@@ -25,12 +25,12 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.testFramework.ServiceContainerUtil;
 import org.picocontainer.MutablePicoContainer;
-import org.picocontainer.defaults.UnsatisfiableDependenciesException;
 
 /** Utility class for registering project services, application services and extensions. */
 public class ServiceHelper {
@@ -48,6 +48,13 @@ public class ServiceHelper {
     ExtensionPoint<T> ep = Extensions.getRootArea().getExtensionPoint(name);
     ep.registerExtension(instance);
     Disposer.register(parentDisposable, () -> ep.unregisterExtension(instance));
+  }
+
+  public static <T> void registerExtensionFirst(
+      ExtensionPointName<T> name, T instance, Disposable parentDisposable) {
+    ExtensionPoint<T> ep =
+        ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(name);
+    ep.registerExtension(instance, LoadingOrder.FIRST, parentDisposable);
   }
 
   /** Unregister all extensions of the given class, for the given extension point. */
@@ -81,7 +88,7 @@ public class ServiceHelper {
       if (!application.hasComponent(key)) {
         // registers component from scratch
         ServiceContainerUtil.registerComponentImplementation(
-            application, key, key, /* shouldBeAlreadyRegistered=*/ false);
+            application, key, key, /*shouldBeRegistered=*/ false);
       }
       // replaces existing component
       ServiceContainerUtil.registerComponentInstance(
@@ -108,21 +115,15 @@ public class ServiceHelper {
 
   private static <T> void registerComponentInstance(
       MutablePicoContainer container, Class<T> key, T implementation, Disposable parentDisposable) {
-    Object old;
-    try {
-      old = container.getComponentInstance(key);
-    } catch (UnsatisfiableDependenciesException e) {
-      old = null;
-    }
+    Object old = ApplicationManager.getApplication().getComponent(key);
     container.unregisterComponent(key.getName());
     container.registerComponentInstance(key.getName(), implementation);
-    Object finalOld = old;
     Disposer.register(
         parentDisposable,
         () -> {
           container.unregisterComponent(key.getName());
-          if (finalOld != null) {
-            container.registerComponentInstance(key.getName(), finalOld);
+          if (old != null) {
+            container.registerComponentInstance(key.getName(), old);
           }
         });
   }
@@ -145,6 +146,6 @@ public class ServiceHelper {
     }
     Disposer.register(
         parentDisposable,
-        () -> BaseSdkTestCompat.unregisterComponent(componentManager, key.getName()));
+        () -> BaseSdkTestCompat.unregisterComponent(componentManager, key));
   }
 }

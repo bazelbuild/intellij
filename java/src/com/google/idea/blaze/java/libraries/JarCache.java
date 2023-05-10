@@ -19,10 +19,14 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
@@ -43,7 +47,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -51,14 +54,15 @@ import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.java.settings.BlazeJavaUserSettings;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -81,10 +85,14 @@ import javax.annotation.Nullable;
 public class JarCache {
 
   public static JarCache getInstance(Project project) {
-    return ServiceManager.getService(project, JarCache.class);
+    return project.getService(JarCache.class);
   }
 
   private static final Logger logger = Logger.getInstance(JarCache.class);
+  private static final ListeningExecutorService REPACKAGE_EXECUTOR =
+      MoreExecutors.listeningDecorator(
+          AppExecutorUtil.createBoundedApplicationPoolExecutor(
+              "JarRepackagerExecutor", /*maxThreads*/ 4));
 
   private boolean isAvailable = !ApplicationManager.getApplication().isUnitTestMode();
 
@@ -93,6 +101,9 @@ public class JarCache {
 
   /** The state of the cache as of the last call to {@link #readFileState}. */
   private volatile ImmutableMap<String, File> cacheState = ImmutableMap.of();
+
+  private volatile ListenableFuture<List<Object>> repackagingTasks =
+      Futures.immediateCancelledFuture();
 
   private boolean enabled;
 
@@ -232,12 +243,9 @@ public class JarCache {
       if (!removed.isEmpty()) {
         context.output(PrintOutput.log(String.format("Removed %d jars", removed.size())));
       }
+
       // repackage cached jars after cache has been updated
-      ImmutableList<ListenableFuture<?>> repackaged = repackageJars(projectData, updated.values());
-      if (!repackaged.isEmpty()) {
-        Futures.allAsList(repackaged).get();
-        context.output(PrintOutput.log(String.format("Repackaged %d jars", repackaged.size())));
-      }
+      repackageJarsInBackground(projectData, updated.values());
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       context.setCancelled();
@@ -331,19 +339,66 @@ public class JarCache {
     }
   }
 
-  /** Repackage jars when necessary to avoid package name conflict. */
-  private ImmutableList<ListenableFuture<?>> repackageJars(
+  /**
+   * Submit repackage tasks without blocking current thread. Log elapsed time when all tasks get
+   * completed.
+   */
+  private void repackageJarsInBackground(
       BlazeProjectData projectData, Collection<BlazeArtifact> updatedJars) {
     JarRepackager jarRepackager = JarRepackager.getInstance();
-    FileOperationProvider ops = FileOperationProvider.getInstance();
     if (!jarRepackager.isEnabled()) {
-      return ImmutableList.of();
+      return;
     }
+
+    Stopwatch timer = Stopwatch.createStarted();
+    // If there are repackaging tasks from a prior sync still running, then we cancel them first.
+    if (!repackagingTasks.isCancelled() && !repackagingTasks.isDone()) {
+      logger.warn("Cancel unfinished repackaging tasks.");
+      repackagingTasks.cancel(false);
+    }
+    ImmutableList<ListenableFuture<?>> tasks =
+        repackageJars(projectData, updatedJars, jarRepackager);
+    if (tasks.isEmpty()) {
+      return;
+    }
+    repackagingTasks = Futures.allAsList(tasks);
+    Futures.addCallback(
+        repackagingTasks,
+        new FutureCallback<Object>() {
+          @Override
+          public void onSuccess(Object result) {
+            logger.info(
+                "Repackaged "
+                    + tasks.size()
+                    + " lint jars in "
+                    + timer.elapsed().toMillis()
+                    + " ms");
+          }
+
+          @Override
+          public void onFailure(Throwable t) {
+            logger.warn(
+                "Failed to repackage "
+                    + tasks.size()
+                    + " lint jars in "
+                    + timer.elapsed().toMillis()
+                    + " ms");
+          }
+        },
+        REPACKAGE_EXECUTOR);
+  }
+
+  /** Repackage jars when necessary to avoid package name conflict. */
+  private ImmutableList<ListenableFuture<?>> repackageJars(
+      BlazeProjectData projectData,
+      Collection<BlazeArtifact> updatedJars,
+      JarRepackager jarRepackager) {
+    FileOperationProvider ops = FileOperationProvider.getInstance();
 
     return LintJarHelper.collectLintJarsArtifacts(projectData).stream()
         .map(
             blazeArtifact ->
-                FetchExecutor.EXECUTOR.submit(
+                REPACKAGE_EXECUTOR.submit(
                     () -> {
                       try {
                         repackageJar(
@@ -441,6 +496,33 @@ public class JarCache {
     return getCacheFile(cacheKey).orElseGet(() -> getFallbackFile(artifact));
   }
 
+  @VisibleForTesting
+  public ListenableFuture<List<Object>> getRepackagingTasks() {
+    return repackagingTasks;
+  }
+
+  /**
+   * Gets the cached file for a lint jar.
+   *
+   * @return the cached & repackaged lint file, or {@code null} if there are ongoing repackaging
+   *     tasks or the repackaged file is inaccessible.
+   */
+  @Nullable
+  public File getCachedLintJar(BlazeArtifact artifact) {
+    if (!repackagingTasks.isDone() && !repackagingTasks.isCancelled()) {
+      return null;
+    }
+    File jar = getCachedJar(artifact);
+    File repackagedJar =
+        new File(
+            jarCacheFolderProvider.getJarCacheFolder(),
+            JarRepackager.getInstance().getRepackagePrefix() + jar.getName());
+    if (repackagedJar.exists()) {
+      return repackagedJar;
+    }
+    return null;
+  }
+
   /**
    * Gets the cached file for a source jar. If it doesn't exist, we return the file from the
    * library, or null if that also can't be accessed locally.
@@ -508,7 +590,8 @@ public class JarCache {
     return cacheKeyInternal(srcjar) + "-src.jar";
   }
 
-  static class FileCacheAdapter implements FileCache {
+  /** An implementation of {@link FileCache} delegating to {@link JarCache}. */
+  public static class FileCacheAdapter implements FileCache {
     @Override
     public String getName() {
       return "Jar Cache";

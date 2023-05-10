@@ -34,7 +34,6 @@ import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -44,7 +43,6 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
@@ -162,13 +160,6 @@ public final class BuildPluginBeforeRunTaskProvider
               .push(new ExperimentScope())
               .push(new ProblemsViewScope(project, userSettings.getShowProblemsViewOnRun()))
               .push(
-                  new BlazeConsoleScope.Builder(project)
-                      .setPopupBehavior(userSettings.getShowBlazeConsoleOnRun())
-                      .addConsoleFilters(
-                          new IssueOutputFilter(
-                              project, workspaceRoot, ContextType.BeforeRunTask, true))
-                      .build())
-              .push(
                   new ToolWindowScope.Builder(
                           project,
                           new com.google.idea.blaze.base.toolwindow.Task(
@@ -210,9 +201,11 @@ public final class BuildPluginBeforeRunTaskProvider
                   ListenableFuture<String> executionRootFuture =
                       BlazeInfoRunner.getInstance()
                           .runBlazeInfo(
+                              project,
+                              Blaze.getBuildSystemProvider(project)
+                                  .getBuildSystem()
+                                  .getDefaultInvoker(project, context),
                               context,
-                              binaryPath,
-                              workspaceRoot,
                               config.getBlazeFlagsState().getFlagsForExternalProcesses(),
                               BlazeInfo.EXECUTION_ROOT_KEY);
 

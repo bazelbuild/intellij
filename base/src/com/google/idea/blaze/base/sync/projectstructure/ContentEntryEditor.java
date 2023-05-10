@@ -100,11 +100,18 @@ public class ContentEntryEditor {
     File file = workspaceRoot.fileForPath(workspacePath);
     boolean isTest = testConfig.isTestSource(workspacePath.relativePath());
     SourceFolder current = sourceFolders.get(new File(file.getPath()));
-    SourceFolder currentOrParent = current != null ? current : parent;
-    if (currentOrParent != null && isTest != currentOrParent.isTestSource()) {
-      currentOrParent =
-          provider.setSourceFolderForLocation(contentEntry, currentOrParent, file, isTest);
-      if (current != null) {
+    SourceFolder next;
+    if (current == null) {
+      if (parent != null && isTest != parent.isTestSource()) {
+        next = provider.setSourceFolderForLocation(contentEntry, parent, file, isTest);
+      } else {
+        next = parent;
+      }
+    } else {
+      if (isTest == current.isTestSource()) {
+        next = current;
+      } else {
+        next = provider.setSourceFolderForLocation(contentEntry, current, file, isTest);
         contentEntry.removeSourceFolder(current);
       }
     }
@@ -117,7 +124,7 @@ public class ContentEntryEditor {
           contentEntry,
           provider,
           sourceFolders,
-          currentOrParent,
+          next,
           child.getKey(),
           child.getValue());
     }

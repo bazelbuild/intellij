@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.lang.buildfile.psi;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.FuncallReference;
@@ -75,6 +76,7 @@ public class FuncallExpression extends BuildElementImpl
     return name != null ? name.getValue() : null;
   }
 
+  @CanIgnoreReturnValue
   @Override
   public PsiElement setName(String name) throws IncorrectOperationException {
     StringLiteral nameNode = getNameArgumentValueNode();

@@ -15,18 +15,18 @@
  */
 package com.google.idea.blaze.base.run.testlogs;
 
-import javax.annotation.Nullable;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 
 /** A strategy for locating results from 'blaze test' invocation (e.g. output XML files). */
 public interface BlazeTestResultFinderStrategy {
 
   /**
    * Attempt to find test results corresponding to the most recent blaze invocation. Called after
-   * the 'blaze test' process completes.
+   * the 'blaze test' process completes. Returns BlazeTestResults.NO_RESULTS if it cannot find test
+   * results
    */
-  @Nullable
-  BlazeTestResults findTestResults();
+  BlazeTestResults findTestResults() throws GetArtifactsException;
 
   /** Remove any temporary files used by this result finder. */
-  void deleteTemporaryOutputXmlFiles();
+  void deleteTemporaryOutputFiles();
 }

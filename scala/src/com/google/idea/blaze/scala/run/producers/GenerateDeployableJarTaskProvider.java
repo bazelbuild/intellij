@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtif
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -39,7 +38,6 @@ import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -177,8 +175,11 @@ class GenerateDeployableJarTaskProvider
         if (result.status != BuildResult.Status.SUCCESS) {
           throw new ExecutionException("Bazel failure building deployable jar");
         }
-      } catch (InterruptedException | CancellationException e) {
-        buildOperation.cancel(true);
+      } catch (InterruptedException e) {
+        cancelBuildFutureWithInterrupt(buildOperation);
+        throw new RunCanceledByUserException();
+      } catch (CancellationException unused) {
+        buildOperation.cancel(/* mayInterruptIfRunning= */ false);
         throw new RunCanceledByUserException();
       } catch (java.util.concurrent.ExecutionException e) {
         throw new ExecutionException(e);
@@ -198,6 +199,11 @@ class GenerateDeployableJarTaskProvider
           String.format(
               "Failed to find deployable jar when building %s: %s", target, e.getMessage()));
     }
+  }
+
+  @SuppressWarnings("Interruption") // propagating a cancellation-with-interrupt from another caller
+  private static void cancelBuildFutureWithInterrupt(ListenableFuture<BuildResult> buildOperation) {
+    buildOperation.cancel(/* mayInterruptIfRunning= */ true);
   }
 
   /** Kicks off the bazel build task, returning a corresponding {@link ListenableFuture}. */
@@ -233,15 +239,7 @@ class GenerateDeployableJarTaskProvider
                             .build())
                     .push(
                         new ProblemsViewScope(
-                            project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()))
-                    .push(
-                        new BlazeConsoleScope.Builder(project)
-                            .setPopupBehavior(
-                                BlazeUserSettings.getInstance().getShowBlazeConsoleOnRun())
-                            .addConsoleFilters(
-                                new IssueOutputFilter(
-                                    project, workspaceRoot, invocationContext.type(), true))
-                            .build());
+                            project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()));
 
                 context.output(new StatusOutput(title));
                 BlazeCommand command =

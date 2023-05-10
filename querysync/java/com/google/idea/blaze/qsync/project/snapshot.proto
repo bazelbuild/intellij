@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package ij.qsync;
+
+import "querysync/java/com/google/idea/blaze/qsync/query/querysummary.proto";
+
+// option java_api_version = 2;
+option java_outer_classname = "SnapshotProto";
+option java_package = "com.google.idea.blaze.qsync.project";
+
+message Snapshot {
+  ProjectDefinition project_definition = 1;
+  VcsState vcs_state = 2;
+  Summary query_summary = 3;
+}
+
+message ProjectDefinition {
+  repeated string include_paths = 1;
+  repeated string exclude_paths = 2;
+}
+
+message VcsState {
+  string upstream_revision = 1;
+  repeated WorkspaceFileChange working_set = 2;
+}
+
+message WorkspaceFileChange {
+  enum VcsOperation {
+    UNSPECIFIED = 0;
+    DELETE = 1;
+    ADD = 2;
+    MODIFY = 3;
+  }
+
+  VcsOperation operation = 1;
+  string workspace_relative_path = 2;
+}

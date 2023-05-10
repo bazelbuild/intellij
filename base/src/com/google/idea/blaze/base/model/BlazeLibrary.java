@@ -18,16 +18,7 @@ package com.google.idea.blaze.base.model;
 import com.google.common.base.Objects;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
-import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.io.URLUtil;
-import java.io.File;
 import javax.annotation.concurrent.Immutable;
 
 /** A model object for something that will map to an IntelliJ library. */
@@ -54,6 +45,13 @@ public abstract class BlazeLibrary implements ProtoWrapper<ProjectData.BlazeLibr
     return key.toString();
   }
 
+  /**
+   * Returns a {@link LibraryFilesProvider} that can be used to update library model content. Many
+   * BlazeLibrary instances may return the same LibraryFilesProvider, and that all BlazeLibraries
+   * with the same FilesProvider will be mapped to the same library in the IJ project model.
+   */
+  public abstract LibraryFilesProvider getDefaultLibraryFilesProvider(Project project);
+
   @Override
   public boolean equals(Object other) {
     if (this == other) {
@@ -67,27 +65,5 @@ public abstract class BlazeLibrary implements ProtoWrapper<ProjectData.BlazeLibr
     return Objects.equal(key, that.key);
   }
 
-  public abstract void modifyLibraryModel(
-      Project project,
-      ArtifactLocationDecoder artifactLocationDecoder,
-      Library.ModifiableModel libraryModel);
-
-  protected static String pathToUrl(File path) {
-    String name = path.getName();
-    boolean isJarFile =
-        FileUtilRt.extensionEquals(name, "jar")
-            || FileUtilRt.extensionEquals(name, "srcjar")
-            || FileUtilRt.extensionEquals(name, "zip");
-    // .jar files require an URL with "jar" protocol.
-    String protocol =
-        isJarFile
-            ? StandardFileSystems.JAR_PROTOCOL
-            : VirtualFileSystemProvider.getInstance().getSystem().getProtocol();
-    String filePath = FileUtil.toSystemIndependentName(path.getPath());
-    String url = VirtualFileManager.constructUrl(protocol, filePath);
-    if (isJarFile) {
-      url += URLUtil.JAR_SEPARATOR;
-    }
-    return url;
-  }
+  public abstract String getExtension();
 }

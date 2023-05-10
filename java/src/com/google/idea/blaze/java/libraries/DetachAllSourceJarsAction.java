@@ -30,9 +30,9 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LibraryEditor;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.common.util.Transactions;
-import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -72,8 +72,7 @@ class DetachAllSourceJarsAction extends BlazeProjectAction {
     Transactions.submitWriteActionTransaction(
         project,
         () -> {
-          IdeModifiableModelsProvider modelsProvider =
-              BaseSdkCompat.createModifiableModelsProvider(project);
+          IdeModifiableModelsProvider modelsProvider = new IdeModifiableModelsProviderImpl(project);
           for (Library library : librariesToDetach) {
             BlazeJarLibrary blazeLibrary =
                 LibraryActionHelper.findLibraryFromIntellijLibrary(
@@ -81,11 +80,7 @@ class DetachAllSourceJarsAction extends BlazeProjectAction {
             if (blazeLibrary == null) {
               continue;
             }
-            LibraryEditor.updateLibrary(
-                project,
-                blazeProjectData.getArtifactLocationDecoder(),
-                modelsProvider,
-                blazeLibrary);
+            LibraryEditor.updateLibrary(project, blazeProjectData, modelsProvider, blazeLibrary);
           }
           modelsProvider.commit();
         });

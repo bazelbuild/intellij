@@ -15,15 +15,19 @@
  */
 package com.google.idea.blaze.base.scope;
 
+import com.google.idea.blaze.common.Context;
+
 /**
  * A scoped facet of a scoped operation.
  *
  * <p>Attaches to a blaze context and starts and ends with it.
  */
-public interface BlazeScope {
+public interface BlazeScope extends Context.Scope<BlazeContext> {
   /** Called when the scope is added to the context. */
+  @Override
   default void onScopeBegin(BlazeContext context) {}
 
   /** Called when the context scope is ending. */
+  @Override
   default void onScopeEnd(BlazeContext context) {}
 }

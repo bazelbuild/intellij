@@ -28,6 +28,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//java",
         "//proto:proto_deps",
+        "//shared",
     ],
 )
 
@@ -44,6 +45,10 @@ intellij_plugin_library(
     deps = [":plugin_dev"],
 )
 
+intellij_plugin_library(
+    name = "empty",
+)
+
 stamped_plugin_xml(
     name = "plugin_dev_plugin_xml",
     plugin_id = "com.google.idea.blaze.plugin_dev",
@@ -54,6 +59,9 @@ intellij_plugin(
     name = "plugin_dev_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":plugin_dev_plugin_xml",
+    tags = [
+        "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
+    ],
     deps = [
         ":plugin_library",
         "//base:plugin_library",

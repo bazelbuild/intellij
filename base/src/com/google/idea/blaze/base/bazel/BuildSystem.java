@@ -74,6 +74,14 @@ public interface BuildSystem {
 
     /** Returns a {@link BlazeCommandRunner} to be used to invoke the build. */
     BlazeCommandRunner getCommandRunner();
+
+    /** Indicates whether the invoker supports user .blazerc from home directories. */
+    default boolean supportsHomeBlazerc() {
+      return true;
+    }
+
+    /** Returns the BuildSystem object. */
+    BuildSystem getBuildSystem();
   }
 
   /** Returns the type of the build system. */
@@ -81,6 +89,9 @@ public interface BuildSystem {
 
   /** Get a Blaze invoker. */
   BuildInvoker getBuildInvoker(Project project, BlazeContext context);
+
+  /** Get a Blaze invoker that only run build locally. */
+  Optional<BuildInvoker> getLocalBuildInvoker(Project project, BlazeContext context);
 
   /**
    * Get a Blaze invoker that supports multiple calls in parallel, if this build system supports it.
@@ -95,4 +106,21 @@ public interface BuildSystem {
   /** Populates the passed builder with version data. */
   void populateBlazeVersionData(
       WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo, BlazeVersionData.Builder builder);
+
+  /**
+   * Returns the parallel invoker if the sync strategy is PARALLEL and the system supports it;
+   * otherwise returns the standard invoker.
+   */
+  default BuildInvoker getDefaultInvoker(Project project, BlazeContext context) {
+    if (getSyncStrategy(project) == SyncStrategy.PARALLEL) {
+      return getParallelBuildInvoker(project, context).orElse(getBuildInvoker(project, context));
+    } else {
+      return getBuildInvoker(project, context);
+    }
+  }
+
+  /** Returns invocation link for the given invocation ID. */
+  default Optional<String> getInvocationLink(String invocationId) {
+    return Optional.empty();
+  }
 }

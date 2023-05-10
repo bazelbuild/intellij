@@ -45,9 +45,6 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException;
-import com.intellij.notification.NotificationGroupManager;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.NavigatableAdapter;
@@ -116,51 +113,15 @@ public final class BlazeConfigurationToolchainResolver {
 
   private static void verifyToolchainDeps(
       BlazeContext context, ImmutableMap<TargetIdeInfo, List<TargetKey>> toolchainDepsTable) {
-    boolean skippedToolchainWarning = false;
     ListMultimap<Integer, TargetIdeInfo> warningTargets = ArrayListMultimap.create();
     for (Map.Entry<TargetIdeInfo, List<TargetKey>> entry : toolchainDepsTable.entrySet()) {
       List<TargetKey> toolchainDeps = entry.getValue();
       if (toolchainDeps.size() != 1) {
         TargetIdeInfo target = entry.getKey();
-        // Starlark cc_library targets depend on cc_toolchain_alias targets instead of
-        // cc_toolchain_suite, but the CToolchainIdeInfo from cc_toolchain_alias targets is
-        // only parsed after a specific change. Even after the change rolls out, users with
-        // stale cache can still observe an empty toolchainDeps, so we skip toolchain warning
-        // in this specific case. Note that this is safe because it's guaranteed that a
-        // cc_toolchain_suite target will also be in the target map, which will be chosen and
-        // provide the CToolchainIdeInfo the IDE needs.
-        if (target.getDependencies().stream()
-            .anyMatch(
-                dep ->
-                    dep.getTargetKey()
-                        .getLabel()
-                        .toString()
-                        .contains("//tools/cpp:current_cc_toolchain"))) {
-          skippedToolchainWarning = true;
-        } else {
           warningTargets.put(toolchainDeps.size(), target);
-        }
       }
     }
     issueToolchainWarning(context, warningTargets);
-
-    // Log that we skipped the toolchain warning so we can monitor how often this happens. And
-    // show a dialog to users and ask them to do a non-incremental Blaze sync so the IDE reads
-    // from aspect artifacts and add the previously missing cc_toolchain_alias target to the
-    // target map.
-    if (skippedToolchainWarning) {
-      // We will monitor the number of the following log entries and IDE version overtime, and
-      // remove the special code that bypasses the toolchain dependency size check and
-      // suppresses toolchain warning, when most users have updated their IDE and g3plugins
-      // version to one that includes this change and have updated their cache either via
-      // non-incremental sync or other changes from their end that introduce cache
-      // invalidation.
-      logger.info("Bypassing the toolchain warning for Starlark cc_library target.");
-      notify(
-          "To adapt to the Starlarkification of cc_library, please do a non-incremental sync"
-              + " so the IDE can add the previously missing cc_toolchain_alias target to the"
-              + " target map.");
-    }
   }
 
   private static ImmutableMap<TargetKey, CToolchainIdeInfo> buildLookupTable(
@@ -182,13 +143,6 @@ public final class BlazeConfigurationToolchainResolver {
       }
     }
     return lookupTable.build();
-  }
-
-  private static void notify(String content) {
-    Notifications.Bus.notify(
-        NotificationGroupManager.getInstance()
-            .getNotificationGroup("StarlarkifiedCcLibraryCacheRefresh")
-            .createNotification(content, NotificationType.WARNING));
   }
 
   private static void issueToolchainWarning(

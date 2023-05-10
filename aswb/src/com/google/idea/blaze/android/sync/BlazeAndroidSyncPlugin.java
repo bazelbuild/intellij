@@ -15,18 +15,28 @@
  */
 package com.google.idea.blaze.android.sync;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static java.util.stream.Collectors.joining;
+
 import com.android.tools.idea.model.AndroidModel;
+import com.android.tools.idea.projectsystem.NamedIdeaSourceProvider;
+import com.android.tools.idea.projectsystem.NamedIdeaSourceProviderBuilder;
+import com.android.tools.idea.projectsystem.ScopeType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.android.projectview.AndroidMinSdkSection;
 import com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
+import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
 import com.google.idea.blaze.android.sync.importer.BlazeAndroidWorkspaceImporter;
 import com.google.idea.blaze.android.sync.importer.BlazeImportInput;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
+import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
+import com.google.idea.blaze.android.sync.projectstructure.AndroidFacetModuleCustomizer;
 import com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectStructureSyncer;
 import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -36,8 +46,11 @@ import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
+import com.google.idea.blaze.base.projectview.section.sections.BuildFlagsSection;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -47,9 +60,12 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
+import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
+import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
 import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.projectstructure.JavaSourceFolderProvider;
@@ -63,12 +79,16 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import java.io.File;
 import java.util.Collection;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidFacetProperties;
 
 /** ASwB sync plugin. */
 public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
@@ -151,6 +171,24 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
   }
 
   @Override
+  public void updateProjectSdk(Project project, Context context, ProjectViewSet projectViewSet) {
+    if (QuerySync.isEnabled()) {
+      if (!isAndroidWorkspace(LanguageSupport.createWorkspaceLanguageSettings(projectViewSet))) {
+        return;
+      }
+      AndroidSdkPlatform androidSdkPlatform =
+          AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet);
+      Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdkPlatform.androidSdk);
+      LanguageLevel javaLanguageLevel =
+          JavaLanguageLevelSection.getLanguageLevel(projectViewSet, LanguageLevel.JDK_11);
+      ProjectRootManagerEx rootManager = ProjectRootManagerEx.getInstanceEx(project);
+      rootManager.setProjectSdk(sdk);
+      LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
+      ext.setLanguageLevel(javaLanguageLevel);
+    }
+  }
+
+  @Override
   public void updateProjectSdk(
       Project project,
       BlazeContext context,
@@ -191,6 +229,66 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
     LanguageLevel javaLanguageLevel =
         JavaLanguageLevelHelper.getJavaLanguageLevel(projectViewSet, blazeProjectData);
     setProjectSdkAndLanguageLevel(project, sdk, javaLanguageLevel);
+  }
+
+  @Override
+  public void updateProjectStructure(
+      Project project,
+      Context context,
+      WorkspaceRoot workspaceRoot,
+      Module workspaceModule,
+      Set<String> androidResourceDirectories,
+      Set<String> androidSourcePackages,
+      WorkspaceLanguageSettings workspaceLanguageSettings) {
+
+    if (!isAndroidWorkspace(workspaceLanguageSettings)) {
+      return;
+    }
+
+    // Attach AndroidFacet to workspace modules
+    AndroidFacetModuleCustomizer.createAndroidFacet(workspaceModule, false);
+
+    // Add all source resource directories to this AndroidFacet
+    AndroidFacet workspaceFacet = AndroidFacet.getInstance(workspaceModule);
+    ImmutableSet<File> androidResourceDirectoryFiles =
+        androidResourceDirectories.stream()
+            .map(dir -> new File(workspaceRoot.directory(), dir).getAbsoluteFile())
+            .collect(toImmutableSet());
+    NamedIdeaSourceProvider sourceProvider =
+        NamedIdeaSourceProviderBuilder.create(
+                workspaceModule.getName(), VfsUtilCore.fileToUrl(new File("MissingManifest.xml")))
+            .withScopeType(ScopeType.MAIN)
+            .withResDirectoryUrls(
+                ContainerUtil.map(androidResourceDirectoryFiles, VfsUtilCore::fileToUrl))
+            .build();
+
+    // Set AndroidModel for this AndroidFacet
+    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    boolean desugarJava8Libs =
+        projectViewSet.listItems(BuildFlagsSection.KEY).contains("--config=android_java8_libs");
+    AndroidSdkPlatform androidSdkPlatform =
+        AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet);
+
+    BlazeAndroidModel androidModel =
+        new BlazeAndroidModel(
+            project,
+            workspaceRoot.directory(),
+            sourceProvider,
+            Futures.immediateFuture(":workspace"),
+            androidSdkPlatform != null ? androidSdkPlatform.androidMinSdkLevel : 1,
+            desugarJava8Libs);
+    AndroidModel.set(workspaceFacet, androidModel);
+    workspaceFacet.getProperties().RES_FOLDERS_RELATIVE_PATH =
+        androidResourceDirectoryFiles.stream()
+            .map(VfsUtilCore::fileToUrl)
+            .collect(joining(AndroidFacetProperties.PATH_LIST_SEPARATOR_IN_FACET_CONFIGURATION));
+
+    // Register all source java packages as workspace packages
+    BlazeLightResourceClassService.Builder rClassBuilder =
+        new BlazeLightResourceClassService.Builder(project);
+    rClassBuilder.addWorkspacePackages(androidSourcePackages);
+
+    BlazeLightResourceClassService.getInstance(project).installRClasses(rClassBuilder);
   }
 
   @Override

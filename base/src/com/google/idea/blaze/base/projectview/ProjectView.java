@@ -19,6 +19,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.Section;
@@ -128,27 +129,32 @@ public final class ProjectView implements Serializable {
       return null;
     }
 
+    @CanIgnoreReturnValue
     public <T, SectionType extends Section<T>> Builder add(SectionBuilder<T, SectionType> builder) {
       return add(builder.build());
     }
 
+    @CanIgnoreReturnValue
     public <T, SectionType extends Section<T>> Builder add(SectionType section) {
       sections.add(section);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public <T> Builder remove(Section<T> section) {
       sections.remove(section);
       return this;
     }
 
     /** Replaces a section if it already exists. If it doesn't, just add the section. */
+    @CanIgnoreReturnValue
     public <T, SectionType extends Section<T>> Builder replace(
         @Nullable Section<T> section, SectionBuilder<T, SectionType> builder) {
       return replace(section, builder.build());
     }
 
     /** Replaces a section if it already exists. If it doesn't, just add the section. */
+    @CanIgnoreReturnValue
     public <T> Builder replace(@Nullable Section<T> toReplace, Section<T> replaceWith) {
       if (toReplace == null) {
         return add(replaceWith);

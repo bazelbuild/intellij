@@ -25,10 +25,12 @@ import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.intellij.pom.java.LanguageLevel;
 import javax.annotation.Nullable;
+import java.util.Locale;
 
 /** Section to force the java language level used */
 public class JavaLanguageLevelSection {
-  public static final SectionKey<Integer, ScalarSection<Integer>> KEY =
+
+  public static final SectionKey<LanguageLevel, ScalarSection<LanguageLevel>> KEY =
       SectionKey.of("java_language_level");
   public static final SectionParser PARSER = new JavaLanguageLevelParser();
 
@@ -36,40 +38,58 @@ public class JavaLanguageLevelSection {
       ProjectViewSet projectViewSet, LanguageLevel defaultValue) {
     return projectViewSet
         .getScalarValue(KEY)
-        .map(i -> getLanguageLevel(i, defaultValue))
         .orElse(defaultValue);
   }
 
   @Nullable
   @VisibleForTesting
-  static LanguageLevel getLanguageLevel(Integer level, @Nullable LanguageLevel defaultValue) {
-    LanguageLevel parsed = LanguageLevel.parse(level.toString());
-    return parsed != null ? parsed : defaultValue;
+  static LanguageLevel getLanguageLevel(String level, @Nullable LanguageLevel defaultValue) {
+    try {
+      return LanguageLevel.valueOf(level.toUpperCase(Locale.ROOT));
+    } catch (IllegalArgumentException e) {
+      // fall through
+    }
+
+    final int numericVersion;
+    try {
+      // LanguageLevel.parse will return levels for strings containing numeric components
+      // like FOO_11_FOO that should not be accepted by the plugin
+      numericVersion = Integer.parseInt(level);
+      if (numericVersion <= 0) {
+        return defaultValue;
+      }
+    } catch (NumberFormatException e) {
+      return defaultValue;
+    }
+
+    LanguageLevel languageLevel = LanguageLevel.parse(Integer.toString(numericVersion));
+    if (languageLevel != null) {
+      return languageLevel;
+    }
+    return defaultValue;
   }
 
-  private static class JavaLanguageLevelParser extends ScalarSectionParser<Integer> {
+  private static class JavaLanguageLevelParser extends ScalarSectionParser<LanguageLevel> {
     JavaLanguageLevelParser() {
       super(KEY, ':');
     }
 
     @Nullable
     @Override
-    protected Integer parseItem(ProjectViewParser parser, ParseContext parseContext, String rest) {
-      try {
-        Integer value = Integer.parseInt(rest);
-        if (getLanguageLevel(value, null) != null) {
-          return value;
-        }
+    protected LanguageLevel parseItem(ProjectViewParser parser, ParseContext parseContext,
+        String rest) {
+      LanguageLevel languageLevel = getLanguageLevel(rest, null);
+      if (languageLevel == null) {
         // Fall through to error handler
-      } catch (NumberFormatException e) {
-        // Fall through to error handler
+        parseContext.addError("Illegal java language level: " + rest);
+        return null;
+      } else {
+        return languageLevel;
       }
-      parseContext.addError("Illegal java language level: " + rest);
-      return null;
     }
 
     @Override
-    protected void printItem(StringBuilder sb, Integer value) {
+    protected void printItem(StringBuilder sb, LanguageLevel value) {
       sb.append(value.toString());
     }
 

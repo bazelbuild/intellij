@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.ideinfo;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
-import com.google.repackaged.bazel.protobuf.Message;
+import com.google.protobuf.Message;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;

@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.List;
 import java.util.Map;
@@ -181,60 +182,72 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
     private Label instruments;
     private ArtifactLocation renderResolveJar;
 
+    @CanIgnoreReturnValue
     public Builder setManifestFile(ArtifactLocation artifactLocation) {
       this.manifest = artifactLocation;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder putManifestValue(String attributeOrPlaceholder, String value) {
       manifestValues.put(attributeOrPlaceholder, value);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addResource(ArtifactLocation artifactLocation) {
       return addResource(AndroidResFolder.builder().setRoot(artifactLocation).build());
     }
 
+    @CanIgnoreReturnValue
     public Builder addResource(AndroidResFolder androidResFolder) {
       this.resources.add(androidResFolder);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setIdlJar(LibraryArtifact idlJar) {
       this.idlJar = idlJar;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setHasIdlSources(boolean hasIdlSources) {
       this.hasIdlSources = hasIdlSources;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setResourceJar(LibraryArtifact.Builder resourceJar) {
       this.resourceJar = resourceJar.build();
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setResourceJavaPackage(@Nullable String resourceJavaPackage) {
       this.resourceJavaPackage = resourceJavaPackage;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setGenerateResourceClass(boolean generateResourceClass) {
       this.generateResourceClass = generateResourceClass;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setLegacyResources(@Nullable Label legacyResources) {
       this.legacyResources = legacyResources;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setInstruments(@Nullable Label instruments) {
       this.instruments = instruments;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setRenderResolveJar(@Nullable ArtifactLocation renderResolveJar) {
       this.renderResolveJar = renderResolveJar;
       return this;

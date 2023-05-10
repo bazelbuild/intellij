@@ -19,6 +19,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.devtools.intellij.model.ProjectData;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -155,11 +156,13 @@ public final class AndroidResourceModule
       this.sourceTargetKeys.add(targetKey);
     }
 
+    @CanIgnoreReturnValue
     public Builder addResource(ArtifactLocation resource) {
       this.resources.add(resource);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addResources(Collection<ArtifactLocation> resources) {
       this.resources.addAll(resources);
       return this;
@@ -169,11 +172,13 @@ public final class AndroidResourceModule
       return !this.resources.isEmpty();
     }
 
+    @CanIgnoreReturnValue
     public Builder addResourceLibraryKey(String aarLibraryKey) {
       this.resourceLibraryKeys.add(aarLibraryKey);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addResourceLibraryKeys(Collection<String> aarLibraryKeys) {
       this.resourceLibraryKeys.addAll(aarLibraryKeys);
       return this;
@@ -183,17 +188,20 @@ public final class AndroidResourceModule
       return this.resourceLibraryKeys;
     }
 
+    @CanIgnoreReturnValue
     public Builder addResourceAndTransitiveResource(ArtifactLocation resource) {
       this.resources.add(resource);
       this.transitiveResources.add(resource);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addTransitiveResource(ArtifactLocation resource) {
       this.transitiveResources.add(resource);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addTransitiveResources(Collection<ArtifactLocation> resources) {
       this.transitiveResources.addAll(resources);
       return this;
@@ -203,30 +211,36 @@ public final class AndroidResourceModule
       return this.transitiveResources;
     }
 
+    @CanIgnoreReturnValue
     public Builder addTransitiveResourceDependency(TargetKey dependency) {
       this.transitiveResourceDependencies.add(dependency);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addTransitiveResourceDependencies(Collection<TargetKey> dependencies) {
       this.transitiveResourceDependencies.addAll(dependencies);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addTransitiveResourceDependency(Label dependency) {
       this.transitiveResourceDependencies.add(TargetKey.forPlainTarget(dependency));
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addTransitiveResourceDependency(String dependency) {
       return addTransitiveResourceDependency(Label.create(dependency));
     }
 
+    @CanIgnoreReturnValue
     public Builder addSourceTarget(TargetKey target) {
       this.sourceTargetKeys.add(target);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addSourceTargets(Collection<TargetKey> targetKeys) {
       this.sourceTargetKeys.addAll(targetKeys);
       return this;

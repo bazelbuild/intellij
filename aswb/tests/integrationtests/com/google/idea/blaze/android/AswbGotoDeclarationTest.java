@@ -22,7 +22,7 @@ import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.and
 import com.android.SdkConstants;
 import com.android.tools.idea.res.AarResourceRepositoryCache;
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.android.libraries.AarLibraryFileBuilder;
+import com.google.idea.blaze.android.libraries.LibraryFileBuilder;
 import com.google.idea.blaze.android.libraries.UnpackedAarUtils;
 import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.targetmapbuilder.NbAarTarget;
@@ -80,8 +80,8 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
     // is invoked on elements declared in the AAR, the IDE should open the resource file inside the
     // unpacked AAR.
     File aarContainingStylesXml =
-        AarLibraryFileBuilder.aar(workspaceRoot, "java/com/foo/libs/libs_aar.aar")
-            .src(
+        LibraryFileBuilder.aar(workspaceRoot, "java/com/foo/libs/libs_aar.aar")
+            .addContent(
                 "res/values/styles.xml",
                 ImmutableList.of(
                     "<?xml version=\"1.0\" encoding=\"utf-8\"?>",
@@ -167,8 +167,8 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
             .generated_jar("classes_and_libs_merged.jar");
 
     File aarLibraryFile =
-        AarLibraryFileBuilder.aar(workspaceRoot, aarTarget.getAar().getRelativePath())
-            .src(
+        LibraryFileBuilder.aar(workspaceRoot, aarTarget.getAar().getRelativePath())
+            .addContent(
                 "res/layout/activity_aar.xml",
                 ImmutableList.of(
                     "<?xml version=\"1.0\" encoding=\"utf-8\"?>",
@@ -180,7 +180,7 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
                     "    android:paddingRight=\"16dp\"",
                     "    tools:context=\".MainActivity\" >",
                     "</RelativeLayout>"))
-            .src(
+            .addContent(
                 "res/values/colors.xml",
                 ImmutableList.of(
                     "<?xml version=\"1.0\" encoding=\"utf-8\"?>",
@@ -218,8 +218,8 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
             .aar("lib_aar.aar")
             .generated_jar("classes_and_libs_merged.jar");
     File aarLibraryFile =
-        AarLibraryFileBuilder.aar(workspaceRoot, aarTarget.getAar().getRelativePath())
-            .src(
+        LibraryFileBuilder.aar(workspaceRoot, aarTarget.getAar().getRelativePath())
+            .addContent(
                 "res/values/colors.xml",
                 ImmutableList.of(
                     "<?xml version=\"1.0\" encoding=\"utf-8\"?>",
@@ -249,8 +249,8 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
             .aar("lib_aar.aar")
             .generated_jar("classes_and_libs_merged.jar");
     File aarLibraryFile =
-        AarLibraryFileBuilder.aar(workspaceRoot, aarTarget.getAar().getRelativePath())
-            .src(
+        LibraryFileBuilder.aar(workspaceRoot, aarTarget.getAar().getRelativePath())
+            .addContent(
                 "res/values/colors.xml",
                 ImmutableList.of(
                     "<?xml version=\"1.0\" encoding=\"utf-8\"?>",

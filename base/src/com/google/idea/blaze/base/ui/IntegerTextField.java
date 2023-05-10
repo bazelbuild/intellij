@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.ui;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.text.FieldPosition;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -99,11 +100,13 @@ public class IntegerTextField extends JFormattedTextField {
     }
   }
 
+  @CanIgnoreReturnValue
   public IntegerTextField setMinValue(int minValue) {
     this.minValue = minValue;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public IntegerTextField setMaxValue(int maxValue) {
     this.maxValue = maxValue;
     return this;

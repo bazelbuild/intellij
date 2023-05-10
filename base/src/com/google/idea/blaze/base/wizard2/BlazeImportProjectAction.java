@@ -19,8 +19,13 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.Messages;
+import java.io.IOException;
 
 class BlazeImportProjectAction extends AnAction {
+  private static final Logger logger = Logger.getInstance(BlazeImportProjectAction.class);
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -39,8 +44,8 @@ class BlazeImportProjectAction extends AnAction {
     if (!wizard.showAndGet()) {
       return;
     }
-    BlazeProjectCreator projectCreator = new BlazeProjectCreator(wizard.context, wizard.builder);
-    projectCreator.createFromWizard();
+    BlazeProjectCreator projectCreator = new BlazeProjectCreator(wizard.builder);
+    createFromWizard(projectCreator, wizard.context);
   }
 
   @Override
@@ -48,5 +53,20 @@ class BlazeImportProjectAction extends AnAction {
     super.update(e);
     e.getPresentation()
         .setText(String.format("Import %s Project...", Blaze.defaultBuildSystemName()));
+  }
+
+  private static void createFromWizard(
+      BlazeProjectCreator blazeProjectCreator, WizardContext wizardContext) {
+    try {
+      blazeProjectCreator.doCreate(
+          wizardContext.getProjectFileDirectory(),
+          wizardContext.getProjectName(),
+          wizardContext.getProjectStorageFormat());
+    } catch (final IOException e) {
+      logger.error("Project creation failed", e);
+      ApplicationManager.getApplication()
+          .invokeLater(
+              () -> Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed"));
+    }
   }
 }

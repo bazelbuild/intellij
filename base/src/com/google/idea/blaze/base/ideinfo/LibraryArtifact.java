@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.common.experiments.BoolExperiment;
 import javax.annotation.Nullable;
 
@@ -128,16 +129,19 @@ public final class LibraryArtifact implements ProtoWrapper<IntellijIdeInfo.Libra
     private ArtifactLocation classJar;
     private final ImmutableList.Builder<ArtifactLocation> sourceJars = ImmutableList.builder();
 
+    @CanIgnoreReturnValue
     public Builder setInterfaceJar(ArtifactLocation artifactLocation) {
       this.interfaceJar = artifactLocation;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setClassJar(@Nullable ArtifactLocation artifactLocation) {
       this.classJar = artifactLocation;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addSourceJar(ArtifactLocation... artifactLocations) {
       this.sourceJars.add(artifactLocations);
       return this;

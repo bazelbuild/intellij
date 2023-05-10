@@ -120,7 +120,7 @@ public class TargetExpression
 
     if (targetPattern.charAt(0) == '@') {
       int slashesIndex = targetPattern.indexOf("//");
-      if (slashesIndex <= 1) {
+      if (slashesIndex == -1) {
         return String.format(
             "Invalid target expression '%s': Couldn't find package path", targetPattern);
       }

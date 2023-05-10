@@ -22,6 +22,7 @@
     <SyncStatusContributor implementation="com.google.idea.blaze.kotlin.syncstatus.KotlinSyncStatusContributor"/>
     <TestContextProvider implementation="com.google.idea.blaze.kotlin.run.producers.KotlinTestContextProvider"/>
     <BinaryContextProvider implementation="com.google.idea.blaze.kotlin.run.producers.KotlinBinaryContextProvider"/>
+    <blazeJavaDebuggingSetupHandler implementation="com.google.idea.blaze.kotlin.run.debug.BlazeKotlinDebuggingSetupHandler"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -31,6 +32,7 @@
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <kotlinxCoroutinesLibFinder implementation="com.google.idea.blaze.kotlin.run.debug.BazelKotlinxCoroutinesLibFinder"/>
+    <kotlinxCoroutinesDebuggingLibProvider implementation="com.google.idea.blaze.kotlin.run.debug.BazelKotlinxCoroutinesDebuggingLibProvider"/>
   </extensions>
 
 </idea-plugin>

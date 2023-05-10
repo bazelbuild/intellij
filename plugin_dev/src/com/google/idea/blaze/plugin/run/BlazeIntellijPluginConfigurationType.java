@@ -18,21 +18,23 @@ package com.google.idea.blaze.plugin.run;
 import static java.util.stream.Collectors.toCollection;
 
 import com.google.common.base.Splitter;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.run.BlazeRunConfigurationFactory;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.plugin.IntellijPluginRule;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationSingletonPolicy;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -50,6 +52,11 @@ import javax.swing.Icon;
  */
 public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
 
+  // Experiment flag for the new, more portable plugin deployer. The new deployer will work off-corp
+  // allowing fully remote plugin development.
+  static final boolean PORTABLE_DEPLOYER_ENABLED =
+      new BoolExperiment("plugin.dev.new.deployer", false).getValue();
+
   private final BlazeIntellijPluginConfigurationFactory factory =
       new BlazeIntellijPluginConfigurationFactory(this);
 
@@ -61,8 +68,11 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
           .isWorkspaceType(WorkspaceType.INTELLIJ_PLUGIN)) {
         return false;
       }
-      TargetIdeInfo target = blazeProjectData.getTargetMap().get(TargetKey.forPlainTarget(label));
-      return target != null && IntellijPluginRule.isPluginTarget(target);
+      BuildTarget target = blazeProjectData.getBuildTarget(label);
+      if (target == null) {
+        return false;
+      }
+      return IntellijPluginRule.isPluginTarget(TargetInfo.builder(label, target.kind()).build());
     }
 
     @Override
@@ -105,13 +115,18 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
     }
 
     @Override
-    public BlazeIntellijPluginConfiguration createTemplateConfiguration(Project project) {
+    public RunConfiguration createTemplateConfiguration(Project project) {
 
-      BlazeIntellijPluginConfiguration config =
-          new BlazeIntellijPluginConfiguration(
-              project, this, "Unnamed", findExamplePluginTarget(project));
-      config.vmParameters = currentVmOptions.getValue();
-      return config;
+      if (PORTABLE_DEPLOYER_ENABLED) {
+        // TODO
+        throw new IllegalStateException("Not implemented yet");
+      } else {
+        BlazeIntellijPluginConfiguration config =
+            new BlazeIntellijPluginConfiguration(
+                project, this, "Unnamed", findExamplePluginTarget(project));
+        config.vmParameters = currentVmOptions.getValue();
+        return config;
+      }
     }
 
     private static Label findExamplePluginTarget(Project project) {
@@ -120,10 +135,9 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
       if (projectData == null) {
         return null;
       }
-      return projectData.getTargetMap().targets().stream()
+      return projectData.targets().stream()
           .filter(IntellijPluginRule::isPluginTarget)
-          .map(TargetIdeInfo::getKey)
-          .map(TargetKey::getLabel)
+          .map(info -> info.label)
           .findFirst()
           .orElse(null);
     }
@@ -148,8 +162,8 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
     }
 
     @Override
-    public boolean isConfigurationSingletonByDefault() {
-      return true;
+    public RunConfigurationSingletonPolicy getSingletonPolicy() {
+      return RunConfigurationSingletonPolicy.SINGLE_INSTANCE_ONLY;
     }
 
     private static String defaultVmOptions() {
@@ -164,11 +178,6 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
               .splitToStream(vmoptionsText)
               .filter(opt -> !opt.startsWith("#"))
               .collect(toCollection(ArrayList::new));
-
-      String vmoptionsFile = System.getProperty("jb.vmOptionsFile");
-      if (vmoptionsFile != null) {
-        vmoptions.add("-Djb.vmOptionsFile=" + vmoptionsFile);
-      }
       vmoptions.add("-Didea.is.internal=true");
 
       return ParametersListUtil.join(vmoptions);

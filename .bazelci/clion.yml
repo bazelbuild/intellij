@@ -38,27 +38,27 @@ tasks:
       - //:clwb_tests
     soft_fail:
       - exit_status: 1
-  CLion-OSS-stable:
-    name: CLion OSS Stable
+  CLion-OSS-oldest-stable:
+    name: CLion OSS Oldest Stable
     platform: ubuntu1804
     build_flags:
-      - --define=ij_product=clion-oss-stable
+      - --define=ij_product=clion-oss-oldest-stable
     build_targets:
       - //clwb/...
     test_flags:
-      - --define=ij_product=clion-oss-stable
+      - --define=ij_product=clion-oss-oldest-stable
       - --test_output=errors
     test_targets:
       - //:clwb_tests
-  CLion-OSS-beta:
-    name: CLion OSS Beta
+  CLion-OSS-latest-stable:
+    name: CLion OSS Latest Stable
     platform: ubuntu1804
     build_flags:
-      - --define=ij_product=clion-oss-beta
+      - --define=ij_product=clion-oss-latest-stable
     build_targets:
       - //clwb/...
     test_flags:
-      - --define=ij_product=clion-oss-beta
+      - --define=ij_product=clion-oss-latest-stable
       - --test_output=errors
     test_targets:
       - //:clwb_tests

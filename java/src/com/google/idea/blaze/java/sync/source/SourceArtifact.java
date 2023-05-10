@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.sync.source;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 
@@ -40,11 +41,13 @@ public class SourceArtifact {
       this.originatingTarget = originatingTarget;
     }
 
+    @CanIgnoreReturnValue
     public Builder setArtifactLocation(ArtifactLocation artifactLocation) {
       this.artifactLocation = artifactLocation;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setArtifactLocation(ArtifactLocation.Builder artifactLocation) {
       return setArtifactLocation(artifactLocation.build());
     }

@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.toolwindow;
 import static com.google.common.truth.Truth8.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.toolwindow.Task.Status;
 import com.google.idea.testing.IntellijRule;
 import java.time.Instant;
 import org.junit.Before;
@@ -26,7 +27,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Tests for {@link TasksToolWindowService} */
+/** Tests for {@link TasksToolWindowServiceImpl} */
 @RunWith(JUnit4.class)
 public class TasksToolWindowServiceTest {
   private static final Instant NOW_INSTANT = Instant.ofEpochSecond(333);
@@ -35,7 +36,7 @@ public class TasksToolWindowServiceTest {
 
   private Task task;
   private final TasksToolWindowService service =
-      new TasksToolWindowService(intellij.getProject(), () -> NOW_INSTANT);
+      new TasksToolWindowServiceImpl(intellij.getProject(), () -> NOW_INSTANT);
 
   @Before
   public void before() {
@@ -50,7 +51,7 @@ public class TasksToolWindowServiceTest {
 
   @Test
   public void testFinishTask() {
-    service.finishTask(task, false, false);
+    service.finishTask(task, Status.FINISHED);
     assertThat(task.getEndTime()).hasValue(NOW_INSTANT);
   }
 }

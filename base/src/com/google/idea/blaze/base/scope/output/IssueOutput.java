@@ -16,8 +16,9 @@
 package com.google.idea.blaze.base.scope.output;
 
 import com.google.common.base.Objects;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.Output;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.Output;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import java.io.File;
@@ -73,26 +74,31 @@ public class IssueOutput implements Output {
       this.message = message;
     }
 
+    @CanIgnoreReturnValue
     public Builder inFile(@Nullable File file) {
       this.file = file;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder onLine(int line) {
       this.line = line;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder inColumn(int column) {
       this.column = column;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder navigatable(@Nullable Navigatable navigatable) {
       this.navigatable = navigatable;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder consoleHyperlinkRange(@Nullable TextRange consoleHyperlinkRange) {
       this.consoleHyperlinkRange = consoleHyperlinkRange;
       return this;
@@ -103,7 +109,7 @@ public class IssueOutput implements Output {
           file, line, column, navigatable, consoleHyperlinkRange, category, message);
     }
 
-    public void submit(BlazeContext context) {
+    public void submit(Context context) {
       context.output(build());
       if (category == Category.ERROR) {
         context.setHasError();

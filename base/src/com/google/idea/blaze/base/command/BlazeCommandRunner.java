@@ -15,19 +15,74 @@
  */
 package com.google.idea.blaze.base.command;
 
+import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
+import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.project.Project;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Optional;
 
-/** Runs a blaze build command */
+/** Runs a blaze command. */
 public interface BlazeCommandRunner {
 
+  /**
+   * Runs a blaze build command, parses the build results into a {@link BlazeBuildOutputs} object
+   * using the given {@link BuildResultHelper}.
+   */
   BlazeBuildOutputs run(
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
-      WorkspaceRoot workspaceRoot,
-      BlazeContext context);
+      BlazeContext context)
+      throws BuildException;
+
+  /**
+   * Runs a blaze test command, parses the test results into a {@link BlazeTestResults} object using
+   * the given {@link BuildResultHelper}.
+   */
+  BlazeTestResults runTest(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context)
+      throws BuildException;
+
+  /**
+   * Runs a blaze query command.
+   *
+   * @return {@link InputStream} from the stdout of the blaze invocation using the given {@link
+   *     BuildResultHelper} and null if the query fails
+   */
+  InputStream runQuery(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context)
+      throws BuildException;
+
+  @MustBeClosed
+  InputStream runBlazeInfo(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context)
+      throws BuildException;
+  /** Allows enabling the use of command runner for restricted set of users. */
+  default boolean shouldUseForLocalTests() {
+    return false;
+  }
+
+  /** Get a list of additional build flags. */
+  default List<String> getExtraBuildFlags(BlazeCommand.Builder blazeCommandBuilder) {
+    return ImmutableList.of();
+  }
+
+  default Optional<Integer> getMaxCommandLineLength() {
+    return Optional.empty();
+  }
 }

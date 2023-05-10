@@ -180,10 +180,13 @@ def _package_meta_inf_files(ctx, final_plugin_xml_file, module_to_merged_xmls):
     for module, merged_xml in module_to_merged_xmls.items():
         args.append(merged_xml.path)
         args.append(_filename_for_module_dependency(module))
+    for plugin_icon_file in ctx.files.plugin_icons:
+        args.append(plugin_icon_file.path)
+        args.append(plugin_icon_file.basename)
     ctx.actions.run(
         executable = ctx.executable._package_meta_inf_files,
         arguments = args,
-        inputs = [ctx.file.deploy_jar, final_plugin_xml_file] + module_to_merged_xmls.values(),
+        inputs = [ctx.file.deploy_jar, final_plugin_xml_file] + module_to_merged_xmls.values() + ctx.files.plugin_icons,
         outputs = [jar_file],
         mnemonic = "PackagePluginJar",
         progress_message = "Packaging plugin jar",
@@ -222,25 +225,26 @@ _intellij_plugin_jar = rule(
         "optional_plugin_xmls": attr.label_list(providers = [_OptionalPluginXmlInfo]),
         "jar_name": attr.string(mandatory = True),
         "deps": attr.label_list(providers = [[_IntellijPluginLibraryInfo]]),
+        "plugin_icons": attr.label_list(allow_files = True),
         "_merge_xml_binary": attr.label(
             default = Label("//build_defs:merge_xml"),
             executable = True,
-            cfg = "host",
+            cfg = "exec",
         ),
         "_append_optional_xml_elements": attr.label(
             default = Label("//build_defs:append_optional_xml_elements"),
             executable = True,
-            cfg = "host",
+            cfg = "exec",
         ),
         "_package_meta_inf_files": attr.label(
             default = Label("//build_defs:package_meta_inf_files"),
             executable = True,
-            cfg = "host",
+            cfg = "exec",
         ),
     },
 )
 
-def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name = None, extra_runtime_deps = [], **kwargs):
+def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name = None, extra_runtime_deps = [], plugin_icons = [], **kwargs):
     """Creates an intellij plugin from the given deps and plugin.xml.
 
     Args:
@@ -249,8 +253,9 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
       plugin_xml: An xml file to be placed in META-INF/plugin.jar
       optional_plugin_xmls: A list of optional_plugin_xml targets.
       jar_name: The name of the final plugin jar, or <name>.jar if None
-      **kwargs: Any further arguments to be passed to the final target
       extra_runtime_deps: runtime_deps added to java_binary or java_test calls
+      plugin_icons: Plugin logo files to be placed in META-INF. Follow https://plugins.jetbrains.com/docs/intellij/plugin-icon-file.html#plugin-logo-requirements
+      **kwargs: Any further arguments to be passed to the final target
     """
     java_deps_name = name + "_java_deps"
     binary_name = name + "_binary"
@@ -264,6 +269,27 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
         runtime_deps = [":" + java_deps_name] + extra_runtime_deps,
         create_executable = 0,
     )
+
+    if not ("testonly" in kwargs and kwargs["testonly"]):
+        DELETE_ENTRIES = [
+            # TODO(b/255334320) Remove these 2 (and hopefully the entire zip -d invocation)
+            "com/google/common/util/concurrent/ListenableFuture.class",
+        ]
+        deploy_jar = binary_name + "_cleaned.jar"
+        native.genrule(
+            name = binary_name + "_cleaned",
+            srcs = [binary_name + "_deploy.jar"],
+            outs = [deploy_jar],
+            cmd = "\n".join([
+                # zip -d operates on a single zip file, modifying it in place. So
+                # make a copy of our input first, and make it writable.
+                "cp $< $@",
+                "chmod u+w $@",
+                "zip -q -d $@ " + " ".join(DELETE_ENTRIES) + " || true ",
+            ]),
+            message = "Applying workarounds to plugin jar",
+        )
+
     jar_target_name = name + "_intellij_plugin_jar"
     _intellij_plugin_jar(
         name = jar_target_name,
@@ -272,12 +298,13 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
         deps = deps,
         plugin_xml = plugin_xml,
         optional_plugin_xmls = optional_plugin_xmls,
+        plugin_icons = plugin_icons,
     )
 
     # included (with tag) as a hack so that IJwB can recognize this is an intellij plugin
     native.java_import(
         name = name,
         jars = [jar_target_name],
-        tags = ["intellij-plugin"],
+        tags = ["intellij-plugin"] + kwargs.pop("tags", []),
         **kwargs
     )

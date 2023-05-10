@@ -69,19 +69,13 @@ java_import(
     name = "android",
     jars = glob([
         "android-studio/plugins/android/lib/*.jar",
-        "android-studio/plugins/android-layoutlib/lib/*.jar",
-        "android-studio/plugins/android-wizardTemplate-plugin/lib/*.jar",
-        "android-studio/plugins/android-wizardTemplate-impl/lib/*.jar",
         "android-studio/plugins/android-ndk/lib/*.jar",
-        "android-studio/plugins/sdk-updates/lib/*.jar",
     ]),
 )
 
 filegroup(
     name = "layoutlib_data",
-    srcs = glob([
-        "android-studio/plugins/android/lib/layoutlib/**/*",
-    ]),
+    srcs = [],
 )
 
 java_import(
@@ -99,10 +93,16 @@ java_import(
     jars = glob(["android-studio/plugins/Kotlin/lib/*.jar"]),
 )
 
+filegroup(
+    name = "kotlinc_version",
+)
+
 java_import(
     name = "coverage",
     jars = glob(["android-studio/plugins/coverage/lib/*.jar"]),
 )
+
+java_library(name = "devkit")  # not present
 
 java_import(
     name = "hg4idea",

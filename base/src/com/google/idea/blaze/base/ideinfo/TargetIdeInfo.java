@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.Dependency.DependencyType;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -420,45 +421,54 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     private KotlinToolchainIdeInfo kotlinToolchainIdeInfo;
     private Long syncTime;
 
+    @CanIgnoreReturnValue
     public Builder setLabel(String label) {
       return setLabel(Label.create(label));
     }
 
+    @CanIgnoreReturnValue
     public Builder setLabel(Label label) {
       this.key = TargetKey.forPlainTarget(label);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setBuildFile(ArtifactLocation buildFile) {
       this.buildFile = buildFile;
       return this;
     }
 
     @VisibleForTesting
+    @CanIgnoreReturnValue
     public Builder setKind(String kindString) {
       Kind kind = Preconditions.checkNotNull(Kind.fromRuleName(kindString));
       return setKind(kind);
     }
 
+    @CanIgnoreReturnValue
     public Builder setKind(Kind kind) {
       this.kind = kind;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addSource(ArtifactLocation source) {
       this.sources.add(source);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addSource(ArtifactLocation.Builder source) {
       return addSource(source.build());
     }
 
+    @CanIgnoreReturnValue
     public Builder setJavaInfo(JavaIdeInfo.Builder builder) {
       javaIdeInfo = builder.build();
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setCInfo(CIdeInfo.Builder cInfoBuilder) {
       this.cIdeInfo = cInfoBuilder.build();
       this.sources.addAll(cIdeInfo.getSources());
@@ -467,91 +477,109 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setCToolchainInfo(CToolchainIdeInfo.Builder info) {
       this.cToolchainIdeInfo = info.build();
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setAndroidInfo(AndroidIdeInfo.Builder androidInfo) {
       this.androidIdeInfo = androidInfo.build();
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setAndroidAarInfo(AndroidAarIdeInfo aarInfo) {
       this.androidAarIdeInfo = aarInfo;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setAndroidInstrumentationInfo(AndroidInstrumentationInfo instrumentationInfo) {
       this.androidInstrumentationInfo = instrumentationInfo;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setPyInfo(PyIdeInfo.Builder pyInfo) {
       this.pyIdeInfo = pyInfo.build();
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setGoInfo(GoIdeInfo.Builder goInfo) {
       this.goIdeInfo = goInfo.build();
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setJsInfo(JsIdeInfo.Builder jsInfo) {
       this.jsIdeInfo = jsInfo.build();
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setTsInfo(TsIdeInfo.Builder tsInfo) {
       this.tsIdeInfo = tsInfo.build();
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setDartInfo(DartIdeInfo.Builder dartInfo) {
       this.dartIdeInfo = dartInfo.build();
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setTestInfo(TestIdeInfo.Builder testInfo) {
       this.testIdeInfo = testInfo.build();
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setJavaToolchainIdeInfo(JavaToolchainIdeInfo.Builder javaToolchainIdeInfo) {
       this.javaToolchainIdeInfo = javaToolchainIdeInfo.build();
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setKotlinToolchainIdeInfo(KotlinToolchainIdeInfo.Builder toolchain) {
       this.kotlinToolchainIdeInfo = toolchain.build();
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addTag(String s) {
       this.tags.add(s);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addDependency(String s) {
       return addDependency(Label.create(s));
     }
 
+    @CanIgnoreReturnValue
     public Builder addDependency(Label label) {
       this.dependencies.add(
           new Dependency(TargetKey.forPlainTarget(label), DependencyType.COMPILE_TIME));
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addRuntimeDep(String s) {
       return addRuntimeDep(Label.create(s));
     }
 
+    @CanIgnoreReturnValue
     public Builder addRuntimeDep(Label label) {
       this.dependencies.add(
           new Dependency(TargetKey.forPlainTarget(label), DependencyType.RUNTIME));
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setSyncTime(@Nullable Instant syncTime) {
       this.syncTime = syncTime != null ? syncTime.toEpochMilli() : null;
       return this;

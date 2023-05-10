@@ -23,8 +23,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ordering;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -370,10 +368,9 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     if (projectData == null) {
       return ImmutableSet.of();
     }
-    return projectData.getTargetMap().targets().stream()
+    return projectData.targets().stream()
         .filter(IntellijPluginRule::isPluginTarget)
-        .map(TargetIdeInfo::getKey)
-        .map(TargetKey::getLabel)
+        .map(info -> info.label)
         .collect(toImmutableSet());
   }
 

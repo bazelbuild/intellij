@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.android;
 
+import com.android.tools.idea.sdk.AndroidSdks;
+import com.android.tools.idea.sdk.IdeSdksCompat;
 import com.google.idea.blaze.base.WorkspaceFileSystem;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,8 +28,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.containers.MultiMap;
 import java.io.File;
+import java.io.IOException;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
-import org.jetbrains.android.sdk.AndroidSdkData;
+import org.jetbrains.android.sdk.AndroidSdkDataCompat;
 import org.jetbrains.android.sdk.AndroidSdkType;
 
 /**
@@ -43,7 +46,6 @@ public class MockSdkUtil {
   public static final WorkspacePath SDK_DIR = new WorkspacePath("sdk");
   private static final WorkspacePath PLATFORM_DIR = new WorkspacePath(SDK_DIR, "platforms");
   private static final String TARGET_HASH = "android-%s";
-  private static final String SDK_NAME = "Android %s SDK";
 
   private MockSdkUtil() {}
 
@@ -97,7 +99,7 @@ public class MockSdkUtil {
       MultiMap<OrderRootType, VirtualFile> roots,
       boolean createSubFiles) {
     String targetHash = String.format(TARGET_HASH, major);
-    String sdkName = String.format(SDK_NAME, major);
+    String sdkName = String.format("Android %s SDK", major);
     WorkspacePath workspacePathToAndroid = new WorkspacePath(PLATFORM_DIR, targetHash);
 
     if (createSubFiles) {
@@ -139,7 +141,7 @@ public class MockSdkUtil {
       workspace.createFile(new WorkspacePath(workspacePathToAndroid, "data/annotations.zip"));
     }
     String sdkHomeDir = workspace.createDirectory(SDK_DIR).getPath();
-    AndroidSdkData.getSdkData(new File(sdkHomeDir), true);
+    AndroidSdkDataCompat.getSdkData(new File(sdkHomeDir), true);
     MockSdk sdk =
         new MockSdk(
             sdkName,
@@ -148,12 +150,33 @@ public class MockSdkUtil {
             roots,
             AndroidSdkType.getInstance());
     AndroidSdkAdditionalData data = new AndroidSdkAdditionalData(sdk);
+    createFakeAndroidAnnotation();
     data.setBuildTargetHashString(targetHash);
     sdk.setSdkAdditionalData(data);
     EdtTestUtil.runInEdtAndWait(
         () ->
             ApplicationManager.getApplication()
-                .runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk)));
-    return sdk;
+                .runWriteAction(
+                    () -> {
+                      IdeSdksCompat.setAndroidSdkPath(new File(sdkHomeDir), sdk, null);
+                    }));
+    return AndroidSdks.getInstance().findSuitableAndroidSdk(targetHash);
+  }
+
+  /**
+   * Create android annotation file since set up android sdk path check existence of
+   * androidAnnotations.jar. But it's not used in test. So only create a fake one.
+   */
+  private static void createFakeAndroidAnnotation() {
+    String userHomeDir = System.getProperty("idea.home.path");
+    File annotationJar =
+        new File(userHomeDir + "/plugins/android/resources/androidAnnotations.jar");
+    try {
+      annotationJar.getParentFile().mkdirs();
+      annotationJar.createNewFile();
+      annotationJar.deleteOnExit();
+    } catch (IOException e) {
+      throw new AssertionError("Fail to create android annotation jar", e);
+    }
   }
 }

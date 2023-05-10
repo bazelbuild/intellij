@@ -31,6 +31,7 @@ import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import java.util.List;
@@ -59,7 +60,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
       BlazeCommandRunConfiguration configuration,
       ConfigurationContext context,
       Ref<PsiElement> sourceElement) {
-    AbstractTestLocation location = getAbstractLocation(context);
+    AbstractTestLocation location = getAbstractLocation(context, sourceElement);
     if (location == null) {
       return false;
     }
@@ -71,12 +72,12 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
   }
 
   @Nullable
-  private static AbstractTestLocation getAbstractLocation(ConfigurationContext context) {
+  private static AbstractTestLocation getAbstractLocation(ConfigurationContext context, Ref<PsiElement> sourceElement) {
     if (!SmRunnerUtils.getSelectedSmRunnerTreeElements(context).isEmpty()) {
       // handled by a different producer
       return null;
     }
-    PsiMethod method = getTestMethod(context);
+    PsiMethod method = getTestMethod(context, sourceElement);
     if (method != null) {
       PsiClass psiClass = method.getContainingClass();
       return hasTestSubclasses(psiClass) ? new AbstractTestLocation(psiClass, method) : null;
@@ -94,8 +95,8 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
     return hasTestSubclasses(psiClass) ? new AbstractTestLocation(psiClass, null) : null;
   }
 
-  private static PsiMethod getTestMethod(ConfigurationContext context) {
-    PsiElement psi = context.getPsiLocation();
+  private static PsiMethod getTestMethod(ConfigurationContext context, Ref<PsiElement> sourceElement) {
+    PsiElement psi = chooseTestElement(context, sourceElement.get());
     if (psi instanceof PsiMethod
         && AnnotationUtil.isAnnotated((PsiMethod) psi, JUnitUtil.TEST_ANNOTATION, false)) {
       return (PsiMethod) psi;
@@ -133,7 +134,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
     if (!(config instanceof BlazeCommandRunConfiguration)) {
       return;
     }
-    AbstractTestLocation location = locationFromConfiguration(configuration);
+    AbstractTestLocation location = locationFromContext(configuration, context);
     if (location == null) {
       return;
     }
@@ -149,9 +150,9 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
   }
 
   @Nullable
-  private static AbstractTestLocation locationFromConfiguration(
-      ConfigurationFromContext configuration) {
-    PsiElement element = configuration.getSourceElement();
+  private static AbstractTestLocation locationFromContext(
+      ConfigurationFromContext configuration, ConfigurationContext context) {
+    PsiElement element = chooseTestElement(context, configuration.getSourceElement());
     PsiMethod method = null;
     PsiClass psiClass = null;
     if (element instanceof PsiMethod) {
@@ -162,6 +163,16 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
     }
 
     return hasTestSubclasses(psiClass) ? new AbstractTestLocation(psiClass, method) : null;
+  }
+
+  private static PsiElement chooseTestElement(ConfigurationContext context, PsiElement sourceElement) {
+    // Sometimes when gutter-clicking on a method in a parent class, IntelliJ sets the configuration's source element to the class.
+    // Detect when the context has more specific method information about the click, and use that instead.
+    if (context.getPsiLocation() instanceof PsiIdentifier && context.getPsiLocation().getParent() instanceof PsiMethod) {
+      return context.getPsiLocation().getParent();
+    } else {
+      return sourceElement;
+    }
   }
 
   private static void setupContext(

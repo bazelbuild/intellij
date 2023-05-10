@@ -16,7 +16,7 @@ load(
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 _FAST_BUILD_JAVAC_SRCS = ["src/com/google/idea/blaze/java/fastbuild/FastBuildJavac.java"]
 
@@ -42,7 +42,6 @@ java_library(
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":fast_build_javac_interface",
-        ":neverlinked_jpda-jdi",
         "//base",
         "//common/actions",
         "//common/experiments",
@@ -55,6 +54,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//sdkcompat",
+        "//shared",
         "//third_party/auto_value",
     ],
 )
@@ -63,14 +63,13 @@ java_library(
 java_library(
     name = "fast_build_javac",
     srcs = _FAST_BUILD_JAVAC_SRCS + _FAST_BUILD_JAVAC_IMPL_SRCS,
+    javacopts = [
+        "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED",
+    ],
     visibility = FAST_BUILD_JAVAC_VISIBILITY,
-)
-
-# This is provided by the IDE at runtime
-java_library(
-    name = "neverlinked_jpda-jdi",
-    neverlink = 1,
-    exports = ["//third_party:jpda-jdi"],
 )
 
 stamped_plugin_xml(
@@ -106,6 +105,9 @@ intellij_plugin(
     name = "java_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":java_plugin_xml",
+    tags = [
+        "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
+    ],
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -129,6 +131,9 @@ intellij_unit_test_suite(
         "-Dfast_build_javac.jar=$(location :fast_build_javac)",
         "-Dguava.jar=$(location :guava_lib_deploy.jar)",
         "-Dtruth.jar=$(location :truth_lib_deploy.jar)",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
     ],
     test_package_root = "com.google.idea.blaze.java",
     deps = [
@@ -143,6 +148,8 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//intellij_platform_sdk:truth",
         "//proto:proto_deps",
+        "//shared",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -192,6 +199,8 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
+        "//shared",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )

@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.async.executor;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressManager;
@@ -58,16 +59,19 @@ public class ProgressiveTaskWithProgressIndicator {
     return new ProgressiveTaskWithProgressIndicator(project, title);
   }
 
+  @CanIgnoreReturnValue
   public ProgressiveTaskWithProgressIndicator setCancelable(boolean cancelable) {
     this.cancelable = cancelable;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public ProgressiveTaskWithProgressIndicator setModality(Modality modality) {
     this.modality = modality;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public ProgressiveTaskWithProgressIndicator setExecutor(ListeningExecutorService executor) {
     this.executor = executor;
     return this;

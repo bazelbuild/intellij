@@ -43,8 +43,7 @@ def to_artifact_location(exec_path, root_exec_path_fragment, is_source, is_exter
         relative_path = relative_path,
         is_source = is_source,
         is_external = is_external,
-        root_execution_path_fragment = root_exec_path_fragment,
-        is_new_external_version = True,
+        root_execution_path_fragment = root_exec_path_fragment
     )
 
 def is_external_artifact(label):

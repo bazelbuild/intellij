@@ -1,0 +1,81 @@
+/*
+ * Copyright 2023 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.idea.blaze.qsync.project;
+
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.qsync.vcs.WorkspaceFileChange.Operation.ADD;
+import static com.google.idea.blaze.qsync.vcs.WorkspaceFileChange.Operation.DELETE;
+import static com.google.idea.blaze.qsync.vcs.WorkspaceFileChange.Operation.MODIFY;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.qsync.query.QuerySummaryTestUtil;
+import com.google.idea.blaze.qsync.vcs.VcsState;
+import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Optional;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+@RunWith(JUnit4.class)
+public class SnapshotSerializationTest {
+
+  @Test
+  public void testSerialization_withVcsState() throws IOException {
+    PostQuerySyncData original =
+        PostQuerySyncData.builder()
+            .setProjectDefinition(
+                ProjectDefinition.create(
+                    ImmutableSet.of(Path.of("project/path")),
+                    ImmutableSet.of(Path.of("project/path/excluded"))))
+            .setVcsState(
+                Optional.of(
+                    new VcsState(
+                        "123",
+                        ImmutableSet.of(
+                            new WorkspaceFileChange(ADD, Path.of("project/path/Added.java")),
+                            new WorkspaceFileChange(DELETE, Path.of("project/path/Deleted.java")),
+                            new WorkspaceFileChange(
+                                MODIFY, Path.of("project/path/Modified.java"))))))
+            .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//project/path:path"))
+            .build();
+    byte[] serialized = new SnapshotSerializer().visit(original).toProto().toByteArray();
+    PostQuerySyncData deserialized =
+        new SnapshotDeserializer().readFrom(new ByteArrayInputStream(serialized)).getSyncData();
+    assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
+    assertThat(deserialized).isEqualTo(original);
+  }
+
+  @Test
+  public void testSerialization_noVcsState() throws IOException {
+    PostQuerySyncData original =
+        PostQuerySyncData.builder()
+            .setProjectDefinition(
+                ProjectDefinition.create(
+                    ImmutableSet.of(Path.of("project/path")),
+                    ImmutableSet.of(Path.of("project/path/excluded"))))
+            .setVcsState(Optional.empty())
+            .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//project/path:path"))
+            .build();
+    byte[] serialized = new SnapshotSerializer().visit(original).toProto().toByteArray();
+    PostQuerySyncData deserialized =
+        new SnapshotDeserializer().readFrom(new ByteArrayInputStream(serialized)).getSyncData();
+    assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
+    assertThat(deserialized).isEqualTo(original);
+  }
+}

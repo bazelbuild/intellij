@@ -21,16 +21,26 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import java.util.List;
@@ -131,6 +141,66 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
     assertThat(params.addProjectViewTargets()).isFalse();
     assertThat(params.addWorkingSet()).isTrue();
     assertThat(params.targetExpressions()).isEmpty();
+  }
+
+  @Test
+  public void testShouldForceFullSync_noNewLanguageAdded() {
+    BlazeContext context = BlazeContext.create();
+    BlazeProjectData projectData = getMockProjectData();
+    SyncProjectState projectState =
+        getMockProjectStateWithLanguages(ImmutableSet.of(LanguageClass.JAVA));
+    assertThat(manager.shouldForceFullSync(projectData, projectState, SyncMode.NO_BUILD, context))
+        .isFalse();
+    assertThat(
+            manager.shouldForceFullSync(projectData, projectState, SyncMode.INCREMENTAL, context))
+        .isFalse();
+    context.close();
+  }
+
+  @Test
+  public void testShouldForceFullSync_newLanguageAdded() {
+    BlazeContext context = BlazeContext.create();
+    BlazeProjectData projectData = getMockProjectData();
+    SyncProjectState projectState =
+        getMockProjectStateWithLanguages(ImmutableSet.of(LanguageClass.JAVA, LanguageClass.KOTLIN));
+    assertThat(manager.shouldForceFullSync(projectData, projectState, SyncMode.NO_BUILD, context))
+        .isFalse();
+    assertThat(
+            manager.shouldForceFullSync(projectData, projectState, SyncMode.INCREMENTAL, context))
+        .isTrue();
+    context.close();
+  }
+
+  @Test
+  public void testShouldForceFullSync_additionalLanguageRemoved() {
+    BlazeContext context = BlazeContext.create();
+    BlazeProjectData projectData = getMockProjectData();
+    SyncProjectState projectState = getMockProjectStateWithLanguages(ImmutableSet.of());
+    assertThat(manager.shouldForceFullSync(projectData, projectState, SyncMode.NO_BUILD, context))
+        .isFalse();
+    assertThat(
+            manager.shouldForceFullSync(projectData, projectState, SyncMode.INCREMENTAL, context))
+        .isFalse();
+    context.close();
+  }
+
+  private SyncProjectState getMockProjectStateWithLanguages(
+      ImmutableSet<LanguageClass> activeLanguages) {
+    return SyncProjectState.builder()
+        .setLanguageSettings(new WorkspaceLanguageSettings(WorkspaceType.ANDROID, activeLanguages))
+        .setProjectViewSet(MockProjectViewManager.getInstance(project).getProjectViewSet())
+        .setBlazeVersionData(BlazeVersionData.builder().build())
+        .setWorkspacePathResolver(
+            new WorkspacePathResolverImpl(WorkspaceRoot.fromProjectSafe(project)))
+        .build();
+  }
+
+  private BlazeProjectData getMockProjectData() {
+    return MockBlazeProjectDataBuilder.builder()
+        .setWorkspaceLanguageSettings(
+            new WorkspaceLanguageSettings(
+                WorkspaceType.ANDROID, Sets.immutableEnumSet(LanguageClass.JAVA)))
+        .build();
   }
 
   private static class MockProjectViewManager extends ProjectViewManager {

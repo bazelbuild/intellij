@@ -19,9 +19,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
-import com.google.idea.blaze.base.console.BlazeConsoleService;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -30,7 +28,7 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfig
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
+import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
@@ -50,10 +48,11 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
-import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -105,7 +104,8 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
     BlazeCommandRunConfiguration configuration =
         BlazeCommandRunConfigurationRunner.getBlazeConfig(env.getRunProfile());
     BlazeCommandRunConfigurationCommonState handlerState =
-        (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
+        (BlazeCommandRunConfigurationCommonState)
+            Objects.requireNonNull(configuration).getHandler().getState();
 
     checkState(configuration.getSingleTarget() != null);
     Label label = (Label) configuration.getSingleTarget();
@@ -136,16 +136,6 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
                     .build())
             .push(new ProblemsViewScope(project, problemsViewFocus))
             .push(new IdeaLogScope())
-            .push(
-                new BlazeConsoleScope.Builder(project)
-                    .setPopupBehavior(consolePopupBehavior)
-                    .addConsoleFilters(
-                        new IssueOutputFilter(
-                            project,
-                            WorkspaceRoot.fromProject(project),
-                            ContextType.RunConfiguration,
-                            /* linkToBlazeConsole= */ true))
-                    .build())
             .push(new FastBuildLogDataScope());
 
     try {
@@ -160,8 +150,7 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
       env.getCopyableUserData(BLAZE_CONTEXT).set(context);
       return true;
     } catch (InterruptedException e) {
-      buildFuture.cancel(/* mayInterruptIfRunning= */ true);
-      Thread.currentThread().interrupt();
+      cancelBuildFuture(buildFuture);
     } catch (CancellationException e) {
       ExecutionUtil.handleExecutionError(
           env.getProject(),
@@ -178,14 +167,25 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
       logger.warn(e);
       if (e.getCause() instanceof FastBuildIncrementalCompileException) {
         handleJavacError(
-            env, project, label, buildService, (FastBuildIncrementalCompileException) e.getCause());
+            env,
+            project,
+            label,
+            buildService,
+            (FastBuildIncrementalCompileException) e.getCause(),
+            context);
       } else {
         ExecutionUtil.handleExecutionError(env, new ExecutionException(e.getCause()));
       }
     }
     // Fall-through for all exceptions. If no exception was thrown, we return from the try{} block.
-    context.endScope();
+    context.close();
     return false;
+  }
+
+  @SuppressWarnings("Interruption") // propagating a cancellation-with-interrupt from another caller
+  private void cancelBuildFuture(Future<FastBuildInfo> buildFuture) {
+    buildFuture.cancel(/* mayInterruptIfRunning= */ true);
+    Thread.currentThread().interrupt();
   }
 
   private static void handleJavacError(
@@ -193,38 +193,33 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
       Project project,
       Label label,
       FastBuildService buildService,
-      FastBuildIncrementalCompileException e) {
+      FastBuildIncrementalCompileException e,
+      BlazeContext context) {
 
-    BlazeConsoleService console = BlazeConsoleService.getInstance(project);
-    console.print(e.getMessage() + "\n", ConsoleViewContentType.ERROR_OUTPUT);
-    console.printHyperlink(
-        "Click here to run the tests again with a fresh "
-            + Blaze.getBuildSystemName(project)
-            + " build.\n",
-        new RerunTestsWithBlazeHyperlink(buildService, label, env));
+    context.output(IssueOutput.error(e.getMessage() + "\n").build());
+
+    // TODO(b/240126599): Consider supporting outputting Hyperlinks to the Blaze console again.
+    NotificationGroupManager.getInstance()
+        .getNotificationGroup("Fastbuild failed notification")
+        .createNotification(
+            "To run the tests again with a fresh "
+                + Blaze.getBuildSystemName(project)
+                + " build, click",
+            NotificationType.ERROR)
+        .addAction(
+            NotificationAction.createExpiring(
+                "here", (event, notification) -> rerunTests(env, label, buildService)))
+        .notify(project);
+
     ExecutionUtil.handleExecutionError(
         env, new ExecutionException("See the Blaze Console for javac output", e.getCause()));
   }
 
-  private static class RerunTestsWithBlazeHyperlink implements HyperlinkInfo {
-
-    final FastBuildService buildService;
-    final Label label;
-    final ExecutionEnvironment env;
-
-    private RerunTestsWithBlazeHyperlink(
-        FastBuildService buildService, Label label, ExecutionEnvironment env) {
-      this.buildService = buildService;
-      this.label = label;
-      this.env = env;
-    }
-
-    @Override
-    public void navigate(Project project) {
-      buildService.resetBuild(label);
-      ExecutionUtil.restart(env);
-      EventLoggingService.getInstance()
-          .logEvent(FastBuildConfigurationRunner.class, "rerun_tests_with_blaze_link_clicked");
-    }
+  private static void rerunTests(
+      ExecutionEnvironment env, Label label, FastBuildService buildService) {
+    buildService.resetBuild(label);
+    ExecutionUtil.restart(env);
+    EventLoggingService.getInstance()
+        .logEvent(FastBuildConfigurationRunner.class, "rerun_tests_with_blaze_link_clicked");
   }
 }

@@ -84,8 +84,8 @@ public class BuiltInFunctionAttributeCompletionContributor extends CompletionCon
               ProcessingContext context,
               CompletionResultSet result) {
             BuildLanguageSpec spec =
-                BuildLanguageSpecProvider.getInstance()
-                    .getLanguageSpec(parameters.getPosition().getProject());
+                BuildLanguageSpecProvider.getInstance(parameters.getPosition().getProject())
+                    .getLanguageSpec();
             if (spec == null) {
               return;
             }

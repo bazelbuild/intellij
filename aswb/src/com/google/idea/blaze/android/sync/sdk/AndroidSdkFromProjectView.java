@@ -24,19 +24,19 @@ import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.ProjectViewSet.ProjectViewFile;
-import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.sync.BlazeSyncManager;
+import com.google.idea.blaze.common.Context;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.Navigatable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
+import org.jetbrains.android.sdk.AndroidPlatformCompat;
 
 /** Calculates AndroidSdkPlatform. */
-public class AndroidSdkFromProjectView {
+public final class AndroidSdkFromProjectView {
   private static final Joiner COMMA_JOINER = Joiner.on(", ");
   public static final String NO_SDK_ERROR_TEMPLATE =
       "No such android_sdk_platform: '%s'. "
@@ -46,10 +46,11 @@ public class AndroidSdkFromProjectView {
 
   @Nullable
   public static AndroidSdkPlatform getAndroidSdkPlatform(
-      BlazeContext context, ProjectViewSet projectViewSet) {
+      Context context, ProjectViewSet projectViewSet) {
     List<Sdk> sdks = BlazeSdkProvider.getInstance().getAllAndroidSdks();
     if (sdks.isEmpty()) {
-      IssueOutput.error("No Android SDK configured. Please use the SDK manager to configure.")
+      String msg = "No Android SDK configured. Please use the SDK manager to configure.";
+      IssueOutput.error(msg)
           .navigatable(
               new Navigatable() {
                 @Override
@@ -68,6 +69,7 @@ public class AndroidSdkFromProjectView {
                 }
               })
           .submit(context);
+      BlazeSyncManager.printAndLogError(msg, context);
       return null;
     }
     if (projectViewSet == null) {
@@ -79,23 +81,26 @@ public class AndroidSdkFromProjectView {
 
     if (androidSdk == null) {
       ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();
-      IssueOutput.error(
-              ("No android platform configured, please select one using the `android_sdk_platform`"
-                  + " flag in the project view file. Available android_sdk_platforms are: "
-                  + getAvailableTargetHashesAsList(sdks)
-                  + ". To install more android SDKs, use the SDK manager."))
+      String msg =
+          "No android platform configured, please select one using the `android_sdk_platform`"
+              + " flag in the project view file. Available android_sdk_platforms are: "
+              + getAvailableTargetHashesAsList(sdks)
+              + ". To install more android SDKs, use the SDK manager.";
+      IssueOutput.error(msg)
           .inFile(projectViewFile != null ? projectViewFile.projectViewFile : null)
           .submit(context);
+      BlazeSyncManager.printAndLogError(msg, context);
       return null;
     }
 
     Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdk);
     if (sdk == null) {
       ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();
-      IssueOutput.error(
-              String.format(NO_SDK_ERROR_TEMPLATE, androidSdk, getAllAvailableTargetHashes()))
+      String msg = String.format(NO_SDK_ERROR_TEMPLATE, androidSdk, getAllAvailableTargetHashes());
+      IssueOutput.error(msg)
           .inFile(projectViewFile != null ? projectViewFile.projectViewFile : null)
           .submit(context);
+      BlazeSyncManager.printAndLogError(msg, context);
       return null;
     }
 
@@ -128,14 +133,8 @@ public class AndroidSdkFromProjectView {
   }
 
   private static int getAndroidSdkApiLevel(Sdk sdk) {
-    int androidSdkApiLevel = 1;
-    AndroidSdkAdditionalData additionalData = (AndroidSdkAdditionalData) sdk.getSdkAdditionalData();
-    if (additionalData != null) {
-      AndroidPlatform androidPlatform = additionalData.getAndroidPlatform();
-      if (androidPlatform != null) {
-        androidSdkApiLevel = androidPlatform.getApiLevel();
-      }
-    }
-    return androidSdkApiLevel;
+    return AndroidPlatformCompat.getApiLevel(sdk);
   }
+
+  private AndroidSdkFromProjectView() {}
 }

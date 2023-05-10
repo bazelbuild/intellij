@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package ij.qsync;
+
+// option java_api_version = 2;
+option java_outer_classname = "Query";
+option java_package = "com.google.idea.blaze.qsync.query";
+
+/**
+ * Contains a summary of a {@code query} command output as needed by querysync.
+ */
+message Summary {
+  map<string, SourceFile> source_files = 1;
+  map<string, Rule> rules = 2;
+}
+
+message SourceFile {
+  string location = 1;
+  // Subincludes of a source file, taken from blaze_query.SourceFile.subinclude
+  repeated string subinclude = 2;
+}
+
+message Rule {
+  string rule_class = 1;
+  repeated string sources = 2;
+  repeated string deps = 3;
+  repeated string idl_sources = 4;
+  // Other single-field attributes required by query sync
+  map<string, string> other_attributes = 5;
+  repeated string runtime_deps = 6;
+  repeated string resource_files = 7;
+}

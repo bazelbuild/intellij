@@ -19,11 +19,14 @@ import static com.android.SdkConstants.FN_FRAMEWORK_LIBRARY;
 import static com.android.SdkConstants.RES_FOLDER;
 
 import com.android.tools.idea.updater.configure.SdkUpdaterConfigurableProvider;
+import com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection;
 import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
-import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +41,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.android.sdk.AndroidPlatform;
+import java.util.Optional;
+import org.jetbrains.android.sdk.AndroidPlatformCompat;
+import org.jetbrains.android.sdk.AndroidPlatformsCompat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,27 +52,39 @@ public class SdkUtil {
   private static final Logger logger = Logger.getInstance(SdkUtil.class);
 
   @Nullable
-  public static AndroidSdkPlatform getAndroidSdkPlatform(BlazeProjectData blazeProjectData) {
+  private static String getAndroidSdkPlatform(Project project, BlazeProjectData blazeProjectData) {
+    // TODO(b/271874279): Retrieve sdk from project data
+    if (QuerySync.isEnabled()) {
+      ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+      if (projectViewSet == null) {
+        return null;
+      }
+      return projectViewSet.getScalarValue(AndroidSdkPlatformSection.KEY).orElse(null);
+    }
+
     BlazeAndroidSyncData syncData = blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
-    return syncData != null ? syncData.androidSdkPlatform : null;
+    return Optional.ofNullable(syncData)
+        .map(data -> data.androidSdkPlatform)
+        .map(sdk -> sdk.androidSdk)
+        .orElse(null);
   }
 
   @Nullable
-  public static AndroidPlatform getAndroidPlatform(@NotNull Project project) {
+  public static AndroidPlatformCompat getAndroidPlatform(@NotNull Project project) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
       return null;
     }
-    AndroidSdkPlatform androidSdkPlatform = getAndroidSdkPlatform(blazeProjectData);
+    String androidSdkPlatform = getAndroidSdkPlatform(project, blazeProjectData);
     if (androidSdkPlatform == null) {
       return null;
     }
-    Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdkPlatform.androidSdk);
+    Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdkPlatform);
     if (sdk == null) {
       return null;
     }
-    return AndroidPlatform.getInstance(sdk);
+    return AndroidPlatformsCompat.getInstance(sdk);
   }
 
   /** Opens the SDK manager settings page */

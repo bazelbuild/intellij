@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
@@ -42,6 +43,7 @@ public class FilesDiffTest extends BlazeTestCase {
   private static class MockFileOperationProvider extends FileOperationProvider {
     Map<File, Long> times = new HashMap<>();
 
+    @CanIgnoreReturnValue
     public MockFileOperationProvider put(File file, long time) {
       times.put(file, time);
       return this;

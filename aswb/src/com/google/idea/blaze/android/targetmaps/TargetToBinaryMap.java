@@ -17,14 +17,13 @@ package com.google.idea.blaze.android.targetmaps;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
 
 /** Interface to find android binary targets that depend on given target(s) */
 public interface TargetToBinaryMap {
   static TargetToBinaryMap getInstance(Project project) {
-    return ServiceManager.getService(project, TargetToBinaryMap.class);
+    return project.getService(TargetToBinaryMap.class);
   }
 
   /** Returns a set of android binary targets that depend on any of the given {@code targetKeys} */

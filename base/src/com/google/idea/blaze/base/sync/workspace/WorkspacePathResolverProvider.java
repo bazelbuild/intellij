@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.sync.workspace;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 
@@ -24,7 +23,7 @@ import javax.annotation.Nullable;
 public interface WorkspacePathResolverProvider {
 
   static WorkspacePathResolverProvider getInstance(Project project) {
-    return ServiceManager.getService(project, WorkspacePathResolverProvider.class);
+    return project.getService(WorkspacePathResolverProvider.class);
   }
 
   void setTemporaryOverride(WorkspacePathResolver resolver, Disposable parentDisposable);

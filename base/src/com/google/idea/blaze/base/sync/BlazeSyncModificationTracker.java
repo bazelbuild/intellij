@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -32,8 +31,7 @@ public final class BlazeSyncModificationTracker {
   private final SimpleModificationTracker modificationTracker = new SimpleModificationTracker();
 
   public static ModificationTracker getInstance(Project project) {
-    return ServiceManager.getService(project, BlazeSyncModificationTracker.class)
-        .modificationTracker;
+    return project.getService(BlazeSyncModificationTracker.class).modificationTracker;
   }
 
   static class Updater implements SyncListener {

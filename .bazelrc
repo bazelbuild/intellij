@@ -1,0 +1,6 @@
+build --java_language_version=17 --javacopt=-source --javacopt=8 --javacopt=-target --javacopt=8
+test  --java_language_version=17 --javacopt=-source --javacopt=8 --javacopt=-target --javacopt=8 --java_runtime_version=17
+
+# delete testdata package needed for bazel integration tests
+build --deleted_packages=//aspect/testing/tests/src/com/google/idea/blaze/aspect/integration/testdata
+query --deleted_packages=//aspect/testing/tests/src/com/google/idea/blaze/aspect/integration/testdata

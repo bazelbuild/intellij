@@ -20,13 +20,14 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -69,32 +70,38 @@ public interface ExternalTask {
       this.workingDirectory = workingDirectory;
     }
 
+    @CanIgnoreReturnValue
     public Builder arg(String arg) {
       command.add(arg);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder args(String... args) {
       command.add(args);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder args(Collection<String> args) {
       command.addAll(args);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder args(Stream<String> args) {
       command.addAll(args.iterator());
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addBlazeCommand(BlazeCommand blazeCommand) {
       this.blazeCommand = blazeCommand;
       command.addAll(blazeCommand.toList());
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder maybeArg(boolean b, String arg) {
       if (b) {
         command.add(arg);
@@ -102,31 +109,37 @@ public interface ExternalTask {
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder context(@Nullable BlazeContext context) {
       this.context = context;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder redirectStderr(boolean redirectStderr) {
       this.redirectErrorStream = redirectStderr;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder stdout(@Nullable OutputStream stdout) {
       this.stdout = stdout;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder stderr(@Nullable OutputStream stderr) {
       this.stderr = stderr;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder environmentVar(String key, String value) {
       environmentVariables.put(key, value);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder environmentVars(Map<String, String> values) {
       environmentVariables.putAll(values);
       return this;

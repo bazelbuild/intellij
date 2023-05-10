@@ -3,10 +3,16 @@
 This is an early-access version of our Bazel plugins for IntelliJ,
 Android Studio, and CLion.
 
-This repository is generally in a state matching the most recently uploaded 
-plugins in the JetBrains' plugin repository. See the 
-[releases](https://github.com/bazelbuild/intellij/releases) tab for more
-information.
+The Bazel plugin uploaded to the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/8609-bazel) 
+regularly from the state of this repository. See the [releases](https://github.com/bazelbuild/intellij/releases) 
+tab for more information.
+
+**Please see our latest community update for Bazel IntelliJ plugin:**
+[Announcing Bazel & JetBrains co-maintenance of IntelliJ IDEA Bazel Plugin](https://blog.bazel.build/2022/07/11/Bazel-IntelliJ-Update.html#announcing-bazel-jetbrains-co-maintenance-of-intellij-idea-bazel).
+
+## Community
+The Bazel project is hosting a Special Interest Group (SIG) for Bazel IntelliJ IDE plug-in. Details about the SIG and 
+how to join the discussion can be found in the [SIG charter](https://github.com/bazelbuild/community/blob/main/sigs/bazel-intellij/CHARTER.md).
 
 ## Support
 
@@ -16,8 +22,18 @@ systems.
 
 ## Installation
 
-You can find our plugin in the Jetbrains plugin repository by going to
-`Settings -> Browse Repositories`, and searching for `Bazel`.
+You can find our plugin in the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/8609-bazel)
+or directly from the IDE by going to `Settings -> Plugins -> Marketplace`, and searching for `Bazel`.
+
+### Beta versions
+
+Beta versions are usually uploaded to the Beta channel 2 weeks before they become full releases. Ways to install them: 
+- download and install them manually from the [Beta channel page](https://plugins.jetbrains.com/plugin/8609-bazel/versions/beta) on JetBrains Marketplace
+- add the Beta channel to the IDE under `Settings -> Plugins -> Gear Icon -> Manage Plugin repositories` and add one of the following URLs depending on your product. 
+  You can now find the latest Beta under `Settings -> Plugins -> Marketplace` or update the Bazel plugin to Beta if you already installed it.
+  - IntelliJ IDEA -> `https://plugins.jetbrains.com/plugins/beta/8609`
+  - CLion -> `https://plugins.jetbrains.com/plugins/beta/9554`
+  - Android Studio -> `https://plugins.jetbrains.com/plugins/beta/9185`
 
 ## Usage
 
@@ -31,9 +47,9 @@ Detailed docs are available [here](http://ij.bazel.build).
 
 Install Bazel, then build the target `*:*_bazel_zip` for your desired product:
 
-* `bazel build //ijwb:ijwb_bazel_zip --define=ij_product=intellij-ue-oss-stable`
-* `bazel build //clwb:clwb_bazel_zip --define=ij_product=clion-oss-stable`
-* `bazel build //aswb:aswb_bazel_zip --define=ij_product=android-studio-oss-stable`
+* `bazel build //ijwb:ijwb_bazel_zip --define=ij_product=intellij-ue-oss-latest-stable`
+* `bazel build //clwb:clwb_bazel_zip --define=ij_product=clion-oss-latest-stable`
+* `bazel build //aswb:aswb_bazel_zip --define=ij_product=android-studio-oss-latest-stable`
 
 from the project root. This will create a plugin zip file at
 `bazel-bin/<PRODUCT>/<PRODUCT>_bazel.zip`, which can be installed directly
@@ -42,17 +58,19 @@ from the IDE. `<PRODUCT>` can be one of `ijwb, clwb, aswb`.
 If the IDE refuses to load the plugin because of version issues, specify the
 correct `ij_product`. These are in the form `<IDE>-oss-<VERSION>` with 
   * `<IDE>` being one of `intellij-ue, intellij, clion, android-studio`, 
-  * `<VERSION>` being one of `stable, beta, under-dev`.
+  * `<VERSION>` being one of `oldest-stable, latest-stable, under-dev`.
 
 Note that there is a difference between `intellij` and `intellij-ue`.
 `ue` stands for IntelliJ Ultimate Edition and contains additional 
 features for JavaScript as well as Go.
 
-If you are using the most recent version of your IDE, you likely want
-`--define=ij_product=<IDE>-oss-beta` which will be the next version after
-`<IDE>-oss-stable`. Additionally, `under-dev` can be a largely untested `alpha` 
-build of an upcoming version. A complete mapping of all currently defined 
-versions can be found in  `intellij_platform_sdk/build_defs.bzl`.
+`<IDE>-oss-oldest-stable` and `<IDE>-oss-latest-stable` are aliases for the two IDE versions
+that the plugin is officially compatible with at a given time. `<IDE>-oss-latest-stable` usually 
+maps to the last released IDE version while `<IDE>-oss-oldest-stable` maps to the one right before that, 
+e.g. `<IDE>-oss-oldest-stable=2022.1` and `<IDE>-oss-latest-stable=2022.2`. Additionally, 
+`<IDE>-oss-under-dev` represents the upcoming version of the IDE that we are working towards 
+supporting. A complete mapping of all currently defined versions can be found in 
+`intellij_platform_sdk/build_defs.bzl`.
 
 You can import the project into IntelliJ (with the Bazel plugin)
 via importing the `ijwb/ijwb.bazelproject` file.
@@ -61,13 +79,13 @@ via importing the `ijwb/ijwb.bazelproject` file.
 
 You can build the plugin for different IDE versions by adjusting the `ij_product` 
 option either from command line or by updating the `.bazelproject` file to specify
-the correct value for `ij_product` under `build_flags`. 
+the desired value for `ij_product` under `build_flags`. 
 
 We have three aliases for product versions;
-  * `stable` is the IDE version supported by the Bazel plugin released to 
+  * `oldest-stable` is the oldest IDE version supported by the Bazel plugin released to 
   the JetBrains stable channel.
-  * `beta` is the IDE version supported by the Bazel plugin released to
-  the JetBrains Beta channel.
+  * `latest-stable` is the latest IDE version supported by the Bazel plugin released to
+  the JetBrains stable channel.
   * `under-dev` is the IDE version we are currently working towards supporting.
 
 The current corresponding IDE versions of these aliases can be found [here](./intellij_platform_sdk/build_defs.bzl#L31).
@@ -109,7 +127,7 @@ the review process faster and easier, we recommend the following:
          Preferred to Adapter and Wrapper when applicable. We add a util-class with 
          only static methods and a private constructor and wrap the changed method by one of the 
          static methods. If the change is small enough, you do not need to create a new util-class
-         and should add the change to [BaseSdkCompat class](./sdkcompat/v203/com/google/idea/sdkcompat/general/BaseSdkCompat.java) 
+         and should add the change to [BaseSdkCompat class](./sdkcompat/v222/com/google/idea/sdkcompat/general/BaseSdkCompat.java) 
          instead. Example: [pr/2345](https://github.com/bazelbuild/intellij/pull/2345)
 
       * **Adapter**  

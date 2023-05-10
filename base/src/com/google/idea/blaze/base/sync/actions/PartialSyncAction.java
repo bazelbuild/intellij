@@ -192,4 +192,9 @@ public class PartialSyncAction extends BlazeProjectSyncAction {
     BuildSystemProvider provider = Blaze.getBuildSystemProvider(project);
     return provider != null && provider.isBuildFile(vf.getName());
   }
+
+  @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.HIDDEN;
+  }
 }

@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -36,7 +35,7 @@ public class AttachedSourceJarManager implements PersistentStateComponent<Elemen
       Collections.synchronizedSet(Sets.newHashSet());
 
   public static AttachedSourceJarManager getInstance(Project project) {
-    return ServiceManager.getService(project, AttachedSourceJarManager.class);
+    return project.getService(AttachedSourceJarManager.class);
   }
 
   public boolean hasSourceJarAttached(LibraryKey libraryKey) {

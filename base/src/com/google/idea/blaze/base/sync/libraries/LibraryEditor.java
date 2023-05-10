@@ -15,33 +15,35 @@
  */
 package com.google.idea.blaze.base.sync.libraries;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.LibraryFilesProvider;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.idea.sdkcompat.general.BaseSdkCompat;
+import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /** Edits IntelliJ libraries */
 public class LibraryEditor {
@@ -54,8 +56,7 @@ public class LibraryEditor {
       BlazeProjectData blazeProjectData,
       Collection<BlazeLibrary> libraries) {
     Set<LibraryKey> intelliJLibraryState = Sets.newHashSet();
-    IdeModifiableModelsProvider modelsProvider =
-        BaseSdkCompat.createModifiableModelsProvider(project);
+    IdeModifiableModelsProvider modelsProvider = new IdeModifiableModelsProviderImpl(project);
     for (Library library : modelsProvider.getAllLibraries()) {
       String name = library.getName();
       if (name != null) {
@@ -65,10 +66,16 @@ public class LibraryEditor {
     context.output(PrintOutput.log(String.format("Workspace has %d libraries", libraries.size())));
 
     try {
-      for (BlazeLibrary library : libraries) {
-        updateLibrary(
-            project, blazeProjectData.getArtifactLocationDecoder(), modelsProvider, library);
-      }
+      Set<String> newLibraryKeys = new HashSet<>();
+      libraries.forEach(
+          library -> {
+            LibraryFilesProvider libraryFilesProvider =
+                LibraryFilesProviderFactory.getInstance(project).get(library);
+            String key = libraryFilesProvider.getName();
+            if (newLibraryKeys.add(key)) {
+              updateLibrary(modelsProvider, blazeProjectData, libraryFilesProvider);
+            }
+          });
 
       // Garbage collect unused libraries
       List<LibrarySource> librarySources = Lists.newArrayList();
@@ -85,11 +92,9 @@ public class LibraryEditor {
               .reduce(Predicate::or)
               .orElse(o -> false);
 
-      Set<LibraryKey> newLibraryKeys =
-          libraries.stream().map((blazeLibrary) -> blazeLibrary.key).collect(Collectors.toSet());
       for (LibraryKey libraryKey : intelliJLibraryState) {
         String libraryIntellijName = libraryKey.getIntelliJLibraryName();
-        if (!newLibraryKeys.contains(libraryKey)) {
+        if (!newLibraryKeys.contains(libraryIntellijName)) {
           Library library = modelsProvider.getLibraryByName(libraryIntellijName);
           if (!gcRetentionFilter.test(library)) {
             if (library != null) {
@@ -111,33 +116,30 @@ public class LibraryEditor {
    * commit()} should only be called once after all modifications as frequent calls can be slow.
    *
    * @param project the IntelliJ project
-   * @param artifactLocationDecoder a decoder to determine the location of artifacts
+   * @param blazeProjectData data class contains BlazeLibrary information, decoder for artifact
+   *     location. Since it has not yet been cached on disk during sync, we cannot get latest one
+   *     via BlazeProjectData.getInstance. Callers need to provide it.
    * @param modelsProvider a modifier for IntelliJ's project model which supports quick application
    *     of massive modifications to the project model
    * @param blazeLibrary the library which should be updated in the project context
    */
   public static void updateLibrary(
       Project project,
-      ArtifactLocationDecoder artifactLocationDecoder,
+      BlazeProjectData blazeProjectData,
       IdeModifiableModelsProvider modelsProvider,
       BlazeLibrary blazeLibrary) {
-    String libraryName = blazeLibrary.key.getIntelliJLibraryName();
+    updateLibrary(
+        modelsProvider,
+        blazeProjectData,
+        LibraryFilesProviderFactory.getInstance(project).get(blazeLibrary));
+  }
 
-    Library library = modelsProvider.getLibraryByName(libraryName);
-    boolean libraryExists = library != null;
-    if (!libraryExists) {
-      library = modelsProvider.createLibrary(libraryName);
-    }
-    Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
-    if (libraryExists) {
-      for (String url : libraryModel.getUrls(OrderRootType.CLASSES)) {
-        libraryModel.removeRoot(url, OrderRootType.CLASSES);
-      }
-      for (String url : libraryModel.getUrls(OrderRootType.SOURCES)) {
-        libraryModel.removeRoot(url, OrderRootType.SOURCES);
-      }
-    }
-    blazeLibrary.modifyLibraryModel(project, artifactLocationDecoder, libraryModel);
+  private static void updateLibrary(
+      IdeModifiableModelsProvider modelsProvider,
+      BlazeProjectData blazeProjectData,
+      LibraryFilesProvider libraryFilesProvider) {
+    LibraryModifier libraryModifier = new LibraryModifier(libraryFilesProvider, modelsProvider);
+    libraryModifier.updateModifiableModel(blazeProjectData);
   }
 
   /**
@@ -153,22 +155,27 @@ public class LibraryEditor {
    * @param libraries the libraries to add as dependencies
    */
   public static void configureDependencies(
-      ModifiableRootModel modifiableRootModel, Collection<BlazeLibrary> libraries) {
+      Project project,
+      ModifiableRootModel modifiableRootModel,
+      Collection<BlazeLibrary> libraries) {
     LibraryTable libraryTable =
         LibraryTablesRegistrar.getInstance().getLibraryTable(modifiableRootModel.getProject());
+    ImmutableSet<String> libraryNames =
+        libraries.stream()
+            .map(library -> LibraryFilesProviderFactory.getInstance(project).get(library).getName())
+            .collect(toImmutableSet());
 
-    ImmutableList<Library> foundLibraries = findLibraries(libraries, libraryTable);
+    ImmutableList<Library> foundLibraries = findLibraries(libraryNames, libraryTable);
     // Add the libraries in a batch operation as adding them one after the other is not performant.
     modifiableRootModel.addLibraryEntries(
         foundLibraries, DependencyScope.COMPILE, /* exported= */ false);
   }
 
   private static ImmutableList<Library> findLibraries(
-      Collection<BlazeLibrary> libraries, LibraryTable libraryTable) {
+      Collection<String> libraryNames, LibraryTable libraryTable) {
     ImmutableList.Builder<Library> foundLibraries = ImmutableList.builder();
     ImmutableList.Builder<String> missingLibraries = ImmutableList.builder();
-    for (BlazeLibrary library : libraries) {
-      String libraryName = library.key.getIntelliJLibraryName();
+    for (String libraryName : libraryNames) {
       // This call is slow and causes freezes when done through IdeModifiableModelsProvider.
       Library foundLibrary = libraryTable.getLibraryByName(libraryName);
       if (foundLibrary == null) {

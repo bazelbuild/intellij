@@ -6,6 +6,24 @@ load(
     "api_version_txt",
 )
 
+ADD_OPENS = [
+    "--add-opens=%s=ALL-UNNAMED" % x
+    for x in [
+        # keep sorted
+        "java.base/java.io",
+        "java.base/java.lang",
+        "java.base/java.util",
+        "java.base/java.util.concurrent",
+        "java.desktop/java.awt",
+        "java.desktop/java.awt.event",
+        "java.desktop/javax.swing",
+        "java.desktop/javax.swing.plaf.basic",
+        "java.desktop/sun.awt",
+        "java.desktop/sun.awt.image",
+        "java.desktop/sun.font",
+    ]
+]
+
 def _generate_test_suite_impl(ctx):
     """Generates a JUnit4 test suite pulling in all the referenced classes.
 
@@ -27,7 +45,7 @@ def _generate_test_suite_impl(ctx):
     for test_class in test_classes:
         lines.append("import %s;" % test_class)
     lines.append("")
-    lines.append("@RunWith(Suite.class)")
+    lines.append("@RunWith(%s.class)" % ctx.attr.run_with)
     lines.append("@Suite.SuiteClasses({")
     for test_class in test_classes:
         lines.append("    %s.class," % test_class.split(".")[-1])
@@ -58,6 +76,7 @@ _generate_test_suite = rule(
         "test_package_root": attr.string(mandatory = True),
         # optional list of classes to instantiate as a @ClassRule in the test suite.
         "class_rules": attr.string_list(),
+        "run_with": attr.string(default = "org.junit.runners.Suite"),
     },
     outputs = {"out": "%{name}.java"},
 )
@@ -98,6 +117,7 @@ def intellij_unit_test_suite(
         "-Djava.awt.headless=true",
         "-Dblaze.idea.api.version.file=$(location %s)" % api_version_txt_name,
     ])
+    jvm_flags.extend(ADD_OPENS)
 
     _generate_test_suite(
         name = suite_class_name,
@@ -147,7 +167,6 @@ def intellij_integration_test_suite(
       srcs: the test classes.
       test_package_root: only tests under this package root will be run.
       deps: the required deps.
-      additional_class_rules: extra JUnit class rules to apply to these tests.
       size: the test size.
       jvm_flags: extra flags to be passed to the test vm.
       runtime_deps: the required runtime dependencies, (e.g., intellij_plugin targets).
@@ -161,7 +180,8 @@ def intellij_integration_test_suite(
         name = suite_class_name,
         srcs = srcs,
         test_package_root = test_package_root,
-        class_rules = ["com.google.idea.testing.BlazeTestSystemPropertiesRule"] + additional_class_rules,
+        class_rules = additional_class_rules,
+        run_with = "com.google.idea.testing.IntellijIntegrationSuite",
     )
 
     api_version_txt_name = name + "_api_version"
@@ -176,7 +196,6 @@ def intellij_integration_test_suite(
     runtime_deps = list(runtime_deps)
     runtime_deps.extend([
         "//intellij_platform_sdk:bundled_plugins",
-        "//third_party:jpda-jdi",
     ])
 
     jvm_flags = list(jvm_flags)
@@ -185,6 +204,7 @@ def intellij_integration_test_suite(
         "-Djava.awt.headless=true",
         "-Dblaze.idea.api.version.file=$(location %s)" % api_version_txt_name,
     ])
+    jvm_flags.extend(ADD_OPENS)
 
     if required_plugins:
         jvm_flags.append("-Didea.required.plugins.id=" + required_plugins)
@@ -192,12 +212,28 @@ def intellij_integration_test_suite(
     tags = kwargs.pop("tags", [])
     tags.append("notsan")
 
+    # Workaround for b/233717538: Some protoeditor related code assumes that
+    # classPathLoader.getResource("include") works if there are files somewhere in include/...
+    # in the classpath. However, that is not true with the default loader.
+    # This is fixed in https://github.com/JetBrains/intellij-plugins/commit/dd6c17e27194e8adafde5d3f31950fc5bf40f6c6.
+    # #api221: Remove this workaround.
+    native.genrule(
+        name = name + "_protoeditor_resource_fix",
+        outs = [name + "_protoeditor_resource_fix/include/empty.txt"],
+        cmd = "echo > $@",
+    )
+
+    args = kwargs.pop("args", [])
+    args.append("--main_advice_classpath=./%s/%s_protoeditor_resource_fix" % (native.package_name(), name))
+    data.append(name + "_protoeditor_resource_fix")
+
     native.java_test(
         name = name,
         size = size,
         srcs = srcs + [suite_class_name],
         data = data,
         tags = tags,
+        args = args,
         jvm_flags = jvm_flags,
         test_class = suite_class,
         runtime_deps = runtime_deps,

@@ -5,7 +5,7 @@
 
 package(default_visibility = ["//aspect:__pkg__"])
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 # To prevent versioning conflicts when developing internally, we always use the same
 # guava version bundled with the IntelliJ plugin API.
@@ -20,8 +20,8 @@ java_library(
     srcs = glob(["src/**/*.java"]),
     deps = [
         ":guava",
-        "//intellij_platform_sdk:jsr305",
         "//proto:proto_deps",
+        "@jsr305_annotations//jar",
         "//third_party/bazel/src/main/protobuf:worker_protocol_java_proto",
     ],
 )
@@ -80,7 +80,10 @@ java_test(
     size = "small",
     srcs = ["tests/unittests/com/google/idea/blaze/aspect/PackageParserTest.java"],
     test_class = "com.google.idea.blaze.aspect.PackageParserTest",
-    deps = [":test_lib"],
+    deps = [
+        ":test_lib",
+        "@error_prone_annotations//jar",
+    ],
 )
 
 java_test(

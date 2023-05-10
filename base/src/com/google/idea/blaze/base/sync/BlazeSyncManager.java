@@ -15,50 +15,90 @@
  */
 package com.google.idea.blaze.base.sync;
 
+import static java.util.stream.Collectors.joining;
+
+import com.google.common.base.VerifyException;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.Scope;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
+import com.google.idea.blaze.base.scope.output.SummaryOutput;
+import com.google.idea.blaze.base.scope.output.SummaryOutput.Prefix;
+import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
+import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
+import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.SyncDirectoriesWarning;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.toolwindow.Task;
-import com.intellij.openapi.components.ServiceManager;
+import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.PrintOutput.OutputType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.text.StringUtil;
 import java.util.Collection;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /** Manages syncing and its listeners. */
 public class BlazeSyncManager {
 
   private final Project project;
+  private static final Logger logger = Logger.getInstance(BlazeSyncManager.class);
 
   public BlazeSyncManager(Project project) {
     this.project = project;
   }
 
   public static BlazeSyncManager getInstance(Project project) {
-    return ServiceManager.getService(project, BlazeSyncManager.class);
+    return project.getService(BlazeSyncManager.class);
+  }
+
+  public static void printAndLogError(String errorMessage, Context context) {
+    context.output(PrintOutput.error(errorMessage));
+    logger.error(errorMessage);
+  }
+
+  private boolean checkProjectType(BlazeContext context) {
+    BlazeImportSettings settings =
+        BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    if (settings.getProjectType() != ProjectType.ASPECT_SYNC) {
+      context.output(
+          PrintOutput.error(
+              "The project uses a new project structure not compatible with this version of Android"
+                  + " Studio. Learn more at go/querysync"));
+      context.setHasError();
+      return false;
+    }
+    return true;
   }
 
   /** Requests a project sync with Blaze. */
@@ -68,8 +108,11 @@ public class BlazeSyncManager {
         && !SyncDirectoriesWarning.warn(project)) {
       return;
     }
+    SaveUtil.saveAllFiles();
 
-    if (BlazeImportSettingsManager.getInstance(project).getImportSettings() == null) {
+    BlazeImportSettings importSettings =
+        BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    if (importSettings == null) {
       throw new IllegalStateException(
           String.format("Attempt to sync non-%s project.", Blaze.buildSystemName(project)));
     }
@@ -88,12 +131,48 @@ public class BlazeSyncManager {
                                   context -> {
                                     context
                                         .push(new ProgressIndicatorScope(indicator))
-                                        .push(buildToolWindowScope(syncParams, indicator));
+                                        .push(buildToolWindowScope(syncParams, indicator))
+                                        .push(
+                                            new ProblemsViewScope(
+                                                project,
+                                                BlazeUserSettings.getInstance()
+                                                    .getShowProblemsViewOnSync()));
+                                    // we do this here rather than earlier so we can show a
+                                    // user-visible message if there's a problem.
+                                    if (!checkProjectType(context)) {
+                                      return;
+                                    }
                                     if (!runInitialDirectoryOnlySync(syncParams)) {
                                       executeTask(project, syncParams, context);
                                       return;
                                     }
-
+                                    // Call shouldForceFullSync before initial directory update
+                                    // because it relies on old project data which is erased during
+                                    // initial directory update
+                                    BlazeProjectData oldProjectData =
+                                        BlazeProjectDataManager.getInstance(project)
+                                            .getBlazeProjectData();
+                                    SyncProjectState projectState = null;
+                                    try {
+                                      projectState =
+                                          ProjectStateSyncTask.collectProjectState(
+                                              project, context);
+                                    } catch (SyncCanceledException | SyncFailedException e) {
+                                      ApplicationManager.getApplication()
+                                          .invokeLater(
+                                              () ->
+                                                  BlazeSyncStatus.getInstance(project)
+                                                      .syncEnded(
+                                                          syncParams.syncMode(),
+                                                          context.getSyncResult()));
+                                      throw new VerifyException(e);
+                                    }
+                                    boolean forceFullSync =
+                                        shouldForceFullSync(
+                                            oldProjectData,
+                                            projectState,
+                                            syncParams.syncMode(),
+                                            context);
                                     BlazeSyncParams initialUpdateSyncParams =
                                         BlazeSyncParams.builder()
                                             .setTitle("Initial directory update")
@@ -103,11 +182,47 @@ public class BlazeSyncManager {
                                             .build();
                                     executeTask(project, initialUpdateSyncParams, context);
 
+                                    BlazeSyncParams updatedSyncParams =
+                                        forceFullSync
+                                            ? syncParams.toBuilder()
+                                                .setSyncMode(SyncMode.FULL)
+                                                .setTitle("Full Sync")
+                                                .build()
+                                            : syncParams;
                                     if (!context.isCancelled()) {
-                                      executeTask(project, syncParams, context);
+                                      executeTask(project, updatedSyncParams, context);
                                     }
                                   }));
             });
+  }
+
+  @VisibleForTesting
+  boolean shouldForceFullSync(
+      BlazeProjectData oldProjectData,
+      SyncProjectState projectState,
+      SyncMode syncMode,
+      BlazeContext context) {
+    if (oldProjectData == null || projectState == null || syncMode == SyncMode.NO_BUILD) {
+      return false;
+    }
+    SetView<LanguageClass> newLanguages =
+        Sets.difference(
+            projectState.getLanguageSettings().getActiveLanguages(),
+            oldProjectData.getWorkspaceLanguageSettings().getActiveLanguages());
+    // Don't care if languages are removed from project view because the corresponding targets will
+    // be removed from the targetMap anyway at the end of the sync
+    if (newLanguages.isEmpty()) {
+      return false;
+    }
+    // Force a full sync if a new language is added to project view
+    String message =
+        String.format(
+            "%s %s added to project view; forcing a full sync",
+            StringUtil.pluralize("Language", newLanguages.size()),
+            newLanguages.stream().map(LanguageClass::getName).collect(joining(",")));
+    context.output(SummaryOutput.output(Prefix.INFO, message).log());
+    logger.info(message);
+    return true;
   }
 
   private static void executeTask(Project project, BlazeSyncParams params, BlazeContext context) {

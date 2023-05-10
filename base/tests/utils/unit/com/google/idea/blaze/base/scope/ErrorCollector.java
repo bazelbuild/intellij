@@ -25,7 +25,17 @@ import java.util.List;
 
 /** Test class that collects issues. */
 public class ErrorCollector implements OutputSink<IssueOutput> {
+
+  private final StringBuilder printOutput;
   List<IssueOutput> issues = Lists.newArrayList();
+
+  public ErrorCollector() {
+    this.printOutput = new StringBuilder();
+  }
+
+  public ErrorCollector(StringBuilder printOutput) {
+    this.printOutput = printOutput;
+  }
 
   @Override
   public Propagation onOutput(IssueOutput output) {
@@ -34,7 +44,11 @@ public class ErrorCollector implements OutputSink<IssueOutput> {
   }
 
   public void assertNoIssues() {
-    assertThat(issues).isEmpty();
+    assertWithMessage(
+            "There were issues during the Blaze invocation. Please check the invocation's log: %s",
+            printOutput.toString())
+        .that(issues)
+        .isEmpty();
   }
 
   public void assertHasErrors() {

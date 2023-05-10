@@ -17,9 +17,9 @@ package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.console.NonProblemFilterWrapper;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.PrintOutput.OutputType;
 import com.intellij.codeEditor.printing.PrintAction;
 import com.intellij.execution.actions.ClearConsoleAction;
 import com.intellij.execution.filters.ConsoleDependentFilterProvider;
@@ -62,12 +62,7 @@ import javax.annotation.Nullable;
 import javax.swing.JComponent;
 import javax.swing.LayoutFocusTraversalPolicy;
 
-/**
- * Simplified copy and replacement of {@link com.google.idea.blaze.base.console.BlazeConsoleView},
- * (which can be deleted after the new tool-window is released).
- *
- * <p>The class handles how the output of a single task is displayed in the tool-window.
- */
+/** ConsoleView handles how the output of a single task is displayed in the tool-window. */
 final class ConsoleView implements Disposable {
 
   /** The counter that is used to create IntelliJ UI components ids. */

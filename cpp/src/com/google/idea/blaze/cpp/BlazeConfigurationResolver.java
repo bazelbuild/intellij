@@ -29,22 +29,27 @@ import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedOperation;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
+import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.Nullable;
 import java.io.File;
+import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +58,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 final class BlazeConfigurationResolver {
   private static final Logger logger = Logger.getInstance(BlazeConfigurationResolver.class);
@@ -75,6 +79,7 @@ final class BlazeConfigurationResolver {
             Blaze.getBuildSystemProvider(project),
             WorkspaceRoot.fromProject(project),
             blazeProjectData.getBlazeInfo().getExecutionRoot(),
+            blazeProjectData.getBlazeInfo().getOutputBase(),
             blazeProjectData.getWorkspacePathResolver());
     ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap =
         BlazeConfigurationToolchainResolver.buildToolchainLookupMap(
@@ -86,6 +91,8 @@ final class BlazeConfigurationResolver {
             toolchainLookupMap,
             executionRootPathResolver,
             oldResult.getCompilerSettings());
+
+    ImmutableMap<String, String> targetToVersion = getTargetToVersionMap(toolchainLookupMap, compilerSettings);
     ProjectViewTargetImportFilter projectViewFilter =
         new ProjectViewTargetImportFilter(
             Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet);
@@ -98,7 +105,24 @@ final class BlazeConfigurationResolver {
         HeaderRootTrimmer.getValidRoots(
             context, blazeProjectData, toolchainLookupMap, targetFilter, executionRootPathResolver);
     builder.setValidHeaderRoots(validHeaderRoots);
+    builder.setTargetToVersionMap(targetToVersion);
     return builder.build();
+  }
+
+  @NotNull
+  private static ImmutableMap<String, String> getTargetToVersionMap(ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap, ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings) {
+    ImmutableMap<ExecutionRootPath, String> compilerVersionByPath =
+            compilerSettings.entrySet().stream().collect(
+                    ImmutableMap.toImmutableMap(
+                            e -> e.getKey().getCppExecutable(),
+                            e -> e.getValue().getCompilerVersion()));
+    return toolchainLookupMap.entrySet().stream()
+            .map(e -> new AbstractMap.SimpleImmutableEntry<>(
+                    e.getKey().getLabel().toString(),
+                    compilerVersionByPath.get(e.getValue().getCppExecutable())))
+            // In case of a broken compiler, the version string is null, but Collectors.toMap requires non-null value function.
+            .filter(e -> e.getValue() != null)
+            .collect(ImmutableMap.toImmutableMap(e -> e.getKey(), e -> e.getValue()));
   }
 
   private static Predicate<TargetIdeInfo> getTargetFilter(

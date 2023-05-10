@@ -21,24 +21,21 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.console.BlazeConsoleService;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildCompiler.CompileInstructions;
 import com.google.idea.blaze.java.fastbuild.FastBuildLogDataScope.FastBuildLogOutput;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
 import com.google.idea.common.util.ConcurrencyUtil;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
 import java.io.File;
-import java.io.Writer;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -48,12 +45,10 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
 
   private final BlazeProjectDataManager projectDataManager;
   private final FastBuildCompilerFactory compilerFactory;
-  private final BlazeConsoleService blazeConsoleService;
 
   FastBuildIncrementalCompilerImpl(Project project) {
     this.projectDataManager = BlazeProjectDataManager.getInstance(project);
     this.compilerFactory = FastBuildCompilerFactory.getInstance(project);
-    this.blazeConsoleService = BlazeConsoleService.getInstance(project);
   }
 
   @Override
@@ -66,8 +61,6 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
     return ConcurrencyUtil.getAppExecutorService()
         .submit(
             () -> {
-              BlazeConsoleWriter writer = new BlazeConsoleWriter(blazeConsoleService);
-
               ChangedSourceInfo changedSourceInfo =
                   getPathsToCompile(context, label, buildOutput.blazeData(), modifiedFiles);
 
@@ -81,7 +74,6 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
                             changedSourceInfo.annotationProcessorClassNames)
                         .annotationProcessorClasspath(
                             changedSourceInfo.annotationProcessorClasspath)
-                        .outputWriter(writer)
                         .build();
 
                 for (FastBuildCompilationModification modification :
@@ -189,27 +181,6 @@ final class FastBuildIncrementalCompilerImpl implements FastBuildIncrementalComp
                     annotationProcessorsClasspath,
                     modifiedSinceBuild,
                     affectedTargets));
-  }
-
-  private static class BlazeConsoleWriter extends Writer {
-
-    final BlazeConsoleService console;
-
-    BlazeConsoleWriter(BlazeConsoleService console) {
-      this.console = console;
-      console.clear();
-    }
-
-    @Override
-    public void write(char[] cbuf, int off, int len) {
-      console.print(new String(cbuf, off, len), ConsoleViewContentType.NORMAL_OUTPUT);
-    }
-
-    @Override
-    public void flush() {}
-
-    @Override
-    public void close() {}
   }
 
   private static class ChangedSourceInfo {

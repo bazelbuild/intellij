@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.messages.MessageBusConnection;
@@ -147,6 +146,25 @@ public class BlazeProjectSystemSyncManager implements ProjectSystemSyncManager {
           .syncPublisher(PROJECT_SYSTEM_SYNC_TOPIC)
           .syncEnded(lastSyncResultCache.lastSyncResult);
     }
+
+    /** Called after sync. Only used in new query-sync * */
+    @Override
+    public void afterSync(Project project, BlazeContext context) {
+      LastSyncResultCache lastSyncResultCache = LastSyncResultCache.getInstance(project);
+
+      if (context.isCancelled()) {
+        lastSyncResultCache.lastSyncResult = SyncResult.CANCELLED;
+      } else if (context.hasErrors()) {
+        lastSyncResultCache.lastSyncResult = SyncResult.FAILURE;
+      } else {
+        lastSyncResultCache.lastSyncResult = SyncResult.SUCCESS;
+      }
+
+      project
+          .getMessageBus()
+          .syncPublisher(PROJECT_SYSTEM_SYNC_TOPIC)
+          .syncEnded(lastSyncResultCache.lastSyncResult);
+    }
   }
 
   @VisibleForTesting
@@ -154,7 +172,7 @@ public class BlazeProjectSystemSyncManager implements ProjectSystemSyncManager {
     SyncResult lastSyncResult = SyncResult.UNKNOWN;
 
     public static LastSyncResultCache getInstance(Project project) {
-      return ServiceManager.getService(project, LastSyncResultCache.class);
+      return project.getService(LastSyncResultCache.class);
     }
 
     /**

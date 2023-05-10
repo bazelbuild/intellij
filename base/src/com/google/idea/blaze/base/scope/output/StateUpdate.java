@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.scope.output;
 
-import com.google.idea.blaze.base.scope.Output;
+import com.google.idea.blaze.common.Output;
 
 /**
  * State update.

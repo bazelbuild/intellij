@@ -15,8 +15,6 @@
  */
 package com.google.idea.blaze.android.run;
 
-import com.android.tools.idea.BaseAsCompat;
-import com.android.tools.idea.run.tasks.LaunchResult;
 import com.google.common.base.StandardSystemProperty;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -58,26 +56,26 @@ public class LaunchMetrics {
   }
 
   public static void logBuildTime(
-      String launchId, boolean usesStudioDeployer, Duration buildDuration, int blazeExitCode) {
+      String launchId,
+      boolean usesStudioDeployer,
+      Duration buildDuration,
+      int blazeExitCode,
+      ImmutableMap<String, String> additionalMetrics) {
     if (!launchMetricsEnabled.getValue()) {
       return;
     }
-
     ImmutableMap<String, String> metrics =
-        ImmutableMap.of(
-            KEY_LAUNCH_ID,
-            launchId,
-            KEY_USES_STUDIO_DEPLOYER,
-            Boolean.toString(usesStudioDeployer),
-            KEY_BUILD_DURATION_MILLIS,
-            Long.toString(buildDuration.toMillis()),
-            KEY_BLAZE_EXIT_CODE,
-            Integer.toString(blazeExitCode));
+        ImmutableMap.<String, String>builder()
+            .put(KEY_LAUNCH_ID, launchId)
+            .put(KEY_USES_STUDIO_DEPLOYER, Boolean.toString(usesStudioDeployer))
+            .put(KEY_BUILD_DURATION_MILLIS, Long.toString(buildDuration.toMillis()))
+            .put(KEY_BLAZE_EXIT_CODE, Integer.toString(blazeExitCode))
+            .putAll(additionalMetrics)
+            .buildOrThrow();
     EventLoggingService.getInstance().logEvent(LaunchMetrics.class, "BuildTiming", metrics);
   }
 
-  public static void logDeploymentTime(
-      String launchId, Duration duration, LaunchResult launchResult) {
+  public static void logDeploymentTime(String launchId, Duration duration, boolean wasSuccessful) {
     if (!launchMetricsEnabled.getValue()) {
       return;
     }
@@ -89,7 +87,7 @@ public class LaunchMetrics {
             KEY_DEPLOY_DURATION_MILLIS,
             Long.toString(duration.toMillis()),
             KEY_DEPLOY_STATUS,
-            Boolean.toString(BaseAsCompat.wasSuccessfulLaunch(launchResult)));
+            Boolean.toString(wasSuccessful));
     EventLoggingService.getInstance().logEvent(LaunchMetrics.class, "DeployTiming", metrics);
   }
 

@@ -48,6 +48,7 @@ import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.MockRemoteArtifactPrefetcher;
@@ -110,7 +111,7 @@ public class BlazeScalaWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
     importSettingsManager.setImportSettings(
-        new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze));
+        new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze, ProjectType.ASPECT_SYNC));
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
 
     applicationServices.register(PrefetchService.class, new MockPrefetchService());

@@ -68,4 +68,7 @@ public interface SyncListener {
       SyncMode syncMode,
       SyncResult syncResult,
       ImmutableSet<Integer> buildIds) {}
+
+  /** Called after sync. Only used in new query-sync * */
+  default void afterSync(Project project, BlazeContext context) {}
 }

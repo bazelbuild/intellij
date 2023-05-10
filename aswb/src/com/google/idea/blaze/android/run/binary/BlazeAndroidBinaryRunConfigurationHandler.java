@@ -22,13 +22,14 @@ import com.android.tools.idea.run.ValidationError;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.android.run.ApkBuildStepProvider;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationValidationUtil;
 import com.google.idea.blaze.android.run.LaunchMetrics;
 import com.google.idea.blaze.android.run.binary.AndroidBinaryLaunchMethodsUtils.AndroidBinaryLaunchMethod;
-import com.google.idea.blaze.android.run.binary.mobileinstall.BlazeAndroidBinaryMobileInstallRunContext;
+import com.google.idea.blaze.android.run.binary.mobileinstall.BlazeAndroidBinaryMobileInstallRunContextCompat;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunner;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
@@ -138,9 +139,10 @@ public class BlazeAndroidBinaryRunConfigurationHandler
             configState.getCommonState().getExeFlagsState().getFlagsForExternalProcesses());
     ApkBuildStep buildStep =
         ApkBuildStepProvider.getInstance(Blaze.getBuildSystemName(project))
-            .getBuildStep(
+            .getBinaryBuildStep(
                 project,
                 AndroidBinaryLaunchMethodsUtils.useMobileInstall(configState.getLaunchMethod()),
+                configState.getCommonState().isNativeDebuggingEnabled(),
                 Label.create(configuration.getSingleTarget().toString()),
                 blazeFlags,
                 exeFlags,
@@ -151,7 +153,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
     switch (configState.getLaunchMethod()) {
       case NON_BLAZE:
         runContext =
-            new BlazeAndroidBinaryNormalBuildRunContext(
+            new BlazeAndroidBinaryNormalBuildRunContextCompat(
                 project, facet, configuration, env, configState, buildStep, launchId);
         break;
       case MOBILE_INSTALL_V2:
@@ -160,7 +162,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
         // fall through
       case MOBILE_INSTALL:
         runContext =
-            new BlazeAndroidBinaryMobileInstallRunContext(
+            new BlazeAndroidBinaryMobileInstallRunContextCompat(
                 project, facet, configuration, env, configState, buildStep, launchId);
         break;
       default:
@@ -227,6 +229,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
    *
    * @return true if dialog was shown and user migrated, otherwise false
    */
+  @CanIgnoreReturnValue
   private boolean maybeShowMobileInstallOptIn(
       Project project, BlazeCommandRunConfiguration configuration) {
     long lastPrompt = PropertiesComponent.getInstance(project).getOrInitLong(MI_LAST_PROMPT, 0L);

@@ -20,6 +20,7 @@ import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 
@@ -32,12 +33,27 @@ public interface ApkBuildStepProvider extends BuildSystemExtensionPoint {
     return BuildSystemExtensionPoint.getInstance(EP_NAME, buildSystemName);
   }
 
-  /** Returns a build step for the given build configurations. */
-  ApkBuildStep getBuildStep(
+  /** Returns a build step that can build artifacts required for an {@code android_binary}. */
+  ApkBuildStep getBinaryBuildStep(
       Project project,
       boolean useMobileInstall,
+      boolean nativeDebuggingEnabled,
       Label label,
       ImmutableList<String> blazeFlags,
       ImmutableList<String> exeFlags,
       String launchId);
+
+  /**
+   * Returns a build step that can build artifacts required for an {@code
+   * android_instrumentation_test}.
+   */
+  ApkBuildStep getAitBuildStep(
+      Project project,
+      boolean useMobileInstall,
+      boolean nativeDebuggingEnabled,
+      Label label,
+      ImmutableList<String> blazeFlags,
+      ImmutableList<String> exeFlags,
+      String launchId)
+      throws ExecutionException;
 }

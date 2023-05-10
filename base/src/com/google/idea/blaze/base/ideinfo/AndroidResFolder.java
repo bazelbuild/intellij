@@ -21,6 +21,7 @@ import com.google.common.base.Objects;
 import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.ResFolderLocation;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import javax.annotation.Nullable;
 
 /**
@@ -75,11 +76,13 @@ public final class AndroidResFolder implements ProtoWrapper<IntellijIdeInfo.ResF
     ArtifactLocation root;
     ArtifactLocation aar;
 
+    @CanIgnoreReturnValue
     public AndroidResFolder.Builder setRoot(ArtifactLocation root) {
       this.root = root;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public AndroidResFolder.Builder setAar(ArtifactLocation aar) {
       this.aar = aar;
       return this;

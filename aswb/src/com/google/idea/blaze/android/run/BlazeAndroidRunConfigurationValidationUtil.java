@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.run;
 
 import com.android.tools.idea.project.AndroidProjectInfo;
 import com.android.tools.idea.run.ValidationError;
+import com.android.tools.idea.run.ValidationErrorCompat;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -32,7 +33,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import java.util.List;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidPlatformsCompat;
 import org.jetbrains.android.util.AndroidBundle;
 
 /**
@@ -69,17 +70,17 @@ public final class BlazeAndroidRunConfigurationValidationUtil {
         ModuleFinder.getInstance(project).findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME);
     if (workspaceModule == null) {
       errors.add(
-          ValidationError.fatal(
+          ValidationErrorCompat.fatal(
               "No workspace module found. Please resync project.", () -> resync(project)));
       return errors;
     }
     if (AndroidFacet.getInstance(workspaceModule) == null) {
       errors.add(
-          ValidationError.fatal(
+          ValidationErrorCompat.fatal(
               "Android model missing from workspace module. Please resync project.",
               () -> resync(project)));
     }
-    if (AndroidPlatform.getInstance(workspaceModule) == null) {
+    if (AndroidPlatformsCompat.getInstance(workspaceModule) == null) {
       errors.add(ValidationError.fatal(AndroidBundle.message("select.platform.error")));
     }
     return errors;
@@ -90,7 +91,7 @@ public final class BlazeAndroidRunConfigurationValidationUtil {
     errors.addAll(validateWorkspaceModule(project));
 
     if (AndroidProjectInfo.getInstance(project).requiredAndroidModelMissing()) {
-      errors.add(ValidationError.fatal(SYNC_FAILED_ERR_MSG, () -> resync(project)));
+      errors.add(ValidationErrorCompat.fatal(SYNC_FAILED_ERR_MSG, () -> resync(project)));
     }
 
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();

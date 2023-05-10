@@ -19,20 +19,28 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.sync.SyncResult;
-import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.Output;
+import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.exception.BuildException;
+import com.intellij.openapi.diagnostic.Logger;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 /** Scoped operation context. */
-public class BlazeContext {
+public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
+
+  private static final Logger logger = Logger.getInstance(BlazeContext.class);
 
   @Nullable private BlazeContext parentContext;
 
-  private final List<BlazeScope> scopes = Lists.newArrayList();
+  private final List<Scope<? super BlazeContext>> scopes = Lists.newArrayList();
 
   // List of all active child contexts.
   private final List<BlazeContext> childContexts =
@@ -48,6 +56,7 @@ public class BlazeContext {
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
   private int holdCount;
   private boolean hasErrors;
+  private boolean hasWarnings;
   private boolean propagatesErrors = true;
 
   private BlazeContext(@Nullable BlazeContext parentContext) {
@@ -58,6 +67,7 @@ public class BlazeContext {
     return new BlazeContext(null);
   }
 
+  @MustBeClosed
   public static BlazeContext create(BlazeContext parentContext) {
     BlazeContext context = new BlazeContext(parentContext);
     if (parentContext != null) {
@@ -66,14 +76,17 @@ public class BlazeContext {
     return context;
   }
 
-  public BlazeContext push(BlazeScope scope) {
+  @CanIgnoreReturnValue
+  @Override
+  public BlazeContext push(Scope<? super BlazeContext> scope) {
     scopes.add(scope);
     scope.onScopeBegin(this);
     return this;
   }
 
   /** Ends the context scope. */
-  public void endScope() {
+  @Override
+  public void close() {
     if (isEnding || holdCount > 0) {
       return;
     }
@@ -87,14 +100,9 @@ public class BlazeContext {
       if (hasErrors && propagatesErrors) {
         parentContext.setHasError();
       }
-    }
-  }
-
-  public void onException(Throwable t) {
-    if (t instanceof SyncCanceledException || t instanceof ProcessCanceledException) {
-      setCancelled();
-    } else {
-      setHasError();
+      if (hasWarnings && propagatesErrors) {
+        parentContext.setHasWarnings();
+      }
     }
   }
 
@@ -135,7 +143,7 @@ public class BlazeContext {
 
   public void release() {
     if (--holdCount == 0) {
-      endScope();
+      close();
     }
   }
 
@@ -148,12 +156,13 @@ public class BlazeContext {
   }
 
   @Nullable
-  public <T extends BlazeScope> T getScope(Class<T> scopeClass) {
+  @Override
+  public <T extends Context.Scope<?>> T getScope(Class<T> scopeClass) {
     return getScope(scopeClass, scopes.size());
   }
 
   @Nullable
-  private <T extends BlazeScope> T getScope(Class<T> scopeClass, int endIndex) {
+  private <T extends Context.Scope<?>> T getScope(Class<T> scopeClass, int endIndex) {
     for (int i = endIndex - 1; i >= 0; i--) {
       if (scopes.get(i).getClass() == scopeClass) {
         return scopeClass.cast(scopes.get(i));
@@ -185,7 +194,7 @@ public class BlazeContext {
    *     startingScope} to the root.
    */
   @VisibleForTesting
-  <T extends BlazeScope> List<T> getScopes(Class<T> scopeClass) {
+  <T extends Scope<?>> List<T> getScopes(Class<T> scopeClass) {
     List<T> scopesCollector = Lists.newArrayList();
     getScopes(scopesCollector, scopeClass, scopes.size());
     return scopesCollector;
@@ -203,7 +212,7 @@ public class BlazeContext {
    *     list.
    */
   @VisibleForTesting
-  <T extends BlazeScope> List<T> getScopes(Class<T> scopeClass, BlazeScope startingScope) {
+  <T extends Scope<?>> List<T> getScopes(Class<T> scopeClass, Scope<?> startingScope) {
     List<T> scopesCollector = Lists.newArrayList();
     int index = scopes.indexOf(startingScope);
     if (index == -1) {
@@ -217,10 +226,9 @@ public class BlazeContext {
 
   /** Add matching scopes to {@param scopesCollector}. Search from {@param maxIndex} - 1 to 0. */
   @VisibleForTesting
-  <T extends BlazeScope> void getScopes(
-      List<T> scopesCollector, Class<T> scopeClass, int maxIndex) {
+  <T extends Scope<?>> void getScopes(List<T> scopesCollector, Class<T> scopeClass, int maxIndex) {
     for (int i = maxIndex - 1; i >= 0; --i) {
-      BlazeScope scope = scopes.get(i);
+      Scope<?> scope = scopes.get(i);
       if (scopeClass.isInstance(scope)) {
         scopesCollector.add(scopeClass.cast(scope));
       }
@@ -230,6 +238,7 @@ public class BlazeContext {
     }
   }
 
+  @CanIgnoreReturnValue
   public <T extends Output> BlazeContext addOutputSink(
       Class<T> outputClass, OutputSink<T> outputSink) {
     outputSinks.put(outputClass, outputSink);
@@ -238,6 +247,7 @@ public class BlazeContext {
 
   /** Produces output by sending it to any registered sinks. */
   @SuppressWarnings("unchecked")
+  @Override
   public synchronized <T extends Output> void output(T output) {
     Class<? extends Output> outputClass = output.getClass();
     List<OutputSink<?>> outputSinks = this.outputSinks.get(outputClass);
@@ -261,13 +271,22 @@ public class BlazeContext {
    *
    * <p>The error state will be propagated to any parents.
    */
+  @Override
   public void setHasError() {
     this.hasErrors = true;
+  }
+
+  public void setHasWarnings() {
+    hasWarnings = true;
   }
 
   /** Returns true if there were errors */
   public boolean hasErrors() {
     return hasErrors;
+  }
+
+  public boolean hasWarnings() {
+    return hasWarnings;
   }
 
   public boolean isRoot() {
@@ -308,5 +327,37 @@ public class BlazeContext {
       return SyncResult.FAILURE;
     }
     return SyncResult.SUCCESS;
+  }
+
+  /**
+   * Log & display a message to the user when a user-initiated action fails.
+   *
+   * @param description A user readable failure message, including the high level IDE operation that
+   *     failed.
+   * @param t The exception that caused the failure.
+   */
+  public void handleException(String description, Throwable t) {
+    if (t instanceof CancellationException) {
+      logger.info(description + ": cancelled.", t);
+      output(PrintOutput.error("Cancelled"));
+      setCancelled();
+      return;
+    } else if (isExceptionError(t)) {
+      logger.error(description, t);
+      output(PrintOutput.error(description + ": " + t.getClass().getSimpleName()));
+    } else {
+      logger.info(description, t);
+    }
+    setHasError();
+    if (t.getMessage() != null) {
+      output(PrintOutput.error(t.getMessage()));
+    }
+  }
+
+  private boolean isExceptionError(Throwable e) {
+    if (e instanceof BuildException) {
+      return ((BuildException) e).isIdeError();
+    }
+    return true;
   }
 }

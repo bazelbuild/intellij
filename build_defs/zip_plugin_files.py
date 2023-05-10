@@ -30,16 +30,20 @@ parser.add_argument(
 
 def pairwise(t):
   it = iter(t)
-  return zip(it, it)
+  return zip(it, it, it)
 
 
 def main():
   args = parser.parse_args()
   with zipfile.ZipFile(args.output, "w") as outfile:
-    for exec_path, zip_path in pairwise(args.files_to_zip):
+    for exec_path, zip_path, executable in pairwise(args.files_to_zip):
       with open(exec_path, mode="rb") as input_file:
         zipinfo = zipfile.ZipInfo(zip_path, (2000, 1, 1, 0, 0, 0))
-        filemode = stat.S_IMODE(os.fstat(input_file.fileno()).st_mode)
+        filemode = (
+            0o755
+            if executable == "True"
+            else stat.S_IMODE(os.fstat(input_file.fileno()).st_mode)
+        )
         zipinfo.external_attr = filemode << 16
         outfile.writestr(zipinfo, input_file.read(), zipfile.ZIP_DEFLATED)
 

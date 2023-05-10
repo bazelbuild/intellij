@@ -6,6 +6,10 @@ load(
     "sources_from_target",
     "struct_omit_none",
 )
+load(
+    ":intellij_info_impl.bzl",
+    "stringify_label",
+)
 
 _DEP_ATTRS = ["deps", "exports", "runtime_deps", "_java_toolchain"]
 
@@ -17,8 +21,8 @@ def _fast_build_info_impl(target, ctx):
 
     info = {
         "workspace_name": ctx.workspace_name,
-        "label": str(target.label),
-        "dependencies": [str(t.label) for t in dep_targets],
+        "label": stringify_label(target.label),
+        "dependencies": [stringify_label(t.label) for t in dep_targets],
     }
 
     write_output = False
@@ -28,7 +32,7 @@ def _fast_build_info_impl(target, ctx):
         write_output = True
         info["data"] = [
             struct(
-                label = str(datadep.label),
+                label = stringify_label(datadep.label),
                 artifacts = [artifact_location(file) for file in datadep.files.to_list()],
             )
             for datadep in ctx.rule.attr.data
@@ -61,9 +65,9 @@ def _fast_build_info_impl(target, ctx):
         if hasattr(ctx.rule.attr, "use_launcher") and not ctx.rule.attr.use_launcher:
             launcher = None
         elif hasattr(ctx.rule.attr, "_java_launcher") and ctx.rule.attr._java_launcher:
-            launcher = str(ctx.rule.attr._java_launcher.label)
+            launcher = stringify_label(ctx.rule.attr._java_launcher.label)
         elif hasattr(ctx.rule.attr, "_javabase") and ctx.rule.attr._javabase:
-            launcher = str(ctx.rule.attr._javabase.label)
+            launcher = stringify_label(ctx.rule.attr._javabase.label)
         java_info = {
             "sources": sources_from_target(ctx),
             "test_class": getattr(ctx.rule.attr, "test_class", None),

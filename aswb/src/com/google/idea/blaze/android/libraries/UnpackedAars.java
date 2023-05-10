@@ -15,9 +15,11 @@
  */
 package com.google.idea.blaze.android.libraries;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -28,6 +30,8 @@ import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArt
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.filecache.FileCacheDiffer;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
@@ -35,7 +39,6 @@ import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -45,7 +48,7 @@ import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.intellij.openapi.components.ServiceManager;
+import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -86,7 +89,7 @@ public class UnpackedAars {
   private final AarCache aarCache;
 
   public static UnpackedAars getInstance(Project project) {
-    return ServiceManager.getService(project, UnpackedAars.class);
+    return project.getService(UnpackedAars.class);
   }
 
   public UnpackedAars(Project project) {
@@ -209,35 +212,57 @@ public class UnpackedAars {
     }
   }
 
+  private File logAndGetFallbackJar(
+      ArtifactLocationDecoder decoder, AarLibrary library, BlazeArtifact jar) {
+    if (aarCache.isEmpty()) {
+      logger.warn("Cache state is empty");
+    }
+
+    // if artifact is RemoteOutputArtifact, we can only find it in aar cache. So it's expected
+    // that the aar directory has been cached. It's unexpected when it runs into this case and
+    // cannot find any fallback file.
+    if (jar instanceof RemoteOutputArtifact) {
+      BlazeArtifact aar = decoder.resolveOutput(library.aarArtifact);
+      logger.warn(
+          String.format(
+              "Fail to look up from cache state for library [aarArtifact = %s, jar = %s]",
+              aar, jar));
+      logger.debug("Cache state contains the following keys: " + aarCache.getCachedKeys());
+    }
+    return getFallbackFile(jar);
+  }
+
   /** Returns the merged jar derived from an AAR, in the unpacked AAR directory. */
   @Nullable
   public File getClassJar(ArtifactLocationDecoder decoder, AarLibrary library) {
     if (library.libraryArtifact == null) {
       return null;
     }
-    BlazeArtifact jar = decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary());
-    if (aarCache.isEmpty()) {
-      logger.warn("Cache state is empty");
-      return getFallbackFile(jar);
-    }
-
-    BlazeArtifact aar = decoder.resolveOutput(library.aarArtifact);
     File aarDir = getAarDir(decoder, library);
-    // check if it was actually cached
     if (aarDir == null) {
-      // if artifact is RemoteOutputArtifact, we can only find it in aar cache. So it's expected
-      // that the aar directory has been cached. It's unexpected when it runs into this case and
-      // cannot find any fallback file.
-      if (jar instanceof RemoteOutputArtifact) {
-        logger.warn(
-            String.format(
-                "Fail to look up %s from cache state for library [aarArtifact = %s, jar = %s]",
-                aarDir, aar, jar));
-        logger.debug("Cache state contains the following keys: " + aarCache.getCachedKeys());
-      }
-      return getFallbackFile(jar);
+      BlazeArtifact jar = decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary());
+      return logAndGetFallbackJar(decoder, library, jar);
     }
     return UnpackedAarUtils.getJarFile(aarDir);
+  }
+
+  /** Returns the src jars derived from an AAR, in the unpacked AAR directory. */
+  public ImmutableList<File> getCachedSrcJars(ArtifactLocationDecoder decoder, AarLibrary library) {
+    if (library.libraryArtifact == null) {
+      return ImmutableList.of();
+    }
+    File aarDir = getAarDir(decoder, library);
+    return library.libraryArtifact.getSourceJars().stream()
+        .map(
+            artifactLocation -> {
+              BlazeArtifact srcJar = decoder.resolveOutput(artifactLocation);
+              if (aarDir == null) {
+                return logAndGetFallbackJar(decoder, library, srcJar);
+              }
+              String srcJarName = UnpackedAarUtils.getSrcJarName(srcJar);
+              return new File(aarDir, srcJarName);
+            })
+        .collect(toImmutableList());
   }
 
   /** Returns the res/ directory corresponding to an unpacked AAR file. */
@@ -256,7 +281,12 @@ public class UnpackedAars {
 
   @Nullable
   public File getAarDir(ArtifactLocationDecoder decoder, AarLibrary library) {
-    BlazeArtifact artifact = decoder.resolveOutput(library.aarArtifact);
+    return getAarDir(decoder, library.aarArtifact);
+  }
+
+  @Nullable
+  public File getAarDir(ArtifactLocationDecoder decoder, ArtifactLocation aar) {
+    BlazeArtifact artifact = decoder.resolveOutput(aar);
     String aarDirName = UnpackedAarUtils.getAarDirName(artifact);
     return aarCache.getCachedAarDir(aarDirName);
   }
@@ -270,7 +300,8 @@ public class UnpackedAars {
     return ((LocalFileArtifact) output).getFile();
   }
 
-  static class FileCacheAdapter implements FileCache {
+  /** An implementation of {@link FileCache} delegating to {@link UnpackedAars}. */
+  public static class FileCacheAdapter implements FileCache {
     @Override
     public String getName() {
       return "Unpacked AAR libraries";
@@ -330,11 +361,18 @@ public class UnpackedAars {
     Map<String, AarLibraryContents> outputs = new HashMap<>();
     for (AarLibrary library : aarLibraries) {
       BlazeArtifact aar = decoder.resolveOutput(library.aarArtifact);
-      BlazeArtifact jar =
-          library.libraryArtifact != null
-              ? decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary())
-              : null;
-      outputs.put(UnpackedAarUtils.getAarDirName(aar), AarLibraryContents.create(aar, jar));
+      LibraryArtifact libraryArtifact = library.libraryArtifact;
+      BlazeArtifact jar = null;
+      ImmutableList<BlazeArtifact> srcJars = ImmutableList.of();
+      if (libraryArtifact != null) {
+        jar = decoder.resolveOutput(libraryArtifact.jarForIntellijLibrary());
+        srcJars =
+            libraryArtifact.getSourceJars().stream()
+                .map(decoder::resolveOutput)
+                .collect(toImmutableList());
+      }
+      outputs.put(
+          UnpackedAarUtils.getAarDirName(aar), AarLibraryContents.create(aar, jar, srcJars));
     }
     return ImmutableMap.copyOf(outputs);
   }

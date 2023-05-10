@@ -28,7 +28,7 @@ load(
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 optional_plugin_xml(
     name = "optional_java",
@@ -49,7 +49,7 @@ stamped_plugin_xml(
     changelog_file = "//:changelog",
     description_file = "src/META-INF/description.html",
     plugin_id = "com.google.idea.bazel.ijwb",
-    plugin_name = "Bazel",
+    plugin_name = "Bazel for IntelliJ",
     # #api212: We depend on an API which is only contained in 2021.2.1+.
     since_build_numbers = {"212": "212.5080.55"},
     stamp_since_build = True,
@@ -74,6 +74,9 @@ java_library(
 intellij_plugin(
     name = "ijwb_bazel",
     plugin_xml = ":stamped_plugin_xml",
+    tags = [
+        "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
+    ],
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -88,6 +91,7 @@ intellij_plugin(
     ] + select_for_ide(
         intellij = [],
         intellij_ue = [
+            "//gazelle:plugin_library",
             "//golang:plugin_library",
             "//javascript:plugin_library",
         ],
@@ -147,6 +151,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -167,6 +172,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )

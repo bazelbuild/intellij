@@ -154,6 +154,7 @@ message OutputArtifact {
   // synced. Used to choose between artifacts with the same path but different
   // IDs artifacts from a more recently-started sync will take priority
   int64 sync_start_time_millis = 3;
+  int64 file_length = 4;
 }
 
 message AndroidResourceModule {

@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -213,6 +214,10 @@ public class TargetExpressionListUi extends JPanel {
     }
 
     private static Collection<String> getTargets(Project project) {
+      // TODO(b/262428615): Retrieve data from query sync
+      if (QuerySync.isEnabled()) {
+        return ImmutableList.of();
+      }
       BlazeProjectData projectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
       BlazeImportSettings importSettings =

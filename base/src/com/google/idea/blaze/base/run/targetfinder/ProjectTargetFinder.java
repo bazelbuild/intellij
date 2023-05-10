@@ -17,16 +17,13 @@ package com.google.idea.blaze.base.run.targetfinder;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.common.BuildTarget;
 import com.intellij.openapi.project.Project;
-import java.util.Objects;
 import java.util.concurrent.Future;
-import javax.annotation.Nullable;
 
 /** Uses the project's {@link TargetMap} to locate targets matching a given label. */
 class ProjectTargetFinder implements TargetFinder {
@@ -35,22 +32,11 @@ class ProjectTargetFinder implements TargetFinder {
   public Future<TargetInfo> findTarget(Project project, Label label) {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    TargetInfo target = projectData != null ? findTarget(projectData.getTargetMap(), label) : null;
-    return Futures.immediateFuture(target);
-  }
-
-  @Nullable
-  private static TargetInfo findTarget(TargetMap map, Label label) {
-    // look for a plain target first
-    TargetIdeInfo target = map.get(TargetKey.forPlainTarget(label));
-    if (target != null) {
-      return target.toTargetInfo();
+    TargetInfo ret = null;
+    if (projectData != null) {
+      BuildTarget buildTarget = projectData.getBuildTarget(label);
+      ret = buildTarget != null ? TargetInfo.builder(label, buildTarget.kind()).build() : null;
     }
-    // otherwise just return any matching target
-    return map.targets().stream()
-        .filter(t -> Objects.equals(label, t.getKey().getLabel()))
-        .findFirst()
-        .map(TargetIdeInfo::toTargetInfo)
-        .orElse(null);
+    return Futures.immediateFuture(ret);
   }
 }

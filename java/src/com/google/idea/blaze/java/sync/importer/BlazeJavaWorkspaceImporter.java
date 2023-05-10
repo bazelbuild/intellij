@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.sync.importer;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -39,11 +40,11 @@ import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.google.idea.blaze.java.sync.DuplicateSourceDetector;
@@ -179,10 +180,6 @@ public final class BlazeJavaWorkspaceImporter {
         targetKeyToLibrary.put(target.getKey(), library);
         addLibraryToJdeps(jdepsPathToLibrary, library);
       }
-
-      javaIdeInfo.getPluginProcessorJars().stream()
-          .map(LibraryArtifact::jarForIntellijLibrary)
-          .forEach(workspaceBuilder.pluginProcessorJars::add);
     }
 
     // Preserve classpath order. Add leaf level dependencies first and work the way up. This
@@ -258,7 +255,13 @@ public final class BlazeJavaWorkspaceImporter {
     TargetKey targetKey = target.getKey();
     Collection<String> jars = jdepsMap.getDependenciesForTarget(targetKey);
     if (jars != null) {
-      workspaceBuilder.jdeps.addAll(jars);
+      // TODO (b/242871251): switch back to jars when we are able to access these -kt-ijar.jar from
+      // provider. Otherwise they fall back to LocalArtifact since they cannot be accessed and make
+      // loading time longer.
+      workspaceBuilder.jdeps.addAll(
+          jars.stream()
+              .filter(jar -> !jar.contains("-kt-ijar.jar") && !jar.contains("-kt-src.jar"))
+              .collect(toImmutableList()));
     }
 
     // Add all deps if this target is in the current working set

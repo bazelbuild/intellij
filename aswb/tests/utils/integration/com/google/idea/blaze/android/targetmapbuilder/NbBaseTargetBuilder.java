@@ -34,4 +34,8 @@ abstract class NbBaseTargetBuilder implements NbTargetBuilder {
   public TargetIdeInfo build() {
     return getIdeInfoBuilder().build();
   }
+
+  public BlazeInfoData getBlazeInfoData() {
+    return blazeInfoData;
+  }
 }

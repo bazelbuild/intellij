@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.ideinfo;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -32,6 +33,7 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
   @Nullable private final String javaBinaryMainClass;
   @Nullable private final String testClass;
   private final ImmutableList<LibraryArtifact> pluginProcessorJars;
+  private final ImmutableList<ArtifactLocation> transitiveCompileTimeJars;
 
   private JavaIdeInfo(
       ImmutableList<LibraryArtifact> jars,
@@ -42,7 +44,8 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
       @Nullable ArtifactLocation jdepsFile,
       @Nullable String javaBinaryMainClass,
       @Nullable String testClass,
-      ImmutableList<LibraryArtifact> pluginProcessorJars) {
+      ImmutableList<LibraryArtifact> pluginProcessorJars,
+      ImmutableList<ArtifactLocation> transitiveCompileTimeJars) {
     this.jars = jars;
     this.generatedJars = generatedJars;
     this.sources = sources;
@@ -52,6 +55,7 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
     this.javaBinaryMainClass = javaBinaryMainClass;
     this.testClass = testClass;
     this.pluginProcessorJars = pluginProcessorJars;
+    this.transitiveCompileTimeJars = transitiveCompileTimeJars;
   }
 
   static JavaIdeInfo fromProto(IntellijIdeInfo.JavaIdeInfo proto) {
@@ -64,7 +68,8 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
         proto.hasJdeps() ? ArtifactLocation.fromProto(proto.getJdeps()) : null,
         Strings.emptyToNull(proto.getMainClass()),
         Strings.emptyToNull(proto.getTestClass()),
-        ProtoWrapper.map(proto.getPluginProcessorJarsList(), LibraryArtifact::fromProto));
+        ProtoWrapper.map(proto.getPluginProcessorJarsList(), LibraryArtifact::fromProto),
+        ProtoWrapper.map(proto.getTransitiveCompileTimeJarsList(), ArtifactLocation::fromProto));
   }
 
   @Override
@@ -74,7 +79,8 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
             .addAllJars(ProtoWrapper.mapToProtos(jars))
             .addAllGeneratedJars(ProtoWrapper.mapToProtos(generatedJars))
             .addAllSources(ProtoWrapper.mapToProtos(sources))
-            .addAllPluginProcessorJars(ProtoWrapper.mapToProtos(pluginProcessorJars));
+            .addAllPluginProcessorJars(ProtoWrapper.mapToProtos(pluginProcessorJars))
+            .addAllTransitiveCompileTimeJars(ProtoWrapper.mapToProtos(transitiveCompileTimeJars));
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setFilteredGenJar, filteredGenJar);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setPackageManifest, packageManifest);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setJdeps, jdepsFile);
@@ -128,9 +134,17 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
     return javaBinaryMainClass;
   }
 
-  /** Jars needed to apply the encapsulated annotation processors. . */
+  /** Jars needed to apply the encapsulated annotation processors. */
   public ImmutableList<LibraryArtifact> getPluginProcessorJars() {
     return pluginProcessorJars;
+  }
+
+  /**
+   * ArtifactLocation of transitive compile time jars. It provides the ability to get
+   * ArtifactLocation of transitive deps without parsing jdeps.
+   */
+  public ImmutableList<ArtifactLocation> getTransitiveCompileTimeJars() {
+    return transitiveCompileTimeJars;
   }
 
   /** test_class attribute value for java_test targets */
@@ -152,39 +166,53 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
     @Nullable String testClass;
     @Nullable ArtifactLocation jdepsFile;
     ImmutableList.Builder<LibraryArtifact> pluginProcessorJars = ImmutableList.builder();
+    ImmutableList.Builder<ArtifactLocation> transitiveCompileTimeJars = ImmutableList.builder();
 
+    @CanIgnoreReturnValue
     public Builder addJar(LibraryArtifact.Builder jar) {
       jars.add(jar.build());
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addGeneratedJar(LibraryArtifact.Builder jar) {
       generatedJars.add(jar.build());
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setFilteredGenJar(LibraryArtifact.Builder jar) {
       this.filteredGenJar = jar.build();
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setMainClass(@Nullable String mainClass) {
       this.mainClass = mainClass;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setTestClass(@Nullable String testClass) {
       this.testClass = testClass;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setJdepsFile(@Nullable ArtifactLocation jdepsFile) {
       this.jdepsFile = jdepsFile;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addPluginProcessorJars(LibraryArtifact.Builder jar) {
       pluginProcessorJars.add(jar.build());
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public Builder addTransitiveCompileTimeJar(ArtifactLocation transitiveCompileTimeJar) {
+      transitiveCompileTimeJars.add(transitiveCompileTimeJar);
       return this;
     }
 
@@ -198,7 +226,8 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
           jdepsFile,
           mainClass,
           testClass,
-          pluginProcessorJars.build());
+          pluginProcessorJars.build(),
+          transitiveCompileTimeJars.build());
     }
   }
 
@@ -219,7 +248,8 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
         && Objects.equals(jdepsFile, that.jdepsFile)
         && Objects.equals(javaBinaryMainClass, that.javaBinaryMainClass)
         && Objects.equals(testClass, that.testClass)
-        && Objects.equals(pluginProcessorJars, that.pluginProcessorJars);
+        && Objects.equals(pluginProcessorJars, that.pluginProcessorJars)
+        && Objects.equals(transitiveCompileTimeJars, that.transitiveCompileTimeJars);
   }
 
   @Override
@@ -233,6 +263,7 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
         jdepsFile,
         javaBinaryMainClass,
         testClass,
-        pluginProcessorJars);
+        pluginProcessorJars,
+        transitiveCompileTimeJars);
   }
 }

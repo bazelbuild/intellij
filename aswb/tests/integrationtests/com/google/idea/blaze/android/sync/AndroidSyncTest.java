@@ -28,7 +28,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
-import com.google.idea.blaze.android.libraries.AarLibraryFileBuilder;
+import com.google.idea.blaze.android.libraries.LibraryFileBuilder;
 import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
 import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
 import com.google.idea.blaze.android.sync.sdk.SdkUtil;
@@ -154,7 +154,8 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
             .setAddProjectViewTargets(true)
             .build());
     List<Sdk> allSdks = BlazeSdkProvider.getInstance().getAllAndroidSdks();
-    assertThat(allSdks).containsExactly(testEnvArgument.sdk);
+    assertThat(allSdks).hasSize(1);
+    assertThat(allSdks.get(0).getName()).isEqualTo(testEnvArgument.sdk.getName());
     errorCollector.assertIssues(
         String.format(
             AndroidSdkFromProjectView.NO_SDK_ERROR_TEMPLATE,
@@ -349,7 +350,7 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
         "android_sdk_platform: android-25");
 
     workspace.createFile(new WorkspacePath("java/com/google/foo.aar"));
-    workspace.createFile(new WorkspacePath("java/com/google/foo.srcjar"));
+    workspace.createFile(new WorkspacePath("foo.srcjar"));
     workspace.createDirectory(new WorkspacePath("java/com/google"));
     workspace.createFile(
         new WorkspacePath("java/com/google/Source.java"),
@@ -361,8 +362,8 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
         "public class Other {}");
 
     // construct an aar file with a res file.
-    AarLibraryFileBuilder.aar(workspaceRoot, "java/com/google/foo.aar")
-        .src(
+    LibraryFileBuilder.aar(workspaceRoot, "java/com/google/foo.aar")
+        .addContent(
             "res/values/colors.xml",
             ImmutableList.of(
                 "<?xml version=\"1.0\" encoding=\"utf-8\"?>",

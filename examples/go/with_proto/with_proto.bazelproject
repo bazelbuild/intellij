@@ -1,0 +1,16 @@
+
+directories:
+  .
+
+derive_targets_from_directories: true
+
+additional_languages:
+  go
+
+gazelle_target: //:gazelle
+
+import_run_configurations:
+  # Test that validates that macro expansion works, as per issue:
+  #    https://github.com/bazelbuild/intellij/issues/4112#event-7958662669
+  # This configuration should be executed on both 'run' (the green arrow) and 'debug' (the bug) modes.
+  run_configurations/test_macro_expansion.xml

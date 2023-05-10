@@ -66,6 +66,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.RemoteApkDownloader" interface="com.google.idea.blaze.android.run.RemoteApkDownloader"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.ComposeStatusProvider" interface="com.google.idea.blaze.android.compose.ComposeStatusProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.android.ApkBuildStepProvider" interface="com.google.idea.blaze.android.run.ApkBuildStepProvider" />
+    <extensionPoint qualifiedName="com.google.idea.blaze.NativeSymbolFinder" interface="com.google.idea.blaze.android.run.NativeSymbolFinder" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -94,7 +95,6 @@
     <ComposeStatusProvider implementation="com.google.idea.blaze.android.compose.ExperimentComposeStatusProvider"/>
     <BlazeBuildListener implementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemBuildManager$BuildCallbackPublisher"/>
     <android.ApkBuildStepProvider implementation="com.google.idea.blaze.android.run.BazelApkBuildStepProvider" />
-    <BuildFlagsProvider implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncBuildFlagsProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.ide">

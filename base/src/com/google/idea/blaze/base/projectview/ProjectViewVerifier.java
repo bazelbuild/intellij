@@ -32,6 +32,8 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.PrintOutput.OutputType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
@@ -118,12 +120,12 @@ public class ProjectViewVerifier {
           WorkspacePath excludedDirectory = entry.directory;
           if (FileUtil.isAncestor(
               excludedDirectory.relativePath(), includedDirectory.relativePath(), false)) {
-            IssueOutput.error(
-                    String.format(
-                        "%s is included, but that contradicts %s which was excluded",
-                        includedDirectory.toString(), excludedDirectory.toString()))
-                .inFile(projectViewFile.projectViewFile)
-                .submit(context);
+            String message =
+                String.format(
+                    "%s is included, but that contradicts %s which was excluded",
+                    includedDirectory, excludedDirectory);
+            IssueOutput.error(message).inFile(projectViewFile.projectViewFile).submit(context);
+            context.output(new PrintOutput(message, OutputType.ERROR));
             ok = false;
           }
         }
@@ -153,18 +155,16 @@ public class ProjectViewVerifier {
         WorkspacePath workspacePath = entry.directory;
         File file = workspacePathResolver.resolveToFile(workspacePath);
         if (!fileOperationProvider.exists(file)) {
-          IssueOutput.error(
-                  String.format(
-                      "Directory '%s' specified in project view not found.", workspacePath))
-              .inFile(projectViewFile.projectViewFile)
-              .submit(context);
+          String message =
+              String.format("Directory '%s' specified in project view not found.", workspacePath);
+          IssueOutput.error(message).inFile(projectViewFile.projectViewFile).submit(context);
+          context.output(new PrintOutput(message, OutputType.ERROR));
           ok = false;
         } else if (!fileOperationProvider.isDirectory(file)) {
-          IssueOutput.error(
-                  String.format(
-                      "Directory '%s' specified in project view is a file.", workspacePath))
-              .inFile(projectViewFile.projectViewFile)
-              .submit(context);
+          String message =
+              String.format("Directory '%s' specified in project view is a file.", workspacePath);
+          IssueOutput.error(message).inFile(projectViewFile.projectViewFile).submit(context);
+          context.output(new PrintOutput(message, OutputType.ERROR));
           ok = false;
         }
       }

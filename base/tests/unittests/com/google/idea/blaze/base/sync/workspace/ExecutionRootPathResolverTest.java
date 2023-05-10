@@ -33,7 +33,8 @@ import org.junit.runners.JUnit4;
 public class ExecutionRootPathResolverTest extends BlazeTestCase {
 
   private static final WorkspaceRoot WORKSPACE_ROOT = new WorkspaceRoot(new File("/path/to/root"));
-  private static final String EXECUTION_ROOT = "/path/to/_bazel_user/1234bf129e/root";
+  private static final String EXECUTION_ROOT = "/path/to/_bazel_user/1234bf129e/execroot/__main__";
+  private static final String OUTPUT_BASE = "/path/to/_bazel_user/1234bf129e";
 
   private ExecutionRootPathResolver pathResolver;
 
@@ -44,14 +45,15 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
             new BazelBuildSystemProvider(),
             WORKSPACE_ROOT,
             new File(EXECUTION_ROOT),
+            new File(OUTPUT_BASE),
             new WorkspacePathResolverImpl(WORKSPACE_ROOT));
   }
 
   @Test
-  public void testExternalWorkspacePathRelativeToExecRoot() {
+  public void testExternalWorkspacePathRelativeToOutputBase() {
     ImmutableList<File> files =
         pathResolver.resolveToIncludeDirectories(new ExecutionRootPath("external/guava/src"));
-    assertThat(files).containsExactly(new File(EXECUTION_ROOT, "external/guava/src"));
+    assertThat(files).containsExactly(new File(OUTPUT_BASE, "external/guava/src"));
   }
 
   @Test
@@ -64,7 +66,7 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
   }
 
   @Test
-  public void testNonOutputPathsRelativeToWorkspaceRoot() {
+  public void testMainWorkspacePathsRelativeToWorkspaceRoot() {
     ImmutableList<File> files =
         pathResolver.resolveToIncludeDirectories(new ExecutionRootPath("tools/fast"));
     assertThat(files).containsExactly(WORKSPACE_ROOT.fileForPath(new WorkspacePath("tools/fast")));

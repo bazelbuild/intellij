@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.query;
 
 import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -32,7 +31,7 @@ import javax.annotation.Nullable;
 public class BlazeQueryOutputBaseProvider {
 
   public static BlazeQueryOutputBaseProvider getInstance(Project project) {
-    return ServiceManager.getService(project, BlazeQueryOutputBaseProvider.class);
+    return project.getService(BlazeQueryOutputBaseProvider.class);
   }
 
   private static final Logger logger = Logger.getInstance(BlazeQueryOutputBaseProvider.class);

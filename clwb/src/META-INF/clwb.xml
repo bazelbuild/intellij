@@ -17,8 +17,6 @@
   <vendor>Google</vendor>
 
   <depends>com.intellij.modules.clion</depends>
-  <depends>org.jetbrains.plugins.clion.test.boost</depends>
-  <depends>org.jetbrains.plugins.clion.test.catch</depends>
   <depends>org.jetbrains.plugins.clion.test.google</depends>
 
   <extensions defaultExtensionNs="com.intellij">

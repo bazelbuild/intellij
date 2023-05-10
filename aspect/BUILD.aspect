@@ -5,7 +5,7 @@
 
 licenses(["notice"])  # Apache 2.0
 
-load(":intellij_info_impl.bzl",
+load(":intellij_info_impl_bundled.bzl",
      "define_flag_hack")
 
 java_binary(

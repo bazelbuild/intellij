@@ -19,11 +19,12 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <RunConfigurationFactory implementation="com.google.idea.blaze.plugin.run.BlazeIntellijPluginConfigurationType$BlazeIntellijPluginRunConfigurationFactory" order="first"/>
     <SyncPlugin implementation="com.google.idea.blaze.plugin.sync.IntellijPluginSyncPlugin"/>
+    <SyncPlugin implementation="com.google.idea.blaze.plugin.sync.IntellijScalaPluginSyncPlugin"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <configurationType implementation="com.google.idea.blaze.plugin.run.BlazeIntellijPluginConfigurationType"/>
-    <stepsBeforeRunProvider implementation="com.google.idea.blaze.plugin.run.BuildPluginBeforeRunTaskProvider"/>
+    <stepsBeforeRunProvider implementation="com.google.idea.blaze.plugin.run.BuildPluginBeforeRunTaskProviderWrapper"/>
   </extensions>
 
 </idea-plugin>

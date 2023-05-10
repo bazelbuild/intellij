@@ -23,12 +23,14 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider.TargetState;
@@ -386,8 +388,11 @@ public class BlazeCommandRunConfiguration
   public void checkConfiguration() throws RuntimeConfigurationException {
     // Our handler check is not valid when we don't have BlazeProjectData.
     if (BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData() == null) {
-      throw new RuntimeConfigurationError(
-          "Configuration cannot be run until project has been synced.");
+      // With query sync we don't need a sync to run a configuration
+      if (!QuerySync.isEnabled()) {
+        throw new RuntimeConfigurationError(
+            "Configuration cannot be run until project has been synced.");
+      }
     }
     boolean hasBlazeBeforeRunTask =
         RunManagerEx.getInstanceEx(getProject()).getBeforeRunTasks(this).stream()
@@ -408,15 +413,19 @@ public class BlazeCommandRunConfiguration
     }
     ImmutableList<String> targetPatterns = this.targetPatterns;
     if (targetPatterns.isEmpty()) {
-      throw new RuntimeConfigurationError(
-          String.format(
-              "You must specify a %s target expression.", Blaze.buildSystemName(getProject())));
+      if (handler.getCommandName() != BlazeCommandName.INFO) {
+        throw new RuntimeConfigurationError(
+                String.format(
+                        "You must specify a %s target expression.", Blaze.buildSystemName(getProject())));
+      }
     }
     for (String pattern : targetPatterns) {
-      if (Strings.isNullOrEmpty(pattern)) {
-        throw new RuntimeConfigurationError(
-            String.format(
-                "You must specify a %s target expression.", Blaze.buildSystemName(getProject())));
+      if (handler.getCommandName() != BlazeCommandName.INFO) {
+        if (Strings.isNullOrEmpty(pattern)) {
+          throw new RuntimeConfigurationError(
+                  String.format(
+                          "You must specify a %s target expression.", Blaze.buildSystemName(getProject())));
+        }
       }
       if (!pattern.startsWith("//") && !pattern.startsWith("@")) {
         throw new RuntimeConfigurationError(

@@ -77,7 +77,7 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
 
   private String getExperiment(Experiment experiment) {
     queriedExperiments.putIfAbsent(experiment.getKey(), experiment);
-    return experiments.get(ExperimentNameHashes.hashExperimentName(experiment.getKey()));
+    return experiments.get(experiment.getKey());
   }
 
   @Override

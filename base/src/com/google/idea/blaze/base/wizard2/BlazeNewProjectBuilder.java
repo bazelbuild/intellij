@@ -20,29 +20,30 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Contains the state to build a new project throughout the new project wizard process. */
 public final class BlazeNewProjectBuilder {
-  private static final Logger logger = Logger.getInstance(BlazeNewProjectBuilder.class);
-
   // The import wizard should keep this many items around for fields that care about history
   public static final int HISTORY_SIZE = 8;
 
@@ -140,37 +141,44 @@ public final class BlazeNewProjectBuilder {
     return buildSystemName != null ? buildSystemName.getName() : Blaze.defaultBuildSystemName();
   }
 
+  @CanIgnoreReturnValue
   public BlazeNewProjectBuilder setWorkspaceData(WorkspaceTypeData workspaceData) {
     this.workspaceData = workspaceData;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public BlazeNewProjectBuilder setProjectViewOption(
       BlazeSelectProjectViewOption projectViewOption) {
     this.projectViewOption = projectViewOption;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public BlazeNewProjectBuilder setProjectView(ProjectView projectView) {
     this.projectView = projectView;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public BlazeNewProjectBuilder setProjectViewFile(File projectViewFile) {
     this.projectViewFile = projectViewFile;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public BlazeNewProjectBuilder setProjectViewSet(ProjectViewSet projectViewSet) {
     this.projectViewSet = projectViewSet;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public BlazeNewProjectBuilder setProjectName(String projectName) {
     this.projectName = projectName;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public BlazeNewProjectBuilder setProjectDataDirectory(String projectDataDirectory) {
     this.projectDataDirectory = projectDataDirectory;
     return this;
@@ -196,7 +204,6 @@ public final class BlazeNewProjectBuilder {
     }
 
     try {
-      logger.assertTrue(projectViewFile != null);
       ProjectViewStorageManager.getInstance()
           .writeProjectView(ProjectViewParser.projectViewToString(projectView), projectViewFile);
     } catch (IOException e) {
@@ -209,7 +216,7 @@ public final class BlazeNewProjectBuilder {
    * Commits the project data. This method mustn't fail, because the project has already been
    * created.
    */
-  void commitToProject(Project project) {
+  public void commitToProject(Project project) {
     BlazeWizardUserSettingsStorage.getInstance().commit(userSettings);
     EventLoggingService.getInstance()
         .logEvent(getClass(), "blaze-project-created", ImmutableMap.copyOf(userSettings.values));
@@ -223,7 +230,8 @@ public final class BlazeNewProjectBuilder {
         workspaceRoot.directory().getPath(),
         projectName,
         projectDataDirectory,
-        projectViewFile.getPath(),
-        getBuildSystem());
+        Optional.ofNullable(projectViewFile).map(File::getPath).orElse(null),
+        getBuildSystem(),
+        QuerySync.isEnabled() ? ProjectType.QUERY_SYNC : ProjectType.ASPECT_SYNC);
   }
 }

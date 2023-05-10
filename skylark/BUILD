@@ -9,7 +9,7 @@ load(
     "SKYLARK_PACKAGES_VISIBILITY",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 java_library(
     name = "skylark",

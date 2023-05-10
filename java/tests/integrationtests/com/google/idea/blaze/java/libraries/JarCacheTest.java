@@ -47,8 +47,8 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.Glob.GlobSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.OutputSink;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
@@ -57,6 +57,7 @@ import com.google.idea.blaze.base.sync.libraries.BlazeLibrarySorter;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.java.settings.BlazeJavaUserSettings;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncPlugin;
 import com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyJarTracker;
@@ -72,6 +73,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.concurrent.ExecutionException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.junit.Rule;
@@ -101,7 +103,12 @@ public class JarCacheTest extends BlazeTestCase {
       File projectDataDirectory = folder.newFolder("projectdata");
       BlazeImportSettings dummyImportSettings =
           new BlazeImportSettings(
-              "", "", projectDataDirectory.getAbsolutePath(), "", BuildSystemName.Blaze);
+              "",
+              "",
+              projectDataDirectory.getAbsolutePath(),
+              "",
+              BuildSystemName.Blaze,
+              ProjectType.ASPECT_SYNC);
       blazeImportSettingsManager.setImportSettings(dummyImportSettings);
     } catch (IOException e) {
       throw new AssertionError("Failed to create a directory for test", e);
@@ -204,7 +211,8 @@ public class JarCacheTest extends BlazeTestCase {
   }
 
   @Test
-  public void refresh_lintJarCachedAndRepackaged() throws IOException {
+  public void refresh_lintJarCachedAndRepackaged()
+      throws IOException, ExecutionException, InterruptedException {
     ArtifactLocationDecoder artifactLocationDecoder =
         new MockArtifactLocationDecoder(workspaceRoot.directory(), /* isRemote= */ true);
     // arrange: set up a project that have PluginProcessorJars and register a fake repackager that
@@ -229,6 +237,7 @@ public class JarCacheTest extends BlazeTestCase {
 
     // assert
     File cacheDir = JarCacheFolderProvider.getInstance(project).getJarCacheFolder();
+    JarCache.getInstance(project).getRepackagingTasks().get();
     File[] cachedFiles = cacheDir.listFiles();
 
     assertThat(cachedFiles).hasLength(2);

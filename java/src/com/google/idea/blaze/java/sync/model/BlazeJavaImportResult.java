@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.model.ProjectData;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.LibraryKey;
@@ -140,36 +141,43 @@ public final class BlazeJavaImportResult
     private EmptyJarTracker emptyJarTracker;
     private ImmutableSet<ArtifactLocation> pluginProcessorJars;
 
+    @CanIgnoreReturnValue
     public Builder setContentEntries(List<BlazeContentEntry> contentEntries) {
       this.contentEntries = ImmutableList.copyOf(contentEntries);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setLibraries(Map<LibraryKey, BlazeJarLibrary> libraries) {
       this.libraries = ImmutableMap.copyOf(libraries);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setBuildOutputJars(List<ArtifactLocation> buildOutputJars) {
       this.buildOutputJars = ImmutableList.copyOf(buildOutputJars);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setJavaSourceFiles(Set<ArtifactLocation> javaSourceFiles) {
       this.javaSourceFiles = ImmutableSet.copyOf(javaSourceFiles);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setSourceVersion(@Nullable String sourceVersion) {
       this.sourceVersion = sourceVersion;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setEmptyJarTracker(EmptyJarTracker emptyJarTracker) {
       this.emptyJarTracker = emptyJarTracker;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setPluginProcessorJars(Set<ArtifactLocation> pluginProcessorJars) {
       this.pluginProcessorJars = ImmutableSet.copyOf(pluginProcessorJars);
       return this;

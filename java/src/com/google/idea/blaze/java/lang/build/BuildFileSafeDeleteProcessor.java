@@ -18,11 +18,11 @@ package com.google.idea.blaze.java.lang.build;
 import com.google.idea.blaze.base.lang.buildfile.references.GlobReference;
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
 import com.google.idea.blaze.base.lang.buildfile.search.ResolveUtil;
+import com.google.idea.sdkcompat.java.JavaSafeDeleteProcessorAdapter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
 import com.intellij.refactoring.safeDelete.NonCodeUsageSearchInfo;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteUsageInfo;
 import com.intellij.usageView.UsageInfo;
@@ -41,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
  * effectively replaces JavaSafeDeleteProcessor (*in the situations where all processors are used,
  * this class has no effect).
  */
-public class BuildFileSafeDeleteProcessor extends JavaSafeDeleteProcessor {
+public class BuildFileSafeDeleteProcessor extends JavaSafeDeleteProcessorAdapter {
 
   /**
    * Delegates to JavaSafeDeleteProcessor, then removes indirect glob references which we don't want
@@ -49,29 +49,27 @@ public class BuildFileSafeDeleteProcessor extends JavaSafeDeleteProcessor {
    */
   @Nullable
   @Override
-  public NonCodeUsageSearchInfo findUsages(
-      @NotNull PsiElement element,
-      @NotNull PsiElement[] allElementsToDelete,
-      @NotNull List<UsageInfo> result) {
-    NonCodeUsageSearchInfo superResult = super.findUsages(element, allElementsToDelete, result);
-    result.removeIf(BuildFileSafeDeleteProcessor::ignoreUsage);
-    return superResult;
+  public boolean ignoreUsage(Object usage_) {
+    return ignoreUsage0(usage_);
   }
 
   /**
    * We keep globs which reference the file directly (i.e. without wildcards), and remove all
    * indirect references for the purposes of the 'safe delete' action.
    */
-  private static boolean ignoreUsage(UsageInfo usage) {
-    if (usage.getReference() instanceof GlobReference && usage instanceof SafeDeleteUsageInfo) {
-      PsiElement referencedElement = ((SafeDeleteUsageInfo) usage).getReferencedElement();
-      PsiFileSystemItem file = ResolveUtil.asFileSystemItemSearch(referencedElement);
-      String relativePath = getBlazePackageRelativePathToFile(file);
-      if (relativePath == null) {
-        return false;
+  private static boolean ignoreUsage0(Object usage_) {
+    if (usage_ instanceof SafeDeleteUsageInfo) {
+      SafeDeleteUsageInfo usage = (SafeDeleteUsageInfo) usage_;
+      if (usage.getReference() instanceof GlobReference) {
+        PsiElement referencedElement = usage.getReferencedElement();
+        PsiFileSystemItem file = ResolveUtil.asFileSystemItemSearch(referencedElement);
+        String relativePath = getBlazePackageRelativePathToFile(file);
+        if (relativePath == null) {
+          return false;
+        }
+        return !((GlobReference) usage.getReference())
+                .matchesDirectly(relativePath, file.isDirectory());
       }
-      return !((GlobReference) usage.getReference())
-          .matchesDirectly(relativePath, file.isDirectory());
     }
     return false;
   }
@@ -92,25 +90,7 @@ public class BuildFileSafeDeleteProcessor extends JavaSafeDeleteProcessor {
   public boolean handlesElement(PsiElement element) {
     return super.handlesElement(element);
   }
-
-  @Nullable
-  @Override
-  public Collection<? extends PsiElement> getElementsToSearch(
-      @NotNull PsiElement element,
-      @Nullable Module module,
-      @NotNull Collection<PsiElement> allElementsToDelete) {
-    return super.getElementsToSearch(element, module, allElementsToDelete);
-  }
-
-  @Nullable
-  @Override
-  public Collection<PsiElement> getAdditionalElementsToDelete(
-      @NotNull PsiElement element,
-      @NotNull Collection<PsiElement> allElementsToDelete,
-      boolean askUser) {
-    return super.getAdditionalElementsToDelete(element, allElementsToDelete, askUser);
-  }
-
+  
   @Nullable
   @Override
   public Collection<String> findConflicts(

@@ -15,22 +15,23 @@
  */
 package com.google.idea.blaze.java.sync.model;
 
-import com.google.common.base.Objects;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
+import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.model.ProjectData;
-import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeLibrary;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.LibraryFilesProvider;
 import com.google.idea.blaze.base.model.LibraryKey;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.libraries.AttachedSourceJarManager;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
 import java.io.File;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
@@ -65,39 +66,13 @@ public final class BlazeJarLibrary extends BlazeLibrary {
   }
 
   @Override
-  public void modifyLibraryModel(
-      Project project,
-      ArtifactLocationDecoder artifactLocationDecoder,
-      Library.ModifiableModel libraryModel) {
-    JarCache jarCache = JarCache.getInstance(project);
-    File jar = jarCache.getCachedJar(artifactLocationDecoder, this);
-    if (jar != null) {
-      libraryModel.addRoot(pathToUrl(jar), OrderRootType.CLASSES);
-    } else {
-      logger.error("No local jar file found for " + libraryArtifact.jarForIntellijLibrary());
-    }
-
-    AttachedSourceJarManager sourceJarManager = AttachedSourceJarManager.getInstance(project);
-    for (AttachSourcesFilter decider : AttachSourcesFilter.EP_NAME.getExtensions()) {
-      if (decider.shouldAlwaysAttachSourceJar(this)) {
-        sourceJarManager.setHasSourceJarAttached(key, true);
-      }
-    }
-
-    if (!sourceJarManager.hasSourceJarAttached(key)) {
-      return;
-    }
-    for (ArtifactLocation srcJar : libraryArtifact.getSourceJars()) {
-      File sourceJar = jarCache.getCachedSourceJar(artifactLocationDecoder, srcJar);
-      if (sourceJar != null) {
-        libraryModel.addRoot(pathToUrl(sourceJar), OrderRootType.SOURCES);
-      }
-    }
+  public LibraryFilesProvider getDefaultLibraryFilesProvider(Project project) {
+    return new DefaultJarLibraryFilesProvider(project);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), libraryArtifact);
+    return Objects.hash(super.hashCode(), libraryArtifact);
   }
 
   @Override
@@ -111,6 +86,76 @@ public final class BlazeJarLibrary extends BlazeLibrary {
 
     BlazeJarLibrary that = (BlazeJarLibrary) other;
 
-    return super.equals(other) && Objects.equal(libraryArtifact, that.libraryArtifact);
+    return super.equals(other) && Objects.equals(libraryArtifact, that.libraryArtifact);
+  }
+
+  @Override
+  public String getExtension() {
+    return ".jar";
+  }
+
+  /** An implementation of {@link LibraryFilesProvider} for {@link BlazeJarLibrary}. */
+  private final class DefaultJarLibraryFilesProvider implements LibraryFilesProvider {
+    private final Project project;
+
+    DefaultJarLibraryFilesProvider(Project project) {
+      this.project = project;
+    }
+
+    @Override
+    public String getName() {
+      return BlazeJarLibrary.this.key.getIntelliJLibraryName();
+    }
+
+    @Override
+    public ImmutableList<File> getClassFiles(BlazeProjectData blazeProjectData) {
+      File classJar =
+          JarCache.getInstance(project)
+              .getCachedJar(blazeProjectData.getArtifactLocationDecoder(), BlazeJarLibrary.this);
+      if (classJar == null) {
+        logger.warn("No local file found for " + libraryArtifact);
+        return ImmutableList.of();
+      }
+      return ImmutableList.of(classJar);
+    }
+
+    @Override
+    public ImmutableList<File> getSourceFiles(BlazeProjectData blazeProjectData) {
+      AttachedSourceJarManager sourceJarManager = AttachedSourceJarManager.getInstance(project);
+      JarCache jarCache = JarCache.getInstance(project);
+      for (AttachSourcesFilter decider : AttachSourcesFilter.EP_NAME.getExtensions()) {
+        if (decider.shouldAlwaysAttachSourceJar(BlazeJarLibrary.this)) {
+          sourceJarManager.setHasSourceJarAttached(key, true);
+        }
+      }
+      if (!sourceJarManager.hasSourceJarAttached(key)) {
+        return ImmutableList.of();
+      }
+      return libraryArtifact.getSourceJars().stream()
+          .map(
+              srcJar ->
+                  jarCache.getCachedSourceJar(
+                      blazeProjectData.getArtifactLocationDecoder(), srcJar))
+          .filter(Objects::nonNull)
+          .collect(toImmutableList());
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      if (this == other) {
+        return true;
+      }
+      if (!(other instanceof DefaultJarLibraryFilesProvider)) {
+        return false;
+      }
+
+      DefaultJarLibraryFilesProvider that = (DefaultJarLibraryFilesProvider) other;
+      return Objects.equals(project, that.project) && getName().equals(that.getName());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(project, getName());
+    }
   }
 }

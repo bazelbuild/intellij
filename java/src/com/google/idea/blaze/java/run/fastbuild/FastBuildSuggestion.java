@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.configurations.RunProfile;
@@ -110,6 +111,10 @@ public final class FastBuildSuggestion
   }
 
   private static boolean isGoodCandidateForFastRun(RunProfile runProfile) {
+    if (QuerySync.isEnabled()) {
+      // Fast Build is not supported with query sync
+      return false;
+    }
     if (!(runProfile instanceof BlazeCommandRunConfiguration)) {
       return false;
     }

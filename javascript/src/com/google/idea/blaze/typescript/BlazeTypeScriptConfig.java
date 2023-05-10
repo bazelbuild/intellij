@@ -30,11 +30,12 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.sdkcompat.javascript.JSModuleResolutionWrapper;
+import com.google.idea.sdkcompat.javascript.JSModuleTargetWrapper;
+import com.google.idea.sdkcompat.javascript.TypeScriptConfigAdapter;
 import com.intellij.lang.javascript.frameworks.modules.JSModulePathSubstitution;
 import com.intellij.lang.javascript.library.JSLibraryUtil;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
-import com.intellij.lang.typescript.tsconfig.TypeScriptFileImports;
-import com.intellij.lang.typescript.tsconfig.TypeScriptFileImportsImpl;
 import com.intellij.lang.typescript.tsconfig.TypeScriptFileImportsResolver;
 import com.intellij.lang.typescript.tsconfig.TypeScriptImportConfigResolveContextImpl;
 import com.intellij.lang.typescript.tsconfig.TypeScriptImportResolveContext;
@@ -49,6 +50,9 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -60,7 +64,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 
 /**
  * {@link TypeScriptConfig} with special handling for tsconfig_editor.json and tsconfig.runfiles.
@@ -72,7 +75,7 @@ import javax.annotation.Nullable;
  * <p>Resolves all the symlinks under tsconfig.runfiles, and adds all of their roots to the paths
  * substitutions.
  */
-class BlazeTypeScriptConfig implements TypeScriptConfig {
+class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
   private static final Logger logger = Logger.getInstance(BlazeTypeScriptConfig.class);
 
   private final Project project;
@@ -85,7 +88,6 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
   private final NotNullLazyValue<TypeScriptConfigIncludeBase> includeChecker;
   private final NotNullLazyValue<TypeScriptImportResolveContext> resolveContext;
   private final NotNullLazyValue<TypeScriptFileImportsResolver> importResolver;
-  private final NotNullLazyValue<TypeScriptFileImports> importStructure;
 
   // tsconfig.json default values
   private boolean compileOnSave = false;
@@ -95,8 +97,8 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
   private final NullableLazyValue<VirtualFile> baseUrlFile;
   private boolean inlineSourceMap = true;
   private String jsxFactory = "React.createElement";
-  private ModuleTarget module = ModuleTarget.COMMON_JS;
-  private ModuleResolution moduleResolution = ModuleResolution.NODE;
+  private JSModuleTargetWrapper module = JSModuleTargetWrapper.COMMON_JS;
+  private JSModuleResolutionWrapper moduleResolution = JSModuleResolutionWrapper.NODE;
   private boolean noImplicitAny = true;
   private boolean noImplicitThis = true;
   private boolean noLib = true;
@@ -240,8 +242,7 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
     this.importResolver =
         NotNullLazyValue.createValue(
             () -> TypeScriptImportsResolverProvider.getResolver(project, this));
-    this.importStructure =
-        NotNullLazyValue.createValue(() -> new TypeScriptFileImportsImpl(project, this));
+    initImportsStructure(project);
 
     try {
       parseJson(
@@ -303,26 +304,26 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
         case "module":
           switch (Ascii.toLowerCase(value.getAsString())) {
             case "commonjs":
-              this.module = ModuleTarget.COMMON_JS;
+              this.module = JSModuleTargetWrapper.COMMON_JS;
               break;
             case "other":
-              this.module = ModuleTarget.OTHER;
+              this.module = JSModuleTargetWrapper.OTHER;
               break;
             default:
-              this.module = ModuleTarget.UNKNOWN;
+              this.module = JSModuleTargetWrapper.UNKNOWN;
               break;
           }
           break;
         case "moduleResolution":
           switch (Ascii.toLowerCase(value.getAsString())) {
             case "node":
-              this.moduleResolution = ModuleResolution.NODE;
+              this.moduleResolution = JSModuleResolutionWrapper.NODE;
               break;
             case "classic":
-              this.moduleResolution = ModuleResolution.CLASSIC;
+              this.moduleResolution = JSModuleResolutionWrapper.CLASSIC;
               break;
             default:
-              this.moduleResolution = ModuleResolution.UNKNOWN;
+              this.moduleResolution = JSModuleResolutionWrapper.UNKNOWN;
               break;
           }
           break;
@@ -533,12 +534,12 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
   }
 
   @Override
-  public ModuleResolution getResolution() {
+  public @NotNull JSModuleResolutionWrapper getAdapterResolution() {
     return moduleResolution;
   }
 
   @Override
-  public ModuleResolution getEffectiveResolution() {
+  public JSModuleResolutionWrapper getAdapterEffectiveResolution() {
     return moduleResolution;
   }
 
@@ -548,7 +549,7 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
   }
 
   @Override
-  public ModuleTarget getModule() {
+  public JSModuleTargetWrapper getAdapterModule() {
     return module;
   }
 
@@ -697,11 +698,6 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
   @Override
   public String jsxFactory() {
     return jsxFactory;
-  }
-
-  @Override
-  public TypeScriptFileImports getConfigImportResolveStructure() {
-    return importStructure.getValue();
   }
 
   @Override

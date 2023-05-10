@@ -29,6 +29,8 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.python.PythonBlazeRules;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -47,6 +49,7 @@ public class BlazePythonSyncPluginTest extends BlazeTestCase {
     registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class)
         .registerExtension(new PythonBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
+    applicationServices.register(ExperimentService.class, new MockExperimentService());
   }
 
   @Test

@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.base.toolwindow;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.base.toolwindow.Task.Status;
+import com.intellij.icons.AllIcons.General;
 import com.intellij.icons.AllIcons.RunConfigurations;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
@@ -26,10 +29,14 @@ import javax.swing.Icon;
 
 /** Contains logic for rendering Task information into a tree cell. */
 public final class TaskNodeDescriptor extends PresentableNodeDescriptor<Task> {
-  private static final Icon NODE_ICON_CANCELED = RunConfigurations.TestIgnored;
-  private static final Icon NODE_ICON_ERROR = RunConfigurations.TestError;
-  private static final Icon NODE_ICON_OK = RunConfigurations.TestPassed;
-  private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.Default();
+
+  private static final ImmutableMap<Status, Icon> STATUS_ICONS =
+      ImmutableMap.of(
+          Status.RUNNING, new AnimatedIcon.Default(),
+          Status.FINISHED, RunConfigurations.TestPassed,
+          Status.FINISHED_WITH_WARNINGS, General.Warning,
+          Status.CANCELLED, RunConfigurations.TestIgnored,
+          Status.ERROR, RunConfigurations.TestError);
 
   private final Task task;
 
@@ -48,7 +55,7 @@ public final class TaskNodeDescriptor extends PresentableNodeDescriptor<Task> {
   protected void update(PresentationData presentationData) {
     presentationData.setPresentableText(task.getName());
     presentationData.setIcon(iconForTask(task));
-    presentationData.addText(getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    presentationData.addText(task.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     if (!task.getState().isEmpty()) {
       presentationData.addText(" " + task.getState(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
     }
@@ -57,14 +64,7 @@ public final class TaskNodeDescriptor extends PresentableNodeDescriptor<Task> {
     }
 
     if (task.getParent().isEmpty()) {
-      String taskResult;
-      if (task.isCancelled()) {
-        taskResult = "cancelled";
-      } else if (task.getHasErrors()) {
-        taskResult = "failed";
-      } else {
-        taskResult = "finished";
-      }
+      String taskResult = task.getStatus().description;
 
       presentationData.addText(" " + taskResult, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
 
@@ -78,15 +78,7 @@ public final class TaskNodeDescriptor extends PresentableNodeDescriptor<Task> {
   }
 
   private static Icon iconForTask(Task task) {
-    if (!task.isFinished()) {
-      return NODE_ICON_RUNNING;
-    } else if (task.isCancelled()) {
-      return NODE_ICON_CANCELED;
-    } else if (task.getHasErrors()) {
-      return NODE_ICON_ERROR;
-    } else {
-      return NODE_ICON_OK;
-    }
+    return STATUS_ICONS.get(task.getStatus());
   }
 
   @Override

@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -107,6 +108,11 @@ public class RenderJarClassFileFinder implements ClassFileFinder {
   @Override
   public VirtualFile findClassFile(String fqcn) {
     if (!isEnabled()) {
+      return null;
+    }
+
+    // TODO(b/266726517): Query sync does not support render jars.
+    if (QuerySync.isEnabled()) {
       return null;
     }
 

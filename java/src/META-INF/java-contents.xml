@@ -115,6 +115,8 @@
     <useScopeEnlarger implementation="com.google.idea.blaze.java.psi.DaggerUseScopeEnlarger"/>
     <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.DaggerImplicitUsageProvider"/>
     <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.GuiceImplicitUsageProvider"/>
+    <useScopeEnlarger implementation="com.google.idea.blaze.java.psi.ForAutoConverterUseScopeEnlarger"/>
+    <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.ForAutoConverterImplicitUsageProvider"/>
     <psi.clsCustomNavigationPolicy implementation="com.google.idea.blaze.java.libraries.BlazeSourceJarNavigationPolicy"/>
     <!-- Need to come first to prevent overriding other position managers. -->
     <debugger.positionManagerFactory implementation="com.google.idea.blaze.java.run.ExternalFilePositionManager$Factory" order="first"/>
@@ -134,6 +136,8 @@
         overrides="true"/>
     <postStartupActivity implementation="com.google.idea.blaze.java.run.producers.NonBlazeProducerSuppressor"/>
     <actionConfigurationCustomizer implementation="com.google.idea.blaze.java.run.hotswap.BlazeHotSwapAction$Customizer"/>
+    <notificationGroup id="Fastbuild failed notification"
+        displayType="STICKY_BALLOON"/>
   </extensions>
 
   <project-components>
@@ -166,5 +170,7 @@
                     interface="com.google.idea.blaze.java.sync.model.AttachSourcesFilter"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.HotSwapCommandBuilder"
                     interface="com.google.idea.blaze.java.run.hotswap.HotSwapCommandBuilder"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.blazeJavaDebuggingSetupHandler"
+                    interface="com.google.idea.blaze.java.run.BlazeJavaDebuggingSetupHandler"/>
   </extensionPoints>
 </idea-plugin>

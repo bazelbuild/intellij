@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.model;
 
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import javax.annotation.Nullable;
 
@@ -30,6 +31,17 @@ public class MockBlazeProjectDataManager implements BlazeProjectDataManager {
   @Override
   public BlazeProjectData getBlazeProjectData() {
     return blazeProjectData;
+  }
+
+  @Nullable
+  @Override
+  public BlazeProjectData loadProject(BlazeImportSettings importSettings) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void saveProject(BlazeImportSettings importSettings, BlazeProjectData projectData) {
+    throw new UnsupportedOperationException();
   }
 
   public void setBlazeProjectData(@Nullable BlazeProjectData blazeProjectData) {

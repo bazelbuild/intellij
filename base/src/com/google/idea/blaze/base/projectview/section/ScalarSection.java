@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.projectview.section;
 
 import com.google.common.base.Objects;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 
 /** Scalar value. */
 public final class ScalarSection<T> extends Section<T> {
@@ -64,6 +65,7 @@ public final class ScalarSection<T> extends Section<T> {
       super(sectionKey);
     }
 
+    @CanIgnoreReturnValue
     public Builder<T> set(T value) {
       this.value = value;
       return this;

@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
@@ -30,6 +31,8 @@ import java.util.Optional;
 
 /** Opens the user's local project view file. */
 public class OpenProjectViewAction extends BlazeProjectAction implements DumbAware {
+
+  private static final Logger logger = Logger.getInstance(OpenProjectViewAction.class);
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
@@ -50,6 +53,14 @@ public class OpenProjectViewAction extends BlazeProjectAction implements DumbAwa
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     File projectViewFile = new File(importSettings.getProjectViewFile());
     VirtualFile virtualFile = VfsUtil.findFileByIoFile(projectViewFile, true);
+    if (virtualFile == null) {
+      logger.warn("Can't find virtual file for " + importSettings.getProjectViewFile());
+    }
     return Optional.ofNullable(virtualFile);
+  }
+
+  @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.SUPPORTED;
   }
 }

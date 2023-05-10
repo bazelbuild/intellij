@@ -19,14 +19,10 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableMap;
-import com.intellij.mock.MockApplication;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Disposer;
+import com.google.idea.testing.IntellijRule;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -39,18 +35,7 @@ public class ExperimentServiceImplTest {
   private static final StringExperiment STRING_EXPERIMENT = new StringExperiment("test.property");
   private static final IntExperiment INT_EXPERIMENT = new IntExperiment("test.property", 0);
 
-  private Disposable testDisposable;
-
-  @Before
-  public void setup() {
-    testDisposable = Disposer.newDisposable();
-    ApplicationManager.setApplication(new MockApplication(testDisposable), testDisposable);
-  }
-
-  @After
-  public final void tearDown() {
-    Disposer.dispose(testDisposable);
-  }
+  @Rule public IntellijRule intellij = new IntellijRule();
 
   @Test
   public void testEmptyLoadersList() {
@@ -185,7 +170,7 @@ public class ExperimentServiceImplTest {
         .isEqualTo("two");
   }
 
-  private static class MapExperimentLoader extends HashingExperimentLoader {
+  private static class MapExperimentLoader implements ExperimentLoader {
 
     private final Map<String, String> map;
 
@@ -198,7 +183,7 @@ public class ExperimentServiceImplTest {
     }
 
     @Override
-    public ImmutableMap<String, String> getUnhashedExperiments() {
+    public ImmutableMap<String, String> getExperiments() {
       return ImmutableMap.copyOf(map);
     }
 

@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.Expression;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.Statement;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -37,7 +36,7 @@ import javax.annotation.Nullable;
 public class BuildElementGenerator {
 
   public static BuildElementGenerator getInstance(Project project) {
-    return ServiceManager.getService(project, BuildElementGenerator.class);
+    return project.getService(BuildElementGenerator.class);
   }
 
   private static final String DUMMY_FILENAME = "dummy.bzl";

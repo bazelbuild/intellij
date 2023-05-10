@@ -38,27 +38,27 @@ tasks:
       - //:ijwb_ce_tests
     soft_fail:
       - exit_status: 1
-  IntelliJ-CE-OSS-stable:
-    name: IntelliJ CE OSS Stable
+  IntelliJ-CE-OSS-oldest-stable:
+    name: IntelliJ CE OSS Oldest Stable
     platform: ubuntu1804
     build_flags:
-      - --define=ij_product=intellij-oss-stable
+      - --define=ij_product=intellij-oss-oldest-stable
     build_targets:
       - //ijwb/...
     test_flags:
-      - --define=ij_product=intellij-oss-stable
+      - --define=ij_product=intellij-oss-oldest-stable
       - --test_output=errors
     test_targets:
       - //:ijwb_ce_tests
-  IntelliJ-CE-OSS-beta:
-    name: IntelliJ CE OSS Beta
+  IntelliJ-CE-OSS-latest-stable:
+    name: IntelliJ CE OSS Latest Stable
     platform: ubuntu1804
     build_flags:
-      - --define=ij_product=intellij-oss-beta
+      - --define=ij_product=intellij-oss-latest-stable
     build_targets:
       - //ijwb/...
     test_flags:
-      - --define=ij_product=intellij-oss-beta
+      - --define=ij_product=intellij-oss-latest-stable
       - --test_output=errors
     test_targets:
       - //:ijwb_ce_tests

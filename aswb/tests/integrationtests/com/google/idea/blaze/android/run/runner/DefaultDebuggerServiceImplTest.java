@@ -17,7 +17,7 @@ package com.google.idea.blaze.android.run.runner;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.android.tools.ndk.run.editor.NativeAndroidDebuggerState;
+import com.android.tools.ndk.run.editor.AutoAndroidDebuggerState;
 import com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDebuggerService.DefaultDebuggerService;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
@@ -35,8 +35,8 @@ public class DefaultDebuggerServiceImplTest extends BlazeIntegrationTestCase {
 
     DefaultDebuggerService debuggerService = new DefaultDebuggerService(getProject());
     BlazeAutoAndroidDebugger nativeDebugger = new BlazeAutoAndroidDebugger();
-    NativeAndroidDebuggerState state =
-        (NativeAndroidDebuggerState) debuggerService.getDebuggerState(nativeDebugger);
+    AutoAndroidDebuggerState state = nativeDebugger.createState();
+    debuggerService.configureNativeDebugger(state, null);
 
     assertThat(state.getWorkingDir()).isEqualTo(workspaceRoot);
     assertThat(state.getUserStartupCommands())

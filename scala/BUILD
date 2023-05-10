@@ -15,7 +15,7 @@ load(
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 java_library(
     name = "scala",
@@ -55,6 +55,9 @@ intellij_plugin(
     name = "scala_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":scala_plugin_xml",
+    tags = [
+        "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
+    ],
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -77,6 +80,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//third_party/scala:scala_for_tests",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -92,10 +96,12 @@ intellij_integration_test_suite(
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
+        "//intellij_platform_sdk:guava",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//third_party/scala:scala_for_tests",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )

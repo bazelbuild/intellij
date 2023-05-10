@@ -34,7 +34,7 @@ load(
     "TEST_ASWB_SUBPACKAGES_VISIBILITY",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 optional_plugin_xml(
     name = "optional_ndk_xml",
@@ -55,7 +55,7 @@ stamped_plugin_xml(
     changelog_file = "//:changelog",
     description_file = "src/META-INF/description.html",
     plugin_id = "com.google.idea.bazel.aswb",
-    plugin_name = "Bazel",
+    plugin_name = "Bazel for Android Studio",
     # #api212: We depend on an API which is only contained in 2021.2.1+.
     since_build_numbers = {"212": "212.5080.55"},
     stamp_since_build = True,
@@ -66,13 +66,24 @@ stamped_plugin_xml(
 java_library(
     name = "unit_test_utils",
     testonly = 1,
-    srcs = glob(["tests/utils/unit/**/*.java"]),
+    srcs = glob(["tests/utils/unit/**/*.java"]) + select_for_plugin_api({
+        "android-studio-2022.2": [
+            "tests/utils/sdkcompat/as222/com/android/tools/idea/rendering/RenderResultCompat.java",
+        ],
+        "android-studio-2022.3": [
+            "tests/utils/sdkcompat/as223/com/android/tools/idea/rendering/RenderResultCompat.java",
+        ],
+        "android-studio-dev": [
+            "tests/utils/sdkcompat/asdev/com/android/tools/idea/rendering/RenderResultCompat.java",
+        ],
+    }),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
         ":aswb_lib",
         "//base",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "@com_google_guava_guava//jar",
     ],
 )
 
@@ -80,25 +91,37 @@ java_library(
     name = "integration_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2021.2": glob([
-            "tests/utils/sdkcompat/as212/com/google/idea/blaze/android/functional/*.java",
-        ]),
-        "android-studio-2021.3": glob([
-            "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/functional/*.java",
-        ]),
+        "android-studio-2022.2": [
+            "tests/utils/sdkcompat/as222/com/android/tools/idea/sdk/IdeSdksCompat.java",
+            "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
+            "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
+        ],
+        "android-studio-2022.3": [
+            "tests/utils/sdkcompat/as223/com/android/tools/idea/sdk/IdeSdksCompat.java",
+            "tests/utils/sdkcompat/as223/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
+            "tests/utils/sdkcompat/as223/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
+        ],
+        "android-studio-dev": [
+            "tests/utils/sdkcompat/asdev/com/android/tools/idea/sdk/IdeSdksCompat.java",
+            "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
+            "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
+        ],
     }),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
         ":aswb_lib",
+        ":unit_test_utils",
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
         "//cpp",
         "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:plugin_api_for_tests",  # unuseddeps: keep
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//testing:lib",
+        "@com_google_guava_guava//jar",
+        "@error_prone_annotations//jar",
         "@junit//jar",
     ],
 )
@@ -106,8 +129,9 @@ java_library(
 java_library(
     name = "aswb_lib",
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2021.2": glob(["sdkcompat/as212/**/*.java"]),
-        "android-studio-2021.3": glob(["sdkcompat/as213/**/*.java"]),
+        "android-studio-2022.2": glob(["sdkcompat/as222/**/*.java"]),
+        "android-studio-2022.3": glob(["sdkcompat/as223/**/*.java"]),
+        "android-studio-dev": glob(["sdkcompat/asdev/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
     visibility = combine_visibilities(
@@ -117,12 +141,14 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
-        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:kotlin",
         "//intellij_platform_sdk:plugin_api",
         "//java",
         "//proto:proto_deps",
+        "//shared",
         "//third_party/auto_value",
+        "@gson//jar",
     ],
 )
 
@@ -145,7 +171,9 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//proto:proto_deps",
+        "//shared",
         "//testing:lib",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -162,7 +190,7 @@ intellij_integration_test_suite(
     name = "normal_integration_tests",
     srcs = glob(
         [
-            "tests/integrationtests/**/*.java",
+            "tests/integrationtests/com/google/idea/blaze/android/**/*.java",
         ],
         exclude = [
             "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",  # Extracted to separate target
@@ -170,9 +198,16 @@ intellij_integration_test_suite(
             "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",  #b/222322106
         ],
     ),
+    additional_class_rules = select_for_plugin_api({
+        "android-studio-2022.2": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
+        "android-studio-2022.3": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
+        "android-studio-dev": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
+        "default": [],
+    }),
     data = [
         "testdata/golden.png",
         "testdata/ic_banner.png",
+        "tools/adt/idea/android/annotations/empty_file",
     ],
     required_plugins = "com.google.idea.bazel.aswb",
     test_package_root = "com.google.idea.blaze.android",
@@ -191,11 +226,13 @@ intellij_integration_test_suite(
         "//common/experiments",
         "//common/experiments:unit_test_utils",
         "//cpp",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//proto:proto_deps",
-        "@error_prone_annotations//jar",
+        "@com_google_guava_guava//jar",
+        "@gson//jar",
         "@junit//jar",
     ],
 )
@@ -225,6 +262,9 @@ intellij_integration_test_suite(
 intellij_plugin(
     name = "aswb_bazel",
     plugin_xml = ":stamped_plugin_xml",
+    tags = [
+        "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
+    ],
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -232,6 +272,7 @@ intellij_plugin(
         "//dart:plugin_library",
         "//java:plugin_library",
         "//kotlin:plugin_library",
+        "//plugin_dev:plugin_library",
         "//python:plugin_library",
         "//skylark:plugin_library",
         "//terminal:plugin_library",
@@ -277,4 +318,10 @@ plugin_deploy_zip(
     ],
     visibility = ["//visibility:public"],
     zip_filename = "aswb_bazel.zip",
+)
+
+genrule(
+    name = "create_empty_annotations_folder",
+    outs = ["tools/adt/idea/android/annotations/empty_file"],
+    cmd = "echo \"No contents\" > $@",
 )

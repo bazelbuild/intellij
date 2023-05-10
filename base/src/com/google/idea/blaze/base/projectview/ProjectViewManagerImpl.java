@@ -29,7 +29,8 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.base.util.SerializationUtil;
-import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -69,7 +70,7 @@ final class ProjectViewManagerImpl extends ProjectViewManager {
         classLoaders.add(Thread.currentThread().getContextClassLoader());
         loadedProjectViewSet = (ProjectViewSet) SerializationUtil.loadFromDisk(file, classLoaders);
       } catch (IOException e) {
-        logger.info(e);
+        logger.warn("Failed to load project view set: " + e.getMessage());
       }
       this.projectViewSet = loadedProjectViewSet;
       this.projectViewSetLoaded = true;
@@ -91,8 +92,6 @@ final class ProjectViewManagerImpl extends ProjectViewManager {
       BlazeContext context, WorkspacePathResolver workspacePathResolver) {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
-    assert importSettings != null;
-    assert importSettings.getProjectViewFile() != null;
     File projectViewFile = new File(importSettings.getProjectViewFile());
     ProjectViewParser parser = new ProjectViewParser(context, workspacePathResolver);
     parser.parseProjectView(projectViewFile);
@@ -125,12 +124,9 @@ final class ProjectViewManagerImpl extends ProjectViewManager {
     }
     // otherwise try to compute the workspace path resolver from scratch
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    BlazeVcsHandler vcsHandler = BlazeVcsHandler.vcsHandlerForProject(project);
-    if (vcsHandler == null) {
-      return null;
-    }
-    BlazeVcsHandler.BlazeVcsSyncHandler vcsSyncHandler =
-        vcsHandler.createSyncHandler(project, workspaceRoot);
+    BlazeVcsHandler vcsHandler = BlazeVcsHandlerProvider.vcsHandlerForProject(project);
+    BlazeVcsHandlerProvider.BlazeVcsSyncHandler vcsSyncHandler =
+        vcsHandler != null ? vcsHandler.createSyncHandler() : null;
     if (vcsSyncHandler == null) {
       return new WorkspacePathResolverImpl(workspaceRoot);
     }

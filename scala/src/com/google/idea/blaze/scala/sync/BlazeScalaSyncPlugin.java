@@ -43,9 +43,17 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
+
+import java.io.File;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+
+import org.jetbrains.plugins.scala.project.ScalaLibraryProperties;
 import org.jetbrains.plugins.scala.project.ScalaLibraryType;
+import scala.Option;
+import scala.collection.immutable.List$;
 
 /** Supports scala. */
 public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
@@ -57,6 +65,25 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
     return ImmutableSet.of();
   }
 
+  /**
+   * See <a href="https://github.com/JetBrains/intellij-scala/blob/4f89d1dd8f71c36a5bc77a90d3722afb49a10822/scala/scala-impl/src/org/jetbrains/plugins/scala/project/package.scala#L81-L83">...</a>
+   */
+  private static final Pattern LIBRARY_VERSION = Pattern.compile("(?<=[:\\-])\\d+\\.\\d+\\.\\d+[^:\\s]*");
+
+  private static final Pattern RUNTIME_LIBRARY = Pattern.compile("((?:scala|dotty|scala3)-library).+");
+
+  private static boolean isRuntimeLibrary(String name) {
+    return RUNTIME_LIBRARY.matcher(name).find();
+  }
+
+  private static Option<String> libraryVersion(String name) {
+    Matcher matcher = LIBRARY_VERSION.matcher(name);
+    if (matcher.find()) {
+      return Option.<String>apply(matcher.group());
+    } else {
+      return Option.<String>empty();
+    }
+  }
   @Override
   public void updateProjectStructure(
       Project project,
@@ -73,12 +100,15 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
     }
     for (Library library :
         LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()) {
-      // Convert the type of the SDK library to prevent the scala plugin from
-      // showing the missing SDK notification.
-      // TODO: use a canonical class in the SDK (e.g., scala.App) instead of the name?
-      if (library.getName() != null && library.getName().startsWith("scala-library")) {
+      // Configure metadata for the Scala library to inform the Scala plugin which SDK and version to use
+      // TODO: If there are multiple Scala library versions on the classpath, this will select a random one.
+      // TODO: We could pick the min or max version, but either choice is problematic, see SCL-18866.
+      // TODO: The best solution would be letting the user specify the expected Scala version explicitly
+      if (library.getName() != null && isRuntimeLibrary(library.getName())) {
+        ScalaLibraryProperties properties = ScalaLibraryProperties.apply(libraryVersion(library.getName()), List$.MODULE$.<File>empty(), List$.MODULE$.<File>empty());
         ExistingLibraryEditor editor = new ExistingLibraryEditor(library, null);
         editor.setType(ScalaLibraryType.apply());
+        editor.setProperties(properties);
         editor.commit();
         return;
       }

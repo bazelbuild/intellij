@@ -25,7 +25,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
 import java.io.Serializable;
-import javax.annotation.Nullable;
 
 /** Utils for serialization. */
 public class SerializationUtil {
@@ -56,12 +55,8 @@ public class SerializationUtil {
    *
    * @throws IOException if deserialization fails.
    */
-  @Nullable
   public static Object loadFromDisk(File file, final Iterable<ClassLoader> classLoaders)
       throws IOException {
-    if (!file.exists()) {
-      return null;
-    }
     try (FileInputStream fin = new FileInputStream(file)) {
       ObjectInputStream ois =
           new ObjectInputStream(fin) {

@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import java.util.Collection;
@@ -75,11 +76,13 @@ public abstract class BlazeSyncParams {
 
     abstract ImmutableSet.Builder<TargetExpression> targetExpressionsBuilder();
 
+    @CanIgnoreReturnValue
     public Builder addTargetExpression(TargetExpression targetExpression) {
       targetExpressionsBuilder().add(targetExpression);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addTargetExpressions(Collection<? extends TargetExpression> targets) {
       targetExpressionsBuilder().addAll(targets);
       return this;
@@ -87,6 +90,7 @@ public abstract class BlazeSyncParams {
 
     abstract ImmutableSet.Builder<WorkspacePath> sourceFilesToSyncBuilder();
 
+    @CanIgnoreReturnValue
     public Builder addSourceFilesToSync(Collection<WorkspacePath> targets) {
       sourceFilesToSyncBuilder().addAll(targets);
       return this;

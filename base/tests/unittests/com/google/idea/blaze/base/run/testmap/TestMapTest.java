@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.SourceToTargetFinder;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.common.experiments.ExperimentService;
@@ -271,6 +272,17 @@ public class TestMapTest extends BlazeTestCase {
     @Override
     public BlazeProjectData getBlazeProjectData() {
       return MockBlazeProjectDataBuilder.builder().setTargetMap(targetMap).build();
+    }
+
+    @Nullable
+    @Override
+    public BlazeProjectData loadProject(BlazeImportSettings importSettings) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void saveProject(BlazeImportSettings importSettings, BlazeProjectData projectData) {
+      throw new UnsupportedOperationException();
     }
   }
 }

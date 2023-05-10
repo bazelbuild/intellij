@@ -50,8 +50,8 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
@@ -60,6 +60,7 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncPlugin;
@@ -251,11 +252,12 @@ public class RenderJarCacheTest {
     File projectDataDir = temporaryFolder.newFolder("project_data");
     importSettingsManager.setImportSettings(
         new BlazeImportSettings(
-            /*workspaceRoot=*/ "",
+            /* workspaceRoot= */ "",
             intellijRule.getProject().getName(),
             projectDataDir.getAbsolutePath(),
-            /*projectViewFile=*/ "",
-            BuildSystemName.Blaze));
+            /* projectViewFile= */ "",
+            BuildSystemName.Blaze,
+            ProjectType.ASPECT_SYNC));
     intellijRule.registerProjectService(BlazeImportSettingsManager.class, importSettingsManager);
   }
 

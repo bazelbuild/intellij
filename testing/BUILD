@@ -14,7 +14,7 @@ load(
 
 package(default_visibility = INTELLIJ_PLUGINS_VISIBILITY)
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 java_library(
     name = "lib",
@@ -27,26 +27,26 @@ java_library(
                ]),
                default = [],
            ) + select_for_plugin_api({
-        "android-studio-2021.2": glob([
-            "testcompat/v212/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v212/com/google/idea/testing/java/*.java",
+        "android-studio-2022.2": glob([
+            "testcompat/v222/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/v222/com/google/idea/testing/java/*.java",
         ]),
-        "android-studio-2021.3": glob([
-            "testcompat/v213/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v213/com/google/idea/testing/java/*.java",
+        "android-studio-2022.3": glob([
+            "testcompat/v223/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/v223/com/google/idea/testing/java/*.java",
         ]),
-        "clion-2021.2": glob(["testcompat/v212/com/google/idea/sdkcompat/**/*.java"]),
+        "android-studio-dev": glob([
+            "testcompat/asdev/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/asdev/com/google/idea/testing/java/*.java",
+        ]),
         "clion-2021.3": glob(["testcompat/v213/com/google/idea/sdkcompat/**/*.java"]),
-        "clion-2022.1": glob(["testcompat/v221/com/google/idea/sdkcompat/**/*.java"]),
+        "clion-2022.1": glob([
+            "testcompat/v221/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/v221_ij/com/google/idea/sdkcompat/**/*.java",
+        ]),
         "clion-2022.2": glob(["testcompat/v222/com/google/idea/sdkcompat/**/*.java"]),
-        "intellij-2021.2": glob([
-            "testcompat/v212/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v212/com/google/idea/testing/java/*.java",
-        ]),
-        "intellij-ue-2021.2": glob([
-            "testcompat/v212/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v212/com/google/idea/testing/java/*.java",
-        ]),
+        "clion-2022.3": glob(["testcompat/v223/com/google/idea/sdkcompat/**/*.java"]),
+        "clion-2023.1": glob(["testcompat/v231/com/google/idea/sdkcompat/**/*.java"]),
         "intellij-2021.3": glob([
             "testcompat/v213/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v213/com/google/idea/testing/java/*.java",
@@ -57,10 +57,12 @@ java_library(
         ]),
         "intellij-2022.1": glob([
             "testcompat/v221/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/v221_ij/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v221/com/google/idea/testing/java/*.java",
         ]),
         "intellij-ue-2022.1": glob([
             "testcompat/v221/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/v221_ij/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v221/com/google/idea/testing/java/*.java",
         ]),
         "intellij-2022.2": glob([
@@ -71,6 +73,22 @@ java_library(
             "testcompat/v222/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v222/com/google/idea/testing/java/*.java",
         ]),
+        "intellij-2022.3": glob([
+            "testcompat/v223/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/v223/com/google/idea/testing/java/*.java",
+        ]),
+        "intellij-ue-2022.3": glob([
+            "testcompat/v223/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/v223/com/google/idea/testing/java/*.java",
+        ]),
+        "intellij-2023.1": glob([
+            "testcompat/v231/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/v231/com/google/idea/testing/java/*.java",
+        ]),
+        "intellij-ue-2023.1": glob([
+            "testcompat/v231/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/v231/com/google/idea/testing/java/*.java",
+        ]),
         "default": [],
     }),
     deps = [
@@ -78,6 +96,7 @@ java_library(
         "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )

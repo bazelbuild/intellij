@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.psi;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.lang.buildfile.lexer.BuildToken;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.intellij.lang.ASTNode;
@@ -48,6 +49,7 @@ public abstract class NamedBuildElement extends BuildElementImpl implements PsiN
     return nameNode != null ? nameNode.getPsi() : null;
   }
 
+  @CanIgnoreReturnValue
   @Override
   public PsiElement setName(String name) {
     final ASTNode nameElement = PsiUtils.createNewName(getProject(), name);

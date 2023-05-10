@@ -222,6 +222,41 @@ public class JdksTest extends BlazeIntegrationTestCase {
     assertThat(chosenSdk).isNotEqualTo(currentJdk7);
   }
 
+  @Test
+  public void testChooseJdkProvidingRequestedPreviewLanguageLevel() {
+    Sdk jdk11 = getUniqueMockJdk(LanguageLevel.JDK_11);
+    Sdk jdk17 = getUniqueMockJdk(LanguageLevel.JDK_17);
+
+    registerJdkProvider(
+        ImmutableMap.of(
+            LanguageLevel.JDK_11, jdk11,
+            LanguageLevel.JDK_17, jdk17));
+
+    setJdkTable(jdk11, jdk17);
+
+    Sdk chosenSdk = Jdks.chooseOrCreateJavaSdk(jdk11, LanguageLevel.JDK_17_PREVIEW);
+    assertThat(chosenSdk).isNotEqualTo(jdk11);
+    assertThat(chosenSdk).isEqualTo(jdk17);
+  }
+
+  @Test
+  public void testChoosesJdkProvidingLevelWhenMultipleLevelsProvided() {
+    Sdk jdk11 = getUniqueMockJdk(LanguageLevel.JDK_11);
+    Sdk jdk17 = getUniqueMockJdk(LanguageLevel.JDK_17);
+
+    registerJdkProvider(
+        ImmutableMap.of(
+            LanguageLevel.JDK_11, jdk11,
+            LanguageLevel.JDK_17, jdk17,
+            LanguageLevel.JDK_17_PREVIEW, jdk17
+        ));
+
+    setJdkTable(jdk11, jdk17);
+
+    Sdk chosenSdk = Jdks.chooseOrCreateJavaSdk(jdk11, LanguageLevel.JDK_17_PREVIEW);
+    assertThat(chosenSdk).isEqualTo(jdk17);
+  }
+
   private void setJdkTable(Sdk... jdks) {
     WriteAction.run(
         () -> {

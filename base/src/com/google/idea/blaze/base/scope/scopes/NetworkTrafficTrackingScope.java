@@ -18,8 +18,8 @@ package com.google.idea.blaze.base.scope.scopes;
 import com.google.common.util.concurrent.AtomicLongMap;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
-import com.google.idea.blaze.base.scope.Output;
 import com.google.idea.blaze.base.scope.OutputSink.Propagation;
+import com.google.idea.blaze.common.Output;
 import java.util.Map;
 
 /** Scope used to measure the number of bytes downloaded over the network. */

@@ -1,0 +1,97 @@
+# Description:
+#
+# Plugin source jars for CLion, accessed remotely.
+
+load("@//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
+
+package(default_visibility = ["//visibility:public"])
+
+java_import(
+    name = "sdk",
+    jars = glob(
+        ["lib/*.jar"],
+        exclude = [
+            # mockito-extensions needs to be removed from this jar.
+            "lib/testFramework.jar",
+        ],
+    ),
+    tags = ["intellij-provided-by-sdk"],
+    exports = [":jars_without_mockito_extensions"],
+    deps = ["@error_prone_annotations//jar"],
+)
+
+no_mockito_extensions(
+    name = "jars_without_mockito_extensions",
+    jars = ["lib/testFramework.jar"],
+)
+
+java_import(
+    name = "guava",
+    jars = glob([
+        "lib/3rd-party-rt.jar",
+    ]),
+)
+
+java_library(name = "jsr305")  # not bundled
+
+java_import(
+    name = "clion_plugins",
+    jars = glob([
+        "plugins/c-plugin/lib/*.jar",
+        "plugins/cidr-base-plugin/lib/*.jar",
+        "plugins/cidr-debugger-plugin/lib/*.jar",
+        "plugins/clion/lib/*.jar",
+        "plugins/clion-test-google/lib/*.jar",
+        "plugins/clion-test-catch/lib/*.jar",
+        "plugins/clion-test-boost/lib/*.jar",
+        "plugins/nativeDebug-plugin/lib/*.jar"
+    ]),
+)
+
+java_import(
+    name = "hg4idea",
+    jars = glob(["plugins/hg4idea/lib/hg4idea.jar"]),
+)
+
+java_import(
+    name = "javascript",
+    jars = glob(["plugins/javascript-impl/lib/*.jar"]),
+)
+
+java_import(
+    name = "css",
+    jars = glob(["plugins/css-impl/lib/*.jar"]),
+)
+
+java_import(
+    name = "tslint",
+    jars = glob(["plugins/tslint/lib/*.jar"]),
+)
+
+java_import(
+    name = "terminal",
+    jars = glob(["plugins/terminal/lib/terminal.jar"]),
+)
+
+java_import(
+    name = "python",
+    jars = glob(["plugins/python-ce/lib/*.jar"]),
+)
+
+filegroup(
+    name = "python_helpers",
+    srcs = glob(["plugins/python-ce/helpers/**/*"]),
+)
+
+# The plugins required by CLwB. Presumably there will be some, when we write
+# some integration tests.
+java_import(
+    name = "bundled_plugins",
+    jars = [],
+    tags = ["intellij-provided-by-sdk"],
+)
+
+filegroup(
+    name = "application_info_json",
+    srcs = ["product-info.json"],
+)
