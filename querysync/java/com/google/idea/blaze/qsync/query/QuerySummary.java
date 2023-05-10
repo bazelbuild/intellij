@@ -137,7 +137,7 @@ public abstract class QuerySummary {
               rule.addAllResourceFiles(a.getStringListValueList());
             }
 
-            if (OTHER_ATTRIBUTES.contains(a.getName()) && a.hasStringValue()) {
+            if (OTHER_ATTRIBUTES.contains(a.getName()) && !a.getStringValue().isEmpty()) {
               rule.putOtherAttributes(a.getName(), a.getStringValue());
             }
           }
