@@ -20,6 +20,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
+import com.google.idea.blaze.qsync.project.SnapshotProto.WorkspaceSnapshot;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.protobuf.AbstractMessageLite;
 import java.nio.file.Path;
@@ -70,6 +71,10 @@ public class SnapshotSerializer {
               .setOperation(OP_MAP.get(change.operation))
               .setWorkspaceRelativePath(change.workspaceRelativePath.toString()));
     }
+    vcsState
+        .workspaceSnapshotPath
+        .map(p -> WorkspaceSnapshot.newBuilder().setPath(p.toString()).build())
+        .ifPresent(snapshot -> vcsProto.setWorkspaceSnapshot(snapshot));
   }
 
   private void visitQuerySummary(QuerySummary summary) {

@@ -22,6 +22,7 @@ message ProjectDefinition {
 message VcsState {
   string upstream_revision = 1;
   repeated WorkspaceFileChange working_set = 2;
+  WorkspaceSnapshot workspace_snapshot = 3;
 }
 
 message WorkspaceFileChange {
@@ -34,4 +35,8 @@ message WorkspaceFileChange {
 
   VcsOperation operation = 1;
   string workspace_relative_path = 2;
+}
+
+message WorkspaceSnapshot {
+  string path = 1;
 }

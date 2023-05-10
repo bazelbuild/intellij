@@ -16,7 +16,9 @@
 package com.google.idea.blaze.common.vcs;
 
 import com.google.common.collect.ImmutableSet;
+import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 
 /** State of the projects VCS at a point in time. */
 public class VcsState {
@@ -30,10 +32,20 @@ public class VcsState {
   public final String upstreamRevision;
   /** The set of files in the workspace that differ compared to {@link #upstreamRevision}. */
   public final ImmutableSet<WorkspaceFileChange> workingSet;
+  /**
+   * The readonly workspace snapshot path that this state derives from. If set, this can be used to
+   * ensure atomic operations on the workspace by ensuring that a set of sequential operations are
+   * all using the exact same revision of the workspace.
+   */
+  public final Optional<Path> workspaceSnapshotPath;
 
-  public VcsState(String upstreamRevision, ImmutableSet<WorkspaceFileChange> workingSet) {
+  public VcsState(
+      String upstreamRevision,
+      ImmutableSet<WorkspaceFileChange> workingSet,
+      Optional<Path> workspaceSnapshotPath) {
     this.upstreamRevision = upstreamRevision;
     this.workingSet = workingSet;
+    this.workspaceSnapshotPath = workspaceSnapshotPath;
   }
 
   @Override
@@ -50,11 +62,13 @@ public class VcsState {
       return false;
     }
     VcsState that = (VcsState) o;
-    return upstreamRevision.equals(that.upstreamRevision) && workingSet.equals(that.workingSet);
+    return upstreamRevision.equals(that.upstreamRevision)
+        && workingSet.equals(that.workingSet)
+        && workspaceSnapshotPath.equals(that.workspaceSnapshotPath);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(upstreamRevision, workingSet);
+    return Objects.hash(upstreamRevision, workingSet, workspaceSnapshotPath);
   }
 }

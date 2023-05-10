@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.common.vcs.VcsState;
+import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import java.util.Optional;
@@ -50,7 +51,7 @@ public interface BlazeVcsHandlerProvider {
    * Exception that may be thrown from a future returned by {@link BlazeVcsHandlerProvider} if an
    * operation fails.
    */
-  class VcsException extends Exception {
+  class VcsException extends BuildException {
     public VcsException(String message) {
       super(message);
     }
@@ -113,7 +114,8 @@ public interface BlazeVcsHandlerProvider {
                   () ->
                       new VcsState(
                           Futures.getDone(upstreamFuture),
-                          Futures.getDone(workingSet).toWorkspaceFileChanges()),
+                          Futures.getDone(workingSet).toWorkspaceFileChanges(),
+                          Optional.empty()),
                   executor));
     }
   }
