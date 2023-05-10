@@ -51,7 +51,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CancellationException;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -162,7 +161,7 @@ public class QuerySyncProject {
             SyncMode.FULL,
             SyncResult.SUCCESS);
       }
-    } catch (CancellationException | BuildException | IOException e) {
+    } catch (Exception e) {
       context.handleException("Project sync failed", e);
     } finally {
       for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
@@ -188,7 +187,7 @@ public class QuerySyncProject {
       Path path = Paths.get(psiFile.getVirtualFile().getPath());
       String rel = workspaceRoot.path().relativize(path).toString();
       build(context, ImmutableList.of(WorkspacePath.createIfValid(rel).asPath()));
-    } catch (CancellationException | IOException | BuildException e) {
+    } catch (Exception e) {
       context.handleException("Failed to build dependencies", e);
     }
   }
