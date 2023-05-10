@@ -716,7 +716,15 @@ def build_java_package_manifest(ctx, target, source_files, suffix):
         join_with = ":",
         map_each = _package_manifest_file_argument,
     )
-    args.use_param_file("@%s")
+
+    # Bazel has an option to put your command line args in a file, and then pass the name of that file as the only
+    # argument to your executable. The PackageParser supports taking args in this way, we can pass in an args file
+    # as "@filename".
+    # Bazel Persistent Workers take their input as a file that contains the argument that will be parsed and turned
+    # into a WorkRequest proto and read on stdin. It also wants an argument of the form "@filename". We can use the
+    # params file as an arg file.
+    # Thus if we always use a params file, we can support both persistent worker mode and local mode (regular) mode.
+    args.use_param_file("@%s", use_always = True)
     args.set_param_file_format("multiline")
 
     ctx.actions.run(
@@ -726,6 +734,10 @@ def build_java_package_manifest(ctx, target, source_files, suffix):
         arguments = [args],
         mnemonic = "JavaPackageManifest",
         progress_message = "Parsing java package strings for " + str(target.label),
+        execution_requirements = {
+            "supports-workers": "1",
+            "requires-worker-protocol": "proto",
+        },
     )
     return output
 
