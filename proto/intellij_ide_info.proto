@@ -48,7 +48,8 @@ message JavaIdeInfo {
   string test_class = 8;
   repeated LibraryArtifact plugin_processor_jars = 9;
   // Pass transitive jar artifact location without parsing jdeps
-  repeated ArtifactLocation transitive_compile_time_jars = 10;
+  repeated ArtifactLocation transitive_compile_time_jars = 10
+      [deprecated = true];
 }
 
 message CIdeInfo {

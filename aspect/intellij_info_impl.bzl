@@ -662,15 +662,6 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     resolve_files += plugin_processor_jar_files
     plugin_processor_jars = [annotation_processing_jars(jar, None) for jar in depset(plugin_processor_jar_files).to_list()]
 
-    # also add transitive hjars + src jars, to catch implicit deps
-
-    transitive_compile_time_jars = []
-    if hasattr(java, "transitive_compile_time_jars"):
-        update_set_in_dict(output_groups, "intellij-resolve-java-direct-deps", java.transitive_compile_time_jars)
-        update_set_in_dict(output_groups, "intellij-resolve-java-direct-deps", java.transitive_source_jars)
-        transitive_compile_time_jars += [artifact_location(output) for output in java.transitive_compile_time_jars.to_list()]
-        transitive_compile_time_jars += [artifact_location(output) for output in java.transitive_source_jars.to_list()]
-
     java_info = struct_omit_none(
         filtered_gen_jar = filtered_gen_jar,
         generated_jars = gen_jars,
@@ -681,7 +672,6 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
         sources = sources,
         test_class = getattr(ctx.rule.attr, "test_class", None),
         plugin_processor_jars = plugin_processor_jars,
-        transitive_compile_time_jars = transitive_compile_time_jars,
     )
 
     ide_info["java_ide_info"] = java_info
@@ -690,6 +680,10 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     update_sync_output_groups(output_groups, "intellij-compile-java", depset(compile_files))
     update_sync_output_groups(output_groups, "intellij-resolve-java", depset(resolve_files))
 
+    # also add transitive hjars + src jars, to catch implicit deps
+    if hasattr(java, "transitive_compile_time_jars"):
+        update_set_in_dict(output_groups, "intellij-resolve-java-direct-deps", java.transitive_compile_time_jars)
+        update_set_in_dict(output_groups, "intellij-resolve-java-direct-deps", java.transitive_source_jars)
     return True
 
 def _android_lint_plugin_jars(target):

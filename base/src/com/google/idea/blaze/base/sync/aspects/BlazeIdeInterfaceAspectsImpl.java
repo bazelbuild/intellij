@@ -156,7 +156,11 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     RemoteOutputArtifacts newRemoteOutputs =
         oldRemoteOutputs
             .appendNewOutputs(getTrackedOutputs(buildResult.getBuildResult()))
-            .removeUntrackedOutputs(state.targetMap, projectState.getLanguageSettings());
+            .removeUntrackedOutputs(state.targetMap, projectState.getLanguageSettings())
+            .appendNewOutputs(
+                getTrackedOutputs(
+                    buildResult.getBuildResult(),
+                    group -> group.contains("intellij-resolve-java-direct-deps")));
 
     return new ProjectTargetData(state.targetMap, state.state, newRemoteOutputs);
   }
@@ -165,8 +169,13 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   private static ImmutableSet<OutputArtifact> getTrackedOutputs(BlazeBuildOutputs buildOutput) {
     // don't track intellij-info.txt outputs -- they're already tracked in
     // BlazeIdeInterfaceState
+    return getTrackedOutputs(buildOutput, group -> true);
+  }
+
+  private static ImmutableSet<OutputArtifact> getTrackedOutputs(
+      BlazeBuildOutputs buildOutput, Predicate<String> outputGroupFilter) {
     Predicate<String> pathFilter = AspectStrategy.ASPECT_OUTPUT_FILE_PREDICATE.negate();
-    return buildOutput.getOutputGroupArtifacts(group -> true).stream()
+    return buildOutput.getOutputGroupArtifacts(outputGroupFilter).stream()
         .filter(a -> pathFilter.test(a.getRelativePath()))
         .collect(toImmutableSet());
   }
