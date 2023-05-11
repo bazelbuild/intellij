@@ -50,7 +50,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
- * The project component for a query based sync.
+ * The project component for a query based sync. With another Comment.
  *
  * <p>This class manages sync'ing the intelliJ project state to the state of the Bazel project in
  * the workspace, as well as building dependencies of the project.

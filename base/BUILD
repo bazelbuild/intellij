@@ -34,7 +34,6 @@ java_library(
         "//common/util:transactions",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
-        "//java/com/google/common/time",
         "//proto:proto_deps",
         "//querysync",
         "//sdkcompat",
@@ -42,6 +41,7 @@ java_library(
         "//shared:exception",
         "//shared:vcs",
         "//third_party/auto_value",
+        "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
     ],
 )
