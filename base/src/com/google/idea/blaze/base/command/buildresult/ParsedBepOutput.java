@@ -32,11 +32,13 @@ import com.google.common.collect.Queues;
 import com.google.common.collect.SetMultimap;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.NamedSetOfFilesId;
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.File;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.NamedSetOfFiles;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.OutputGroup;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -408,23 +410,29 @@ public final class ParsedBepOutput {
   /** Returns a copy of a {@link NamedSetOfFiles} with interned string references. */
   private static NamedSetOfFiles internNamedSet(
       NamedSetOfFiles namedSet, Interner<String> interner) {
+    final boolean isQuerySyncEnabled = QuerySync.isEnabled();
     return namedSet.toBuilder()
         .clearFiles()
         .addAllFiles(
             namedSet.getFilesList().stream()
                 .map(
-                    file ->
-                        file.toBuilder()
-                            // The digest is not used when parsing output artifacts
-                            .setDigest("")
-                            .setUri(interner.intern(file.getUri()))
-                            .setName(interner.intern(file.getName()))
-                            .clearPathPrefix()
-                            .addAllPathPrefix(
-                                file.getPathPrefixList().stream()
-                                    .map(interner::intern)
-                                    .collect(Collectors.toUnmodifiableList()))
-                            .build())
+                    file -> {
+                      File.Builder builder =
+                          file.toBuilder()
+                              .setUri(interner.intern(file.getUri()))
+                              .setName(interner.intern(file.getName()))
+                              .clearPathPrefix()
+                              .addAllPathPrefix(
+                                  file.getPathPrefixList().stream()
+                                      .map(interner::intern)
+                                      .collect(Collectors.toUnmodifiableList()));
+                      if (!isQuerySyncEnabled) {
+                        // The digest is not used when parsing output artifacts in the non-query
+                        // sync mode.
+                        builder.setDigest("");
+                      }
+                      return builder.build();
+                    })
                 .collect(Collectors.toUnmodifiableList()))
         .build();
   }
