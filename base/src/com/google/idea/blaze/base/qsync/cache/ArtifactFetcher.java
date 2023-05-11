@@ -35,9 +35,18 @@ public interface ArtifactFetcher<ArtifactT extends OutputArtifact> {
       MoreExecutors.listeningDecorator(
           AppExecutorUtil.createBoundedApplicationPoolExecutor("ArtifactBulkCopyExecutor", 128));
 
+  /** A structure that describes that destination location to which an artifact has to be copied. */
+  final class ArtifactDestination {
+    public final Path path;
+
+    public ArtifactDestination(Path path) {
+      this.path = path;
+    }
+  }
+
   /** Copies a bunch of artifact to destination. */
   ListenableFuture<List<Path>> copy(
-      ImmutableMap<? extends ArtifactT, Path> artifactToDest, Context<?> context);
+      ImmutableMap<? extends ArtifactT, ArtifactDestination> artifactToDest, Context<?> context);
 
   Class<ArtifactT> supportedArtifactType();
 }

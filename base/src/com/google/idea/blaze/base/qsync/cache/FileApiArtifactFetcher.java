@@ -33,13 +33,15 @@ import java.util.Map.Entry;
 public class FileApiArtifactFetcher implements ArtifactFetcher<LocalFileOutputArtifact> {
   @Override
   public ListenableFuture<List<Path>> copy(
-      ImmutableMap<? extends LocalFileOutputArtifact, Path> artifactToDest, Context<?> context) {
+      ImmutableMap<? extends LocalFileOutputArtifact, ArtifactDestination> artifactToDest,
+      Context<?> context) {
     ImmutableList.Builder<ListenableFuture<Path>> tasks = ImmutableList.builder();
-    for (Entry<? extends LocalFileOutputArtifact, Path> entry : artifactToDest.entrySet()) {
+    for (Entry<? extends LocalFileOutputArtifact, ArtifactDestination> entry :
+        artifactToDest.entrySet()) {
       tasks.add(
           EXECUTOR.submit(
               () -> {
-                Path dest = entry.getValue();
+                Path dest = entry.getValue().path;
                 LocalFileOutputArtifact localFileOutputArtifact = entry.getKey();
                 if (Files.exists(dest) && Files.isDirectory(dest)) {
                   FileOperationProvider.getInstance().deleteRecursively(dest.toFile(), true);
