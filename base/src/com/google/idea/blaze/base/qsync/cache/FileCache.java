@@ -58,9 +58,6 @@ public class FileCache {
      * process it to form the final cache layout.
      */
     OutputArtifactDestination getOutputArtifactDestination(OutputArtifact outputArtifact);
-
-    /** Returns a list of paths for artifact subdirectories in this specific cache layout. */
-    ImmutableList<Path> getSubdirectories() throws IOException;
   }
 
   /**
@@ -202,9 +199,5 @@ public class FileCache {
 
   public Path getDirectory() {
     return cacheDirectoryManager.cacheDirectory;
-  }
-
-  public ImmutableList<Path> getSubdirectories() throws IOException {
-    return cacheLayout.getSubdirectories();
   }
 }

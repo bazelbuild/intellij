@@ -30,9 +30,18 @@ import java.nio.file.Path;
 class CacheDirectoryManager {
 
   public final Path cacheDirectory;
+  private final Path cacheDotDirectory;
 
-  public CacheDirectoryManager(Path cacheDirectory) {
+  public CacheDirectoryManager(Path cacheDirectory, Path cacheDotDirectory) {
+    if (cacheDotDirectory.startsWith(cacheDirectory)) {
+      throw new IllegalArgumentException(
+          String.format(
+              "cacheDotDirectory cannot be under cacheDirectory. cacheDirectory: %s,"
+                  + " cacheDotDirectory: %s",
+              cacheDirectory, cacheDotDirectory));
+    }
     this.cacheDirectory = cacheDirectory;
+    this.cacheDotDirectory = cacheDotDirectory;
   }
 
   /**
@@ -43,6 +52,7 @@ class CacheDirectoryManager {
   public void initialize() throws IOException {
     try {
       Files.createDirectories(cacheDirectory);
+      Files.createDirectories(cacheDotDirectory);
     } catch (IOException e) {
       throw new IOException("Cache Directory '" + cacheDirectory + "' cannot be initialized", e);
     }
@@ -54,6 +64,11 @@ class CacheDirectoryManager {
    * <p>Both in-memory and on-disk storage is cleared.
    */
   public void clear() throws IOException {
+    // Delete dot directory first to ensure invalidation if interrupted.
+    if (Files.exists(cacheDotDirectory)) {
+      //noinspection UnstableApiUsage
+      MoreFiles.deleteRecursively(cacheDotDirectory);
+    }
     if (Files.exists(cacheDirectory)) {
       //noinspection UnstableApiUsage
       MoreFiles.deleteRecursively(cacheDirectory);

@@ -15,18 +15,12 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
-
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestination;
 import com.intellij.openapi.util.io.FileUtilRt;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Stream;
 
 /**
  * A cache layout implementation building its cache directory in a way that can be consumed by the
@@ -46,11 +40,14 @@ public class DefaultCacheLayout implements CacheLayout {
 
   private static final String PACKED_FILES_DIR = ".zips";
 
+  private final Path cacheDotDirectory;
   private final ImmutableSet<String> zipFileExtensions;
   private final Path cacheDirectory;
 
-  public DefaultCacheLayout(Path cacheDirectory, ImmutableSet<String> zipFileExtensions) {
+  public DefaultCacheLayout(
+      Path cacheDirectory, Path cacheDotDirectory, ImmutableSet<String> zipFileExtensions) {
     this.cacheDirectory = cacheDirectory;
+    this.cacheDotDirectory = cacheDotDirectory;
     this.zipFileExtensions = zipFileExtensions;
   }
 
@@ -58,14 +55,16 @@ public class DefaultCacheLayout implements CacheLayout {
    * Maps output artifacts to the paths of local files the artifacts should be copied to.
    *
    * <p>Output artifacts that needs to be extracted for being used in the IDE are placed into
-   * sub-directories under {@code dir} in which their content will be extracted later.
+   * sub-directories under {@code cacheDotDirectory} and the final layout is built under {@code
+   * cacheDirectory}.
    *
    * <p>When artifact files are extracted, the final file system layout looks like:
    *
    * <pre>
-   *     aars/
+   *     .aars/
    *         .zips/
    *             file.zip-like.aar                # the zip file being extracted
+   *     aars/
    *         file.zip-like.aar/
    *             file.txt                         # a file from file.zip-like.aar
    *             res/                             # a directory from file.zip-like.aar
@@ -79,7 +78,7 @@ public class DefaultCacheLayout implements CacheLayout {
     final Path finalDestination = cacheDirectory.resolve(key);
     if (shouldExtractFile(Path.of(outputArtifact.getRelativePath()))) {
       return new ZippedOutputArtifactDestination(
-          finalDestination, cacheDirectory.resolve(PACKED_FILES_DIR).resolve(key));
+          finalDestination, cacheDotDirectory.resolve(PACKED_FILES_DIR).resolve(key));
     } else {
       return new PreparedOutputArtifactDestination(finalDestination);
     }
@@ -87,14 +86,5 @@ public class DefaultCacheLayout implements CacheLayout {
 
   private boolean shouldExtractFile(Path sourcePath) {
     return zipFileExtensions.contains(FileUtilRt.getExtension(sourcePath.getFileName().toString()));
-  }
-
-  @Override
-  public ImmutableList<Path> getSubdirectories() throws IOException {
-    try (Stream<Path> pathStream = Files.list(cacheDirectory)) {
-      return pathStream
-          .filter(p -> Files.isDirectory(p) && !p.getFileName().toString().equals(PACKED_FILES_DIR))
-          .collect(toImmutableList());
-    }
   }
 }
