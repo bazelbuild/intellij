@@ -112,7 +112,8 @@ public class ProjectQuerierImpl implements ProjectQuerier {
    * </ul>
    */
   @Override
-  public BlazeProjectSnapshot update(PostQuerySyncData previousState, BlazeContext context)
+  public BlazeProjectSnapshot update(
+      ProjectDefinition currentProjectDef, PostQuerySyncData previousState, BlazeContext context)
       throws IOException, BuildException {
 
     Optional<VcsState> vcsState = Optional.empty();
@@ -132,7 +133,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
     }
 
     RefreshOperation refresh =
-        projectRefresher.startPartialRefresh(context, previousState, vcsState);
+        projectRefresher.startPartialRefresh(context, previousState, vcsState, currentProjectDef);
 
     Optional<QuerySpec> spec = refresh.getQuerySpec();
     if (spec.isPresent()) {

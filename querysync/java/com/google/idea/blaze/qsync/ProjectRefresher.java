@@ -48,9 +48,16 @@ public class ProjectRefresher {
   }
 
   public RefreshOperation startPartialRefresh(
-      Context context, PostQuerySyncData currentProject, Optional<VcsState> latestVcsState) {
+      Context<?> context,
+      PostQuerySyncData currentProject,
+      Optional<VcsState> latestVcsState,
+      ProjectDefinition latestProjectDefinition) {
+    if (!currentProject.projectDefinition().equals(latestProjectDefinition)) {
+      context.output(PrintOutput.output("Project definition has changed; performing full query"));
+      return fullUpdate(context, latestProjectDefinition, latestVcsState);
+    }
     if (!currentProject.vcsState().isPresent()) {
-      context.output(PrintOutput.output("No VCS state from last query: performing full query"));
+      context.output(PrintOutput.output("No VCS state from last sync: performing full query"));
       return fullUpdate(context, currentProject.projectDefinition(), latestVcsState);
     }
     if (!latestVcsState.isPresent()) {
