@@ -31,6 +31,7 @@ public interface ProjectQuerier {
   BlazeProjectSnapshot fullQuery(ProjectDefinition projectDef, BlazeContext context)
       throws IOException, BuildException;
 
-  BlazeProjectSnapshot update(PostQuerySyncData previousState, BlazeContext context)
+  BlazeProjectSnapshot update(
+      ProjectDefinition currentProjectDef, PostQuerySyncData previousState, BlazeContext context)
       throws IOException, BuildException;
 }

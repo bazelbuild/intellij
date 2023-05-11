@@ -45,18 +45,11 @@ import com.google.idea.blaze.qsync.PackageStatementParser;
 import com.google.idea.blaze.qsync.ParallelPackageReader;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.WorkspaceResolvingPackageReader;
-import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.google.idea.blaze.qsync.project.SnapshotDeserializer;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.Optional;
-import java.util.zip.GZIPInputStream;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -113,14 +106,6 @@ public class ProjectLoader {
         ProjectDefinition.create(importRoots.rootPaths(), importRoots.excludePaths());
 
     Path snapshotFilePath = getSnapshotFilePath(importSettings);
-    Optional<PostQuerySyncData> loadedSnapshot = loadFromDisk(snapshotFilePath);
-    // don't use the snapshot if the project definition has changed, since a full re-load will be
-    // necessary in that case:
-    loadedSnapshot =
-        loadedSnapshot.filter(snapshot -> snapshot.projectDefinition().equals(latestProjectDef));
-
-    ProjectDefinition projectDefinition =
-        loadedSnapshot.map(PostQuerySyncData::projectDefinition).orElse(latestProjectDef);
 
     DependencyBuilder dependencyBuilder =
         createDependencyBuilder(workspaceRoot, importRoots, buildSystem);
@@ -142,23 +127,21 @@ public class ProjectLoader {
     QuerySyncSourceToTargetMap sourceToTargetMap =
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
 
-    QuerySyncProject loadedProject =
-        new QuerySyncProject(
-            project,
-            snapshotFilePath,
-            graph,
-            importSettings,
-            workspaceRoot,
-            dependencyCache,
-            dependencyTracker,
-            projectQuerier,
-            projectDefinition,
-            projectViewSet,
-            workspacePathResolver,
-            workspaceLanguageSettings,
-            sourceToTargetMap,
-            projectViewManager);
-    return loadedProject;
+    return new QuerySyncProject(
+        project,
+        snapshotFilePath,
+        graph,
+        importSettings,
+        workspaceRoot,
+        dependencyCache,
+        dependencyTracker,
+        projectQuerier,
+        latestProjectDef,
+        projectViewSet,
+        workspacePathResolver,
+        workspaceLanguageSettings,
+        sourceToTargetMap,
+        projectViewManager);
   }
 
   private static ParallelPackageReader createPackageReader(WorkspaceRoot workspaceRoot) {
@@ -183,16 +166,6 @@ public class ProjectLoader {
   protected DependencyBuilder createDependencyBuilder(
       WorkspaceRoot workspaceRoot, ImportRoots importRoots, BuildSystem buildSystem) {
     return new BazelDependencyBuilder(project, buildSystem, importRoots, workspaceRoot);
-  }
-
-  public Optional<PostQuerySyncData> loadFromDisk(Path snapshotFilePath) throws IOException {
-    File f = snapshotFilePath.toFile();
-    if (!f.exists()) {
-      return Optional.empty();
-    }
-    try (InputStream in = new GZIPInputStream(new FileInputStream(f))) {
-      return Optional.of(new SnapshotDeserializer().readFrom(in).getSyncData());
-    }
   }
 
   private Path getSnapshotFilePath(BlazeImportSettings importSettings) {

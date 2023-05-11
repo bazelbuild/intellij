@@ -49,7 +49,8 @@ public class ProjectRefresherTest {
             .startPartialRefresh(
                 QuerySyncTestUtils.NOOP_CONTEXT,
                 project,
-                Optional.of(new VcsState("2", ImmutableSet.of(), Optional.empty())));
+                Optional.of(new VcsState("2", ImmutableSet.of(), Optional.empty())),
+                project.projectDefinition());
     assertThat(update).isInstanceOf(FullProjectUpdate.class);
   }
 
@@ -74,7 +75,8 @@ public class ProjectRefresherTest {
             .startPartialRefresh(
                 QuerySyncTestUtils.NOOP_CONTEXT,
                 project,
-                Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())));
+                Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())),
+                project.projectDefinition());
 
     assertThat(update).isInstanceOf(PartialProjectRefresh.class);
     PartialProjectRefresh partialQuery = (PartialProjectRefresh) update;
@@ -103,7 +105,8 @@ public class ProjectRefresherTest {
             .startPartialRefresh(
                 QuerySyncTestUtils.NOOP_CONTEXT,
                 project,
-                Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())));
+                Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())),
+                project.projectDefinition());
 
     assertThat(update).isInstanceOf(PartialProjectRefresh.class);
     PartialProjectRefresh partialQuery = (PartialProjectRefresh) update;
@@ -133,7 +136,8 @@ public class ProjectRefresherTest {
             .startPartialRefresh(
                 QuerySyncTestUtils.NOOP_CONTEXT,
                 project,
-                Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())));
+                Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())),
+                project.projectDefinition());
 
     assertThat(update).isInstanceOf(PartialProjectRefresh.class);
     PartialProjectRefresh partialQuery = (PartialProjectRefresh) update;

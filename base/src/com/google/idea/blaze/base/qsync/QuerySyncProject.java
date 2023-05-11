@@ -38,19 +38,23 @@ import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.blaze.qsync.project.SnapshotDeserializer;
 import com.google.idea.blaze.qsync.project.SnapshotSerializer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -144,7 +148,7 @@ public class QuerySyncProject {
       BlazeProjectSnapshot newProject =
           lastQuery.isEmpty()
               ? projectQuerier.fullQuery(projectDefinition, context)
-              : projectQuerier.update(lastQuery.get(), context);
+              : projectQuerier.update(projectDefinition, lastQuery.get(), context);
       newProject = dependencyTracker.updateSnapshot(context, newProject);
       onNewSnapshot(context, newProject);
 
@@ -221,6 +225,16 @@ public class QuerySyncProject {
         ProjectDefinition.create(importRoots.rootPaths(), importRoots.excludePaths());
 
     return this.projectDefinition.equals(projectDefinition);
+  }
+
+  public Optional<PostQuerySyncData> readSnapshotFromDisk() throws IOException {
+    File f = snapshotFilePath.toFile();
+    if (!f.exists()) {
+      return Optional.empty();
+    }
+    try (InputStream in = new GZIPInputStream(new FileInputStream(f))) {
+      return Optional.of(new SnapshotDeserializer().readFrom(in).getSyncData());
+    }
   }
 
   private void writeToDisk(BlazeProjectSnapshot snapshot) throws IOException {
