@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.common.time.TimeSource;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
@@ -77,12 +76,11 @@ public class BazelQueryRunner implements QueryRunner {
         InputStream in =
             commandRunner.runQuery(project, commandBuilder, buildResultHelper, context)) {
       logger.info(String.format("Summarising query from %s", in));
-      Instant start = TimeSource.system().now();
+      Instant start = Instant.now();
       QuerySummary summary = QuerySummary.create(in);
       logger.info(
           String.format(
-              "Summarised query in %ds",
-              Duration.between(start, TimeSource.system().now()).toSeconds()));
+              "Summarised query in %ds", Duration.between(start, Instant.now()).toSeconds()));
       return summary;
     }
   }
