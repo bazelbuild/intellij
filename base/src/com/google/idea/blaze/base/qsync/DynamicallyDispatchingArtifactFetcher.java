@@ -38,7 +38,8 @@ class DynamicallyDispatchingArtifactFetcher implements ArtifactFetcher<OutputArt
 
   @Override
   public ListenableFuture<List<Path>> copy(
-      ImmutableMap<? extends OutputArtifact, Path> artifactToDest, Context<?> context) {
+      ImmutableMap<? extends OutputArtifact, ArtifactDestination> artifactToDest,
+      Context<?> context) {
     ImmutableList<ListenableFuture<List<Path>>> futures =
         artifactToDest.entrySet().stream()
             .collect(Collectors.groupingBy(it -> it.getKey().getClass()))
