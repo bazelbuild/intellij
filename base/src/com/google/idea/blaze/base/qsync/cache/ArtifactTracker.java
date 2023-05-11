@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -94,10 +95,11 @@ public class ArtifactTracker {
       ArtifactFetcher<OutputArtifact> artifactFetcher,
       Path cacheDirectory,
       ImmutableSet<String> zipFileExtensions) {
+    Path cacheDotDirectory = cacheDirectory.resolveSibling("." + cacheDirectory.getFileName());
     return new FileCache(
         artifactFetcher,
-        new CacheDirectoryManager(cacheDirectory),
-        new DefaultCacheLayout(cacheDirectory, zipFileExtensions));
+        new CacheDirectoryManager(cacheDirectory, cacheDotDirectory),
+        new DefaultCacheLayout(cacheDirectory, cacheDotDirectory, zipFileExtensions));
   }
 
   public void initialize() {
@@ -224,7 +226,9 @@ public class ArtifactTracker {
   }
 
   public ImmutableList<Path> getGenSrcSubfolders() throws IOException {
-    return generatedSrcFileCache.getSubdirectories();
+    try (Stream<Path> pathStream = Files.list(generatedSrcFileCache.getDirectory())) {
+      return pathStream.collect(toImmutableList());
+    }
   }
 
   public Set<Label> getCachedTargets() {
