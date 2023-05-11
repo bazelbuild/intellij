@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.common.time.TimeSource;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
@@ -25,15 +26,21 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
+import java.time.Instant;
 
 /** The default implementation of QueryRunner. */
 public class BazelQueryRunner implements QueryRunner {
+
+  private static final Logger logger = Logger.getInstance(BazelQueryRunner.class);
+
   private final Project project;
   private final BuildSystem buildSystem;
 
@@ -47,6 +54,10 @@ public class BazelQueryRunner implements QueryRunner {
       throws IOException, BuildException {
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
     BlazeCommandRunner commandRunner = invoker.getCommandRunner();
+    logger.info(
+        String.format(
+            "Running `%s` using invoker %s, runner %s",
+            query, invoker.getClass().getSimpleName(), commandRunner.getClass().getSimpleName()));
 
     BlazeCommand.Builder commandBuilder = BlazeCommand.builder(invoker, BlazeCommandName.QUERY);
     commandBuilder.addBlazeFlags(query.getQueryFlags());
@@ -65,7 +76,14 @@ public class BazelQueryRunner implements QueryRunner {
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper();
         InputStream in =
             commandRunner.runQuery(project, commandBuilder, buildResultHelper, context)) {
-      return QuerySummary.create(in);
+      logger.info(String.format("Summarising query from %s", in));
+      Instant start = TimeSource.system().now();
+      QuerySummary summary = QuerySummary.create(in);
+      logger.info(
+          String.format(
+              "Summarised query in %ds",
+              Duration.between(start, TimeSource.system().now()).toSeconds()));
+      return summary;
     }
   }
 }

@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.nio.file.Path;
@@ -54,6 +55,17 @@ public abstract class QuerySpec {
   // LINT.ThenChange(
   //   //depot/google3/aswb/testdata/projects/test_projects.bzl
   // )
+
+  @Override
+  public final String toString() {
+    return Joiner.on(' ')
+        .join(
+            ImmutableList.builder()
+                .add("query")
+                .addAll(getQueryFlags())
+                .add(getQueryExpression())
+                .build());
+  }
 
   public static Builder builder() {
     return new AutoValue_QuerySpec.Builder();
