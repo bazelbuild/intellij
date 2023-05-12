@@ -116,7 +116,8 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
                   LineProcessingOutputStream.of(
                       line -> {
                         // errors are expected, so limit logging to info level
-                        Logger.getInstance(this.getClass()).info(line);
+                        Logger.getInstance(this.getClass()).info(line.stripTrailing());
+                        context.output(PrintOutput.output(line.stripTrailing()));
                         return true;
                       }))
               .build()
