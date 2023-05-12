@@ -30,6 +30,8 @@ public class QuerySyncTestUtils {
 
   public static final Context<?> NOOP_CONTEXT = new NoopContext();
 
+  public static final Context<?> LOGGING_CONTEXT = new LoggingContext();
+
   public static final PackageReader EMPTY_PACKAGE_READER = p -> "";
 
   public static final Optional<VcsState> CLEAN_VCS_STATE =

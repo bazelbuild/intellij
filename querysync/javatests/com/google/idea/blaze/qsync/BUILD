@@ -1,6 +1,7 @@
 java_library(
     name = "TestUtils",
     srcs = [
+        "LoggingContext.java",
         "NoopContext.java",
         "QuerySyncTestUtils.java",
     ],
@@ -11,6 +12,7 @@ java_library(
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//shared",
         "//shared:vcs",
+        "//third_party/java/flogger",
         "@com_google_guava_guava//jar",
     ],
 )
