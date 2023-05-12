@@ -47,7 +47,7 @@ public class ProjectRefresherTest {
     RefreshOperation update =
         createRefresher()
             .startPartialRefresh(
-                QuerySyncTestUtils.NOOP_CONTEXT,
+                QuerySyncTestUtils.LOGGING_CONTEXT,
                 project,
                 Optional.of(new VcsState("2", ImmutableSet.of(), Optional.empty())),
                 project.projectDefinition());
@@ -73,7 +73,7 @@ public class ProjectRefresherTest {
     RefreshOperation update =
         createRefresher()
             .startPartialRefresh(
-                QuerySyncTestUtils.NOOP_CONTEXT,
+                QuerySyncTestUtils.LOGGING_CONTEXT,
                 project,
                 Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())),
                 project.projectDefinition());
@@ -103,7 +103,7 @@ public class ProjectRefresherTest {
     RefreshOperation update =
         createRefresher()
             .startPartialRefresh(
-                QuerySyncTestUtils.NOOP_CONTEXT,
+                QuerySyncTestUtils.LOGGING_CONTEXT,
                 project,
                 Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())),
                 project.projectDefinition());
@@ -134,7 +134,7 @@ public class ProjectRefresherTest {
     RefreshOperation update =
         createRefresher()
             .startPartialRefresh(
-                QuerySyncTestUtils.NOOP_CONTEXT,
+                QuerySyncTestUtils.LOGGING_CONTEXT,
                 project,
                 Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())),
                 project.projectDefinition());
