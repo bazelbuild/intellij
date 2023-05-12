@@ -33,7 +33,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.execution.ParametersListUtil;
 import java.io.File;
 import java.io.IOException;
@@ -247,8 +246,7 @@ public interface ExternalTask {
     }
 
     private int invokeCommand(BlazeContext context) {
-      String logMessage =
-          "Command: " + ParametersListUtil.join(command) + SystemProperties.getLineSeparator();
+      String logMessage = "Command: " + ParametersListUtil.join(command);
 
       context.output(
           PrintOutput.log(
