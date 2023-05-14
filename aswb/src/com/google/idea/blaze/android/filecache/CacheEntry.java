@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
+import java.io.File;
 import java.util.Objects;
 import java.util.Set;
 
@@ -29,9 +30,9 @@ public final class CacheEntry {
   private final String cacheKey;
 
   private final String fileName;
-  private final Set<ArtifactMetadata> artifacts;
+  private final Set<Metadata> artifacts;
 
-  public CacheEntry(String cacheKey, String fileName, Set<ArtifactMetadata> artifacts) {
+  public CacheEntry(String cacheKey, String fileName, Set<Metadata> artifacts) {
     this.cacheKey = cacheKey;
     this.fileName = fileName;
     this.artifacts = artifacts;
@@ -49,7 +50,7 @@ public final class CacheEntry {
     return fileName;
   }
 
-  public ImmutableSet<ArtifactMetadata> getArtifacts() {
+  public ImmutableSet<Metadata> getArtifacts() {
     return ImmutableSet.copyOf(artifacts);
   }
 
@@ -78,7 +79,7 @@ public final class CacheEntry {
   @VisibleForTesting
   public static CacheEntry forArtifact(OutputArtifact blazeArtifact)
       throws ArtifactNotFoundException {
-    ArtifactMetadata artifactMetadata = ArtifactMetadata.forArtifact(blazeArtifact);
+    Metadata artifactMetadata = Metadata.forArtifact(blazeArtifact);
 
     String artifactPath = artifactMetadata.getRelativePath();
 
@@ -87,7 +88,7 @@ public final class CacheEntry {
     String artifactExtension = FileUtil.getExtension(artifactNameAndExt, "").toString();
 
     // Logic for generating cache keys (matches the current FileCache logic)
-    String cacheKey = artifactName + "_" + Integer.toHexString(artifactPath.hashCode());
+    String cacheKey = getCachedKey(artifactName, artifactPath);
 
     String localFileName = cacheKey;
     if (!artifactExtension.isEmpty()) {
@@ -95,5 +96,24 @@ public final class CacheEntry {
     }
 
     return new CacheEntry(cacheKey, localFileName, ImmutableSet.of(artifactMetadata));
+  }
+
+  public static String getCachedKey(String name, String relativePath) {
+    return name + "_" + Integer.toHexString(relativePath.hashCode());
+  }
+
+  /** Returns a {@link CacheEntry} corresponding to the given {@code File}. */
+  @VisibleForTesting
+  public static CacheEntry forFile(File file) {
+    Metadata metadata = Metadata.forFile(file);
+    String relativePath = metadata.getRelativePath();
+
+    String nameAndExt = PathUtil.getFileName(relativePath);
+    String name = FileUtil.getNameWithoutExtension(nameAndExt);
+
+    // Logic for generating cache keys (matches the current FileCache logic)
+    String cacheKey = getCachedKey(name, relativePath);
+
+    return new CacheEntry(cacheKey, file.getName(), ImmutableSet.of(metadata));
   }
 }

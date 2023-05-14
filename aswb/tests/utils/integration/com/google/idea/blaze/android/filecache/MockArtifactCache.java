@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-/** Mock of {@link ArtifactCache}. Does not require actual files to present in the file system */
+/** Mock of {@link LocalCache}. Does not require actual files to present in the file system */
 public class MockArtifactCache implements ArtifactCache {
   // Maps an artifact's relative path to it's path in cache
   private final Map<String, String> relativePathToFile;
@@ -42,11 +42,14 @@ public class MockArtifactCache implements ArtifactCache {
   }
 
   @Override
-  public void putAll(
-      Collection<OutputArtifact> artifacts, BlazeContext context, boolean removeMissingArtifacts) {
-    throw new UnsupportedOperationException(
-        "MockArtifactCache does not support putting files in file system. Use `addTrackedFile`"
-            + " instead");
+  public void refresh() {
+    throw new UnsupportedOperationException("Operation is not supported");
+  }
+
+  @Nullable
+  @Override
+  public Path get(String cacheKey) {
+    return Paths.get(relativePathToFile.get(cacheKey));
   }
 
   @Nullable
@@ -61,6 +64,14 @@ public class MockArtifactCache implements ArtifactCache {
     return Paths.get(
         relativePathToFile.get(
             cacheEntry.getArtifacts().stream().findFirst().get().getRelativePath()));
+  }
+
+  @Override
+  public void putAll(
+      Collection<OutputArtifact> artifacts, BlazeContext context, boolean removeMissingArtifacts) {
+    throw new UnsupportedOperationException(
+        "MockArtifactCache does not support putting files in file system. Use `addTrackedFile`"
+            + " instead");
   }
 
   public void addTrackedFile(OutputArtifact artifact, String trackedFilePath) {

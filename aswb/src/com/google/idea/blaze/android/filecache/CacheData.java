@@ -30,10 +30,10 @@ import java.util.Collection;
 import java.util.List;
 
 /** Data class for (de)serializing cache data */
-public final class ArtifactCacheData {
+public final class CacheData {
   private final List<CacheEntry> cacheEntries;
 
-  public ArtifactCacheData(Collection<CacheEntry> cacheEntries) {
+  public CacheData(Collection<CacheEntry> cacheEntries) {
     this.cacheEntries = ImmutableList.copyOf(cacheEntries);
   }
 
@@ -44,14 +44,14 @@ public final class ArtifactCacheData {
   public void writeJson(OutputStream outputStream) throws IOException {
     Gson gson = new Gson();
     try (JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(outputStream, UTF_8))) {
-      gson.toJson(this, ArtifactCacheData.class, jsonWriter);
+      gson.toJson(this, CacheData.class, jsonWriter);
     }
   }
 
-  public static ArtifactCacheData readJson(InputStream inputStream) throws IOException {
+  public static CacheData readJson(InputStream inputStream) throws IOException {
     Gson gson = new Gson();
     try (JsonReader jsonReader = new JsonReader(new InputStreamReader(inputStream, UTF_8))) {
-      return gson.fromJson(jsonReader, ArtifactCacheData.class);
+      return gson.fromJson(jsonReader, CacheData.class);
     }
   }
 }
