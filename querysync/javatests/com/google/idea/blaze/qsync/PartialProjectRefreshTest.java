@@ -99,6 +99,7 @@ public class PartialProjectRefreshTest {
     PartialProjectRefresh queryStrategy =
         new PartialProjectRefresh(
             QuerySyncTestUtils.NOOP_CONTEXT,
+            Path.of("/workspace/root"),
             QuerySyncTestUtils.EMPTY_PACKAGE_READER,
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,
@@ -166,6 +167,7 @@ public class PartialProjectRefreshTest {
     PartialProjectRefresh queryStrategy =
         new PartialProjectRefresh(
             QuerySyncTestUtils.NOOP_CONTEXT,
+            Path.of("/workspace/root"),
             QuerySyncTestUtils.EMPTY_PACKAGE_READER,
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,
@@ -229,6 +231,7 @@ public class PartialProjectRefreshTest {
     PartialProjectRefresh queryStrategy =
         new PartialProjectRefresh(
             QuerySyncTestUtils.NOOP_CONTEXT,
+            Path.of("/workspace/root"),
             QuerySyncTestUtils.EMPTY_PACKAGE_READER,
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,

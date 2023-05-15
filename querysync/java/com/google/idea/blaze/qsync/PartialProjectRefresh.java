@@ -39,11 +39,12 @@ import java.util.Optional;
  * Implements a query strategy based on querying a minimal set of packages derived from the VCS
  * working set.
  *
- * <p>Instance of this class will be returned from {@link
- * ProjectRefresher#startPartialRefresh(Context, BlazeProjectSnapshot, Optional)} when appropriate.
+ * <p>Instance of this class will be returned from {@link ProjectRefresher#startPartialRefresh} when
+ * appropriate.
  */
 class PartialProjectRefresh implements RefreshOperation {
 
+  private final Path effectiveWorkspaceRoot;
   private final PostQuerySyncData previousState;
   private final BlazeQueryParser queryParser;
   private final GraphToProjectConverter graphToProjectConverter;
@@ -54,11 +55,13 @@ class PartialProjectRefresh implements RefreshOperation {
 
   PartialProjectRefresh(
       Context context,
+      Path effectiveWorkspaceRoot,
       PackageReader packageReader,
       PostQuerySyncData previousState,
       Optional<VcsState> currentVcsState,
       ImmutableSet<Path> modifiedPackages,
       ImmutableSet<Path> deletedPackages) {
+    this.effectiveWorkspaceRoot = effectiveWorkspaceRoot;
     this.previousState = previousState;
     this.newState =
         PostQuerySyncData.builder()
@@ -77,7 +80,11 @@ class PartialProjectRefresh implements RefreshOperation {
       return Optional.empty();
     }
     // TODO should we also consider excludes here?
-    return Optional.of(QuerySpec.builder().includePackages(modifiedPackages).build());
+    return Optional.of(
+        QuerySpec.builder()
+            .includePackages(modifiedPackages)
+            .workspaceRoot(effectiveWorkspaceRoot)
+            .build());
   }
 
   @Override

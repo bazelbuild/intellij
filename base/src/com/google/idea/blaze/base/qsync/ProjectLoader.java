@@ -44,7 +44,6 @@ import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.PackageStatementParser;
 import com.google.idea.blaze.qsync.ParallelPackageReader;
 import com.google.idea.blaze.qsync.ProjectRefresher;
-import com.google.idea.blaze.qsync.WorkspaceResolvingPackageReader;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -118,7 +117,7 @@ public class ProjectLoader {
     DependencyTracker dependencyTracker =
         new DependencyTracker(project, graph, dependencyBuilder, dependencyCache);
     ProjectRefresher projectRefresher =
-        new ProjectRefresher(createPackageReader(workspaceRoot), workspaceRoot.path());
+        new ProjectRefresher(createWorkspaceRelativePackageReader(), workspaceRoot.path());
     QueryRunner queryRunner = createQueryRunner(buildSystem);
     ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner);
     ProjectUpdater projectUpdater =
@@ -144,14 +143,12 @@ public class ProjectLoader {
         projectViewManager);
   }
 
-  private static ParallelPackageReader createPackageReader(WorkspaceRoot workspaceRoot) {
+  private static ParallelPackageReader createWorkspaceRelativePackageReader() {
     ListeningExecutorService executor =
         MoreExecutors.listeningDecorator(
             AppExecutorUtil.createBoundedApplicationPoolExecutor("ParallelPackageReader", 128));
 
-    return new ParallelPackageReader(
-        executor,
-        new WorkspaceResolvingPackageReader(workspaceRoot.path(), new PackageStatementParser()));
+    return new ParallelPackageReader(executor, new PackageStatementParser());
   }
 
   private ProjectQuerierImpl createProjectQuerier(

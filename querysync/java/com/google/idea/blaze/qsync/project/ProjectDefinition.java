@@ -58,7 +58,7 @@ public abstract class ProjectDefinition {
    * queried.
    */
   public QuerySpec deriveQuerySpec(Context context, Path workspaceRoot) throws IOException {
-    QuerySpec.Builder result = QuerySpec.builder();
+    QuerySpec.Builder result = QuerySpec.builder().workspaceRoot(workspaceRoot);
     for (Path include : projectIncludes()) {
       if (isValidPathForQuery(context, workspaceRoot.resolve(include))) {
         result.includePath(include);
