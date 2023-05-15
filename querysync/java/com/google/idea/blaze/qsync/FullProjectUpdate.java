@@ -33,14 +33,11 @@ import java.util.Optional;
  *
  * <p>This strategy is used when creating a new project from scratch, or when updating the project
  * if a partial query cannot be used.
- *
- * <p>When instantiating this class directly for new project creation, you must call {@link
- * #setVcsState(Optional)} before {@link #createBlazeProject()}.
  */
 public class FullProjectUpdate implements RefreshOperation {
 
-  private final Context context;
-  private final Path workspaceRoot;
+  private final Context<?> context;
+  private final Path effectiveWorkspaceRoot;
   private final BlazeQueryParser queryParser;
   private final ProjectDefinition projectDefinition;
   private final GraphToProjectConverter graphToProjectConverter;
@@ -48,13 +45,15 @@ public class FullProjectUpdate implements RefreshOperation {
   private final PostQuerySyncData.Builder result;
 
   public FullProjectUpdate(
-      Context context,
-      Path workspaceRoot,
+      Context<?> context,
+      Path effectiveWorkspaceRoot,
       ProjectDefinition definition,
-      PackageReader packageReader) {
+      PackageReader packageReader,
+      Optional<VcsState> vcsState) {
     this.context = context;
-    this.workspaceRoot = workspaceRoot;
-    this.result = PostQuerySyncData.builder().setProjectDefinition(definition);
+    this.effectiveWorkspaceRoot = effectiveWorkspaceRoot;
+    this.result =
+        PostQuerySyncData.builder().setProjectDefinition(definition).setVcsState(vcsState);
     this.projectDefinition = definition;
     this.queryParser = new BlazeQueryParser(context);
     this.graphToProjectConverter =
@@ -63,17 +62,13 @@ public class FullProjectUpdate implements RefreshOperation {
 
   @Override
   public Optional<QuerySpec> getQuerySpec() throws IOException {
-    QuerySpec querySpec = projectDefinition.deriveQuerySpec(context, workspaceRoot);
+    QuerySpec querySpec = projectDefinition.deriveQuerySpec(context, effectiveWorkspaceRoot);
     return Optional.of(querySpec);
   }
 
   @Override
   public void setQueryOutput(QuerySummary output) {
     result.setQuerySummary(output);
-  }
-
-  public void setVcsState(Optional<VcsState> state) {
-    result.setVcsState(state);
   }
 
   @Override

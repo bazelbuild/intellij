@@ -337,21 +337,33 @@ public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
    * @param t The exception that caused the failure.
    */
   public void handleException(String description, Throwable t) {
+    if (handleExceptionInternal(description, t)) {
+      setHasError();
+    }
+  }
+
+  public void handleExceptionAsWarning(String description, Throwable t) {
+    if (handleExceptionInternal(description, t)) {
+      setHasWarnings();
+    }
+  }
+
+  private boolean handleExceptionInternal(String description, Throwable t) {
     if (t instanceof CancellationException) {
       logger.info(description + ": cancelled.", t);
       output(PrintOutput.error("Cancelled"));
       setCancelled();
-      return;
+      return false;
     } else if (isExceptionError(t)) {
       logger.error(description, t);
       output(PrintOutput.error(description + ": " + t.getClass().getSimpleName()));
     } else {
       logger.info(description, t);
     }
-    setHasError();
     if (t.getMessage() != null) {
       output(PrintOutput.error(t.getMessage()));
     }
+    return true;
   }
 
   private boolean isExceptionError(Throwable e) {

@@ -72,6 +72,7 @@ public class BazelQueryRunner implements QueryRunner {
     } else {
       commandBuilder.addBlazeFlags(queryExp);
     }
+    commandBuilder.setWorkspaceRoot(query.workspaceRoot());
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper();
         InputStream in =
             commandRunner.runQuery(project, commandBuilder, buildResultHelper, context)) {

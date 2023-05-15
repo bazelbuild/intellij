@@ -35,16 +35,24 @@ import java.util.Optional;
  */
 public class ProjectRefresher {
 
-  private final PackageReader packageReader;
+  private final PackageReader workspaceRelativePackageReader;
   private final Path workspaceRoot;
 
-  public ProjectRefresher(PackageReader packageReader, Path workspaceRoot) {
-    this.packageReader = packageReader;
+  public ProjectRefresher(PackageReader workspaceRelativePackageReader, Path workspaceRoot) {
+    this.workspaceRelativePackageReader = workspaceRelativePackageReader;
     this.workspaceRoot = workspaceRoot;
   }
 
-  public FullProjectUpdate startFullUpdate(Context context, ProjectDefinition spec) {
-    return new FullProjectUpdate(context, workspaceRoot, spec, packageReader);
+  public FullProjectUpdate startFullUpdate(
+      Context<?> context, ProjectDefinition spec, Optional<VcsState> vcsState) {
+    Path effectiveWorkspaceRoot =
+        vcsState.flatMap(s -> s.workspaceSnapshotPath).orElse(workspaceRoot);
+    return new FullProjectUpdate(
+        context,
+        effectiveWorkspaceRoot,
+        spec,
+        new WorkspaceResolvingPackageReader(effectiveWorkspaceRoot, workspaceRelativePackageReader),
+        vcsState);
   }
 
   public RefreshOperation startPartialRefresh(
@@ -106,9 +114,12 @@ public class ProjectRefresher {
             .getAffectedPackages();
     // TODO check affected.isIncomplete() and offer (or just do?) a full sync in that case.
 
+    Path effectiveWorkspaceRoot =
+        latestVcsState.flatMap(s -> s.workspaceSnapshotPath).orElse(workspaceRoot);
     return new PartialProjectRefresh(
         context,
-        packageReader,
+        effectiveWorkspaceRoot,
+        new WorkspaceResolvingPackageReader(effectiveWorkspaceRoot, workspaceRelativePackageReader),
         currentProject,
         latestVcsState,
         affected.getModifiedPackages(),
@@ -117,8 +128,6 @@ public class ProjectRefresher {
 
   private RefreshOperation fullUpdate(
       Context context, ProjectDefinition projectDefinition, Optional<VcsState> latestVcsState) {
-    FullProjectUpdate fullQuery = startFullUpdate(context, projectDefinition);
-    fullQuery.setVcsState(latestVcsState);
-    return fullQuery;
+    return startFullUpdate(context, projectDefinition, latestVcsState);
   }
 }

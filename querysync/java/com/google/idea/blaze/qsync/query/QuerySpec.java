@@ -29,7 +29,7 @@ import java.util.Collection;
 @AutoValue
 public abstract class QuerySpec {
 
-  public static final QuerySpec EMPTY = builder().build();
+  public abstract Path workspaceRoot();
 
   /** The set of package patterns to include. */
   abstract ImmutableList<String> includes();
@@ -83,6 +83,8 @@ public abstract class QuerySpec {
    */
   @AutoValue.Builder
   public abstract static class Builder {
+
+    public abstract Builder workspaceRoot(Path workspaceRoot);
 
     abstract ImmutableList.Builder<String> includesBuilder();
 
