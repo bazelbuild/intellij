@@ -50,6 +50,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -225,14 +226,14 @@ public class WildcardTargetExpander {
             : t -> handledRulesPredicate.test(t.ruleType) || explicitTargets.contains(t.label);
 
     BlazeQueryLabelKindParser outputProcessor = new BlazeQueryLabelKindParser(filter);
-    try (BuildResultHelper buildResultHelper = buildBinary.createBuildResultHelper()) {
-      InputStream queryResultStream =
-          buildBinary.getCommandRunner().runQuery(project, builder, buildResultHelper, context);
+    try (BuildResultHelper buildResultHelper = buildBinary.createBuildResultHelper();
+        InputStream queryResultStream =
+            buildBinary.getCommandRunner().runQuery(project, builder, buildResultHelper, context)) {
       verify(queryResultStream != null);
       new BufferedReader(new InputStreamReader(queryResultStream, UTF_8))
           .lines()
           .forEach(outputProcessor::processLine);
-    } catch (BuildException e) {
+    } catch (IOException | BuildException e) {
       Logger.getInstance(WildcardTargetExpander.class)
           .warn("Error running blaze query to expand the input target pattern", e);
       return new ExpandedTargetsResult(outputProcessor.getTargetLabels(), BuildResult.FATAL_ERROR);
