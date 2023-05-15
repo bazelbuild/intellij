@@ -58,6 +58,7 @@ public interface BlazeCommandRunner {
    * @return {@link InputStream} from the stdout of the blaze invocation using the given {@link
    *     BuildResultHelper} and null if the query fails
    */
+  @MustBeClosed
   InputStream runQuery(
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,

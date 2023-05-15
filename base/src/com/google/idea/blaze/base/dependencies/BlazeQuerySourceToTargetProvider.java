@@ -22,8 +22,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.Uninterruptibles;
-import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
@@ -41,6 +40,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import java.io.BufferedReader;
@@ -51,7 +51,6 @@ import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -190,15 +189,19 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
     BlazeCommand.Builder command =
         getBlazeCommandBuilder(
             project, type, rdepsQuery, ImmutableList.of("--output=label_kind"), context);
-    InputStream queryResultStream = runQuery(project, command, context);
-    BlazeQueryLabelKindParser blazeQueryLabelKindParser = new BlazeQueryLabelKindParser(t -> true);
-    if (queryResultStream == null) {
-      return null;
+    try (InputStream queryResultStream = runQuery(project, command, context)) {
+      BlazeQueryLabelKindParser blazeQueryLabelKindParser =
+          new BlazeQueryLabelKindParser(t -> true);
+      if (queryResultStream == null) {
+        return null;
+      }
+      new BufferedReader(new InputStreamReader(queryResultStream, UTF_8))
+          .lines()
+          .forEach(blazeQueryLabelKindParser::processLine);
+      return blazeQueryLabelKindParser.getTargets();
+    } catch (IOException e) {
+      throw new BlazeQuerySourceToTargetException("Failed to get target info list", e);
     }
-    new BufferedReader(new InputStreamReader(queryResultStream, UTF_8))
-        .lines()
-        .forEach(blazeQueryLabelKindParser::processLine);
-    return blazeQueryLabelKindParser.getTargets();
   }
 
   @Nullable
@@ -207,8 +210,8 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
       throws BlazeQuerySourceToTargetException {
     BlazeCommand.Builder commandBuilder =
         getBlazeCommandBuilder(project, type, expr, ImmutableList.of("--output=package"), context);
-    InputStream queryResultStream = runQuery(project, commandBuilder, context);
-    try {
+
+    try (InputStream queryResultStream = runQuery(project, commandBuilder, context)) {
       return queryResultStream == null
           ? null
           : CharStreams.toString(new InputStreamReader(queryResultStream, UTF_8)).trim();
@@ -221,28 +224,18 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
   }
 
   @Nullable
+  @MustBeClosed
   private static InputStream runQuery(
       Project project, BlazeCommand.Builder blazeCommand, BlazeContext context)
       throws BlazeQuerySourceToTargetException {
     BuildInvoker invoker =
         Blaze.getBuildSystemProvider(project).getBuildSystem().getDefaultInvoker(project, context);
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
-      return Uninterruptibles.getUninterruptibly(
-          BlazeExecutor.getInstance()
-              .submit(
-                  () ->
-                      invoker
-                          .getCommandRunner()
-                          .runQuery(
-                              project,
-                              blazeCommand,
-                              buildResultHelper,
-                              context)));
-    } catch (ExecutionException e) {
+      return invoker.getCommandRunner().runQuery(project, blazeCommand, buildResultHelper, context);
+    } catch (BuildException e) {
       context.output(
-          PrintOutput.log(
-              String.format("Failed to execute blaze query: %s", e.getCause().getMessage())));
-      throw new BlazeQuerySourceToTargetException(e.getCause().getMessage(), e);
+          PrintOutput.log(String.format("Failed to execute blaze query: %s", e.getMessage())));
+      throw new BlazeQuerySourceToTargetException(e.getMessage(), e);
     }
   }
 
