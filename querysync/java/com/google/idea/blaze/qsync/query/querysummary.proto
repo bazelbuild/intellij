@@ -12,6 +12,7 @@ option java_package = "com.google.idea.blaze.qsync.query";
 message Summary {
   map<string, SourceFile> source_files = 1;
   map<string, Rule> rules = 2;
+  int32 version = 3;
 }
 
 message SourceFile {

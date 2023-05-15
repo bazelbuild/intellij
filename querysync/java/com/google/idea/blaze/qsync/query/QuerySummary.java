@@ -21,6 +21,7 @@ import static com.google.common.collect.Multimaps.flatteningToMultimap;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
@@ -60,7 +61,17 @@ import java.util.Optional;
 @AutoValue
 public abstract class QuerySummary {
 
-  public static final QuerySummary EMPTY = create(Query.Summary.getDefaultInstance());
+  /**
+   * The current version of the Query.Summary proto that this is compatible with. Any persisted
+   * protos with a different version embedded in them will be discarded.
+   *
+   * <p>Whenever changing the logic in this class such that the Query.Summary proto contents will be
+   * different for the same input, this version should be incremented.
+   */
+  @VisibleForTesting public static final int PROTO_VERSION = 0;
+
+  public static final QuerySummary EMPTY =
+      create(Query.Summary.newBuilder().setVersion(PROTO_VERSION).build());
 
   // Other rule attributes needed by query sync. Only supports attributes with single-string values
   private static final ImmutableSet<String> OTHER_ATTRIBUTES =
@@ -86,6 +97,10 @@ public abstract class QuerySummary {
 
   public abstract Query.Summary proto();
 
+  public boolean isCompatibleWithCurrentPluginVersion() {
+    return proto().getVersion() == PROTO_VERSION;
+  }
+
   /** Do not generate toString, this object is too large */
   @Override
   public final String toString() {
@@ -96,7 +111,10 @@ public abstract class QuerySummary {
     return new AutoValue_QuerySummary(proto);
   }
 
+
   public static QuerySummary create(InputStream protoInputStream) throws IOException {
+    // IMPORTANT: when changing the logic herein, you should also update PROTO_VERSION above.
+    // Failure to do so is likely to result in problems during a partial sync.
     Map<String, Query.SourceFile> sourceFileMap = Maps.newHashMap();
     Map<String, Query.Rule> ruleMap = Maps.newHashMap();
     Build.Target target;
@@ -148,7 +166,11 @@ public abstract class QuerySummary {
       }
     }
     return create(
-        Query.Summary.newBuilder().putAllSourceFiles(sourceFileMap).putAllRules(ruleMap).build());
+        Query.Summary.newBuilder()
+            .setVersion(PROTO_VERSION)
+            .putAllSourceFiles(sourceFileMap)
+            .putAllRules(ruleMap)
+            .build());
   }
 
   public static QuerySummary create(File protoFile) throws IOException {
@@ -228,7 +250,8 @@ public abstract class QuerySummary {
    * QuerySummary#create(InputStream)} instead.
    */
   public static class Builder {
-    private final Query.Summary.Builder builder = Query.Summary.newBuilder();
+    private final Query.Summary.Builder builder =
+        Query.Summary.newBuilder().setVersion(PROTO_VERSION);
 
     Builder() {}
 

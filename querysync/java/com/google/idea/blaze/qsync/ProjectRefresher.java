@@ -52,6 +52,10 @@ public class ProjectRefresher {
       PostQuerySyncData currentProject,
       Optional<VcsState> latestVcsState,
       ProjectDefinition latestProjectDefinition) {
+    if (!currentProject.querySummary().isCompatibleWithCurrentPluginVersion()) {
+      context.output(PrintOutput.output("IDE has updated since last sync; performing full query"));
+      return fullUpdate(context, latestProjectDefinition, latestVcsState);
+    }
     if (!currentProject.projectDefinition().equals(latestProjectDefinition)) {
       context.output(PrintOutput.output("Project definition has changed; performing full query"));
       return fullUpdate(context, latestProjectDefinition, latestVcsState);
