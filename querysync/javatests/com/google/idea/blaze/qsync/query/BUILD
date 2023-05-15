@@ -3,6 +3,7 @@ java_library(
     srcs = ["QuerySummaryTestUtil.java"],
     visibility = ["//querysync/javatests/com/google/idea/blaze/qsync:__subpackages__"],
     deps = [
+        "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//shared",
         "@com_google_guava_guava//jar",

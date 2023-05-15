@@ -23,6 +23,8 @@ import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.blaze.qsync.query.Query;
+import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.query.QuerySummaryTestUtil;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -35,6 +37,24 @@ public class ProjectRefresherTest {
 
   private ProjectRefresher createRefresher() {
     return new ProjectRefresher(QuerySyncTestUtils.EMPTY_PACKAGE_READER, Path.of("/"));
+  }
+
+  @Test
+  public void testStartPartialRefresh_pluginVersionChanged() {
+    PostQuerySyncData project =
+        PostQuerySyncData.EMPTY.toBuilder()
+            .setVcsState(Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())))
+            .setQuerySummary(QuerySummary.create(Query.Summary.newBuilder().setVersion(-1).build()))
+            .build();
+
+    RefreshOperation update =
+        createRefresher()
+            .startPartialRefresh(
+                QuerySyncTestUtils.LOGGING_CONTEXT,
+                project,
+                project.vcsState(),
+                project.projectDefinition());
+    assertThat(update).isInstanceOf(FullProjectUpdate.class);
   }
 
   @Test
