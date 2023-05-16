@@ -17,20 +17,25 @@ package com.google.idea.blaze.base.qsync.cache;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.Hashing;
 import com.google.common.io.MoreFiles;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.PathUtil;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 /** A class that knows how to manage artifact cache directories. */
 class CacheDirectoryManager {
+  private static final String DIGESTS_DIRECTORY_NAME = ".digests";
 
   public final Path cacheDirectory;
-  private final Path cacheDotDirectory;
+  private final Path digestsDirectory;
+  @VisibleForTesting public final Path cacheDotDirectory;
 
   public CacheDirectoryManager(Path cacheDirectory, Path cacheDotDirectory) {
     if (cacheDotDirectory.startsWith(cacheDirectory)) {
@@ -41,6 +46,7 @@ class CacheDirectoryManager {
               cacheDirectory, cacheDotDirectory));
     }
     this.cacheDirectory = cacheDirectory;
+    this.digestsDirectory = cacheDotDirectory.resolve(DIGESTS_DIRECTORY_NAME);
     this.cacheDotDirectory = cacheDotDirectory;
   }
 
@@ -53,8 +59,13 @@ class CacheDirectoryManager {
     try {
       Files.createDirectories(cacheDirectory);
       Files.createDirectories(cacheDotDirectory);
+      Files.createDirectories(digestsDirectory);
     } catch (IOException e) {
-      throw new IOException("Cache Directory '" + cacheDirectory + "' cannot be initialized", e);
+      throw new IOException(
+          String.format(
+              "Cannot initialize cache. Directories:\n  %s,\n  %s",
+              cacheDirectory, cacheDotDirectory),
+          e);
     }
   }
 
@@ -87,5 +98,37 @@ class CacheDirectoryManager {
     return name
         + "_"
         + Integer.toHexString(Hashing.sha256().hashString(artifactKey, UTF_8).hashCode());
+  }
+
+  /** Gets the previously stored digest of the given artifact. */
+  public String getStoredArtifactDigest(OutputArtifact outputArtifact) {
+    return fileContentOrEmptyString(
+        digestsDirectory.resolve(cacheKeyForArtifact(outputArtifact.getKey()) + ".txt"));
+  }
+
+  /** Stores the digest of the given artifact for later use. */
+  public void setStoredArtifactDigest(OutputArtifact outputArtifact, String value) {
+    try {
+      Path artifactDigestFile =
+          digestsDirectory.resolve(cacheKeyForArtifact(outputArtifact.getKey()) + ".txt");
+      if (value.isEmpty()) {
+        Files.deleteIfExists(artifactDigestFile);
+      } else {
+        Files.writeString(artifactDigestFile, value);
+      }
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  private static String fileContentOrEmptyString(Path path) {
+    if (Files.isRegularFile(path)) {
+      try {
+        return Files.readString(path);
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    }
+    return "";
   }
 }
