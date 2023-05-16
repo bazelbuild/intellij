@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -28,7 +29,12 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
-class DynamicallyDispatchingArtifactFetcher implements ArtifactFetcher<OutputArtifact> {
+/**
+ * A delegating {@link ArtifactFetcher} that relies on {@link
+ * ArtifactFetcher#supportedArtifactType()} to chose fetchers to fetchers to delegate fetching to.
+ */
+@VisibleForTesting
+public class DynamicallyDispatchingArtifactFetcher implements ArtifactFetcher<OutputArtifact> {
 
   private final ImmutableList<ArtifactFetcher<?>> fetchers;
 
