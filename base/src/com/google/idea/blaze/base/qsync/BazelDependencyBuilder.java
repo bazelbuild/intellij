@@ -194,7 +194,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     }
     File srcfsArtifact = new File(hashId.replaceFirst("/google_src", "/google/src"));
     return new LocalFileOutputArtifact(
-        srcfsArtifact, it.getRelativePath(), it.getConfigurationMnemonic());
+        srcfsArtifact, it.getRelativePath(), it.getConfigurationMnemonic(), it.getDigest());
   }
 
   private BuildArtifacts readArtifactInfoFile(BlazeArtifact file) throws BuildException {

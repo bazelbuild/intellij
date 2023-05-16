@@ -27,8 +27,8 @@ import com.google.idea.blaze.base.MockProjectViewManager;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifactWithoutDigest;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -178,7 +178,7 @@ public class RenderJarCacheTest {
                     SyncMode.INCREMENTAL));
 
     @SuppressWarnings("unchecked") // irrelevant unchecked conversion warning for artifactsCaptor
-    ArgumentCaptor<Collection<OutputArtifact>> artifactsCaptor =
+    ArgumentCaptor<Collection<OutputArtifactWithoutDigest>> artifactsCaptor =
         ArgumentCaptor.forClass(Collection.class);
 
     ArgumentCaptor<BlazeContext> contextCaptor = ArgumentCaptor.forClass(BlazeContext.class);
@@ -187,7 +187,7 @@ public class RenderJarCacheTest {
     verify(mockedArtifactCache, Mockito.times(1))
         .putAll(artifactsCaptor.capture(), contextCaptor.capture(), removeCaptor.capture());
 
-    Collection<OutputArtifact> passedArtifact = artifactsCaptor.getValue();
+    Collection<OutputArtifactWithoutDigest> passedArtifact = artifactsCaptor.getValue();
     assertThat(passedArtifact.stream().map(Object::toString))
         .containsExactly(
             "com/foo/bar/baz/baz_render_jar.jar", "com/foo/bar/qux/qux_render_jar.jar");
@@ -230,7 +230,7 @@ public class RenderJarCacheTest {
     BlazeArtifact bazRenderJar =
         artifactLocationDecoder.resolveOutput(
             getArtifactLocation("com/foo/bar/baz/baz_render_jar.jar"));
-    File bazRenderJarFile = ((LocalFileOutputArtifact) bazRenderJar).getFile();
+    File bazRenderJarFile = ((LocalFileOutputArtifactWithoutDigest) bazRenderJar).getFile();
     assertThat(Paths.get(bazRenderJarFile.getParent()).toFile().mkdirs()).isTrue();
     assertThat(bazRenderJarFile.createNewFile()).isTrue();
     assertThat(bazRenderJarFile.setLastModified(100000L)).isTrue();
@@ -239,7 +239,7 @@ public class RenderJarCacheTest {
     BlazeArtifact quxRenderJar =
         artifactLocationDecoder.resolveOutput(
             getArtifactLocation("com/foo/bar/qux/qux_render_jar.jar"));
-    File quxRenderJarFile = ((LocalFileOutputArtifact) quxRenderJar).getFile();
+    File quxRenderJarFile = ((LocalFileOutputArtifactWithoutDigest) quxRenderJar).getFile();
     assertThat(Paths.get(quxRenderJarFile.getParent()).toFile().mkdirs()).isTrue();
     assertThat(quxRenderJarFile.createNewFile()).isTrue();
     assertThat(quxRenderJarFile.setLastModified(100000L)).isTrue();

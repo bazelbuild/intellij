@@ -25,7 +25,7 @@ import com.google.devtools.build.lib.view.proto.Deps;
 import com.google.devtools.build.lib.view.proto.Deps.Dependency;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -59,11 +59,11 @@ public class JdepsFileReader {
   private static final Logger logger = Logger.getInstance(JdepsFileReader.class);
 
   private static class Result {
-    OutputArtifact output;
+    OutputArtifactWithoutDigest output;
     TargetKey targetKey;
     List<String> dependencies;
 
-    Result(OutputArtifact output, TargetKey targetKey, List<String> dependencies) {
+    Result(OutputArtifactWithoutDigest output, TargetKey targetKey, List<String> dependencies) {
       this.output = output;
       this.targetKey = targetKey;
       this.dependencies = dependencies;
@@ -114,11 +114,11 @@ public class JdepsFileReader {
       Collection<TargetIdeInfo> targetsToLoad,
       SyncMode syncMode)
       throws InterruptedException, ExecutionException {
-    Map<OutputArtifact, TargetKey> fileToTargetMap = Maps.newHashMap();
+    Map<OutputArtifactWithoutDigest, TargetKey> fileToTargetMap = Maps.newHashMap();
     for (TargetIdeInfo target : targetsToLoad) {
       BlazeArtifact output = resolveJdepsOutput(decoder, target);
-      if (output instanceof OutputArtifact) {
-        fileToTargetMap.put((OutputArtifact) output, target.getKey());
+      if (output instanceof OutputArtifactWithoutDigest) {
+        fileToTargetMap.put((OutputArtifactWithoutDigest) output, target.getKey());
       }
     }
 
@@ -127,7 +127,7 @@ public class JdepsFileReader {
             oldState != null ? oldState.getArtifactState() : null, fileToTargetMap.keySet());
 
     // TODO: handle prefetching for arbitrary OutputArtifacts
-    List<OutputArtifact> outputArtifacts = diff.getUpdatedOutputs();
+    List<OutputArtifactWithoutDigest> outputArtifacts = diff.getUpdatedOutputs();
     // b/187759986: if there was no build, then all the needed artifacts should've been cached
     // already. Additional logging to identify what is going wrong.
     if (!outputArtifacts.isEmpty() && !syncMode.involvesBlazeBuild()) {
@@ -171,7 +171,7 @@ public class JdepsFileReader {
     AtomicLong totalSizeLoaded = new AtomicLong(0);
 
     List<ListenableFuture<Result>> futures = Lists.newArrayList();
-    for (OutputArtifact updatedFile : outputArtifacts) {
+    for (OutputArtifactWithoutDigest updatedFile : outputArtifacts) {
       futures.add(
           FetchExecutor.EXECUTOR.submit(
               () -> {
@@ -201,7 +201,7 @@ public class JdepsFileReader {
     }
     state.removeArtifacts(
         diff.getUpdatedOutputs().stream()
-            .map(OutputArtifact::toArtifactState)
+            .map(OutputArtifactWithoutDigest::toArtifactState)
             .collect(toImmutableList()));
     state.removeArtifacts(diff.getRemovedOutputs());
     for (Result result : Futures.allAsList(futures).get()) {

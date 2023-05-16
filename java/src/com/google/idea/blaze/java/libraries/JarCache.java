@@ -30,7 +30,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.filecache.FileCache;
@@ -573,8 +573,8 @@ public class JarCache {
   }
 
   private static String artifactKey(BlazeArtifact artifact) {
-    if (artifact instanceof OutputArtifact) {
-      return ((OutputArtifact) artifact).getKey();
+    if (artifact instanceof OutputArtifactWithoutDigest) {
+      return ((OutputArtifactWithoutDigest) artifact).getKey();
     }
     if (artifact instanceof SourceArtifact) {
       return ((SourceArtifact) artifact).getFile().getPath();

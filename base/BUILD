@@ -360,6 +360,7 @@ java_library(
         "src/com/google/idea/blaze/base/command/buildresult/BlazeArtifact.java",
         "src/com/google/idea/blaze/base/command/buildresult/OutputArtifact.java",
         "src/com/google/idea/blaze/base/command/buildresult/OutputArtifactParser.java",
+        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifactWithoutDigest.java",
         "src/com/google/idea/blaze/base/command/buildresult/RemoteOutputArtifact.java",
         "src/com/google/idea/blaze/base/ideinfo/ProtoWrapper.java",
         "src/com/google/idea/blaze/base/prefetch/DefaultPrefetcher.java",
@@ -411,7 +412,9 @@ java_library(
     name = "artifact_fetcher",
     srcs = [
         "src/com/google/idea/blaze/base/command/buildresult/LocalFileOutputArtifact.java",
+        "src/com/google/idea/blaze/base/command/buildresult/LocalFileOutputArtifactWithoutDigest.java",
         "src/com/google/idea/blaze/base/command/buildresult/OutputArtifact.java",
+        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifactWithoutDigest.java",
         "src/com/google/idea/blaze/base/qsync/cache/ArtifactFetcher.java",
         "src/com/google/idea/blaze/base/qsync/cache/FileApiArtifactFetcher.java",
         "src/com/google/idea/blaze/base/settings/BuildBinaryType.java",
