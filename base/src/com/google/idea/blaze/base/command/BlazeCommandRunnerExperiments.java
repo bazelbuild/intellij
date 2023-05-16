@@ -29,9 +29,6 @@ public class BlazeCommandRunnerExperiments {
   private static final FeatureRolloutExperiment useBlazeCommandRunnerForTestsLinux =
       new FeatureRolloutExperiment("blaze.commandrunner.localtests.linux.enable");
 
-  public static final FeatureRolloutExperiment supportLocalTestsDebuggingMac =
-      new FeatureRolloutExperiment("localtests.debugging.mac.enable");
-
   public static boolean isEnabledForTests(BlazeCommandRunner runner) {
     if (SystemInfo.isLinux) {
       return useBlazeCommandRunnerForTestsLinux.isEnabled();
