@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -146,11 +147,20 @@ public class FileCache {
       BlazeContext context,
       ImmutableMap<OutputArtifact, OutputArtifactDestination> artifactToDestinationMap) {
     final ImmutableMap<OutputArtifact, ArtifactDestination> artifactToDestinationPathMap =
-        artifactToDestinationMap.entrySet().stream()
-            .collect(
-                ImmutableMap.toImmutableMap(
-                    Entry::getKey,
-                    it -> new ArtifactDestination(it.getValue().getCopyDestination())));
+        runMeasureAndLog(
+            () ->
+                artifactToDestinationMap.entrySet().stream()
+                    .filter(
+                        it ->
+                            !Objects.equals(
+                                it.getKey().getDigest(),
+                                cacheDirectoryManager.getStoredArtifactDigest(it.getKey())))
+                    .collect(
+                        ImmutableMap.toImmutableMap(
+                            Entry::getKey,
+                            it -> new ArtifactDestination(it.getValue().getCopyDestination()))),
+            String.format("Read %d artifact digests", artifactToDestinationMap.size()),
+            1000);
 
     runMeasureAndLog(
         () -> {

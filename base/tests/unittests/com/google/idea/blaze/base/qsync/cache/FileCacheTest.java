@@ -35,6 +35,7 @@ import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -45,7 +46,7 @@ public class FileCacheTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void metadata_are_preserved() throws Exception {
+  public void metadata_are_preserved() throws Throwable {
     CacheDirectoryManager cacheDirectoryManager = createCacheDirectoryManager();
     TestArtifactFetcher testArtifactFetcher = new TestArtifactFetcher();
     FileCache fileCache =
@@ -58,13 +59,16 @@ public class FileCacheTest {
                 ImmutableSet.of()));
     fileCache.initialize();
 
-    fileCache
-        .cache(
-            ImmutableList.of(
-                testOutputArtifact("abc", "abc_digest"), testOutputArtifact("klm", "klm_digest")),
-            BlazeContext.create())
-        .get();
-    assertThat(testArtifactFetcher.collectedArtifactKeyToMetadata)
+    assertThat(
+            testArtifactFetcher.runAndCollectFetches(
+                () ->
+                    fileCache
+                        .cache(
+                            ImmutableList.of(
+                                testOutputArtifact("abc", "abc_digest"),
+                                testOutputArtifact("klm", "klm_digest")),
+                            BlazeContext.create())
+                        .get()))
         .containsExactly("somewhere/abc", "somewhere/klm");
     assertThat(
             cacheDirectoryManager.getStoredArtifactDigest(
@@ -119,11 +123,52 @@ public class FileCacheTest {
 
     assertThat(
             cacheDirectoryManager.getStoredArtifactDigest(testOutputArtifact("abc", "abc_digest")))
-        .isEmpty();
+        .isEqualTo("abc_digest"); // It shouldn't be copied since it hasn't changed.
     assertThat(
             cacheDirectoryManager.getStoredArtifactDigest(
                 testOutputArtifact("klm", "klm_digest_diff")))
-        .isEmpty();
+        .isEmpty(); // It was supposed to be copied but failed.
+  }
+
+  @Test
+  public void artifacts_fecthed_once() throws Throwable {
+    CacheDirectoryManager cacheDirectoryManager = createCacheDirectoryManager();
+    TestArtifactFetcher testArtifactFetcher = new TestArtifactFetcher();
+    FileCache fileCache =
+        new FileCache(
+            testArtifactFetcher,
+            cacheDirectoryManager,
+            new DefaultCacheLayout(
+                cacheDirectoryManager.cacheDirectory,
+                cacheDirectoryManager.cacheDotDirectory,
+                ImmutableSet.of()));
+    fileCache.initialize();
+
+    assertThat(
+            testArtifactFetcher.runAndCollectFetches(
+                () ->
+                    fileCache
+                        .cache(
+                            ImmutableList.of(
+                                testOutputArtifact("abc", "abc_digest"),
+                                testOutputArtifact("klm", "klm_digest")),
+                            BlazeContext.create())
+                        .get()))
+        .containsExactly("somewhere/abc", "somewhere/klm");
+
+    // Second cache operation.
+    assertThat(
+            testArtifactFetcher.runAndCollectFetches(
+                () ->
+                    fileCache
+                        .cache(
+                            ImmutableList.of(
+                                testOutputArtifact("abc", "abc_digest"),
+                                testOutputArtifact("klm", "klm_digest_diff"),
+                                testOutputArtifact("xyz", "xyz_digest")),
+                            BlazeContext.create())
+                        .get()))
+        .containsExactly("somewhere/klm", "somewhere/xyz");
   }
 
   private CacheDirectoryManager createCacheDirectoryManager() {
@@ -134,7 +179,16 @@ public class FileCacheTest {
 
   private static class TestArtifactFetcher implements ArtifactFetcher<OutputArtifact> {
 
-    public List<String> collectedArtifactKeyToMetadata = new ArrayList<>();
+    private List<String> collectedArtifactKeyToMetadata = new ArrayList<>();
+
+    public ImmutableList<String> runAndCollectFetches(ThrowingRunnable runnable) throws Throwable {
+      try {
+        runnable.run();
+        return ImmutableList.copyOf(collectedArtifactKeyToMetadata);
+      } finally {
+        collectedArtifactKeyToMetadata.clear();
+      }
+    }
 
     @Override
     public Class<OutputArtifact> supportedArtifactType() {
