@@ -35,10 +35,13 @@ import com.google.idea.blaze.qsync.GeneratedSourceProjectUpdater;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectProto;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import java.io.File;
+import com.intellij.openapi.vfs.VirtualFile;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -183,14 +186,45 @@ public class DependencyTracker {
                 "Updated cache in %d ms: updated %d artifacts, removed %d artifacts",
                 elapsedMs, updateResult.updatedFiles().size(), updateResult.removedKeys().size())));
     cache.saveState();
+    refreshFiles(context, updateResult.updatedFiles());
+  }
 
-    context.output(PrintOutput.log("Refreshing Vfs..."));
-    VfsUtil.markDirtyAndRefresh(
-        true,
-        false,
-        false,
-        updateResult.updatedFiles().stream().map(Path::toFile).toArray(File[]::new));
-    context.output(PrintOutput.log("Done"));
+  private void refreshFiles(BlazeContext context, ImmutableSet<Path> updatedFiles) {
+    System.out.printf("=>Refreshing Vfs... (%d files)", updatedFiles.size());
+    ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
+    applicationEx.invokeAndWait(
+        () -> {
+          final var unused =
+              applicationEx.runWriteActionWithNonCancellableProgressInDispatchThread(
+                  "Finding build outputs",
+                  project,
+                  null,
+                  indicator -> {
+                    ProjectRootManagerEx.getInstanceEx(project)
+                        .mergeRootsChangesDuring(
+                            () -> {
+                              final ImmutableList.Builder<VirtualFile> virtualFiles =
+                                  ImmutableList.builder();
+                              Path[] paths = updatedFiles.toArray(new Path[0]);
+                              for (int i = 0; i < paths.length; i++) {
+                                final var path = paths[i];
+                                VirtualFile virtualFile =
+                                    VfsUtil.findFileByIoFile(path.toFile(), true);
+                                if (virtualFile != null) {
+                                  virtualFiles.add(virtualFile);
+                                }
+                                indicator.setFraction(((float) i) / paths.length);
+                              }
+                              indicator.setText("Scanning build outputs");
+                              VfsUtil.markDirtyAndRefresh(
+                                  false,
+                                  false,
+                                  false,
+                                  virtualFiles.build().toArray(new VirtualFile[0]));
+                              context.output(PrintOutput.log("Done"));
+                            });
+                  });
+        });
   }
 
   public BlazeProjectSnapshot updateSnapshot(BlazeContext context, BlazeProjectSnapshot snapshot)
