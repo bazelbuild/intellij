@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
-import com.google.common.io.MoreFiles;
+import com.intellij.openapi.util.io.FileUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -79,7 +79,7 @@ public class ZippedOutputArtifactDestination implements FileCache.OutputArtifact
   @Override
   public Path prepareFinalLayout() throws IOException {
     if (Files.exists(finalDestination)) {
-      MoreFiles.deleteRecursively(finalDestination);
+      FileUtil.delete(finalDestination.toFile());
     }
     extract(copyDestination, finalDestination);
     return finalDestination;
