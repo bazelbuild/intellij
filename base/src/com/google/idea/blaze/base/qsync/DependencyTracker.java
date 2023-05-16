@@ -194,7 +194,7 @@ public class DependencyTracker {
     ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
     applicationEx.invokeAndWait(
         () -> {
-          final var unused =
+          final boolean unused =
               applicationEx.runWriteActionWithNonCancellableProgressInDispatchThread(
                   "Finding build outputs",
                   project,
@@ -207,7 +207,7 @@ public class DependencyTracker {
                                   ImmutableList.builder();
                               Path[] paths = updatedFiles.toArray(new Path[0]);
                               for (int i = 0; i < paths.length; i++) {
-                                final var path = paths[i];
+                                final Path path = paths[i];
                                 VirtualFile virtualFile =
                                     VfsUtil.findFileByIoFile(path.toFile(), true);
                                 if (virtualFile != null) {
