@@ -501,6 +501,9 @@ jvm_maven_import_external(
     server_urls = ["https://repo1.maven.org/maven2"],
 )
 
+# objenesis is a dependency of mockito https://mvnrepository.com/artifact/org.mockito/mockito-core/3.3.0
+# Before 2023.2 it was delivered with IntelliJ bundle in lib/app.jar, but this no longer happens so we need
+# to download it from Maven Central.
 jvm_maven_import_external(
     name = "objenesis",
     artifact = "org.objenesis:objenesis:3.3",

@@ -62,7 +62,7 @@ java_library(
         "clion-2022.2": ["@clion_2022_2//:tslint"],
         "clion-2022.3": ["@clion_2022_3//:tslint"],
         "clion-2023.1": ["@clion_2023_1//:tslint"],
-        "clion-2023.2": ["@clion_2023_1//:tslint"],
+        "clion-2023.2": ["@clion_2023_2//:tslint"],
         "default": [],
     }),
 )
@@ -83,7 +83,7 @@ java_library(
         "clion-2022.2": ["@intellij_ue_2022_2//:angular"],
         "clion-2022.3": ["@intellij_ue_2022_3//:angular"],
         "clion-2023.1": ["@intellij_ue_2023_1//:angular"],
-        "clion-2023.2": ["@intellij_ue_2023_1//:angular"],
+        "clion-2023.2": ["@intellij_ue_2023_2//:angular"],
         "default": [],
     }),
 )
