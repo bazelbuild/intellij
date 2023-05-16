@@ -27,6 +27,8 @@ import java.util.zip.ZipInputStream;
 /** A record that describes the location of an output artifact in cache directories. */
 public class ZippedOutputArtifactDestination implements FileCache.OutputArtifactDestination {
 
+  private final String key;
+
   /**
    * The location where in the cache directory the representation of the artifact for the IDE should
    * be placed.
@@ -35,7 +37,8 @@ public class ZippedOutputArtifactDestination implements FileCache.OutputArtifact
 
   private final Path copyDestination;
 
-  public ZippedOutputArtifactDestination(Path finalDestination, Path copyDestination) {
+  public ZippedOutputArtifactDestination(String key, Path finalDestination, Path copyDestination) {
+    this.key = key;
     this.finalDestination = finalDestination;
     this.copyDestination = copyDestination;
   }
@@ -56,6 +59,11 @@ public class ZippedOutputArtifactDestination implements FileCache.OutputArtifact
         }
       }
     }
+  }
+
+  @Override
+  public String getKey() {
+    return key;
   }
 
   /**

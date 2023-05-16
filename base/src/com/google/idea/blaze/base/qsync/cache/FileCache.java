@@ -18,27 +18,32 @@ package com.google.idea.blaze.base.qsync.cache;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher.ArtifactDestination;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.intellij.openapi.diagnostic.Logger;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /** Local cache of the .jar, .aars and other artifacts referenced by the project. */
 @SuppressWarnings("InvalidBlockTag")
 public class FileCache {
+  private static final Logger logger = Logger.getInstance(FileCache.class);
 
   /**
    * An interface that defines the layout of an IDE artifact cache directory.
@@ -70,6 +75,14 @@ public class FileCache {
    * OutputArtifactDestination#prepareFinalLayout()}.
    */
   public interface OutputArtifactDestination {
+    /**
+     * A value used by the cache system to refer to this output artifact.
+     *
+     * <p>The value is used as a file name (a prefix) and thus must only contain allowed symbols.
+     *
+     * <p>Note, it does not represent a specific version of the artifact.
+     */
+    String getKey();
 
     /**
      * The location where a fetched copy of this artifact should be placed by an {@link
@@ -133,21 +146,42 @@ public class FileCache {
       BlazeContext context,
       ImmutableMap<OutputArtifact, OutputArtifactDestination> artifactToDestinationMap) {
     final ImmutableMap<OutputArtifact, ArtifactDestination> artifactToDestinationPathMap =
-        ImmutableMap.copyOf(
-            Maps.transformEntries(
-                artifactToDestinationMap,
-                (k, v) -> new ArtifactDestination(v.getCopyDestination())));
+        artifactToDestinationMap.entrySet().stream()
+            .collect(
+                ImmutableMap.toImmutableMap(
+                    Entry::getKey,
+                    it -> new ArtifactDestination(it.getValue().getCopyDestination())));
+
+    runMeasureAndLog(
+        () -> {
+          for (OutputArtifact outputArtifact : artifactToDestinationPathMap.keySet()) {
+            // Once fetching starts we do not know the state of downloaded files. If fetching fails,
+            // consider files lost.
+            cacheDirectoryManager.setStoredArtifactDigest(outputArtifact, "");
+          }
+        },
+        String.format("Reset %d artifact digests", artifactToDestinationPathMap.size()),
+        1000);
     return Futures.transform(
         artifactFetcher.copy(artifactToDestinationPathMap, context),
-        fetchedArtifactFileList -> {
-          final ImmutableSet<Path> fetchedArtifactFiles =
-              ImmutableSet.copyOf(fetchedArtifactFileList);
-          return Maps.filterEntries(
-                  artifactToDestinationMap,
-                  entry -> fetchedArtifactFiles.contains(entry.getValue().getCopyDestination()))
-              .values();
-        },
-        MoreExecutors.directExecutor());
+        fetchedArtifacts ->
+            runMeasureAndLog(
+                () -> {
+                  ImmutableList.Builder<OutputArtifactDestination> result = ImmutableList.builder();
+                  for (Entry<OutputArtifact, ArtifactDestination> entry :
+                      artifactToDestinationPathMap.entrySet()) {
+                    OutputArtifactDestination artifactDestination =
+                        artifactToDestinationMap.get(entry.getKey());
+                    Preconditions.checkNotNull(artifactDestination);
+                    cacheDirectoryManager.setStoredArtifactDigest(
+                        entry.getKey(), entry.getKey().getDigest());
+                    result.add(artifactDestination);
+                  }
+                  return result.build();
+                },
+                String.format("Store %d artifact digests", artifactToDestinationPathMap.size()),
+                1000),
+        ArtifactFetcher.EXECUTOR);
   }
 
   /**
@@ -202,5 +236,28 @@ public class FileCache {
 
   public Path getDirectory() {
     return cacheDirectoryManager.cacheDirectory;
+  }
+
+  private <T> T runMeasureAndLog(Supplier<T> block, String operation, int maxToleratedMs) {
+    final Stopwatch stopwatch = Stopwatch.createStarted();
+    try {
+      return block.get();
+    } finally {
+      final long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+      if (elapsed > maxToleratedMs) {
+        logger.warn(String.format("%s took %d ms", operation, elapsed));
+      }
+    }
+  }
+
+  private void runMeasureAndLog(Runnable block, String operation, int maxToleratedMs) {
+    Object unused =
+        runMeasureAndLog(
+            () -> {
+              block.run();
+              return null;
+            },
+            operation,
+            maxToleratedMs);
   }
 }
