@@ -1,3 +1,8 @@
+v2023.05.16
+===========
+* Improve performance of Java package parser by making it a Bazel worker #3686
+* plugin_dev: Allow plugin development on Windows #4843
+
 v2023.05.02
 ===========
 * Fix gdbserver wrapper passing incorrect arguments #4783
