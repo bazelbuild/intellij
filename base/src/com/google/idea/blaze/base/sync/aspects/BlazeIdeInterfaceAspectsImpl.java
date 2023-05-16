@@ -43,6 +43,7 @@ import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
@@ -355,7 +356,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
               // Read protos from any new files
               List<ListenableFuture<TargetFilePair>> futures = Lists.newArrayList();
-              for (OutputArtifact file : fileState.getUpdatedOutputs()) {
+              for (OutputArtifactWithoutDigest file : fileState.getUpdatedOutputs()) {
                 futures.add(
                     executor.submit(
                         () -> {
@@ -382,7 +383,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
               try {
                 for (TargetFilePair targetFilePair : Futures.allAsList(futures).get()) {
                   if (targetFilePair.target != null) {
-                    OutputArtifact file = targetFilePair.file;
+                    OutputArtifactWithoutDigest file = targetFilePair.file;
                     String config = file.getConfigurationMnemonic();
                     configurations.add(config);
                     TargetKey key = targetFilePair.target.getKey();
@@ -559,10 +560,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   }
 
   private static class TargetFilePair {
-    private final OutputArtifact file;
+    private final OutputArtifactWithoutDigest file;
     private final TargetIdeInfo target;
 
-    TargetFilePair(OutputArtifact file, TargetIdeInfo target) {
+    TargetFilePair(OutputArtifactWithoutDigest file, TargetIdeInfo target) {
       this.file = file;
       this.target = target;
     }

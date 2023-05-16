@@ -44,7 +44,7 @@ public interface ArtifactFetcher<ArtifactT extends OutputArtifact> {
     }
   }
 
-  /** Copies a bunch of artifact to destination. */
+  /** Copies a bunch of artifacts to destination. */
   ListenableFuture<List<Path>> copy(
       ImmutableMap<? extends ArtifactT, ArtifactDestination> artifactToDest, Context<?> context);
 

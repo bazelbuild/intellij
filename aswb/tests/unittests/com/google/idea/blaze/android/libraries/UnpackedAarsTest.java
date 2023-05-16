@@ -207,6 +207,13 @@ public class UnpackedAarsTest extends BlazeTestCase {
     public long getSyncTimeMillis() {
       return 0;
     }
+
+    @Override
+    public String getDigest() {
+      // The digest algorithm depends on the build system and thus in-memory hash code is suitable
+      // in tests.
+      return String.valueOf(FileUtil.fileHashCode(file));
+    }
   }
 
   private ArtifactLocation generateArtifactLocation(String relativePath) {

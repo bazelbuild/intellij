@@ -20,7 +20,7 @@ import static com.android.SdkConstants.FN_LINT_JAR;
 
 import com.android.SdkConstants;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
@@ -36,8 +36,8 @@ public final class UnpackedAarUtils {
 
   /* Converts {@link BlazeArtifact} to the key which is used to create aar directory name */
   public static String getArtifactKey(BlazeArtifact artifact) {
-    if (artifact instanceof OutputArtifact) {
-      return ((OutputArtifact) artifact).getKey();
+    if (artifact instanceof OutputArtifactWithoutDigest) {
+      return ((OutputArtifactWithoutDigest) artifact).getKey();
     }
     if (artifact instanceof SourceArtifact) {
       return ((SourceArtifact) artifact).getFile().getPath();

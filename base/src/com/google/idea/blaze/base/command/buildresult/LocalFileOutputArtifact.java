@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Bazel Authors. All rights reserved.
+ * Copyright 2023 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,81 +15,23 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
-import com.google.errorprone.annotations.MustBeClosed;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
-import com.google.idea.blaze.base.filecache.ArtifactState;
-import com.google.idea.blaze.base.filecache.ArtifactState.LocalFileState;
-import com.google.idea.blaze.base.io.FileOperationProvider;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import javax.annotation.Nullable;
 
-/** A blaze output artifact which exists on the local file system. */
-public class LocalFileOutputArtifact implements OutputArtifact, LocalFileArtifact {
-
-  private final File file;
-  private final String blazeOutRelativePath;
-  private final String configurationMnemonic;
+/**
+ * A variant of {@link LocalFileOutputArtifactWithoutDigest} implementing {@link OutputArtifact}.
+ */
+public class LocalFileOutputArtifact extends LocalFileOutputArtifactWithoutDigest
+    implements OutputArtifact {
+  private final String digest;
 
   public LocalFileOutputArtifact(
-      File file, String blazeOutRelativePath, String configurationMnemonic) {
-    this.file = file;
-    this.blazeOutRelativePath = blazeOutRelativePath;
-    this.configurationMnemonic = configurationMnemonic;
-  }
-
-  private long getLastModifiedTime() {
-    return FileOperationProvider.getInstance().getFileModifiedTime(file);
+      File file, String blazeOutRelativePath, String configurationMnemonic, String digest) {
+    super(file, blazeOutRelativePath, configurationMnemonic);
+    this.digest = digest;
   }
 
   @Override
-  @Nullable
-  public ArtifactState toArtifactState() {
-    long lastModifiedTime = getLastModifiedTime();
-    return lastModifiedTime == 0 ? null : new LocalFileState(getKey(), lastModifiedTime);
-  }
-
-  @Override
-  public String getConfigurationMnemonic() {
-    return configurationMnemonic;
-  }
-
-  @Override
-  public String getRelativePath() {
-    return blazeOutRelativePath;
-  }
-
-  @Override
-  @MustBeClosed
-  public BufferedInputStream getInputStream() throws IOException {
-    return new BufferedInputStream(new FileInputStream(file));
-  }
-
-  @Override
-  public File getFile() {
-    return file;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (obj == this) {
-      return true;
-    }
-    if (!(obj instanceof LocalFileOutputArtifact)) {
-      return false;
-    }
-    return file.getPath().equals(((LocalFileOutputArtifact) obj).file.getPath());
-  }
-
-  @Override
-  public int hashCode() {
-    return file.getPath().hashCode();
-  }
-
-  @Override
-  public String toString() {
-    return blazeOutRelativePath;
+  public String getDigest() {
+    return digest;
   }
 }

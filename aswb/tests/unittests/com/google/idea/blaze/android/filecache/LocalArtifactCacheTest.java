@@ -19,8 +19,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.android.filecache.LocalArtifactCache.CACHE_DATA_FILENAME;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifactWithoutDigest;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
@@ -110,24 +110,24 @@ public class LocalArtifactCacheTest {
         .forEach(f -> assertThat(f.exists()).isTrue());
   }
 
-  private LocalFileOutputArtifact newLocalOutputArtifact(String path) {
+  private LocalFileOutputArtifactWithoutDigest newLocalOutputArtifact(String path) {
     String execRoot = workspaceRoot.directory().getAbsolutePath();
     String mnemonic = "k8-opt";
-    return new LocalFileOutputArtifact(
+    return new LocalFileOutputArtifactWithoutDigest(
         new File(execRoot + "/blaze-out" + mnemonic + "/" + path), mnemonic + "/" + path, mnemonic);
   }
 
   @Test
   public void put_addsArtifactInDirectory() throws IOException {
     // Create blaze artifacts in FS
-    ImmutableList<OutputArtifact> outputArtifacts =
+    ImmutableList<OutputArtifactWithoutDigest> outputArtifacts =
         ImmutableList.of(
             newLocalOutputArtifact("relative/path_1/artifact_1.jar"),
             newLocalOutputArtifact("relative/path_2/artifact_2.jar"),
             newLocalOutputArtifact("relative/path_3/artifact_3.jar"));
 
-    for (OutputArtifact a : outputArtifacts) {
-      File file = ((LocalFileOutputArtifact) a).getFile();
+    for (OutputArtifactWithoutDigest a : outputArtifacts) {
+      File file = ((LocalFileOutputArtifactWithoutDigest) a).getFile();
       assertThat(Paths.get(file.getParent()).toFile().mkdirs()).isTrue();
       assertThat(file.createNewFile()).isTrue();
     }
@@ -161,13 +161,13 @@ public class LocalArtifactCacheTest {
   @Test
   public void get_fetchesCorrectFileForArtifact() throws IOException {
     // Create blaze artifacts in FS
-    ImmutableList<OutputArtifact> outputArtifacts =
+    ImmutableList<OutputArtifactWithoutDigest> outputArtifacts =
         ImmutableList.of(
             newLocalOutputArtifact("relative/path_1/artifact_1.jar"),
             newLocalOutputArtifact("relative/path_2/artifact_2.jar"),
             newLocalOutputArtifact("relative/path_3/artifact_3.jar"));
-    for (OutputArtifact a : outputArtifacts) {
-      File file = ((LocalFileOutputArtifact) a).getFile();
+    for (OutputArtifactWithoutDigest a : outputArtifacts) {
+      File file = ((LocalFileOutputArtifactWithoutDigest) a).getFile();
       assertThat(Paths.get(file.getParent()).toFile().mkdirs()).isTrue();
       assertThat(file.createNewFile()).isTrue();
     }
@@ -177,7 +177,7 @@ public class LocalArtifactCacheTest {
     artifactCache.putAll(outputArtifacts, blazeContext, false);
 
     // Attempt to get an arbitraty artifact
-    OutputArtifact artifactToFetch = outputArtifacts.get(1);
+    OutputArtifactWithoutDigest artifactToFetch = outputArtifacts.get(1);
 
     // Check that the returned file matches the expected file
     File expectedFile =

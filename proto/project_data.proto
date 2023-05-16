@@ -155,6 +155,10 @@ message OutputArtifact {
   // IDs artifacts from a more recently-started sync will take priority
   int64 sync_start_time_millis = 3;
   int64 file_length = 4;
+  // The digest of the artifact file; using the build tool's configured digest
+  // algorithm. It represents the content of the file and can be used to detect
+  // whether the content has changed.
+  string digest = 5;
 }
 
 message AndroidResourceModule {

@@ -31,7 +31,7 @@ import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.JavaSourcePackage;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PackageManifest;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
@@ -83,12 +83,12 @@ public class PackageManifestReader {
       Map<TargetKey, ArtifactLocation> javaPackageManifests,
       ListeningExecutorService executorService) {
 
-    Map<OutputArtifact, TargetKey> fileToLabelMap = Maps.newHashMap();
+    Map<OutputArtifactWithoutDigest, TargetKey> fileToLabelMap = Maps.newHashMap();
     for (Map.Entry<TargetKey, ArtifactLocation> entry : javaPackageManifests.entrySet()) {
       TargetKey key = entry.getKey();
       BlazeArtifact artifact = decoder.resolveOutput(entry.getValue());
-      if (artifact instanceof OutputArtifact) {
-        fileToLabelMap.put((OutputArtifact) artifact, key);
+      if (artifact instanceof OutputArtifactWithoutDigest) {
+        fileToLabelMap.put((OutputArtifactWithoutDigest) artifact, key);
       }
     }
     ArtifactsDiff diff;
@@ -138,7 +138,7 @@ public class PackageManifestReader {
     }
 
     List<ListenableFuture<Void>> futures = Lists.newArrayList();
-    for (OutputArtifact file : diff.getUpdatedOutputs()) {
+    for (OutputArtifactWithoutDigest file : diff.getUpdatedOutputs()) {
       futures.add(
           executorService.submit(
               () -> {
@@ -168,7 +168,8 @@ public class PackageManifestReader {
   }
 
   @Nullable
-  private static File findArtifactInCache(Project project, OutputArtifact outputArtifact) {
+  private static File findArtifactInCache(
+      Project project, OutputArtifactWithoutDigest outputArtifact) {
     if (outputArtifact instanceof RemoteOutputArtifact) {
       return RemoteOutputsCache.getInstance(project)
           .resolveOutput((RemoteOutputArtifact) outputArtifact);
@@ -177,7 +178,7 @@ public class PackageManifestReader {
   }
 
   private static Map<ArtifactLocation, String> parseManifestFile(
-      Project project, OutputArtifact packageManifest) {
+      Project project, OutputArtifactWithoutDigest packageManifest) {
     Map<ArtifactLocation, String> outputMap = Maps.newHashMap();
     InputStreamProvider inputStreamProvider = InputStreamProvider.getInstance();
 
