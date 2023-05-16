@@ -19,7 +19,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.Hashing;
-import com.google.common.io.MoreFiles;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -77,12 +76,10 @@ class CacheDirectoryManager {
   public void clear() throws IOException {
     // Delete dot directory first to ensure invalidation if interrupted.
     if (Files.exists(cacheDotDirectory)) {
-      //noinspection UnstableApiUsage
-      MoreFiles.deleteRecursively(cacheDotDirectory);
+      FileUtil.delete(cacheDotDirectory.toFile());
     }
     if (Files.exists(cacheDirectory)) {
-      //noinspection UnstableApiUsage
-      MoreFiles.deleteRecursively(cacheDirectory);
+      FileUtil.delete(cacheDirectory.toFile());
     }
     initialize();
   }
