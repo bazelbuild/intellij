@@ -201,8 +201,14 @@ public class QuerySyncProject {
     if (virtualFile == null) {
       return true;
     }
+    Path p = virtualFile.getFileSystem().getNioPath(virtualFile);
+    if (p == null || !workspaceRoot.path().startsWith(p)) {
+      // Not in the workspace.
+      // p == null can occur if the file is a zip entry.
+      return true;
+    }
     Set<Label> pendingTargets =
-        dependencyTracker.getPendingTargets(workspaceRoot.relativize(psiFile.getVirtualFile()));
+        dependencyTracker.getPendingTargets(workspaceRoot.relativize(virtualFile));
     int unsynced = pendingTargets == null ? 0 : pendingTargets.size();
     return unsynced == 0;
   }
