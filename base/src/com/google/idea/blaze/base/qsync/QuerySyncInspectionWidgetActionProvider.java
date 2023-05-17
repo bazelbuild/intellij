@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.intellij.icons.AllIcons.Actions;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -45,6 +46,9 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
   @Override
   public AnAction createAction(@NotNull Editor editor) {
     if (!QuerySync.isEnabled()) {
+      return null;
+    }
+    if (!Blaze.isBlazeProject(editor.getProject())) {
       return null;
     }
     if (!editor.getEditorKind().equals(EditorKind.MAIN_EDITOR)) {
