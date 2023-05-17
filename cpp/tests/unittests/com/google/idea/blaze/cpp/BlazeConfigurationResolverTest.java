@@ -97,7 +97,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     applicationServices.register(ProgressManager.class, new ProgressManagerImpl());
     applicationServices.register(CompilerWrapperProvider.class, new CompilerWrapperProviderImpl());
     xcodeSettingsProvider = new MockXcodeSettingsProvider();
-    applicationServices.register(XcodeCompilerSettingsProvider.class, xcodeSettingsProvider);
+    projectServices.register(XcodeCompilerSettingsProvider.class, xcodeSettingsProvider);
     applicationServices.register(VirtualFileManager.class, mock(VirtualFileManager.class));
     applicationServices.register(FileOperationProvider.class, new FileOperationProvider());
     mockFileSystem = mock(LocalFileSystem.class);

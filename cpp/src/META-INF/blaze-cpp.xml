@@ -46,12 +46,12 @@
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.google.idea.blaze.cpp.BlazeCompilerInfoMapService"/>
+    <projectService serviceInterface="com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider"
+                    serviceImplementation="com.google.idea.blaze.cpp.XcodeCompilerSettingsProviderImpl"/>
     <registryKey defaultValue="false" description="Disable absolute path trimming in debug clang builds" key="bazel.trim.absolute.path.disabled"/>
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerVersionChecker"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerWrapperProvider"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerWrapperProviderImpl"/>
-    <applicationService serviceInterface="com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider"
-                        serviceImplementation="com.google.idea.blaze.cpp.XcodeCompilerSettingsProviderImpl"/>
   </extensions>
 </idea-plugin>

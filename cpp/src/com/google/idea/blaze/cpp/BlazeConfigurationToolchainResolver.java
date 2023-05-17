@@ -286,7 +286,7 @@ public final class BlazeConfigurationToolchainResolver {
       Optional<XcodeCompilerSettings> xcodeCompilerSettings,
       File cppExecutable) {
     File executionRoot = executionRootPathResolver.getExecutionRoot();
-    ImmutableMap<String, String> compilerEnvFlags = XcodeCompilerSettingsProvider.getInstance().asEnvironmentVariables(xcodeCompilerSettings);
+    ImmutableMap<String, String> compilerEnvFlags = XcodeCompilerSettingsProvider.getInstance(project).asEnvironmentVariables(xcodeCompilerSettings);
     try {
       return CompilerVersionChecker.getInstance()
           .checkCompilerVersion(executionRoot, cppExecutable, compilerEnvFlags);
@@ -339,7 +339,7 @@ public final class BlazeConfigurationToolchainResolver {
       File cppExecutable,
       String compilerVersion) {
     ImmutableMap<String, String> compilerWrapperEnvVars =
-        XcodeCompilerSettingsProvider.getInstance().asEnvironmentVariables(xcodeCompilerSettings);
+        XcodeCompilerSettingsProvider.getInstance(project).asEnvironmentVariables(xcodeCompilerSettings);
     File compilerWrapper =
         CompilerWrapperProvider.getInstance()
             .createCompilerExecutableWrapper(executionRoot, cppExecutable, compilerWrapperEnvVars);
@@ -375,7 +375,7 @@ public final class BlazeConfigurationToolchainResolver {
         childContext -> {
           childContext.push(new TimingScope("Resolve Xcode information", EventType.Other));
           try {
-            return XcodeCompilerSettingsProvider.getInstance().fromContext(context, project);
+            return XcodeCompilerSettingsProvider.getInstance(project).fromContext(context, project);
           } catch (XcodeCompilerSettingsException e) {
             IssueOutput.warn(String.format("There was an error fetching the Xcode information from the build: %s\n\nSome C++ functionality may not be available.", e.toString()));
             return Optional.empty();

@@ -1,12 +1,31 @@
+/*
+ * Copyright 2023 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.google.idea.blaze.cpp;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.ExternalTask;
+import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.async.process.LineProcessingOutputStream.LineProcessor;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -23,9 +42,10 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Optional;
 
+
 public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsProvider {
 
-  private static final String QUERY_XCODE_VERSION_STARLARK_EXPR = "`{} {}`.format(providers(target)[`XcodeProperties`].xcode_version, providers(target)[`XcodeProperties`].default_macos_sdk_version) if `XcodeProperties` in providers(target) else ``".replace(
+  private static final String QUERY_XCODE_VERSION_STARLARK_EXPR = "`{} {}`.format(providers(target)[`XcodeProperties`].xcode_version, providers(target)[`XcodeProperties`].default_macos_sdk_version) if providers(target) and `XcodeProperties` in providers(target) else ``".replace(
       '`', '"');
 
   // This only exists because it's impossible to escape a `deps()` query expression correctly in a Java string.
@@ -53,13 +73,32 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
       String macosSdkVersion = versions.sdkVersion;
       String developerDir = XcodeCompilerSettingsProviderImpl.queryDeveloperDir(context, invoker, workspaceRoot, xcodeVersion);
       String sdkVersionString = String.format("MacOSX%s.sdk", macosSdkVersion);
-      return Optional.of(new XcodeCompilerSettings(
+      return Optional.of(XcodeCompilerSettings.create(
           Path.of(developerDir),
           Path.of(developerDir, "Platforms", "MacOSX.platform", "Developer", "SDKs",
               sdkVersionString)
       ));
     }
     return Optional.empty();
+  }
+
+  static class CaptureLineProcessor implements LineProcessor {
+    StringBuilder stream;
+
+    public CaptureLineProcessor() {
+      this.stream = new StringBuilder();
+    }
+
+    @Override
+    public String toString() {
+      return this.stream.toString();
+    }
+
+    @Override
+    public boolean processLine(String line) {
+      this.stream.append(line);
+      return true;
+    }
   }
 
   /**
@@ -75,11 +114,17 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
     runXcodeLocator.addExeFlags(xcodeVersion).build();
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    ByteArrayOutputStream errStream = new ByteArrayOutputStream();
+    CaptureLineProcessor errLines = new CaptureLineProcessor();
     int result = ExternalTask.builder(workspaceRoot)
         .addBlazeCommand(runXcodeLocator.build())
         .context(context)
-        .stderr(errStream)
+        .stderr(
+            LineProcessingOutputStream.of(
+                ImmutableList.<LineProcessor>builder().add(errLines).addAll(
+                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)
+                ).build()
+            )
+        )
         .stdout(outputStream)
         .build()
         .run();
@@ -87,7 +132,7 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
     if (result != 0) {
       throw new XcodeCompilerSettingsException(
           IssueKind.QUERY_DEVELOPER_DIR,
-          String.format("stderr: \"%s\"\nstdout: \"%s\"", errStream, outputStream));
+          String.format("stderr: \"%s\"\nstdout: \"%s\"", errLines, outputStream));
     }
     return outputStream.toString().strip();
   }
@@ -123,11 +168,16 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
     }
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    ByteArrayOutputStream errStream = new ByteArrayOutputStream();
+    CaptureLineProcessor errLines = new CaptureLineProcessor();
     int result = ExternalTask.builder(workspaceRoot)
         .arg(blazeCqueryWrapper.getAbsolutePath())
         .context(context)
-        .stderr(errStream)
+        .stderr(
+            LineProcessingOutputStream.of(
+                ImmutableList.<LineProcessor>builder().add(errLines).addAll(
+                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)
+                ).build()
+            ))
         .stdout(outputStream)
         .build()
         .run();
@@ -141,7 +191,7 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
     if (result != 0) {
       throw new XcodeCompilerSettingsException(
           IssueKind.FETCH_XCODE_VERSION,
-          String.format("stderr: \"%s\"\nstdout: \"%s\"", errStream, outputStream));
+          String.format("stderr: \"%s\"\nstdout: \"%s\"", errLines, outputStream));
     }
 
     // This will not be more than 10 lines. It's fine to store it in a string.
