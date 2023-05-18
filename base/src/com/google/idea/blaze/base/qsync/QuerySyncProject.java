@@ -202,7 +202,7 @@ public class QuerySyncProject {
       return true;
     }
     Path p = virtualFile.getFileSystem().getNioPath(virtualFile);
-    if (p == null || !workspaceRoot.path().startsWith(p)) {
+    if (p == null || !p.startsWith(workspaceRoot.path())) {
       // Not in the workspace.
       // p == null can occur if the file is a zip entry.
       return true;
