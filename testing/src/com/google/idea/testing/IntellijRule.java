@@ -16,6 +16,7 @@
 package com.google.idea.testing;
 
 import com.intellij.mock.MockProject;
+import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -42,7 +43,7 @@ public final class IntellijRule extends ExternalResource {
     TestUtils.createMockApplication(testDisposable);
     project =
         TestUtils.mockProject(
-            ApplicationManager.getApplication().getPicoContainer(), testDisposable);
+            ((MockApplication)ApplicationManager.getApplication()).getPicoContainer(), testDisposable);
   }
 
   @Override
@@ -56,7 +57,7 @@ public final class IntellijRule extends ExternalResource {
 
   public <T> void registerApplicationService(Class<T> klass, T instance) {
     registerComponentInstance(
-        (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer(),
+        ((MockApplication)ApplicationManager.getApplication()).getPicoContainer(),
         klass,
         instance,
         testDisposable);
@@ -64,7 +65,7 @@ public final class IntellijRule extends ExternalResource {
 
   public <T> void registerApplicationComponent(Class<T> klass, T instance) {
     registerComponentInstance(
-        (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer(),
+        ((MockApplication)ApplicationManager.getApplication()).getPicoContainer(),
         klass,
         instance,
         testDisposable);
@@ -72,12 +73,12 @@ public final class IntellijRule extends ExternalResource {
 
   public <T> void registerProjectService(Class<T> klass, T instance) {
     registerComponentInstance(
-        (MutablePicoContainer) getProject().getPicoContainer(), klass, instance, testDisposable);
+        ((MockProject)(getProject())).getPicoContainer(), klass, instance, testDisposable);
   }
 
   public <T> void registerProjectComponent(Class<T> klass, T instance) {
     registerComponentInstance(
-        (MutablePicoContainer) getProject().getPicoContainer(), klass, instance, testDisposable);
+        ((MockProject)getProject()).getPicoContainer(), klass, instance, testDisposable);
   }
 
   public <T> void registerExtensionPoint(ExtensionPointName<T> name, Class<T> type) {

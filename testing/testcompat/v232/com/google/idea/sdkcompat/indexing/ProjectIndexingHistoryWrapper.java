@@ -79,6 +79,7 @@ public class ProjectIndexingHistoryWrapper {
                   /* totalIndexingVisibleTime= */ new JsonDuration(
                       /* nano= */ providerIndexingTime.toNanos()),
                   /* contentLoadingVisibleTime= */ new JsonDuration(/* nano= */ 0),
+		  /* readActionWaitingVisibleTime= */ new JsonDuration(/* nano= */0),
                   /* numberOfTooLargeForIndexingFiles= */ 0,
                   /* slowIndexedFiles= */ ImmutableList.of(),
                   /* filesFullyIndexedByExtensions= */ ImmutableList.of(),

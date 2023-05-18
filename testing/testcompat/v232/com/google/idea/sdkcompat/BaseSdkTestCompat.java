@@ -24,6 +24,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.UITestUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.CoreIconManager;
 
@@ -66,5 +67,10 @@ public final class BaseSdkTestCompat {
   /** #api231 */
   public static void deactivateIconManager() {
     IconManager.Companion.deactivate();
+  }
+
+  /** #api222 */
+  public static void replaceIdeEventQueueSafely() {
+      UITestUtil.replaceIdeEventQueueSafely();
   }
 }
