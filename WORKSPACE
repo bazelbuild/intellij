@@ -269,8 +269,8 @@ http_archive(
 http_archive(
     name = "scala_2022_2",
     build_file_content = _SCALA_BUILD_FILE,
-    sha256 = "c250726ef598d9f942a1aeaf3b7376d6816d73824b2308bbff1007bcc1871482",
-    url = "https://plugins.jetbrains.com/files/1347/198991/scala-intellij-bin-2022.2.10.zip",
+    sha256 = "9f668afa80e5cff90667fca7e7737d47a9ec73f39ff59b3488881371349afcff",
+    url = "https://plugins.jetbrains.com/files/1347/258933/scala-intellij-bin-2022.2.19.zip",
 )
 
 http_archive(
