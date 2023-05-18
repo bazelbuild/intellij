@@ -15,9 +15,9 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.qsync.cache.ArtifactTracker;
-import com.google.idea.blaze.base.qsync.cache.ArtifactTracker.UpdateResult;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
@@ -26,38 +26,36 @@ import java.nio.file.Path;
 import java.util.Set;
 
 /** A local cache of project dependencies. */
-public class DependencyCache {
-  private final ArtifactTracker artifactTracker;
-
-  public DependencyCache(ArtifactTracker artifactTracker) {
-    this.artifactTracker = artifactTracker;
-  }
+public interface DependencyCache {
 
   /* Cleans up all cache files and reset Artifact map. */
-  public void invalidateAll() throws IOException {
-    artifactTracker.clear();
-  }
+  void invalidateAll() throws IOException;
 
   /* Caches new Artifacts to local. */
-  public UpdateResult update(Set<Label> targets, OutputInfo outputInfo, BlazeContext context)
-      throws BuildException {
-    return artifactTracker.add(targets, outputInfo, context);
-  }
+  UpdateResult update(Set<Label> targets, OutputInfo outputInfo, BlazeContext context)
+      throws BuildException;
 
   /* Save artifact info to disk. */
-  public void saveState() throws IOException {
-    artifactTracker.saveToDisk();
-  }
+  void saveState() throws IOException;
 
-  public Set<Label> getCachedTargets() {
-    return artifactTracker.getCachedTargets();
-  }
+  Set<Label> getLiveCachedTargets();
 
-  public Path getGenSrcCacheDirectory() {
-    return artifactTracker.getGenSrcCacheDirectory();
-  }
+  Path getExternalAarDirectory();
 
-  public ImmutableList<Path> getGenSrcSubfolders() throws IOException {
-    return artifactTracker.getGenSrcSubfolders();
+  Path getGenSrcCacheDirectory();
+
+  ImmutableList<Path> getGenSrcSubfolders() throws IOException;
+
+  /** A data class representing the result of updating artifacts. */
+  @AutoValue
+  public abstract static class UpdateResult {
+    public abstract ImmutableSet<Path> updatedFiles();
+
+    public abstract ImmutableSet<String> removedKeys();
+
+    public static UpdateResult create(
+        ImmutableSet<Path> updatedFiles, ImmutableSet<String> removedKeys) {
+      return new AutoValue_DependencyCache_UpdateResult(updatedFiles, removedKeys);
+    }
   }
 }

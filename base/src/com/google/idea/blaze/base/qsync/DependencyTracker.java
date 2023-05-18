@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.bazel.BazelExitCode;
-import com.google.idea.blaze.base.qsync.cache.ArtifactTracker.UpdateResult;
+import com.google.idea.blaze.base.qsync.DependencyCache.UpdateResult;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
@@ -87,7 +87,7 @@ public class DependencyTracker {
     if (targets == null) {
       return null;
     }
-    Set<Label> cachedTargets = cache.getCachedTargets();
+    Set<Label> cachedTargets = cache.getLiveCachedTargets();
     return Sets.difference(targets, cachedTargets).immutableCopy();
   }
 
