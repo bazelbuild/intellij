@@ -28,7 +28,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher;
-import com.google.idea.blaze.base.qsync.cache.ArtifactTracker;
+import com.google.idea.blaze.base.qsync.cache.ArtifactTrackerImpl;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
@@ -111,7 +111,7 @@ public class ProjectLoader {
 
     BlazeProject graph = new BlazeProject();
     ArtifactFetcher<OutputArtifact> artifactFetcher = createArtifactFetcher();
-    ArtifactTracker artifactTracker = new ArtifactTracker(importSettings, artifactFetcher);
+    ArtifactTrackerImpl artifactTracker = new ArtifactTrackerImpl(importSettings, artifactFetcher);
     artifactTracker.initialize();
     DependencyTracker dependencyTracker =
         new DependencyTracker(project, graph, dependencyBuilder, artifactTracker);

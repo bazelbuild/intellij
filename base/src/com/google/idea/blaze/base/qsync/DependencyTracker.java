@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.bazel.BazelExitCode;
-import com.google.idea.blaze.base.qsync.DependencyCache.UpdateResult;
+import com.google.idea.blaze.base.qsync.ArtifactTracker.UpdateResult;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
@@ -61,17 +61,17 @@ public class DependencyTracker {
 
   private final BlazeProject blazeProject;
   private final DependencyBuilder builder;
-  private final DependencyCache cache;
+  private final ArtifactTracker artifactTracker;
 
   public DependencyTracker(
       Project project,
       BlazeProject blazeProject,
       DependencyBuilder builder,
-      DependencyCache cache) {
+      ArtifactTracker artifactTracker) {
     this.project = project;
     this.blazeProject = blazeProject;
     this.builder = builder;
-    this.cache = cache;
+    this.artifactTracker = artifactTracker;
   }
 
   /** Recursively get all the transitive deps outside the project */
@@ -87,7 +87,7 @@ public class DependencyTracker {
     if (targets == null) {
       return null;
     }
-    Set<Label> cachedTargets = cache.getLiveCachedTargets();
+    Set<Label> cachedTargets = artifactTracker.getLiveCachedTargets();
     return Sets.difference(targets, cachedTargets).immutableCopy();
   }
 
@@ -223,14 +223,14 @@ public class DependencyTracker {
       BlazeContext context, Set<Label> targets, OutputInfo outputInfo)
       throws BuildException, IOException {
     long now = System.nanoTime();
-    UpdateResult updateResult = cache.update(targets, outputInfo, context);
+    UpdateResult updateResult = artifactTracker.update(targets, outputInfo, context);
     long elapsedMs = (System.nanoTime() - now) / 1000000L;
     context.output(
         PrintOutput.log(
             String.format(
                 "Updated cache in %d ms: updated %d artifacts, removed %d artifacts",
                 elapsedMs, updateResult.updatedFiles().size(), updateResult.removedKeys().size())));
-    cache.saveState();
+    artifactTracker.saveState();
     return updateResult.updatedFiles();
   }
 
@@ -277,8 +277,9 @@ public class DependencyTracker {
     ProjectProto.Project projectProto = snapshot.project();
 
     Path genSrcCacheRelativeToProject =
-        Paths.get(checkNotNull(project.getBasePath())).relativize(cache.getGenSrcCacheDirectory());
-    ImmutableList<Path> subfolders = cache.getGenSrcSubfolders();
+        Paths.get(checkNotNull(project.getBasePath()))
+            .relativize(artifactTracker.getGenSrcCacheDirectory());
+    ImmutableList<Path> subfolders = artifactTracker.getGenSrcSubfolders();
     GeneratedSourceProjectUpdater updater =
         new GeneratedSourceProjectUpdater(projectProto, genSrcCacheRelativeToProject, subfolders);
 

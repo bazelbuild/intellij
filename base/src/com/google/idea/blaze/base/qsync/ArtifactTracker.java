@@ -26,36 +26,53 @@ import java.nio.file.Path;
 import java.util.Set;
 
 /** A local cache of project dependencies. */
-public interface DependencyCache {
+public interface ArtifactTracker {
 
-  /* Cleans up all cache files and reset Artifact map. */
-  void invalidateAll() throws IOException;
+  /** Drops all artifacts and clears caches. */
+  void clear() throws IOException;
 
-  /* Caches new Artifacts to local. */
+  /** Fetches, caches and sets up new artifacts. */
   UpdateResult update(Set<Label> targets, OutputInfo outputInfo, BlazeContext context)
       throws BuildException;
 
-  /* Save artifact info to disk. */
+  /** Save artifact info to disk. */
   void saveState() throws IOException;
 
+  /**
+   * Returns the set of targets that artifacts are set up for.
+   *
+   * <p>Note, the returned set is a live set which is updated as a result of {@link #update} and
+   * {@link #clear} invocation.
+   */
   Set<Label> getLiveCachedTargets();
 
+  /**
+   * Returns the location of the directory containing unpacked Android libraries (i.e. resources and
+   * manifests) in the layout expected by the IDE.
+   */
   Path getExternalAarDirectory();
 
+  /** Returns the directory containing generated sources in the layout expected by the IDE. */
   Path getGenSrcCacheDirectory();
 
+  /**
+   * Returns the list of sub-directories under the {@link #getGenSrcCacheDirectory()}.
+   *
+   * <p>Such directories must be registered as separate source roots each as they represent Java
+   * package hierarchy roots.
+   */
   ImmutableList<Path> getGenSrcSubfolders() throws IOException;
 
   /** A data class representing the result of updating artifacts. */
   @AutoValue
-  public abstract static class UpdateResult {
+  abstract class UpdateResult {
     public abstract ImmutableSet<Path> updatedFiles();
 
     public abstract ImmutableSet<String> removedKeys();
 
     public static UpdateResult create(
         ImmutableSet<Path> updatedFiles, ImmutableSet<String> removedKeys) {
-      return new AutoValue_DependencyCache_UpdateResult(updatedFiles, removedKeys);
+      return new AutoValue_ArtifactTracker_UpdateResult(updatedFiles, removedKeys);
     }
   }
 }
