@@ -117,7 +117,8 @@ public class ProjectLoader {
     DependencyTracker dependencyTracker =
         new DependencyTracker(project, graph, dependencyBuilder, dependencyCache);
     ProjectRefresher projectRefresher =
-        new ProjectRefresher(createWorkspaceRelativePackageReader(), workspaceRoot.path());
+        new ProjectRefresher(
+            createWorkspaceRelativePackageReader(), workspaceRoot.path(), graph::getCurrent);
     QueryRunner queryRunner = createQueryRunner(buildSystem);
     ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner);
     ProjectUpdater projectUpdater =

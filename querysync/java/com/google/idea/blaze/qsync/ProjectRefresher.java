@@ -15,19 +15,15 @@
  */
 package com.google.idea.blaze.qsync;
 
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
-
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.vcs.VcsState;
-import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
+import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * Project refresher creates an appropriate {@link RefreshOperation} based on the project and
@@ -37,10 +33,15 @@ public class ProjectRefresher {
 
   private final PackageReader workspaceRelativePackageReader;
   private final Path workspaceRoot;
+  private final Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier;
 
-  public ProjectRefresher(PackageReader workspaceRelativePackageReader, Path workspaceRoot) {
+  public ProjectRefresher(
+      PackageReader workspaceRelativePackageReader,
+      Path workspaceRoot,
+      Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier) {
     this.workspaceRelativePackageReader = workspaceRelativePackageReader;
     this.workspaceRoot = workspaceRoot;
+    this.latestProjectSnapshotSupplier = latestProjectSnapshotSupplier;
   }
 
   public FullProjectUpdate startFullUpdate(
@@ -60,74 +61,42 @@ public class ProjectRefresher {
       PostQuerySyncData currentProject,
       Optional<VcsState> latestVcsState,
       ProjectDefinition latestProjectDefinition) {
-    if (!currentProject.querySummary().isCompatibleWithCurrentPluginVersion()) {
-      context.output(PrintOutput.output("IDE has updated since last sync; performing full query"));
-      return fullUpdate(context, latestProjectDefinition, latestVcsState);
-    }
-    if (!currentProject.projectDefinition().equals(latestProjectDefinition)) {
-      context.output(PrintOutput.output("Project definition has changed; performing full query"));
-      return fullUpdate(context, latestProjectDefinition, latestVcsState);
-    }
-    if (!currentProject.vcsState().isPresent()) {
-      context.output(PrintOutput.output("No VCS state from last sync: performing full query"));
-      return fullUpdate(context, currentProject.projectDefinition(), latestVcsState);
-    }
-    if (!latestVcsState.isPresent()) {
-      context.output(
-          PrintOutput.output("VCS doesn't support delta updates: performing full query"));
-      return fullUpdate(context, currentProject.projectDefinition(), latestVcsState);
-    }
-    if (!Objects.equals(
-        currentProject.vcsState().get().upstreamRevision, latestVcsState.get().upstreamRevision)) {
-      context.output(
-          PrintOutput.output(
-              "Upstream revision has changed %s -> %s: performing full query",
-              currentProject.vcsState().get().upstreamRevision,
-              latestVcsState.get().upstreamRevision));
-      return fullUpdate(context, currentProject.projectDefinition(), latestVcsState);
-    }
-    // Build the effective working set. This includes the working set as was when the original
-    // sync query was run, as it's possible that files have been reverted since then but the
-    // earlier query output will reflect the un-reverted file state.
+    return startPartialRefresh(
+        new RefreshParameters(currentProject, latestVcsState, latestProjectDefinition), context);
+  }
 
-    ImmutableSet<Path> newWorkingSetFiles =
-        latestVcsState.get().workingSet.stream()
-            .map(c -> c.workspaceRelativePath)
-            .collect(toImmutableSet());
+  public RefreshOperation startPartialRefresh(RefreshParameters params, Context<?> context) {
+    if (params.requiresFullUpdate(context)) {
+      return startFullUpdate(context, params.latestProjectDefinition, params.latestVcsState);
+    }
+    AffectedPackages affected;
 
-    // Files that were in the working set previously, but are no longer, must have been reverted.
-    // Find them, and then invert them to ensure that all state is updated appropriately.
-    ImmutableSet<WorkspaceFileChange> revertedChanges =
-        currentProject.vcsState().get().workingSet.stream()
-            .filter(c -> !newWorkingSetFiles.contains(c.workspaceRelativePath))
-            .map(WorkspaceFileChange::invert)
-            .collect(toImmutableSet());
-
-    AffectedPackages affected =
-        AffectedPackagesCalculator.builder()
-            .context(context)
-            .projectIncludes(currentProject.projectDefinition().projectIncludes())
-            .projectExcludes(currentProject.projectDefinition().projectExcludes())
-            .changedFiles(Sets.union(latestVcsState.get().workingSet, revertedChanges))
-            .lastQuery(currentProject.querySummary())
-            .build()
-            .getAffectedPackages();
-    // TODO check affected.isIncomplete() and offer (or just do?) a full sync in that case.
+    if (params.isNoopUpdate()) {
+      // VCS state has not changed since last sync
+      if (latestProjectSnapshotSupplier.get().isPresent()) {
+        // We have full project state. We don't need to do anything.
+        context.output(PrintOutput.log("Nothing has changed since last sync."));
+        return new NoopProjectRefresh(latestProjectSnapshotSupplier.get()::get);
+      }
+      // else we need to recalculate the project structure. This happens on the first sync after
+      // reloading the project.
+      affected = AffectedPackages.EMPTY;
+    } else {
+      // VCS state has changed, or we don't have a readonly snapshot to work from.
+      affected = params.calculateAffectedPackages(context);
+    }
+    // TODO(mathewi) check affected.isIncomplete() and offer (or just do?) a full sync in that case.
 
     Path effectiveWorkspaceRoot =
-        latestVcsState.flatMap(s -> s.workspaceSnapshotPath).orElse(workspaceRoot);
+        params.latestVcsState.flatMap(s -> s.workspaceSnapshotPath).orElse(workspaceRoot);
     return new PartialProjectRefresh(
         context,
         effectiveWorkspaceRoot,
         new WorkspaceResolvingPackageReader(effectiveWorkspaceRoot, workspaceRelativePackageReader),
-        currentProject,
-        latestVcsState,
+        params.currentProject,
+        params.latestVcsState,
         affected.getModifiedPackages(),
         affected.getDeletedPackages());
   }
 
-  private RefreshOperation fullUpdate(
-      Context context, ProjectDefinition projectDefinition, Optional<VcsState> latestVcsState) {
-    return startFullUpdate(context, projectDefinition, latestVcsState);
-  }
 }
