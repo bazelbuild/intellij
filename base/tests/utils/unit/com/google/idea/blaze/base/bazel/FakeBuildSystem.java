@@ -19,6 +19,7 @@ import com.google.auto.value.AutoValue;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.BazelQueryRunner;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.project.Project;
@@ -78,6 +79,11 @@ public abstract class FakeBuildSystem implements BuildSystem {
   @Override
   public void populateBlazeVersionData(
       WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo, BlazeVersionData.Builder builder) {}
+
+  @Override
+  public BazelQueryRunner createQueryRunner(Project project) {
+    return null;
+  }
 
   /**
    * Builder for {@link FakeBuildSystem}. Use {@link FakeBuildSystem#builder(BuildSystemName)} to

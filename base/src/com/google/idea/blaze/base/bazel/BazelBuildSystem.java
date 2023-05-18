@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.BazelBinarySection;
+import com.google.idea.blaze.base.qsync.BazelQueryRunner;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
@@ -102,5 +103,10 @@ class BazelBuildSystem implements BuildSystem {
   public void populateBlazeVersionData(
       WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo, BlazeVersionData.Builder builder) {
     builder.setBazelVersion(BazelVersion.parseVersion(blazeInfo));
+  }
+
+  @Override
+  public BazelQueryRunner createQueryRunner(Project project) {
+    return new BazelQueryRunner(project, this);
   }
 }

@@ -157,7 +157,7 @@ public class ProjectLoader {
   }
 
   protected QueryRunner createQueryRunner(BuildSystem buildSystem) {
-    return new BazelQueryRunner(project, buildSystem);
+    return buildSystem.createQueryRunner(project);
   }
 
   protected DependencyBuilder createDependencyBuilder(

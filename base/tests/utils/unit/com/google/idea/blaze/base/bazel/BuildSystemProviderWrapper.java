@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.BazelQueryRunner;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
@@ -290,6 +291,11 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
     public void populateBlazeVersionData(
         WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo, BlazeVersionData.Builder builder) {
       inner.populateBlazeVersionData(workspaceRoot, blazeInfo, builder);
+    }
+
+    @Override
+    public BazelQueryRunner createQueryRunner(Project project) {
+      return inner.createQueryRunner(project);
     }
   }
 }
