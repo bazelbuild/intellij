@@ -113,9 +113,8 @@ public class ProjectLoader {
     ArtifactFetcher<OutputArtifact> artifactFetcher = createArtifactFetcher();
     ArtifactTracker artifactTracker = new ArtifactTracker(importSettings, artifactFetcher);
     artifactTracker.initialize();
-    DependencyCache dependencyCache = new DependencyCache(artifactTracker);
     DependencyTracker dependencyTracker =
-        new DependencyTracker(project, graph, dependencyBuilder, dependencyCache);
+        new DependencyTracker(project, graph, dependencyBuilder, artifactTracker);
     ProjectRefresher projectRefresher =
         new ProjectRefresher(
             createWorkspaceRelativePackageReader(), workspaceRoot.path(), graph::getCurrent);
@@ -133,7 +132,7 @@ public class ProjectLoader {
         graph,
         importSettings,
         workspaceRoot,
-        dependencyCache,
+        artifactTracker,
         dependencyTracker,
         projectQuerier,
         latestProjectDef,

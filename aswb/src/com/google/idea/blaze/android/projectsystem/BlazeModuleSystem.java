@@ -34,9 +34,9 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.qsync.DependencyCache;
 import com.google.idea.blaze.base.qsync.QuerySync;
-import com.google.idea.blaze.base.qsync.cache.ArtifactTracker;
-import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
@@ -66,10 +66,12 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
       androidExternalLibraryManager =
           new AndroidExternalLibraryManager(
               () -> {
-                Path aarDirectory =
-                    ArtifactTracker.getExternalAarDirectory(
-                        BlazeImportSettingsManager.getInstance(module.getProject())
-                            .getImportSettings());
+                DependencyCache dependencyCache =
+                    QuerySyncManager.getInstance(module.getProject()).getDependencyCache();
+                if (dependencyCache == null) {
+                  return ImmutableList.of();
+                }
+                Path aarDirectory = dependencyCache.getExternalAarDirectory();
                 // This can be called by the IDE as the user navigates the project and so might be
                 // called before a sync has been completed and the project structure has been set
                 // up.

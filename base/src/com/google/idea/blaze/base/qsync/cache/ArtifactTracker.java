@@ -20,7 +20,6 @@ import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.AAR_DI
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.GEN_SRC_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.LIBRARY_DIRECTORY;
 
-import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
@@ -29,6 +28,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.qsync.DependencyCache;
 import com.google.idea.blaze.base.qsync.OutputInfo;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -60,7 +60,7 @@ import java.util.zip.GZIPOutputStream;
  *
  * <p>This class maps all the targets that have been built to their artifacts.
  */
-public class ArtifactTracker {
+public class ArtifactTracker implements DependencyCache {
 
   private static final Logger logger = Logger.getInstance(ArtifactTracker.class);
 
@@ -82,7 +82,9 @@ public class ArtifactTracker {
             ImmutableSet.of());
     aarCache =
         createFileCache(
-            artifactFetcher, getExternalAarDirectory(importSettings), ImmutableSet.of("aar"));
+            artifactFetcher,
+            getProjectDirectory(importSettings).resolve(AAR_DIRECTORY),
+            ImmutableSet.of("aar"));
     generatedSrcFileCache =
         createFileCache(
             artifactFetcher,
@@ -128,7 +130,8 @@ public class ArtifactTracker {
     }
   }
 
-  public void saveToDisk() throws IOException {
+  @Override
+  public void saveState() throws IOException {
     BuildArtifacts.Builder builder = BuildArtifacts.newBuilder();
     for (Entry<Label, List<Path>> entry : artifacts.entrySet()) {
       ImmutableList<String> paths =
@@ -147,7 +150,8 @@ public class ArtifactTracker {
    * Merges TargetToDeps into tracker maps and cache necessary OutputArtifact to local. The
    * artifacts will not be added into tracker if it's failed to be cached.
    */
-  public UpdateResult add(Set<Label> targets, OutputInfo outputInfo, BlazeContext outerContext)
+  @Override
+  public UpdateResult update(Set<Label> targets, OutputInfo outputInfo, BlazeContext outerContext)
       throws BuildException {
     try (BlazeContext context = BlazeContext.create(outerContext)) {
       DownloadTrackingScope downloads = new DownloadTrackingScope();
@@ -204,12 +208,13 @@ public class ArtifactTracker {
     }
   }
 
-  public void clear() throws IOException {
+  @Override
+  public void invalidateAll() throws IOException {
     artifacts.clear();
     jarCache.clear();
     aarCache.clear();
     generatedSrcFileCache.clear();
-    saveToDisk();
+    saveState();
   }
 
   /** Returns directory of project. */
@@ -217,34 +222,25 @@ public class ArtifactTracker {
     return BlazeDataStorage.getProjectDataDir(importSettings).toPath();
   }
 
-  public static Path getExternalAarDirectory(BlazeImportSettings importSettings) {
-    return getProjectDirectory(importSettings).resolve(AAR_DIRECTORY);
+  @Override
+  public Path getExternalAarDirectory() {
+    return aarCache.getDirectory();
   }
 
+  @Override
   public Path getGenSrcCacheDirectory() {
     return generatedSrcFileCache.getDirectory();
   }
 
+  @Override
   public ImmutableList<Path> getGenSrcSubfolders() throws IOException {
     try (Stream<Path> pathStream = Files.list(generatedSrcFileCache.getDirectory())) {
       return pathStream.collect(toImmutableList());
     }
   }
 
-  public Set<Label> getCachedTargets() {
+  @Override
+  public Set<Label> getLiveCachedTargets() {
     return artifacts.keySet();
-  }
-
-  /** A data class representing the result of updating artifacts. */
-  @AutoValue
-  public abstract static class UpdateResult {
-    public abstract ImmutableSet<Path> updatedFiles();
-
-    public abstract ImmutableSet<String> removedKeys();
-
-    public static UpdateResult create(
-        ImmutableSet<Path> updatedFiles, ImmutableSet<String> removedKeys) {
-      return new AutoValue_ArtifactTracker_UpdateResult(updatedFiles, removedKeys);
-    }
   }
 }
