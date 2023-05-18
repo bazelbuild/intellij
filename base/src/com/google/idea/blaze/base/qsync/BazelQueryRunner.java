@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.common.base.Stopwatch;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
@@ -22,6 +23,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
@@ -34,6 +36,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.TimeUnit;
 
 /** The default implementation of QueryRunner. */
 public class BazelQueryRunner implements QueryRunner {
@@ -51,6 +54,7 @@ public class BazelQueryRunner implements QueryRunner {
   @Override
   public QuerySummary runQuery(QuerySpec query, BlazeContext context)
       throws IOException, BuildException {
+    Stopwatch timer = Stopwatch.createStarted();
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
     BlazeCommandRunner commandRunner = invoker.getCommandRunner();
     logger.info(
@@ -73,16 +77,32 @@ public class BazelQueryRunner implements QueryRunner {
       commandBuilder.addBlazeFlags(queryExp);
     }
     commandBuilder.setWorkspaceRoot(query.workspaceRoot());
+    addExtraFlags(commandBuilder);
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper();
         InputStream in =
             commandRunner.runQuery(project, commandBuilder, buildResultHelper, context)) {
-      logger.info(String.format("Summarising query from %s", in));
-      Instant start = Instant.now();
+      QuerySummary querySummary = readFrom(in, context);
+      context.output(
+          PrintOutput.output("Total query time ms: " + timer.elapsed(TimeUnit.MILLISECONDS)));
+      return querySummary;
+    }
+  }
+
+  /** Allows derived classes to add proprietary flags to the query invocation. */
+  protected void addExtraFlags(BlazeCommand.Builder commandBuilder) {}
+
+  protected QuerySummary readFrom(InputStream in, BlazeContext context) throws BuildException {
+    logger.info(String.format("Summarising query from %s", in));
+    Instant start = Instant.now();
+    try {
       QuerySummary summary = QuerySummary.create(in);
       logger.info(
           String.format(
               "Summarised query in %ds", Duration.between(start, Instant.now()).toSeconds()));
       return summary;
+    } catch (IOException e) {
+      throw new BuildException("Failed to read query output", e);
     }
   }
+
 }

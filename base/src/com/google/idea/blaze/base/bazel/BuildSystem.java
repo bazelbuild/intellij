@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.BazelQueryRunner;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
@@ -134,4 +135,6 @@ public interface BuildSystem {
   default Optional<String> getInvocationLink(String invocationId) {
     return Optional.empty();
   }
+
+  BazelQueryRunner createQueryRunner(Project project);
 }
