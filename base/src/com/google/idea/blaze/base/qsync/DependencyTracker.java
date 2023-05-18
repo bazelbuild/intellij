@@ -104,6 +104,42 @@ public class DependencyTracker {
             .getCurrent()
             .orElseThrow(() -> new IllegalStateException("Sync is not yet complete"));
 
+    Optional<RequestedTargets> maybeRequestedTargets =
+        computeRequestedTargets(context, snapshot, workspaceRelativePaths);
+    if (maybeRequestedTargets.isEmpty()) {
+      return;
+    }
+
+    RequestedTargets requestedTargets = maybeRequestedTargets.get();
+    buildDependencies(context, snapshot, requestedTargets);
+  }
+
+  static class RequestedTargets {
+    public final ImmutableSet<Label> buildTargets;
+    public final ImmutableSet<Label> expectedDependencyTargets;
+
+    RequestedTargets(
+        ImmutableSet<Label> targetsToRequestBuild, ImmutableSet<Label> expectedToBeBuiltTargets) {
+      this.buildTargets = targetsToRequestBuild;
+      this.expectedDependencyTargets = expectedToBeBuiltTargets;
+    }
+  }
+
+  private void buildDependencies(
+      BlazeContext context, BlazeProjectSnapshot snapshot, RequestedTargets requestedTargets)
+      throws IOException, BuildException {
+    OutputInfo outputInfo = builder.build(context, requestedTargets.buildTargets);
+
+    reportErrorsAndWarnings(context, snapshot, outputInfo);
+
+    ImmutableSet<Path> updatedFiles =
+        updateCaches(context, requestedTargets.expectedDependencyTargets, outputInfo);
+
+    refreshFiles(context, updatedFiles);
+  }
+
+  private static Optional<RequestedTargets> computeRequestedTargets(
+      BlazeContext context, BlazeProjectSnapshot snapshot, List<Path> workspaceRelativePaths) {
     Set<Label> targets = new HashSet<>();
     Set<Label> buildTargets = new HashSet<>();
     for (Path workspaceRelativePath : workspaceRelativePaths) {
@@ -119,7 +155,7 @@ public class DependencyTracker {
             PrintOutput.error(
                 "If this is a newly added supported rule, please re-sync your project."));
         context.setHasError();
-        return;
+        return Optional.empty();
       }
       ImmutableSet<Label> t = snapshot.getFileDependencies(workspaceRelativePath);
       if (t != null) {
@@ -127,8 +163,13 @@ public class DependencyTracker {
       }
     }
 
-    OutputInfo outputInfo = builder.build(context, buildTargets);
+    return Optional.of(
+        new RequestedTargets(ImmutableSet.copyOf(buildTargets), ImmutableSet.copyOf(targets)));
+  }
 
+  private void reportErrorsAndWarnings(
+      BlazeContext context, BlazeProjectSnapshot snapshot, OutputInfo outputInfo)
+      throws NoDependenciesBuiltException {
     if (outputInfo.isEmpty()) {
       throw new NoDependenciesBuiltException(
           "Build produced no usable outputs. Please fix any build errors and retry.");
@@ -176,7 +217,11 @@ public class DependencyTracker {
                   + " above build errors and try again."));
       context.setHasWarnings();
     }
+  }
 
+  private ImmutableSet<Path> updateCaches(
+      BlazeContext context, Set<Label> targets, OutputInfo outputInfo)
+      throws BuildException, IOException {
     long now = System.nanoTime();
     UpdateResult updateResult = cache.update(targets, outputInfo, context);
     long elapsedMs = (System.nanoTime() - now) / 1000000L;
@@ -186,7 +231,7 @@ public class DependencyTracker {
                 "Updated cache in %d ms: updated %d artifacts, removed %d artifacts",
                 elapsedMs, updateResult.updatedFiles().size(), updateResult.removedKeys().size())));
     cache.saveState();
-    refreshFiles(context, updateResult.updatedFiles());
+    return updateResult.updatedFiles();
   }
 
   private void refreshFiles(BlazeContext context, ImmutableSet<Path> updatedFiles) {
