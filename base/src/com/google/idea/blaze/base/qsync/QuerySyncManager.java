@@ -123,9 +123,9 @@ public class QuerySyncManager {
     }
   }
 
-  public DependencyCache getDependencyCache() {
+  public ArtifactTracker getArtifactTracker() {
     assertProjectLoaded();
-    return loadedProject.getDependencyCache();
+    return loadedProject.getArtifactTracker();
   }
 
   public SourceToTargetMap getSourceToTargetMap() {

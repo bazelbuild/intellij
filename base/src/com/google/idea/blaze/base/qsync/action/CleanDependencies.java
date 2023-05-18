@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync.action;
 
-import com.google.idea.blaze.base.qsync.DependencyCache;
+import com.google.idea.blaze.base.qsync.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,9 +30,10 @@ public final class CleanDependencies extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    DependencyCache cache = QuerySyncManager.getInstance(e.getProject()).getDependencyCache();
+    ArtifactTracker artifactTracker =
+        QuerySyncManager.getInstance(e.getProject()).getArtifactTracker();
     try {
-      cache.invalidateAll();
+      artifactTracker.clear();
     } catch (IOException ex) {
       logger.warn("Failed to invalidate dependencies", ex);
     }

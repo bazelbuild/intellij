@@ -28,7 +28,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
-import com.google.idea.blaze.base.qsync.DependencyCache;
+import com.google.idea.blaze.base.qsync.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.OutputInfo;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -60,9 +60,9 @@ import java.util.zip.GZIPOutputStream;
  *
  * <p>This class maps all the targets that have been built to their artifacts.
  */
-public class ArtifactTracker implements DependencyCache {
+public class ArtifactTrackerImpl implements ArtifactTracker {
 
-  private static final Logger logger = Logger.getInstance(ArtifactTracker.class);
+  private static final Logger logger = Logger.getInstance(ArtifactTrackerImpl.class);
 
   // The artifacts in the cache. Note that artifacts that do not produce files are also stored here.
   // So, it is not the same for a label not to be present, than a label to have an empty list.
@@ -73,7 +73,7 @@ public class ArtifactTracker implements DependencyCache {
   private final FileCache generatedSrcFileCache;
   private final Path persistentFile;
 
-  public ArtifactTracker(
+  public ArtifactTrackerImpl(
       BlazeImportSettings importSettings, ArtifactFetcher<OutputArtifact> artifactFetcher) {
     jarCache =
         createFileCache(
@@ -209,7 +209,7 @@ public class ArtifactTracker implements DependencyCache {
   }
 
   @Override
-  public void invalidateAll() throws IOException {
+  public void clear() throws IOException {
     artifacts.clear();
     jarCache.clear();
     aarCache.clear();

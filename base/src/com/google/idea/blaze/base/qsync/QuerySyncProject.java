@@ -70,7 +70,7 @@ public class QuerySyncProject {
   private final BlazeProject snapshotHolder;
   private final BlazeImportSettings importSettings;
   private final WorkspaceRoot workspaceRoot;
-  private final DependencyCache dependencyCache;
+  private final ArtifactTracker artifactTracker;
   private final DependencyTracker dependencyTracker;
   private final ProjectQuerier projectQuerier;
   private final ProjectDefinition projectDefinition;
@@ -89,7 +89,7 @@ public class QuerySyncProject {
       BlazeProject snapshotHolder,
       BlazeImportSettings importSettings,
       WorkspaceRoot workspaceRoot,
-      DependencyCache dependencyCache,
+      ArtifactTracker artifactTracker,
       DependencyTracker dependencyTracker,
       ProjectQuerier projectQuerier,
       ProjectDefinition projectDefinition,
@@ -103,7 +103,7 @@ public class QuerySyncProject {
     this.snapshotHolder = snapshotHolder;
     this.importSettings = importSettings;
     this.workspaceRoot = workspaceRoot;
-    this.dependencyCache = dependencyCache;
+    this.artifactTracker = artifactTracker;
     this.dependencyTracker = dependencyTracker;
     this.projectQuerier = projectQuerier;
     this.projectDefinition = projectDefinition;
@@ -127,8 +127,8 @@ public class QuerySyncProject {
     return workspaceLanguageSettings;
   }
 
-  public DependencyCache getDependencyCache() {
-    return dependencyCache;
+  public ArtifactTracker getArtifactTracker() {
+    return artifactTracker;
   }
 
   public SourceToTargetMap getSourceToTargetMap() {
