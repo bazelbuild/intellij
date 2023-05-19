@@ -785,7 +785,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
         TargetMapBuilder.builder()
             .addTarget(createCcToolchain())
             .build();
-    XcodeCompilerSettings expected = new XcodeCompilerSettings(Path.of("/tmp/dev_dir"), Path.of("/tmp/dev_dir/sdk"));
+    XcodeCompilerSettings expected = XcodeCompilerSettings.create(Path.of("/tmp/dev_dir"), Path.of("/tmp/dev_dir/sdk"));
     xcodeSettingsProvider.setXcodeSettings(expected);
     assertThatResolving(projectView, targetMap).producesXcodeConfiguration(expected);
   }
