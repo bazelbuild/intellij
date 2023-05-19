@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.cpp;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.components.ServiceManager;
 import java.io.File;
 import javax.annotation.Nullable;
@@ -38,8 +39,10 @@ public interface CompilerWrapperProvider {
    *
    * @param executionRoot the execution root for running the compiler
    * @param blazeCompilerExecutableFile the compiler
+   * @param compilerWrapperEnvVars
    * @return The wrapper script that CLion can call.
    */
   @Nullable
-  File createCompilerExecutableWrapper(File executionRoot, File blazeCompilerExecutableFile);
+  File createCompilerExecutableWrapper(File executionRoot, File blazeCompilerExecutableFile,
+      ImmutableMap<String, String> compilerWrapperEnvVars);
 }

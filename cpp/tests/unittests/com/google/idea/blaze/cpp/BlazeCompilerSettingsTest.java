@@ -18,6 +18,7 @@ package com.google.idea.blaze.cpp;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
@@ -80,7 +81,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             new File("bin/c++"),
             cFlags,
             cFlags,
-            "cc version (trunk r123456)");
+            "cc version (trunk r123456)",
+            ImmutableMap.of());
 
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
         .containsExactly("-fast", "-slow")
@@ -97,7 +99,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             new File("bin/c++"),
             cFlags,
             cFlags,
-            "cc version (trunk r123456)");
+            "cc version (trunk r123456)",
+            ImmutableMap.of());
 
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
         .containsExactly("--sysroot=" + workspaceRoot + "/third_party/toolchain");
@@ -113,7 +116,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             new File("bin/c++"),
             cFlags,
             cFlags,
-            "cc version (trunk r123456)");
+            "cc version (trunk r123456)",
+            ImmutableMap.of());
 
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
         .containsExactly("--sysroot=/usr");
@@ -130,7 +134,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             new File("bin/c++"),
             cFlags,
             cFlags,
-            "cc version (trunk r123456)");
+            "cc version (trunk r123456)",
+            ImmutableMap.of());
 
     String outputBase = blazeProjectData.getBlazeInfo().getOutputBase().toString();
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
@@ -153,7 +158,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             new File("bin/c++"),
             cFlags,
             cFlags,
-            "cc version (trunk r123456)");
+            "cc version (trunk r123456)",
+            ImmutableMap.of());
 
     String execRoot = blazeProjectData.getBlazeInfo().getExecutionRoot().toString();
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
@@ -172,9 +178,26 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             new File("bin/c++"),
             cFlags,
             cFlags,
-            "cc version (trunk r123456)");
+            "cc version (trunk r123456)",
+            ImmutableMap.of());
 
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
         .containsExactly("-isystem", "/usr/include");
+  }
+
+  @Test
+  public void developerDirEnvVar_doesNotChange() {
+    BlazeCompilerSettings settings =
+        new BlazeCompilerSettings(
+            getProject(),
+            new File("bin/c"),
+            new File("bin/c++"),
+            ImmutableList.of(),
+            ImmutableList.of(),
+            "cc version (trunk r123456)",
+            ImmutableMap.of("DEVELOPER_DIR", "/tmp/foobar"));
+
+    assertThat(settings.getCompilerEnvironment("DEVELOPER_DIR"))
+        .matches("/tmp/foobar");
   }
 }

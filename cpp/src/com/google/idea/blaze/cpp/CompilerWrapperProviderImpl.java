@@ -18,11 +18,13 @@ package com.google.idea.blaze.cpp;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.stream.Collectors;
 
 /**
  * Creates a wrapper script which reads the arguments file and writes the compiler outputs directly.
@@ -32,7 +34,8 @@ public class CompilerWrapperProviderImpl implements CompilerWrapperProvider {
 
   @Override
   public File createCompilerExecutableWrapper(
-      File executionRoot, File blazeCompilerExecutableFile) {
+      File executionRoot, File blazeCompilerExecutableFile,
+      ImmutableMap<String, String> compilerWrapperEnvVars) {
     try {
       File blazeCompilerWrapper =
           FileUtil.createTempFile("blaze_compiler", ".sh", true /* deleteOnExit */);
@@ -40,38 +43,43 @@ public class CompilerWrapperProviderImpl implements CompilerWrapperProvider {
         logger.warn("Unable to make compiler wrapper script executable: " + blazeCompilerWrapper);
         return null;
       }
-      ImmutableList<String> compilerWrapperScriptLines =
-          ImmutableList.of(
-              "#!/bin/bash",
-              "",
-              "# The c toolchain compiler wrapper script doesn't handle arguments files, so we",
-              "# need to move the compiler arguments from the file to the command line. We",
-              "# preserve any existing commandline arguments, and remove the escaping from",
-              "# arguments inside the args file.",
-              "",
-              "parsedargs=()",
-              "for arg in \"${@}\"; do ",
-              "  case \"$arg\" in",
-              "    @*)",
-              "      # Make sure the file ends with a newline - the read loop will not return",
-              "      # the final line if it does not.",
-              "      echo >> ${arg#@}",
-              "      # Args file, the read will remove a layer of escaping",
-              "      while read; do",
-              "        parsedargs+=($REPLY)",
-              "      done < ${arg#@}",
-              "      ;;",
-              "    *)",
-              "      # Regular arg",
-              "      parsedargs+=(\"$arg\")",
-              "      ;;",
-              "  esac",
-              "done",
-              "",
-              "# The actual compiler wrapper script we get from blaze",
-              String.format("EXE=%s", blazeCompilerExecutableFile.getPath()),
-              "# Read in the arguments file so we can pass the arguments on the command line.",
-              String.format("(cd %s && $EXE \"${parsedargs[@]}\")", executionRoot));
+      ImmutableList<String> compilerWrapperScriptLines = new ImmutableList.Builder<String>()
+          .add(
+            "#!/bin/bash",
+            "",
+            "# The c toolchain compiler wrapper script doesn't handle arguments files, so we",
+            "# need to move the compiler arguments from the file to the command line. We",
+            "# preserve any existing commandline arguments, and remove the escaping from",
+            "# arguments inside the args file.",
+            ""
+          ).addAll(
+              exportedEnvVars(compilerWrapperEnvVars).stream().iterator()
+          ).add(
+            "parsedargs=()",
+            "for arg in \"${@}\"; do ",
+            "  case \"$arg\" in",
+            "    @*)",
+            "      # Make sure the file ends with a newline - the read loop will not return",
+            "      # the final line if it does not.",
+            "      echo >> ${arg#@}",
+            "      # Args file, the read will remove a layer of escaping",
+            "      while read; do",
+            "        parsedargs+=($REPLY)",
+            "      done < ${arg#@}",
+            "      ;;",
+            "    *)",
+            "      # Regular arg",
+            "      parsedargs+=(\"$arg\")",
+            "      ;;",
+            "  esac",
+            "done",
+            "",
+            "# The actual compiler wrapper script we get from blaze",
+            String.format("EXE=%s", blazeCompilerExecutableFile.getPath()),
+            "# Read in the arguments file so we can pass the arguments on the command line.",
+            String.format("(cd %s && $EXE \"${parsedargs[@]}\")", executionRoot)
+          )
+          .build();
 
       try (PrintWriter pw = new PrintWriter(blazeCompilerWrapper, UTF_8.name())) {
         compilerWrapperScriptLines.forEach(pw::println);
@@ -82,5 +90,11 @@ public class CompilerWrapperProviderImpl implements CompilerWrapperProvider {
           "Unable to write compiler wrapper script executable: " + blazeCompilerExecutableFile, e);
       return null;
     }
+  }
+
+  private ImmutableList<String> exportedEnvVars(ImmutableMap<String, String> compilerWrapperEnvVars) {
+    return compilerWrapperEnvVars.entrySet().stream()
+        .map(envVar -> String.format("export %s=%s", envVar.getKey(), envVar.getValue()))
+        .collect(ImmutableList.toImmutableList());
   }
 }

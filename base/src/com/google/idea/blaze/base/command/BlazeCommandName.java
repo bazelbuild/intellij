@@ -37,6 +37,7 @@ public final class BlazeCommandName {
   public static final BlazeCommandName RUN = fromString("run");
   public static final BlazeCommandName BUILD = fromString("build");
   public static final BlazeCommandName QUERY = fromString("query");
+  public static final BlazeCommandName CQUERY = fromString("cquery");
   public static final BlazeCommandName INFO = fromString("info");
   public static final BlazeCommandName MOBILE_INSTALL = fromString("mobile-install");
   public static final BlazeCommandName COVERAGE = fromString("coverage");

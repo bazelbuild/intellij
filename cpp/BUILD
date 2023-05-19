@@ -65,6 +65,18 @@ java_library(
     ],
 )
 
+java_library(
+    name = "mock_xcode_settings_provider",
+    testonly = 1,
+    srcs = ["tests/utils/com/google/idea/blaze/cpp/MockXcodeSettingsProvider.java"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
+    deps = [
+        ":cpp",
+        "//base",
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
 # exposed so plugins can optionally depend on it
 java_library(
     name = "compiler_version_checker",
@@ -96,6 +108,7 @@ intellij_unit_test_suite(
     runtime_deps = ["//intellij_platform_sdk:test_libs"],
     deps = [
         ":cpp",
+        ":mock_xcode_settings_provider",
         "//base",
         "//base:unit_test_utils",
         "//common/experiments",

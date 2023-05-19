@@ -97,6 +97,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
 
     applicationServices.register(ProgressManager.class, new ProgressManagerImpl());
     applicationServices.register(CompilerWrapperProvider.class, new CompilerWrapperProviderImpl());
+    projectServices.register(XcodeCompilerSettingsProvider.class, new MockXcodeSettingsProvider());
     applicationServices.register(VirtualFileManager.class, mock(VirtualFileManager.class));
     applicationServices.register(FileOperationProvider.class, new FileOperationProvider());
     mockFileSystem = mock(LocalFileSystem.class);

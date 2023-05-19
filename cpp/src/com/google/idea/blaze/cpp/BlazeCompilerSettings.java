@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.CLanguageKind;
@@ -32,6 +33,7 @@ final class BlazeCompilerSettings {
   private final ImmutableList<String> cCompilerSwitches;
   private final ImmutableList<String> cppCompilerSwitches;
   private final String compilerVersion;
+  private final ImmutableMap<String, String> compilerEnvironment;
 
   BlazeCompilerSettings(
       Project project,
@@ -39,12 +41,14 @@ final class BlazeCompilerSettings {
       @Nullable File cppCompiler,
       ImmutableList<String> cFlags,
       ImmutableList<String> cppFlags,
-      String compilerVersion) {
+      String compilerVersion,
+      ImmutableMap<String, String> compilerEnvironment) {
     this.cCompiler = cCompiler;
     this.cppCompiler = cppCompiler;
     this.cCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cFlags));
     this.cppCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cppFlags));
     this.compilerVersion = compilerVersion;
+    this.compilerEnvironment = compilerEnvironment;
   }
 
   OCCompilerKind getCompiler(OCLanguageKind languageKind) {
@@ -80,5 +84,9 @@ final class BlazeCompilerSettings {
 
   String getCompilerVersion() {
     return compilerVersion;
+  }
+
+  String getCompilerEnvironment(String variable) {
+    return compilerEnvironment.get(variable);
   }
 }
