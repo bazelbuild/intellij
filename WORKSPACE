@@ -177,8 +177,8 @@ http_archive(
 http_archive(
     name = "python_2022_2",
     build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = "5a961a160d8d13072b131adf6dd839b4c8e9aae98ee10f064159ead08149d387",
-    url = "https://plugins.jetbrains.com/files/7322/201536/python-ce-222.3345.126.zip",
+    sha256 = "aaae5ea44b5ad18793f8de63c00dce0371d91c14f7381260d19c4adaf4f9c9bf",
+    url = "https://plugins.jetbrains.com/files/7322/305491/python-ce-222.4554.5.zip",
 )
 
 http_archive(
@@ -269,8 +269,8 @@ http_archive(
 http_archive(
     name = "scala_2022_2",
     build_file_content = _SCALA_BUILD_FILE,
-    sha256 = "c250726ef598d9f942a1aeaf3b7376d6816d73824b2308bbff1007bcc1871482",
-    url = "https://plugins.jetbrains.com/files/1347/198991/scala-intellij-bin-2022.2.10.zip",
+    sha256 = "9f668afa80e5cff90667fca7e7737d47a9ec73f39ff59b3488881371349afcff",
+    url = "https://plugins.jetbrains.com/files/1347/258933/scala-intellij-bin-2022.2.19.zip",
 )
 
 http_archive(
