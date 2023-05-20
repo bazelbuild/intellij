@@ -111,6 +111,30 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     loadFromDisk();
   }
 
+  @Override
+  public void clear() throws IOException {
+    artifacts.clear();
+    jarCache.clear();
+    aarCache.clear();
+    generatedSrcFileCache.clear();
+    saveState();
+  }
+
+  private void saveState() throws IOException {
+    BuildArtifacts.Builder builder = BuildArtifacts.newBuilder();
+    for (Entry<Label, List<Path>> entry : artifacts.entrySet()) {
+      ImmutableList<String> paths =
+          entry.getValue().stream().map(Path::toString).collect(toImmutableList());
+      builder.addArtifacts(
+          TargetArtifacts.newBuilder()
+              .setTarget(entry.getKey().toString())
+              .addAllArtifactPaths(paths));
+    }
+    try (OutputStream stream = new GZIPOutputStream(Files.newOutputStream(persistentFile))) {
+      builder.build().writeTo(stream);
+    }
+  }
+
   private void loadFromDisk() {
     if (!Files.exists(persistentFile)) {
       return;
@@ -127,22 +151,6 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
       }
     } catch (IOException e) {
       // TODO: If there is an error parsing the index, reinitialize the cache properly.
-    }
-  }
-
-  @Override
-  public void saveState() throws IOException {
-    BuildArtifacts.Builder builder = BuildArtifacts.newBuilder();
-    for (Entry<Label, List<Path>> entry : artifacts.entrySet()) {
-      ImmutableList<String> paths =
-          entry.getValue().stream().map(Path::toString).collect(toImmutableList());
-      builder.addArtifacts(
-          TargetArtifacts.newBuilder()
-              .setTarget(entry.getKey().toString())
-              .addAllArtifactPaths(paths));
-    }
-    try (OutputStream stream = new GZIPOutputStream(Files.newOutputStream(persistentFile))) {
-      builder.build().writeTo(stream);
     }
   }
 
@@ -180,6 +188,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
       for (BuildArtifacts artifacts : outputInfo.getArtifacts()) {
         updateMaps(targets, artifacts);
       }
+      saveState();
       return UpdateResult.create(updated, ImmutableSet.of());
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
@@ -209,20 +218,6 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   }
 
   @Override
-  public void clear() throws IOException {
-    artifacts.clear();
-    jarCache.clear();
-    aarCache.clear();
-    generatedSrcFileCache.clear();
-    saveState();
-  }
-
-  /** Returns directory of project. */
-  private static Path getProjectDirectory(BlazeImportSettings importSettings) {
-    return BlazeDataStorage.getProjectDataDir(importSettings).toPath();
-  }
-
-  @Override
   public Path getExternalAarDirectory() {
     return aarCache.getDirectory();
   }
@@ -242,5 +237,10 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   @Override
   public Set<Label> getLiveCachedTargets() {
     return artifacts.keySet();
+  }
+
+  /** Returns directory of project. */
+  private static Path getProjectDirectory(BlazeImportSettings importSettings) {
+    return BlazeDataStorage.getProjectDataDir(importSettings).toPath();
   }
 }

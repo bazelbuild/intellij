@@ -220,8 +220,7 @@ public class DependencyTracker {
   }
 
   private ImmutableSet<Path> updateCaches(
-      BlazeContext context, Set<Label> targets, OutputInfo outputInfo)
-      throws BuildException, IOException {
+      BlazeContext context, Set<Label> targets, OutputInfo outputInfo) throws BuildException {
     long now = System.nanoTime();
     UpdateResult updateResult = artifactTracker.update(targets, outputInfo, context);
     long elapsedMs = (System.nanoTime() - now) / 1000000L;
@@ -230,7 +229,6 @@ public class DependencyTracker {
             String.format(
                 "Updated cache in %d ms: updated %d artifacts, removed %d artifacts",
                 elapsedMs, updateResult.updatedFiles().size(), updateResult.removedKeys().size())));
-    artifactTracker.saveState();
     return updateResult.updatedFiles();
   }
 
