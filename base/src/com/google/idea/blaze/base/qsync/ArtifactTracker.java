@@ -35,9 +35,6 @@ public interface ArtifactTracker {
   UpdateResult update(Set<Label> targets, OutputInfo outputInfo, BlazeContext context)
       throws BuildException;
 
-  /** Save artifact info to disk. */
-  void saveState() throws IOException;
-
   /**
    * Returns the set of targets that artifacts are set up for.
    *
