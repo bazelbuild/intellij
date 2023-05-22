@@ -322,8 +322,8 @@ http_archive(
 http_archive(
     name = "go_2022_2",
     build_file_content = _GO_BUILD_FILE,
-    sha256 = "e7bfbfe3412d6bba675288d696d749b336eb5c81c003581b0a2d84565b98fd32",
-    url = "https://plugins.jetbrains.com/files/9568/200544/go-222.3345.118.zip",
+    sha256 = "cc19cc418b512420643c8c94eaf2cf1775de3183b1a8d0c2703959fcc4275afd",
+    url = "https://plugins.jetbrains.com/files/9568/256314/go-222.4459.24.zip",
 )
 
 _GO_BUILD_FILE_223 = """
