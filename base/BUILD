@@ -428,6 +428,18 @@ java_library(
 )
 
 java_library(
+    name = "blaze_executor",
+    srcs = [
+        "src/com/google/idea/blaze/base/async/executor/BlazeExecutor.java",
+    ],
+    visibility = G3PLUGINS_VISIBILITY,
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
+        "@com_google_guava_guava//jar",
+    ],
+)
+
+java_library(
     name = "unit_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/unit/**/*.java"]),
