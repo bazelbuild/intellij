@@ -1,9 +1,8 @@
-package(
-    default_visibility = [
-        "//base:__subpackages__",
-        "//querysync/javatests:__subpackages__",
-    ],
-)
+package(default_visibility = [
+    "//base:__subpackages__",
+    "//java/com/google/devtools/intellij/blaze/plugin/base:__subpackages__",
+    "//querysync/javatests:__subpackages__",
+])
 
 # A build rule to expose individual targets under java/ to users
 java_library(
