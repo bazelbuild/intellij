@@ -329,19 +329,14 @@ public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
     return SyncResult.SUCCESS;
   }
 
-  /**
-   * Log & display a message to the user when a user-initiated action fails.
-   *
-   * @param description A user readable failure message, including the high level IDE operation that
-   *     failed.
-   * @param t The exception that caused the failure.
-   */
+  @Override
   public void handleException(String description, Throwable t) {
     if (handleExceptionInternal(description, t)) {
       setHasError();
     }
   }
 
+  @Override
   public void handleExceptionAsWarning(String description, Throwable t) {
     if (handleExceptionInternal(description, t)) {
       setHasWarnings();

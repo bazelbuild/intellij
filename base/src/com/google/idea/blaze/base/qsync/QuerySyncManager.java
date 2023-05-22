@@ -103,6 +103,7 @@ public class QuerySyncManager {
       if (!context.hasErrors()) {
         loadedProject = Preconditions.checkNotNull(newProject);
         loadedProject.sync(context, loadedProject.readSnapshotFromDisk());
+
       }
     } catch (Exception e) {
       context.handleException("Failed to load project", e);

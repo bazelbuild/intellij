@@ -122,6 +122,10 @@ public class ProjectLoader {
     ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner);
     ProjectUpdater projectUpdater =
         new ProjectUpdater(project, importSettings, projectViewSet, workspaceRoot);
+    SourcePrefetcher prefetcher =
+        new SourcePrefetcher(
+            AppExecutorUtil.getAppScheduledExecutorService(), workspaceRoot.path());
+    graph.addListener(prefetcher);
     graph.addListener(projectUpdater);
     QuerySyncSourceToTargetMap sourceToTargetMap =
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
