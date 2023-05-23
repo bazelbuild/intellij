@@ -43,6 +43,16 @@ public class BlazeBuildOutputs {
         buildResult, ImmutableMap.of(), ImmutableMap.of(), ImmutableSet.of(), 0L);
   }
 
+  @VisibleForTesting
+  public static BlazeBuildOutputs noOutputs(String buildId, BuildResult buildResult) {
+    return new BlazeBuildOutputs(
+        buildResult,
+        ImmutableMap.of(),
+        ImmutableMap.of(buildId, buildResult),
+        ImmutableSet.of(),
+        0L);
+  }
+
   public static BlazeBuildOutputs fromParsedBepOutput(
       BuildResult result, ParsedBepOutput parsedOutput) {
     ImmutableMap<String, BuildResult> buildIdWithResult =
