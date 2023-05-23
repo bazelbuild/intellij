@@ -34,18 +34,36 @@ import java.io.InputStream;
  * the provided result helper.
  */
 public class FakeBlazeCommandRunner implements BlazeCommandRunner {
+
+  @FunctionalInterface
+  public interface BuildFunction {
+    BlazeBuildOutputs runBuild(BuildResultHelper buildResultHelper) throws BuildException;
+  }
+
+  private final BuildFunction resultsFunction;
   private BlazeCommand command;
+
+  public FakeBlazeCommandRunner() {
+    this(
+        buildResultHelper ->
+            BlazeBuildOutputs.fromParsedBepOutput(
+                BuildResult.SUCCESS, buildResultHelper.getBuildOutput()));
+  }
+
+  public FakeBlazeCommandRunner(BuildFunction buildFunction) {
+    this.resultsFunction = buildFunction;
+  }
 
   @Override
   public BlazeBuildOutputs run(
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
-      BlazeContext context) {
+      BlazeContext context)
+      throws BuildException {
     command = blazeCommandBuilder.build();
     try {
-      return BlazeBuildOutputs.fromParsedBepOutput(
-          BuildResult.SUCCESS, buildResultHelper.getBuildOutput());
+      return resultsFunction.runBuild(buildResultHelper);
     } catch (GetArtifactsException e) {
       return BlazeBuildOutputs.noOutputs(BuildResult.FATAL_ERROR);
     }
