@@ -88,7 +88,7 @@ public class AswbRenderTestUtils {
     // Delete the layoutlib resource folder manually linked in #beforeRenderTestCase if exists.
     Files.deleteIfExists(Paths.get(PathManager.getHomePath(), LAYOUTLIB_SRC_PATH));
 
-    RenderLogger.resetFidelityErrorsFilters();
+    RenderLoggerCompat.resetFidelityErrorsFilters();
     waitForRenderTaskDisposeToFinish();
   }
 

@@ -31,8 +31,6 @@
     <projectService serviceImplementation="com.google.idea.blaze.android.resources.BlazeLightResourceClassService"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemSyncManager$LastSyncResultCache"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.editor.ProjectUnresolvedResourceStatsCollector"/>
-    <projectService serviceInterface="com.google.idea.blaze.android.run.BlazeAndroidDeploymentService"
-        serviceImplementation="com.google.idea.blaze.android.run.BlazeAndroidDeploymentService$DefaultDeploymentService"/>
     <projectService serviceInterface="com.google.idea.blaze.android.run.runner.BlazeDeployTargetService"
         serviceImplementation="com.google.idea.blaze.android.run.runner.BlazeDeployTargetService$DefaultService"/>
     <projectService serviceInterface="com.google.idea.blaze.android.run.runner.BlazeAndroidDebuggerService"

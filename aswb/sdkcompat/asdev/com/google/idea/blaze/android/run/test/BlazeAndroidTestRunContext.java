@@ -19,6 +19,7 @@ import static com.android.tools.idea.run.tasks.DefaultConnectDebuggerTaskKt.getB
 import static com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryNormalBuildRunContextBase.getApkInfoToInstall;
 
 import com.android.ddmlib.IDevice;
+import com.android.tools.idea.execution.common.DeployOptions;
 import com.android.tools.idea.execution.common.debug.AndroidDebugger;
 import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.run.ApkProvider;
@@ -135,27 +136,26 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
   }
 
   @Override
-  public BlazeLaunchTasksProvider getLaunchTasksProvider(LaunchOptions.Builder launchOptionsBuilder)
+  public BlazeLaunchTasksProvider getLaunchTasksProvider(LaunchOptions launchOptions)
       throws ExecutionException {
-    return new BlazeAndroidLaunchTasksProvider(
-        project, this, applicationIdProvider, launchOptionsBuilder);
+    return new BlazeAndroidLaunchTasksProvider(project, this, applicationIdProvider, launchOptions);
   }
 
   @Override
-  public ImmutableList<BlazeLaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
+  public ImmutableList<BlazeLaunchTask> getDeployTasks(IDevice device, DeployOptions deployOptions)
       throws ExecutionException {
     if (configState.getLaunchMethod() != AndroidTestLaunchMethod.NON_BLAZE) {
       return ImmutableList.of();
     }
     return ImmutableList.of(
         DeployTasksCompat.createDeployTask(
-            project, getApkInfoToInstall(device, launchOptions, apkProvider), launchOptions));
+            project, getApkInfoToInstall(device, deployOptions, apkProvider), deployOptions));
   }
 
   @Override
   @Nullable
   public BlazeLaunchTask getApplicationLaunchTask(
-      LaunchOptions launchOptions, @Nullable Integer userId, String contributorsAmStartOptions)
+      boolean isDebug, @Nullable Integer userId, String contributorsAmStartOptions)
       throws ExecutionException {
     switch (configState.getLaunchMethod()) {
       case BLAZE_TEST:
@@ -166,13 +166,7 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
                 configState.getMethodName(),
                 configState.getPackageName());
         return new BlazeAndroidTestLaunchTask(
-            project,
-            label,
-            blazeFlags,
-            testFilter,
-            this,
-            launchOptions.isDebug(),
-            testResultsHolder);
+            project, label, blazeFlags, testFilter, this, isDebug, testResultsHolder);
       case NON_BLAZE:
       case MOBILE_INSTALL:
         BlazeAndroidDeployInfo deployInfo;
@@ -182,7 +176,7 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
           throw new ExecutionException(e);
         }
         return StockAndroidTestLaunchTask.getStockTestLaunchTask(
-            configState, applicationIdProvider, launchOptions.isDebug(), deployInfo, project);
+            configState, applicationIdProvider, isDebug, deployInfo, project);
     }
     throw new AssertionError();
   }

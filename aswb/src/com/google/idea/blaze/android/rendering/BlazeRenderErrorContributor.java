@@ -16,9 +16,10 @@
 package com.google.idea.blaze.android.rendering;
 
 import static com.android.SdkConstants.ANDROID_MANIFEST_XML;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.android.tools.idea.rendering.RenderErrorContributor;
-import com.android.tools.idea.rendering.RenderLogger;
+import com.android.tools.idea.rendering.RenderLoggerCompat;
 import com.android.tools.idea.rendering.RenderResult;
 import com.android.tools.idea.rendering.errors.ui.RenderErrorModel;
 import com.android.tools.idea.ui.designer.EditorDesignSurface;
@@ -63,21 +64,21 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.jetbrains.annotations.Nullable;
 
 /** Contribute blaze specific render errors. */
 public class BlazeRenderErrorContributor extends RenderErrorContributor {
-  private RenderLogger logger;
-  private Module module;
-  private Project project;
+  private final RenderLoggerCompat logger;
+  private final Module module;
+  private final Project project;
 
   public BlazeRenderErrorContributor(
       EditorDesignSurface surface, RenderResult result, @Nullable DataContext dataContext) {
     super(surface, result, dataContext);
-    logger = result.getLogger();
+    logger = new RenderLoggerCompat(result);
     module = result.getModule();
     project = module.getProject();
   }
@@ -163,7 +164,7 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
         target.getAndroidIdeInfo().getResources().stream()
             .map(AndroidResFolder::getRoot)
             .filter(ArtifactLocation::isGenerated)
-            .collect(Collectors.toMap(Function.identity(), resource -> target)));
+            .collect(toImmutableMap(Function.identity(), resource -> target)));
     return generatedResources;
   }
 
@@ -221,9 +222,10 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
    * android_binary, so we could end up with resources that ultimately build correctly, but fail to
    * find their class dependencies during rendering in the layout editor.
    */
+  @SuppressWarnings("rawtypes")
   private void reportResourceTargetShouldDependOnClassTarget(
       TargetIdeInfo target, TargetMap targetMap, ArtifactLocationDecoder decoder) {
-    Collection<String> missingClasses = logger.getMissingClasses();
+    Set<String> missingClasses = logger.getMissingClasses();
     if (missingClasses == null || missingClasses.isEmpty()) {
       return;
     }

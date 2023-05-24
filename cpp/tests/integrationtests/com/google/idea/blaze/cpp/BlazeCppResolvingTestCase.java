@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.testing.cidr.StubOCResolveConfigurationBase;
 import com.google.idea.testing.cidr.StubOCWorkspace;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.psi.OCFile;
@@ -86,7 +87,13 @@ public class BlazeCppResolvingTestCase extends BlazeCppIntegrationTestCase {
     // Assumes the 2018.1+ behavior where projectHeaderRoots is not used and only
     // libraryHeadersRoots is used.
     stubConfiguration.setLibraryIncludeRoots(searchRoots.build());
-    registerProjectComponent(OCWorkspace.class, stubOCWorkspace);
+
+    // OCWorkspace is registered as project service after 2023.1.1.1
+    if (ApplicationInfo.getInstance().getBuild().getBaselineVersion() >= 231) {
+      registerProjectService(OCWorkspace.class, stubOCWorkspace);
+    } else {
+      registerProjectComponent(OCWorkspace.class, stubOCWorkspace);
+    }
   }
 
   private ExecutionRootPathResolver executionRootPathResolver(BlazeProjectData projectData) {
@@ -108,6 +115,6 @@ public class BlazeCppResolvingTestCase extends BlazeCppIntegrationTestCase {
 
   private void resetFileSymbols(OCFile file) {
     FileSymbolTablesCache.getInstance(getProject())
-        .handleOutOfCodeBlockChange(file, /* hasMacro */ true);
+        .handleOutOfCodeBlockChange(file, /* hasMacro= */ true);
   }
 }
