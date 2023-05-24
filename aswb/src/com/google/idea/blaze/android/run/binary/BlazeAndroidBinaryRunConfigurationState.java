@@ -15,14 +15,22 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
+import static com.google.common.base.Verify.verify;
+
+import com.android.annotations.Nullable;
+import com.android.tools.idea.execution.common.ComponentLaunchOptions;
 import com.android.tools.idea.run.ValidationError;
+import com.android.tools.idea.run.configuration.ComplicationWatchFaceInfo;
+import com.android.tools.idea.run.configuration.DefaultComplicationWatchFaceInfo;
+import com.android.tools.idea.run.configuration.execution.ComplicationLaunchOptions;
+import com.android.tools.idea.run.configuration.execution.TileLaunchOptions;
+import com.android.tools.idea.run.configuration.execution.WatchFaceLaunchOptions;
 import com.android.tools.idea.run.editor.AndroidProfilersPanel;
 import com.android.tools.idea.run.editor.ProfilerState;
-import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.base.VerifyException;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
 import com.google.idea.blaze.android.run.binary.AndroidBinaryLaunchMethodsUtils.AndroidBinaryLaunchMethod;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
@@ -30,6 +38,8 @@ import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.xmlb.XmlSerializer;
+import java.util.HashMap;
 import java.util.Map;
 import org.jdom.Element;
 
@@ -38,10 +48,15 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
   /** Element name used to group the {@link ProfilerState} settings */
   private static final String PROFILERS_ELEMENT_NAME = "Profilers";
 
+  public static final String LAUNCH_TILE = "launch_tile";
+
   public static final String LAUNCH_DEFAULT_ACTIVITY = "default_activity";
   public static final String LAUNCH_SPECIFIC_ACTIVITY = "specific_activity";
   public static final String DO_NOTHING = "do_nothing";
   public static final String LAUNCH_DEEP_LINK = "launch_deep_link";
+  public static final String LAUNCH_COMPLICATION = "launch_complication";
+  public static final String LAUNCH_WATCHFACE = "launch_watchface";
+  private static final String LAUNCH_OPTIONS_NAME = "LaunchOptions";
 
   private static final String LAUNCH_METHOD_ATTR = "launch-method";
   // Remove once v2 becomes default.
@@ -62,19 +77,32 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
   private static final String DEEP_LINK = "DEEP_LINK";
   private static final String ACTIVITY_CLASS = "ACTIVITY_CLASS";
   private static final String MODE = "MODE";
-  private static final String ACTIVITY_EXTRA_FLAGS = "ACTIVITY_EXTRA_FLAGS";
   private String deepLink = "";
   private String activityClass = "";
   private String mode = LAUNCH_DEFAULT_ACTIVITY;
 
   private static final String AM_START_OPTIONS = "AM_START_OPTIONS";
+  private static final String CLEAR_APP_STORAGE = "CLEAR_APP_STORAGE";
   private String amStartOptions = "";
 
+  private boolean clearAppStorage = false;
+
+  private String buildSystem;
+
+  public final ComplicationWatchFaceInfo watchfaceInfo = DefaultComplicationWatchFaceInfo.INSTANCE;
+
   private final BlazeAndroidRunConfigurationCommonState commonState;
+  // TODO: move activity launch here from top level properties.
+  private final Map<String, ComponentLaunchOptions> wearLaunchOptions = new HashMap<>();
 
   BlazeAndroidBinaryRunConfigurationState(String buildSystemName) {
     commonState = new BlazeAndroidRunConfigurationCommonState(buildSystemName);
     profilerState = new ProfilerState();
+    buildSystem = buildSystemName;
+
+    wearLaunchOptions.put(LAUNCH_TILE, new TileLaunchOptions());
+    wearLaunchOptions.put(LAUNCH_COMPLICATION, new ComplicationLaunchOptions());
+    wearLaunchOptions.put(LAUNCH_WATCHFACE, new WatchFaceLaunchOptions());
   }
 
   public BlazeAndroidRunConfigurationCommonState getCommonState() {
@@ -83,6 +111,21 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
 
   public AndroidBinaryLaunchMethod getLaunchMethod() {
     return launchMethod;
+  }
+
+  /** Returns ComponentLaunchOptions if wear surface as chosen for launch otherwise returns null. */
+  @Nullable
+  public ComponentLaunchOptions getCurrentWearLaunchOptions() {
+    return wearLaunchOptions.get(mode);
+  }
+
+  /** Set Wear launch options corresponding to the current mode. */
+  public void setWearLaunchOptions(ComponentLaunchOptions options) {
+    verify(
+        mode.equals(LAUNCH_COMPLICATION)
+            || mode.equals(LAUNCH_TILE)
+            || mode.equals(LAUNCH_WATCHFACE));
+    wearLaunchOptions.put(mode, options);
   }
 
   @VisibleForTesting
@@ -162,6 +205,14 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
     return amStartOptions;
   }
 
+  public boolean getClearAppStorage() {
+    return clearAppStorage;
+  }
+
+  public void setClearAppStorage(boolean clearAppStorage) {
+    this.clearAppStorage = clearAppStorage;
+  }
+
   /**
    * We collect errors rather than throwing to avoid missing fatal errors by exiting early for a
    * warning.
@@ -215,25 +266,18 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
       setAmStartOptions(amStartOptionsString);
     }
 
-    for (Map.Entry<String, String> entry : getLegacyValues(element).entrySet()) {
-      String value = entry.getValue();
-      switch (entry.getKey()) {
-        case DEEP_LINK:
-          deepLink = Strings.nullToEmpty(value);
-          break;
-        case ACTIVITY_CLASS:
-          activityClass = Strings.nullToEmpty(value);
-          break;
-        case MODE:
-          mode = Strings.isNullOrEmpty(value) ? LAUNCH_DEFAULT_ACTIVITY : value;
-          break;
-        case ACTIVITY_EXTRA_FLAGS:
-          if (userId == null) {
-            userId = LaunchUtils.getUserIdFromFlags(value);
-          }
-          break;
-        default:
-          break;
+    setClearAppStorage(Boolean.parseBoolean(element.getAttributeValue(CLEAR_APP_STORAGE)));
+
+    // Read wear launch options
+    Element launchOptionsElement = element.getChild(LAUNCH_OPTIONS_NAME);
+    if (launchOptionsElement != null) {
+      for (Map.Entry<String, ComponentLaunchOptions> option : wearLaunchOptions.entrySet()) {
+        Element optionElement = launchOptionsElement.getChild(option.getKey());
+        if (optionElement != null) {
+          XmlSerializer.deserializeInto(option.getValue(), optionElement);
+        } else {
+          throw new VerifyException("Missing launch option declaration " + option.getKey());
+        }
       }
     }
   }
@@ -244,7 +288,7 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
 
     // Group profiler settings under its own section. Previously written profiler info
     // are replaced manually because ProfilerState#writeExternal does not handle the removal
-    // process; unlike i.e, implementers of RunConfigurationState.
+    // process; unlike i.e., implementers of RunConfigurationState.
     Element profilersElement = new Element(PROFILERS_ELEMENT_NAME);
     element.removeChildren(PROFILERS_ELEMENT_NAME);
     element.addContent(profilersElement);
@@ -258,28 +302,57 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
     element.setAttribute(WORK_PROFILE_ATTR, Boolean.toString(useWorkProfileIfPresent));
     element.setAttribute(SHOW_LOGCAT_AUTOMATICALLY, Boolean.toString(showLogcatAutomatically));
     element.setAttribute(AM_START_OPTIONS, amStartOptions);
+    element.setAttribute(CLEAR_APP_STORAGE, Boolean.toString(clearAppStorage));
 
     if (userId != null) {
       element.setAttribute(USER_ID_ATTR, Integer.toString(userId));
     } else {
       element.removeAttribute(USER_ID_ATTR);
     }
-  }
 
-  /** Imports legacy values in the old reflective JDOM externalizer manner. Can be removed ~2.0+. */
-  private static Map<String, String> getLegacyValues(Element element) {
-    Map<String, String> result = Maps.newHashMap();
-    for (Element option : element.getChildren("option")) {
-      String name = option.getAttributeValue("name");
-      String value = option.getAttributeValue("value");
-      result.put(name, value);
+    // Add wear launch options
+    Element launchOptionsElement = new Element(LAUNCH_OPTIONS_NAME);
+    element.removeChildren(LAUNCH_OPTIONS_NAME);
+    element.addContent(launchOptionsElement);
+
+    for (Map.Entry<String, ComponentLaunchOptions> option : wearLaunchOptions.entrySet()) {
+      Element optionElement = new Element(option.getKey());
+      launchOptionsElement.addContent(optionElement);
+      XmlSerializer.serializeInto(option.getValue(), optionElement);
     }
-    return result;
   }
 
   @Override
   public RunConfigurationStateEditor getEditor(Project project) {
     return new BlazeAndroidBinaryRunConfigurationStateEditor(
         commonState.getEditor(project), new AndroidProfilersPanel(project, profilerState), project);
+  }
+
+  // Create a deep copy of BlazeAndroidBinaryRunConfigurationState.
+  @Override
+  public BlazeAndroidBinaryRunConfigurationState clone() {
+    BlazeAndroidBinaryRunConfigurationState clone =
+        new BlazeAndroidBinaryRunConfigurationState(buildSystem);
+
+    clone.launchMethod = launchMethod;
+    clone.profilerState = profilerState;
+    clone.deepLink = deepLink;
+    clone.activityClass = activityClass;
+    clone.mode = mode;
+    clone.useSplitApksIfPossible = useSplitApksIfPossible;
+    clone.useWorkProfileIfPresent = useWorkProfileIfPresent;
+    clone.userId = userId;
+    clone.showLogcatAutomatically = showLogcatAutomatically;
+    clone.amStartOptions = amStartOptions;
+    clone.clearAppStorage = clearAppStorage;
+    clone.wearLaunchOptions.put(
+        LAUNCH_TILE, ((TileLaunchOptions) wearLaunchOptions.get(LAUNCH_TILE)).clone());
+    clone.wearLaunchOptions.put(
+        LAUNCH_COMPLICATION,
+        ((ComplicationLaunchOptions) wearLaunchOptions.get(LAUNCH_COMPLICATION)).clone());
+    clone.wearLaunchOptions.put(
+        LAUNCH_WATCHFACE,
+        ((WatchFaceLaunchOptions) wearLaunchOptions.get(LAUNCH_WATCHFACE)).clone());
+    return clone;
   }
 }

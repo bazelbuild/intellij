@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.android.run.binary.mobileinstall;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.android.ddmlib.IDevice;
 import com.android.tools.idea.run.ApkFileUnit;
 import com.android.tools.idea.run.ApkInfo;
@@ -24,11 +26,11 @@ import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.editor.ProfilerState;
+import com.android.tools.idea.run.tasks.DeployTasksCompat;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationIdProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryConsoleProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
@@ -45,7 +47,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import java.util.Collections;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
@@ -138,12 +139,11 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
         new ApkInfo(
             deployInfo.getApksToDeploy().stream()
                 .map(file -> new ApkFileUnit(BlazeDataStorage.WORKSPACE_MODULE_NAME, file))
-                .collect(Collectors.toList()),
+                .collect(toImmutableList()),
             packageName);
 
     LaunchTask deployTask =
-        BlazeAndroidDeploymentService.getInstance(project)
-            .getDeployTask(Collections.singletonList(info), launchOptions);
+        DeployTasksCompat.createDeployTask(project, Collections.singletonList(info), launchOptions);
     return ImmutableList.of(new DeploymentTimingReporterTask(launchId, deployTask));
   }
 

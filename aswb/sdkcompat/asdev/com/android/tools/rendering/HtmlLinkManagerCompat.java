@@ -15,7 +15,6 @@
  */
 package com.android.tools.rendering;
 
-import com.android.tools.idea.rendering.HtmlLinkManager;
 import java.io.File;
 import org.jetbrains.annotations.NotNull;
 
