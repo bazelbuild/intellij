@@ -16,16 +16,15 @@
 package com.google.idea.blaze.base.command;
 
 import com.google.common.collect.Interner;
+import com.google.common.io.Closer;
 import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException.ThrowOption;
-import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolUtils;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.info.BlazeInfoException;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
@@ -40,13 +39,12 @@ import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 
 /** {@inheritDoc} Start a build via local binary. */
@@ -105,8 +103,12 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       BuildResultHelper buildResultHelper,
       BlazeContext context)
       throws BuildException {
-    File outputFile = BuildEventProtocolUtils.createTempOutputFile();
-    try (FileOutputStream out = new FileOutputStream(outputFile)) {
+    try (Closer closer = Closer.create()) {
+      Path tempFile =
+          Files.createTempFile(
+              String.format("intellij-bazel-%s-", blazeCommandBuilder.build().getName()),
+              ".stdout");
+      OutputStream out = closer.register(Files.newOutputStream(tempFile));
       int retVal =
           ExternalTask.builder(WorkspaceRoot.fromProject(project))
               .addBlazeCommand(blazeCommandBuilder.build())
@@ -124,7 +126,8 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
               .run();
       BazelExitCodeException.throwIfFailed(
           blazeCommandBuilder, retVal, ThrowOption.ALLOW_PARTIAL_SUCCESS);
-      return new BufferedInputStream(new FileInputStream(outputFile));
+      return new BufferedInputStream(
+          Files.newInputStream(tempFile, StandardOpenOption.DELETE_ON_CLOSE));
     } catch (IOException e) {
       throw new BuildException(e);
     }
@@ -137,11 +140,15 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
       BlazeContext context)
-      throws BlazeInfoException {
-    File outputFile = BuildEventProtocolUtils.createTempOutputFile();
-    try (FileOutputStream out = new FileOutputStream(outputFile);
-        OutputStream stderr =
-            LineProcessingOutputStream.of(new PrintOutputLineProcessor(context))) {
+      throws BuildException {
+    try (Closer closer = Closer.create()) {
+      Path tmpFile =
+          Files.createTempFile(
+              String.format("intellij-bazel-%s-", blazeCommandBuilder.build().getName()),
+              ".stdout");
+      OutputStream out = closer.register(Files.newOutputStream(tmpFile));
+      OutputStream stderr =
+          closer.register(LineProcessingOutputStream.of(new PrintOutputLineProcessor(context)));
       int exitCode =
           ExternalTask.builder(WorkspaceRoot.fromProject(project))
               .addBlazeCommand(blazeCommandBuilder.build())
@@ -150,22 +157,11 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
               .stderr(stderr)
               .build()
               .run();
-      if (exitCode != 0) {
-        // TODO(akhildixit): Fix converting out and stderr to string
-        throw new BlazeInfoException(
-            String.format(
-                "Blaze info failed with exit code %d: \nStdout: %s \nStderr: %s",
-                exitCode, out, stderr));
-      }
+      BazelExitCodeException.throwIfFailed(blazeCommandBuilder, exitCode);
+      return new BufferedInputStream(
+          Files.newInputStream(tmpFile, StandardOpenOption.DELETE_ON_CLOSE));
     } catch (IOException e) {
-      throw new BlazeInfoException(
-          String.format("Error writing blaze info to file %s", outputFile.getPath()), e);
-    }
-    try {
-      return new BufferedInputStream(new FileInputStream(outputFile));
-    } catch (FileNotFoundException e) {
-      throw new BlazeInfoException(
-          String.format("Error reading blaze info from file %s", outputFile.getPath()), e);
+      throw new BuildException(e);
     }
   }
 
