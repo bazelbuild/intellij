@@ -59,6 +59,11 @@ public final class UIControllerCreator {
       public boolean canClosePopup() {
         return true;
       }
+
+      @Override
+      public boolean isToolbarEnabled() {
+        return true;
+      }
     };
   }
 
