@@ -1044,6 +1044,29 @@ java_library(
     ),
 )
 
+# IntelliJ JavaEE plugin
+java_library(
+    name = "javaee",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [],
+        intellij_ue = [":javaee"],
+    ),
+)
+
+java_library(
+    name = "javaee_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [],
+        intellij_ue = [":javaee"],
+    ),
+)
+
 filegroup(
     name = "application_info_json",
     srcs = select_from_plugin_api_directory(
