@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.qsync.cache;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.AAR_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.GEN_SRC_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.LIBRARY_DIRECTORY;
@@ -55,6 +56,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
@@ -71,8 +73,9 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   private static final Logger logger = Logger.getInstance(ArtifactTrackerImpl.class);
   private final Project project;
 
-  // The artifacts in the cache. Note that artifacts that do not produce files are also stored here.
-  // So, it is not the same for a label not to be present, than a label to have an empty list.
+  // The artifacts relative path (blaze-out/xxx) that can be used to retrieve local copy in the
+  // cache. Note that artifacts that do not produce files are also stored here. So, it is not the
+  // same for a label not to be present, than a label to have an empty list.
   private final HashMap<Label, List<Path>> artifacts = new HashMap<>();
 
   private final FileCache jarCache;
@@ -167,6 +170,39 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     } catch (IOException e) {
       // TODO: If there is an error parsing the index, reinitialize the cache properly.
     }
+  }
+
+  @Override
+  public Optional<ImmutableSet<Path>> getCachedFiles(Label target) {
+    List<Path> paths = artifacts.get(target);
+    if (paths == null) {
+      return Optional.empty();
+    }
+    return Optional.of(
+        paths.stream()
+            .map(
+                artifactPath ->
+                    getCachedFile(artifactPath)
+                        .orElseThrow(
+                            () ->
+                                new IllegalStateException(
+                                    "File cache and artifact map are not matched. Failed to get"
+                                        + " cached file for artifact "
+                                        + artifactPath)))
+            .collect(toImmutableSet()));
+  }
+
+  private Optional<Path> getCachedFile(Path artifactPath) {
+    String path = artifactPath.toString();
+    if (path.endsWith(".aar")) {
+      return aarCache.getCacheFile(path);
+    }
+    Optional<Path> cachedFile = jarCache.getCacheFile(path);
+    if (cachedFile.isPresent()) {
+      return cachedFile;
+    }
+
+    return generatedSrcFileCache.getCacheFile(path);
   }
 
   /**

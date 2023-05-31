@@ -23,6 +23,7 @@ import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Set;
 
 /** A local cache of project dependencies. */
@@ -42,6 +43,12 @@ public interface ArtifactTracker {
    * to be applied to the IDE project.
    */
   BlazeProjectSnapshot updateSnapshot(BlazeProjectSnapshot snapshot) throws IOException;
+
+  /**
+   * Returns a list of local cache files that build by target provided. Returns Optional.empty() if
+   * the target has not yet been built.
+   */
+  Optional<ImmutableSet<Path>> getCachedFiles(Label target);
 
   /**
    * Returns the set of targets that artifacts are set up for.
