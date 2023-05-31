@@ -18,11 +18,10 @@ package com.google.idea.blaze.java.lang.build;
 import com.google.idea.blaze.base.lang.buildfile.references.GlobReference;
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
 import com.google.idea.blaze.base.lang.buildfile.search.ResolveUtil;
-import com.intellij.openapi.module.Module;
+import com.google.idea.sdkcompat.refactoring.safedelete.JavaSafeDeleteProcessorCompat;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
 import com.intellij.refactoring.safeDelete.NonCodeUsageSearchInfo;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteUsageInfo;
 import com.intellij.usageView.UsageInfo;
@@ -41,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
  * effectively replaces JavaSafeDeleteProcessor (*in the situations where all processors are used,
  * this class has no effect).
  */
-public class BuildFileSafeDeleteProcessor extends JavaSafeDeleteProcessor {
+public class BuildFileSafeDeleteProcessor extends JavaSafeDeleteProcessorCompat {
 
   /**
    * Delegates to JavaSafeDeleteProcessor, then removes indirect glob references which we don't want
@@ -49,11 +48,11 @@ public class BuildFileSafeDeleteProcessor extends JavaSafeDeleteProcessor {
    */
   @Nullable
   @Override
-  public NonCodeUsageSearchInfo findUsages(
-      @NotNull PsiElement element,
-      @NotNull PsiElement[] allElementsToDelete,
-      @NotNull List<UsageInfo> result) {
-    NonCodeUsageSearchInfo superResult = super.findUsages(element, allElementsToDelete, result);
+  public NonCodeUsageSearchInfo doFindUsages(
+      PsiElement element,
+      PsiElement[] allElementsToDelete,
+      List<? super UsageInfo> result,
+      NonCodeUsageSearchInfo superResult) {
     result.removeIf(BuildFileSafeDeleteProcessor::ignoreUsage);
     return superResult;
   }
@@ -62,7 +61,13 @@ public class BuildFileSafeDeleteProcessor extends JavaSafeDeleteProcessor {
    * We keep globs which reference the file directly (i.e. without wildcards), and remove all
    * indirect references for the purposes of the 'safe delete' action.
    */
-  private static boolean ignoreUsage(UsageInfo usage) {
+  private static boolean ignoreUsage(Object o) {
+    UsageInfo usage;
+    if (o instanceof UsageInfo) {
+      usage = (UsageInfo) o;
+    } else {
+      return false;
+    }
     if (usage.getReference() instanceof GlobReference && usage instanceof SafeDeleteUsageInfo) {
       PsiElement referencedElement = ((SafeDeleteUsageInfo) usage).getReferencedElement();
       PsiFileSystemItem file = ResolveUtil.asFileSystemItemSearch(referencedElement);
@@ -88,29 +93,6 @@ public class BuildFileSafeDeleteProcessor extends JavaSafeDeleteProcessor {
     return containingPackage.getRelativePathToChild(file.getVirtualFile());
   }
 
-  @Override
-  public boolean handlesElement(PsiElement element) {
-    return super.handlesElement(element);
-  }
-
-  @Nullable
-  @Override
-  public Collection<? extends PsiElement> getElementsToSearch(
-      @NotNull PsiElement element,
-      @Nullable Module module,
-      @NotNull Collection<PsiElement> allElementsToDelete) {
-    return super.getElementsToSearch(element, module, allElementsToDelete);
-  }
-
-  @Nullable
-  @Override
-  public Collection<PsiElement> getAdditionalElementsToDelete(
-      @NotNull PsiElement element,
-      @NotNull Collection<PsiElement> allElementsToDelete,
-      boolean askUser) {
-    return super.getAdditionalElementsToDelete(element, allElementsToDelete, askUser);
-  }
-
   @Nullable
   @Override
   public Collection<String> findConflicts(
@@ -127,23 +109,4 @@ public class BuildFileSafeDeleteProcessor extends JavaSafeDeleteProcessor {
   @Override
   public void prepareForDeletion(PsiElement element) throws IncorrectOperationException {}
 
-  @Override
-  public boolean isToSearchInComments(PsiElement element) {
-    return super.isToSearchInComments(element);
-  }
-
-  @Override
-  public void setToSearchInComments(PsiElement element, boolean enabled) {
-    super.setToSearchInComments(element, enabled);
-  }
-
-  @Override
-  public boolean isToSearchForTextOccurrences(PsiElement element) {
-    return super.isToSearchForTextOccurrences(element);
-  }
-
-  @Override
-  public void setToSearchForTextOccurrences(PsiElement element, boolean enabled) {
-    super.setToSearchForTextOccurrences(element, enabled);
-  }
 }

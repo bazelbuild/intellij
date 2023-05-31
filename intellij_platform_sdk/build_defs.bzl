@@ -6,11 +6,11 @@ INDIRECT_IJ_PRODUCTS = {
     "intellij-latest": "intellij-2022.3",
     "intellij-latest-mac": "intellij-2022.3-mac",
     "intellij-beta": "intellij-2022.3",
-    "intellij-under-dev": "intellij-2022.3",
-    "intellij-ue-latest": "intellij-ue-2022.3",
-    "intellij-ue-latest-mac": "intellij-ue-2022.3-mac",
-    "intellij-ue-beta": "intellij-ue-2022.3",
-    "intellij-ue-under-dev": "intellij-ue-2022.3",
+    "intellij-under-dev": "intellij-2023.1",
+    "intellij-ue-latest": "intellij-ue-2023.1",
+    "intellij-ue-latest-mac": "intellij-ue-2023.1-mac",
+    "intellij-ue-beta": "intellij-ue-2023.1",
+    "intellij-ue-under-dev": "intellij-ue-2023.1",
     "android-studio-latest": "android-studio-2022.2",
     "android-studio-latest-mac": "android-studio-2022.2-mac",
     "android-studio-beta": "android-studio-2022.3",
@@ -26,9 +26,9 @@ INDIRECT_IJ_PRODUCTS = {
     # Indirect ij_product mapping for Bazel Plugin OSS
     "intellij-oss-oldest-stable": "intellij-2022.2",
     "intellij-oss-latest-stable": "intellij-2022.3",
-    "intellij-oss-under-dev": "intellij-2022.3",
-    "intellij-ue-oss-oldest-stable": "intellij-ue-2022.2",
-    "intellij-ue-oss-latest-stable": "intellij-ue-2022.3",
+    "intellij-oss-under-dev": "intellij-2023.1",
+    "intellij-ue-oss-oldest-stable": "intellij-ue-2023.1",
+    "intellij-ue-oss-latest-stable": "intellij-ue-2023.1",
     "intellij-ue-oss-under-dev": "intellij-ue-2022.3",
     "android-studio-oss-oldest-stable": "android-studio-2022.2",
     "android-studio-oss-latest-stable": "android-studio-2022.3",
@@ -78,6 +78,14 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij",
         directory = "intellij_ce_2022_3",
     ),
+    "intellij-2023.1": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2023_1",
+    ),
+    "intellij-2023.1-mac": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2023_1",
+    ),
     "intellij-ue-2021.3": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2021_3",
@@ -109,6 +117,14 @@ DIRECT_IJ_PRODUCTS = {
     "intellij-ue-2022.3-mac": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2022_3",
+    ),
+    "intellij-ue-2023.1": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2023_1",
+    ),
+    "intellij-ue-2023.1-mac": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2023_1",
     ),
     "android-studio-2022.2": struct(
         ide = "android-studio",

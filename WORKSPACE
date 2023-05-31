@@ -6,6 +6,18 @@ load("@bazel_tools//tools/build_defs/repo:jvm.bzl", "jvm_maven_import_external")
 
 # Long-lived download links available at: https://www.jetbrains.com/intellij-repository/releases
 
+# The plugin api for intellij_ce_2023_1. This is required to build IJwB and run integration tests.
+IC_231_SHA = "9e10cf30da3d0d81d95112b722ef58875081f1e7a908a10ea604d6ec3f592b6c"
+
+IC_231_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/231.9011.34/ideaIC-231.9011.34.zip"
+
+http_archive(
+    name = "intellij_ce_2023_1",
+    build_file = "@//intellij_platform_sdk:BUILD.idea231",
+    sha256 = IC_231_SHA,
+    url = IC_231_URL,
+)
+
 # The plugin api for IntelliJ 2021.2. This is required to build IJwB,
 # and run integration tests.
 http_archive(
@@ -188,6 +200,17 @@ http_archive(
     url = "https://plugins.jetbrains.com/files/7322/300704/python-ce-223.8836.26.zip",
 )
 
+PYTHON_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/231.8109.144/PythonCore-231.8109.144.zip"
+
+PYTHON_PLUGIN_231_SHA = "90b75d0e4919f424fabc81e83cc83da9305ed73b60d73a4653353685ec89f47f"
+
+http_archive(
+    name = "python_2023_1",
+    build_file_content = _PYTHON_CE_BUILD_FILE,
+    sha256 = PYTHON_PLUGIN_231_SHA,
+    url = PYTHON_PLUGIN_231_URL,
+)
+
 _GO_BUILD_FILE = """
 java_import(
     name = "go",
@@ -278,6 +301,17 @@ http_archive(
     build_file_content = _SCALA_BUILD_FILE,
     sha256 = "e3b49e40153f441a3e0f8bf28aa09fccf7b5bf92b58f53c72aa546d74bfeefbb",
     url = "https://plugins.jetbrains.com/files/1347/301506/scala-intellij-bin-2022.3.20.zip",
+)
+
+SCALA_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.1.3/org.intellij.scala-2023.1.3.zip"
+
+SCALA_PLUGIN_231_SHA = "c7563a3ba0e7efa49e7138a6cdf500562f234b7cc5b44bc41429c5c58bae05ed"
+
+http_archive(
+    name = "scala_2023_1",
+    build_file_content = _SCALA_BUILD_FILE,
+    sha256 = SCALA_PLUGIN_231_SHA,
+    url = SCALA_PLUGIN_231_URL,
 )
 
 # The plugin api for android_studio_2022_2 android_studio. This is required to build ASwB and run integration tests
