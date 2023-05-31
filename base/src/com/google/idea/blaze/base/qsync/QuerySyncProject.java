@@ -149,7 +149,7 @@ public class QuerySyncProject {
           lastQuery.isEmpty()
               ? projectQuerier.fullQuery(projectDefinition, context)
               : projectQuerier.update(projectDefinition, lastQuery.get(), context);
-      newProject = dependencyTracker.updateSnapshot(context, newProject);
+      newProject = artifactTracker.updateSnapshot(newProject);
       onNewSnapshot(context, newProject);
 
       // TODO: Revisit SyncListeners once we switch fully to qsync
@@ -178,7 +178,7 @@ public class QuerySyncProject {
   public void build(BlazeContext context, List<Path> wps) throws IOException, BuildException {
     getDependencyTracker().buildDependenciesForFile(context, wps);
     BlazeProjectSnapshot newSnapshot =
-        getDependencyTracker().updateSnapshot(context, snapshotHolder.getCurrent().orElseThrow());
+        artifactTracker.updateSnapshot(snapshotHolder.getCurrent().orElseThrow());
     onNewSnapshot(context, newSnapshot);
   }
 

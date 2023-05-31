@@ -16,11 +16,11 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Set;
@@ -36,6 +36,14 @@ public interface ArtifactTracker {
       throws BuildException;
 
   /**
+   * Makes the project snapshot reflect the current state of tracked artifacts.
+   *
+   * <p>When additional artifacts are brought into the IDE they may require additional configuration
+   * to be applied to the IDE project.
+   */
+  BlazeProjectSnapshot updateSnapshot(BlazeProjectSnapshot snapshot) throws IOException;
+
+  /**
    * Returns the set of targets that artifacts are set up for.
    *
    * <p>Note, the returned set is a live set which is updated as a result of {@link #update} and
@@ -48,17 +56,6 @@ public interface ArtifactTracker {
    * manifests) in the layout expected by the IDE.
    */
   Path getExternalAarDirectory();
-
-  /** Returns the directory containing generated sources in the layout expected by the IDE. */
-  Path getGenSrcCacheDirectory();
-
-  /**
-   * Returns the list of sub-directories under the {@link #getGenSrcCacheDirectory()}.
-   *
-   * <p>Such directories must be registered as separate source roots each as they represent Java
-   * package hierarchy roots.
-   */
-  ImmutableList<Path> getGenSrcSubfolders() throws IOException;
 
   /** A data class representing the result of updating artifacts. */
   @AutoValue

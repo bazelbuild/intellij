@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.AAR_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.GEN_SRC_DIRECTORY;
@@ -37,14 +38,19 @@ import com.google.idea.blaze.common.DownloadTrackingScope;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.GeneratedSourceProjectUpdater;
+import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.protobuf.ExtensionRegistry;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -63,6 +69,7 @@ import java.util.zip.GZIPOutputStream;
 public class ArtifactTrackerImpl implements ArtifactTracker {
 
   private static final Logger logger = Logger.getInstance(ArtifactTrackerImpl.class);
+  private final Project project;
 
   // The artifacts in the cache. Note that artifacts that do not produce files are also stored here.
   // So, it is not the same for a label not to be present, than a label to have an empty list.
@@ -74,7 +81,10 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   private final Path persistentFile;
 
   public ArtifactTrackerImpl(
-      BlazeImportSettings importSettings, ArtifactFetcher<OutputArtifact> artifactFetcher) {
+      Project project,
+      BlazeImportSettings importSettings,
+      ArtifactFetcher<OutputArtifact> artifactFetcher) {
+    this.project = project;
     jarCache =
         createFileCache(
             artifactFetcher,
@@ -223,17 +233,28 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   }
 
   @Override
-  public Path getExternalAarDirectory() {
-    return aarCache.getDirectory();
+  public BlazeProjectSnapshot updateSnapshot(BlazeProjectSnapshot snapshot) throws IOException {
+    ProjectProto.Project projectProto = snapshot.project();
+
+    Path genSrcCacheRelativeToProject =
+        Paths.get(checkNotNull(project.getBasePath())).relativize(getGenSrcCacheDirectory());
+    ImmutableList<Path> subfolders = getGenSrcSubfolders();
+    GeneratedSourceProjectUpdater updater =
+        new GeneratedSourceProjectUpdater(projectProto, genSrcCacheRelativeToProject, subfolders);
+
+    projectProto = updater.addGenSrcContentEntry();
+    return BlazeProjectSnapshot.builder()
+        .queryData(snapshot.queryData())
+        .graph(snapshot.graph())
+        .project(projectProto)
+        .build();
   }
 
-  @Override
-  public Path getGenSrcCacheDirectory() {
+  private Path getGenSrcCacheDirectory() {
     return generatedSrcFileCache.getDirectory();
   }
 
-  @Override
-  public ImmutableList<Path> getGenSrcSubfolders() throws IOException {
+  private ImmutableList<Path> getGenSrcSubfolders() throws IOException {
     try (Stream<Path> pathStream = Files.list(generatedSrcFileCache.getDirectory())) {
       return pathStream.collect(toImmutableList());
     }
@@ -242,6 +263,11 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   @Override
   public Set<Label> getLiveCachedTargets() {
     return artifacts.keySet();
+  }
+
+  @Override
+  public Path getExternalAarDirectory() {
+    return aarCache.getDirectory();
   }
 
   /** Returns directory of project. */

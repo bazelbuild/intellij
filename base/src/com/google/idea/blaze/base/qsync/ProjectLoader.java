@@ -111,7 +111,8 @@ public class ProjectLoader {
 
     BlazeProject graph = new BlazeProject();
     ArtifactFetcher<OutputArtifact> artifactFetcher = createArtifactFetcher();
-    ArtifactTrackerImpl artifactTracker = new ArtifactTrackerImpl(importSettings, artifactFetcher);
+    ArtifactTrackerImpl artifactTracker =
+        new ArtifactTrackerImpl(project, importSettings, artifactFetcher);
     artifactTracker.initialize();
     DependencyTracker dependencyTracker =
         new DependencyTracker(project, graph, dependencyBuilder, artifactTracker);
