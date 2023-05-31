@@ -16,7 +16,6 @@
 package com.google.idea.blaze.qsync;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
@@ -36,7 +35,7 @@ public class GeneratedSourceProjectUpdater {
     this.genSrcFolders = genSrcFolders;
   }
 
-  public Project addGenSrcContentEntry(Context<?> context) {
+  public Project addGenSrcContentEntry() {
     if (genSrcFolders.isEmpty()) {
       return project;
     }

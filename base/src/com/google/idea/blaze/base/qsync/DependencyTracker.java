@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.base.Preconditions;
@@ -31,10 +30,8 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
-import com.google.idea.blaze.qsync.GeneratedSourceProjectUpdater;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
@@ -44,7 +41,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -268,24 +264,5 @@ public class DependencyTracker {
                             });
                   });
         });
-  }
-
-  public BlazeProjectSnapshot updateSnapshot(BlazeContext context, BlazeProjectSnapshot snapshot)
-      throws IOException {
-    ProjectProto.Project projectProto = snapshot.project();
-
-    Path genSrcCacheRelativeToProject =
-        Paths.get(checkNotNull(project.getBasePath()))
-            .relativize(artifactTracker.getGenSrcCacheDirectory());
-    ImmutableList<Path> subfolders = artifactTracker.getGenSrcSubfolders();
-    GeneratedSourceProjectUpdater updater =
-        new GeneratedSourceProjectUpdater(projectProto, genSrcCacheRelativeToProject, subfolders);
-
-    projectProto = updater.addGenSrcContentEntry(context);
-    return BlazeProjectSnapshot.builder()
-        .queryData(snapshot.queryData())
-        .graph(snapshot.graph())
-        .project(projectProto)
-        .build();
   }
 }
