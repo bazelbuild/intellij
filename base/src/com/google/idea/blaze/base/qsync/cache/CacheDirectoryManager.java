@@ -103,6 +103,14 @@ class CacheDirectoryManager {
         digestsDirectory.resolve(cacheKeyForArtifact(outputArtifact.getKey()) + ".txt"));
   }
 
+  /**
+   * Gets the path of artifact in cache directory. The path is calculated according to artifact
+   * relative but but it's not guaranteed the existence of file.
+   */
+  public Path getArtifactLocalPath(String artifactPath) {
+    return cacheDirectory.resolve(cacheKeyForArtifact(artifactPath));
+  }
+
   /** Stores the digest of the given artifact for later use. */
   public void setStoredArtifactDigest(OutputArtifact outputArtifact, String value) {
     try {

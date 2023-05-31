@@ -37,6 +37,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -120,6 +121,15 @@ public class FileCache {
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
+  }
+
+  /**
+   * Returns local cached artifact. Returns Optional.empty() if it does not exist in this cache
+   * directory.
+   */
+  public Optional<Path> getCacheFile(String artifactPath) {
+    Path path = cacheDirectoryManager.getArtifactLocalPath(artifactPath);
+    return Optional.ofNullable(Files.exists(path) ? path : null);
   }
 
   /**

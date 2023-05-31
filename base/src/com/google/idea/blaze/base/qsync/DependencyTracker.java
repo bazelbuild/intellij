@@ -231,6 +231,14 @@ public class DependencyTracker {
     }
   }
 
+  /**
+   * Returns a list of local cache files that build by target provided. Returns Optional.empty() if
+   * the target has not yet been built.
+   */
+  public Optional<ImmutableSet<Path>> getCachedArtifacts(Label target) {
+    return artifactTracker.getCachedFiles(target);
+  }
+
   private ImmutableSet<Path> updateCaches(
       BlazeContext context, Set<Label> targets, OutputInfo outputInfo) throws BuildException {
     long now = System.nanoTime();
