@@ -56,6 +56,7 @@ public class FileCacheTest {
             new DefaultCacheLayout(
                 cacheDirectoryManager.cacheDirectory,
                 cacheDirectoryManager.cacheDotDirectory,
+                ImmutableSet.of(),
                 ImmutableSet.of()));
     fileCache.initialize();
 
@@ -95,6 +96,7 @@ public class FileCacheTest {
             new DefaultCacheLayout(
                 cacheDirectoryManager.cacheDirectory,
                 cacheDirectoryManager.cacheDotDirectory,
+                ImmutableSet.of(),
                 ImmutableSet.of()));
     fileCache.initialize();
 
@@ -141,6 +143,7 @@ public class FileCacheTest {
             new DefaultCacheLayout(
                 cacheDirectoryManager.cacheDirectory,
                 cacheDirectoryManager.cacheDotDirectory,
+                ImmutableSet.of(),
                 ImmutableSet.of()));
     fileCache.initialize();
 

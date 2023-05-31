@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
@@ -38,17 +39,22 @@ import java.nio.file.Path;
  */
 public class DefaultCacheLayout implements CacheLayout {
 
-  private static final String PACKED_FILES_DIR = ".zips";
+  @VisibleForTesting public static final String PACKED_FILES_DIR = ".zips";
 
   private final Path cacheDotDirectory;
   private final ImmutableSet<String> zipFileExtensions;
+  private final ImmutableSet<String> directoryExtensions;
   private final Path cacheDirectory;
 
   public DefaultCacheLayout(
-      Path cacheDirectory, Path cacheDotDirectory, ImmutableSet<String> zipFileExtensions) {
+      Path cacheDirectory,
+      Path cacheDotDirectory,
+      ImmutableSet<String> zipFileExtensions,
+      ImmutableSet<String> directoryExtensions) {
     this.cacheDirectory = cacheDirectory;
     this.cacheDotDirectory = cacheDotDirectory;
     this.zipFileExtensions = zipFileExtensions;
+    this.directoryExtensions = directoryExtensions;
   }
 
   /**
@@ -71,6 +77,16 @@ public class DefaultCacheLayout implements CacheLayout {
    *                 layout/
    *                     main.xml
    * </pre>
+   *
+   * <p>Output artifacts that need to be located in a dedicated folder are place into
+   * sub-directories in {@code cacheDirectory}. The name of the sub-directory is the same as the
+   * name of the artfact
+   *
+   * <pre>
+   *    cacheDirectory/
+   *       some-artifact.ext/                     # sub-directory
+   *           some-artifact.ext                  # the output artifact
+   * </pre>
    */
   @Override
   public OutputArtifactDestination getOutputArtifactDestination(OutputArtifact outputArtifact) {
@@ -79,6 +95,8 @@ public class DefaultCacheLayout implements CacheLayout {
     if (shouldExtractFile(Path.of(outputArtifact.getRelativePath()))) {
       return new ZippedOutputArtifactDestination(
           key, finalDestination, cacheDotDirectory.resolve(PACKED_FILES_DIR).resolve(key));
+    } else if (shouldCreateDirectory(Path.of(outputArtifact.getRelativePath()))) {
+      return new PreparedOutputArtifactDestination(key, finalDestination.resolve(key));
     } else {
       return new PreparedOutputArtifactDestination(key, finalDestination);
     }
@@ -86,5 +104,10 @@ public class DefaultCacheLayout implements CacheLayout {
 
   private boolean shouldExtractFile(Path sourcePath) {
     return zipFileExtensions.contains(FileUtilRt.getExtension(sourcePath.getFileName().toString()));
+  }
+
+  private boolean shouldCreateDirectory(Path sourcePath) {
+    return directoryExtensions.contains(
+        FileUtilRt.getExtension(sourcePath.getFileName().toString()));
   }
 }

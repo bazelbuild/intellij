@@ -79,29 +79,34 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
         createFileCache(
             artifactFetcher,
             getProjectDirectory(importSettings).resolve(LIBRARY_DIRECTORY),
+            ImmutableSet.of(),
             ImmutableSet.of());
     aarCache =
         createFileCache(
             artifactFetcher,
             getProjectDirectory(importSettings).resolve(AAR_DIRECTORY),
-            ImmutableSet.of("aar"));
+            ImmutableSet.of("aar"),
+            ImmutableSet.of());
     generatedSrcFileCache =
         createFileCache(
             artifactFetcher,
             getProjectDirectory(importSettings).resolve(GEN_SRC_DIRECTORY),
-            ImmutableSet.of("jar", "srcjar"));
+            ImmutableSet.of("jar", "srcjar"),
+            ImmutableSet.of("java", "kt"));
     persistentFile = getProjectDirectory(importSettings).resolve(".artifact.info");
   }
 
   private static FileCache createFileCache(
       ArtifactFetcher<OutputArtifact> artifactFetcher,
       Path cacheDirectory,
-      ImmutableSet<String> zipFileExtensions) {
+      ImmutableSet<String> zipFileExtensions,
+      ImmutableSet<String> directoryFileExtension) {
     Path cacheDotDirectory = cacheDirectory.resolveSibling("." + cacheDirectory.getFileName());
     return new FileCache(
         artifactFetcher,
         new CacheDirectoryManager(cacheDirectory, cacheDotDirectory),
-        new DefaultCacheLayout(cacheDirectory, cacheDotDirectory, zipFileExtensions));
+        new DefaultCacheLayout(
+            cacheDirectory, cacheDotDirectory, zipFileExtensions, directoryFileExtension));
   }
 
   public void initialize() {
