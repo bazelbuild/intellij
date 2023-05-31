@@ -87,6 +87,12 @@ public class DependencyTracker {
     return Sets.difference(targets, cachedTargets).immutableCopy();
   }
 
+  private BlazeProjectSnapshot getCurrentSnapshot() {
+    return blazeProject
+        .getCurrent()
+        .orElseThrow(() -> new IllegalStateException("Sync is not yet complete"));
+  }
+
   /**
    * Builds the external dependencies of the given files, putting the resultant libraries in the
    * shared library directory so that they are picked up by the IDE.
@@ -95,10 +101,7 @@ public class DependencyTracker {
       throws IOException, BuildException {
     workspaceRelativePaths.forEach(path -> Preconditions.checkState(!path.isAbsolute(), path));
 
-    BlazeProjectSnapshot snapshot =
-        blazeProject
-            .getCurrent()
-            .orElseThrow(() -> new IllegalStateException("Sync is not yet complete"));
+    BlazeProjectSnapshot snapshot = getCurrentSnapshot();
 
     Optional<RequestedTargets> maybeRequestedTargets =
         computeRequestedTargets(context, snapshot, workspaceRelativePaths);
@@ -107,6 +110,19 @@ public class DependencyTracker {
     }
 
     RequestedTargets requestedTargets = maybeRequestedTargets.get();
+    buildDependencies(context, snapshot, requestedTargets);
+  }
+
+  /**
+   * Builds the dependencies of the given target, putting the resultant libraries in the shared
+   * library directory so that they are picked up by the IDE.
+   */
+  public void buildDependenciesForTarget(BlazeContext context, Label target)
+      throws IOException, BuildException {
+    BlazeProjectSnapshot snapshot = getCurrentSnapshot();
+
+    RequestedTargets requestedTargets =
+        new RequestedTargets(ImmutableSet.of(target), ImmutableSet.of(target));
     buildDependencies(context, snapshot, requestedTargets);
   }
 
