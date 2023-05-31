@@ -61,6 +61,17 @@ def declares_android_resources(target, ctx):
         return False
     return hasattr(ctx.rule.attr, "resource_files") and len(ctx.rule.attr.resource_files) > 0
 
+def declares_aar_import(ctx):
+    """
+    Returns true if the target has aar and is aar_import rule.
+
+    Args:
+      ctx: the context.
+    Returns:
+      True if the target has aar and is aar_import rule.
+    """
+    return ctx.rule.kind == "aar_import" and hasattr(ctx.rule.attr, "aar")
+
 def _collect_dependencies_impl(target, ctx):
     return _collect_dependencies_core_impl(
         target,
@@ -148,6 +159,8 @@ def _collect_dependencies_core_impl(
             ide_aar = _get_ide_aar_file(target, ctx)
             if ide_aar:
                 aar_files.append(ide_aar)
+        elif declares_aar_import(ctx):
+            aar_files.append(ctx.rule.attr.aar.files.to_list()[0])
 
     else:
         if generate_aidl_classes and generates_idl_jar(target):
