@@ -25,13 +25,15 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
+import com.google.idea.blaze.base.qsync.ArtifactTracker.UpdateResult;
+import com.google.idea.blaze.base.qsync.OutputInfo;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.Label;
 import java.io.BufferedInputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,42 +43,38 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class FileCacheTest {
+public class ArtifactTrackerImplTest {
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
   public void metadata_are_preserved() throws Throwable {
-    CacheDirectoryManager cacheDirectoryManager = createCacheDirectoryManager();
     TestArtifactFetcher testArtifactFetcher = new TestArtifactFetcher();
-    FileCache fileCache =
-        new FileCache(
-            testArtifactFetcher,
-            cacheDirectoryManager,
-            new DefaultCacheLayout(
-                cacheDirectoryManager.cacheDirectory,
-                cacheDirectoryManager.cacheDotDirectory,
-                ImmutableSet.of(),
-                ImmutableSet.of()));
-    fileCache.initialize();
+    ArtifactTrackerImpl artifactTracker =
+        new ArtifactTrackerImpl(
+            temporaryFolder.getRoot().toPath(),
+            temporaryFolder.getRoot().toPath().resolve("ide_project"),
+            testArtifactFetcher);
+    artifactTracker.initialize();
 
     assertThat(
             testArtifactFetcher.runAndCollectFetches(
                 () ->
-                    fileCache
-                        .cache(
+                    artifactTracker.update(
+                        ImmutableSet.of(Label.of("//test:test")),
+                        createOutputInfo(
                             ImmutableList.of(
                                 testOutputArtifact("abc", "abc_digest"),
-                                testOutputArtifact("klm", "klm_digest")),
-                            BlazeContext.create())
-                        .get()))
+                                testOutputArtifact("klm", "klm_digest"))),
+                        BlazeContext.create())))
         .containsExactly("somewhere/abc", "somewhere/klm");
     assertThat(
-            cacheDirectoryManager.getStoredArtifactDigest(
+            artifactTracker.cacheDirectoryManager.getStoredArtifactDigest(
                 testOutputArtifact("abc", "abc_digest_diff")))
         .isEqualTo("abc_digest");
     assertThat(
-            cacheDirectoryManager.getStoredArtifactDigest(testOutputArtifact("klm", "klm_digest")))
+            artifactTracker.cacheDirectoryManager.getStoredArtifactDigest(
+                testOutputArtifact("klm", "klm_digest")))
         .isEqualTo("klm_digest");
   }
 
@@ -87,97 +85,82 @@ public class FileCacheTest {
    */
   @Test
   public void failed_fetch_resets_metadata() throws Exception {
-    CacheDirectoryManager cacheDirectoryManager = createCacheDirectoryManager();
     FailingArtifactFetcher testArtifactFetcher = new FailingArtifactFetcher();
-    FileCache fileCache =
-        new FileCache(
-            testArtifactFetcher,
-            cacheDirectoryManager,
-            new DefaultCacheLayout(
-                cacheDirectoryManager.cacheDirectory,
-                cacheDirectoryManager.cacheDotDirectory,
-                ImmutableSet.of(),
-                ImmutableSet.of()));
-    fileCache.initialize();
+    ArtifactTrackerImpl artifactTracker =
+        new ArtifactTrackerImpl(
+            temporaryFolder.getRoot().toPath(),
+            temporaryFolder.getRoot().toPath().resolve("ide_project"),
+            testArtifactFetcher);
+    artifactTracker.initialize();
 
-    fileCache
-        .cache(
-            ImmutableList.of(
-                testOutputArtifact("abc", "abc_digest"), testOutputArtifact("klm", "klm_digest")),
-            BlazeContext.create())
-        .get();
+    final UpdateResult unused =
+        artifactTracker.update(
+            ImmutableSet.of(Label.of("//test:test")),
+            createOutputInfo(
+                ImmutableList.of(
+                    testOutputArtifact("abc", "abc_digest"),
+                    testOutputArtifact("klm", "klm_digest"))),
+            BlazeContext.create());
 
     testArtifactFetcher.shouldFail = true;
     try {
-      fileCache
-          .cache(
-              ImmutableList.of(
-                  testOutputArtifact("abc", "abc_digest"),
-                  testOutputArtifact("klm", "klm_digest_diff")),
-              BlazeContext.create())
-          .get();
-    } catch (ExecutionException e) {
-      if (!(e.getCause() instanceof TestException)) {
-        throw e;
-      }
+      final UpdateResult unused2 =
+          artifactTracker.update(
+              ImmutableSet.of(Label.of("//test:test2")),
+              createOutputInfo(
+                  ImmutableList.of(
+                      testOutputArtifact("abc", "abc_digest"),
+                      testOutputArtifact("klm", "klm_digest_diff"))),
+              BlazeContext.create());
+    } catch (TestException e) {
       // Do nothing.
     }
 
     assertThat(
-            cacheDirectoryManager.getStoredArtifactDigest(testOutputArtifact("abc", "abc_digest")))
+            artifactTracker.cacheDirectoryManager.getStoredArtifactDigest(
+                testOutputArtifact("abc", "abc_digest")))
         .isEqualTo("abc_digest"); // It shouldn't be copied since it hasn't changed.
     assertThat(
-            cacheDirectoryManager.getStoredArtifactDigest(
+            artifactTracker.cacheDirectoryManager.getStoredArtifactDigest(
                 testOutputArtifact("klm", "klm_digest_diff")))
         .isEmpty(); // It was supposed to be copied but failed.
   }
 
   @Test
   public void artifacts_fecthed_once() throws Throwable {
-    CacheDirectoryManager cacheDirectoryManager = createCacheDirectoryManager();
     TestArtifactFetcher testArtifactFetcher = new TestArtifactFetcher();
-    FileCache fileCache =
-        new FileCache(
-            testArtifactFetcher,
-            cacheDirectoryManager,
-            new DefaultCacheLayout(
-                cacheDirectoryManager.cacheDirectory,
-                cacheDirectoryManager.cacheDotDirectory,
-                ImmutableSet.of(),
-                ImmutableSet.of()));
-    fileCache.initialize();
+    ArtifactTrackerImpl artifactTracker =
+        new ArtifactTrackerImpl(
+            temporaryFolder.getRoot().toPath(),
+            temporaryFolder.getRoot().toPath().resolve("ide_project"),
+            testArtifactFetcher);
+    artifactTracker.initialize();
 
     assertThat(
             testArtifactFetcher.runAndCollectFetches(
                 () ->
-                    fileCache
-                        .cache(
+                    artifactTracker.update(
+                        ImmutableSet.of(Label.of("//test:test")),
+                        createOutputInfo(
                             ImmutableList.of(
                                 testOutputArtifact("abc", "abc_digest"),
-                                testOutputArtifact("klm", "klm_digest")),
-                            BlazeContext.create())
-                        .get()))
+                                testOutputArtifact("klm", "klm_digest"))),
+                        BlazeContext.create())))
         .containsExactly("somewhere/abc", "somewhere/klm");
 
     // Second cache operation.
     assertThat(
             testArtifactFetcher.runAndCollectFetches(
                 () ->
-                    fileCache
-                        .cache(
+                    artifactTracker.update(
+                        ImmutableSet.of(Label.of("//test:test2")),
+                        createOutputInfo(
                             ImmutableList.of(
                                 testOutputArtifact("abc", "abc_digest"),
                                 testOutputArtifact("klm", "klm_digest_diff"),
-                                testOutputArtifact("xyz", "xyz_digest")),
-                            BlazeContext.create())
-                        .get()))
+                                testOutputArtifact("xyz", "xyz_digest"))),
+                        BlazeContext.create())))
         .containsExactly("somewhere/klm", "somewhere/xyz");
-  }
-
-  private CacheDirectoryManager createCacheDirectoryManager() {
-    return new CacheDirectoryManager(
-        temporaryFolder.getRoot().toPath().resolve("cache"),
-        temporaryFolder.getRoot().toPath().resolve(".cache"));
   }
 
   private static class TestArtifactFetcher implements ArtifactFetcher<OutputArtifact> {
@@ -271,5 +254,15 @@ public class FileCacheTest {
         throw new UnsupportedOperationException();
       }
     };
+  }
+
+  private static OutputInfo createOutputInfo(ImmutableList<OutputArtifact> outputArtifacts) {
+    return OutputInfo.create(
+        ImmutableSet.of(),
+        outputArtifacts,
+        ImmutableList.of(),
+        ImmutableList.of(),
+        ImmutableSet.of(),
+        0);
   }
 }
