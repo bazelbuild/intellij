@@ -15,6 +15,11 @@
  */
 package com.google.idea.blaze.android.projectsystem;
 
+import static com.android.SdkConstants.DOT_AAR;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static java.util.Arrays.stream;
+
 import com.android.ide.common.repository.GradleCoordinate;
 import com.android.ide.common.util.PathString;
 import com.android.manifmerger.ManifestSystemProperty;
@@ -34,6 +39,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.compose.ComposeStatusProvider;
 import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.npw.project.BlazeAndroidModuleTemplate;
@@ -49,12 +55,16 @@ import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.DependencyTracker;
 import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
+import com.google.idea.blaze.common.Label;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,12 +80,10 @@ import com.intellij.psi.search.ProjectScope;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Optional;
 import java.util.stream.Stream;
 import kotlin.Triple;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +113,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
     this.project = module.getProject();
     classFileFinder = new RenderJarClassFileFinder(module);
     sampleDataDirectoryProvider = new BlazeSampleDataDirectoryProvider(module);
-    isWorkspaceModule = BlazeDataStorage.WORKSPACE_MODULE_NAME.equals(module.getName());
+    isWorkspaceModule = module.getName().equals(BlazeDataStorage.WORKSPACE_MODULE_NAME);
   }
 
   @Override
@@ -225,12 +233,22 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
       return null;
     }
 
-    Set<TargetKey> firstLevelDeps =
+    ImmutableSet<TargetKey> firstLevelDeps =
         resourceModuleTarget.getDependencies().stream()
             .map(Dependency::getTargetKey)
-            .collect(Collectors.toSet());
+            .collect(toImmutableSet());
 
     return locateArtifactsFor(coordinate).anyMatch(firstLevelDeps::contains) ? coordinate : null;
+  }
+
+  @Nullable
+  private Label getResolvedLabel(GradleCoordinate coordinate) {
+    return MavenArtifactLocator.forBuildSystem(Blaze.getBuildSystemName(module.getProject()))
+        .stream()
+        .map(locator -> locator.labelFor(coordinate))
+        .map(l -> new Label(l.toString()))
+        .findFirst()
+        .orElse(null);
   }
 
   @Nullable
@@ -288,6 +306,36 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
   }
 
   /**
+   * Returns first cached aar that build by the label provided. This is used by qsync. Returns null
+   * if failed to find such aar locally.
+   *
+   * @param label the label that aar build from
+   * @param buildDeps whether run blaze build to build aar before get it.
+   */
+  private Optional<Path> getCachedAarForLabel(Label label, boolean buildDeps) {
+    DependencyTracker dependencyTracker =
+        QuerySyncManager.getInstance(project).getDependencyTracker();
+    if (dependencyTracker == null) {
+      return Optional.empty();
+    }
+
+    if (buildDeps) {
+      BlazeContext tmpContext = BlazeContext.create();
+      try {
+        dependencyTracker.buildDependenciesForTarget(tmpContext, label);
+      } catch (Exception e) {
+        tmpContext.handleException("Failed to build dependencies", e);
+      }
+    }
+
+    Optional<ImmutableSet<Path>> paths = dependencyTracker.getCachedArtifacts(label);
+    if (paths.isEmpty()) {
+      return Optional.empty();
+    }
+    return paths.get().stream().filter(path -> path.toString().endsWith(DOT_AAR)).findFirst();
+  }
+
+  /**
    * Returns the absolute path of the dependency, if it exists.
    *
    * @param coordinate external coordinates for the dependency.
@@ -296,6 +344,21 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
   @Override
   @Nullable
   public Path getDependencyPath(GradleCoordinate coordinate) {
+    if (QuerySync.isEnabled()) {
+      Label label = getResolvedLabel(coordinate);
+      if (label == null) {
+        return null;
+      }
+      Optional<Path> result = getCachedAarForLabel(label, false);
+      if (result.isPresent()) {
+        return result.get();
+      }
+      // Failed to get cache aar without building the target. It means the target may not be built
+      // correctly (either not build or its artifact not cached correctly), we need to
+      // re-build it again as the target cannot not be build except here. This is required for
+      // compose layout inspector.
+      return getCachedAarForLabel(label, true).orElse(null);
+    }
     TargetKey target = getResolvedTarget(coordinate);
     if (target == null) {
       return null;
@@ -347,9 +410,9 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
 
     if (isWorkspaceModule) {
       // The workspace module depends on every resource module.
-      return Arrays.stream(ModuleManager.getInstance(project).getModules())
+      return stream(ModuleManager.getInstance(project).getModules())
           .filter(module -> resourceModuleRegistry.get(module) != null)
-          .collect(Collectors.toList());
+          .collect(toImmutableList());
     }
     AndroidResourceModule resourceModule = resourceModuleRegistry.get(module);
     if (resourceModule == null) {
@@ -359,7 +422,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
     return resourceModule.transitiveResourceDependencies.stream()
         .map(resourceModuleRegistry::getModuleContainingResourcesOf)
         .filter(Objects::nonNull)
-        .collect(Collectors.toList());
+        .collect(toImmutableList());
   }
 
   @Override
@@ -399,7 +462,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
         .map(TargetIdeInfo::getKey)
         .map(resourceModuleRegistry::getModuleContainingResourcesOf)
         .filter(Objects::nonNull)
-        .collect(Collectors.toList());
+        .collect(toImmutableList());
   }
 
   @Override
@@ -436,7 +499,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
     manifestValues.forEach(
         (key, value) ->
             ManifestValueProcessor.processManifestValue(key, value, directOverrides, placeholders));
-    return new ManifestOverrides(directOverrides.build(), placeholders.build());
+    return new ManifestOverrides(directOverrides.buildOrThrow(), placeholders.buildOrThrow());
   }
 
   @Override
