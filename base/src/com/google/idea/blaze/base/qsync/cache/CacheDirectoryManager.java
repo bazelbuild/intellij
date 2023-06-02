@@ -19,7 +19,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.Hashing;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.PathUtil;
@@ -84,38 +84,33 @@ class CacheDirectoryManager {
     initialize();
   }
 
-  static String cacheKeyForArtifact(String artifactKey) {
+  static String cacheKeyForArtifact(OutputArtifactInfo artifactInfo) {
     return String.format(
         "%s.%s",
-        CacheDirectoryManager.cacheKeyInternal(artifactKey), FileUtilRt.getExtension(artifactKey));
+        CacheDirectoryManager.cacheKeyInternal(artifactInfo),
+        FileUtilRt.getExtension(artifactInfo.getRelativePath()));
   }
 
-  private static String cacheKeyInternal(String artifactKey) {
-    String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(artifactKey));
+  private static String cacheKeyInternal(OutputArtifactInfo artifactInfo) {
+    String name =
+        FileUtil.getNameWithoutExtension(PathUtil.getFileName(artifactInfo.getRelativePath()));
     return name
         + "_"
-        + Integer.toHexString(Hashing.sha256().hashString(artifactKey, UTF_8).hashCode());
+        + Integer.toHexString(
+            Hashing.sha256().hashString(artifactInfo.getRelativePath(), UTF_8).hashCode());
   }
 
   /** Gets the previously stored digest of the given artifact. */
-  public String getStoredArtifactDigest(OutputArtifact outputArtifact) {
+  public String getStoredArtifactDigest(OutputArtifactInfo artifactInfo) {
     return fileContentOrEmptyString(
-        digestsDirectory.resolve(cacheKeyForArtifact(outputArtifact.getKey()) + ".txt"));
-  }
-
-  /**
-   * Gets the path of artifact in cache directory. The path is calculated according to artifact
-   * relative but but it's not guaranteed the existence of file.
-   */
-  public Path getArtifactLocalPath(String artifactPath) {
-    return cacheDirectory.resolve(cacheKeyForArtifact(artifactPath));
+        digestsDirectory.resolve(cacheKeyForArtifact(artifactInfo) + ".txt"));
   }
 
   /** Stores the digest of the given artifact for later use. */
-  public void setStoredArtifactDigest(OutputArtifact outputArtifact, String value) {
+  public void setStoredArtifactDigest(OutputArtifactInfo artifactInfo, String value) {
     try {
       Path artifactDigestFile =
-          digestsDirectory.resolve(cacheKeyForArtifact(outputArtifact.getKey()) + ".txt");
+          digestsDirectory.resolve(cacheKeyForArtifact(artifactInfo) + ".txt");
       if (value.isEmpty()) {
         Files.deleteIfExists(artifactDigestFile);
       } else {
