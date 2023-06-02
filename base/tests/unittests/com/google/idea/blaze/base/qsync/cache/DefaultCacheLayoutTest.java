@@ -18,12 +18,9 @@ package com.google.idea.blaze.base.qsync.cache;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
-import com.google.idea.blaze.base.filecache.ArtifactState;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestination;
-import java.io.BufferedInputStream;
 import java.nio.file.Path;
-import javax.annotation.Nullable;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -45,14 +42,14 @@ public class DefaultCacheLayoutTest {
             ImmutableSet.of(),
             ImmutableSet.of());
 
-    OutputArtifact outputArtifact = testOutputArtifact("libfoo.jar");
+    OutputArtifactInfo outputArtifact = testOutputArtifact("libfoo.jar");
 
     OutputArtifactDestination artifactDestination =
         cacheLayout.getOutputArtifactDestinationAndLayout(outputArtifact);
     Path relativeCopyDestination =
         cacheDirectoryManager.cacheDirectory.relativize(artifactDestination.getCopyDestination());
 
-    String cacheKey = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact.getKey());
+    String cacheKey = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact);
     assertThat(relativeCopyDestination.toString()).isEqualTo(cacheKey);
   }
 
@@ -67,21 +64,21 @@ public class DefaultCacheLayoutTest {
             ImmutableSet.of("java"));
 
     // Artifact with dedicated directory
-    OutputArtifact outputArtifact = testOutputArtifact("Class.java");
+    OutputArtifactInfo outputArtifact = testOutputArtifact("Class.java");
     Path relativeCopyDestination =
         cacheDirectoryManager.cacheDirectory.relativize(
             cacheLayout.getOutputArtifactDestinationAndLayout(outputArtifact).getCopyDestination());
-    String cacheKey = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact.getKey());
+    String cacheKey = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact);
     assertThat(relativeCopyDestination.toString())
         .isEqualTo(String.format("%s/%s", cacheKey, cacheKey));
 
     // Regular artifact behavior is unchanged
-    OutputArtifact simpleArtifact = testOutputArtifact("lib-class.jar");
+    OutputArtifactInfo simpleArtifact = testOutputArtifact("lib-class.jar");
     Path relativeSimpleCopyDestination =
         cacheDirectoryManager.cacheDirectory.relativize(
             cacheLayout.getOutputArtifactDestinationAndLayout(simpleArtifact).getCopyDestination());
     assertThat(relativeSimpleCopyDestination.toString())
-        .isEqualTo(CacheDirectoryManager.cacheKeyForArtifact(simpleArtifact.getKey()));
+        .isEqualTo(CacheDirectoryManager.cacheKeyForArtifact(simpleArtifact));
   }
 
   @Test
@@ -95,21 +92,21 @@ public class DefaultCacheLayoutTest {
             ImmutableSet.of());
 
     // Zipped artifact
-    OutputArtifact outputArtifact = testOutputArtifact("archive.zip");
+    OutputArtifactInfo outputArtifact = testOutputArtifact("archive.zip");
     Path relativeCopyDestination =
         cacheDirectoryManager.cacheDotDirectory.relativize(
             cacheLayout.getOutputArtifactDestinationAndLayout(outputArtifact).getCopyDestination());
-    String cacheKey = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact.getKey());
+    String cacheKey = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact);
     assertThat(relativeCopyDestination.toString())
         .isEqualTo(String.format("%s/%s", DefaultCacheLayout.PACKED_FILES_DIR, cacheKey));
 
     // Regular artifact behavior is unchanged
-    OutputArtifact simpleArtifact = testOutputArtifact("lib-class.jar");
+    OutputArtifactInfo simpleArtifact = testOutputArtifact("lib-class.jar");
     Path relativeSimpleCopyDestination =
         cacheDirectoryManager.cacheDirectory.relativize(
             cacheLayout.getOutputArtifactDestinationAndLayout(simpleArtifact).getCopyDestination());
     assertThat(relativeSimpleCopyDestination.toString())
-        .isEqualTo(CacheDirectoryManager.cacheKeyForArtifact(simpleArtifact.getKey()));
+        .isEqualTo(CacheDirectoryManager.cacheKeyForArtifact(simpleArtifact));
   }
 
   private CacheDirectoryManager createCacheDirectoryManager() {
@@ -118,37 +115,11 @@ public class DefaultCacheLayoutTest {
         temporaryFolder.getRoot().toPath().resolve(".cache"));
   }
 
-  private static OutputArtifact testOutputArtifact(String fileName) {
-    return new OutputArtifact() {
-      @Override
-      public String getConfigurationMnemonic() {
-        return "mnemonic";
-      }
-
+  private static OutputArtifactInfo testOutputArtifact(String fileName) {
+    return new OutputArtifactInfo() {
       @Override
       public String getRelativePath() {
         return "somewhere/" + fileName;
-      }
-
-      @Nullable
-      @Override
-      public ArtifactState toArtifactState() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public String getDigest() {
-        return fileName + "_digest";
-      }
-
-      @Override
-      public long getLength() {
-        return 0;
-      }
-
-      @Override
-      public BufferedInputStream getInputStream() {
-        throw new UnsupportedOperationException();
       }
     };
   }

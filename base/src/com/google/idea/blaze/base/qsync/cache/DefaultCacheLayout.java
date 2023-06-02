@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.qsync.cache;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -90,8 +90,8 @@ public class DefaultCacheLayout implements CacheLayout {
    */
   @Override
   public OutputArtifactDestinationAndLayout getOutputArtifactDestinationAndLayout(
-      OutputArtifact outputArtifact) {
-    String key = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact.getKey());
+      OutputArtifactInfo outputArtifact) {
+    String key = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact);
     final Path finalDestination = cacheDirectory.resolve(key);
     if (shouldExtractFile(Path.of(outputArtifact.getRelativePath()))) {
       return new ZippedOutputArtifactDestination(

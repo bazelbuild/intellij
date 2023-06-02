@@ -19,13 +19,10 @@ import com.google.idea.blaze.base.filecache.ArtifactState;
 import javax.annotation.Nullable;
 
 /** A blaze output artifact, generated during some build action. */
-public interface OutputArtifactWithoutDigest extends BlazeArtifact {
+public interface OutputArtifactWithoutDigest extends BlazeArtifact, OutputArtifactInfo {
 
   /** The path component related to the build configuration. */
   String getConfigurationMnemonic();
-
-  /** The blaze-out-relative path. */
-  String getRelativePath();
 
   /**
    * A key uniquely identifying an artifact between builds. Different versions of an artifact

@@ -27,6 +27,7 @@ import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher.ArtifactDestination;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -51,7 +52,7 @@ public class FileCache {
    * An interface that defines the layout of an IDE artifact cache directory.
    *
    * <p>The cache layout definition is a two stage process: at the first stage {@link
-   * #getOutputArtifactDestinationAndLayout(OutputArtifact)} maps output artifacts to objects
+   * #getOutputArtifactDestinationAndLayout(OutputArtifactInfo)} maps output artifacts to objects
    * implementing {@link OutputArtifactDestinationAndLayout} that describe the location of where the
    * artifact fetcher should place a fetched artifact and which know how to process artifacts in
    * these locations to build the final cache layout; at the second stage invocations of {@link
@@ -66,7 +67,7 @@ public class FileCache {
      * process it to form the final cache layout.
      */
     OutputArtifactDestinationAndLayout getOutputArtifactDestinationAndLayout(
-        OutputArtifact outputArtifact);
+        OutputArtifactInfo outputArtifact);
   }
 
   /** A descriptor of the artifact's intended fetch location in a specific cache layout. */
@@ -134,7 +135,8 @@ public class FileCache {
    * directory.
    */
   public Optional<Path> getCacheFile(String artifactPath) {
-    Path path = cacheDirectoryManager.getArtifactLocalPath(artifactPath);
+    Path path =
+        cacheLayout.getOutputArtifactDestinationAndLayout(() -> artifactPath).getCopyDestination();
     return Optional.ofNullable(Files.exists(path) ? path : null);
   }
 
