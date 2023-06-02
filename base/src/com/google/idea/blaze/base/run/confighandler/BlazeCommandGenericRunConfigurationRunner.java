@@ -19,7 +19,6 @@ import static com.google.common.base.Verify.verify;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -34,7 +33,6 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -46,8 +44,6 @@ import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
-import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
-import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultHolder;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
@@ -161,23 +157,10 @@ public final class BlazeCommandGenericRunConfigurationRunner
                 ImmutableList.copyOf(buildResultHelper.getBuildFlags()),
                 context);
 
-        BlazeTestResultFinderStrategy testResultFinderStrategy;
-        if (BlazeCommandRunnerExperiments.isEnabledForTests(invoker.getCommandRunner())) {
-          testResultFinderStrategy = new BlazeTestResultHolder();
-          // Initialize with empty test results and NO_STATUS to avoid IllegalStateException
-          ((BlazeTestResultHolder) testResultFinderStrategy)
-              .setTestResults(
-                  BlazeTestResults.fromFlatList(
-                      ImmutableList.of(
-                          BlazeTestResult.create(
-                              Label.create(configuration.getSingleTarget().toString()),
-                              configuration.getTargetKind(),
-                              TestStatus.NO_STATUS,
-                              ImmutableSet.of()))));
-        } else {
-          testResultFinderStrategy =
-              new LocalBuildEventProtocolTestFinderStrategy(buildResultHelper);
-        }
+        BlazeTestResultFinderStrategy testResultFinderStrategy =
+            BlazeCommandRunnerExperiments.isEnabledForTests(invoker.getCommandRunner())
+                ? new BlazeTestResultHolder()
+                : new LocalBuildEventProtocolTestFinderStrategy(buildResultHelper);
 
         if (canUseTestUi()
             && BlazeTestEventsHandler.targetsSupported(project, configuration.getTargets())) {
