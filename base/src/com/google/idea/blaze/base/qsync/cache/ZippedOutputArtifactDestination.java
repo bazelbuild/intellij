@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +26,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /** A record that describes the location of an output artifact in cache directories. */
-public class ZippedOutputArtifactDestination implements FileCache.OutputArtifactDestination {
+public class ZippedOutputArtifactDestination implements OutputArtifactDestinationAndLayout {
 
   private final String key;
 

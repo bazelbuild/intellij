@@ -15,11 +15,12 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import java.io.IOException;
 import java.nio.file.Path;
 
 /** A record that describes the location of an output artifact in cache directories. */
-public class PreparedOutputArtifactDestination implements FileCache.OutputArtifactDestination {
+public class PreparedOutputArtifactDestination implements OutputArtifactDestinationAndLayout {
 
   private final String key;
   /**
