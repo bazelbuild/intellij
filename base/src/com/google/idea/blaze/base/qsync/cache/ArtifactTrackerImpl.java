@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.AAR_DIRECTORY;
@@ -33,8 +32,6 @@ import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.qsync.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.OutputInfo;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.common.DownloadTrackingScope;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
@@ -44,14 +41,12 @@ import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.protobuf.ExtensionRegistry;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -71,7 +66,6 @@ import java.util.zip.GZIPOutputStream;
 public class ArtifactTrackerImpl implements ArtifactTracker {
 
   private static final Logger logger = Logger.getInstance(ArtifactTrackerImpl.class);
-  private final Project project;
 
   // The artifacts relative path (blaze-out/xxx) that can be used to retrieve local copy in the
   // cache. Note that artifacts that do not produce files are also stored here. So, it is not the
@@ -82,31 +76,32 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   private final FileCache aarCache;
   private final FileCache generatedSrcFileCache;
   private final Path persistentFile;
+  private final Path ideProjectBasePath;
 
   public ArtifactTrackerImpl(
-      Project project,
-      BlazeImportSettings importSettings,
+      Path projectDirectory,
+      Path ideProjectBasePath,
       ArtifactFetcher<OutputArtifact> artifactFetcher) {
-    this.project = project;
     jarCache =
         createFileCache(
             artifactFetcher,
-            getProjectDirectory(importSettings).resolve(LIBRARY_DIRECTORY),
+            projectDirectory.resolve(LIBRARY_DIRECTORY),
             ImmutableSet.of(),
             ImmutableSet.of());
     aarCache =
         createFileCache(
             artifactFetcher,
-            getProjectDirectory(importSettings).resolve(AAR_DIRECTORY),
+            projectDirectory.resolve(AAR_DIRECTORY),
             ImmutableSet.of("aar"),
             ImmutableSet.of());
     generatedSrcFileCache =
         createFileCache(
             artifactFetcher,
-            getProjectDirectory(importSettings).resolve(GEN_SRC_DIRECTORY),
+            projectDirectory.resolve(GEN_SRC_DIRECTORY),
             ImmutableSet.of("jar", "srcjar"),
             ImmutableSet.of("java", "kt"));
-    persistentFile = getProjectDirectory(importSettings).resolve(".artifact.info");
+    persistentFile = projectDirectory.resolve(".artifact.info");
+    this.ideProjectBasePath = ideProjectBasePath;
   }
 
   private static FileCache createFileCache(
@@ -272,8 +267,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   public BlazeProjectSnapshot updateSnapshot(BlazeProjectSnapshot snapshot) throws IOException {
     ProjectProto.Project projectProto = snapshot.project();
 
-    Path genSrcCacheRelativeToProject =
-        Paths.get(checkNotNull(project.getBasePath())).relativize(getGenSrcCacheDirectory());
+    Path genSrcCacheRelativeToProject = ideProjectBasePath.relativize(getGenSrcCacheDirectory());
     ImmutableList<Path> subfolders = getGenSrcSubfolders();
     GeneratedSourceProjectUpdater updater =
         new GeneratedSourceProjectUpdater(projectProto, genSrcCacheRelativeToProject, subfolders);
@@ -304,10 +298,5 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   @Override
   public Path getExternalAarDirectory() {
     return aarCache.getDirectory();
-  }
-
-  /** Returns directory of project. */
-  private static Path getProjectDirectory(BlazeImportSettings importSettings) {
-    return BlazeDataStorage.getProjectDataDir(importSettings).toPath();
   }
 }
