@@ -19,7 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
-import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestination;
+import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import com.intellij.openapi.util.io.FileUtilRt;
 import java.nio.file.Path;
 
@@ -35,7 +35,7 @@ import java.nio.file.Path;
  *   <li>.srcjar bundles
  * </ol>
  *
- * <p>See {@link #getOutputArtifactDestination} for the details of the layout.
+ * <p>See {@link #getOutputArtifactDestinationAndLayout} for the details of the layout.
  */
 public class DefaultCacheLayout implements CacheLayout {
 
@@ -89,7 +89,8 @@ public class DefaultCacheLayout implements CacheLayout {
    * </pre>
    */
   @Override
-  public OutputArtifactDestination getOutputArtifactDestination(OutputArtifact outputArtifact) {
+  public OutputArtifactDestinationAndLayout getOutputArtifactDestinationAndLayout(
+      OutputArtifact outputArtifact) {
     String key = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact.getKey());
     final Path finalDestination = cacheDirectory.resolve(key);
     if (shouldExtractFile(Path.of(outputArtifact.getRelativePath()))) {

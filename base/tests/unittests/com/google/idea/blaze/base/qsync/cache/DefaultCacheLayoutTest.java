@@ -48,7 +48,7 @@ public class DefaultCacheLayoutTest {
     OutputArtifact outputArtifact = testOutputArtifact("libfoo.jar");
 
     OutputArtifactDestination artifactDestination =
-        cacheLayout.getOutputArtifactDestination(outputArtifact);
+        cacheLayout.getOutputArtifactDestinationAndLayout(outputArtifact);
     Path relativeCopyDestination =
         cacheDirectoryManager.cacheDirectory.relativize(artifactDestination.getCopyDestination());
 
@@ -70,7 +70,7 @@ public class DefaultCacheLayoutTest {
     OutputArtifact outputArtifact = testOutputArtifact("Class.java");
     Path relativeCopyDestination =
         cacheDirectoryManager.cacheDirectory.relativize(
-            cacheLayout.getOutputArtifactDestination(outputArtifact).getCopyDestination());
+            cacheLayout.getOutputArtifactDestinationAndLayout(outputArtifact).getCopyDestination());
     String cacheKey = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact.getKey());
     assertThat(relativeCopyDestination.toString())
         .isEqualTo(String.format("%s/%s", cacheKey, cacheKey));
@@ -79,7 +79,7 @@ public class DefaultCacheLayoutTest {
     OutputArtifact simpleArtifact = testOutputArtifact("lib-class.jar");
     Path relativeSimpleCopyDestination =
         cacheDirectoryManager.cacheDirectory.relativize(
-            cacheLayout.getOutputArtifactDestination(simpleArtifact).getCopyDestination());
+            cacheLayout.getOutputArtifactDestinationAndLayout(simpleArtifact).getCopyDestination());
     assertThat(relativeSimpleCopyDestination.toString())
         .isEqualTo(CacheDirectoryManager.cacheKeyForArtifact(simpleArtifact.getKey()));
   }
@@ -98,7 +98,7 @@ public class DefaultCacheLayoutTest {
     OutputArtifact outputArtifact = testOutputArtifact("archive.zip");
     Path relativeCopyDestination =
         cacheDirectoryManager.cacheDotDirectory.relativize(
-            cacheLayout.getOutputArtifactDestination(outputArtifact).getCopyDestination());
+            cacheLayout.getOutputArtifactDestinationAndLayout(outputArtifact).getCopyDestination());
     String cacheKey = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact.getKey());
     assertThat(relativeCopyDestination.toString())
         .isEqualTo(String.format("%s/%s", DefaultCacheLayout.PACKED_FILES_DIR, cacheKey));
@@ -107,7 +107,7 @@ public class DefaultCacheLayoutTest {
     OutputArtifact simpleArtifact = testOutputArtifact("lib-class.jar");
     Path relativeSimpleCopyDestination =
         cacheDirectoryManager.cacheDirectory.relativize(
-            cacheLayout.getOutputArtifactDestination(simpleArtifact).getCopyDestination());
+            cacheLayout.getOutputArtifactDestinationAndLayout(simpleArtifact).getCopyDestination());
     assertThat(relativeSimpleCopyDestination.toString())
         .isEqualTo(CacheDirectoryManager.cacheKeyForArtifact(simpleArtifact.getKey()));
   }

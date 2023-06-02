@@ -51,11 +51,11 @@ public class FileCache {
    * An interface that defines the layout of an IDE artifact cache directory.
    *
    * <p>The cache layout definition is a two stage process: at the first stage {@link
-   * #getOutputArtifactDestination(OutputArtifact)} maps output artifacts to objects implementing
-   * {@link OutputArtifactDestination} that describe the location of where the artifact fetcher
-   * should place a fetched artifact and which know how to process artifacts in these locations to
-   * build the final cache layout; at the second stage invocations of {@link
-   * OutputArtifactDestination#prepareFinalLayout()} build the final cache layout.
+   * #getOutputArtifactDestinationAndLayout(OutputArtifact)} maps output artifacts to objects
+   * implementing {@link OutputArtifactDestinationAndLayout} that describe the location of where the
+   * artifact fetcher should place a fetched artifact and which know how to process artifacts in
+   * these locations to build the final cache layout; at the second stage invocations of {@link
+   * OutputArtifactDestinationAndLayout#prepareFinalLayout()} build the final cache layout.
    */
   public interface CacheLayout {
 
@@ -65,18 +65,13 @@ public class FileCache {
      * <p>The descriptor tells both where a fetched artifact should be placed and knows how to
      * process it to form the final cache layout.
      */
-    OutputArtifactDestination getOutputArtifactDestination(OutputArtifact outputArtifact);
+    OutputArtifactDestinationAndLayout getOutputArtifactDestinationAndLayout(
+        OutputArtifact outputArtifact);
   }
 
-  /**
-   * A descriptor of the artifact's locations in a specific cache layout.
-   *
-   * <p>Instances describe two conceptually different locations in the cache: (1) the location where
-   * an artifact should be placed by an {@link ArtifactFetcher} and (2) a location where the
-   * artifact was placed by the cache itself. The latter is returned by {@link
-   * OutputArtifactDestination#prepareFinalLayout()}.
-   */
+  /** A descriptor of the artifact's intended fetch location in a specific cache layout. */
   public interface OutputArtifactDestination {
+
     /**
      * A value used by the cache system to refer to this output artifact.
      *
@@ -91,7 +86,17 @@ public class FileCache {
      * ArtifactFetcher}.
      */
     Path getCopyDestination();
+  }
 
+  /**
+   * A descriptor of the artifact's locations in a specific cache layout.
+   *
+   * <p>Instances describe two conceptually different locations in the cache: (1) the location where
+   * an artifact should be placed by an {@link ArtifactFetcher} and (2) a location where the
+   * artifact was placed by the cache itself. The latter is returned by {@link
+   * OutputArtifactDestinationAndLayout#prepareFinalLayout()}.
+   */
+  public interface OutputArtifactDestinationAndLayout extends OutputArtifactDestination {
     /**
      * Prepares a file located at {@link #getCopyDestination()} for use by the IDE and returns the
      * location of the resulting file/directory.
@@ -104,6 +109,7 @@ public class FileCache {
 
   private final ArtifactFetcher<OutputArtifact> artifactFetcher;
   private final CacheDirectoryManager cacheDirectoryManager;
+
   private final CacheLayout cacheLayout;
 
   public FileCache(
@@ -151,11 +157,10 @@ public class FileCache {
   /**
    * Fetches the output artifacts requested in {@code artifactToDestinationMap}.
    *
-   * @return {@link OutputArtifactDestination}'s from the original request.
+   * @return {@link OutputArtifactDestinationAndLayout}'s from the original request.
    */
-  private ListenableFuture<Collection<OutputArtifactDestination>> fetchArtifacts(
-      BlazeContext context,
-      ImmutableMap<OutputArtifact, OutputArtifactDestination> artifactToDestinationMap) {
+  private <T extends OutputArtifactDestination> ListenableFuture<Collection<T>> fetchArtifacts(
+      BlazeContext context, ImmutableMap<OutputArtifact, T> artifactToDestinationMap) {
     final ImmutableMap<OutputArtifact, ArtifactDestination> artifactToDestinationPathMap =
         runMeasureAndLog(
             () ->
@@ -187,11 +192,10 @@ public class FileCache {
         fetchedArtifacts ->
             runMeasureAndLog(
                 () -> {
-                  ImmutableList.Builder<OutputArtifactDestination> result = ImmutableList.builder();
+                  ImmutableList.Builder<T> result = ImmutableList.builder();
                   for (Entry<OutputArtifact, ArtifactDestination> entry :
                       artifactToDestinationPathMap.entrySet()) {
-                    OutputArtifactDestination artifactDestination =
-                        artifactToDestinationMap.get(entry.getKey());
+                    T artifactDestination = artifactToDestinationMap.get(entry.getKey());
                     Preconditions.checkNotNull(artifactDestination);
                     cacheDirectoryManager.setStoredArtifactDigest(
                         entry.getKey(), entry.getKey().getDigest());
@@ -208,10 +212,10 @@ public class FileCache {
    * Builds a map describing where artifact files should be copied to and where their content should
    * be extracted to.
    */
-  private ImmutableMap<OutputArtifact, OutputArtifactDestination>
+  private ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout>
       prepareDestinationPathsAndDirectories(ImmutableList<OutputArtifact> artifacts)
           throws IOException {
-    final ImmutableMap<OutputArtifact, OutputArtifactDestination> pathMap =
+    final ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> pathMap =
         getLocalPathMap(artifacts);
     // Make sure target directories exists regardless of the cache directory layout, which may
     // include directories like `.zips` etc.
@@ -226,10 +230,12 @@ public class FileCache {
     return pathMap;
   }
 
-  private ImmutableMap<OutputArtifact, OutputArtifactDestination> getLocalPathMap(
+  private ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> getLocalPathMap(
       ImmutableList<OutputArtifact> outputArtifacts) {
     return outputArtifacts.stream()
-        .collect(toImmutableMap(Function.identity(), cacheLayout::getOutputArtifactDestination));
+        .collect(
+            toImmutableMap(
+                Function.identity(), cacheLayout::getOutputArtifactDestinationAndLayout));
   }
 
   /**
@@ -238,10 +244,10 @@ public class FileCache {
    * <p>Any existing files and directories at the destination paths are deleted.
    */
   private ImmutableSet<Path> prepareFinalLayouts(
-      Collection<OutputArtifactDestination> destinations) {
+      Collection<OutputArtifactDestinationAndLayout> destinations) {
     ImmutableSet.Builder<Path> result = ImmutableSet.builder();
     try {
-      for (OutputArtifactDestination destination : destinations) {
+      for (OutputArtifactDestinationAndLayout destination : destinations) {
         result.add(destination.prepareFinalLayout());
       }
     } catch (IOException e) {
