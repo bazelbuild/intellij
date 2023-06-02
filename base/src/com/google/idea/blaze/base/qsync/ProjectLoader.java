@@ -49,6 +49,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -112,7 +113,10 @@ public class ProjectLoader {
     BlazeProject graph = new BlazeProject();
     ArtifactFetcher<OutputArtifact> artifactFetcher = createArtifactFetcher();
     ArtifactTrackerImpl artifactTracker =
-        new ArtifactTrackerImpl(project, importSettings, artifactFetcher);
+        new ArtifactTrackerImpl(
+            BlazeDataStorage.getProjectDataDir(importSettings).toPath(),
+            Paths.get(checkNotNull(project.getBasePath())),
+            artifactFetcher);
     artifactTracker.initialize();
     DependencyTracker dependencyTracker =
         new DependencyTracker(project, graph, dependencyBuilder, artifactTracker);
