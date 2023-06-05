@@ -34,6 +34,7 @@ import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
@@ -58,6 +59,8 @@ public class DependencyTracker {
   private final BlazeProject blazeProject;
   private final DependencyBuilder builder;
   private final ArtifactTracker artifactTracker;
+
+  private static final Logger logger = Logger.getInstance(DependencyTracker.class);
 
   public DependencyTracker(
       Project project,
@@ -159,10 +162,12 @@ public class DependencyTracker {
       if (targetOwner != null) {
         buildTargets.add(targetOwner);
       } else {
-        context.output(
-            PrintOutput.error(
+        String msg =
+            String.format(
                 "File %s does not seem to be part of a build rule that the IDE supports.",
-                workspaceRelativePath));
+                workspaceRelativePath);
+        logger.warn(msg);
+        context.output(PrintOutput.error(msg));
         context.output(
             PrintOutput.error(
                 "If this is a newly added supported rule, please re-sync your project."));
