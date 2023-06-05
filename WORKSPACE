@@ -388,11 +388,15 @@ http_archive(
     url = "https://dl.google.com/dl/android/studio/ide-zips/2022.3.1.12/android-studio-2022.3.1.12-linux.tar.gz",
 )
 
+JUNIT_ARTIFACT = "junit:junit:4.13.2"
+
+JUNIT_SHA = "8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3"
+
 # LICENSE: Common Public License 1.0
 jvm_maven_import_external(
     name = "junit",
-    artifact = "junit:junit:4.12",
-    artifact_sha256 = "59721f0805e223d84b90677887d9ff567dc534d7c502ca903c0c2b17f05c116a",
+    artifact = JUNIT_ARTIFACT,
+    artifact_sha256 = JUNIT_SHA,
     licenses = ["notice"],  # Common Public License 1.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )
