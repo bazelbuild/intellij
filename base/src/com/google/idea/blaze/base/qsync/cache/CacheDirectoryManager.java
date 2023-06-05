@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.qsync.cache;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.hash.Hashing;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -28,25 +28,20 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/** A class that knows how to manage artifact cache directories. */
+/**
+ * A class that knows how to manage artifact caches.
+ *
+ * <p>(1) This class manages cache directories and (2) this class keeps track of the digests of
+ * artifacts stored in the cache.
+ */
 class CacheDirectoryManager {
-  private static final String DIGESTS_DIRECTORY_NAME = ".digests";
 
-  public final Path cacheDirectory;
-  private final Path digestsDirectory;
-  @VisibleForTesting public final Path cacheDotDirectory;
+  private final Path digestDirectory;
+  private final ImmutableList<Path> cacheDirectories;
 
-  public CacheDirectoryManager(Path cacheDirectory, Path cacheDotDirectory) {
-    if (cacheDotDirectory.startsWith(cacheDirectory)) {
-      throw new IllegalArgumentException(
-          String.format(
-              "cacheDotDirectory cannot be under cacheDirectory. cacheDirectory: %s,"
-                  + " cacheDotDirectory: %s",
-              cacheDirectory, cacheDotDirectory));
-    }
-    this.cacheDirectory = cacheDirectory;
-    this.digestsDirectory = cacheDotDirectory.resolve(DIGESTS_DIRECTORY_NAME);
-    this.cacheDotDirectory = cacheDotDirectory;
+  public CacheDirectoryManager(Path digestDirectory, ImmutableList<Path> cacheDirectories) {
+    this.digestDirectory = digestDirectory;
+    this.cacheDirectories = cacheDirectories;
   }
 
   /**
@@ -54,16 +49,17 @@ class CacheDirectoryManager {
    *
    * <p>Both in-memory and on-disk structures are initialized.
    */
-  public void initialize() throws IOException {
+  public void initialize() {
     try {
-      Files.createDirectories(cacheDirectory);
-      Files.createDirectories(cacheDotDirectory);
-      Files.createDirectories(digestsDirectory);
+      for (Path cacheDirectory : cacheDirectories) {
+        Files.createDirectories(cacheDirectory);
+      }
+      Files.createDirectories(digestDirectory);
     } catch (IOException e) {
-      throw new IOException(
+      throw new UncheckedIOException(
           String.format(
               "Cannot initialize cache. Directories:\n  %s,\n  %s",
-              cacheDirectory, cacheDotDirectory),
+              digestDirectory, cacheDirectories),
           e);
     }
   }
@@ -75,11 +71,13 @@ class CacheDirectoryManager {
    */
   public void clear() throws IOException {
     // Delete dot directory first to ensure invalidation if interrupted.
-    if (Files.exists(cacheDotDirectory)) {
-      FileUtil.delete(cacheDotDirectory.toFile());
+    for (Path cacheDirectory : cacheDirectories) {
+      if (Files.exists(cacheDirectory)) {
+        FileUtil.delete(cacheDirectory.toFile());
+      }
     }
-    if (Files.exists(cacheDirectory)) {
-      FileUtil.delete(cacheDirectory.toFile());
+    if (Files.exists(digestDirectory)) {
+      FileUtil.delete(digestDirectory.toFile());
     }
     initialize();
   }
@@ -103,14 +101,13 @@ class CacheDirectoryManager {
   /** Gets the previously stored digest of the given artifact. */
   public String getStoredArtifactDigest(OutputArtifactInfo artifactInfo) {
     return fileContentOrEmptyString(
-        digestsDirectory.resolve(cacheKeyForArtifact(artifactInfo) + ".txt"));
+        digestDirectory.resolve(cacheKeyForArtifact(artifactInfo) + ".txt"));
   }
 
   /** Stores the digest of the given artifact for later use. */
   public void setStoredArtifactDigest(OutputArtifactInfo artifactInfo, String value) {
     try {
-      Path artifactDigestFile =
-          digestsDirectory.resolve(cacheKeyForArtifact(artifactInfo) + ".txt");
+      Path artifactDigestFile = digestDirectory.resolve(cacheKeyForArtifact(artifactInfo) + ".txt");
       if (value.isEmpty()) {
         Files.deleteIfExists(artifactDigestFile);
       } else {

@@ -18,35 +18,19 @@ package com.google.idea.blaze.base.qsync.cache;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.FluentFuture;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
-import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher.ArtifactDestination;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.intellij.openapi.diagnostic.Logger;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /** Local cache of the .jar, .aars and other artifacts referenced by the project. */
 @SuppressWarnings("InvalidBlockTag")
 public class FileCache {
-  private static final Logger logger = Logger.getInstance(FileCache.class);
 
   /**
    * An interface that defines the layout of an IDE artifact cache directory.
@@ -108,26 +92,10 @@ public class FileCache {
     Path prepareFinalLayout() throws IOException;
   }
 
-  private final ArtifactFetcher<OutputArtifact> artifactFetcher;
-  private final CacheDirectoryManager cacheDirectoryManager;
-
   private final CacheLayout cacheLayout;
 
-  public FileCache(
-      ArtifactFetcher<OutputArtifact> artifactFetcher,
-      CacheDirectoryManager cacheDirectoryManager,
-      CacheLayout cacheLayout) {
-    this.artifactFetcher = artifactFetcher;
-    this.cacheDirectoryManager = cacheDirectoryManager;
+  public FileCache(CacheLayout cacheLayout) {
     this.cacheLayout = cacheLayout;
-  }
-
-  public void initialize() {
-    try {
-      cacheDirectoryManager.initialize();
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
   }
 
   /**
@@ -141,80 +109,10 @@ public class FileCache {
   }
 
   /**
-   * Caches {@code artifacts} in the local cache and returns paths that the IDE should use to find
-   * them.
-   *
-   * @noinspection UnstableApiUsage
-   */
-  public ListenableFuture<ImmutableSet<Path>> cache(
-      ImmutableList<OutputArtifact> artifacts, BlazeContext context) throws IOException {
-    return FluentFuture.from(
-            ArtifactFetcher.EXECUTOR.submit(() -> prepareDestinationPathsAndDirectories(artifacts)))
-        .transformAsync(
-            artifactToDestinationMap -> fetchArtifacts(context, artifactToDestinationMap),
-            ArtifactFetcher.EXECUTOR)
-        .transform(this::prepareFinalLayouts, ArtifactFetcher.EXECUTOR);
-  }
-
-  /**
-   * Fetches the output artifacts requested in {@code artifactToDestinationMap}.
-   *
-   * @return {@link OutputArtifactDestinationAndLayout}'s from the original request.
-   */
-  private <T extends OutputArtifactDestination> ListenableFuture<Collection<T>> fetchArtifacts(
-      BlazeContext context, ImmutableMap<OutputArtifact, T> artifactToDestinationMap) {
-    final ImmutableMap<OutputArtifact, ArtifactDestination> artifactToDestinationPathMap =
-        runMeasureAndLog(
-            () ->
-                artifactToDestinationMap.entrySet().stream()
-                    .filter(
-                        it ->
-                            !Objects.equals(
-                                it.getKey().getDigest(),
-                                cacheDirectoryManager.getStoredArtifactDigest(it.getKey())))
-                    .collect(
-                        ImmutableMap.toImmutableMap(
-                            Entry::getKey,
-                            it -> new ArtifactDestination(it.getValue().getCopyDestination()))),
-            String.format("Read %d artifact digests", artifactToDestinationMap.size()),
-            1000);
-
-    runMeasureAndLog(
-        () -> {
-          for (OutputArtifact outputArtifact : artifactToDestinationPathMap.keySet()) {
-            // Once fetching starts we do not know the state of downloaded files. If fetching fails,
-            // consider files lost.
-            cacheDirectoryManager.setStoredArtifactDigest(outputArtifact, "");
-          }
-        },
-        String.format("Reset %d artifact digests", artifactToDestinationPathMap.size()),
-        1000);
-    return Futures.transform(
-        artifactFetcher.copy(artifactToDestinationPathMap, context),
-        fetchedArtifacts ->
-            runMeasureAndLog(
-                () -> {
-                  ImmutableList.Builder<T> result = ImmutableList.builder();
-                  for (Entry<OutputArtifact, ArtifactDestination> entry :
-                      artifactToDestinationPathMap.entrySet()) {
-                    T artifactDestination = artifactToDestinationMap.get(entry.getKey());
-                    Preconditions.checkNotNull(artifactDestination);
-                    cacheDirectoryManager.setStoredArtifactDigest(
-                        entry.getKey(), entry.getKey().getDigest());
-                    result.add(artifactDestination);
-                  }
-                  return result.build();
-                },
-                String.format("Store %d artifact digests", artifactToDestinationPathMap.size()),
-                1000),
-        ArtifactFetcher.EXECUTOR);
-  }
-
-  /**
    * Builds a map describing where artifact files should be copied to and where their content should
    * be extracted to.
    */
-  private ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout>
+  public ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout>
       prepareDestinationPathsAndDirectories(ImmutableList<OutputArtifact> artifacts)
           throws IOException {
     final ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> pathMap =
@@ -238,54 +136,5 @@ public class FileCache {
         .collect(
             toImmutableMap(
                 Function.identity(), cacheLayout::getOutputArtifactDestinationAndLayout));
-  }
-
-  /**
-   * Extracts zip-like files in the {@code sourcePaths} into the final destination directories.
-   *
-   * <p>Any existing files and directories at the destination paths are deleted.
-   */
-  private ImmutableSet<Path> prepareFinalLayouts(
-      Collection<OutputArtifactDestinationAndLayout> destinations) {
-    ImmutableSet.Builder<Path> result = ImmutableSet.builder();
-    try {
-      for (OutputArtifactDestinationAndLayout destination : destinations) {
-        result.add(destination.prepareFinalLayout());
-      }
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-    return result.build();
-  }
-
-  public void clear() throws IOException {
-    cacheDirectoryManager.clear();
-  }
-
-  public Path getDirectory() {
-    return cacheDirectoryManager.cacheDirectory;
-  }
-
-  private <T> T runMeasureAndLog(Supplier<T> block, String operation, int maxToleratedMs) {
-    final Stopwatch stopwatch = Stopwatch.createStarted();
-    try {
-      return block.get();
-    } finally {
-      final long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-      if (elapsed > maxToleratedMs) {
-        logger.warn(String.format("%s took %d ms", operation, elapsed));
-      }
-    }
-  }
-
-  private void runMeasureAndLog(Runnable block, String operation, int maxToleratedMs) {
-    Object unused =
-        runMeasureAndLog(
-            () -> {
-              block.run();
-              return null;
-            },
-            operation,
-            maxToleratedMs);
   }
 }

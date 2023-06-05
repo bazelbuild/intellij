@@ -34,7 +34,7 @@ public class DefaultCacheLayoutTest {
 
   @Test
   public void basic_artifact() {
-    CacheDirectoryManager cacheDirectoryManager = createCacheDirectoryManager();
+    CacheDirectories cacheDirectoryManager = createCacheDirectoryManager();
     DefaultCacheLayout cacheLayout =
         new DefaultCacheLayout(
             cacheDirectoryManager.cacheDirectory,
@@ -55,7 +55,7 @@ public class DefaultCacheLayoutTest {
 
   @Test
   public void artifacts_with_directories() {
-    CacheDirectoryManager cacheDirectoryManager = createCacheDirectoryManager();
+    CacheDirectories cacheDirectoryManager = createCacheDirectoryManager();
     DefaultCacheLayout cacheLayout =
         new DefaultCacheLayout(
             cacheDirectoryManager.cacheDirectory,
@@ -83,7 +83,7 @@ public class DefaultCacheLayoutTest {
 
   @Test
   public void zipped_artifacts() {
-    CacheDirectoryManager cacheDirectoryManager = createCacheDirectoryManager();
+    CacheDirectories cacheDirectoryManager = createCacheDirectoryManager();
     DefaultCacheLayout cacheLayout =
         new DefaultCacheLayout(
             cacheDirectoryManager.cacheDirectory,
@@ -109,8 +109,18 @@ public class DefaultCacheLayoutTest {
         .isEqualTo(CacheDirectoryManager.cacheKeyForArtifact(simpleArtifact));
   }
 
-  private CacheDirectoryManager createCacheDirectoryManager() {
-    return new CacheDirectoryManager(
+  private static class CacheDirectories {
+    public final Path cacheDirectory;
+    public final Path cacheDotDirectory;
+
+    private CacheDirectories(Path cacheDirectory, Path cacheDotDirectory) {
+      this.cacheDirectory = cacheDirectory;
+      this.cacheDotDirectory = cacheDotDirectory;
+    }
+  }
+
+  private CacheDirectories createCacheDirectoryManager() {
+    return new CacheDirectories(
         temporaryFolder.getRoot().toPath().resolve("cache"),
         temporaryFolder.getRoot().toPath().resolve(".cache"));
   }
