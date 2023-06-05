@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.qsync.cache;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import java.io.BufferedInputStream;
@@ -47,7 +48,7 @@ public class CacheDirectoryManagerTest {
   }
 
   @Test
-  public void initialize_existing() throws IOException {
+  public void initialize_existing() {
     CacheDirectoryManager cacheDirectoryManager1 = createCacheDirectoryManager();
     cacheDirectoryManager1.initialize();
 
@@ -56,7 +57,7 @@ public class CacheDirectoryManagerTest {
   }
 
   @Test
-  public void read_nonexistent_medatadata() throws IOException {
+  public void read_nonexistent_medatadata() {
     CacheDirectoryManager cacheDirectoryManager = createCacheDirectoryManager();
     cacheDirectoryManager.initialize();
 
@@ -64,7 +65,7 @@ public class CacheDirectoryManagerTest {
   }
 
   @Test
-  public void set_and_read_medatadata() throws IOException {
+  public void set_and_read_medatadata() {
     CacheDirectoryManager cacheDirectoryManager = createCacheDirectoryManager();
     cacheDirectoryManager.initialize();
     cacheDirectoryManager.setStoredArtifactDigest(testOutputArtifact("123"), "abc");
@@ -74,7 +75,7 @@ public class CacheDirectoryManagerTest {
   }
 
   @Test
-  public void set_set_and_read_medatadata() throws IOException {
+  public void set_set_and_read_medatadata() {
     CacheDirectoryManager cacheDirectoryManager = createCacheDirectoryManager();
     cacheDirectoryManager.initialize();
     cacheDirectoryManager.setStoredArtifactDigest(testOutputArtifact("123"), "abc");
@@ -96,8 +97,10 @@ public class CacheDirectoryManagerTest {
 
   private CacheDirectoryManager createCacheDirectoryManager() {
     return new CacheDirectoryManager(
-        temporaryFolder.getRoot().toPath().resolve("cache"),
-        temporaryFolder.getRoot().toPath().resolve(".cache"));
+        temporaryFolder.getRoot().toPath().resolve(".digest"),
+        ImmutableList.of(
+            temporaryFolder.getRoot().toPath().resolve("cache"),
+            temporaryFolder.getRoot().toPath().resolve(".cache")));
   }
 
   private static OutputArtifact testOutputArtifact(String fileName) {
