@@ -21,11 +21,13 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.BazelBinarySection;
 import com.google.idea.blaze.base.qsync.BazelQueryRunner;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
@@ -60,6 +62,12 @@ class BazelBuildSystem implements BuildSystem {
   @Override
   public BuildSystemName getName() {
     return BuildSystemName.Bazel;
+  }
+
+  @Override
+  public BuildInvoker getBuildInvoker(
+      Project project, BlazeContext context, ExecutorType executorType, Kind targetKind) {
+    return getBuildInvoker(project, context);
   }
 
   @Override
