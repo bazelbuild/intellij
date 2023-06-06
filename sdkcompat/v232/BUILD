@@ -14,6 +14,7 @@ java_library(
         "com/google/idea/sdkcompat/vcs/**",
     ]) + select_for_ide(
         android_studio = glob([
+            "com/google/idea/sdkcompat/cpp/**",
             "com/google/idea/sdkcompat/java/**",
             "com/google/idea/sdkcompat/kotlin/**",
         ]),
