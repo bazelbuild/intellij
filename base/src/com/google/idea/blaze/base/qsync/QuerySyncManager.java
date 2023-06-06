@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedOperation;
+import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
@@ -209,7 +210,8 @@ public class QuerySyncManager {
                       context
                           .push(new ProgressIndicatorScope(indicator))
                           .push(scope)
-                          .push(new ProblemsViewScope(project, FocusBehavior.ALWAYS));
+                          .push(new ProblemsViewScope(project, FocusBehavior.ALWAYS))
+                          .push(new IdeaLogScope());
                       operation.execute(context);
                       return !context.hasErrors();
                     }));
