@@ -24,6 +24,9 @@ import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.ui.CoreIconManager;
+import com.intellij.ui.IconManager;
+
 import java.util.List;
 
 /**
@@ -47,5 +50,20 @@ public final class BaseSdkTestCompat {
   public static TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(
       IdeaTestFixtureFactory factory, String projectName) {
     return factory.createLightFixtureBuilder(projectName);
+  }
+
+  /** #api231 */
+  public static CoreIconManager newCoreIconManager() {
+    return new CoreIconManager();
+  }
+
+  /** #api231 */
+  public static void activateIconManager(IconManager iconManager) throws Throwable {
+    IconManager.activate(iconManager);
+  }
+
+  /** #api231 */
+  public static void deactivateIconManager() {
+    IconManager.deactivate();
   }
 }

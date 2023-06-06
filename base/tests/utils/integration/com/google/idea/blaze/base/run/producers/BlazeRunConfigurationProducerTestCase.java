@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.sdkcompat.BaseSdkTestCompat;
 import com.google.idea.testing.FunctionalHeadlessDataManager;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
@@ -40,7 +41,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.ServiceContainerUtil;
-import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
 import java.util.Arrays;
 import javax.annotation.Nullable;
@@ -71,7 +71,7 @@ public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestC
 
     // IntelliJ will use a dummy icon manager that returns the same exact icon.
     // This will cause uniqueness issues for gutter icons.
-    IconManager.activate(new CoreIconManager());
+    BaseSdkTestCompat.activateIconManager(BaseSdkTestCompat.newCoreIconManager());
   }
 
   @After
@@ -79,7 +79,7 @@ public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestC
     ServiceContainerUtil.registerServiceInstance(
         ApplicationManager.getApplication(), DataManager.class, defaultDataManager);
 
-    IconManager.deactivate();
+    BaseSdkTestCompat.deactivateIconManager();
   }
 
   protected PsiFile createAndIndexFile(WorkspacePath path, String... contents) throws Throwable {
