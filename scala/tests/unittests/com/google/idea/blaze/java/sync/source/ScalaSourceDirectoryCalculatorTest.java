@@ -74,6 +74,7 @@ public class ScalaSourceDirectoryCalculatorTest extends BlazeTestCase {
     mockInputStreamProvider = new MockInputStreamProvider();
     applicationServices.register(InputStreamProvider.class, mockInputStreamProvider);
     applicationServices.register(JavaSourcePackageReader.class, new JavaSourcePackageReader());
+    applicationServices.register(ScalaSourcePackageReader.class, new ScalaSourcePackageReader());
     applicationServices.register(PackageManifestReader.class, new PackageManifestReader());
     applicationServices.register(PrefetchService.class, new MockPrefetchService());
     applicationServices.register(FileOperationProvider.class, new FileOperationProvider());
@@ -133,6 +134,39 @@ public class ScalaSourceDirectoryCalculatorTest extends BlazeTestCase {
                 .setArtifactLocation(
                     ArtifactLocation.builder()
                         .setRelativePath("src/main/scala/com/google/foo/Bar.scala")
+                        .setIsSource(true))
+                .build());
+    ImmutableList<BlazeContentEntry> result =
+        sourceDirectoryCalculator.calculateContentEntries(
+            project,
+            context,
+            workspaceRoot,
+            decoder,
+            buildImportRoots(new WorkspacePath("src/main/scala/com/google/foo")),
+            sourceArtifacts,
+            ImmutableMap.of());
+    assertThat(result)
+        .containsExactly(
+            BlazeContentEntry.builder("/root/src/main/scala/com/google/foo")
+                .addSource(
+                    BlazeSourceDirectory.builder("/root/src/main/scala/com/google/foo")
+                        .setPackagePrefix("com.google.foo")
+                        .build())
+                .build());
+    issues.assertNoIssues();
+  }
+
+  @Test
+  public void testScalaSourceWithPackageObject() {
+    mockInputStreamProvider.addFile(
+        "/root/src/main/scala/com/google/foo/package.scala", "package com.google\n package object foo {}");
+    List<SourceArtifact> sourceArtifacts =
+        ImmutableList.of(
+            SourceArtifact.builder(
+                    TargetKey.forPlainTarget(Label.create("//src/main/scala/com/google/foo:bar")))
+                .setArtifactLocation(
+                    ArtifactLocation.builder()
+                        .setRelativePath("src/main/scala/com/google/foo/package.scala")
                         .setIsSource(true))
                 .build());
     ImmutableList<BlazeContentEntry> result =
