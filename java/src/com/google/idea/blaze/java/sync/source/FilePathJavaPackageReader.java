@@ -23,7 +23,7 @@ import com.google.idea.blaze.base.util.PackagePrefixCalculator;
 import java.io.File;
 
 /** Gets the package from a java file by its file path alone (i.e. without opening the file). */
-public final class FilePathJavaPackageReader extends JavaPackageReader {
+public final class FilePathJavaPackageReader implements JavaPackageReader {
   @Override
   public String getDeclaredPackageOfJavaFile(
       BlazeContext context,

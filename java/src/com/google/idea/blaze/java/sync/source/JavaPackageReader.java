@@ -20,9 +20,9 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import javax.annotation.Nullable;
 
 /** Reads java packages from files. */
-public abstract class JavaPackageReader {
+public interface JavaPackageReader {
   @Nullable
-  abstract String getDeclaredPackageOfJavaFile(
+  String getDeclaredPackageOfJavaFile(
       BlazeContext context,
       ArtifactLocationDecoder artifactLocationDecoder,
       SourceArtifact sourceArtifact);
