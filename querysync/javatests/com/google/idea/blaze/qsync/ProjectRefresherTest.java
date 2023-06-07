@@ -25,6 +25,7 @@ import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.query.QuerySummaryTestUtil;
@@ -140,7 +141,10 @@ public class ProjectRefresherTest {
                             new WorkspaceFileChange(Operation.ADD, Path.of("package/path/BUILD"))),
                         Optional.empty())))
             .setProjectDefinition(
-                ProjectDefinition.create(ImmutableSet.of(Path.of("package")), ImmutableSet.of()))
+                ProjectDefinition.create(
+                    ImmutableSet.of(Path.of("package")),
+                    ImmutableSet.of(),
+                    ImmutableSet.of(LanguageClass.JAVA)))
             .build();
 
     RefreshOperation update =
@@ -170,7 +174,10 @@ public class ProjectRefresherTest {
                                 Operation.DELETE, Path.of("package/path/BUILD"))),
                         Optional.empty())))
             .setProjectDefinition(
-                ProjectDefinition.create(ImmutableSet.of(Path.of("package")), ImmutableSet.of()))
+                ProjectDefinition.create(
+                    ImmutableSet.of(Path.of("package")),
+                    ImmutableSet.of(),
+                    ImmutableSet.of(LanguageClass.JAVA)))
             .build();
 
     RefreshOperation update =
@@ -201,7 +208,10 @@ public class ProjectRefresherTest {
                                 Operation.MODIFY, Path.of("package/path/BUILD"))),
                         Optional.empty())))
             .setProjectDefinition(
-                ProjectDefinition.create(ImmutableSet.of(Path.of("package")), ImmutableSet.of()))
+                ProjectDefinition.create(
+                    ImmutableSet.of(Path.of("package")),
+                    ImmutableSet.of(),
+                    ImmutableSet.of(LanguageClass.JAVA)))
             .build();
 
     RefreshOperation update =

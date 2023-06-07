@@ -23,6 +23,7 @@ import static com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation.MOD
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
+import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.query.QuerySummaryTestUtil;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -42,7 +43,8 @@ public class SnapshotSerializationTest {
             .setProjectDefinition(
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("project/path")),
-                    ImmutableSet.of(Path.of("project/path/excluded"))))
+                    ImmutableSet.of(Path.of("project/path/excluded")),
+                    ImmutableSet.of(LanguageClass.JAVA)))
             .setVcsState(
                 Optional.of(
                     new VcsState(
@@ -65,7 +67,8 @@ public class SnapshotSerializationTest {
   public void testSerialization_withVcsState_including_workspaceSnapshot() throws IOException {
     PostQuerySyncData original =
         PostQuerySyncData.builder()
-            .setProjectDefinition(ProjectDefinition.create(ImmutableSet.of(), ImmutableSet.of()))
+            .setProjectDefinition(
+                ProjectDefinition.create(ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of()))
             .setVcsState(
                 Optional.of(
                     new VcsState(
@@ -88,7 +91,8 @@ public class SnapshotSerializationTest {
             .setProjectDefinition(
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("project/path")),
-                    ImmutableSet.of(Path.of("project/path/excluded"))))
+                    ImmutableSet.of(Path.of("project/path/excluded")),
+                    ImmutableSet.of(LanguageClass.JAVA)))
             .setVcsState(Optional.empty())
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//project/path:path"))
             .build();
