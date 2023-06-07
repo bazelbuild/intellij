@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -214,10 +215,6 @@ public class TargetExpressionListUi extends JPanel {
     }
 
     private static Collection<String> getTargets(Project project) {
-      // TODO(b/262428615): Retrieve data from query sync
-      if (QuerySync.isEnabled()) {
-        return ImmutableList.of();
-      }
       BlazeProjectData projectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
       BlazeImportSettings importSettings =
@@ -231,13 +228,22 @@ public class TargetExpressionListUi extends JPanel {
                   WorkspaceRoot.fromImportSettings(importSettings), importSettings.getBuildSystem())
               .add(projectViewSet)
               .build();
+
+      if (QuerySync.isEnabled()) {
+        return projectData.targets().stream()
+            .map(TargetInfo::getLabel)
+            .filter(importRoots::importAsSource)
+            .map(TargetExpression::toString)
+            .collect(toImmutableList());
+      }
+
       return projectData.getTargetMap().targets().stream()
           .filter(TargetIdeInfo::isPlainTarget)
           .map(TargetIdeInfo::getKey)
           .map(TargetKey::getLabel)
           .filter(importRoots::importAsSource)
           .map(TargetExpression::toString)
-          .collect(toList());
+          .collect(toImmutableList());
     }
   }
 }

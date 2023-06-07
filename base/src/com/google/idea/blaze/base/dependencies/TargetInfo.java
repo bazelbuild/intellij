@@ -59,6 +59,10 @@ public class TargetInfo {
     return Kind.fromRuleName(kindString);
   }
 
+  public Label getLabel() {
+    return label;
+  }
+
   /** Returns this targets sources, or Optional#empty if they're not known. */
   public Optional<ImmutableList<ArtifactLocation>> getSources() {
     return Optional.ofNullable(sources);
