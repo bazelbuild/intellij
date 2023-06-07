@@ -188,6 +188,13 @@ http_archive(
     url = "https://plugins.jetbrains.com/files/7322/300704/python-ce-223.8836.26.zip",
 )
 
+http_archive(
+    name = "python_2023_1",
+    build_file_content = _PYTHON_CE_BUILD_FILE,
+    sha256 = "825c30d2cbcce405fd18fddf356eb1f425607e9c780f8eff95d21ac23f8d90fd",
+    url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/231.8770.65/PythonCore-231.8770.65.zip",
+)
+
 _GO_BUILD_FILE = """
 java_import(
     name = "go",
