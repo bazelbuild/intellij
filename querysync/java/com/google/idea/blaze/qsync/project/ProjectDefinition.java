@@ -36,6 +36,12 @@ import java.util.stream.Stream;
 @AutoValue
 public abstract class ProjectDefinition {
 
+  /** A language class that the query sync supports/needs to care about. */
+  public enum LanguageClass {
+    JAVA,
+    KOTLIN
+  }
+
   /**
    * Project includes, also know as root directories. Taken from the users {@code .blazeproject}
    * file. Paths are relative to the workspace root.
@@ -49,8 +55,13 @@ public abstract class ProjectDefinition {
    */
   public abstract ImmutableSet<Path> projectExcludes();
 
-  public static ProjectDefinition create(ImmutableSet<Path> includes, ImmutableSet<Path> excludes) {
-    return new AutoValue_ProjectDefinition(includes, excludes);
+  public abstract ImmutableSet<LanguageClass> languageClasses();
+
+  public static ProjectDefinition create(
+      ImmutableSet<Path> includes,
+      ImmutableSet<Path> excludes,
+      ImmutableSet<LanguageClass> languageClasses) {
+    return new AutoValue_ProjectDefinition(includes, excludes, languageClasses);
   }
 
   /**

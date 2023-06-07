@@ -15,8 +15,15 @@ message Snapshot {
 }
 
 message ProjectDefinition {
+  enum LanguageClass {
+    UNSPECIFIED = 0;
+    JAVA = 1;
+    KOTLIN = 2;
+  }
+
   repeated string include_paths = 1;
   repeated string exclude_paths = 2;
+  repeated LanguageClass language_classes = 3;
 }
 
 message VcsState {

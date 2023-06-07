@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectProto.ContentEntry;
 import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
@@ -45,7 +46,10 @@ public class GeneratedSourceProjectUpdaterTest {
         new GraphToProjectConverter(
             EMPTY_PACKAGE_READER,
             NOOP_CONTEXT,
-            ProjectDefinition.create(ImmutableSet.of(workspaceImportDirectory), ImmutableSet.of()));
+            ProjectDefinition.create(
+                ImmutableSet.of(workspaceImportDirectory),
+                ImmutableSet.of(),
+                ImmutableSet.of(LanguageClass.JAVA)));
 
     BuildGraphData buildGraphData =
         new BlazeQueryParser(NOOP_CONTEXT)

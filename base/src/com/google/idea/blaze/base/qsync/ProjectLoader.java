@@ -103,7 +103,10 @@ public class ProjectLoader {
         LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
 
     ProjectDefinition latestProjectDef =
-        ProjectDefinition.create(importRoots.rootPaths(), importRoots.excludePaths());
+        ProjectDefinition.create(
+            importRoots.rootPaths(),
+            importRoots.excludePaths(),
+            LanguageClasses.translateFrom(workspaceLanguageSettings.getActiveLanguages()));
 
     Path snapshotFilePath = getSnapshotFilePath(importSettings);
 

@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
@@ -227,8 +228,13 @@ public class QuerySyncProject {
         ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
             .add(projectViewSet)
             .build();
+    WorkspaceLanguageSettings workspaceLanguageSettings =
+        LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
     ProjectDefinition projectDefinition =
-        ProjectDefinition.create(importRoots.rootPaths(), importRoots.excludePaths());
+        ProjectDefinition.create(
+            importRoots.rootPaths(),
+            importRoots.excludePaths(),
+            LanguageClasses.translateFrom(workspaceLanguageSettings.getActiveLanguages()));
 
     return this.projectDefinition.equals(projectDefinition);
   }

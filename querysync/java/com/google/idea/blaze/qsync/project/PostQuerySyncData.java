@@ -37,7 +37,8 @@ public abstract class PostQuerySyncData {
   @VisibleForTesting
   public static final PostQuerySyncData EMPTY =
       builder()
-          .setProjectDefinition(ProjectDefinition.create(ImmutableSet.of(), ImmutableSet.of()))
+          .setProjectDefinition(
+              ProjectDefinition.create(ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of()))
           .setVcsState(Optional.empty())
           .setQuerySummary(QuerySummary.EMPTY)
           .build();
