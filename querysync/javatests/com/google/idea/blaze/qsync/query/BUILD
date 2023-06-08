@@ -24,3 +24,14 @@ java_test(
         "@truth//jar",
     ],
 )
+
+java_test(
+    name = "QuerySpecTest",
+    size = "small",
+    srcs = ["QuerySpecTest.java"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync/query",
+        "@junit//jar",
+        "@truth//jar",
+    ],
+)
