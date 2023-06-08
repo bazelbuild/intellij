@@ -383,11 +383,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
         new GeneratedSourceProjectUpdater(projectProto, genSrcCacheRelativeToProject, subfolders);
 
     projectProto = updater.addGenSrcContentEntry();
-    return BlazeProjectSnapshot.builder()
-        .queryData(snapshot.queryData())
-        .graph(snapshot.graph())
-        .project(projectProto)
-        .build();
+    return snapshot.toBuilder().project(projectProto).build();
   }
 
   private ImmutableList<Path> getGenSrcSubfolders() throws IOException {

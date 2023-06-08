@@ -58,6 +58,8 @@ public abstract class BlazeProjectSnapshot {
     return new AutoValue_BlazeProjectSnapshot.Builder();
   }
 
+  public abstract Builder toBuilder();
+
   /**
    * Returns the set of build packages in the query output.
    *
