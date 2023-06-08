@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Bazel Authors. All rights reserved.
+ * Copyright 2023 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.android.rendering;
+package com.android.tools.rendering;
 
-import com.android.tools.rendering.security.RenderSecurityManagerOverrides;
+import com.android.tools.idea.rendering.RenderService;
 
-/** Overrides some security restrictions used by the render sandbox. */
-public class BlazeRenderSecurityManagerOverrides implements RenderSecurityManagerOverrides {
-  @Override
-  public boolean allowsPropertiesAccess() {
-    // System properties access is needed for SystemPropertyExperimentLoader
-    return true;
+/** Compat class for {@link RenderService} */
+public final class RenderServiceCompat {
+  public static void shutdownRenderExecutor(long l) {
+    RenderService.shutdownRenderExecutor(l);
   }
+
+  public static void initializeRenderExecutor() {
+    RenderService.initializeRenderExecutor();
+  }
+
+  private RenderServiceCompat() {}
 }

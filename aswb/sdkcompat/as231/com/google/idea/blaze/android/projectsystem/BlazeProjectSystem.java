@@ -22,7 +22,6 @@ import com.android.tools.apk.analyzer.AaptInvoker;
 import com.android.tools.idea.log.LogWrapper;
 import com.android.tools.idea.model.AndroidModel;
 import com.android.tools.idea.model.ClassJarProvider;
-import com.android.tools.idea.projectsystem.AndroidModuleSystem;
 import com.android.tools.idea.projectsystem.AndroidProjectSystem;
 import com.android.tools.idea.projectsystem.NamedIdeaSourceProvider;
 import com.android.tools.idea.projectsystem.ProjectSystemBuildManager;
@@ -107,7 +106,7 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
   }
 
   @Override
-  public AndroidModuleSystem getModuleSystem(Module module) {
+  public BlazeModuleSystem getModuleSystem(Module module) {
     return BlazeModuleSystem.getInstance(module);
   }
 
@@ -199,6 +198,33 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
               }
             })
         .collect(Collectors.toList());
+  }
+
+  @Override
+  public boolean isNamespaceOrParentPackage(@NotNull String packageName) {
+    List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
+    GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
+    for (AndroidFacet facet : facets) {
+      String moduleNamespace = PackageNameUtils.getPackageName(facet.getModule());
+      if (moduleNamespace == null) {
+        continue;
+      }
+      // Check if the moduleNamespace is exactly the package name, or is a subpackage
+      if (!moduleNamespace.startsWith(packageName)) {
+        continue;
+      }
+      // packageName=com.example should not match moduleNamespace=com.example2
+      if (moduleNamespace.length() > packageName.length()
+          && moduleNamespace.charAt(packageName.length()) != '.') {
+        continue;
+      }
+      VirtualFile file = SourceProviderManager.getInstance(facet).getMainManifestFile();
+      if (file == null || !scope.contains(file)) {
+        continue;
+      }
+      return true;
+    }
+    return false;
   }
 
   @Override

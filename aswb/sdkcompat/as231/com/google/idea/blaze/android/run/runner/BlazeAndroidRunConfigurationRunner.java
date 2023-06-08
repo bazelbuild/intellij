@@ -39,6 +39,7 @@ import com.android.tools.idea.run.editor.DeployTargetState;
 import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.binary.mobileinstall.MobileInstallBuildStep;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
@@ -48,6 +49,7 @@ import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
+import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedTask;
@@ -118,7 +120,6 @@ public final class BlazeAndroidRunConfigurationRunner
     BlazeAndroidDeviceSelector deviceSelector = runContext.getDeviceSelector();
     BlazeAndroidDeviceSelector.DeviceSession deviceSession =
         deviceSelector.getDevice(project, executor, env, isDebug, runConfig.getUniqueID());
-
     if (deviceSession == null) {
       return null;
     }
@@ -146,21 +147,33 @@ public final class BlazeAndroidRunConfigurationRunner
       }
     }
 
-    LaunchOptions.Builder launchOptionsBuilder = getDefaultLaunchOptions().setDebug(isDebug);
+    LaunchOptions.Builder launchOptionsBuilder = getDefaultLaunchOptions();
     runContext.augmentLaunchOptions(launchOptionsBuilder);
 
     // Store the run context on the execution environment so before-run tasks can access it.
     env.putCopyableUserData(RUN_CONTEXT_KEY, runContext);
     env.putCopyableUserData(DEVICE_SESSION_KEY, deviceSession);
 
+    RunConfigurationState state = runConfig.getHandler().getState();
+
+    if (state instanceof BlazeAndroidBinaryRunConfigurationState
+        && ((BlazeAndroidBinaryRunConfigurationState) state).getCurrentWearLaunchOptions()
+            != null) {
+      ComponentLaunchOptions launchOptions =
+          ((BlazeAndroidBinaryRunConfigurationState) state).getCurrentWearLaunchOptions();
+
+      return getWearExecutor(launchOptions, env, deployTarget);
+    }
+
+    final LaunchOptions launchOptions = launchOptionsBuilder.build();
     BlazeAndroidConfigurationExecutor runner =
         new BlazeAndroidConfigurationExecutor(
             runContext.getConsoleProvider(),
             runContext.getApplicationIdProvider(),
             env,
             deviceFutures,
-            runContext.getLaunchTasksProvider(launchOptionsBuilder),
-            LaunchOptions.builder().build());
+            runContext.getLaunchTasksProvider(launchOptions),
+            launchOptions);
     return new AndroidConfigurationExecutorRunProfileState(runner);
   }
 
@@ -245,7 +258,6 @@ public final class BlazeAndroidRunConfigurationRunner
         new BlazeWrapperForAndroidConfigurationExecutor(configurationExecutor));
   }
 
-  @Nullable
   private static String canDebug(
       DeviceFutures deviceFutures, AndroidFacet facet, String moduleName) {
     // If we are debugging on a device, then the app needs to be debuggable
@@ -264,7 +276,7 @@ public final class BlazeAndroidRunConfigurationRunner
   }
 
   private static LaunchOptions.Builder getDefaultLaunchOptions() {
-    return LaunchOptionsCompat.getDefaultLaunchOptions();
+    return LaunchOptions.builder();
   }
 
   @Override
