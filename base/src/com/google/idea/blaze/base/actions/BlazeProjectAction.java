@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.actions;
 
 import static com.google.idea.blaze.base.actions.BlazeProjectAction.QuerySyncStatus.HIDDEN;
+import static com.google.idea.blaze.base.actions.BlazeProjectAction.QuerySyncStatus.REQUIRED;
 import static com.google.idea.blaze.base.actions.BlazeProjectAction.QuerySyncStatus.SUPPORTED;
 
 import com.google.idea.blaze.base.qsync.QuerySync;
@@ -43,6 +44,8 @@ public abstract class BlazeProjectAction extends AnAction {
     DISABLED,
     /** The action supports querysync and is available in the UI. */
     SUPPORTED,
+    /** The action requires querysync in order to be usable. */
+    REQUIRED,
   }
 
   protected BlazeProjectAction() {}
@@ -67,9 +70,17 @@ public abstract class BlazeProjectAction extends AnAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    if (QuerySync.isEnabled() && querySyncSupport() == HIDDEN) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
+    final QuerySyncStatus querySyncStatus = querySyncSupport();
+    if (QuerySync.isEnabled()) {
+      if (querySyncStatus == HIDDEN) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+    } else {
+      if (querySyncStatus == REQUIRED) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
     }
 
     e.getPresentation().setEnabledAndVisible(true);
@@ -78,7 +89,7 @@ public abstract class BlazeProjectAction extends AnAction {
       e.getPresentation().setEnabled(false);
       return;
     }
-    if (QuerySync.isEnabled() && querySyncSupport() != SUPPORTED) {
+    if (QuerySync.isEnabled() && querySyncStatus != SUPPORTED && querySyncStatus != REQUIRED) {
       // TODO(b/260643753) disabling all blaze actions for querysync is way too broad, instead we
       //  should investigate which can be supported and update them accordingly.
       e.getPresentation().setEnabled(false);
