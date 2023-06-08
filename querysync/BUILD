@@ -25,6 +25,7 @@ test_suite(
         "//querysync/javatests/com/google/idea/blaze/qsync:ProjectRefresherTest",
         "//querysync/javatests/com/google/idea/blaze/qsync/project:BuildGraphTest",
         "//querysync/javatests/com/google/idea/blaze/qsync/project:SnapshotSerializationTest",
+        "//querysync/javatests/com/google/idea/blaze/qsync/query:QuerySpecTest",
         "//querysync/javatests/com/google/idea/blaze/qsync/query:QuerySummaryTest",
     ],
 )
