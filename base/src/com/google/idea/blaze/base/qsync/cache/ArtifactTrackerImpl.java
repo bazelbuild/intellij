@@ -55,6 +55,7 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -243,7 +244,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
                             Entry::getKey,
                             it -> new ArtifactDestination(it.getValue().getCopyDestination()))),
             String.format("Read %d artifact digests", artifactToDestinationMap.size()),
-            1000);
+            Duration.ofSeconds(1));
 
     runMeasureAndLog(
         () -> {
@@ -254,7 +255,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
           }
         },
         String.format("Reset %d artifact digests", artifactToDestinationPathMap.size()),
-        1000);
+        Duration.ofSeconds(1));
     return Futures.transform(
         artifactFetcher.copy(artifactToDestinationPathMap, context),
         fetchedArtifacts ->
@@ -272,7 +273,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
                   return result.build();
                 },
                 String.format("Store %d artifact digests", artifactToDestinationPathMap.size()),
-                1000),
+                Duration.ofSeconds(1)),
         ArtifactFetcher.EXECUTOR);
   }
 
@@ -402,19 +403,20 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     return aarCacheDirectory;
   }
 
-  private <T> T runMeasureAndLog(Supplier<T> block, String operation, int maxToleratedMs) {
+  private <T> T runMeasureAndLog(
+      Supplier<T> block, String operation, Duration maxToleratedDuration) {
     final Stopwatch stopwatch = Stopwatch.createStarted();
     try {
       return block.get();
     } finally {
       final long elapsed = stopwatch.elapsed(MILLISECONDS);
-      if (elapsed > maxToleratedMs) {
+      if (elapsed > maxToleratedDuration.toMillis()) {
         logger.warn(String.format("%s took %d ms", operation, elapsed));
       }
     }
   }
 
-  private void runMeasureAndLog(Runnable block, String operation, int maxToleratedMs) {
+  private void runMeasureAndLog(Runnable block, String operation, Duration maxToleratedDuration) {
     Object unused =
         runMeasureAndLog(
             () -> {
@@ -422,6 +424,6 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
               return null;
             },
             operation,
-            maxToleratedMs);
+            maxToleratedDuration);
   }
 }
