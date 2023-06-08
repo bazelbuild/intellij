@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.async.process;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -179,6 +180,11 @@ public interface ExternalTask {
       this.redirectErrorStream = redirectErrorStream;
       this.stdout = stdout != null ? stdout : NULL_STREAM;
       this.stderr = stderr != null ? stderr : NULL_STREAM;
+    }
+
+    @Override
+    public String toString() {
+      return Joiner.on(' ').join(resolveCustomBinary(command));
     }
 
     @Override
