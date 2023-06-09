@@ -29,6 +29,7 @@ java_import(
     name = "guava",
     jars = glob([
         "lib/lib.jar",
+        "lib/lib-client.jar",
     ]),
 )
 
