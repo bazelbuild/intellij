@@ -1,3 +1,7 @@
+v2023.06.13
+===========
+
+
 v2023.05.30
 ===========
 * The plugin now supports Xcode toolchain, not only the Xcode Command Line Tools fix(clion): Add Xcode information to Cpp compiler wrapper #4651
