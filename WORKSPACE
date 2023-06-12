@@ -249,13 +249,8 @@ http_archive(
 http_archive(
     name = "python_2022_2",
     build_file_content = _PYTHON_CE_BUILD_FILE,
-<<<<<<< HEAD
-    sha256 = "1bca17ee017762a47d97acd17cfd16966825a75c625c51a851cc439040fca103",
-    url = "https://plugins.jetbrains.com/files/7322/201922/python-ce-222.3345.131.zip",
-=======
     sha256 = "aaae5ea44b5ad18793f8de63c00dce0371d91c14f7381260d19c4adaf4f9c9bf",
     url = "https://plugins.jetbrains.com/files/7322/305491/python-ce-222.4554.5.zip",
->>>>>>> 65f67fdb8 (Import Language Plugins for Jetbrains Community Edition 2022.2.5)
 )
 
 http_archive(
