@@ -20,7 +20,7 @@ java_binary(
 bazel_integration_tests(
     name = "bazel_invocation_integration_tests",
     bazel_versions = [
-        "1.2.0",
+        "4.0.0",
         "6.0.0",
     ],
     # set tags = [] because otherwise bazel_integration_tests sets
