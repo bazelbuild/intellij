@@ -664,7 +664,7 @@ bazel_integration_test_rules_dependencies()
 load("@contrib_rules_bazel_integration_test//bazel_integration_test:defs.bzl", "bazel_binaries")
 
 bazel_binaries(versions = [
-    "1.2.0",
+    "4.0.0",
     "6.0.0",
 ])
 
