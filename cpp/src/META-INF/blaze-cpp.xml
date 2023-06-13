@@ -46,8 +46,18 @@
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.google.idea.blaze.cpp.BlazeCompilerInfoMapService"/>
+    <!-- It may look like we're registering the same service twice, but this is intentional.
+     In non-macOS systems, we don't want to return any Xcode compiler settings.
+     Therefore, we register a service that returns nothing.
+     We override this registration on macOS systems later. -->
     <projectService serviceInterface="com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider"
-                    serviceImplementation="com.google.idea.blaze.cpp.XcodeCompilerSettingsProviderImpl"/>
+      serviceImplementation="com.google.idea.blaze.cpp.XcodeCompilerSettingsProviderNoopImpl"
+    />
+    <projectService serviceInterface="com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider"
+                    serviceImplementation="com.google.idea.blaze.cpp.XcodeCompilerSettingsProviderImpl"
+                    os="mac"
+                    overrides="true"
+    />
     <registryKey defaultValue="false" description="Disable absolute path trimming in debug clang builds" key="bazel.trim.absolute.path.disabled"/>
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerVersionChecker"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>
