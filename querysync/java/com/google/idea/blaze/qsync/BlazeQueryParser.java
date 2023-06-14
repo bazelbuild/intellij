@@ -122,6 +122,7 @@ public class BlazeQueryParser {
       graphBuilder.targetMapBuilder().put(ruleEntry.getKey(), buildTarget.build());
 
       if (isJavaRule(ruleClass)) {
+        graphBuilder.allTargetsBuilder().add(ruleEntry.getKey());
         ImmutableSet<Label> thisSources =
             ImmutableSet.<Label>builder()
                 .addAll(toLabelList(ruleEntry.getValue().getSourcesList()))

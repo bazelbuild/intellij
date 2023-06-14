@@ -82,6 +82,8 @@ public abstract class BuildGraphData {
   /** All dependencies external to this project */
   public abstract ImmutableSet<Label> projectDeps();
 
+  public abstract ImmutableSet<Label> allTargets();
+
   abstract ImmutableSet<Label> androidTargets();
 
   abstract ImmutableMap<Label, BuildTarget> targetMap();
@@ -193,6 +195,8 @@ public abstract class BuildGraphData {
 
     public abstract Builder projectDeps(Set<Label> value);
 
+    public abstract ImmutableSet.Builder<Label> allTargetsBuilder();
+
     public abstract ImmutableSet.Builder<Label> androidTargetsBuilder();
 
     public abstract Builder packages(PackageSet value);
@@ -229,7 +233,7 @@ public abstract class BuildGraphData {
       CacheBuilder.newBuilder()
           .build(CacheLoader.from(this::calculateTransitiveExternalDependencies));
 
-  private ImmutableSet<Label> getTransitiveExternalDependencies(Label target) {
+  public ImmutableSet<Label> getTransitiveExternalDependencies(Label target) {
     return transitiveDeps.getUnchecked(target);
   }
 

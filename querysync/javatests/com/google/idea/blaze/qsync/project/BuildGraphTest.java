@@ -40,6 +40,8 @@ public class BuildGraphTest {
     BuildGraphData graph =
         new BlazeQueryParser(NOOP_CONTEXT)
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY));
+    assertThat(graph.allTargets())
+        .containsExactly(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps"));
     assertThat(graph.getAllSourceFiles())
         .containsExactly(
             TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java"),
@@ -106,6 +108,10 @@ public class BuildGraphTest {
     BuildGraphData graph =
         new BlazeQueryParser(NOOP_CONTEXT)
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_MULTI_TARGETS));
+    assertThat(graph.allTargets())
+        .containsExactly(
+            Label.of("//" + TESTDATA_ROOT + "/multitarget:nodeps"),
+            Label.of("//" + TESTDATA_ROOT + "/multitarget:externaldep"));
     // Sanity check:
     assertThat(graph.getJavaSourceFiles())
         .contains(TESTDATA_ROOT.resolve("multitarget/TestClassSingleTarget.java"));
