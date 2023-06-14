@@ -25,6 +25,7 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync",
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
+        "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "@com_google_guava_guava//jar",
         "@junit//jar",
