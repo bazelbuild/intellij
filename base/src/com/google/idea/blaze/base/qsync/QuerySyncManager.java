@@ -47,6 +47,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.serviceContainer.NonInjectable;
+import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -229,6 +230,22 @@ public class QuerySyncManager {
         "Building dependencies",
         "Building...",
         context -> loadedProject.enableAnalysis(context, psiFile));
+  }
+
+  @CanIgnoreReturnValue
+  public ListenableFuture<Boolean> enableAnalysis(Path workspaceRelativePath) {
+    assertProjectLoaded();
+    return run(
+        "Building dependencies",
+        "Building...",
+        context -> loadedProject.enableAnalysis(context, workspaceRelativePath));
+  }
+
+  public boolean canEnableAnalysisFor(Path workspaceRelativePath) {
+    if (loadedProject == null) {
+      return false;
+    }
+    return loadedProject.canEnableAnalysisFor(workspaceRelativePath);
   }
 
   public boolean isReadyForAnalysis(PsiFile psiFile) {

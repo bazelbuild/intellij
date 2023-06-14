@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.base.Preconditions;
@@ -35,6 +36,7 @@ import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.blaze.qsync.query.PackageSet;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +50,6 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -160,35 +161,82 @@ public class DependencyTracker {
     refreshFiles(context, updatedFiles);
   }
 
-  private static Optional<RequestedTargets> computeRequestedTargets(
+  /**
+   * Returns the list of project targets related to the given workspace paths.
+   *
+   * @param context Context
+   * @param workspaceRelativePaths Workspace relative paths to find targets for. These may be source
+   *     files, directories or BUILD files.
+   * @return Corresponding project targets. For a source file, this is a target than builds that
+   *     file. For a BUILD file, it's the set or targets defined in that file. For a directory, it's
+   *     the set of all targets defined in all build packages SyPr| within the directory
+   *     (recursively).
+   */
+  public ImmutableSet<Label> getProjectTargets(
+      BlazeContext context, List<Path> workspaceRelativePaths) {
+    return blazeProject
+        .getCurrent()
+        .map(snapshot -> getProjectTargets(context, snapshot, workspaceRelativePaths))
+        .orElse(ImmutableSet.of());
+  }
+
+  private static ImmutableSet<Label> getProjectTargets(
       BlazeContext context, BlazeProjectSnapshot snapshot, List<Path> workspaceRelativePaths) {
-    Set<Label> targets = new HashSet<>();
-    Set<Label> buildTargets = new HashSet<>();
+    ImmutableSet.Builder<Label> buildTargets = ImmutableSet.builder();
     for (Path workspaceRelativePath : workspaceRelativePaths) {
-      Label targetOwner = snapshot.getTargetOwner(workspaceRelativePath);
-      if (targetOwner != null) {
-        buildTargets.add(targetOwner);
+      PackageSet buildPackages;
+      if (workspaceRelativePath.endsWith("BUILD")) {
+        buildPackages = PackageSet.of(workspaceRelativePath.getParent());
       } else {
-        String msg =
-            String.format(
-                "File %s does not seem to be part of a build rule that the IDE supports.",
-                workspaceRelativePath);
-        logger.warn(msg);
-        context.output(PrintOutput.error(msg));
-        context.output(
-            PrintOutput.error(
-                "If this is a newly added supported rule, please re-sync your project."));
-        context.setHasError();
-        return Optional.empty();
+        buildPackages = snapshot.graph().packages().getSubpackages(workspaceRelativePath);
       }
-      ImmutableSet<Label> t = snapshot.getFileDependencies(workspaceRelativePath);
-      if (t != null) {
-        targets.addAll(t);
+      if (!buildPackages.isEmpty()) {
+        ImmutableSet<Label> projectTargets =
+            snapshot.graph().allTargets().stream()
+                .filter(l -> buildPackages.contains(l.getPackage()))
+                .collect(toImmutableSet());
+        if (projectTargets.isEmpty()) {
+          context.output(
+              PrintOutput.error("No supported targets found in %s", workspaceRelativePath));
+          context.setHasWarnings();
+        }
+        buildTargets.addAll(projectTargets);
+      } else {
+        // Not a build file or a directory containing packages.
+        if (snapshot.graph().getAllSourceFiles().contains(workspaceRelativePath)) {
+          Label targetOwner = snapshot.getTargetOwner(workspaceRelativePath);
+          if (targetOwner != null) {
+            buildTargets.add(targetOwner);
+          }
+        } else {
+          context.output(
+              PrintOutput.error("Can't find any supported targets for %s", workspaceRelativePath));
+          context.output(
+              PrintOutput.error(
+                  "If this is a newly added supported rule, please re-sync your project."));
+          context.setHasWarnings();
+        }
       }
     }
+    return buildTargets.build();
+  }
 
-    return Optional.of(
-        new RequestedTargets(ImmutableSet.copyOf(buildTargets), ImmutableSet.copyOf(targets)));
+  private static Optional<RequestedTargets> computeRequestedTargets(
+      BlazeContext context, BlazeProjectSnapshot snapshot, List<Path> workspaceRelativePaths) {
+    ImmutableSet<Label> projectTargets =
+        getProjectTargets(context, snapshot, workspaceRelativePaths);
+    if (projectTargets.isEmpty()) {
+      context.output(PrintOutput.error("Didn't find anything to build"));
+      context.setHasError();
+      return Optional.empty();
+    }
+
+    ImmutableSet<Label> externalDeps =
+        projectTargets.stream()
+            .flatMap(t -> snapshot.graph().getTransitiveExternalDependencies(t).stream())
+            .collect(ImmutableSet.toImmutableSet());
+
+    return Optional.of(new RequestedTargets(projectTargets, externalDeps));
   }
 
   private void reportErrorsAndWarnings(

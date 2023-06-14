@@ -119,6 +119,10 @@
       icon="BlazeIcons.Logo">
       <add-to-group group-id="FileOpenGroup" relative-to-action="OpenFile" anchor="after"/>
     </action>
+    <action id="Blaze.BuildDependencies"
+        class="com.google.idea.blaze.base.qsync.action.BuildDependenciesAction"
+        text="Build dependencies">
+    </action>
 
     <group id="Blaze.MainMenuActionGroup" class="com.google.idea.blaze.base.actions.BlazeMenuGroup">
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="HelpMenu"/>
@@ -161,6 +165,7 @@
       <add-to-group anchor="after" group-id="EditorTabPopupMenu" relative-to-action="CopyReference"/>
       <add-to-group anchor="before" group-id="EditorPopupMenu" relative-to-action="$SearchWeb"/>
       <separator/>
+      <reference ref="Blaze.BuildDependencies"/>
       <reference ref="Blaze.PartialSync"/>
       <reference ref="Blaze.AddSourceToProject"/>
       <reference ref="Blaze.OpenCorrespondingBuildFile"/>

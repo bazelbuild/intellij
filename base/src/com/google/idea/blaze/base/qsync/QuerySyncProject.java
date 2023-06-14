@@ -197,6 +197,20 @@ public class QuerySyncProject {
     }
   }
 
+  public void enableAnalysis(BlazeContext context, Path workspaceRelativePath) {
+    try {
+      build(context, ImmutableList.of(workspaceRelativePath));
+    } catch (Exception e) {
+      context.handleException("Failed to build dependencies", e);
+    }
+  }
+
+  public boolean canEnableAnalysisFor(Path workspacePath) {
+    return !getDependencyTracker()
+        .getProjectTargets(BlazeContext.create(), ImmutableList.of(workspacePath))
+        .isEmpty();
+  }
+
   public boolean isReadyForAnalysis(PsiFile psiFile) {
     VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) {
