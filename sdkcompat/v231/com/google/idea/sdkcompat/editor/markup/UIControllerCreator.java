@@ -56,7 +56,7 @@ public final class UIControllerCreator {
       public void fillHectorPanels(Container container, GridBag bag) {}
 
       @Override
-      public boolean enableToolbar() {
+      public boolean isToolbarEnabled() {
         return true;
       }
 

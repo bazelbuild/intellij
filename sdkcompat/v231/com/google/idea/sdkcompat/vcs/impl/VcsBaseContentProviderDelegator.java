@@ -10,7 +10,7 @@ public class VcsBaseContentProviderDelegator {
   private final VcsBaseContentProvider delegate;
 
   public VcsBaseContentProviderDelegator(Project project) {
-    this.delegate = project.getComponent(VcsFileStatusProvider.class);
+    this.delegate = project.getComponent(VcsBaseContentProvider.class);
   }
 
   public boolean isSupported(VirtualFile file) {
