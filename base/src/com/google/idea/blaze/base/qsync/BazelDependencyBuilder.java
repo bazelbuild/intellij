@@ -44,7 +44,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
@@ -67,10 +66,10 @@ import java.util.Set;
 /** An object that knows how to build dependencies for given targets */
 public class BazelDependencyBuilder implements DependencyBuilder {
 
-  private final Project project;
-  private final BuildSystem buildSystem;
-  private final ImportRoots importRoots;
-  private final WorkspaceRoot workspaceRoot;
+  protected final Project project;
+  protected final BuildSystem buildSystem;
+  protected final ImportRoots importRoots;
+  protected final WorkspaceRoot workspaceRoot;
 
   public BazelDependencyBuilder(
       Project project,
@@ -88,9 +87,6 @@ public class BazelDependencyBuilder implements DependencyBuilder {
       throws IOException, BuildException {
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
-      PluginDescriptor plugin = checkNotNull(PluginManager.getPluginByClass(AspectStrategy.class));
-      Path aspect =
-          Paths.get(plugin.getPluginPath().toString(), "aspect", "build_dependencies.bzl");
       String includes =
           importRoots.rootDirectories().stream()
               .map(BazelDependencyBuilder::directoryToLabel)
@@ -99,10 +95,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
           importRoots.excludeDirectories().stream()
               .map(BazelDependencyBuilder::directoryToLabel)
               .collect(joining(","));
-      Files.copy(
-          aspect,
-          workspaceRoot.directory().toPath().resolve(".aswb.bzl"),
-          StandardCopyOption.REPLACE_EXISTING);
+      String aspectLocation = getAspectLocation(context);
       String alwaysBuildRuleTypes = Joiner.on(",").join(BlazeQueryParser.ALWAYS_BUILD_RULE_TYPES);
 
       ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
@@ -122,7 +115,9 @@ public class BazelDependencyBuilder implements DependencyBuilder {
               .addBlazeFlags(buildResultHelper.getBuildFlags())
               .addBlazeFlags(additionalBlazeFlags)
               .addBlazeFlags(
-                  "--aspects=//:.aswb.bzl%collect_dependencies,//:.aswb.bzl%package_dependencies")
+                  String.format(
+                      "--aspects=%1$s%%collect_dependencies,%1$s%%package_dependencies",
+                      aspectLocation))
               .addBlazeFlags(String.format("--aspects_parameters=include=%s", includes))
               .addBlazeFlags(String.format("--aspects_parameters=exclude=%s", excludes))
               .addBlazeFlags(
@@ -145,6 +140,27 @@ public class BazelDependencyBuilder implements DependencyBuilder {
 
       return createOutputInfo(outputs);
     }
+  }
+
+  protected Path getBundledAspectPath() {
+    PluginDescriptor plugin = checkNotNull(PluginManager.getPluginByClass(getClass()));
+    return Paths.get(plugin.getPluginPath().toString(), "aspect", "build_dependencies.bzl");
+  }
+
+  /**
+   * Returns the location of the {@code build_dependencies.bzl} aspect, performing any necessary
+   * preparation first.
+   *
+   * <p>The return value is a string in the format expected by bazel for an aspect file, omitting
+   * the name of the aspect within that file. For example, {@code //package:aspect.bzl}.
+   */
+  protected String getAspectLocation(BlazeContext context) throws IOException, BuildException {
+    Path aspect = getBundledAspectPath();
+    Files.copy(
+        aspect,
+        workspaceRoot.directory().toPath().resolve(".aswb.bzl"),
+        StandardCopyOption.REPLACE_EXISTING);
+    return "//:.aswb.bzl";
   }
 
   private OutputInfo createOutputInfo(BlazeBuildOutputs blazeBuildOutputs) throws BuildException {
