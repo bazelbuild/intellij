@@ -1,6 +1,10 @@
 v2023.06.13
 ===========
-
+* fix(cpp): Only register Xcode settings provider on macOS #4976
+* Fix path separator in run configuration generator #4846
+* Add associates to dep attributes #4915
+* Added a registry key to disable passing the extra compiler flags to Bazel when building a C/C++ target in debug mode. #4913
+* Move oldest supported Bazel version to 4.0.0
 
 v2023.05.30
 ===========
