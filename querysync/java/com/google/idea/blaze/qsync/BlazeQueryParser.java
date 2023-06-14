@@ -29,6 +29,7 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.BuildGraphData.Location;
+import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
@@ -63,7 +64,7 @@ public class BlazeQueryParser {
           "android_instrumentation_test",
           "kt_android_library_helper");
 
-  private final Context context;
+  private final Context<?> context;
 
   public BlazeQueryParser(Context context) {
     this.context = context;
@@ -76,7 +77,7 @@ public class BlazeQueryParser {
   public BuildGraphData parse(QuerySummary query) {
     context.output(PrintOutput.log("Analyzing project structure..."));
 
-    Set<Path> packages = new HashSet<>();
+    PackageSet.Builder packages = new PackageSet.Builder();
     long now = System.nanoTime();
 
     BuildGraphData.Builder graphBuilder = BuildGraphData.builder();
@@ -99,7 +100,7 @@ public class BlazeQueryParser {
         query.getSourceFilesMap().entrySet()) {
       Location l = new Location(sourceFileEntry.getValue().getLocation());
       if (l.file.endsWith(Path.of("BUILD"))) {
-        packages.add(l.file);
+        packages.add(l.file.getParent());
       }
       graphBuilder.locationsBuilder().put(sourceFileEntry.getKey(), l);
       graphBuilder.fileToTargetBuilder().put(l.file, sourceFileEntry.getKey());
@@ -201,13 +202,13 @@ public class BlazeQueryParser {
             .ruleDeps(ruleDeps)
             .ruleRuntimeDeps(ruleRuntimeDeps)
             .projectDeps(projectDeps)
-            .packages(packages)
+            .packages(packages.build())
             .reverseDeps(caclulateReverseDeps(ruleDeps, ruleRuntimeDeps))
             .build();
 
     context.output(PrintOutput.log("%-10d Source files", graph.locations().size()));
     context.output(PrintOutput.log("%-10d Java sources", graph.javaSources().size()));
-    context.output(PrintOutput.log("%-10d Packages", packages.size()));
+    context.output(PrintOutput.log("%-10d Packages", graph.packages().size()));
     context.output(PrintOutput.log("%-10d Dependencies", deps.size()));
     context.output(PrintOutput.log("%-10d External dependencies", graph.projectDeps().size()));
 

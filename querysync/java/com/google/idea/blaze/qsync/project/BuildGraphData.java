@@ -33,6 +33,7 @@ import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.query.PackageSet;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -59,7 +60,7 @@ public abstract class BuildGraphData {
   /** A set of all the targets that show up in java rules 'src' attributes */
   public abstract ImmutableSet<Label> javaSources();
   /** A set of all the BUILD files */
-  public abstract ImmutableSet<Path> packages();
+  public abstract PackageSet packages();
   /** A map from a file path to its target */
   abstract ImmutableMap<Path, Label> fileToTarget();
   /** From source target to the rule that builds it. If multiple one is picked. */
@@ -140,7 +141,7 @@ public abstract class BuildGraphData {
           .sourceOwner(ImmutableMap.of())
           .ruleDeps(ImmutableMap.of())
           .projectDeps(ImmutableSet.of())
-          .packages(ImmutableSet.of())
+          .packages(PackageSet.EMPTY)
           .build();
 
   /** Builder for {@link BuildGraphData}. */
@@ -194,7 +195,7 @@ public abstract class BuildGraphData {
 
     public abstract ImmutableSet.Builder<Label> androidTargetsBuilder();
 
-    public abstract Builder packages(Set<Path> value);
+    public abstract Builder packages(PackageSet value);
 
     public abstract BuildGraphData build();
   }

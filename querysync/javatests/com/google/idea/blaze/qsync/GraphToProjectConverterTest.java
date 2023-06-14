@@ -28,6 +28,7 @@ import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
+import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -44,12 +45,12 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testChooseFilePerPackage() {
-    ImmutableSet<Path> buildFiles =
-        ImmutableSet.of(
-            Path.of("java/com/test/BUILD"),
-            Path.of("java/com/test/nested/BUILD"),
-            Path.of("java/com/double/BUILD"),
-            Path.of("java/com/multiple/BUILD"));
+    PackageSet buildFiles =
+        PackageSet.of(
+            Path.of("java/com/test"),
+            Path.of("java/com/test/nested"),
+            Path.of("java/com/double"),
+            Path.of("java/com/multiple"));
     ImmutableSet<Path> files =
         ImmutableSet.of(
             Path.of("java/com/test/Class1.java"),
@@ -134,7 +135,7 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateRootSources_singleSource_atImportRoot() throws IOException {
-    ImmutableSet<Path> packages = ImmutableSet.of(Path.of("java/com/test/BUILD"));
+    PackageSet packages = PackageSet.of(Path.of("java/com/test"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(Path.of("java/com/test/Class1.java"), "com.test");
 
@@ -155,7 +156,7 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateRootSources_singleSource_belowImportRoot() throws IOException {
-    ImmutableSet<Path> packages = ImmutableSet.of(Path.of("java/com/test/BUILD"));
+    PackageSet packages = PackageSet.of(Path.of("java/com/test"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(Path.of("java/com/test/subpackage/Class1.java"), "com.test.subpackage");
 
@@ -176,7 +177,7 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateRootSources_multiSource_belowImportRoot() throws IOException {
-    ImmutableSet<Path> packages = ImmutableSet.of(Path.of("java/com/test/BUILD"));
+    PackageSet packages = PackageSet.of(Path.of("java/com/test"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
             Path.of("java/com/test/package1/Class1.java"), "com.test.package1",
@@ -199,8 +200,7 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateRootSources_multiRoots() throws IOException {
-    ImmutableSet<Path> packages =
-        ImmutableSet.of(Path.of("java/com/app/BUILD"), Path.of("java/com/lib/BUILD"));
+    PackageSet packages = PackageSet.of(Path.of("java/com/app"), Path.of("java/com/lib"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
             Path.of("java/com/app/AppClass.java"), "com.app",
@@ -225,8 +225,8 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateRootSources_multiSource_packageMismatch() throws IOException {
-    ImmutableSet<Path> packages =
-        ImmutableSet.of(Path.of("java/com/test/BUILD"), Path.of("java/com/test/package1/BUILD"));
+    PackageSet packages =
+        PackageSet.of(Path.of("java/com/test"), Path.of("java/com/test/package1"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
             Path.of("java/com/test/package2/Class1.java"), "com.test.package2",
@@ -252,9 +252,8 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateRootSources_multiSource_samePrefix() throws IOException {
-    ImmutableSet<Path> packages =
-        ImmutableSet.of(
-            Path.of("java/com/test/package1/BUILD"), Path.of("java/com/test/package2/BUILD"));
+    PackageSet packages =
+        PackageSet.of(Path.of("java/com/test/package1"), Path.of("java/com/test/package2"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
             Path.of("java/com/test/package2/Class1.java"), "com.test.package2",
@@ -277,8 +276,7 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateRootSources_multiSource_nextedPrefixCompatible() throws IOException {
-    ImmutableSet<Path> packages =
-        ImmutableSet.of(Path.of("java/com/test/BUILD"), Path.of("java/com/test/package/BUILD"));
+    PackageSet packages = PackageSet.of(Path.of("java/com/test"), Path.of("java/com/test/package"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
             Path.of("java/com/test/Class1.java"), "com.test",
@@ -301,8 +299,7 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateRootSources_multiSource_nestedPrefixIncompatible() throws IOException {
-    ImmutableSet<Path> packages =
-        ImmutableSet.of(Path.of("java/com/test/BUILD"), Path.of("java/com/test/package/BUILD"));
+    PackageSet packages = PackageSet.of(Path.of("java/com/test"), Path.of("java/com/test/package"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
             Path.of("java/com/test/Class1.java"), "com.test.odd",
@@ -328,8 +325,8 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateRootSources_multiSource_rootPrefix() throws IOException {
-    ImmutableSet<Path> packages =
-        ImmutableSet.of(Path.of("third_party/java/BUILD"), Path.of("third_party/javatests/BUILD"));
+    PackageSet packages =
+        PackageSet.of(Path.of("third_party/java"), Path.of("third_party/javatests"));
 
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
@@ -356,8 +353,8 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateRootSources_multiSource_repackagedSource() throws IOException {
-    ImmutableSet<Path> packages =
-        ImmutableSet.of(Path.of("java/com/test/BUILD"), Path.of("java/com/test/repackaged/BUILD"));
+    PackageSet packages =
+        PackageSet.of(Path.of("java/com/test"), Path.of("java/com/test/repackaged"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
             Path.of("java/com/test/repackaged/com/foo/Class1.java"), "com.foo",

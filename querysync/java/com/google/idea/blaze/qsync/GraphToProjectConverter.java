@@ -31,6 +31,7 @@ import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
+import com.google.idea.blaze.qsync.query.PackageSet;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -101,16 +102,16 @@ public class GraphToProjectConverter {
    * </pre>
    *
    * @param srcFiles all the files that should be included.
-   * @param buildFiles the BUILD files to create source roots for.
+   * @param packages the BUILD files to create source roots for.
    * @return the content roots in the following form : Content Root -> Source Root -> package
    *     prefix. A content root contains multiple source roots, each one with a package prefix.
    */
   @VisibleForTesting
   public Map<Path, Map<Path, String>> calculateRootSources(
-      Collection<Path> srcFiles, ImmutableSet<Path> buildFiles) throws IOException {
+      Collection<Path> srcFiles, PackageSet packages) throws IOException {
 
     // A map from package to the file chosen to represent it.
-    ImmutableList<Path> chosenFiles = chooseTopLevelFiles(srcFiles, buildFiles);
+    ImmutableList<Path> chosenFiles = chooseTopLevelFiles(srcFiles, packages);
 
     // A map from a directory to its prefix
     ImmutableMap<Path, String> prefixes = readPackages(chosenFiles);
@@ -159,9 +160,7 @@ public class GraphToProjectConverter {
 
   @VisibleForTesting
   protected static ImmutableList<Path> chooseTopLevelFiles(
-      Collection<Path> files, ImmutableSet<Path> buildFiles) {
-
-    Set<Path> packages = buildFiles.stream().map(Path::getParent).collect(Collectors.toSet());
+      Collection<Path> files, PackageSet packages) {
 
     // A map from directory to the candidate chosen to represent that directory
     Map<Path, Path> candidates =
@@ -178,7 +177,7 @@ public class GraphToProjectConverter {
         .collect(ImmutableList.toImmutableList());
   }
 
-  private static boolean isTopLevel(Set<Path> packages, Map<Path, Path> candidates, Path file) {
+  private static boolean isTopLevel(PackageSet packages, Map<Path, Path> candidates, Path file) {
     Path dir = relativeParentOf(file);
     while (dir != null) {
       Path existing = candidates.get(dir);
