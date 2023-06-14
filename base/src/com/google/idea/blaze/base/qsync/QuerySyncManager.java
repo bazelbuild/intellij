@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -87,7 +86,6 @@ public class QuerySyncManager {
     this.loader = new ProjectLoader(project);
   }
 
-  @VisibleForTesting
   @NonInjectable
   public QuerySyncManager(Project project, ProjectLoader loader) {
     this.project = project;
