@@ -1,3 +1,8 @@
+v2023.06.13
+===========
+* Move oldest supported Bazel version to 4.0.0
+* Internal cleanup
+
 v2023.05.30
 ===========
 * Internal cleanup
