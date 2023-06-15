@@ -15,24 +15,27 @@
  */
 package com.google.idea.blaze.qsync;
 
-import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 import static com.google.idea.blaze.qsync.query.QuerySummaryTestUtil.createProtoForPackages;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.truth.Expect;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.query.QuerySummaryTestUtil;
 import java.nio.file.Path;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class AffectedPackagesTest {
+
+  @Rule public final Expect expect = Expect.create();
 
   @Test
   public void testModifyBuildFile() {
@@ -51,10 +54,10 @@ public class AffectedPackagesTest {
             .build()
             .getAffectedPackages();
 
-    assertThat(affected.isEmpty()).isFalse();
-    assertThat(affected.isIncomplete()).isFalse();
-    assertThat(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package1"));
-    assertThat(affected.getDeletedPackages()).isEmpty();
+    expect.that(affected.isEmpty()).isFalse();
+    expect.that(affected.isIncomplete()).isFalse();
+    expect.that(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package1"));
+    expect.that(affected.getDeletedPackages()).isEmpty();
   }
 
   @Test
@@ -71,10 +74,10 @@ public class AffectedPackagesTest {
                     new WorkspaceFileChange(Operation.ADD, Path.of("my/build/package2/BUILD"))))
             .build()
             .getAffectedPackages();
-    assertThat(affected.isEmpty()).isFalse();
-    assertThat(affected.isIncomplete()).isFalse();
-    assertThat(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package2"));
-    assertThat(affected.getDeletedPackages()).isEmpty();
+    expect.that(affected.isEmpty()).isFalse();
+    expect.that(affected.isIncomplete()).isFalse();
+    expect.that(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package2"));
+    expect.that(affected.getDeletedPackages()).isEmpty();
   }
 
   @Test
@@ -93,11 +96,12 @@ public class AffectedPackagesTest {
             .build()
             .getAffectedPackages();
 
-    assertThat(affected.isEmpty()).isFalse();
-    assertThat(affected.isIncomplete()).isFalse();
-    assertThat(affected.getModifiedPackages())
+    expect.that(affected.isEmpty()).isFalse();
+    expect.that(affected.isIncomplete()).isFalse();
+    expect
+        .that(affected.getModifiedPackages())
         .containsExactly(Path.of("my/build/package1"), Path.of("my/build/package1/subpackage"));
-    assertThat(affected.getDeletedPackages()).isEmpty();
+    expect.that(affected.getDeletedPackages()).isEmpty();
   }
 
   @Test
@@ -117,10 +121,10 @@ public class AffectedPackagesTest {
             .build()
             .getAffectedPackages();
 
-    assertThat(affected.isEmpty()).isFalse();
-    assertThat(affected.isIncomplete()).isFalse();
-    assertThat(affected.getModifiedPackages()).isEmpty();
-    assertThat(affected.getDeletedPackages()).containsExactly(Path.of("my/build/package2"));
+    expect.that(affected.isEmpty()).isFalse();
+    expect.that(affected.isIncomplete()).isFalse();
+    expect.that(affected.getModifiedPackages()).isEmpty();
+    expect.that(affected.getDeletedPackages()).containsExactly(Path.of("my/build/package2"));
   }
 
   @Test
@@ -142,10 +146,11 @@ public class AffectedPackagesTest {
             .build()
             .getAffectedPackages();
 
-    assertThat(affected.isEmpty()).isFalse();
-    assertThat(affected.isIncomplete()).isFalse();
-    assertThat(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package1"));
-    assertThat(affected.getDeletedPackages())
+    expect.that(affected.isEmpty()).isFalse();
+    expect.that(affected.isIncomplete()).isFalse();
+    expect.that(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package1"));
+    expect
+        .that(affected.getDeletedPackages())
         .containsExactly(Path.of("my/build/package1/subpackage"));
   }
 
@@ -163,10 +168,10 @@ public class AffectedPackagesTest {
                     new WorkspaceFileChange(Operation.MODIFY, Path.of("my/build/package2/BUILD"))))
             .build()
             .getAffectedPackages();
-    assertThat(affected.isEmpty()).isTrue();
-    assertThat(affected.isIncomplete()).isTrue();
-    assertThat(affected.getModifiedPackages()).isEmpty();
-    assertThat(affected.getDeletedPackages()).isEmpty();
+    expect.that(affected.isEmpty()).isTrue();
+    expect.that(affected.isIncomplete()).isTrue();
+    expect.that(affected.getModifiedPackages()).isEmpty();
+    expect.that(affected.getDeletedPackages()).isEmpty();
   }
 
   @Test
@@ -184,10 +189,10 @@ public class AffectedPackagesTest {
                     new WorkspaceFileChange(Operation.MODIFY, Path.of("my/build/package2/BUILD"))))
             .build()
             .getAffectedPackages();
-    assertThat(affected.isEmpty()).isTrue();
-    assertThat(affected.isIncomplete()).isTrue();
-    assertThat(affected.getModifiedPackages()).isEmpty();
-    assertThat(affected.getDeletedPackages()).isEmpty();
+    expect.that(affected.isEmpty()).isTrue();
+    expect.that(affected.isIncomplete()).isTrue();
+    expect.that(affected.getModifiedPackages()).isEmpty();
+    expect.that(affected.getDeletedPackages()).isEmpty();
   }
 
   @Test
@@ -212,8 +217,9 @@ public class AffectedPackagesTest {
                         Operation.MODIFY, Path.of("my/build/package1/macro.bzl"))))
             .build()
             .getAffectedPackages();
-    assertThat(affected.isIncomplete()).isFalse();
-    assertThat(affected.getModifiedPackages())
+    expect.that(affected.isIncomplete()).isFalse();
+    expect
+        .that(affected.getModifiedPackages())
         .containsExactly(Path.of("my/build/package1"), Path.of("my/build/package2"));
   }
 
@@ -238,9 +244,9 @@ public class AffectedPackagesTest {
             .build()
             .getAffectedPackages();
     // we edited a bzl file outside of the project:
-    assertThat(affected.isIncomplete()).isTrue();
+    expect.that(affected.isIncomplete()).isTrue();
     // but we can know that it affected a BUILD file inside a project:
-    assertThat(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
+    expect.that(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
   }
 
   @Test
@@ -257,8 +263,8 @@ public class AffectedPackagesTest {
                         Operation.MODIFY, Path.of("my/build/package/NewClass.java"))))
             .build()
             .getAffectedPackages();
-    assertThat(affected.isIncomplete()).isFalse();
-    assertThat(affected.getModifiedPackages()).isEmpty();
+    expect.that(affected.isIncomplete()).isFalse();
+    expect.that(affected.getModifiedPackages()).isEmpty();
   }
 
   @Test
@@ -276,8 +282,8 @@ public class AffectedPackagesTest {
                         Operation.ADD, Path.of("my/build/package/NewClass.java"))))
             .build()
             .getAffectedPackages();
-    assertThat(affected.isIncomplete()).isFalse();
-    assertThat(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
+    expect.that(affected.isIncomplete()).isFalse();
+    expect.that(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
   }
 
   @Test
@@ -295,8 +301,8 @@ public class AffectedPackagesTest {
                         Operation.ADD, Path.of("my/build/package/lib/NewClass.java"))))
             .build()
             .getAffectedPackages();
-    assertThat(affected.isIncomplete()).isFalse();
-    assertThat(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
+    expect.that(affected.isIncomplete()).isFalse();
+    expect.that(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
   }
 
   @Test
@@ -312,9 +318,9 @@ public class AffectedPackagesTest {
                     new WorkspaceFileChange(Operation.ADD, Path.of("my/build/NewClass.java"))))
             .build()
             .getAffectedPackages();
-    assertThat(affected.isIncomplete()).isFalse();
-    assertThat(affected.getModifiedPackages()).isEmpty();
-    assertThat(affected.getUnownedSources()).containsExactly(Path.of("my/build/NewClass.java"));
+    expect.that(affected.isIncomplete()).isFalse();
+    expect.that(affected.getModifiedPackages()).isEmpty();
+    expect.that(affected.getUnownedSources()).containsExactly(Path.of("my/build/NewClass.java"));
   }
 
   @Test
@@ -332,9 +338,9 @@ public class AffectedPackagesTest {
                         Operation.ADD, Path.of("my/build/newpackage/NewClass.java"))))
             .build()
             .getAffectedPackages();
-    assertThat(affected.isIncomplete()).isFalse();
-    assertThat(affected.getModifiedPackages()).containsExactly(Path.of("my/build/newpackage"));
-    assertThat(affected.getUnownedSources()).isEmpty();
+    expect.that(affected.isIncomplete()).isFalse();
+    expect.that(affected.getModifiedPackages()).containsExactly(Path.of("my/build/newpackage"));
+    expect.that(affected.getUnownedSources()).isEmpty();
   }
 
   @Test
@@ -352,10 +358,11 @@ public class AffectedPackagesTest {
                         Operation.ADD, Path.of("my/build/package/lib/NewClass.java"))))
             .build()
             .getAffectedPackages();
-    assertThat(affected.isIncomplete()).isFalse();
-    assertThat(affected.getModifiedPackages())
+    expect.that(affected.isIncomplete()).isFalse();
+    expect
+        .that(affected.getModifiedPackages())
         .containsExactly(Path.of("my/build/package"), Path.of("my/build/package/lib"));
-    assertThat(affected.getUnownedSources()).isEmpty();
+    expect.that(affected.getUnownedSources()).isEmpty();
   }
 
   @Test
@@ -373,8 +380,8 @@ public class AffectedPackagesTest {
                         Operation.DELETE, Path.of("my/build/package/NewClass.java"))))
             .build()
             .getAffectedPackages();
-    assertThat(affected.isIncomplete()).isFalse();
-    assertThat(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
+    expect.that(affected.isIncomplete()).isFalse();
+    expect.that(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
   }
 
   @Test
@@ -392,10 +399,10 @@ public class AffectedPackagesTest {
                         Operation.DELETE, Path.of("my/build/package/NewClass.java"))))
             .build()
             .getAffectedPackages();
-    assertThat(affected.isIncomplete()).isFalse();
-    assertThat(affected.getModifiedPackages()).isEmpty();
-    assertThat(affected.getDeletedPackages()).containsExactly(Path.of("my/build/package"));
-    assertThat(affected.getUnownedSources()).isEmpty();
+    expect.that(affected.isIncomplete()).isFalse();
+    expect.that(affected.getModifiedPackages()).isEmpty();
+    expect.that(affected.getDeletedPackages()).containsExactly(Path.of("my/build/package"));
+    expect.that(affected.getUnownedSources()).isEmpty();
   }
 
   @Test
@@ -416,10 +423,10 @@ public class AffectedPackagesTest {
                         Operation.ADD, Path.of("my/build/package/lib/NewClass.java"))))
             .build()
             .getAffectedPackages();
-    assertThat(affected.isIncomplete()).isFalse();
-    assertThat(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
-    assertThat(affected.getDeletedPackages()).containsExactly(Path.of("my/build/package/lib"));
-    assertThat(affected.getUnownedSources()).isEmpty();
+    expect.that(affected.isIncomplete()).isFalse();
+    expect.that(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
+    expect.that(affected.getDeletedPackages()).containsExactly(Path.of("my/build/package/lib"));
+    expect.that(affected.getUnownedSources()).isEmpty();
   }
 
   @Test
@@ -437,10 +444,11 @@ public class AffectedPackagesTest {
                         Operation.ADD, Path.of("my/build/package/NewClass.java"))))
             .build()
             .getAffectedPackages();
-    assertThat(affected.isIncomplete()).isFalse();
-    assertThat(affected.getModifiedPackages()).isEmpty();
-    assertThat(affected.getDeletedPackages()).containsExactly(Path.of("my/build/package"));
-    assertThat(affected.getUnownedSources())
+    expect.that(affected.isIncomplete()).isFalse();
+    expect.that(affected.getModifiedPackages()).isEmpty();
+    expect.that(affected.getDeletedPackages()).containsExactly(Path.of("my/build/package"));
+    expect
+        .that(affected.getUnownedSources())
         .containsExactly(Path.of("my/build/package/NewClass.java"));
   }
 }
