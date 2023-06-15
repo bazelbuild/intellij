@@ -10,7 +10,10 @@ proto_library(
 
 java_proto_library(
     name = "project_java_proto",
-    visibility = ["//querysync:__subpackages__"],
+    visibility = [
+        "//base:__subpackages__",
+        "//querysync:__subpackages__",
+    ],
     deps = [":project_proto"],
 )
 

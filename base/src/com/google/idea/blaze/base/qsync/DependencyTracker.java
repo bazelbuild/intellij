@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.qsync;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.util.stream.Collectors.joining;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
@@ -222,7 +223,8 @@ public class DependencyTracker {
     return buildTargets.build();
   }
 
-  private static Optional<RequestedTargets> computeRequestedTargets(
+  @VisibleForTesting
+  public static Optional<RequestedTargets> computeRequestedTargets(
       BlazeContext context, BlazeProjectSnapshot snapshot, List<Path> workspaceRelativePaths) {
     ImmutableSet<Label> projectTargets =
         getProjectTargets(context, snapshot, workspaceRelativePaths);

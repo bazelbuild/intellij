@@ -15,21 +15,32 @@
  */
 package com.google.idea.blaze.qsync.testdata;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static java.util.Arrays.stream;
+
+import com.google.common.collect.ImmutableList;
 import com.google.devtools.build.runtime.RunfilesPaths;
 import java.nio.file.Path;
 import java.util.Locale;
 
 public enum TestData {
-  ANDROID_AIDL_SOURCE_QUERY,
-  ANDROID_LIB_QUERY,
-  JAVA_EXPORTED_DEP_QUERY,
-  JAVA_LIBRARY_EXTERNAL_DEP_QUERY,
-  JAVA_LIBRARY_INTERNAL_DEP_QUERY,
-  JAVA_LIBRARY_MULTI_TARGETS,
-  JAVA_LIBRARY_NO_DEPS_QUERY,
-  JAVA_LIBRARY_PROTO_DEP_QUERY,
-  JAVA_LIBRARY_TRANSITIVE_DEP_QUERY,
-  BUILDINCLUDES_QUERY;
+  ANDROID_AIDL_SOURCE_QUERY("aidl"),
+  ANDROID_LIB_QUERY("android"),
+  JAVA_EXPORTED_DEP_QUERY("exports"),
+  JAVA_LIBRARY_EXTERNAL_DEP_QUERY("externaldep"),
+  JAVA_LIBRARY_INTERNAL_DEP_QUERY("internaldep", "nodeps"),
+  JAVA_LIBRARY_MULTI_TARGETS("multitarget"),
+  JAVA_LIBRARY_NESTED_PACKAGE("nested"),
+  JAVA_LIBRARY_NO_DEPS_QUERY("nodeps"),
+  JAVA_LIBRARY_PROTO_DEP_QUERY("protodep"),
+  JAVA_LIBRARY_TRANSITIVE_DEP_QUERY("transitivedep", "externaldep"),
+  BUILDINCLUDES_QUERY("buildincludes");
+
+  public final ImmutableList<Path> srcPaths;
+
+  TestData(String... paths) {
+    this.srcPaths = stream(paths).map(Path::of).collect(toImmutableList());
+  }
 
   public static final Path ROOT =
       Path.of(
@@ -39,5 +50,9 @@ public enum TestData {
 
   public static Path getPathFor(TestData name) {
     return RunfilesPaths.resolve(ROOT).resolve(name.toString().toLowerCase(Locale.ROOT));
+  }
+
+  public static ImmutableList<Path> getRelativeSourcePathsFor(TestData name) {
+    return name.srcPaths.stream().map(ROOT::resolve).collect(toImmutableList());
   }
 }

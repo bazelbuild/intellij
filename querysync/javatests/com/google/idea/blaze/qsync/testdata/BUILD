@@ -1,8 +1,9 @@
 load(":scope_util.bzl", "scopeForAndroidPackage", "scopeForJavaPackage")
 
-package(
-    default_visibility = ["//querysync/javatests/com/google/idea/blaze/qsync:__subpackages__"],
-)
+package(default_visibility = [
+    "//base:__subpackages__",
+    "//querysync/javatests/com/google/idea/blaze/qsync:__subpackages__",
+])
 
 genquery(
     name = "java_library_no_deps_query",
@@ -56,6 +57,17 @@ genquery(
 )
 
 genquery(
+    name = "java_library_nested_package",
+    expression = " + ".join([
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata/nested:*",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata/nested/inner:*",
+    ]),
+    opts = ["--output=streamed_proto"],
+    scope = scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/nested") +
+            scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/nested/inner"),
+)
+
+genquery(
     name = "android_lib_query",
     expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/android:*",
     opts = ["--output=streamed_proto"],
@@ -97,11 +109,13 @@ java_library(
         ":java_library_external_dep_query",
         ":java_library_internal_dep_query",
         ":java_library_multi_targets",
+        ":java_library_nested_package",
         ":java_library_no_deps_query",
         ":java_library_proto_dep_query",
         ":java_library_transitive_dep_query",
     ],
     deps = [
         "//java/com/google/devtools/build/runtime:runfiles",
+        "@com_google_guava_guava//jar",
     ],
 )

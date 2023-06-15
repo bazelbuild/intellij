@@ -508,6 +508,8 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
+        "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//shared",
         "//testing:lib",
         "@com_google_guava_guava//jar",

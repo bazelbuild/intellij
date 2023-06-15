@@ -46,6 +46,10 @@ public class Label {
     return of(String.format("//%s:%s", packagePath, name));
   }
 
+  public static Label fromPackageAndName(Path packagePath, String name) {
+    return fromPackageAndName(packagePath, Path.of(name));
+  }
+
   public static ImmutableList<Label> toLabelList(List<String> labels) {
     return labels.stream().map(Label::of).collect(toImmutableList());
   }
