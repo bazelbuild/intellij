@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.command;
 
+import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.intellij.openapi.util.SystemInfo;
 
@@ -23,6 +24,8 @@ import com.intellij.openapi.util.SystemInfo;
  * invocations on Mac and Linux
  */
 public class BlazeCommandRunnerExperiments {
+  public static final BoolExperiment USE_SINGLEJAR_FOR_DEBUGGING =
+      new BoolExperiment("debug.localtests.singlejar.enable", true);
   private static final FeatureRolloutExperiment useBlazeCommandRunnerForTestsMac =
       new FeatureRolloutExperiment("blaze.commandrunner.localtests.mac.enable");
 
