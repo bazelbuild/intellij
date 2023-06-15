@@ -177,10 +177,11 @@ public class QuerySyncProject {
   }
 
   public void build(BlazeContext context, List<Path> wps) throws IOException, BuildException {
-    getDependencyTracker().buildDependenciesForFile(context, wps);
-    BlazeProjectSnapshot newSnapshot =
-        artifactTracker.updateSnapshot(snapshotHolder.getCurrent().orElseThrow());
-    onNewSnapshot(context, newSnapshot);
+    if (getDependencyTracker().buildDependenciesForFile(context, wps)) {
+      BlazeProjectSnapshot newSnapshot =
+          artifactTracker.updateSnapshot(snapshotHolder.getCurrent().orElseThrow());
+      onNewSnapshot(context, newSnapshot);
+    }
   }
 
   public DependencyTracker getDependencyTracker() {
