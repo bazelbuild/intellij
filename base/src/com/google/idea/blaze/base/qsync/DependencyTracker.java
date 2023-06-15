@@ -108,7 +108,7 @@ public class DependencyTracker {
    * Builds the external dependencies of the given files, putting the resultant libraries in the
    * shared library directory so that they are picked up by the IDE.
    */
-  public void buildDependenciesForFile(BlazeContext context, List<Path> workspaceRelativePaths)
+  public boolean buildDependenciesForFile(BlazeContext context, List<Path> workspaceRelativePaths)
       throws IOException, BuildException {
     workspaceRelativePaths.forEach(path -> Preconditions.checkState(!path.isAbsolute(), path));
 
@@ -117,11 +117,12 @@ public class DependencyTracker {
     Optional<RequestedTargets> maybeRequestedTargets =
         computeRequestedTargets(context, snapshot, workspaceRelativePaths);
     if (maybeRequestedTargets.isEmpty()) {
-      return;
+      return false;
     }
 
     RequestedTargets requestedTargets = maybeRequestedTargets.get();
     buildDependencies(context, snapshot, requestedTargets);
+    return true;
   }
 
   /**
