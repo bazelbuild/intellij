@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.intellij.openapi.diagnostic.Logger;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
@@ -36,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 /** Implementation of {@link BlazeProjectData} specific to querysync. */
 public class QuerySyncProjectData implements BlazeProjectData {
+
+  private static final Logger logger = Logger.getInstance(QuerySyncProjectData.class);
 
   private final WorkspacePathResolver workspacePathResolver;
   private final Optional<BlazeProjectSnapshot> blazeProject;
@@ -116,7 +119,23 @@ public class QuerySyncProjectData implements BlazeProjectData {
 
   @Override
   public BlazeVersionData getBlazeVersionData() {
-    return null;
+    // TODO(mathewi) Investigate uses of this, and remove them if necessary. BlazeVersionData
+    //  assumes that the base VCS revision is a decimal integer, which may not be true.
+    logger.warn("Usage of legacy getBlazeVersionData");
+    BlazeVersionData.Builder data = BlazeVersionData.builder();
+    String baseRev =
+        blazeProject
+            .flatMap(p -> p.queryData().vcsState())
+            .map(q -> q.upstreamRevision)
+            .orElse(null);
+    if (baseRev != null) {
+      try {
+        data.setClientCl(Long.parseLong(baseRev));
+      } catch (NumberFormatException e) {
+        logger.warn(e);
+      }
+    }
+    return data.build();
   }
 
   @Override
