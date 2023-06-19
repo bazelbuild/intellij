@@ -105,6 +105,38 @@ public class AffectedPackagesTest {
   }
 
   @Test
+  public void testAddBuildFile_andDeleteParent() {
+    QuerySummary query =
+        QuerySummary.create(
+            createProtoForPackages(
+                "//my/build/package1:rule1", "//my/build/package1/subpackage:subrule"));
+
+    AffectedPackages affected =
+        AffectedPackagesCalculator.builder()
+            .context(NOOP_CONTEXT)
+            .lastQuery(query)
+            .projectIncludes(ImmutableSet.of(Path.of("my/build")))
+            .changedFiles(
+                ImmutableSet.of(
+                    new WorkspaceFileChange(
+                        Operation.DELETE, Path.of("my/build/package1/subpackage/BUILD")),
+                    new WorkspaceFileChange(
+                        Operation.ADD, Path.of("my/build/package1/subpackage/nested/BUILD"))))
+            .build()
+            .getAffectedPackages();
+
+    expect.that(affected.isEmpty()).isFalse();
+    expect.that(affected.isIncomplete()).isFalse();
+    expect
+        .that(affected.getModifiedPackages())
+        .containsExactly(
+            Path.of("my/build/package1"), Path.of("my/build/package1/subpackage/nested"));
+    expect
+        .that(affected.getDeletedPackages())
+        .containsExactly(Path.of("my/build/package1/subpackage"));
+  }
+
+  @Test
   public void testDeleteBuildFile_siblingPackage() {
     QuerySummary query =
         QuerySummary.create(
@@ -152,6 +184,39 @@ public class AffectedPackagesTest {
     expect
         .that(affected.getDeletedPackages())
         .containsExactly(Path.of("my/build/package1/subpackage"));
+  }
+
+  @Test
+  public void testDeleteBuildFile_childPackage_nested() {
+    QuerySummary query =
+        QuerySummary.create(
+            createProtoForPackages(
+                "//my/build/package1:rule1",
+                "//my/build/package1/subpackage:subrule",
+                "//my/build/package1/subpackage/nested:nestedrule"));
+
+    AffectedPackages affected =
+        AffectedPackagesCalculator.builder()
+            .context(NOOP_CONTEXT)
+            .lastQuery(query)
+            .projectIncludes(ImmutableSet.of(Path.of("my/build")))
+            .changedFiles(
+                ImmutableSet.of(
+                    new WorkspaceFileChange(
+                        Operation.DELETE, Path.of("my/build/package1/subpackage/BUILD")),
+                    new WorkspaceFileChange(
+                        Operation.DELETE, Path.of("my/build/package1/subpackage/nested/BUILD"))))
+            .build()
+            .getAffectedPackages();
+
+    expect.that(affected.isEmpty()).isFalse();
+    expect.that(affected.isIncomplete()).isFalse();
+    expect.that(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package1"));
+    expect
+        .that(affected.getDeletedPackages())
+        .containsExactly(
+            Path.of("my/build/package1/subpackage"),
+            Path.of("my/build/package1/subpackage/nested"));
   }
 
   @Test
