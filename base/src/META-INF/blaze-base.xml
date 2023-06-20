@@ -122,6 +122,8 @@
     <action id="Blaze.BuildDependencies"
         class="com.google.idea.blaze.base.qsync.action.BuildDependenciesAction"
         text="Build dependencies">
+      <keyboard-shortcut first-keystroke="ctrl shift D" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta shift D" keymap="macOS System Shortcuts" replace-all="true"/>
     </action>
 
     <group id="Blaze.MainMenuActionGroup" class="com.google.idea.blaze.base.actions.BlazeMenuGroup">
