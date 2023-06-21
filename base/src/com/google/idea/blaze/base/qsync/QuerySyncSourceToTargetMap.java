@@ -45,10 +45,11 @@ public class QuerySyncSourceToTargetMap implements SourceToTargetMap {
   public ImmutableList<Label> getTargetsToBuildForSourceFile(File file) {
     Path rel = workspaceRoot.relativize(file.toPath());
 
-    BlazeProjectSnapshot snapshot =
-        blazeProject
-            .getCurrent()
-            .orElseThrow(() -> new IllegalStateException("Sync is not yet complete"));
+    BlazeProjectSnapshot snapshot = blazeProject.getCurrent().orElse(null);
+    if (snapshot == null) {
+      logger.warn("getTargetsToBuildForSourceFile call before sync complete");
+      return ImmutableList.of();
+    }
 
     Set<Label> buildTargets = new HashSet<>();
     // TODO(mathewi) this returns a single owner of the source file, whereas the API we're
