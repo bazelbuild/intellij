@@ -483,6 +483,28 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
+  public void testCalculateAndroidSourcePackages_pathPrefixOfAnotherPath() {
+    GraphToProjectConverter converter =
+        new GraphToProjectConverter(
+            EMPTY_PACKAGE_READER,
+            NOOP_CONTEXT,
+            ProjectDefinition.create(ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of()));
+
+    ImmutableList<Path> androidSourceFiles =
+        ImmutableList.of(
+            Path.of("project/MainActivity.java"),
+            Path.of("project/modules/test/com/example/bar/Bar.java"));
+    ImmutableMap<Path, Map<Path, String>> rootToPrefix =
+        ImmutableMap.of(
+            Path.of("project"),
+            ImmutableMap.of(Path.of(""), "com.root.project", Path.of("modules", "test"), ""));
+
+    ImmutableSet<String> androidResourcePackages =
+        converter.computeAndroidSourcePackages(androidSourceFiles, rootToPrefix);
+    assertThat(androidResourcePackages).containsExactly("com.root.project", "com.example.bar");
+  }
+
+  @Test
   public void testConvertProject_emptyProject() throws IOException {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(

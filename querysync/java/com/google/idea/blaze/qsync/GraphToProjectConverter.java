@@ -16,6 +16,8 @@
 package com.google.idea.blaze.qsync;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static java.util.Comparator.comparingInt;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -35,8 +37,10 @@ import com.google.idea.blaze.qsync.query.PackageSet;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -361,14 +365,32 @@ public class GraphToProjectConverter {
   public ImmutableSet<String> computeAndroidSourcePackages(
       List<Path> androidSourceFiles, Map<Path, Map<Path, String>> rootToPrefix) {
     ImmutableSet.Builder<String> androidSourcePackages = ImmutableSet.builder();
+
+    // Map entries are sorted by path length to ensure that, if the map contains keys k1 and k2,
+    // where k1 is a prefix of k2, then k2 is checked before k1. We check by string length to ensure
+    // the empty path is checked last.
+    ImmutableMap<Path, ImmutableList<Entry<Path, String>>> sortedRootToPrefix =
+        rootToPrefix.entrySet().stream()
+            .map(
+                entry -> {
+                  Map<Path, String> sourceDirs = entry.getValue();
+                  ImmutableList<Entry<Path, String>> sortedEntries =
+                      ImmutableList.sortedCopyOf(
+                          Collections.reverseOrder(
+                              comparingInt(e -> e.getKey().toString().length())),
+                          sourceDirs.entrySet());
+                  return new SimpleEntry<>(entry.getKey(), sortedEntries);
+                })
+            .collect(toImmutableMap(Entry::getKey, Entry::getValue));
+
     for (Path androidSourceFile : androidSourceFiles) {
       boolean found = false;
-      for (Entry<Path, Map<Path, String>> root : rootToPrefix.entrySet()) {
+      for (Entry<Path, ImmutableList<Entry<Path, String>>> root : sortedRootToPrefix.entrySet()) {
         if (androidSourceFile.startsWith(root.getKey())) {
           String inRoot =
               androidSourceFile.toString().substring(root.getKey().toString().length() + 1);
-          Map<Path, String> sourceDirs = root.getValue();
-          for (Entry<Path, String> prefixes : sourceDirs.entrySet()) {
+          ImmutableList<Entry<Path, String>> sourceDirs = root.getValue();
+          for (Entry<Path, String> prefixes : sourceDirs) {
             if (inRoot.startsWith(prefixes.getKey().toString())) {
               found = true;
               String inSource = inRoot.substring(prefixes.getKey().toString().length());
