@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.BlazeCommandRunnerExperiments;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolUtils;
@@ -134,6 +135,9 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
       commandBuilder
           .add(getEntryPointScript())
           .add(debugPortFlag(false, getState(getConfiguration()).getDebugPortState().port));
+      if (BlazeCommandRunnerExperiments.USE_SINGLEJAR_FOR_DEBUGGING.getValue()) {
+        commandBuilder.add("--singlejar");
+      }
       return getScopedProcessHandler(project, commandBuilder.build(), workspaceRoot);
     }
 
