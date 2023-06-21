@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.common.base.Suppliers;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.common.util.MorePlatformUtils;
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.function.Supplier;
 
@@ -28,11 +29,13 @@ public class QuerySync {
   // Only read the initial value, as the sync mode should not change over a single run of the IDE.
   private static final Supplier<Boolean> ENABLED =
       Suppliers.memoize(new BoolExperiment("use.query.sync", false)::getValue);
+  private static final Supplier<Boolean> ENABLED_FOR_ASWB =
+      Suppliers.memoize(new BoolExperiment("aswb.use.query.sync", false)::getValue);
 
   private QuerySync() {}
 
   public static boolean isEnabled() {
-    return ENABLED.get();
+    return ENABLED.get() || (MorePlatformUtils.isAndroidStudio() && ENABLED_FOR_ASWB.get());
   }
 
   public static void assertNotEnabled(String reason) {
