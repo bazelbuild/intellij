@@ -64,22 +64,75 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
     BuildSystem.BuildInvoker invoker =
         Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
 
-    Optional<XcodeAndSdkVersions> xcodeAndSdkVersions = XcodeCompilerSettingsProviderImpl.queryXcodeAndSdkVersions(context, invoker,
+    Optional<XcodeAndSdkVersions> xcodeAndSdkVersions = XcodeCompilerSettingsProviderImpl.queryXcodeAndSdkVersions(
+        context, invoker,
         workspaceRoot);
 
-    if (xcodeAndSdkVersions.isPresent()) {
-      XcodeAndSdkVersions versions = xcodeAndSdkVersions.get();
-      String xcodeVersion = versions.xcodeVersion;
-      String macosSdkVersion = versions.sdkVersion;
-      String developerDir = XcodeCompilerSettingsProviderImpl.queryDeveloperDir(context, invoker, workspaceRoot, xcodeVersion);
-      String sdkVersionString = String.format("MacOSX%s.sdk", macosSdkVersion);
-      return Optional.of(XcodeCompilerSettings.create(
-          Path.of(developerDir),
-          Path.of(developerDir, "Platforms", "MacOSX.platform", "Developer", "SDKs",
-              sdkVersionString)
-      ));
+    if (!xcodeAndSdkVersions.isPresent()) {
+      return Optional.empty();
     }
-    return Optional.empty();
+    XcodeAndSdkVersions versions = xcodeAndSdkVersions.get();
+
+    String macosSdkVersion = versions.sdkVersion;
+    Optional<XcodeCompilerSettings> settings = Optional.empty();
+    switch (versions.xcodeKind) {
+      case XCODE_APP: {
+        if (!versions.xcodeVersion.isPresent()) {
+          throw new XcodeCompilerSettingsException(IssueKind.QUERY_DEVELOPER_DIR,
+              "Bazel thinks you're using a full Xcode installation, but was unable to parse the version for it. Please make sure your Xcode installation is correct, or switch to command line tools.");
+        }
+        String xcodeVersion = versions.xcodeVersion.get();
+        String developerDir = XcodeCompilerSettingsProviderImpl.queryDeveloperDir(context, invoker,
+            workspaceRoot, xcodeVersion);
+        String sdkVersionString = String.format("MacOSX%s.sdk", macosSdkVersion);
+        settings = Optional.of(XcodeCompilerSettings.create(
+            Path.of(developerDir),
+            Path.of(developerDir, "Platforms", "MacOSX.platform", "Developer", "SDKs",
+                sdkVersionString)
+        ));
+        break;
+      }
+      case COMMAND_LINE_TOOLS: {
+        String developerDirRaw = "/Library/Developer/CommandLineTools";
+        Path developerDir = Path.of(developerDirRaw);
+        // Some users might not have command line tools installed.
+        // This should never trigger as Bazel requires that at least one of Xcode or CLTs are in the system to work.
+        // However, *if* it triggers (e.g. because Bazel changes this requirement),
+        // we want to handle the case.
+        if (!developerDir.toFile().exists()) {
+          return Optional.empty();
+        }
+        settings = Optional.of(XcodeCompilerSettings.create(
+            developerDir,
+            Path.of(developerDirRaw, "SDKs", "MacOSX.sdk")
+        ));
+        if (!XcodeCompilerSettingsProviderImpl.commandLineToolsHaveValidClang(settings.get())) {
+          throw new XcodeCompilerSettingsException(IssueKind.QUERY_DEVELOPER_DIR,
+              "Your CommandLineTools installation does not have a usable clang. This is often caused by a corrupted macOS upgrade. Please reinstall CommandLineTools or install Xcode");
+        }
+        break;
+      }
+    }
+
+    if (!settings.isPresent()) {
+      throw new XcodeCompilerSettingsException(IssueKind.QUERY_DEVELOPER_DIR,
+          "Unable to classify your CC toolchain as either an Xcode app or a CommandLineTools installation. Please check that the installation is correct");
+    }
+
+    return settings;
+  }
+
+  // Sometimes, a macOS upgrade can corrupt the installation of CommandLineTools.
+  // We detect that we can at least run `clang --version`.
+  private static boolean commandLineToolsHaveValidClang(XcodeCompilerSettings xcodeCompilerSettings) {
+    Path clang = Path.of(xcodeCompilerSettings.getDeveloperDir().toString(), "usr", "bin", "clang");
+    if (!clang.toFile().exists()) {
+      return false;
+    }
+
+    // We try to run clang --version to know that it's a working binary.
+    int result = ExternalTask.builder().args(clang.toString(), "--version").build().run();
+    return result == 0;
   }
 
   static class CaptureLineProcessor implements LineProcessor {
@@ -203,25 +256,45 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
           throw new XcodeCompilerSettingsException(IssueKind.FETCH_XCODE_VERSION,
               String.format("Error parsing Xcode versions from cquery output: %s", output));
         }
+        // If you only have CommandLineTools installed),
+        // the query will fail to fetch an xcode version.
+        // But it will still return an SDK version.
+        if (versions[0].equals("None")) {
+          return Optional.of(XcodeAndSdkVersions.forCommandLineTools(versions[1]));
+        }
         // Returning the first occurrence here is fine
         // because the target we query is an alias for the current config anyway.
-        return Optional.of(new XcodeAndSdkVersions(versions[0], versions[1]));
+        return Optional.of(XcodeAndSdkVersions.forXcodeApplication(versions[0], versions[1]));
       }
     }
     throw new XcodeCompilerSettingsException(IssueKind.FETCH_XCODE_VERSION,
         String.format("Could not get a usable Xcode version from cquery output: %s", output));
   }
 
+  private enum XcodeInstallationKind {
+    XCODE_APP,
+    COMMAND_LINE_TOOLS,
+  }
 
   // TODO: Replace with Java records when we can target a newer version.
   private static class XcodeAndSdkVersions {
 
-    String xcodeVersion;
+    XcodeInstallationKind xcodeKind;
+    Optional<String> xcodeVersion;
     String sdkVersion;
 
-    public XcodeAndSdkVersions(String xcodeVersion, String sdkVersion) {
+    private XcodeAndSdkVersions(XcodeInstallationKind xcodeKind, Optional<String> xcodeVersion, String sdkVersion) {
+      this.xcodeKind = xcodeKind;
       this.xcodeVersion = xcodeVersion;
       this.sdkVersion = sdkVersion;
+    }
+
+    public static XcodeAndSdkVersions forXcodeApplication(String xcodeVersion, String sdkVersion) {
+      return new XcodeAndSdkVersions(XcodeInstallationKind.XCODE_APP, Optional.of(xcodeVersion), sdkVersion);
+    }
+
+    public static XcodeAndSdkVersions forCommandLineTools(String sdkVersion) {
+      return new XcodeAndSdkVersions(XcodeInstallationKind.COMMAND_LINE_TOOLS, Optional.empty(), sdkVersion);
     }
   }
 }

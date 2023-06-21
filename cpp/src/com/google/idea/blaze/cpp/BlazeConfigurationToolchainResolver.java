@@ -377,7 +377,9 @@ public final class BlazeConfigurationToolchainResolver {
           try {
             return XcodeCompilerSettingsProvider.getInstance(project).fromContext(context, project);
           } catch (XcodeCompilerSettingsException e) {
-            IssueOutput.warn(String.format("There was an error fetching the Xcode information from the build: %s\n\nSome C++ functionality may not be available.", e.toString()));
+            IssueOutput.warn(
+                String.format("There was an error fetching the Xcode information from the build: %s\n\nSome C++ functionality may not be available.", e.toString())
+            ).submit(childContext);
             return Optional.empty();
           }
         });
