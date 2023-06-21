@@ -55,23 +55,34 @@ public class Label {
   }
 
   public Label(String label) {
-    // If this is causing problems, it's probably time to support explicit workspace names here.
-    // Users of getPackage() may need to be updated to check the workspace too:
-    Preconditions.checkArgument(
-        !label.startsWith("@"), "Explicit workspace names not supported: %s", label);
-    Preconditions.checkArgument(label.startsWith("//"), label);
-    Preconditions.checkArgument(label.contains(":"), label);
+    if (label.startsWith("@")) {
+      int doubleSlash = label.indexOf("//");
+      Preconditions.checkArgument(doubleSlash > 0, label);
+      int colon = label.indexOf(":");
+      Preconditions.checkArgument(colon > doubleSlash, label);
+    } else {
+      Preconditions.checkArgument(label.startsWith("//"), label);
+      Preconditions.checkArgument(label.contains(":"), label);
+    }
     this.label = label;
   }
 
   public Path getPackage() {
     // this should be safe thanks to the asserts in the constructor.
-    return Path.of(label.substring(2, label.indexOf(":")));
+    return Path.of(label.substring(label.indexOf("//") + 2, label.indexOf(":")));
   }
 
   public Path getName() {
     // this should be safe thanks to the asserts in the constructor.
     return Path.of(label.substring(label.indexOf(':') + 1));
+  }
+
+  public String getWorkspaceName() {
+    if (!label.startsWith("@")) {
+      return "";
+    } else {
+      return label.substring(1, label.indexOf("//"));
+    }
   }
 
   /** When this label refers to a source file, returns the workspace relative path to that file. */
