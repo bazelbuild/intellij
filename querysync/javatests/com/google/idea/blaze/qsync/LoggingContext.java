@@ -15,15 +15,18 @@
  */
 package com.google.idea.blaze.qsync;
 
-import com.google.common.flogger.GoogleLogger;
+import com.google.common.flogger.FluentLogger;
 import com.google.idea.blaze.common.Output;
+import com.google.idea.blaze.common.PrintOutput;
 
 public class LoggingContext extends NoopContext {
 
-  private static final GoogleLogger logger = GoogleLogger.forEnclosingClass();
+  private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
   @Override
   public <T extends Output> void output(T output) {
-    logger.atInfo().log(output);
+    if (output instanceof PrintOutput) {
+      logger.atInfo().log("%s", output);
+    }
   }
 }

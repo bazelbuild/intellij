@@ -19,8 +19,9 @@ java_library(
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//shared",
         "//shared:vcs",
-        "//third_party/java/flogger",
         "@com_google_guava_guava//jar",
+        "@flogger//jar",
+        "@flogger_system_backend//jar",
     ],
 )
 
