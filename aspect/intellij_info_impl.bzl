@@ -636,7 +636,7 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     package_manifest = None
     if java_sources:
         package_manifest = build_java_package_manifest(ctx, target, java_sources, ".java-manifest")
-        ide_info_files += [package_manifest]
+        ide_info_files.append(package_manifest)
 
     filtered_gen_jar = None
     if java_sources and (gen_java_sources or srcjars):
@@ -676,7 +676,7 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     )
 
     ide_info["java_ide_info"] = java_info
-    ide_info_files += [ide_info_file]
+    ide_info_files.append(ide_info_file)
     update_sync_output_groups(output_groups, "intellij-info-java", depset(ide_info_files))
     update_sync_output_groups(output_groups, "intellij-compile-java", depset(compile_files))
     update_sync_output_groups(output_groups, "intellij-resolve-java", depset(resolve_files))
@@ -892,7 +892,7 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
     )
 
     if android.manifest and not android.manifest.is_source:
-        resolve_files += [android.manifest]
+        resolve_files.append(android.manifest)
 
     # b/176209293: expose resource jar to make sure empty library
     # knows they are remote output artifact
@@ -1217,6 +1217,6 @@ def make_intellij_info_aspect(aspect_impl, semantics):
         attr_aspects = attr_aspects,
         attrs = attrs,
         fragments = ["cpp"],
-        required_aspect_providers = [[JavaInfo], [CcInfo], ["dart"]] + semantics.extra_required_aspect_providers,
+        required_aspect_providers = [[JavaInfo], [CcInfo]] + semantics.extra_required_aspect_providers,
         implementation = aspect_impl,
     )
