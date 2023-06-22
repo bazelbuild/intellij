@@ -1,11 +1,11 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.run.runner;
 
 import com.android.ddmlib.IDevice;
+import com.android.tools.idea.execution.common.DeployOptions;
 import com.android.tools.idea.execution.common.debug.AndroidDebugger;
 import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.run.ApplicationIdProvider;
@@ -44,19 +45,17 @@ public interface BlazeAndroidRunContext {
 
   ApplicationIdProvider getApplicationIdProvider() throws ExecutionException;
 
-  BlazeLaunchTasksProvider getLaunchTasksProvider(LaunchOptions.Builder launchOptionsBuilder)
+  BlazeLaunchTasksProvider getLaunchTasksProvider(LaunchOptions launchOptions)
       throws ExecutionException;
 
   /** Returns the tasks to deploy the application. */
-  ImmutableList<BlazeLaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
+  ImmutableList<BlazeLaunchTask> getDeployTasks(IDevice device, DeployOptions deployOptions)
       throws ExecutionException;
 
   /** Returns the task to launch the application. */
   @Nullable
   BlazeLaunchTask getApplicationLaunchTask(
-      LaunchOptions launchOptions,
-      @Nullable Integer userId,
-      @NotNull String contributorsAmStartOptions)
+      boolean isDebug, @Nullable Integer userId, @NotNull String contributorsAmStartOptions)
       throws ExecutionException;
 
   /** Returns the task to connect the debugger. */
