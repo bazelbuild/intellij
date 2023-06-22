@@ -7,6 +7,7 @@ licenses(["notice"])
 java_library(
     name = "v222",
     srcs = ["com/google/idea/sdkcompat/refactoring/rename/DelegatingRenamePsiElementProcessorBase.java"] + glob([
+        "com/google/idea/sdkcompat/cpp/**",
         "com/google/idea/sdkcompat/editor/**",
         "com/google/idea/sdkcompat/general/**",
         "com/google/idea/sdkcompat/fig/**",
@@ -35,6 +36,6 @@ java_library(
     deps = [
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:plugin_api",
-        "//third_party/scala",
+        "//third_party/scala",  # unuseddeps: keep
     ],
 )

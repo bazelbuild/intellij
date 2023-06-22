@@ -17,9 +17,13 @@ java_library(
         "com/google/idea/sdkcompat/vcs/**",
     ]) + select_for_ide(
         android_studio = glob([
+            "com/google/idea/sdkcompat/cpp/**",
             "com/google/idea/sdkcompat/java/**",
             "com/google/idea/sdkcompat/kotlin/**",
         ]) + ["com/google/idea/sdkcompat/refactoring/safedelete/JavaSafeDeleteProcessorCompat.java"],
+        clion = glob([
+            "com/google/idea/sdkcompat/cpp/**",
+        ]),
         intellij = glob([
             "com/google/idea/sdkcompat/java/**",
             "com/google/idea/sdkcompat/scala/**",
@@ -35,6 +39,6 @@ java_library(
     deps = [
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:plugin_api",
-        "//third_party/scala",
+        "//third_party/scala",  # unuseddeps: keep
     ],
 )

@@ -42,6 +42,7 @@
     <autoImportHelper implementation="com.google.idea.blaze.cpp.BlazeCppAutoImportHelper"/>
     <customHeaderProvider implementation="com.google.idea.blaze.cpp.BlazeCustomHeaderProvider"/>
     <includeHelper implementation="com.google.idea.blaze.cpp.BlazeIncludeHelper"/>
+    <ownModuleDetector implementation="com.google.idea.blaze.cpp.BlazeOwnModuleDetector"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerVersionChecker"
