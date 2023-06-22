@@ -56,7 +56,7 @@ public class DependencyTrackerTest {
     assertThat(targets.get().buildTargets)
         .containsExactly(Label.fromPackageAndName(TestData.ROOT.resolve(targetName), targetName));
     assertThat(targets.get().expectedDependencyTargets)
-        .containsExactly(Label.of("//java/com/google/common/collect:collect"));
+        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
   }
 
   @Test
@@ -76,7 +76,7 @@ public class DependencyTrackerTest {
             Label.fromPackageAndName(TestData.ROOT.resolve(targetName), "externaldep"),
             Label.fromPackageAndName(TestData.ROOT.resolve(targetName), "nodeps"));
     assertThat(targets.get().expectedDependencyTargets)
-        .containsExactly(Label.of("//java/com/google/common/collect:collect"));
+        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
   }
 
   @Test
@@ -94,7 +94,7 @@ public class DependencyTrackerTest {
     assertThat(targets.get().buildTargets)
         .containsExactly(Label.fromPackageAndName(TestData.ROOT.resolve(targetName), targetName));
     assertThat(targets.get().expectedDependencyTargets)
-        .containsExactly(Label.of("//java/com/google/common/collect:collect"));
+        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
   }
 
   @Test
@@ -114,7 +114,7 @@ public class DependencyTrackerTest {
             Label.fromPackageAndName(TestData.ROOT.resolve(targetName).resolve("inner"), "inner"));
     assertThat(targets.get().expectedDependencyTargets)
         .containsExactly(
-            Label.of("//java/com/google/common/collect:collect"),
-            Label.of("//java/com/google/common/base:base"));
+            Label.of("@com_google_guava_guava//jar:jar"),
+            Label.of("@gson//jar:jar"));
   }
 }

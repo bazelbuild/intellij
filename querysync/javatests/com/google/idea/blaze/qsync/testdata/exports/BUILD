@@ -6,5 +6,5 @@ java_library(
 
 java_library(
     name = "exported-collect",
-    exports = ["//java/com/google/common/collect"],
+    exports = ["@com_google_guava_guava//jar"],
 )

@@ -19,7 +19,8 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Arrays.stream;
 
 import com.google.common.collect.ImmutableList;
-import com.google.devtools.build.runtime.RunfilesPaths;
+import com.google.devtools.build.runfiles.Runfiles;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Locale;
 
@@ -42,14 +43,17 @@ public enum TestData {
     this.srcPaths = stream(paths).map(Path::of).collect(toImmutableList());
   }
 
+  private static final String WORKSPACE_NAME = "intellij_with_bazel";
+
   public static final Path ROOT =
       Path.of(
           "querysync/javatests/com/google/idea/blaze/qsync/testdata");
 
   public static final String ROOT_PACKAGE = "//" + ROOT;
 
-  public static Path getPathFor(TestData name) {
-    return RunfilesPaths.resolve(ROOT).resolve(name.toString().toLowerCase(Locale.ROOT));
+  public static Path getPathFor(TestData name) throws IOException {
+    return Path.of(Runfiles.preload().unmapped().rlocation(WORKSPACE_NAME + "/" + ROOT))
+        .resolve(name.toString().toLowerCase(Locale.ROOT));
   }
 
   public static ImmutableList<Path> getRelativeSourcePathsFor(TestData name) {

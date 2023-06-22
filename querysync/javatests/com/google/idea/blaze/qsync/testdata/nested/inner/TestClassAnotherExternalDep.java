@@ -15,8 +15,7 @@
  */
 package com.google.idea.blaze.qsync.testdata.nested.inner;
 
-import com.google.common.base.Joiner;
-import java.util.List;
+import com.google.gson.Gson;
 
 public class TestClassAnotherExternalDep {
 
@@ -24,6 +23,12 @@ public class TestClassAnotherExternalDep {
 
   @SuppressWarnings("JdkImmutableCollections")
   public static String getString() {
-    return Joiner.on("&").join(List.of("one", "two", "three"));
+    Foo foo = new Foo();
+    Gson gson = new Gson();
+    return gson.toJson(foo);
+  }
+
+  private static class Foo {
+    private Foo() {}
   }
 }

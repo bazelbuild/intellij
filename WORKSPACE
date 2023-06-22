@@ -579,6 +579,31 @@ jvm_maven_import_external(
     ],
 )
 
+jvm_maven_import_external(
+    name = "flogger",
+    artifact = "com.google.flogger:flogger:0.7.4",
+    artifact_sha256 = "77aac11b3c26e1e184dcfe79c55ac6e27967a6dfe1c04146125176940bc64a55",
+    server_urls = [
+        "https://repo1.maven.org/maven2",
+    ],
+)
+
+jvm_maven_import_external(
+    name = "flogger_system_backend",
+    artifact = "com.google.flogger:flogger-system-backend:0.7.4",
+    artifact_sha256 = "fd66f2615a9d8fe1b2274f1b5005a5555a0cd63cdfdab2ca9500e6eb81dc5f63",
+    server_urls = [
+        "https://repo1.maven.org/maven2",
+    ],
+)
+
+http_archive(
+    name = "build_bazel_rules_android",
+    sha256 = "cd06d15dd8bb59926e4d65f9003bfc20f9da4b2519985c27e190cddc8b7a7806",
+    strip_prefix = "rules_android-0.1.1",
+    urls = ["https://github.com/bazelbuild/rules_android/archive/v0.1.1.zip"],
+)
+
 _JARJAR_BUILD_FILE = """
 java_binary(
     name = "jarjar_bin",

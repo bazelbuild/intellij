@@ -63,7 +63,7 @@ public class BuildGraphTest {
     assertThat(
             graph.getFileDependencies(
                 TESTDATA_ROOT.resolve("externaldep/TestClassExternalDep.java")))
-        .containsExactly(Label.of("//java/com/google/common/collect:collect"));
+        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
   }
 
   @Test
@@ -91,7 +91,7 @@ public class BuildGraphTest {
     assertThat(
             graph.getFileDependencies(
                 TESTDATA_ROOT.resolve("transitivedep/TestClassTransitiveDep.java")))
-        .containsExactly(Label.of("//java/com/google/common/collect:collect"));
+        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
   }
 
   @Test
@@ -132,7 +132,7 @@ public class BuildGraphTest {
     Path sourceFile = TESTDATA_ROOT.resolve("exports/TestClassUsingExport.java");
     assertThat(graph.getJavaSourceFiles()).containsExactly(sourceFile);
     assertThat(graph.getFileDependencies(sourceFile))
-        .containsExactly(Label.of("//java/com/google/common/collect:collect"));
+        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
   }
 
   @Test

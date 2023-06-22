@@ -115,7 +115,7 @@ java_library(
         ":java_library_transitive_dep_query",
     ],
     deps = [
-        "//java/com/google/devtools/build/runtime:runfiles",
+        "@bazel_tools//tools/java/runfiles",
         "@com_google_guava_guava//jar",
     ],
 )
