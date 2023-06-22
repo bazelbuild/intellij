@@ -93,6 +93,7 @@
     <ComposeStatusProvider implementation="com.google.idea.blaze.android.compose.ExperimentComposeStatusProvider"/>
     <BlazeBuildListener implementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemBuildManager$BuildCallbackPublisher"/>
     <android.ApkBuildStepProvider implementation="com.google.idea.blaze.android.run.BazelApkBuildStepProvider" />
+    <ExperimentLoader implementation="com.google.idea.blaze.android.experiments.StudioUserOverridesExperimentLoader" order="after SystemPropertyExperimentLoader, before UserOverridesExperimentLoader"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.ide">
