@@ -20,6 +20,7 @@ import static com.google.idea.blaze.qsync.QuerySyncTestUtils.EMPTY_PACKAGE_READE
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
@@ -45,6 +46,7 @@ public class GeneratedSourceProjectUpdaterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             EMPTY_PACKAGE_READER,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(
                 ImmutableSet.of(workspaceImportDirectory),

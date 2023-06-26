@@ -36,6 +36,9 @@ import java.util.stream.Stream;
 @AutoValue
 public abstract class ProjectDefinition {
 
+  public static final ProjectDefinition EMPTY =
+      create(ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of());
+
   /** A language class that the query sync supports/needs to care about. */
   public enum LanguageClass {
     JAVA,

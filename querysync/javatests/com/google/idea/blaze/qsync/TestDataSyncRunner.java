@@ -17,6 +17,7 @@ package com.google.idea.blaze.qsync;
 
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
@@ -58,7 +59,8 @@ public class TestDataSyncRunner {
             .build();
     BuildGraphData buildGraphData = new BlazeQueryParser(context).parse(querySummary);
     GraphToProjectConverter converter =
-        new GraphToProjectConverter(packageReader, context, projectDefinition);
+        new GraphToProjectConverter(
+            packageReader, Predicates.alwaysTrue(), context, projectDefinition);
     Project project = converter.createProject(buildGraphData);
     return BlazeProjectSnapshot.builder()
         .queryData(pqsd)

@@ -71,7 +71,8 @@ class PartialProjectRefresh implements RefreshOperation {
     this.deletedPackages = deletedPackages;
     this.queryParser = new BlazeQueryParser(context);
     this.graphToProjectConverter =
-        new GraphToProjectConverter(packageReader, context, previousState.projectDefinition());
+        new GraphToProjectConverter(
+            packageReader, effectiveWorkspaceRoot, context, previousState.projectDefinition());
   }
 
   private Optional<QuerySpec> createQuerySpec() {

@@ -57,7 +57,8 @@ public class FullProjectUpdate implements RefreshOperation {
     this.projectDefinition = definition;
     this.queryParser = new BlazeQueryParser(context);
     this.graphToProjectConverter =
-        new GraphToProjectConverter(packageReader, context, projectDefinition);
+        new GraphToProjectConverter(
+            packageReader, effectiveWorkspaceRoot, context, projectDefinition);
   }
 
   @Override
