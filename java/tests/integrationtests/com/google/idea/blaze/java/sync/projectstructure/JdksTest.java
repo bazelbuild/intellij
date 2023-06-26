@@ -234,7 +234,7 @@ public class JdksTest extends BlazeIntegrationTestCase {
 
     setJdkTable(jdk11, jdk17);
 
-    Sdk chosenSdk = Jdks.chooseOrCreateJavaSdk(jdk11, LanguageLevel.JDK_17_PREVIEW);
+    Sdk chosenSdk = Jdks.chooseOrCreateJavaSdk(jdk11, LanguageLevel.JDK_17);
     assertThat(chosenSdk).isNotEqualTo(jdk11);
     assertThat(chosenSdk).isEqualTo(jdk17);
   }
@@ -247,13 +247,12 @@ public class JdksTest extends BlazeIntegrationTestCase {
     registerJdkProvider(
         ImmutableMap.of(
             LanguageLevel.JDK_11, jdk11,
-            LanguageLevel.JDK_17, jdk17,
-            LanguageLevel.JDK_17_PREVIEW, jdk17
+            LanguageLevel.JDK_17, jdk17
         ));
 
     setJdkTable(jdk11, jdk17);
 
-    Sdk chosenSdk = Jdks.chooseOrCreateJavaSdk(jdk11, LanguageLevel.JDK_17_PREVIEW);
+    Sdk chosenSdk = Jdks.chooseOrCreateJavaSdk(jdk11, LanguageLevel.JDK_17);
     assertThat(chosenSdk).isEqualTo(jdk17);
   }
 
