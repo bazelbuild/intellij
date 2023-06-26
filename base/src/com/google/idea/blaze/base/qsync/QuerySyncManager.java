@@ -246,6 +246,15 @@ public class QuerySyncManager {
     return loadedProject.canEnableAnalysisFor(workspaceRelativePath);
   }
 
+  @CanIgnoreReturnValue
+  public ListenableFuture<Boolean> generateRenderJar(PsiFile psiFile) {
+    assertProjectLoaded();
+    return run(
+        "Building Render jar for Compose preview",
+        "Building...",
+        context -> loadedProject.enableRenderJar(context, psiFile));
+  }
+
   public boolean isReadyForAnalysis(PsiFile psiFile) {
     if (loadedProject == null) {
       return false;

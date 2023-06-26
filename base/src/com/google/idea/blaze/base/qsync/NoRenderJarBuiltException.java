@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync.project;
+package com.google.idea.blaze.base.qsync;
 
-/** Path names used for query sync project data */
-public class BlazeProjectDataStorage {
-  private BlazeProjectDataStorage() {}
+import com.google.idea.blaze.exception.BuildException;
 
-  public static final String BLAZE_DATA_SUBDIRECTORY = ".blaze";
-  public static final String WORKSPACE_MODULE_NAME = ".workspace";
+/**
+ * No dependencies were built as part of a "build render jar" action, perhaps due to a build file
+ * error.
+ */
+public class NoRenderJarBuiltException extends BuildException {
 
-  public static final String LIBRARY_DIRECTORY = "libraries";
-  public static final String RENDER_JARS_DIRECTORY = "renderjars";
-  public static final String AAR_DIRECTORY = "aars";
-  public static final String GEN_SRC_DIRECTORY = "generated";
+  public NoRenderJarBuiltException(String message) {
+    super(message);
+  }
 
-  public static final String DEPENDENCIES_LIBRARY = ".dependencies";
+  @Override
+  public boolean isIdeError() {
+    return false;
+  }
 }

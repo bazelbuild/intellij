@@ -184,6 +184,11 @@ public class QuerySyncProject {
     }
   }
 
+  public void buildRenderJar(BlazeContext context, List<Path> wps)
+      throws IOException, BuildException {
+    getDependencyTracker().buildRenderJarForFile(context, wps);
+  }
+
   public DependencyTracker getDependencyTracker() {
     return dependencyTracker;
   }
@@ -210,6 +215,16 @@ public class QuerySyncProject {
     return !getDependencyTracker()
         .getProjectTargets(BlazeContext.create(), ImmutableList.of(workspacePath))
         .isEmpty();
+  }
+
+  public void enableRenderJar(BlazeContext context, PsiFile psiFile) {
+    try {
+      Path path = Paths.get(psiFile.getVirtualFile().getPath());
+      String rel = workspaceRoot.path().relativize(path).toString();
+      buildRenderJar(context, ImmutableList.of(WorkspacePath.createIfValid(rel).asPath()));
+    } catch (Exception e) {
+      context.handleException("Failed to build render jar", e);
+    }
   }
 
   public boolean isReadyForAnalysis(PsiFile psiFile) {

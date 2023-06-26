@@ -207,6 +207,7 @@
 
     <projectService serviceImplementation="com.google.idea.blaze.base.qsync.QuerySyncManager"/>
     <iw.actionProvider implementation="com.google.idea.blaze.base.qsync.QuerySyncInspectionWidgetActionProvider"/>
+    <iw.actionProvider implementation="com.google.idea.blaze.base.qsync.ComposePreviewQuerySyncInspectionWidgetActionProvider"/>
     <daemon.highlightInfoFilter implementation="com.google.idea.blaze.base.qsync.QuerySyncHighlightingFilter"/>
     <trafficLightRendererContributor implementation="com.google.idea.blaze.base.qsync.QuerySyncTrafficLightRendererContributor"/>
 

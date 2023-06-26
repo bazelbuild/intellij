@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync.project;
+package com.google.idea.blaze.base.qsync;
 
-/** Path names used for query sync project data */
-public class BlazeProjectDataStorage {
-  private BlazeProjectDataStorage() {}
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.exception.BuildException;
+import java.io.IOException;
+import java.util.Set;
 
-  public static final String BLAZE_DATA_SUBDIRECTORY = ".blaze";
-  public static final String WORKSPACE_MODULE_NAME = ".workspace";
+/** A query sync service that builds render jars for given targets */
+public interface RenderJarBuilder {
 
-  public static final String LIBRARY_DIRECTORY = "libraries";
-  public static final String RENDER_JARS_DIRECTORY = "renderjars";
-  public static final String AAR_DIRECTORY = "aars";
-  public static final String GEN_SRC_DIRECTORY = "generated";
-
-  public static final String DEPENDENCIES_LIBRARY = ".dependencies";
+  RenderJarInfo buildRenderJar(BlazeContext context, Set<Label> buildTargets)
+      throws IOException, BuildException;
 }

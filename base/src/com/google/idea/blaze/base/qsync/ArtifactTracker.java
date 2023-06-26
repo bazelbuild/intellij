@@ -16,11 +16,13 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -34,6 +36,10 @@ public interface ArtifactTracker {
 
   /** Fetches, caches and sets up new artifacts. */
   UpdateResult update(Set<Label> targets, OutputInfo outputInfo, BlazeContext context)
+      throws BuildException;
+
+  /** Fetches, caches and sets up new render jar artifacts. */
+  UpdateResult update(Set<Label> targets, RenderJarInfo renderJarInfo, BlazeContext context)
       throws BuildException;
 
   /**
@@ -76,4 +82,7 @@ public interface ArtifactTracker {
       return new AutoValue_ArtifactTracker_UpdateResult(updatedFiles, removedKeys);
     }
   }
+
+  /** Returns the list of render jars */
+  ImmutableList<File> getRenderJars();
 }
