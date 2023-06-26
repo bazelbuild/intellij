@@ -35,6 +35,7 @@ import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap.SimpleEntry;
@@ -52,6 +53,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -59,13 +61,30 @@ import javax.annotation.Nullable;
 public class GraphToProjectConverter {
 
   private final PackageReader packageReader;
-  private final Context context;
+  private final Predicate<Path> fileExistanceCheck;
+  private final Context<?> context;
 
   private final ProjectDefinition projectDefinition;
 
   public GraphToProjectConverter(
-      PackageReader packageReader, Context context, ProjectDefinition projectDefinition) {
+      PackageReader packageReader,
+      Path workspaceRoot,
+      Context<?> context,
+      ProjectDefinition projectDefinition) {
     this.packageReader = packageReader;
+    this.fileExistanceCheck = p -> Files.isRegularFile(workspaceRoot.resolve(p));
+    this.context = context;
+    this.projectDefinition = projectDefinition;
+  }
+
+  @VisibleForTesting
+  public GraphToProjectConverter(
+      PackageReader packageReader,
+      Predicate<Path> fileExistanceCheck,
+      Context<?> context,
+      ProjectDefinition projectDefinition) {
+    this.packageReader = packageReader;
+    this.fileExistanceCheck = fileExistanceCheck;
     this.context = context;
     this.projectDefinition = projectDefinition;
   }
@@ -163,12 +182,12 @@ public class GraphToProjectConverter {
   }
 
   @VisibleForTesting
-  protected static ImmutableList<Path> chooseTopLevelFiles(
-      Collection<Path> files, PackageSet packages) {
+  protected ImmutableList<Path> chooseTopLevelFiles(Collection<Path> files, PackageSet packages) {
 
     // A map from directory to the candidate chosen to represent that directory
     Map<Path, Path> candidates =
         files.stream()
+            .filter(fileExistanceCheck)
             .collect(
                 Collectors.toMap(
                     Path::getParent,

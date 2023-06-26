@@ -27,6 +27,7 @@ import com.google.protobuf.TextFormat;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.zip.GZIPInputStream;
 
@@ -54,6 +55,7 @@ public class ProjectSpecBuilder {
   private final CliContext context = new CliContext();
 
   private final File snapshotFile;
+  private final Path workspaceRoot;
   private final PackageReader packageReader;
 
   public static void main(String[] args) throws IOException {
@@ -62,9 +64,9 @@ public class ProjectSpecBuilder {
 
   private ProjectSpecBuilder(File snapshotFile) {
     this.snapshotFile = snapshotFile;
+    this.workspaceRoot = Paths.get("").toAbsolutePath();
     this.packageReader =
-        new WorkspaceResolvingPackageReader(
-            Paths.get("").toAbsolutePath(), new PackageStatementParser());
+        new WorkspaceResolvingPackageReader(workspaceRoot, new PackageStatementParser());
   }
 
   private int run() throws IOException {
@@ -74,7 +76,8 @@ public class ProjectSpecBuilder {
             .getSyncData();
     BuildGraphData buildGraph = new BlazeQueryParser(context).parse(snapshot.querySummary());
     GraphToProjectConverter converter =
-        new GraphToProjectConverter(packageReader, context, snapshot.projectDefinition());
+        new GraphToProjectConverter(
+            packageReader, workspaceRoot, context, snapshot.projectDefinition());
     System.out.println(TextFormat.printer().printToString(converter.createProject(buildGraph)));
     return context.hasError() ? 1 : 0;
   }

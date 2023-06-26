@@ -20,6 +20,7 @@ import static com.google.idea.blaze.qsync.QuerySyncTestUtils.EMPTY_PACKAGE_READE
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -33,7 +34,6 @@ import com.google.idea.blaze.qsync.testdata.TestData;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,6 +45,9 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testChooseFilePerPackage() {
+    GraphToProjectConverter converter =
+        new GraphToProjectConverter(
+            EMPTY_PACKAGE_READER, Predicates.alwaysTrue(), NOOP_CONTEXT, ProjectDefinition.EMPTY);
     PackageSet buildFiles =
         PackageSet.of(
             Path.of("java/com/test"),
@@ -61,7 +64,7 @@ public class GraphToProjectConverterTest {
             Path.of("java/com/multiple/BNotThis.java"),
             Path.of("java/com/multiple/nest/BNorThis.java"));
 
-    List<Path> chosenFiles = GraphToProjectConverter.chooseTopLevelFiles(files, buildFiles);
+    ImmutableList<Path> chosenFiles = converter.chooseTopLevelFiles(files, buildFiles);
 
     assertThat(chosenFiles)
         .containsExactly(
@@ -73,6 +76,46 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
+  public void testChooseFilePerPackage_someFilesMissing() {
+    PackageSet buildFiles =
+        PackageSet.of(
+            Path.of("java/com/test"),
+            Path.of("java/com/test/nested"),
+            Path.of("java/com/double"),
+            Path.of("java/com/multiple"));
+    ImmutableSet<Path> files =
+        ImmutableSet.of(
+            Path.of("java/com/test/Class1_missing.java"),
+            Path.of("java/com/test/nested/Nested.java"),
+            Path.of("java/com/double/TopLevel_missing.java"),
+            Path.of("java/com/double/nest1/BothThis.java"),
+            Path.of("java/com/double/nest2/AndThis.java"),
+            Path.of("java/com/multiple/ANotThis_missing.java"),
+            Path.of("java/com/multiple/BThis.java"),
+            Path.of("java/com/multiple/nest/BNorThis.java"));
+
+    ImmutableSet<Path> presentFiles =
+        ImmutableSet.of(
+            Path.of("java/com/test/nested/Nested.java"),
+            Path.of("java/com/double/nest1/BothThis.java"),
+            Path.of("java/com/double/nest2/AndThis.java"),
+            Path.of("java/com/multiple/BThis.java"),
+            Path.of("java/com/multiple/nest/BNorThis.java"));
+
+    GraphToProjectConverter converter =
+        new GraphToProjectConverter(
+            EMPTY_PACKAGE_READER, presentFiles::contains, NOOP_CONTEXT, ProjectDefinition.EMPTY);
+    ImmutableList<Path> chosenFiles = converter.chooseTopLevelFiles(files, buildFiles);
+
+    assertThat(chosenFiles)
+        .containsExactly(
+            Path.of("java/com/test/nested/Nested.java"),
+            Path.of("java/com/double/nest1/BothThis.java"),
+            Path.of("java/com/double/nest2/AndThis.java"),
+            Path.of("java/com/multiple/BThis.java"));
+  }
+
+  @Test
   public void testSplitByRoot() {
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(Path.of("java/com/test/Class1.java"), "com.test");
@@ -81,6 +124,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(
                 roots, ImmutableSet.of(), ImmutableSet.of(LanguageClass.JAVA)));
@@ -142,6 +186,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(
                 ImmutableSet.of(Path.of("java/com/test")),
@@ -163,6 +208,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(
                 ImmutableSet.of(Path.of("java/com/test")),
@@ -186,6 +232,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(
                 ImmutableSet.of(Path.of("java/com/test")),
@@ -209,6 +256,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(
                 ImmutableSet.of(Path.of("java/com/app"), Path.of("java/com/lib")),
@@ -235,6 +283,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(
                 ImmutableSet.of(Path.of("java/com/test")),
@@ -262,6 +311,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(
                 ImmutableSet.of(Path.of("java/com/test")),
@@ -285,6 +335,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(
                 ImmutableSet.of(Path.of("java/com/test")),
@@ -308,6 +359,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(
                 ImmutableSet.of(Path.of("java/com/test")),
@@ -336,6 +388,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(
                 ImmutableSet.of(Path.of("third_party")),
@@ -363,6 +416,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(
                 ImmutableSet.of(Path.of("java/com/test")),
@@ -422,6 +476,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             EMPTY_PACKAGE_READER,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(
                 ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of(LanguageClass.JAVA)));
@@ -442,6 +497,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             EMPTY_PACKAGE_READER,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(
                 ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of(LanguageClass.JAVA)));
@@ -463,6 +519,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             EMPTY_PACKAGE_READER,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of()));
 
@@ -487,6 +544,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             EMPTY_PACKAGE_READER,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of()));
 
@@ -509,6 +567,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             EMPTY_PACKAGE_READER,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of()));
     ProjectProto.Project project = converter.createProject(BuildGraphData.EMPTY);
@@ -526,6 +585,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             EMPTY_PACKAGE_READER,
+            Predicates.alwaysTrue(),
             NOOP_CONTEXT,
             ProjectDefinition.create(
                 ImmutableSet.of(workspaceImportDirectory),
