@@ -43,7 +43,7 @@ def _impl(ctx):
         mnemonic = "IntellijAspectTestFixtureBuilder",
         progress_message = "Building Intellij Aspect Test Fixture",
     )
-    return struct(
+    return DefaultInfo(
         files = depset([output]),
         runfiles = ctx.runfiles(
             files = [output],
