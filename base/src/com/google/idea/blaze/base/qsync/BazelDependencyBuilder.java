@@ -95,7 +95,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
           importRoots.excludeDirectories().stream()
               .map(BazelDependencyBuilder::directoryToLabel)
               .collect(joining(","));
-      String aspectLocation = getAspectLocation(context);
+      String aspectLocation = prepareAspect(context);
       String alwaysBuildRuleTypes = Joiner.on(",").join(BlazeQueryParser.ALWAYS_BUILD_RULE_TYPES);
 
       ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
@@ -148,13 +148,12 @@ public class BazelDependencyBuilder implements DependencyBuilder {
   }
 
   /**
-   * Returns the location of the {@code build_dependencies.bzl} aspect, performing any necessary
-   * preparation first.
+   * Prepares for use, and returns the location of the {@code build_dependencies.bzl} aspect.
    *
    * <p>The return value is a string in the format expected by bazel for an aspect file, omitting
    * the name of the aspect within that file. For example, {@code //package:aspect.bzl}.
    */
-  protected String getAspectLocation(BlazeContext context) throws IOException, BuildException {
+  protected String prepareAspect(BlazeContext context) throws IOException, BuildException {
     Path aspect = getBundledAspectPath();
     Files.copy(
         aspect,
