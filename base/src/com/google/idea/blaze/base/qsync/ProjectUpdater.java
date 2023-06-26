@@ -92,7 +92,7 @@ public class ProjectUpdater implements BlazeProjectListener {
   }
 
   @Override
-  public void graphCreated(Context context, BlazeProjectSnapshot graph) throws IOException {
+  public void graphCreated(Context<?> context, BlazeProjectSnapshot graph) throws IOException {
 
     updateProjectModel(graph.project(), context);
   }

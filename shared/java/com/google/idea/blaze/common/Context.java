@@ -44,4 +44,22 @@ public interface Context<C extends Context<C>> {
   <T extends Output> void output(T output);
 
   void setHasError();
+
+  /**
+   * Log & display a message to the user when a user-initiated action fails.
+   *
+   * @param description A user readable failure message, including the high level IDE operation that
+   *     failed.
+   * @param t The exception that caused the failure.
+   */
+  default void handleException(String description, Throwable t) {}
+
+  /**
+   * Log & display a message to the user when a user-initiated action encounters non-fatal problems.
+   *
+   * @param description A user readable failure message, including the high level IDE operation that
+   *     failed.
+   * @param t The exception that caused the failure.
+   */
+  default void handleExceptionAsWarning(String description, Throwable t) {}
 }

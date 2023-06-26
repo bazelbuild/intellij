@@ -73,6 +73,6 @@ public class JavaPrefetchFileSource implements PrefetchFileSource {
 
   @Override
   public Set<String> prefetchFileExtensions() {
-    return ImmutableSet.of("java");
+    return ImmutableSet.of("java", "kt");
   }
 }
