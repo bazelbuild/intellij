@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.AAR_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.GEN_SRC_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.LIBRARY_DIRECTORY;
+import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.RENDER_JARS_DIRECTORY;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import com.google.common.base.Preconditions;
@@ -35,6 +36,7 @@ import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.qsync.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.OutputInfo;
+import com.google.idea.blaze.base.qsync.RenderJarInfo;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher.ArtifactDestination;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestination;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
@@ -49,6 +51,7 @@ import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.protobuf.ExtensionRegistry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -90,6 +93,8 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   @VisibleForTesting public final CacheDirectoryManager cacheDirectoryManager;
   private final FileCache jarCache;
   private final Path aarCacheDirectory;
+  private final Path renderJarCacheDirectory;
+  private final FileCache renderJarCache;
   private final FileCache aarCache;
   private final Path generatedSrcFileCacheDirectory;
   private final FileCache generatedSrcFileCache;
@@ -111,6 +116,10 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     aarCache =
         fileCacheCreator.createFileCache(
             aarCacheDirectory, ImmutableSet.of("aar"), ImmutableSet.of());
+    renderJarCacheDirectory = projectDirectory.resolve(RENDER_JARS_DIRECTORY);
+    renderJarCache =
+        fileCacheCreator.createFileCache(
+            renderJarCacheDirectory, ImmutableSet.of(), ImmutableSet.of());
     generatedSrcFileCacheDirectory = projectDirectory.resolve(GEN_SRC_DIRECTORY);
     generatedSrcFileCache =
         fileCacheCreator.createFileCache(
@@ -317,6 +326,40 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
    * artifacts will not be added into tracker if it's failed to be cached.
    */
   @Override
+  public UpdateResult update(
+      Set<Label> targets, RenderJarInfo renderJarInfo, BlazeContext outerContext)
+      throws BuildException {
+    try (BlazeContext context = BlazeContext.create(outerContext)) {
+      DownloadTrackingScope downloads = new DownloadTrackingScope();
+      context.push(downloads);
+      ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap =
+          ImmutableMap.<OutputArtifact, OutputArtifactDestinationAndLayout>builder()
+              .putAll(
+                  renderJarCache.prepareDestinationPathsAndDirectories(
+                      renderJarInfo.getRenderJars()))
+              .buildOrThrow();
+
+      ListenableFuture<ImmutableSet<Path>> artifactPaths = cache(artifactMap, context);
+      if (downloads.getFileCount() > 0) {
+        context.output(
+            PrintOutput.log(
+                "Downloading %d render jar artifacts (%s)",
+                downloads.getFileCount(), StringUtil.formatFileSize(downloads.getTotalBytes())));
+      }
+
+      ImmutableSet<Path> updated = Uninterruptibles.getUninterruptibly(artifactPaths);
+      saveState();
+      return UpdateResult.create(updated, ImmutableSet.of());
+    } catch (ExecutionException | IOException e) {
+      throw new BuildException(e);
+    }
+  }
+
+  /**
+   * Merges TargetToDeps into tracker maps and cache necessary OutputArtifact to local. The
+   * artifacts will not be added into tracker if it's failed to be cached.
+   */
+  @Override
   public UpdateResult update(Set<Label> targets, OutputInfo outputInfo, BlazeContext outerContext)
       throws BuildException {
     try (BlazeContext context = BlazeContext.create(outerContext)) {
@@ -425,5 +468,11 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
             },
             operation,
             maxToleratedDuration);
+  }
+
+  @Override
+  public ImmutableList<File> getRenderJars() {
+    return ImmutableList.copyOf(
+        renderJarCacheDirectory.toFile().listFiles((file, name) -> name.endsWith(".jar")));
   }
 }

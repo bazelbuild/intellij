@@ -30,7 +30,9 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.qsync.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -111,11 +113,6 @@ public class RenderJarClassFileFinder implements ClassFileFinder {
       return null;
     }
 
-    // TODO(b/266726517): Query sync does not support render jars.
-    if (QuerySync.isEnabled()) {
-      return null;
-    }
-
     // Ever since Compose support was introduced in AS, finding class files is invoked during the
     // normal course of opening an editor. The contract for this method requires that it shouldn't
     // throw any exceptions, but we've had a few bugs where this method threw an exception, which
@@ -140,6 +137,22 @@ public class RenderJarClassFileFinder implements ClassFileFinder {
     if (isResourceClass(fqcn) && !resolveResourceClasses.getValue()) {
       log.warn(String.format("Attempting to load resource '%s' from RenderJAR.", fqcn));
       return null;
+    }
+
+    if (QuerySync.isEnabled()) {
+      ArtifactTracker artifactTracker = QuerySyncManager.getInstance(project).getArtifactTracker();
+      // TODO(b/283280194): Setup fqcn -> target and target -> Render jar mappings to avoid
+      // iterating over all render jars when trying to locate class for fqcn.
+      // TODO(b/284002836): Collect metrics on time taken to iterate over the jars
+      for (File renderJar : artifactTracker.getRenderJars()) {
+        VirtualFile renderResolveJarVF =
+            VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(renderJar);
+        if (renderResolveJarVF != null) {
+          return findClassInJar(renderResolveJarVF, fqcn);
+        }
+        log.warn(String.format("Could not find class `%1$s` with Query Sync", fqcn));
+        return null;
+      }
     }
 
     BlazeProjectData projectData =

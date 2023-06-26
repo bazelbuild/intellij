@@ -41,6 +41,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -89,6 +90,11 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
 
     if (blazeProjectData == null || !logger.hasErrors()) {
+      return getIssues();
+    }
+
+    if (QuerySync.isEnabled()) {
+      // TODO(b/284002829): Setup resource-module specific issue reporting
       return getIssues();
     }
 

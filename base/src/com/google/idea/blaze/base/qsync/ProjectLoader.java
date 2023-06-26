@@ -112,6 +112,7 @@ public class ProjectLoader {
 
     DependencyBuilder dependencyBuilder =
         createDependencyBuilder(workspaceRoot, importRoots, buildSystem);
+    RenderJarBuilder renderJarBuilder = createRenderJarBuilder(buildSystem);
 
     BlazeProject graph = new BlazeProject();
     ArtifactFetcher<OutputArtifact> artifactFetcher = createArtifactFetcher();
@@ -122,7 +123,7 @@ public class ProjectLoader {
             artifactFetcher);
     artifactTracker.initialize();
     DependencyTracker dependencyTracker =
-        new DependencyTracker(project, graph, dependencyBuilder, artifactTracker);
+        new DependencyTracker(project, graph, dependencyBuilder, renderJarBuilder, artifactTracker);
     ProjectRefresher projectRefresher =
         new ProjectRefresher(
             createWorkspaceRelativePackageReader(), workspaceRoot.path(), graph::getCurrent);
@@ -171,6 +172,10 @@ public class ProjectLoader {
   protected DependencyBuilder createDependencyBuilder(
       WorkspaceRoot workspaceRoot, ImportRoots importRoots, BuildSystem buildSystem) {
     return new BazelDependencyBuilder(project, buildSystem, importRoots, workspaceRoot);
+  }
+
+  protected RenderJarBuilder createRenderJarBuilder(BuildSystem buildSystem) {
+    return new BazelRenderJarBuilder(project, buildSystem);
   }
 
   private Path getSnapshotFilePath(BlazeImportSettings importSettings) {

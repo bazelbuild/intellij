@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -51,6 +52,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -67,6 +69,7 @@ public class DependencyTracker {
 
   private final BlazeProject blazeProject;
   private final DependencyBuilder builder;
+  private final RenderJarBuilder renderJarBuilder;
   private final ArtifactTracker artifactTracker;
 
   private static final Logger logger = Logger.getInstance(DependencyTracker.class);
@@ -75,10 +78,12 @@ public class DependencyTracker {
       Project project,
       BlazeProject blazeProject,
       DependencyBuilder builder,
+      RenderJarBuilder renderJarBuilder,
       ArtifactTracker artifactTracker) {
     this.project = project;
     this.blazeProject = blazeProject;
     this.builder = builder;
+    this.renderJarBuilder = renderJarBuilder;
     this.artifactTracker = artifactTracker;
   }
 
@@ -304,14 +309,15 @@ public class DependencyTracker {
 
   private ImmutableSet<Path> updateCaches(
       BlazeContext context, Set<Label> targets, OutputInfo outputInfo) throws BuildException {
-    long now = System.nanoTime();
+    Stopwatch stopwatch = Stopwatch.createStarted();
     UpdateResult updateResult = artifactTracker.update(targets, outputInfo, context);
-    long elapsedMs = (System.nanoTime() - now) / 1000000L;
     context.output(
         PrintOutput.log(
             String.format(
                 "Updated cache in %d ms: updated %d artifacts, removed %d artifacts",
-                elapsedMs, updateResult.updatedFiles().size(), updateResult.removedKeys().size())));
+                stopwatch.elapsed().toMillis(),
+                updateResult.updatedFiles().size(),
+                updateResult.removedKeys().size())));
     return updateResult.updatedFiles();
   }
 
@@ -445,5 +451,76 @@ public class DependencyTracker {
    */
   private static VirtualFile getFileByIoFileIfInVfs(Path path) {
     return VfsUtil.findFileByIoFile(path.toFile(), false /* refreshIfNeeded */);
+  }
+
+  /** Builds the render jars of the given files and adds then to the cache */
+  public void buildRenderJarForFile(BlazeContext context, List<Path> workspaceRelativePaths)
+      throws IOException, BuildException {
+    workspaceRelativePaths.forEach(path -> Preconditions.checkState(!path.isAbsolute(), path));
+
+    BlazeProjectSnapshot snapshot =
+        blazeProject
+            .getCurrent()
+            .orElseThrow(() -> new IllegalStateException("Failed to get the snapshot"));
+
+    Set<Label> targets = new HashSet<>();
+    Set<Label> buildTargets = new HashSet<>();
+    for (Path workspaceRelativePath : workspaceRelativePaths) {
+      Label targetOwner = snapshot.getTargetOwner(workspaceRelativePath);
+      if (targetOwner != null) {
+        buildTargets.add(targetOwner);
+      } else {
+        context.output(
+            PrintOutput.error(
+                "File %s does not seem to be part of a build rule that the IDE supports.",
+                workspaceRelativePath));
+        context.output(
+            PrintOutput.error(
+                "If this is a newly added supported rule, please re-sync your project."));
+        context.setHasError();
+        return;
+      }
+    }
+
+    RenderJarInfo renderJarInfo = renderJarBuilder.buildRenderJar(context, buildTargets);
+
+    if (renderJarInfo.isEmpty()) {
+      throw new NoRenderJarBuiltException(
+          "Build produced no usable render jars. Please fix any build errors and retry.");
+    }
+
+    if (renderJarInfo.getExitCode() != BazelExitCode.SUCCESS) {
+      // This will happen if there is an error in a build file, as no build actions are attempted
+      // in that case.
+      context.setHasWarnings();
+      context.output(PrintOutput.error("There were build errors when generating render jar."));
+    }
+
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    UpdateResult updateResult = artifactTracker.update(targets, renderJarInfo, context);
+    context.output(
+        PrintOutput.log(
+            String.format(
+                "Updated cache in %d ms: updated %d artifacts, removed %d artifacts",
+                stopwatch.elapsed().toMillis(),
+                updateResult.updatedFiles().size(),
+                updateResult.removedKeys().size())));
+    if (updateResult.updatedFiles().isEmpty()) {
+      context.output(
+          PrintOutput.log(
+              "Render jar already generated for files: "
+                  + workspaceRelativePaths
+                  + " and targets: "
+                  + buildTargets));
+    } else {
+      context.output(
+          PrintOutput.log(
+              "Generated Render jars: "
+                  + updateResult.updatedFiles()
+                  + ", for these files: "
+                  + workspaceRelativePaths
+                  + ", and targets: "
+                  + buildTargets));
+    }
   }
 }
