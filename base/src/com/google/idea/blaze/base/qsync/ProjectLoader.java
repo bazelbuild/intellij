@@ -39,17 +39,21 @@ import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.PackageStatementParser;
 import com.google.idea.blaze.qsync.ParallelPackageReader;
 import com.google.idea.blaze.qsync.ProjectRefresher;
+import com.google.idea.blaze.qsync.VcsStateDiffer;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -124,11 +128,16 @@ public class ProjectLoader {
     artifactTracker.initialize();
     DependencyTracker dependencyTracker =
         new DependencyTracker(project, graph, dependencyBuilder, renderJarBuilder, artifactTracker);
+    Optional<BlazeVcsHandler> vcsHandler =
+        Optional.ofNullable(BlazeVcsHandlerProvider.vcsHandlerForProject(project));
     ProjectRefresher projectRefresher =
         new ProjectRefresher(
-            createWorkspaceRelativePackageReader(), workspaceRoot.path(), graph::getCurrent);
+            createWorkspaceRelativePackageReader(),
+            vcsHandler.map(BlazeVcsHandler::getVcsStateDiffer).orElse(VcsStateDiffer.NONE),
+            workspaceRoot.path(),
+            graph::getCurrent);
     QueryRunner queryRunner = createQueryRunner(buildSystem);
-    ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner);
+    ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner, vcsHandler);
     ProjectUpdater projectUpdater =
         new ProjectUpdater(project, importSettings, projectViewSet, workspaceRoot);
     graph.addListener(projectUpdater);
@@ -161,8 +170,10 @@ public class ProjectLoader {
   }
 
   private ProjectQuerierImpl createProjectQuerier(
-      ProjectRefresher projectRefresher, QueryRunner queryRunner) {
-    return new ProjectQuerierImpl(project, queryRunner, projectRefresher);
+      ProjectRefresher projectRefresher,
+      QueryRunner queryRunner,
+      Optional<BlazeVcsHandler> vcsHandler) {
+    return new ProjectQuerierImpl(queryRunner, projectRefresher, vcsHandler);
   }
 
   protected QueryRunner createQueryRunner(BuildSystem buildSystem) {

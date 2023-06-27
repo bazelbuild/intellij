@@ -36,6 +36,9 @@ public class QuerySyncTestUtils {
 
   public static final PackageReader EMPTY_PACKAGE_READER = p -> "";
 
+  public static final VcsStateDiffer NO_CHANGES_DIFFER =
+      (recent, earlier) -> Optional.of(ImmutableSet.of());
+
   public static final PackageReader PATH_INFERRING_PACKAGE_READER =
       QuerySyncTestUtils::inferJavaPackageFromPath;
 
@@ -57,5 +60,13 @@ public class QuerySyncTestUtils {
       }
     }
     return "";
+  }
+
+  public static VcsStateDiffer differForFiles(Path... paths) {
+    return (recent, earlier) -> Optional.of(ImmutableSet.copyOf(paths));
+  }
+
+  public static VcsStateDiffer noFilesChangedDiffer() {
+    return differForFiles();
   }
 }
