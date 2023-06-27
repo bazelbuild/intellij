@@ -16,12 +16,15 @@
 package com.google.idea.blaze.qsync;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.qsync.QuerySyncTestUtils.differForFiles;
+import static com.google.idea.blaze.qsync.QuerySyncTestUtils.noFilesChangedDiffer;
 
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -43,15 +46,25 @@ public class ProjectRefresherTest {
     return createRefresher(Optional.of(BlazeProjectSnapshot.EMPTY));
   }
 
+  private ProjectRefresher createRefresher(VcsStateDiffer vcsDiffer) {
+    return createRefresher(vcsDiffer, Optional.of(BlazeProjectSnapshot.EMPTY));
+  }
+
   private ProjectRefresher createRefresher(Optional<BlazeProjectSnapshot> existingSnapshot) {
+    return createRefresher(noFilesChangedDiffer(), existingSnapshot);
+  }
+
+  private ProjectRefresher createRefresher(
+      VcsStateDiffer vcsDiffer, Optional<BlazeProjectSnapshot> existingSnapshot) {
     return new ProjectRefresher(
         QuerySyncTestUtils.EMPTY_PACKAGE_READER,
+        vcsDiffer,
         Path.of("/"),
         Suppliers.ofInstance(existingSnapshot));
   }
 
   @Test
-  public void testStartPartialRefresh_pluginVersionChanged() {
+  public void testStartPartialRefresh_pluginVersionChanged() throws BuildException {
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
             .setVcsState(Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())))
@@ -70,7 +83,7 @@ public class ProjectRefresherTest {
 
   @Test
   public void testStartPartialRefresh_vcsSnapshotUnchanged_existingProjectSnapshot()
-      throws IOException {
+      throws IOException, BuildException {
     VcsState vcsState =
         new VcsState("1", ImmutableSet.of(), Optional.of(Path.of("/my/workspace/.snapshot/1")));
     PostQuerySyncData project =
@@ -80,7 +93,7 @@ public class ProjectRefresherTest {
             .build();
     BlazeProjectSnapshot existingProject = BlazeProjectSnapshot.EMPTY;
     RefreshOperation update =
-        createRefresher(Optional.of(existingProject))
+        createRefresher(QuerySyncTestUtils.NO_CHANGES_DIFFER)
             .startPartialRefresh(
                 QuerySyncTestUtils.LOGGING_CONTEXT,
                 project,
@@ -92,7 +105,7 @@ public class ProjectRefresherTest {
 
   @Test
   public void testStartPartialRefresh_vcsSnapshotUnchanged_noExistingProjectSnapshot()
-      throws IOException {
+      throws IOException, BuildException {
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
             .setVcsState(
@@ -112,7 +125,7 @@ public class ProjectRefresherTest {
   }
 
   @Test
-  public void testStartPartialRefresh_upstreamRevisionChange() {
+  public void testStartPartialRefresh_upstreamRevisionChange() throws BuildException {
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
             .setVcsState(Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())))
@@ -129,7 +142,7 @@ public class ProjectRefresherTest {
   }
 
   @Test
-  public void testStartPartialRefresh_buildFileAddedThenReverted() {
+  public void testStartPartialRefresh_buildFileAddedThenReverted() throws BuildException {
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//package/path:rule"))
@@ -148,7 +161,7 @@ public class ProjectRefresherTest {
             .build();
 
     RefreshOperation update =
-        createRefresher()
+        createRefresher(VcsStateDiffer.NONE)
             .startPartialRefresh(
                 QuerySyncTestUtils.LOGGING_CONTEXT,
                 project,
@@ -162,7 +175,7 @@ public class ProjectRefresherTest {
   }
 
   @Test
-  public void testStartPartialRefresh_buildFileDeletedThenReverted() {
+  public void testStartPartialRefresh_buildFileDeletedThenReverted() throws BuildException {
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
             .setVcsState(
@@ -181,7 +194,7 @@ public class ProjectRefresherTest {
             .build();
 
     RefreshOperation update =
-        createRefresher()
+        createRefresher(VcsStateDiffer.NONE)
             .startPartialRefresh(
                 QuerySyncTestUtils.LOGGING_CONTEXT,
                 project,
@@ -195,7 +208,64 @@ public class ProjectRefresherTest {
   }
 
   @Test
-  public void testStartPartialRefresh_buildFileModifiedThenReverted() {
+  public void testStartPartialRefresh_buildFileModified() throws BuildException {
+    ImmutableSet<WorkspaceFileChange> workingSet =
+        ImmutableSet.of(new WorkspaceFileChange(Operation.MODIFY, Path.of("package/path/BUILD")));
+    PostQuerySyncData project =
+        PostQuerySyncData.EMPTY.toBuilder()
+            .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//package/path:rule"))
+            .setVcsState(Optional.of(new VcsState("1", workingSet, Optional.empty())))
+            .setProjectDefinition(
+                ProjectDefinition.create(
+                    ImmutableSet.of(Path.of("package")),
+                    ImmutableSet.of(),
+                    ImmutableSet.of(LanguageClass.JAVA)))
+            .build();
+
+    RefreshOperation update =
+        createRefresher(differForFiles(Path.of("package/path/BUILD")))
+            .startPartialRefresh(
+                QuerySyncTestUtils.LOGGING_CONTEXT,
+                project,
+                Optional.of(new VcsState("1", workingSet, Optional.empty())),
+                project.projectDefinition());
+
+    assertThat(update).isInstanceOf(PartialProjectRefresh.class);
+    PartialProjectRefresh partialQuery = (PartialProjectRefresh) update;
+    assertThat(partialQuery.deletedPackages).isEmpty();
+    assertThat(partialQuery.modifiedPackages).containsExactly(Path.of("package/path"));
+  }
+
+  @Test
+  public void testStartPartialRefresh_buildFileInWorkingSet_unmodified() throws BuildException {
+    ImmutableSet<WorkspaceFileChange> workingSet =
+        ImmutableSet.of(
+            new WorkspaceFileChange(Operation.MODIFY, Path.of("package/path/BUILD")),
+            new WorkspaceFileChange(Operation.MODIFY, Path.of("package/path/Class.java")));
+    PostQuerySyncData project =
+        PostQuerySyncData.EMPTY.toBuilder()
+            .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//package/path:rule"))
+            .setVcsState(Optional.of(new VcsState("1", workingSet, Optional.empty())))
+            .setProjectDefinition(
+                ProjectDefinition.create(
+                    ImmutableSet.of(Path.of("package")),
+                    ImmutableSet.of(),
+                    ImmutableSet.of(LanguageClass.JAVA)))
+            .build();
+
+    RefreshOperation update =
+        createRefresher(differForFiles(Path.of("package/path/Class.java")))
+            .startPartialRefresh(
+                QuerySyncTestUtils.LOGGING_CONTEXT,
+                project,
+                Optional.of(new VcsState("1", workingSet, Optional.empty())),
+                project.projectDefinition());
+
+    assertThat(update).isInstanceOf(NoopProjectRefresh.class);
+  }
+
+  @Test
+  public void testStartPartialRefresh_buildFileModifiedThenReverted() throws BuildException {
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//package/path:rule"))
@@ -215,7 +285,7 @@ public class ProjectRefresherTest {
             .build();
 
     RefreshOperation update =
-        createRefresher()
+        createRefresher(VcsStateDiffer.NONE)
             .startPartialRefresh(
                 QuerySyncTestUtils.LOGGING_CONTEXT,
                 project,

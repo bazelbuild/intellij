@@ -21,7 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.FullProjectUpdate;
@@ -33,7 +33,6 @@ import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -43,16 +42,18 @@ public class ProjectQuerierImpl implements ProjectQuerier {
 
   private static final Logger logger = Logger.getInstance(ProjectQuerierImpl.class);
 
-  private final Project project;
-  private final ProjectRefresher projectRefresher;
   private final QueryRunner queryRunner;
+  private final ProjectRefresher projectRefresher;
+  private final Optional<BlazeVcsHandler> vcsHandler;
 
   @VisibleForTesting
   public ProjectQuerierImpl(
-      Project project, QueryRunner queryRunner, ProjectRefresher projectRefresher) {
-    this.project = project;
-    this.projectRefresher = projectRefresher;
+      QueryRunner queryRunner,
+      ProjectRefresher projectRefresher,
+      Optional<BlazeVcsHandler> vcsHandler) {
     this.queryRunner = queryRunner;
+    this.projectRefresher = projectRefresher;
+    this.vcsHandler = vcsHandler;
   }
 
   /**
@@ -82,8 +83,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
 
   private Optional<VcsState> getVcsState(BlazeContext context) {
     Optional<ListenableFuture<VcsState>> stateFuture =
-        Optional.ofNullable(BlazeVcsHandlerProvider.vcsHandlerForProject(project))
-            .flatMap(h -> h.getVcsState(context, BlazeExecutor.getInstance().getExecutor()));
+        vcsHandler.flatMap(h -> h.getVcsState(context, BlazeExecutor.getInstance().getExecutor()));
     if (stateFuture.isEmpty()) {
       return Optional.empty();
     }

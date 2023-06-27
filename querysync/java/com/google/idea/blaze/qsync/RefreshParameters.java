@@ -23,11 +23,13 @@ import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Input parameters to a project refresh, and logic to determine what sort of refresh is required.
@@ -37,14 +39,23 @@ public class RefreshParameters {
   final PostQuerySyncData currentProject;
   final Optional<VcsState> latestVcsState;
   final ProjectDefinition latestProjectDefinition;
+  final Optional<ImmutableSet<Path>> filesChanged;
 
   RefreshParameters(
       PostQuerySyncData currentProject,
       Optional<VcsState> latestVcsState,
-      ProjectDefinition latestProjectDefinition) {
+      ProjectDefinition latestProjectDefinition,
+      VcsStateDiffer vcsDiffer)
+      throws BuildException {
     this.currentProject = currentProject;
     this.latestVcsState = latestVcsState;
     this.latestProjectDefinition = latestProjectDefinition;
+    if (currentProject.vcsState().isPresent() && latestVcsState.isPresent()) {
+      filesChanged =
+          vcsDiffer.getFilesChangedBetween(latestVcsState.get(), currentProject.vcsState().get());
+    } else {
+      filesChanged = Optional.empty();
+    }
   }
 
   boolean requiresFullUpdate(Context<?> context) {
@@ -77,11 +88,6 @@ public class RefreshParameters {
     return false;
   }
 
-  boolean isNoopUpdate() {
-    return currentProject.vcsState().get().workspaceSnapshotPath.isPresent()
-        && currentProject.vcsState().equals(latestVcsState);
-  }
-
   AffectedPackages calculateAffectedPackages(Context<?> context) {
     // Build the effective working set. This includes the working set as was when the original
     // sync query was run, as it's possible that files have been reverted since then but the
@@ -100,11 +106,20 @@ public class RefreshParameters {
             .map(WorkspaceFileChange::invert)
             .collect(toImmutableSet());
 
+    Set<WorkspaceFileChange> changed = Sets.union(latestVcsState.get().workingSet, revertedChanges);
+    if (filesChanged.isPresent()) {
+      // filter out files that didn't actually change:
+      changed =
+          changed.stream()
+              .filter(c -> filesChanged.get().contains(c.workspaceRelativePath))
+              .collect(toImmutableSet());
+    }
+
     return AffectedPackagesCalculator.builder()
         .context(context)
         .projectIncludes(currentProject.projectDefinition().projectIncludes())
         .projectExcludes(currentProject.projectDefinition().projectExcludes())
-        .changedFiles(Sets.union(latestVcsState.get().workingSet, revertedChanges))
+        .changedFiles(changed)
         .lastQuery(currentProject.querySummary())
         .build()
         .getAffectedPackages();

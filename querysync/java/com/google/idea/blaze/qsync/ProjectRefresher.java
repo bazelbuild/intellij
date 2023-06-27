@@ -18,6 +18,7 @@ package com.google.idea.blaze.qsync;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.vcs.VcsState;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -32,14 +33,17 @@ import java.util.function.Supplier;
 public class ProjectRefresher {
 
   private final PackageReader workspaceRelativePackageReader;
+  private final VcsStateDiffer vcsDiffer;
   private final Path workspaceRoot;
   private final Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier;
 
   public ProjectRefresher(
       PackageReader workspaceRelativePackageReader,
+      VcsStateDiffer vcsDiffer,
       Path workspaceRoot,
       Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier) {
     this.workspaceRelativePackageReader = workspaceRelativePackageReader;
+    this.vcsDiffer = vcsDiffer;
     this.workspaceRoot = workspaceRoot;
     this.latestProjectSnapshotSupplier = latestProjectSnapshotSupplier;
   }
@@ -60,19 +64,21 @@ public class ProjectRefresher {
       Context<?> context,
       PostQuerySyncData currentProject,
       Optional<VcsState> latestVcsState,
-      ProjectDefinition latestProjectDefinition) {
+      ProjectDefinition latestProjectDefinition)
+      throws BuildException {
     return startPartialRefresh(
-        new RefreshParameters(currentProject, latestVcsState, latestProjectDefinition), context);
+        new RefreshParameters(currentProject, latestVcsState, latestProjectDefinition, vcsDiffer),
+        context);
   }
 
   public RefreshOperation startPartialRefresh(RefreshParameters params, Context<?> context) {
     if (params.requiresFullUpdate(context)) {
       return startFullUpdate(context, params.latestProjectDefinition, params.latestVcsState);
     }
-    AffectedPackages affected;
+    AffectedPackages affected = params.calculateAffectedPackages(context);
 
-    if (params.isNoopUpdate()) {
-      // VCS state has not changed since last sync
+    if (affected.isEmpty()) {
+      // No consequential changes since last sync
       if (latestProjectSnapshotSupplier.get().isPresent()) {
         // We have full project state. We don't need to do anything.
         context.output(PrintOutput.log("Nothing has changed since last sync."));
@@ -80,10 +86,6 @@ public class ProjectRefresher {
       }
       // else we need to recalculate the project structure. This happens on the first sync after
       // reloading the project.
-      affected = AffectedPackages.EMPTY;
-    } else {
-      // VCS state has changed, or we don't have a readonly snapshot to work from.
-      affected = params.calculateAffectedPackages(context);
     }
     // TODO(mathewi) check affected.isIncomplete() and offer (or just do?) a full sync in that case.
 
