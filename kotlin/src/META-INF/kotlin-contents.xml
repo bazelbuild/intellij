@@ -29,6 +29,9 @@
     <programRunner implementation="com.google.idea.blaze.kotlin.run.debug.KotlinDebuggerRunner" id="BazelKotlinDebug" order="before BlazeJavaDebug"/>
     <notificationGroup id="KotlinDebuggerNotification" displayType="BALLOON"/>
   </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <projectConfigurator implementation="com.google.idea.blaze.kotlin.sync.BlazeKotlinProjectConfigurator"/>
+  </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <kotlinxCoroutinesLibFinder implementation="com.google.idea.blaze.kotlin.run.debug.BazelKotlinxCoroutinesLibFinder"/>
