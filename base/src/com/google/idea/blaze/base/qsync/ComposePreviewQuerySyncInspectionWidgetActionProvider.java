@@ -47,7 +47,7 @@ public class ComposePreviewQuerySyncInspectionWidgetActionProvider
   @Nullable
   @Override
   public AnAction createAction(@NotNull Editor editor) {
-    if (!QuerySync.isEnabled()) {
+    if (!QuerySync.isComposeEnabled()) {
       return null;
     }
     if (!Blaze.isBlazeProject(editor.getProject())) {
