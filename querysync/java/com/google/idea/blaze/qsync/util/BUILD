@@ -1,3 +1,7 @@
+package(default_visibility = [
+    "//java/com/google/devtools/intellij/blaze/plugin/querysync:__subpackages__",
+])
+
 java_binary(
     name = "project_spec_builder",
     srcs = ["ProjectSpecBuilder.java"],
