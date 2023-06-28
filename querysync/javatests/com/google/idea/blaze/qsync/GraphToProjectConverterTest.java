@@ -31,7 +31,6 @@ import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.testdata.TestData;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,7 +43,7 @@ import org.junit.runners.JUnit4;
 public class GraphToProjectConverterTest {
 
   @Test
-  public void testChooseFilePerPackage() {
+  public void testChooseFilePerPackage() throws Exception {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             EMPTY_PACKAGE_READER, Predicates.alwaysTrue(), NOOP_CONTEXT, ProjectDefinition.EMPTY);
@@ -76,7 +75,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
-  public void testChooseFilePerPackage_someFilesMissing() {
+  public void testChooseFilePerPackage_someFilesMissing() throws Exception {
     PackageSet buildFiles =
         PackageSet.of(
             Path.of("java/com/test"),
@@ -178,7 +177,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
-  public void testCalculateRootSources_singleSource_atImportRoot() throws IOException {
+  public void testCalculateRootSources_singleSource_atImportRoot() throws Exception {
     PackageSet packages = PackageSet.of(Path.of("java/com/test"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(Path.of("java/com/test/Class1.java"), "com.test");
@@ -200,7 +199,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
-  public void testCalculateRootSources_singleSource_belowImportRoot() throws IOException {
+  public void testCalculateRootSources_singleSource_belowImportRoot() throws Exception {
     PackageSet packages = PackageSet.of(Path.of("java/com/test"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(Path.of("java/com/test/subpackage/Class1.java"), "com.test.subpackage");
@@ -222,7 +221,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
-  public void testCalculateRootSources_multiSource_belowImportRoot() throws IOException {
+  public void testCalculateRootSources_multiSource_belowImportRoot() throws Exception {
     PackageSet packages = PackageSet.of(Path.of("java/com/test"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
@@ -246,7 +245,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
-  public void testCalculateRootSources_multiRoots() throws IOException {
+  public void testCalculateRootSources_multiRoots() throws Exception {
     PackageSet packages = PackageSet.of(Path.of("java/com/app"), Path.of("java/com/lib"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
@@ -272,7 +271,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
-  public void testCalculateRootSources_multiSource_packageMismatch() throws IOException {
+  public void testCalculateRootSources_multiSource_packageMismatch() throws Exception {
     PackageSet packages =
         PackageSet.of(Path.of("java/com/test"), Path.of("java/com/test/package1"));
     ImmutableMap<Path, String> sourcePackages =
@@ -300,7 +299,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
-  public void testCalculateRootSources_multiSource_samePrefix() throws IOException {
+  public void testCalculateRootSources_multiSource_samePrefix() throws Exception {
     PackageSet packages =
         PackageSet.of(Path.of("java/com/test/package1"), Path.of("java/com/test/package2"));
     ImmutableMap<Path, String> sourcePackages =
@@ -325,7 +324,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
-  public void testCalculateRootSources_multiSource_nextedPrefixCompatible() throws IOException {
+  public void testCalculateRootSources_multiSource_nextedPrefixCompatible() throws Exception {
     PackageSet packages = PackageSet.of(Path.of("java/com/test"), Path.of("java/com/test/package"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
@@ -349,7 +348,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
-  public void testCalculateRootSources_multiSource_nestedPrefixIncompatible() throws IOException {
+  public void testCalculateRootSources_multiSource_nestedPrefixIncompatible() throws Exception {
     PackageSet packages = PackageSet.of(Path.of("java/com/test"), Path.of("java/com/test/package"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
@@ -376,7 +375,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
-  public void testCalculateRootSources_multiSource_rootPrefix() throws IOException {
+  public void testCalculateRootSources_multiSource_rootPrefix() throws Exception {
     PackageSet packages =
         PackageSet.of(Path.of("third_party/java"), Path.of("third_party/javatests"));
 
@@ -405,7 +404,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
-  public void testCalculateRootSources_multiSource_repackagedSource() throws IOException {
+  public void testCalculateRootSources_multiSource_repackagedSource() throws Exception {
     PackageSet packages =
         PackageSet.of(Path.of("java/com/test"), Path.of("java/com/test/repackaged"));
     ImmutableMap<Path, String> sourcePackages =
@@ -563,7 +562,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
-  public void testConvertProject_emptyProject() throws IOException {
+  public void testConvertProject_emptyProject() throws Exception {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             EMPTY_PACKAGE_READER,
@@ -580,7 +579,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
-  public void testConvertProject_buildGraphWithSingleImportRoot() throws IOException {
+  public void testConvertProject_buildGraphWithSingleImportRoot() throws Exception {
     Path workspaceImportDirectory = TestData.ROOT.resolve("nodeps");
     GraphToProjectConverter converter =
         new GraphToProjectConverter(

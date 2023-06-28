@@ -26,7 +26,6 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.QuerySyncTestUtils;
 import com.google.idea.blaze.qsync.TestDataSyncRunner;
 import com.google.idea.blaze.qsync.testdata.TestData;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 import org.junit.Test;
@@ -41,7 +40,7 @@ public class DependencyTrackerTest {
       new TestDataSyncRunner(context, QuerySyncTestUtils.PATH_INFERRING_PACKAGE_READER);
 
   @Test
-  public void computeRequestedTargets_srcFile() throws IOException {
+  public void computeRequestedTargets_srcFile() throws Exception {
     Optional<RequestedTargets> targets =
         DependencyTracker.computeRequestedTargets(
             context,
@@ -60,7 +59,7 @@ public class DependencyTrackerTest {
   }
 
   @Test
-  public void computeRequestedTargets_buildFile_multiTarget() throws IOException {
+  public void computeRequestedTargets_buildFile_multiTarget() throws Exception {
     Optional<RequestedTargets> targets =
         DependencyTracker.computeRequestedTargets(
             context,
@@ -80,7 +79,7 @@ public class DependencyTrackerTest {
   }
 
   @Test
-  public void computeRequestedTargets_buildFile_nested() throws IOException {
+  public void computeRequestedTargets_buildFile_nested() throws Exception {
     Optional<RequestedTargets> targets =
         DependencyTracker.computeRequestedTargets(
             context,
@@ -98,7 +97,7 @@ public class DependencyTrackerTest {
   }
 
   @Test
-  public void computeRequestedTargets_directory() throws IOException {
+  public void computeRequestedTargets_directory() throws Exception {
     Optional<RequestedTargets> targets =
         DependencyTracker.computeRequestedTargets(
             context,

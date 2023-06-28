@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
-import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -32,7 +31,6 @@ import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.query.QuerySummaryTestUtil;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 import org.junit.Test;
@@ -64,7 +62,7 @@ public class ProjectRefresherTest {
   }
 
   @Test
-  public void testStartPartialRefresh_pluginVersionChanged() throws BuildException {
+  public void testStartPartialRefresh_pluginVersionChanged() throws Exception {
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
             .setVcsState(Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())))
@@ -83,7 +81,7 @@ public class ProjectRefresherTest {
 
   @Test
   public void testStartPartialRefresh_vcsSnapshotUnchanged_existingProjectSnapshot()
-      throws IOException, BuildException {
+      throws Exception {
     VcsState vcsState =
         new VcsState("1", ImmutableSet.of(), Optional.of(Path.of("/my/workspace/.snapshot/1")));
     PostQuerySyncData project =
@@ -105,7 +103,7 @@ public class ProjectRefresherTest {
 
   @Test
   public void testStartPartialRefresh_vcsSnapshotUnchanged_noExistingProjectSnapshot()
-      throws IOException, BuildException {
+      throws Exception {
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
             .setVcsState(
@@ -125,7 +123,7 @@ public class ProjectRefresherTest {
   }
 
   @Test
-  public void testStartPartialRefresh_upstreamRevisionChange() throws BuildException {
+  public void testStartPartialRefresh_upstreamRevisionChange() throws Exception {
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
             .setVcsState(Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())))
@@ -142,7 +140,7 @@ public class ProjectRefresherTest {
   }
 
   @Test
-  public void testStartPartialRefresh_buildFileAddedThenReverted() throws BuildException {
+  public void testStartPartialRefresh_buildFileAddedThenReverted() throws Exception {
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//package/path:rule"))
@@ -175,7 +173,7 @@ public class ProjectRefresherTest {
   }
 
   @Test
-  public void testStartPartialRefresh_buildFileDeletedThenReverted() throws BuildException {
+  public void testStartPartialRefresh_buildFileDeletedThenReverted() throws Exception {
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
             .setVcsState(
@@ -208,7 +206,7 @@ public class ProjectRefresherTest {
   }
 
   @Test
-  public void testStartPartialRefresh_buildFileModified() throws BuildException {
+  public void testStartPartialRefresh_buildFileModified() throws Exception {
     ImmutableSet<WorkspaceFileChange> workingSet =
         ImmutableSet.of(new WorkspaceFileChange(Operation.MODIFY, Path.of("package/path/BUILD")));
     PostQuerySyncData project =
@@ -237,7 +235,7 @@ public class ProjectRefresherTest {
   }
 
   @Test
-  public void testStartPartialRefresh_buildFileInWorkingSet_unmodified() throws BuildException {
+  public void testStartPartialRefresh_buildFileInWorkingSet_unmodified() throws Exception {
     ImmutableSet<WorkspaceFileChange> workingSet =
         ImmutableSet.of(
             new WorkspaceFileChange(Operation.MODIFY, Path.of("package/path/BUILD")),
@@ -265,7 +263,7 @@ public class ProjectRefresherTest {
   }
 
   @Test
-  public void testStartPartialRefresh_buildFileModifiedThenReverted() throws BuildException {
+  public void testStartPartialRefresh_buildFileModifiedThenReverted() throws Exception {
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//package/path:rule"))
