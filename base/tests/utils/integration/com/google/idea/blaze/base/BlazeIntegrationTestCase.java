@@ -196,7 +196,8 @@ public abstract class BlazeIntegrationTestCase {
 
     if (isLightTestCase()) {
       TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
-          factory.createLightFixtureBuilder(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+          factory.createLightFixtureBuilder(
+              LightJavaCodeInsightFixtureTestCase.JAVA_8, "test-project");
       IdeaProjectTestFixture lightFixture = fixtureBuilder.getFixture();
       return factory.createCodeInsightFixture(lightFixture, new LightTempDirTestFixtureImpl(true));
     }
