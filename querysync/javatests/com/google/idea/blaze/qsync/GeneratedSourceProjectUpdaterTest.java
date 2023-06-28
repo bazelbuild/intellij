@@ -31,7 +31,6 @@ import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
 import com.google.idea.blaze.qsync.project.ProjectProto.SourceFolder;
 import com.google.idea.blaze.qsync.testdata.TestData;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Test;
@@ -41,7 +40,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class GeneratedSourceProjectUpdaterTest {
 
-  private static Project constructBasicProject() throws IOException {
+  private static Project constructBasicProject() throws Exception {
     Path workspaceImportDirectory = TestData.ROOT.resolve("nodeps");
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
@@ -60,7 +59,7 @@ public class GeneratedSourceProjectUpdaterTest {
   }
 
   @Test
-  public void testNoGeneratedSources() throws IOException {
+  public void testNoGeneratedSources() throws Exception {
     Project project = constructBasicProject();
 
     GeneratedSourceProjectUpdater updater =
@@ -72,7 +71,7 @@ public class GeneratedSourceProjectUpdaterTest {
   }
 
   @Test
-  public void testGeneratedSourcesAdded() throws IOException {
+  public void testGeneratedSourcesAdded() throws Exception {
     Project project = constructBasicProject();
     assertThat(project.getModulesCount()).isEqualTo(1);
     assertThat(project.getModules(0).getContentEntriesCount()).isEqualTo(1);
