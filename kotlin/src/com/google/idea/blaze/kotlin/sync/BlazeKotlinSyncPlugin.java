@@ -346,18 +346,6 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
       }
       KotlinCompat.configureModule(project, workspaceModule);
     }
-
-    @Override
-    public void afterSync(Project project, BlazeContext context) {
-      if (!isKotlinProject(project)) {
-        return;
-      }
-      Module workspaceModule = getWorkspaceModule(project);
-      if (workspaceModule == null) {
-        return;
-      }
-      KotlinCompat.configureModule(project, workspaceModule);
-    }
   }
 
   private static boolean isKotlinProject(Project project) {
