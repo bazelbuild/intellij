@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.qsync;
 
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
@@ -45,5 +46,5 @@ public interface RefreshOperation {
    * Creates the new project snapshot. Must only be called after {@link
    * #setQueryOutput(QuerySummary)}.
    */
-  BlazeProjectSnapshot createBlazeProject() throws IOException;
+  BlazeProjectSnapshot createBlazeProject() throws BuildException;
 }

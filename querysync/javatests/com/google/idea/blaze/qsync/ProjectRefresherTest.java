@@ -16,6 +16,7 @@
 package com.google.idea.blaze.qsync;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.util.concurrent.MoreExecutors.newDirectExecutorService;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.differForFiles;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.noFilesChangedDiffer;
 
@@ -55,6 +56,7 @@ public class ProjectRefresherTest {
   private ProjectRefresher createRefresher(
       VcsStateDiffer vcsDiffer, Optional<BlazeProjectSnapshot> existingSnapshot) {
     return new ProjectRefresher(
+        newDirectExecutorService(),
         QuerySyncTestUtils.EMPTY_PACKAGE_READER,
         vcsDiffer,
         Path.of("/"),

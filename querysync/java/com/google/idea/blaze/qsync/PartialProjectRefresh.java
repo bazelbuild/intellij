@@ -19,9 +19,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.vcs.VcsState;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
@@ -30,7 +32,6 @@ import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.Query.SourceFile;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
@@ -55,6 +56,7 @@ class PartialProjectRefresh implements RefreshOperation {
 
   PartialProjectRefresh(
       Context context,
+      ListeningExecutorService executor,
       Path effectiveWorkspaceRoot,
       PackageReader packageReader,
       PostQuerySyncData previousState,
@@ -72,7 +74,11 @@ class PartialProjectRefresh implements RefreshOperation {
     this.queryParser = new BlazeQueryParser(context);
     this.graphToProjectConverter =
         new GraphToProjectConverter(
-            packageReader, effectiveWorkspaceRoot, context, previousState.projectDefinition());
+            packageReader,
+            effectiveWorkspaceRoot,
+            context,
+            previousState.projectDefinition(),
+            executor);
   }
 
   private Optional<QuerySpec> createQuerySpec() {
@@ -100,7 +106,7 @@ class PartialProjectRefresh implements RefreshOperation {
   }
 
   @Override
-  public BlazeProjectSnapshot createBlazeProject() throws IOException {
+  public BlazeProjectSnapshot createBlazeProject() throws BuildException {
     Preconditions.checkNotNull(partialQuery, "queryOutput");
     QuerySummary effectiveQuery = applyDelta();
     PostQuerySyncData postQuerySyncData = newState.setQuerySummary(effectiveQuery).build();

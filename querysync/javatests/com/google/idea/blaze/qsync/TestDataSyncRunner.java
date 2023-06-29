@@ -15,11 +15,13 @@
  */
 package com.google.idea.blaze.qsync;
 
+import static com.google.common.util.concurrent.MoreExecutors.newDirectExecutorService;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
@@ -44,7 +46,7 @@ public class TestDataSyncRunner {
     this.packageReader = packageReader;
   }
 
-  public BlazeProjectSnapshot sync(TestData testProject) throws IOException {
+  public BlazeProjectSnapshot sync(TestData testProject) throws IOException, BuildException {
     ProjectDefinition projectDefinition =
         ProjectDefinition.create(
             /* includes= */ ImmutableSet.copyOf(TestData.getRelativeSourcePathsFor(testProject)),
@@ -60,7 +62,11 @@ public class TestDataSyncRunner {
     BuildGraphData buildGraphData = new BlazeQueryParser(context).parse(querySummary);
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
-            packageReader, Predicates.alwaysTrue(), context, projectDefinition);
+            packageReader,
+            Predicates.alwaysTrue(),
+            context,
+            projectDefinition,
+            newDirectExecutorService());
     Project project = converter.createProject(buildGraphData);
     return BlazeProjectSnapshot.builder()
         .queryData(pqsd)

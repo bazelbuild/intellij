@@ -22,12 +22,20 @@ import static java.util.Comparator.comparingInt;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimaps;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectDataStorage;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -49,44 +57,48 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Converts a {@link BuildGraphData} instance into a project proto. */
 public class GraphToProjectConverter {
 
   private final PackageReader packageReader;
-  private final Predicate<Path> fileExistanceCheck;
+  private final Predicate<Path> fileExistenceCheck;
   private final Context<?> context;
 
   private final ProjectDefinition projectDefinition;
+  private final ListeningExecutorService executor;
 
   public GraphToProjectConverter(
       PackageReader packageReader,
       Path workspaceRoot,
       Context<?> context,
-      ProjectDefinition projectDefinition) {
+      ProjectDefinition projectDefinition,
+      ListeningExecutorService executor) {
     this.packageReader = packageReader;
-    this.fileExistanceCheck = p -> Files.isRegularFile(workspaceRoot.resolve(p));
+    this.fileExistenceCheck = p -> Files.isRegularFile(workspaceRoot.resolve(p));
     this.context = context;
     this.projectDefinition = projectDefinition;
+    this.executor = executor;
   }
 
   @VisibleForTesting
   public GraphToProjectConverter(
       PackageReader packageReader,
-      Predicate<Path> fileExistanceCheck,
+      Predicate<Path> fileExistenceCheck,
       Context<?> context,
-      ProjectDefinition projectDefinition) {
+      ProjectDefinition projectDefinition,
+      ListeningExecutorService executor) {
     this.packageReader = packageReader;
-    this.fileExistanceCheck = fileExistanceCheck;
+    this.fileExistenceCheck = fileExistenceCheck;
     this.context = context;
     this.projectDefinition = projectDefinition;
+    this.executor = executor;
   }
 
   /**
@@ -131,7 +143,7 @@ public class GraphToProjectConverter {
    */
   @VisibleForTesting
   public Map<Path, Map<Path, String>> calculateRootSources(
-      Collection<Path> srcFiles, PackageSet packages) throws IOException {
+      Collection<Path> srcFiles, PackageSet packages) throws BuildException {
 
     // A map from package to the file chosen to represent it.
     ImmutableList<Path> chosenFiles = chooseTopLevelFiles(srcFiles, packages);
@@ -165,34 +177,60 @@ public class GraphToProjectConverter {
     return split;
   }
 
-  private ImmutableMap<Path, String> readPackages(Collection<Path> files) throws IOException {
-    long now = System.currentTimeMillis();
-    ArrayList<Path> allFiles = new ArrayList<>(files);
-    List<String> allPackages = packageReader.readPackages(allFiles);
-    long elapsed = System.currentTimeMillis() - now;
-    context.output(PrintOutput.log("%-10d Java files read (%d ms)", files.size(), elapsed));
+  private ImmutableMap<Path, String> readPackages(Collection<Path> files) throws BuildException {
+    try {
+      long now = System.currentTimeMillis();
+      ArrayList<Path> allFiles = new ArrayList<>(files);
+      List<String> allPackages = packageReader.readPackages(allFiles);
+      long elapsed = System.currentTimeMillis() - now;
+      context.output(PrintOutput.log("%-10d Java files read (%d ms)", files.size(), elapsed));
 
-    ImmutableMap.Builder<Path, String> prefixes = ImmutableMap.builder();
-    Iterator<Path> i = allFiles.iterator();
-    Iterator<String> j = allPackages.iterator();
-    while (i.hasNext() && j.hasNext()) {
-      prefixes.put(i.next().getParent(), j.next());
+      ImmutableMap.Builder<Path, String> prefixes = ImmutableMap.builder();
+      Iterator<Path> i = allFiles.iterator();
+      Iterator<String> j = allPackages.iterator();
+      while (i.hasNext() && j.hasNext()) {
+        prefixes.put(i.next().getParent(), j.next());
+      }
+      return prefixes.buildOrThrow();
+    } catch (IOException e) {
+      throw new BuildException(e);
     }
-    return prefixes.build();
   }
 
   @VisibleForTesting
-  protected ImmutableList<Path> chooseTopLevelFiles(Collection<Path> files, PackageSet packages) {
+  protected ImmutableList<Path> chooseTopLevelFiles(Collection<Path> files, PackageSet packages)
+      throws BuildException {
 
+    ImmutableListMultimap<Path, Path> filesByPath = Multimaps.index(files, Path::getParent);
     // A map from directory to the candidate chosen to represent that directory
-    Map<Path, Path> candidates =
-        files.stream()
-            .filter(fileExistanceCheck)
-            .collect(
-                Collectors.toMap(
-                    Path::getParent,
-                    Function.identity(),
-                    BinaryOperator.minBy(Comparator.comparing(Path::getFileName))));
+    // We filter out non-existent files, but without checking for the existence of all files as
+    // that slows things down unnecessarily.
+    Map<Path, Path> candidates = Maps.newConcurrentMap();
+    List<ListenableFuture<?>> futures = Lists.newArrayList();
+    for (Path dir : filesByPath.keySet()) {
+      futures.add(
+          executor.submit(
+              () -> {
+                // We use a priority queue to find the first element without sorting, since in most
+                // cases we only need the first element.
+                PriorityQueue<Path> dirFiles =
+                    new PriorityQueue<>(Comparator.comparing(Path::getFileName));
+                dirFiles.addAll(filesByPath.get(dir));
+                Path candidate = dirFiles.poll();
+                while (candidate != null && !fileExistenceCheck.test(candidate)) {
+                  candidate = dirFiles.poll();
+                }
+                if (candidate != null) {
+                  candidates.put(dir, candidate);
+                }
+              }));
+    }
+
+    try {
+      Uninterruptibles.getUninterruptibly(Futures.allAsList(futures));
+    } catch (ExecutionException e) {
+      throw new BuildException(e);
+    }
 
     // Filter the files that are top level files only
     return candidates.values().stream()
@@ -292,7 +330,7 @@ public class GraphToProjectConverter {
     }
   }
 
-  public ProjectProto.Project createProject(BuildGraphData graph) throws IOException {
+  public ProjectProto.Project createProject(BuildGraphData graph) throws BuildException {
     Map<Path, Map<Path, String>> rootToPrefix =
         calculateRootSources(graph.getJavaSourceFiles(), graph.packages());
     ImmutableSet<Path> dirs = computeAndroidResourceDirectories(graph.getAllSourceFiles());

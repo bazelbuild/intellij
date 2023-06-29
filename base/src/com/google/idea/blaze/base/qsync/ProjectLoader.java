@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
@@ -49,7 +48,6 @@ import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.VcsStateDiffer;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -64,9 +62,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ProjectLoader {
 
+  private final ListeningExecutorService executor;
   protected final Project project;
 
-  public ProjectLoader(Project project) {
+  public ProjectLoader(ListeningExecutorService executor, Project project) {
+    this.executor = executor;
     this.project = project;
   }
 
@@ -132,6 +132,7 @@ public class ProjectLoader {
         Optional.ofNullable(BlazeVcsHandlerProvider.vcsHandlerForProject(project));
     ProjectRefresher projectRefresher =
         new ProjectRefresher(
+            executor,
             createWorkspaceRelativePackageReader(),
             vcsHandler.map(BlazeVcsHandler::getVcsStateDiffer).orElse(VcsStateDiffer.NONE),
             workspaceRoot.path(),
@@ -161,11 +162,7 @@ public class ProjectLoader {
         projectViewManager);
   }
 
-  private static ParallelPackageReader createWorkspaceRelativePackageReader() {
-    ListeningExecutorService executor =
-        MoreExecutors.listeningDecorator(
-            AppExecutorUtil.createBoundedApplicationPoolExecutor("ParallelPackageReader", 128));
-
+  private ParallelPackageReader createWorkspaceRelativePackageReader() {
     return new ParallelPackageReader(executor, new PackageStatementParser());
   }
 

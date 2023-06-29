@@ -15,10 +15,14 @@
  */
 package com.google.idea.blaze.qsync.util;
 
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.GraphToProjectConverter;
 import com.google.idea.blaze.qsync.PackageReader;
 import com.google.idea.blaze.qsync.PackageStatementParser;
+import com.google.idea.blaze.qsync.ParallelPackageReader;
 import com.google.idea.blaze.qsync.WorkspaceResolvingPackageReader;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
@@ -29,6 +33,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.Executors;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -57,8 +62,10 @@ public class ProjectSpecBuilder {
   private final File snapshotFile;
   private final Path workspaceRoot;
   private final PackageReader packageReader;
+  private final ListeningExecutorService executor =
+      MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws Exception {
     System.exit(new ProjectSpecBuilder(new File(args[0])).run());
   }
 
@@ -66,10 +73,12 @@ public class ProjectSpecBuilder {
     this.snapshotFile = snapshotFile;
     this.workspaceRoot = Paths.get("").toAbsolutePath();
     this.packageReader =
-        new WorkspaceResolvingPackageReader(workspaceRoot, new PackageStatementParser());
+        new ParallelPackageReader(
+            executor,
+            new WorkspaceResolvingPackageReader(workspaceRoot, new PackageStatementParser()));
   }
 
-  private int run() throws IOException {
+  private int run() throws IOException, BuildException {
     PostQuerySyncData snapshot =
         new SnapshotDeserializer()
             .readFrom(new GZIPInputStream(new FileInputStream(snapshotFile)), context)
@@ -78,7 +87,7 @@ public class ProjectSpecBuilder {
     BuildGraphData buildGraph = new BlazeQueryParser(context).parse(snapshot.querySummary());
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
-            packageReader, workspaceRoot, context, snapshot.projectDefinition());
+            packageReader, workspaceRoot, context, snapshot.projectDefinition(), executor);
     System.out.println(TextFormat.printer().printToString(converter.createProject(buildGraph)));
     return context.hasError() ? 1 : 0;
   }
