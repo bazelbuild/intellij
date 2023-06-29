@@ -269,13 +269,15 @@ public class QuerySyncProject {
     return this.projectDefinition.equals(projectDefinition);
   }
 
-  public Optional<PostQuerySyncData> readSnapshotFromDisk() throws IOException {
+  public Optional<PostQuerySyncData> readSnapshotFromDisk(BlazeContext context) throws IOException {
     File f = snapshotFilePath.toFile();
     if (!f.exists()) {
       return Optional.empty();
     }
     try (InputStream in = new GZIPInputStream(new FileInputStream(f))) {
-      return Optional.of(new SnapshotDeserializer().readFrom(in).getSyncData());
+      return new SnapshotDeserializer()
+          .readFrom(in, context)
+          .map(SnapshotDeserializer::getSyncData);
     }
   }
 
