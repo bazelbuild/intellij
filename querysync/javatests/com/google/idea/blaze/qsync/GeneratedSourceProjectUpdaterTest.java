@@ -16,6 +16,7 @@
 package com.google.idea.blaze.qsync;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.util.concurrent.MoreExecutors.newDirectExecutorService;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.EMPTY_PACKAGE_READER;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
@@ -50,7 +51,8 @@ public class GeneratedSourceProjectUpdaterTest {
             ProjectDefinition.create(
                 ImmutableSet.of(workspaceImportDirectory),
                 ImmutableSet.of(),
-                ImmutableSet.of(LanguageClass.JAVA)));
+                ImmutableSet.of(LanguageClass.JAVA)),
+            newDirectExecutorService());
 
     BuildGraphData buildGraphData =
         new BlazeQueryParser(NOOP_CONTEXT)

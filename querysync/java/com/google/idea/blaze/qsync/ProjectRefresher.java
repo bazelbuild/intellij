@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.qsync;
 
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.vcs.VcsState;
@@ -32,16 +33,19 @@ import java.util.function.Supplier;
  */
 public class ProjectRefresher {
 
+  private final ListeningExecutorService executor;
   private final PackageReader workspaceRelativePackageReader;
   private final VcsStateDiffer vcsDiffer;
   private final Path workspaceRoot;
   private final Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier;
 
   public ProjectRefresher(
+      ListeningExecutorService executor,
       PackageReader workspaceRelativePackageReader,
       VcsStateDiffer vcsDiffer,
       Path workspaceRoot,
       Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier) {
+    this.executor = executor;
     this.workspaceRelativePackageReader = workspaceRelativePackageReader;
     this.vcsDiffer = vcsDiffer;
     this.workspaceRoot = workspaceRoot;
@@ -54,6 +58,7 @@ public class ProjectRefresher {
         vcsState.flatMap(s -> s.workspaceSnapshotPath).orElse(workspaceRoot);
     return new FullProjectUpdate(
         context,
+        executor,
         effectiveWorkspaceRoot,
         spec,
         new WorkspaceResolvingPackageReader(effectiveWorkspaceRoot, workspaceRelativePackageReader),
@@ -93,6 +98,7 @@ public class ProjectRefresher {
         params.latestVcsState.flatMap(s -> s.workspaceSnapshotPath).orElse(workspaceRoot);
     return new PartialProjectRefresh(
         context,
+        executor,
         effectiveWorkspaceRoot,
         new WorkspaceResolvingPackageReader(effectiveWorkspaceRoot, workspaceRelativePackageReader),
         params.currentProject,

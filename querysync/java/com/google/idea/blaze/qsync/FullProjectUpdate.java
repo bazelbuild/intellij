@@ -15,8 +15,10 @@
  */
 package com.google.idea.blaze.qsync;
 
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.vcs.VcsState;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
@@ -46,6 +48,7 @@ public class FullProjectUpdate implements RefreshOperation {
 
   public FullProjectUpdate(
       Context<?> context,
+      ListeningExecutorService executor,
       Path effectiveWorkspaceRoot,
       ProjectDefinition definition,
       PackageReader packageReader,
@@ -58,7 +61,7 @@ public class FullProjectUpdate implements RefreshOperation {
     this.queryParser = new BlazeQueryParser(context);
     this.graphToProjectConverter =
         new GraphToProjectConverter(
-            packageReader, effectiveWorkspaceRoot, context, projectDefinition);
+            packageReader, effectiveWorkspaceRoot, context, projectDefinition, executor);
   }
 
   @Override
@@ -73,7 +76,7 @@ public class FullProjectUpdate implements RefreshOperation {
   }
 
   @Override
-  public BlazeProjectSnapshot createBlazeProject() throws IOException {
+  public BlazeProjectSnapshot createBlazeProject() throws BuildException {
     PostQuerySyncData newData = result.build();
     BuildGraphData graph = queryParser.parse(newData.querySummary());
     ProjectProto.Project project = graphToProjectConverter.createProject(graph);

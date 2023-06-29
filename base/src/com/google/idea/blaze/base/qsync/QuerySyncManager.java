@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -49,6 +50,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.serviceContainer.NonInjectable;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -76,6 +78,9 @@ public class QuerySyncManager {
   private final Logger logger = Logger.getInstance(getClass());
 
   private final Project project;
+  protected final ListeningExecutorService executor =
+      MoreExecutors.listeningDecorator(
+          AppExecutorUtil.createBoundedApplicationPoolExecutor("QuerySync", 128));
 
   private final ProjectLoader loader;
   private volatile QuerySyncProject loadedProject;
@@ -86,13 +91,17 @@ public class QuerySyncManager {
 
   public QuerySyncManager(Project project) {
     this.project = project;
-    this.loader = new ProjectLoader(project);
+    this.loader = createProjectLoader(executor, project);
   }
 
   @NonInjectable
   public QuerySyncManager(Project project, ProjectLoader loader) {
     this.project = project;
     this.loader = loader;
+  }
+
+  protected ProjectLoader createProjectLoader(ListeningExecutorService executor, Project project) {
+    return new ProjectLoader(executor, project);
   }
 
   @CanIgnoreReturnValue
