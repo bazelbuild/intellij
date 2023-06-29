@@ -6,6 +6,7 @@ java_binary(
     name = "project_spec_builder",
     srcs = ["ProjectSpecBuilder.java"],
     main_class = "com.google.idea.blaze.qsync.util.ProjectSpecBuilder",
+    visibility = ["//querysync:__pkg__"],
     deps = [
         ":cli_context",
         "//querysync/java/com/google/idea/blaze/qsync",
@@ -18,6 +19,7 @@ java_binary(
     name = "query_summarizer",
     srcs = ["QuerySummarizer.java"],
     main_class = "com.google.idea.blaze.qsync.util.QuerySummarizer",
+    visibility = ["//querysync:__pkg__"],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/project:snapshot_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/query",
