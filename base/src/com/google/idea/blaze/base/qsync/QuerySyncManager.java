@@ -23,6 +23,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
+import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
+import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
@@ -205,6 +208,11 @@ public class QuerySyncManager {
                               .setProgressIndicator(indicator)
                               .showSummaryOutput()
                               .setPopupBehavior(FocusBehavior.ALWAYS)
+                              .setIssueParsers(
+                                  BlazeIssueParser.defaultIssueParsers(
+                                      project,
+                                      WorkspaceRoot.fromProject(project),
+                                      ContextType.Sync))
                               .build();
                       context
                           .push(new ProgressIndicatorScope(indicator))
