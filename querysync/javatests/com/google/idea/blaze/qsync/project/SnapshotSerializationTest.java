@@ -16,9 +16,11 @@
 package com.google.idea.blaze.qsync.project;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
 import static com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation.ADD;
 import static com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation.DELETE;
 import static com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation.MODIFY;
+import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.vcs.VcsState;
@@ -58,7 +60,10 @@ public class SnapshotSerializationTest {
             .build();
     byte[] serialized = new SnapshotSerializer().visit(original).toProto().toByteArray();
     PostQuerySyncData deserialized =
-        new SnapshotDeserializer().readFrom(new ByteArrayInputStream(serialized)).getSyncData();
+        new SnapshotDeserializer()
+            .readFrom(new ByteArrayInputStream(serialized), NOOP_CONTEXT)
+            .get()
+            .getSyncData();
     assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
     assertThat(deserialized).isEqualTo(original);
   }
@@ -79,7 +84,10 @@ public class SnapshotSerializationTest {
             .build();
     byte[] serialized = new SnapshotSerializer().visit(original).toProto().toByteArray();
     PostQuerySyncData deserialized =
-        new SnapshotDeserializer().readFrom(new ByteArrayInputStream(serialized)).getSyncData();
+        new SnapshotDeserializer()
+            .readFrom(new ByteArrayInputStream(serialized), NOOP_CONTEXT)
+            .get()
+            .getSyncData();
     assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
     assertThat(deserialized).isEqualTo(original);
   }
@@ -98,8 +106,29 @@ public class SnapshotSerializationTest {
             .build();
     byte[] serialized = new SnapshotSerializer().visit(original).toProto().toByteArray();
     PostQuerySyncData deserialized =
-        new SnapshotDeserializer().readFrom(new ByteArrayInputStream(serialized)).getSyncData();
+        new SnapshotDeserializer()
+            .readFrom(new ByteArrayInputStream(serialized), NOOP_CONTEXT)
+            .get()
+            .getSyncData();
     assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
     assertThat(deserialized).isEqualTo(original);
+  }
+
+  @Test
+  public void testSerialization_versionBump() throws IOException {
+    PostQuerySyncData original =
+        PostQuerySyncData.builder()
+            .setProjectDefinition(
+                ProjectDefinition.create(
+                    ImmutableSet.of(Path.of("project/path")),
+                    ImmutableSet.of(Path.of("project/path/excluded")),
+                    ImmutableSet.of(LanguageClass.JAVA)))
+            .setVcsState(Optional.empty())
+            .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//project/path:path"))
+            .build();
+    byte[] serialized = new SnapshotSerializer(-1).visit(original).toProto().toByteArray();
+    assertThat(
+            new SnapshotDeserializer().readFrom(new ByteArrayInputStream(serialized), NOOP_CONTEXT))
+        .isEmpty();
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.qsync.project;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.common.vcs.VcsState;
@@ -28,6 +29,8 @@ import java.nio.file.Path;
 
 /** Serializes a {@link PostQuerySyncData} instance to a proto message. */
 public class SnapshotSerializer {
+
+  public static final int PROTO_VERSION = 0;
 
   static final ImmutableBiMap<Operation, SnapshotProto.WorkspaceFileChange.VcsOperation> OP_MAP =
       ImmutableBiMap.of(
@@ -44,7 +47,12 @@ public class SnapshotSerializer {
   private final SnapshotProto.Snapshot.Builder proto;
 
   public SnapshotSerializer() {
-    proto = SnapshotProto.Snapshot.newBuilder();
+    proto = SnapshotProto.Snapshot.newBuilder().setVersion(PROTO_VERSION);
+  }
+
+  @VisibleForTesting
+  public SnapshotSerializer(int protoVersion) {
+    proto = SnapshotProto.Snapshot.newBuilder().setVersion(protoVersion);
   }
 
   @CanIgnoreReturnValue

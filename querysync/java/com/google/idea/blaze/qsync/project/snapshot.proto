@@ -12,6 +12,7 @@ message Snapshot {
   ProjectDefinition project_definition = 1;
   VcsState vcs_state = 2;
   Summary query_summary = 3;
+  int32 version = 4;
 }
 
 message ProjectDefinition {

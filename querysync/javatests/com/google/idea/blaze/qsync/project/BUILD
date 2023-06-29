@@ -17,6 +17,7 @@ java_test(
     srcs = ["SnapshotSerializationTest.java"],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/project",
+        "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
         "//querysync/javatests/com/google/idea/blaze/qsync/query:QuerySummaryTestUtil",
         "//shared:vcs",
         "@com_google_guava_guava//jar",

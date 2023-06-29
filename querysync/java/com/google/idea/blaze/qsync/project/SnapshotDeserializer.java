@@ -19,6 +19,8 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableBiMap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
@@ -46,15 +48,20 @@ public class SnapshotDeserializer {
   }
 
   @CanIgnoreReturnValue
-  public SnapshotDeserializer readFrom(InputStream in) throws IOException {
+  public Optional<SnapshotDeserializer> readFrom(InputStream in, Context<?> context)
+      throws IOException {
     SnapshotProto.Snapshot proto =
         SnapshotProto.Snapshot.parseFrom(in, ExtensionRegistry.getEmptyRegistry());
+    if (proto.getVersion() != SnapshotSerializer.PROTO_VERSION) {
+      context.output(PrintOutput.output("IDE has updated since last sync; performing full sync"));
+      return Optional.empty();
+    }
     visitProjectDefinition(proto.getProjectDefinition());
     if (proto.hasVcsState()) {
       visitVcsState(proto.getVcsState());
     }
     visitQuerySummay(proto.getQuerySummary());
-    return this;
+    return Optional.of(this);
   }
 
   public PostQuerySyncData getSyncData() {

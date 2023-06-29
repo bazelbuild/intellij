@@ -72,7 +72,8 @@ public class ProjectSpecBuilder {
   private int run() throws IOException {
     PostQuerySyncData snapshot =
         new SnapshotDeserializer()
-            .readFrom(new GZIPInputStream(new FileInputStream(snapshotFile)))
+            .readFrom(new GZIPInputStream(new FileInputStream(snapshotFile)), context)
+            .orElseThrow()
             .getSyncData();
     BuildGraphData buildGraph = new BlazeQueryParser(context).parse(snapshot.querySummary());
     GraphToProjectConverter converter =
