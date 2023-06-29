@@ -19,11 +19,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Interner;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
-import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.exception.BuildException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /** Assists in getting build artifacts from a build operation. */
@@ -108,7 +108,7 @@ public interface BuildResultHelper extends AutoCloseable {
    * @param completedBuildId build id.
    * @return a list of message on stdout.
    */
-  default InputStream getStdout(String completedBuildId, BlazeContext context)
+  default InputStream getStdout(String completedBuildId, Consumer<String> stderrConsumer)
       throws BuildException {
     return InputStream.nullInputStream();
   }

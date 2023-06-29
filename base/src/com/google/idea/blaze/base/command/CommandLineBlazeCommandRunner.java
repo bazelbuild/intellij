@@ -46,6 +46,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Optional;
+import java.util.function.Function;
 
 /** {@inheritDoc} Start a build via local binary. */
 public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
@@ -109,14 +110,20 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
               String.format("intellij-bazel-%s-", blazeCommandBuilder.build().getName()),
               ".stdout");
       OutputStream out = closer.register(Files.newOutputStream(tempFile));
+      BlazeCommand command = blazeCommandBuilder.build();
+      WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+      Function<String, String> rootReplacement =
+          WorkspaceRootReplacement.create(workspaceRoot.path(), command);
+
       int retVal =
-          ExternalTask.builder(WorkspaceRoot.fromProject(project))
-              .addBlazeCommand(blazeCommandBuilder.build())
+          ExternalTask.builder(workspaceRoot)
+              .addBlazeCommand(command)
               .context(context)
               .stdout(out)
               .stderr(
                   LineProcessingOutputStream.of(
                       line -> {
+                        line = rootReplacement.apply(line);
                         // errors are expected, so limit logging to info level
                         Logger.getInstance(this.getClass()).info(line.stripTrailing());
                         context.output(PrintOutput.output(line.stripTrailing()));
