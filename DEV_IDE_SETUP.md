@@ -35,7 +35,3 @@ Once the project is imported, create a new Run configuration: `Run -> Edit Confi
 Click the `+` sign, and create a new `Bazel IntelliJ Plugin` run configuration.
 Configure the `Plugin SDK` field to use the SDK you've just installed.
 
-### If Using JDK17
-
-You'll need to add some additional flags to the VM Options to open the required modules.
-You can find an up to date list in [the JetBrains/intellij-community repository](https://raw.githubusercontent.com/JetBrains/intellij-community/master/plugins/devkit/devkit-core/src/run/OpenedPackages.txt)
