@@ -83,15 +83,15 @@ def _build_deploy_info_file(deploy_file):
     )
 
 def _intellij_plugin_debug_target_impl(ctx):
-    files = depset()
+    files_depsets = []
     deploy_files = []
     java_agent_deploy_files = []
     for target in ctx.attr.deps:
-        files = depset(transitive = [files, target.input_files])
+        files_depsets.append(target[input_files])
         deploy_files.extend(target.aspect_intellij_plugin_deploy_info.deploy_files)
         java_agent_deploy_files.extend(target.aspect_intellij_plugin_deploy_info.java_agent_deploy_files)
     for target in ctx.attr.javaagents:
-        files = depset(transitive = [files, target.input_files])
+        files_depsets.append(target[input_files])
         java_agent_deploy_files.extend(target.aspect_intellij_plugin_deploy_info.deploy_files)
         java_agent_deploy_files.extend(target.aspect_intellij_plugin_deploy_info.java_agent_deploy_files)
     deploy_info = struct(
@@ -100,6 +100,8 @@ def _intellij_plugin_debug_target_impl(ctx):
     )
     output = ctx.actions.declare_file(ctx.label.name + SUFFIX)
     ctx.actions.write(output, deploy_info.to_proto())
+
+    files = depset(transitive = files_depsets)
 
     # We've already consumed any dependent intellij_plugin_debug_targets into our own,
     # do not build or report these
