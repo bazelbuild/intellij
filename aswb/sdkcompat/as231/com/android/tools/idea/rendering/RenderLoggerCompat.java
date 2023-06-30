@@ -15,6 +15,8 @@
  */
 package com.android.tools.idea.rendering;
 
+import com.android.tools.rendering.RenderLogger;
+import com.android.tools.rendering.RenderResult;
 import java.util.Map;
 import java.util.Set;
 

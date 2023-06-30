@@ -15,6 +15,7 @@
  */
 package com.android.tools.idea.rendering;
 
+import com.android.tools.rendering.RenderResult;
 import com.intellij.psi.PsiFile;
 
 /** Compat class for {@link RenderResult} */

@@ -20,7 +20,6 @@ import static com.android.tools.idea.run.tasks.DefaultConnectDebuggerTaskKt.getB
 import com.android.tools.idea.execution.common.debug.AndroidDebugger;
 import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.run.ApkProvisionException;
-import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
 import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
 import com.android.tools.idea.run.blaze.BlazeLaunchTask;
@@ -51,7 +50,7 @@ public class BlazeAndroidBinaryNormalBuildRunContext
 
   @Override
   public BlazeLaunchTask getApplicationLaunchTask(
-      LaunchOptions launchOptions, @Nullable Integer userId, String contributorsAmStartOptions)
+      boolean isDebug, @Nullable Integer userId, String contributorsAmStartOptions)
       throws ExecutionException {
     String extraFlags = UserIdHelper.getFlagsFromUserId(userId);
     if (!contributorsAmStartOptions.isEmpty()) {
@@ -59,7 +58,7 @@ public class BlazeAndroidBinaryNormalBuildRunContext
     }
 
     final StartActivityFlagsProvider startActivityFlagsProvider =
-        new DefaultStartActivityFlagsProvider(project, launchOptions.isDebug(), extraFlags);
+        new DefaultStartActivityFlagsProvider(project, isDebug, extraFlags);
 
     BlazeAndroidDeployInfo deployInfo;
     try {

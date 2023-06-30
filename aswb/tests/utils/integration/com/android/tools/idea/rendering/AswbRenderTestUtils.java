@@ -20,6 +20,7 @@ import static org.junit.Assert.fail;
 import com.android.sdklib.devices.Device;
 import com.android.tools.idea.configurations.Configuration;
 import com.android.tools.idea.configurations.ConfigurationManager;
+import com.android.tools.rendering.RenderServiceCompat;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
@@ -76,8 +77,8 @@ public class AswbRenderTestUtils {
     }
 
     // Give the render executor 5 seconds to shutdown.
-    RenderService.shutdownRenderExecutor(5);
-    RenderService.initializeRenderExecutor();
+    RenderServiceCompat.shutdownRenderExecutor(5);
+    RenderServiceCompat.initializeRenderExecutor();
   }
 
   /**

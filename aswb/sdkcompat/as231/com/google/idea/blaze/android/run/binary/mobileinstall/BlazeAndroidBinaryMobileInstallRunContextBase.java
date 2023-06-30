@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.run.binary.mobileinstall;
 
 import com.android.ddmlib.IDevice;
+import com.android.tools.idea.execution.common.DeployOptions;
 import com.android.tools.idea.run.ApkFileUnit;
 import com.android.tools.idea.run.ApkInfo;
 import com.android.tools.idea.run.ApkProvisionException;
@@ -115,7 +116,7 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
   }
 
   @Override
-  public ImmutableList<BlazeLaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
+  public ImmutableList<BlazeLaunchTask> getDeployTasks(IDevice device, DeployOptions deployOptions)
       throws ExecutionException {
     if (!buildStep.needsIdeDeploy()) {
       return ImmutableList.of();
@@ -141,7 +142,7 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
             packageName);
 
     BlazeLaunchTask deployTask =
-        DeployTasksCompat.createDeployTask(project, Collections.singletonList(info), launchOptions);
+        DeployTasksCompat.createDeployTask(project, Collections.singletonList(info), deployOptions);
     return ImmutableList.of(new DeploymentTimingReporterTask(launchId, deployTask));
   }
 
@@ -152,10 +153,9 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
   }
 
   @Override
-  public BlazeLaunchTasksProvider getLaunchTasksProvider(LaunchOptions.Builder launchOptionsBuilder)
+  public BlazeLaunchTasksProvider getLaunchTasksProvider(LaunchOptions launchOptions)
       throws ExecutionException {
-    return new BlazeAndroidLaunchTasksProvider(
-        project, this, applicationIdProvider, launchOptionsBuilder);
+    return new BlazeAndroidLaunchTasksProvider(project, this, applicationIdProvider, launchOptions);
   }
 
   @Override

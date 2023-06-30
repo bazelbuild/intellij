@@ -24,6 +24,6 @@ public class LaunchOptionsCompat {
 
   /** Create default launch options to maintain compatibility with #api211. */
   public static LaunchOptions.Builder getDefaultLaunchOptions() {
-    return LaunchOptions.builder().setClearLogcatBeforeStart(false);
+    return LaunchOptions.builder();
   }
 }

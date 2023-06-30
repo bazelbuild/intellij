@@ -20,10 +20,10 @@ import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.android.tools.idea.rendering.RenderErrorContributor;
 import com.android.tools.idea.rendering.RenderLoggerCompat;
-import com.android.tools.idea.rendering.RenderResult;
 import com.android.tools.idea.rendering.errors.ui.RenderErrorModel;
 import com.android.tools.idea.ui.designer.EditorDesignSurface;
 import com.android.tools.rendering.HtmlLinkManagerCompat;
+import com.android.tools.rendering.RenderResult;
 import com.android.utils.HtmlBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
@@ -41,14 +41,12 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -77,8 +75,8 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
   private final Project project;
 
   public BlazeRenderErrorContributor(
-      EditorDesignSurface surface, RenderResult result, @Nullable DataContext dataContext) {
-    super(surface, result, dataContext);
+      EditorDesignSurface surface, RenderResult result) {
+    super(surface, result);
     logger = new RenderLoggerCompat(result);
     module = result.getModule();
     project = module.getProject();
@@ -90,11 +88,6 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
 
     if (blazeProjectData == null || !logger.hasErrors()) {
-      return getIssues();
-    }
-
-    if (QuerySync.isEnabled()) {
-      // TODO(b/284002829): Setup resource-module specific issue reporting
       return getIssues();
     }
 
@@ -359,9 +352,8 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
     @Override
     public RenderErrorContributor getContributor(
         @Nullable EditorDesignSurface surface,
-        RenderResult result,
-        @Nullable DataContext dataContext) {
-      return new BlazeRenderErrorContributor(surface, result, dataContext);
+        RenderResult result) {
+      return new BlazeRenderErrorContributor(surface, result);
     }
   }
 }

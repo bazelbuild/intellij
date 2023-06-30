@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.run.binary;
 import static com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider.NATIVE_DEBUGGING_ENABLED;
 
 import com.android.ddmlib.IDevice;
+import com.android.tools.idea.execution.common.DeployOptions;
 import com.android.tools.idea.gradle.util.DynamicAppUtils;
 import com.android.tools.idea.run.ApkFileUnit;
 import com.android.tools.idea.run.ApkInfo;
@@ -38,6 +39,7 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
@@ -89,13 +91,15 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
 
   @Override
   public void augmentLaunchOptions(LaunchOptions.Builder options) {
-    options.setDeploy(true).setOpenLogcatAutomatically(configState.showLogcatAutomatically());
-    options.addExtraOptions(
-        ImmutableMap.of(
-            "android.profilers.state", // Not used after #api211
-            configState.getProfilerState(),
-            NATIVE_DEBUGGING_ENABLED,
-            configState.getCommonState().isNativeDebuggingEnabled()));
+    LaunchOptions.Builder unused =
+        options
+            .setDeploy(true)
+            .setOpenLogcatAutomatically(configState.showLogcatAutomatically())
+            .addExtraOptions(
+                ImmutableMap.of(
+                    NATIVE_DEBUGGING_ENABLED,
+                    configState.getCommonState().isNativeDebuggingEnabled()))
+            .setClearAppStorage(configState.getClearAppStorage());
   }
 
   @Override
@@ -120,10 +124,9 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   }
 
   @Override
-  public BlazeLaunchTasksProvider getLaunchTasksProvider(LaunchOptions.Builder launchOptionsBuilder)
+  public BlazeLaunchTasksProvider getLaunchTasksProvider(LaunchOptions launchOptions)
       throws ExecutionException {
-    return new BlazeAndroidLaunchTasksProvider(
-        project, this, applicationIdProvider, launchOptionsBuilder);
+    return new BlazeAndroidLaunchTasksProvider(project, this, applicationIdProvider, launchOptions);
   }
 
   @Override
@@ -131,24 +134,19 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
     return configState.getAmStartOptions();
   }
 
-  @Override
-  public ProfilerState getProfileState() {
-    return configState.getProfilerState();
-  }
-
   @Nullable
   @Override
-  public ImmutableList<BlazeLaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
+  public ImmutableList<BlazeLaunchTask> getDeployTasks(IDevice device, DeployOptions deployOptions)
       throws ExecutionException {
     BlazeLaunchTask deployTask =
         DeployTasksCompat.createDeployTask(
-            project, getApkInfoToInstall(device, launchOptions, apkProvider), launchOptions);
+            project, getApkInfoToInstall(device, deployOptions, apkProvider), deployOptions);
     return ImmutableList.of(new DeploymentTimingReporterTask(launchId, deployTask));
   }
 
   /** Returns a list of APKs excluding any APKs for features that are disabled. */
   public static List<ApkInfo> getApkInfoToInstall(
-      IDevice device, LaunchOptions launchOptions, ApkProvider apkProvider)
+      IDevice device, DeployOptions deployOptions, ApkProvider apkProvider)
       throws ExecutionException {
     Collection<ApkInfo> apks;
     try {
@@ -156,7 +154,7 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
     } catch (ApkProvisionException e) {
       throw new ExecutionException(e);
     }
-    List<String> disabledFeatures = launchOptions.getDisabledDynamicFeatures();
+    List<String> disabledFeatures = deployOptions.getDisabledDynamicFeatures();
     return apks.stream()
         .map(apk -> getApkInfoToInstall(apk, disabledFeatures))
         .collect(Collectors.toList());
@@ -173,5 +171,15 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
     } else {
       return apkInfo;
     }
+  }
+
+  @Override
+  public Executor getExecutor() {
+    return env.getExecutor();
+  }
+
+  @Override
+  public ProfilerState getProfileState() {
+    return configState.getProfilerState();
   }
 }

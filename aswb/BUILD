@@ -166,7 +166,13 @@ intellij_unit_test_suite(
     srcs = glob(
         ["tests/unittests/**/*.java"],
         exclude = ["tests/unittests/com/google/idea/blaze/android/sync/model/idea/BlazeClassJarProviderTest.java"],  # b/145809318
-    ),
+    ) + select_for_plugin_api({
+        "android-studio-2022.2": ["tests/utils/sdkcompat/as222/com/google/idea/blaze/android/rendering/BlazeRenderErrorContributorTest.java"],
+        "android-studio-2022.3": ["tests/utils/sdkcompat/as223/com/google/idea/blaze/android/rendering/BlazeRenderErrorContributorTest.java"],
+        "android-studio-2023.1": ["tests/utils/sdkcompat/as231/com/google/idea/blaze/android/rendering/BlazeRenderErrorContributorTest.java"],
+        "android-studio-dev": ["tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/rendering/BlazeRenderErrorContributorTest.java"],
+        "default": [],
+    }),
     test_package_root = "com.google.idea.blaze.android",
     deps = [
         ":aswb_lib",

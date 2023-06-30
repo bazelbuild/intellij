@@ -11,6 +11,6 @@ public abstract class AbstractRepositoryManagerCompat<T extends Repository>
     extends AbstractRepositoryManager<T> {
   protected AbstractRepositoryManagerCompat(
       AbstractVcs abstractVcs, Project project, VcsKey vcsKey, String repoDirName) {
-    super(abstractVcs, repoDirName);
+    super(project, vcsKey, repoDirName);
   }
 }
