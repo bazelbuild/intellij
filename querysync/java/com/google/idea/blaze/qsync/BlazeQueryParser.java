@@ -119,6 +119,10 @@ public class BlazeQueryParser {
         buildTarget.setInstruments(
             Label.of(ruleEntry.getValue().getOtherAttributesOrThrow("instruments")));
       }
+      if (ruleEntry.getValue().containsOtherAttributes("custom_package")) {
+        buildTarget.setCustomPackage(
+            ruleEntry.getValue().getOtherAttributesOrThrow("custom_package"));
+      }
       graphBuilder.targetMapBuilder().put(ruleEntry.getKey(), buildTarget.build());
 
       if (isJavaRule(ruleClass)) {

@@ -301,4 +301,15 @@ public abstract class BuildGraphData {
     }
     return files;
   }
+
+  /** Returns a list of custom_package fields that used by current project. */
+  public ImmutableSet<String> getAllCustomPackages() {
+    ImmutableSet.Builder<String> customPackages = ImmutableSet.builder();
+    for (BuildTarget target : targetMap().values()) {
+      if (target.customPackage().isPresent()) {
+        customPackages.add(target.customPackage().get());
+      }
+    }
+    return customPackages.build();
+  }
 }
