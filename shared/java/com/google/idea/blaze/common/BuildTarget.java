@@ -29,6 +29,8 @@ public abstract class BuildTarget {
 
   public abstract Optional<Label> instruments();
 
+  public abstract Optional<String> customPackage();
+
   public static Builder builder() {
     return new AutoValue_BuildTarget.Builder();
   }
@@ -43,6 +45,8 @@ public abstract class BuildTarget {
     public abstract Builder setTestApp(Label testApp);
 
     public abstract Builder setInstruments(Label instruments);
+
+    public abstract Builder setCustomPackage(String customPackage);
 
     public abstract BuildTarget build();
   }

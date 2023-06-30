@@ -68,14 +68,14 @@ public abstract class QuerySummary {
    * <p>Whenever changing the logic in this class such that the Query.Summary proto contents will be
    * different for the same input, this version should be incremented.
    */
-  @VisibleForTesting public static final int PROTO_VERSION = 0;
+  @VisibleForTesting public static final int PROTO_VERSION = 1;
 
   public static final QuerySummary EMPTY =
       create(Query.Summary.newBuilder().setVersion(PROTO_VERSION).build());
 
   // Other rule attributes needed by query sync. Only supports attributes with single-string values
   private static final ImmutableSet<String> OTHER_ATTRIBUTES =
-      ImmutableSet.of("test_app", "instruments");
+      ImmutableSet.of("test_app", "instruments", "custom_package");
 
   // Compile-time dependency attributes
   private static final ImmutableSet<String> DEPENDENCY_ATTRIBUTES =

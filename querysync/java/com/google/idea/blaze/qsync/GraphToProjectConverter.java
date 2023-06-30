@@ -360,7 +360,8 @@ public class GraphToProjectConverter {
             .addLibraryName(depsLib.getName())
             .addAllAndroidResourceDirectories(
                 dirs.stream().map(Path::toString).collect(toImmutableList()))
-            .addAllAndroidSourcePackages(pkgs);
+            .addAllAndroidSourcePackages(pkgs)
+            .addAllAndroidCustomPackages(graph.getAllCustomPackages());
 
     ListMultimap<Path, Path> excludesByRootDirectory =
         projectDefinition.getExcludesByRootDirectory();
