@@ -260,10 +260,12 @@ public interface ExternalTask {
               StringUtil.shortenTextWithEllipsis(
                   logMessage, /* maxLength= */ 1000, /* suffixLength= */ 0)));
 
+      String logCommand = ParametersListUtil.join(command);
+      if (logCommand.length() > 2000) {
+        logCommand = logCommand.substring(0, 2000) + " <truncated>";
+      }
       logger.info(
-          String.format(
-              "Running task:\n  %s\n  with PWD: %s",
-              ParametersListUtil.join(command), workingDirectory));
+          String.format("Running task:\n  %s\n  with PWD: %s", logCommand, workingDirectory));
 
       try {
         if (context.isEnding()) {
