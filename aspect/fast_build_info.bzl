@@ -94,7 +94,7 @@ def _fast_build_info_impl(target, ctx):
 
     if write_output:
         output_file = ctx.actions.declare_file(target.label.name + ".ide-fast-build-info.txt")
-        ctx.actions.write(output_file, struct_omit_none(**info).to_proto())
+        ctx.actions.write(output_file, proto.encode_text(struct_omit_none(**info)))
         output_files += [output_file]
 
     output_groups = depset(output_files, transitive = dep_outputs)

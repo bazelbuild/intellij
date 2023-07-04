@@ -1140,7 +1140,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
 
     # Output the ide information file.
     info = struct_omit_none(**ide_info)
-    ctx.actions.write(ide_info_file, info.to_proto())
+    ctx.actions.write(ide_info_file, proto.encode_text(info))
 
     # Return providers.
     return struct_omit_none(
