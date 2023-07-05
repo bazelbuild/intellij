@@ -20,7 +20,7 @@ import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.android.tools.idea.rendering.RenderErrorContributor;
 import com.android.tools.idea.rendering.RenderLoggerCompat;
-import com.android.tools.idea.rendering.RenderResult;
+import com.android.tools.idea.rendering.RenderResultCompat;
 import com.android.tools.idea.rendering.errors.ui.RenderErrorModel;
 import com.android.tools.idea.ui.designer.EditorDesignSurface;
 import com.android.tools.rendering.HtmlLinkManagerCompat;
@@ -42,7 +42,6 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.qsync.QuerySync;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
@@ -77,8 +76,8 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
   private final Project project;
 
   public BlazeRenderErrorContributor(
-      EditorDesignSurface surface, RenderResult result, @Nullable DataContext dataContext) {
-    super(surface, result, dataContext);
+      EditorDesignSurface surface, RenderResultCompat result, @Nullable DataContext dataContext) {
+    super(surface, result.get(), dataContext);
     logger = new RenderLoggerCompat(result);
     module = result.getModule();
     project = module.getProject();
@@ -347,21 +346,5 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
       return builder.addLink(target.toString(), url);
     }
     return builder.add(target.toString());
-  }
-
-  /** Extension to provide {@link BlazeRenderErrorContributor}. */
-  public static class BlazeProvider extends Provider {
-    @Override
-    public boolean isApplicable(Project project) {
-      return Blaze.isBlazeProject(project);
-    }
-
-    @Override
-    public RenderErrorContributor getContributor(
-        @Nullable EditorDesignSurface surface,
-        RenderResult result,
-        @Nullable DataContext dataContext) {
-      return new BlazeRenderErrorContributor(surface, result, dataContext);
-    }
   }
 }

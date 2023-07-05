@@ -104,7 +104,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.android.rendering">
-    <renderErrorContributor implementation="com.google.idea.blaze.android.rendering.BlazeRenderErrorContributor$BlazeProvider"/>
+    <renderErrorContributor implementation="com.android.tools.idea.rendering.RenderResultCompat$BlazeProvider"/>
     <renderSecurityManagerOverrides implementation="com.google.idea.blaze.android.rendering.BlazeRenderSecurityManagerOverrides"/>
   </extensions>
 
