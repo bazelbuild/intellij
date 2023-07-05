@@ -66,20 +66,7 @@ stamped_plugin_xml(
 java_library(
     name = "unit_test_utils",
     testonly = 1,
-    srcs = glob(["tests/utils/unit/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2022.2": [
-            "tests/utils/sdkcompat/as222/com/android/tools/idea/rendering/RenderResultCompat.java",
-        ],
-        "android-studio-2022.3": [
-            "tests/utils/sdkcompat/as223/com/android/tools/idea/rendering/RenderResultCompat.java",
-        ],
-        "android-studio-2023.1": [
-            "tests/utils/sdkcompat/as231/com/android/tools/idea/rendering/RenderResultCompat.java",
-        ],
-        "android-studio-dev": [
-            "tests/utils/sdkcompat/asdev/com/android/tools/idea/rendering/RenderResultCompat.java",
-        ],
-    }),
+    srcs = glob(["tests/utils/unit/**/*.java"]),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
         ":aswb_lib",
