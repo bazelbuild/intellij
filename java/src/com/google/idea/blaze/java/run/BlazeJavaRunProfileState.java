@@ -108,7 +108,7 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
                 getConfiguration().getTargetKind());
     BlazeTestUiSession testUiSession = null;
     if (TargetKindUtil.isLocalTest(getConfiguration().getTargetKind())
-        && invoker.getCommandRunner().shouldUseForLocalTests()
+        && !invoker.getCommandRunner().canUseCli()
         && getExecutorType().isDebugType()) {
       File downloadDir = getDownloadDir();
       WorkspaceRoot workspaceRoot =

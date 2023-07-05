@@ -27,7 +27,6 @@ import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.BlazeCommandRunnerExperiments;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
@@ -155,7 +154,9 @@ public final class BlazeCommandGenericRunConfigurationRunner
                 invoker,
                 ImmutableList.copyOf(buildResultHelper.getBuildFlags()),
                 context);
-
+        if (invoker.getCommandRunner().canUseCli()) {
+          return getScopedProcessHandler(project, blazeCommand.build(), workspaceRoot);
+        }
         return isTest()
             ? getProcessHandlerForTests(
                 project, invoker, buildResultHelper, blazeCommand, workspaceRoot, context)
@@ -255,7 +256,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
         BlazeContext context)
         throws ExecutionException {
       BlazeTestResultFinderStrategy testResultFinderStrategy =
-          BlazeCommandRunnerExperiments.isEnabledForTests(invoker.getCommandRunner())
+          !invoker.getCommandRunner().canUseCli()
               ? new BlazeTestResultHolder()
               : new LocalBuildEventProtocolTestFinderStrategy(buildResultHelper);
       BlazeTestUiSession testUiSession = null;
@@ -283,7 +284,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
         context.addOutputSink(PrintOutput.class, new WritingOutputSink(consoleView));
       }
       addConsoleFilters(consoleFilters.toArray(new Filter[0]));
-      return BlazeCommandRunnerExperiments.isEnabledForTests(invoker.getCommandRunner())
+      return !invoker.getCommandRunner().canUseCli()
           ? getCommandRunnerProcessHandler(
               project,
               invoker,
