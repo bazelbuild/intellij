@@ -25,9 +25,5 @@ public class BlazeCommandRunnerExperiments {
   public static final BoolExperiment USE_SINGLEJAR_FOR_DEBUGGING =
       new BoolExperiment("debug.localtests.singlejar.enable", true);
 
-  public static boolean isEnabledForTests(BlazeCommandRunner runner) {
-    return runner.shouldUseForLocalTests();
-  }
-
   private BlazeCommandRunnerExperiments() {}
 }

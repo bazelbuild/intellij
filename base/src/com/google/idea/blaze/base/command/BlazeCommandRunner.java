@@ -73,9 +73,10 @@ public interface BlazeCommandRunner {
       BuildResultHelper buildResultHelper,
       BlazeContext context)
       throws BuildException;
+
   /** Allows enabling the use of command runner for restricted set of users. */
-  default boolean shouldUseForLocalTests() {
-    return false;
+  default boolean canUseCli() {
+    return true;
   }
 
   /** Get a list of additional build flags. */
