@@ -1,3 +1,7 @@
+v2023.07.04
+===========
+
+
 v2023.06.13
 ===========
 * fix(cpp): Only register Xcode settings provider on macOS #4976
