@@ -18,7 +18,7 @@ public abstract class FileReferenceCompat extends FileReference {
   protected void innerResolveInContext(
       String text,
       PsiFileSystemItem context,
-      Collection<? super ResolveResult> result,
+      Collection<ResolveResult> result,
       boolean caseSensitive) {
     if (doInnerResolveInContext(text, context, result, caseSensitive)) {
       super.innerResolveInContext(text, context, result, caseSensitive);
