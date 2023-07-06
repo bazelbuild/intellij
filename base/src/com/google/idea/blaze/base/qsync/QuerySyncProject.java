@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.qsync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -34,6 +35,7 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
@@ -194,18 +196,17 @@ public class QuerySyncProject {
   }
 
   public void enableAnalysis(BlazeContext context, PsiFile psiFile) {
-    try {
-      Path path = Paths.get(psiFile.getVirtualFile().getPath());
-      String rel = workspaceRoot.path().relativize(path).toString();
-      build(context, ImmutableList.of(WorkspacePath.createIfValid(rel).asPath()));
-    } catch (Exception e) {
-      context.handleException("Failed to build dependencies", e);
-    }
+    Path path = Paths.get(psiFile.getVirtualFile().getPath());
+    Path rel = workspaceRoot.path().relativize(path);
+    enableAnalysis(context, ImmutableList.of(rel));
   }
 
-  public void enableAnalysis(BlazeContext context, Path workspaceRelativePath) {
+  public void enableAnalysis(BlazeContext context, ImmutableList<Path> workspaceRelativePaths) {
     try {
-      build(context, ImmutableList.of(workspaceRelativePath));
+      context.output(
+          PrintOutput.output(
+              "Building dependencies for:\n  " + Joiner.on("\n  ").join(workspaceRelativePaths)));
+      build(context, workspaceRelativePaths);
     } catch (Exception e) {
       context.handleException("Failed to build dependencies", e);
     }
