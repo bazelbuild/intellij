@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -248,12 +249,12 @@ public class QuerySyncManager {
   }
 
   @CanIgnoreReturnValue
-  public ListenableFuture<Boolean> enableAnalysis(Path workspaceRelativePath) {
+  public ListenableFuture<Boolean> enableAnalysis(ImmutableList<Path> workspaceRelativePaths) {
     assertProjectLoaded();
     return run(
         "Building dependencies",
         "Building...",
-        context -> loadedProject.enableAnalysis(context, workspaceRelativePath));
+        context -> loadedProject.enableAnalysis(context, workspaceRelativePaths));
   }
 
   public boolean canEnableAnalysisFor(Path workspaceRelativePath) {

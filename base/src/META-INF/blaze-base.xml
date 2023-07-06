@@ -125,6 +125,12 @@
       <keyboard-shortcut first-keystroke="ctrl shift D" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta shift D" keymap="macOS System Shortcuts" replace-all="true"/>
     </action>
+    <action id="Blaze.BuildOpenFileDependencies"
+        class="com.google.idea.blaze.base.qsync.action.BuildDependenciesForOpenFilesAction"
+        text="Build dependencies for open files">
+      <keyboard-shortcut first-keystroke="ctrl alt shift D" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta alt shift D" keymap="macOS System Shortcuts" replace-all="true"/>
+    </action>
 
     <group id="Blaze.MainMenuActionGroup" class="com.google.idea.blaze.base.actions.BlazeMenuGroup">
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="HelpMenu"/>

@@ -16,10 +16,7 @@
 package com.google.idea.blaze.base.qsync.action;
 
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.intellij.icons.AllIcons.Actions;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -29,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -59,32 +57,24 @@ public class BuildDependenciesAction extends BlazeProjectAction {
     presentation.setIcon(Actions.Compile);
     presentation.setText(NAME);
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (virtualFile == null || !virtualFile.isInLocalFileSystem()) {
+    BuildDependenciesHelper helper = new BuildDependenciesHelper(project);
+    Optional<Path> relativePath = helper.getRelativePathToEnableAnalysisFor(virtualFile);
+    if (relativePath.isEmpty()) {
       presentation.setEnabledAndVisible(false);
       return;
     }
-    Path workspaceRoot = WorkspaceRoot.fromProject(project).path();
-    Path filePath = virtualFile.toNioPath();
-    if (!filePath.startsWith(workspaceRoot)) {
-      presentation.setEnabledAndVisible(false);
-      return;
-    }
-    if (BlazeSyncStatus.getInstance(project).syncInProgress()) {
+    if (!helper.canEnableAnalysisNow()) {
       presentation.setEnabled(false);
       return;
     }
-    QuerySyncManager syncManager = QuerySyncManager.getInstance(project);
-    Path relative = workspaceRoot.relativize(filePath);
-    presentation.setEnabled(syncManager.canEnableAnalysisFor(relative));
+    presentation.setEnabled(true);
   }
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    QuerySyncManager syncManager = QuerySyncManager.getInstance(project);
-    Path workspaceRoot = WorkspaceRoot.fromProject(project).path();
-    VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    Path filePath = virtualFile.toNioPath();
-    Path relative = workspaceRoot.relativize(filePath);
-    syncManager.enableAnalysis(relative);
+    BuildDependenciesHelper helper = new BuildDependenciesHelper(project);
+    helper
+        .getRelativePathToEnableAnalysisFor(e.getData(CommonDataKeys.VIRTUAL_FILE))
+        .ifPresent(helper::enableAnalysis);
   }
 }
