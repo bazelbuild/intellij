@@ -1,6 +1,7 @@
 v2023.07.04
 ===========
-
+* fix(clion): Handle (possibly broken) CommandLineTools installations #5010
+* [query-sync] Support the "Build dependencies" action for directories and BUILD files.
 
 v2023.06.13
 ===========
