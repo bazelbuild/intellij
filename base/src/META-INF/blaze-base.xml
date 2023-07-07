@@ -212,6 +212,7 @@
     <projectService serviceImplementation="com.google.idea.blaze.base.sync.BlazeSyncManager"/>
 
     <projectService serviceImplementation="com.google.idea.blaze.base.qsync.QuerySyncManager"/>
+    <project.converterProvider implementation="com.google.idea.blaze.base.qsync.ProjectConverterProvider"/>
     <iw.actionProvider implementation="com.google.idea.blaze.base.qsync.QuerySyncInspectionWidgetActionProvider"/>
     <iw.actionProvider implementation="com.google.idea.blaze.base.qsync.ComposePreviewQuerySyncInspectionWidgetActionProvider"/>
     <daemon.highlightInfoFilter implementation="com.google.idea.blaze.base.qsync.QuerySyncHighlightingFilter"/>
