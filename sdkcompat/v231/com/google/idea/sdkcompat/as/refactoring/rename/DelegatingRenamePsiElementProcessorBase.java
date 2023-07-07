@@ -34,7 +34,7 @@ public abstract class DelegatingRenamePsiElementProcessorBase extends RenamePsiE
 
   @Override
   public void substituteElementToRename(
-      PsiElement element, Editor editor, Pass<? super PsiElement> renameCallback) {
+      PsiElement element, Editor editor, Pass<PsiElement> renameCallback) {
     RenamePsiElementProcessor processor = getDelegateAndStoreState(element);
     if (processor != null) {
       processor.substituteElementToRename(element, editor, renameCallback);
