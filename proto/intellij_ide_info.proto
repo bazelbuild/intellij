@@ -63,6 +63,8 @@ message CIdeInfo {
   repeated string target_copt = 7;
   repeated ArtifactLocation header = 8;
   repeated ArtifactLocation textual_header = 9;
+
+  string strip_include_prefix = 10;
 }
 
 message AndroidIdeInfo {

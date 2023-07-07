@@ -31,6 +31,8 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import java.io.File;
@@ -47,6 +49,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
+    applicationServices.register(ExperimentService.class, new MockExperimentService());
+
     ExtensionPointImpl<BlazeCompilerFlagsProcessor.Provider> ep =
         registerExtensionPoint(
             BlazeCompilerFlagsProcessor.EP_NAME, BlazeCompilerFlagsProcessor.Provider.class);

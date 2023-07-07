@@ -102,7 +102,8 @@ public class BlazeCppResolvingTestCase extends BlazeCppIntegrationTestCase {
         workspaceRoot,
         projectData.getBlazeInfo().getExecutionRoot(),
         projectData.getBlazeInfo().getOutputBase(),
-        projectData.getWorkspacePathResolver());
+        projectData.getWorkspacePathResolver(),
+        projectData.getTargetMap());
   }
 
   private HeadersSearchRoot searchRootFromExecRoot(
