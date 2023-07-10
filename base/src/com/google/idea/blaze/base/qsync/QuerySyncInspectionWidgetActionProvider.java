@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.common.Label;
@@ -116,7 +117,7 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
 
       presentation.setEnabled(true);
       DependencyTracker tracker = querySync.getDependencyTracker();
-      if (tracker != null) {
+      if (tracker != null && QuerySyncSettings.getInstance().showDetailedInformationInEditor) {
         Set<Label> targets = tracker.getPendingTargets(workspaceRoot.relativize(vf));
         if (targets != null && !targets.isEmpty()) {
           String dependency = StringUtil.pluralize("dependency", targets.size());
