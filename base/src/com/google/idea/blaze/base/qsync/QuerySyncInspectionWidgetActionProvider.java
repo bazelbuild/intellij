@@ -16,11 +16,13 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurable;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.common.Label;
 import com.intellij.icons.AllIcons.Actions;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -29,6 +31,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -134,7 +137,31 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
       presentation.setIcon(Actions.Compile);
       presentation.setText("");
       ActionButtonWithText button =
-          new ActionButtonWithText(this, presentation, place, JBUI.size(16));
+          new ActionButtonWithText(this, presentation, place, JBUI.size(16)) {
+
+            @Override
+            protected void updateToolTipText() {
+              Project project = editor.getProject();
+              if (project != null) {
+                HelpTooltip.dispose(this);
+                new HelpTooltip()
+                    .setTitle("Build dependencies")
+                    .setDescription(
+                        "Builds the external dependencies needed for this file and "
+                            + " enables analysis")
+                    .setLink(
+                        "Settings...",
+                        new Runnable() {
+                          @Override
+                          public void run() {
+                            ShowSettingsUtil.getInstance()
+                                .showSettingsDialog(project, QuerySyncConfigurable.class);
+                          }
+                        })
+                    .installOn(this);
+              }
+            }
+          };
       button.setHorizontalTextPosition(SwingConstants.LEFT);
       button.setFont(
           new FontUIResource(
