@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.command;
 
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.openapi.util.SystemInfo;
 
 /**
  * A utility class that manages the experiments to use blaze command runners for blaze test
@@ -24,6 +25,8 @@ import com.google.idea.common.experiments.BoolExperiment;
 public class BlazeCommandRunnerExperiments {
   public static final BoolExperiment USE_SINGLEJAR_FOR_DEBUGGING =
       new BoolExperiment("debug.localtests.singlejar.enable", true);
+  public static final BoolExperiment ANDROID_JNI_LIBRARY_FORCE_ANDROID =
+      new BoolExperiment("debug.localtests.android.jni.library", SystemInfo.isMac);
 
   private BlazeCommandRunnerExperiments() {}
 }
