@@ -15,30 +15,38 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
+import com.google.idea.blaze.common.Label;
 import com.intellij.icons.AllIcons.Actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
+import java.util.Set;
 import javax.swing.JComponent;
+import javax.swing.SwingConstants;
+import javax.swing.plaf.FontUIResource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides the actions to be used with the inspection widget. The inspection widget is the
  * tri-color icon at the top-right of files showing analysis results. This class provides the action
- * that sits there and builds the file dependencies and enables analysis.
+ * that sits there and builds the file dependencies and enables analysis
  */
 public class QuerySyncInspectionWidgetActionProvider implements InspectionWidgetActionProvider {
 
@@ -78,10 +86,36 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       Project project = e.getProject();
-      presentation.setEnabled(
-          QuerySyncManager.getInstance(project).isProjectLoaded()
-              && !BlazeSyncStatus.getInstance(project).syncInProgress());
-      super.update(e);
+      presentation.setText("");
+      if (project == null) {
+        presentation.setEnabled(false);
+        return;
+      }
+
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      VirtualFile vf = psiFile != null ? psiFile.getVirtualFile() : null;
+      WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+      if (vf == null || !workspaceRoot.isInWorkspace(vf)) {
+        presentation.setEnabled(false);
+        return;
+      }
+
+      QuerySyncManager querySync = QuerySyncManager.getInstance(project);
+      if (!querySync.isProjectLoaded() || BlazeSyncStatus.getInstance(project).syncInProgress()) {
+        presentation.setEnabled(false);
+        return;
+      }
+
+      presentation.setEnabled(true);
+      DependencyTracker tracker = querySync.getDependencyTracker();
+      if (tracker != null) {
+        Set<Label> targets = tracker.getPendingTargets(workspaceRoot.relativize(vf));
+        if (targets != null && !targets.isEmpty()) {
+          String dependency = StringUtil.pluralize("dependency", targets.size());
+          presentation.setText(
+              String.format("Analysis disabled - missing %d %s ", targets.size(), dependency));
+        }
+      }
     }
 
     @Override
@@ -89,7 +123,19 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     public JComponent createCustomComponent(
         @NotNull Presentation presentation, @NotNull String place) {
       presentation.setIcon(Actions.Compile);
-      return new ActionButton(this, presentation, place, JBUI.size(16));
+      presentation.setText("");
+      ActionButtonWithText button =
+          new ActionButtonWithText(this, presentation, place, JBUI.size(16));
+      button.setHorizontalTextPosition(SwingConstants.LEFT);
+      button.setFont(
+          new FontUIResource(
+              button
+                  .getFont()
+                  .deriveFont(
+                      button.getFont().getStyle(),
+                      button.getFont().getSize() - JBUIScale.scale(2))));
+
+      return button;
     }
   }
 }
