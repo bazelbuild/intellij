@@ -15,13 +15,10 @@
  */
 package com.google.idea.blaze.base.syncstatus;
 
-import static java.util.Arrays.stream;
-
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.qsync.DependencyTracker;
 import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
-import com.google.idea.blaze.base.syncstatus.SyncStatusContributor.PsiFileAndName;
 import com.google.idea.blaze.common.Label;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -29,10 +26,8 @@ import com.intellij.ide.projectView.ProjectViewNodeDecorator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
-import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import java.util.Objects;
 import java.util.Set;
 
 /** Shows the number of external dependencies that need to be build for a source file. */
@@ -47,21 +42,9 @@ public class QuerySyncNodeDecorator implements ProjectViewNodeDecorator {
     if (project == null) {
       return;
     }
-    PsiFileAndName psiFileAndName =
-        stream(SyncStatusContributor.EP_NAME.getExtensions())
-            .map(c -> c.toPsiFileAndName(node))
-            .filter(Objects::nonNull)
-            .findFirst()
-            .orElse(null);
-
-    if (psiFileAndName == null) {
-      return;
-    }
-
-    PsiFile file = psiFileAndName.psiFile;
-    VirtualFile vf = file.getVirtualFile();
+    VirtualFile vf = node.getVirtualFile();
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    if (!workspaceRoot.isInWorkspace(vf)) {
+    if (vf == null || !workspaceRoot.isInWorkspace(vf)) {
       return;
     }
     DependencyTracker deps = QuerySyncManager.getInstance(project).getDependencyTracker();
