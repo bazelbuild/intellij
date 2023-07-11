@@ -185,6 +185,7 @@
     <postStartupActivity implementation="com.google.idea.blaze.base.project.DisableAndroidFrameworkActivity"/>
     <postStartupActivity implementation="com.google.idea.blaze.base.formatter.ExternalFormatterCodeStyleManager$Installer"/>
     <postStartupActivity implementation="com.google.idea.blaze.base.prefetch.PrefetchProjectInitializer" />
+    <postStartupActivity implementation="com.google.idea.blaze.base.project.OpenProjectViewStartupActivity"/>
 
 
     <toolWindow id="Blaze"
@@ -325,6 +326,9 @@
     <actionConfigurationCustomizer implementation="com.google.idea.blaze.base.plugin.BlazeHideMakeActions"/>
     <notificationGroup displayType="BALLOON" id="BuildifierBinaryMissing"/>
     <registryKey defaultValue="false" description="Disable auto import of bazel projects" key="bazel.auto.import.disabled"/>
+    <registryKey defaultValue="true"
+                 description="Enables opening the project view file the first time the project is imported"
+                 key="blaze.project.import.open_project_view"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
