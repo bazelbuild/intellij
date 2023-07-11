@@ -108,7 +108,7 @@ def _collect_dependencies_core_impl(
         )]
     label = str(target.label)
 
-    must_build = True
+    must_build_main_artifacts = True
 
     # include can only be empty when used from collect_all_dependencies_for_tests
     # aspect, which is meant to be used in tests only.
@@ -116,17 +116,17 @@ def _collect_dependencies_core_impl(
         for inc in include.split(","):
             if label.startswith(inc):
                 if label[len(inc)] in [":", "/"]:
-                    must_build = False
+                    must_build_main_artifacts = False
                     break
-    if not must_build and len(exclude) > 0:
+    if not must_build_main_artifacts and len(exclude) > 0:
         for exc in exclude.split(","):
             if label.startswith(exc):
                 if label[len(exc)] in [":", "/"]:
-                    must_build = True
+                    must_build_main_artifacts = True
                     break
 
-    if not must_build and ctx.rule.kind in always_build_rules.split(","):
-        must_build = True
+    if not must_build_main_artifacts and ctx.rule.kind in always_build_rules.split(","):
+        must_build_main_artifacts = True
 
     deps = []
     if hasattr(ctx.rule.attr, "deps"):
@@ -143,7 +143,7 @@ def _collect_dependencies_core_impl(
     own_ide_aar_files = []
     own_gensrc_files = []
 
-    if must_build:
+    if must_build_main_artifacts:
         # For rules that we do not follow dependencies of (either because they don't
         # have further dependencies with JavaInfo or do so in attributes we don't care)
         # we gather all their transitive dependencies. If they have dependencies, we
@@ -171,7 +171,6 @@ def _collect_dependencies_core_impl(
             if hasattr(ctx.rule.attr, "_android_sdk"):
                 android_sdk_info = getattr(ctx.rule.attr, "_android_sdk")[AndroidSdkInfo]
                 own_jar_depsets.append(android_sdk_info.aidl_lib.files)
-            must_build = True
 
         # Add generated java_outputs (e.g. from annotation processing
         generated_class_jars = []
@@ -180,7 +179,6 @@ def _collect_dependencies_core_impl(
                 generated_class_jars.append(java_output.generated_class_jar)
         if generated_class_jars:
             own_jar_files += generated_class_jars
-            must_build = True
 
         # Add generated sources for included targets
         if hasattr(ctx.rule.attr, "srcs"):
@@ -188,10 +186,13 @@ def _collect_dependencies_core_impl(
                 for file in src.files.to_list():
                     if not file.is_source:
                         own_gensrc_files.append(file)
-                        must_build = True
+
+    has_own_artifacts = (
+        len(own_jar_files) + len(own_jar_depsets) + len(own_ide_aar_files) + len(own_gensrc_files)
+    ) > 0
 
     target_to_artifacts = {}
-    if must_build:
+    if has_own_artifacts:
         artifacts = depset(own_jar_files + own_ide_aar_files + own_gensrc_files, transitive = own_jar_depsets).to_list()
         target_to_artifacts[label] = [_output_relative_path(file.path) for file in artifacts]
 
