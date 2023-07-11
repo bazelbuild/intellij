@@ -26,6 +26,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PathsList;
+import com.intellij.util.system.CpuArch;
 
 import java.io.File;
 import java.io.IOException;
@@ -114,7 +115,6 @@ public class IntellijWithPluginClasspathHelper {
     }
     Path info = location.resolve("product-info.json");
     String os = resolveOsName();
-    String arch = System.getProperty("os.arch");
 
     if (Files.exists(info)) {
       try {
@@ -130,7 +130,7 @@ public class IntellijWithPluginClasspathHelper {
         }
 
         return productInfo.launch.stream()
-                .filter(l -> Objects.equals(l.os, os) && Objects.equals(l.arch, arch))
+                .filter(l -> Objects.equals(l.os, os) && Objects.equals(CpuArch.fromString(l.arch), CpuArch.CURRENT))
                 .findFirst()
                 .orElse(null);
       } catch (IOException e) {
