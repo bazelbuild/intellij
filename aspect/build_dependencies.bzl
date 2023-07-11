@@ -108,6 +108,21 @@ def _target_outside_project_scope(label, include, exclude):
                     break
     return result
 
+def _get_followed_dependency_infos(rule):
+    deps = []
+    if hasattr(rule.attr, "deps"):
+        deps += rule.attr.deps
+    if hasattr(rule.attr, "exports"):
+        deps += rule.attr.exports
+    if hasattr(rule.attr, "_junit"):
+        deps.append(rule.attr._junit)
+
+    return [
+        dep[DependenciesInfo]
+        for dep in deps
+        if DependenciesInfo in dep and dep[DependenciesInfo].target_to_artifacts
+    ]
+
 def _collect_dependencies_core_impl(
         target,
         ctx,
@@ -131,15 +146,7 @@ def _collect_dependencies_core_impl(
         ctx.rule.kind in always_build_rules.split(",")
     )
 
-    deps = []
-    if hasattr(ctx.rule.attr, "deps"):
-        deps += ctx.rule.attr.deps
-    if hasattr(ctx.rule.attr, "exports"):
-        deps += ctx.rule.attr.exports
-    if hasattr(ctx.rule.attr, "_junit"):
-        deps.append(ctx.rule.attr._junit)
-
-    info_deps = [dep[DependenciesInfo] for dep in deps if DependenciesInfo in dep and dep[DependenciesInfo].target_to_artifacts]
+    info_deps = _get_followed_dependency_infos(ctx.rule)
 
     own_jar_files = []
     own_jar_depsets = []
