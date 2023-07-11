@@ -86,7 +86,7 @@ def _collect_all_dependencies_for_tests_impl(target, ctx):
     return _collect_dependencies_core_impl(
         target,
         ctx,
-        include = None,
+        include = target if ctx.attr.for_within_project else None,
         exclude = None,
         always_build_rules = None,
         generate_aidl_classes = None,
@@ -401,6 +401,10 @@ collect_all_dependencies_for_tests = aspect(
     provides = [DependenciesInfo],
     attr_aspects = ["deps", "exports", "_junit"],
     attrs = {
+        "for_within_project": attr.bool(
+            doc = "Whether to build a variant of descriptors for targets as if they were within the project scope.",
+            mandatory = False,
+        ),
         "_build_zip": attr.label(
             allow_files = True,
             cfg = "exec",
