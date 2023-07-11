@@ -1,7 +1,8 @@
 """Aspects to build and collect project dependencies."""
 
 def _package_dependencies_impl(target, ctx):
-    file_name = target.label.name + ".target-info.txt"
+    suffix = ".in_scope" if ctx.attr.for_within_project else ""
+    file_name = target.label.name + suffix + ".target-info.txt"
     artifact_info_file = ctx.actions.declare_file(file_name)
     ctx.actions.write(
         artifact_info_file,
@@ -36,6 +37,12 @@ def _encode_target_info_proto(target):
 package_dependencies = aspect(
     implementation = _package_dependencies_impl,
     required_aspect_providers = [[DependenciesInfo]],
+    attrs = {
+        "for_within_project": attr.bool(
+            doc = "Whether to build a variant of descriptors for targets as if they were within the project scope.",
+            default = False,
+        ),
+    },
 )
 
 def generates_idl_jar(target):
@@ -86,9 +93,9 @@ def _collect_all_dependencies_for_tests_impl(target, ctx):
     return _collect_dependencies_core_impl(
         target,
         ctx,
-        include = None,
-        exclude = None,
-        always_build_rules = None,
+        include = "/" if ctx.attr.for_within_project else None,
+        exclude = "" if ctx.attr.for_within_project else None,
+        always_build_rules = "",
         generate_aidl_classes = None,
     )
 
@@ -401,6 +408,10 @@ collect_all_dependencies_for_tests = aspect(
     provides = [DependenciesInfo],
     attr_aspects = ["deps", "exports", "_junit"],
     attrs = {
+        "for_within_project": attr.bool(
+            doc = "Whether to build a variant of descriptors for targets as if they were within the project scope.",
+            mandatory = True,
+        ),
         "_build_zip": attr.label(
             allow_files = True,
             cfg = "exec",
