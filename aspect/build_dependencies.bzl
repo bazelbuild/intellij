@@ -92,6 +92,22 @@ def _collect_all_dependencies_for_tests_impl(target, ctx):
         generate_aidl_classes = None,
     )
 
+def _target_outside_project_scope(label, include, exclude):
+    result = True
+    if include:
+        for inc in include.split(","):
+            if label.startswith(inc):
+                if label[len(inc)] in [":", "/"]:
+                    result = False
+                    break
+    if not result and len(exclude) > 0:
+        for exc in exclude.split(","):
+            if label.startswith(exc):
+                if label[len(exc)] in [":", "/"]:
+                    result = True
+                    break
+    return result
+
 def _collect_dependencies_core_impl(
         target,
         ctx,
@@ -108,25 +124,12 @@ def _collect_dependencies_core_impl(
         )]
     label = str(target.label)
 
-    must_build_main_artifacts = True
-
     # include can only be empty when used from collect_all_dependencies_for_tests
     # aspect, which is meant to be used in tests only.
-    if include:
-        for inc in include.split(","):
-            if label.startswith(inc):
-                if label[len(inc)] in [":", "/"]:
-                    must_build_main_artifacts = False
-                    break
-    if not must_build_main_artifacts and len(exclude) > 0:
-        for exc in exclude.split(","):
-            if label.startswith(exc):
-                if label[len(exc)] in [":", "/"]:
-                    must_build_main_artifacts = True
-                    break
-
-    if not must_build_main_artifacts and ctx.rule.kind in always_build_rules.split(","):
-        must_build_main_artifacts = True
+    must_build_main_artifacts = (
+        _target_outside_project_scope(label, include, exclude) or
+        ctx.rule.kind in always_build_rules.split(",")
+    )
 
     deps = []
     if hasattr(ctx.rule.attr, "deps"):
