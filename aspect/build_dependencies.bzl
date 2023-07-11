@@ -181,6 +181,50 @@ def _collect_own_artifacts(target, ctx, must_build_main_artifacts, generate_aidl
         own_gensrc_files,
     )
 
+def _collect_own_and_dependency_artifacts(target, ctx, always_build_rules, generate_aidl_classes, target_is_within_project_scope):
+    # include can only be empty when used from collect_all_dependencies_for_tests
+    # aspect, which is meant to be used in tests only.
+    must_build_main_artifacts = (
+        not target_is_within_project_scope or ctx.rule.kind in always_build_rules.split(",")
+    )
+
+    info_deps = _get_followed_dependency_infos(ctx.rule)
+    can_follow_dependencies = bool(info_deps)
+
+    own_jar_files, own_jar_depsets, own_ide_aar_files, own_gensrc_files = _collect_own_artifacts(
+        target,
+        ctx,
+        must_build_main_artifacts,
+        generate_aidl_classes,
+        can_follow_dependencies,
+    )
+
+    has_own_artifacts = (
+        len(own_jar_files) + len(own_jar_depsets) + len(own_ide_aar_files) + len(own_gensrc_files)
+    ) > 0
+
+    target_to_artifacts = {}
+    if has_own_artifacts:
+        artifacts = depset(own_jar_files + own_ide_aar_files + own_gensrc_files, transitive = own_jar_depsets).to_list()
+        target_to_artifacts[str(target.label)] = [_output_relative_path(file.path) for file in artifacts]
+
+    own_and_transitive_jar_depsets = list(own_jar_depsets)  # Copy to prevent changes to own_jar_depsets.
+    own_and_transitive_ide_aar_depsets = []
+    own_and_transitive_gensrc_depsets = []
+
+    for info in info_deps:
+        target_to_artifacts.update(info.target_to_artifacts)
+        own_and_transitive_jar_depsets.append(info.compile_time_jars)
+        own_and_transitive_ide_aar_depsets.append(info.aars)
+        own_and_transitive_gensrc_depsets.append(info.gensrcs)
+
+    return (
+        target_to_artifacts,
+        depset(own_jar_files, transitive = own_and_transitive_jar_depsets),
+        depset(own_ide_aar_files, transitive = own_and_transitive_ide_aar_depsets),
+        depset(own_gensrc_files, transitive = own_and_transitive_gensrc_depsets),
+    )
+
 def _collect_dependencies_core_impl(
         target,
         ctx,
@@ -195,42 +239,17 @@ def _collect_dependencies_core_impl(
             aars = depset(),
             gensrcs = depset(),
         )]
-    label = str(target.label)
 
-    # include can only be empty when used from collect_all_dependencies_for_tests
-    # aspect, which is meant to be used in tests only.
-    must_build_main_artifacts = (
-        not _target_within_project_scope(label, include, exclude) or
-        ctx.rule.kind in always_build_rules.split(",")
+    target_is_within_project_scope = _target_within_project_scope(str(target.label), include, exclude)
+
+    target_to_artifacts, compile_jars, aars, gensrcs = _collect_own_and_dependency_artifacts(
+        target,
+        ctx,
+        always_build_rules,
+        generate_aidl_classes,
+        target_is_within_project_scope,
     )
 
-    info_deps = _get_followed_dependency_infos(ctx.rule)
-    can_follow_dependencies = bool(info_deps)
-
-    own_jar_files, own_jar_depsets, own_ide_aar_files, own_gensrc_files = _collect_own_artifacts(target, ctx, must_build_main_artifacts, generate_aidl_classes, can_follow_dependencies)
-
-    has_own_artifacts = (
-        len(own_jar_files) + len(own_jar_depsets) + len(own_ide_aar_files) + len(own_gensrc_files)
-    ) > 0
-
-    target_to_artifacts = {}
-    if has_own_artifacts:
-        artifacts = depset(own_jar_files + own_ide_aar_files + own_gensrc_files, transitive = own_jar_depsets).to_list()
-        target_to_artifacts[label] = [_output_relative_path(file.path) for file in artifacts]
-
-    own_and_transitive_jar_depsets = list(own_jar_depsets)  # Copy to prevent changes to own_jar_depsets.
-    own_and_transitive_ide_aar_depsets = []
-    own_and_transitive_gensrc_depsets = []
-
-    for info in info_deps:
-        target_to_artifacts.update(info.target_to_artifacts)
-        own_and_transitive_jar_depsets.append(info.compile_time_jars)
-        own_and_transitive_ide_aar_depsets.append(info.aars)
-        own_and_transitive_gensrc_depsets.append(info.gensrcs)
-
-    compile_jars = depset(own_jar_files, transitive = own_and_transitive_jar_depsets)
-    aars = depset(own_ide_aar_files, transitive = own_and_transitive_ide_aar_depsets)
-    gensrcs = depset(own_gensrc_files, transitive = own_and_transitive_gensrc_depsets)
     return [
         DependenciesInfo(
             target_to_artifacts = target_to_artifacts,
