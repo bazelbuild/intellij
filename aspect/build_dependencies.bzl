@@ -123,6 +123,64 @@ def _get_followed_dependency_infos(rule):
         if DependenciesInfo in dep and dep[DependenciesInfo].target_to_artifacts
     ]
 
+def _collect_own_artifacts(target, ctx, must_build_main_artifacts, generate_aidl_classes, can_follow_dependencies):
+    rule = ctx.rule
+
+    own_jar_files = []
+    own_jar_depsets = []
+    own_ide_aar_files = []
+    own_gensrc_files = []
+
+    if must_build_main_artifacts:
+        # For rules that we do not follow dependencies of (either because they don't
+        # have further dependencies with JavaInfo or do so in attributes we don't care)
+        # we gather all their transitive dependencies. If they have dependencies, we
+        # only gather their own compile jars and continue down the tree.
+        # This is done primarily for rules like proto, where they don't have dependencies
+        # and add their "toolchain" classes to transitive deps.
+        if can_follow_dependencies:
+            own_jar_depsets.append(target[JavaInfo].compile_jars)
+        else:
+            own_jar_depsets.append(target[JavaInfo].transitive_compile_time_jars)
+
+        if declares_android_resources(target, ctx):
+            ide_aar = _get_ide_aar_file(target, ctx)
+            if ide_aar:
+                own_ide_aar_files.append(ide_aar)
+        elif declares_aar_import(ctx):
+            own_ide_aar_files.append(rule.attr.aar.files.to_list()[0])
+
+    else:
+        if generate_aidl_classes and generates_idl_jar(target):
+            idl_jar = target[AndroidIdeInfo].idl_class_jar
+            own_jar_files.append(idl_jar)
+
+            # An AIDL base jar needed for resolving base classes for aidl generated stubs,
+            if hasattr(rule.attr, "_android_sdk"):
+                android_sdk_info = getattr(rule.attr, "_android_sdk")[AndroidSdkInfo]
+                own_jar_depsets.append(android_sdk_info.aidl_lib.files)
+
+        # Add generated java_outputs (e.g. from annotation processing
+        generated_class_jars = []
+        for java_output in target[JavaInfo].java_outputs:
+            if java_output.generated_class_jar:
+                generated_class_jars.append(java_output.generated_class_jar)
+        if generated_class_jars:
+            own_jar_files += generated_class_jars
+
+        # Add generated sources for included targets
+        if hasattr(rule.attr, "srcs"):
+            for src in rule.attr.srcs:
+                for file in src.files.to_list():
+                    if not file.is_source:
+                        own_gensrc_files.append(file)
+    return (
+        own_jar_files,
+        own_jar_depsets,
+        own_ide_aar_files,
+        own_gensrc_files,
+    )
+
 def _collect_dependencies_core_impl(
         target,
         ctx,
@@ -147,55 +205,9 @@ def _collect_dependencies_core_impl(
     )
 
     info_deps = _get_followed_dependency_infos(ctx.rule)
+    can_follow_dependencies = bool(info_deps)
 
-    own_jar_files = []
-    own_jar_depsets = []
-    own_ide_aar_files = []
-    own_gensrc_files = []
-
-    if must_build_main_artifacts:
-        # For rules that we do not follow dependencies of (either because they don't
-        # have further dependencies with JavaInfo or do so in attributes we don't care)
-        # we gather all their transitive dependencies. If they have dependencies, we
-        # only gather their own compile jars and continue down the tree.
-        # This is done primarily for rules like proto, where they don't have dependencies
-        # and add their "toolchain" classes to transitive deps.
-        if info_deps:
-            own_jar_depsets.append(target[JavaInfo].compile_jars)
-        else:
-            own_jar_depsets.append(target[JavaInfo].transitive_compile_time_jars)
-
-        if declares_android_resources(target, ctx):
-            ide_aar = _get_ide_aar_file(target, ctx)
-            if ide_aar:
-                own_ide_aar_files.append(ide_aar)
-        elif declares_aar_import(ctx):
-            own_ide_aar_files.append(ctx.rule.attr.aar.files.to_list()[0])
-
-    else:
-        if generate_aidl_classes and generates_idl_jar(target):
-            idl_jar = target[AndroidIdeInfo].idl_class_jar
-            own_jar_files.append(idl_jar)
-
-            # An AIDL base jar needed for resolving base classes for aidl generated stubs,
-            if hasattr(ctx.rule.attr, "_android_sdk"):
-                android_sdk_info = getattr(ctx.rule.attr, "_android_sdk")[AndroidSdkInfo]
-                own_jar_depsets.append(android_sdk_info.aidl_lib.files)
-
-        # Add generated java_outputs (e.g. from annotation processing
-        generated_class_jars = []
-        for java_output in target[JavaInfo].java_outputs:
-            if java_output.generated_class_jar:
-                generated_class_jars.append(java_output.generated_class_jar)
-        if generated_class_jars:
-            own_jar_files += generated_class_jars
-
-        # Add generated sources for included targets
-        if hasattr(ctx.rule.attr, "srcs"):
-            for src in ctx.rule.attr.srcs:
-                for file in src.files.to_list():
-                    if not file.is_source:
-                        own_gensrc_files.append(file)
+    own_jar_files, own_jar_depsets, own_ide_aar_files, own_gensrc_files = _collect_own_artifacts(target, ctx, must_build_main_artifacts, generate_aidl_classes, can_follow_dependencies)
 
     has_own_artifacts = (
         len(own_jar_files) + len(own_jar_depsets) + len(own_ide_aar_files) + len(own_gensrc_files)
