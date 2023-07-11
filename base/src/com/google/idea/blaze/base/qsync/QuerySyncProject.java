@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
+import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
@@ -148,6 +149,7 @@ public class QuerySyncProject {
 
   public void sync(BlazeContext context, Optional<PostQuerySyncData> lastQuery) {
     try {
+      SaveUtil.saveAllFiles();
       BlazeProjectSnapshot newProject =
           lastQuery.isEmpty()
               ? projectQuerier.fullQuery(projectDefinition, context)
