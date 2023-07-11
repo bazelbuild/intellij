@@ -92,19 +92,19 @@ def _collect_all_dependencies_for_tests_impl(target, ctx):
         generate_aidl_classes = None,
     )
 
-def _target_outside_project_scope(label, include, exclude):
-    result = True
+def _target_within_project_scope(label, include, exclude):
+    result = False
     if include:
         for inc in include.split(","):
             if label.startswith(inc):
                 if label[len(inc)] in [":", "/"]:
-                    result = False
+                    result = True
                     break
-    if not result and len(exclude) > 0:
+    if result and len(exclude) > 0:
         for exc in exclude.split(","):
             if label.startswith(exc):
                 if label[len(exc)] in [":", "/"]:
-                    result = True
+                    result = False
                     break
     return result
 
@@ -200,7 +200,7 @@ def _collect_dependencies_core_impl(
     # include can only be empty when used from collect_all_dependencies_for_tests
     # aspect, which is meant to be used in tests only.
     must_build_main_artifacts = (
-        _target_outside_project_scope(label, include, exclude) or
+        not _target_within_project_scope(label, include, exclude) or
         ctx.rule.kind in always_build_rules.split(",")
     )
 
