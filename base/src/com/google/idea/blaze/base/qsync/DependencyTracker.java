@@ -31,6 +31,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.base.bazel.BazelExitCode;
 import com.google.idea.blaze.base.qsync.ArtifactTracker.UpdateResult;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.PrintOutput.OutputType;
@@ -116,6 +117,7 @@ public class DependencyTracker {
    */
   public boolean buildDependenciesForFile(BlazeContext context, List<Path> workspaceRelativePaths)
       throws IOException, BuildException {
+    SaveUtil.saveAllFiles();
     workspaceRelativePaths.forEach(path -> Preconditions.checkState(!path.isAbsolute(), path));
 
     BlazeProjectSnapshot snapshot = getCurrentSnapshot();
