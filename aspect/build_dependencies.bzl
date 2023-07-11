@@ -138,11 +138,10 @@ def _collect_dependencies_core_impl(
 
     info_deps = [dep[DependenciesInfo] for dep in deps if DependenciesInfo in dep and dep[DependenciesInfo].target_to_artifacts]
 
-    trs = []
-    aar_files = []
-    aar_trs = []
-    gensrc_files = []
-    gensrc_trs = []
+    own_jar_files = []
+    own_jar_depsets = []
+    own_ide_aar_files = []
+    own_gensrc_files = []
 
     if must_build:
         # For rules that we do not follow dependencies of (either because they don't
@@ -152,25 +151,26 @@ def _collect_dependencies_core_impl(
         # This is done primarily for rules like proto, where they don't have dependencies
         # and add their "toolchain" classes to transitive deps.
         if info_deps:
-            trs = [target[JavaInfo].compile_jars]
+            own_jar_depsets.append(target[JavaInfo].compile_jars)
         else:
-            trs = [target[JavaInfo].transitive_compile_time_jars]
+            own_jar_depsets.append(target[JavaInfo].transitive_compile_time_jars)
+
         if declares_android_resources(target, ctx):
             ide_aar = _get_ide_aar_file(target, ctx)
             if ide_aar:
-                aar_files.append(ide_aar)
+                own_ide_aar_files.append(ide_aar)
         elif declares_aar_import(ctx):
-            aar_files.append(ctx.rule.attr.aar.files.to_list()[0])
+            own_ide_aar_files.append(ctx.rule.attr.aar.files.to_list()[0])
 
     else:
         if generate_aidl_classes and generates_idl_jar(target):
             idl_jar = target[AndroidIdeInfo].idl_class_jar
-            trs.append(depset([idl_jar]))
+            own_jar_files.append(idl_jar)
 
             # An AIDL base jar needed for resolving base classes for aidl generated stubs,
             if hasattr(ctx.rule.attr, "_android_sdk"):
                 android_sdk_info = getattr(ctx.rule.attr, "_android_sdk")[AndroidSdkInfo]
-                trs.append(android_sdk_info.aidl_lib.files)
+                own_jar_depsets.append(android_sdk_info.aidl_lib.files)
             must_build = True
 
         # Add generated java_outputs (e.g. from annotation processing
@@ -179,7 +179,7 @@ def _collect_dependencies_core_impl(
             if java_output.generated_class_jar:
                 generated_class_jars.append(java_output.generated_class_jar)
         if generated_class_jars:
-            trs.append(depset(generated_class_jars))
+            own_jar_files += generated_class_jars
             must_build = True
 
         # Add generated sources for included targets
@@ -187,27 +187,31 @@ def _collect_dependencies_core_impl(
             for src in ctx.rule.attr.srcs:
                 for file in src.files.to_list():
                     if not file.is_source:
-                        gensrc_files.append(file)
+                        own_gensrc_files.append(file)
                         must_build = True
 
     target_to_artifacts = {}
     if must_build:
-        artifacts = depset(gensrc_files + aar_files, transitive = trs).to_list()
+        artifacts = depset(own_jar_files + own_ide_aar_files + own_gensrc_files, transitive = own_jar_depsets).to_list()
         target_to_artifacts[label] = [_output_relative_path(file.path) for file in artifacts]
 
-    for info in info_deps:
-        trs.append(info.compile_time_jars)
-        target_to_artifacts.update(info.target_to_artifacts)
-        aar_trs.append(info.aars)
-        gensrc_trs.append(info.gensrcs)
+    own_and_transitive_jar_depsets = list(own_jar_depsets)  # Copy to prevent changes to own_jar_depsets.
+    own_and_transitive_ide_aar_depsets = []
+    own_and_transitive_gensrc_depsets = []
 
-    cj = depset([], transitive = trs)
-    aars = depset(aar_files, transitive = aar_trs)
-    gensrcs = depset(gensrc_files, transitive = gensrc_trs)
+    for info in info_deps:
+        target_to_artifacts.update(info.target_to_artifacts)
+        own_and_transitive_jar_depsets.append(info.compile_time_jars)
+        own_and_transitive_ide_aar_depsets.append(info.aars)
+        own_and_transitive_gensrc_depsets.append(info.gensrcs)
+
+    compile_jars = depset(own_jar_files, transitive = own_and_transitive_jar_depsets)
+    aars = depset(own_ide_aar_files, transitive = own_and_transitive_ide_aar_depsets)
+    gensrcs = depset(own_gensrc_files, transitive = own_and_transitive_gensrc_depsets)
     return [
         DependenciesInfo(
-            compile_time_jars = cj,
             target_to_artifacts = target_to_artifacts,
+            compile_time_jars = compile_jars,
             aars = aars,
             gensrcs = gensrcs,
         ),
@@ -227,7 +231,7 @@ def _get_ide_aar_file(target, ctx):
     full_aar = target[AndroidIdeInfo].aar
     if full_aar:
         resource_files = _collect_resource_files(ctx)
-        resource_map = _build_aar_file_map(target[AndroidIdeInfo].manifest, resource_files)
+        resource_map = _build_ide_aar_file_map(target[AndroidIdeInfo].manifest, resource_files)
         aar = ctx.actions.declare_file(full_aar.short_path.removesuffix(".aar") + "_ide/" + full_aar.basename)
         _package_ide_aar(ctx, aar, resource_map)
         return aar
@@ -253,7 +257,7 @@ def _collect_resource_files(ctx):
             resource_files.append(f)
     return resource_files
 
-def _build_aar_file_map(manifest_file, resource_files):
+def _build_ide_aar_file_map(manifest_file, resource_files):
     """
     Build the list of files and their paths as they have to appear in .aar.
     """
