@@ -784,3 +784,15 @@ jvm_maven_import_external(
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )
+
+load("@bazel_tools//tools/jdk:remote_java_repository.bzl", "remote_java_repository")
+
+remote_java_repository(
+    name = "java_21_jdk",
+    prefix = "zulujdk",
+    sha256 = "90629dffc362eb48b793a76dbd35fbebec3e8c060a224e07a143b75daef74fb8",
+    strip_prefix = "zulu21.0.21-ea-jdk21.0.0-ea.6-linux_x64",
+    target_compatible_with = ["@platforms//os:linux"],
+    urls = ["https://cdn.azul.com/zulu/bin/zulu21.0.21-ea-jdk21.0.0-ea.6-linux_x64.tar.gz"],
+    version = "21",
+)

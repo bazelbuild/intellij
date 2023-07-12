@@ -183,6 +183,11 @@ public class BazelKotlinxCoroutinesLibFinderTest extends BlazeRunConfigurationPr
   }
 
   @Test
+  public void assertJavaVersion() {
+    assertThat(System.getProperty("java.version")).isEqualTo("21-ea");
+  }
+
+  @Test
   public void oldKotlinxCoroutinesLibVersionAttached_jarNotFound() {
     TargetMap targetMap = createTargetMap(kotlinxCoroutinesOldVersion).build();
     registerProjectService(targetMap);
