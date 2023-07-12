@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
@@ -140,14 +141,26 @@ public class QuerySyncProject {
   }
 
   public void fullSync(BlazeContext context) {
-    sync(context, Optional.empty());
+    try {
+      sync(context, Optional.empty());
+    } catch (Exception e) {
+      context.handleException("Project full sync failed", e);
+    }
   }
 
   public void deltaSync(BlazeContext context) {
+    try {
+      syncWithCurrentSnapshot(context);
+    } catch (Exception e) {
+      context.handleException("Project delta sync failed", e);
+    }
+  }
+
+  private void syncWithCurrentSnapshot(BlazeContext context) throws Exception {
     sync(context, snapshotHolder.getCurrent().map(BlazeProjectSnapshot::queryData));
   }
 
-  public void sync(BlazeContext context, Optional<PostQuerySyncData> lastQuery) {
+  public void sync(BlazeContext context, Optional<PostQuerySyncData> lastQuery) throws Exception {
     try {
       SaveUtil.saveAllFiles();
       BlazeProjectSnapshot newProject =
@@ -170,8 +183,6 @@ public class QuerySyncProject {
             SyncMode.FULL,
             SyncResult.SUCCESS);
       }
-    } catch (Exception e) {
-      context.handleException("Project sync failed", e);
     } finally {
       for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
         // A query sync specific callback.
@@ -205,6 +216,9 @@ public class QuerySyncProject {
 
   public void enableAnalysis(BlazeContext context, ImmutableList<Path> workspaceRelativePaths) {
     try {
+      if (QuerySyncSettings.getInstance().syncBeforeBuild) {
+        syncWithCurrentSnapshot(context);
+      }
       context.output(
           PrintOutput.output(
               "Building dependencies for:\n  " + Joiner.on("\n  ").join(workspaceRelativePaths)));
