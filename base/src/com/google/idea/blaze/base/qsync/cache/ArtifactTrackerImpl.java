@@ -138,9 +138,6 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
         new CacheDirectoryManager(
             projectDirectory.resolve(DIGESTS_DIRECTORY_NAME),
             fileCacheCreator.getCacheDirectories());
-    // TODO renamed this as the proto definition has changed. How should we handle upgrades?
-    // seems to be safe we should clear all cache state (since otherwise we'll be missing info
-    // that is now produced by the aspect).
     persistentFile = projectDirectory.resolve("artifact_tracker_state");
   }
 
