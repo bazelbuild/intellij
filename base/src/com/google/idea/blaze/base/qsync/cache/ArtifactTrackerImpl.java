@@ -16,7 +16,9 @@
 package com.google.idea.blaze.base.qsync.cache;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.google.common.util.concurrent.Uninterruptibles.getUninterruptibly;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.AAR_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.GEN_SRC_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.LIBRARY_DIRECTORY;
@@ -25,13 +27,17 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.devtools.intellij.qsync.ArtifactTrackerData.ArtifactTrackerState;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
+import com.google.devtools.intellij.qsync.ArtifactTrackerData.CachedArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.qsync.ArtifactTracker;
@@ -59,15 +65,15 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
@@ -84,10 +90,12 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   public static final String DIGESTS_DIRECTORY_NAME = ".digests";
   private static final Logger logger = Logger.getInstance(ArtifactTrackerImpl.class);
 
-  // The artifacts relative path (blaze-out/xxx) that can be used to retrieve local copy in the
-  // cache. Note that artifacts that do not produce files are also stored here. So, it is not the
-  // same for a label not to be present, than a label to have an empty list.
-  private final HashMap<Label, List<Path>> artifacts = new HashMap<>();
+  // Information about dependency artifacts derviced when the dependencies were built.
+  // Note that artifacts that do not produce files are also stored here.
+  private final Map<Label, ArtifactInfo> artifacts = new HashMap<>();
+  // Information about the origin of files in the cache. For each file in the cache, stores the
+  // artifact key that the file was derived from.
+  private final Map<Path, Path> cachePathToArtifactKeyMap = new HashMap<>();
 
   private final ArtifactFetcher<OutputArtifact> artifactFetcher;
   @VisibleForTesting public final CacheDirectoryManager cacheDirectoryManager;
@@ -130,7 +138,10 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
         new CacheDirectoryManager(
             projectDirectory.resolve(DIGESTS_DIRECTORY_NAME),
             fileCacheCreator.getCacheDirectories());
-    persistentFile = projectDirectory.resolve(".artifact.info");
+    // TODO renamed this as the proto definition has changed. How should we handle upgrades?
+    // seems to be safe we should clear all cache state (since otherwise we'll be missing info
+    // that is now produced by the aspect).
+    persistentFile = projectDirectory.resolve("artifact_tracker_state");
   }
 
   private static class FileCacheCreator {
@@ -167,16 +178,18 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
 
   private void saveState() throws IOException {
     BuildArtifacts.Builder builder = BuildArtifacts.newBuilder();
-    for (Entry<Label, List<Path>> entry : artifacts.entrySet()) {
-      ImmutableList<String> paths =
-          entry.getValue().stream().map(Path::toString).collect(toImmutableList());
-      builder.addArtifacts(
-          TargetArtifacts.newBuilder()
-              .setTarget(entry.getKey().toString())
-              .addAllArtifactPaths(paths));
+    artifacts.values().stream().map(ArtifactInfo::toProto).forEach(builder::addArtifacts);
+    CachedArtifacts.Builder cachedArtifactsBuilder = CachedArtifacts.newBuilder();
+    for (Map.Entry<Path, Path> entry : cachePathToArtifactKeyMap.entrySet()) {
+      cachedArtifactsBuilder.putCachePathToArtifactPath(
+          entry.getKey().toString(), entry.getValue().toString());
     }
     try (OutputStream stream = new GZIPOutputStream(Files.newOutputStream(persistentFile))) {
-      builder.build().writeTo(stream);
+      ArtifactTrackerState.newBuilder()
+          .setArtifactInfo(builder.build())
+          .setCachedArtifacts(cachedArtifactsBuilder.build())
+          .build()
+          .writeTo(stream);
     }
   }
 
@@ -185,14 +198,20 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
       return;
     }
     artifacts.clear();
+    cachePathToArtifactKeyMap.clear();
     try (InputStream stream = new GZIPInputStream(Files.newInputStream(persistentFile))) {
-      BuildArtifacts saved = BuildArtifacts.parseFrom(stream, ExtensionRegistry.getEmptyRegistry());
-      for (TargetArtifacts targetArtifact : saved.getArtifactsList()) {
-        Label label = Label.of(targetArtifact.getTarget());
-        List<Path> artifactPathList = artifacts.computeIfAbsent(label, k -> new ArrayList<>());
-        for (String path : targetArtifact.getArtifactPathsList()) {
-          artifactPathList.add(Path.of(path));
-        }
+      ArtifactTrackerState saved =
+          ArtifactTrackerState.parseFrom(stream, ExtensionRegistry.getEmptyRegistry());
+      cachePathToArtifactKeyMap.putAll(
+          saved.getCachedArtifacts().getCachePathToArtifactPathMap().entrySet().stream()
+              .collect(toImmutableMap(e -> Path.of(e.getKey()), e -> Path.of(e.getValue()))));
+      artifacts.putAll(
+          saved.getArtifactInfo().getArtifactsList().stream()
+              .map(ArtifactInfo::create)
+              .collect(toImmutableMap(ArtifactInfo::label, Function.identity())));
+      for (TargetArtifacts targetArtifact : saved.getArtifactInfo().getArtifactsList()) {
+        ArtifactInfo artifactInfo = ArtifactInfo.create(targetArtifact);
+        artifacts.put(artifactInfo.label(), artifactInfo);
       }
     } catch (IOException e) {
       // TODO: If there is an error parsing the index, reinitialize the cache properly.
@@ -200,44 +219,42 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   }
 
   @Override
-  public Optional<ImmutableSet<Path>> getCachedFiles(Label target) {
-    List<Path> paths = artifacts.get(target);
-    if (paths == null) {
-      return Optional.empty();
+  public ImmutableSet<Path> getTargetSources(Path cachedArtifact) {
+    if (!cachePathToArtifactKeyMap.containsKey(cachedArtifact)) {
+      return ImmutableSet.of();
     }
-    return Optional.of(
-        paths.stream()
-            .map(
-                artifactPath ->
-                    getCachedFile(artifactPath)
-                        .orElseThrow(
-                            () ->
-                                new IllegalStateException(
-                                    "File cache and artifact map are not matched. Failed to get"
-                                        + " cached file for artifact "
-                                        + artifactPath)))
-            .collect(toImmutableSet()));
+    Path artifactPath = cachePathToArtifactKeyMap.get(cachedArtifact);
+    return artifacts.values().stream()
+        .filter(d -> d.artifactPath().contains(artifactPath))
+        .map(ArtifactInfo::source)
+        .flatMap(Set::stream)
+        .collect(toImmutableSet());
   }
 
-  private Optional<Path> getCachedFile(Path artifactPath) {
-    String path = artifactPath.toString();
-    if (path.endsWith(".aar")) {
-      return aarCache.getCacheFile(path);
-    }
-    Optional<Path> cachedFile = jarCache.getCacheFile(path);
-    if (cachedFile.isPresent()) {
-      return cachedFile;
+  @Override
+  public Optional<ImmutableSet<Path>> getCachedFiles(Label target) {
+    ArtifactInfo artifactInfo = artifacts.get(target);
+    if (artifactInfo == null) {
+      return Optional.empty();
     }
 
-    return generatedSrcFileCache.getCacheFile(path);
+    Multimap<Path, Path> artifactToCachedMap =
+        Multimaps.invertFrom(
+            Multimaps.forMap(cachePathToArtifactKeyMap), ArrayListMultimap.create());
+    return Optional.of(
+        artifactInfo.artifactPath().stream()
+            .map(artifactToCachedMap::get)
+            .flatMap(Collection::stream)
+            .collect(toImmutableSet()));
   }
 
   /**
    * Fetches the output artifacts requested in {@code artifactToDestinationMap}.
    *
-   * @return {@link OutputArtifactDestinationAndLayout}'s from the original request.
+   * @return A map of {@link OutputArtifactDestination}'s from the original request to the original
+   *     artifact key that it was derived from.
    */
-  private <T extends OutputArtifactDestination> ListenableFuture<Collection<T>> fetchArtifacts(
+  private <T extends OutputArtifactDestination> ListenableFuture<Map<T, Path>> fetchArtifacts(
       BlazeContext context, ImmutableMap<OutputArtifact, T> artifactToDestinationMap) {
     final ImmutableMap<OutputArtifact, ArtifactDestination> artifactToDestinationPathMap =
         runMeasureAndLog(
@@ -249,7 +266,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
                                 it.getKey().getDigest(),
                                 cacheDirectoryManager.getStoredArtifactDigest(it.getKey())))
                     .collect(
-                        ImmutableMap.toImmutableMap(
+                        toImmutableMap(
                             Entry::getKey,
                             it -> new ArtifactDestination(it.getValue().getCopyDestination()))),
             String.format("Read %d artifact digests", artifactToDestinationMap.size()),
@@ -270,16 +287,17 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
         fetchedArtifacts ->
             runMeasureAndLog(
                 () -> {
-                  ImmutableList.Builder<T> result = ImmutableList.builder();
+                  ImmutableMap.Builder<T, Path> destinationToArtifactMap = ImmutableMap.builder();
                   for (Entry<OutputArtifact, ArtifactDestination> entry :
                       artifactToDestinationPathMap.entrySet()) {
                     T artifactDestination = artifactToDestinationMap.get(entry.getKey());
                     Preconditions.checkNotNull(artifactDestination);
                     cacheDirectoryManager.setStoredArtifactDigest(
                         entry.getKey(), entry.getKey().getDigest());
-                    result.add(artifactDestination);
+                    destinationToArtifactMap.put(
+                        artifactDestination, Path.of(entry.getKey().getRelativePath()));
                   }
-                  return result.build();
+                  return destinationToArtifactMap.buildOrThrow();
                 },
                 String.format("Store %d artifact digests", artifactToDestinationPathMap.size()),
                 Duration.ofSeconds(1)),
@@ -287,13 +305,13 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   }
 
   /**
-   * Caches {@code artifacts} in the local cache and returns paths that the IDE should use to find
-   * them.
+   * Caches {@code artifacts} in the local cache and returns a map from paths that the IDE should
+   * use to find them to the original artifact path.
    *
    * @noinspection UnstableApiUsage
    */
   @VisibleForTesting
-  public ListenableFuture<ImmutableSet<Path>> cache(
+  public ListenableFuture<ImmutableMap<Path, Path>> cache(
       ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactToDestinationMap,
       BlazeContext context)
       throws IOException {
@@ -307,13 +325,15 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
    * Extracts zip-like files in the {@code sourcePaths} into the final destination directories.
    *
    * <p>Any existing files and directories at the destination paths are deleted.
+   *
+   * @return A map of final destination path to the key of the artifact that it was derived from.
    */
-  private ImmutableSet<Path> prepareFinalLayouts(
-      Collection<OutputArtifactDestinationAndLayout> destinations) {
-    ImmutableSet.Builder<Path> result = ImmutableSet.builder();
+  private ImmutableMap<Path, Path> prepareFinalLayouts(
+      Map<OutputArtifactDestinationAndLayout, Path> destinationToArtifact) {
+    ImmutableMap.Builder<Path, Path> result = ImmutableMap.builder();
     try {
-      for (OutputArtifactDestinationAndLayout destination : destinations) {
-        result.add(destination.prepareFinalLayout());
+      for (OutputArtifactDestinationAndLayout destination : destinationToArtifact.keySet()) {
+        result.put(destination.prepareFinalLayout(), destinationToArtifact.get(destination));
       }
     } catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -339,7 +359,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
                       renderJarInfo.getRenderJars()))
               .buildOrThrow();
 
-      ListenableFuture<ImmutableSet<Path>> artifactPaths = cache(artifactMap, context);
+      ListenableFuture<ImmutableMap<Path, Path>> artifactPaths = cache(artifactMap, context);
       if (downloads.getFileCount() > 0) {
         context.output(
             PrintOutput.log(
@@ -347,9 +367,9 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
                 downloads.getFileCount(), StringUtil.formatFileSize(downloads.getTotalBytes())));
       }
 
-      ImmutableSet<Path> updated = Uninterruptibles.getUninterruptibly(artifactPaths);
+      ImmutableMap<Path, Path> updated = getUninterruptibly(artifactPaths);
       saveState();
-      return UpdateResult.create(updated, ImmutableSet.of());
+      return UpdateResult.create(updated.keySet(), ImmutableSet.of());
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
     }
@@ -374,7 +394,8 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
                       outputInfo.getGeneratedSources()))
               .buildOrThrow();
 
-      ListenableFuture<ImmutableSet<Path>> artifactPaths = cache(artifactMap, context);
+      ListenableFuture<ImmutableMap<Path, Path>> cachePathToArtifactKeyMapFuture =
+          cache(artifactMap, context);
       if (downloads.getFileCount() > 0) {
         context.output(
             PrintOutput.log(
@@ -382,13 +403,16 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
                 downloads.getFileCount(), StringUtil.formatFileSize(downloads.getTotalBytes())));
       }
 
-      ImmutableSet<Path> updated = Uninterruptibles.getUninterruptibly(artifactPaths);
+      ImmutableMap<Path, Path> cachePathToArtifactKeyMap =
+          getUninterruptibly(cachePathToArtifactKeyMapFuture);
+
+      this.cachePathToArtifactKeyMap.putAll(cachePathToArtifactKeyMap);
 
       for (BuildArtifacts artifacts : outputInfo.getArtifacts()) {
         updateMaps(targets, artifacts);
       }
       saveState();
-      return UpdateResult.create(updated, ImmutableSet.of());
+      return UpdateResult.create(cachePathToArtifactKeyMap.keySet(), ImmutableSet.of());
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
     }
@@ -402,16 +426,14 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
    */
   private void updateMaps(Set<Label> targets, BuildArtifacts newArtifacts) {
     for (TargetArtifacts targetArtifacts : newArtifacts.getArtifactsList()) {
-      ImmutableList<Path> paths =
-          targetArtifacts.getArtifactPathsList().stream().map(Path::of).collect(toImmutableList());
-      Label label = Label.of(targetArtifacts.getTarget());
-      artifacts.put(label, paths);
+      ArtifactInfo artifactInfo = ArtifactInfo.create(targetArtifacts);
+      artifacts.put(artifactInfo.label(), artifactInfo);
     }
     for (Label label : targets) {
       if (!artifacts.containsKey(label)) {
         logger.warn(
             "Target " + label + " was not built. If the target is an alias, this is expected");
-        artifacts.put(label, new ArrayList<>());
+        artifacts.put(label, ArtifactInfo.empty(label));
       }
     }
   }

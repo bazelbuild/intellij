@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.qsync.cache;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Objects;
 
 /** A record that describes the location of an output artifact in cache directories. */
 public class PreparedOutputArtifactDestination implements OutputArtifactDestinationAndLayout {
@@ -52,5 +53,22 @@ public class PreparedOutputArtifactDestination implements OutputArtifactDestinat
   @Override
   public Path prepareFinalLayout() throws IOException {
     return finalDestination;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof PreparedOutputArtifactDestination)) {
+      return false;
+    }
+    PreparedOutputArtifactDestination that = (PreparedOutputArtifactDestination) o;
+    return key.equals(that.key) && finalDestination.equals(that.finalDestination);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(key, finalDestination);
   }
 }
