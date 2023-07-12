@@ -44,6 +44,7 @@ import com.google.idea.blaze.base.projectview.section.sections.RunConfigurations
 import com.google.idea.blaze.base.projectview.section.sections.Sections;
 import com.google.idea.blaze.base.projectview.section.sections.ShardBlazeBuildsSection;
 import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
+import com.google.idea.blaze.base.projectview.section.sections.SyncManualTargetsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetShardSizeSection;
 import com.google.idea.blaze.base.projectview.section.sections.TestFlagsSection;
@@ -102,6 +103,7 @@ public class ProjectViewSetTest extends BlazeTestCase {
                         ListSection.builder(RunConfigurationsSection.KEY)
                             .add(new WorkspacePath("test")))
                     .add(ScalarSection.builder(AutomaticallyDeriveTargetsSection.KEY).set(false))
+                    .add(ScalarSection.builder(SyncManualTargetsSection.KEY).set(false))
                     .add(ScalarSection.builder(ShardBlazeBuildsSection.KEY).set(false))
                     .add(ScalarSection.builder(TargetShardSizeSection.KEY).set(500))
                     .add(
