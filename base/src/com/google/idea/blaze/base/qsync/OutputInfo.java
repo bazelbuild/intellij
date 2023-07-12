@@ -76,6 +76,11 @@ public abstract class OutputInfo {
         .build();
   }
 
+  @VisibleForTesting
+  public static Builder builder() {
+    return EMPTY.toBuilder();
+  }
+
   /** Builder for {@link OutputInfo}. */
   @VisibleForTesting
   @AutoValue.Builder
@@ -83,13 +88,23 @@ public abstract class OutputInfo {
 
     public abstract Builder setArtifacts(ImmutableSet<BuildArtifacts> value);
 
+    public abstract Builder setArtifacts(BuildArtifacts... values);
+
     public abstract Builder setJars(ImmutableList<OutputArtifact> value);
+
+    public abstract Builder setJars(OutputArtifact... values);
 
     public abstract Builder setAars(ImmutableList<OutputArtifact> value);
 
+    public abstract Builder setAars(OutputArtifact... values);
+
     public abstract Builder setGeneratedSources(ImmutableList<OutputArtifact> value);
 
+    public abstract Builder setGeneratedSources(OutputArtifact... values);
+
     public abstract Builder setTargetsWithErrors(ImmutableSet<Label> value);
+
+    public abstract Builder setTargetsWithErrors(Label... values);
 
     public abstract Builder setExitCode(int value);
 

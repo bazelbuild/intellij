@@ -62,10 +62,11 @@ public class ArtifactTrackerImplTest {
                 () ->
                     artifactTracker.update(
                         ImmutableSet.of(Label.of("//test:test")),
-                        createOutputInfo(
-                            ImmutableList.of(
+                        OutputInfo.builder()
+                            .setJars(
                                 testOutputArtifact("abc", "abc_digest"),
-                                testOutputArtifact("klm", "klm_digest"))),
+                                testOutputArtifact("klm", "klm_digest"))
+                            .build(),
                         BlazeContext.create())))
         .containsExactly("somewhere/abc", "somewhere/klm");
     assertThat(
@@ -96,10 +97,11 @@ public class ArtifactTrackerImplTest {
     final UpdateResult unused =
         artifactTracker.update(
             ImmutableSet.of(Label.of("//test:test")),
-            createOutputInfo(
-                ImmutableList.of(
+            OutputInfo.builder()
+                .setJars(
                     testOutputArtifact("abc", "abc_digest"),
-                    testOutputArtifact("klm", "klm_digest"))),
+                    testOutputArtifact("klm", "klm_digest"))
+                .build(),
             BlazeContext.create());
 
     testArtifactFetcher.shouldFail = true;
@@ -107,10 +109,11 @@ public class ArtifactTrackerImplTest {
       final UpdateResult unused2 =
           artifactTracker.update(
               ImmutableSet.of(Label.of("//test:test2")),
-              createOutputInfo(
-                  ImmutableList.of(
+              OutputInfo.builder()
+                  .setJars(
                       testOutputArtifact("abc", "abc_digest"),
-                      testOutputArtifact("klm", "klm_digest_diff"))),
+                      testOutputArtifact("klm", "klm_digest_diff"))
+                  .build(),
               BlazeContext.create());
     } catch (TestException e) {
       // Do nothing.
@@ -141,10 +144,11 @@ public class ArtifactTrackerImplTest {
                 () ->
                     artifactTracker.update(
                         ImmutableSet.of(Label.of("//test:test")),
-                        createOutputInfo(
-                            ImmutableList.of(
+                        OutputInfo.builder()
+                            .setJars(
                                 testOutputArtifact("abc", "abc_digest"),
-                                testOutputArtifact("klm", "klm_digest"))),
+                                testOutputArtifact("klm", "klm_digest"))
+                            .build(),
                         BlazeContext.create())))
         .containsExactly("somewhere/abc", "somewhere/klm");
 
@@ -154,11 +158,12 @@ public class ArtifactTrackerImplTest {
                 () ->
                     artifactTracker.update(
                         ImmutableSet.of(Label.of("//test:test2")),
-                        createOutputInfo(
-                            ImmutableList.of(
+                        OutputInfo.builder()
+                            .setJars(
                                 testOutputArtifact("abc", "abc_digest"),
                                 testOutputArtifact("klm", "klm_digest_diff"),
-                                testOutputArtifact("xyz", "xyz_digest"))),
+                                testOutputArtifact("xyz", "xyz_digest"))
+                            .build(),
                         BlazeContext.create())))
         .containsExactly("somewhere/klm", "somewhere/xyz");
   }
@@ -254,15 +259,5 @@ public class ArtifactTrackerImplTest {
         throw new UnsupportedOperationException();
       }
     };
-  }
-
-  private static OutputInfo createOutputInfo(ImmutableList<OutputArtifact> outputArtifacts) {
-    return OutputInfo.create(
-        ImmutableSet.of(),
-        outputArtifacts,
-        ImmutableList.of(),
-        ImmutableList.of(),
-        ImmutableSet.of(),
-        0);
   }
 }
