@@ -18,8 +18,10 @@ package com.android.tools.idea.rendering;
 import static org.junit.Assert.fail;
 
 import com.android.sdklib.devices.Device;
-import com.android.tools.idea.configurations.Configuration;
+import com.android.tools.configurations.ConfigurationCompat;
 import com.android.tools.idea.configurations.ConfigurationManager;
+import com.android.tools.rendering.RenderLoggerCompat;
+import com.android.tools.rendering.RenderServiceCompat;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
@@ -76,8 +78,8 @@ public class AswbRenderTestUtils {
     }
 
     // Give the render executor 5 seconds to shutdown.
-    RenderService.shutdownRenderExecutor(5);
-    RenderService.initializeRenderExecutor();
+    RenderServiceCompat.shutdownRenderExecutor(5);
+    RenderServiceCompat.initializeRenderExecutor();
   }
 
   /**
@@ -108,13 +110,15 @@ public class AswbRenderTestUtils {
             });
   }
 
-  public static Configuration getConfiguration(Module module, VirtualFile file) {
+  public static ConfigurationCompat getConfiguration(Module module, VirtualFile file) {
     return getConfiguration(module, file, DEFAULT_DEVICE_ID);
   }
 
-  public static Configuration getConfiguration(Module module, VirtualFile file, String deviceId) {
+  public static ConfigurationCompat getConfiguration(
+      Module module, VirtualFile file, String deviceId) {
     ConfigurationManager configurationManager = ConfigurationManager.getOrCreateInstance(module);
-    Configuration configuration = configurationManager.getConfiguration(file);
+    ConfigurationCompat configuration =
+        new ConfigurationCompat(configurationManager.getConfiguration(file));
     configuration.setDevice(findDeviceById(configurationManager, deviceId), false);
 
     return configuration;

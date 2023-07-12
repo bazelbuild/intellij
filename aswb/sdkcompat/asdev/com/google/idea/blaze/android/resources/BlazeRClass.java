@@ -19,9 +19,9 @@ import static org.jetbrains.android.AndroidResolveScopeEnlarger.LIGHT_CLASS_KEY;
 import static org.jetbrains.android.AndroidResolveScopeEnlarger.MODULE_POINTER_KEY;
 
 import com.android.ide.common.rendering.api.ResourceNamespace;
-import com.android.tools.idea.res.LocalResourceRepository;
 import com.android.tools.idea.res.ResourceRepositoryRClass;
 import com.android.tools.idea.res.StudioResourceRepositoryManager;
+import com.android.tools.res.LocalResourceRepository;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,7 +43,7 @@ public class BlazeRClass extends ResourceRepositoryRClass {
             return packageName;
           }
 
-          @Override
+          // @Override #api4.1
           public Transitivity getTransitivity() {
             return Transitivity.TRANSITIVE;
           }

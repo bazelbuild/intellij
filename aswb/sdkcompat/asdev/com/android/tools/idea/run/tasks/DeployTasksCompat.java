@@ -15,10 +15,11 @@
  */
 package com.android.tools.idea.run.tasks;
 
+import com.android.tools.deployer.DeployerException;
+import com.android.tools.idea.execution.common.AndroidExecutionException;
 import com.android.tools.idea.execution.common.DeployOptions;
 import com.android.tools.idea.run.ApkInfo;
 import com.android.tools.idea.run.blaze.BlazeLaunchTask;
-import com.android.tools.idea.run.blaze.BlazeLaunchTaskWrapper;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
@@ -32,15 +33,20 @@ public class DeployTasksCompat {
 
   public static BlazeLaunchTask createDeployTask(
       Project project, Collection<ApkInfo> packages, DeployOptions deployOptions) {
-    // We don't have a device information, fallback to the most conservative
-    // install option.
-    return new BlazeLaunchTaskWrapper(
-        new DeployTask(
-            project,
-            packages,
-            deployOptions.getPmInstallFlags(),
-            deployOptions.getInstallOnAllUsers(),
-            deployOptions.getAlwaysInstallWithPm()));
+    return launchContext -> {
+      try {
+        var unused =
+            new DeployTask(
+                    project,
+                    packages,
+                    deployOptions.getPmInstallFlags(),
+                    deployOptions.getInstallOnAllUsers(),
+                    deployOptions.getAlwaysInstallWithPm())
+                .run(launchContext.getDevice(), launchContext.getProgressIndicator());
+      } catch (DeployerException e) {
+        throw new AndroidExecutionException(e.getId(), e.getMessage());
+      }
+    };
   }
 }
 

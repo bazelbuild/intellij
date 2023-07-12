@@ -18,12 +18,12 @@ package com.google.idea.blaze.android.rendering;
 import static com.android.SdkConstants.ANDROID_MANIFEST_XML;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
-import com.android.tools.idea.rendering.RenderErrorContributor;
-import com.android.tools.idea.rendering.RenderLoggerCompat;
-import com.android.tools.idea.rendering.RenderResultCompat;
+import com.android.tools.idea.rendering.RenderErrorContributorCompat;
 import com.android.tools.idea.rendering.errors.ui.RenderErrorModel;
 import com.android.tools.idea.ui.designer.EditorDesignSurface;
 import com.android.tools.rendering.HtmlLinkManagerCompat;
+import com.android.tools.rendering.RenderLoggerCompat;
+import com.android.tools.rendering.RenderResultCompat;
 import com.android.utils.HtmlBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
@@ -70,14 +70,14 @@ import java.util.function.Function;
 import org.jetbrains.annotations.Nullable;
 
 /** Contribute blaze specific render errors. */
-public class BlazeRenderErrorContributor extends RenderErrorContributor {
+public class BlazeRenderErrorContributor extends RenderErrorContributorCompat {
   private final RenderLoggerCompat logger;
   private final Module module;
   private final Project project;
 
   public BlazeRenderErrorContributor(
       EditorDesignSurface surface, RenderResultCompat result, @Nullable DataContext dataContext) {
-    super(surface, result.get(), dataContext);
+    super(surface, result, dataContext);
     logger = new RenderLoggerCompat(result);
     module = result.getModule();
     project = module.getProject();

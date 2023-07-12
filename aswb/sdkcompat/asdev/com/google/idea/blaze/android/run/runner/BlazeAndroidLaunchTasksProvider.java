@@ -28,27 +28,24 @@ import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.android.tools.idea.run.blaze.BlazeLaunchTasksProvider;
-import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
-import com.android.tools.ndk.run.editor.AutoAndroidDebuggerState;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
-import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebugSession;
 import java.util.Collections;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /** Normal launch tasks provider. #api4.1 */
 public class BlazeAndroidLaunchTasksProvider implements BlazeLaunchTasksProvider {
   public static final String NATIVE_DEBUGGING_ENABLED = "NATIVE_DEBUGGING_ENABLED";
   private static final Logger LOG = Logger.getInstance(BlazeAndroidLaunchTasksProvider.class);
-  private static final BoolExperiment isLiveEditEnabled =
-      new BoolExperiment("aswb.live.edit.enabled", false);
 
   private final Project project;
   private final BlazeAndroidRunContext runContext;
@@ -126,8 +123,9 @@ public class BlazeAndroidLaunchTasksProvider implements BlazeLaunchTasksProvider
               isDebug, userId, String.join(" ", amStartOptions.build()));
       if (appLaunchTask != null) {
         launchTasks.add(appLaunchTask);
-        // TODO(arvindanekal): live edit api get changed and we cannot get apk here to create live
-        // edit, live edit team or Arvind need to fix this
+        // TODO(arvindanekal): the live edit api changed and we cannot get the apk here to create
+        // live
+        // edit; the live edit team or Arvind need to fix this
       }
     } catch (ApkProvisionException e) {
       throw new ExecutionException("Unable to determine application id: " + e);
@@ -136,30 +134,31 @@ public class BlazeAndroidLaunchTasksProvider implements BlazeLaunchTasksProvider
     return ImmutableList.copyOf(launchTasks);
   }
 
+  @NotNull
   @Override
-  @Nullable
-  public ConnectDebuggerTask getConnectDebuggerTask() {
-    BlazeAndroidDeployInfo deployInfo;
-    try {
-      deployInfo = runContext.getBuildStep().getDeployInfo();
-    } catch (ApkProvisionException e) {
-      LOG.error(e);
-      deployInfo = null;
+  public XDebugSession startDebugSession(
+      @NotNull ExecutionEnvironment environment,
+      @NotNull IDevice device,
+      @NotNull ConsoleView console,
+      @NotNull ProgressIndicator indicator,
+      @NotNull String packageName)
+      throws ExecutionException {
+    // Do not get debugger state directly from the debugger itself.
+    // See BlazeAndroidDebuggerService#getDebuggerState for an explanation.
+    BlazeAndroidDebuggerService debuggerService = BlazeAndroidDebuggerService.getInstance(project);
+    AndroidDebugger debugger = debuggerService.getDebugger(isNativeDebuggingEnabled(launchOptions));
+    if (debugger == null) {
+      throw new ExecutionException("Can't find AndroidDebugger for launch");
+    }
+    AndroidDebuggerState debuggerState = debuggerService.getDebuggerState(debugger);
+    if (debuggerState == null) {
+      throw new ExecutionException("Can't find AndroidDebuggerState for launch");
     }
 
-    BlazeAndroidDebuggerService debuggerService = BlazeAndroidDebuggerService.getInstance(project);
-    if (isNativeDebuggingEnabled(launchOptions)) {
-      AndroidDebugger<AutoAndroidDebuggerState> debugger = debuggerService.getNativeDebugger();
-      // The below state type should be AutoAndroidDebuggerState, but referencing it will crash the
-      // task if the NDK plugin is not loaded.
-      AndroidDebuggerState state = debugger.createState();
-      debuggerService.configureNativeDebugger(state, deployInfo);
-      return runContext.getDebuggerTask(debugger, state);
-    } else {
-      AndroidDebugger<AndroidDebuggerState> debugger = debuggerService.getDebugger();
-      return runContext.getDebuggerTask(debugger, debugger.createState());
-    }
+    return runContext.startDebuggerSession(
+        debugger, debuggerState, environment, device, console, indicator, packageName);
   }
+
 
   private boolean isNativeDebuggingEnabled(LaunchOptions launchOptions) {
     Object flag = launchOptions.getExtraOption(NATIVE_DEBUGGING_ENABLED);

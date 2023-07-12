@@ -25,10 +25,13 @@ import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.android.tools.idea.run.blaze.BlazeLaunchTasksProvider;
 import com.android.tools.idea.run.editor.ProfilerState;
-import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.google.common.collect.ImmutableList;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.xdebugger.XDebugSession;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,8 +63,14 @@ public interface BlazeAndroidRunContext {
 
   /** Returns the task to connect the debugger. */
   @Nullable
-  ConnectDebuggerTask getDebuggerTask(
-      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState);
+  XDebugSession startDebuggerSession(
+      AndroidDebugger androidDebugger,
+      AndroidDebuggerState androidDebuggerState,
+      ExecutionEnvironment env,
+      IDevice device,
+      ConsoleView consoleView,
+      ProgressIndicator indicator,
+      String packageName);
 
   @Nullable
   Integer getUserId(IDevice device) throws ExecutionException;
