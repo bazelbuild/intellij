@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.tools.idea.rendering;
+package com.android.tools.rendering;
 
+import com.android.ide.common.rendering.api.Result;
+import com.android.tools.idea.rendering.RenderErrorContributor;
+import com.android.tools.idea.rendering.RenderErrorModelFactory;
+import com.android.tools.idea.rendering.RenderResults;
 import com.android.tools.idea.rendering.errors.ui.RenderErrorModel;
 import com.android.tools.idea.ui.designer.EditorDesignSurface;
+import com.android.tools.rendering.imagepool.ImagePool.Image;
 import com.google.idea.blaze.android.rendering.BlazeRenderErrorContributor;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -28,6 +32,10 @@ import org.jetbrains.annotations.Nullable;
 /** Compat class for {@link RenderResult} */
 public final class RenderResultCompat {
   private RenderResult result;
+
+  public RenderResultCompat(RenderResult result) {
+    this.result = result;
+  }
 
   public static RenderResultCompat createBlank(PsiFile file) {
     return new RenderResultCompat(RenderResults.createBlank(file));
@@ -49,8 +57,12 @@ public final class RenderResultCompat {
     return result.getModule();
   }
 
-  public RenderResultCompat(RenderResult result) {
-    this.result = result;
+  public Result getRenderResult() {
+    return result.getRenderResult();
+  }
+
+  public Image getRenderedImage() {
+    return result.getRenderedImage();
   }
 
   private RenderResultCompat() {}
@@ -65,9 +77,9 @@ public final class RenderResultCompat {
     @Override
     public RenderErrorContributor getContributor(
         @Nullable EditorDesignSurface surface,
-        RenderResult result,
-        @Nullable DataContext dataContext) {
-      return new BlazeRenderErrorContributor(surface, new RenderResultCompat(result), dataContext);
+        RenderResult result) {
+      return new BlazeRenderErrorContributor(
+          surface, new RenderResultCompat(result), null);
     }
   }
 }

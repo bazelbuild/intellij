@@ -17,20 +17,23 @@
 package com.google.idea.blaze.android.run.runner;
 
 import com.android.ddmlib.IDevice;
+import com.android.tools.idea.editors.literals.LiveEditService;
+import com.android.tools.idea.execution.common.AndroidConfigurationExecutor;
+import com.android.tools.idea.execution.common.AndroidConfigurationExecutorRunProfileState;
 import com.android.tools.idea.execution.common.AppRunSettings;
 import com.android.tools.idea.execution.common.ApplicationDeployer;
 import com.android.tools.idea.execution.common.ComponentLaunchOptions;
 import com.android.tools.idea.execution.common.DeployOptions;
+import com.android.tools.idea.execution.common.stats.RunStats;
 import com.android.tools.idea.run.ApkProvider;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.blaze.BlazeAndroidConfigurationExecutor;
 import com.android.tools.idea.run.configuration.execution.AndroidComplicationConfigurationExecutor;
-import com.android.tools.idea.run.configuration.execution.AndroidConfigurationExecutor;
-import com.android.tools.idea.run.configuration.execution.AndroidConfigurationExecutorRunProfileState;
 import com.android.tools.idea.run.configuration.execution.AndroidTileConfigurationExecutor;
 import com.android.tools.idea.run.configuration.execution.AndroidWatchFaceConfigurationExecutor;
+import com.android.tools.idea.run.configuration.execution.ApplicationDeployerImpl;
 import com.android.tools.idea.run.configuration.execution.ComplicationLaunchOptions;
 import com.android.tools.idea.run.configuration.execution.TileLaunchOptions;
 import com.android.tools.idea.run.configuration.execution.WatchFaceLaunchOptions;
@@ -65,7 +68,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -165,6 +167,9 @@ public final class BlazeAndroidRunConfigurationRunner
       return getWearExecutor(launchOptions, env, deployTarget);
     }
 
+    ApkProvider apkProvider =
+        BlazeApkProviderService.getInstance()
+            .getApkProvider(env.getProject(), runContext.getBuildStep());
     final LaunchOptions launchOptions = launchOptionsBuilder.build();
     BlazeAndroidConfigurationExecutor runner =
         new BlazeAndroidConfigurationExecutor(
@@ -173,7 +178,9 @@ public final class BlazeAndroidRunConfigurationRunner
             env,
             deviceFutures,
             runContext.getLaunchTasksProvider(launchOptions),
-            launchOptions);
+            launchOptions,
+            apkProvider,
+            LiveEditService.getInstance(env.getProject()));
     return new AndroidConfigurationExecutorRunProfileState(runner);
   }
 
@@ -208,54 +215,28 @@ public final class BlazeAndroidRunConfigurationRunner
             .getApkProvider(env.getProject(), runContext.getBuildStep());
     DeviceFutures deviceFutures = deployTarget.getDevices(env.getProject());
 
+    ApplicationDeployer deployer =
+        runContext.getBuildStep() instanceof MobileInstallBuildStep
+            ? new MobileInstallApplicationDeployer()
+            : new ApplicationDeployerImpl(env.getProject(), RunStats.from(env));
+
     if (launchOptions instanceof TileLaunchOptions) {
       configurationExecutor =
           new AndroidTileConfigurationExecutor(
-              env, deviceFutures, settings, appIdProvider, apkProvider) {
-            @NotNull
-            @Override
-            public ApplicationDeployer getApplicationDeployer(@NotNull ConsoleView console)
-                throws ExecutionException {
-              if (runContext.getBuildStep() instanceof MobileInstallBuildStep) {
-                return new MobileInstallApplicationDeployer(console);
-              }
-              return super.getApplicationDeployer(console);
-            }
-          };
+              env, deviceFutures, settings, appIdProvider, apkProvider, deployer);
     } else if (launchOptions instanceof WatchFaceLaunchOptions) {
       configurationExecutor =
           new AndroidWatchFaceConfigurationExecutor(
-              env, deviceFutures, settings, appIdProvider, apkProvider) {
-            @NotNull
-            @Override
-            public ApplicationDeployer getApplicationDeployer(@NotNull ConsoleView console)
-                throws ExecutionException {
-              if (runContext.getBuildStep() instanceof MobileInstallBuildStep) {
-                return new MobileInstallApplicationDeployer(console);
-              }
-              return super.getApplicationDeployer(console);
-            }
-          };
+              env, deviceFutures, settings, appIdProvider, apkProvider, deployer);
     } else if (launchOptions instanceof ComplicationLaunchOptions) {
       configurationExecutor =
           new AndroidComplicationConfigurationExecutor(
-              env, deviceFutures, settings, appIdProvider, apkProvider) {
-            @NotNull
-            @Override
-            public ApplicationDeployer getApplicationDeployer(@NotNull ConsoleView console)
-                throws ExecutionException {
-              if (runContext.getBuildStep() instanceof MobileInstallBuildStep) {
-                return new MobileInstallApplicationDeployer(console);
-              }
-              return super.getApplicationDeployer(console);
-            }
-          };
+              env, deviceFutures, settings, appIdProvider, apkProvider, deployer);
     } else {
       throw new RuntimeException("Unknown launch options " + launchOptions.getClass().getName());
     }
 
-    return new AndroidConfigurationExecutorRunProfileState(
-        new BlazeWrapperForAndroidConfigurationExecutor(configurationExecutor));
+    return new AndroidConfigurationExecutorRunProfileState(configurationExecutor);
   }
 
   private static String canDebug(

@@ -15,8 +15,7 @@
  */
 package com.google.idea.blaze.android.run.test;
 
-import static com.android.tools.idea.run.deployment.DeviceAndSnapshotComboBoxAction.DEPLOYS_TO_LOCAL_DEVICE;
-
+import com.android.tools.idea.execution.common.DeployableToDevice;
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -69,7 +68,7 @@ public class BlazeAndroidTestRunConfigurationHandler
     this.configState =
         new BlazeAndroidTestRunConfigurationState(
             Blaze.buildSystemName(configuration.getProject()));
-    configuration.putUserData(DEPLOYS_TO_LOCAL_DEVICE, true);
+    configuration.putUserData(DeployableToDevice.getKEY(), true);
   }
 
   @Override

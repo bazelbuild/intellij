@@ -13,8 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.tools.idea.rendering;
+package com.android.tools.rendering;
 
+import com.android.tools.idea.rendering.RenderErrorContributor;
+import com.android.tools.idea.rendering.RenderErrorModelFactory;
+import com.android.tools.idea.rendering.RenderLogger;
+import com.android.tools.idea.rendering.RenderResult;
+import com.android.tools.idea.rendering.RenderResults;
 import com.android.tools.idea.rendering.errors.ui.RenderErrorModel;
 import com.android.tools.idea.ui.designer.EditorDesignSurface;
 import com.google.idea.blaze.android.rendering.BlazeRenderErrorContributor;
@@ -30,7 +35,7 @@ public final class RenderResultCompat {
   private RenderResult result;
 
   public static RenderResultCompat createBlank(PsiFile file) {
-    return new RenderResultCompat(RenderResult.createBlank(file));
+    return new RenderResultCompat(RenderResults.createBlank(file));
   }
 
   public RenderErrorModel createErrorModel() {

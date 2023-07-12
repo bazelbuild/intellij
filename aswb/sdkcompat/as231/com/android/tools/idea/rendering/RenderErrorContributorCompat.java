@@ -15,30 +15,15 @@
  */
 package com.android.tools.idea.rendering;
 
-import java.util.Map;
-import java.util.Set;
+import com.android.tools.idea.ui.designer.EditorDesignSurface;
+import com.android.tools.rendering.RenderResultCompat;
+import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.Nullable;
 
-/** Compat class for RenderLogger. */
-public class RenderLoggerCompat {
-  private final RenderLogger renderLogger;
-
-  public RenderLoggerCompat(RenderResultCompat result) {
-    renderLogger = result.getLogger();
-  }
-
-  public boolean hasErrors() {
-    return renderLogger.hasErrors();
-  }
-
-  public Map<String, Throwable> getBrokenClasses() {
-    return renderLogger.getBrokenClasses();
-  }
-
-  public Set<String> getMissingClasses() {
-    return renderLogger.getMissingClasses();
-  }
-
-  public static void resetFidelityErrorsFilters() {
-    RenderLogger.resetFidelityErrorsFilters();
+/** Contribute blaze specific render errors. */
+public class RenderErrorContributorCompat extends RenderErrorContributor {
+  public RenderErrorContributorCompat(
+      EditorDesignSurface surface, RenderResultCompat result, @Nullable DataContext dataContext) {
+    super(surface, result.get(), dataContext);
   }
 }
