@@ -32,6 +32,11 @@ import org.jetbrains.annotations.Nullable;
 
 /** A converter from aspect-sync projects into a query-sync ones. */
 public class ProjectConverterProvider extends ConverterProvider {
+
+  protected ProjectConverterProvider() {
+    super("query.sync.project.converter");
+  }
+
   @Override
   @NlsContexts.DialogMessage
   @NotNull
