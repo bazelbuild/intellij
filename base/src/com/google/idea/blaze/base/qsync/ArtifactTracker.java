@@ -57,6 +57,15 @@ public interface ArtifactTracker {
   Optional<ImmutableSet<Path>> getCachedFiles(Label target);
 
   /**
+   * Returns the sources corresponding to an artifact in the cache.
+   *
+   * @param libJar A cached jar file.
+   * @return The list of workspace relative source files from the target that {@code libJar} was
+   *     derived from.
+   */
+  ImmutableSet<Path> getTargetSources(Path cachedArtifact);
+
+  /**
    * Returns the set of targets that artifacts are set up for.
    *
    * <p>Note, the returned set is a live set which is updated as a result of {@link #update} and

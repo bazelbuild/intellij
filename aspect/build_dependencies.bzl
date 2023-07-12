@@ -27,9 +27,13 @@ DependenciesInfo = provider(
 
 def _encode_target_info_proto(target):
     contents = []
-    for label, artifacts_paths in target[DependenciesInfo].target_to_artifacts.items():
+    for label, target_info in target[DependenciesInfo].target_to_artifacts.items():
         contents.append(
-            struct(target = label, artifact_paths = artifacts_paths),
+            struct(
+                target = label,
+                artifact_paths = target_info["artifact_paths"],
+                srcs = target_info["srcs"],
+            ),
         )
     return proto.encode_text(struct(artifacts = contents))
 
@@ -123,13 +127,14 @@ def _get_followed_dependency_infos(rule):
         if DependenciesInfo in dep and dep[DependenciesInfo].target_to_artifacts
     ]
 
-def _collect_own_artifacts(target, ctx, must_build_main_artifacts, generate_aidl_classes, can_follow_dependencies):
+def _collect_own_artifacts(target, ctx, target_is_within_project_scope, must_build_main_artifacts, generate_aidl_classes, can_follow_dependencies):
     rule = ctx.rule
 
     own_jar_files = []
     own_jar_depsets = []
     own_ide_aar_files = []
     own_gensrc_files = []
+    own_src_files = []
 
     if must_build_main_artifacts:
         # For rules that we do not follow dependencies of (either because they don't
@@ -174,11 +179,16 @@ def _collect_own_artifacts(target, ctx, must_build_main_artifacts, generate_aidl
                 for file in src.files.to_list():
                     if not file.is_source:
                         own_gensrc_files.append(file)
+
+    if not target_is_within_project_scope and hasattr(rule.attr, "srcs"):
+        own_src_files = rule.attr.srcs
+
     return (
         own_jar_files,
         own_jar_depsets,
         own_ide_aar_files,
         own_gensrc_files,
+        own_src_files,
     )
 
 def _collect_own_and_dependency_artifacts(target, ctx, always_build_rules, generate_aidl_classes, target_is_within_project_scope):
@@ -191,22 +201,26 @@ def _collect_own_and_dependency_artifacts(target, ctx, always_build_rules, gener
     info_deps = _get_followed_dependency_infos(ctx.rule)
     can_follow_dependencies = bool(info_deps)
 
-    own_jar_files, own_jar_depsets, own_ide_aar_files, own_gensrc_files = _collect_own_artifacts(
+    own_jar_files, own_jar_depsets, own_ide_aar_files, own_gensrc_files, own_src_files = _collect_own_artifacts(
         target,
         ctx,
+        target_is_within_project_scope,
         must_build_main_artifacts,
         generate_aidl_classes,
         can_follow_dependencies,
     )
 
     has_own_artifacts = (
-        len(own_jar_files) + len(own_jar_depsets) + len(own_ide_aar_files) + len(own_gensrc_files)
+        len(own_jar_files) + len(own_jar_depsets) + len(own_ide_aar_files) + len(own_gensrc_files) + len(own_src_files)
     ) > 0
 
     target_to_artifacts = {}
     if has_own_artifacts:
         artifacts = depset(own_jar_files + own_ide_aar_files + own_gensrc_files, transitive = own_jar_depsets).to_list()
-        target_to_artifacts[str(target.label)] = [_output_relative_path(file.path) for file in artifacts]
+        target_to_artifacts[str(target.label)] = {
+            "artifact_paths": [_output_relative_path(file.path) for file in artifacts],
+            "srcs": [file.path for target in own_src_files for file in target.files.to_list()],
+        }
 
     own_and_transitive_jar_depsets = list(own_jar_depsets)  # Copy to prevent changes to own_jar_depsets.
     own_and_transitive_ide_aar_depsets = []

@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -84,5 +85,24 @@ public class ZippedOutputArtifactDestination implements OutputArtifactDestinatio
     }
     extract(copyDestination, finalDestination);
     return finalDestination;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ZippedOutputArtifactDestination)) {
+      return false;
+    }
+    ZippedOutputArtifactDestination that = (ZippedOutputArtifactDestination) o;
+    return key.equals(that.key)
+        && finalDestination.equals(that.finalDestination)
+        && copyDestination.equals(that.copyDestination);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(key, finalDestination, copyDestination);
   }
 }

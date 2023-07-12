@@ -513,6 +513,7 @@ intellij_unit_test_suite(
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//shared",
         "//testing:lib",
+        "//third_party/auto_value",
         "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
