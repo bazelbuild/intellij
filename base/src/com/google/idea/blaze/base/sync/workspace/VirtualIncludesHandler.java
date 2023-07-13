@@ -11,6 +11,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -55,13 +56,54 @@ class VirtualIncludesHandler {
     static ImmutableList<File> resolveVirtualInclude(ExecutionRootPath executionRootPath,
         File externalWorkspacePath,
         WorkspacePathResolver workspacePathResolver,
-        TargetMap targetMap) {
+        TargetMap targetMap)
+    {
+        TargetKey key = guessTargetKey(executionRootPath);
+        if (key == null) {
+            return ImmutableList.of();
+        }
+
+        TargetIdeInfo info = targetMap.get(key);
+        if (info == null) {
+            return ImmutableList.of();
+        }
+
+        CIdeInfo cIdeInfo = info.getcIdeInfo();
+        if (cIdeInfo == null) {
+            return ImmutableList.of();
+        }
+
+        String stripPrefix = info.getcIdeInfo().getStripIncludePrefix();
+        if (!stripPrefix.isEmpty()) {
+            String extrenalWorkspaceName = key.getLabel().externalWorkspaceName();
+            WorkspacePath workspacePath = key.getLabel().blazePackage();
+            if (key.getLabel().externalWorkspaceName() != null) {
+                ExecutionRootPath external = new ExecutionRootPath(
+                    ExecutionRootPathResolver.externalPath.toPath()
+                        .resolve(extrenalWorkspaceName)
+                        .resolve(workspacePath.toString())
+                        .resolve(stripPrefix).toString());
+
+                return ImmutableList.of(external.getFileRootedAt(externalWorkspacePath));
+            } else {
+                return workspacePathResolver.resolveToIncludeDirectories(
+                    new WorkspacePath(workspacePath, stripPrefix));
+            }
+        } else {
+            return ImmutableList.of();
+        }
+
+    }
+
+    @Nullable
+    private static TargetKey guessTargetKey(ExecutionRootPath executionRootPath) {
         List<Path> split = splitExecutionPath(executionRootPath);
         int virtualIncludesIdx = split.indexOf(VIRTUAL_INCLUDES_DIRECTORY);
 
         if (virtualIncludesIdx > -1) {
             String externalWorkspaceName =
-                split.get(EXTERNAL_DIRECTORY_IDX).equals(ExecutionRootPathResolver.externalPath.toPath())
+                split.get(EXTERNAL_DIRECTORY_IDX)
+                    .equals(ExecutionRootPathResolver.externalPath.toPath())
                     ? split.get(EXTERNAL_WORKSPACE_NAME_IDX).toString()
                     : null;
 
@@ -73,46 +115,19 @@ class VirtualIncludesHandler {
                 ? split.subList(workspacePathStart, virtualIncludesIdx)
                 : Collections.emptyList();
 
-            String workspacePathString = workspacePaths.stream().reduce(Path.of(""), Path::resolve).toString();
+            String workspacePathString = workspacePaths.stream().reduce(Path.of(""), Path::resolve)
+                .toString();
 
             TargetName target = TargetName.create(split.get(virtualIncludesIdx + 1).toString());
             WorkspacePath workspacePath = WorkspacePath.createIfValid(workspacePathString);
             if (workspacePath == null) {
-                return ImmutableList.of();
+                return null;
             }
 
-            TargetKey key = TargetKey.forPlainTarget(Label.create(externalWorkspaceName, workspacePath, target));
-
-            TargetIdeInfo info = targetMap.get(key);
-            if (info == null) {
-                return ImmutableList.of();
-            }
-
-            CIdeInfo cIdeInfo = info.getcIdeInfo();
-            if (cIdeInfo == null) {
-                return ImmutableList.of();
-            }
-
-            String stripPrefix = info.getcIdeInfo().getStripIncludePrefix();
-            if (!stripPrefix.isEmpty()) {
-                if (externalWorkspaceName != null) {
-                    ExecutionRootPath external = new ExecutionRootPath(
-                        ExecutionRootPathResolver.externalPath.toPath()
-                            .resolve(externalWorkspaceName)
-                            .resolve(workspacePathString)
-                            .resolve(stripPrefix).toString());
-
-                    return ImmutableList.of(external.getFileRootedAt(externalWorkspacePath));
-                } else {
-                    return workspacePathResolver.resolveToIncludeDirectories(
-                        new WorkspacePath(workspacePath, stripPrefix));
-                }
-            } else {
-                return ImmutableList.of();
-            }
-
+            return TargetKey.forPlainTarget(
+                Label.create(externalWorkspaceName, workspacePath, target));
         } else {
-            return ImmutableList.of();
+            return null;
         }
     }
 }
