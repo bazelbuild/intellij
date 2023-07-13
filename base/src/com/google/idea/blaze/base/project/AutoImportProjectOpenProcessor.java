@@ -114,6 +114,8 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
     Project newProject = createProject(virtualFile);
     Objects.requireNonNull(newProject);
 
+    newProject.putUserData(PROJECT_AUTO_IMPORTED, true);
+
     Path projectFilePath = Paths.get(Objects.requireNonNull(newProject.getProjectFilePath()));
     ProjectUtil.updateLastProjectLocation(projectFilePath);
 
@@ -123,7 +125,6 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
                     BaseSdkCompat.createOpenProjectTask(newProject)
             );
     SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject);
-    newProject.putUserData(PROJECT_AUTO_IMPORTED, true);
     return newProject;
   }
 
