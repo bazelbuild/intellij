@@ -15,24 +15,26 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
-import static com.android.tools.idea.run.tasks.DefaultConnectDebuggerTaskKt.getBaseDebuggerTask;
-
+import com.android.ddmlib.IDevice;
 import com.android.tools.idea.execution.common.debug.AndroidDebugger;
 import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
+import com.android.tools.idea.execution.common.debug.DebugSessionStarter;
 import com.android.tools.idea.run.ApkProvisionException;
-import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
 import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
 import com.android.tools.idea.run.blaze.BlazeLaunchTask;
-import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebugSession;
 import javax.annotation.Nullable;
+import kotlin.Unit;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Compat for #api212 */
@@ -51,15 +53,18 @@ public class BlazeAndroidBinaryNormalBuildRunContext
 
   @Override
   public BlazeLaunchTask getApplicationLaunchTask(
-      LaunchOptions launchOptions, @Nullable Integer userId, String contributorsAmStartOptions)
+      boolean isDebug, @Nullable Integer userId, String contributorsAmStartOptions)
       throws ExecutionException {
     String extraFlags = UserIdHelper.getFlagsFromUserId(userId);
     if (!contributorsAmStartOptions.isEmpty()) {
       extraFlags += (extraFlags.isEmpty() ? "" : " ") + contributorsAmStartOptions;
     }
+    if (isDebug) {
+      extraFlags += (extraFlags.isEmpty() ? "" : " ") + "-D";
+    }
 
     final StartActivityFlagsProvider startActivityFlagsProvider =
-        new DefaultStartActivityFlagsProvider(project, launchOptions.isDebug(), extraFlags);
+        new DefaultStartActivityFlagsProvider(project, isDebug, extraFlags);
 
     BlazeAndroidDeployInfo deployInfo;
     try {
@@ -77,10 +82,27 @@ public class BlazeAndroidBinaryNormalBuildRunContext
 
   @Nullable
   @Override
-  @SuppressWarnings("unchecked")
-  public ConnectDebuggerTask getDebuggerTask(
-      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState) {
-    return getBaseDebuggerTask(androidDebugger, androidDebuggerState, env, facet);
+  public XDebugSession startDebuggerSession(
+      AndroidDebugger androidDebugger,
+      AndroidDebuggerState androidDebuggerState,
+      ExecutionEnvironment env,
+      IDevice device,
+      ConsoleView consoleView,
+      ProgressIndicator indicator,
+      String packageName) {
+    return DebugSessionStarter.INSTANCE.attachDebuggerToStartedProcess(
+        device,
+        packageName,
+        env,
+        androidDebugger,
+        androidDebuggerState,
+        /*destroyRunningProcess*/ d -> {
+          d.forceStop(packageName);
+          return Unit.INSTANCE;
+        },
+        indicator,
+        consoleView,
+        15L);
   }
 
   @Override

@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.android.rendering;
 
-import com.android.tools.idea.rendering.RenderSecurityManagerOverrides;
+import com.android.tools.rendering.security.RenderSecurityManagerOverrides;
 
 /** Overrides some security restrictions used by the render sandbox. */
 public class BlazeRenderSecurityManagerOverrides implements RenderSecurityManagerOverrides {

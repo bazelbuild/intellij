@@ -16,7 +16,6 @@
 package com.android.tools.configurations;
 
 import com.android.sdklib.devices.Device;
-import com.android.tools.idea.configurations.Configuration;
 
 /** Compat class for Configuration. */
 public class ConfigurationCompat {

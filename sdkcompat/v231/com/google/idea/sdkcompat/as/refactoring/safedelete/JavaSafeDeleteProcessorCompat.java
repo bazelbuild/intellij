@@ -11,7 +11,7 @@ public abstract class JavaSafeDeleteProcessorCompat extends JavaSafeDeleteProces
 
   @Override
   public NonCodeUsageSearchInfo findUsages(
-      PsiElement element, PsiElement[] allElementsToDelete, List<UsageInfo> result) {
+      PsiElement element, PsiElement[] allElementsToDelete, List<? super UsageInfo> result) {
     NonCodeUsageSearchInfo superResult = super.findUsages(element, allElementsToDelete, result);
     return doFindUsages(element, allElementsToDelete, result, superResult);
   }
