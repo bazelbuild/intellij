@@ -127,8 +127,18 @@ def _get_followed_dependency_infos(rule):
         if DependenciesInfo in dep and dep[DependenciesInfo].target_to_artifacts
     ]
 
-def _collect_own_artifacts(target, ctx, target_is_within_project_scope, must_build_main_artifacts, generate_aidl_classes, can_follow_dependencies):
+def _collect_own_artifacts(
+        target,
+        ctx,
+        always_build_rules,
+        generate_aidl_classes,
+        can_follow_dependencies,
+        target_is_within_project_scope):
     rule = ctx.rule
+
+    must_build_main_artifacts = (
+        not target_is_within_project_scope or rule.kind in always_build_rules.split(",")
+    )
 
     own_jar_files = []
     own_jar_depsets = []
@@ -191,23 +201,22 @@ def _collect_own_artifacts(target, ctx, target_is_within_project_scope, must_bui
         own_src_files,
     )
 
-def _collect_own_and_dependency_artifacts(target, ctx, always_build_rules, generate_aidl_classes, target_is_within_project_scope):
-    # include can only be empty when used from collect_all_dependencies_for_tests
-    # aspect, which is meant to be used in tests only.
-    must_build_main_artifacts = (
-        not target_is_within_project_scope or ctx.rule.kind in always_build_rules.split(",")
-    )
-
-    info_deps = _get_followed_dependency_infos(ctx.rule)
-    can_follow_dependencies = bool(info_deps)
+def _collect_own_and_dependency_artifacts(
+        target,
+        ctx,
+        dependency_infos,
+        always_build_rules,
+        generate_aidl_classes,
+        target_is_within_project_scope):
+    can_follow_dependencies = bool(dependency_infos)
 
     own_jar_files, own_jar_depsets, own_ide_aar_files, own_gensrc_files, own_src_files = _collect_own_artifacts(
         target,
         ctx,
-        target_is_within_project_scope,
-        must_build_main_artifacts,
+        always_build_rules,
         generate_aidl_classes,
         can_follow_dependencies,
+        target_is_within_project_scope,
     )
 
     has_own_artifacts = (
@@ -226,7 +235,7 @@ def _collect_own_and_dependency_artifacts(target, ctx, always_build_rules, gener
     own_and_transitive_ide_aar_depsets = []
     own_and_transitive_gensrc_depsets = []
 
-    for info in info_deps:
+    for info in dependency_infos:
         target_to_artifacts.update(info.target_to_artifacts)
         own_and_transitive_jar_depsets.append(info.compile_time_jars)
         own_and_transitive_ide_aar_depsets.append(info.aars)
@@ -255,10 +264,12 @@ def _collect_dependencies_core_impl(
         )]
 
     target_is_within_project_scope = _target_within_project_scope(str(target.label), include, exclude)
+    dependency_infos = _get_followed_dependency_infos(ctx.rule)
 
     target_to_artifacts, compile_jars, aars, gensrcs = _collect_own_and_dependency_artifacts(
         target,
         ctx,
+        dependency_infos,
         always_build_rules,
         generate_aidl_classes,
         target_is_within_project_scope,
