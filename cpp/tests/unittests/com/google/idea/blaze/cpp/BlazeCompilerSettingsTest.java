@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.util.registry.Registry;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import java.io.File;
 import org.junit.Test;
@@ -50,6 +51,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
     applicationServices.register(ExperimentService.class, new MockExperimentService());
+
+    Registry.get("bazel.sync.resolve.virtual.includes").setValue(true);
 
     ExtensionPointImpl<BlazeCompilerFlagsProcessor.Provider> ep =
         registerExtensionPoint(

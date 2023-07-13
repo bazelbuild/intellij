@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.primitives.*;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.nio.file.Path;
@@ -102,6 +103,8 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
+    Registry.get("bazel.sync.resolve.virtual.includes").setValue(true);
+
     pathResolver =
         new ExecutionRootPathResolver(
             new BazelBuildSystemProvider(),

@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -111,7 +112,8 @@ public class ExecutionRootPathResolver {
     if (buildArtifactDirectories.contains(firstPathComponent)) {
       // Build artifacts accumulate under the execution root, independent of symlink settings
 
-      if (VirtualIncludesHandler.containsVirtualInclude(path)) {
+      if(Registry.is("bazel.sync.resolve.virtual.includes") &&
+          VirtualIncludesHandler.containsVirtualInclude(path)) {
         // Resolve virtual_include from execution root either to local or external workspace for correct code insight
         ImmutableList<File> resolved =
             VirtualIncludesHandler.resolveVirtualInclude(path, outputBase, workspacePathResolver,
