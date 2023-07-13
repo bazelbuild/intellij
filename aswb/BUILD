@@ -134,7 +134,9 @@ java_library(
     ) + select_for_plugin_api({
         "android-studio-2022.2": glob(["sdkcompat/as222/**/*.java"]),
         "android-studio-2022.3": glob(["sdkcompat/as223/**/*.java"]),
-        "android-studio-2023.1": glob(["sdkcompat/as231/**/*.java"]),
+        "android-studio-2023.1": glob(["sdkcompat/as231/**/*.java"] + [
+            "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
+        ]),
         "android-studio-dev": glob(["sdkcompat/asdev/**/*.java"] + [
             "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
         ]),

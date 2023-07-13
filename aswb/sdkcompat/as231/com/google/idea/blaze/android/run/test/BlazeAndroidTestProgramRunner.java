@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.android.run.test;
 
+import com.android.tools.idea.execution.common.AndroidConfigurationExecutor;
 import com.android.tools.idea.run.configuration.AndroidConfigurationProgramRunner;
-import com.android.tools.idea.run.configuration.execution.AndroidConfigurationExecutor;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;

@@ -15,8 +15,7 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
-import static com.android.tools.idea.run.deployment.DeviceAndSnapshotComboBoxAction.DEPLOYS_TO_LOCAL_DEVICE;
-
+import com.android.tools.idea.execution.common.DeployableToDevice;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -34,6 +33,6 @@ public class BlazeAndroidBinaryRunConfigurationHandlerCompat {
     configState =
         new BlazeAndroidBinaryRunConfigurationState(
             Blaze.buildSystemName(configuration.getProject()));
-    configuration.putUserData(DEPLOYS_TO_LOCAL_DEVICE, true);
+    configuration.putUserData(DeployableToDevice.getKEY(), true);
   }
 }

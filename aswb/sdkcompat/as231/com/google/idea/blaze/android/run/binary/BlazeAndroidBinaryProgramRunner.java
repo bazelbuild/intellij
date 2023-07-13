@@ -17,8 +17,8 @@ package com.google.idea.blaze.android.run.binary;
 
 import static com.intellij.openapi.application.ModalityState.NON_MODAL;
 
+import com.android.tools.idea.execution.common.AndroidConfigurationExecutor;
 import com.android.tools.idea.profilers.ProfileRunExecutor;
-import com.android.tools.idea.run.configuration.execution.AndroidConfigurationExecutor;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;

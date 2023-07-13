@@ -15,12 +15,13 @@
  */
 package com.google.idea.blaze.android.run.test;
 
-import static com.android.tools.idea.run.tasks.DefaultConnectDebuggerTaskKt.getBaseDebuggerTask;
 import static com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryNormalBuildRunContextBase.getApkInfoToInstall;
 
 import com.android.ddmlib.IDevice;
+import com.android.tools.idea.execution.common.DeployOptions;
 import com.android.tools.idea.execution.common.debug.AndroidDebugger;
 import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
+import com.android.tools.idea.execution.common.debug.DebugSessionStarter;
 import com.android.tools.idea.run.ApkProvider;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
@@ -29,7 +30,6 @@ import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.android.tools.idea.run.blaze.BlazeLaunchTasksProvider;
 import com.android.tools.idea.run.editor.ProfilerState;
-import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.DeployTasksCompat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -46,10 +46,17 @@ import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultHolder;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.process.NopProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebugSession;
 import java.util.List;
 import javax.annotation.Nullable;
+import kotlin.Unit;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Run context for android_test. */
@@ -135,27 +142,26 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
   }
 
   @Override
-  public BlazeLaunchTasksProvider getLaunchTasksProvider(LaunchOptions.Builder launchOptionsBuilder)
+  public BlazeLaunchTasksProvider getLaunchTasksProvider(LaunchOptions launchOptions)
       throws ExecutionException {
-    return new BlazeAndroidLaunchTasksProvider(
-        project, this, applicationIdProvider, launchOptionsBuilder);
+    return new BlazeAndroidLaunchTasksProvider(project, this, applicationIdProvider, launchOptions);
   }
 
   @Override
-  public ImmutableList<BlazeLaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
+  public ImmutableList<BlazeLaunchTask> getDeployTasks(IDevice device, DeployOptions deployOptions)
       throws ExecutionException {
     if (configState.getLaunchMethod() != AndroidTestLaunchMethod.NON_BLAZE) {
       return ImmutableList.of();
     }
     return ImmutableList.of(
         DeployTasksCompat.createDeployTask(
-            project, getApkInfoToInstall(device, launchOptions, apkProvider), launchOptions));
+            project, getApkInfoToInstall(device, deployOptions, apkProvider), deployOptions));
   }
 
   @Override
   @Nullable
   public BlazeLaunchTask getApplicationLaunchTask(
-      LaunchOptions launchOptions, @Nullable Integer userId, String contributorsAmStartOptions)
+      boolean isDebug, @Nullable Integer userId, String contributorsAmStartOptions)
       throws ExecutionException {
     switch (configState.getLaunchMethod()) {
       case BLAZE_TEST:
@@ -166,13 +172,7 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
                 configState.getMethodName(),
                 configState.getPackageName());
         return new BlazeAndroidTestLaunchTask(
-            project,
-            label,
-            blazeFlags,
-            testFilter,
-            this,
-            launchOptions.isDebug(),
-            testResultsHolder);
+            project, label, blazeFlags, testFilter, this, isDebug, testResultsHolder);
       case NON_BLAZE:
       case MOBILE_INSTALL:
         BlazeAndroidDeployInfo deployInfo;
@@ -182,21 +182,63 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
           throw new ExecutionException(e);
         }
         return StockAndroidTestLaunchTask.getStockTestLaunchTask(
-            configState, applicationIdProvider, launchOptions.isDebug(), deployInfo, project);
+            configState, applicationIdProvider, isDebug, deployInfo, project);
     }
     throw new AssertionError();
   }
 
   @Override
   @SuppressWarnings({"unchecked", "rawtypes"}) // Raw type from upstream.
-  public ConnectDebuggerTask getDebuggerTask(
-      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState) {
+  public XDebugSession startDebuggerSession(
+      AndroidDebugger androidDebugger,
+      AndroidDebuggerState androidDebuggerState,
+      ExecutionEnvironment env,
+      IDevice device,
+      ConsoleView consoleView,
+      ProgressIndicator indicator,
+      String packageName) {
     switch (configState.getLaunchMethod()) {
       case BLAZE_TEST:
-        return new ConnectBlazeTestDebuggerTask(this, androidDebugger, androidDebuggerState);
+        /**
+         * Wires up listeners to automatically reconnect the debugger for each test method. When you
+         * `blaze test` an android_test in debug mode, it kills the instrumentation process between
+         * each test method, disconnecting the debugger. We listen for the start of a new method
+         * waiting for a debugger, and reconnect. TODO: Support stopping Blaze from the UI. This is
+         * hard because we have no way to distinguish process handler termination/debug session
+         * ending initiated by the user.
+         */
+        final ProcessHandler masterProcessHandler = new NopProcessHandler();
+        addLaunchTaskCompleteListener(
+            () -> {
+              masterProcessHandler.notifyTextAvailable(
+                  "Test run completed.\n", ProcessOutputTypes.STDOUT);
+              masterProcessHandler.detachProcess();
+            });
+        return DebugSessionStarter.INSTANCE.attachReattachingDebuggerToStartedProcess(
+            device,
+            packageName,
+            masterProcessHandler,
+            env,
+            androidDebugger,
+            androidDebuggerState,
+            indicator,
+            consoleView,
+            Long.MAX_VALUE);
       case NON_BLAZE:
       case MOBILE_INSTALL:
-        return getBaseDebuggerTask(androidDebugger, androidDebuggerState, env, facet, 30);
+        return DebugSessionStarter.INSTANCE.attachDebuggerToStartedProcess(
+            device,
+            packageName,
+            env,
+            androidDebugger,
+            androidDebuggerState,
+            /*destroyRunningProcess*/ d -> {
+              d.forceStop(packageName);
+              return Unit.INSTANCE;
+            },
+            indicator,
+            consoleView,
+            Long.MAX_VALUE);
     }
     throw new AssertionError();
   }

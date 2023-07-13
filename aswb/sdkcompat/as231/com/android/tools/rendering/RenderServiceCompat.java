@@ -15,10 +15,8 @@
  */
 package com.android.tools.rendering;
 
-import com.android.tools.idea.rendering.RenderService;
-
 /** Compat class for {@link RenderService} */
-public final class RenderServiceCompat {
+public class RenderServiceCompat {
   public static void shutdownRenderExecutor(long l) {
     RenderService.shutdownRenderExecutor(l);
   }
@@ -26,6 +24,4 @@ public final class RenderServiceCompat {
   public static void initializeRenderExecutor() {
     RenderService.initializeRenderExecutor();
   }
-
-  private RenderServiceCompat() {}
 }

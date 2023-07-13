@@ -15,7 +15,6 @@
  */
 package com.android.tools.rendering;
 
-import com.android.tools.idea.rendering.RenderLogger;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,6 +24,10 @@ public class RenderLoggerCompat {
 
   public RenderLoggerCompat(RenderResultCompat result) {
     renderLogger = result.getLogger();
+  }
+
+  public RenderLogger get() {
+    return renderLogger;
   }
 
   public boolean hasErrors() {

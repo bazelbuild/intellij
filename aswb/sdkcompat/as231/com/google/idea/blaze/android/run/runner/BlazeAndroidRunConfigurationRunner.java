@@ -17,20 +17,23 @@
 package com.google.idea.blaze.android.run.runner;
 
 import com.android.ddmlib.IDevice;
+import com.android.tools.idea.editors.literals.LiveEditService;
+import com.android.tools.idea.execution.common.AndroidConfigurationExecutor;
+import com.android.tools.idea.execution.common.AndroidConfigurationExecutorRunProfileState;
 import com.android.tools.idea.execution.common.AppRunSettings;
 import com.android.tools.idea.execution.common.ApplicationDeployer;
 import com.android.tools.idea.execution.common.ComponentLaunchOptions;
 import com.android.tools.idea.execution.common.DeployOptions;
+import com.android.tools.idea.execution.common.stats.RunStats;
 import com.android.tools.idea.run.ApkProvider;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.blaze.BlazeAndroidConfigurationExecutor;
 import com.android.tools.idea.run.configuration.execution.AndroidComplicationConfigurationExecutor;
-import com.android.tools.idea.run.configuration.execution.AndroidConfigurationExecutor;
-import com.android.tools.idea.run.configuration.execution.AndroidConfigurationExecutorRunProfileState;
 import com.android.tools.idea.run.configuration.execution.AndroidTileConfigurationExecutor;
 import com.android.tools.idea.run.configuration.execution.AndroidWatchFaceConfigurationExecutor;
+import com.android.tools.idea.run.configuration.execution.ApplicationDeployerImpl;
 import com.android.tools.idea.run.configuration.execution.ComplicationLaunchOptions;
 import com.android.tools.idea.run.configuration.execution.TileLaunchOptions;
 import com.android.tools.idea.run.configuration.execution.WatchFaceLaunchOptions;
@@ -39,6 +42,7 @@ import com.android.tools.idea.run.editor.DeployTargetState;
 import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.binary.mobileinstall.MobileInstallBuildStep;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
@@ -48,6 +52,7 @@ import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
+import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedTask;
@@ -63,7 +68,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -118,7 +122,6 @@ public final class BlazeAndroidRunConfigurationRunner
     BlazeAndroidDeviceSelector deviceSelector = runContext.getDeviceSelector();
     BlazeAndroidDeviceSelector.DeviceSession deviceSession =
         deviceSelector.getDevice(project, executor, env, isDebug, runConfig.getUniqueID());
-
     if (deviceSession == null) {
       return null;
     }
@@ -146,21 +149,38 @@ public final class BlazeAndroidRunConfigurationRunner
       }
     }
 
-    LaunchOptions.Builder launchOptionsBuilder = getDefaultLaunchOptions().setDebug(isDebug);
+    LaunchOptions.Builder launchOptionsBuilder = getDefaultLaunchOptions();
     runContext.augmentLaunchOptions(launchOptionsBuilder);
 
     // Store the run context on the execution environment so before-run tasks can access it.
     env.putCopyableUserData(RUN_CONTEXT_KEY, runContext);
     env.putCopyableUserData(DEVICE_SESSION_KEY, deviceSession);
 
+    RunConfigurationState state = runConfig.getHandler().getState();
+
+    if (state instanceof BlazeAndroidBinaryRunConfigurationState
+        && ((BlazeAndroidBinaryRunConfigurationState) state).getCurrentWearLaunchOptions()
+            != null) {
+      ComponentLaunchOptions launchOptions =
+          ((BlazeAndroidBinaryRunConfigurationState) state).getCurrentWearLaunchOptions();
+
+      return getWearExecutor(launchOptions, env, deployTarget);
+    }
+
+    ApkProvider apkProvider =
+        BlazeApkProviderService.getInstance()
+            .getApkProvider(env.getProject(), runContext.getBuildStep());
+    final LaunchOptions launchOptions = launchOptionsBuilder.build();
     BlazeAndroidConfigurationExecutor runner =
         new BlazeAndroidConfigurationExecutor(
             runContext.getConsoleProvider(),
             runContext.getApplicationIdProvider(),
             env,
             deviceFutures,
-            runContext.getLaunchTasksProvider(launchOptionsBuilder),
-            LaunchOptions.builder().build());
+            runContext.getLaunchTasksProvider(launchOptions),
+            launchOptions,
+            apkProvider,
+            LiveEditService.getInstance(env.getProject()));
     return new AndroidConfigurationExecutorRunProfileState(runner);
   }
 
@@ -195,57 +215,30 @@ public final class BlazeAndroidRunConfigurationRunner
             .getApkProvider(env.getProject(), runContext.getBuildStep());
     DeviceFutures deviceFutures = deployTarget.getDevices(env.getProject());
 
+    ApplicationDeployer deployer =
+        runContext.getBuildStep() instanceof MobileInstallBuildStep
+            ? new MobileInstallApplicationDeployer()
+            : new ApplicationDeployerImpl(env.getProject(), RunStats.from(env));
+
     if (launchOptions instanceof TileLaunchOptions) {
       configurationExecutor =
           new AndroidTileConfigurationExecutor(
-              env, deviceFutures, settings, appIdProvider, apkProvider) {
-            @NotNull
-            @Override
-            public ApplicationDeployer getApplicationDeployer(@NotNull ConsoleView console)
-                throws ExecutionException {
-              if (runContext.getBuildStep() instanceof MobileInstallBuildStep) {
-                return new MobileInstallApplicationDeployer(console);
-              }
-              return super.getApplicationDeployer(console);
-            }
-          };
+              env, deviceFutures, settings, appIdProvider, apkProvider, deployer);
     } else if (launchOptions instanceof WatchFaceLaunchOptions) {
       configurationExecutor =
           new AndroidWatchFaceConfigurationExecutor(
-              env, deviceFutures, settings, appIdProvider, apkProvider) {
-            @NotNull
-            @Override
-            public ApplicationDeployer getApplicationDeployer(@NotNull ConsoleView console)
-                throws ExecutionException {
-              if (runContext.getBuildStep() instanceof MobileInstallBuildStep) {
-                return new MobileInstallApplicationDeployer(console);
-              }
-              return super.getApplicationDeployer(console);
-            }
-          };
+              env, deviceFutures, settings, appIdProvider, apkProvider, deployer);
     } else if (launchOptions instanceof ComplicationLaunchOptions) {
       configurationExecutor =
           new AndroidComplicationConfigurationExecutor(
-              env, deviceFutures, settings, appIdProvider, apkProvider) {
-            @NotNull
-            @Override
-            public ApplicationDeployer getApplicationDeployer(@NotNull ConsoleView console)
-                throws ExecutionException {
-              if (runContext.getBuildStep() instanceof MobileInstallBuildStep) {
-                return new MobileInstallApplicationDeployer(console);
-              }
-              return super.getApplicationDeployer(console);
-            }
-          };
+              env, deviceFutures, settings, appIdProvider, apkProvider, deployer);
     } else {
       throw new RuntimeException("Unknown launch options " + launchOptions.getClass().getName());
     }
 
-    return new AndroidConfigurationExecutorRunProfileState(
-        new BlazeWrapperForAndroidConfigurationExecutor(configurationExecutor));
+    return new AndroidConfigurationExecutorRunProfileState(configurationExecutor);
   }
 
-  @Nullable
   private static String canDebug(
       DeviceFutures deviceFutures, AndroidFacet facet, String moduleName) {
     // If we are debugging on a device, then the app needs to be debuggable
@@ -264,7 +257,7 @@ public final class BlazeAndroidRunConfigurationRunner
   }
 
   private static LaunchOptions.Builder getDefaultLaunchOptions() {
-    return LaunchOptionsCompat.getDefaultLaunchOptions();
+    return LaunchOptions.builder();
   }
 
   @Override
