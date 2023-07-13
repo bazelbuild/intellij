@@ -50,7 +50,9 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
 
   private static final TargetName SIMPLE_TARGET = TargetName.create("simple_target");
   private static final TargetName ADVANCED_TARGET = TargetName.create("advanced_target");
+  private static final TargetName TARGET_WITH_INCLUDE_PREFIX = TargetName.create("include_prefix");
   private static final List<TargetName> TARGET_NAMES = List.of(SIMPLE_TARGET, ADVANCED_TARGET);
+  private static final String INCLUDE_PREFIX = "generated-include-prefix";
 
   private ExecutionRootPathResolver pathResolver;
 
@@ -71,6 +73,8 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
       return simpleStripPrefix;
     } else if (targetName.equals(ADVANCED_TARGET)) {
       return advancedStripPrefix;
+    } else if (targetName.equals(TARGET_WITH_INCLUDE_PREFIX)) {
+      return simpleStripPrefix;
     } else {
       throw new IllegalArgumentException("Unexpected targetName");
     }
@@ -79,8 +83,13 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
   private static TargetIdeInfo getTargetIdeInfo(TargetName targetName) {
     String stripPrefix = getStripPrefix(targetName);
 
+    CIdeInfo.Builder cIdeInfoBuilder = CIdeInfo.builder().setStripIncludePrefix(stripPrefix);
+    if (targetName.equals(TARGET_WITH_INCLUDE_PREFIX)) {
+      cIdeInfoBuilder.setIncludePrefix(INCLUDE_PREFIX);
+    }
+
     return TargetIdeInfo.builder()
-        .setCInfo(CIdeInfo.builder().setStripIncludePrefix(stripPrefix))
+        .setCInfo(cIdeInfoBuilder)
         .build();
   }
 
@@ -97,6 +106,11 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
         }
       }
     }
+
+    builder.put(
+        TargetKey.forPlainTarget(
+            Label.create(WORKSPACES.get(0), WORKSPACE_PATHS.get(0), TARGET_WITH_INCLUDE_PREFIX)),
+        getTargetIdeInfo(TARGET_WITH_INCLUDE_PREFIX));
 
     return new TargetMap(builder.build());
   }
@@ -190,5 +204,24 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
         }
       }
     }
+  }
+
+  @Test
+  public void testVirtualIncludesWithIncludePrefix() {
+    File fileToBeResolved = Path.of(
+        "bazel-out/k8-fastbuild/bin",
+        WORKSPACE_PATHS.get(0).toString(),
+        VirtualIncludesHandler.VIRTUAL_INCLUDES_DIRECTORY.toString(),
+        TARGET_WITH_INCLUDE_PREFIX.toString(),
+        INCLUDE_PREFIX).toFile();
+
+    ExecutionRootPath generatedPath = new ExecutionRootPath(fileToBeResolved);
+
+    ImmutableList<File> files =
+        pathResolver.resolveToIncludeDirectories(generatedPath);
+
+    // check that include path for target with "include_prefix" attribute is resolved to execution root
+    assertThat(files).containsExactly(
+        new File(EXECUTION_ROOT, fileToBeResolved.toString()));
   }
 }

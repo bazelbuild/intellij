@@ -34,6 +34,8 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
   private final ImmutableList<ExecutionRootPath> transitiveQuoteIncludeDirectories;
   private final ImmutableList<String> transitiveDefines;
   private final ImmutableList<ExecutionRootPath> transitiveSystemIncludeDirectories;
+
+  private final String includePrefix;
   private final String stripIncludePrefix;
 
   private CIdeInfo(
@@ -45,6 +47,7 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
       ImmutableList<ExecutionRootPath> transitiveQuoteIncludeDirectories,
       ImmutableList<String> transitiveDefines,
       ImmutableList<ExecutionRootPath> transitiveSystemIncludeDirectories,
+      String includePrefix,
       String stripIncludePrefix) {
     this.sources = sources;
     this.headers = headers;
@@ -54,6 +57,7 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
     this.transitiveQuoteIncludeDirectories = transitiveQuoteIncludeDirectories;
     this.transitiveDefines = transitiveDefines;
     this.transitiveSystemIncludeDirectories = transitiveSystemIncludeDirectories;
+    this.includePrefix = includePrefix;
     this.stripIncludePrefix = stripIncludePrefix;
   }
 
@@ -69,6 +73,7 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
         ProtoWrapper.internStrings(proto.getTransitiveDefineList()),
         ProtoWrapper.map(
             proto.getTransitiveSystemIncludeDirectoryList(), ExecutionRootPath::fromProto),
+        proto.getIncludePrefix(),
         proto.getStripIncludePrefix());
   }
 
@@ -120,6 +125,10 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
     return transitiveSystemIncludeDirectories;
   }
 
+  public String getIncludePrefix() {
+    return includePrefix;
+  }
+
   public String getStripIncludePrefix() {
     return stripIncludePrefix;
   }
@@ -143,6 +152,7 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
     private final ImmutableList.Builder<ExecutionRootPath> transitiveSystemIncludeDirectories =
         ImmutableList.builder();
 
+    private String includePrefix = "";
     private String stripIncludePrefix = "";
 
     @CanIgnoreReturnValue
@@ -215,6 +225,12 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
     }
 
     @CanIgnoreReturnValue
+    public Builder setIncludePrefix(String includePrefix) {
+      this.includePrefix = includePrefix;
+      return this;
+    }
+
+    @CanIgnoreReturnValue
     public Builder setStripIncludePrefix(String stripIncludePrefix) {
       this.stripIncludePrefix = stripIncludePrefix;
       return this;
@@ -230,6 +246,7 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
           transitiveQuoteIncludeDirectories.build(),
           transitiveDefines.build(),
           transitiveSystemIncludeDirectories.build(),
+          includePrefix,
           stripIncludePrefix);
     }
   }

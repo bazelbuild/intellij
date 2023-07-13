@@ -10,6 +10,7 @@ import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ import java.util.List;
  * {@code bazel-out/.../bin/.../_virtual_includes/...}
  */
 class VirtualIncludesHandler {
+    private static final Logger LOG = Logger.getInstance(VirtualIncludesHandler.class);
     final static Path VIRTUAL_INCLUDES_DIRECTORY = Path.of("_virtual_includes");
     private static final int EXTERNAL_DIRECTORY_IDX = 3;
     private static final int EXTERNAL_WORKSPACE_NAME_IDX = 4;
@@ -70,6 +72,11 @@ class VirtualIncludesHandler {
 
         CIdeInfo cIdeInfo = info.getcIdeInfo();
         if (cIdeInfo == null) {
+            return ImmutableList.of();
+        }
+
+        if (!info.getcIdeInfo().getIncludePrefix().isEmpty()) {
+            LOG.warn("_virtual_includes cannot be handled for targets with include_prefix attribute");
             return ImmutableList.of();
         }
 
