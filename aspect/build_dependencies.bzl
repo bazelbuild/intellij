@@ -1,5 +1,7 @@
 """Aspects to build and collect project dependencies."""
 
+ALWAYS_BUILD_RULES = "java_proto_library,java_lite_proto_library,java_mutable_proto_library,kt_proto_library_helper"
+
 def _package_dependencies_impl(target, ctx):
     file_name = target.label.name + ".target-info.txt"
     artifact_info_file = ctx.actions.declare_file(file_name)
