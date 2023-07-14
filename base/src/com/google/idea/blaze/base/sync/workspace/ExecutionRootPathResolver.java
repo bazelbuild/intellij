@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import java.io.File;
@@ -38,6 +39,7 @@ import javax.annotation.Nullable;
   * target is built.
  */
 public class ExecutionRootPathResolver {
+  private static final Logger LOG = Logger.getInstance(ExecutionRootPathResolver.class);
   private final static String externalPrefix = "external";
   final static File externalPath = new File(externalPrefix);
   private final ImmutableList<String> buildArtifactDirectories;
@@ -115,9 +117,13 @@ public class ExecutionRootPathResolver {
       if(Registry.is("bazel.sync.resolve.virtual.includes") &&
           VirtualIncludesHandler.containsVirtualInclude(path)) {
         // Resolve virtual_include from execution root either to local or external workspace for correct code insight
-        ImmutableList<File> resolved =
-            VirtualIncludesHandler.resolveVirtualInclude(path, outputBase, workspacePathResolver,
-                targetMap);
+        ImmutableList<File> resolved = ImmutableList.of();
+        try {
+          resolved = VirtualIncludesHandler.resolveVirtualInclude(path, outputBase,
+              workspacePathResolver, targetMap);
+        } catch (Throwable throwable) {
+          LOG.error("Failed to resolve virtual includes for " + path, throwable);
+        }
 
         return resolved.isEmpty()
             ? ImmutableList.of(path.getFileRootedAt(executionRoot))

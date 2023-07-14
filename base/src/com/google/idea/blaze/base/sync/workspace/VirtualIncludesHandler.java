@@ -61,7 +61,16 @@ class VirtualIncludesHandler {
         WorkspacePathResolver workspacePathResolver,
         TargetMap targetMap)
     {
-        TargetKey key = guessTargetKey(executionRootPath);
+        TargetKey key = null;
+        try {
+            key = guessTargetKey(executionRootPath);
+        } catch (IndexOutOfBoundsException exception) {
+            // report to intellij EA
+            LOG.error(
+                "Failed to detect target from execution root path: " + executionRootPath,
+                exception);
+        }
+
         if (key == null) {
             return ImmutableList.of();
         }
@@ -77,7 +86,8 @@ class VirtualIncludesHandler {
         }
 
         if (!info.getcIdeInfo().getIncludePrefix().isEmpty()) {
-            LOG.warn("_virtual_includes cannot be handled for targets with include_prefix attribute");
+            LOG.debug(
+                "_virtual_includes cannot be handled for targets with include_prefix attribute");
             return ImmutableList.of();
         }
 
@@ -103,6 +113,10 @@ class VirtualIncludesHandler {
 
     }
 
+    /**
+     * @throws IndexOutOfBoundsException if executionRootPath has _virtual_includes but
+     * its content is unexpected
+     */
     @Nullable
     private static TargetKey guessTargetKey(ExecutionRootPath executionRootPath) {
         List<Path> split = splitExecutionPath(executionRootPath);

@@ -50,6 +50,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
+    // access to target map from IncludeRootFlagsProcessor requires ExperimentService
+    // which is used there to check whether querysync is enabled
     applicationServices.register(ExperimentService.class, new MockExperimentService());
 
     Registry.get("bazel.sync.resolve.virtual.includes").setValue(true);
