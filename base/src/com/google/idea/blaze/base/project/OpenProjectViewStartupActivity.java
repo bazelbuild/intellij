@@ -1,6 +1,7 @@
 package com.google.idea.blaze.base.project;
 
 import com.google.idea.blaze.base.settings.ui.OpenProjectViewAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -12,7 +13,8 @@ public class OpenProjectViewStartupActivity implements StartupActivity, DumbAwar
     public void runActivity(@NotNull Project project) {
         if (Boolean.TRUE.equals(project.getUserData(AutoImportProjectOpenProcessor.PROJECT_AUTO_IMPORTED)) &&
                 Registry.is("blaze.project.import.open_project_view")) {
-            OpenProjectViewAction.openLocalProjectViewFile(project);
+            ApplicationManager.getApplication().invokeLater(() ->
+                    OpenProjectViewAction.openLocalProjectViewFile(project));
         }
     }
 }
