@@ -344,6 +344,7 @@
     <fileTypeFactory implementation="com.google.idea.blaze.base.lang.projectview.language.ProjectViewFileTypeFactory"/>
     <lang.parserDefinition language="projectview" implementationClass="com.google.idea.blaze.base.lang.projectview.parser.ProjectViewParserDefinition"/>
     <lang.commenter language="projectview" implementationClass="com.google.idea.blaze.base.lang.projectview.formatting.ProjectViewCommenter"/>
+    <lang.foldingBuilder language="projectview" implementationClass="com.google.idea.blaze.base.lang.projectview.formatting.ProjectViewFoldingBuilder"/>
     <lang.syntaxHighlighterFactory language="projectview" implementationClass="com.google.idea.blaze.base.lang.projectview.highlighting.ProjectViewSyntaxHighlighterFactory"/>
     <completion.contributor language="projectview" implementationClass="com.google.idea.blaze.base.lang.projectview.completion.ProjectViewKeywordCompletionContributor"/>
     <completion.contributor language="projectview" implementationClass="com.google.idea.blaze.base.lang.projectview.completion.WorkspaceTypeCompletionContributor"/>
