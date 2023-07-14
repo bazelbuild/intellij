@@ -11,6 +11,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,8 +123,9 @@ class VirtualIncludesHandler {
                 ? split.subList(workspacePathStart, virtualIncludesIdx)
                 : Collections.emptyList();
 
-            String workspacePathString = workspacePaths.stream().reduce(Path.of(""), Path::resolve)
-                .toString();
+            String workspacePathString =
+                FileUtil.toSystemIndependentName(
+                    workspacePaths.stream().reduce(Path.of(""), Path::resolve).toString());
 
             TargetName target = TargetName.create(split.get(virtualIncludesIdx + 1).toString());
             WorkspacePath workspacePath = WorkspacePath.createIfValid(workspacePathString);
