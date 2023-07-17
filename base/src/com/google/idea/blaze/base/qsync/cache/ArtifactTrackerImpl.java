@@ -88,6 +88,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 public class ArtifactTrackerImpl implements ArtifactTracker {
 
   public static final String DIGESTS_DIRECTORY_NAME = ".digests";
+  public static final int STORAGE_VERSION = 1;
   private static final Logger logger = Logger.getInstance(ArtifactTrackerImpl.class);
 
   // Information about dependency artifacts derviced when the dependencies were built.
@@ -183,6 +184,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     }
     try (OutputStream stream = new GZIPOutputStream(Files.newOutputStream(persistentFile))) {
       ArtifactTrackerState.newBuilder()
+          .setVersion(STORAGE_VERSION)
           .setArtifactInfo(builder.build())
           .setCachedArtifacts(cachedArtifactsBuilder.build())
           .build()
@@ -199,6 +201,9 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     try (InputStream stream = new GZIPInputStream(Files.newInputStream(persistentFile))) {
       ArtifactTrackerState saved =
           ArtifactTrackerState.parseFrom(stream, ExtensionRegistry.getEmptyRegistry());
+      if (saved.getVersion() != STORAGE_VERSION) {
+        return;
+      }
       cachePathToArtifactKeyMap.putAll(
           saved.getCachedArtifacts().getCachePathToArtifactPathMap().entrySet().stream()
               .collect(toImmutableMap(e -> Path.of(e.getKey()), e -> Path.of(e.getValue()))));
@@ -222,7 +227,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     }
     Path artifactPath = cachePathToArtifactKeyMap.get(cachedArtifact);
     return artifacts.values().stream()
-        .filter(d -> d.artifactPath().contains(artifactPath))
+        .filter(d -> d.containsPath(artifactPath))
         .map(ArtifactInfo::source)
         .flatMap(Set::stream)
         .collect(toImmutableSet());
@@ -239,7 +244,8 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
         Multimaps.invertFrom(
             Multimaps.forMap(cachePathToArtifactKeyMap), ArrayListMultimap.create());
     return Optional.of(
-        artifactInfo.artifactPath().stream()
+        artifactInfo
+            .artifactStream()
             .map(artifactToCachedMap::get)
             .flatMap(Collection::stream)
             .collect(toImmutableSet()));

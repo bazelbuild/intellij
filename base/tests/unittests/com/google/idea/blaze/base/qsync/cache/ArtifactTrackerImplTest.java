@@ -202,13 +202,13 @@ public class ArtifactTrackerImplTest {
                         .addArtifacts(
                             TargetArtifacts.newBuilder()
                                 .setTarget("//test:test")
-                                .addArtifactPaths("out/test.jar")
+                                .addJars("out/test.jar")
                                 .addSrcs("test/Test.java")
                                 .build())
                         .addArtifacts(
                             TargetArtifacts.newBuilder()
                                 .setTarget("//test:anothertest")
-                                .addArtifactPaths("out/anothertest.jar")
+                                .addJars("out/anothertest.jar")
                                 .addSrcs("test/AnotherTest.java")
                                 .build())
                         .build())
@@ -247,7 +247,7 @@ public class ArtifactTrackerImplTest {
                         .addArtifacts(
                             TargetArtifacts.newBuilder()
                                 .setTarget("//test:test")
-                                .addArtifactPaths("out/test.jar")
+                                .addJars("out/test.jar")
                                 .addSrcs("test/Test.java")
                                 .build())
                         .build())

@@ -34,7 +34,9 @@ def _encode_target_info_proto(target):
         contents.append(
             struct(
                 target = label,
-                artifact_paths = target_info["artifact_paths"],
+                jars = target_info["jars"],
+                ide_aars = target_info["ide_aars"],
+                gen_srcs = target_info["gen_srcs"],
                 srcs = target_info["srcs"],
             ),
         )
@@ -229,9 +231,13 @@ def _collect_own_and_dependency_artifacts(
 
     target_to_artifacts = {}
     if has_own_artifacts:
-        artifacts = depset(own_jar_files + own_ide_aar_files + own_gensrc_files, transitive = own_jar_depsets).to_list()
+        jars = depset(own_jar_files, transitive = own_jar_depsets).to_list()
+        ide_aars = depset(own_ide_aar_files).to_list()  # depset(0 is needed to remove
+        gen_srcs = depset(own_gensrc_files).to_list()  # Deduplicate if needed.
         target_to_artifacts[str(target.label)] = {
-            "artifact_paths": [_output_relative_path(file.path) for file in artifacts],
+            "jars": [_output_relative_path(file.path) for file in jars],
+            "ide_aars": [_output_relative_path(file.path) for file in ide_aars],
+            "gen_srcs": [_output_relative_path(file.path) for file in gen_srcs],
             "srcs": [file.path for target in own_src_files for file in target.files.to_list()],
         }
 
@@ -248,6 +254,7 @@ def _collect_own_and_dependency_artifacts(
     return (
         target_to_artifacts,
         depset(own_jar_files, transitive = own_and_transitive_jar_depsets),
+        # Pass the following lists through depses() too to remove any duplicates.
         depset(own_ide_aar_files, transitive = own_and_transitive_ide_aar_depsets),
         depset(own_gensrc_files, transitive = own_and_transitive_gensrc_depsets),
     )
