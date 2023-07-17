@@ -333,7 +333,7 @@
     />
     <registryKey defaultValue="true"
                  description="Enables opening the project view file the first time the project is imported"
-                 key="blaze.project.import.open_project_view"/>
+                 key="bazel.project.import.open_project_view"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -12,7 +12,7 @@ public class OpenProjectViewStartupActivity implements StartupActivity, DumbAwar
     @Override
     public void runActivity(@NotNull Project project) {
         if (Boolean.TRUE.equals(project.getUserData(AutoImportProjectOpenProcessor.PROJECT_AUTO_IMPORTED)) &&
-                Registry.is("blaze.project.import.open_project_view")) {
+                Registry.is("bazel.project.import.open_project_view")) {
             ApplicationManager.getApplication().invokeLater(() ->
                     OpenProjectViewAction.openLocalProjectViewFile(project));
         }
