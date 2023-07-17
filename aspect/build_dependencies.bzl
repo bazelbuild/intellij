@@ -232,8 +232,10 @@ def _collect_own_and_dependency_artifacts(
     target_to_artifacts = {}
     if has_own_artifacts:
         jars = depset(own_jar_files, transitive = own_jar_depsets).to_list()
-        ide_aars = depset(own_ide_aar_files).to_list()  # depset(0 is needed to remove
-        gen_srcs = depset(own_gensrc_files).to_list()  # Deduplicate if needed.
+
+        # Pass the following lists through depset() too to remove any duplicates.
+        ide_aars = depset(own_ide_aar_files).to_list()
+        gen_srcs = depset(own_gensrc_files).to_list()
         target_to_artifacts[str(target.label)] = {
             "jars": [_output_relative_path(file.path) for file in jars],
             "ide_aars": [_output_relative_path(file.path) for file in ide_aars],
@@ -254,7 +256,6 @@ def _collect_own_and_dependency_artifacts(
     return (
         target_to_artifacts,
         depset(own_jar_files, transitive = own_and_transitive_jar_depsets),
-        # Pass the following lists through depses() too to remove any duplicates.
         depset(own_ide_aar_files, transitive = own_and_transitive_ide_aar_depsets),
         depset(own_gensrc_files, transitive = own_and_transitive_gensrc_depsets),
     )
