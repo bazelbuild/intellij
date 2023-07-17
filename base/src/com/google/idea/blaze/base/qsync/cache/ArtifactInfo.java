@@ -53,7 +53,7 @@ public abstract class ArtifactInfo {
   public abstract ImmutableList<Path> genSrcs();
 
   /** Workspace relative sources for this dependency, extracted at dependency build time. */
-  public abstract ImmutableSet<Path> source();
+  public abstract ImmutableSet<Path> sources();
 
   public static ArtifactInfo create(TargetArtifacts proto) {
     // Note, the proto contains a list of sources, we take the parent as we want directories instead
@@ -71,7 +71,7 @@ public abstract class ArtifactInfo {
         .addAllJars(jars().stream().map(Path::toString).collect(toImmutableList()))
         .addAllIdeAars(ideAars().stream().map(Path::toString).collect(toImmutableList()))
         .addAllGenSrcs(genSrcs().stream().map(Path::toString).collect(toImmutableList()))
-        .addAllSrcs(source().stream().map(Path::toString).collect(toImmutableList()))
+        .addAllSrcs(sources().stream().map(Path::toString).collect(toImmutableList()))
         .build();
   }
 

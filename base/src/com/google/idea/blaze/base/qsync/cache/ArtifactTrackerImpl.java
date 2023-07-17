@@ -228,7 +228,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     Path artifactPath = cachePathToArtifactKeyMap.get(cachedArtifact);
     return artifacts.values().stream()
         .filter(d -> d.containsPath(artifactPath))
-        .map(ArtifactInfo::source)
+        .map(ArtifactInfo::sources)
         .flatMap(Set::stream)
         .collect(toImmutableSet());
   }
