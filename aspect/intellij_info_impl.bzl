@@ -291,7 +291,7 @@ def update_set_in_dict(input_dict, key, other_set):
 
 def _get_output_mnemonic(ctx):
     """Gives the output directory mnemonic for some target context."""
-    return ctx.configuration.bin_dir.path.split("/")[1]
+    return ctx.bin_dir.path.split("/")[1]
 
 def _get_python_version(ctx):
     if ctx.attr._flag_hack[FlagHackInfo].incompatible_py2_outputs_are_suffixed:
