@@ -60,7 +60,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
-  static final Key<Boolean> PROJECT_AUTO_IMPORTED = Key.create("blaze.project.auto_imported");
+  static final Key<Boolean> PROJECT_AUTO_IMPORTED = Key.create("bazel.project.auto_imported");
 
   private static final Logger LOG = Logger.getInstance(AutoImportProjectOpenProcessor.class);
 
