@@ -191,6 +191,7 @@
     <postStartupActivity implementation="com.google.idea.blaze.base.project.DisableAndroidFrameworkActivity"/>
     <postStartupActivity implementation="com.google.idea.blaze.base.formatter.ExternalFormatterCodeStyleManager$Installer"/>
     <postStartupActivity implementation="com.google.idea.blaze.base.prefetch.PrefetchProjectInitializer" />
+    <postStartupActivity implementation="com.google.idea.blaze.base.project.OpenProjectViewStartupActivity"/>
 
 
     <toolWindow id="Blaze"
@@ -338,6 +339,9 @@
       description="Apply heuristics to detect correct location of headers which are accessed from _virtual_includes during build"
       defaultValue="true"
     />
+    <registryKey defaultValue="true"
+                 description="Enables opening the project view file the first time the project is imported"
+                 key="bazel.project.import.open_project_view"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
