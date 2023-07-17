@@ -22,8 +22,11 @@ option java_package = "com.google.devtools.intellij.qsync";
 // The artifacts built for a given target
 message TargetArtifacts {
   string target = 1;
-  repeated string artifact_paths = 2;
-  repeated string srcs = 3;
+  reserved 2;
+  repeated string srcs = 3;      // Workspace relative.
+  repeated string jars = 4;      // Build output relative.
+  repeated string ide_aars = 5;  // Build output relative.
+  repeated string gen_srcs = 6;  // Build output relative.
 }
 
 // The list of all targets built and their artifacts. Note that because
@@ -43,5 +46,5 @@ message CachedArtifacts {
 message ArtifactTrackerState {
   BuildArtifacts artifact_info = 1;
   CachedArtifacts cached_artifacts = 2;
+  int32 version = 3;
 }
-

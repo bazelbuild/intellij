@@ -21,9 +21,11 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Streams;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
 import com.google.idea.blaze.common.Label;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 /** Information about a project dependency that is calculated when the dependency is built. */
 @AutoValue
@@ -33,10 +35,22 @@ public abstract class ArtifactInfo {
   public abstract Label label();
 
   /**
-   * The artifacts relative path (blaze-out/xxx) that can be used to retrieve local copy in the
+   * The jar artifacts relative path (blaze-out/xxx) that can be used to retrieve local copy in the
    * cache.
    */
-  public abstract ImmutableList<Path> artifactPath();
+  public abstract ImmutableList<Path> jars();
+
+  /**
+   * The aar artifacts relative path (blaze-out/xxx) that can be used to retrieve local copy in the
+   * cache.
+   */
+  public abstract ImmutableList<Path> ideAars();
+
+  /**
+   * The gensrc artifacts relative path (blaze-out/xxx) that can be used to retrieve local copy in
+   * the cache.
+   */
+  public abstract ImmutableList<Path> genSrcs();
 
   /** Workspace relative sources for this dependency, extracted at dependency build time. */
   public abstract ImmutableSet<Path> source();
@@ -45,19 +59,34 @@ public abstract class ArtifactInfo {
     // Note, the proto contains a list of sources, we take the parent as we want directories instead
     return new AutoValue_ArtifactInfo(
         Label.of(proto.getTarget()),
-        proto.getArtifactPathsList().stream().map(Path::of).collect(toImmutableList()),
+        proto.getJarsList().stream().map(Path::of).collect(toImmutableList()),
+        proto.getIdeAarsList().stream().map(Path::of).collect(toImmutableList()),
+        proto.getGenSrcsList().stream().map(Path::of).collect(toImmutableList()),
         proto.getSrcsList().stream().map(Path::of).collect(toImmutableSet()));
   }
 
   public TargetArtifacts toProto() {
     return TargetArtifacts.newBuilder()
         .setTarget(label().toString())
-        .addAllArtifactPaths(artifactPath().stream().map(Path::toString).collect(toImmutableList()))
+        .addAllJars(jars().stream().map(Path::toString).collect(toImmutableList()))
+        .addAllIdeAars(ideAars().stream().map(Path::toString).collect(toImmutableList()))
+        .addAllGenSrcs(genSrcs().stream().map(Path::toString).collect(toImmutableList()))
         .addAllSrcs(source().stream().map(Path::toString).collect(toImmutableList()))
         .build();
   }
 
+  public final boolean containsPath(Path artifactPath) {
+    return jars().contains(artifactPath)
+        || ideAars().contains(artifactPath)
+        || genSrcs().contains(artifactPath);
+  }
+
+  public final Stream<Path> artifactStream() {
+    return Streams.concat(jars().stream(), ideAars().stream(), genSrcs().stream());
+  }
+
   public static ArtifactInfo empty(Label target) {
-    return new AutoValue_ArtifactInfo(target, ImmutableList.of(), ImmutableSet.of());
+    return new AutoValue_ArtifactInfo(
+        target, ImmutableList.of(), ImmutableList.of(), ImmutableList.of(), ImmutableSet.of());
   }
 }
