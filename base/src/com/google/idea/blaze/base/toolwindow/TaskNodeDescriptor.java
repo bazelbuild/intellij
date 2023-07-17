@@ -55,7 +55,7 @@ public final class TaskNodeDescriptor extends PresentableNodeDescriptor<Task> {
   protected void update(PresentationData presentationData) {
     presentationData.setPresentableText(task.getName());
     presentationData.setIcon(iconForTask(task));
-    presentationData.addText(getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    presentationData.addText(task.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     if (!task.getState().isEmpty()) {
       presentationData.addText(" " + task.getState(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
     }
