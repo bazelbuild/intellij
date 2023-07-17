@@ -214,7 +214,7 @@
     <applicationConfigurable provider="com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurableProvider" id ="query.sync" displayName="Query Sync"/>
     <applicationService serviceImplementation="com.google.idea.blaze.base.qsync.settings.QuerySyncSettings" id="QuerySyncSettings"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.qsync.QuerySyncManager"/>
-    <project.converterProvider implementation="com.google.idea.blaze.base.qsync.ProjectConverterProvider" id="bazel-qsync-converter"/>
+    <project.converterProvider implementation="com.google.idea.blaze.base.qsync.ProjectConverterProvider" id="query.sync.project.converter"/>
     <iw.actionProvider implementation="com.google.idea.blaze.base.qsync.QuerySyncInspectionWidgetActionProvider"/>
     <iw.actionProvider implementation="com.google.idea.blaze.base.qsync.ComposePreviewQuerySyncInspectionWidgetActionProvider"/>
     <daemon.highlightInfoFilter implementation="com.google.idea.blaze.base.qsync.QuerySyncHighlightingFilter"/>
