@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.sdkcompat.java.AttachSourcesProviderAdapter;
 import com.intellij.openapi.project.Project;
@@ -39,6 +40,9 @@ public class AddLibraryTargetDirectoryToProjectViewAttachSourcesProvider
   @Override
   public Collection<AttachSourcesAction> getAdapterActions(
       List<? extends LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
+    if (QuerySync.isEnabled()) {
+      return ImmutableList.of();
+    }
     Project project = psiFile.getProject();
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
