@@ -16,21 +16,13 @@
 package com.google.idea.blaze.qsync;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.util.concurrent.MoreExecutors.newDirectExecutorService;
-import static com.google.idea.blaze.qsync.QuerySyncTestUtils.EMPTY_PACKAGE_READER;
-import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
-import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.qsync.project.BuildGraphData;
-import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectProto.ContentEntry;
 import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
 import com.google.idea.blaze.qsync.project.ProjectProto.SourceFolder;
+import com.google.idea.blaze.qsync.testdata.ProjectProtos;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,28 +33,9 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class GeneratedSourceProjectUpdaterTest {
 
-  private static Project constructBasicProject() throws Exception {
-    Path workspaceImportDirectory = TestData.ROOT.resolve("nodeps");
-    GraphToProjectConverter converter =
-        new GraphToProjectConverter(
-            EMPTY_PACKAGE_READER,
-            Predicates.alwaysTrue(),
-            NOOP_CONTEXT,
-            ProjectDefinition.create(
-                ImmutableSet.of(workspaceImportDirectory),
-                ImmutableSet.of(),
-                ImmutableSet.of(LanguageClass.JAVA)),
-            newDirectExecutorService());
-
-    BuildGraphData buildGraphData =
-        new BlazeQueryParser(NOOP_CONTEXT)
-            .parse(getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY));
-    return converter.createProject(buildGraphData);
-  }
-
   @Test
   public void testNoGeneratedSources() throws Exception {
-    Project project = constructBasicProject();
+    Project project = ProjectProtos.forTestProject(TestData.JAVA_LIBRARY_NO_DEPS_QUERY);
 
     GeneratedSourceProjectUpdater updater =
         new GeneratedSourceProjectUpdater(project, Paths.get(""), ImmutableList.of());
@@ -74,7 +47,7 @@ public class GeneratedSourceProjectUpdaterTest {
 
   @Test
   public void testGeneratedSourcesAdded() throws Exception {
-    Project project = constructBasicProject();
+    Project project = ProjectProtos.forTestProject(TestData.JAVA_LIBRARY_NO_DEPS_QUERY);
     assertThat(project.getModulesCount()).isEqualTo(1);
     assertThat(project.getModules(0).getContentEntriesCount()).isEqualTo(1);
 
