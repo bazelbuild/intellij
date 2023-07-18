@@ -21,13 +21,17 @@ import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Objects;
 
 /** Decodes intellij_ide_info.proto ArtifactLocation file paths */
 public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecoder {
+  private static final Logger LOG = Logger.getInstance(ArtifactLocationDecoderImpl.class);
   private final BlazeInfo blazeInfo;
   private final WorkspacePathResolver pathResolver;
   private final RemoteOutputArtifacts remoteOutputs;
@@ -55,6 +59,19 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
 
   @Override
   public File resolveSource(ArtifactLocation artifact) {
+    if (artifact.isExternal()) {
+      try {
+        File realFile = blazeInfo.getExecutionRoot().toPath()
+            .resolve(artifact.getExecutionRootRelativePath()).toRealPath().toFile();
+        if (pathResolver.getWorkspacePath(realFile) != null) {
+          return realFile;
+        }
+      } catch (IOException ioException) {
+        LOG.warn("Failed to resolve real path for " + artifact.getExecutionRootRelativePath(),
+            ioException);
+      }
+    }
+
     return artifact.isMainWorkspaceSourceArtifact()
         ? pathResolver.resolveToFile(artifact.getRelativePath())
         : null;
