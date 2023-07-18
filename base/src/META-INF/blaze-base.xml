@@ -342,6 +342,9 @@
     <registryKey defaultValue="true"
                  description="Enables opening the project view file the first time the project is imported"
                  key="bazel.project.import.open_project_view"/>
+    <registryKey defaultValue="false"
+                 description="Scan for non-root source folders in source jars."
+                 key="bazel.sync.detect.source.roots"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
