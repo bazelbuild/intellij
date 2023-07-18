@@ -34,7 +34,13 @@ message Module {
   repeated string android_source_packages = 6;
 
   // Separate custom package with source packages as it's only used by R class.
-  repeated string android_custom_packages = 7;
+  repeated string android_custom_packages = 7 [deprecated = true];
+  repeated CustomPackageInfo android_custom_package_infos = 8;
+}
+
+message CustomPackageInfo {
+  string android_custom_package = 1;
+  repeated string original_packages = 2;
 }
 
 /**

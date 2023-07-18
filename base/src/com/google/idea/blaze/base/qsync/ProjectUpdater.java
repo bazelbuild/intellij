@@ -201,7 +201,10 @@ public class ProjectUpdater implements BlazeProjectListener {
                   ImmutableSet.copyOf(moduleSpec.getAndroidResourceDirectoriesList()),
                   ImmutableSet.<String>builder()
                       .addAll(moduleSpec.getAndroidSourcePackagesList())
-                      .addAll(moduleSpec.getAndroidCustomPackagesList())
+                      .addAll(
+                          moduleSpec.getAndroidCustomPackageInfosList().stream()
+                              .map(info -> info.getAndroidCustomPackage())
+                              .collect(toImmutableSet()))
                       .build(),
                   workspaceLanguageSettings);
             }

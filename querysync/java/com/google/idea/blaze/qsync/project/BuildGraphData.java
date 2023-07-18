@@ -23,12 +23,16 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.Queues;
+import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.common.BuildTarget;
@@ -302,14 +306,33 @@ public abstract class BuildGraphData {
     return files;
   }
 
-  /** Returns a list of custom_package fields that used by current project. */
-  public ImmutableSet<String> getAllCustomPackages() {
-    ImmutableSet.Builder<String> customPackages = ImmutableSet.builder();
-    for (BuildTarget target : targetMap().values()) {
-      if (target.customPackage().isPresent()) {
-        customPackages.add(target.customPackage().get());
+  private ImmutableSetMultimap<Label, Path> getTargetToAndroidSourceFiles() {
+    SetMultimap<Label, Label> targetToSource =
+        Multimaps.invertFrom(Multimaps.forMap(sourceOwner()), HashMultimap.create());
+    ImmutableSetMultimap.Builder<Label, Path> targetToFiles = ImmutableSetMultimap.builder();
+    for (Label target : androidTargets()) {
+      for (Label source : targetToSource.get(target)) {
+        Location location = locations().get(source);
+        if (location == null) {
+          continue;
+        }
+        targetToFiles.put(target, location.file);
       }
     }
-    return customPackages.build();
+    return targetToFiles.build();
+  }
+
+  /** Returns a map from custom_package to its source files that used by current project. */
+  public ImmutableSetMultimap<String, Path> getCustomPackageToSourceFiles() {
+    ImmutableSetMultimap.Builder<String, Path> customPackagesToFiles =
+        ImmutableSetMultimap.builder();
+    ImmutableSetMultimap<Label, Path> targetToAndroidSourceFiles = getTargetToAndroidSourceFiles();
+    for (BuildTarget target : targetMap().values()) {
+      if (target.customPackage().isPresent()) {
+        customPackagesToFiles.putAll(
+            target.customPackage().get(), targetToAndroidSourceFiles.get(target.label()));
+      }
+    }
+    return customPackagesToFiles.build();
   }
 }

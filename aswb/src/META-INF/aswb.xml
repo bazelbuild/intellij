@@ -38,6 +38,10 @@
     <projectService serviceInterface="com.google.idea.blaze.android.targetmaps.TargetToBinaryMap"
         serviceImplementation="com.google.idea.blaze.android.targetmaps.TargetToBinaryMapImpl" />
     <projectService serviceImplementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemBuildManager$LastBuildResultCache"/>
+    <projectService
+        serviceInterface="com.intellij.openapi.roots.PackageIndex"
+        serviceImplementation="com.google.idea.blaze.android.qsync.CustomPackageIndexExpander"
+        overrides="true"/>
     <applicationService serviceImplementation="com.google.idea.blaze.android.settings.BlazeAndroidUserSettings"/>
     <applicationService serviceInterface="com.google.idea.blaze.android.sdk.BlazeSdkProvider"
       serviceImplementation="com.google.idea.blaze.android.sdk.BlazeSdkProviderImpl"/>

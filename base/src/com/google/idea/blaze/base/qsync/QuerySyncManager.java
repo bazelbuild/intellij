@@ -136,6 +136,11 @@ public class QuerySyncManager {
     }
   }
 
+  public CustomPackageMap getCustomPackageMap() {
+    assertProjectLoaded();
+    return loadedProject.getCustomPackageMap();
+  }
+
   public ArtifactTracker getArtifactTracker() {
     assertProjectLoaded();
     return loadedProject.getArtifactTracker();
