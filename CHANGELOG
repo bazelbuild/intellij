@@ -1,6 +1,9 @@
 v2023.07.18
 ===========
-
+* We now support C++ strip_include_prefix parameter (done in Resolve _virtual_includes to local or external workspace #5059)
+* "Build dependecies for open files" action adcfaae
+* Aspect-sync to query-sync conversion 3f268d0
+* Open project view file after auto import of project #5088
 
 v2023.07.04
 ===========
