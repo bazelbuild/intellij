@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.libraries.Library.ModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.JavaVfsSourceRootDetectionUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -78,14 +79,14 @@ public class LibraryModifier {
       logger.warn("No local file found for " + file);
       return;
     }
-    if (orderRootType == OrderRootType.SOURCES) {
-      VirtualFile jarfile = VirtualFileManager.getInstance().findFileByUrl(pathToUrl(file));
+    if (Registry.is("bazel.sync.detect.source.roots") && orderRootType == OrderRootType.SOURCES) {
+      VirtualFile jarFile = VirtualFileManager.getInstance().findFileByUrl(pathToUrl(file));
       List<VirtualFile> candidates = Collections.emptyList();
-      if (jarfile != null) {
-        candidates = JavaVfsSourceRootDetectionUtil.suggestRoots(jarfile, new EmptyProgressIndicator());
+      if (jarFile != null) {
+        candidates = JavaVfsSourceRootDetectionUtil.suggestRoots(jarFile, new EmptyProgressIndicator());
       }
-      if (candidates.size() == 1) {
-        modifiableModel.addRoot(candidates.get(0), orderRootType);
+      if (!candidates.isEmpty()) {
+          candidates.forEach(candidate -> modifiableModel.addRoot(candidate, orderRootType));
       } else {
         modifiableModel.addRoot(pathToUrl(file), orderRootType);
       }
