@@ -107,11 +107,10 @@ java_test(
     size = "small",
     srcs = ["GeneratedSourceProjectUpdaterTest.java"],
     deps = [
-        ":TestUtils",
         "//querysync/java/com/google/idea/blaze/qsync",
-        "//querysync/java/com/google/idea/blaze/qsync/project",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata:project_protos",
         "@com_google_guava_guava//jar",
         "@junit//jar",
         "@truth//jar",
