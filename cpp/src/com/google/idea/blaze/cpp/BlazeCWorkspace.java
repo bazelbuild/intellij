@@ -22,8 +22,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.errorprone.annotations.Keep;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.*;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -66,13 +65,10 @@ import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Message;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Session;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -159,6 +155,37 @@ public final class BlazeCWorkspace implements ProjectComponent {
             });
   }
 
+  private List<String> collectIncludes(String rootPath, TargetKey targetKey, BlazeProjectData blazeProjectData) {
+    TargetIdeInfo targetIdeInfo = blazeProjectData.getTargetMap().get(targetKey);
+    if (targetIdeInfo == null || targetIdeInfo.getcIdeInfo() == null) {
+      return Collections.emptyList();
+    }
+
+    ArrayList<String> includes = new ArrayList<>();
+    CIdeInfo cIdeInfo = targetIdeInfo.getcIdeInfo();
+    String includePrefix = cIdeInfo.getIncludePrefix();
+    String stripPrefix = cIdeInfo.getStripIncludePrefix();
+    for (ArtifactLocation header : cIdeInfo.getHeaders()) {
+      String realPath = rootPath + "/" + header.getExecutionRootRelativePath();
+      String pathUsedInSourceCode = header.getRelativePath();
+      if (stripPrefix != null && !stripPrefix.isEmpty() && pathUsedInSourceCode.startsWith(stripPrefix)) {
+        pathUsedInSourceCode = pathUsedInSourceCode.substring(stripPrefix.length() +
+                (stripPrefix.endsWith("/") ? 0 : 1));
+      }
+      if (includePrefix != null && !includePrefix.isEmpty()) {
+        pathUsedInSourceCode = includePrefix + "/" + pathUsedInSourceCode;
+      }
+
+      includes.add("-ibazel" + pathUsedInSourceCode + "=" + realPath);
+    }
+
+    for (Dependency dep : targetIdeInfo.getDependencies()) {
+      includes.addAll(collectIncludes(rootPath, dep.getTargetKey(), blazeProjectData));
+    }
+
+    return includes;
+  }
+
   private OCWorkspaceImpl.ModifiableModel calculateConfigurations(
       BlazeProjectData blazeProjectData,
       WorkspaceRoot workspaceRoot,
@@ -192,13 +219,14 @@ public final class BlazeCWorkspace implements ProjectComponent {
           continue;
         }
 
+        @NotNull CIdeInfo cIdeInfo = targetIdeInfo.getcIdeInfo();
         // defines and include directories are the same for all sources in a given target, so lets
         // collect them once and reuse for each source file's options
 
         UnfilteredCompilerOptions coptsExtractor =
             UnfilteredCompilerOptions.builder()
                 .registerSingleOrSplitOption("-I")
-                .build(targetIdeInfo.getcIdeInfo().getLocalCopts());
+                .build(cIdeInfo.getLocalCopts());
         ImmutableList<String> plainLocalCopts =
             filterIncompatibleFlags(coptsExtractor.getUninterpretedOptions());
         ImmutableList<ExecutionRootPath> localIncludes =
@@ -208,7 +236,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
         // transitiveDefines are sourced from a target's (and transitive deps) "defines" attribute
         ImmutableList<String> transitiveDefineOptions =
-            targetIdeInfo.getcIdeInfo().getTransitiveDefines().stream()
+                cIdeInfo.getTransitiveDefines().stream()
                 .map(s -> "-D" + s)
                 .collect(toImmutableList());
 
@@ -222,7 +250,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         ImmutableList<String> iOptionIncludeDirectories =
             Stream.concat(
                     localIncludes.stream().flatMap(resolver),
-                    targetIdeInfo.getcIdeInfo().getTransitiveIncludeDirectories().stream()
+                    cIdeInfo.getTransitiveIncludeDirectories().stream()
                         .flatMap(resolver)
                         .filter(configResolveData::isValidHeaderRoot))
                 .map(file -> "-I" + file.getAbsolutePath())
@@ -231,7 +259,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // transitiveQuoteIncludeDirectories are sourced from
         // CcSkylarkApiProvider.quote_include_directories
         ImmutableList<String> iquoteOptionIncludeDirectories =
-            targetIdeInfo.getcIdeInfo().getTransitiveQuoteIncludeDirectories().stream()
+                cIdeInfo.getTransitiveQuoteIncludeDirectories().stream()
                 .flatMap(resolver)
                 .filter(configResolveData::isValidHeaderRoot)
                 .map(file -> "-iquote" + file.getAbsolutePath())
@@ -241,11 +269,14 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // Note: We would ideally use -isystem here, but it interacts badly with the switches
         // that get built by ClangUtils::addIncludeDirectories (it uses -I for system libraries).
         ImmutableList<String> isystemOptionIncludeDirectories =
-            targetIdeInfo.getcIdeInfo().getTransitiveSystemIncludeDirectories().stream()
+            cIdeInfo.getTransitiveSystemIncludeDirectories().stream()
                 .flatMap(resolver)
                 .filter(configResolveData::isValidHeaderRoot)
                 .map(file -> "-I" + file.getAbsolutePath())
                 .collect(toImmutableList());
+
+        String rootPath = workspaceRoot.directory().getAbsolutePath();
+        ImmutableList<String> includes = ImmutableList.copyOf(collectIncludes(rootPath, targetKey, blazeProjectData));
 
         for (VirtualFile vf : resolveConfiguration.getSources(targetKey)) {
           OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(vf);
@@ -262,6 +293,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
           fileSpecificSwitchBuilder.addAllRaw(iOptionIncludeDirectories);
           fileSpecificSwitchBuilder.addAllRaw(isystemOptionIncludeDirectories);
           fileSpecificSwitchBuilder.addAllRaw(plainLocalCopts);
+          fileSpecificSwitchBuilder.addAllRaw(includes);
 
           PerFileCompilerOpts perFileCompilerOpts =
               new PerFileCompilerOpts(kind, fileSpecificSwitchBuilder.build());
