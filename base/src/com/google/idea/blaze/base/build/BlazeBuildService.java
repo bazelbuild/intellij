@@ -90,24 +90,24 @@ public class BlazeBuildService {
     this.buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
   }
 
-  public void buildFileForLabels(
+  public Future<BlazeBuildOutputs> buildFileForLabels(
       String fileName, ImmutableSet<com.google.idea.blaze.common.Label> labels) {
     buildFile(fileName, labels.stream().map(Label::create).collect(toImmutableSet()));
   }
 
   public void buildFile(String fileName, ImmutableCollection<Label> targets) {
     if (!Blaze.isBlazeProject(project) || fileName == null) {
-      return;
+      return null;
     }
     ProjectViewSet projectView = ProjectViewManager.getInstance(project).getProjectViewSet();
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectView == null || projectData == null) {
-      return;
+      return null;
     }
 
     String title = "Make " + fileName;
-    buildTargetExpressions(
+    return buildTargetExpressions(
         project,
         projectView,
         projectData,
@@ -168,7 +168,7 @@ public class BlazeBuildService {
     project.putUserData(PROJECT_LAST_BUILD_TIMESTAMP_KEY, System.currentTimeMillis());
   }
 
-  private static void buildTargetExpressions(
+  private static Future<BlazeBuildOutputs> buildTargetExpressions(
       Project project,
       ProjectViewSet projectView,
       BlazeProjectData projectData,
@@ -179,16 +179,16 @@ public class BlazeBuildService {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // a gross hack to avoid breaking change detector tests. We had a few tests which relied on
       // this never being called *and* relied on PROJECT_LAST_BUILD_TIMESTAMP_KEY being set
-      return;
+      return null;
     }
     FocusBehavior problemsViewFocus = BlazeUserSettings.getInstance().getShowProblemsViewOnRun();
     @SuppressWarnings("unused") // go/futurereturn-lsc
-    Future<?> possiblyIgnoredError =
+    Future<BlazeBuildOutputs> buildOutput =
         ProgressiveTaskWithProgressIndicator.builder(project, "Building targets")
             .submitTaskWithResult(
-                new ScopedTask<Void>() {
+                new ScopedTask<>() {
                   @Override
-                  public Void execute(BlazeContext context) {
+                  public BlazeBuildOutputs execute(BlazeContext context) {
                     Task task = new Task(project, taskName, Task.Type.MAKE);
                     context
                         .push(
@@ -249,7 +249,7 @@ public class BlazeBuildService {
                     if (buildOutputs.buildResult.status != BuildResult.Status.SUCCESS) {
                       context.setHasError();
                     }
-                    return null;
+                    return buildOutputs;
                   }
                 });
   }
