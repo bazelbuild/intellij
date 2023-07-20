@@ -29,7 +29,6 @@ public class QuerySyncConfigurable implements Configurable {
 
   private final JPanel panel;
   private final JBCheckBox displayDetailsText;
-  private final JBCheckBox syncBeforeBuild;
 
   private final QuerySyncSettings settings = QuerySyncSettings.getInstance();
 
@@ -39,9 +38,6 @@ public class QuerySyncConfigurable implements Configurable {
 
     displayDetailsText = new JBCheckBox("Display detailed dependency text in the editor");
     panel.add(displayDetailsText);
-
-    syncBeforeBuild = new JBCheckBox("Sync automatically before building dependencies");
-    panel.add(syncBeforeBuild);
   }
 
   @Override
@@ -56,19 +52,16 @@ public class QuerySyncConfigurable implements Configurable {
 
   @Override
   public boolean isModified() {
-    return settings.showDetailedInformationInEditor != displayDetailsText.isSelected()
-        || settings.syncBeforeBuild != syncBeforeBuild.isSelected();
+    return settings.showDetailedInformationInEditor != displayDetailsText.isSelected();
   }
 
   @Override
   public void apply() throws ConfigurationException {
     settings.showDetailedInformationInEditor = displayDetailsText.isSelected();
-    settings.syncBeforeBuild = syncBeforeBuild.isSelected();
   }
 
   @Override
   public void reset() {
     displayDetailsText.setSelected(settings.showDetailedInformationInEditor);
-    syncBeforeBuild.setSelected(settings.syncBeforeBuild);
   }
 }
