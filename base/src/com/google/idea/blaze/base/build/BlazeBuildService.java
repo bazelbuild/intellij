@@ -182,11 +182,10 @@ public class BlazeBuildService {
       return null;
     }
     FocusBehavior problemsViewFocus = BlazeUserSettings.getInstance().getShowProblemsViewOnRun();
-    @SuppressWarnings("unused") // go/futurereturn-lsc
-    Future<BlazeBuildOutputs> buildOutput =
-        ProgressiveTaskWithProgressIndicator.builder(project, "Building targets")
+    // go/futurereturn-lsc
+    return ProgressiveTaskWithProgressIndicator.builder(project, "Building targets")
             .submitTaskWithResult(
-                new ScopedTask<>() {
+                new ScopedTask<BlazeBuildOutputs>() {
                   @Override
                   public BlazeBuildOutputs execute(BlazeContext context) {
                     Task task = new Task(project, taskName, Task.Type.MAKE);
