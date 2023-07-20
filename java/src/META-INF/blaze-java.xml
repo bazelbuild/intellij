@@ -18,6 +18,9 @@
     <applicationService serviceInterface="com.google.idea.blaze.java.libraries.JarRepackager" serviceImplementation="com.google.idea.blaze.java.libraries.JarRepackager$NoopJarRepackager"/>
     <postStartupActivity implementation="com.google.idea.blaze.java.plugin.JUnitPluginDependencyWarning"/>
   </extensions>
+  <extensions defaultExtensionNs="com.intellij.psi">
+    <clsCustomNavigationPolicy implementation="com.google.idea.blaze.java.qsync.QuerySyncNavigationPolicy" />
+  </extensions>
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <TargetKindProvider implementation="com.google.idea.blaze.java.JavaBlazeRules"/>
     <TargetKindProvider implementation="com.google.idea.blaze.java.AndroidBlazeRules"/>

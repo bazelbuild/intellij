@@ -202,5 +202,6 @@ intellij_integration_test_suite(
         "//shared",
         "@com_google_guava_guava//jar",
         "@junit//jar",
+        "@truth//jar",
     ],
 )
