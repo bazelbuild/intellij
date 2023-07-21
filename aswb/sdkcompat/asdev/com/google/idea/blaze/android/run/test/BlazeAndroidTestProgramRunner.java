@@ -16,13 +16,11 @@
 package com.google.idea.blaze.android.run.test;
 
 import com.android.tools.idea.execution.common.AndroidConfigurationExecutor;
-import com.android.tools.idea.run.configuration.AndroidConfigurationProgramRunner;
+import com.android.tools.idea.execution.common.AndroidConfigurationProgramRunner;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
-import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -41,10 +39,7 @@ public class BlazeAndroidTestProgramRunner extends AndroidConfigurationProgramRu
     if (!(handler instanceof BlazeAndroidTestRunConfigurationHandler)) {
       return false;
     }
-    if (!(profile instanceof BlazeCommandRunConfiguration)) {
-      return false;
-    }
-    return DefaultRunExecutor.EXECUTOR_ID.equals(executorId)
+    return super.canRun(executorId, profile) && DefaultRunExecutor.EXECUTOR_ID.equals(executorId)
         || DefaultDebugExecutor.EXECUTOR_ID.equals(executorId);
   }
 
@@ -68,15 +63,14 @@ public class BlazeAndroidTestProgramRunner extends AndroidConfigurationProgramRu
   @Override
   protected RunContentDescriptor run(
       @NotNull ExecutionEnvironment environment,
-      @NotNull RunProfileState state,
+      @NotNull AndroidConfigurationExecutor executor,
       @NotNull ProgressIndicator indicator)
       throws ExecutionException {
-    final AndroidConfigurationExecutor state1 = (AndroidConfigurationExecutor) state;
     if (DefaultDebugExecutor.EXECUTOR_ID.equals(environment.getExecutor().getId())) {
-      return state1.debug(indicator);
+      return executor.debug(indicator);
     }
     if (DefaultRunExecutor.EXECUTOR_ID.equals(environment.getExecutor().getId())) {
-      return state1.run(indicator);
+      return executor.run(indicator);
     }
     throw new RuntimeException("Unsupported executor");
   }

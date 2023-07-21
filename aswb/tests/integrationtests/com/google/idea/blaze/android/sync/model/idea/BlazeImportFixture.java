@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.android.sync.model.idea;
 
+import com.android.ide.common.repository.GoogleMavenArtifactIdCompat;
 import com.android.ide.common.repository.GradleCoordinate;
-import com.android.tools.idea.projectsystem.GoogleMavenArtifactId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.projectsystem.MavenArtifactLocator;
@@ -202,14 +202,7 @@ public final class BlazeImportFixture {
           new MavenArtifactLocator() {
             @Override
             public Label labelFor(GradleCoordinate coordinate) {
-              switch (GoogleMavenArtifactId.forCoordinate(coordinate)) {
-                case RECYCLERVIEW_V7:
-                  return Label.create("//third_party/recyclerview:recyclerview");
-                case CONSTRAINT_LAYOUT:
-                  return Label.create("//third_party/constraint_layout:constraint_layout");
-                default:
-                  return null;
-              }
+              return GoogleMavenArtifactIdCompat.getLabelForGoogleMaventArtifact(coordinate);
             }
 
             @Override
