@@ -34,7 +34,6 @@ public final class JavaBlazeRules implements Kind.Provider {
     JAVA_LIBRARY("java_library", LanguageClass.JAVA, RuleType.LIBRARY),
     JAVA_TEST("java_test", LanguageClass.JAVA, RuleType.TEST),
     JAVA_BINARY("java_binary", LanguageClass.JAVA, RuleType.BINARY),
-    INTELLIJ_BINARY("intellij_binary", LanguageClass.JAVA, RuleType.BINARY),
     JAVA_IMPORT("java_import", LanguageClass.JAVA, RuleType.UNKNOWN),
     JAVA_TOOLCHAIN("java_toolchain", LanguageClass.JAVA, RuleType.UNKNOWN),
     JAVA_PROTO_LIBRARY("java_proto_library", LanguageClass.JAVA, RuleType.LIBRARY),
