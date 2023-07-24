@@ -2,7 +2,7 @@
 awaiting-review:
 - '**/*'
 
-product: CLion
+'product: CLion':
 - clwb/**/*
 - cpp/**/*
 - base/**/*
@@ -14,7 +14,7 @@ product: CLion
 - intellij_platform_sdk/BUILD.clion231
 - intellij_platform_sdk/BUILD.clion232
 
-product: Android Studio
+'product: Android Studio':
 - aswb/**/*
 - sdkcompat/**/*
 - examples/kotlin/**/*
@@ -26,7 +26,7 @@ product: Android Studio
 - intellij_platform_sdk/BUILD.android_studio231
 - intellij_platform_sdk/BUILD.android_studiodev
 
-product: IntelliJ
+'product: IntelliJ':
 - aspect/**/*
 - base/**/*
 - build_defs/**/*
@@ -58,7 +58,7 @@ product: IntelliJ
 - intellij_platform_sdk/BUILD.ue231
 - intellij_platform_sdk/BUILD.ue232
 
-product: GoLand
+'product: GoLand':
 - base/**/*
 - examples/go/with_proto/**/*
 - gazelle/**/*
