@@ -1,0 +1,71 @@
+# Add 'awaiting-review' to any PR opened
+awaiting-review:
+- '**/*'
+
+product: CLion:
+- clwb/**/*
+- cpp/**/*
+- base/**/*
+- examples/cpp/simple_project/**/*
+- intellij_platform_sdk/BUILD.clion213
+- intellij_platform_sdk/BUILD.clion221
+- intellij_platform_sdk/BUILD.clion222
+- intellij_platform_sdk/BUILD.clion223
+- intellij_platform_sdk/BUILD.clion231
+- intellij_platform_sdk/BUILD.clion232
+
+
+product: Android Studio:
+- aswb/**/*
+- sdkcompat/**/*
+- examples/kotlin/**/*
+- base/**/*
+- intellij_platform_sdk/BUILD.android_studio213
+- intellij_platform_sdk/BUILD.android_studio221
+- intellij_platform_sdk/BUILD.android_studio222
+- intellij_platform_sdk/BUILD.android_studio223
+- intellij_platform_sdk/BUILD.android_studio231
+- intellij_platform_sdk/BUILD.android_studiodev
+
+
+
+product: IntelliJ:
+- aspect/**/*
+- base/**/*
+- build_defs/**/*
+- examples/java/greetings_project/**/*
+- ijwb/**/*
+- kotlin/**/*
+- plugin_dev/**/*
+- shared/**/*
+- java/**/*
+- third_party/java/jdk/**/*
+- javascript/**/*
+- third_party/javascript/**/*
+- python/**/*
+- third_party/python/**/*
+- querysync/**/*
+- scala/**/*
+- third_party/scala/**/*
+- proto/**/*
+- skylark/**/*
+- intellij_platform_sdk/BUILD.idea221
+- intellij_platform_sdk/BUILD.idea222
+- intellij_platform_sdk/BUILD.idea223
+- intellij_platform_sdk/BUILD.idea231
+- intellij_platform_sdk/BUILD.idea232
+- intellij_platform_sdk/BUILD.ue213
+- intellij_platform_sdk/BUILD.ue221
+- intellij_platform_sdk/BUILD.ue222
+- intellij_platform_sdk/BUILD.ue223
+- intellij_platform_sdk/BUILD.ue231
+- intellij_platform_sdk/BUILD.ue232
+
+product: GoLand:
+- base/**/*
+- examples/go/with_proto/**/*
+- gazelle/**/*
+- golang/**/*
+- third_party/go/**/*
+
+
