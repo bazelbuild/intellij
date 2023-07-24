@@ -189,9 +189,9 @@ http_archive(
 )
 
 # The plugin api for clion_2023_2. This is required to build CLwB\, and run integration tests.
-CLION_232_SHA = "e1094675664095b1cdfa7ad4a2fa4f01c2f85b0adb1272e28758ae29fdce2db4"
+CLION_232_SHA = "9f33385561c5e136235b75041535e3f13e36d844dc7a3ebaf9009a256079b86f"
 
-CLION_232_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/232.8660.49-EAP-SNAPSHOT/clion-232.8660.49-EAP-SNAPSHOT.zip"
+CLION_232_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/232.8660.139-EAP-SNAPSHOT/clion-232.8660.139-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "clion_2023_2",
