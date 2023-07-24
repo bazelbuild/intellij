@@ -64,5 +64,3 @@ product: GoLand:
 - gazelle/**/*
 - golang/**/*
 - third_party/go/**/*
-
-
