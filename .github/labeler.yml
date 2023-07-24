@@ -14,7 +14,6 @@ product: CLion:
 - intellij_platform_sdk/BUILD.clion231
 - intellij_platform_sdk/BUILD.clion232
 
-
 product: Android Studio:
 - aswb/**/*
 - sdkcompat/**/*
@@ -26,8 +25,6 @@ product: Android Studio:
 - intellij_platform_sdk/BUILD.android_studio223
 - intellij_platform_sdk/BUILD.android_studio231
 - intellij_platform_sdk/BUILD.android_studiodev
-
-
 
 product: IntelliJ:
 - aspect/**/*
