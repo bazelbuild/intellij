@@ -13,7 +13,6 @@ load(
     "//:build-visibility.bzl",
     "PLUGIN_PACKAGES_VISIBILITY",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 
 licenses(["notice"])
 
@@ -44,19 +43,6 @@ intellij_plugin_library(
     optional_plugin_xmls = [":optional_xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":plugin_dev"],
-)
-
-# This rule is necessary so that "plugin_library" can be included in ASwB builds based on 2022.1 and
-# later only, where the "plugin devkit" is included in the base version of Studio. Delete is once we
-# no longer support earlier versions.
-alias(
-    name = "plugin_library_for_aswb",
-    actual = select_for_plugin_api({
-        "android-studio-2021.3": ":empty",
-        # 2022.1 and all future versions should include this.
-        "default": "//plugin_dev:plugin_library",
-    }),
-    visibility = PLUGIN_PACKAGES_VISIBILITY,
 )
 
 intellij_plugin_library(

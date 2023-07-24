@@ -48,6 +48,7 @@ import com.google.idea.blaze.base.projectview.section.Glob.GlobSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
@@ -102,7 +103,12 @@ public class JarCacheTest extends BlazeTestCase {
       File projectDataDirectory = folder.newFolder("projectdata");
       BlazeImportSettings dummyImportSettings =
           new BlazeImportSettings(
-              "", "", projectDataDirectory.getAbsolutePath(), "", BuildSystemName.Blaze);
+              "",
+              "",
+              projectDataDirectory.getAbsolutePath(),
+              "",
+              BuildSystemName.Blaze,
+              ProjectType.ASPECT_SYNC);
       blazeImportSettingsManager.setImportSettings(dummyImportSettings);
     } catch (IOException e) {
       throw new AssertionError("Failed to create a directory for test", e);

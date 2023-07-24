@@ -45,7 +45,7 @@ public class QuerySummaryTestUtil {
             .collect(toCollection(HashSet::new));
     includes.keySet().stream().map(Label::of).forEach(sourceFiles::add);
 
-    Query.Summary.Builder builder = Query.Summary.newBuilder();
+    Query.Summary.Builder builder = QuerySummary.EMPTY.proto().toBuilder();
     for (String p : packages) {
       builder.putRules(p, Query.Rule.newBuilder().setRuleClass("java_library").build());
     }

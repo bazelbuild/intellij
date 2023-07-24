@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeCommandRunnerExperiments;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolUtils;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
@@ -50,9 +49,7 @@ import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.java.AndroidBlazeRules;
-import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
-import com.google.idea.blaze.java.JavaBlazeRules;
+import com.google.idea.blaze.java.TargetKindUtil;
 import com.google.idea.blaze.java.run.hotswap.HotSwapCommandBuilder;
 import com.google.idea.blaze.java.run.hotswap.HotSwapUtils;
 import com.intellij.execution.DefaultExecutionResult;
@@ -67,7 +64,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtilRt;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -104,13 +101,15 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
     BuildInvoker invoker =
         Blaze.getBuildSystemProvider(project)
             .getBuildSystem()
-            .getDefaultInvoker(project, BlazeContext.create());
+            .getBuildInvoker(
+                project,
+                BlazeContext.create(),
+                getExecutorType(),
+                getConfiguration().getTargetKind());
     BlazeTestUiSession testUiSession = null;
-    if (SystemInfo.isMac
-        && isLocalTest()
-        && invoker.getCommandRunner().shouldUseForLocalTests()
-        && getExecutorType().isDebugType()
-        && BlazeCommandRunnerExperiments.supportLocalTestsDebuggingMac.isEnabled()) {
+    if (TargetKindUtil.isLocalTest(getConfiguration().getTargetKind())
+        && !invoker.getCommandRunner().canUseCli()
+        && getExecutorType().isDebugType()) {
       File downloadDir = getDownloadDir();
       WorkspaceRoot workspaceRoot =
           new WorkspaceRoot(
@@ -122,7 +121,7 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
               .add(JAVA_RUNFILES_ENV + downloadDir.getAbsolutePath());
 
       // android_local_tests need additional env variables
-      if (getConfiguration().getTargetKind().equals(RuleTypes.ANDROID_LOCAL_TEST.getKind())) {
+      if (TargetKindUtil.isAndroidLocalTest(getConfiguration().getTargetKind())) {
         commandBuilder
             .add(TEST_TIMEOUT_ENV + "300")
             .add(TEST_SIZE_ENV + "medium")
@@ -134,6 +133,10 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
       commandBuilder
           .add(getEntryPointScript())
           .add(debugPortFlag(false, getState(getConfiguration()).getDebugPortState().port));
+      if (TargetKindUtil.isAndroidLocalTest(getConfiguration().getTargetKind())
+          && BlazeCommandRunnerExperiments.USE_SINGLEJAR_FOR_DEBUGGING.getValue()) {
+        commandBuilder.add("--singlejar");
+      }
       return getScopedProcessHandler(project, commandBuilder.build(), workspaceRoot);
     }
 
@@ -300,19 +303,10 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
         });
   }
 
-  private boolean isLocalTest() {
-    Kind targetKind = getConfiguration().getTargetKind();
-    return targetKind != null
-        && targetKind.isOneOf(
-            AndroidBlazeRules.RuleTypes.ANDROID_LOCAL_TEST.getKind(),
-            JavaBlazeRules.RuleTypes.JAVA_TEST.getKind());
-  }
-
   private File getDownloadDir() {
-    File downloadDir = BuildEventProtocolUtils.getOutputDir();
     String testTargetString = getConfiguration().getSingleTarget().toString();
     return new File(
-        downloadDir,
+        FileUtilRt.getTempDirectory(),
         testTargetString.substring(testTargetString.lastIndexOf(":") + 1) + ".runfiles");
   }
 

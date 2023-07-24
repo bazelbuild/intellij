@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.vcs;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -25,9 +26,12 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.qsync.vcs.VcsState;
+import com.google.idea.blaze.common.vcs.VcsState;
+import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.VcsStateDiffer;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -50,7 +54,7 @@ public interface BlazeVcsHandlerProvider {
    * Exception that may be thrown from a future returned by {@link BlazeVcsHandlerProvider} if an
    * operation fails.
    */
-  class VcsException extends Exception {
+  class VcsException extends BuildException {
     public VcsException(String message) {
       super(message);
     }
@@ -113,8 +117,25 @@ public interface BlazeVcsHandlerProvider {
                   () ->
                       new VcsState(
                           Futures.getDone(upstreamFuture),
-                          Futures.getDone(workingSet).toWorkspaceFileChanges()),
+                          Futures.getDone(workingSet).toWorkspaceFileChanges(),
+                          Optional.empty()),
                   executor));
+    }
+
+    /**
+     * Diffs two VCS states from different points in time.
+     *
+     * @param current The more recent VCS state
+     * @param previous An earlier VCS state
+     * @return All files that changed between the points at which the two states correspond to, as
+     *     workspace relative paths. If this VCS does not support diffing two states in this way,
+     *     returns empty. If nothing has changed between the two points, an empty list is returned.
+     */
+    Optional<ImmutableSet<Path>> diffVcsState(VcsState current, VcsState previous)
+        throws BuildException;
+
+    default VcsStateDiffer getVcsStateDiffer() {
+      return this::diffVcsState;
     }
   }
 

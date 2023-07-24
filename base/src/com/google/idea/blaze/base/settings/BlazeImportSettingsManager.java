@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.settings;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -38,7 +37,7 @@ public class BlazeImportSettingsManager implements PersistentStateComponent<Blaz
   }
 
   public static BlazeImportSettingsManager getInstance(Project project) {
-    return ServiceManager.getService(project, BlazeImportSettingsManager.class);
+    return project.getService(BlazeImportSettingsManager.class);
   }
 
   @Nullable

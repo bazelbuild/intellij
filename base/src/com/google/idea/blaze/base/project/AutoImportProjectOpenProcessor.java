@@ -30,6 +30,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,6 +59,8 @@ import org.jetbrains.annotations.Nullable;
  * Must be loaded after {@link BlazeProjectOpenProcessor} to only import new projects.
  */
 public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
+
+  static final Key<Boolean> PROJECT_AUTO_IMPORTED = Key.create("bazel.project.auto_imported");
 
   private static final Logger LOG = Logger.getInstance(AutoImportProjectOpenProcessor.class);
 
@@ -110,6 +113,8 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
     Project newProject = createProject(virtualFile);
     Objects.requireNonNull(newProject);
+
+    newProject.putUserData(PROJECT_AUTO_IMPORTED, true);
 
     Path projectFilePath = Paths.get(Objects.requireNonNull(newProject.getProjectFilePath()));
     ProjectUtil.updateLastProjectLocation(projectFilePath);

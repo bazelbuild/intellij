@@ -1,3 +1,56 @@
+v2023.07.18
+===========
+* We now support C++ strip_include_prefix parameter (done in Resolve _virtual_includes to local or external workspace #5059)
+* "Build dependecies for open files" action adcfaae
+* Aspect-sync to query-sync conversion 3f268d0
+* Open project view file after auto import of project #5088
+
+v2023.07.04
+===========
+* fix(clion): Handle (possibly broken) CommandLineTools installations #5010
+* [query-sync] Support the "Build dependencies" action for directories and BUILD files.
+
+v2023.06.13
+===========
+* fix(cpp): Only register Xcode settings provider on macOS #4976
+* Fix path separator in run configuration generator #4846
+* Add associates to dep attributes #4915
+* Added a registry key to disable passing the extra compiler flags to Bazel when building a C/C++ target in debug mode. #4913
+* Move oldest supported Bazel version to 4.0.0
+
+v2023.05.30
+===========
+* The plugin now supports Xcode toolchain, not only the Xcode Command Line Tools fix(clion): Add Xcode information to Cpp compiler wrapper #4651
+
+v2023.05.16
+===========
+* Improve performance of Java package parser by making it a Bazel worker #3686
+* plugin_dev: Allow plugin development on Windows #4843
+
+v2023.05.02
+===========
+* Fix gdbserver wrapper passing incorrect arguments #4783
+* fix(cc): Run main function-style tests in CLion #4786
+* remove-suppression-of-jest-run-configuration #4647
+
+v2023.04.18
+===========
+* Remove the dependencies on CLion's bundled plugins for Boost tests and Catch tests. #4715
+* plugin_dev: Fix run configuration on Mac OS X #4702
+* fix(clion): Correctly parse copts with spaces in a single string. #4654
+* Fixes Allow setting custom blaze-script file location #4253
+* Fixes Internal errors when synchronizing on a newly created git branch #4609
+* Fixes Partial Query fails on test targets due to input stream reader issue #4738
+
+v2023.04.04
+===========
+* Superclass method test runs run the correct method #4632
+* Internal cleanup.
+
+v2023.03.21
+===========
+* Internal cleanup
+
 v2023.03.07
 ===========
 * Pass --path to buildifier when possible #4550

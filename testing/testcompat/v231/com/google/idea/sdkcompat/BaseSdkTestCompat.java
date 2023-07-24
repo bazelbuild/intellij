@@ -24,6 +24,10 @@ import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.UITestUtil;
+import com.intellij.ui.CoreIconManager;
+import com.intellij.ui.IconManager;
+
 import java.util.List;
 
 /**
@@ -38,14 +42,34 @@ public final class BaseSdkTestCompat {
     return CodeInsightTestUtil.testAnnotator(annotator, elements);
   }
 
-  /** #api212: inline into ServiceHelper */
-  public static void unregisterComponent(ComponentManager componentManager, Class<?> key) {
-    ((ComponentManagerImpl) componentManager).unregisterComponent(key);
+  /** #api223: inline into ServiceHelper */
+  public static void unregisterComponent(ComponentManager componentManager, Class<?> componentKey) {
+    ((ComponentManagerImpl) componentManager).unregisterComponent(componentKey);
   }
 
   /** #api213: inline into tests */
   public static TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(
       IdeaTestFixtureFactory factory, String projectName) {
     return factory.createLightFixtureBuilder(projectName);
+  }
+
+  /** #api231 */
+  public static CoreIconManager newCoreIconManager() {
+    return new CoreIconManager();
+  }
+
+  /** #api231 */
+  public static void activateIconManager(IconManager iconManager) throws Throwable {
+    IconManager.activate(iconManager);
+  }
+
+  /** #api231 */
+  public static void deactivateIconManager() {
+    IconManager.deactivate();
+  }
+
+  /** #api222 */
+  public static void replaceIdeEventQueueSafely() {
+      UITestUtil.replaceIdeEventQueueSafely();
   }
 }

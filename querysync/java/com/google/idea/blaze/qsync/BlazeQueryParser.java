@@ -17,15 +17,19 @@ package com.google.idea.blaze.qsync;
 
 import static com.google.idea.blaze.common.Label.toLabelList;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Streams;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.BuildGraphData.Location;
+import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
@@ -45,7 +49,11 @@ public class BlazeQueryParser {
   // project.
   public static final ImmutableSet<String> ALWAYS_BUILD_RULE_TYPES =
       ImmutableSet.of(
-          "java_proto_library", "java_lite_proto_library", "java_mutable_proto_library");
+          "java_proto_library",
+          "java_lite_proto_library",
+          "java_mutable_proto_library",
+          // Underlying rule for kt_jvm_lite_proto_library and kt_jvm_proto_library
+          "kt_proto_library_helper");
   private static final ImmutableSet<String> JAVA_RULE_TYPES =
       ImmutableSet.of("java_library", "java_binary", "kt_jvm_library_helper", "java_test");
   private static final ImmutableSet<String> ANDROID_RULE_TYPES =
@@ -56,7 +64,7 @@ public class BlazeQueryParser {
           "android_instrumentation_test",
           "kt_android_library_helper");
 
-  private final Context context;
+  private final Context<?> context;
 
   public BlazeQueryParser(Context context) {
     this.context = context;
@@ -69,12 +77,13 @@ public class BlazeQueryParser {
   public BuildGraphData parse(QuerySummary query) {
     context.output(PrintOutput.log("Analyzing project structure..."));
 
-    Set<Path> packages = new HashSet<>();
+    PackageSet.Builder packages = new PackageSet.Builder();
     long now = System.nanoTime();
 
     BuildGraphData.Builder graphBuilder = BuildGraphData.builder();
     Map<Label, Label> sourceOwner = Maps.newHashMap();
     Map<Label, Set<Label>> ruleDeps = Maps.newHashMap();
+    Map<Label, Set<Label>> ruleRuntimeDeps = Maps.newHashMap();
     Set<Label> projectDeps = Sets.newHashSet();
 
     // A hacky collection the project state. This is the equivalent of the targetmap data:
@@ -91,7 +100,7 @@ public class BlazeQueryParser {
         query.getSourceFilesMap().entrySet()) {
       Location l = new Location(sourceFileEntry.getValue().getLocation());
       if (l.file.endsWith(Path.of("BUILD"))) {
-        packages.add(l.file);
+        packages.add(l.file.getParent());
       }
       graphBuilder.locationsBuilder().put(sourceFileEntry.getKey(), l);
       graphBuilder.fileToTargetBuilder().put(l.file, sourceFileEntry.getKey());
@@ -110,13 +119,27 @@ public class BlazeQueryParser {
         buildTarget.setInstruments(
             Label.of(ruleEntry.getValue().getOtherAttributesOrThrow("instruments")));
       }
+      if (ruleEntry.getValue().containsOtherAttributes("custom_package")) {
+        buildTarget.setCustomPackage(
+            ruleEntry.getValue().getOtherAttributesOrThrow("custom_package"));
+      }
       graphBuilder.targetMapBuilder().put(ruleEntry.getKey(), buildTarget.build());
 
       if (isJavaRule(ruleClass)) {
+        graphBuilder.allTargetsBuilder().add(ruleEntry.getKey());
         ImmutableSet<Label> thisSources =
-            ImmutableSet.copyOf(toLabelList(ruleEntry.getValue().getSourcesList()));
+            ImmutableSet.<Label>builder()
+                .addAll(toLabelList(ruleEntry.getValue().getSourcesList()))
+                .addAll(toLabelList(ruleEntry.getValue().getResourceFilesList()))
+                .build();
         Set<Label> thisDeps = Sets.newHashSet(toLabelList(ruleEntry.getValue().getDepsList()));
         ruleDeps.computeIfAbsent(ruleEntry.getKey(), x -> Sets.newHashSet()).addAll(thisDeps);
+
+        Set<Label> thisRuntimeDeps =
+            Sets.newHashSet(toLabelList(ruleEntry.getValue().getRuntimeDepsList()));
+        ruleRuntimeDeps
+            .computeIfAbsent(ruleEntry.getKey(), x -> Sets.newHashSet())
+            .addAll(thisRuntimeDeps);
         for (Label thisSource : thisSources) {
           // TODO Consider replace sourceDeps with a map of:
           //   (source target) -> (rules the include it)
@@ -179,14 +202,34 @@ public class BlazeQueryParser {
     context.output(PrintOutput.log("%-10d Targets (%d ms):", nTargets, elapsedMs));
 
     BuildGraphData graph =
-        graphBuilder.sourceOwner(sourceOwner).ruleDeps(ruleDeps).projectDeps(projectDeps).build();
+        graphBuilder
+            .sourceOwner(sourceOwner)
+            .ruleDeps(ruleDeps)
+            .ruleRuntimeDeps(ruleRuntimeDeps)
+            .projectDeps(projectDeps)
+            .packages(packages.build())
+            .reverseDeps(caclulateReverseDeps(ruleDeps, ruleRuntimeDeps))
+            .build();
 
     context.output(PrintOutput.log("%-10d Source files", graph.locations().size()));
     context.output(PrintOutput.log("%-10d Java sources", graph.javaSources().size()));
-    context.output(PrintOutput.log("%-10d Packages", packages.size()));
+    context.output(PrintOutput.log("%-10d Packages", graph.packages().size()));
     context.output(PrintOutput.log("%-10d Dependencies", deps.size()));
     context.output(PrintOutput.log("%-10d External dependencies", graph.projectDeps().size()));
 
     return graph;
+  }
+
+  private ImmutableMultimap<Label, Label> caclulateReverseDeps(
+      Map<Label, Set<Label>> ruleDeps, Map<Label, Set<Label>> ruleRuntimeDeps) {
+    ArrayListMultimap<Label, Label> map = ArrayListMultimap.create();
+    Streams.concat(ruleDeps.entrySet().stream(), ruleRuntimeDeps.entrySet().stream())
+        .forEach(
+            entry -> {
+              for (Label dep : entry.getValue()) {
+                map.put(dep, entry.getKey());
+              }
+            });
+    return ImmutableMultimap.copyOf(map);
   }
 }

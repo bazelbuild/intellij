@@ -19,6 +19,7 @@ import static com.google.common.util.concurrent.Futures.immediateFuture;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -27,7 +28,9 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
+import com.google.idea.blaze.common.vcs.VcsState;
 import com.intellij.openapi.project.Project;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -88,6 +91,11 @@ public class MockBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
     @Override
     public BlazeVcsSyncHandler createSyncHandler() {
       return null;
+    }
+
+    @Override
+    public Optional<ImmutableSet<Path>> diffVcsState(VcsState current, VcsState previous) {
+      return Optional.empty();
     }
   }
 }

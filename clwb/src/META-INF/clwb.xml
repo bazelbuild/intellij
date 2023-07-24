@@ -17,8 +17,6 @@
   <vendor>Google</vendor>
 
   <depends>com.intellij.modules.clion</depends>
-  <depends>org.jetbrains.plugins.clion.test.boost</depends>
-  <depends>org.jetbrains.plugins.clion.test.catch</depends>
   <depends>org.jetbrains.plugins.clion.test.google</depends>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -30,6 +28,7 @@
     <moduleType id="BLAZE_CPP_MODULE" implementationClass="com.google.idea.blaze.clwb.BlazeCppModuleType"/>
     <postStartupActivity implementation="com.google.idea.blaze.clwb.run.producers.NonBlazeProducerSuppressor"/>
     <actionConfigurationCustomizer implementation="com.google.idea.blaze.plugin.ClwbHideMakeActions"/>
+    <registryKey defaultValue="false" description="Disable the extra debug flags in debug C/C++ builds" key="bazel.clwb.debug.extraflags.disabled"/>
   </extensions>
 
   <extensions defaultExtensionNs="cidr.debugger">

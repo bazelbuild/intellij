@@ -47,6 +47,9 @@ message JavaIdeInfo {
   string main_class = 7;
   string test_class = 8;
   repeated LibraryArtifact plugin_processor_jars = 9;
+  // Pass transitive jar artifact location without parsing jdeps
+  repeated ArtifactLocation transitive_compile_time_jars = 10
+      [deprecated = true];
 }
 
 message CIdeInfo {
@@ -60,6 +63,9 @@ message CIdeInfo {
   repeated string target_copt = 7;
   repeated ArtifactLocation header = 8;
   repeated ArtifactLocation textual_header = 9;
+
+  string include_prefix = 10;
+  string strip_include_prefix = 11;
 }
 
 message AndroidIdeInfo {

@@ -15,8 +15,10 @@
  */
 package com.google.idea.common.experiments;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -83,4 +85,9 @@ public class MockExperimentService implements ExperimentService {
 
   @Override
   public void notifyExperimentsChanged() {}
+
+  @Override
+  public List<ExperimentValue> getOverrides(String key) {
+    return ImmutableList.of(ExperimentValue.create("loader", key, experiments.get(key).toString()));
+  }
 }

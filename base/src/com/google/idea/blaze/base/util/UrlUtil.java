@@ -52,6 +52,12 @@ public class UrlUtil {
     }
   }
 
+  public static String pathToIdeaDirectoryUrl(Path path) {
+    return VirtualFileManager.constructUrl(
+        VirtualFileSystemProvider.getInstance().getSystem().getProtocol(),
+        FileUtil.toSystemIndependentName(path.toString()));
+  }
+
   /**
    * Returns the local file path associated with the given URL, or null if it doesn't refer to a
    * local file.

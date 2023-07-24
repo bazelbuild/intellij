@@ -213,7 +213,7 @@ def _intellij_plugin_jar_impl(ctx):
     final_plugin_xml_file = _add_optional_dependencies_to_plugin_xml(ctx, augmented_xml, module_to_merged_xmls.keys())
     jar_file = _package_meta_inf_files(ctx, final_plugin_xml_file, module_to_merged_xmls)
     files = depset([jar_file])
-    return struct(
+    return DefaultInfo(
         files = files,
     )
 
@@ -244,7 +244,7 @@ _intellij_plugin_jar = rule(
     },
 )
 
-def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name = None, extra_runtime_deps = [], plugin_icons = [], extra_tags = [], **kwargs):
+def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name = None, extra_runtime_deps = [], plugin_icons = [], **kwargs):
     """Creates an intellij plugin from the given deps and plugin.xml.
 
     Args:
@@ -255,7 +255,6 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
       jar_name: The name of the final plugin jar, or <name>.jar if None
       extra_runtime_deps: runtime_deps added to java_binary or java_test calls
       plugin_icons: Plugin logo files to be placed in META-INF. Follow https://plugins.jetbrains.com/docs/intellij/plugin-icon-file.html#plugin-logo-requirements
-      extra_tags: extra tags add to java_import.
       **kwargs: Any further arguments to be passed to the final target
     """
     java_deps_name = name + "_java_deps"

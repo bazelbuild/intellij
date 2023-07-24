@@ -18,7 +18,7 @@ package com.google.idea.blaze.android.filecache;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import java.util.Objects;
@@ -76,7 +76,7 @@ public final class CacheEntry {
 
   /** Returns a {@link CacheEntry} corresponding to the given {@code OutputArtifact}. */
   @VisibleForTesting
-  public static CacheEntry forArtifact(OutputArtifact blazeArtifact)
+  public static CacheEntry forArtifact(OutputArtifactWithoutDigest blazeArtifact)
       throws ArtifactNotFoundException {
     ArtifactMetadata artifactMetadata = ArtifactMetadata.forArtifact(blazeArtifact);
 

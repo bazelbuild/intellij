@@ -19,7 +19,6 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.idea.blaze.android.sync.importer.BlazeAndroidWorkspaceImporter;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import java.util.HashMap;
@@ -58,7 +57,7 @@ public class AndroidResourceModuleRegistry {
   private final Map<TargetKey, AndroidResourceModule> targetToResourceModule = new HashMap<>();
 
   public static AndroidResourceModuleRegistry getInstance(Project project) {
-    return ServiceManager.getService(project, AndroidResourceModuleRegistry.class);
+    return project.getService(AndroidResourceModuleRegistry.class);
   }
 
   /**

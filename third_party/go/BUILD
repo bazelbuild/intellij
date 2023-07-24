@@ -18,6 +18,8 @@ java_library(
         "intellij-ue-2022.3": ["@go_2022_3//:go"],
         "intellij-2023.1": ["@go_2023_1//:go"],
         "intellij-ue-2023.1": ["@go_2023_1//:go"],
+        "intellij-2023.2": ["@go_2023_2//:go"],
+        "intellij-ue-2023.2": ["@go_2023_2//:go"],
         "default": [],
     }),
 )

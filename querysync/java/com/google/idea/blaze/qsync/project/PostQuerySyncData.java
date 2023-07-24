@@ -19,9 +19,9 @@ import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.QuerySummary;
-import com.google.idea.blaze.qsync.vcs.VcsState;
 import java.util.Optional;
 
 /**
@@ -37,7 +37,8 @@ public abstract class PostQuerySyncData {
   @VisibleForTesting
   public static final PostQuerySyncData EMPTY =
       builder()
-          .setProjectDefinition(ProjectDefinition.create(ImmutableSet.of(), ImmutableSet.of()))
+          .setProjectDefinition(
+              ProjectDefinition.create(ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of()))
           .setVcsState(Optional.empty())
           .setQuerySummary(QuerySummary.EMPTY)
           .build();

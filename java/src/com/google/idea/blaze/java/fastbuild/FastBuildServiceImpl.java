@@ -267,7 +267,9 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
       Label label,
       FastBuildParameters buildParameters,
       BuildResultHelper resultHelper) {
-    Label deployJarLabel = createDeployJarLabel(label);
+    FastBuildDeployJarStrategy deployJarStrategy =
+        FastBuildDeployJarStrategy.getInstance(Blaze.getBuildSystemName(project));
+    Label deployJarLabel = deployJarStrategy.createDeployJarLabel(label);
     context.output(
         new StatusOutput(
             "Building base deploy jar for fast builds: " + deployJarLabel.targetName()));
@@ -280,8 +282,8 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
 
     BlazeCommand.Builder command =
         BlazeCommand.builder(buildParameters.blazeBinary(), BlazeCommandName.BUILD)
-            .addTargets(label)
-            .addTargets(deployJarLabel)
+            .addTargets(deployJarStrategy.getBuildTargets(label))
+            .addBlazeFlags(deployJarStrategy.getBuildFlags())
             .addBlazeFlags(buildParameters.buildFlags())
             .addBlazeFlags(resultHelper.getBuildFlags());
 
@@ -303,17 +305,17 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     if (result.status != Status.SUCCESS) {
       throw new FastBuildTunnelException(new BlazeBuildError("Blaze failure building deploy jar"));
     }
-    Predicate<String> filePredicate =
-        file ->
-            file.endsWith(deployJarLabel.targetName().toString())
-                || aspectStrategy.getAspectOutputFilePredicate().test(file);
+    Predicate<String> jarPredicate = file -> file.endsWith(deployJarLabel.targetName().toString());
     try {
       ImmutableList<File> deployJarArtifacts =
           BlazeArtifact.getLocalFiles(
-              resultHelper.getBuildArtifactsForTarget(deployJarLabel, filePredicate));
+              resultHelper.getBuildArtifactsForTarget(
+                  deployJarStrategy.deployJarOwnerLabel(label), jarPredicate));
       checkState(deployJarArtifacts.size() == 1);
       File deployJar = deployJarArtifacts.get(0);
 
+      Predicate<String> filePredicate =
+          file -> aspectStrategy.getAspectOutputFilePredicate().test(file);
       ImmutableList<File> ideInfoFiles =
           BlazeArtifact.getLocalFiles(
               resultHelper.getArtifactsForOutputGroup(
@@ -336,10 +338,12 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     ListenableFuture<BlazeInfo> blazeInfoFuture =
         BlazeInfoRunner.getInstance()
             .runBlazeInfo(
+                project,
+                Blaze.getBuildSystemProvider(project)
+                    .getBuildSystem()
+                    .getDefaultInvoker(project, context),
                 context,
                 buildSystemName,
-                buildParameters.blazeBinary(),
-                WorkspaceRoot.fromProject(project),
                 buildParameters.infoFlags());
     BlazeInfo info =
         FutureUtil.waitForFuture(context, blazeInfoFuture)
@@ -354,10 +358,6 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
           String.format("%s info failed", buildSystemName.getLowerCaseName()));
     }
     return info;
-  }
-
-  private Label createDeployJarLabel(Label label) {
-    return Label.create(label + "_deploy.jar");
   }
 
   private FastBuildState performIncrementalCompilation(

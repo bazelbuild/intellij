@@ -40,6 +40,8 @@ public class BuildGraphTest {
     BuildGraphData graph =
         new BlazeQueryParser(NOOP_CONTEXT)
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY));
+    assertThat(graph.allTargets())
+        .containsExactly(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps"));
     assertThat(graph.getAllSourceFiles())
         .containsExactly(
             TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java"),
@@ -61,7 +63,7 @@ public class BuildGraphTest {
     assertThat(
             graph.getFileDependencies(
                 TESTDATA_ROOT.resolve("externaldep/TestClassExternalDep.java")))
-        .containsExactly(Label.of("//java/com/google/common/collect:collect"));
+        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
   }
 
   @Test
@@ -89,7 +91,7 @@ public class BuildGraphTest {
     assertThat(
             graph.getFileDependencies(
                 TESTDATA_ROOT.resolve("transitivedep/TestClassTransitiveDep.java")))
-        .containsExactly(Label.of("//java/com/google/common/collect:collect"));
+        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
   }
 
   @Test
@@ -106,6 +108,10 @@ public class BuildGraphTest {
     BuildGraphData graph =
         new BlazeQueryParser(NOOP_CONTEXT)
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_MULTI_TARGETS));
+    assertThat(graph.allTargets())
+        .containsExactly(
+            Label.of("//" + TESTDATA_ROOT + "/multitarget:nodeps"),
+            Label.of("//" + TESTDATA_ROOT + "/multitarget:externaldep"));
     // Sanity check:
     assertThat(graph.getJavaSourceFiles())
         .contains(TESTDATA_ROOT.resolve("multitarget/TestClassSingleTarget.java"));
@@ -126,7 +132,7 @@ public class BuildGraphTest {
     Path sourceFile = TESTDATA_ROOT.resolve("exports/TestClassUsingExport.java");
     assertThat(graph.getJavaSourceFiles()).containsExactly(sourceFile);
     assertThat(graph.getFileDependencies(sourceFile))
-        .containsExactly(Label.of("//java/com/google/common/collect:collect"));
+        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
   }
 
   @Test
@@ -163,5 +169,7 @@ public class BuildGraphTest {
     assertThat(graph.getAndroidSourceFiles())
         .containsExactly(TESTDATA_ROOT.resolve("aidl/TestAndroidAidlClass.java"));
     assertThat(graph.projectDeps()).containsExactly(Label.of("//" + TESTDATA_ROOT + "/aidl:aidl"));
+    assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("aidl/TestAndroidAidlClass.java")))
+        .containsExactly(Label.of("//" + TESTDATA_ROOT + "/aidl:aidl"));
   }
 }

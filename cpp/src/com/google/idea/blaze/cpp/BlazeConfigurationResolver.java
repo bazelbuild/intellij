@@ -45,6 +45,7 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -80,17 +81,24 @@ final class BlazeConfigurationResolver {
             WorkspaceRoot.fromProject(project),
             blazeProjectData.getBlazeInfo().getExecutionRoot(),
             blazeProjectData.getBlazeInfo().getOutputBase(),
-            blazeProjectData.getWorkspacePathResolver());
+            blazeProjectData.getWorkspacePathResolver(),
+            blazeProjectData.getTargetMap());
     ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap =
         BlazeConfigurationToolchainResolver.buildToolchainLookupMap(
             context, blazeProjectData.getTargetMap());
+
+    Optional<XcodeCompilerSettings> xcodeSettings =
+            BlazeConfigurationToolchainResolver.resolveXcodeCompilerSettings(context, project);
+
     ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings =
         BlazeConfigurationToolchainResolver.buildCompilerSettingsMap(
             context,
             project,
             toolchainLookupMap,
             executionRootPathResolver,
-            oldResult.getCompilerSettings());
+            oldResult.getCompilerSettings(),
+            xcodeSettings
+        );
 
     ImmutableMap<String, String> targetToVersion = getTargetToVersionMap(toolchainLookupMap, compilerSettings);
     ProjectViewTargetImportFilter projectViewFilter =
@@ -106,6 +114,8 @@ final class BlazeConfigurationResolver {
             context, blazeProjectData, toolchainLookupMap, targetFilter, executionRootPathResolver);
     builder.setValidHeaderRoots(validHeaderRoots);
     builder.setTargetToVersionMap(targetToVersion);
+    builder.setXcodeSettings(xcodeSettings);
+
     return builder.build();
   }
 

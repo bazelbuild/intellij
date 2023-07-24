@@ -40,6 +40,8 @@ java_library(
         "//querysync",
         "//sdkcompat",
         "//shared",
+        "//shared:exception",
+        "//shared:vcs",
         "//third_party/auto_value",
         "@error_prone_annotations//jar",
     ],
@@ -299,6 +301,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//shared",
     ],
 )
 
@@ -357,6 +360,7 @@ java_library(
         "src/com/google/idea/blaze/base/command/buildresult/BlazeArtifact.java",
         "src/com/google/idea/blaze/base/command/buildresult/OutputArtifact.java",
         "src/com/google/idea/blaze/base/command/buildresult/OutputArtifactParser.java",
+        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifactWithoutDigest.java",
         "src/com/google/idea/blaze/base/command/buildresult/RemoteOutputArtifact.java",
         "src/com/google/idea/blaze/base/ideinfo/ProtoWrapper.java",
         "src/com/google/idea/blaze/base/prefetch/DefaultPrefetcher.java",
@@ -407,8 +411,12 @@ java_library(
 java_library(
     name = "artifact_fetcher",
     srcs = [
+        "src/com/google/idea/blaze/base/command/buildresult/LocalFileOutputArtifact.java",
+        "src/com/google/idea/blaze/base/command/buildresult/LocalFileOutputArtifactWithoutDigest.java",
         "src/com/google/idea/blaze/base/command/buildresult/OutputArtifact.java",
+        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifactWithoutDigest.java",
         "src/com/google/idea/blaze/base/qsync/cache/ArtifactFetcher.java",
+        "src/com/google/idea/blaze/base/qsync/cache/FileApiArtifactFetcher.java",
         "src/com/google/idea/blaze/base/settings/BuildBinaryType.java",
     ],
     neverlink = 1,
@@ -417,6 +425,19 @@ java_library(
         ":base",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//shared",
+    ],
+)
+
+java_library(
+    name = "blaze_executor",
+    srcs = [
+        "src/com/google/idea/blaze/base/async/executor/BlazeExecutor.java",
+    ],
+    visibility = G3PLUGINS_VISIBILITY,
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
+        "@com_google_guava_guava//jar",
     ],
 )
 
@@ -430,6 +451,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "//shared:exception",
         "//testing:lib",
         "//third_party/auto_value",
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_java_proto",
@@ -450,6 +472,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
+        "//shared:vcs",
         "//testing:lib",
         "@com_google_guava_guava//jar",
         "@junit//jar",
@@ -486,8 +509,11 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
+        "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//shared",
         "//testing:lib",
+        "//third_party/auto_value",
         "@com_google_guava_guava//jar",
         "@junit//jar",
     ],

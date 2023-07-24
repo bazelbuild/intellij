@@ -90,14 +90,15 @@ public class ShardedTargetList {
       BlazeContext context,
       Function<Integer, String> progressMessage,
       Function<List<? extends TargetExpression>, BuildResult> invocation,
-      BuildInvoker binary) {
+      BuildInvoker binary,
+      boolean invokeParallel) {
     if (isEmpty()) {
       return BuildResult.SUCCESS;
     }
     if (shardedTargets.size() == 1) {
       return invocation.apply(shardedTargets.get(0));
     }
-    if (binary.supportsParallelism()) {
+    if (binary.supportsParallelism() && invokeParallel) {
       return runInParallel(project, context, invocation);
     }
     int progress = 0;
@@ -119,6 +120,7 @@ public class ShardedTargetList {
     return output;
   }
 
+  @SuppressWarnings("Interruption")
   private BuildResult runInParallel(
       Project project,
       BlazeContext context,

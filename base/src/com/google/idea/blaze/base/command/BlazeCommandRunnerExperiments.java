@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.command;
 
-import com.google.idea.common.experiments.FeatureRolloutExperiment;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.util.SystemInfo;
 
 /**
@@ -23,21 +23,10 @@ import com.intellij.openapi.util.SystemInfo;
  * invocations on Mac and Linux
  */
 public class BlazeCommandRunnerExperiments {
-  private static final FeatureRolloutExperiment useBlazeCommandRunnerForTestsMac =
-      new FeatureRolloutExperiment("blaze.commandrunner.localtests.mac.enable");
-
-  private static final FeatureRolloutExperiment useBlazeCommandRunnerForTestsLinux =
-      new FeatureRolloutExperiment("blaze.commandrunner.localtests.linux.enable");
-
-  public static final FeatureRolloutExperiment supportLocalTestsDebuggingMac =
-      new FeatureRolloutExperiment("localtests.debugging.mac.enable");
-
-  public static boolean isEnabledForTests(BlazeCommandRunner runner) {
-    if (SystemInfo.isLinux) {
-      return useBlazeCommandRunnerForTestsLinux.isEnabled();
-    }
-    return runner.shouldUseForLocalTests() || useBlazeCommandRunnerForTestsMac.isEnabled();
-  }
+  public static final BoolExperiment USE_SINGLEJAR_FOR_DEBUGGING =
+      new BoolExperiment("debug.localtests.singlejar.enable", true);
+  public static final BoolExperiment ANDROID_JNI_LIBRARY_FORCE_ANDROID =
+      new BoolExperiment("debug.localtests.android.jni.library", SystemInfo.isMac);
 
   private BlazeCommandRunnerExperiments() {}
 }

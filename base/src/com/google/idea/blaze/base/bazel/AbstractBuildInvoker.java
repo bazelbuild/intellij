@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -146,11 +145,6 @@ public abstract class AbstractBuildInvoker implements BuildInvoker {
             blazeContext,
             BlazeInvocationContext.SYNC_CONTEXT);
     return BlazeInfoRunner.getInstance()
-        .runBlazeInfo(
-            blazeContext,
-            buildSystem.getName(),
-            getBinaryPathForBlazeInfo(),
-            WorkspaceRoot.fromProject(project),
-            syncFlags);
+        .runBlazeInfo(project, this, blazeContext, buildSystem.getName(), syncFlags);
   }
 }

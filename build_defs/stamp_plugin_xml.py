@@ -99,9 +99,12 @@ def parse_key_value_items(items):
 
 
 def _read_changelog(changelog_file):
-  """Reads the changelog and transforms it into trivial HTML."""
+  """Reads the changelog and transforms it into trivial HTML if it's not HTML."""
   with io.open(changelog_file, encoding="utf-8") as f:
-    return "\n".join("<p>" + line + "</p>" for line in f.readlines())
+    if changelog_file.endswith("html"):
+      return f.read()
+    else:
+      return "\n".join("<p>" + line + "</p>" for line in f.readlines())
 
 
 def _read_description(description_file):

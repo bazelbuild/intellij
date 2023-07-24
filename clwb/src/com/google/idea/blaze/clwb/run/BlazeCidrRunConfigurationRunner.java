@@ -46,6 +46,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
 
+import java.util.Collections;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.List;
@@ -112,25 +113,28 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
     try (BuildResultHelper buildResultHelper =
         BuildResultHelperProvider.createForLocalBuild(env.getProject())) {
 
-      List<String> extraDebugFlags;
-      if (!BlazeGDBServerProvider.shouldUseGdbserver()) {
-        ImmutableList<String> extraClangFlags = isClangBuild() && !Registry.is("bazel.trim.absolute.path.disabled")
-                ? ImmutableList.of(
-                "--copt=-fdebug-compilation-dir=" + WorkspaceRoot.fromProject(env.getProject()),
-                "--linkopt=-Wl,-oso_prefix,.")
-                : ImmutableList.of();
-        extraDebugFlags =
-                Streams.concat(
-                        Stream.of(
-                                "--compilation_mode=dbg",
-                                "--copt=-O0",
-                                "--copt=-g",
-                                "--strip=never",
-                                "--dynamic_mode=off",
-                                "--fission=yes"), extraClangFlags.stream()).collect(Collectors.toList());
-      } else {
-        extraDebugFlags =
-            BlazeGDBServerProvider.getFlagsForDebugging(configuration.getHandler().getState());
+      List<String> extraDebugFlags = Collections.emptyList();
+      if(!Registry.is("bazel.clwb.debug.extraflags.disabled")) {
+        if (!BlazeGDBServerProvider.shouldUseGdbserver()) {
+          ImmutableList<String> extraClangFlags =
+              isClangBuild() && !Registry.is("bazel.trim.absolute.path.disabled")
+                  ? ImmutableList.of(
+                  "--copt=-fdebug-compilation-dir=" + WorkspaceRoot.fromProject(env.getProject()),
+                  "--linkopt=-Wl,-oso_prefix,.")
+                  : ImmutableList.of();
+          extraDebugFlags =
+              Streams.concat(
+                  Stream.of(
+                      "--compilation_mode=dbg",
+                      "--copt=-O0",
+                      "--copt=-g",
+                      "--strip=never",
+                      "--dynamic_mode=off",
+                      "--fission=yes"), extraClangFlags.stream()).collect(Collectors.toList());
+        } else {
+          extraDebugFlags =
+              BlazeGDBServerProvider.getFlagsForDebugging(configuration.getHandler().getState());
+        }
       }
 
       ListenableFuture<BuildResult> buildOperation =

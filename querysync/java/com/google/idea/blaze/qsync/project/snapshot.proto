@@ -12,16 +12,25 @@ message Snapshot {
   ProjectDefinition project_definition = 1;
   VcsState vcs_state = 2;
   Summary query_summary = 3;
+  int32 version = 4;
 }
 
 message ProjectDefinition {
+  enum LanguageClass {
+    UNSPECIFIED = 0;
+    JAVA = 1;
+    KOTLIN = 2;
+  }
+
   repeated string include_paths = 1;
   repeated string exclude_paths = 2;
+  repeated LanguageClass language_classes = 3;
 }
 
 message VcsState {
   string upstream_revision = 1;
   repeated WorkspaceFileChange working_set = 2;
+  WorkspaceSnapshot workspace_snapshot = 3;
 }
 
 message WorkspaceFileChange {
@@ -34,4 +43,8 @@ message WorkspaceFileChange {
 
   VcsOperation operation = 1;
   string workspace_relative_path = 2;
+}
+
+message WorkspaceSnapshot {
+  string path = 1;
 }

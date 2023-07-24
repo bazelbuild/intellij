@@ -72,6 +72,11 @@ public class FakeRemoteOutputArtifact implements RemoteOutputArtifact {
   }
 
   @Override
+  public String getDigest() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public int hashCode() {
     return file.hashCode();
   }

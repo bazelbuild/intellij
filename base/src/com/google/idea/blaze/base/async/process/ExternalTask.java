@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.async.process;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -33,11 +34,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.execution.ParametersListUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -54,7 +55,7 @@ public interface ExternalTask {
   /** A builder for an external task */
   class Builder {
     @VisibleForTesting public final ImmutableList.Builder<String> command = ImmutableList.builder();
-    final File workingDirectory;
+    File workingDirectory;
     final Map<String, String> environmentVariables = Maps.newHashMap();
     @VisibleForTesting @Nullable public BlazeContext context;
     @VisibleForTesting @Nullable public OutputStream stdout;
@@ -98,6 +99,7 @@ public interface ExternalTask {
     public Builder addBlazeCommand(BlazeCommand blazeCommand) {
       this.blazeCommand = blazeCommand;
       command.addAll(blazeCommand.toList());
+      blazeCommand.getEffectiveWorkspaceRoot().ifPresent(p -> workingDirectory = p.toFile());
       return this;
     }
 
@@ -181,6 +183,11 @@ public interface ExternalTask {
     }
 
     @Override
+    public String toString() {
+      return Joiner.on(' ').join(resolveCustomBinary(command));
+    }
+
+    @Override
     public int run(BlazeScope... scopes) {
       Integer returnValue =
           Scope.push(
@@ -246,13 +253,19 @@ public interface ExternalTask {
     }
 
     private int invokeCommand(BlazeContext context) {
-      String logMessage =
-          "Command: " + ParametersListUtil.join(command) + SystemProperties.getLineSeparator();
+      String logMessage = "Command: " + ParametersListUtil.join(command);
 
       context.output(
           PrintOutput.log(
               StringUtil.shortenTextWithEllipsis(
                   logMessage, /* maxLength= */ 1000, /* suffixLength= */ 0)));
+
+      String logCommand = ParametersListUtil.join(command);
+      if (logCommand.length() > 2000) {
+        logCommand = logCommand.substring(0, 2000) + " <truncated>";
+      }
+      logger.info(
+          String.format("Running task:\n  %s\n  with PWD: %s", logCommand, workingDirectory));
 
       try {
         if (context.isEnding()) {
@@ -327,6 +340,10 @@ public interface ExternalTask {
 
   static Builder builder(File workingDirectory) {
     return new Builder(workingDirectory);
+  }
+
+  static Builder builder(Path workingDirectory) {
+    return new Builder(workingDirectory.toFile());
   }
 
   static Builder builder(WorkspaceRoot workspaceRoot) {

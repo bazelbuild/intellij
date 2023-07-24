@@ -63,6 +63,7 @@ import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.MockRemoteArtifactPrefetcher;
@@ -156,7 +157,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
       };
 
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
-      new BlazeImportSettings("", "", "", "", BuildSystemName.Bazel);
+      new BlazeImportSettings("", "", "", "", BuildSystemName.Bazel, ProjectType.ASPECT_SYNC);
   private ExtensionPointImpl<BlazeJavaSyncAugmenter> augmenters;
 
   private BlazeContext context;

@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -25,6 +26,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /** Wrapper around a {@link BlazeNewProjectBuilder} to fit into IntelliJ's import framework. */
+@VisibleForTesting
 public class BlazeProjectImportBuilder extends ProjectBuilder {
   private BlazeNewProjectBuilder builder = new BlazeNewProjectBuilder();
 

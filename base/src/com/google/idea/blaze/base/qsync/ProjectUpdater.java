@@ -152,7 +152,7 @@ public class ProjectUpdater implements BlazeProjectListener {
 
               ContentEntry contentEntry =
                   roots.addContentEntry(
-                      UrlUtil.pathToIdeaUrl(
+                      UrlUtil.pathToIdeaDirectoryUrl(
                           contentEntryBasePath.resolve(ceSpec.getRoot().getPath())));
               for (ProjectProto.SourceFolder sfSpec : ceSpec.getSourcesList()) {
                 Path sourceFolderPath = contentEntryBasePath.resolve(sfSpec.getPath());
@@ -165,11 +165,11 @@ public class ProjectUpdater implements BlazeProjectListener {
                     sfSpec.getIsTest() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
                 SourceFolder unused =
                     contentEntry.addSourceFolder(
-                        UrlUtil.pathToIdeaUrl(sourceFolderPath), rootType, properties);
+                        UrlUtil.pathToIdeaDirectoryUrl(sourceFolderPath), rootType, properties);
               }
               for (String exclude : ceSpec.getExcludesList()) {
                 contentEntry.addExcludeFolder(
-                    UrlUtil.pathToIdeaUrl(workspaceRoot.absolutePathFor(exclude)));
+                    UrlUtil.pathToIdeaDirectoryUrl(workspaceRoot.absolutePathFor(exclude)));
               }
             }
 
@@ -199,7 +199,10 @@ public class ProjectUpdater implements BlazeProjectListener {
                   workspaceRoot,
                   module,
                   ImmutableSet.copyOf(moduleSpec.getAndroidResourceDirectoriesList()),
-                  ImmutableSet.copyOf(moduleSpec.getAndroidSourcePackagesList()),
+                  ImmutableSet.<String>builder()
+                      .addAll(moduleSpec.getAndroidSourcePackagesList())
+                      .addAll(moduleSpec.getAndroidCustomPackagesList())
+                      .build(),
                   workspaceLanguageSettings);
             }
             roots.commit();

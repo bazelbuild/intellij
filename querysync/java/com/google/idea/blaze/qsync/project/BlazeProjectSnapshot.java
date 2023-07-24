@@ -16,10 +16,12 @@
 package com.google.idea.blaze.qsync.project;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.project.ProjectProto.Project;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
@@ -37,6 +39,14 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class BlazeProjectSnapshot {
 
+  @VisibleForTesting
+  public static final BlazeProjectSnapshot EMPTY =
+      builder()
+          .graph(BuildGraphData.EMPTY)
+          .project(Project.getDefaultInstance())
+          .queryData(PostQuerySyncData.EMPTY)
+          .build();
+
   public abstract PostQuerySyncData queryData();
 
   public abstract BuildGraphData graph();
@@ -47,6 +57,8 @@ public abstract class BlazeProjectSnapshot {
   public static Builder builder() {
     return new AutoValue_BlazeProjectSnapshot.Builder();
   }
+
+  public abstract Builder toBuilder();
 
   /**
    * Returns the set of build packages in the query output.

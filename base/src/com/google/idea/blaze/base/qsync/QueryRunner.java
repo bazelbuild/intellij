@@ -15,15 +15,14 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.query.QuerySpec;
+import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.io.IOException;
-import java.io.InputStream;
 
 /** A query sync service that knows how to run queries on bazel projects. */
 public interface QueryRunner {
 
-  @MustBeClosed
-  InputStream runQuery(QuerySpec query, BlazeContext context) throws IOException;
+  QuerySummary runQuery(QuerySpec query, BlazeContext context) throws IOException, BuildException;
 }

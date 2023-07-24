@@ -7,15 +7,22 @@ licenses(["notice"])
 java_library(
     name = "v231",
     srcs = glob([
+        "com/google/idea/sdkcompat/editor/**",
         "com/google/idea/sdkcompat/general/**",
         "com/google/idea/sdkcompat/logging/**",
+        "com/google/idea/sdkcompat/platform/**",
+        "com/google/idea/sdkcompat/python/**",
     ]) + select_for_ide(
         android_studio = glob([
             "com/google/idea/sdkcompat/cpp/**",
             "com/google/idea/sdkcompat/java/**",
             "com/google/idea/sdkcompat/kotlin/**",
+            "com/google/idea/sdkcompat/as/refactoring/**",
+            "com/google/idea/sdkcompat/fig/**",
+            "com/google/idea/sdkcompat/psi/**",
+            "com/google/idea/sdkcompat/vcs/**",
         ]),
-        clion = glob([
+        clion = ["com/google/idea/sdkcompat/refactoring/rename/DelegatingRenamePsiElementProcessorBase.java"] + glob([
             "com/google/idea/sdkcompat/cpp/**",
             "com/google/idea/sdkcompat/clion/**", # For classes incompatible with Android Studio
             "com/google/idea/sdkcompat/javascript/**", #api223
@@ -24,12 +31,14 @@ java_library(
             "com/google/idea/sdkcompat/java/**",
             "com/google/idea/sdkcompat/scala/**",
             "com/google/idea/sdkcompat/kotlin/**",
+            "com/google/idea/sdkcompat/refactoring/**",
         ]),
         intellij_ue = glob([
             "com/google/idea/sdkcompat/java/**",
             "com/google/idea/sdkcompat/scala/**",
             "com/google/idea/sdkcompat/kotlin/**",
-            "com/google/idea/sdkcompat/javascript/**" #api223
+            "com/google/idea/sdkcompat/javascript/**", #api223
+            "com/google/idea/sdkcompat/refactoring/**",
         ]),
     ),
     visibility = ["//sdkcompat:__pkg__"],

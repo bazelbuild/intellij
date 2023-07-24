@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import org.jdom.Element;
@@ -36,7 +37,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
-      new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze);
+      new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze, ProjectType.ASPECT_SYNC);
   private static final BlazeCommandName COMMAND = BlazeCommandName.fromString("command");
 
   private BlazeCommandRunConfigurationCommonState state;

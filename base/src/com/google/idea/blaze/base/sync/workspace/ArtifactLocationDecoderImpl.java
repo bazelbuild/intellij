@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -93,8 +93,8 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
   }
 
   /**
-   * Derives a {@link LocalFileOutputArtifact} from a generated {@link ArtifactLocation} under
-   * blaze-out.
+   * Derives a {@link LocalFileOutputArtifactWithoutDigest} from a generated {@link
+   * ArtifactLocation} under blaze-out.
    *
    * <p>If the exec-root path is of an unexpected form, falls back to returning a {@link
    * SourceArtifact}.
@@ -109,6 +109,6 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
     }
     String blazeOutPath = execRootPath.substring(ix1 + 1);
     String configMnemonic = execRootPath.substring(ix1 + 1, ix2);
-    return new LocalFileOutputArtifact(decode(location), blazeOutPath, configMnemonic);
+    return new LocalFileOutputArtifactWithoutDigest(decode(location), blazeOutPath, configMnemonic);
   }
 }

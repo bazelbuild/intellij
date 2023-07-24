@@ -16,13 +16,14 @@
 package com.google.idea.blaze.android.rendering;
 
 import static com.android.SdkConstants.ANDROID_MANIFEST_XML;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
-import com.android.tools.idea.rendering.HtmlLinkManager;
-import com.android.tools.idea.rendering.RenderErrorContributor;
-import com.android.tools.idea.rendering.RenderLogger;
-import com.android.tools.idea.rendering.RenderResult;
+import com.android.tools.idea.rendering.RenderErrorContributorCompat;
 import com.android.tools.idea.rendering.errors.ui.RenderErrorModel;
 import com.android.tools.idea.ui.designer.EditorDesignSurface;
+import com.android.tools.rendering.HtmlLinkManagerCompat;
+import com.android.tools.rendering.RenderLoggerCompat;
+import com.android.tools.rendering.RenderResultCompat;
 import com.android.utils.HtmlBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
@@ -40,7 +41,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
@@ -63,21 +64,21 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.jetbrains.annotations.Nullable;
 
 /** Contribute blaze specific render errors. */
-public class BlazeRenderErrorContributor extends RenderErrorContributor {
-  private RenderLogger logger;
-  private Module module;
-  private Project project;
+public class BlazeRenderErrorContributor extends RenderErrorContributorCompat {
+  private final RenderLoggerCompat logger;
+  private final Module module;
+  private final Project project;
 
   public BlazeRenderErrorContributor(
-      EditorDesignSurface surface, RenderResult result, @Nullable DataContext dataContext) {
+      EditorDesignSurface surface, RenderResultCompat result, @Nullable DataContext dataContext) {
     super(surface, result, dataContext);
-    logger = result.getLogger();
+    logger = new RenderLoggerCompat(result);
     module = result.getModule();
     project = module.getProject();
   }
@@ -88,6 +89,11 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
 
     if (blazeProjectData == null || !logger.hasErrors()) {
+      return getIssues();
+    }
+
+    if (QuerySync.isEnabled()) {
+      // TODO(b/284002829): Setup resource-module specific issue reporting
       return getIssues();
     }
 
@@ -163,7 +169,7 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
         target.getAndroidIdeInfo().getResources().stream()
             .map(AndroidResFolder::getRoot)
             .filter(ArtifactLocation::isGenerated)
-            .collect(Collectors.toMap(Function.identity(), resource -> target)));
+            .collect(toImmutableMap(Function.identity(), resource -> target)));
     return generatedResources;
   }
 
@@ -196,7 +202,7 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
     HtmlBuilder builder = new HtmlBuilder();
     addTargetLink(builder, target, decoder)
         .add(" uses a non-standard name for the Android manifest: ");
-    String linkToManifest = HtmlLinkManager.createFilePositionUrl(manifest, -1, 0);
+    String linkToManifest = HtmlLinkManagerCompat.createFilePositionUrl(manifest, -1, 0);
     if (linkToManifest != null) {
       builder.addLink(manifest.getName(), linkToManifest);
     } else {
@@ -221,9 +227,10 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
    * android_binary, so we could end up with resources that ultimately build correctly, but fail to
    * find their class dependencies during rendering in the layout editor.
    */
+  @SuppressWarnings("rawtypes")
   private void reportResourceTargetShouldDependOnClassTarget(
       TargetIdeInfo target, TargetMap targetMap, ArtifactLocationDecoder decoder) {
-    Collection<String> missingClasses = logger.getMissingClasses();
+    Set<String> missingClasses = logger.getMissingClasses();
     if (missingClasses == null || missingClasses.isEmpty()) {
       return;
     }
@@ -334,26 +341,10 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
                       return StringUtil.offsetToLineNumber(
                           psiFile.getText(), buildTargetPsi.getTextOffset());
                     });
-    String url = HtmlLinkManager.createFilePositionUrl(buildFile, line, 0);
+    String url = HtmlLinkManagerCompat.createFilePositionUrl(buildFile, line, 0);
     if (url != null) {
       return builder.addLink(target.toString(), url);
     }
     return builder.add(target.toString());
-  }
-
-  /** Extension to provide {@link BlazeRenderErrorContributor}. */
-  public static class BlazeProvider extends Provider {
-    @Override
-    public boolean isApplicable(Project project) {
-      return Blaze.isBlazeProject(project);
-    }
-
-    @Override
-    public RenderErrorContributor getContributor(
-        @Nullable EditorDesignSurface surface,
-        RenderResult result,
-        @Nullable DataContext dataContext) {
-      return new BlazeRenderErrorContributor(surface, result, dataContext);
-    }
   }
 }

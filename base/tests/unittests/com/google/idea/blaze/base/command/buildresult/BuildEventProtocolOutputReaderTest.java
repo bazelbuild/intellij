@@ -44,6 +44,8 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import java.io.ByteArrayInputStream;
@@ -87,6 +89,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
     ep.registerExtension(new GenericBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
+    applicationServices.register(ExperimentService.class, new MockExperimentService());
 
     ExtensionPointImpl<OutputArtifactParser> parserEp =
         registerExtensionPoint(OutputArtifactParser.EP_NAME, OutputArtifactParser.class);
@@ -459,8 +462,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
   @Test
   public void testStatusEnum_handlesAllProtoEnumValues() {
     Set<String> protoValues =
-        EnumSet.allOf(BuildEventStreamProtos.TestStatus.class)
-            .stream()
+        EnumSet.allOf(BuildEventStreamProtos.TestStatus.class).stream()
             .map(Enum::name)
             .collect(Collectors.toSet());
     protoValues.remove(BuildEventStreamProtos.TestStatus.UNRECOGNIZED.name());

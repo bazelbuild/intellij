@@ -21,6 +21,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import java.io.IOException;
@@ -35,6 +36,15 @@ import java.util.stream.Stream;
 @AutoValue
 public abstract class ProjectDefinition {
 
+  public static final ProjectDefinition EMPTY =
+      create(ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of());
+
+  /** A language class that the query sync supports/needs to care about. */
+  public enum LanguageClass {
+    JAVA,
+    KOTLIN
+  }
+
   /**
    * Project includes, also know as root directories. Taken from the users {@code .blazeproject}
    * file. Paths are relative to the workspace root.
@@ -48,16 +58,21 @@ public abstract class ProjectDefinition {
    */
   public abstract ImmutableSet<Path> projectExcludes();
 
-  public static ProjectDefinition create(ImmutableSet<Path> includes, ImmutableSet<Path> excludes) {
-    return new AutoValue_ProjectDefinition(includes, excludes);
+  public abstract ImmutableSet<LanguageClass> languageClasses();
+
+  public static ProjectDefinition create(
+      ImmutableSet<Path> includes,
+      ImmutableSet<Path> excludes,
+      ImmutableSet<LanguageClass> languageClasses) {
+    return new AutoValue_ProjectDefinition(includes, excludes, languageClasses);
   }
 
   /**
    * Constructs a query spec from a sync spec. Filters the import roots to those that can be safely
    * queried.
    */
-  public QuerySpec deriveQuerySpec(Context context, Path workspaceRoot) throws IOException {
-    QuerySpec.Builder result = QuerySpec.builder();
+  public QuerySpec deriveQuerySpec(Context<?> context, Path workspaceRoot) throws IOException {
+    QuerySpec.Builder result = QuerySpec.builder().workspaceRoot(workspaceRoot);
     for (Path include : projectIncludes()) {
       if (isValidPathForQuery(context, workspaceRoot.resolve(include))) {
         result.includePath(include);
@@ -116,6 +131,14 @@ public abstract class ProjectDefinition {
           .ifPresent(foundWorkspacePath -> result.put(foundWorkspacePath, exclude));
     }
     return result;
+  }
+
+  public boolean isIncluded(Label target) {
+    if (projectIncludes().stream().filter(target.getPackage()::startsWith).findAny().isEmpty()) {
+      // not in any included directory
+      return false;
+    }
+    return projectExcludes().stream().filter(target.getPackage()::startsWith).findAny().isEmpty();
   }
 
   private static boolean isUnderRootDirectory(Path rootDirectory, Path relativePath) {

@@ -21,6 +21,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
@@ -88,6 +89,10 @@ public class AutoSyncHandler implements ProjectComponent {
   protected AutoSyncHandler(Project project) {
     this.project = project;
     if (!Blaze.isBlazeProject(project)) {
+      return;
+    }
+    // TODO(b/278770777): Support auto-sync for query sync
+    if (QuerySync.isEnabled()) {
       return;
     }
     // listen for changes to the VFS

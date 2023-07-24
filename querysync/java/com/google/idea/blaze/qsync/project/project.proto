@@ -32,6 +32,9 @@ message Module {
   //  should be updated to accept a ModuleSpec or other suitable data type.
   repeated string android_resource_directories = 5;
   repeated string android_source_packages = 6;
+
+  // Separate custom package with source packages as it's only used by R class.
+  repeated string android_custom_packages = 7;
 }
 
 /**

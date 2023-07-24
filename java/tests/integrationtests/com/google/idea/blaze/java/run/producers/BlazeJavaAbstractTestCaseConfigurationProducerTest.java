@@ -34,6 +34,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import java.util.List;
@@ -277,5 +278,68 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
         .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
     assertThat(getTestFilterContents(blazeConfig))
         .isEqualTo(BlazeFlags.TEST_FILTER + "=com.google.test.TestClass#testMethod$");
+  }
+
+  @Test
+  public void testConfigurationCreatedFromIdentifierOfMethodInAbstractClass() throws Throwable {
+    PsiFile abstractClassFile =
+            createAndIndexFile(
+                    new WorkspacePath("java/com/google/test/AbstractTestCase.java"),
+                    "package com.google.test;",
+                    "public abstract class AbstractTestCase {",
+                    "  @org.junit.Test",
+                    "  public void testMethod() {}",
+                    "}");
+
+    createAndIndexFile(
+            new WorkspacePath("java/com/google/test/TestClass.java"),
+            "package com.google.test;",
+            "import com.google.test.AbstractTestCase;",
+            "import org.junit.runner.RunWith;",
+            "import org.junit.runners.JUnit4;",
+            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
+            "public class TestClass extends AbstractTestCase {}");
+
+    PsiClass javaClass = ((PsiClassOwner) abstractClassFile).getClasses()[0];
+    PsiMethod method = PsiUtils.findFirstChildOfClassRecursive(javaClass, PsiMethod.class);
+    assertThat(method).isNotNull();
+
+    PsiElement identifyingElement = method.getIdentifyingElement();
+    assertThat(identifyingElement).isNotNull();
+    ConfigurationContext context = createContextFromPsi(identifyingElement);
+    List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
+    assertThat(configurations).hasSize(1);
+
+    ConfigurationFromContext fromContext = configurations.get(0);
+    assertThat(fromContext.isProducedBy(BlazeJavaAbstractTestCaseConfigurationProducer.class))
+            .isTrue();
+    assertThat(fromContext.getSourceElement()).isEqualTo(method);
+
+    RunConfiguration config = fromContext.getConfiguration();
+    assertThat(config).isInstanceOf(BlazeCommandRunConfiguration.class);
+    BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) config;
+    assertThat(blazeConfig.getTargets()).isEmpty();
+    assertThat(blazeConfig.getName()).isEqualTo("Choose subclass for AbstractTestCase.testMethod");
+
+    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
+    builder.setTargetMap(
+            TargetMapBuilder.builder()
+                    .addTarget(
+                            TargetIdeInfo.builder()
+                                    .setKind("java_test")
+                                    .setLabel("//java/com/google/test:TestClass")
+                                    .addSource(sourceRoot("java/com/google/test/TestClass.java"))
+                                    .build())
+                    .build());
+    registerProjectService(
+            BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+
+    BlazeJavaAbstractTestCaseConfigurationProducer.chooseSubclass(
+            fromContext, context, EmptyRunnable.INSTANCE);
+
+    assertThat(blazeConfig.getTargets())
+            .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
+    assertThat(getTestFilterContents(blazeConfig))
+            .isEqualTo(BlazeFlags.TEST_FILTER + "=com.google.test.TestClass#testMethod$");
   }
 }

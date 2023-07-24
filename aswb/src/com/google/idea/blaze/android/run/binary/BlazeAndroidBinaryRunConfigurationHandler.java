@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
-import static com.android.tools.idea.run.deployment.DeviceAndSnapshotComboBoxAction.DEPLOYS_TO_LOCAL_DEVICE;
 import static com.google.idea.blaze.android.run.LaunchMetrics.logBinaryLaunch;
 
 import com.android.tools.idea.run.ValidationError;
@@ -69,26 +68,21 @@ import org.jetbrains.annotations.Nullable;
  * android_binary targets.
  */
 public class BlazeAndroidBinaryRunConfigurationHandler
+    extends BlazeAndroidBinaryRunConfigurationHandlerCompat
     implements BlazeAndroidRunConfigurationHandler {
+
+  @VisibleForTesting
+  protected BlazeAndroidBinaryRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
+    super(configuration);
+  }
+
   private static final Logger LOG =
       Logger.getInstance(BlazeAndroidBinaryRunConfigurationHandler.class);
-
-  private final Project project;
-  private final BlazeAndroidBinaryRunConfigurationState configState;
 
   // Keys to store state for the MI migration prompt
   private static final String MI_LAST_PROMPT = "MI_MIGRATE_LAST_PROMPT";
   static final String MI_NEVER_ASK_AGAIN = "MI_MIGRATE_NEVER_AGAIN";
   private static final Long MI_TIMEOUT_MS = TimeUnit.HOURS.toMillis(20); // 20 hours
-
-  @VisibleForTesting
-  protected BlazeAndroidBinaryRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-    project = configuration.getProject();
-    configState =
-        new BlazeAndroidBinaryRunConfigurationState(
-            Blaze.buildSystemName(configuration.getProject()));
-    configuration.putUserData(DEPLOYS_TO_LOCAL_DEVICE, true);
-  }
 
   @Override
   public BlazeAndroidBinaryRunConfigurationState getState() {

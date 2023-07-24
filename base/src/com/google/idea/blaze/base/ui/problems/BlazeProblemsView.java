@@ -25,7 +25,6 @@ import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.GroupingElement;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -64,7 +63,7 @@ public class BlazeProblemsView {
   private static final Logger logger = Logger.getInstance(BlazeProblemsView.class);
 
   public static BlazeProblemsView getInstance(Project project) {
-    return ServiceManager.getService(project, BlazeProblemsView.class);
+    return project.getService(BlazeProblemsView.class);
   }
 
   private static final EnumSet<ErrorTreeElementKind> ALL_MESSAGE_KINDS =

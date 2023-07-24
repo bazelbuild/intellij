@@ -33,4 +33,9 @@ public class StringExperiment extends Experiment {
   public String getLogValue() {
     return String.valueOf(getValue());
   }
+
+  @Override
+  public String getRawDefault() {
+    return null;
+  }
 }

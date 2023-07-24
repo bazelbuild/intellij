@@ -29,12 +29,12 @@ import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
+import com.android.tools.idea.run.tasks.DeployTasksCompat;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
@@ -152,8 +152,8 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
     }
 
     return ImmutableList.of(
-        BlazeAndroidDeploymentService.getInstance(project)
-            .getDeployTask(getApkInfoToInstall(device, launchOptions, apkProvider), launchOptions));
+        DeployTasksCompat.createDeployTask(
+            project, getApkInfoToInstall(device, launchOptions, apkProvider), launchOptions));
   }
 
   @Override

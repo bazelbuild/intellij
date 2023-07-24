@@ -18,7 +18,7 @@ package com.google.idea.blaze.android.filecache;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.devtools.intellij.model.ProjectData.LocalFile;
 import com.google.devtools.intellij.model.ProjectData.LocalFileOrOutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import java.util.Objects;
 
@@ -66,7 +66,7 @@ public final class ArtifactMetadata {
    *
    * @throws ArtifactNotFoundException if the artifact is not present.
    */
-  public static ArtifactMetadata forArtifact(OutputArtifact artifact)
+  public static ArtifactMetadata forArtifact(OutputArtifactWithoutDigest artifact)
       throws ArtifactNotFoundException {
     ArtifactState artifactState = artifact.toArtifactState();
     if (artifactState == null) {

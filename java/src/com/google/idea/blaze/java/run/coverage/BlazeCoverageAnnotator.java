@@ -21,7 +21,6 @@ import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.coverage.SimpleCoverageAnnotator;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -40,7 +39,7 @@ public class BlazeCoverageAnnotator extends SimpleCoverageAnnotator {
   private final List<String> coverageFilePaths = new ArrayList<>();
 
   public static BlazeCoverageAnnotator getInstance(Project project) {
-    return ServiceManager.getService(project, BlazeCoverageAnnotator.class);
+    return project.getService(BlazeCoverageAnnotator.class);
   }
 
   public BlazeCoverageAnnotator(Project project) {

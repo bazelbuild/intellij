@@ -52,6 +52,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
@@ -62,6 +63,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -82,6 +84,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   private BlazeConfigurationResolver resolver;
   private BlazeConfigurationResolverResult resolverResult;
   private MockCompilerVersionChecker compilerVersionChecker;
+  private MockXcodeSettingsProvider xcodeSettingsProvider;
   private LocalFileSystem mockFileSystem;
 
   @Override
@@ -93,6 +96,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     applicationServices.register(CompilerVersionChecker.class, compilerVersionChecker);
     applicationServices.register(ProgressManager.class, new ProgressManagerImpl());
     applicationServices.register(CompilerWrapperProvider.class, new CompilerWrapperProviderImpl());
+    xcodeSettingsProvider = new MockXcodeSettingsProvider();
+    projectServices.register(XcodeCompilerSettingsProvider.class, xcodeSettingsProvider);
     applicationServices.register(VirtualFileManager.class, mock(VirtualFileManager.class));
     applicationServices.register(FileOperationProvider.class, new FileOperationProvider());
     mockFileSystem = mock(LocalFileSystem.class);
@@ -110,7 +115,12 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     BlazeImportSettingsManager.getInstance(getProject())
         .setImportSettings(
             new BlazeImportSettings(
-                "", "", "", "", getBuildSystemProvider().getBuildSystem().getName()));
+                "",
+                "",
+                "",
+                "",
+                getBuildSystemProvider().getBuildSystem().getName(),
+                ProjectType.ASPECT_SYNC));
 
     registerExtensionPoint(
         BlazeCompilerFlagsProcessor.EP_NAME, BlazeCompilerFlagsProcessor.Provider.class);
@@ -768,6 +778,18 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
         targetWith64Dep.build().getKey().toString(), aarch64Toolchain.build());
   }
 
+  @Test
+  public void xcodeSettingsAreChecked() {
+    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(createCcToolchain())
+            .build();
+    XcodeCompilerSettings expected = XcodeCompilerSettings.create(Path.of("/tmp/dev_dir"), Path.of("/tmp/dev_dir/sdk"));
+    xcodeSettingsProvider.setXcodeSettings(expected);
+    assertThatResolving(projectView, targetMap).producesXcodeConfiguration(expected);
+  }
+
   private static ArtifactLocation src(String path) {
     return ArtifactLocation.builder().setRelativePath(path).setIsSource(true).build();
   }
@@ -918,6 +940,13 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 .collect(Collectors.toList());
         assertThat(notReusedTargets).containsExactly((Object[]) expectedNotReused);
       }
+
+      @Override
+      public void producesXcodeConfiguration(XcodeCompilerSettings expected) {
+        assertThat(resolverResult.getXcodeProperties().isPresent()).isTrue();
+        XcodeCompilerSettings actual = resolverResult.getXcodeProperties().get();
+        assertThat(actual).isEqualTo(expected);
+      }
     };
   }
 
@@ -938,5 +967,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     void producesNoConfigurations();
 
     void reusedConfigurations(Collection<BlazeResolveConfiguration> reused, String... notReused);
+
+    void producesXcodeConfiguration(XcodeCompilerSettings expected);
   }
 }

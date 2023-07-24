@@ -27,15 +27,6 @@ java_library(
                ]),
                default = [],
            ) + select_for_plugin_api({
-        "android-studio-2021.3": glob([
-            "testcompat/v213/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v213/com/google/idea/testing/java/*.java",
-        ]),
-        "android-studio-2022.1": glob([
-            "testcompat/v221/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v221_as/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v221/com/google/idea/testing/java/*.java",
-        ]),
         "android-studio-2022.2": glob([
             "testcompat/v222/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v222/com/google/idea/testing/java/*.java",
@@ -43,6 +34,10 @@ java_library(
         "android-studio-2022.3": glob([
             "testcompat/v223/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v223/com/google/idea/testing/java/*.java",
+        ]),
+        "android-studio-2023.1": glob([
+            "testcompat/v231/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/v231/com/google/idea/testing/java/*.java",
         ]),
         "android-studio-dev": glob([
             "testcompat/asdev/com/google/idea/sdkcompat/**/*.java",
@@ -56,6 +51,7 @@ java_library(
         "clion-2022.2": glob(["testcompat/v222/com/google/idea/sdkcompat/**/*.java"]),
         "clion-2022.3": glob(["testcompat/v223/com/google/idea/sdkcompat/**/*.java"]),
         "clion-2023.1": glob(["testcompat/v231/com/google/idea/sdkcompat/**/*.java"]),
+        "clion-2023.2": glob(["testcompat/v232/com/google/idea/sdkcompat/**/*.java"]),
         "intellij-2021.3": glob([
             "testcompat/v213/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v213/com/google/idea/testing/java/*.java",
@@ -97,6 +93,14 @@ java_library(
         "intellij-ue-2023.1": glob([
             "testcompat/v231/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v231/com/google/idea/testing/java/*.java",
+        ]),
+        "intellij-2023.2": glob([
+            "testcompat/v232/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/v232/com/google/idea/testing/java/*.java",
+        ]),
+        "intellij-ue-2023.2": glob([
+            "testcompat/v232/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/v232/com/google/idea/testing/java/*.java",
         ]),
         "default": [],
     }),

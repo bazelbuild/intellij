@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.PendingRunConfigurationContext;
@@ -69,6 +70,10 @@ public class PendingWebTestContext extends TestContext implements PendingRunConf
       ImmutableList<BlazeFlagsModification> blazeFlags,
       @Nullable String description) {
     if (!findWebTestContext.getValue()) {
+      return null;
+    }
+    // TODO(b/274800785): Add query sync support
+    if (QuerySync.isEnabled()) {
       return null;
     }
     ImmutableList<TargetInfo> wrapperTests = getWebTestWrappers(project, target);

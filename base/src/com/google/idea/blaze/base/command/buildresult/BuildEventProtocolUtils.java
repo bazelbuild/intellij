@@ -36,6 +36,11 @@ public final class BuildEventProtocolUtils {
   /**
    * Creates a temporary output file to write the BEP data to. Callers are responsible for deleting
    * this file after use.
+   *
+   * <p>Note: when mdproxy is in use, the file returned will be on an sshfs mounted filesystem, so
+   * is shared between the local and mdproxy hosts. As such, this method should *not* be used for
+   * files that are used only internally by the IDE, and using an sshfs filesystem in that case will
+   * slow things down.
    */
   public static File createTempOutputFile() {
     File tempDir = getOutputDir();
@@ -48,19 +53,19 @@ public final class BuildEventProtocolUtils {
     return tempFile;
   }
 
-  /**
-   * Creates a temporary file to write the portable manifest data to. Callers are responsible for
-   * deleting this file after use.
-   */
-  public static File createTempPortableManifestFile(String fileName) {
-    return new File(getOutputDir(), fileName);
-  }
-
   /** Returns a build flag instructing blaze to write build events to the given output file. */
   public static ImmutableList<String> getBuildFlags(File outputFile) {
     return ImmutableList.of("--build_event_binary_file=" + outputFile.getPath(), LOCAL_FILE_PATHS);
   }
 
+  /**
+   * Returns a directory for temporary files.
+   *
+   * <p>Note: when mdproxy is in use, the directory returned will be on an sshfs mounted filesystem,
+   * so is shared between the local and mdproxy hosts. As such, this method should *not* be used for
+   * files that are used only internally by the IDE, and using an sshfs filesystem in that case will
+   * slow things down.
+   */
   public static File getOutputDir() {
     String dirPath = System.getProperty(BEP_OUTPUT_FILE_VM_OVERRIDE);
     if (Strings.isNullOrEmpty(dirPath)) {

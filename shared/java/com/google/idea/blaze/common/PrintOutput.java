@@ -47,6 +47,11 @@ public class PrintOutput implements Output {
     return text;
   }
 
+  @Override
+  public String toString() {
+    return getText();
+  }
+
   @Nonnull
   public OutputType getOutputType() {
     return outputType;

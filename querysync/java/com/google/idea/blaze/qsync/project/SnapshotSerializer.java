@@ -15,17 +15,22 @@
  */
 package com.google.idea.blaze.qsync.project;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.idea.blaze.common.vcs.VcsState;
+import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
+import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
+import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.idea.blaze.qsync.project.SnapshotProto.WorkspaceSnapshot;
 import com.google.idea.blaze.qsync.query.QuerySummary;
-import com.google.idea.blaze.qsync.vcs.VcsState;
-import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange;
-import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange.Operation;
 import com.google.protobuf.AbstractMessageLite;
 import java.nio.file.Path;
 
 /** Serializes a {@link PostQuerySyncData} instance to a proto message. */
 public class SnapshotSerializer {
+
+  public static final int PROTO_VERSION = 0;
 
   static final ImmutableBiMap<Operation, SnapshotProto.WorkspaceFileChange.VcsOperation> OP_MAP =
       ImmutableBiMap.of(
@@ -33,10 +38,21 @@ public class SnapshotSerializer {
           Operation.DELETE, SnapshotProto.WorkspaceFileChange.VcsOperation.DELETE,
           Operation.MODIFY, SnapshotProto.WorkspaceFileChange.VcsOperation.MODIFY);
 
+  static final ImmutableBiMap<LanguageClass, SnapshotProto.ProjectDefinition.LanguageClass>
+      LANGUAGE_CLASS_MAP =
+          ImmutableBiMap.of(
+              LanguageClass.JAVA, SnapshotProto.ProjectDefinition.LanguageClass.JAVA,
+              LanguageClass.KOTLIN, SnapshotProto.ProjectDefinition.LanguageClass.KOTLIN);
+
   private final SnapshotProto.Snapshot.Builder proto;
 
   public SnapshotSerializer() {
-    proto = SnapshotProto.Snapshot.newBuilder();
+    proto = SnapshotProto.Snapshot.newBuilder().setVersion(PROTO_VERSION);
+  }
+
+  @VisibleForTesting
+  public SnapshotSerializer(int protoVersion) {
+    proto = SnapshotProto.Snapshot.newBuilder().setVersion(protoVersion);
   }
 
   @CanIgnoreReturnValue
@@ -59,6 +75,9 @@ public class SnapshotSerializer {
     projectDefinition.projectExcludes().stream()
         .map(Path::toString)
         .forEach(proto::addExcludePaths);
+    projectDefinition.languageClasses().stream()
+        .map(LANGUAGE_CLASS_MAP::get)
+        .forEach(proto::addLanguageClasses);
   }
 
   private void visitVcsState(VcsState vcsState) {
@@ -70,6 +89,10 @@ public class SnapshotSerializer {
               .setOperation(OP_MAP.get(change.operation))
               .setWorkspaceRelativePath(change.workspaceRelativePath.toString()));
     }
+    vcsState
+        .workspaceSnapshotPath
+        .map(p -> WorkspaceSnapshot.newBuilder().setPath(p.toString()).build())
+        .ifPresent(snapshot -> vcsProto.setWorkspaceSnapshot(snapshot));
   }
 
   private void visitQuerySummary(QuerySummary summary) {

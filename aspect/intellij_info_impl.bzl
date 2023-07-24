@@ -42,6 +42,7 @@ DEPS = [
     "instruments",  # android_instrumentation_test
     "tests",  # From test_suite
     "compilers",  # From go_proto_library
+    "associates",  # From kotlin rules
 ]
 
 # Run-time dependency attributes, grouped by type.
@@ -143,9 +144,15 @@ def build_file_artifact_location(ctx):
         is_external_artifact(ctx.label),
     )
 
+# https://github.com/bazelbuild/bazel/issues/18966
+def _list_or_depset_to_list(list_or_depset):
+    if hasattr(list_or_depset, "to_list"):
+        return list_or_depset.to_list()
+    return list_or_depset
+
 def get_source_jars(output):
     if hasattr(output, "source_jars"):
-        return output.source_jars
+        return _list_or_depset_to_list(output.source_jars)
     if hasattr(output, "source_jar"):
         return [output.source_jar]
     return []
@@ -290,7 +297,7 @@ def update_set_in_dict(input_dict, key, other_set):
 
 def _get_output_mnemonic(ctx):
     """Gives the output directory mnemonic for some target context."""
-    return ctx.configuration.bin_dir.path.split("/")[1]
+    return ctx.bin_dir.path.split("/")[1]
 
 def _get_python_version(ctx):
     if ctx.attr._flag_hack[FlagHackInfo].incompatible_py2_outputs_are_suffixed:
@@ -457,6 +464,8 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
         transitive_include_directory = compilation_context.includes.to_list(),
         transitive_quote_include_directory = compilation_context.quote_includes.to_list(),
         transitive_system_include_directory = compilation_context.system_includes.to_list(),
+        include_prefix = getattr(ctx.rule.attr, "include_prefix", None),
+        strip_include_prefix = getattr(ctx.rule.attr, "strip_include_prefix", None),
     )
     ide_info["c_ide_info"] = c_info
     resolve_files = compilation_context.headers
@@ -635,7 +644,7 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     package_manifest = None
     if java_sources:
         package_manifest = build_java_package_manifest(ctx, target, java_sources, ".java-manifest")
-        ide_info_files += [package_manifest]
+        ide_info_files.append(package_manifest)
 
     filtered_gen_jar = None
     if java_sources and (gen_java_sources or srcjars):
@@ -651,7 +660,11 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     # Custom lint checks are incorporated as java plugins. We collect them here and register them with the IDE so that the IDE can also run the same checks.
     plugin_processor_jar_files = []
     if hasattr(ctx.rule.attr, "_android_lint_plugins"):
-        plugin_processor_jar_files += [jar for p in getattr(ctx.rule.attr, "_android_lint_plugins", []) for jar in p[JavaInfo].transitive_runtime_jars.to_list()]
+        plugin_processor_jar_files += [
+            jar
+            for p in getattr(ctx.rule.attr, "_android_lint_plugins", [])
+            for jar in _android_lint_plugin_jars(p)
+        ]
 
     if hasattr(java, "annotation_processing") and java.annotation_processing and hasattr(java.annotation_processing, "processor_classpath"):
         plugin_processor_jar_files += java.annotation_processing.processor_classpath.to_list()
@@ -671,7 +684,7 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     )
 
     ide_info["java_ide_info"] = java_info
-    ide_info_files += [ide_info_file]
+    ide_info_files.append(ide_info_file)
     update_sync_output_groups(output_groups, "intellij-info-java", depset(ide_info_files))
     update_sync_output_groups(output_groups, "intellij-compile-java", depset(compile_files))
     update_sync_output_groups(output_groups, "intellij-resolve-java", depset(resolve_files))
@@ -681,6 +694,12 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
         update_set_in_dict(output_groups, "intellij-resolve-java-direct-deps", java.transitive_compile_time_jars)
         update_set_in_dict(output_groups, "intellij-resolve-java-direct-deps", java.transitive_source_jars)
     return True
+
+def _android_lint_plugin_jars(target):
+    if JavaInfo in target:
+        return target[JavaInfo].transitive_runtime_jars.to_list()
+    else:
+        return []
 
 def _package_manifest_file_argument(f):
     artifact = artifact_location(f)
@@ -700,7 +719,15 @@ def build_java_package_manifest(ctx, target, source_files, suffix):
         join_with = ":",
         map_each = _package_manifest_file_argument,
     )
-    args.use_param_file("@%s")
+
+    # Bazel has an option to put your command line args in a file, and then pass the name of that file as the only
+    # argument to your executable. The PackageParser supports taking args in this way, we can pass in an args file
+    # as "@filename".
+    # Bazel Persistent Workers take their input as a file that contains the argument that will be parsed and turned
+    # into a WorkRequest proto and read on stdin. It also wants an argument of the form "@filename". We can use the
+    # params file as an arg file.
+    # Thus if we always use a params file, we can support both persistent worker mode and local mode (regular) mode.
+    args.use_param_file("@%s", use_always = True)
     args.set_param_file_format("multiline")
 
     ctx.actions.run(
@@ -710,6 +737,10 @@ def build_java_package_manifest(ctx, target, source_files, suffix):
         arguments = [args],
         mnemonic = "JavaPackageManifest",
         progress_message = "Parsing java package strings for " + str(target.label),
+        execution_requirements = {
+            "supports-workers": "1",
+            "requires-worker-protocol": "proto",
+        },
     )
     return output
 
@@ -723,7 +754,7 @@ def _build_filtered_gen_jar(ctx, target, java_outputs, gen_java_sources, srcjars
         elif jar.class_jar:
             jar_artifacts.append(jar.class_jar)
         if hasattr(jar, "source_jars") and jar.source_jars:
-            source_jar_artifacts.extend(jar.source_jars)
+            source_jar_artifacts.extend(_list_or_depset_to_list(jar.source_jars))
         elif hasattr(jar, "source_jar") and jar.source_jar:
             source_jar_artifacts.append(jar.source_jar)
 
@@ -869,7 +900,7 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
     )
 
     if android.manifest and not android.manifest.is_source:
-        resolve_files += [android.manifest]
+        resolve_files.append(android.manifest)
 
     # b/176209293: expose resource jar to make sure empty library
     # knows they are remote output artifact
@@ -1133,7 +1164,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
 
     # Output the ide information file.
     info = struct_omit_none(**ide_info)
-    ctx.actions.write(ide_info_file, info.to_proto())
+    ctx.actions.write(ide_info_file, proto.encode_text(info))
 
     # Return providers.
     return struct_omit_none(
@@ -1194,6 +1225,6 @@ def make_intellij_info_aspect(aspect_impl, semantics):
         attr_aspects = attr_aspects,
         attrs = attrs,
         fragments = ["cpp"],
-        required_aspect_providers = [[JavaInfo], [CcInfo], ["dart"]] + semantics.extra_required_aspect_providers,
+        required_aspect_providers = [[JavaInfo], [CcInfo]] + semantics.extra_required_aspect_providers,
         implementation = aspect_impl,
     )

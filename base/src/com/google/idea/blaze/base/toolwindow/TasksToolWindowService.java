@@ -49,7 +49,7 @@ public interface TasksToolWindowService {
 
   void state(Task task, StateUpdate output);
 
-  void finishTask(Task task, boolean hasErrors, boolean isCancelled);
+  void finishTask(Task task, Task.Status status);
 
   void moveTask(Task task, Task newParent);
 

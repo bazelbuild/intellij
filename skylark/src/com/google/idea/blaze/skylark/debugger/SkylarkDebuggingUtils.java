@@ -35,8 +35,9 @@ public final class SkylarkDebuggingUtils {
 
   public static boolean debuggingEnabled(Project project) {
     if (QuerySync.isEnabled()) {
-      // TODO(b/260643753)
-      return false;
+      // Skylark debugging only needs a blaze version past EARLIEST_SUPPORTED_BLAZE_CL, which
+      // greatly predates query sync
+      return true;
     }
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();

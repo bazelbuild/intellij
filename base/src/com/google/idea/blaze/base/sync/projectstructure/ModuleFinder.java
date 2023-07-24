@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.sync.projectstructure;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
@@ -24,7 +23,7 @@ import javax.annotation.Nullable;
 public interface ModuleFinder {
 
   static ModuleFinder getInstance(Project project) {
-    return ServiceManager.getService(project, ModuleFinder.class);
+    return project.getService(ModuleFinder.class);
   }
 
   @Nullable

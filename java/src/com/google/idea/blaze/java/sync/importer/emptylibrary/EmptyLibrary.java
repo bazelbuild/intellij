@@ -24,7 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -113,7 +113,7 @@ public class EmptyLibrary {
       BlazeJavaImportResult.Builder importResultBuilder) {
 
     long startTime = System.currentTimeMillis();
-    Set<OutputArtifact> currentOutputArtifacts = new HashSet<>();
+    Set<OutputArtifactWithoutDigest> currentOutputArtifacts = new HashSet<>();
     Map<LibraryKey, ArtifactState> libraryKeyToArtifactState = new HashMap<>();
 
     // Create a map LibraryKey -> ArtifactState for all entries in `allLibraries` that correspond to
@@ -123,10 +123,11 @@ public class EmptyLibrary {
     for (Map.Entry<LibraryKey, BlazeJarLibrary> entry : allLibraries.entrySet()) {
       ArtifactLocation libraryJar = entry.getValue().libraryArtifact.jarForIntellijLibrary();
       BlazeArtifact libraryArtifact = locationDecoder.resolveOutput(libraryJar);
-      if (libraryArtifact instanceof OutputArtifact) {
-        ArtifactState libraryArtifactState = ((OutputArtifact) libraryArtifact).toArtifactState();
+      if (libraryArtifact instanceof OutputArtifactWithoutDigest) {
+        ArtifactState libraryArtifactState =
+            ((OutputArtifactWithoutDigest) libraryArtifact).toArtifactState();
         libraryKeyToArtifactState.put(entry.getKey(), libraryArtifactState);
-        currentOutputArtifacts.add((OutputArtifact) libraryArtifact);
+        currentOutputArtifacts.add((OutputArtifactWithoutDigest) libraryArtifact);
       }
     }
 
@@ -164,14 +165,14 @@ public class EmptyLibrary {
   private static EmptyJarTracker getUpdatedEmptyJarTracker(
       Project project,
       BlazeContext context,
-      Collection<OutputArtifact> newArtifacts,
+      Collection<OutputArtifactWithoutDigest> newArtifacts,
       EmptyJarTracker oldTracker) {
     ImmutableMap<String, ArtifactState> oldState = oldTracker.getState();
 
     try {
       // Calculate artifacts that have changed or been removed since last sync
       ArtifactsDiff diff = ArtifactsDiff.diffArtifacts(oldState, newArtifacts);
-      ImmutableList<OutputArtifact> updated = diff.getUpdatedOutputs();
+      ImmutableList<OutputArtifactWithoutDigest> updated = diff.getUpdatedOutputs();
       ImmutableSet<ArtifactState> removed = diff.getRemovedOutputs();
 
       // Copy over tracking data from previous sync, and remove entries which are no longer valid.
@@ -225,7 +226,7 @@ public class EmptyLibrary {
    * map of ArtifactState -> Empty Status
    */
   private static ImmutableMap<ArtifactState, Boolean> getEmptyStatusInParallel(
-      Collection<OutputArtifact> artifacts,
+      Collection<OutputArtifactWithoutDigest> artifacts,
       Predicate<BlazeArtifact> emptyStatusTester,
       ListeningExecutorService executor)
       throws ExecutionException, InterruptedException {

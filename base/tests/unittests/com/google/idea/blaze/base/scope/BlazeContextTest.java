@@ -35,6 +35,7 @@ import org.mockito.Mockito;
 
 /** Tests for {@link BlazeContext}. */
 @RunWith(JUnit4.class)
+@SuppressWarnings("MustBeClosedChecker")
 public class BlazeContextTest extends BlazeTestCase {
 
   @Test
@@ -50,7 +51,7 @@ public class BlazeContextTest extends BlazeTestCase {
     BlazeContext context = BlazeContext.create();
     final BlazeScope scope = mock(BlazeScope.class);
     context.push(scope);
-    context.endScope();
+    context.close();
     verify(scope).onScopeEnd(context);
   }
 
@@ -59,8 +60,8 @@ public class BlazeContextTest extends BlazeTestCase {
     BlazeContext context = BlazeContext.create();
     final BlazeScope scope = mock(BlazeScope.class);
     context.push(scope);
-    context.endScope();
-    context.endScope();
+    context.close();
+    context.close();
     verify(scope).onScopeEnd(context);
   }
 
@@ -68,7 +69,7 @@ public class BlazeContextTest extends BlazeTestCase {
   public void testEndingScopeNormallyDoesntEndParent() {
     BlazeContext parentContext = BlazeContext.create();
     BlazeContext childContext = BlazeContext.create(parentContext);
-    childContext.endScope();
+    childContext.close();
     assertTrue(childContext.isEnding());
     assertFalse(parentContext.isEnding());
   }
@@ -120,7 +121,7 @@ public class BlazeContextTest extends BlazeTestCase {
         .push(new RecordScope(1, record))
         .push(new RecordScope(2, record))
         .push(new RecordScope(3, record));
-    context.endScope();
+    context.close();
     assertThat(record)
         .isEqualTo(ImmutableList.of("begin1", "begin2", "begin3", "end3", "end2", "end1"));
   }
@@ -205,7 +206,7 @@ public class BlazeContextTest extends BlazeTestCase {
   public void testHoldingPreventsEndingContext() {
     BlazeContext context = BlazeContext.create();
     context.hold();
-    context.endScope();
+    context.close();
     assertFalse(context.isEnding());
     context.release();
     assertTrue(context.isEnding());
@@ -253,7 +254,7 @@ public class BlazeContextTest extends BlazeTestCase {
     context.push(new StringScope("d"));
     context.push(new StringScope("e"));
     context.push(new CollectorScope(output3));
-    context.endScope();
+    context.close();
 
     assertThat(output1).isEqualTo(ImmutableList.of("b", "a"));
     assertThat(output2).isEqualTo(ImmutableList.of("c", "b", "a"));
@@ -280,9 +281,9 @@ public class BlazeContextTest extends BlazeTestCase {
 
     BlazeContext context3 = BlazeContext.create(context2);
     context3.push(new CollectorScope(output3));
-    context3.endScope();
-    context2.endScope();
-    context1.endScope();
+    context3.close();
+    context2.close();
+    context1.close();
 
     assertThat(output1).isEqualTo(ImmutableList.of("b", "a"));
     assertThat(output2).isEqualTo(ImmutableList.of("c", "b", "a"));

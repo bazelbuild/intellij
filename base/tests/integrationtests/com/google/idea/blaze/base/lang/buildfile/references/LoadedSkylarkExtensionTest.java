@@ -32,7 +32,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.TargetExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiReference;
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -266,7 +265,7 @@ public class LoadedSkylarkExtensionTest extends BuildFileIntegrationTestCase {
     }
     MockBuildLanguageSpecProvider specProvider = new MockBuildLanguageSpecProvider();
     specProvider.setRules(rules.build());
-    registerApplicationService(BuildLanguageSpecProvider.class, specProvider);
+    registerProjectService(BuildLanguageSpecProvider.class, specProvider);
     specProvider.setRules(rules.build());
   }
 
@@ -280,7 +279,7 @@ public class LoadedSkylarkExtensionTest extends BuildFileIntegrationTestCase {
 
     @Nullable
     @Override
-    public BuildLanguageSpec getLanguageSpec(Project project) {
+    public BuildLanguageSpec getLanguageSpec() {
       return languageSpec;
     }
   }

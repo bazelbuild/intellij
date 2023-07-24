@@ -17,6 +17,7 @@ package com.google.idea.blaze.qsync;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
+import static com.google.common.util.concurrent.MoreExecutors.newDirectExecutorService;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Label;
@@ -99,6 +100,8 @@ public class PartialProjectRefreshTest {
     PartialProjectRefresh queryStrategy =
         new PartialProjectRefresh(
             QuerySyncTestUtils.NOOP_CONTEXT,
+            newDirectExecutorService(),
+            Path.of("/workspace/root"),
             QuerySyncTestUtils.EMPTY_PACKAGE_READER,
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,
@@ -166,6 +169,8 @@ public class PartialProjectRefreshTest {
     PartialProjectRefresh queryStrategy =
         new PartialProjectRefresh(
             QuerySyncTestUtils.NOOP_CONTEXT,
+            newDirectExecutorService(),
+            Path.of("/workspace/root"),
             QuerySyncTestUtils.EMPTY_PACKAGE_READER,
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,
@@ -229,6 +234,8 @@ public class PartialProjectRefreshTest {
     PartialProjectRefresh queryStrategy =
         new PartialProjectRefresh(
             QuerySyncTestUtils.NOOP_CONTEXT,
+            newDirectExecutorService(),
+            Path.of("/workspace/root"),
             QuerySyncTestUtils.EMPTY_PACKAGE_READER,
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,

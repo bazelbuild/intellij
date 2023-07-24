@@ -29,11 +29,16 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.intellij.openapi.diagnostic.Logger;
+import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 
 /** Implementation of {@link BlazeProjectData} specific to querysync. */
 public class QuerySyncProjectData implements BlazeProjectData {
+
+  private static final Logger logger = Logger.getInstance(QuerySyncProjectData.class);
 
   private final WorkspacePathResolver workspacePathResolver;
   private final Optional<BlazeProjectSnapshot> blazeProject;
@@ -68,11 +73,25 @@ public class QuerySyncProjectData implements BlazeProjectData {
         .orElse(null);
   }
 
+  /**
+   * Returns all in project targets that depend on the source file at {@code sourcePath} via an
+   * in-project dependency chain.
+   *
+   * <p>If project target A depends on external target B, and external target B depends on project
+   * target C, target A is *not* included in {@code getReverseDeps} for a source file in target C.
+   */
+  public Collection<BuildTarget> getReverseDeps(Path sourcePath) {
+    return blazeProject
+        .map(BlazeProjectSnapshot::graph)
+        .map(graph -> graph.getReverseDepsForSource(sourcePath))
+        .orElse(ImmutableList.of());
+  }
+
   @Override
   public ImmutableList<TargetInfo> targets() {
     if (blazeProject.isPresent()) {
       return blazeProject.get().getTargetMap().values().stream()
-          .map(t -> TargetInfo.builder(Label.create(t.label().toString()), t.kind()).build())
+          .map(TargetInfo::fromBuildTarget)
           .collect(ImmutableList.toImmutableList());
     }
     return ImmutableList.of();
@@ -100,12 +119,28 @@ public class QuerySyncProjectData implements BlazeProjectData {
 
   @Override
   public BlazeVersionData getBlazeVersionData() {
-    return null;
+    // TODO(mathewi) Investigate uses of this, and remove them if necessary. BlazeVersionData
+    //  assumes that the base VCS revision is a decimal integer, which may not be true.
+    logger.warn("Usage of legacy getBlazeVersionData");
+    BlazeVersionData.Builder data = BlazeVersionData.builder();
+    String baseRev =
+        blazeProject
+            .flatMap(p -> p.queryData().vcsState())
+            .map(q -> q.upstreamRevision)
+            .orElse(null);
+    if (baseRev != null) {
+      try {
+        data.setClientCl(Long.parseLong(baseRev));
+      } catch (NumberFormatException e) {
+        logger.warn(e);
+      }
+    }
+    return data.build();
   }
 
   @Override
   public ArtifactLocationDecoder getArtifactLocationDecoder() {
-    throw new NotSupportedWithQuerySyncException("getTargetMap");
+    throw new NotSupportedWithQuerySyncException("getArtifactLocationDecoder");
   }
 
   @Override

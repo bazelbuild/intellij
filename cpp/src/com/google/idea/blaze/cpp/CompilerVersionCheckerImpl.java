@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.cpp;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException.IssueKind;
 import java.io.ByteArrayOutputStream;
@@ -24,8 +25,9 @@ import java.io.File;
 public class CompilerVersionCheckerImpl implements CompilerVersionChecker {
 
   @Override
-  public String checkCompilerVersion(File executionRoot, File cppExecutable)
-      throws VersionCheckException {
+  public String checkCompilerVersion(File executionRoot, File cppExecutable,
+      ImmutableMap<String, String> checkerEnv)
+  throws VersionCheckException {
     if (!executionRoot.exists()) {
       throw new VersionCheckException(IssueKind.MISSING_EXEC_ROOT, "");
     }
@@ -39,6 +41,7 @@ public class CompilerVersionCheckerImpl implements CompilerVersionChecker {
             .args(cppExecutable.toString())
             // NOTE: this won't work with MSVC if we ever support that (check CToolchainIdeInfo?)
             .args("--version")
+            .environmentVars(checkerEnv)
             .stdout(outputStream)
             .stderr(errStream)
             .build()

@@ -29,7 +29,7 @@ def _impl(ctx):
         mnemonic = "FastBuildAspectTestFixtureBuilder",
         progress_message = "Building Fast Build Aspect Test Fixture",
     )
-    return struct(
+    return DefaultInfo(
         files = depset([output]),
         runfiles = ctx.runfiles(
             files = [output],

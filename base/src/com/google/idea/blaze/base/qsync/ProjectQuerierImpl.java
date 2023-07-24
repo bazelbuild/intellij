@@ -15,62 +15,45 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import static com.google.common.util.concurrent.Uninterruptibles.getUninterruptibly;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
-import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
-import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
+import com.google.idea.blaze.common.vcs.VcsState;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.FullProjectUpdate;
-import com.google.idea.blaze.qsync.PackageStatementParser;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.RefreshOperation;
-import com.google.idea.blaze.qsync.WorkspaceResolvingPackageReader;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
-import com.google.idea.blaze.qsync.vcs.VcsState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 /** An object that knows how to */
 public class ProjectQuerierImpl implements ProjectQuerier {
 
-  private final Logger logger = Logger.getInstance(getClass());
+  private static final Logger logger = Logger.getInstance(ProjectQuerierImpl.class);
 
-  private final Project project;
-  private final ProjectRefresher projectRefresher;
   private final QueryRunner queryRunner;
+  private final ProjectRefresher projectRefresher;
+  private final Optional<BlazeVcsHandler> vcsHandler;
 
   @VisibleForTesting
   public ProjectQuerierImpl(
-      Project project,
       QueryRunner queryRunner,
-      ProjectRefresher projectRefresher) {
-    this.project = project;
-    this.projectRefresher = projectRefresher;
+      ProjectRefresher projectRefresher,
+      Optional<BlazeVcsHandler> vcsHandler) {
     this.queryRunner = queryRunner;
-  }
-
-  public static ProjectQuerier create(
-      Project project, BuildSystem buildSystem, Path workspaceRoot) {
-    ProjectRefresher projectRefresher =
-        new ProjectRefresher(
-            new WorkspaceResolvingPackageReader(workspaceRoot, new PackageStatementParser()),
-            workspaceRoot);
-    QueryRunner queryRunner = new BazelBinaryQueryRunner(project, buildSystem, workspaceRoot);
-    return new ProjectQuerierImpl(project, queryRunner, projectRefresher);
+    this.projectRefresher = projectRefresher;
+    this.vcsHandler = vcsHandler;
   }
 
   /**
@@ -80,42 +63,39 @@ public class ProjectQuerierImpl implements ProjectQuerier {
    */
   @Override
   public BlazeProjectSnapshot fullQuery(ProjectDefinition projectDef, BlazeContext context)
-      throws IOException {
+      throws IOException, BuildException {
 
-    FullProjectUpdate fullQuery = projectRefresher.startFullUpdate(context, projectDef);
+    Optional<VcsState> vcsState = getVcsState(context);
 
-    Optional<ListenableFuture<VcsState>> vcsStateFuture = getVcsState(context);
-    // TODO if we throw between here and when we get this future, perhaps we should cancel it?
+    logger.info(
+        String.format(
+            "Starting full query update; upstream rev=%s; snapshot path=%s",
+            vcsState.map(s -> s.upstreamRevision).orElse("<unknown>"),
+            vcsState.flatMap(s -> s.workspaceSnapshotPath).map(Object::toString).orElse("<none>")));
+
+    FullProjectUpdate fullQuery = projectRefresher.startFullUpdate(context, projectDef, vcsState);
 
     QuerySpec querySpec = fullQuery.getQuerySpec().get();
-    try (InputStream queryStream = queryRunner.runQuery(querySpec, context)) {
-      fullQuery.setQueryOutput(QuerySummary.create(queryStream));
-    }
-
-    Optional<VcsState> vcsState = Optional.empty();
-    try {
-      if (vcsStateFuture.isPresent()) {
-        vcsState = Optional.of(getUninterruptibly(vcsStateFuture.get()));
-      }
-    } catch (ExecutionException e) {
-      // We can continue without the VCS state, but it means that when we update later on
-      // we have to re-run the entire query rather than performing an minimal update.
-      logger.warn("Failed to get VCS state", e);
-      context.output(
-          PrintOutput.output("WARNING: Could not get VCS state, future updates may be suboptimal"));
-      if (e.getCause().getMessage() != null) {
-        context.output(PrintOutput.output("Cause: %s", e.getCause().getMessage()));
-      }
-    }
-
-    fullQuery.setVcsState(vcsState);
+    fullQuery.setQueryOutput(queryRunner.runQuery(querySpec, context));
 
     return fullQuery.createBlazeProject();
   }
 
-  private Optional<ListenableFuture<VcsState>> getVcsState(BlazeContext context) {
-    return Optional.ofNullable(BlazeVcsHandlerProvider.vcsHandlerForProject(project))
-        .flatMap(h -> h.getVcsState(context, BlazeExecutor.getInstance().getExecutor()));
+  private Optional<VcsState> getVcsState(BlazeContext context) {
+    Optional<ListenableFuture<VcsState>> stateFuture =
+        vcsHandler.flatMap(h -> h.getVcsState(context, BlazeExecutor.getInstance().getExecutor()));
+    if (stateFuture.isEmpty()) {
+      return Optional.empty();
+    }
+    try {
+      return Optional.of(Uninterruptibles.getUninterruptibly(stateFuture.get()));
+    } catch (ExecutionException e) {
+      // We can continue without the VCS state, but it means that when we update later on
+      // we have to re-run the entire query rather than performing an minimal update.
+      context.handleExceptionAsWarning(
+          "WARNING: Could not get VCS state, future updates may be suboptimal", e.getCause());
+      return Optional.empty();
+    }
   }
 
   /**
@@ -130,37 +110,26 @@ public class ProjectQuerierImpl implements ProjectQuerier {
    * </ul>
    */
   @Override
-  public BlazeProjectSnapshot update(PostQuerySyncData previousState, BlazeContext context)
-      throws IOException {
+  public BlazeProjectSnapshot update(
+      ProjectDefinition currentProjectDef, PostQuerySyncData previousState, BlazeContext context)
+      throws IOException, BuildException {
 
-    Optional<VcsState> vcsState = Optional.empty();
-    try {
-      Optional<ListenableFuture<VcsState>> stateFuture = getVcsState(context);
-      // conceptually, this is stateFuture.map(Uninterruptibles::getUninterruptibly) but the
-      // declared exception prevents us doing it so concisely.
-      if (stateFuture.isPresent()) {
-        vcsState = Optional.of(Uninterruptibles.getUninterruptibly(stateFuture.get()));
-      }
-    } catch (ExecutionException e) {
-      logger.warn("Failed to get VCS state", e.getCause());
-      context.output(PrintOutput.output("WARNING: Could not get VCS state"));
-      if (e.getCause().getMessage() != null) {
-        context.output(PrintOutput.output("Cause: %s", e.getCause().getMessage()));
-      }
-    }
+    Optional<VcsState> vcsState = getVcsState(context);
+    logger.info(
+        String.format(
+            "Starting partial query update; upstream rev=%s; snapshot path=%s",
+            vcsState.map(s -> s.upstreamRevision).orElse("<unknown>"),
+            vcsState.flatMap(s -> s.workspaceSnapshotPath).map(Object::toString).orElse("<none>")));
 
     RefreshOperation refresh =
-        projectRefresher.startPartialRefresh(context, previousState, vcsState);
+        projectRefresher.startPartialRefresh(context, previousState, vcsState, currentProjectDef);
 
     Optional<QuerySpec> spec = refresh.getQuerySpec();
     if (spec.isPresent()) {
-      try (InputStream queryStream = queryRunner.runQuery(spec.get(), context)) {
-        refresh.setQueryOutput(QuerySummary.create(queryStream));
-      }
+      refresh.setQueryOutput(queryRunner.runQuery(spec.get(), context));
     } else {
       refresh.setQueryOutput(QuerySummary.EMPTY);
     }
     return refresh.createBlazeProject();
   }
-
 }

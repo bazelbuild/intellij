@@ -15,9 +15,9 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.exception.BuildException;
 import java.io.IOException;
 import java.util.Set;
 
@@ -25,5 +25,5 @@ import java.util.Set;
 public interface DependencyBuilder {
 
   OutputInfo build(BlazeContext context, Set<Label> buildTargets)
-      throws IOException, GetArtifactsException;
+      throws IOException, BuildException;
 }

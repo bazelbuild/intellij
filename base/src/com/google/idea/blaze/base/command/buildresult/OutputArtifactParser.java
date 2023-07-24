@@ -35,9 +35,7 @@ public interface OutputArtifactParser {
 
   @Nullable
   static OutputArtifact parseArtifact(
-      BuildEventStreamProtos.File file,
-      String configurationMnemonic,
-      long syncStartTimeMillis) {
+      BuildEventStreamProtos.File file, String configurationMnemonic, long syncStartTimeMillis) {
     return Arrays.stream(EP_NAME.getExtensions())
         .map(p -> p.parse(file, configurationMnemonic, syncStartTimeMillis))
         .filter(Objects::nonNull)
@@ -47,18 +45,14 @@ public interface OutputArtifactParser {
 
   @Nullable
   OutputArtifact parse(
-      BuildEventStreamProtos.File file,
-      String configurationMnemonic,
-      long syncStartTimeMillis);
+      BuildEventStreamProtos.File file, String configurationMnemonic, long syncStartTimeMillis);
 
   /** The default implementation of {@link OutputArtifactParser}, for local, absolute file paths. */
   class LocalFileParser implements OutputArtifactParser {
     @Override
     @Nullable
     public OutputArtifact parse(
-        BuildEventStreamProtos.File file,
-        String configurationMnemonic,
-        long syncStartTimeMillis) {
+        BuildEventStreamProtos.File file, String configurationMnemonic, long syncStartTimeMillis) {
       String uri = file.getUri();
       if (!uri.startsWith(URLUtil.FILE_PROTOCOL)) {
         return null;
@@ -66,7 +60,10 @@ public interface OutputArtifactParser {
       try {
         File f = new File(new URI(uri));
         return new LocalFileOutputArtifact(
-            f, getBlazeOutRelativePath(file, configurationMnemonic), configurationMnemonic);
+            f,
+            getBlazeOutRelativePath(file, configurationMnemonic),
+            configurationMnemonic,
+            file.getDigest());
       } catch (URISyntaxException | IllegalArgumentException e) {
         return null;
       }

@@ -129,7 +129,7 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
     return javaBinaryMainClass;
   }
 
-  /** Jars needed to apply the encapsulated annotation processors. . */
+  /** Jars needed to apply the encapsulated annotation processors. */
   public ImmutableList<LibraryArtifact> getPluginProcessorJars() {
     return pluginProcessorJars;
   }

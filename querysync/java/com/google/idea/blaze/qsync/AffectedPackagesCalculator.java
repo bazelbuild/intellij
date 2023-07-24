@@ -26,10 +26,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
+import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.query.QuerySummary;
-import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange;
-import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange.Operation;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -90,6 +90,7 @@ public abstract class AffectedPackagesCalculator {
             .collect(toImmutableList());
     PackageSet.Builder addedPackages = new PackageSet.Builder();
     PackageSet.Builder deletedPackages = new PackageSet.Builder();
+    ImmutableSet.Builder<Path> addedOrDeletePackages = ImmutableSet.builder();
     if (!buildFileChanges.isEmpty()) {
       context().output(PrintOutput.log("Edited %d BUILD files", buildFileChanges.size()));
       for (WorkspaceFileChange c : buildFileChanges) {
@@ -113,13 +114,13 @@ public abstract class AffectedPackagesCalculator {
             if (!lastQuery().getPackages().contains(buildPackage)) {
               addedPackages.add(buildPackage);
             }
-            lastQuery().getParentPackage(buildPackage).ifPresent(result::addAffectedPackage);
+            addedOrDeletePackages.add(buildPackage);
             break;
           case DELETE:
             // Deleting a build package only affects the parent (if any).
             result.addDeletedPackage(buildPackage);
             deletedPackages.add(buildPackage);
-            lastQuery().getParentPackage(buildPackage).ifPresent(result::addAffectedPackage);
+            addedOrDeletePackages.add(buildPackage);
             break;
           case MODIFY:
             result.addAffectedPackage(buildPackage);
@@ -184,6 +185,13 @@ public abstract class AffectedPackagesCalculator {
             .getPackages()
             .addPackages(addedPackages.build())
             .deletePackages(deletedPackages.build());
+
+    // For packages that were added or deleted, the parent package is also affected (due to blaze
+    // globbing rules). Add them to affected packages too:
+    addedOrDeletePackages.build().stream()
+        .map(effectivePackages::getParentPackage)
+        .flatMap(Optional::stream)
+        .forEach(result::addAffectedPackage);
 
     // Process adds/deletes to non-BUILD files. We don't need to worry about modifications, since
     // they shouldn't effect the build graph structure, and the IDE will pick them up as usual.

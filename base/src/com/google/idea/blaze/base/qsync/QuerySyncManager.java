@@ -15,15 +15,25 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
+import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
+import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedOperation;
+import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
@@ -31,18 +41,18 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
+import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.base.toolwindow.Task;
-import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.serviceContainer.NonInjectable;
-import java.io.IOException;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -69,39 +79,55 @@ public class QuerySyncManager {
   private final Logger logger = Logger.getInstance(getClass());
 
   private final Project project;
+  protected final ListeningExecutorService executor =
+      MoreExecutors.listeningDecorator(
+          AppExecutorUtil.createBoundedApplicationPoolExecutor("QuerySync", 128));
 
   private final ProjectLoader loader;
   private volatile QuerySyncProject loadedProject;
 
   public static QuerySyncManager getInstance(Project project) {
-    return ServiceManager.getService(project, QuerySyncManager.class);
+    return project.getService(QuerySyncManager.class);
   }
 
   public QuerySyncManager(Project project) {
     this.project = project;
-    this.loader = new ProjectLoader(project);
+    this.loader = createProjectLoader(executor, project);
   }
 
-  @VisibleForTesting
   @NonInjectable
   public QuerySyncManager(Project project, ProjectLoader loader) {
     this.project = project;
     this.loader = loader;
   }
 
+  protected ProjectLoader createProjectLoader(ListeningExecutorService executor, Project project) {
+    return new ProjectLoader(executor, project);
+  }
+
+  @CanIgnoreReturnValue
+  public ListenableFuture<Boolean> reloadProject() {
+    return run("Loading project", "Re-loading project", this::loadProject);
+  }
+
   public void loadProject(BlazeContext context) {
     try {
       QuerySyncProject newProject = loader.loadProject(context);
       if (!context.hasErrors()) {
-        loadedProject = newProject;
+        loadedProject = Preconditions.checkNotNull(newProject);
+        loadedProject.sync(context, loadedProject.readSnapshotFromDisk(context));
       }
-    } catch (IOException e) {
-      onError("Failed to load project", e, context);
+    } catch (Exception e) {
+      context.handleException("Failed to load project", e);
     }
   }
 
   public Optional<QuerySyncProject> getLoadedProject() {
     return Optional.ofNullable(loadedProject);
+  }
+
+  public boolean isProjectLoaded() {
+    return loadedProject != null;
   }
 
   private void assertProjectLoaded() {
@@ -110,19 +136,14 @@ public class QuerySyncManager {
     }
   }
 
-  /** Log & display a message to the user when a user-initiated action fails. */
-  void onError(String description, Exception e, BlazeContext context) {
-    logger.error(description, e);
-    context.output(PrintOutput.error(description + ": " + e.getClass().getSimpleName()));
-    context.setHasError();
-    if (e.getMessage() != null) {
-      context.output(PrintOutput.error("Cause: " + e.getMessage()));
-    }
+  public ArtifactTracker getArtifactTracker() {
+    assertProjectLoaded();
+    return loadedProject.getArtifactTracker();
   }
 
-  public DependencyCache getDependencyCache() {
+  public SourceToTargetMap getSourceToTargetMap() {
     assertProjectLoaded();
-    return loadedProject.getDependencyCache();
+    return loadedProject.getSourceToTargetMap();
   }
 
   @CanIgnoreReturnValue
@@ -132,30 +153,55 @@ public class QuerySyncManager {
 
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> fullSync() {
-    return run("Updating project structure", "Re-importing project", loadedProject::fullSync);
+    if (projectDefinitionHasChanged()) {
+      return run("Updating project structure", "Re-importing project", this::loadProject);
+
+    } else {
+      return run("Updating project structure", "Re-importing project", loadedProject::fullSync);
+    }
   }
 
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> deltaSync() {
     assertProjectLoaded();
-    return run("Updating project structure", "Refreshing project", loadedProject::deltaSync);
+    if (projectDefinitionHasChanged()) {
+      return run("Updating project structure", "Re-importing project", this::loadProject);
+    } else {
+      return run("Updating project structure", "Refreshing project", loadedProject::deltaSync);
+    }
   }
 
   private ListenableFuture<Boolean> run(String title, String subTitle, ScopedOperation operation) {
     SettableFuture<Boolean> result = SettableFuture.create();
-    BlazeSyncStatus.getInstance(project).syncStarted();
-    DumbService.getInstance(project)
-        .runWhenSmart(
-            () -> {
-              try {
-                ListenableFuture<Boolean> innerResultFuture =
-                    createAndSubmitRunTask(title, subTitle, operation);
-                result.setFuture(innerResultFuture);
-              } catch (Throwable t) {
-                result.setException(t);
-                throw t;
-              }
-            });
+    BlazeSyncStatus syncStatus = BlazeSyncStatus.getInstance(project);
+    syncStatus.syncStarted();
+    Futures.addCallback(
+        result,
+        new FutureCallback<Boolean>() {
+          @Override
+          public void onSuccess(Boolean success) {
+            syncStatus.syncEnded(SyncMode.FULL, success ? SyncResult.SUCCESS : SyncResult.FAILURE);
+          }
+
+          @Override
+          public void onFailure(Throwable throwable) {
+            if (result.isCancelled()) {
+              syncStatus.syncEnded(SyncMode.FULL, SyncResult.CANCELLED);
+            } else {
+              logger.error("Sync failed", throwable);
+              syncStatus.syncEnded(SyncMode.FULL, SyncResult.FAILURE);
+            }
+          }
+        },
+        MoreExecutors.directExecutor());
+    try {
+      ListenableFuture<Boolean> innerResultFuture =
+          createAndSubmitRunTask(title, subTitle, operation);
+      result.setFuture(innerResultFuture);
+    } catch (Throwable t) {
+      result.setException(t);
+      throw t;
+    }
     return result;
   }
 
@@ -172,15 +218,18 @@ public class QuerySyncManager {
                               .setProgressIndicator(indicator)
                               .showSummaryOutput()
                               .setPopupBehavior(FocusBehavior.ALWAYS)
+                              .setIssueParsers(
+                                  BlazeIssueParser.defaultIssueParsers(
+                                      project,
+                                      WorkspaceRoot.fromProject(project),
+                                      ContextType.Sync))
                               .build();
                       context
                           .push(new ProgressIndicatorScope(indicator))
                           .push(scope)
-                          .push(new ProblemsViewScope(project, FocusBehavior.ALWAYS));
+                          .push(new ProblemsViewScope(project, FocusBehavior.ALWAYS))
+                          .push(new IdeaLogScope());
                       operation.execute(context);
-                      // TODO cancel on exceptions
-                      BlazeSyncStatus.getInstance(project)
-                          .syncEnded(SyncMode.FULL, SyncResult.SUCCESS);
                       return !context.hasErrors();
                     }));
   }
@@ -199,10 +248,47 @@ public class QuerySyncManager {
         context -> loadedProject.enableAnalysis(context, psiFile));
   }
 
+  @CanIgnoreReturnValue
+  public ListenableFuture<Boolean> enableAnalysis(ImmutableList<Path> workspaceRelativePaths) {
+    assertProjectLoaded();
+    return run(
+        "Building dependencies",
+        "Building...",
+        context -> loadedProject.enableAnalysis(context, workspaceRelativePaths));
+  }
+
+  public boolean canEnableAnalysisFor(Path workspaceRelativePath) {
+    if (loadedProject == null) {
+      return false;
+    }
+    return loadedProject.canEnableAnalysisFor(workspaceRelativePath);
+  }
+
+  @CanIgnoreReturnValue
+  public ListenableFuture<Boolean> generateRenderJar(PsiFile psiFile) {
+    assertProjectLoaded();
+    return run(
+        "Building Render jar for Compose preview",
+        "Building...",
+        context -> loadedProject.enableRenderJar(context, psiFile));
+  }
+
   public boolean isReadyForAnalysis(PsiFile psiFile) {
     if (loadedProject == null) {
       return false;
     }
     return loadedProject.isReadyForAnalysis(psiFile);
+  }
+
+  /**
+   * Loads the {@link ProjectViewSet} and checks if the {@link ProjectDefinition} for the project
+   * has changed.
+   *
+   * @return true if the {@link ProjectDefinition} has changed.
+   */
+  private boolean projectDefinitionHasChanged() {
+    // Ensure edits to the project view and any imports have been saved
+    SaveUtil.saveAllFiles();
+    return !loadedProject.isDefinitionCurrent();
   }
 }

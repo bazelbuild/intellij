@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.toolwindow.Task;
+import com.google.idea.blaze.base.toolwindow.Task.Status;
 import com.google.idea.blaze.base.toolwindow.TasksToolWindowService;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.PrintOutput.OutputType;
@@ -207,10 +208,22 @@ public final class ToolWindowScope implements BlazeScope {
         });
   }
 
+  private static Task.Status statusForContext(BlazeContext context) {
+    if (context.hasErrors()) {
+      return Status.ERROR;
+    } else if (context.isCancelled()) {
+      return Status.CANCELLED;
+    } else if (context.hasWarnings()) {
+      return Status.FINISHED_WITH_WARNINGS;
+    } else {
+      return Status.FINISHED;
+    }
+  }
+
   @Override
   public void onScopeEnd(BlazeContext context) {
     if (finishTaskOnScopeEnd) {
-      tasksToolWindowController.finishTask(task, context.hasErrors(), context.isCancelled());
+      tasksToolWindowController.finishTask(task, statusForContext(context));
     }
     tasksToolWindowController.removeStopHandler(task);
   }

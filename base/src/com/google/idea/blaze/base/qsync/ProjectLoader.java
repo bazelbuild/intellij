@@ -18,36 +18,41 @@ package com.google.idea.blaze.base.qsync;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher;
-import com.google.idea.blaze.base.qsync.cache.ArtifactTracker;
-import com.google.idea.blaze.base.qsync.cache.FileApiArtifactFetcher;
+import com.google.idea.blaze.base.qsync.cache.ArtifactTrackerImpl;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeProject;
-import com.google.idea.blaze.qsync.project.PostQuerySyncData;
+import com.google.idea.blaze.qsync.PackageStatementParser;
+import com.google.idea.blaze.qsync.ParallelPackageReader;
+import com.google.idea.blaze.qsync.ProjectRefresher;
+import com.google.idea.blaze.qsync.VcsStateDiffer;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.google.idea.blaze.qsync.project.SnapshotDeserializer;
 import com.intellij.openapi.project.Project;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
-import java.util.zip.GZIPInputStream;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Loads a project, either from saved state or from a {@code .blazeproject} file, yielding a {@link
@@ -57,19 +62,28 @@ import java.util.zip.GZIPInputStream;
  */
 public class ProjectLoader {
 
-  private final Project project;
+  private final ListeningExecutorService executor;
+  protected final Project project;
 
-  public ProjectLoader(Project project) {
+  public ProjectLoader(ListeningExecutorService executor, Project project) {
+    this.executor = executor;
     this.project = project;
   }
 
+  @Nullable
   public QuerySyncProject loadProject(BlazeContext context) throws IOException {
     BlazeImportSettings importSettings =
         Preconditions.checkNotNull(
             BlazeImportSettingsManager.getInstance(project).getImportSettings());
-
-    Path snapshotFilePath = getSnapshotFilePath(importSettings);
-    Optional<PostQuerySyncData> loadedSnapshot = loadFromDisk(snapshotFilePath);
+    if (importSettings.getProjectType() != ProjectType.QUERY_SYNC) {
+      context.output(
+          PrintOutput.error(
+              "The project uses a legacy project structure not compatible with this version of"
+                  + " Android Studio. Please reimport into a newly created project. Learn more at"
+                  + " go/querysync"));
+      context.setHasError();
+      return null;
+    }
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
     // TODO we may need to get the WorkspacePathResolver from the VcsHandler, as the old sync
@@ -78,10 +92,10 @@ public class ProjectLoader {
     // implementations of WorkspacePathResolver exists. Perhaps they are performance
     // optimizations?
     WorkspacePathResolver workspacePathResolver = new WorkspacePathResolverImpl(workspaceRoot);
+
+    ProjectViewManager projectViewManager = ProjectViewManager.getInstance(project);
     ProjectViewSet projectViewSet =
-        checkNotNull(
-            ProjectViewManager.getInstance(project)
-                .reloadProjectView(context, workspacePathResolver));
+        checkNotNull(projectViewManager.reloadProjectView(context, workspacePathResolver));
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
             .add(projectViewSet)
@@ -92,77 +106,92 @@ public class ProjectLoader {
     WorkspaceLanguageSettings workspaceLanguageSettings =
         LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
 
+    ProjectDefinition latestProjectDef =
+        ProjectDefinition.create(
+            importRoots.rootPaths(),
+            importRoots.excludePaths(),
+            LanguageClasses.translateFrom(workspaceLanguageSettings.getActiveLanguages()));
+
+    Path snapshotFilePath = getSnapshotFilePath(importSettings);
+
     DependencyBuilder dependencyBuilder =
-        new BazelBinaryDependencyBuilder(project, buildSystem, importRoots, workspaceRoot);
+        createDependencyBuilder(workspaceRoot, importRoots, buildSystem);
+    RenderJarBuilder renderJarBuilder = createRenderJarBuilder(buildSystem);
 
     BlazeProject graph = new BlazeProject();
-    ArtifactFetcher artifactFetcher = createArtifactFetcher(buildSystem);
-    ArtifactTracker artifactTracker = new ArtifactTracker(importSettings, artifactFetcher);
+    ArtifactFetcher<OutputArtifact> artifactFetcher = createArtifactFetcher();
+    ArtifactTrackerImpl artifactTracker =
+        new ArtifactTrackerImpl(
+            BlazeDataStorage.getProjectDataDir(importSettings).toPath(),
+            Paths.get(checkNotNull(project.getBasePath())),
+            artifactFetcher);
     artifactTracker.initialize();
-    DependencyCache dependencyCache = new DependencyCache(artifactTracker);
     DependencyTracker dependencyTracker =
-        new DependencyTracker(workspaceRoot.path(), graph, dependencyBuilder, dependencyCache);
-    ProjectQuerier projectQuerier =
-        ProjectQuerierImpl.create(project, buildSystem, workspaceRoot.path());
+        new DependencyTracker(project, graph, dependencyBuilder, renderJarBuilder, artifactTracker);
+    Optional<BlazeVcsHandler> vcsHandler =
+        Optional.ofNullable(BlazeVcsHandlerProvider.vcsHandlerForProject(project));
+    ProjectRefresher projectRefresher =
+        new ProjectRefresher(
+            executor,
+            createWorkspaceRelativePackageReader(),
+            vcsHandler.map(BlazeVcsHandler::getVcsStateDiffer).orElse(VcsStateDiffer.NONE),
+            workspaceRoot.path(),
+            graph::getCurrent);
+    QueryRunner queryRunner = createQueryRunner(buildSystem);
+    ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner, vcsHandler);
     ProjectUpdater projectUpdater =
         new ProjectUpdater(project, importSettings, projectViewSet, workspaceRoot);
     graph.addListener(projectUpdater);
+    QuerySyncSourceToTargetMap sourceToTargetMap =
+        new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
 
-    ProjectDefinition projectDefinition =
-        loadedSnapshot
-            .map(PostQuerySyncData::projectDefinition)
-            .orElseGet(
-                () ->
-                    ProjectDefinition.create(importRoots.rootPaths(), importRoots.excludePaths()));
-
-    QuerySyncProject loadedProject =
-        new QuerySyncProject(
-            project,
-            snapshotFilePath,
-            graph,
-            importSettings,
-            workspaceRoot,
-            dependencyCache,
-            dependencyTracker,
-            projectQuerier,
-            projectDefinition,
-            projectViewSet,
-            workspacePathResolver,
-            workspaceLanguageSettings);
-    // If we don't want to do a sync on startup, some more logic will be needed here:
-    // - in the case of a new project (loadedSnapshot is empty), do a full sync
-    // - when loadedSnapshot is not empty, we need to re-run the final stage of sync to regenerate
-    //   the BuildGraphData etc.
-    loadedProject.sync(context, loadedSnapshot);
-    return loadedProject;
+    return new QuerySyncProject(
+        project,
+        snapshotFilePath,
+        graph,
+        importSettings,
+        workspaceRoot,
+        artifactTracker,
+        dependencyTracker,
+        projectQuerier,
+        latestProjectDef,
+        projectViewSet,
+        workspacePathResolver,
+        workspaceLanguageSettings,
+        sourceToTargetMap,
+        projectViewManager);
   }
 
-  public Optional<PostQuerySyncData> loadFromDisk(Path snapshotFilePath) throws IOException {
-    File f = snapshotFilePath.toFile();
-    if (!f.exists()) {
-      return Optional.empty();
-    }
-    try (InputStream in = new GZIPInputStream(new FileInputStream(f))) {
-      return Optional.of(new SnapshotDeserializer().readFrom(in).getSyncData());
-    }
+  private ParallelPackageReader createWorkspaceRelativePackageReader() {
+    return new ParallelPackageReader(executor, new PackageStatementParser());
+  }
+
+  private ProjectQuerierImpl createProjectQuerier(
+      ProjectRefresher projectRefresher,
+      QueryRunner queryRunner,
+      Optional<BlazeVcsHandler> vcsHandler) {
+    return new ProjectQuerierImpl(queryRunner, projectRefresher, vcsHandler);
+  }
+
+  protected QueryRunner createQueryRunner(BuildSystem buildSystem) {
+    return buildSystem.createQueryRunner(project);
+  }
+
+  protected DependencyBuilder createDependencyBuilder(
+      WorkspaceRoot workspaceRoot, ImportRoots importRoots, BuildSystem buildSystem) {
+    return new BazelDependencyBuilder(project, buildSystem, importRoots, workspaceRoot);
+  }
+
+  protected RenderJarBuilder createRenderJarBuilder(BuildSystem buildSystem) {
+    return new BazelRenderJarBuilder(project, buildSystem);
   }
 
   private Path getSnapshotFilePath(BlazeImportSettings importSettings) {
     return BlazeDataStorage.getProjectDataDir(importSettings).toPath().resolve("qsyncdata.gz");
   }
 
-  private ArtifactFetcher createArtifactFetcher(BuildSystem buildSystem) {
-    Preconditions.checkState(
-        ArtifactFetcher.EP_NAME.getExtensions().length <= 1,
-        "There are too many artifact fetchers");
-    ArtifactFetcher defaultArtifactFetcher = new FileApiArtifactFetcher();
-    BuildBinaryType buildBinaryType =
-        buildSystem.getDefaultInvoker(project, BlazeContext.create()).getType();
-    for (ArtifactFetcher artifactFetcher : ArtifactFetcher.EP_NAME.getExtensions()) {
-      if (artifactFetcher.isEnabled(buildBinaryType)) {
-        return artifactFetcher;
-      }
-    }
-    return defaultArtifactFetcher;
+  private ArtifactFetcher<OutputArtifact> createArtifactFetcher() {
+    return new DynamicallyDispatchingArtifactFetcher(
+        ImmutableList.copyOf(ArtifactFetcher.EP_NAME.getExtensions()));
   }
 }

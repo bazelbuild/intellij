@@ -29,10 +29,18 @@ public class QuerySync {
   private static final Supplier<Boolean> ENABLED =
       Suppliers.memoize(new BoolExperiment("use.query.sync", false)::getValue);
 
+  /** Enable compose preview for Query Sync. */
+  private static final Supplier<Boolean> COMPOSE_ENABLED =
+      Suppliers.memoize(new BoolExperiment("aswb.query.sync.enable.compose", false)::getValue);
+
   private QuerySync() {}
 
   public static boolean isEnabled() {
     return ENABLED.get();
+  }
+
+  public static boolean isComposeEnabled() {
+    return isEnabled() && COMPOSE_ENABLED.get();
   }
 
   public static void assertNotEnabled(String reason) {

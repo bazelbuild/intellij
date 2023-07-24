@@ -12,6 +12,7 @@ option java_package = "com.google.idea.blaze.qsync.query";
 message Summary {
   map<string, SourceFile> source_files = 1;
   map<string, Rule> rules = 2;
+  int32 version = 3;
 }
 
 message SourceFile {
@@ -27,4 +28,6 @@ message Rule {
   repeated string idl_sources = 4;
   // Other single-field attributes required by query sync
   map<string, string> other_attributes = 5;
+  repeated string runtime_deps = 6;
+  repeated string resource_files = 7;
 }

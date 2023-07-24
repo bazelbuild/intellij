@@ -257,7 +257,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
             .submit(
                 () -> {
                   SyncPhaseCoordinator.getInstance(getProject()).runSync(syncParams, true, context);
-                  context.endScope();
+                  context.close();
                 });
     while (!future.isDone()) {
       IdeEventQueue.getInstance().flushQueue();
@@ -277,20 +277,10 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     private final Map<String, String> results = Maps.newHashMap();
 
     @Override
-    public ListenableFuture<byte[]> runBlazeInfoGetBytes(
-        @Nullable BlazeContext context,
-        String binaryPath,
-        WorkspaceRoot workspaceRoot,
-        List<String> blazeFlags,
-        String key) {
-      return Futures.immediateFuture(null);
-    }
-
-    @Override
     public ListenableFuture<String> runBlazeInfo(
-        @Nullable BlazeContext context,
-        String binaryPath,
-        WorkspaceRoot workspaceRoot,
+        Project project,
+        BuildInvoker invoker,
+        BlazeContext context,
         List<String> blazeFlags,
         String key) {
       return Futures.immediateFuture(results.get(key));
@@ -298,13 +288,23 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
 
     @Override
     public ListenableFuture<BlazeInfo> runBlazeInfo(
-        @Nullable BlazeContext context,
+        Project project,
+        BuildInvoker invoker,
+        BlazeContext context,
         BuildSystemName buildSystemName,
-        String binaryPath,
-        WorkspaceRoot workspaceRoot,
         List<String> blazeFlags) {
       return Futures.immediateFuture(
           BlazeInfo.create(buildSystemName, ImmutableMap.copyOf(results)));
+    }
+
+    @Override
+    public ListenableFuture<byte[]> runBlazeInfoGetBytes(
+        Project project,
+        BuildInvoker invoker,
+        BlazeContext context,
+        List<String> blazeFlags,
+        String key) {
+      return Futures.immediateFuture(null);
     }
 
     public void setResults(Map<String, String> results) {
@@ -312,7 +312,6 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
       this.results.putAll(results);
     }
   }
-
   private static class MockBlazeIdeInterface implements BlazeIdeInterface {
     private TargetMap targetMap = new TargetMap(ImmutableMap.of());
 

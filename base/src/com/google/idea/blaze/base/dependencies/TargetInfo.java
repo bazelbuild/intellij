@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleType;
+import com.google.idea.blaze.common.BuildTarget;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
@@ -56,6 +57,10 @@ public class TargetInfo {
   @Nullable
   public Kind getKind() {
     return Kind.fromRuleName(kindString);
+  }
+
+  public Label getLabel() {
+    return label;
   }
 
   /** Returns this targets sources, or Optional#empty if they're not known. */
@@ -159,5 +164,10 @@ public class TargetInfo {
     public TargetInfo build() {
       return new TargetInfo(label, kindString, testSize, testClass, syncTime, sources);
     }
+  }
+
+  public static TargetInfo fromBuildTarget(BuildTarget buildTarget) {
+    return TargetInfo.builder(Label.create(buildTarget.label().toString()), buildTarget.kind())
+        .build();
   }
 }

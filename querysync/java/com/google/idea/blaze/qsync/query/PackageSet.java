@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.qsync.query;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -29,14 +31,28 @@ import java.util.Set;
  */
 public class PackageSet {
 
+  public static final PackageSet EMPTY = new PackageSet(ImmutableSet.of());
+
   private final ImmutableSet<Path> packages;
 
   public PackageSet(Set<Path> packages) {
     this.packages = ImmutableSet.copyOf(packages);
   }
 
+  public static PackageSet of(Path... packages) {
+    return new PackageSet(ImmutableSet.copyOf(packages));
+  }
+
   public boolean contains(Path packagePath) {
     return packages.contains(packagePath);
+  }
+
+  public boolean isEmpty() {
+    return packages.isEmpty();
+  }
+
+  public int size() {
+    return packages.size();
   }
 
   @VisibleForTesting
@@ -78,6 +94,11 @@ public class PackageSet {
       path = path.getParent();
     }
     return Optional.empty();
+  }
+
+  public PackageSet getSubpackages(Path root) {
+    return new PackageSet(
+        packages.stream().filter(p -> p.startsWith(root)).collect(toImmutableSet()));
   }
 
   /** Builder for {@link PackageSet}. */

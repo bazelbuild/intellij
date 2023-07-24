@@ -61,7 +61,6 @@ import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedT
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import java.util.List;
@@ -74,7 +73,7 @@ public class BlazeBuildService {
       Key.create("blaze.project.last.build.timestamp");
 
   public static BlazeBuildService getInstance(Project project) {
-    return ServiceManager.getService(project, BlazeBuildService.class);
+    return project.getService(BlazeBuildService.class);
   }
 
   public static Long getLastBuildTimeStamp(Project project) {
@@ -215,7 +214,6 @@ public class BlazeBuildService {
                         BlazeBuildTargetSharder.expandAndShardTargets(
                             project,
                             context,
-                            workspaceRoot,
                             projectView,
                             projectData.getWorkspacePathResolver(),
                             targets,

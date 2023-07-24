@@ -66,23 +66,7 @@ stamped_plugin_xml(
 java_library(
     name = "unit_test_utils",
     testonly = 1,
-    srcs = glob(["tests/utils/unit/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2021.3": [
-            "tests/utils/sdkcompat/as213/com/android/tools/idea/rendering/RenderResultCompat.java",
-        ],
-        "android-studio-2022.1": [
-            "tests/utils/sdkcompat/as221/com/android/tools/idea/rendering/RenderResultCompat.java",
-        ],
-        "android-studio-2022.2": [
-            "tests/utils/sdkcompat/as222/com/android/tools/idea/rendering/RenderResultCompat.java",
-        ],
-        "android-studio-2022.3": [
-            "tests/utils/sdkcompat/as223/com/android/tools/idea/rendering/RenderResultCompat.java",
-        ],
-        "android-studio-dev": [
-            "tests/utils/sdkcompat/asdev/com/android/tools/idea/rendering/RenderResultCompat.java",
-        ],
-    }),
+    srcs = glob(["tests/utils/unit/**/*.java"]),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
         ":aswb_lib",
@@ -97,27 +81,26 @@ java_library(
     name = "integration_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2021.3": [
-            "tests/utils/sdkcompat/as213/com/android/tools/idea/sdk/IdeSdksCompat.java",
-            "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
-            "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
-        ],
-        "android-studio-2022.1": [
-            "tests/utils/sdkcompat/as221/com/android/tools/idea/sdk/IdeSdksCompat.java",
-            "tests/utils/sdkcompat/as221/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
-            "tests/utils/sdkcompat/as221/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
-        ],
         "android-studio-2022.2": [
+            "sdkcompat/as222/com/android/tools/rendering/RenderResultCompat.java",
             "tests/utils/sdkcompat/as222/com/android/tools/idea/sdk/IdeSdksCompat.java",
             "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
             "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
         ],
         "android-studio-2022.3": [
+            "sdkcompat/as223/com/android/tools/rendering/RenderResultCompat.java",
             "tests/utils/sdkcompat/as223/com/android/tools/idea/sdk/IdeSdksCompat.java",
             "tests/utils/sdkcompat/as223/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
             "tests/utils/sdkcompat/as223/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
         ],
+        "android-studio-2023.1": [
+            "sdkcompat/as231/com/android/tools/rendering/RenderResultCompat.java",
+            "tests/utils/sdkcompat/as231/com/android/tools/idea/sdk/IdeSdksCompat.java",
+            "tests/utils/sdkcompat/as231/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
+            "tests/utils/sdkcompat/as231/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
+        ],
         "android-studio-dev": [
+            "sdkcompat/asdev/com/android/tools/rendering/RenderResultCompat.java",
             "tests/utils/sdkcompat/asdev/com/android/tools/idea/sdk/IdeSdksCompat.java",
             "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
             "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
@@ -144,12 +127,19 @@ java_library(
 
 java_library(
     name = "aswb_lib",
-    srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2021.3": glob(["sdkcompat/as213/**/*.java"]),
-        "android-studio-2022.1": glob(["sdkcompat/as221/**/*.java"]),
+    srcs = glob(
+        ["src/**/*.java"],
+        # These source files below should be omitted for versions < 2023.1.1.11
+        exclude = ["src/com/google/idea/blaze/android/run/binary/tasks/*.java"],
+    ) + select_for_plugin_api({
         "android-studio-2022.2": glob(["sdkcompat/as222/**/*.java"]),
         "android-studio-2022.3": glob(["sdkcompat/as223/**/*.java"]),
-        "android-studio-dev": glob(["sdkcompat/asdev/**/*.java"]),
+        "android-studio-2023.1": glob(["sdkcompat/as231/**/*.java"] + [
+            "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
+        ]),
+        "android-studio-dev": glob(["sdkcompat/asdev/**/*.java"] + [
+            "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
+        ]),
     }),
     resources = glob(["resources/**/*"]),
     visibility = combine_visibilities(
@@ -219,6 +209,7 @@ intellij_integration_test_suite(
     additional_class_rules = select_for_plugin_api({
         "android-studio-2022.2": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "android-studio-2022.3": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
+        "android-studio-2023.1": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "android-studio-dev": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "default": [],
     }),
@@ -290,7 +281,7 @@ intellij_plugin(
         "//dart:plugin_library",
         "//java:plugin_library",
         "//kotlin:plugin_library",
-        "//plugin_dev:plugin_library_for_aswb",
+        "//plugin_dev:plugin_library",
         "//python:plugin_library",
         "//skylark:plugin_library",
         "//terminal:plugin_library",

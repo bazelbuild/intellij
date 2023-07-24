@@ -27,6 +27,8 @@ import java.util.Collection;
 @AutoValue
 abstract class AffectedPackages {
 
+  public static final AffectedPackages EMPTY = AffectedPackages.builder().build();
+
   /** Paths of packages that are affected. */
   public abstract ImmutableSet<Path> getModifiedPackages();
 

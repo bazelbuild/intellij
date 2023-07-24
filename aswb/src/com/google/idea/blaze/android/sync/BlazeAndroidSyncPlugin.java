@@ -287,7 +287,7 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
     BlazeLightResourceClassService.Builder rClassBuilder =
         new BlazeLightResourceClassService.Builder(project);
     rClassBuilder.addWorkspacePackages(androidSourcePackages);
-
+    // TODO(b/283282438): Make Preview work with resources in project's res folder in Query Sync
     BlazeLightResourceClassService.getInstance(project).installRClasses(rClassBuilder);
   }
 

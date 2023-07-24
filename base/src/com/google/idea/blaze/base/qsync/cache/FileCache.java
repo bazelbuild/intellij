@@ -17,246 +17,124 @@ package com.google.idea.blaze.base.qsync.cache;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.hash.Hashing;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.Uninterruptibles;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
-import com.google.idea.blaze.base.io.FileOperationProvider;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.PathUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
-import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import javax.annotation.Nullable;
 
-/** Local cache of the jars referenced by the project. */
+/** Local cache of the .jar, .aars and other artifacts referenced by the project. */
+@SuppressWarnings("InvalidBlockTag")
 public class FileCache {
 
-  private static final ListeningExecutorService EXECUTOR =
-      MoreExecutors.listeningDecorator(
-          AppExecutorUtil.createBoundedApplicationPoolExecutor("JarCacheExecutor", 128));
-  private static final Logger logger = Logger.getInstance(FileCache.class);
-  private static final ImmutableSet<String> ZIP_FILE_EXTENSION =
-      ImmutableSet.of("aar", "jar", "srcjar");
+  /**
+   * An interface that defines the layout of an IDE artifact cache directory.
+   *
+   * <p>The cache layout definition is a two stage process: at the first stage {@link
+   * #getOutputArtifactDestinationAndLayout(OutputArtifactInfo)} maps output artifacts to objects
+   * implementing {@link OutputArtifactDestinationAndLayout} that describe the location of where the
+   * artifact fetcher should place a fetched artifact and which know how to process artifacts in
+   * these locations to build the final cache layout; at the second stage invocations of {@link
+   * OutputArtifactDestinationAndLayout#prepareFinalLayout()} build the final cache layout.
+   */
+  public interface CacheLayout {
 
-  // TODO(xinruiy): check if need to provide multi-threading support.
-  // Map from local cache key to the local cached file. The local cache key is generated from the
-  // OutputArtifact.getKey(). We keep the map in memory to avoid too many IO when finding the local
-  // copy of an artifact.
-  private ImmutableMap<String, Path> cacheState = ImmutableMap.of();
-
-  private final Path cacheDir;
-  private final ImmutableSet<String> toCacheFileExtensions;
-  private final boolean extractAfterFetch;
-  private final ArtifactFetcher artifactFetcher;
-
-  public FileCache(
-      Path cacheDir,
-      ImmutableSet<String> toCacheFileExtension,
-      boolean extractAfterFetch,
-      ArtifactFetcher artifactFetcher) {
-    this.cacheDir = cacheDir;
-    this.extractAfterFetch = extractAfterFetch;
-    this.toCacheFileExtensions = toCacheFileExtension;
-    this.artifactFetcher = artifactFetcher;
+    /**
+     * Returns a descriptor of {@code outputArtifact} in this specific cache layout.
+     *
+     * <p>The descriptor tells both where a fetched artifact should be placed and knows how to
+     * process it to form the final cache layout.
+     */
+    OutputArtifactDestinationAndLayout getOutputArtifactDestinationAndLayout(
+        OutputArtifactInfo outputArtifact);
   }
 
-  /** Updates in memory state, and returns the currently cached files. */
-  @CanIgnoreReturnValue
-  private ImmutableMap<String, Path> readFileState() {
-    FileOperationProvider ops = FileOperationProvider.getInstance();
-    try (Stream<Path> stream = Files.list(cacheDir)) {
-      ImmutableMap<String, Path> cacheState =
-          stream
-              .filter(
-                  file ->
-                      ops.isFile(file.toFile())
-                          && toCacheFileExtensions.contains(
-                              FileUtilRt.getExtension(file.getFileName().toString())))
-              .collect(toImmutableMap(path -> path.getFileName().toString(), f -> f));
-      this.cacheState = cacheState;
-    } catch (IOException e) {
-      logger.warn("Fail to read latest cache directory status ", e);
+  /** A descriptor of the artifact's intended fetch location in a specific cache layout. */
+  public interface OutputArtifactDestination {
+
+    /**
+     * A value used by the cache system to refer to this output artifact.
+     *
+     * <p>The value is used as a file name (a prefix) and thus must only contain allowed symbols.
+     *
+     * <p>Note, it does not represent a specific version of the artifact.
+     */
+    String getKey();
+
+    /**
+     * The location where a fetched copy of this artifact should be placed by an {@link
+     * ArtifactFetcher}.
+     */
+    Path getCopyDestination();
+  }
+
+  /**
+   * A descriptor of the artifact's locations in a specific cache layout.
+   *
+   * <p>Instances describe two conceptually different locations in the cache: (1) the location where
+   * an artifact should be placed by an {@link ArtifactFetcher} and (2) a location where the
+   * artifact was placed by the cache itself. The latter is returned by {@link
+   * OutputArtifactDestinationAndLayout#prepareFinalLayout()}.
+   */
+  public interface OutputArtifactDestinationAndLayout extends OutputArtifactDestination {
+    /**
+     * Prepares a file located at {@link #getCopyDestination()} for use by the IDE and returns the
+     * location of the resulting file/directory.
+     *
+     * <p>Note, that this might be an no-op and in this case the method should simply return {@link
+     * #getCopyDestination()}.
+     */
+    Path prepareFinalLayout() throws IOException;
+  }
+
+  private final CacheLayout cacheLayout;
+
+  public FileCache(CacheLayout cacheLayout) {
+    this.cacheLayout = cacheLayout;
+  }
+
+  /**
+   * Returns local cached artifact. Returns Optional.empty() if it does not exist in this cache
+   * directory.
+   */
+  public Optional<Path> getCacheFile(String artifactPath) {
+    Path path =
+        cacheLayout.getOutputArtifactDestinationAndLayout(() -> artifactPath).getCopyDestination();
+    return Optional.ofNullable(Files.exists(path) ? path : null);
+  }
+
+  /**
+   * Builds a map describing where artifact files should be copied to and where their content should
+   * be extracted to.
+   */
+  public ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout>
+      prepareDestinationPathsAndDirectories(ImmutableList<OutputArtifact> artifacts)
+          throws IOException {
+    final ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> pathMap =
+        getLocalPathMap(artifacts);
+    // Make sure target directories exists regardless of the cache directory layout, which may
+    // include directories like `.zips` etc.
+    final ImmutableList<Path> copyDestinationDirectories =
+        pathMap.values().stream()
+            .map(it -> it.getCopyDestination().getParent())
+            .distinct()
+            .collect(toImmutableList());
+    for (Path directory : copyDestinationDirectories) {
+      Files.createDirectories(directory);
     }
-    return cacheState;
+    return pathMap;
   }
 
-  public void initialize() {
-    ensureDirectoryExists(cacheDir);
-    readFileState();
-  }
-
-  private void ensureDirectoryExists(Path directory) {
-    if (!Files.exists(directory)) {
-      FileOperationProvider ops = FileOperationProvider.getInstance();
-      ops.mkdirs(directory.toFile());
-      if (!ops.isDirectory(directory.toFile())) {
-        throw new IllegalArgumentException(
-            "Cache Directory '" + directory + "' is not a valid directory");
-      }
-    }
-  }
-
-  public ImmutableSet<Path> cache(ImmutableList<OutputArtifact> artifacts) throws IOException {
-    try {
-      ListenableFuture<List<Path>> copyArtifactFuture =
-          artifactFetcher.copy(getLocalPathMap(artifacts, cacheDir));
-      List<Path> files = Uninterruptibles.getUninterruptibly(copyArtifactFuture);
-      if (extractAfterFetch) {
-        files = extract(files);
-      }
-      return ImmutableSet.copyOf(files);
-    } catch (ExecutionException e) {
-      if (e.getCause() instanceof IOException) {
-        throw (IOException) e.getCause();
-      }
-      throw new FileCacheOperationException(
-          "Failed to copy jars to cache with unexpected exceptions.", e);
-    } finally {
-      readFileState();
-    }
-  }
-
-  private ImmutableMap<OutputArtifact, Path> getLocalPathMap(
-      ImmutableList<OutputArtifact> outputArtifacts, Path dir) {
+  private ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> getLocalPathMap(
+      ImmutableList<OutputArtifact> outputArtifacts) {
     return outputArtifacts.stream()
         .collect(
             toImmutableMap(
-                Function.identity(),
-                outputArtifact -> dir.resolve(cacheKeyForArtifact(outputArtifact.getKey()))));
-  }
-
-  private ImmutableList<Path> extract(Collection<Path> sourcePaths) throws IOException {
-    ImmutableList.Builder<Path> result = ImmutableList.builder();
-    for (Path sourcePath : sourcePaths) {
-      if (ZIP_FILE_EXTENSION.contains(
-          FileUtilRt.getExtension(sourcePath.getFileName().toString()))) {
-        Path tmpPath = sourcePath.resolveSibling(sourcePath.getFileName() + ".tmp");
-        // Since we will keep using same file name for extracted directory, we need to rename source
-        // file
-        Files.move(sourcePath, tmpPath);
-        result.add(extract(tmpPath, sourcePath));
-        Files.delete(tmpPath);
-      }
-    }
-    return result.build();
-  }
-
-  private Path extract(Path source, Path destination) throws IOException {
-    Files.createDirectories(destination);
-    try (InputStream inputStream = Files.newInputStream(source);
-        ZipInputStream zis = new ZipInputStream(inputStream)) {
-      ZipEntry entry;
-      while ((entry = zis.getNextEntry()) != null) {
-        if (entry.isDirectory()) {
-          Files.createDirectories(destination.resolve(entry.getName()));
-        } else {
-          // Srcjars do not contain separate directory entries
-          Files.createDirectories(destination.resolve(entry.getName()).getParent());
-          Files.copy(
-              zis, destination.resolve(entry.getName()), StandardCopyOption.REPLACE_EXISTING);
-        }
-      }
-    }
-    return destination;
-  }
-
-  public void clear() throws IOException {
-    FileOperationProvider ops = FileOperationProvider.getInstance();
-    if (ops.exists(cacheDir.toFile())) {
-      try {
-        ops.deleteDirectoryContents(cacheDir.toFile(), true);
-      } finally {
-        readFileState();
-      }
-    }
-  }
-
-  @CanIgnoreReturnValue
-  public ImmutableSet<String> remove(Collection<String> artifactKeys) throws IOException {
-    ImmutableList<ListenableFuture<String>> futures =
-        artifactKeys.stream()
-            .map(
-                artifactKey -> {
-                  Optional<Path> file = get(artifactKey);
-                  if (file.isPresent()) {
-                    return EXECUTOR.submit(
-                        () -> {
-                          FileOperationProvider fop = FileOperationProvider.getInstance();
-                          fop.deleteRecursively(file.get().toFile());
-                          return artifactKey;
-                        });
-                  }
-                  return Futures.immediateFuture(artifactKey);
-                })
-            .collect(toImmutableList());
-    try {
-      return ImmutableSet.copyOf(Uninterruptibles.getUninterruptibly(Futures.allAsList(futures)));
-    } catch (ExecutionException e) {
-      if (e.getCause() instanceof IOException) {
-        throw (IOException) e.getCause();
-      }
-      throw new FileCacheOperationException(
-          "Failed to remove cache with unexpected exceptions.", e);
-    } finally {
-      readFileState();
-    }
-  }
-
-  @Nullable
-  public Optional<Path> get(OutputArtifact artifact) {
-    return get(artifactKey(artifact));
-  }
-
-  @Nullable
-  public Optional<Path> get(String artifactKey) {
-    String key = cacheKeyForArtifact(artifactKey);
-    return Optional.ofNullable(cacheState.get(key));
-  }
-
-  private static String cacheKeyForArtifact(String artifactKey) {
-    return String.format(
-        "%s.%s", cacheKeyInternal(artifactKey), FileUtilRt.getExtension(artifactKey));
-  }
-
-  private static String cacheKeyInternal(String artifactKey) {
-    String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(artifactKey));
-    return name
-        + "_"
-        + Integer.toHexString(Hashing.sha256().hashString(artifactKey, UTF_8).hashCode());
-  }
-
-  private static String artifactKey(OutputArtifact artifact) {
-    return artifact.getKey();
-  }
-
-  // TODO(xinruiy): We create FileCacheOperationException for handling unexpect exception during
-  // copy/ remove files. We need to revisit it when we improve all exception handling in the future.
-  static class FileCacheOperationException extends RuntimeException {
-    public FileCacheOperationException(String message, Throwable e) {
-      super(message, e);
-    }
+                Function.identity(), cacheLayout::getOutputArtifactDestinationAndLayout));
   }
 }

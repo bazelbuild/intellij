@@ -27,8 +27,10 @@ import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.project.Project;
@@ -229,6 +231,7 @@ public final class BlazeNewProjectBuilder {
         projectName,
         projectDataDirectory,
         Optional.ofNullable(projectViewFile).map(File::getPath).orElse(null),
-        getBuildSystem());
+        getBuildSystem(),
+        QuerySync.isEnabled() ? ProjectType.QUERY_SYNC : ProjectType.ASPECT_SYNC);
   }
 }

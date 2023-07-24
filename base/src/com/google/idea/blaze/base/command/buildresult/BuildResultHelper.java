@@ -19,8 +19,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Interner;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
+import com.google.idea.blaze.exception.BuildException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /** Assists in getting build artifacts from a build operation. */
@@ -105,8 +108,9 @@ public interface BuildResultHelper extends AutoCloseable {
    * @param completedBuildId build id.
    * @return a list of message on stdout.
    */
-  default ImmutableList<String> getStdout(String completedBuildId) throws GetStdoutException {
-    return ImmutableList.of();
+  default InputStream getStdout(String completedBuildId, Consumer<String> stderrConsumer)
+      throws BuildException {
+    return InputStream.nullInputStream();
   }
 
   /**
@@ -118,8 +122,8 @@ public interface BuildResultHelper extends AutoCloseable {
    * @param completedBuildId build id.
    * @return a list of message on stderr.
    */
-  default ImmutableList<String> getStderr(String completedBuildId) throws GetStderrException {
-    return ImmutableList.of();
+  default InputStream getStderr(String completedBuildId) throws BuildException {
+    return InputStream.nullInputStream();
   }
 
   /**
@@ -164,9 +168,17 @@ public interface BuildResultHelper extends AutoCloseable {
   void close();
 
   /** Indicates a failure to get artifact information */
-  class GetArtifactsException extends Exception {
+  class GetArtifactsException extends BuildException {
+    public GetArtifactsException(Throwable cause) {
+      super(cause);
+    }
+
     public GetArtifactsException(String message) {
       super(message);
+    }
+
+    public GetArtifactsException(String message, Throwable cause) {
+      super(message, cause);
     }
   }
 
@@ -182,19 +194,6 @@ public interface BuildResultHelper extends AutoCloseable {
 
     public GetFlagsException(Throwable cause) {
       super(cause);
-    }
-  }
-
-  /** Indicates a failure to get stderr messages */
-  class GetStderrException extends Exception {
-    public GetStderrException(String message) {
-      super(message);
-    }
-  }
-  /** Indicates a failure to get stdout messages */
-  class GetStdoutException extends Exception {
-    public GetStdoutException(String message) {
-      super(message);
     }
   }
 }

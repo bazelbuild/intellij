@@ -19,25 +19,38 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
-import com.google.idea.blaze.base.settings.BuildBinaryType;
-import java.io.IOException;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.io.FileOperationProvider;
+import com.google.idea.blaze.common.Context;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.Map;
+import java.util.Map.Entry;
 
 /** Implementation of {@link ArtifactFetcher} that copy file via file api. */
-public class FileApiArtifactFetcher implements ArtifactFetcher {
+public class FileApiArtifactFetcher implements ArtifactFetcher<LocalFileOutputArtifact> {
   @Override
-  public ListenableFuture<List<Path>> copy(ImmutableMap<OutputArtifact, Path> artifactToDest)
-      throws IOException {
+  public ListenableFuture<List<Path>> copy(
+      ImmutableMap<? extends LocalFileOutputArtifact, ArtifactDestination> artifactToDest,
+      Context<?> context) {
     ImmutableList.Builder<ListenableFuture<Path>> tasks = ImmutableList.builder();
-    for (Map.Entry<OutputArtifact, Path> entry : artifactToDest.entrySet()) {
+    for (Entry<? extends LocalFileOutputArtifact, ArtifactDestination> entry :
+        artifactToDest.entrySet()) {
       tasks.add(
           EXECUTOR.submit(
               () -> {
-                Path dest = entry.getValue();
-                entry.getKey().copyTo(dest);
+                Path dest = entry.getValue().path;
+                LocalFileOutputArtifact localFileOutputArtifact = entry.getKey();
+                if (Files.exists(dest) && Files.isDirectory(dest)) {
+                  FileOperationProvider.getInstance().deleteRecursively(dest.toFile(), true);
+                }
+                Files.copy(
+                    Paths.get(localFileOutputArtifact.getFile().getPath()),
+                    dest,
+                    StandardCopyOption.REPLACE_EXISTING,
+                    StandardCopyOption.COPY_ATTRIBUTES);
                 return dest;
               }));
     }
@@ -45,7 +58,7 @@ public class FileApiArtifactFetcher implements ArtifactFetcher {
   }
 
   @Override
-  public boolean isEnabled(BuildBinaryType buildBinaryType) {
-    return true;
+  public Class<LocalFileOutputArtifact> supportedArtifactType() {
+    return LocalFileOutputArtifact.class;
   }
 }

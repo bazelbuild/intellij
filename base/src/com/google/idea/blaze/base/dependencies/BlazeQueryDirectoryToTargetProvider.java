@@ -19,7 +19,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
@@ -27,20 +26,20 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.query.BlazeQueryLabelKindParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /** Runs a blaze query to derive a set of targets from the project's {@link ImportRoots}. */
@@ -93,25 +92,14 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
             .addBlazeFlags(query);
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
     BlazeQueryLabelKindParser outputProcessor = new BlazeQueryLabelKindParser(t -> true);
-    try (BuildResultHelper helper = invoker.createBuildResultHelper()) {
-      InputStream queryResultStream =
-          BlazeExecutor.getInstance()
-              .submit(
-                  () ->
-                      invoker
-                          .getCommandRunner()
-                          .runQuery(
-                              project,
-                              command,
-                              helper,
-                              WorkspaceRoot.fromProject(project),
-                              context))
-              .get();
+    try (BuildResultHelper helper = invoker.createBuildResultHelper();
+        InputStream queryResultStream =
+            invoker.getCommandRunner().runQuery(project, command, helper, context)) {
       new BufferedReader(new InputStreamReader(queryResultStream, UTF_8))
           .lines()
           .forEach(outputProcessor::processLine);
       return outputProcessor.getTargets();
-    } catch (InterruptedException | ExecutionException e) {
+    } catch (IOException | BuildException e) {
       logger.error(e.getMessage(), e);
       return null;
     }

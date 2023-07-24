@@ -40,13 +40,10 @@ import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProviderWrapper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import java.io.File;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,9 +54,6 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     extends BlazeAndroidIntegrationTestCase {
-  /** Exposed to test methods to toggle presence of execroot */
-  private BuildResultHelper mockBuildResultHelper;
-
   private void setupProject() {
     setProjectView(
         "directories:",
@@ -96,15 +90,10 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     runFullBlazeSyncWithNoIssues();
   }
 
-  /** Setup build result helper to return BEP output with test execroot by default. */
+  /** Setup build system provider with {@link BuildSystemProviderWrapper} */
   @Before
-  public void setupBuildResultHelperProvider() throws GetArtifactsException {
-    mockBuildResultHelper = mock(BuildResultHelper.class);
-    when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(
-            new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS, 0));
+  public void setupBuildSystemProvider() {
     BuildSystemProviderWrapper buildSystem = new BuildSystemProviderWrapper(() -> getProject());
-    buildSystem.setBuildResultHelperSupplier(() -> mockBuildResultHelper);
     registerExtension(BuildSystemProvider.EP_NAME, buildSystem);
   }
 
@@ -278,8 +267,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
   }
 
   @Test
-  public void nullExecRoot()
-      throws GetDeployInfoException, ApkProvisionException, GetArtifactsException {
+  public void nullExecRoot() throws GetDeployInfoException {
     setupProject();
     Label instrumentorTarget = Label.create("//java/com/foo/app:test_app");
     Label appTarget = Label.create("//java/com/foo/app:app");
@@ -291,8 +279,8 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     context.addOutputSink(IssueOutput.class, messageCollector);
 
     // Return null execroot
-    when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS, 0));
+    // the only way for execroot to be null is for getBlazeInfo() to throw an exception
+    BuildSystemProviderWrapper.getInstance(getProject()).setThrowExceptionOnGetBlazeInfo(true);
 
     // Setup interceptor for fake running of blaze commands and capture details.
     ExternalTaskInterceptor externalTaskInterceptor = new ExternalTaskInterceptor();

@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -44,7 +43,7 @@ public class SyncCache {
   }
 
   public static SyncCache getInstance(Project project) {
-    return ServiceManager.getService(project, SyncCache.class);
+    return project.getService(SyncCache.class);
   }
 
   /** Computes a value derived from the sync project data and caches it until the next sync. */

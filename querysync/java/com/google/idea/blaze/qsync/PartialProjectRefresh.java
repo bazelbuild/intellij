@@ -19,8 +19,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.vcs.VcsState;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
@@ -29,8 +32,6 @@ import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.Query.SourceFile;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
-import com.google.idea.blaze.qsync.vcs.VcsState;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
@@ -39,11 +40,12 @@ import java.util.Optional;
  * Implements a query strategy based on querying a minimal set of packages derived from the VCS
  * working set.
  *
- * <p>Instance of this class will be returned from {@link
- * ProjectRefresher#startPartialRefresh(Context, BlazeProjectSnapshot, Optional)} when appropriate.
+ * <p>Instance of this class will be returned from {@link ProjectRefresher#startPartialRefresh} when
+ * appropriate.
  */
 class PartialProjectRefresh implements RefreshOperation {
 
+  private final Path effectiveWorkspaceRoot;
   private final PostQuerySyncData previousState;
   private final BlazeQueryParser queryParser;
   private final GraphToProjectConverter graphToProjectConverter;
@@ -54,11 +56,14 @@ class PartialProjectRefresh implements RefreshOperation {
 
   PartialProjectRefresh(
       Context context,
+      ListeningExecutorService executor,
+      Path effectiveWorkspaceRoot,
       PackageReader packageReader,
       PostQuerySyncData previousState,
       Optional<VcsState> currentVcsState,
       ImmutableSet<Path> modifiedPackages,
       ImmutableSet<Path> deletedPackages) {
+    this.effectiveWorkspaceRoot = effectiveWorkspaceRoot;
     this.previousState = previousState;
     this.newState =
         PostQuerySyncData.builder()
@@ -68,7 +73,12 @@ class PartialProjectRefresh implements RefreshOperation {
     this.deletedPackages = deletedPackages;
     this.queryParser = new BlazeQueryParser(context);
     this.graphToProjectConverter =
-        new GraphToProjectConverter(packageReader, context, previousState.projectDefinition());
+        new GraphToProjectConverter(
+            packageReader,
+            effectiveWorkspaceRoot,
+            context,
+            previousState.projectDefinition(),
+            executor);
   }
 
   private Optional<QuerySpec> createQuerySpec() {
@@ -77,7 +87,11 @@ class PartialProjectRefresh implements RefreshOperation {
       return Optional.empty();
     }
     // TODO should we also consider excludes here?
-    return Optional.of(QuerySpec.builder().includePackages(modifiedPackages).build());
+    return Optional.of(
+        QuerySpec.builder()
+            .includePackages(modifiedPackages)
+            .workspaceRoot(effectiveWorkspaceRoot)
+            .build());
   }
 
   @Override
@@ -92,7 +106,7 @@ class PartialProjectRefresh implements RefreshOperation {
   }
 
   @Override
-  public BlazeProjectSnapshot createBlazeProject() throws IOException {
+  public BlazeProjectSnapshot createBlazeProject() throws BuildException {
     Preconditions.checkNotNull(partialQuery, "queryOutput");
     QuerySummary effectiveQuery = applyDelta();
     PostQuerySyncData postQuerySyncData = newState.setQuerySummary(effectiveQuery).build();

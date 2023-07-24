@@ -127,15 +127,12 @@ public final class BuildPhaseSyncTask {
   private BlazeSyncBuildResult run(BlazeContext parentContext)
       throws SyncCanceledException, SyncFailedException {
     // run under a child context to capture all timing information before finalizing the stats
-    BlazeContext context = BlazeContext.create(parentContext);
-    try {
+    try (BlazeContext context = BlazeContext.create(parentContext)) {
       TimingScope timingScope = new TimingScope("Build phase", EventType.Other);
       timingScope.addScopeListener(
           (events, totalTime) -> buildStats.setTimedEvents(events).setTotalTime(totalTime));
       context.push(timingScope);
       doRun(context);
-    } finally {
-      context.endScope();
     }
     return resultBuilder.setBuildPhaseStats(ImmutableList.of(buildStats.build())).build();
   }
@@ -196,7 +193,6 @@ public final class BuildPhaseSyncTask {
         BlazeBuildTargetSharder.expandAndShardTargets(
             project,
             context,
-            workspaceRoot,
             viewSet,
             projectState.getWorkspacePathResolver(),
             targets,

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.vcs.git;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.process.ExternalTask;
@@ -26,11 +27,13 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
+import com.google.idea.blaze.common.vcs.VcsState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -81,6 +84,11 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
     @Override
     public BlazeVcsSyncHandler createSyncHandler() {
       return null;
+    }
+
+    @Override
+    public Optional<ImmutableSet<Path>> diffVcsState(VcsState current, VcsState previous) {
+      return Optional.empty();
     }
 
     @Override
@@ -140,7 +148,7 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
       return getUpstreamSha(workspaceRoot);
     } catch (VcsException e) {
       if (!suppressErrors) {
-        logger.error(e.getMessage());
+        logger.warn(e.getMessage());
       }
       return null;
     }

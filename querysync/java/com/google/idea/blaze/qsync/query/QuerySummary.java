@@ -21,6 +21,7 @@ import static com.google.common.collect.Multimaps.flatteningToMultimap;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
@@ -60,13 +61,45 @@ import java.util.Optional;
 @AutoValue
 public abstract class QuerySummary {
 
-  public static final QuerySummary EMPTY = create(Query.Summary.getDefaultInstance());
+  /**
+   * The current version of the Query.Summary proto that this is compatible with. Any persisted
+   * protos with a different version embedded in them will be discarded.
+   *
+   * <p>Whenever changing the logic in this class such that the Query.Summary proto contents will be
+   * different for the same input, this version should be incremented.
+   */
+  @VisibleForTesting public static final int PROTO_VERSION = 1;
+
+  public static final QuerySummary EMPTY =
+      create(Query.Summary.newBuilder().setVersion(PROTO_VERSION).build());
 
   // Other rule attributes needed by query sync. Only supports attributes with single-string values
   private static final ImmutableSet<String> OTHER_ATTRIBUTES =
-      ImmutableSet.of("test_app", "instruments");
+      ImmutableSet.of("test_app", "instruments", "custom_package");
+
+  // Compile-time dependency attributes
+  private static final ImmutableSet<String> DEPENDENCY_ATTRIBUTES =
+      ImmutableSet.of(
+          // android_local_test depends on junit implicitly using the _junit attribute.
+          "$junit",
+          "deps",
+          // This is not strictly correct, as source files of rule with 'export' do not
+          // depend on exported targets.
+          "exports");
+
+  // Runtime dependency attributes
+  private static final ImmutableSet<String> RUNTIME_DEP_ATTRIBUTES =
+      ImmutableSet.of(
+          // From android_binary rules used in android_instrumentation_tests
+          "instruments",
+          // From android_instrumentation_test rules
+          "test_app");
 
   public abstract Query.Summary proto();
+
+  public boolean isCompatibleWithCurrentPluginVersion() {
+    return proto().getVersion() == PROTO_VERSION;
+  }
 
   /** Do not generate toString, this object is too large */
   @Override
@@ -78,7 +111,10 @@ public abstract class QuerySummary {
     return new AutoValue_QuerySummary(proto);
   }
 
+
   public static QuerySummary create(InputStream protoInputStream) throws IOException {
+    // IMPORTANT: when changing the logic herein, you should also update PROTO_VERSION above.
+    // Failure to do so is likely to result in problems during a partial sync.
     Map<String, Query.SourceFile> sourceFileMap = Maps.newHashMap();
     Map<String, Query.Rule> ruleMap = Maps.newHashMap();
     Build.Target target;
@@ -101,18 +137,25 @@ public abstract class QuerySummary {
           for (Build.Attribute a : target.getRule().getAttributeList()) {
             if (a.getName().equals("srcs")) {
               rule.addAllSources(a.getStringListValueList());
-            } else if (a.getName().equals("deps")) {
-              rule.addAllDeps(a.getStringListValueList());
-            } else if (a.getName().equals("exports")) {
-              // This is not strictly correct, as source files of rule with 'export' do not
-              // depend on exported targets.
-              rule.addAllDeps(a.getStringListValueList());
-            } else if (a.getName().equals("$junit")) {
-              // android_local_test depends on junit implicitly using the _junit attribute.
-              rule.addDeps(a.getStringValue());
+            } else if (DEPENDENCY_ATTRIBUTES.contains(a.getName())) {
+              if (a.hasStringValue()) {
+                rule.addDeps(a.getStringValue());
+              } else {
+                rule.addAllDeps(a.getStringListValueList());
+              }
+            } else if (RUNTIME_DEP_ATTRIBUTES.contains(a.getName())) {
+              if (a.hasStringValue()) {
+                rule.addRuntimeDeps(a.getStringValue());
+              } else {
+                rule.addAllRuntimeDeps(a.getStringListValueList());
+              }
             } else if (a.getName().equals("idl_srcs")) {
               rule.addAllIdlSources(a.getStringListValueList());
-            } else if (OTHER_ATTRIBUTES.contains(a.getName()) && !a.getStringValue().isEmpty()) {
+            } else if (a.getName().equals("resource_files")) {
+              rule.addAllResourceFiles(a.getStringListValueList());
+            }
+
+            if (OTHER_ATTRIBUTES.contains(a.getName()) && !a.getStringValue().isEmpty()) {
               rule.putOtherAttributes(a.getName(), a.getStringValue());
             }
           }
@@ -123,7 +166,11 @@ public abstract class QuerySummary {
       }
     }
     return create(
-        Query.Summary.newBuilder().putAllSourceFiles(sourceFileMap).putAllRules(ruleMap).build());
+        Query.Summary.newBuilder()
+            .setVersion(PROTO_VERSION)
+            .putAllSourceFiles(sourceFileMap)
+            .putAllRules(ruleMap)
+            .build());
   }
 
   public static QuerySummary create(File protoFile) throws IOException {
@@ -203,7 +250,8 @@ public abstract class QuerySummary {
    * QuerySummary#create(InputStream)} instead.
    */
   public static class Builder {
-    private final Query.Summary.Builder builder = Query.Summary.newBuilder();
+    private final Query.Summary.Builder builder =
+        Query.Summary.newBuilder().setVersion(PROTO_VERSION);
 
     Builder() {}
 

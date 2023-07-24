@@ -30,7 +30,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.filecache.FileCache;
@@ -58,7 +58,6 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.java.settings.BlazeJavaUserSettings;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -86,7 +85,7 @@ import javax.annotation.Nullable;
 public class JarCache {
 
   public static JarCache getInstance(Project project) {
-    return ServiceManager.getService(project, JarCache.class);
+    return project.getService(JarCache.class);
   }
 
   private static final Logger logger = Logger.getInstance(JarCache.class);
@@ -574,8 +573,8 @@ public class JarCache {
   }
 
   private static String artifactKey(BlazeArtifact artifact) {
-    if (artifact instanceof OutputArtifact) {
-      return ((OutputArtifact) artifact).getKey();
+    if (artifact instanceof OutputArtifactWithoutDigest) {
+      return ((OutputArtifactWithoutDigest) artifact).getKey();
     }
     if (artifact instanceof SourceArtifact) {
       return ((SourceArtifact) artifact).getFile().getPath();

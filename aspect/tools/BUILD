@@ -22,6 +22,7 @@ java_library(
         ":guava",
         "//proto:proto_deps",
         "@jsr305_annotations//jar",
+        "//third_party/bazel/src/main/protobuf:worker_protocol_java_proto",
     ],
 )
 

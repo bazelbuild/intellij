@@ -22,6 +22,8 @@ import com.google.common.io.Files;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.devtools.build.lib.worker.WorkerProtocol.WorkResponse;
+import com.google.devtools.build.lib.worker.WorkerProtocol.WorkRequest;
 import com.google.devtools.intellij.aspect.Common.ArtifactLocation;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.JavaSourcePackage;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PackageManifest;
@@ -68,14 +70,61 @@ public class PackageParser {
 
   private static final Pattern PACKAGE_PATTERN = Pattern.compile("^\\s*package\\s+([\\w\\.]+)");
 
-  public static void main(String[] args) throws Exception {
-    PackageParserOptions options = parseArgs(args);
+  private static boolean isWorkerMode(String [] args) {
+    return args.length == 1 && args[0].equals("--persistent_worker");
+  }
+
+  private static String[] getWorkRequestArgs(WorkRequest workRequest) {
+    return workRequest.getArgumentsList().toArray(new String[0]);
+  }
+
+  private static void parsePackagesAndWriteManifest(
+      PackageParser parser, PackageParserOptions options) throws Exception {
     Preconditions.checkNotNull(options.outputManifest);
 
+    Map<ArtifactLocation, String> outputMap = parser.parsePackageStrings(options.sources);
+    parser.writeManifest(outputMap, options.outputManifest);
+  }
+
+  private static void runPersistentWorker(PackageParser parser) throws IOException {
+    while (true) {
+      WorkRequest workRequest = WorkRequest.parseDelimitedFrom(System.in);
+      if (workRequest == null) {
+        // parseDelimitedFrom returns null iff the stream is at EOF, thus we have no more work to
+        // do.
+        return;
+      }
+
+      WorkResponse.Builder builder =
+          WorkResponse.newBuilder().setRequestId(workRequest.getRequestId());
+
+      try {
+        PackageParserOptions workRequestOptions = parseArgs(getWorkRequestArgs(workRequest));
+
+        parsePackagesAndWriteManifest(parser, workRequestOptions);
+
+        builder.build().writeDelimitedTo(System.out);
+      } catch (Exception e) {
+        logger.log(Level.SEVERE, "Error parsing package strings ", e);
+        builder.setOutput("Error parsing package strings: " + e);
+        builder.setExitCode(1);
+      }
+    }
+  }
+
+  public static void main(String[] args) throws Exception {
+    PackageParserOptions options = parseArgs(args);
+    PackageParser parser = new PackageParser(PackageParserIoProvider.INSTANCE);
+
     try {
-      PackageParser parser = new PackageParser(PackageParserIoProvider.INSTANCE);
-      Map<ArtifactLocation, String> outputMap = parser.parsePackageStrings(options.sources);
-      parser.writeManifest(outputMap, options.outputManifest);
+      if (isWorkerMode(args)) {
+        // Bazel persistent workers are required to only write WorkResponses to stdout. The
+        // java.util.logging API defaults to writing to System.err, so we don't have to
+        // redirect log output away from stdout.
+        runPersistentWorker(parser);
+      } else {
+        parsePackagesAndWriteManifest(parser, options);
+      }
     } catch (Throwable e) {
       logger.log(Level.SEVERE, "Error parsing package strings", e);
       System.exit(1);

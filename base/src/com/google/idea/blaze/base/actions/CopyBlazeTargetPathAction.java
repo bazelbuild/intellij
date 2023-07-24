@@ -33,6 +33,11 @@ import javax.annotation.Nullable;
 public class CopyBlazeTargetPathAction extends BlazeProjectAction {
 
   @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.SUPPORTED;
+  }
+
+  @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     Label label = findTarget(project, e);
     if (label != null) {

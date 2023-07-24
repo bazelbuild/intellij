@@ -15,13 +15,14 @@
  */
 package com.google.idea.blaze.qsync;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
-import com.google.idea.blaze.common.Output;
+import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.testdata.TestData;
-import com.google.idea.blaze.qsync.vcs.VcsState;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 
 /** Helpers for unit tests. */
@@ -29,22 +30,43 @@ public class QuerySyncTestUtils {
 
   private QuerySyncTestUtils() {}
 
-  public static final Context NOOP_CONTEXT =
-      new Context() {
-        @Override
-        public <T extends Output> void output(T output) {}
+  public static final Context<?> NOOP_CONTEXT = new NoopContext();
 
-        @Override
-        public void setHasError() {}
-      };
+  public static final Context<?> LOGGING_CONTEXT = new LoggingContext();
 
   public static final PackageReader EMPTY_PACKAGE_READER = p -> "";
 
-  public static final Optional<VcsState> CLEAN_VCS_STATE =
-      Optional.of(new VcsState("1", ImmutableSet.of()));
+  public static final VcsStateDiffer NO_CHANGES_DIFFER =
+      (recent, earlier) -> Optional.of(ImmutableSet.of());
 
+  public static final PackageReader PATH_INFERRING_PACKAGE_READER =
+      QuerySyncTestUtils::inferJavaPackageFromPath;
+
+  public static final Optional<VcsState> CLEAN_VCS_STATE =
+      Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty()));
 
   public static QuerySummary getQuerySummary(TestData genQueryName) throws IOException {
     return QuerySummary.create(TestData.getPathFor(genQueryName).toFile());
+  }
+
+  private static final ImmutableSet<String> JAVA_ROOT_DIRS = ImmutableSet.of("java", "javatests");
+
+  public static String inferJavaPackageFromPath(Path p) {
+    Path dir = p.getParent();
+    for (int i = 0; i < dir.getNameCount(); ++i) {
+      if (JAVA_ROOT_DIRS.contains(dir.getName(i).toString())) {
+        Path packagePath = dir.subpath(i + 1, dir.getNameCount());
+        return Joiner.on(".").join(packagePath);
+      }
+    }
+    return "";
+  }
+
+  public static VcsStateDiffer differForFiles(Path... paths) {
+    return (recent, earlier) -> Optional.of(ImmutableSet.copyOf(paths));
+  }
+
+  public static VcsStateDiffer noFilesChangedDiffer() {
+    return differForFiles();
   }
 }

@@ -25,6 +25,22 @@ import javax.annotation.Nullable;
 
 /** Represents a Blaze Outputs Tool Window Task, which can be hierarchical. */
 public final class Task {
+
+  /** State of a task including human readable description. */
+  public enum Status {
+    RUNNING("Running"),
+    FINISHED("Finished"),
+    FINISHED_WITH_WARNINGS("Finished with some errors"),
+    CANCELLED("Cancelled"),
+    ERROR("Failed");
+
+    public final String description;
+
+    Status(String description) {
+      this.description = description;
+    }
+  }
+
   private final Project project;
   private final String name;
   private final Type type;
@@ -32,8 +48,7 @@ public final class Task {
   private String state = "";
   @Nullable private Instant startTime;
   @Nullable private Instant endTime;
-  private boolean hasErrors;
-  private boolean isCancelled;
+  private Status status = Status.RUNNING;
 
   /**
    * Creates a new top level task without a parent.
@@ -76,20 +91,12 @@ public final class Task {
     this.endTime = endTime;
   }
 
-  boolean getHasErrors() {
-    return hasErrors;
+  Status getStatus() {
+    return status;
   }
 
-  void setHasErrors(boolean hasErrors) {
-    this.hasErrors = hasErrors;
-  }
-
-  boolean isCancelled() {
-    return isCancelled;
-  }
-
-  void setCancelled(boolean isCancelled) {
-    this.isCancelled = isCancelled;
+  void setStatus(Status status) {
+    this.status = status;
   }
 
   boolean isFinished() {

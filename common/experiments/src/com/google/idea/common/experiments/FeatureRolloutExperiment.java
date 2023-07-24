@@ -16,6 +16,7 @@
 package com.google.idea.common.experiments;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -28,8 +29,16 @@ import javax.annotation.Nullable;
  */
 public class FeatureRolloutExperiment extends Experiment {
 
-  public FeatureRolloutExperiment(String key) {
+  private final UsernameProvider usernameProvider;
+
+  @VisibleForTesting
+  public FeatureRolloutExperiment(UsernameProvider provider, String key) {
     super(key);
+    usernameProvider = provider;
+  }
+
+  public FeatureRolloutExperiment(String key) {
+    this(new UsernameProvider() {}, key);
   }
 
   /** Returns true if the feature should be enabled for this user. */
@@ -39,7 +48,11 @@ public class FeatureRolloutExperiment extends Experiment {
         "disabled")) {
       return false;
     }
-    return getUserHash(ExperimentUsernameProvider.getUsername()) < getRolloutPercentage();
+    return getUserPercentage() < getRolloutPercentage();
+  }
+
+  private int getUserPercentage() {
+    return getUserHash(usernameProvider.getUsername());
   }
 
   @Override
@@ -83,5 +96,38 @@ public class FeatureRolloutExperiment extends Experiment {
     }
     int hash = (userName + getKey()).hashCode();
     return Math.abs(hash) % 100;
+  }
+
+  @Override
+  public String getRawDefault() {
+    return null;
+  }
+
+  @Override
+  public String renderValue(String value) {
+    try {
+      int rollout = Integer.parseInt(value);
+      int user = getUserPercentage();
+      boolean enabled = user < rollout;
+      return String.format("%d<%d? %s", user, rollout, enabled ? "enabled" : "disabled");
+    } catch (NumberFormatException e) {
+      return value;
+    }
+  }
+
+  @Override
+  public boolean isOverridden(List<ExperimentValue> values) {
+    return super.isOverridden(values)
+        || (values.size() == 1
+            && !values.get(0).value().equals("100")
+            && !values.get(0).value().equals("0"));
+  }
+
+  /** A class to provide user names, used to inject testing dependencies */
+  @VisibleForTesting
+  public interface UsernameProvider {
+    default String getUsername() {
+      return ExperimentUsernameProvider.getUsername();
+    }
   }
 }

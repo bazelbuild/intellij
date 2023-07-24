@@ -15,21 +15,21 @@
  */
 package com.google.idea.blaze.base.sync.sharding;
 
+import static com.google.common.base.Verify.verify;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.FutureUtil;
-import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.query.BlazeQueryLabelKindParser;
@@ -44,9 +44,15 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -130,7 +136,6 @@ public class WildcardTargetExpander {
   static ExpandedTargetsResult expandToSingleTargets(
       Project project,
       BlazeContext parentContext,
-      WorkspaceRoot workspaceRoot,
       BuildInvoker buildBinary,
       ProjectViewSet projectViewSet,
       List<TargetExpression> allTargets) {
@@ -139,15 +144,13 @@ public class WildcardTargetExpander {
         context -> {
           context.push(new TimingScope("ExpandTargetsQuery", EventType.BlazeInvocation));
           context.setPropagatesErrors(false);
-          return doExpandToSingleTargets(
-              project, context, workspaceRoot, buildBinary, projectViewSet, allTargets);
+          return doExpandToSingleTargets(project, context, buildBinary, projectViewSet, allTargets);
         });
   }
 
   private static ExpandedTargetsResult doExpandToSingleTargets(
       Project project,
       BlazeContext context,
-      WorkspaceRoot workspaceRoot,
       BuildInvoker buildBinary,
       ProjectViewSet projectViewSet,
       List<TargetExpression> allTargets) {
@@ -165,12 +168,7 @@ public class WildcardTargetExpander {
                   "Expanding wildcard target patterns, shard %s of %s", i + 1, shards.size())));
       ExpandedTargetsResult result =
           queryIndividualTargets(
-              context,
-              workspaceRoot,
-              buildBinary,
-              handledRulesPredicate,
-              shard,
-              excludeManualTargets);
+              project, context, buildBinary, handledRulesPredicate, shard, excludeManualTargets);
       output = output == null ? result : ExpandedTargetsResult.merge(output, result);
       if (output.buildResult.status == Status.FATAL_ERROR) {
         return output;
@@ -202,8 +200,8 @@ public class WildcardTargetExpander {
 
   /** Runs a blaze query to expand the input target patterns to individual blaze targets. */
   private static ExpandedTargetsResult queryIndividualTargets(
+      Project project,
       BlazeContext context,
-      WorkspaceRoot workspaceRoot,
       BuildInvoker buildBinary,
       Predicate<String> handledRulesPredicate,
       List<TargetExpression> targetPatterns,
@@ -228,20 +226,19 @@ public class WildcardTargetExpander {
             : t -> handledRulesPredicate.test(t.ruleType) || explicitTargets.contains(t.label);
 
     BlazeQueryLabelKindParser outputProcessor = new BlazeQueryLabelKindParser(filter);
-
-    int retVal =
-        ExternalTask.builder(workspaceRoot)
-            .addBlazeCommand(builder.build())
-            .context(context)
-            .stdout(LineProcessingOutputStream.of(outputProcessor))
-            .stderr(
-                LineProcessingOutputStream.of(
-                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
-            .build()
-            .run();
-
-    BuildResult buildResult = BuildResult.fromExitCode(retVal);
-    return new ExpandedTargetsResult(outputProcessor.getTargetLabels(), buildResult);
+    try (BuildResultHelper buildResultHelper = buildBinary.createBuildResultHelper();
+        InputStream queryResultStream =
+            buildBinary.getCommandRunner().runQuery(project, builder, buildResultHelper, context)) {
+      verify(queryResultStream != null);
+      new BufferedReader(new InputStreamReader(queryResultStream, UTF_8))
+          .lines()
+          .forEach(outputProcessor::processLine);
+    } catch (IOException | BuildException e) {
+      Logger.getInstance(WildcardTargetExpander.class)
+          .warn("Error running blaze query to expand the input target pattern", e);
+      return new ExpandedTargetsResult(outputProcessor.getTargetLabels(), BuildResult.FATAL_ERROR);
+    }
+    return new ExpandedTargetsResult(outputProcessor.getTargetLabels(), BuildResult.SUCCESS);
   }
 
   private static Predicate<String> handledRuleTypes(ProjectViewSet projectViewSet) {
