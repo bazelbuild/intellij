@@ -58,7 +58,7 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
     return runQuery(project, getQueryString(directories, shouldManualTargetSync), context);
   }
 
-  private static String getQueryString(ImportRoots directories, boolean allowManualTargetsSync) {
+  protected static String getQueryString(ImportRoots directories, boolean allowManualTargetsSync) {
     StringBuilder targets = new StringBuilder();
     targets.append(
         directories.rootDirectories().stream()
