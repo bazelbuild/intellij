@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.jar.JarInputStream;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 
 public class BlazeReloadFileAction extends AnAction {
@@ -44,6 +45,7 @@ public class BlazeReloadFileAction extends AnAction {
     public static final String ACTION_ID = "Debugger.ReloadFile";
 
     private static final Logger LOGGER = Logger.getInstance(BlazeReloadFileAction.class);
+    private static final Pattern INNER_CLASS_PATTERN = Pattern.compile("^(?:\\$\\w+)*$");
 
     public BlazeReloadFileAction(AnAction delegate) {
         super(
@@ -120,7 +122,8 @@ public class BlazeReloadFileAction extends AnAction {
                                             String entryFileName = entry.getName().substring(entry.getName().lastIndexOf(Paths.DELIM) + 1);
                                             String entryFileNameWithoutExtention = entryFileName.contains(".") ? entryFileName.substring(0, entryFileName.lastIndexOf('.')) : entryFileName;
                                             if (entryFileNameWithoutExtention.startsWith(filenameWithoutExtension) &&
-                                                    (entryFileNameWithoutExtention.length() == filenameWithoutExtension.length() || entryFileNameWithoutExtention.charAt(filenameWithoutExtension.length()) == '$')) {
+                                                    (entryFileNameWithoutExtention.length() == filenameWithoutExtension.length() ||
+                                                        INNER_CLASS_PATTERN.matcher(entryFileNameWithoutExtention.substring(filenameWithoutExtension.length())).matches())) {
                                                 File out = new File(tempClassDir, entryFileName);
                                                 Files.copy(jis, out.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
