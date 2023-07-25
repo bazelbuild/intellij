@@ -41,6 +41,8 @@ import java.util.zip.ZipEntry;
 
 public class BlazeReloadFileAction extends AnAction {
 
+    public static final String ACTION_ID = "Debugger.ReloadFile";
+
     private static final Logger LOGGER = Logger.getInstance(BlazeReloadFileAction.class);
 
     public BlazeReloadFileAction(AnAction delegate) {
