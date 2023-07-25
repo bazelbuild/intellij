@@ -18,6 +18,7 @@ package com.google.idea.blaze.qsync.project;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
@@ -27,6 +28,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
@@ -37,6 +39,7 @@ import com.google.idea.blaze.qsync.query.PackageSet;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -63,8 +66,10 @@ public abstract class BuildGraphData {
   public abstract PackageSet packages();
   /** A map from a file path to its target */
   abstract ImmutableMap<Path, Label> fileToTarget();
-  /** From source target to the rule that builds it. If multiple one is picked. */
-  abstract ImmutableMap<Label, Label> sourceOwner();
+
+  /** Map from build rule targets to their sources. */
+  abstract ImmutableSetMultimap<Label, Label> targetSources();
+
   /**
    * All the dependencies of a java rule.
    *
@@ -72,6 +77,7 @@ public abstract class BuildGraphData {
    * rule with no dependencies vs a rules that does not exist.
    */
   abstract ImmutableMap<Label, ImmutableSet<Label>> ruleDeps();
+
   /**
    * All the runtime dependencies of a java rule.
    *
@@ -79,6 +85,7 @@ public abstract class BuildGraphData {
    * rule with no runtime dependencies vs a rules that does not exist.
    */
   abstract ImmutableMap<Label, ImmutableSet<Label>> ruleRuntimeDeps();
+
   /** All dependencies external to this project */
   public abstract ImmutableSet<Label> projectDeps();
 
@@ -140,7 +147,7 @@ public abstract class BuildGraphData {
   @VisibleForTesting
   public static final BuildGraphData EMPTY =
       builder()
-          .sourceOwner(ImmutableMap.of())
+          .targetSources(ImmutableMultimap.of())
           .ruleDeps(ImmutableMap.of())
           .projectDeps(ImmutableSet.of())
           .packages(PackageSet.EMPTY)
@@ -156,7 +163,7 @@ public abstract class BuildGraphData {
 
     public abstract ImmutableMap.Builder<Path, Label> fileToTargetBuilder();
 
-    public abstract Builder sourceOwner(Map<Label, Label> value);
+    public abstract Builder targetSources(Multimap<Label, Label> value);
 
     public abstract ImmutableMap.Builder<Label, ImmutableSet<Label>> ruleDepsBuilder();
 
@@ -201,7 +208,15 @@ public abstract class BuildGraphData {
 
     public abstract Builder packages(PackageSet value);
 
-    public abstract BuildGraphData build();
+    abstract BuildGraphData autoBuild();
+
+    public final BuildGraphData build() {
+      BuildGraphData result = autoBuild();
+      // sourceOwners is memoized, but we choose to pay the cost of building it now so that
+      // it's done ay sync time rather than later on.
+      var unused = result.sourceOwners();
+      return result;
+    }
   }
 
   /** Represents a location on a file. */
@@ -253,9 +268,19 @@ public abstract class BuildGraphData {
     return Sets.intersection(builder.build(), projectDeps()).immutableCopy();
   }
 
+  @Memoized
+  public ImmutableSetMultimap<Label, Label> sourceOwners() {
+    return targetSources().inverse();
+  }
+
+  @Nullable
   public Label getTargetOwner(Path path) {
     Label syncTarget = fileToTarget().get(path);
-    return sourceOwner().get(syncTarget);
+    // If multiple targets, choose the one with fewest sources
+    // this should be cheap since source files are usually included in only a few targets (mostly 1)
+    return sourceOwners().get(syncTarget).stream()
+        .min(Comparator.comparingInt(label -> ruleDeps().get(label).size()))
+        .orElse(null);
   }
 
   @Nullable
@@ -290,13 +315,14 @@ public abstract class BuildGraphData {
   public List<Path> getAndroidSourceFiles() {
     List<Path> files = new ArrayList<>();
     for (Label source : javaSources()) {
-      Label owningTarget = sourceOwner().get(source);
-      if (androidTargets().contains(owningTarget)) {
-        Location location = locations().get(source);
-        if (location == null) {
-          continue;
+      for (Label owningTarget : sourceOwners().get(source)) {
+        if (androidTargets().contains(owningTarget)) {
+          Location location = locations().get(source);
+          if (location == null) {
+            continue;
+          }
+          files.add(location.file);
         }
-        files.add(location.file);
       }
     }
     return files;
