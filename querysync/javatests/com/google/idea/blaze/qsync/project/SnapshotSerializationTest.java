@@ -50,6 +50,7 @@ public class SnapshotSerializationTest {
             .setVcsState(
                 Optional.of(
                     new VcsState(
+                        "workspaceId",
                         "123",
                         ImmutableSet.of(
                             new WorkspaceFileChange(ADD, Path.of("project/path/Added.java")),
@@ -77,6 +78,7 @@ public class SnapshotSerializationTest {
             .setVcsState(
                 Optional.of(
                     new VcsState(
+                        "workspaceId",
                         "123",
                         ImmutableSet.of(),
                         Optional.of(Path.of("/snapshot/user/snapshot/1")))))

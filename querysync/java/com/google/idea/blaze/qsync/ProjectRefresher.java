@@ -76,7 +76,8 @@ public class ProjectRefresher {
         context);
   }
 
-  public RefreshOperation startPartialRefresh(RefreshParameters params, Context<?> context) {
+  public RefreshOperation startPartialRefresh(RefreshParameters params, Context<?> context)
+      throws BuildException {
     if (params.requiresFullUpdate(context)) {
       return startFullUpdate(context, params.latestProjectDefinition, params.latestVcsState);
     }

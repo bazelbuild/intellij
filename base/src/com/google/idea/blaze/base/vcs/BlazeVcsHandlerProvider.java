@@ -116,6 +116,7 @@ public interface BlazeVcsHandlerProvider {
               .call(
                   () ->
                       new VcsState(
+                          "default",
                           Futures.getDone(upstreamFuture),
                           Futures.getDone(workingSet).toWorkspaceFileChanges(),
                           Optional.empty()),
