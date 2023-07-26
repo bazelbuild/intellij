@@ -213,8 +213,8 @@ public abstract class BuildGraphData {
     public final BuildGraphData build() {
       BuildGraphData result = autoBuild();
       // sourceOwners is memoized, but we choose to pay the cost of building it now so that
-      // it's done ay sync time rather than later on.
-      var unused = result.sourceOwners();
+      // it's done by sync time rather than later on.
+      ImmutableSetMultimap<Label, Label> unused = result.sourceOwners();
       return result;
     }
   }
