@@ -30,6 +30,8 @@ public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSett
   // A place holder setting, to be changed later
   public boolean showDetailedInformationInEditor = true;
 
+  public boolean syncBeforeBuild = true;
+
   public static QuerySyncSettings getInstance() {
     return ApplicationManager.getApplication().getService(QuerySyncSettings.class);
   }
