@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.project.AutoImportProjectOpenProcessor;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.ui.UiUtil;
@@ -31,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TextFieldWithStoredHistory;
 import java.awt.Dimension;
 import java.io.File;
+import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -54,6 +57,22 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
     projectViewPathField.setHistorySize(BlazeNewProjectBuilder.HISTORY_SIZE);
     projectViewPathField.setText(userSettings.get(LAST_WORKSPACE_PATH, ""));
     projectViewPathField.setMinimumAndPreferredWidth(MINIMUM_FIELD_WIDTH);
+
+    WorkspaceRoot workspaceRoot = builder.getWorkspaceData() != null ? builder.getWorkspaceData().workspaceRoot() : null;
+    //Add managed project view to the list
+    if (workspaceRoot != null &&
+            workspaceRoot.path().resolve(AutoImportProjectOpenProcessor.MANAGED_PROJECT_RELATIVE_PATH).toFile().exists()) {
+      if (projectViewPathField.getText().isEmpty()) {
+        projectViewPathField.setText(AutoImportProjectOpenProcessor.MANAGED_PROJECT_RELATIVE_PATH);
+      } else {
+        List<String> history = projectViewPathField.getHistory();
+        if (!history.contains(AutoImportProjectOpenProcessor.MANAGED_PROJECT_RELATIVE_PATH)) {
+          history.add(0, AutoImportProjectOpenProcessor.MANAGED_PROJECT_RELATIVE_PATH);
+          projectViewPathField.setHistory(history);
+        }
+      }
+    }
+
 
     JButton button = new JButton("...");
     button.addActionListener(action -> chooseWorkspacePath());
