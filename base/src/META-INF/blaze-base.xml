@@ -527,7 +527,6 @@
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.base.run.smrunner.BlazeGenericTestEventsHandler" order="last"/>
     <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.base.projectview.section.sections.DirectorySection$DirectoriesProjectViewDefaultValueProvider"/>
     <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection$DefaultValueProvider"/>
-    <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.base.projectview.section.sections.SyncManualTargetsSection$DefaultValueProvider"/>
     <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.base.projectview.section.sections.TargetSection$TargetsProjectViewDefaultValueProvider"/>
     <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguagesSection$AdditionalLanguagesDefaultValueProvider"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.base.prefetch.ProtoPrefetchFileSource"/>

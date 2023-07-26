@@ -69,29 +69,4 @@ public class SyncManualTargetsSection {
       return "If set to true, project targets will be derived from the directories.";
     }
   }
-
-  static class DefaultValueProvider implements ProjectViewDefaultValueProvider {
-    @Override
-    public ProjectView addProjectViewDefaultValue(
-        BuildSystemName buildSystemName,
-        ProjectViewSet projectViewSet,
-        ProjectView topLevelProjectView) {
-      if (!topLevelProjectView.getSectionsOfType(KEY).isEmpty()) {
-        return topLevelProjectView;
-      }
-      return ProjectView.builder(topLevelProjectView)
-          .add(
-              TextBlockSection.of(
-                  TextBlock.of(
-                      "# Automatically targets tagged as manual to be synced")))
-          .add(ScalarSection.builder(KEY).set(false))
-          .add(TextBlockSection.of(TextBlock.newLine()))
-          .build();
-    }
-
-    @Override
-    public SectionKey<?, ?> getSectionKey() {
-      return KEY;
-    }
-  }
 }
