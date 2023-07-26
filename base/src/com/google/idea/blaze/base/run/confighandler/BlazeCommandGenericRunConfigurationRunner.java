@@ -154,14 +154,11 @@ public final class BlazeCommandGenericRunConfigurationRunner
                 invoker,
                 ImmutableList.copyOf(buildResultHelper.getBuildFlags()),
                 context);
-        if (invoker.getCommandRunner().canUseCli()) {
-          return getScopedProcessHandler(project, blazeCommand.build(), workspaceRoot);
-        }
         return isTest()
             ? getProcessHandlerForTests(
                 project, invoker, buildResultHelper, blazeCommand, workspaceRoot, context)
             : getProcessHandlerForNonTests(
-                project, invoker, buildResultHelper, blazeCommand, context);
+                project, invoker, buildResultHelper, blazeCommand, workspaceRoot, context);
       }
     }
 
@@ -222,7 +219,12 @@ public final class BlazeCommandGenericRunConfigurationRunner
         BuildInvoker invoker,
         BuildResultHelper buildResultHelper,
         BlazeCommand.Builder blazeCommandBuilder,
-        BlazeContext context) {
+        WorkspaceRoot workspaceRoot,
+        BlazeContext context)
+        throws ExecutionException {
+      if (invoker.getCommandRunner().canUseCli()) {
+        return getScopedProcessHandler(project, blazeCommandBuilder.build(), workspaceRoot);
+      }
       ProcessHandler processHandler = getGenericProcessHandler();
       ConsoleView consoleView = getConsoleBuilder().getConsole();
       context.addOutputSink(PrintOutput.class, new WritingOutputSink(consoleView));

@@ -144,9 +144,15 @@ def build_file_artifact_location(ctx):
         is_external_artifact(ctx.label),
     )
 
+# https://github.com/bazelbuild/bazel/issues/18966
+def _list_or_depset_to_list(list_or_depset):
+    if hasattr(list_or_depset, "to_list"):
+        return list_or_depset.to_list()
+    return list_or_depset
+
 def get_source_jars(output):
     if hasattr(output, "source_jars"):
-        return output.source_jars
+        return _list_or_depset_to_list(output.source_jars)
     if hasattr(output, "source_jar"):
         return [output.source_jar]
     return []
@@ -291,7 +297,7 @@ def update_set_in_dict(input_dict, key, other_set):
 
 def _get_output_mnemonic(ctx):
     """Gives the output directory mnemonic for some target context."""
-    return ctx.configuration.bin_dir.path.split("/")[1]
+    return ctx.bin_dir.path.split("/")[1]
 
 def _get_python_version(ctx):
     if ctx.attr._flag_hack[FlagHackInfo].incompatible_py2_outputs_are_suffixed:
@@ -748,7 +754,7 @@ def _build_filtered_gen_jar(ctx, target, java_outputs, gen_java_sources, srcjars
         elif jar.class_jar:
             jar_artifacts.append(jar.class_jar)
         if hasattr(jar, "source_jars") and jar.source_jars:
-            source_jar_artifacts.extend(jar.source_jars)
+            source_jar_artifacts.extend(_list_or_depset_to_list(jar.source_jars))
         elif hasattr(jar, "source_jar") and jar.source_jar:
             source_jar_artifacts.append(jar.source_jar)
 

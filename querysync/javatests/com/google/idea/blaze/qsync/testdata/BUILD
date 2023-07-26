@@ -119,3 +119,18 @@ java_library(
         "@com_google_guava_guava//jar",
     ],
 )
+
+java_library(
+    name = "project_protos",
+    testonly = 1,
+    srcs = ["ProjectProtos.java"],
+    deps = [
+        ":testdata",
+        "//querysync/java/com/google/idea/blaze/qsync",
+        "//querysync/java/com/google/idea/blaze/qsync/project",
+        "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
+        "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
+        "//shared:exception",
+        "@com_google_guava_guava//jar",
+    ],
+)
