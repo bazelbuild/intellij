@@ -13,7 +13,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 fun main(args: Array<String>) { // run with WORKSPACE file path as the first arg
     val out = Paths.get("${args[0]}.out")
     Files.copy(Paths.get(args[0]), out, StandardCopyOption.REPLACE_EXISTING)
-    bumpEap("232", out)
+    bumpRelease("2023.2", "232", out)
     bumpPlugins("232", out)
     bumpRelease("2023.1", "231", out)
     bumpPlugins("231", out)
@@ -157,8 +157,9 @@ private fun latestRelease(version: String, releasesPage: String, product: String
         "clion" -> "clion"
         else -> throw RuntimeException("No such product: $product")
     }
-    return "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/$productFamily/$product/$version.([\\d+])/$product-$version.[\\d+].zip".toRegex()
-        .findAll(releasesPage).maxBy { it.groupValues[1].toInt() }.value
+    return "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/$productFamily/$product/$version\\.?(\\d*)/$product-$version\\.?(\\d*).zip".toRegex()
+        .findAll(releasesPage).maxBy { it.groupValues[1].toIntOrNull() ?: 0 }.value
+
 }
 
 fun pluginLatestVersion(pluginId: String, major: String): String? {
