@@ -48,9 +48,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2023_1. This is required to build IJwB and run integration tests.
-IC_231_SHA = "ad17f138a87789c9e281e774a4138b9131717e59b2f21ede17f49f9ffee10c11"
+IC_231_SHA = "453980e0f2f56cf799df30e4378c65f3645ab1870276d13b1b7b5ebfbfb3e6e0"
 
-IC_231_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2023.1.4/ideaIC-2023.1.4.zip"
+IC_231_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2023.1.5/ideaIC-2023.1.5.zip"
 
 http_archive(
     name = "intellij_ce_2023_1",
@@ -60,9 +60,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2023_2. This is required to build IJwB and run integration tests.
-IC_232_SHA = "9feac2dc4f613dfc7051e96e9fab4fbbfe52737bc09376336f9641583886be1a"
+IC_232_SHA = "c9fd992d9c1510627bb07c5f1dc73cbe15b903fff8d8bcf71ef895580b3acdae"
 
-IC_232_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/232.8660.142-EAP-SNAPSHOT/ideaIC-232.8660.142-EAP-SNAPSHOT.zip"
+IC_232_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2023.2/ideaIC-2023.2.zip"
 
 http_archive(
     name = "intellij_ce_2023_2",
@@ -113,9 +113,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ue_2023_1. This is required to run UE-specific integration tests.
-IU_231_SHA = "8dced0ba2410bf18af5f8fdb5cff151581a36b562eade7e67793ae73fdef4b28"
+IU_231_SHA = "c6142e5b060a1f48257b3bdec840367e889d5ae80f8cf355dccd69524484ee6f"
 
-IU_231_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2023.1.4/ideaIU-2023.1.4.zip"
+IU_231_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2023.1.5/ideaIU-2023.1.5.zip"
 
 http_archive(
     name = "intellij_ue_2023_1",
@@ -125,9 +125,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ue_2023_2. This is required to run UE-specific integration tests.
-IU_232_SHA = "544183a9cd9537a117784b3a60e9ffbc6f30d60c5da11357e56043125ddf1458"
+IU_232_SHA = "e8587ec0344e6369ae3e986446cda6e9e738776a3b3becabea4cc81f633dffc2"
 
-IU_232_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/232.8660.142-EAP-SNAPSHOT/ideaIU-232.8660.142-EAP-SNAPSHOT.zip"
+IU_232_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2023.2/ideaIU-2023.2.zip"
 
 http_archive(
     name = "intellij_ue_2023_2",
@@ -189,9 +189,9 @@ http_archive(
 )
 
 # The plugin api for clion_2023_2. This is required to build CLwB\, and run integration tests.
-CLION_232_SHA = "9f33385561c5e136235b75041535e3f13e36d844dc7a3ebaf9009a256079b86f"
+CLION_232_SHA = "152c7814cf16c4ffda16edfc6c0827cd6a031e6c381f034260ccc806a406b3e3"
 
-CLION_232_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/232.8660.139-EAP-SNAPSHOT/clion-232.8660.139-EAP-SNAPSHOT.zip"
+CLION_232_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2023.2/clion-2023.2.zip"
 
 http_archive(
     name = "clion_2023_2",
@@ -271,9 +271,9 @@ http_archive(
     url = PYTHON_PLUGIN_231_URL,
 )
 
-PYTHON_PLUGIN_232_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/232.8660.142/PythonCore-232.8660.142.zip"
+PYTHON_PLUGIN_232_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/232.8660.185/PythonCore-232.8660.185.zip"
 
-PYTHON_PLUGIN_232_SHA = "09e95e7e2873b8f1692161fa62481bd6c49ef7225efaec99e28967ab13ae9bd5"
+PYTHON_PLUGIN_232_SHA = "ac69daca683885b62b8cd3d36308fc96363860b227d5d0e764243020fe6979dd"
 
 http_archive(
     name = "python_2023_2",
@@ -343,9 +343,9 @@ http_archive(
     url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/223.7571.182/org.jetbrains.plugins.go-223.7571.182.zip",
 )
 
-GO_PLUGIN_231_SHA = "20753c77b5b7ce8bf1ffc421efd648fb51adb7bd2bae40a0fce442726d92d6e0"
+GO_PLUGIN_231_SHA = "a8d277125ec1f6a2ba0190a7c456d6c39057e563596874ec432a8f278b3d6976"
 
-GO_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/231.9225.16/org.jetbrains.plugins.go-231.9225.16.zip"
+GO_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/231.9392.1/org.jetbrains.plugins.go-231.9392.1.zip"
 
 http_archive(
     name = "go_2023_1",
@@ -422,9 +422,9 @@ http_archive(
     url = SCALA_PLUGIN_231_URL,
 )
 
-SCALA_PLUGIN_232_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.2.14/org.intellij.scala-2023.2.14.zip"
+SCALA_PLUGIN_232_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.2.17/org.intellij.scala-2023.2.17.zip"
 
-SCALA_PLUGIN_232_SHA = "b1c22b708936211ae9a259c1f92bc6637236aee770d8f4c96e4e2db7eb6089b4"
+SCALA_PLUGIN_232_SHA = "069751b0add6dc9acfa60eaffae784ca645efb4514fcd9e5f5029f9509a3c585"
 
 http_archive(
     name = "scala_2023_2",
