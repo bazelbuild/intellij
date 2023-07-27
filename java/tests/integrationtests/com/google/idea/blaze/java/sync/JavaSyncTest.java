@@ -18,6 +18,8 @@ package com.google.idea.blaze.java.sync;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.dependencies.BlazeQueryDirectoryToTargetProvider;
+import com.google.idea.blaze.base.dependencies.DirectoryToTargetProvider;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -154,6 +156,83 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
     assertThat(blazeProjectData.getWorkspaceLanguageSettings().getWorkspaceType())
         .isEqualTo(WorkspaceType.JAVA);
   }
+
+  public void runWorkspaceSync() {
+    workspace.createFile(
+            new WorkspacePath("java/com/google/Source.java"),
+            "package com.google;",
+            "public class Source {}");
+
+    workspace.createFile(
+            new WorkspacePath("java/com/google/Other.java"),
+            "package com.google;",
+            "public class Other {}");
+
+    TargetMap targetMap =
+            TargetMapBuilder.builder()
+                    .addTarget(
+                            TargetIdeInfo.builder()
+                                    .setBuildFile(sourceRoot("java/com/google/BUILD"))
+                                    .setLabel("//java/com/google:lib")
+                                    .setKind("java_library")
+                                    .addTag("manual")
+                                    .addSource(sourceRoot("java/com/google/Source.java"))
+                                    .addSource(sourceRoot("java/com/google/Other.java")))
+                    .build();
+
+    setTargetMap(targetMap);
+
+    runBlazeSync(
+            BlazeSyncParams.builder()
+                    .setTitle("Sync")
+                    .setSyncMode(SyncMode.INCREMENTAL)
+                    .setSyncOrigin("test")
+                    .setAddProjectViewTargets(true)
+                    .build());
+  }
+
+  void mockBazelQueryDirectorProvider() {
+    DirectoryToTargetProvider.EP_NAME.getPoint().unregisterExtension(BlazeQueryDirectoryToTargetProvider.class);
+    registerExtensionFirst(DirectoryToTargetProvider.EP_NAME, new FakeBlazeQueryProvider());
+  }
+
+  @Test
+  public void testManualTargetSyncTrue() throws Exception {
+    mockBazelQueryDirectorProvider();
+
+    setProjectView(
+            "directories:",
+            "  java/com/google",
+            "derive_targets_from_directories: true",
+            "allow_manual_targets_sync: true");
+    runWorkspaceSync();
+
+    errorCollector.assertNoIssues();
+    List<SyncStats> syncStatsList = getSyncStats();
+    SyncStats syncStats = syncStatsList.get(0);
+
+    assertThat(syncStats.buildPhaseStats().get(0).targets()).hasSize(1);
+  }
+
+  @Test
+  public void testManualTargetSyncFalse() throws Exception {
+    mockBazelQueryDirectorProvider();
+
+    setProjectView(
+            "directories:",
+            "  java/com/google",
+            "derive_targets_from_directories: true",
+            "allow_manual_targets_sync: false");
+
+    runWorkspaceSync();
+
+    errorCollector.assertNoIssues();
+    List<SyncStats> syncStatsList = getSyncStats();
+    SyncStats syncStats = syncStatsList.get(0);
+
+    assertThat(syncStats.buildPhaseStats().get(0).targets()).hasSize(0);
+  }
+
 
   @Test
   public void testSimpleSyncLogging() throws Exception {
