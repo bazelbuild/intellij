@@ -176,5 +176,4 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.blazeJavaDebuggingSetupHandler"
                     interface="com.google.idea.blaze.java.run.BlazeJavaDebuggingSetupHandler"/>
   </extensionPoints>
-
 </idea-plugin>
