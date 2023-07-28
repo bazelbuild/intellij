@@ -21,6 +21,8 @@ import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.Argument;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
+import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
+import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -164,6 +166,61 @@ public class ExternalWorkspaceReferenceTest extends BuildFileIntegrationTestCase
         PsiUtils.findFirstChildOfClassRecursive(
             other.getKeywordArgument("dep"), StringLiteral.class);
     assertThat(label.getReferencedElement()).isEqualTo(target);
+  }
+
+  @Test
+  public void testRepoRelativeLoadInExternalWorkspace() {
+    createFileInExternalWorkspace("rules_go", new WorkspacePath("go/private/BUILD"));
+    BuildFile loadedBzl =
+        (BuildFile)
+            createFileInExternalWorkspace(
+                "rules_go",
+                new WorkspacePath("go/private/defs.bzl"),
+                "def go_library():",
+                "    pass");
+    createFileInExternalWorkspace("rules_go", new WorkspacePath("go/BUILD"));
+    BuildFile loadingBzl =
+        (BuildFile)
+            createFileInExternalWorkspace(
+                "rules_go",
+                new WorkspacePath("go/defs.bzl"),
+                "load(\"//go/private:defs.bzl\", \"go_library\")");
+
+    LoadStatement load = loadingBzl.firstChildOfClass(LoadStatement.class);
+    assertThat(load.getImportPsiElement().getReferencedElement()).isEqualTo(loadedBzl);
+
+    FunctionStatement function = loadedBzl.firstChildOfClass(FunctionStatement.class);
+    assertThat(function).isNotNull();
+
+    assertThat(load.getImportedSymbolElements()).hasLength(1);
+    assertThat(load.getImportedSymbolElements()[0].getLoadedElement()).isEqualTo(function);
+  }
+
+  @Test
+  public void testRelativeLoadInExternalWorkspace() {
+    createFileInExternalWorkspace("rules_go", new WorkspacePath("go/private/BUILD"));
+    BuildFile loadedBzl =
+        (BuildFile)
+            createFileInExternalWorkspace(
+                "rules_go",
+                new WorkspacePath("go/private/library.bzl"),
+                "def go_library():",
+                "    pass");
+    BuildFile loadingBzl =
+        (BuildFile)
+            createFileInExternalWorkspace(
+                "rules_go",
+                new WorkspacePath("go/private/defs.bzl"),
+                "load(\":library.bzl\", \"go_library\")");
+
+    LoadStatement load = loadingBzl.firstChildOfClass(LoadStatement.class);
+    assertThat(load.getImportPsiElement().getReferencedElement()).isEqualTo(loadedBzl);
+
+    FunctionStatement function = loadedBzl.firstChildOfClass(FunctionStatement.class);
+    assertThat(function).isNotNull();
+
+    assertThat(load.getImportedSymbolElements()).hasLength(1);
+    assertThat(load.getImportedSymbolElements()[0].getLoadedElement()).isEqualTo(function);
   }
 
   private PsiFile createFileInExternalWorkspace(
