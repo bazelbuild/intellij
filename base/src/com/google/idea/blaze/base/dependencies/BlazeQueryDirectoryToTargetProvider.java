@@ -51,13 +51,14 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
   @Override
   public List<TargetInfo> doExpandDirectoryTargets(
       Project project,
+      Boolean shouldManualTargetSync,
       ImportRoots directories,
       WorkspacePathResolver pathResolver,
       BlazeContext context) {
-    return runQuery(project, getQueryString(directories), context);
+    return runQuery(project, getQueryString(directories, shouldManualTargetSync), context);
   }
 
-  private static String getQueryString(ImportRoots directories) {
+  protected static String getQueryString(ImportRoots directories, boolean allowManualTargetsSync) {
     StringBuilder targets = new StringBuilder();
     targets.append(
         directories.rootDirectories().stream()
@@ -65,6 +66,10 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
             .collect(joining(" + ")));
     for (WorkspacePath excluded : directories.excludeDirectories()) {
       targets.append(" - " + TargetExpression.allFromPackageRecursive(excluded).toString());
+    }
+
+    if (allowManualTargetsSync) {
+      return targets.toString();
     }
 
     // exclude 'manual' targets, which shouldn't be built when expanding wildcard target patterns

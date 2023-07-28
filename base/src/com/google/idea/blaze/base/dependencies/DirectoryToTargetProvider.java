@@ -46,11 +46,12 @@ public interface DirectoryToTargetProvider {
   @Nullable
   static List<TargetInfo> expandDirectoryTargets(
       Project project,
+      Boolean shouldManualTargetSync,
       ImportRoots directories,
       WorkspacePathResolver pathResolver,
       BlazeContext context) {
     return Arrays.stream(EP_NAME.getExtensions())
-        .map(p -> p.doExpandDirectoryTargets(project, directories, pathResolver, context))
+        .map(p -> p.doExpandDirectoryTargets(project, shouldManualTargetSync, directories, pathResolver, context))
         .filter(Objects::nonNull)
         .findFirst()
         .orElse(null);
@@ -63,6 +64,7 @@ public interface DirectoryToTargetProvider {
   @Nullable
   List<TargetInfo> doExpandDirectoryTargets(
       Project project,
+      Boolean shouldManualTargetSync,
       ImportRoots directories,
       WorkspacePathResolver pathResolver,
       BlazeContext context);

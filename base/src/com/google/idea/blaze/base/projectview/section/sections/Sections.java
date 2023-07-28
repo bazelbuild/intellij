@@ -30,6 +30,7 @@ public class Sections {
           ImportSection.PARSER,
           DirectorySection.PARSER,
           AutomaticallyDeriveTargetsSection.PARSER,
+          SyncManualTargetsSection.PARSER,
           TargetSection.PARSER,
           WorkspaceTypeSection.PARSER,
           AdditionalLanguagesSection.PARSER,
