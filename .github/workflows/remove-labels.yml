@@ -2,7 +2,7 @@ name: Remove PR Labels
 
 on:
   pull_request_target:
-    types: ["closed"]
+    types: ["closed", "merged"]
 
 jobs:
   remove-label:
