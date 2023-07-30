@@ -19,9 +19,12 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.model.ProjectData;
+import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
+import com.google.idea.blaze.base.async.executor.ProgressiveWithResult;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.LibraryFilesProvider;
@@ -29,9 +32,24 @@ import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.java.libraries.AttachedSourceJarManager;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.JavaVfsSourceRootDetectionUtil;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.io.URLUtil;
+
 import java.io.File;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
@@ -138,6 +156,62 @@ public final class BlazeJarLibrary extends BlazeLibrary {
                       blazeProjectData.getArtifactLocationDecoder(), srcJar))
           .filter(Objects::nonNull)
           .collect(toImmutableList());
+    }
+
+    @Override
+    public ImmutableList<String> getClassFilesUrls(BlazeProjectData blazeProjectData) {
+      return getClassFiles(blazeProjectData).stream()
+              .map(this::pathToUrl)
+              .collect(toImmutableList());
+    }
+
+    @Override
+    public ImmutableList<String> getSourceFilesUrls(BlazeProjectData blazeProjectData) {
+      final ImmutableList<File> sourceFiles = getSourceFiles(blazeProjectData);
+      ImmutableList<String> jarFilesAsSourceRoots = sourceFiles.stream().map(this::pathToUrl).collect(toImmutableList());
+      if (!Registry.is("bazel.sync.detect.source.roots")) {
+        return jarFilesAsSourceRoots;
+      } else {
+        try {
+          return ProgressiveTaskWithProgressIndicator.builder(project, "Building targets")
+                  .setModality(ProgressiveTaskWithProgressIndicator.Modality.MODAL)
+                  .submitTaskWithResult(indicator -> {
+                    List<String> sourceFilesUrls = new LinkedList<>();
+                    for (File sourceFile : sourceFiles) {
+                      VirtualFile jarFile = VirtualFileManager.getInstance().findFileByUrl(pathToUrl(sourceFile));
+                      List<VirtualFile> candidates = Collections.emptyList();
+                      if (jarFile != null && jarFile.exists()) {
+                        candidates = JavaVfsSourceRootDetectionUtil.suggestRoots(jarFile, indicator);
+                      }
+                      if (!candidates.isEmpty()) {
+                        candidates.forEach(sourceVirtualFile -> sourceFilesUrls.add(sourceVirtualFile.getUrl()));
+                      }
+                    }
+                    return ImmutableList.copyOf(sourceFilesUrls);
+                  }).get();
+        } catch (InterruptedException | ExecutionException e) {
+          return jarFilesAsSourceRoots;
+        }
+      }
+    }
+
+    private String pathToUrl(File path) {
+      String name = path.getName();
+      boolean isJarFile =
+              FileUtilRt.extensionEquals(name, "jar")
+                      || FileUtilRt.extensionEquals(name, "srcjar")
+                      || FileUtilRt.extensionEquals(name, "zip");
+      // .jar files require an URL with "jar" protocol.
+      String protocol =
+              isJarFile
+                      ? StandardFileSystems.JAR_PROTOCOL
+                      : VirtualFileSystemProvider.getInstance().getSystem().getProtocol();
+      String filePath = FileUtil.toSystemIndependentName(path.getPath());
+      String url = VirtualFileManager.constructUrl(protocol, filePath);
+      if (isJarFile) {
+        url += URLUtil.JAR_SEPARATOR;
+      }
+      return url;
     }
 
     @Override

@@ -343,7 +343,7 @@
                  description="Enables opening the project view file the first time the project is imported"
                  key="bazel.project.import.open_project_view"/>
     <registryKey defaultValue="false"
-                 description="Scan for non-root source folders in source jars."
+                 description="Scan for non-root source folders in source jars. (requires re-sync)"
                  key="bazel.sync.detect.source.roots"/>
   </extensions>
 

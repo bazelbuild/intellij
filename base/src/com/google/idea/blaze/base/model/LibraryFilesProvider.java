@@ -31,10 +31,22 @@ public interface LibraryFilesProvider {
   ImmutableList<File> getClassFiles(BlazeProjectData blazeProjectData);
 
   /**
+   * Returns a list of files' urls that should be added to {@link Library.ModifiableModel} as
+   * OrderRootType.CLASSES.
+   */
+  ImmutableList<String> getClassFilesUrls(BlazeProjectData blazeProjectData);
+
+  /**
    * Returns a list of files that should be added to {@link Library.ModifiableModel} as
    * OrderRootType.SOURCES.
    */
   ImmutableList<File> getSourceFiles(BlazeProjectData blazeProjectData);
+
+  /**
+   * Returns a list of files' urls that should be added to {@link Library.ModifiableModel} as
+   * OrderRootType.SOURCES.
+   */
+  ImmutableList<String> getSourceFilesUrls(BlazeProjectData blazeProjectData);
 
   default boolean supportAnchors() {
     return false;

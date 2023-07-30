@@ -55,12 +55,12 @@ public class LibraryModifier {
   /** Writes the library content to its {@link Library.ModifiableModel}. */
   public void updateModifiableModel(BlazeProjectData blazeProjectData) {
     removeAllContents();
-    for (File classFile : libraryFilesProvider.getClassFiles(blazeProjectData)) {
-      addRoot(classFile, OrderRootType.CLASSES);
+    for (String classFileUrl : libraryFilesProvider.getClassFilesUrls(blazeProjectData)) {
+      addRoot(classFileUrl, OrderRootType.CLASSES);
     }
 
-    for (File sourceFile : libraryFilesProvider.getSourceFiles(blazeProjectData)) {
-      addRoot(sourceFile, OrderRootType.SOURCES);
+    for (String sourceFileUrl : libraryFilesProvider.getSourceFilesUrls(blazeProjectData)) {
+      addRoot(sourceFileUrl, OrderRootType.SOURCES);
     }
   }
 
@@ -74,44 +74,13 @@ public class LibraryModifier {
     return modelsProvider.getModifiableLibraryModel(library);
   }
 
-  private void addRoot(File file, OrderRootType orderRootType) {
-    if (!file.exists()) {
-      logger.warn("No local file found for " + file);
+  private void addRoot(String fileUrl, OrderRootType orderRootType) {
+    VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(fileUrl);
+    if (virtualFile == null || !virtualFile.exists()) {
+      logger.warn("No local file found for " + fileUrl);
       return;
     }
-    if (Registry.is("bazel.sync.detect.source.roots") && orderRootType == OrderRootType.SOURCES) {
-      VirtualFile jarFile = VirtualFileManager.getInstance().findFileByUrl(pathToUrl(file));
-      List<VirtualFile> candidates = Collections.emptyList();
-      if (jarFile != null) {
-        candidates = JavaVfsSourceRootDetectionUtil.suggestRoots(jarFile, new EmptyProgressIndicator());
-      }
-      if (!candidates.isEmpty()) {
-          candidates.forEach(candidate -> modifiableModel.addRoot(candidate, orderRootType));
-      } else {
-        modifiableModel.addRoot(pathToUrl(file), orderRootType);
-      }
-    } else {
-      modifiableModel.addRoot(pathToUrl(file), orderRootType);
-    }
-  }
-
-  private String pathToUrl(File path) {
-    String name = path.getName();
-    boolean isJarFile =
-        FileUtilRt.extensionEquals(name, "jar")
-            || FileUtilRt.extensionEquals(name, "srcjar")
-            || FileUtilRt.extensionEquals(name, "zip");
-    // .jar files require an URL with "jar" protocol.
-    String protocol =
-        isJarFile
-            ? StandardFileSystems.JAR_PROTOCOL
-            : VirtualFileSystemProvider.getInstance().getSystem().getProtocol();
-    String filePath = FileUtil.toSystemIndependentName(path.getPath());
-    String url = VirtualFileManager.constructUrl(protocol, filePath);
-    if (isJarFile) {
-      url += URLUtil.JAR_SEPARATOR;
-    }
-    return url;
+    modifiableModel.addRoot(fileUrl, orderRootType);
   }
 
   private void removeAllContents() {
