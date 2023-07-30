@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
@@ -124,7 +125,10 @@ public class ExternalFileProjectManagementHelper
     }
     boolean inProjectDirectories = AddSourceToProjectHelper.sourceInProjectDirectories(context);
     boolean alreadyBuilt = AddSourceToProjectHelper.sourceCoveredByProjectViewTargets(context);
-    if (alreadyBuilt && inProjectDirectories) {
+    // We do not want to add `/.ijwb` to the project view since it has no BUILD files
+    // This helps to avoid `ERROR: Skipping '//.ijwb/...:all': no targets found beneath '.ijwb'`
+    if (context.file.getPath().contains(String.format("/%s/", BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY))
+            || (alreadyBuilt && inProjectDirectories)) {
       return null;
     }
 
