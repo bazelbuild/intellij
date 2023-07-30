@@ -158,7 +158,7 @@ public final class BlazeJarLibrary extends BlazeLibrary {
         return jarFilesAsSourceRoots;
       } else {
         try {
-          return ProgressiveTaskWithProgressIndicator.builder(project, "Building targets")
+          return ProgressiveTaskWithProgressIndicator.builder(project, "Locating source roots in source path entry")
                   .setModality(ProgressiveTaskWithProgressIndicator.Modality.MODAL)
                   .submitTaskWithResult(indicator -> {
                     List<String> sourceFilesUrls = new LinkedList<>();
