@@ -1,0 +1,3 @@
+# TODO(b/255334320) Remove these 2 (and hopefully the entire zip -d invocation below)
+com/google/common/util/concurrent/ListenableFuture.class
+kotlin/Triple.class

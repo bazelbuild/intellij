@@ -1,0 +1,14 @@
+# TODO(b/255334320) Remove these 2 (and hopefully the entire zip -d invocation below)
+com/google/common/util/concurrent/ListenableFuture.class
+kotlin/Triple.class
+# TODO(b/255307289) Remove these. It may lead to problems if the collect lib in google3
+# is out of sync with that in IJ.
+# Note: we really want to zap c.g.c.collect.ImmutableList, but we
+# can't do that alone due to package private member access to/from
+# other classes in the same package. So we zap the whole package.
+# Then we need to zap a few other classes to avoid LinkageErrors.
+com/google/common/collect/*
+com/google/common/base/Function.class
+com/google/common/base/Predicate.class
+com/google/common/base/Supplier.class
+com/google/common/base/Joiner*.class

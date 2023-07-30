@@ -37,6 +37,8 @@ intellij_plugin(
 
 """
 
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
+
 _OptionalPluginXmlInfo = provider(fields = ["optional_plugin_xmls"])
 
 def _optional_plugin_xml_impl(ctx):
