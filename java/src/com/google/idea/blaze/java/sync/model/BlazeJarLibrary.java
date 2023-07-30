@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndi
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.LibraryFilesProvider;
@@ -33,13 +32,9 @@ import com.google.idea.blaze.java.libraries.JarCache;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.JavaVfsSourceRootDetectionUtil;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.io.URLUtil;
 
 import java.io.File;
 import java.util.Collections;
@@ -156,13 +151,6 @@ public final class BlazeJarLibrary extends BlazeLibrary {
     }
 
     @Override
-    public ImmutableList<String> getClassFilesUrls(BlazeProjectData blazeProjectData) {
-      return getClassFiles(blazeProjectData).stream()
-              .map(this::pathToUrl)
-              .collect(toImmutableList());
-    }
-
-    @Override
     public ImmutableList<String> getSourceFilesUrls(BlazeProjectData blazeProjectData) {
       final ImmutableList<File> sourceFiles = getSourceFiles(blazeProjectData);
       ImmutableList<String> jarFilesAsSourceRoots = sourceFiles.stream().map(this::pathToUrl).collect(toImmutableList());
@@ -190,25 +178,6 @@ public final class BlazeJarLibrary extends BlazeLibrary {
           return jarFilesAsSourceRoots;
         }
       }
-    }
-
-    private String pathToUrl(File path) {
-      String name = path.getName();
-      boolean isJarFile =
-              FileUtilRt.extensionEquals(name, "jar")
-                      || FileUtilRt.extensionEquals(name, "srcjar")
-                      || FileUtilRt.extensionEquals(name, "zip");
-      // .jar files require an URL with "jar" protocol.
-      String protocol =
-              isJarFile
-                      ? StandardFileSystems.JAR_PROTOCOL
-                      : VirtualFileSystemProvider.getInstance().getSystem().getProtocol();
-      String filePath = FileUtil.toSystemIndependentName(path.getPath());
-      String url = VirtualFileManager.constructUrl(protocol, filePath);
-      if (isJarFile) {
-        url += URLUtil.JAR_SEPARATOR;
-      }
-      return url;
     }
 
     @Override

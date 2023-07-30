@@ -16,8 +16,17 @@
 package com.google.idea.blaze.base.model;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.io.URLUtil;
+
 import java.io.File;
+
+import static com.google.common.collect.ImmutableList.toImmutableList;
 
 /** Provides files to be updated in {@link Library.ModifiableModel}. */
 public interface LibraryFilesProvider {
@@ -34,7 +43,11 @@ public interface LibraryFilesProvider {
    * Returns a list of files' urls that should be added to {@link Library.ModifiableModel} as
    * OrderRootType.CLASSES.
    */
-  ImmutableList<String> getClassFilesUrls(BlazeProjectData blazeProjectData);
+  default ImmutableList<String> getClassFilesUrls(BlazeProjectData blazeProjectData) {
+    return getClassFiles(blazeProjectData).stream()
+            .map(this::pathToUrl)
+            .collect(toImmutableList());
+  };
 
   /**
    * Returns a list of files that should be added to {@link Library.ModifiableModel} as
@@ -46,9 +59,34 @@ public interface LibraryFilesProvider {
    * Returns a list of files' urls that should be added to {@link Library.ModifiableModel} as
    * OrderRootType.SOURCES.
    */
-  ImmutableList<String> getSourceFilesUrls(BlazeProjectData blazeProjectData);
+  default ImmutableList<String> getSourceFilesUrls(BlazeProjectData blazeProjectData) {
+    return getSourceFiles(blazeProjectData).stream()
+            .map(this::pathToUrl)
+            .collect(toImmutableList());
+  }
 
   default boolean supportAnchors() {
     return false;
   }
+
+  default String pathToUrl(File path) {
+    String name = path.getName();
+    boolean isJarFile =
+            FileUtilRt.extensionEquals(name, "jar")
+                    || FileUtilRt.extensionEquals(name, "srcjar")
+                    || FileUtilRt.extensionEquals(name, "zip");
+    // .jar files require an URL with "jar" protocol.
+    String protocol =
+            isJarFile
+                    ? StandardFileSystems.JAR_PROTOCOL
+                    : VirtualFileSystemProvider.getInstance().getSystem().getProtocol();
+    String filePath = FileUtil.toSystemIndependentName(path.getPath());
+    String url = VirtualFileManager.constructUrl(protocol, filePath);
+    if (isJarFile) {
+      url += URLUtil.JAR_SEPARATOR;
+    }
+    return url;
+  }
+
+
 }
