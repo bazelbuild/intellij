@@ -15,26 +15,15 @@
  */
 package com.google.idea.blaze.base.sync.libraries;
 
-import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.LibraryFilesProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.Library.ModifiableModel;
-import com.intellij.openapi.roots.ui.configuration.JavaVfsSourceRootDetectionUtil;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.io.URLUtil;
-import java.io.File;
-import java.util.Collections;
-import java.util.List;
 
 /** Modifies {@link Library} content in {@link Library.ModifiableModel}. */
 public class LibraryModifier {
