@@ -82,6 +82,17 @@ public class LabelUtils {
     }
     int colonIndex = labelString.indexOf(':');
     if (isAbsolute(labelString)) {
+      if (labelString.startsWith("//") && blazePackage != null) {
+        // Labels of the form //packagePath:packageRelativeTarget inside an external workspace need
+        // to be resolved within that workspace.
+        Label originLabel = blazePackage.getPackageLabel();
+        if (originLabel != null) {
+          String originWorkspace = originLabel.externalWorkspaceName();
+          if (originWorkspace != null) {
+            labelString = "@" + originWorkspace + labelString;
+          }
+        }
+      }
       if (colonIndex != -1) {
         return Label.createIfValid(labelString);
       }
