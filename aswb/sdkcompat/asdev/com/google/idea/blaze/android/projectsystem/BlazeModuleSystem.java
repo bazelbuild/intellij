@@ -16,6 +16,8 @@
 package com.google.idea.blaze.android.projectsystem;
 
 import com.android.tools.idea.projectsystem.AndroidModuleSystem;
+import com.android.tools.idea.rendering.StudioModuleDependencies;
+import com.android.tools.module.ModuleDependencies;
 import com.intellij.openapi.module.Module;
 
 /** Blaze implementation of {@link AndroidModuleSystem}. */
@@ -23,5 +25,10 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
 
   BlazeModuleSystem(Module module) {
     super(module);
+  }
+
+  @Override
+  public ModuleDependencies getModuleDependencies() {
+    return new StudioModuleDependencies(getModule());
   }
 }
