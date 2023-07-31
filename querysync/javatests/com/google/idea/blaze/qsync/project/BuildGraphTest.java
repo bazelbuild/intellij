@@ -49,8 +49,8 @@ public class BuildGraphTest {
     assertThat(graph.getJavaSourceFiles())
         .containsExactly(TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java"));
     assertThat(graph.getAndroidSourceFiles()).isEmpty();
-    assertThat(graph.getTargetOwner(TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java")))
-        .isEqualTo(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps"));
+    assertThat(graph.getTargetOwners(TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java")))
+        .containsExactly(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps"));
     assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java")))
         .isEmpty();
   }
@@ -115,14 +115,15 @@ public class BuildGraphTest {
     // Sanity check:
     assertThat(graph.getJavaSourceFiles())
         .contains(TESTDATA_ROOT.resolve("multitarget/TestClassSingleTarget.java"));
-    // If a source file is included in more than one target, we prefer the one with fewer
-    // dependencies.
-    assertThat(graph.getTargetOwner(TESTDATA_ROOT.resolve("multitarget/TestClassMultiTarget.java")))
-        .isEqualTo(Label.of("//" + TESTDATA_ROOT + "/multitarget:nodeps"));
+    assertThat(
+            graph.getTargetOwners(TESTDATA_ROOT.resolve("multitarget/TestClassMultiTarget.java")))
+        .containsExactly(
+            Label.of("//" + TESTDATA_ROOT + "/multitarget:nodeps"),
+            Label.of("//" + TESTDATA_ROOT + "/multitarget:externaldep"));
     assertThat(
             graph.getFileDependencies(
                 TESTDATA_ROOT.resolve("multitarget/TestClassMultiTarget.java")))
-        .isEmpty();
+        .contains(Label.of("java/com/google/common/collect:collect"));
   }
 
   @Test
@@ -147,8 +148,8 @@ public class BuildGraphTest {
         .containsExactly(TESTDATA_ROOT.resolve("android/TestAndroidClass.java"));
     assertThat(graph.getAndroidSourceFiles())
         .containsExactly(TESTDATA_ROOT.resolve("android/TestAndroidClass.java"));
-    assertThat(graph.getTargetOwner(TESTDATA_ROOT.resolve("android/TestAndroidClass.java")))
-        .isEqualTo(Label.of("//" + TESTDATA_ROOT + "/android:android"));
+    assertThat(graph.getTargetOwners(TESTDATA_ROOT.resolve("android/TestAndroidClass.java")))
+        .containsExactly(Label.of("//" + TESTDATA_ROOT + "/android:android"));
     assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("android/TestAndroidClass.java")))
         .isEmpty();
     assertThat(graph.projectDeps()).isEmpty();

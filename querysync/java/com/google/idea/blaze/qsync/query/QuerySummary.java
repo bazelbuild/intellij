@@ -134,8 +134,13 @@ public abstract class QuerySummary {
           //   reduce the size of the output proto.
           Query.Rule.Builder rule =
               Query.Rule.newBuilder().setRuleClass(target.getRule().getRuleClass());
+          boolean noide = false;
           for (Build.Attribute a : target.getRule().getAttributeList()) {
-            if (a.getName().equals("srcs")) {
+            if (a.getName().equals("tags")) {
+              if (a.getStringListValueList().contains("no-ide")) {
+                noide = true;
+              }
+            } if (a.getName().equals("srcs")) {
               rule.addAllSources(a.getStringListValueList());
             } else if (DEPENDENCY_ATTRIBUTES.contains(a.getName())) {
               if (a.hasStringValue()) {
@@ -159,7 +164,9 @@ public abstract class QuerySummary {
               rule.putOtherAttributes(a.getName(), a.getStringValue());
             }
           }
-          ruleMap.put(target.getRule().getName(), rule.build());
+          if (!noide) {
+            ruleMap.put(target.getRule().getName(), rule.build());
+          }
           break;
         default:
           break;

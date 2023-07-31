@@ -52,13 +52,12 @@ public class QuerySyncSourceToTargetMap implements SourceToTargetMap {
     }
 
     Set<Label> buildTargets = new HashSet<>();
-    // TODO(mathewi) this returns a single owner of the source file, whereas the API we're
-    //  implementing  expects all such targets.
-    com.google.idea.blaze.common.Label targetOwner = snapshot.getTargetOwner(rel);
-    if (targetOwner != null) {
-      buildTargets.add(Label.create(targetOwner.toString()));
+    ImmutableCollection<com.google.idea.blaze.common.Label> targetOwners =
+        snapshot.getTargetOwners(rel);
+    if (targetOwners != null) {
+      targetOwners.stream().map(Label::create).forEach(buildTargets::add);
     } else {
-      logger.warn(String.format("No target owner found for file %s", rel));
+      logger.warn(String.format("No target owners found for file %s", rel));
     }
     return ImmutableList.copyOf(buildTargets);
   }
