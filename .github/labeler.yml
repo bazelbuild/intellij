@@ -16,8 +16,6 @@ awaiting-review:
 
 'product: Android Studio':
 - aswb/**/*
-- sdkcompat/**/*
-- examples/kotlin/**/*
 - base/**/*
 - intellij_platform_sdk/BUILD.android_studio213
 - intellij_platform_sdk/BUILD.android_studio221
@@ -27,23 +25,17 @@ awaiting-review:
 - intellij_platform_sdk/BUILD.android_studiodev
 
 'product: IntelliJ':
-- aspect/**/*
 - base/**/*
-- build_defs/**/*
 - examples/java/greetings_project/**/*
 - ijwb/**/*
 - kotlin/**/*
 - plugin_dev/**/*
-- shared/**/*
 - java/**/*
-- third_party/java/jdk/**/*
+- sdkcompat/**/*
+- examples/kotlin/**/*
 - javascript/**/*
-- third_party/javascript/**/*
 - python/**/*
-- third_party/python/**/*
-- querysync/**/*
 - scala/**/*
-- third_party/scala/**/*
 - proto/**/*
 - skylark/**/*
 - intellij_platform_sdk/BUILD.idea221
@@ -63,4 +55,3 @@ awaiting-review:
 - examples/go/with_proto/**/*
 - gazelle/**/*
 - golang/**/*
-- third_party/go/**/*
