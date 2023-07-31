@@ -119,4 +119,10 @@ public class QuerySummaryTest {
             TestData.ROOT.resolve("buildincludes/includes.bzl"),
             TestData.ROOT.resolve("buildincludes/BUILD"));
   }
+
+  @Test
+  public void testNoIde() throws IOException {
+    QuerySummary qs = QuerySummary.create(TestData.getPathFor(TestData.JAVA_LIBRARY_NO_IDE_QUERY).toFile());
+    assertThat(qs.getRulesMap().keySet()).containsExactly(Label.of(TestData.ROOT_PACKAGE + "/noide:yeside"));
+  }
 }

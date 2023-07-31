@@ -13,6 +13,14 @@ genquery(
 )
 
 genquery(
+    name = "java_library_no_ide_query",
+    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/noide:*",
+    opts = ["--output=streamed_proto"],
+    scope = scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/noide") +
+            scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/noide:yeside"),
+)
+
+genquery(
     name = "java_library_external_dep_query",
     expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/externaldep:*",
     opts = ["--output=streamed_proto"],
@@ -111,6 +119,7 @@ java_library(
         ":java_library_multi_targets",
         ":java_library_nested_package",
         ":java_library_no_deps_query",
+        ":java_library_no_ide_query",
         ":java_library_proto_dep_query",
         ":java_library_transitive_dep_query",
     ],

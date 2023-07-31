@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync.action;
 
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
+import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.PopupPosititioner;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.icons.AllIcons.Actions;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -25,7 +26,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  * Action to build dependencies and enable analysis.
  *
  * <p>It can operate on a source file, BUILD file or package. See {@link
- * com.google.idea.blaze.base.qsync.DependencyTracker#getProjectTargets(BlazeContext, List)} for a
+ * com.google.idea.blaze.base.qsync.DependencyTracker#getProjectTargets(BlazeContext, Path)} for a
  * description of what targets dependencies aren built for in each case.
  */
 public class BuildDependenciesAction extends BlazeProjectAction {
@@ -73,8 +73,6 @@ public class BuildDependenciesAction extends BlazeProjectAction {
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     BuildDependenciesHelper helper = new BuildDependenciesHelper(project);
-    helper
-        .getRelativePathToEnableAnalysisFor(e.getData(CommonDataKeys.VIRTUAL_FILE))
-        .ifPresent(helper::enableAnalysis);
+    helper.enableAnalysis(e, PopupPosititioner.showAtMousePointerOrCentered(e));
   }
 }

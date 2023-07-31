@@ -33,6 +33,7 @@ public enum TestData {
   JAVA_LIBRARY_MULTI_TARGETS("multitarget"),
   JAVA_LIBRARY_NESTED_PACKAGE("nested"),
   JAVA_LIBRARY_NO_DEPS_QUERY("nodeps"),
+  JAVA_LIBRARY_NO_IDE_QUERY("noide"),
   JAVA_LIBRARY_PROTO_DEP_QUERY("protodep"),
   JAVA_LIBRARY_TRANSITIVE_DEP_QUERY("transitivedep", "externaldep"),
   BUILDINCLUDES_QUERY("buildincludes");

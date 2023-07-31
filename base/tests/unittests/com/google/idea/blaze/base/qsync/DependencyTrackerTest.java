@@ -18,13 +18,13 @@ package com.google.idea.blaze.base.qsync;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.qsync.DependencyTracker.RequestedTargets;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.QuerySyncTestUtils;
 import com.google.idea.blaze.qsync.TestDataSyncRunner;
+import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -41,15 +41,19 @@ public class DependencyTrackerTest {
 
   @Test
   public void computeRequestedTargets_srcFile() throws Exception {
+    BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
     Optional<RequestedTargets> targets =
         DependencyTracker.computeRequestedTargets(
-            context,
-            syncRunner.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY),
-            ImmutableList.of(
-                Iterables.getOnlyElement(
-                        TestData.getRelativeSourcePathsFor(
-                            TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY))
-                    .resolve(Path.of("TestClassExternalDep.java"))));
+            snapshot,
+            DependencyTracker.getProjectTargets(
+                    context,
+                    snapshot,
+                    Iterables.getOnlyElement(
+                            TestData.getRelativeSourcePathsFor(
+                                TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY))
+                        .resolve(Path.of("TestClassExternalDep.java")))
+                .getUnambiguousTargets()
+                .orElseThrow());
     assertThat(targets).isPresent();
     Path targetName = Iterables.getOnlyElement(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.srcPaths);
     assertThat(targets.get().buildTargets)
@@ -60,14 +64,18 @@ public class DependencyTrackerTest {
 
   @Test
   public void computeRequestedTargets_buildFile_multiTarget() throws Exception {
+    BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_MULTI_TARGETS);
     Optional<RequestedTargets> targets =
         DependencyTracker.computeRequestedTargets(
-            context,
-            syncRunner.sync(TestData.JAVA_LIBRARY_MULTI_TARGETS),
-            ImmutableList.of(
-                Iterables.getOnlyElement(
-                        TestData.getRelativeSourcePathsFor(TestData.JAVA_LIBRARY_MULTI_TARGETS))
-                    .resolve(Path.of("BUILD"))));
+            snapshot,
+            DependencyTracker.getProjectTargets(
+                    context,
+                    snapshot,
+                    Iterables.getOnlyElement(
+                            TestData.getRelativeSourcePathsFor(TestData.JAVA_LIBRARY_MULTI_TARGETS))
+                        .resolve(Path.of("BUILD")))
+                .getUnambiguousTargets()
+                .orElseThrow());
     assertThat(targets).isPresent();
     Path targetName = Iterables.getOnlyElement(TestData.JAVA_LIBRARY_MULTI_TARGETS.srcPaths);
     assertThat(targets.get().buildTargets)
@@ -80,14 +88,19 @@ public class DependencyTrackerTest {
 
   @Test
   public void computeRequestedTargets_buildFile_nested() throws Exception {
+    BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_NESTED_PACKAGE);
     Optional<RequestedTargets> targets =
         DependencyTracker.computeRequestedTargets(
-            context,
-            syncRunner.sync(TestData.JAVA_LIBRARY_NESTED_PACKAGE),
-            ImmutableList.of(
-                Iterables.getOnlyElement(
-                        TestData.getRelativeSourcePathsFor(TestData.JAVA_LIBRARY_NESTED_PACKAGE))
-                    .resolve(Path.of("BUILD"))));
+            snapshot,
+            DependencyTracker.getProjectTargets(
+                    context,
+                    snapshot,
+                    Iterables.getOnlyElement(
+                            TestData.getRelativeSourcePathsFor(
+                                TestData.JAVA_LIBRARY_NESTED_PACKAGE))
+                        .resolve(Path.of("BUILD")))
+                .getUnambiguousTargets()
+                .orElseThrow());
     assertThat(targets).isPresent();
     Path targetName = Iterables.getOnlyElement(TestData.JAVA_LIBRARY_NESTED_PACKAGE.srcPaths);
     assertThat(targets.get().buildTargets)
@@ -98,13 +111,17 @@ public class DependencyTrackerTest {
 
   @Test
   public void computeRequestedTargets_directory() throws Exception {
+    BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_NESTED_PACKAGE);
     Optional<RequestedTargets> targets =
         DependencyTracker.computeRequestedTargets(
-            context,
-            syncRunner.sync(TestData.JAVA_LIBRARY_NESTED_PACKAGE),
-            ImmutableList.of(
-                Iterables.getOnlyElement(
-                    TestData.getRelativeSourcePathsFor(TestData.JAVA_LIBRARY_NESTED_PACKAGE))));
+            snapshot,
+            DependencyTracker.getProjectTargets(
+                    context,
+                    snapshot,
+                    Iterables.getOnlyElement(
+                        TestData.getRelativeSourcePathsFor(TestData.JAVA_LIBRARY_NESTED_PACKAGE)))
+                .getUnambiguousTargets()
+                .orElseThrow());
     assertThat(targets).isPresent();
     Path targetName = Iterables.getOnlyElement(TestData.JAVA_LIBRARY_NESTED_PACKAGE.srcPaths);
     assertThat(targets.get().buildTargets)
