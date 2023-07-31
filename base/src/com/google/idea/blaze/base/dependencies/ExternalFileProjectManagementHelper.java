@@ -125,7 +125,7 @@ public class ExternalFileProjectManagementHelper
     }
     boolean inProjectDirectories = AddSourceToProjectHelper.sourceInProjectDirectories(context);
     boolean alreadyBuilt = AddSourceToProjectHelper.sourceCoveredByProjectViewTargets(context);
-    // We do not want to add `/.ijwb` to the project view since it has no BUILD files
+    // We do not want to add `/.ijwb` (neither `.clwb` or `.aswb`) to the project view since it has no BUILD files
     // This helps to avoid `ERROR: Skipping '//.ijwb/...:all': no targets found beneath '.ijwb'`
     if (context.file.getPath().contains(String.format("/%s/", BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY))
             || (alreadyBuilt && inProjectDirectories)) {
