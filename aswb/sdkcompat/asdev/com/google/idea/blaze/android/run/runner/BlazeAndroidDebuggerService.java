@@ -129,7 +129,7 @@ public interface BlazeAndroidDebuggerService {
     }
   }
 
-  private static boolean isNdkPluginLoaded() {
+  static boolean isNdkPluginLoaded() {
     return PluginManagerCore.getLoadedPlugins().stream()
         .anyMatch(
             d -> d.isEnabled() && d.getPluginId().getIdString().equals("com.android.tools.ndk"));
