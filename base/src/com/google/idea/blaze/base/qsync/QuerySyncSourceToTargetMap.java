@@ -56,7 +56,7 @@ public class QuerySyncSourceToTargetMap implements SourceToTargetMap {
     //  implementing  expects all such targets.
     com.google.idea.blaze.common.Label targetOwner = snapshot.getTargetOwner(rel);
     if (targetOwner != null) {
-      buildTargets.add(Label.create(targetOwner.toString()));
+      buildTargets.add(Label.create(targetOwner));
     } else {
       logger.warn(String.format("No target owner found for file %s", rel));
     }
