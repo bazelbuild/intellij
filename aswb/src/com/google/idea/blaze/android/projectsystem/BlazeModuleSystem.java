@@ -23,6 +23,7 @@ import com.android.projectmodel.ExternalLibraryImpl;
 import com.android.projectmodel.SelectiveResourceFolder;
 import com.android.tools.idea.projectsystem.AndroidModuleSystem;
 import com.android.tools.idea.projectsystem.DependencyScopeType;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.libraries.UnpackedAars;
