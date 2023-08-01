@@ -1,3 +1,7 @@
+v2023.08.01
+===========
+
+
 v2023.07.18
 ===========
 * We now support C++ strip_include_prefix parameter (done in Resolve _virtual_includes to local or external workspace #5059)
