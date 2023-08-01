@@ -24,7 +24,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import java.nio.file.Path;
+import com.intellij.openapi.vfs.VirtualFile;
 import java.util.Arrays;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
@@ -49,10 +49,10 @@ public class BuildDependenciesForOpenFilesAction extends BlazeProjectAction {
     if (!helper.canEnableAnalysisNow()) {
       return;
     }
-    ImmutableList<Path> paths =
+    ImmutableList<VirtualFile> paths =
         Arrays.stream(FileEditorManager.getInstance(project).getAllEditors())
             .map(FileEditor::getFile)
-            .map(helper::getRelativePathToEnableAnalysisFor)
+            .map(helper::getFileToEnableAnalysisFor)
             .flatMap(Optional::stream)
             .collect(toImmutableList());
     if (!paths.isEmpty()) {

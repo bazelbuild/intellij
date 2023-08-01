@@ -15,14 +15,17 @@
  */
 package com.google.idea.blaze.base.qsync.action;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.qsync.TargetsToBuild;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Helper class for actions that build dependencies for source files, to allow the core logic to be
@@ -42,7 +45,7 @@ public class BuildDependenciesHelper {
     return !BlazeSyncStatus.getInstance(project).syncInProgress();
   }
 
-  Optional<Path> getRelativePathToEnableAnalysisFor(VirtualFile virtualFile) {
+  Optional<VirtualFile> getFileToEnableAnalysisFor(VirtualFile virtualFile) {
     if (virtualFile == null || !virtualFile.isInLocalFileSystem()) {
       return Optional.empty();
     }
@@ -56,14 +59,23 @@ public class BuildDependenciesHelper {
     if (!syncManager.canEnableAnalysisFor(relative)) {
       return Optional.empty();
     }
-    return Optional.of(relative);
+    return Optional.of(virtualFile);
   }
 
-  void enableAnalysis(Path workspaceRelativePath) {
-    enableAnalysis(ImmutableList.of(workspaceRelativePath));
+  void enableAnalysis(VirtualFile file) {
+    TargetsToBuild targets = syncManager.getTargetsToBuild(file);
+    syncManager.enableAnalysis(
+        targets
+            .getUnambiguousTargets() // TODO(mathewi) resolve ambiguous targets
+            .orElse(ImmutableSet.of(targets.targets().stream().findFirst().orElseThrow())));
   }
 
-  void enableAnalysis(ImmutableList<Path> workspaceRelativePaths) {
-    syncManager.enableAnalysis(workspaceRelativePaths);
+  void enableAnalysis(Collection<VirtualFile> files) {
+    syncManager.enableAnalysis(
+        files.stream()
+            .map(syncManager::getTargetsToBuild)
+            .map(TargetsToBuild::targets) // TODO(mathewi) resolve ambiguous targets
+            .flatMap(Set::stream)
+            .collect(ImmutableSet.toImmutableSet()));
   }
 }

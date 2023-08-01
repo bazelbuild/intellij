@@ -70,24 +70,28 @@ public abstract class BlazeProjectSnapshot {
   }
 
   /**
+   * Given a path to a file it returns the targets that own the file.
+   *
+   * @param path a workspace relative path.
+   */
+  @Nullable
+  public ImmutableSet<Label> getTargetOwners(Path path) {
+    return graph().getTargetOwners(path);
+  }
+
+  /**
    * Given a path to a file it returns the target that owns the file. Note that in general there
    * could be multiple targets that compile a file, but we try to choose the smallest one, as it
    * would have everything the file needs to be compiled.
    *
    * @param path a workspace relative path.
+   * @deprecated Since the "choose the smallest" logic used in here is problematic, please use
+   *     {@link #getTargetOwners(Path)} instead.
    */
   @Nullable
+  @Deprecated
   public Label getTargetOwner(Path path) {
-    return graph().getTargetOwner(path);
-  }
-
-  /**
-   * For a given path to a file, returns all the targets outside the project that this file needs to
-   * be edited fully.
-   */
-  @Nullable
-  public ImmutableSet<Label> getFileDependencies(Path path) {
-    return graph().getFileDependencies(path);
+    return graph().selectLabelWithLeastDeps(graph().getTargetOwners(path));
   }
 
   /** Returns mapping of targets to {@link BuildTarget} */

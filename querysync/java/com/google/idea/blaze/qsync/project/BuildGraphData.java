@@ -16,6 +16,7 @@
 package com.google.idea.blaze.qsync.project;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -60,10 +61,13 @@ public abstract class BuildGraphData {
 
   /** A map from target to file on disk for all source files */
   public abstract ImmutableMap<Label, Location> locations();
+
   /** A set of all the targets that show up in java rules 'src' attributes */
   public abstract ImmutableSet<Label> javaSources();
+
   /** A set of all the BUILD files */
   public abstract PackageSet packages();
+
   /** A map from a file path to its target */
   abstract ImmutableMap<Path, Label> fileToTarget();
 
@@ -110,16 +114,15 @@ public abstract class BuildGraphData {
    */
   public Collection<BuildTarget> getReverseDepsForSource(Path sourcePath) {
 
-    Label targetOwner = getTargetOwner(sourcePath);
+    ImmutableSet<Label> targetOwners = getTargetOwners(sourcePath);
 
-    if (targetOwner == null) {
+    if (targetOwners == null || targetOwners.isEmpty()) {
       return ImmutableList.of();
     }
 
-    Queue<Label> toVisit = Queues.newArrayDeque();
+    Queue<Label> toVisit = Queues.newArrayDeque(targetOwners);
     Set<Label> visited = Sets.newHashSet();
 
-    toVisit.add(targetOwner);
     while (!toVisit.isEmpty()) {
       Label next = toVisit.remove();
       if (visited.add(next)) {
@@ -274,22 +277,35 @@ public abstract class BuildGraphData {
   }
 
   @Nullable
-  public Label getTargetOwner(Path path) {
+  public ImmutableSet<Label> getTargetOwners(Path path) {
     Label syncTarget = fileToTarget().get(path);
-    // If multiple targets, choose the one with fewest sources
-    // this should be cheap since source files are usually included in only a few targets (mostly 1)
-    return sourceOwners().get(syncTarget).stream()
+    return sourceOwners().get(syncTarget);
+  }
+
+  /**
+   * @deprecated Choosing a target based on the number of deps it has is not a good strategy, as we
+   *     could end up selecting one that doesn't build in the current config. Allow the user to
+   *     choose, or require the projects source -> target mapping to be unambiguous instead.
+   */
+  @Deprecated
+  @Nullable
+  public Label selectLabelWithLeastDeps(Collection<Label> candidates) {
+    return candidates.stream()
         .min(Comparator.comparingInt(label -> ruleDeps().get(label).size()))
         .orElse(null);
   }
 
+  @VisibleForTesting
   @Nullable
   ImmutableSet<Label> getFileDependencies(Path path) {
-    Label target = getTargetOwner(path);
-    if (target == null) {
+    ImmutableSet<Label> targets = getTargetOwners(path);
+    if (targets == null) {
       return null;
     }
-    return getTransitiveExternalDependencies(target);
+    return targets.stream()
+        .map(this::getTransitiveExternalDependencies)
+        .flatMap(Set::stream)
+        .collect(toImmutableSet());
   }
 
   /** Returns a list of all the source files of the project, relative to the workspace root. */
