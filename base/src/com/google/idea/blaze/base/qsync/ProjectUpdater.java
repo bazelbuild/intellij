@@ -53,6 +53,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.Library.ModifiableModel;
+import com.intellij.openapi.vfs.VfsUtil;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -256,7 +257,10 @@ public class ProjectUpdater implements BlazeProjectListener {
       if (srcJars.contains(url)) {
         foundSrcJars.add(url);
       } else {
-        modifiableModel.removeRoot(url, OrderRootType.SOURCES);
+        final String file = VfsUtil.urlToPath(url);
+        if (workspaceRoot.isInWorkspace(new File(file)) || Path.of(file).startsWith(projectBase)) {
+          modifiableModel.removeRoot(url, OrderRootType.SOURCES);
+        }
       }
     }
     for (String missing : Sets.difference(srcJars, foundSrcJars)) {
