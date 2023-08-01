@@ -1,6 +1,6 @@
 """Aspects to build and collect project dependencies."""
 
-ALWAYS_BUILD_RULES = "java_proto_library,java_lite_proto_library,java_mutable_proto_library,kt_proto_library_helper"
+ALWAYS_BUILD_RULES = "java_proto_library,java_lite_proto_library,java_mutable_proto_library,kt_proto_library_helper,java_grpc_library,java_stubby_library,aar_import"
 
 def _package_dependencies_impl(target, ctx):
     file_name = target.label.name + ".target-info.txt"
@@ -38,6 +38,7 @@ def _encode_target_info_proto(target):
                 ide_aars = target_info["ide_aars"],
                 gen_srcs = target_info["gen_srcs"],
                 srcs = target_info["srcs"],
+                srcjars = target_info["srcjars"],
             ),
         )
     return proto.encode_text(struct(artifacts = contents))
@@ -153,6 +154,7 @@ def _collect_own_artifacts(
     own_ide_aar_files = []
     own_gensrc_files = []
     own_src_files = []
+    own_srcjar_files = []
 
     if must_build_main_artifacts:
         # For rules that we do not follow dependencies of (either because they don't
@@ -198,8 +200,16 @@ def _collect_own_artifacts(
                     if not file.is_source:
                         own_gensrc_files.append(file)
 
-    if not target_is_within_project_scope and hasattr(rule.attr, "srcs"):
-        own_src_files = rule.attr.srcs
+    if not target_is_within_project_scope:
+        if hasattr(rule.attr, "srcs"):
+            for src in rule.attr.srcs:
+                for file in src.files.to_list():
+                    if file.is_source:
+                        own_src_files.append(file.path)
+        if hasattr(rule.attr, "srcjar"):
+            if rule.attr.srcjar:
+                for file in rule.attr.srcjar.files.to_list():
+                    own_srcjar_files.append(file.path)
 
     return (
         own_jar_files,
@@ -207,6 +217,7 @@ def _collect_own_artifacts(
         own_ide_aar_files,
         own_gensrc_files,
         own_src_files,
+        own_srcjar_files,
     )
 
 def _collect_own_and_dependency_artifacts(
@@ -216,7 +227,7 @@ def _collect_own_and_dependency_artifacts(
         always_build_rules,
         generate_aidl_classes,
         target_is_within_project_scope):
-    own_jar_files, own_jar_depsets, own_ide_aar_files, own_gensrc_files, own_src_files = _collect_own_artifacts(
+    own_jar_files, own_jar_depsets, own_ide_aar_files, own_gensrc_files, own_src_files, own_srcjar_files = _collect_own_artifacts(
         target,
         ctx,
         dependency_infos,
@@ -226,7 +237,7 @@ def _collect_own_and_dependency_artifacts(
     )
 
     has_own_artifacts = (
-        len(own_jar_files) + len(own_jar_depsets) + len(own_ide_aar_files) + len(own_gensrc_files) + len(own_src_files)
+        len(own_jar_files) + len(own_jar_depsets) + len(own_ide_aar_files) + len(own_gensrc_files) + len(own_src_files) + len(own_srcjar_files)
     ) > 0
 
     target_to_artifacts = {}
@@ -240,7 +251,8 @@ def _collect_own_and_dependency_artifacts(
             "jars": [_output_relative_path(file.path) for file in jars],
             "ide_aars": [_output_relative_path(file.path) for file in ide_aars],
             "gen_srcs": [_output_relative_path(file.path) for file in gen_srcs],
-            "srcs": [file.path for target in own_src_files for file in target.files.to_list()],
+            "srcs": own_src_files,
+            "srcjars": own_srcjar_files,
         }
 
     own_and_transitive_jar_depsets = list(own_jar_depsets)  # Copy to prevent changes to own_jar_depsets.
@@ -296,6 +308,7 @@ def _collect_dependencies_core_impl(
             within_scope_own_jar_depsets,
             within_scope_own_ide_aar_files,
             within_scope_own_gensrc_files,
+            _,
             _,
         ) = _collect_own_artifacts(
             target,

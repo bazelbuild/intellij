@@ -116,3 +116,18 @@ java_test(
         "@truth//jar",
     ],
 )
+
+java_test(
+    name = "SrcJarProjectUpdaterTest",
+    size = "small",
+    srcs = ["SrcJarProjectUpdaterTest.java"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync",
+        "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata:project_protos",
+        "@com_google_guava_guava//jar",
+        "@junit//jar",
+        "@truth//jar",
+    ],
+)

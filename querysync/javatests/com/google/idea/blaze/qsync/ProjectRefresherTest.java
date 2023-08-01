@@ -67,7 +67,8 @@ public class ProjectRefresherTest {
   public void testStartPartialRefresh_pluginVersionChanged() throws Exception {
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
-            .setVcsState(Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())))
+            .setVcsState(
+                Optional.of(new VcsState("workspaceId", "1", ImmutableSet.of(), Optional.empty())))
             .setQuerySummary(QuerySummary.create(Query.Summary.newBuilder().setVersion(-1).build()))
             .build();
 
@@ -85,7 +86,11 @@ public class ProjectRefresherTest {
   public void testStartPartialRefresh_vcsSnapshotUnchanged_existingProjectSnapshot()
       throws Exception {
     VcsState vcsState =
-        new VcsState("1", ImmutableSet.of(), Optional.of(Path.of("/my/workspace/.snapshot/1")));
+        new VcsState(
+            "workspaceId",
+            "1",
+            ImmutableSet.of(),
+            Optional.of(Path.of("/my/workspace/.snapshot/1")));
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
             .setVcsState(Optional.of(vcsState))
@@ -111,7 +116,10 @@ public class ProjectRefresherTest {
             .setVcsState(
                 Optional.of(
                     new VcsState(
-                        "1", ImmutableSet.of(), Optional.of(Path.of("/my/workspace/.snapshot/1")))))
+                        "workspaceId",
+                        "1",
+                        ImmutableSet.of(),
+                        Optional.of(Path.of("/my/workspace/.snapshot/1")))))
             .setQuerySummary(QuerySummary.EMPTY)
             .build();
     RefreshOperation update =
@@ -125,10 +133,11 @@ public class ProjectRefresherTest {
   }
 
   @Test
-  public void testStartPartialRefresh_upstreamRevisionChange() throws Exception {
+  public void testStartPartialRefresh_workspaceChange() throws Exception {
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
-            .setVcsState(Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())))
+            .setVcsState(
+                Optional.of(new VcsState("workspace1", "1", ImmutableSet.of(), Optional.empty())))
             .build();
 
     RefreshOperation update =
@@ -136,7 +145,25 @@ public class ProjectRefresherTest {
             .startPartialRefresh(
                 QuerySyncTestUtils.LOGGING_CONTEXT,
                 project,
-                Optional.of(new VcsState("2", ImmutableSet.of(), Optional.empty())),
+                Optional.of(new VcsState("workspace2", "1", ImmutableSet.of(), Optional.empty())),
+                project.projectDefinition());
+    assertThat(update).isInstanceOf(FullProjectUpdate.class);
+  }
+
+  @Test
+  public void testStartPartialRefresh_upstreamRevisionChange() throws Exception {
+    PostQuerySyncData project =
+        PostQuerySyncData.EMPTY.toBuilder()
+            .setVcsState(
+                Optional.of(new VcsState("workspaceId", "1", ImmutableSet.of(), Optional.empty())))
+            .build();
+
+    RefreshOperation update =
+        createRefresher()
+            .startPartialRefresh(
+                QuerySyncTestUtils.LOGGING_CONTEXT,
+                project,
+                Optional.of(new VcsState("workspaceId", "2", ImmutableSet.of(), Optional.empty())),
                 project.projectDefinition());
     assertThat(update).isInstanceOf(FullProjectUpdate.class);
   }
@@ -149,6 +176,7 @@ public class ProjectRefresherTest {
             .setVcsState(
                 Optional.of(
                     new VcsState(
+                        "workspaceId",
                         "1",
                         ImmutableSet.of(
                             new WorkspaceFileChange(Operation.ADD, Path.of("package/path/BUILD"))),
@@ -165,7 +193,7 @@ public class ProjectRefresherTest {
             .startPartialRefresh(
                 QuerySyncTestUtils.LOGGING_CONTEXT,
                 project,
-                Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())),
+                Optional.of(new VcsState("workspaceId", "1", ImmutableSet.of(), Optional.empty())),
                 project.projectDefinition());
 
     assertThat(update).isInstanceOf(PartialProjectRefresh.class);
@@ -181,6 +209,7 @@ public class ProjectRefresherTest {
             .setVcsState(
                 Optional.of(
                     new VcsState(
+                        "workspaceId",
                         "1",
                         ImmutableSet.of(
                             new WorkspaceFileChange(
@@ -198,7 +227,7 @@ public class ProjectRefresherTest {
             .startPartialRefresh(
                 QuerySyncTestUtils.LOGGING_CONTEXT,
                 project,
-                Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())),
+                Optional.of(new VcsState("workspaceId", "1", ImmutableSet.of(), Optional.empty())),
                 project.projectDefinition());
 
     assertThat(update).isInstanceOf(PartialProjectRefresh.class);
@@ -214,7 +243,8 @@ public class ProjectRefresherTest {
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//package/path:rule"))
-            .setVcsState(Optional.of(new VcsState("1", workingSet, Optional.empty())))
+            .setVcsState(
+                Optional.of(new VcsState("workspaceId", "1", workingSet, Optional.empty())))
             .setProjectDefinition(
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("package")),
@@ -227,7 +257,7 @@ public class ProjectRefresherTest {
             .startPartialRefresh(
                 QuerySyncTestUtils.LOGGING_CONTEXT,
                 project,
-                Optional.of(new VcsState("1", workingSet, Optional.empty())),
+                Optional.of(new VcsState("workspaceId", "1", workingSet, Optional.empty())),
                 project.projectDefinition());
 
     assertThat(update).isInstanceOf(PartialProjectRefresh.class);
@@ -245,7 +275,8 @@ public class ProjectRefresherTest {
     PostQuerySyncData project =
         PostQuerySyncData.EMPTY.toBuilder()
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//package/path:rule"))
-            .setVcsState(Optional.of(new VcsState("1", workingSet, Optional.empty())))
+            .setVcsState(
+                Optional.of(new VcsState("workspaceId", "1", workingSet, Optional.empty())))
             .setProjectDefinition(
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("package")),
@@ -258,7 +289,7 @@ public class ProjectRefresherTest {
             .startPartialRefresh(
                 QuerySyncTestUtils.LOGGING_CONTEXT,
                 project,
-                Optional.of(new VcsState("1", workingSet, Optional.empty())),
+                Optional.of(new VcsState("workspaceId", "1", workingSet, Optional.empty())),
                 project.projectDefinition());
 
     assertThat(update).isInstanceOf(NoopProjectRefresh.class);
@@ -272,6 +303,7 @@ public class ProjectRefresherTest {
             .setVcsState(
                 Optional.of(
                     new VcsState(
+                        "workspaceId",
                         "1",
                         ImmutableSet.of(
                             new WorkspaceFileChange(
@@ -289,7 +321,7 @@ public class ProjectRefresherTest {
             .startPartialRefresh(
                 QuerySyncTestUtils.LOGGING_CONTEXT,
                 project,
-                Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty())),
+                Optional.of(new VcsState("workspaceId", "1", ImmutableSet.of(), Optional.empty())),
                 project.projectDefinition());
 
     assertThat(update).isInstanceOf(PartialProjectRefresh.class);

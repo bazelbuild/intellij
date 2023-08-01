@@ -196,22 +196,21 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
   private ProjectView defaultEmptyProjectView() {
     Builder projectViewBuilder = ProjectView.builder();
-
-    projectViewBuilder.add(
-        ListSection
-            .builder(DirectorySection.KEY)
-            .add(DirectoryEntry.include(new WorkspacePath(".")))
-            .build()
-    );
-
-    projectViewBuilder.add(TextBlockSection.of(TextBlock.newLine()));
-
-    projectViewBuilder.add(
-        ScalarSection
-            .builder(AutomaticallyDeriveTargetsSection.KEY)
-            .set(false)
-            .build()
-    );
+    projectViewBuilder.add(TextBlockSection.of(TextBlock.of(
+            "# This is a projectview file generated automatically during bazel project auto-import ",
+            "# For more documentation, please visit https://ij.bazel.build/docs/project-views.html",
+            "# If your repository contains predefined .projectview files, you use 'import' directive to include them.",
+            "# Otherwise, please specify 'directories' and 'targets' you want to be imported",
+            "# ",
+            "# By default we keep your 'directories' and 'targets' sections empty, so nothing is imported.",
+            "# Please uncomment them and put the correct data there, and then run 'Sync' again" ,
+            "",
+            "# directories: ",
+            "#  <your directory here>",
+            "# targets: ",
+            "#  <your directory here>",
+            ""
+    )));
 
     return projectViewBuilder.build();
   }

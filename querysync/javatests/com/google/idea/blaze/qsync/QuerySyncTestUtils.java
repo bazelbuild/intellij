@@ -43,7 +43,7 @@ public class QuerySyncTestUtils {
       QuerySyncTestUtils::inferJavaPackageFromPath;
 
   public static final Optional<VcsState> CLEAN_VCS_STATE =
-      Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty()));
+      Optional.of(new VcsState("workspaceId", "1", ImmutableSet.of(), Optional.empty()));
 
   public static QuerySummary getQuerySummary(TestData genQueryName) throws IOException {
     return QuerySummary.create(TestData.getPathFor(genQueryName).toFile());

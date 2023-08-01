@@ -27,6 +27,7 @@ import com.google.idea.blaze.common.Output;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -349,9 +350,11 @@ public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
   }
 
   private boolean handleExceptionInternal(String description, Throwable t) {
-    if (t instanceof CancellationException) {
+    if (t instanceof CancellationException
+        || t instanceof ProcessCanceledException
+        || isUserCancelledBuild(t)) {
       logger.info(description + ": cancelled.", t);
-      output(PrintOutput.error("Cancelled"));
+      output(PrintOutput.error("Operation cancelled by user."));
       setCancelled();
       return false;
     } else if (isExceptionError(t)) {
@@ -371,5 +374,9 @@ public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
       return ((BuildException) e).isIdeError();
     }
     return true;
+  }
+
+  private boolean isUserCancelledBuild(Throwable e) {
+    return this.isCancelled() && (e instanceof BuildException);
   }
 }

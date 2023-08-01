@@ -93,6 +93,7 @@ message Library {
   string name = 1;
   /** classes.jar directories */
   repeated JarDirectory classes_jar = 2;
+  repeated LibrarySource sources = 3;
 }
 
 /**
@@ -104,4 +105,11 @@ message Library {
 message JarDirectory {
   string path = 1;
   bool recursive = 2;
+}
+
+/**
+ * Represents a library source root.
+ */
+message LibrarySource {
+  string srcjar_path = 1;
 }
