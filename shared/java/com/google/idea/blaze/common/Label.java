@@ -85,6 +85,10 @@ public class Label {
     }
   }
 
+  public Label siblingWithName(String name) {
+    return fromPackageAndName(getPackage(), name);
+  }
+
   /** When this label refers to a source file, returns the workspace relative path to that file. */
   public Path toFilePath() {
     return getPackage().resolve(getName());

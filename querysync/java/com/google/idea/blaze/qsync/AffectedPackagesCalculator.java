@@ -202,6 +202,13 @@ public abstract class AffectedPackagesCalculator {
         .flatMap(Optional::stream)
         .forEach(result::addAffectedPackage);
 
+    // Packages that had errors when we ran the last query may not strictly be affected, but we
+    // should re-query them anyway to ensure the errors are visible and handled correctly (unless
+    // they have been deleted).
+    lastQuery().getPackagesWithErrors().stream()
+        .filter(effectivePackages::contains)
+        .forEach(result::addAffectedPackage);
+
     // warn about adds/modifications to files outside of any build package
     ImmutableList<Path> unownedSources =
         nonBuildEdits.stream()

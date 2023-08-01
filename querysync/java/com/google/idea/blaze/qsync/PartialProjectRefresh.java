@@ -150,6 +150,7 @@ class PartialProjectRefresh implements RefreshOperation {
     return QuerySummary.newBuilder()
         .putAllSourceFiles(newSourceFiles)
         .putAllRules(newRules)
+        .putAllPackagesWithErrors(partialQuery.getPackagesWithErrors())
         .build();
   }
 }
