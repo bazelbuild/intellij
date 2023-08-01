@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync.settings;
 
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.NlsContexts.ConfigurableName;
@@ -41,7 +42,12 @@ public class QuerySyncConfigurable implements Configurable {
     panel.add(displayDetailsText);
 
     syncBeforeBuild = new JBCheckBox("Sync automatically before building dependencies");
-    panel.add(syncBeforeBuild);
+    if (QuerySync.isSyncBeforeBuildEnabled()) {
+      panel.add(syncBeforeBuild);
+    } else {
+      // Disable sync before build if the experiment is disabled
+      syncBeforeBuild.setSelected(false);
+    }
   }
 
   @Override
