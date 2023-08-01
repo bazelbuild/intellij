@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
@@ -58,8 +57,8 @@ public class BuildDependenciesAction extends BlazeProjectAction {
     presentation.setText(NAME);
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     BuildDependenciesHelper helper = new BuildDependenciesHelper(project);
-    Optional<Path> relativePath = helper.getRelativePathToEnableAnalysisFor(virtualFile);
-    if (relativePath.isEmpty()) {
+    Optional<VirtualFile> fileToEnableAnalysisFor = helper.getFileToEnableAnalysisFor(virtualFile);
+    if (fileToEnableAnalysisFor.isEmpty()) {
       presentation.setEnabledAndVisible(false);
       return;
     }
@@ -74,7 +73,7 @@ public class BuildDependenciesAction extends BlazeProjectAction {
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     BuildDependenciesHelper helper = new BuildDependenciesHelper(project);
     helper
-        .getRelativePathToEnableAnalysisFor(e.getData(CommonDataKeys.VIRTUAL_FILE))
+        .getFileToEnableAnalysisFor(e.getData(CommonDataKeys.VIRTUAL_FILE))
         .ifPresent(helper::enableAnalysis);
   }
 }

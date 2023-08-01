@@ -191,8 +191,23 @@ public class QuerySyncProject {
     }
   }
 
-  public void build(BlazeContext context, List<Path> wps) throws IOException, BuildException {
-    if (getDependencyTracker().buildDependenciesForFile(context, wps)) {
+  /**
+   * Returns the list of project targets related to the given workspace file.
+   *
+   * @param context Context
+   * @param workspaceRelativePath Workspace relative file path to find targets for. This may be a
+   *     source file, directory or BUILD file.
+   * @return Corresponding project targets. For a source file, this is the targets that build that
+   *     file. For a BUILD file, it's the set or targets defined in that file. For a directory, it's
+   *     the set of all targets defined in all build packages within the directory (recursively).
+   */
+  public TargetsToBuild getProjectTargets(BlazeContext context, Path workspaceRelativePath) {
+    return dependencyTracker.getProjectTargets(context, workspaceRelativePath);
+  }
+
+  public void build(BlazeContext context, Set<Label> projectTargets)
+      throws IOException, BuildException {
+    if (getDependencyTracker().buildDependenciesForTargets(context, projectTargets)) {
       BlazeProjectSnapshot newSnapshot =
           artifactTracker.updateSnapshot(snapshotHolder.getCurrent().orElseThrow());
       onNewSnapshot(context, newSnapshot);
@@ -208,30 +223,22 @@ public class QuerySyncProject {
     return dependencyTracker;
   }
 
-  public void enableAnalysis(BlazeContext context, PsiFile psiFile) {
-    Path path = Paths.get(psiFile.getVirtualFile().getPath());
-    Path rel = workspaceRoot.path().relativize(path);
-    enableAnalysis(context, ImmutableList.of(rel));
-  }
-
-  public void enableAnalysis(BlazeContext context, ImmutableList<Path> workspaceRelativePaths) {
+  public void enableAnalysis(BlazeContext context, Set<Label> projectTargets) {
     try {
       if (QuerySyncSettings.getInstance().syncBeforeBuild) {
         syncWithCurrentSnapshot(context);
       }
       context.output(
           PrintOutput.output(
-              "Building dependencies for:\n  " + Joiner.on("\n  ").join(workspaceRelativePaths)));
-      build(context, workspaceRelativePaths);
+              "Building dependencies for:\n  " + Joiner.on("\n  ").join(projectTargets)));
+      build(context, projectTargets);
     } catch (Exception e) {
       context.handleException("Failed to build dependencies", e);
     }
   }
 
   public boolean canEnableAnalysisFor(Path workspacePath) {
-    return !getDependencyTracker()
-        .getProjectTargets(BlazeContext.create(), ImmutableList.of(workspacePath))
-        .isEmpty();
+    return !getProjectTargets(BlazeContext.create(), workspacePath).isEmpty();
   }
 
   public void enableRenderJar(BlazeContext context, PsiFile psiFile) {
@@ -257,8 +264,7 @@ public class QuerySyncProject {
     }
     Set<Label> pendingTargets =
         dependencyTracker.getPendingTargets(workspaceRoot.relativize(virtualFile));
-    int unsynced = pendingTargets == null ? 0 : pendingTargets.size();
-    return unsynced == 0;
+    return pendingTargets == null || pendingTargets.isEmpty();
   }
 
   /**

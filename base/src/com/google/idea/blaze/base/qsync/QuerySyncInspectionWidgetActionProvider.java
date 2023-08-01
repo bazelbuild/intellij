@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurable;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
@@ -25,6 +26,7 @@ import com.intellij.icons.AllIcons.Actions;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
@@ -89,9 +91,13 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = editor.getProject();
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      QuerySyncManager.getInstance(project).enableAnalysis(psiFile);
+      QuerySyncManager syncManager = QuerySyncManager.getInstance(e.getProject());
+      TargetsToBuild targets =
+          syncManager.getTargetsToBuild(e.getData(CommonDataKeys.VIRTUAL_FILE));
+      syncManager.enableAnalysis(
+          targets
+              .getUnambiguousTargets() // TODO(mathewi) resolve ambiguous targets
+              .orElse(ImmutableSet.of(targets.targets().stream().findFirst().orElseThrow())));
     }
 
     @Override
