@@ -33,6 +33,10 @@ public class QuerySync {
   private static final Supplier<Boolean> COMPOSE_ENABLED =
       Suppliers.memoize(new BoolExperiment("aswb.query.sync.enable.compose", false)::getValue);
 
+  /** Enabled sync before build for Query Sync. */
+  private static final Supplier<Boolean> SYNC_BEFORE_BUILD_ENABLED =
+      Suppliers.memoize(new BoolExperiment("query.sync.before.build", false)::getValue);
+
   private QuerySync() {}
 
   public static boolean isEnabled() {
@@ -41,6 +45,10 @@ public class QuerySync {
 
   public static boolean isComposeEnabled() {
     return isEnabled() && COMPOSE_ENABLED.get();
+  }
+
+  public static boolean isSyncBeforeBuildEnabled() {
+    return SYNC_BEFORE_BUILD_ENABLED.get();
   }
 
   public static void assertNotEnabled(String reason) {

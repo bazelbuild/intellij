@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync.settings;
 
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -30,7 +31,7 @@ public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSett
   // A place holder setting, to be changed later
   public boolean showDetailedInformationInEditor = true;
 
-  public boolean syncBeforeBuild = true;
+  public boolean syncBeforeBuild = QuerySync.isSyncBeforeBuildEnabled();
 
   public static QuerySyncSettings getInstance() {
     return ApplicationManager.getApplication().getService(QuerySyncSettings.class);
