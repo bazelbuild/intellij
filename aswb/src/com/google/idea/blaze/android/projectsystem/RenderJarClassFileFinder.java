@@ -140,17 +140,23 @@ public class RenderJarClassFileFinder implements ClassFileFinder {
     }
 
     if (QuerySync.isEnabled()) {
-      ArtifactTracker artifactTracker = QuerySyncManager.getInstance(project).getArtifactTracker();
-      // TODO(b/283280194): Setup fqcn -> target and target -> Render jar mappings to avoid
-      // iterating over all render jars when trying to locate class for fqcn.
-      // TODO(b/284002836): Collect metrics on time taken to iterate over the jars
-      for (File renderJar : artifactTracker.getRenderJars()) {
-        VirtualFile renderResolveJarVF =
-            VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(renderJar);
-        if (renderResolveJarVF != null) {
-          return findClassInJar(renderResolveJarVF, fqcn);
+      if (QuerySync.isComposeEnabled()) {
+        ArtifactTracker artifactTracker =
+            QuerySyncManager.getInstance(project).getArtifactTracker();
+        // TODO(b/283280194): Setup fqcn -> target and target -> Render jar mappings to avoid
+        // iterating over all render jars when trying to locate class for fqcn.
+        // TODO(b/284002836): Collect metrics on time taken to iterate over the jars
+        for (File renderJar : artifactTracker.getRenderJars()) {
+          VirtualFile renderResolveJarVf =
+              VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(renderJar);
+          if (renderResolveJarVf != null) {
+            return findClassInJar(renderResolveJarVf, fqcn);
+          }
+          log.warn(String.format("Could not find class `%1$s` with Query Sync", fqcn));
+          return null;
         }
-        log.warn(String.format("Could not find class `%1$s` with Query Sync", fqcn));
+      } else {
+        // Disable this class for Query Sync if Compose is not enabled
         return null;
       }
     }
