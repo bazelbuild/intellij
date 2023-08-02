@@ -62,19 +62,19 @@ public class QuerySyncConfigurable implements Configurable {
 
   @Override
   public boolean isModified() {
-    return settings.showDetailedInformationInEditor != displayDetailsText.isSelected()
-        || settings.syncBeforeBuild != syncBeforeBuild.isSelected();
+    return settings.showDetailedInformationInEditor() != displayDetailsText.isSelected()
+        || settings.syncBeforeBuild() != syncBeforeBuild.isSelected();
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    settings.showDetailedInformationInEditor = displayDetailsText.isSelected();
-    settings.syncBeforeBuild = syncBeforeBuild.isSelected();
+    settings.enableShowDetailedInformationInEditor(displayDetailsText.isSelected());
+    settings.enableSyncBeforeBuild(syncBeforeBuild.isSelected());
   }
 
   @Override
   public void reset() {
-    displayDetailsText.setSelected(settings.showDetailedInformationInEditor);
-    syncBeforeBuild.setSelected(settings.syncBeforeBuild);
+    displayDetailsText.setSelected(settings.showDetailedInformationInEditor());
+    syncBeforeBuild.setSelected(settings.syncBeforeBuild());
   }
 }

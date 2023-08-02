@@ -225,7 +225,7 @@ public class QuerySyncProject {
 
   public void enableAnalysis(BlazeContext context, Set<Label> projectTargets) {
     try {
-      if (QuerySyncSettings.getInstance().syncBeforeBuild) {
+      if (QuerySyncSettings.getInstance().syncBeforeBuild()) {
         syncWithCurrentSnapshot(context);
       }
       context.output(

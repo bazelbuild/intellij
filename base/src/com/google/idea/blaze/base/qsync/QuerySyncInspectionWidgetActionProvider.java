@@ -117,7 +117,7 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
 
       presentation.setEnabled(true);
       if (toBuild.type() == TargetsToBuild.Type.SOURCE_FILE
-          && QuerySyncSettings.getInstance().showDetailedInformationInEditor) {
+          && QuerySyncSettings.getInstance().showDetailedInformationInEditor()) {
 
         int missing = buildDepsHelper.getSourceFileMissingDepsCount(toBuild);
         if (missing > 0) {
