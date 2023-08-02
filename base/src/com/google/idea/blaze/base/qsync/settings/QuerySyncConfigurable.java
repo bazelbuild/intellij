@@ -15,66 +15,83 @@
  */
 package com.google.idea.blaze.base.qsync.settings;
 
-import com.google.idea.blaze.base.qsync.QuerySync;
+import com.intellij.openapi.options.BoundSearchableConfigurable;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.NlsContexts.ConfigurableName;
+import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.ui.components.JBCheckBox;
-import javax.swing.BoxLayout;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ui.dsl.builder.BuilderKt;
+import com.intellij.ui.dsl.builder.Cell;
+import com.intellij.ui.dsl.builder.MutableProperty;
+import com.intellij.ui.dsl.builder.Row;
+import javax.swing.AbstractButton;
+import javax.swing.JLabel;
+import kotlin.Unit;
 
 /** A configuration page for the settings dialog for query sync. */
-public class QuerySyncConfigurable implements Configurable {
-
-  private final JPanel panel;
-  private final JBCheckBox displayDetailsText;
-  private final JBCheckBox syncBeforeBuild;
-
+public class QuerySyncConfigurable extends BoundSearchableConfigurable implements Configurable {
   private final QuerySyncSettings settings = QuerySyncSettings.getInstance();
 
   public QuerySyncConfigurable() {
-    panel = new JPanel();
-    panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-
-    displayDetailsText = new JBCheckBox("Display detailed dependency text in the editor");
-    panel.add(displayDetailsText);
-
-    syncBeforeBuild = new JBCheckBox("Sync automatically before building dependencies");
-    if (QuerySync.isSyncBeforeBuildEnabled()) {
-      panel.add(syncBeforeBuild);
-    } else {
-      // Disable sync before build if the experiment is disabled
-      syncBeforeBuild.setSelected(false);
-    }
+    super(/* displayName= */ "Query Sync", /* helpTopic= */ "", /* _id= */ "query.sync");
   }
 
   @Override
-  public @ConfigurableName String getDisplayName() {
-    return "Query Sync";
-  }
+  public DialogPanel createPanel() {
+    return BuilderKt.panel(
+        p -> {
+          Row unusedDisplayDetailsOptionRow =
+              p.row(
+                  /* label= */ ((JLabel) null),
+                  /* init= */ r -> {
+                    Cell<JBCheckBox> unusedDisplayDetailsCheckBox =
+                        r.checkBox("Display detailed dependency text in the editor")
+                            .bind(
+                                /* componentGet= */ AbstractButton::isSelected,
+                                /* componentSet= */ (jbCheckBox, selected) -> {
+                                  jbCheckBox.setSelected(selected);
+                                  return Unit.INSTANCE;
+                                },
+                                /* prop= */ new MutableProperty<Boolean>() {
+                                  @Override
+                                  public Boolean get() {
+                                    return settings.showDetailedInformationInEditor();
+                                  }
 
-  @Override
-  public @Nullable JComponent createComponent() {
-    return panel;
-  }
+                                  @Override
+                                  public void set(Boolean selected) {
+                                    settings.enableShowDetailedInformationInEditor(selected);
+                                  }
+                                });
+                    return Unit.INSTANCE;
+                  });
+          if (!settings.enableSyncBeforeBuildByExperimentFile()) {
+            Row unusedSyncBeforeBuildOptionRow =
+                p.row(
+                    /* label= */ ((JLabel) null),
+                    /* init= */ r -> {
+                      Cell<JBCheckBox> unusedSyncBeforeBuild =
+                          r.checkBox("Sync automatically before building dependencies")
+                              .bind(
+                                  /* componentGet= */ AbstractButton::isSelected,
+                                  /* componentSet= */ (jbCheckBox, selected) -> {
+                                    jbCheckBox.setSelected(selected);
+                                    return Unit.INSTANCE;
+                                  },
+                                  /* prop= */ new MutableProperty<Boolean>() {
+                                    @Override
+                                    public Boolean get() {
+                                      return settings.syncBeforeBuild();
+                                    }
 
-  @Override
-  public boolean isModified() {
-    return settings.showDetailedInformationInEditor() != displayDetailsText.isSelected()
-        || settings.syncBeforeBuild() != syncBeforeBuild.isSelected();
-  }
-
-  @Override
-  public void apply() throws ConfigurationException {
-    settings.enableShowDetailedInformationInEditor(displayDetailsText.isSelected());
-    settings.enableSyncBeforeBuild(syncBeforeBuild.isSelected());
-  }
-
-  @Override
-  public void reset() {
-    displayDetailsText.setSelected(settings.showDetailedInformationInEditor());
-    syncBeforeBuild.setSelected(settings.syncBeforeBuild());
+                                    @Override
+                                    public void set(Boolean selected) {
+                                      settings.enableSyncBeforeBuild(selected);
+                                    }
+                                  });
+                      return Unit.INSTANCE;
+                    });
+          }
+          return Unit.INSTANCE;
+        });
   }
 }
