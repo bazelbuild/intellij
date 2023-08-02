@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.cppimpl.debug;
 
 import com.android.ddmlib.Client;
 import com.android.tools.ndk.run.editor.AutoAndroidDebuggerState;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.concurrency.Promise;
@@ -32,5 +33,10 @@ public class BlazeAutoAndroidDebugger extends BlazeAutoAndroidDebuggerBase {
     } else {
       return super.attachToClient(project, client, state);
     }
+  }
+
+  @Override
+  protected boolean isNativeDeployment(Project project, Module debuggeeModule) {
+    return isNativeProject(project);
   }
 }
