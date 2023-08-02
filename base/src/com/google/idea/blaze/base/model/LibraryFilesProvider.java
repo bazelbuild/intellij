@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.model;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.sync.libraries.LibraryModifier;
 import com.intellij.openapi.roots.libraries.Library;
-
 import java.io.File;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
@@ -63,5 +62,4 @@ public interface LibraryFilesProvider {
   default boolean supportAnchors() {
     return false;
   }
-
 }

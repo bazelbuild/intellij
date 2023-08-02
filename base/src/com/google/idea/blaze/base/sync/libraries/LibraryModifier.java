@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.URLUtil;
-
 import java.io.File;
 
 /** Modifies {@link Library} content in {@link Library.ModifiableModel}. */
@@ -82,14 +81,14 @@ public class LibraryModifier {
   public static String pathToUrl(File path) {
     String name = path.getName();
     boolean isJarFile =
-            FileUtilRt.extensionEquals(name, "jar")
-                    || FileUtilRt.extensionEquals(name, "srcjar")
-                    || FileUtilRt.extensionEquals(name, "zip");
+        FileUtilRt.extensionEquals(name, "jar")
+            || FileUtilRt.extensionEquals(name, "srcjar")
+            || FileUtilRt.extensionEquals(name, "zip");
     // .jar files require an URL with "jar" protocol.
     String protocol =
-            isJarFile
-                    ? StandardFileSystems.JAR_PROTOCOL
-                    : VirtualFileSystemProvider.getInstance().getSystem().getProtocol();
+        isJarFile
+            ? StandardFileSystems.JAR_PROTOCOL
+            : VirtualFileSystemProvider.getInstance().getSystem().getProtocol();
     String filePath = FileUtil.toSystemIndependentName(path.getPath());
     String url = VirtualFileManager.constructUrl(protocol, filePath);
     if (isJarFile) {
