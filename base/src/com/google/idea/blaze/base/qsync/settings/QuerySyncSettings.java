@@ -15,35 +15,71 @@
  */
 package com.google.idea.blaze.base.qsync.settings;
 
-import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.common.base.Suppliers;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.util.xmlb.XmlSerializerUtil;
+import java.util.function.Supplier;
 
 /** The settings for query sync to be stored per user. */
 @State(
     name = "QuerySyncSettings",
     storages = {@Storage("query.sync.user.settings.xml")})
-public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSettings> {
+public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSettings.State> {
+  // If enabled query Sync via a legacy way (set up experimental value).
+  // Only read the initial value, as the sync mode should not change over a single run of the IDE.
+  private static final Supplier<Boolean> QUERY_SYNC_ENABLED_LEGACY =
+      Suppliers.memoize(new BoolExperiment("use.query.sync", false)::getValue);
 
-  // A place holder setting, to be changed later
-  public boolean showDetailedInformationInEditor = true;
+  // If enabled sync before build for Query Sync via a legacy way (set up experimental value)
+  private static final Supplier<Boolean> SYNC_BEFORE_BUILD_ENABLED_LEGACY =
+      Suppliers.memoize(new BoolExperiment("query.sync.before.build", false)::getValue);
 
-  public boolean syncBeforeBuild = QuerySync.isSyncBeforeBuildEnabled();
+  static class State {
+    public boolean showDetailedInformationInEditor = true;
+
+    public boolean syncBeforeBuild = SYNC_BEFORE_BUILD_ENABLED_LEGACY.get();
+  }
+
+  private QuerySyncSettings.State state = new QuerySyncSettings.State();
 
   public static QuerySyncSettings getInstance() {
     return ApplicationManager.getApplication().getService(QuerySyncSettings.class);
   }
 
-  @Override
-  public QuerySyncSettings getState() {
-    return this;
+  public void enableShowDetailedInformationInEditor(boolean showDetailedInformationInEditor) {
+    state.showDetailedInformationInEditor = showDetailedInformationInEditor;
+  }
+
+  public boolean showDetailedInformationInEditor() {
+    return state.showDetailedInformationInEditor;
+  }
+
+  public void enableSyncBeforeBuild(boolean syncBeforeBuild) {
+    state.syncBeforeBuild = syncBeforeBuild;
+  }
+
+  public boolean syncBeforeBuild() {
+    return state.syncBeforeBuild;
   }
 
   @Override
-  public void loadState(QuerySyncSettings state) {
-    XmlSerializerUtil.copyBean(state, this);
+  public QuerySyncSettings.State getState() {
+    return state;
+  }
+
+  @Override
+  public void loadState(QuerySyncSettings.State state) {
+    this.state = state;
+  }
+
+  public boolean enableQuerySyncByExperimentFile() {
+    return QUERY_SYNC_ENABLED_LEGACY.get();
+  }
+
+  public boolean enableSyncBeforeBuildByExperimentFile() {
+    return SYNC_BEFORE_BUILD_ENABLED_LEGACY.get();
   }
 }
