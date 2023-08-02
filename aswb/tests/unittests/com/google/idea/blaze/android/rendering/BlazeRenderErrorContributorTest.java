@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.rendering;
 
+import static com.google.common.collect.MoreCollectors.onlyElement;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -25,7 +26,6 @@ import com.android.tools.rendering.RenderResultCompat;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.base.BlazeTestCase;
@@ -40,7 +40,6 @@ import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManage
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.model.primitives.Kind.Provider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -75,7 +74,6 @@ import com.intellij.psi.impl.JvmPsiConversionHelperImpl;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.search.ProjectScopeBuilderImpl;
 import java.io.File;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -109,7 +107,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     projectServices.register(
         AndroidResourceModuleRegistry.class, new AndroidResourceModuleRegistry());
 
-    ExtensionPointImpl<Provider> kindProvider =
+    ExtensionPointImpl<Kind.Provider> kindProvider =
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
     kindProvider.registerExtension(new AndroidBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
@@ -180,10 +178,9 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     RenderErrorModel errorModel = createRenderErrorModelWithBrokenClasses();
 
     RenderErrorModel.Issue generatedResourcesIssue =
-        Iterables.getOnlyElement(
-            errorModel.getIssues().stream()
-                .filter(issue -> issue.getSummary().equals(GENERATED_RESOURCES_ERROR))
-                .collect(Collectors.toList()));
+        errorModel.getIssues().stream()
+            .filter(issue -> issue.getSummary().equals(GENERATED_RESOURCES_ERROR))
+            .collect(onlyElement());
 
     assertThat(generatedResourcesIssue.getHtmlContent())
         .isEqualTo(
@@ -217,10 +214,9 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     RenderErrorModel errorModel = createRenderErrorModelWithBrokenClasses();
 
     RenderErrorModel.Issue nonStandardManifestNameIssue =
-        Iterables.getOnlyElement(
-            errorModel.getIssues().stream()
-                .filter(issue -> issue.getSummary().equals(NON_STANDARD_MANIFEST_NAME_ERROR))
-                .collect(Collectors.toList()));
+        errorModel.getIssues().stream()
+            .filter(issue -> issue.getSummary().equals(NON_STANDARD_MANIFEST_NAME_ERROR))
+            .collect(onlyElement());
 
     assertThat(nonStandardManifestNameIssue.getHtmlContent())
         .isEqualTo(
@@ -259,10 +255,9 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
             "com.google.example.ResourceView");
 
     RenderErrorModel.Issue missingClassDependenciesIssue =
-        Iterables.getOnlyElement(
-            errorModel.getIssues().stream()
-                .filter(issue -> issue.getSummary().equals(MISSING_CLASS_DEPENDENCIES_ERROR))
-                .collect(Collectors.toList()));
+        errorModel.getIssues().stream()
+            .filter(issue -> issue.getSummary().equals(MISSING_CLASS_DEPENDENCIES_ERROR))
+            .collect(onlyElement());
 
     assertThat(missingClassDependenciesIssue.getHtmlContent())
         .isEqualTo(
