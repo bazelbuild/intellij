@@ -24,7 +24,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import java.util.List;
+import java.nio.file.Path;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * Action to build dependencies and enable analysis.
  *
  * <p>It can operate on a source file, BUILD file or package. See {@link
- * com.google.idea.blaze.base.qsync.DependencyTracker#getProjectTargets(BlazeContext, List)} for a
+ * com.google.idea.blaze.base.qsync.DependencyTracker#getProjectTargets(BlazeContext, Path)} for a
  * description of what targets dependencies aren built for in each case.
  */
 public class BuildDependenciesAction extends BlazeProjectAction {
@@ -57,8 +57,8 @@ public class BuildDependenciesAction extends BlazeProjectAction {
     presentation.setText(NAME);
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     BuildDependenciesHelper helper = new BuildDependenciesHelper(project);
-    Optional<VirtualFile> fileToEnableAnalysisFor = helper.getFileToEnableAnalysisFor(virtualFile);
-    if (fileToEnableAnalysisFor.isEmpty()) {
+    Optional<Path> relativePath = helper.getRelativePathToEnableAnalysisFor(virtualFile);
+    if (relativePath.isEmpty()) {
       presentation.setEnabledAndVisible(false);
       return;
     }
@@ -72,8 +72,6 @@ public class BuildDependenciesAction extends BlazeProjectAction {
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     BuildDependenciesHelper helper = new BuildDependenciesHelper(project);
-    helper
-        .getFileToEnableAnalysisFor(e.getData(CommonDataKeys.VIRTUAL_FILE))
-        .ifPresent(helper::enableAnalysis);
+    helper.enableAnalysis(e);
   }
 }
