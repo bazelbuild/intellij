@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.LibraryFilesProvider;
 import com.google.idea.blaze.base.model.LibraryKey;
+import com.google.idea.blaze.base.sync.libraries.LibraryModifier;
 import com.google.idea.blaze.java.libraries.AttachedSourceJarManager;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.intellij.openapi.diagnostic.Logger;
@@ -153,7 +154,7 @@ public final class BlazeJarLibrary extends BlazeLibrary {
     @Override
     public ImmutableList<String> getSourceFilesUrls(BlazeProjectData blazeProjectData) {
       final ImmutableList<File> sourceFiles = getSourceFiles(blazeProjectData);
-      ImmutableList<String> jarFilesAsSourceRoots = sourceFiles.stream().map(this::pathToUrl).collect(toImmutableList());
+      ImmutableList<String> jarFilesAsSourceRoots = sourceFiles.stream().map(LibraryModifier::pathToUrl).collect(toImmutableList());
       if (!Registry.is("bazel.sync.detect.source.roots")) {
         return jarFilesAsSourceRoots;
       } else {
@@ -163,7 +164,7 @@ public final class BlazeJarLibrary extends BlazeLibrary {
                   .submitTaskWithResult(indicator -> {
                     List<String> sourceFilesUrls = new LinkedList<>();
                     for (File sourceFile : sourceFiles) {
-                      VirtualFile jarFile = VirtualFileManager.getInstance().findFileByUrl(pathToUrl(sourceFile));
+                      VirtualFile jarFile = VirtualFileManager.getInstance().findFileByUrl(LibraryModifier.pathToUrl(sourceFile));
                       List<VirtualFile> candidates = Collections.emptyList();
                       if (jarFile != null && jarFile.exists()) {
                         candidates = JavaVfsSourceRootDetectionUtil.suggestRoots(jarFile, indicator);

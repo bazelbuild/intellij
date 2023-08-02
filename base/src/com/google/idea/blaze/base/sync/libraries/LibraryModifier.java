@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.libraries;
 
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.LibraryFilesProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,8 +23,14 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.Library.ModifiableModel;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.io.URLUtil;
+
+import java.io.File;
 
 /** Modifies {@link Library} content in {@link Library.ModifiableModel}. */
 public class LibraryModifier {
@@ -70,6 +77,25 @@ public class LibraryModifier {
       return;
     }
     modifiableModel.addRoot(fileUrl, orderRootType);
+  }
+
+  public static String pathToUrl(File path) {
+    String name = path.getName();
+    boolean isJarFile =
+            FileUtilRt.extensionEquals(name, "jar")
+                    || FileUtilRt.extensionEquals(name, "srcjar")
+                    || FileUtilRt.extensionEquals(name, "zip");
+    // .jar files require an URL with "jar" protocol.
+    String protocol =
+            isJarFile
+                    ? StandardFileSystems.JAR_PROTOCOL
+                    : VirtualFileSystemProvider.getInstance().getSystem().getProtocol();
+    String filePath = FileUtil.toSystemIndependentName(path.getPath());
+    String url = VirtualFileManager.constructUrl(protocol, filePath);
+    if (isJarFile) {
+      url += URLUtil.JAR_SEPARATOR;
+    }
+    return url;
   }
 
   private void removeAllContents() {
