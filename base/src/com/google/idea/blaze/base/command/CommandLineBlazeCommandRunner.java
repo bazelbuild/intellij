@@ -129,6 +129,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
                         context.output(PrintOutput.output(line.stripTrailing()));
                         return true;
                       }))
+              .ignoreExitCode(true)
               .build()
               .run();
       BazelExitCodeException.throwIfFailed(
@@ -162,6 +163,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
               .context(context)
               .stdout(out)
               .stderr(stderr)
+              .ignoreExitCode(true)
               .build()
               .run();
       BazelExitCodeException.throwIfFailed(blazeCommandBuilder, exitCode);
@@ -182,6 +184,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
             .stderr(
                 LineProcessingOutputStream.of(
                     BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
+            .ignoreExitCode(true)
             .build()
             .run();
     return BuildResult.fromExitCode(retVal);

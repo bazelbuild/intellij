@@ -62,6 +62,7 @@ public interface ExternalTask {
     @VisibleForTesting @Nullable public OutputStream stderr;
     @Nullable BlazeCommand blazeCommand;
     boolean redirectErrorStream = false;
+    boolean ignoreExitCode = false;
 
     private Builder(WorkspaceRoot workspaceRoot) {
       this(workspaceRoot.directory());
@@ -147,6 +148,17 @@ public interface ExternalTask {
       return this;
     }
 
+    /**
+     * The default behaviour calls {@link BlazeContext#setHasError()} if the process's exit code is
+     * not 0. Setting this to {@code true} disables this behaviour so that callers can handle exit
+     * codes in a context appropriate way.
+     */
+    @CanIgnoreReturnValue
+    public Builder ignoreExitCode(boolean ignore) {
+      this.ignoreExitCode = ignore;
+      return this;
+    }
+
     public ExternalTask build() {
       return ExternalTaskProvider.getInstance().build(this);
     }
@@ -164,6 +176,7 @@ public interface ExternalTask {
     private final boolean redirectErrorStream;
     private final OutputStream stdout;
     private final OutputStream stderr;
+    private final boolean ignoreExitCode;
 
     ExternalTaskImpl(
         @Nullable BlazeContext context,
@@ -172,7 +185,8 @@ public interface ExternalTask {
         Map<String, String> environmentVariables,
         @Nullable OutputStream stdout,
         @Nullable OutputStream stderr,
-        boolean redirectErrorStream) {
+        boolean redirectErrorStream,
+        boolean ignoreExitCode) {
       this.workingDirectory = workingDirectory;
       this.command = command;
       this.environmentVariables = environmentVariables;
@@ -180,6 +194,7 @@ public interface ExternalTask {
       this.redirectErrorStream = redirectErrorStream;
       this.stdout = stdout != null ? stdout : NULL_STREAM;
       this.stderr = stderr != null ? stderr : NULL_STREAM;
+      this.ignoreExitCode = ignoreExitCode;
     }
 
     @Override
@@ -304,7 +319,7 @@ public interface ExternalTask {
               stderrThread.join();
             }
             int exitValue = process.exitValue();
-            if (exitValue != 0) {
+            if (!ignoreExitCode && exitValue != 0) {
               context.setHasError();
             }
             return exitValue;
