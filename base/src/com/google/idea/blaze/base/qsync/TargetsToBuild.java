@@ -15,11 +15,15 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static java.util.function.Predicate.not;
+
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Label;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 /** The result of resolving a source file or directory to build targets. */
 @AutoValue
@@ -27,17 +31,21 @@ public abstract class TargetsToBuild {
 
   /** The type of this target set, determines the semantics of how it should be used. */
   public enum Type {
-    /** All targets returned should be built. This is used for directories and build files. */
-    BUILD_ALL,
     /**
-     * Just one of the returned targets needs to be built. This is used for regular source files,
-     * and the associated {@link #targets()} represent all build rules that use that file as source.
+     * A group of targets, all of which should be built. This is used for directories and build
+     * files.
      */
-    CHOOSE_ONE
+    TARGET_GROUP,
+    /**
+     * Target(s) relating to a source file; just one of the included targets needs to be built. This
+     * is used for regular source files, and the associated {@link #targets()} represent all build
+     * rules that use that file as source.
+     */
+    SOURCE_FILE
   }
 
   public static final TargetsToBuild NONE =
-      new AutoValue_TargetsToBuild(Type.BUILD_ALL, ImmutableSet.of());
+      new AutoValue_TargetsToBuild(Type.TARGET_GROUP, ImmutableSet.of());
 
   public abstract Type type();
 
@@ -54,18 +62,31 @@ public abstract class TargetsToBuild {
    *     more than one target.
    */
   public boolean isAmbiguous() {
-    return type() == Type.CHOOSE_ONE && targets().size() > 1;
+    return type() == Type.SOURCE_FILE && targets().size() > 1;
   }
 
   public Optional<ImmutableSet<Label>> getUnambiguousTargets() {
     return isAmbiguous() ? Optional.empty() : Optional.of(targets());
   }
 
-  static TargetsToBuild buildAll(Collection<Label> targets) {
-    return new AutoValue_TargetsToBuild(Type.BUILD_ALL, ImmutableSet.copyOf(targets));
+  static TargetsToBuild targetGroup(Collection<Label> targets) {
+    return new AutoValue_TargetsToBuild(Type.TARGET_GROUP, ImmutableSet.copyOf(targets));
   }
 
-  static TargetsToBuild chooseOne(Collection<Label> targets) {
-    return new AutoValue_TargetsToBuild(Type.CHOOSE_ONE, ImmutableSet.copyOf(targets));
+  static TargetsToBuild forSourceFile(Collection<Label> targets) {
+    return new AutoValue_TargetsToBuild(Type.SOURCE_FILE, ImmutableSet.copyOf(targets));
+  }
+
+  public static ImmutableSet<Label> getAllUnambiguous(Collection<TargetsToBuild> targetsSet) {
+    return targetsSet.stream()
+        .filter(not(TargetsToBuild::isAmbiguous))
+        .map(TargetsToBuild::targets)
+        .flatMap(Set::stream)
+        .collect(toImmutableSet());
+  }
+
+  public static ImmutableSet<TargetsToBuild> getAllAmbiguous(
+      Collection<TargetsToBuild> targetsSet) {
+    return targetsSet.stream().filter(TargetsToBuild::isAmbiguous).collect(toImmutableSet());
   }
 }

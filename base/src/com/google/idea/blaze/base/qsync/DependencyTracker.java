@@ -234,13 +234,13 @@ public class DependencyTracker {
             PrintOutput.error("No supported targets found in %s", workspaceRelativePath));
         context.setHasWarnings();
       }
-      return TargetsToBuild.buildAll(projectTargets);
+      return TargetsToBuild.targetGroup(projectTargets);
     }
     // Not a build file or a directory containing packages.
     if (snapshot.graph().getAllSourceFiles().contains(workspaceRelativePath)) {
       ImmutableSet<Label> targetOwner = snapshot.getTargetOwners(workspaceRelativePath);
       if (!targetOwner.isEmpty()) {
-        return TargetsToBuild.chooseOne(targetOwner);
+        return TargetsToBuild.forSourceFile(targetOwner);
       }
     } else {
       context.output(

@@ -15,18 +15,14 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurable;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
-import com.google.idea.blaze.common.Label;
 import com.intellij.icons.AllIcons.Actions;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
@@ -49,7 +45,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.HierarchyBoundsListener;
 import java.awt.event.HierarchyEvent;
-import java.util.Set;
 import javax.swing.JComponent;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -83,21 +78,18 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
       implements CustomComponentAction, DumbAware {
 
     private final Editor editor;
+    private final BuildDependenciesHelper buildDepsHelper;
 
     public BuildDependencies(@NotNull Editor editor) {
       super("Build file dependencies");
       this.editor = editor;
+      buildDepsHelper = new BuildDependenciesHelper(editor.getProject());
     }
+
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      QuerySyncManager syncManager = QuerySyncManager.getInstance(e.getProject());
-      TargetsToBuild targets =
-          syncManager.getTargetsToBuild(e.getData(CommonDataKeys.VIRTUAL_FILE));
-      syncManager.enableAnalysis(
-          targets
-              .getUnambiguousTargets() // TODO(mathewi) resolve ambiguous targets
-              .orElse(ImmutableSet.of(targets.targets().stream().findFirst().orElseThrow())));
+      buildDepsHelper.enableAnalysis(e);
     }
 
     @Override
@@ -112,26 +104,26 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
 
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       VirtualFile vf = psiFile != null ? psiFile.getVirtualFile() : null;
-      WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-      if (vf == null || !workspaceRoot.isInWorkspace(vf)) {
+      if (vf == null) {
         presentation.setEnabled(false);
         return;
       }
+      TargetsToBuild toBuild = buildDepsHelper.getTargetsToEnableAnalysisFor(vf);
 
-      QuerySyncManager querySync = QuerySyncManager.getInstance(project);
-      if (!querySync.isProjectLoaded() || BlazeSyncStatus.getInstance(project).syncInProgress()) {
+      if (toBuild.isEmpty()) {
         presentation.setEnabled(false);
         return;
       }
 
       presentation.setEnabled(true);
-      DependencyTracker tracker = querySync.getDependencyTracker();
-      if (tracker != null && QuerySyncSettings.getInstance().showDetailedInformationInEditor) {
-        Set<Label> targets = tracker.getPendingTargets(workspaceRoot.relativize(vf));
-        if (targets != null && !targets.isEmpty()) {
-          String dependency = StringUtil.pluralize("dependency", targets.size());
+      if (toBuild.type() == TargetsToBuild.Type.SOURCE_FILE
+          && QuerySyncSettings.getInstance().showDetailedInformationInEditor) {
+
+        int missing = buildDepsHelper.getSourceFileMissingDepsCount(toBuild);
+        if (missing > 0) {
+          String dependency = StringUtil.pluralize("dependency", missing);
           presentation.setText(
-              String.format("Analysis disabled - missing %d %s ", targets.size(), dependency));
+              String.format("Analysis disabled - missing %d %s ", missing, dependency));
         }
       }
     }

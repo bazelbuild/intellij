@@ -15,17 +15,27 @@
  */
 package com.google.idea.blaze.base.qsync.action;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.qsync.TargetsToBuild;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
+import com.google.idea.blaze.common.Label;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VirtualFile;
+import java.awt.event.MouseEvent;
 import java.nio.file.Path;
-import java.util.Collection;
+import java.util.Comparator;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Helper class for actions that build dependencies for source files, to allow the core logic to be
@@ -36,16 +46,28 @@ public class BuildDependenciesHelper {
   private final Project project;
   private final QuerySyncManager syncManager;
 
-  BuildDependenciesHelper(Project project) {
+  public BuildDependenciesHelper(Project project) {
     this.project = project;
-    syncManager = QuerySyncManager.getInstance(project);
+    this.syncManager = QuerySyncManager.getInstance(project);
   }
 
   boolean canEnableAnalysisNow() {
     return !BlazeSyncStatus.getInstance(project).syncInProgress();
   }
 
-  Optional<VirtualFile> getFileToEnableAnalysisFor(VirtualFile virtualFile) {
+  public TargetsToBuild getTargetsToEnableAnalysisFor(VirtualFile virtualFile) {
+    if (!syncManager.isProjectLoaded() || BlazeSyncStatus.getInstance(project).syncInProgress()) {
+      return TargetsToBuild.NONE;
+    }
+    return syncManager.getTargetsToBuild(virtualFile);
+  }
+
+  public int getSourceFileMissingDepsCount(TargetsToBuild toBuild) {
+    Preconditions.checkState(toBuild.type() == TargetsToBuild.Type.SOURCE_FILE);
+    return syncManager.getDependencyTracker().getPendingExternalDeps(toBuild.targets()).size();
+  }
+
+  public Optional<Path> getRelativePathToEnableAnalysisFor(VirtualFile virtualFile) {
     if (virtualFile == null || !virtualFile.isInLocalFileSystem()) {
       return Optional.empty();
     }
@@ -59,23 +81,72 @@ public class BuildDependenciesHelper {
     if (!syncManager.canEnableAnalysisFor(relative)) {
       return Optional.empty();
     }
-    return Optional.of(virtualFile);
+    return Optional.of(relative);
   }
 
-  void enableAnalysis(VirtualFile file) {
-    TargetsToBuild targets = syncManager.getTargetsToBuild(file);
-    syncManager.enableAnalysis(
-        targets
-            .getUnambiguousTargets() // TODO(mathewi) resolve ambiguous targets
-            .orElse(ImmutableSet.of(targets.targets().stream().findFirst().orElseThrow())));
+  public static VirtualFile getVirtualFile(AnActionEvent e) {
+    return e.getData(CommonDataKeys.VIRTUAL_FILE);
   }
 
-  void enableAnalysis(Collection<VirtualFile> files) {
-    syncManager.enableAnalysis(
-        files.stream()
-            .map(syncManager::getTargetsToBuild)
-            .map(TargetsToBuild::targets) // TODO(mathewi) resolve ambiguous targets
-            .flatMap(Set::stream)
-            .collect(ImmutableSet.toImmutableSet()));
+  public void enableAnalysis(AnActionEvent e) {
+    VirtualFile vfile = getVirtualFile(e);
+    TargetsToBuild toBuild = getTargetsToEnableAnalysisFor(vfile);
+    if (toBuild.isEmpty()) {
+      return;
+    }
+    if (!toBuild.isAmbiguous()) {
+      syncManager.enableAnalysis(toBuild.targets());
+      return;
+    }
+    chooseTargetToBuildFor(vfile, toBuild, e, label -> enableAnalysis(ImmutableSet.of(label)));
+  }
+
+  void enableAnalysis(ImmutableSet<Label> targets) {
+    syncManager.enableAnalysis(targets);
+  }
+
+  public void chooseTargetToBuildFor(
+      VirtualFile vfile,
+      TargetsToBuild toBuild,
+      AnActionEvent event,
+      Consumer<Label> chosenConsumer) {
+    JBPopupFactory factory = JBPopupFactory.getInstance();
+    ListPopup popup =
+        factory.createListPopup(SelectTargetPopupStep.create(toBuild, vfile, chosenConsumer));
+    if (event.getInputEvent() instanceof MouseEvent
+        && event.getInputEvent().getComponent() != null) {
+      // if the user clicked the action button, show underneath that
+      popup.showUnderneathOf(event.getInputEvent().getComponent());
+    } else {
+      popup.showCenteredInCurrentWindow(event.getProject());
+    }
+  }
+
+  static class SelectTargetPopupStep extends BaseListPopupStep<Label> {
+    static SelectTargetPopupStep create(
+        TargetsToBuild toBuild, VirtualFile forFile, Consumer<Label> onChosen) {
+      ImmutableList<Label> rows =
+          ImmutableList.sortedCopyOf(Comparator.comparing(Label::toString), toBuild.targets());
+
+      return new SelectTargetPopupStep(rows, forFile.getName(), onChosen);
+    }
+
+    private final Consumer<Label> onChosen;
+
+    SelectTargetPopupStep(ImmutableList<Label> rows, String forFileName, Consumer<Label> onChosen) {
+      super("Select target to build for " + forFileName, rows);
+      this.onChosen = onChosen;
+    }
+
+    @Override
+    public PopupStep<?> onChosen(Label selectedValue, boolean finalChoice) {
+      if (selectedValue == null) {
+        return FINAL_CHOICE;
+      }
+      if (finalChoice) {
+        onChosen.accept(selectedValue);
+      }
+      return FINAL_CHOICE;
+    }
   }
 }
