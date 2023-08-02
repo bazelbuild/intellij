@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.projectsystem;
 
 import static com.android.tools.idea.projectsystem.SourceProvidersKt.emptySourceProvider;
+import static com.google.idea.blaze.base.sync.data.BlazeDataStorage.WORKSPACE_MODULE_NAME;
 import static org.jetbrains.android.facet.SourceProviderUtil.createSourceProvidersForLegacyModule;
 
 import com.android.tools.apk.analyzer.AaptInvoker;
@@ -35,6 +36,7 @@ import com.android.tools.idea.res.AndroidInnerClassFinder;
 import com.android.tools.idea.res.AndroidResourceClassPsiElementFinder;
 import com.android.tools.idea.sdk.AndroidSdks;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
 import com.google.idea.blaze.android.sync.model.idea.BlazeClassJarProvider;
@@ -42,6 +44,7 @@ import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.google.idea.blaze.base.qsync.QuerySync;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElementFinder;
@@ -50,6 +53,8 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -228,6 +233,44 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
     return false;
   }
 
+  @NotNull
+  @Override
+  public Set<String> getKnownApplicationIds() {
+    List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
+    Set<String> applicationIds = new HashSet<>(facets.size());
+    for (AndroidFacet facet : facets) {
+      AndroidModel model = AndroidModel.get(facet);
+      if (model == null) {
+        continue;
+      }
+      applicationIds.addAll(model.getAllApplicationIds());
+    }
+    return Collections.unmodifiableSet(applicationIds);
+  }
+
+  @NotNull
+  @Override
+  public Collection<Module> findModulesWithApplicationId(@NotNull String applicationId) {
+    if (QuerySync.isEnabled()) {
+      Module workspaceModule =
+          ModuleManager.getInstance(project).findModuleByName(WORKSPACE_MODULE_NAME);
+      if (workspaceModule != null) {
+        return ImmutableList.of(workspaceModule);
+      } else {
+        return ImmutableList.of();
+      }
+    }
+    List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
+    ImmutableSet.Builder<Module> resultBuilder = ImmutableSet.builder();
+    for (AndroidFacet facet : facets) {
+      AndroidModel model = AndroidModel.get(facet);
+      if (model != null && model.getApplicationId().equals(applicationId)) {
+        resultBuilder.add(facet.getModule());
+      }
+    }
+    return resultBuilder.build();
+  }
+
   @Override
   public Collection<Module> getSubmodules() {
     return ImmutableList.of();
@@ -251,16 +294,5 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
   // @Override #api223
   public List<File> desugarLibraryConfigFiles(@NotNull Project project) {
     return ImmutableList.of();
-  }
-
-  @Override
-  public Collection<Module> findModulesWithApplicationId(String applicationId) {
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public Set<String> getKnownApplicationIds() {
-    return null;
   }
 }
