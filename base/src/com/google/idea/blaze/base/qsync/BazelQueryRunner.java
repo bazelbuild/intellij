@@ -64,6 +64,7 @@ public class BazelQueryRunner implements QueryRunner {
 
     BlazeCommand.Builder commandBuilder = BlazeCommand.builder(invoker, BlazeCommandName.QUERY);
     commandBuilder.addBlazeFlags(query.getQueryFlags());
+    commandBuilder.addBlazeFlags("--keep_going");
     String queryExp = query.getQueryExpression();
     if (commandRunner.getMaxCommandLineLength().map(max -> queryExp.length() > max).orElse(false)) {
       // Query is too long, write it to a file.
@@ -82,8 +83,17 @@ public class BazelQueryRunner implements QueryRunner {
         InputStream in =
             commandRunner.runQuery(project, commandBuilder, buildResultHelper, context)) {
       QuerySummary querySummary = readFrom(in, context);
+      int packagesWithErrorsCount = querySummary.proto().getPackagesWithErrorsCount();
       context.output(
           PrintOutput.output("Total query time ms: " + timer.elapsed(TimeUnit.MILLISECONDS)));
+      if (packagesWithErrorsCount > 0) {
+        context.output(
+            PrintOutput.error(
+                "There were errors in %d packages; project will be incomplete. Please fix the above"
+                    + " errors and try again.",
+                packagesWithErrorsCount));
+        context.setHasWarnings();
+      }
       return querySummary;
     }
   }
@@ -104,5 +114,4 @@ public class BazelQueryRunner implements QueryRunner {
       throw new BuildException("Failed to read query output", e);
     }
   }
-
 }

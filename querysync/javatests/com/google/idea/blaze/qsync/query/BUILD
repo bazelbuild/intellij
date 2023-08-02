@@ -1,6 +1,9 @@
 java_library(
     name = "QuerySummaryTestUtil",
-    srcs = ["QuerySummaryTestUtil.java"],
+    srcs = [
+        "QuerySummaryTestBuilder.java",
+        "QuerySummaryTestUtil.java",
+    ],
     visibility = ["//querysync/javatests/com/google/idea/blaze/qsync:__subpackages__"],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/query",

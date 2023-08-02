@@ -253,4 +253,30 @@ public class PartialProjectRefreshTest {
             Label.of("//my/build/package2:Class2.java"),
             Label.of("//my/build/package2:BUILD"));
   }
+
+  @Test
+  public void testDelta_packagesWithErrors() {
+    QuerySummary base =
+        QuerySummary.create(
+            Query.Summary.newBuilder().addPackagesWithErrors("//my/build/package:BUILD").build());
+    PostQuerySyncData baseProject =
+        PostQuerySyncData.EMPTY.toBuilder().setQuerySummary(base).build();
+    QuerySummary delta =
+        QuerySummary.create(
+            Query.Summary.newBuilder().addPackagesWithErrors("//my/build/package:BUILD").build());
+
+    PartialProjectRefresh queryStrategy =
+        new PartialProjectRefresh(
+            QuerySyncTestUtils.NOOP_CONTEXT,
+            newDirectExecutorService(),
+            Path.of("/workspace/root"),
+            QuerySyncTestUtils.EMPTY_PACKAGE_READER,
+            baseProject,
+            QuerySyncTestUtils.CLEAN_VCS_STATE,
+            /* modifiedPackages= */ ImmutableSet.of(Path.of("my/build/package")),
+            ImmutableSet.of());
+    queryStrategy.setQueryOutput(delta);
+    QuerySummary applied = queryStrategy.applyDelta();
+    assertThat(applied.getPackagesWithErrors()).containsExactly(Path.of("my/build/package"));
+  }
 }

@@ -18,14 +18,13 @@ package com.google.idea.blaze.qsync;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 import static com.google.idea.blaze.qsync.query.QuerySummaryTestUtil.createProtoForPackages;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Expect;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
 import com.google.idea.blaze.qsync.query.QuerySummary;
-import com.google.idea.blaze.qsync.query.QuerySummaryTestUtil;
+import com.google.idea.blaze.qsync.query.QuerySummaryTestBuilder;
 import java.nio.file.Path;
 import org.junit.Rule;
 import org.junit.Test;
@@ -264,12 +263,14 @@ public class AffectedPackagesTest {
   public void testModifyBzlFile_included() {
     QuerySummary summary =
         QuerySummary.create(
-            QuerySummaryTestUtil.createProtoForPackagesAndIncludes(
-                ImmutableList.of("//my/build/package1:rule", "//my/build/package2:rule"),
-                ImmutableMultimap.<String, String>builder()
-                    .put("//my/build/package1:BUILD", "//my/build/package1:macro.bzl")
-                    .put("//my/build/package2:BUILD", "//my/build/package1:macro.bzl")
-                    .build()));
+            new QuerySummaryTestBuilder()
+                .addPackages("//my/build/package1:rule", "//my/build/package2:rule")
+                .addSubincludes(
+                    ImmutableMultimap.<String, String>builder()
+                        .put("//my/build/package1:BUILD", "//my/build/package1:macro.bzl")
+                        .put("//my/build/package2:BUILD", "//my/build/package1:macro.bzl")
+                        .build())
+                .build());
 
     AffectedPackages affected =
         AffectedPackagesCalculator.builder()
@@ -292,10 +293,12 @@ public class AffectedPackagesTest {
   public void testModifyBzlFile_excluded() {
     QuerySummary summary =
         QuerySummary.create(
-            QuerySummaryTestUtil.createProtoForPackagesAndIncludes(
-                ImmutableList.of("//my/build/package:rule"),
-                ImmutableMultimap.of(
-                    "//my/build/package:BUILD", "//other/build/package1:macro.bzl")));
+            new QuerySummaryTestBuilder()
+                .addPackages("//my/build/package:rule")
+                .addSubincludes(
+                    ImmutableMultimap.of(
+                        "//my/build/package:BUILD", "//other/build/package1:macro.bzl"))
+                .build());
 
     AffectedPackages affected =
         AffectedPackagesCalculator.builder()
@@ -515,5 +518,49 @@ public class AffectedPackagesTest {
     expect
         .that(affected.getUnownedSources())
         .containsExactly(Path.of("my/build/package/NewClass.java"));
+  }
+
+  @Test
+  public void testPackagesWithErrorsAreAffected() {
+    QuerySummary query =
+        QuerySummary.create(
+            new QuerySummaryTestBuilder()
+                .addPackages("//my/build/package:rule", "//my/build/package/lib:rule")
+                .addBuildFileLabelsWithErrors("//my/build/package:BUILD")
+                .build());
+    AffectedPackages affected =
+        AffectedPackagesCalculator.builder()
+            .context(NOOP_CONTEXT)
+            .lastQuery(query)
+            .projectIncludes(ImmutableSet.of(Path.of("my/build")))
+            .changedFiles(ImmutableSet.of())
+            .build()
+            .getAffectedPackages();
+    expect.that(affected.isIncomplete()).isFalse();
+    expect.that(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
+  }
+
+  @Test
+  public void testPackagesWithErrorsThenDeleted() {
+    QuerySummary query =
+        QuerySummary.create(
+            new QuerySummaryTestBuilder()
+                .addPackages("//my/build/package/lib1:rule", "//my/build/package/lib2:rule")
+                .addBuildFileLabelsWithErrors("//my/build/package/lib1:BUILD")
+                .build());
+    AffectedPackages affected =
+        AffectedPackagesCalculator.builder()
+            .context(NOOP_CONTEXT)
+            .lastQuery(query)
+            .projectIncludes(ImmutableSet.of(Path.of("my/build")))
+            .changedFiles(
+                ImmutableSet.of(
+                    new WorkspaceFileChange(
+                        Operation.DELETE, Path.of("my/build/package/lib1/BUILD"))))
+            .build()
+            .getAffectedPackages();
+    expect.that(affected.isIncomplete()).isFalse();
+    expect.that(affected.getModifiedPackages()).isEmpty();
+    expect.that(affected.getDeletedPackages()).containsExactly(Path.of("my/build/package/lib1"));
   }
 }

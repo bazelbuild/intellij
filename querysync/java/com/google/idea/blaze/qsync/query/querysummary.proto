@@ -13,6 +13,7 @@ message Summary {
   map<string, SourceFile> source_files = 1;
   map<string, Rule> rules = 2;
   int32 version = 3;
+  repeated string packages_with_errors = 4;
 }
 
 message SourceFile {
