@@ -15,13 +15,13 @@
  */
 package com.google.idea.blaze.android.functional;
 
+import static com.android.ide.common.repository.GoogleMavenArtifactIdCompat.CONSTRAINT_LAYOUT_COORDINATE;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.android.targetmapbuilder.NbAarTarget.aar_import;
 import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.android_library;
 
 import com.android.SdkConstants;
 import com.android.ide.common.repository.GradleCoordinate;
-import com.android.tools.idea.projectsystem.GoogleMavenArtifactId;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
@@ -52,8 +52,6 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BlazeModuleSystemExternalDependencyIntegrationTest
     extends BlazeAndroidIntegrationTestCase {
-  private static final GradleCoordinate CONSTRAINT_LAYOUT_COORDINATE =
-      GoogleMavenArtifactId.CONSTRAINT_LAYOUT.getCoordinate("+");
   private static final String CONSTRAINT_LAYOUT_LABEL =
       "//third_party/java/android/android_sdk_linux/extras/android/compatibility/constraint_layout:constraint_layout";
 

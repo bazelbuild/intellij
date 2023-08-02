@@ -24,12 +24,20 @@ import java.util.Optional;
 public class VcsState {
 
   /**
+   * A unique ID for the workspace that this state derives from.
+   *
+   * <p>This is treated as an opaque string for equality testing only.
+   */
+  public final String workspaceId;
+
+  /**
    * Upstream/base revision or CL number. This usually represents the last checked-in change that
    * the users workspace contains.
    *
    * <p>This is treated as an opaque string for equality testing only.
    */
   public final String upstreamRevision;
+
   /** The set of files in the workspace that differ compared to {@link #upstreamRevision}. */
   public final ImmutableSet<WorkspaceFileChange> workingSet;
   /**
@@ -40,9 +48,11 @@ public class VcsState {
   public final Optional<Path> workspaceSnapshotPath;
 
   public VcsState(
+      String workspaceId,
       String upstreamRevision,
       ImmutableSet<WorkspaceFileChange> workingSet,
       Optional<Path> workspaceSnapshotPath) {
+    this.workspaceId = workspaceId;
     this.upstreamRevision = upstreamRevision;
     this.workingSet = workingSet;
     this.workspaceSnapshotPath = workspaceSnapshotPath;
@@ -62,13 +72,14 @@ public class VcsState {
       return false;
     }
     VcsState that = (VcsState) o;
-    return upstreamRevision.equals(that.upstreamRevision)
+    return workspaceId.equals(that.workspaceId)
+        && upstreamRevision.equals(that.upstreamRevision)
         && workingSet.equals(that.workingSet)
         && workspaceSnapshotPath.equals(that.workspaceSnapshotPath);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(upstreamRevision, workingSet, workspaceSnapshotPath);
+    return Objects.hash(workspaceId, upstreamRevision, workingSet, workspaceSnapshotPath);
   }
 }

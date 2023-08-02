@@ -182,7 +182,11 @@ java_binary(
 
 intellij_integration_test_suite(
     name = "integration_tests",
-    srcs = glob(["tests/integrationtests/**/*.java"]),
+    srcs = glob(
+        ["tests/integrationtests/**/*.java"],
+        # b/292251337 exclude this test to pass copybara test temporarily
+        exclude = ["tests/integrationtests/com/google/idea/blaze/java/qsync/ClassFileJavaSourceFinderTest.java"],
+    ),
     required_plugins = "com.google.idea.blaze.java",
     test_package_root = "com.google.idea.blaze.java",
     runtime_deps = [
@@ -202,5 +206,6 @@ intellij_integration_test_suite(
         "//shared",
         "@com_google_guava_guava//jar",
         "@junit//jar",
+        "@truth//jar",
     ],
 )

@@ -18,8 +18,7 @@ package com.google.idea.blaze.plugin.run;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
-import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -27,10 +26,6 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
-import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
-import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
@@ -52,6 +47,7 @@ import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.exception.BuildException;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -60,7 +56,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import icons.BlazeIcons;
-import java.io.File;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -155,7 +150,6 @@ public final class BuildPluginBeforeRunTaskProvider
     BlazeUserSettings userSettings = BlazeUserSettings.getInstance();
     return Scope.root(
         context -> {
-          WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
           context
               .push(new ExperimentScope())
               .push(new ProblemsViewScope(project, userSettings.getShowProblemsViewOnRun()))
@@ -194,37 +188,8 @@ public final class BuildPluginBeforeRunTaskProvider
               new ScopedTask<Void>(context) {
                 @Override
                 protected Void execute(BlazeContext context) {
-                  String binaryPath = Blaze.getBuildSystemProvider(project).getBinaryPath(project);
                   BlazeIntellijPluginConfiguration config =
                       (BlazeIntellijPluginConfiguration) configuration;
-
-                  ListenableFuture<String> executionRootFuture =
-                      BlazeInfoRunner.getInstance()
-                          .runBlazeInfo(
-                              project,
-                              Blaze.getBuildSystemProvider(project)
-                                  .getBuildSystem()
-                                  .getDefaultInvoker(project, context),
-                              context,
-                              config.getBlazeFlagsState().getFlagsForExternalProcesses(),
-                              BlazeInfo.EXECUTION_ROOT_KEY);
-
-                  String executionRoot;
-                  try {
-                    executionRoot = executionRootFuture.get();
-                  } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    context.setCancelled();
-                    return null;
-                  } catch (ExecutionException e) {
-                    IssueOutput.error(e.getMessage()).submit(context);
-                    context.setHasError();
-                    return null;
-                  }
-                  if (executionRoot == null) {
-                    IssueOutput.error("Could not determine execution root").submit(context);
-                    return null;
-                  }
                   BlazeProjectData blazeProjectData =
                       BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
                   if (blazeProjectData == null) {
@@ -232,12 +197,13 @@ public final class BuildPluginBeforeRunTaskProvider
                     return null;
                   }
 
-                  // Explicitly create a local build helper because deployer.reportBuildComplete
-                  // expects the outputs to be available locally
-                  try (BuildResultHelper buildResultHelper =
-                      BuildResultHelperProvider.createForLocalBuild(project)) {
-                    BlazeCommand command =
-                        BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
+                  BuildInvoker invoker =
+                      Blaze.getBuildSystemProvider(project)
+                          .getBuildSystem()
+                          .getBuildInvoker(project, context);
+                  try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
+                    BlazeCommand.Builder command =
+                        BlazeCommand.builder(invoker, BlazeCommandName.BUILD)
                             .addTargets(config.getTargets())
                             .addBlazeFlags(
                                 BlazeFlags.blazeFlags(
@@ -252,37 +218,32 @@ public final class BuildPluginBeforeRunTaskProvider
                             .addBlazeFlags(
                                 config.getBlazeFlagsState().getFlagsForExternalProcesses())
                             .addExeFlags(config.getExeFlagsState().getFlagsForExternalProcesses())
-                            .addBlazeFlags(buildResultHelper.getBuildFlags())
-                            .build();
+                            .addBlazeFlags(buildResultHelper.getBuildFlags());
+
                     if (command == null || context.hasErrors() || context.isCancelled()) {
                       return null;
                     }
                     SaveUtil.saveAllFiles();
-                    int retVal =
-                        ExternalTask.builder(workspaceRoot)
-                            .addBlazeCommand(command)
-                            .context(context)
-                            .stderr(
-                                LineProcessingOutputStream.of(
-                                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
-                                        context)))
-                            .build()
-                            .run();
-                    if (retVal != 0) {
+                    BlazeBuildOutputs outputs =
+                        invoker
+                            .getCommandRunner()
+                            .run(project, command, buildResultHelper, context);
+                    if (!outputs.buildResult.equals(BuildResult.SUCCESS)) {
                       context.setHasError();
                     }
                     ListenableFuture<Void> unusedFuture =
                         FileCaches.refresh(
-                            project,
-                            context,
-                            BlazeBuildOutputs.noOutputs(BuildResult.fromExitCode(retVal)));
+                            project, context, BlazeBuildOutputs.noOutputs(outputs.buildResult));
                     try {
-                      deployer.reportBuildComplete(new File(executionRoot), buildResultHelper);
+                      deployer.reportBuildComplete(outputs);
                     } catch (GetArtifactsException e) {
                       IssueOutput.error("Failed to get build artifacts: " + e.getMessage())
                           .submit(context);
                       return null;
                     }
+                    return null;
+                  } catch (BuildException e) {
+                    context.handleException("Failed to build", e);
                     return null;
                   }
                 }
@@ -301,10 +262,7 @@ public final class BuildPluginBeforeRunTaskProvider
             context.setCancelled();
           }
 
-          if (context.hasErrors() || context.isCancelled()) {
-            return false;
-          }
-          return true;
+          return !context.hasErrors() && !context.isCancelled();
         });
   }
 }

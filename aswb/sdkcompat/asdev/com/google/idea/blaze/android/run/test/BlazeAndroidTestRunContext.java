@@ -51,12 +51,15 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import java.util.List;
 import javax.annotation.Nullable;
 import kotlin.Unit;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Run context for android_test. */
@@ -197,50 +200,61 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
       ConsoleView consoleView,
       ProgressIndicator indicator,
       String packageName) {
-    switch (configState.getLaunchMethod()) {
-      case BLAZE_TEST:
-        /**
-         * Wires up listeners to automatically reconnect the debugger for each test method. When you
-         * `blaze test` an android_test in debug mode, it kills the instrumentation process between
-         * each test method, disconnecting the debugger. We listen for the start of a new method
-         * waiting for a debugger, and reconnect. TODO: Support stopping Blaze from the UI. This is
-         * hard because we have no way to distinguish process handler termination/debug session
-         * ending initiated by the user.
-         */
-        final ProcessHandler masterProcessHandler = new NopProcessHandler();
-        addLaunchTaskCompleteListener(
-            () -> {
-              masterProcessHandler.notifyTextAvailable(
-                  "Test run completed.\n", ProcessOutputTypes.STDOUT);
-              masterProcessHandler.detachProcess();
-            });
-        return DebugSessionStarter.INSTANCE.attachReattachingDebuggerToStartedProcess(
-            device,
-            packageName,
-            masterProcessHandler,
-            env,
-            androidDebugger,
-            androidDebuggerState,
-            indicator,
-            consoleView,
-            Long.MAX_VALUE);
-      case NON_BLAZE:
-      case MOBILE_INSTALL:
-        return DebugSessionStarter.INSTANCE.attachDebuggerToStartedProcess(
-            device,
-            packageName,
-            env,
-            androidDebugger,
-            androidDebuggerState,
-            /*destroyRunningProcess*/ d -> {
-              d.forceStop(packageName);
-              return Unit.INSTANCE;
-            },
-            indicator,
-            consoleView,
-            Long.MAX_VALUE);
+    try {
+      return BuildersKt.runBlocking(
+          EmptyCoroutineContext.INSTANCE,
+          (scope, continuation) -> {
+            switch (configState.getLaunchMethod()) {
+              case BLAZE_TEST:
+
+                /**
+                 * Wires up listeners to automatically reconnect the debugger for each test method.
+                 * When you `blaze test` an android_test in debug mode, it kills the instrumentation
+                 * process between each test method, disconnecting the debugger. We listen for the
+                 * start of a new method waiting for a debugger, and reconnect. TODO: Support
+                 * stopping Blaze from the UI. This is hard because we have no way to distinguish
+                 * process handler termination/debug session ending initiated by the user.
+                 */
+                final ProcessHandler masterProcessHandler = new NopProcessHandler();
+                addLaunchTaskCompleteListener(
+                    () -> {
+                      masterProcessHandler.notifyTextAvailable(
+                          "Test run completed.\n", ProcessOutputTypes.STDOUT);
+                      masterProcessHandler.detachProcess();
+                    });
+                return DebugSessionStarter.INSTANCE.attachReattachingDebuggerToStartedProcess(
+                    device,
+                    packageName,
+                    masterProcessHandler,
+                    env,
+                    androidDebugger,
+                    androidDebuggerState,
+                    indicator,
+                    consoleView,
+                    Long.MAX_VALUE,
+                    continuation);
+              case NON_BLAZE:
+              case MOBILE_INSTALL:
+                return DebugSessionStarter.INSTANCE.attachDebuggerToStartedProcess(
+                    device,
+                    packageName,
+                    env,
+                    androidDebugger,
+                    androidDebuggerState,
+                    /*destroyRunningProcess*/ d -> {
+                      d.forceStop(packageName);
+                      return Unit.INSTANCE;
+                    },
+                    indicator,
+                    consoleView,
+                    Long.MAX_VALUE,
+                    continuation);
+            }
+            throw new RuntimeException("Unknown lunch mode");
+          });
+    } catch (InterruptedException e) {
+      throw new ProcessCanceledException();
     }
-    throw new AssertionError();
   }
 
   void onLaunchTaskComplete() {

@@ -55,6 +55,8 @@ public abstract class ArtifactInfo {
   /** Workspace relative sources for this dependency, extracted at dependency build time. */
   public abstract ImmutableSet<Path> sources();
 
+  public abstract ImmutableSet<Path> srcJars();
+
   public static ArtifactInfo create(TargetArtifacts proto) {
     // Note, the proto contains a list of sources, we take the parent as we want directories instead
     return new AutoValue_ArtifactInfo(
@@ -62,7 +64,8 @@ public abstract class ArtifactInfo {
         proto.getJarsList().stream().map(Path::of).collect(toImmutableList()),
         proto.getIdeAarsList().stream().map(Path::of).collect(toImmutableList()),
         proto.getGenSrcsList().stream().map(Path::of).collect(toImmutableList()),
-        proto.getSrcsList().stream().map(Path::of).collect(toImmutableSet()));
+        proto.getSrcsList().stream().map(Path::of).collect(toImmutableSet()),
+        proto.getSrcjarsList().stream().map(Path::of).collect(toImmutableSet()));
   }
 
   public TargetArtifacts toProto() {
@@ -72,6 +75,7 @@ public abstract class ArtifactInfo {
         .addAllIdeAars(ideAars().stream().map(Path::toString).collect(toImmutableList()))
         .addAllGenSrcs(genSrcs().stream().map(Path::toString).collect(toImmutableList()))
         .addAllSrcs(sources().stream().map(Path::toString).collect(toImmutableList()))
+        .addAllSrcjars(srcJars().stream().map(Path::toString).collect(toImmutableList()))
         .build();
   }
 
@@ -87,6 +91,11 @@ public abstract class ArtifactInfo {
 
   public static ArtifactInfo empty(Label target) {
     return new AutoValue_ArtifactInfo(
-        target, ImmutableList.of(), ImmutableList.of(), ImmutableList.of(), ImmutableSet.of());
+        target,
+        ImmutableList.of(),
+        ImmutableList.of(),
+        ImmutableList.of(),
+        ImmutableSet.of(),
+        ImmutableSet.of());
   }
 }

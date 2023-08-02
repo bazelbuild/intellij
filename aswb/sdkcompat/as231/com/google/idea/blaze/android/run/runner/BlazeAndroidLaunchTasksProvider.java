@@ -31,6 +31,7 @@ import com.android.tools.idea.run.blaze.BlazeLaunchTasksProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
+import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
@@ -145,8 +146,9 @@ public class BlazeAndroidLaunchTasksProvider implements BlazeLaunchTasksProvider
       throws ExecutionException {
     // Do not get debugger state directly from the debugger itself.
     // See BlazeAndroidDebuggerService#getDebuggerState for an explanation.
+    boolean isNativeDebuggingEnabled = isNativeDebuggingEnabled(launchOptions);
     BlazeAndroidDebuggerService debuggerService = BlazeAndroidDebuggerService.getInstance(project);
-    AndroidDebugger debugger = debuggerService.getDebugger(isNativeDebuggingEnabled(launchOptions));
+    AndroidDebugger debugger = debuggerService.getDebugger(isNativeDebuggingEnabled);
     if (debugger == null) {
       throw new ExecutionException("Can't find AndroidDebugger for launch");
     }
@@ -154,11 +156,19 @@ public class BlazeAndroidLaunchTasksProvider implements BlazeLaunchTasksProvider
     if (debuggerState == null) {
       throw new ExecutionException("Can't find AndroidDebuggerState for launch");
     }
+    if (isNativeDebuggingEnabled) {
+      BlazeAndroidDeployInfo deployInfo = null;
+      try {
+        deployInfo = runContext.getBuildStep().getDeployInfo();
+      } catch (ApkProvisionException e) {
+        LOG.error(e);
+      }
+      debuggerService.configureNativeDebugger(debuggerState, deployInfo);
+    }
 
     return runContext.startDebuggerSession(
         debugger, debuggerState, environment, device, console, indicator, packageName);
   }
-
 
   private boolean isNativeDebuggingEnabled(LaunchOptions launchOptions) {
     Object flag = launchOptions.getExtraOption(NATIVE_DEBUGGING_ENABLED);

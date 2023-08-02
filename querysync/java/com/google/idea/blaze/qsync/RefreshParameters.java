@@ -39,23 +39,17 @@ public class RefreshParameters {
   final PostQuerySyncData currentProject;
   final Optional<VcsState> latestVcsState;
   final ProjectDefinition latestProjectDefinition;
-  final Optional<ImmutableSet<Path>> filesChanged;
+  final VcsStateDiffer vcsDiffer;
 
   RefreshParameters(
       PostQuerySyncData currentProject,
       Optional<VcsState> latestVcsState,
       ProjectDefinition latestProjectDefinition,
-      VcsStateDiffer vcsDiffer)
-      throws BuildException {
+      VcsStateDiffer vcsDiffer) {
     this.currentProject = currentProject;
     this.latestVcsState = latestVcsState;
     this.latestProjectDefinition = latestProjectDefinition;
-    if (currentProject.vcsState().isPresent() && latestVcsState.isPresent()) {
-      filesChanged =
-          vcsDiffer.getFilesChangedBetween(latestVcsState.get(), currentProject.vcsState().get());
-    } else {
-      filesChanged = Optional.empty();
-    }
+    this.vcsDiffer = vcsDiffer;
   }
 
   boolean requiresFullUpdate(Context<?> context) {
@@ -77,6 +71,14 @@ public class RefreshParameters {
       return true;
     }
     if (!Objects.equals(
+        currentProject.vcsState().get().workspaceId, latestVcsState.get().workspaceId)) {
+      context.output(
+          PrintOutput.output(
+              "Workspace has changed %s -> %s: performing full query",
+              currentProject.vcsState().get().workspaceId, latestVcsState.get().workspaceId));
+      return true;
+    }
+    if (!Objects.equals(
         currentProject.vcsState().get().upstreamRevision, latestVcsState.get().upstreamRevision)) {
       context.output(
           PrintOutput.output(
@@ -88,7 +90,7 @@ public class RefreshParameters {
     return false;
   }
 
-  AffectedPackages calculateAffectedPackages(Context<?> context) {
+  AffectedPackages calculateAffectedPackages(Context<?> context) throws BuildException {
     // Build the effective working set. This includes the working set as was when the original
     // sync query was run, as it's possible that files have been reverted since then but the
     // earlier query output will reflect the un-reverted file state.
@@ -107,12 +109,17 @@ public class RefreshParameters {
             .collect(toImmutableSet());
 
     Set<WorkspaceFileChange> changed = Sets.union(latestVcsState.get().workingSet, revertedChanges);
-    if (filesChanged.isPresent()) {
-      // filter out files that didn't actually change:
-      changed =
-          changed.stream()
-              .filter(c -> filesChanged.get().contains(c.workspaceRelativePath))
-              .collect(toImmutableSet());
+
+    if (currentProject.vcsState().isPresent() && latestVcsState.isPresent()) {
+      Optional<ImmutableSet<Path>> filesChanged =
+          vcsDiffer.getFilesChangedBetween(latestVcsState.get(), currentProject.vcsState().get());
+      if (filesChanged.isPresent()) {
+        // filter out files that didn't actually change:
+        changed =
+            changed.stream()
+                .filter(c -> filesChanged.get().contains(c.workspaceRelativePath))
+                .collect(toImmutableSet());
+      }
     }
 
     return AffectedPackagesCalculator.builder()

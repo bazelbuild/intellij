@@ -1,3 +1,10 @@
+v2023.08.01
+===========
+* Fix references for repo-relative labels in external workspaces #5164
+* Make the default projectview empty during autoimport and add some com… #5162
+* Allow manual tags to be synced to the project #5085
+* Folding builder #5110
+
 v2023.07.18
 ===========
 * We now support C++ strip_include_prefix parameter (done in Resolve _virtual_includes to local or external workspace #5059)
