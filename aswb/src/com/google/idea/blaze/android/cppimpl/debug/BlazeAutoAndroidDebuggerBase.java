@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 
 /** Attached either java or native debugger depending on if native debugging is enabled. */
@@ -36,11 +35,6 @@ public abstract class BlazeAutoAndroidDebuggerBase extends AutoAndroidDebugger {
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     return blazeProjectData != null
         && blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C);
-  }
-
-  @Override
-  protected boolean isNativeDeployment(Project project, Module debuggeeModule) {
-    return isNativeProject(project);
   }
 
   @Override

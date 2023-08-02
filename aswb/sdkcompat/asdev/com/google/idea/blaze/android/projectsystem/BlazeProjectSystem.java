@@ -51,6 +51,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -250,5 +251,16 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
   // @Override #api223
   public List<File> desugarLibraryConfigFiles(@NotNull Project project) {
     return ImmutableList.of();
+  }
+
+  @Override
+  public Collection<Module> findModulesWithApplicationId(String applicationId) {
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public Set<String> getKnownApplicationIds() {
+    return null;
   }
 }
