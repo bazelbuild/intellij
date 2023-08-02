@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Target;
 import com.google.idea.blaze.common.Label;
@@ -41,6 +42,8 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Summaries the output from a {@code query} invocation into just the data needed by the rest of
@@ -111,12 +114,12 @@ public abstract class QuerySummary {
     return new AutoValue_QuerySummary(proto);
   }
 
-
   public static QuerySummary create(InputStream protoInputStream) throws IOException {
     // IMPORTANT: when changing the logic herein, you should also update PROTO_VERSION above.
     // Failure to do so is likely to result in problems during a partial sync.
     Map<String, Query.SourceFile> sourceFileMap = Maps.newHashMap();
     Map<String, Query.Rule> ruleMap = Maps.newHashMap();
+    Set<String> packagesWithErrors = Sets.newHashSet();
     Build.Target target;
     while ((target = Target.parseDelimitedFrom(protoInputStream)) != null) {
       switch (target.getType()) {
@@ -127,6 +130,9 @@ public abstract class QuerySummary {
                   .addAllSubinclude(target.getSourceFile().getSubincludeList())
                   .build();
           sourceFileMap.put(target.getSourceFile().getName(), sourceFile);
+          if (target.getSourceFile().getPackageContainsErrors()) {
+            packagesWithErrors.add(target.getSourceFile().getName());
+          }
           break;
         case RULE:
           // TODO We don't need all rules types in the proto since many are not user later on.
@@ -170,6 +176,7 @@ public abstract class QuerySummary {
             .setVersion(PROTO_VERSION)
             .putAllSourceFiles(sourceFileMap)
             .putAllRules(ruleMap)
+            .addAllPackagesWithErrors(packagesWithErrors)
             .build());
   }
 
@@ -203,6 +210,14 @@ public abstract class QuerySummary {
         .collect(toImmutableMap(e -> Label.of(e.getKey()), Map.Entry::getValue));
   }
 
+  @Memoized
+  public ImmutableSet<Path> getPackagesWithErrors() {
+    return proto().getPackagesWithErrorsList().stream()
+        .map(Label::of)
+        .map(Label::getPackage) // The packages are BUILD file labels.
+        .collect(toImmutableSet());
+  }
+
   /**
    * Returns the set of build packages in the query output.
    *
@@ -211,7 +226,10 @@ public abstract class QuerySummary {
   @Memoized
   public PackageSet getPackages() {
     return new PackageSet(
-        getRulesMap().keySet().stream().map(Label::getPackage).collect(toImmutableSet()));
+        Stream.concat(
+                getRulesMap().keySet().stream().map(Label::getPackage),
+                getPackagesWithErrors().stream())
+            .collect(toImmutableSet()));
   }
 
   /**
@@ -266,6 +284,14 @@ public abstract class QuerySummary {
       builder.putAllRules(
           rulesMap.entrySet().stream()
               .collect(toImmutableMap(e -> e.getKey().toString(), Map.Entry::getValue)));
+      return this;
+    }
+
+    public Builder putAllPackagesWithErrors(Set<Path> packagesWithErrors) {
+      packagesWithErrors.stream()
+          .map(p -> Label.fromPackageAndName(p, "BUILD"))
+          .map(Label::toString)
+          .forEach(builder::addPackagesWithErrors);
       return this;
     }
 
