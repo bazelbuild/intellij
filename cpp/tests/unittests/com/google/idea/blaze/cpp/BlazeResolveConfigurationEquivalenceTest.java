@@ -334,53 +334,53 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   public void changeDefines_testIncrementalUpdate_0() {
     Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 0);
-    do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
+    doChangeDefinesTestIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_1() {
     Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 1);
-    do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
+    doChangeDefinesTestIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_2() {
     Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 2);
-    do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
+    doChangeDefinesTestIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_3() {
     Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 3);
-    do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
+    doChangeDefinesTestIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_4() {
     Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 4);
-    do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
+    doChangeDefinesTestIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_5() {
     Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 5);
-    do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
+    doChangeDefinesTestIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_6() {
     Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 6);
-    do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
+    doChangeDefinesTestIncrementalUpdate(testCase.getKey(), testCase.getValue());
     assertThat(permutationsAndExpectations.size()).isEqualTo(7);
   }
 
-  private void do_changeDefines_testIncrementalUpdate(
+  private void doChangeDefinesTestIncrementalUpdate(
       List<String> labelsToFlip, ImmutableList<String> newConfigurationLabels) {
     ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:...:all"));
     List<BlazeResolveConfiguration> configurations =

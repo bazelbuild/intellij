@@ -17,6 +17,7 @@ package com.google.idea.blaze.python.sync;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PyIdeInfo.PythonSrcsVersion;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PyIdeInfo.PythonVersion;
 import com.google.idea.blaze.base.BlazeTestCase;
@@ -80,7 +81,8 @@ public class BlazePythonSyncPluginTest extends BlazeTestCase {
     BlazeProjectData blazeProjectData =
         MockBlazeProjectDataBuilder.builder().setTargetMap(targetMap).build();
 
-    List<PythonVersion> versions = BlazePythonSyncPlugin.suggestPythonVersions(blazeProjectData);
+    ImmutableList<PythonVersion> versions =
+        BlazePythonSyncPlugin.suggestPythonVersions(blazeProjectData);
     assertThat(versions).isEmpty();
   }
 
@@ -112,7 +114,8 @@ public class BlazePythonSyncPluginTest extends BlazeTestCase {
     BlazeProjectData blazeProjectData =
         MockBlazeProjectDataBuilder.builder().setTargetMap(targetMap).build();
 
-    List<PythonVersion> versions = BlazePythonSyncPlugin.suggestPythonVersions(blazeProjectData);
+    ImmutableList<PythonVersion> versions =
+        BlazePythonSyncPlugin.suggestPythonVersions(blazeProjectData);
     assertThat(versions).containsExactly(PythonVersion.PY2);
   }
 
@@ -144,7 +147,8 @@ public class BlazePythonSyncPluginTest extends BlazeTestCase {
     BlazeProjectData blazeProjectData =
         MockBlazeProjectDataBuilder.builder().setTargetMap(targetMap).build();
 
-    List<PythonVersion> versions = BlazePythonSyncPlugin.suggestPythonVersions(blazeProjectData);
+    ImmutableList<PythonVersion> versions =
+        BlazePythonSyncPlugin.suggestPythonVersions(blazeProjectData);
     assertThat(versions).containsExactly(PythonVersion.PY3);
   }
 

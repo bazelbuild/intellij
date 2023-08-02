@@ -17,6 +17,7 @@ package com.google.idea.blaze.cpp;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
+import static java.util.Arrays.stream;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -38,7 +39,6 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.model.primitives.Kind.Provider;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -105,7 +105,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
         VirtualFileSystemProvider.class, mock(VirtualFileSystemProvider.class));
     when(VirtualFileSystemProvider.getInstance().getSystem()).thenReturn(mockFileSystem);
 
-    ExtensionPointImpl<Provider> ep =
+    ExtensionPointImpl<Kind.Provider> ep =
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
     ep.registerExtension(new CppBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
@@ -526,7 +526,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .build();
 
     assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary");
-    Collection<BlazeResolveConfiguration> initialConfigurations =
+    ImmutableList<BlazeResolveConfiguration> initialConfigurations =
         resolverResult.getAllConfigurations();
     BlazeConfigurationResolverResult oldResult = resolverResult;
 
@@ -844,18 +844,15 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   private static ListSection<DirectoryEntry> directories(String... directories) {
     return ListSection.builder(DirectorySection.KEY)
         .addAll(
-            Arrays.stream(directories)
+            stream(directories)
                 .map(directory -> DirectoryEntry.include(WorkspacePath.createIfValid(directory)))
-                .collect(Collectors.toList()))
+                .collect(toImmutableList()))
         .build();
   }
 
   private static ListSection<TargetExpression> targets(String... targets) {
     return ListSection.builder(TargetSection.KEY)
-        .addAll(
-            Arrays.stream(targets)
-                .map(TargetExpression::fromStringSafe)
-                .collect(Collectors.toList()))
+        .addAll(stream(targets).map(TargetExpression::fromStringSafe).collect(toImmutableList()))
         .build();
   }
 
