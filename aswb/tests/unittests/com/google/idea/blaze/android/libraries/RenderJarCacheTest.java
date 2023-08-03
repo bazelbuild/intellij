@@ -46,6 +46,7 @@ import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.OutputSink;
@@ -144,6 +145,7 @@ public class RenderJarCacheTest {
     intellijRule.registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
     intellijRule.registerExtension(Kind.Provider.EP_NAME, new AndroidBlazeRules());
     intellijRule.registerApplicationService(ApplicationState.class, new ApplicationState());
+    intellijRule.registerApplicationService(QuerySyncSettings.class, new QuerySyncSettings());
 
     // registered because `RenderJarCache` uses it to filter source targets
     projectViewManager = new MockProjectViewManager();

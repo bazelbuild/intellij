@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.base.Suppliers;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.function.Supplier;
@@ -27,15 +28,11 @@ public class QuerySync {
 
   // Only read the initial value, as the sync mode should not change over a single run of the IDE.
   private static final Supplier<Boolean> ENABLED =
-      Suppliers.memoize(new BoolExperiment("use.query.sync", false)::getValue);
+      Suppliers.memoize(QuerySyncSettings.getInstance()::useQuerySync);
 
   /** Enable compose preview for Query Sync. */
   private static final Supplier<Boolean> COMPOSE_ENABLED =
       Suppliers.memoize(new BoolExperiment("aswb.query.sync.enable.compose", false)::getValue);
-
-  /** Enabled sync before build for Query Sync. */
-  private static final Supplier<Boolean> SYNC_BEFORE_BUILD_ENABLED =
-      Suppliers.memoize(new BoolExperiment("query.sync.before.build", false)::getValue);
 
   private QuerySync() {}
 
@@ -48,7 +45,7 @@ public class QuerySync {
   }
 
   public static boolean isSyncBeforeBuildEnabled() {
-    return SYNC_BEFORE_BUILD_ENABLED.get();
+    return QuerySyncSettings.getInstance().syncBeforeBuild();
   }
 
   public static void assertNotEnabled(String reason) {

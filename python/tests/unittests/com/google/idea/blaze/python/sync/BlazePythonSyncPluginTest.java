@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.python.PythonBlazeRules;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
@@ -51,6 +52,7 @@ public class BlazePythonSyncPluginTest extends BlazeTestCase {
         .registerExtension(new PythonBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
+    applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
   }
 
   @Test
