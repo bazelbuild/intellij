@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync.action;
 
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
+import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.PopupPosititioner;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.icons.AllIcons.Actions;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -72,6 +73,6 @@ public class BuildDependenciesAction extends BlazeProjectAction {
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     BuildDependenciesHelper helper = new BuildDependenciesHelper(project);
-    helper.enableAnalysis(e);
+    helper.enableAnalysis(e, PopupPosititioner.showAtMousePointerOrCentered(e));
   }
 }

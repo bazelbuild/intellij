@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper;
+import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.PopupPosititioner;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurable;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -86,10 +87,10 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
       buildDepsHelper = new BuildDependenciesHelper(editor.getProject());
     }
 
-
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      buildDepsHelper.enableAnalysis(e);
+      buildDepsHelper.enableAnalysis(
+          e, PopupPosititioner.showUnderneathClickedComponentOrCentered(e));
     }
 
     @Override

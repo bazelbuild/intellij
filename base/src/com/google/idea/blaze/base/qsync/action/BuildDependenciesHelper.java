@@ -26,11 +26,13 @@ import com.google.idea.blaze.common.Label;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.awt.RelativePoint;
 import java.awt.event.MouseEvent;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -42,6 +44,46 @@ import java.util.function.Consumer;
  * shared.
  */
 public class BuildDependenciesHelper {
+
+  /** Encapsulates a relative position to show the target selection popup at. */
+  public interface PopupPosititioner {
+    void showInCorrectPosition(JBPopup popup);
+
+    /**
+     * Shows the popup at the location of the mount event, or centered it the screen if the event is
+     * not a mouse event (e.g. keyboard shortcut).
+     *
+     * <p>This is used e.g. when selecting "build dependencies" from a context menu.
+     */
+    static PopupPosititioner showAtMousePointerOrCentered(AnActionEvent e) {
+      return popup -> {
+        if (e.getInputEvent() instanceof MouseEvent) {
+          popup.show(
+              RelativePoint.fromScreen(((MouseEvent) e.getInputEvent()).getLocationOnScreen()));
+        } else {
+          popup.showCenteredInCurrentWindow(e.getProject());
+        }
+      };
+    }
+
+    /**
+     * Shows the popup underneath the clicked UI component, or centered in tge screen if the event
+     * is not a mouse event.
+     *
+     * <p>This is used to show the popup underneath the inspection widget action.
+     */
+    static PopupPosititioner showUnderneathClickedComponentOrCentered(AnActionEvent event) {
+      return popup -> {
+        if (event.getInputEvent() instanceof MouseEvent
+            && event.getInputEvent().getComponent() != null) {
+          // if the user clicked the action button, show underneath that
+          popup.showUnderneathOf(event.getInputEvent().getComponent());
+        } else {
+          popup.showCenteredInCurrentWindow(event.getProject());
+        }
+      };
+    }
+  }
 
   private final Project project;
   private final QuerySyncManager syncManager;
@@ -88,7 +130,7 @@ public class BuildDependenciesHelper {
     return e.getData(CommonDataKeys.VIRTUAL_FILE);
   }
 
-  public void enableAnalysis(AnActionEvent e) {
+  public void enableAnalysis(AnActionEvent e, PopupPosititioner positioner) {
     VirtualFile vfile = getVirtualFile(e);
     TargetsToBuild toBuild = getTargetsToEnableAnalysisFor(vfile);
     if (toBuild.isEmpty()) {
@@ -98,7 +140,8 @@ public class BuildDependenciesHelper {
       syncManager.enableAnalysis(toBuild.targets());
       return;
     }
-    chooseTargetToBuildFor(vfile, toBuild, e, label -> enableAnalysis(ImmutableSet.of(label)));
+    chooseTargetToBuildFor(
+        vfile, toBuild, positioner, label -> enableAnalysis(ImmutableSet.of(label)));
   }
 
   void enableAnalysis(ImmutableSet<Label> targets) {
@@ -108,18 +151,12 @@ public class BuildDependenciesHelper {
   public void chooseTargetToBuildFor(
       VirtualFile vfile,
       TargetsToBuild toBuild,
-      AnActionEvent event,
+      PopupPosititioner positioner,
       Consumer<Label> chosenConsumer) {
     JBPopupFactory factory = JBPopupFactory.getInstance();
     ListPopup popup =
         factory.createListPopup(SelectTargetPopupStep.create(toBuild, vfile, chosenConsumer));
-    if (event.getInputEvent() instanceof MouseEvent
-        && event.getInputEvent().getComponent() != null) {
-      // if the user clicked the action button, show underneath that
-      popup.showUnderneathOf(event.getInputEvent().getComponent());
-    } else {
-      popup.showCenteredInCurrentWindow(event.getProject());
-    }
+    positioner.showInCorrectPosition(popup);
   }
 
   static class SelectTargetPopupStep extends BaseListPopupStep<Label> {
