@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -141,6 +142,8 @@ public abstract class BlazeIntegrationTestCase {
             throw new RuntimeException("Can't handle output artifact type: " + output.getClass());
           }
         });
+
+    registerApplicationService(QuerySyncSettings.class, new QuerySyncSettings());
 
     if (isLightTestCase()) {
       registerApplicationService(

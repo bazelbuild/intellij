@@ -50,6 +50,7 @@ import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -92,6 +93,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(BlazeExecutor.class, new MockBlazeExecutor());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
+    applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
     applicationServices.register(
         CompilerVersionChecker.class, new MockCompilerVersionChecker("1234"));
 

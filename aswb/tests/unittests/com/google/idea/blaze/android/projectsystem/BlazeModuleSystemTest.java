@@ -41,6 +41,7 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -84,6 +85,7 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
     kindProvider.registerExtension(new AndroidBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
+    applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
 
     module = new MockModule(project, () -> {});
 

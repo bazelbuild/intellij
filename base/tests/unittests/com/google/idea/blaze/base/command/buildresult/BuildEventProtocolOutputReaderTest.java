@@ -43,6 +43,7 @@ import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
@@ -89,6 +90,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
     ep.registerExtension(new GenericBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
+    applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
 
     ExtensionPointImpl<OutputArtifactParser> parserEp =
         registerExtensionPoint(OutputArtifactParser.EP_NAME, OutputArtifactParser.class);

@@ -38,6 +38,8 @@ public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSett
       Suppliers.memoize(new BoolExperiment("query.sync.before.build", false)::getValue);
 
   static class State {
+    public boolean useQuerySync = QUERY_SYNC_ENABLED_LEGACY.get();
+
     public boolean showDetailedInformationInEditor = true;
 
     public boolean syncBeforeBuild = SYNC_BEFORE_BUILD_ENABLED_LEGACY.get();
@@ -47,6 +49,14 @@ public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSett
 
   public static QuerySyncSettings getInstance() {
     return ApplicationManager.getApplication().getService(QuerySyncSettings.class);
+  }
+
+  public void enableUseQuerySync(boolean useQuerySync) {
+    state.useQuerySync = useQuerySync;
+  }
+
+  public boolean useQuerySync() {
+    return state.useQuerySync;
   }
 
   public void enableShowDetailedInformationInEditor(boolean showDetailedInformationInEditor) {

@@ -42,6 +42,7 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -98,6 +99,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(FileTypeManager.class, new MockFileTypeManager());
+    applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
 
     projectFileIndex = mock(ProjectFileIndex.class);
     projectServices.register(ProjectFileIndex.class, projectFileIndex);
