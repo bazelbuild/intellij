@@ -49,8 +49,8 @@ public class SyncManualTargetsSection {
         return false;
       }
       parseContext.addError(
-          "'allow_manual_tags_sync' must be set to 'true' or 'false' (e.g."
-              + " 'allow_manual_tags_sync: true')");
+          "'allow_manual_targets_sync' must be set to 'true' or 'false' (e.g."
+              + " 'allow_manual_targets_sync: true')");
       return null;
     }
 
