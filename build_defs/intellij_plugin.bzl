@@ -37,6 +37,8 @@ intellij_plugin(
 
 """
 
+load("//build_defs:restrictions.bzl", "restricted_deps_aspect")
+
 _OptionalPluginXmlInfo = provider(fields = ["optional_plugin_xmls"])
 
 def _optional_plugin_xml_impl(ctx):
@@ -225,6 +227,7 @@ _intellij_plugin_jar = rule(
         "optional_plugin_xmls": attr.label_list(providers = [_OptionalPluginXmlInfo]),
         "jar_name": attr.string(mandatory = True),
         "deps": attr.label_list(providers = [[_IntellijPluginLibraryInfo]]),
+        "restricted_deps": attr.label_list(aspects = [restricted_deps_aspect]),
         "plugin_icons": attr.label_list(allow_files = True),
         "_merge_xml_binary": attr.label(
             default = Label("//build_defs:merge_xml"),
@@ -244,7 +247,7 @@ _intellij_plugin_jar = rule(
     },
 )
 
-def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name = None, extra_runtime_deps = [], plugin_icons = [], **kwargs):
+def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name = None, extra_runtime_deps = [], plugin_icons = [], restrict_deps = False, **kwargs):
     """Creates an intellij plugin from the given deps and plugin.xml.
 
     Args:
@@ -296,6 +299,7 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
         deploy_jar = deploy_jar,
         jar_name = jar_name or (name + ".jar"),
         deps = deps,
+        restricted_deps = deps if restrict_deps else [],
         plugin_xml = plugin_xml,
         optional_plugin_xmls = optional_plugin_xmls,
         plugin_icons = plugin_icons,
