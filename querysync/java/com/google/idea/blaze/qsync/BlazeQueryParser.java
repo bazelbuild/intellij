@@ -54,7 +54,8 @@ public class BlazeQueryParser {
           "java_mutable_proto_library",
           // Underlying rule for kt_jvm_lite_proto_library and kt_jvm_proto_library
           "kt_proto_library_helper",
-          "java_grpc_library",
+          "_java_grpc_library",
+          "_java_lite_grpc_library",
           "java_stubby_library",
           "aar_import");
   private static final ImmutableSet<String> JAVA_RULE_TYPES =
