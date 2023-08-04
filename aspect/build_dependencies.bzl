@@ -1,6 +1,6 @@
 """Aspects to build and collect project dependencies."""
 
-ALWAYS_BUILD_RULES = "java_proto_library,java_lite_proto_library,java_mutable_proto_library,kt_proto_library_helper,java_grpc_library,java_stubby_library,aar_import"
+ALWAYS_BUILD_RULES = "java_proto_library,java_lite_proto_library,java_mutable_proto_library,kt_proto_library_helper,_java_grpc_library,_java_lite_grpc_library,java_stubby_library,aar_import"
 
 def _package_dependencies_impl(target, ctx):
     file_name = target.label.name + ".target-info.txt"
