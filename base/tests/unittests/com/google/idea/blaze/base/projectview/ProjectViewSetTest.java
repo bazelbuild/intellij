@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguagesSection;
 import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection;
 import com.google.idea.blaze.base.projectview.section.sections.BazelBinarySection;
+import com.google.idea.blaze.base.projectview.section.sections.BuildConfigSection;
 import com.google.idea.blaze.base.projectview.section.sections.BuildFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
@@ -109,6 +110,9 @@ public class ProjectViewSetTest extends BlazeTestCase {
                     .add(
                         ScalarSection.builder(BazelBinarySection.KEY)
                             .set(new File("/bazel/path/override")))
+                    .add(
+                        ScalarSection.builder(BuildConfigSection.KEY)
+                            .set(new WorkspacePath("test")))
                     .build())
             .build();
 
