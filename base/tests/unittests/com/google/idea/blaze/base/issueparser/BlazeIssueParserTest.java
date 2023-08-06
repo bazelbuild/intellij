@@ -232,6 +232,26 @@ public class BlazeIssueParserTest extends BlazeTestCase {
   }
 
   @Test
+  public void testParseBuildBazelError() {
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
+    IssueOutput issue =
+        blazeIssueParser.parseIssue(
+            "ERROR: /root/javatests/package_path/BUILD.bazel:42:12: "
+                + "Target '//java/package_path:helloroot_visibility' failed");
+    assertThat(issue).isNotNull();
+    assertThat(issue.getFile().getPath()).isEqualTo("/root/javatests/package_path/BUILD.bazel");
+    assertThat(issue.getLine()).isEqualTo(42);
+    assertThat(issue.getColumn()).isEqualTo(12);
+    assertThat(issue.getMessage())
+        .isEqualTo("Target '//java/package_path:helloroot_visibility' failed");
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
+    assertThat(issue.getConsoleHyperlinkRange())
+        .isEqualTo(
+            TextRange.create(
+                "ERROR: ".length(), "ERROR: /root/javatests/package_path/BUILD.bazel:42:12".length()));
+  }
+
+  @Test
   public void testParseSkylarkError() {
     BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
     IssueOutput issue =
