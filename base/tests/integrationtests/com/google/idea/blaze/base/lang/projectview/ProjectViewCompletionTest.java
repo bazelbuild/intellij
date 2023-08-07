@@ -83,7 +83,7 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
 
   @Test
   public void testColonDividerAndSpaceInsertedAfterScalarSection() {
-    setInput("works<caret>");
+    setInput("workspace_t<caret>");
     assertThat(editorTest.completeIfUnique()).isTrue();
     assertResult("workspace_type: <caret>");
   }

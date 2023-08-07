@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 /** A section to specify build-system's configuration file. */
 public final class BuildConfigSection {
   public static final SectionKey<WorkspacePath, ScalarSection<WorkspacePath>> KEY =
-      SectionKey.of("build_config_file");
+      SectionKey.of("workspace_buildrc_file");
   public static final SectionParser PARSER = new BuildConfigSectionParser();
 
   private static class BuildConfigSectionParser extends ScalarSectionParser<WorkspacePath> {
