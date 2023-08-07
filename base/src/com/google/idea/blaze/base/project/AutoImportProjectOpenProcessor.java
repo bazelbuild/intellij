@@ -22,6 +22,9 @@ import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -102,27 +105,36 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
       @Nullable Project projectToClose,
       boolean forceOpenInNewFrame
   ) {
+    try {
+      return ProgressManager.getInstance().run(new Task.WithResult<Project, Exception>(null, "Importing Project...", true) {
+        @Override
+        protected Project compute(@NotNull ProgressIndicator progressIndicator) {
+          ProjectManager pm = ProjectManager.getInstance();
+          if (projectToClose != null) {
+            pm.closeAndDispose(projectToClose);
+          }
 
-    ProjectManager pm = ProjectManager.getInstance();
-    if (projectToClose != null) {
-      pm.closeAndDispose(projectToClose);
+          Project newProject = createProject(virtualFile);
+          Objects.requireNonNull(newProject);
+
+          newProject.putUserData(PROJECT_AUTO_IMPORTED, true);
+
+          Path projectFilePath = Paths.get(Objects.requireNonNull(newProject.getProjectFilePath()));
+          ProjectUtil.updateLastProjectLocation(projectFilePath);
+
+          ProjectManagerEx.getInstanceEx()
+                  .openProject(
+                          projectFilePath,
+                          BaseSdkCompat.createOpenProjectTask(newProject)
+                  );
+          SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject);
+          return newProject;
+        }
+      });
+    } catch (Exception e) {
+      LOG.error("Unexpected exception thrown while importing project", e);
+      return null;
     }
-
-    Project newProject = createProject(virtualFile);
-    Objects.requireNonNull(newProject);
-
-    newProject.putUserData(PROJECT_AUTO_IMPORTED, true);
-
-    Path projectFilePath = Paths.get(Objects.requireNonNull(newProject.getProjectFilePath()));
-    ProjectUtil.updateLastProjectLocation(projectFilePath);
-
-    ProjectManagerEx.getInstanceEx()
-            .openProject(
-                    projectFilePath,
-                    BaseSdkCompat.createOpenProjectTask(newProject)
-            );
-    SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject);
-    return newProject;
   }
 
   @Nullable

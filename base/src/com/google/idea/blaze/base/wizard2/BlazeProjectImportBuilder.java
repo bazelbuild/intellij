@@ -21,7 +21,10 @@ import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -42,5 +45,14 @@ public class BlazeProjectImportBuilder extends ProjectBuilder {
 
   public BlazeNewProjectBuilder builder() {
     return builder;
+  }
+
+  @Override
+  public @Nullable Project createProject(String name, String path) {
+    //Allows checked in files to be used. createProject deletes the directory.
+    if (new File(path, Project.DIRECTORY_STORE_FOLDER).exists()) {
+      return ProjectManagerEx.getInstanceEx().loadProject(Path.of(path));
+    }
+    return super.createProject(name, path);
   }
 }
