@@ -68,19 +68,19 @@ public interface OutputArtifactParser {
         return null;
       }
     }
+  }
 
-    private static String getBlazeOutRelativePath(
-        BuildEventStreamProtos.File file, String configurationMnemonic) {
-      List<String> pathPrefixList = file.getPathPrefixList();
-      if (pathPrefixList.size() <= 1) {
-        // fall back to using the configuration mnemonic
-        // TODO(brendandouglas): remove this backwards compatibility code after September 2019
-        return configurationMnemonic + "/" + file.getName();
-      }
-
-      // remove the initial 'bazel-out' path component
-      String prefix = Joiner.on('/').join(pathPrefixList.subList(1, pathPrefixList.size()));
-      return prefix + "/" + file.getName();
+  default String getBlazeOutRelativePath(
+      BuildEventStreamProtos.File file, String configurationMnemonic) {
+    List<String> pathPrefixList = file.getPathPrefixList();
+    if (pathPrefixList.size() <= 1) {
+      // fall back to using the configuration mnemonic
+      // TODO(brendandouglas): remove this backwards compatibility code after September 2019
+      return configurationMnemonic + "/" + file.getName();
     }
+
+    // remove the initial 'bazel-out' path component
+    String prefix = Joiner.on('/').join(pathPrefixList.subList(1, pathPrefixList.size()));
+    return prefix + "/" + file.getName();
   }
 }

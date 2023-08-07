@@ -53,7 +53,10 @@ public class BlazeQueryParser {
           "java_lite_proto_library",
           "java_mutable_proto_library",
           // Underlying rule for kt_jvm_lite_proto_library and kt_jvm_proto_library
-          "kt_proto_library_helper");
+          "kt_proto_library_helper",
+          "java_grpc_library",
+          "java_stubby_library",
+          "aar_import");
   private static final ImmutableSet<String> JAVA_RULE_TYPES =
       ImmutableSet.of("java_library", "java_binary", "kt_jvm_library_helper", "java_test");
   private static final ImmutableSet<String> ANDROID_RULE_TYPES =
@@ -81,7 +84,7 @@ public class BlazeQueryParser {
     long now = System.nanoTime();
 
     BuildGraphData.Builder graphBuilder = BuildGraphData.builder();
-    Map<Label, Label> sourceOwner = Maps.newHashMap();
+    ImmutableMultimap.Builder<Label, Label> targetSources = ImmutableMultimap.builder();
     Map<Label, Set<Label>> ruleDeps = Maps.newHashMap();
     Map<Label, Set<Label>> ruleRuntimeDeps = Maps.newHashMap();
     Set<Label> projectDeps = Sets.newHashSet();
@@ -140,23 +143,8 @@ public class BlazeQueryParser {
         ruleRuntimeDeps
             .computeIfAbsent(ruleEntry.getKey(), x -> Sets.newHashSet())
             .addAll(thisRuntimeDeps);
+        targetSources.putAll(ruleEntry.getKey(), thisSources);
         for (Label thisSource : thisSources) {
-          // TODO Consider replace sourceDeps with a map of:
-          //   (source target) -> (rules the include it)
-          // This would involve modifying the "fewer dependencies" logic below, but may yield
-          // a cleaner solution.
-          Set<Label> currentDeps = sourceDeps.get(thisSource);
-          if (currentDeps == null) {
-            sourceDeps.put(thisSource, thisDeps);
-            sourceOwner.put(thisSource, ruleEntry.getKey());
-          } else {
-            currentDeps.retainAll(thisDeps);
-            if (ruleDeps.get(sourceOwner.get(thisSource)).size() > thisDeps.size()) {
-              // Replace the owner with one with fewer dependencies
-              sourceOwner.put(thisSource, ruleEntry.getKey());
-            }
-          }
-
           // Require build step for targets with generated sources.
           if (!query.getSourceFilesMap().containsKey(thisSource)) {
             projectTargetsToBuild.add(ruleEntry.getKey());
@@ -203,7 +191,7 @@ public class BlazeQueryParser {
 
     BuildGraphData graph =
         graphBuilder
-            .sourceOwner(sourceOwner)
+            .targetSources(targetSources.build())
             .ruleDeps(ruleDeps)
             .ruleRuntimeDeps(ruleRuntimeDeps)
             .projectDeps(projectDeps)

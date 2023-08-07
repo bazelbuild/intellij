@@ -30,7 +30,7 @@ import java.nio.file.Path;
 /** Serializes a {@link PostQuerySyncData} instance to a proto message. */
 public class SnapshotSerializer {
 
-  public static final int PROTO_VERSION = 0;
+  public static final int PROTO_VERSION = 1;
 
   static final ImmutableBiMap<Operation, SnapshotProto.WorkspaceFileChange.VcsOperation> OP_MAP =
       ImmutableBiMap.of(
@@ -82,7 +82,7 @@ public class SnapshotSerializer {
 
   private void visitVcsState(VcsState vcsState) {
     SnapshotProto.VcsState.Builder vcsProto = proto.getVcsStateBuilder();
-    vcsProto.setUpstreamRevision(vcsState.upstreamRevision);
+    vcsProto.setWorkspaceId(vcsState.workspaceId).setUpstreamRevision(vcsState.upstreamRevision);
     for (WorkspaceFileChange change : vcsState.workingSet) {
       vcsProto.addWorkingSet(
           SnapshotProto.WorkspaceFileChange.newBuilder()

@@ -81,6 +81,7 @@ public class SnapshotDeserializer {
   private void visitVcsState(SnapshotProto.VcsState proto) {
     VcsState state =
         new VcsState(
+            proto.getWorkspaceId(),
             proto.getUpstreamRevision(),
             proto.getWorkingSetList().stream()
                 .map(

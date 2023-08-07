@@ -66,11 +66,11 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
       androidExternalLibraryManager =
           new AndroidExternalLibraryManager(
               () -> {
-                ArtifactTracker artifactTracker =
-                    QuerySyncManager.getInstance(module.getProject()).getArtifactTracker();
-                if (artifactTracker == null) {
+                if (!QuerySyncManager.getInstance(project).isProjectLoaded()) {
                   return ImmutableList.of();
                 }
+                ArtifactTracker artifactTracker =
+                    QuerySyncManager.getInstance(project).getArtifactTracker();
                 Path aarDirectory = artifactTracker.getExternalAarDirectory();
                 // This can be called by the IDE as the user navigates the project and so might be
                 // called before a sync has been completed and the project structure has been set

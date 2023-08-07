@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.libraries.Library.ModifiableModel;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.URLUtil;
 import java.io.File;
@@ -49,12 +50,12 @@ public class LibraryModifier {
   /** Writes the library content to its {@link Library.ModifiableModel}. */
   public void updateModifiableModel(BlazeProjectData blazeProjectData) {
     removeAllContents();
-    for (File classFile : libraryFilesProvider.getClassFiles(blazeProjectData)) {
-      addRoot(classFile, OrderRootType.CLASSES);
+    for (String classFileUrl : libraryFilesProvider.getClassFilesUrls(blazeProjectData)) {
+      addRoot(classFileUrl, OrderRootType.CLASSES);
     }
 
-    for (File sourceFile : libraryFilesProvider.getSourceFiles(blazeProjectData)) {
-      addRoot(sourceFile, OrderRootType.SOURCES);
+    for (String sourceFileUrl : libraryFilesProvider.getSourceFilesUrls(blazeProjectData)) {
+      addRoot(sourceFileUrl, OrderRootType.SOURCES);
     }
   }
 
@@ -68,15 +69,16 @@ public class LibraryModifier {
     return modelsProvider.getModifiableLibraryModel(library);
   }
 
-  private void addRoot(File file, OrderRootType orderRootType) {
-    if (!file.exists()) {
-      logger.warn("No local file found for " + file);
+  private void addRoot(String fileUrl, OrderRootType orderRootType) {
+    VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(fileUrl);
+    if (virtualFile == null || !virtualFile.exists()) {
+      logger.warn("No local file found for " + fileUrl);
       return;
     }
-    modifiableModel.addRoot(pathToUrl(file), orderRootType);
+    modifiableModel.addRoot(fileUrl, orderRootType);
   }
 
-  private String pathToUrl(File path) {
+  public static String pathToUrl(File path) {
     String name = path.getName();
     boolean isJarFile =
         FileUtilRt.extensionEquals(name, "jar")

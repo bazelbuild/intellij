@@ -23,6 +23,7 @@ import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
+import java.util.List;
 
 /** Compat class for {@link DeployTask} */
 public class DeployTasksCompat {
@@ -35,7 +36,7 @@ public class DeployTasksCompat {
       Project project, Collection<ApkInfo> packages, DeployOptions deployOptions) {
     return launchContext -> {
       try {
-        var unused =
+        List unused =
             new DeployTask(
                     project,
                     packages,

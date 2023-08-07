@@ -119,6 +119,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//shared",
         "//third_party/auto_value",
     ],
 )
@@ -464,6 +465,12 @@ java_library(
     name = "integration_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]),
+    data = [
+        "//base/tests/utils/testdata/java/com/test",
+        "//base/tests/utils/testdata/java/com/test:test_srcs",
+        "//base/tests/utils/testdata/java/com/test2",
+        "//base/tests/utils/testdata/java/com/test2:test2_srcs",
+    ],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":base",
@@ -474,6 +481,7 @@ java_library(
         "//proto:proto_deps",
         "//shared:vcs",
         "//testing:lib",
+        "@bazel_tools//tools/java/runfiles",
         "@com_google_guava_guava//jar",
         "@junit//jar",
     ],

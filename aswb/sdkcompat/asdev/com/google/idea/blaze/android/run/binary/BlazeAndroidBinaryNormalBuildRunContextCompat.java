@@ -23,11 +23,14 @@ import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import javax.annotation.Nullable;
 import kotlin.Unit;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Compat class for {@link BlazeAndroidBinaryNormalBuildRunContext}. */
@@ -55,18 +58,26 @@ public class BlazeAndroidBinaryNormalBuildRunContextCompat
       ConsoleView consoleView,
       ProgressIndicator indicator,
       String packageName) {
-    return DebugSessionStarter.INSTANCE.attachDebuggerToStartedProcess(
-        device,
-        packageName,
-        env,
-        androidDebugger,
-        androidDebuggerState,
-        /*destroyRunningProcess*/ d -> {
-          d.forceStop(packageName);
-          return Unit.INSTANCE;
-        },
-        indicator,
-        consoleView,
-        15L);
+    try {
+      return BuildersKt.runBlocking(
+          EmptyCoroutineContext.INSTANCE,
+          (scope, continuation) ->
+              DebugSessionStarter.INSTANCE.attachDebuggerToStartedProcess(
+                  device,
+                  packageName,
+                  env,
+                  androidDebugger,
+                  androidDebuggerState,
+                  /*destroyRunningProcess*/ d -> {
+                    d.forceStop(packageName);
+                    return Unit.INSTANCE;
+                  },
+                  indicator,
+                  consoleView,
+                  15L,
+                  continuation));
+    } catch (InterruptedException e) {
+      throw new ProcessCanceledException();
+    }
   }
 }

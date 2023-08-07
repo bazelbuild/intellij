@@ -52,6 +52,7 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.GeneratedSourceProjectUpdater;
+import com.google.idea.blaze.qsync.SrcJarProjectUpdater;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.protobuf.ExtensionRegistry;
@@ -88,7 +89,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 public class ArtifactTrackerImpl implements ArtifactTracker {
 
   public static final String DIGESTS_DIRECTORY_NAME = ".digests";
-  public static final int STORAGE_VERSION = 1;
+  public static final int STORAGE_VERSION = 2;
   private static final Logger logger = Logger.getInstance(ArtifactTrackerImpl.class);
 
   // Information about dependency artifacts derviced when the dependencies were built.
@@ -452,6 +453,16 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
         new GeneratedSourceProjectUpdater(projectProto, genSrcCacheRelativeToProject, subfolders);
 
     projectProto = updater.addGenSrcContentEntry();
+
+    SrcJarProjectUpdater srcJarUpdater =
+        new SrcJarProjectUpdater(
+            projectProto,
+            artifacts.values().stream()
+                .map(ArtifactInfo::srcJars)
+                .flatMap(Set::stream)
+                .collect(ImmutableSet.toImmutableSet()));
+    projectProto = srcJarUpdater.addSrcJars();
+
     return snapshot.toBuilder().project(projectProto).build();
   }
 

@@ -16,7 +16,9 @@
 package com.google.idea.blaze.base.qsync;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static java.util.function.Predicate.not;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -33,6 +35,7 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeProjectListener;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectProto;
+import com.google.idea.blaze.qsync.project.ProjectProto.LibrarySource;
 import com.google.idea.common.util.Transactions;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
@@ -93,7 +96,6 @@ public class ProjectUpdater implements BlazeProjectListener {
 
   @Override
   public void graphCreated(Context context, BlazeProjectSnapshot graph) throws IOException {
-
     updateProjectModel(graph.project(), context);
   }
 
@@ -240,6 +242,27 @@ public class ProjectUpdater implements BlazeProjectListener {
       ProjectProto.JarDirectory dir = dirs.get(notFound);
       modifiableModel.addJarDirectory(notFound, dir.getRecursive(), OrderRootType.CLASSES);
     }
+
+    ImmutableSet<String> srcJars =
+        libSpec.getSourcesList().stream()
+            .map(LibrarySource::getSrcjarPath)
+            .filter(not(Strings::isNullOrEmpty))
+            .map(Path::of)
+            .map(workspaceRoot.path()::resolve)
+            .map(UrlUtil::pathToIdeaUrl)
+            .collect(ImmutableSet.toImmutableSet());
+    Set<String> foundSrcJars = Sets.newHashSet();
+    for (String url : modifiableModel.getUrls(OrderRootType.SOURCES)) {
+      if (srcJars.contains(url)) {
+        foundSrcJars.add(url);
+      } else {
+        modifiableModel.removeRoot(url, OrderRootType.SOURCES);
+      }
+    }
+    for (String missing : Sets.difference(srcJars, foundSrcJars)) {
+      modifiableModel.addRoot(missing, OrderRootType.SOURCES);
+    }
+
     modifiableModel.commit();
     return library;
   }
