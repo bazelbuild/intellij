@@ -32,6 +32,7 @@ java_library(
         "//common/util:concurrency",
         "//common/util:platform",
         "//common/util:transactions",
+        "//ext:intellij_ext",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
