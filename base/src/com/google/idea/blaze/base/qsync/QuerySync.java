@@ -44,10 +44,6 @@ public class QuerySync {
     return isEnabled() && COMPOSE_ENABLED.get();
   }
 
-  public static boolean isSyncBeforeBuildEnabled() {
-    return QuerySyncSettings.getInstance().syncBeforeBuild();
-  }
-
   public static void assertNotEnabled(String reason) {
     if (isEnabled()) {
       NotSupportedWithQuerySyncException e = new NotSupportedWithQuerySyncException(reason);

@@ -40,7 +40,7 @@ public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSett
   static class State {
     public boolean useQuerySync = QUERY_SYNC_ENABLED_LEGACY.get();
 
-    public boolean showDetailedInformationInEditor = true;
+    public boolean showDetailedInformationInEditor = false;
 
     public boolean syncBeforeBuild = SYNC_BEFORE_BUILD_ENABLED_LEGACY.get();
   }
@@ -55,6 +55,12 @@ public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSett
     state.useQuerySync = useQuerySync;
   }
 
+  /**
+   * Gets current state.useQuerySync value. It's a field to store current user selection for
+   * enabling query sync or not and it indicates whether query sync is enabled next time after IDE
+   * get restart. But it should not be used to decide if query sync is enabled now. Refer to {@code
+   * QuerySync#isEnable()} when you need to decide if a query sync feature is enabled or not.
+   */
   public boolean useQuerySync() {
     return state.useQuerySync;
   }

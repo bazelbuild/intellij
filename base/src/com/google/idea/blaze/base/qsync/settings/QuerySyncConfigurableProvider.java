@@ -15,13 +15,17 @@
  */
 package com.google.idea.blaze.base.qsync.settings;
 
-import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.common.base.Suppliers;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
+import java.util.function.Supplier;
 import org.jetbrains.annotations.Nullable;
 
 /** A provider of configuration pages that provides the query sync page only if it is enabled. */
 public class QuerySyncConfigurableProvider extends ConfigurableProvider {
+  public static final Supplier<Boolean> ENABLED =
+      Suppliers.memoize(new BoolExperiment("use.query.sync.beta", false)::getValue);
 
   @Override
   public @Nullable Configurable createConfigurable() {
@@ -30,6 +34,6 @@ public class QuerySyncConfigurableProvider extends ConfigurableProvider {
 
   @Override
   public boolean canCreateConfigurable() {
-    return QuerySync.isEnabled();
+    return ENABLED.get();
   }
 }
