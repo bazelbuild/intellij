@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.sync.data;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.logging.LoggedDirectoryProvider;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -25,36 +26,25 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
-import java.util.HashMap;
 import java.util.Optional;
 
 /** Defines where we store our blaze project data. */
 public class BlazeDataStorage {
   public static final String WORKSPACE_MODULE_NAME = ".workspace";
   public static final String BLAZE_DATA_SUBDIRECTORY = ".blaze";
+  public static final ImmutableMap<String, String> ALL_PROJECT_SUBDIRECTORIES = ImmutableMap.<String, String>builder()
+          .put("IJ", ".ijwb")
+          .put("CL", ".clwb")
+          .put("AI", ".aswb")
+          .build();
   public static final String PROJECT_DATA_SUBDIRECTORY = getProjectDataSubdirectory();
-  public static final HashMap<String, String> ALL_PROJECT_SUBDIRECTORIES = getAllProjectSubdirectories();
+
 
   private static String getProjectDataSubdirectory() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return ".ijwb";
     }
-    switch (ApplicationInfo.getInstance().getBuild().getProductCode()) {
-      case "CL": // CLion
-        return ".clwb";
-      case "AI": // Android Studio
-        return ".aswb";
-      default:
-        return ".ijwb";
-    }
-  }
-
-  private static HashMap<String, String> getAllProjectSubdirectories() {
-    HashMap<String, String> directories = new HashMap<>();
-    directories.put("IJ", ".ijwb");
-    directories.put("CL", ".clwb");
-    directories.put("AS", ".aswb");
-    return directories;
+    return ALL_PROJECT_SUBDIRECTORIES.getOrDefault(ApplicationInfo.getInstance().getBuild().getProductCode(), ".ijwb");
   }
 
   public static File getProjectDataDir(BlazeImportSettings importSettings) {

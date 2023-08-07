@@ -73,13 +73,13 @@ public class ContentEntryEditor {
       }
 
       File directory = new File(workspaceRoot.toString());
-      File[] files = directory.listFiles(new FilenameFilter() {
-        public boolean accept(File dir, String name) {
-          return (finder.isInProject(dir) && BlazeDataStorage.ALL_PROJECT_SUBDIRECTORIES.containsValue(name)) ;
+      File[] files = directory
+              .listFiles((dir, name) ->
+                      finder != null && finder.isInProject(dir) && BlazeDataStorage.ALL_PROJECT_SUBDIRECTORIES.containsValue(name));
+      if (files != null) {
+        for (File file : files) {
+          contentEntry.addExcludeFolder(UrlUtil.fileToIdeaUrl(file));
         }
-      });
-      for (File file : files) {
-        contentEntry.addExcludeFolder(UrlUtil.fileToIdeaUrl(file));
       }
 
       ImmutableMap<File, SourceFolder> sourceFolders =
