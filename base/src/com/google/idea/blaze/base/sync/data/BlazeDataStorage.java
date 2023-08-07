@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.util.HashMap;
 import java.util.Optional;
 
 /** Defines where we store our blaze project data. */
@@ -32,6 +33,7 @@ public class BlazeDataStorage {
   public static final String WORKSPACE_MODULE_NAME = ".workspace";
   public static final String BLAZE_DATA_SUBDIRECTORY = ".blaze";
   public static final String PROJECT_DATA_SUBDIRECTORY = getProjectDataSubdirectory();
+  public static final HashMap<String, String> ALL_PROJECT_SUBDIRECTORIES = getAllProjectSubdirectories();
 
   private static String getProjectDataSubdirectory() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -45,6 +47,14 @@ public class BlazeDataStorage {
       default:
         return ".ijwb";
     }
+  }
+
+  private static HashMap<String, String> getAllProjectSubdirectories() {
+    HashMap<String, String> directories = new HashMap<>();
+    directories.put("IJ", ".ijwb");
+    directories.put("CL", ".clwb");
+    directories.put("AS", ".aswb");
+    return directories;
   }
 
   public static File getProjectDataDir(BlazeImportSettings importSettings) {
