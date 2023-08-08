@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.command.info.BlazeInfoProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -144,7 +145,15 @@ public abstract class AbstractBuildInvoker implements BuildInvoker {
             BlazeCommandName.INFO,
             blazeContext,
             BlazeInvocationContext.SYNC_CONTEXT);
+    if (BlazeInfoProvider.isEnabled()) {
+      return BlazeInfoProvider.getInstance(project)
+              .getBlazeInfo(blazeContext, syncFlags);
+    }
     return BlazeInfoRunner.getInstance()
-        .runBlazeInfo(project, this, blazeContext, buildSystem.getName(), syncFlags);
+            .runBlazeInfo(project,
+                    this,
+                    blazeContext,
+                    buildSystem.getName(),
+                    syncFlags);
   }
 }
