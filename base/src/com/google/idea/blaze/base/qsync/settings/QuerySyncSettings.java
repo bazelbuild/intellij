@@ -40,7 +40,7 @@ public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSett
   static class State {
     public boolean useQuerySync = QUERY_SYNC_ENABLED_LEGACY.get();
 
-    public boolean showDetailedInformationInEditor = false;
+    public boolean showDetailedInformationInEditor = true;
 
     public boolean syncBeforeBuild = SYNC_BEFORE_BUILD_ENABLED_LEGACY.get();
   }
