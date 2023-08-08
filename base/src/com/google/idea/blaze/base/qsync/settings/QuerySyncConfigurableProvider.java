@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.qsync.settings;
 
+import static com.google.idea.blaze.base.qsync.settings.QuerySyncSettings.QUERY_SYNC_ENABLED_LEGACY;
+
 import com.google.common.base.Suppliers;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.options.Configurable;
@@ -34,6 +36,6 @@ public class QuerySyncConfigurableProvider extends ConfigurableProvider {
 
   @Override
   public boolean canCreateConfigurable() {
-    return ENABLED.get();
+    return ENABLED.get() || QUERY_SYNC_ENABLED_LEGACY.get();
   }
 }
