@@ -125,10 +125,11 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
   }
 
   private static boolean isGitRepository(WorkspaceRoot workspaceRoot) {
-    // TODO: What if the git repo root is a parent directory of the workspace root?
-    // Just call 'git rev-parse --is-inside-work-tree' or similar instead?
-    File gitDir = new File(workspaceRoot.directory(), ".git");
-    return FileOperationProvider.getInstance().isDirectory(gitDir);
+    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+    String[] args = new String[] {"git", "rev-parse", "--is-inside-work-tree"};
+    int retVal = ExternalTask.builder(workspaceRoot).args(args).stdout(stdout).build().run();
+    return retVal == 0 && "true".equals(StringUtil.trimEnd(stdout.toString(), "\n"));
   }
 
   /**
