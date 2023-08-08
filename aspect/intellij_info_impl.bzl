@@ -30,6 +30,7 @@ DEPS = [
     "_cc_toolchain",  # From cc rules
     "_stl",  # From cc rules
     "malloc",  # From cc_binary rules
+    "implementation_deps",  # From cc_library rules
     "_java_toolchain",  # From java rules
     "deps",
     "jars",  # from java_import rules
@@ -427,6 +428,12 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     update_sync_output_groups(output_groups, "intellij-resolve-go", depset(generated))
     return True
 
+def _collect_from_deps(direct, deps, attr_name):
+    return depset(
+        direct,
+        transitive = [getattr(dep[CcInfo].compilation_context, attr_name, depset()) for dep in deps]
+    ).to_list()
+
 def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates C++-specific output groups, returns false if not a C++ target."""
 
@@ -454,16 +461,27 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
     target_copts = _do_starlark_string_expansion(ctx, "copt", target_copts)
 
     compilation_context = target[CcInfo].compilation_context
+    defines = compilation_context.defines.to_list()
+    includes = compilation_context.includes.to_list()
+    quote_includes = compilation_context.quote_includes.to_list()
+    system_includes = compilation_context.system_includes.to_list()
+
+    if hasattr(ctx.rule.attr, "implementation_deps"):
+        implementation_deps = ctx.rule.attr.implementation_deps
+        defines = _collect_from_deps(defines, implementation_deps, "defines")
+        includes = _collect_from_deps(includes, implementation_deps, "includes")
+        quote_includes = _collect_from_deps(quote_includes, implementation_deps, "quote_includes")
+        system_includes = _collect_from_deps(system_includes, implementation_deps, "system_includes")
 
     c_info = struct_omit_none(
         header = headers,
         source = sources,
         target_copt = target_copts,
         textual_header = textual_headers,
-        transitive_define = compilation_context.defines.to_list(),
-        transitive_include_directory = compilation_context.includes.to_list(),
-        transitive_quote_include_directory = compilation_context.quote_includes.to_list(),
-        transitive_system_include_directory = compilation_context.system_includes.to_list(),
+        transitive_define = defines,
+        transitive_include_directory = includes,
+        transitive_quote_include_directory = quote_includes,
+        transitive_system_include_directory = system_includes,
         include_prefix = getattr(ctx.rule.attr, "include_prefix", None),
         strip_include_prefix = getattr(ctx.rule.attr, "strip_include_prefix", None),
     )
