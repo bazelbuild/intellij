@@ -428,7 +428,8 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     update_sync_output_groups(output_groups, "intellij-resolve-go", depset(generated))
     return True
 
-def _collect_from_deps(direct, deps, attr_name):
+def _combine_with_deps(direct, deps, attr_name):
+    """Returns a list from a depset containing direct and all transitive compilation_context.attr_name values from deps"""
     return depset(
         direct,
         transitive = [getattr(dep[CcInfo].compilation_context, attr_name, depset()) for dep in deps]
@@ -468,10 +469,10 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
 
     if hasattr(ctx.rule.attr, "implementation_deps"):
         implementation_deps = ctx.rule.attr.implementation_deps
-        defines = _collect_from_deps(defines, implementation_deps, "defines")
-        includes = _collect_from_deps(includes, implementation_deps, "includes")
-        quote_includes = _collect_from_deps(quote_includes, implementation_deps, "quote_includes")
-        system_includes = _collect_from_deps(system_includes, implementation_deps, "system_includes")
+        defines = _combine_with_deps(defines, implementation_deps, "defines")
+        includes = _combine_with_deps(includes, implementation_deps, "includes")
+        quote_includes = _combine_with_deps(quote_includes, implementation_deps, "quote_includes")
+        system_includes = _combine_with_deps(system_includes, implementation_deps, "system_includes")
 
     c_info = struct_omit_none(
         header = headers,
