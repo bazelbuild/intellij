@@ -156,7 +156,7 @@ public class BlazeSyncManager {
                                     try {
                                       projectState =
                                           ProjectStateSyncTask.collectProjectState(
-                                              project, context);
+                                              project, context, syncParams);
                                     } catch (SyncCanceledException | SyncFailedException e) {
                                       ApplicationManager.getApplication()
                                           .invokeLater(

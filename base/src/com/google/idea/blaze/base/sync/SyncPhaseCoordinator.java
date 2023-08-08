@@ -361,7 +361,7 @@ final class SyncPhaseCoordinator {
               context,
               childContext -> {
                 SyncProjectState projectState =
-                    ProjectStateSyncTask.collectProjectState(project, context);
+                    ProjectStateSyncTask.collectProjectState(project, context, params);
                 if (projectState == null) {
                   return;
                 }
@@ -436,7 +436,7 @@ final class SyncPhaseCoordinator {
             SyncStats.builder());
         return;
       }
-      SyncProjectState projectState = ProjectStateSyncTask.collectProjectState(project, context);
+      SyncProjectState projectState = ProjectStateSyncTask.collectProjectState(project, context, params);
       BlazeSyncBuildResult buildResult =
           BuildPhaseSyncTask.runBuildPhase(
               project, params, projectState, buildId, context, buildSystem);

@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.FutureUtil;
@@ -61,10 +62,10 @@ import javax.annotation.Nullable;
 /** Collects information about the project state (VCS, blaze info, .blazeproject contents, etc.). */
 final class ProjectStateSyncTask {
 
-  static SyncProjectState collectProjectState(Project project, BlazeContext context)
+  static SyncProjectState collectProjectState(Project project, BlazeContext context, BlazeSyncParams syncParams)
       throws SyncCanceledException, SyncFailedException {
     ProjectStateSyncTask task = new ProjectStateSyncTask(project);
-    return task.getProjectState(context);
+    return task.getProjectState(context, syncParams);
   }
 
   private final Project project;
@@ -77,7 +78,7 @@ final class ProjectStateSyncTask {
     this.workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
   }
 
-  private SyncProjectState getProjectState(BlazeContext context)
+  private SyncProjectState getProjectState(BlazeContext context, BlazeSyncParams params)
       throws SyncFailedException, SyncCanceledException {
     if (!FileOperationProvider.getInstance().exists(workspaceRoot.directory())) {
       String message = String.format("Workspace '%s' doesn't exist.", workspaceRoot.directory());
@@ -124,7 +125,12 @@ final class ProjectStateSyncTask {
                 importSettings.getBuildSystem(),
                 syncFlags);
 
-    ListenableFuture<WorkingSet> workingSetFuture = vcsHandler.getWorkingSet(context, executor);
+    ListenableFuture<WorkingSet> workingSetFuture;
+    if(params.addWorkingSet() || params.syncMode() == SyncMode.FULL) {
+      workingSetFuture = vcsHandler.getWorkingSet(context, executor);
+    } else {
+      workingSetFuture = Futures.immediateFuture(null);
+    }
 
     BlazeInfo blazeInfo =
         FutureUtil.waitForFuture(context, blazeInfoFuture)
