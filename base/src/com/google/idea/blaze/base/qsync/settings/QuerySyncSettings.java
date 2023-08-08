@@ -30,7 +30,7 @@ import java.util.function.Supplier;
 public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSettings.State> {
   // If enabled query Sync via a legacy way (set up experimental value).
   // Only read the initial value, as the sync mode should not change over a single run of the IDE.
-  private static final Supplier<Boolean> QUERY_SYNC_ENABLED_LEGACY =
+  public static final Supplier<Boolean> QUERY_SYNC_ENABLED_LEGACY =
       Suppliers.memoize(new BoolExperiment("use.query.sync", false)::getValue);
 
   // If enabled sync before build for Query Sync via a legacy way (set up experimental value)
