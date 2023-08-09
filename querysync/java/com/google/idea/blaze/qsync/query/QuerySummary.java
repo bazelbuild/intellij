@@ -71,14 +71,10 @@ public abstract class QuerySummary {
    * <p>Whenever changing the logic in this class such that the Query.Summary proto contents will be
    * different for the same input, this version should be incremented.
    */
-  @VisibleForTesting public static final int PROTO_VERSION = 2;
+  @VisibleForTesting public static final int PROTO_VERSION = 3;
 
   public static final QuerySummary EMPTY =
       create(Query.Summary.newBuilder().setVersion(PROTO_VERSION).build());
-
-  // Other rule attributes needed by query sync. Only supports attributes with single-string values
-  private static final ImmutableSet<String> OTHER_ATTRIBUTES =
-      ImmutableSet.of("test_app", "instruments", "custom_package");
 
   // Compile-time dependency attributes
   private static final ImmutableSet<String> DEPENDENCY_ATTRIBUTES =
@@ -161,10 +157,12 @@ public abstract class QuerySummary {
               rule.addAllResourceFiles(a.getStringListValueList());
             } else if (a.getName().equals("manifest")) {
               rule.setManifest(a.getStringValue());
-            }
-
-            if (OTHER_ATTRIBUTES.contains(a.getName()) && !a.getStringValue().isEmpty()) {
-              rule.putOtherAttributes(a.getName(), a.getStringValue());
+            } else if (a.getName().equals("test_app")) {
+              rule.setTestApp(a.getStringValue());
+            } else if (a.getName().equals("instruments")) {
+              rule.setInstruments(a.getStringValue());
+            } else if (a.getName().equals("custom_package")) {
+              rule.setCustomPackage(a.getStringValue());
             }
           }
           ruleMap.put(target.getRule().getName(), rule.build());
