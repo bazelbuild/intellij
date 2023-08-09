@@ -60,7 +60,8 @@ public class ProjectRefresherTest {
         QuerySyncTestUtils.EMPTY_PACKAGE_READER,
         vcsDiffer,
         Path.of("/"),
-        Suppliers.ofInstance(existingSnapshot));
+        Suppliers.ofInstance(existingSnapshot),
+        "");
   }
 
   @Test

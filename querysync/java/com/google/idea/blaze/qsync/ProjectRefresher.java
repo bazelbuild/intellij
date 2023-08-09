@@ -38,18 +38,21 @@ public class ProjectRefresher {
   private final VcsStateDiffer vcsDiffer;
   private final Path workspaceRoot;
   private final Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier;
+  private final String implicitDepsVersion;
 
   public ProjectRefresher(
       ListeningExecutorService executor,
       PackageReader workspaceRelativePackageReader,
       VcsStateDiffer vcsDiffer,
       Path workspaceRoot,
-      Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier) {
+      Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier,
+      String implicitDepsVerion) {
     this.executor = executor;
     this.workspaceRelativePackageReader = workspaceRelativePackageReader;
     this.vcsDiffer = vcsDiffer;
     this.workspaceRoot = workspaceRoot;
     this.latestProjectSnapshotSupplier = latestProjectSnapshotSupplier;
+    this.implicitDepsVersion = implicitDepsVerion;
   }
 
   public FullProjectUpdate startFullUpdate(
@@ -72,7 +75,12 @@ public class ProjectRefresher {
       ProjectDefinition latestProjectDefinition)
       throws BuildException {
     return startPartialRefresh(
-        new RefreshParameters(currentProject, latestVcsState, latestProjectDefinition, vcsDiffer),
+        new RefreshParameters(
+            currentProject,
+            latestVcsState,
+            latestProjectDefinition,
+            vcsDiffer,
+            implicitDepsVersion),
         context);
   }
 

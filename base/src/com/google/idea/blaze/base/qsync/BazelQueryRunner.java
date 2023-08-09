@@ -27,6 +27,7 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
+import com.google.idea.blaze.qsync.query.QuerySummaryProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
@@ -45,10 +46,13 @@ public class BazelQueryRunner implements QueryRunner {
 
   private final Project project;
   private final BuildSystem buildSystem;
+  private final QuerySummaryProvider querySummaryProvider;
 
-  public BazelQueryRunner(Project project, BuildSystem buildSystem) {
+  public BazelQueryRunner(
+      Project project, BuildSystem buildSystem, QuerySummaryProvider querySummaryProvider) {
     this.project = project;
     this.buildSystem = buildSystem;
+    this.querySummaryProvider = querySummaryProvider;
   }
 
   @Override
@@ -105,7 +109,7 @@ public class BazelQueryRunner implements QueryRunner {
     logger.info(String.format("Summarising query from %s", in));
     Instant start = Instant.now();
     try {
-      QuerySummary summary = QuerySummary.create(in);
+      QuerySummary summary = querySummaryProvider.getSummary(in);
       logger.info(
           String.format(
               "Summarised query in %ds", Duration.between(start, Instant.now()).toSeconds()));

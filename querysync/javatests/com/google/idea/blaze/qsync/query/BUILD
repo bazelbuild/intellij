@@ -23,6 +23,8 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//shared",
+        "//third_party/bazel/src/main/protobuf:build_java_proto",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
         "@truth//jar",
     ],

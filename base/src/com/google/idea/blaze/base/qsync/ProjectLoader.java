@@ -136,7 +136,8 @@ public class ProjectLoader {
             createWorkspaceRelativePackageReader(),
             vcsHandler.map(BlazeVcsHandler::getVcsStateDiffer).orElse(VcsStateDiffer.NONE),
             workspaceRoot.path(),
-            graph::getCurrent);
+            graph::getCurrent,
+            QuerySyncManager.getInstance(project).getImplicitDepsProvider().getVersionWithName());
     QueryRunner queryRunner = createQueryRunner(buildSystem);
     ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner, vcsHandler);
     ProjectUpdater projectUpdater =

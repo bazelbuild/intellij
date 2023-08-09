@@ -27,11 +27,13 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.BazelBinarySection;
 import com.google.idea.blaze.base.qsync.BazelQueryRunner;
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.blaze.qsync.query.QuerySummaryProvider;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Optional;
@@ -115,6 +117,9 @@ class BazelBuildSystem implements BuildSystem {
 
   @Override
   public BazelQueryRunner createQueryRunner(Project project) {
-    return new BazelQueryRunner(project, this);
+    return new BazelQueryRunner(
+        project,
+        this,
+        new QuerySummaryProvider(QuerySyncManager.getInstance(project).getImplicitDepsProvider()));
   }
 }

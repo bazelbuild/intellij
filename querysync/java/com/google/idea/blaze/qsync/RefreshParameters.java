@@ -40,20 +40,23 @@ public class RefreshParameters {
   final Optional<VcsState> latestVcsState;
   final ProjectDefinition latestProjectDefinition;
   final VcsStateDiffer vcsDiffer;
+  final String implicitDepsVersion;
 
   RefreshParameters(
       PostQuerySyncData currentProject,
       Optional<VcsState> latestVcsState,
       ProjectDefinition latestProjectDefinition,
-      VcsStateDiffer vcsDiffer) {
+      VcsStateDiffer vcsDiffer,
+      String implicitDepsVersion) {
     this.currentProject = currentProject;
     this.latestVcsState = latestVcsState;
     this.latestProjectDefinition = latestProjectDefinition;
     this.vcsDiffer = vcsDiffer;
+    this.implicitDepsVersion = implicitDepsVersion;
   }
 
   boolean requiresFullUpdate(Context<?> context) {
-    if (!currentProject.querySummary().isCompatibleWithCurrentPluginVersion()) {
+    if (!currentProject.querySummary().isCompatibleWithCurrentPluginVersion(implicitDepsVersion)) {
       context.output(PrintOutput.output("IDE has updated since last sync; performing full query"));
       return true;
     }

@@ -122,12 +122,13 @@ def _target_within_project_scope(label, include, exclude):
 
 def _get_followed_dependency_infos(rule):
     deps = []
-    if hasattr(rule.attr, "deps"):
-        deps += rule.attr.deps
-    if hasattr(rule.attr, "exports"):
-        deps += rule.attr.exports
-    if hasattr(rule.attr, "_junit"):
-        deps.append(rule.attr._junit)
+    for (attr, kinds) in FOLLOW_ATTRIBUTES_DETAILS:
+        if hasattr(rule.attr, attr) and (not kinds or rule.kind in kinds):
+            to_add = getattr(rule.attr, attr)
+            if type(to_add) == "list":
+                deps += to_add
+            else:
+                deps.append(to_add)
 
     return [
         dep[DependenciesInfo]
@@ -163,10 +164,11 @@ def _collect_own_artifacts(
         # only gather their own compile jars and continue down the tree.
         # This is done primarily for rules like proto, where they don't have dependencies
         # and add their "toolchain" classes to transitive deps.
-        if can_follow_dependencies:
-            own_jar_depsets.append(target[JavaInfo].compile_jars)
-        else:
-            own_jar_depsets.append(target[JavaInfo].transitive_compile_time_jars)
+        if JavaInfo in target:
+            if can_follow_dependencies:
+                own_jar_depsets.append(target[JavaInfo].compile_jars)
+            else:
+                own_jar_depsets.append(target[JavaInfo].transitive_compile_time_jars)
 
         if declares_android_resources(target, ctx):
             ide_aar = _get_ide_aar_file(target, ctx)
@@ -187,9 +189,10 @@ def _collect_own_artifacts(
 
         # Add generated java_outputs (e.g. from annotation processing
         generated_class_jars = []
-        for java_output in target[JavaInfo].java_outputs:
-            if java_output.generated_class_jar:
-                generated_class_jars.append(java_output.generated_class_jar)
+        if JavaInfo in target:
+            for java_output in target[JavaInfo].java_outputs:
+                if java_output.generated_class_jar:
+                    generated_class_jars.append(java_output.generated_class_jar)
         if generated_class_jars:
             own_jar_files += generated_class_jars
 
@@ -280,15 +283,6 @@ def _collect_dependencies_core_impl(
         always_build_rules,
         generate_aidl_classes,
         test_mode):
-    if JavaInfo not in target:
-        return [DependenciesInfo(
-            compile_time_jars = depset(),
-            target_to_artifacts = {},
-            aars = depset(),
-            gensrcs = depset(),
-            test_mode_own_files = None,
-        )]
-
     target_is_within_project_scope = _target_within_project_scope(str(target.label), include, exclude) and not test_mode
     dependency_infos = _get_followed_dependency_infos(ctx.rule)
 
@@ -433,10 +427,27 @@ def _output_relative_path(path):
         path = path[10:]
     return path
 
+# List of tuples containing:
+#   1. An attribute for the aspect to traverse
+#   2. Whether the attribute is a list of labels
+#   3. A list of rule kind to specify which rules for which the attribute labels
+#      need to be added as dependencies. If empty, the attribute is followed for
+#      all rules.
+FOLLOW_ATTRIBUTES_DETAILS = [
+    ("deps", []),
+    ("exports", []),
+    ("_junit", []),
+    ("_aspect_proto_toolchain_for_javalite", []),
+    ("_aspect_java_proto_toolchain", []),
+    ("runtime", ["proto_lang_toolchain"]),
+]
+
+FOLLOW_ATTRIBUTES = [attr for (attr, _) in FOLLOW_ATTRIBUTES_DETAILS]
+
 collect_dependencies = aspect(
     implementation = _collect_dependencies_impl,
     provides = [DependenciesInfo],
-    attr_aspects = ["deps", "exports", "_junit"],
+    attr_aspects = FOLLOW_ATTRIBUTES,
     attrs = {
         "include": attr.string(
             doc = "Comma separated list of workspace paths included in the project as source. Any targets inside here will not be built.",
@@ -474,7 +485,7 @@ collect_all_dependencies_for_tests = aspect(
     """,
     implementation = _collect_all_dependencies_for_tests_impl,
     provides = [DependenciesInfo],
-    attr_aspects = ["deps", "exports", "_junit"],
+    attr_aspects = FOLLOW_ATTRIBUTES,
     attrs = {
         "_build_zip": attr.label(
             allow_files = True,

@@ -71,7 +71,7 @@ public abstract class QuerySummary {
    * <p>Whenever changing the logic in this class such that the Query.Summary proto contents will be
    * different for the same input, this version should be incremented.
    */
-  @VisibleForTesting public static final int PROTO_VERSION = 3;
+  @VisibleForTesting public static final int PROTO_VERSION = 4;
 
   public static final QuerySummary EMPTY =
       create(Query.Summary.newBuilder().setVersion(PROTO_VERSION).build());
@@ -96,8 +96,9 @@ public abstract class QuerySummary {
 
   public abstract Query.Summary proto();
 
-  public boolean isCompatibleWithCurrentPluginVersion() {
-    return proto().getVersion() == PROTO_VERSION;
+  public boolean isCompatibleWithCurrentPluginVersion(String currentImplicitDepsVersion) {
+    return proto().getVersion() == PROTO_VERSION
+        && proto().getImplicitDepsVersion().equals(currentImplicitDepsVersion);
   }
 
   /** Do not generate toString, this object is too large */
@@ -110,7 +111,8 @@ public abstract class QuerySummary {
     return new AutoValue_QuerySummary(proto);
   }
 
-  public static QuerySummary create(InputStream protoInputStream) throws IOException {
+  static QuerySummary create(
+      InputStream protoInputStream, ImplicitDepsProvider implicitDepsProvider) throws IOException {
     // IMPORTANT: when changing the logic herein, you should also update PROTO_VERSION above.
     // Failure to do so is likely to result in problems during a partial sync.
     Map<String, Query.SourceFile> sourceFileMap = Maps.newHashMap();
@@ -165,6 +167,8 @@ public abstract class QuerySummary {
               rule.setCustomPackage(a.getStringValue());
             }
           }
+
+          rule.addAllDeps(implicitDepsProvider.forRule(target.getRule()));
           ruleMap.put(target.getRule().getName(), rule.build());
           break;
         default:
@@ -174,14 +178,16 @@ public abstract class QuerySummary {
     return create(
         Query.Summary.newBuilder()
             .setVersion(PROTO_VERSION)
+            .setImplicitDepsVersion(implicitDepsProvider.getVersionWithName())
             .putAllSourceFiles(sourceFileMap)
             .putAllRules(ruleMap)
             .addAllPackagesWithErrors(packagesWithErrors)
             .build());
   }
 
-  public static QuerySummary create(File protoFile) throws IOException {
-    return create(new BufferedInputStream(new FileInputStream(protoFile)));
+  static QuerySummary create(File protoFile, ImplicitDepsProvider implicitDepsProvider)
+      throws IOException {
+    return create(new BufferedInputStream(new FileInputStream(protoFile)), implicitDepsProvider);
   }
 
   public static Builder newBuilder() {
@@ -265,7 +271,7 @@ public abstract class QuerySummary {
   /**
    * Builder for {@link QuerySummary}. This should be used when constructing a summary from a map of
    * source files and rules. To construct one from a serialized proto, you should use {@link
-   * QuerySummary#create(InputStream)} instead.
+   * QuerySummary#create(InputStream, ImplicitDepsProvider)} instead.
    */
   public static class Builder {
     private final Query.Summary.Builder builder =
