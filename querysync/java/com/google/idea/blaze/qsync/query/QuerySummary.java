@@ -71,7 +71,7 @@ public abstract class QuerySummary {
    * <p>Whenever changing the logic in this class such that the Query.Summary proto contents will be
    * different for the same input, this version should be incremented.
    */
-  @VisibleForTesting public static final int PROTO_VERSION = 1;
+  @VisibleForTesting public static final int PROTO_VERSION = 2;
 
   public static final QuerySummary EMPTY =
       create(Query.Summary.newBuilder().setVersion(PROTO_VERSION).build());
@@ -159,6 +159,8 @@ public abstract class QuerySummary {
               rule.addAllIdlSources(a.getStringListValueList());
             } else if (a.getName().equals("resource_files")) {
               rule.addAllResourceFiles(a.getStringListValueList());
+            } else if (a.getName().equals("manifest")) {
+              rule.setManifest(a.getStringValue());
             }
 
             if (OTHER_ATTRIBUTES.contains(a.getName()) && !a.getStringValue().isEmpty()) {

@@ -143,7 +143,8 @@ public class BuildGraphTest {
     assertThat(graph.getAllSourceFiles())
         .containsExactly(
             TESTDATA_ROOT.resolve("android/TestAndroidClass.java"),
-            TESTDATA_ROOT.resolve("android/BUILD"));
+            TESTDATA_ROOT.resolve("android/BUILD"),
+            TESTDATA_ROOT.resolve("android/AndroidManifest.xml"));
     assertThat(graph.getJavaSourceFiles())
         .containsExactly(TESTDATA_ROOT.resolve("android/TestAndroidClass.java"));
     assertThat(graph.getAndroidSourceFiles())

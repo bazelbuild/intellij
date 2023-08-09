@@ -31,4 +31,5 @@ message Rule {
   map<string, string> other_attributes = 5;
   repeated string runtime_deps = 6;
   repeated string resource_files = 7;
+  string manifest = 8;
 }

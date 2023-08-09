@@ -54,6 +54,16 @@ public class QuerySummaryTest {
   }
 
   @Test
+  public void testCreate_androidLibrary_manifest() throws IOException {
+    QuerySummary qs = QuerySummary.create(TestData.getPathFor(TestData.ANDROID_LIB_QUERY).toFile());
+    Label android = Label.of(TestData.ROOT_PACKAGE + "/android:android");
+    assertThat(qs.getRulesMap().keySet()).contains(android);
+    Query.Rule rule = qs.getRulesMap().get(android);
+    assertThat(rule.getManifest())
+        .isEqualTo(android.siblingWithName("AndroidManifest.xml").toString());
+  }
+
+  @Test
   public void testGetPackages_singleRule() {
     QuerySummary summary = QuerySummary.create(createProtoForPackages("//my/build/package:rule"));
     assertThat(summary.getPackages().asPathSet()).containsExactly(Path.of("my/build/package"));
