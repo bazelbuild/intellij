@@ -115,17 +115,14 @@ public class BlazeQueryParser {
 
       BuildTarget.Builder buildTarget =
           BuildTarget.builder().setLabel(ruleEntry.getKey()).setKind(ruleClass);
-      if (ruleEntry.getValue().containsOtherAttributes("test_app")) {
-        buildTarget.setTestApp(
-            Label.of(ruleEntry.getValue().getOtherAttributesOrThrow("test_app")));
+      if (!ruleEntry.getValue().getTestApp().isEmpty()) {
+        buildTarget.setTestApp(Label.of(ruleEntry.getValue().getTestApp()));
       }
-      if (ruleEntry.getValue().containsOtherAttributes("instruments")) {
-        buildTarget.setInstruments(
-            Label.of(ruleEntry.getValue().getOtherAttributesOrThrow("instruments")));
+      if (!ruleEntry.getValue().getInstruments().isEmpty()) {
+        buildTarget.setInstruments(Label.of(ruleEntry.getValue().getInstruments()));
       }
-      if (ruleEntry.getValue().containsOtherAttributes("custom_package")) {
-        buildTarget.setCustomPackage(
-            ruleEntry.getValue().getOtherAttributesOrThrow("custom_package"));
+      if (!ruleEntry.getValue().getCustomPackage().isEmpty()) {
+        buildTarget.setCustomPackage(ruleEntry.getValue().getCustomPackage());
       }
       graphBuilder.targetMapBuilder().put(ruleEntry.getKey(), buildTarget.build());
 

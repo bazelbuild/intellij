@@ -27,9 +27,11 @@ message Rule {
   repeated string sources = 2;
   repeated string deps = 3;
   repeated string idl_sources = 4;
-  // Other single-field attributes required by query sync
-  map<string, string> other_attributes = 5;
+  reserved 5;
   repeated string runtime_deps = 6;
   repeated string resource_files = 7;
   string manifest = 8;
+  string test_app = 9;
+  string instruments = 10;
+  string custom_package = 11;
 }
