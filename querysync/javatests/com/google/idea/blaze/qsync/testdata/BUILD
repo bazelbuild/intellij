@@ -1,4 +1,4 @@
-load(":scope_util.bzl", "scopeForAndroidPackage", "scopeForJavaPackage")
+load(":scope_util.bzl", "scopeForAndroidPackage", "scopeForAndroidPackageWithResources", "scopeForJavaPackage")
 
 package(default_visibility = [
     "//base:__subpackages__",
@@ -71,7 +71,7 @@ genquery(
     name = "android_lib_query",
     expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/android:*",
     opts = ["--output=streamed_proto"],
-    scope = scopeForAndroidPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/android"),
+    scope = scopeForAndroidPackageWithResources("//querysync/javatests/com/google/idea/blaze/qsync/testdata/android"),
 )
 
 genquery(

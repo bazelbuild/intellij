@@ -162,6 +162,9 @@ public class BlazeQueryParser {
           if (!ruleEntry.getValue().getIdlSourcesList().isEmpty()) {
             projectTargetsToBuild.add(ruleEntry.getKey());
           }
+          if (!ruleEntry.getValue().getManifest().isEmpty()) {
+            targetSources.put(ruleEntry.getKey(), Label.of(ruleEntry.getValue().getManifest()));
+          }
         }
       } else if (ALWAYS_BUILD_RULE_TYPES.contains(ruleClass)) {
         projectTargetsToBuild.add(ruleEntry.getKey());
