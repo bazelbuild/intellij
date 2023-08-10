@@ -58,12 +58,27 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
     projectViewPathField.setText(userSettings.get(LAST_WORKSPACE_PATH, ""));
     projectViewPathField.setMinimumAndPreferredWidth(MINIMUM_FIELD_WIDTH);
 
+    String projectViewFromEnv = System.getenv(AutoImportProjectOpenProcessor.PROJECT_VIEW_FROM_ENV);
     WorkspaceRoot workspaceRoot = builder.getWorkspaceData() != null ? builder.getWorkspaceData().workspaceRoot() : null;
-    //Add managed project view to the list
-    if (workspaceRoot != null &&
-            workspaceRoot.path().resolve(AutoImportProjectOpenProcessor.MANAGED_PROJECT_RELATIVE_PATH).toFile().exists()) {
+    //Add the project view passed in from the environment and/or managed project view to the projectViewPath field if they exist
+    if (workspaceRoot != null) {
+      if (projectViewFromEnv != null) {
+        File projectViewFromEnvFile = new File(projectViewFromEnv);
+        if (projectViewFromEnvFile.exists()) {
+          String relativeProjectViewPath = workspaceRoot.path().relativize(projectViewFromEnvFile.toPath()).toString();
+          if (projectViewPathField.getText().isEmpty()) {
+            projectViewPathField.setTextAndAddToHistory(relativeProjectViewPath);
+          } else {
+            List<String> history = projectViewPathField.getHistory();
+            if (!history.contains(relativeProjectViewPath)) {
+              history.add(0, relativeProjectViewPath);
+              projectViewPathField.setHistory(history);
+            }
+          }
+        }
+      }
       if (projectViewPathField.getText().isEmpty()) {
-        projectViewPathField.setText(AutoImportProjectOpenProcessor.MANAGED_PROJECT_RELATIVE_PATH);
+        projectViewPathField.setTextAndAddToHistory(AutoImportProjectOpenProcessor.MANAGED_PROJECT_RELATIVE_PATH);
       } else {
         List<String> history = projectViewPathField.getHistory();
         if (!history.contains(AutoImportProjectOpenProcessor.MANAGED_PROJECT_RELATIVE_PATH)) {
