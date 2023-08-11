@@ -231,7 +231,7 @@ intellij_integration_test_suite(
         "testdata/ic_banner.png",
         "tools/adt/idea/android/annotations/empty_file",
     ],
-    required_plugins = "com.google.idea.bazel.aswb",
+    required_plugins = "com.google.idea.bazel.aswb,com.android.tools.ndk",
     test_package_root = "com.google.idea.blaze.android",
     runtime_deps = [
         ":aswb_bazel",

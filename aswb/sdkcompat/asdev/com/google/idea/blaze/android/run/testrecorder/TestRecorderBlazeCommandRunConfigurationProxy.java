@@ -15,13 +15,8 @@
  */
 package com.google.idea.blaze.android.run.testrecorder;
 
-import com.android.annotations.Nullable;
-import com.android.ddmlib.IDevice;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunner;
+import com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebuggerBase;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import java.util.List;
 
 /** Compat class for implementing TestRecorderBlazeCommandRunConfigurationProxy. */
 public class TestRecorderBlazeCommandRunConfigurationProxy
@@ -33,11 +28,7 @@ public class TestRecorderBlazeCommandRunConfigurationProxy
   }
 
   @Override
-  @Nullable
-  public List<ListenableFuture<IDevice>> getDeviceFutures(ExecutionEnvironment environment) {
-    return environment
-        .getCopyableUserData(BlazeAndroidRunConfigurationRunner.DEVICE_SESSION_KEY)
-        .deviceFutures
-        .get();
+  public boolean isNativeProject() {
+    return BlazeAutoAndroidDebuggerBase.isNativeCodeInProject(getModule().getProject());
   }
 }

@@ -42,7 +42,7 @@ public final class RenderResultCompat {
   }
 
   public RenderErrorModel createErrorModel() {
-    return RenderErrorModelFactory.createErrorModel(null, result, null);
+    return RenderErrorModelFactory.createErrorModel(null, result);
   }
 
   public RenderResult get() {

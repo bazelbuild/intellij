@@ -15,8 +15,8 @@
  */
 package com.google.idea.sdkcompat.ui.icons;
 
-import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.icons.CoreIconManager;
 
 /** Compat class for IconManager. */
 public class IconManagerCompat {
@@ -24,10 +24,10 @@ public class IconManagerCompat {
   private IconManagerCompat() {}
 
   public static void activateCoreIconManager() throws Throwable {
-    IconManager.activate(new CoreIconManager());
+    IconManager.Companion.activate(new CoreIconManager());
   }
 
   public static void deactivate() {
-    IconManager.deactivate();
+    IconManager.Companion.deactivate();
   }
 }
