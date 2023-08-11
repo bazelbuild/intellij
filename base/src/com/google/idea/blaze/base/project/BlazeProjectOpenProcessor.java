@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import icons.BlazeIcons;
@@ -42,7 +43,7 @@ public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
   private static final String DEPRECATED_PROJECT_DATA_SUBDIRECTORY = ".project";
 
   @Nullable
-  private static VirtualFile getIdeaSubdirectory(VirtualFile file) {
+  public static VirtualFile getIdeaSubdirectory(VirtualFile file) {
     VirtualFile projectSubdirectory = file.findChild(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY);
     if (projectSubdirectory == null || !projectSubdirectory.isDirectory()) {
       projectSubdirectory = file.findChild(DEPRECATED_PROJECT_DATA_SUBDIRECTORY);
@@ -68,7 +69,7 @@ public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Override
   public boolean isStrongProjectInfoHolder() {
-    return true;
+    return Registry.is("bazel.project.auto.open.if.present", true);
   }
 
   @Override
