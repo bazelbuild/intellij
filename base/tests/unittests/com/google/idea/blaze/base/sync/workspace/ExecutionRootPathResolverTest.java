@@ -16,6 +16,9 @@
 package com.google.idea.blaze.base.sync.workspace;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -27,6 +30,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.primitives.*;
 import com.intellij.openapi.util.registry.Registry;
+import java.io.IOException;
 import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.nio.file.Path;
@@ -223,5 +227,26 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
     // check that include path for target with "include_prefix" attribute is resolved to execution root
     assertThat(files).containsExactly(
         new File(EXECUTION_ROOT, fileToBeResolved.toString()));
+  }
+
+  @Test
+  public void testExternalWorkspaceSymlinkToProject() throws IOException {
+    Path expectedPath = Path.of(WORKSPACE_ROOT.toString(), "guava", "src");
+
+    Path pathMock = mock(Path.class);
+    when(pathMock.toRealPath()).thenReturn(expectedPath);
+
+    File output = spy(new File("external/guava/src"));
+
+    // some hacky mocking to bypass several ifs
+    when(output.isAbsolute()).thenReturn(false, true);
+    when(output.toPath()).thenReturn(pathMock);
+
+    ExecutionRootPath pathUnderTest = new ExecutionRootPath(output);
+
+    ImmutableList<File> files =
+        pathResolver.resolveToIncludeDirectories(pathUnderTest);
+
+    assertThat(files).containsExactly(WORKSPACE_ROOT.fileForPath(new WorkspacePath("guava/src")));
   }
 }
