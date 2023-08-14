@@ -51,6 +51,8 @@ class BlazeCreateResourceUtils {
   private static final String PLACEHOLDER_TEXT =
       "choose a res/ directory with dropdown or browse button";
 
+  // TODO(b/295880481): Revisit how resources are created. This file conflates logic and UI, but it
+  // also reveals that the integration with Studio is done at the wrong level.
   static void setupResDirectoryChoices(
       Project project,
       @Nullable VirtualFile contextFile,
