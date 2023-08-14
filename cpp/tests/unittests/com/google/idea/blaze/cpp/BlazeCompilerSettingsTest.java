@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -54,6 +55,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
     // which is used there to check whether querysync is enabled
     applicationServices.register(ExperimentService.class, new MockExperimentService());
 
+    applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
+    
     Registry.get("bazel.sync.resolve.virtual.includes").setValue(true);
 
     ExtensionPointImpl<BlazeCompilerFlagsProcessor.Provider> ep =
