@@ -19,6 +19,8 @@ import com.intellij.testFramework.TestRunnerUtil;
 
 /** Compat class for TestRunnerUtil. */
 public class TestRunnerUtilCompat {
+  private TestRunnerUtilCompat() {}
+
   public static void replaceIdeEventQueueSafely() {
     TestRunnerUtil.replaceIdeEventQueueSafely();
   }
