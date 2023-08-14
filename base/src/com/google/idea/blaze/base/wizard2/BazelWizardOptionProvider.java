@@ -16,7 +16,11 @@
 package com.google.idea.blaze.base.wizard2;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.project.AutoImportProjectOpenProcessor;
 import com.intellij.openapi.Disposable;
+
+import java.io.File;
 
 /** Provides bazel options for the wizard. */
 public class BazelWizardOptionProvider implements BlazeWizardOptionProvider {
@@ -30,10 +34,28 @@ public class BazelWizardOptionProvider implements BlazeWizardOptionProvider {
   @Override
   public ImmutableList<BlazeSelectProjectViewOption> getSelectProjectViewOptions(
       BlazeNewProjectBuilder builder) {
-    return ImmutableList.of(
-        new CreateFromScratchProjectViewOption(),
-        new ImportFromWorkspaceProjectViewOption(builder),
-        new GenerateFromBuildFileSelectProjectViewOption(builder),
-        new CopyExternalProjectViewOption(builder));
+    ImmutableList.Builder<BlazeSelectProjectViewOption> options = new ImmutableList.Builder<>();
+
+    String projectViewFromEnv = System.getenv(AutoImportProjectOpenProcessor.PROJECT_VIEW_FROM_ENV);
+    WorkspaceRoot workspaceRoot = builder.getWorkspaceData() != null ? builder.getWorkspaceData().workspaceRoot() : null;
+
+    if (workspaceRoot != null) {
+      if (projectViewFromEnv != null) {
+        File projectViewFromEnvFile = new File(projectViewFromEnv);
+        if (projectViewFromEnvFile.exists()) {
+          options.add(UseKnownProjectViewOption.fromEnvironmentVariable(projectViewFromEnvFile));
+        }
+      }
+      if (workspaceRoot.absolutePathFor(AutoImportProjectOpenProcessor.MANAGED_PROJECT_RELATIVE_PATH).toFile().exists()) {
+        options.add(UseKnownProjectViewOption.fromManagedProject(workspaceRoot));
+      }
+    }
+
+    options.add(new CreateFromScratchProjectViewOption());
+    options.add(new ImportFromWorkspaceProjectViewOption(builder));
+    options.add(new GenerateFromBuildFileSelectProjectViewOption(builder));
+    options.add(new CopyExternalProjectViewOption(builder));
+
+    return options.build();
   }
 }

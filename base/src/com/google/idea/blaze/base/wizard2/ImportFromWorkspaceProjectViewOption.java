@@ -16,8 +16,6 @@
 package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.project.AutoImportProjectOpenProcessor;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.ui.UiUtil;
@@ -33,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TextFieldWithStoredHistory;
 import java.awt.Dimension;
 import java.io.File;
-import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -57,37 +54,6 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
     projectViewPathField.setHistorySize(BlazeNewProjectBuilder.HISTORY_SIZE);
     projectViewPathField.setText(userSettings.get(LAST_WORKSPACE_PATH, ""));
     projectViewPathField.setMinimumAndPreferredWidth(MINIMUM_FIELD_WIDTH);
-
-    String projectViewFromEnv = System.getenv(AutoImportProjectOpenProcessor.PROJECT_VIEW_FROM_ENV);
-    WorkspaceRoot workspaceRoot = builder.getWorkspaceData() != null ? builder.getWorkspaceData().workspaceRoot() : null;
-    //Add the project view passed in from the environment and/or managed project view to the projectViewPath field if they exist
-    if (workspaceRoot != null) {
-      if (projectViewFromEnv != null) {
-        File projectViewFromEnvFile = new File(projectViewFromEnv);
-        if (projectViewFromEnvFile.exists()) {
-          String relativeProjectViewPath = workspaceRoot.path().relativize(projectViewFromEnvFile.toPath()).toString();
-          if (projectViewPathField.getText().isEmpty()) {
-            projectViewPathField.setTextAndAddToHistory(relativeProjectViewPath);
-          } else {
-            List<String> history = projectViewPathField.getHistory();
-            if (!history.contains(relativeProjectViewPath)) {
-              history.add(0, relativeProjectViewPath);
-              projectViewPathField.setHistory(history);
-            }
-          }
-        }
-      }
-      if (projectViewPathField.getText().isEmpty()) {
-        projectViewPathField.setTextAndAddToHistory(AutoImportProjectOpenProcessor.MANAGED_PROJECT_RELATIVE_PATH);
-      } else {
-        List<String> history = projectViewPathField.getHistory();
-        if (!history.contains(AutoImportProjectOpenProcessor.MANAGED_PROJECT_RELATIVE_PATH)) {
-          history.add(0, AutoImportProjectOpenProcessor.MANAGED_PROJECT_RELATIVE_PATH);
-          projectViewPathField.setHistory(history);
-        }
-      }
-    }
-
 
     JButton button = new JButton("...");
     button.addActionListener(action -> chooseWorkspacePath());
