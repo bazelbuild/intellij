@@ -1,6 +1,8 @@
 # Description:
 #
 # Scripts for building IntelliJ plugins
+
+load("@rules_python//python:defs.bzl", "py_binary")
 load(
     "//:build-visibility.bzl",
     "INTELLIJ_PLUGINS_VISIBILITY",
