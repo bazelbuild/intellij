@@ -15,29 +15,23 @@
  */
 package com.google.idea.blaze.android.run.testrecorder;
 
-import com.android.annotations.Nullable;
-import com.android.ddmlib.IDevice;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gct.testrecorder.run.TestRecorderRunConfigurationProxy;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandler;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunner;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;
-import java.util.List;
 
 /** {@link TestRecorderRunConfigurationProxy} for blaze. */
-public class TestRecorderBlazeCommandRunConfigurationProxy
+public abstract class TestRecorderBlazeCommandRunConfigurationProxyBase
     implements TestRecorderRunConfigurationProxy {
 
   private final BlazeCommandRunConfiguration myBaseConfiguration;
   private final BlazeAndroidBinaryRunConfigurationHandler myBaseConfigurationHandler;
 
-  public TestRecorderBlazeCommandRunConfigurationProxy(
+  public TestRecorderBlazeCommandRunConfigurationProxyBase(
       BlazeCommandRunConfiguration baseConfiguration) {
     myBaseConfiguration = baseConfiguration;
     myBaseConfigurationHandler =
@@ -73,14 +67,5 @@ public class TestRecorderBlazeCommandRunConfigurationProxy
     }
 
     return "";
-  }
-
-  @Nullable
-  @Override
-  public List<ListenableFuture<IDevice>> getDeviceFutures(ExecutionEnvironment environment) {
-    return environment
-        .getCopyableUserData(BlazeAndroidRunConfigurationRunner.DEVICE_SESSION_KEY)
-        .deviceFutures
-        .get();
   }
 }
