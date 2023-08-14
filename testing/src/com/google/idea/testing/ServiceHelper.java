@@ -17,6 +17,7 @@ package com.google.idea.testing;
 
 import com.google.idea.sdkcompat.BaseSdkTestCompat;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -90,17 +91,20 @@ public class ServiceHelper {
       if (!application.hasComponent(key)) {
         // registers component from scratch
         ServiceContainerUtil.registerComponentImplementation(
-            application, key, key, /*shouldBeRegistered=*/ false);
+            application, key, key, /* shouldBeRegistered= */ false);
       }
       // replaces existing component
       ServiceContainerUtil.registerComponentInstance(
           application, key, implementation, parentDisposable);
-    } else {
+    } else if (application instanceof MockApplication) {
       registerComponentInstance(
-          ((MockApplication)application).getPicoContainer(),
+          ((MockApplication) application).getPicoContainer(),
           key,
           implementation,
           parentDisposable);
+    } else {
+      throw new RuntimeException(
+          "Implementation not supported: " + application.getClass().getSimpleName());
     }
   }
 
@@ -117,7 +121,7 @@ public class ServiceHelper {
 
   private static <T> void registerComponentInstance(
       MutablePicoContainer container, Class<T> key, T implementation, Disposable parentDisposable) {
-    Object old = ApplicationManager.getApplication().getComponent(key);
+    Object old = container.getComponentInstance(key);
     container.unregisterComponent(key.getName());
     container.registerComponentInstance(key.getName(), implementation);
     Disposer.register(

@@ -131,10 +131,11 @@ public final class TestUtils {
     }
   }
 
-  public static void createMockApplication(Disposable parentDisposable) {
+  public static MockApplication createMockApplication(Disposable parentDisposable) {
     final MyMockApplication instance = new MyMockApplication(parentDisposable);
     ApplicationManager.setApplication(instance, FileTypeManager::getInstance, parentDisposable);
     instance.registerService(EncodingManager.class, EncodingManagerImpl.class);
+    return instance;
   }
 
   public static MockProject mockProject(
