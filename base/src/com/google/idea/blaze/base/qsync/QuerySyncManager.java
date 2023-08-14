@@ -155,7 +155,7 @@ public class QuerySyncManager {
 
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> fullSync() {
-    if (projectDefinitionHasChanged()) {
+    if (!isProjectLoaded() || projectDefinitionHasChanged()) {
       return run("Updating project structure", "Re-importing project", this::loadProject);
 
     } else {
