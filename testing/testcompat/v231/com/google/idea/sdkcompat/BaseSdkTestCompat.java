@@ -53,21 +53,6 @@ public final class BaseSdkTestCompat {
     return factory.createLightFixtureBuilder(projectName);
   }
 
-  /** #api231 */
-  public static CoreIconManager newCoreIconManager() {
-    return new CoreIconManager();
-  }
-
-  /** #api231 */
-  public static void activateIconManager(IconManager iconManager) throws Throwable {
-    IconManager.activate(iconManager);
-  }
-
-  /** #api231 */
-  public static void deactivateIconManager() {
-    IconManager.deactivate();
-  }
-
   /** #api222 */
   public static void replaceIdeEventQueueSafely() {
       UITestUtil.replaceIdeEventQueueSafely();
