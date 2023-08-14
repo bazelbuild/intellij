@@ -1,3 +1,4 @@
+load("@rules_python//python:defs.bzl", "py_binary")
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
