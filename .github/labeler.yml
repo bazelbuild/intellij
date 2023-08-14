@@ -14,16 +14,6 @@ awaiting-review:
 - intellij_platform_sdk/BUILD.clion231
 - intellij_platform_sdk/BUILD.clion232
 
-'product: Android Studio':
-- aswb/**/*
-- base/**/*
-- intellij_platform_sdk/BUILD.android_studio213
-- intellij_platform_sdk/BUILD.android_studio221
-- intellij_platform_sdk/BUILD.android_studio222
-- intellij_platform_sdk/BUILD.android_studio223
-- intellij_platform_sdk/BUILD.android_studio231
-- intellij_platform_sdk/BUILD.android_studiodev
-
 'product: IntelliJ':
 - base/**/*
 - examples/java/greetings_project/**/*
