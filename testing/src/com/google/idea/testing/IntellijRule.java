@@ -15,12 +15,14 @@
  */
 package com.google.idea.testing;
 
+import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import org.junit.Assert;
 import org.junit.rules.ExternalResource;
 import org.picocontainer.MutablePicoContainer;
 
@@ -32,16 +34,17 @@ import org.picocontainer.MutablePicoContainer;
 public final class IntellijRule extends ExternalResource {
 
   private MockProject project;
+  private MockApplication application;
   private Disposable testDisposable;
 
   @Override
   protected void before() {
     testDisposable = Disposer.newDisposable();
-
-    TestUtils.createMockApplication(testDisposable);
-    project =
-        TestUtils.mockProject(
-            ApplicationManager.getApplication().getPicoContainer(), testDisposable);
+    application = TestUtils.createMockApplication(testDisposable);
+    Assert.assertSame(application, ApplicationManager.getApplication());
+    Assert.assertSame(
+        application.getPicoContainer(), ApplicationManager.getApplication().getPicoContainer());
+    project = TestUtils.mockProject(application.getPicoContainer(), testDisposable);
   }
 
   @Override
@@ -54,29 +57,19 @@ public final class IntellijRule extends ExternalResource {
   }
 
   public <T> void registerApplicationService(Class<T> klass, T instance) {
-    registerComponentInstance(
-        (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer(),
-        klass,
-        instance,
-        testDisposable);
+    registerComponentInstance(application.getPicoContainer(), klass, instance, testDisposable);
   }
 
   public <T> void registerApplicationComponent(Class<T> klass, T instance) {
-    registerComponentInstance(
-        (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer(),
-        klass,
-        instance,
-        testDisposable);
+    registerComponentInstance(application.getPicoContainer(), klass, instance, testDisposable);
   }
 
   public <T> void registerProjectService(Class<T> klass, T instance) {
-    registerComponentInstance(
-        (MutablePicoContainer) getProject().getPicoContainer(), klass, instance, testDisposable);
+    registerComponentInstance(project.getPicoContainer(), klass, instance, testDisposable);
   }
 
   public <T> void registerProjectComponent(Class<T> klass, T instance) {
-    registerComponentInstance(
-        (MutablePicoContainer) getProject().getPicoContainer(), klass, instance, testDisposable);
+    registerComponentInstance(project.getPicoContainer(), klass, instance, testDisposable);
   }
 
   public <T> void registerExtensionPoint(ExtensionPointName<T> name, Class<T> type) {
@@ -89,12 +82,7 @@ public final class IntellijRule extends ExternalResource {
 
   private static <T> void registerComponentInstance(
       MutablePicoContainer container, Class<T> key, T implementation, Disposable parentDisposable) {
-    Object old;
-    try {
-      old = container.getComponentInstance(key);
-    } catch (RuntimeException e) {
-      old = null;
-    }
+    Object old = container.getComponentInstance(key);
     container.unregisterComponent(key.getName());
     container.registerComponentInstance(key.getName(), implementation);
     Object finalOld = old;

@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.bazel.FakeBuildSystem;
 import com.google.idea.blaze.base.bazel.FakeBuildSystemProvider;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.testing.TestUtils;
+import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockComponentManager;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
@@ -95,9 +96,8 @@ public class BlazeTestCase {
   @Before
   public final void setup() {
     testDisposable = new RootDisposable();
-    TestUtils.createMockApplication(testDisposable);
-    MutablePicoContainer applicationContainer =
-        (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer();
+    MockApplication mockApplication = TestUtils.createMockApplication(testDisposable);
+    MutablePicoContainer applicationContainer = mockApplication.getPicoContainer();
     MockProject mockProject = TestUtils.mockProject(applicationContainer, testDisposable);
 
     extensionsArea = (ExtensionsAreaImpl) Extensions.getRootArea();
