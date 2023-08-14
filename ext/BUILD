@@ -13,13 +13,13 @@ java_library(
     deps = [
         "//ext/proto:intellijext_java_grpc",
         "//ext/proto:intellijext_java_proto",
-        "//third_party/java/grpc:core",
-        "//third_party/java/grpc:netty",
-        "//third_party/java/netty4:common",
-        "//third_party/java/netty4:transport",
-        "//third_party/java/netty4:transport_native_epoll",
-        "//third_party/java/netty4:transport_native_unix_common",
         "@com_google_guava_guava//jar",
+        "@io_grpc_grpc_java//core",
+        "@io_grpc_grpc_java//netty",
+        "@io_netty_netty_common//jar",
+        "@io_netty_netty_transport//jar",
+        "@io_netty_netty_transport_native_epoll//jar",
+        "@io_netty_netty_transport_native_unix_common//jar",
     ],
 )
 
@@ -30,13 +30,13 @@ java_binary(
     deps = [
         "//ext/proto:intellijext_java_grpc",
         "//ext/proto:intellijext_java_proto",
-        "//third_party/java/grpc:core",
-        "//third_party/java/grpc:netty",
         "//third_party/java/grpc:stub",
-        "//third_party/java/netty4:common",
-        "//third_party/java/netty4:transport",
-        "//third_party/java/netty4:transport_native_epoll",
-        "//third_party/java/netty4:transport_native_unix_common",
+        "@io_grpc_grpc_java//core",
+        "@io_grpc_grpc_java//netty",
+        "@io_netty_netty_common//jar",
+        "@io_netty_netty_transport//jar",
+        "@io_netty_netty_transport_native_epoll//jar",
+        "@io_netty_netty_transport_native_unix_common//jar",
     ],
 )
 
@@ -50,7 +50,7 @@ java_test(
     deps = [
         ":intellijext",
         "//ext/proto:intellijext_java_proto",
-        "//third_party/java/grpc:core",
+        "@io_grpc_grpc_java//core",
         "@junit//jar",
         "@truth//jar",
     ],

@@ -1,11 +1,9 @@
-load("//third_party/java/grpc:build_defs.bzl", "java_grpc_library")
-load("//net/grpc/go/build_defs:go_grpc_library.bzl", "go_grpc_library")
+load("@io_grpc_grpc_java//:java_grpc_library.bzl", "java_grpc_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_grpc_library", "go_proto_library")
 
 proto_library(
     name = "intellijext_proto",
     srcs = ["intellijext.proto"],
-    has_services = 1,
-    use_java_stubby_library = True,
 )
 
 java_proto_library(
@@ -29,7 +27,6 @@ go_proto_library(
 
 go_grpc_library(
     name = "intellijext_go_grpc",
-    srcs = [":intellijext_proto"],
     visibility = ["//visibility:public"],
     deps = [":intellijext_go_proto"],
 )
