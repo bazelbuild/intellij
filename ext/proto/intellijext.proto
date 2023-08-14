@@ -20,7 +20,7 @@ package com.google.idea.blaze.ext;
 option java_package = "com.google.idea.blaze.ext";
 option java_multiple_files = true;
 option java_outer_classname = "IntelliJExtProto";
-option use_java_stubby_library = true;
+
 
 message GetVersionRequest {}
 
