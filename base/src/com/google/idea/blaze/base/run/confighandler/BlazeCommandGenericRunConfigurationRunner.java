@@ -103,6 +103,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
 
   /** {@link RunProfileState} for generic blaze commands. */
   public static class BlazeCommandRunProfileState extends CommandLineState {
+    private static final int BLAZE_BUILD_INTERRUPTED = 8;
     private final BlazeCommandRunConfiguration configuration;
     private final BlazeCommandRunConfigurationCommonState handlerState;
     private final ImmutableList<Filter> consoleFilters;
@@ -166,7 +167,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
       return new ProcessHandler() {
         @Override
         protected void destroyProcessImpl() {
-          notifyProcessTerminated(0);
+          notifyProcessTerminated(BLAZE_BUILD_INTERRUPTED);
         }
 
         @Override
@@ -244,8 +245,31 @@ public final class BlazeCommandGenericRunConfigurationRunner
                       invoker
                           .getCommandRunner()
                           .run(project, blazeCommandBuilder, buildResultHelper, context));
-      blazeBuildOutputsListenableFuture.addListener(
-          processHandler::detachProcess, BlazeExecutor.getInstance().getExecutor());
+      Futures.addCallback(
+          blazeBuildOutputsListenableFuture,
+          new FutureCallback<BlazeBuildOutputs>() {
+            @Override
+            public void onSuccess(BlazeBuildOutputs blazeBuildOutputs) {
+              processHandler.detachProcess();
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+              context.handleException(throwable.getMessage(), throwable);
+              processHandler.detachProcess();
+            }
+          },
+          BlazeExecutor.getInstance().getExecutor());
+
+      processHandler.addProcessListener(
+          new ProcessAdapter() {
+            @Override
+            public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
+              if (willBeDestroyed) {
+                context.setCancelled();
+              }
+            }
+          });
       return processHandler;
     }
 
@@ -328,6 +352,10 @@ public final class BlazeCommandGenericRunConfigurationRunner
 
             @Override
             public void onFailure(Throwable throwable) {
+              context.handleException(throwable.getMessage(), throwable);
+              verify(testResultFinderStrategy instanceof BlazeTestResultHolder);
+              ((BlazeTestResultHolder) testResultFinderStrategy)
+                  .setTestResults(BlazeTestResults.NO_RESULTS);
               processHandler.detachProcess();
             }
           },
@@ -336,14 +364,12 @@ public final class BlazeCommandGenericRunConfigurationRunner
       processHandler.addProcessListener(
           new ProcessAdapter() {
             @Override
-            @SuppressWarnings("Interruption")
             public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
               if (willBeDestroyed) {
-                blazeTestResultsFuture.cancel(true);
-                context.output(
-                    PrintOutput.error(
-                        "Error: Tests interrupted, could not parse the test results for "
-                            + configuration.getName()));
+                context.setCancelled();
+                verify(testResultFinderStrategy instanceof BlazeTestResultHolder);
+                ((BlazeTestResultHolder) testResultFinderStrategy)
+                    .setTestResults(BlazeTestResults.NO_RESULTS);
               }
             }
           });
