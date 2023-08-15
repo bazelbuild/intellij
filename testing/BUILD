@@ -103,19 +103,19 @@ java_library(
         ]),
         "intellij-2023.1": glob([
             "testcompat/v231/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v231/com/google/idea/testing/java/*.java",
+            "testcompat/v231/com/google/idea/testing/**/*.java",
         ]),
         "intellij-ue-2023.1": glob([
             "testcompat/v231/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v231/com/google/idea/testing/java/*.java",
+            "testcompat/v231/com/google/idea/testing/**/*.java",
         ]),
         "intellij-2023.2": glob([
             "testcompat/v232/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v232/com/google/idea/testing/java/*.java",
+            "testcompat/v232/com/google/idea/testing/**/*.java",
         ]),
         "intellij-ue-2023.2": glob([
             "testcompat/v232/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v232/com/google/idea/testing/java/*.java",
+            "testcompat/v232/com/google/idea/testing/**/*.java",
         ]),
         "default": [],
     }),
