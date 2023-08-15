@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -55,6 +56,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
     applicationServices.register(ExperimentService.class, new MockExperimentService());
 
     Registry.get("bazel.sync.resolve.virtual.includes").setValue(true);
+
+    applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
 
     ExtensionPointImpl<BlazeCompilerFlagsProcessor.Provider> ep =
         registerExtensionPoint(
