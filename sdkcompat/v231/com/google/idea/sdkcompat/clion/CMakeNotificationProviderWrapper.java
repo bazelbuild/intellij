@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.cpp.cmake.workspace.CMakeNotificationProvider;
 
+import java.util.function.Function;
+import javax.annotation.Nullable;
 import javax.swing.*;
 
 // #api223
@@ -16,7 +18,15 @@ public class CMakeNotificationProviderWrapper {
         this.value = new CMakeNotificationProvider();
     }
 
+    @Nullable
     public JComponent createNotificationPanel(VirtualFile virtualFile, FileEditor fileEditor, Project project) {
-        return this.value.collectNotificationData(project, virtualFile).apply(fileEditor);
+        Function<? super FileEditor, ? extends JComponent> notificationProducer =
+            this.value.collectNotificationData(project, virtualFile);
+
+        if (notificationProducer != null) {
+            return notificationProducer.apply(fileEditor);
+        }
+
+        return null;
     }
 }
