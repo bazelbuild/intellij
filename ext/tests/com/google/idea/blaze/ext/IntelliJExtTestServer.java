@@ -20,8 +20,6 @@ import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollServerDomainSocketChannel;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import java.nio.file.Path;
@@ -71,11 +69,11 @@ public final class IntelliJExtTestServer extends IntelliJExtImplBase {
     }
 
     Path path = Paths.get(socket);
-    EpollEventLoopGroup group =
-        new EpollEventLoopGroup(new DefaultThreadFactory(EventLoopGroup.class, true));
+    EventLoopGroup group =
+        IntelliJExts.createGroup(new DefaultThreadFactory(EventLoopGroup.class, true));
     NettyServerBuilder sb =
-        NettyServerBuilder.forAddress(new DomainSocketAddress(path.toString()))
-            .channelType(EpollServerDomainSocketChannel.class)
+        NettyServerBuilder.forAddress(new DomainSocketAddress(path.toFile()))
+            .channelType(IntelliJExts.getChannelType())
             .bossEventLoopGroup(group)
             .addService(new IntelliJExtTestServer())
             .workerEventLoopGroup(group);

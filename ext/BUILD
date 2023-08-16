@@ -8,7 +8,15 @@ java_binary(
 
 java_library(
     name = "intellijext",
-    srcs = glob(["src/**/*.java"]),
+    srcs = [
+        "src/com/google/idea/blaze/ext/IntelliJExtClient.java",
+        "src/com/google/idea/blaze/ext/IntelliJExtServer.java",
+        "src/com/google/idea/blaze/ext/IntelliJExtService.java",
+        "src/com/google/idea/blaze/ext/StreamProcessor.java",
+    ] + select({
+        "//tools/cc_target_os:platform_macos": ["src/com/google/idea/blaze/ext/mac/IntelliJExts.java"],
+        "//conditions:default": ["src/com/google/idea/blaze/ext/IntelliJExts.java"],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         "//ext/proto:intellijext_java_grpc",
@@ -18,14 +26,20 @@ java_library(
         "@io_grpc_grpc_java//netty",
         "@io_netty_netty_common//jar",
         "@io_netty_netty_transport//jar",
-        "@io_netty_netty_transport_native_epoll//jar",
         "@io_netty_netty_transport_native_unix_common//jar",
-    ],
+    ] + select({
+        "//tools/cc_target_os:platform_macos": ["@io_netty_netty_transport//jar_native_kqueue"],
+        "//conditions:default": ["@io_netty_netty_transport_native_epoll//jar"],
+    }),
 )
 
 java_binary(
     name = "IntelliJExtTestServer",
-    srcs = ["tests/com/google/idea/blaze/ext/IntelliJExtTestServer.java"],
+    srcs = ["tests/com/google/idea/blaze/ext/IntelliJExtTestServer.java"] +
+           select({
+               "//tools/cc_target_os:platform_macos": ["src/com/google/idea/blaze/ext/mac/IntelliJExts.java"],
+               "//conditions:default": ["src/com/google/idea/blaze/ext/IntelliJExts.java"],
+           }),
     main_class = "com.google.idea.blaze.ext.IntelliJExtTestServer",
     deps = [
         "//ext/proto:intellijext_java_grpc",
@@ -35,9 +49,11 @@ java_binary(
         "@io_grpc_grpc_java//netty",
         "@io_netty_netty_common//jar",
         "@io_netty_netty_transport//jar",
-        "@io_netty_netty_transport_native_epoll//jar",
         "@io_netty_netty_transport_native_unix_common//jar",
-    ],
+    ] + select({
+        "//tools/cc_target_os:platform_macos": ["@io_netty_netty_transport//jar_native_kqueue"],
+        "//conditions:default": ["@io_netty_netty_transport_native_epoll//jar"],
+    }),
 )
 
 java_test(
