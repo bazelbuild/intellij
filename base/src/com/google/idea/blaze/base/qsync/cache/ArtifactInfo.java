@@ -52,6 +52,12 @@ public abstract class ArtifactInfo {
    */
   public abstract ImmutableList<Path> genSrcs();
 
+  /**
+   * The external gensrc artifacts relative path (blaze-out/xxx) that can be used to retrieve local
+   * copy in the cache.
+   */
+  public abstract ImmutableList<Path> extGenSrcs();
+
   /** Workspace relative sources for this dependency, extracted at dependency build time. */
   public abstract ImmutableSet<Path> sources();
 
@@ -64,6 +70,7 @@ public abstract class ArtifactInfo {
         proto.getJarsList().stream().map(Path::of).collect(toImmutableList()),
         proto.getIdeAarsList().stream().map(Path::of).collect(toImmutableList()),
         proto.getGenSrcsList().stream().map(Path::of).collect(toImmutableList()),
+        proto.getExtGenSrcsList().stream().map(Path::of).collect(toImmutableList()),
         proto.getSrcsList().stream().map(Path::of).collect(toImmutableSet()),
         proto.getSrcjarsList().stream().map(Path::of).collect(toImmutableSet()));
   }
@@ -74,6 +81,7 @@ public abstract class ArtifactInfo {
         .addAllJars(jars().stream().map(Path::toString).collect(toImmutableList()))
         .addAllIdeAars(ideAars().stream().map(Path::toString).collect(toImmutableList()))
         .addAllGenSrcs(genSrcs().stream().map(Path::toString).collect(toImmutableList()))
+        .addAllExtGenSrcs(extGenSrcs().stream().map(Path::toString).collect(toImmutableList()))
         .addAllSrcs(sources().stream().map(Path::toString).collect(toImmutableList()))
         .addAllSrcjars(srcJars().stream().map(Path::toString).collect(toImmutableList()))
         .build();
@@ -92,6 +100,7 @@ public abstract class ArtifactInfo {
   public static ArtifactInfo empty(Label target) {
     return new AutoValue_ArtifactInfo(
         target,
+        ImmutableList.of(),
         ImmutableList.of(),
         ImmutableList.of(),
         ImmutableList.of(),

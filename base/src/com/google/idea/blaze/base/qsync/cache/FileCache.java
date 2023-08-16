@@ -102,9 +102,11 @@ public class FileCache {
    * Returns local cached artifact. Returns Optional.empty() if it does not exist in this cache
    * directory.
    */
-  public Optional<Path> getCacheFile(String artifactPath) {
+  public Optional<Path> getCacheFile(Path artifactPath) {
     Path path =
-        cacheLayout.getOutputArtifactDestinationAndLayout(() -> artifactPath).getCopyDestination();
+        cacheLayout
+            .getOutputArtifactDestinationAndLayout(artifactPath::toString)
+            .getCopyDestination();
     return Optional.ofNullable(Files.exists(path) ? path : null);
   }
 

@@ -20,6 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.regex.Matcher;
@@ -32,14 +33,18 @@ public class PackageStatementParser implements PackageReader {
 
   @Override
   public String readPackage(Path path) throws IOException {
-    try (InputStreamReader in = new InputStreamReader(new FileInputStream(path.toFile()), UTF_8)) {
-      BufferedReader javaReader = new BufferedReader(in);
-      String javaLine;
-      while ((javaLine = javaReader.readLine()) != null) {
-        Matcher packageMatch = PACKAGE_PATTERN.matcher(javaLine);
-        if (packageMatch.find()) {
-          return packageMatch.group(1);
-        }
+    try (InputStream in = new FileInputStream(path.toFile())) {
+      return readPackage(in);
+    }
+  }
+
+  public String readPackage(InputStream in) throws IOException {
+    BufferedReader javaReader = new BufferedReader(new InputStreamReader(in, UTF_8));
+    String javaLine;
+    while ((javaLine = javaReader.readLine()) != null) {
+      Matcher packageMatch = PACKAGE_PATTERN.matcher(javaLine);
+      if (packageMatch.find()) {
+        return packageMatch.group(1);
       }
     }
     return "";

@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.qsync.OutputInfo;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.project.ProjectPath.Resolver;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -60,7 +61,8 @@ public class ArtifactTrackerImplTest {
         new ArtifactTrackerImpl(
             temporaryFolder.getRoot().toPath(),
             temporaryFolder.getRoot().toPath().resolve("ide_project"),
-            testArtifactFetcher);
+            testArtifactFetcher,
+            Resolver.EMPTY_FOR_TESTING);
     artifactTracker.initialize();
 
     assertThat(
@@ -97,7 +99,8 @@ public class ArtifactTrackerImplTest {
         new ArtifactTrackerImpl(
             temporaryFolder.getRoot().toPath(),
             temporaryFolder.getRoot().toPath().resolve("ide_project"),
-            testArtifactFetcher);
+            testArtifactFetcher,
+            Resolver.EMPTY_FOR_TESTING);
     artifactTracker.initialize();
 
     final UpdateResult unused =
@@ -142,7 +145,8 @@ public class ArtifactTrackerImplTest {
         new ArtifactTrackerImpl(
             temporaryFolder.getRoot().toPath(),
             temporaryFolder.getRoot().toPath().resolve("ide_project"),
-            testArtifactFetcher);
+            testArtifactFetcher,
+            Resolver.EMPTY_FOR_TESTING);
     artifactTracker.initialize();
 
     assertThat(
@@ -181,7 +185,8 @@ public class ArtifactTrackerImplTest {
         new ArtifactTrackerImpl(
             temporaryFolder.getRoot().toPath(),
             temporaryFolder.getRoot().toPath().resolve("ide_project"),
-            testArtifactFetcher);
+            testArtifactFetcher,
+            Resolver.EMPTY_FOR_TESTING);
     artifactTracker.initialize();
 
     final UpdateResult unused =
@@ -230,7 +235,8 @@ public class ArtifactTrackerImplTest {
         new ArtifactTrackerImpl(
             temporaryFolder.getRoot().toPath(),
             temporaryFolder.getRoot().toPath().resolve("ide_project"),
-            testArtifactFetcher);
+            testArtifactFetcher,
+            Resolver.EMPTY_FOR_TESTING);
     artifactTracker.initialize();
 
     final UpdateResult unused =

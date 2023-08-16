@@ -34,6 +34,7 @@ public abstract class OutputInfo {
           ImmutableList.of(),
           ImmutableList.of(),
           ImmutableList.of(),
+          ImmutableList.of(),
           ImmutableSet.of(),
           0);
 
@@ -44,6 +45,8 @@ public abstract class OutputInfo {
   public abstract ImmutableList<OutputArtifact> getAars();
 
   public abstract ImmutableList<OutputArtifact> getGeneratedSources();
+
+  public abstract ImmutableList<OutputArtifact> getExternalGeneratedSources();
 
   public abstract ImmutableSet<Label> getTargetsWithErrors();
 
@@ -64,6 +67,7 @@ public abstract class OutputInfo {
       ImmutableList<OutputArtifact> jars,
       ImmutableList<OutputArtifact> aars,
       ImmutableList<OutputArtifact> generatedSources,
+      ImmutableList<OutputArtifact> externalGeneratedSources,
       ImmutableSet<Label> targetsWithErrors,
       int exitCode) {
     return new AutoValue_OutputInfo.Builder()
@@ -71,6 +75,7 @@ public abstract class OutputInfo {
         .setJars(jars)
         .setAars(aars)
         .setGeneratedSources(generatedSources)
+        .setExternalGeneratedSources(externalGeneratedSources)
         .setTargetsWithErrors(targetsWithErrors)
         .setExitCode(exitCode)
         .build();
@@ -101,6 +106,8 @@ public abstract class OutputInfo {
     public abstract Builder setGeneratedSources(ImmutableList<OutputArtifact> value);
 
     public abstract Builder setGeneratedSources(OutputArtifact... values);
+
+    public abstract Builder setExternalGeneratedSources(ImmutableList<OutputArtifact> value);
 
     public abstract Builder setTargetsWithErrors(ImmutableSet<Label> value);
 

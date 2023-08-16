@@ -132,6 +132,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
               .addBlazeFlags("--output_groups=qsync_jars")
               .addBlazeFlags("--output_groups=qsync_aars")
               .addBlazeFlags("--output_groups=qsync_gensrcs")
+              .addBlazeFlags("--output_groups=qsync_ext_gensrcs")
               .addBlazeFlags("--output_groups=artifact_info_file")
               .addBlazeFlags("--noexperimental_run_validations")
               .addBlazeFlags("--keep_going");
@@ -178,6 +179,9 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     ImmutableList<OutputArtifact> generatedSources =
         translateOutputArtifacts(
             blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("qsync_gensrcs")));
+    ImmutableList<OutputArtifact> externalGeneratedSources =
+        translateOutputArtifacts(
+            blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("qsync_ext_gensrcs")));
     ImmutableList<OutputArtifact> artifactInfoFiles =
         translateOutputArtifacts(
             blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("artifact_info_file")));
@@ -190,6 +194,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
         jars,
         aars,
         generatedSources,
+        externalGeneratedSources,
         blazeBuildOutputs.getTargetsWithErrors().stream()
             .map(Object::toString)
             .map(Label::of)
