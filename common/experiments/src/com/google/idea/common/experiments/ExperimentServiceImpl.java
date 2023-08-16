@@ -97,7 +97,7 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
   public int getExperimentInt(Experiment experiment, int defaultValue) {
     String property = getExperiment(experiment);
     try {
-      return property != null ? Integer.parseInt(property) : defaultValue;
+      return property != null ? Integer.parseInt(property.trim()) : defaultValue;
     } catch (NumberFormatException e) {
       logger.warn("Could not parse int for experiment: " + experiment.getKey(), e);
       return defaultValue;
