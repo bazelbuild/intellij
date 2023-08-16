@@ -20,8 +20,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.netty.NettyChannelBuilder;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.EpollDomainSocketChannel;
-import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import java.nio.file.Path;
@@ -33,12 +31,12 @@ public class IntelliJExtClient {
 
   public IntelliJExtClient(Path socket) {
     DomainSocketAddress address = new DomainSocketAddress(socket.toFile());
-    EpollEventLoopGroup group =
-        new EpollEventLoopGroup(new DefaultThreadFactory(EventLoopGroup.class, true));
+    EventLoopGroup group =
+        IntelliJExts.createGroup(new DefaultThreadFactory(EventLoopGroup.class, true));
     ManagedChannel channel =
         NettyChannelBuilder.forAddress(address)
             .eventLoopGroup(group)
-            .channelType(EpollDomainSocketChannel.class)
+            .channelType(IntelliJExts.getChannelType())
             .withOption(ChannelOption.SO_KEEPALIVE, false)
             .usePlaintext()
             .build();
