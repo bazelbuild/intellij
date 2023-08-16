@@ -1,3 +1,12 @@
+v2023.08.15
+===========
+* - Allow to suppress automatic Bazel project opening if .ijwb or so … #5208
+* Support BUILD.bazel files along BUILDin errors parsing #5206
+* Fix detecting custom test_suite macros #5184
+* Do not suggest to add .ijwb and others to project view. #5168
+* Fix the "No display name is specified' error #5196
+* Select source roots for library jars that have interim folders like `… #5117
+
 v2023.08.01
 ===========
 * Fix references for repo-relative labels in external workspaces #5164
