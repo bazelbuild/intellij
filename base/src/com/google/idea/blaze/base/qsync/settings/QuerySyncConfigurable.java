@@ -38,7 +38,8 @@ import javax.swing.JLabel;
 import kotlin.Unit;
 
 /** A configuration page for the settings dialog for query sync. */
-public class QuerySyncConfigurable extends BoundSearchableConfigurable implements Configurable {
+public class QuerySyncConfigurable extends BoundSearchableConfigurable
+    implements Configurable.Beta {
   private final QuerySyncSettings settings = QuerySyncSettings.getInstance();
 
   // Makes sure we have checked query sync enable option before any changes. Otherwise, it may
