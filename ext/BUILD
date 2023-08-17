@@ -14,7 +14,7 @@ java_library(
         "src/com/google/idea/blaze/ext/IntelliJExtService.java",
         "src/com/google/idea/blaze/ext/StreamProcessor.java",
     ] + select({
-        "//tools/cc_target_os:platform_macos": ["src/com/google/idea/blaze/ext/mac/IntelliJExts.java"],
+        "@platforms//os:macos": ["src/com/google/idea/blaze/ext/mac/IntelliJExts.java"],
         "//conditions:default": ["src/com/google/idea/blaze/ext/IntelliJExts.java"],
     }),
     visibility = ["//visibility:public"],
@@ -28,7 +28,7 @@ java_library(
         "@io_netty_netty_transport//jar",
         "@io_netty_netty_transport_native_unix_common//jar",
     ] + select({
-        "//tools/cc_target_os:platform_macos": ["@io_netty_netty_transport//jar_native_kqueue"],
+        "@platforms//os:macos": ["@io_netty_netty_transport//jar_native_kqueue"],
         "//conditions:default": ["@io_netty_netty_transport_native_epoll//jar"],
     }),
 )
@@ -37,7 +37,7 @@ java_binary(
     name = "IntelliJExtTestServer",
     srcs = ["tests/com/google/idea/blaze/ext/IntelliJExtTestServer.java"] +
            select({
-               "//tools/cc_target_os:platform_macos": ["src/com/google/idea/blaze/ext/mac/IntelliJExts.java"],
+               "@platforms//os:macos": ["src/com/google/idea/blaze/ext/mac/IntelliJExts.java"],
                "//conditions:default": ["src/com/google/idea/blaze/ext/IntelliJExts.java"],
            }),
     main_class = "com.google.idea.blaze.ext.IntelliJExtTestServer",
@@ -51,7 +51,7 @@ java_binary(
         "@io_netty_netty_transport//jar",
         "@io_netty_netty_transport_native_unix_common//jar",
     ] + select({
-        "//tools/cc_target_os:platform_macos": ["@io_netty_netty_transport//jar_native_kqueue"],
+        "@platforms//os:macos": ["@io_netty_netty_transport//jar_native_kqueue"],
         "//conditions:default": ["@io_netty_netty_transport_native_epoll//jar"],
     }),
 )
