@@ -54,6 +54,7 @@ import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.GeneratedSourceProjectUpdater;
 import com.google.idea.blaze.qsync.SrcJarProjectUpdater;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.protobuf.ExtensionRegistry;
 import com.intellij.openapi.diagnostic.Logger;
@@ -460,6 +461,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
             artifacts.values().stream()
                 .map(ArtifactInfo::srcJars)
                 .flatMap(Set::stream)
+                .map(ProjectPath::workspaceRelative)
                 .collect(ImmutableSet.toImmutableSet()));
     projectProto = srcJarUpdater.addSrcJars();
 

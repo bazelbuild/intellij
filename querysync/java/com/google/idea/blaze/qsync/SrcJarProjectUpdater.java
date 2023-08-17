@@ -17,24 +17,23 @@ package com.google.idea.blaze.qsync;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
-import static java.util.function.Predicate.not;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Library;
 import com.google.idea.blaze.qsync.project.ProjectProto.LibrarySource;
-import java.nio.file.Path;
 import java.util.List;
 
 /** Updates the project proto with the provided source jars. */
 public class SrcJarProjectUpdater {
 
   private final ProjectProto.Project project;
-  private final ImmutableCollection<Path> srcJars;
+  private final ImmutableCollection<ProjectPath> srcJars;
 
-  public SrcJarProjectUpdater(ProjectProto.Project project, ImmutableCollection<Path> srcJars) {
+  public SrcJarProjectUpdater(
+      ProjectProto.Project project, ImmutableCollection<ProjectPath> srcJars) {
     this.project = project;
     this.srcJars = srcJars;
   }
@@ -55,11 +54,11 @@ public class SrcJarProjectUpdater {
       return project;
     }
 
-    ImmutableSet<Path> existingSrcjars =
+    ImmutableSet<ProjectPath> existingSrcjars =
         project.getLibrary(depLibPos).getSourcesList().stream()
-            .map(LibrarySource::getSrcjarPath)
-            .filter(not(Strings::isNullOrEmpty))
-            .map(Path::of)
+            .filter(LibrarySource::hasSrcjar)
+            .map(LibrarySource::getSrcjar)
+            .map(ProjectPath::create)
             .collect(toImmutableSet());
 
     if (existingSrcjars.equals(ImmutableSet.copyOf(srcJars))) {
@@ -75,8 +74,8 @@ public class SrcJarProjectUpdater {
                 .clearSources()
                 .addAllSources(
                     srcJars.stream()
-                        .map(Path::toString)
-                        .map(srcJar -> LibrarySource.newBuilder().setSrcjarPath(srcJar).build())
+                        .map(ProjectPath::toProto)
+                        .map(srcJar -> LibrarySource.newBuilder().setSrcjar(srcJar).build())
                         .collect(toImmutableList()))
                 .build())
         .build();

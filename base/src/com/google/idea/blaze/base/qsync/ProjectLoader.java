@@ -47,6 +47,7 @@ import com.google.idea.blaze.qsync.ParallelPackageReader;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.VcsStateDiffer;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -118,12 +119,16 @@ public class ProjectLoader {
         createDependencyBuilder(workspaceRoot, importRoots, buildSystem);
     RenderJarBuilder renderJarBuilder = createRenderJarBuilder(buildSystem);
 
+    Path ideProjectBasePath = Paths.get(checkNotNull(project.getBasePath()));
+    ProjectPath.Resolver projectPathResolver =
+        ProjectPath.Resolver.create(workspaceRoot.path(), ideProjectBasePath);
+
     BlazeProject graph = new BlazeProject();
     ArtifactFetcher<OutputArtifact> artifactFetcher = createArtifactFetcher();
     ArtifactTrackerImpl artifactTracker =
         new ArtifactTrackerImpl(
             BlazeDataStorage.getProjectDataDir(importSettings).toPath(),
-            Paths.get(checkNotNull(project.getBasePath())),
+            ideProjectBasePath,
             artifactFetcher);
     artifactTracker.initialize();
     DependencyTracker dependencyTracker =
@@ -140,7 +145,8 @@ public class ProjectLoader {
     QueryRunner queryRunner = createQueryRunner(buildSystem);
     ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner, vcsHandler);
     ProjectUpdater projectUpdater =
-        new ProjectUpdater(project, importSettings, projectViewSet, workspaceRoot);
+        new ProjectUpdater(
+            project, importSettings, projectViewSet, workspaceRoot, projectPathResolver);
     graph.addListener(projectUpdater);
     QuerySyncSourceToTargetMap sourceToTargetMap =
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
