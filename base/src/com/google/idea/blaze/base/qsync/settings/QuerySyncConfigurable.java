@@ -15,7 +15,10 @@
  */
 package com.google.idea.blaze.base.qsync.settings;
 
+import com.google.common.base.Suppliers;
 import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.ExperimentValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -32,6 +35,7 @@ import com.intellij.ui.dsl.builder.MutableProperty;
 import com.intellij.ui.dsl.builder.Row;
 import com.intellij.ui.dsl.builder.RowsRange;
 import com.intellij.ui.dsl.builder.UtilsKt;
+import java.util.function.Supplier;
 import javax.swing.AbstractButton;
 import javax.swing.JEditorPane;
 import javax.swing.JLabel;
@@ -40,6 +44,21 @@ import kotlin.Unit;
 /** A configuration page for the settings dialog for query sync. */
 public class QuerySyncConfigurable extends BoundSearchableConfigurable
     implements Configurable.Beta {
+
+  // If enabled query Sync via a legacy way (set up experimental value).
+  // Only read the initial value, as the sync mode should not change over a single run of the IDE.
+  private static final Supplier<Boolean> QUERY_SYNC_ENABLED_LEGACY =
+      Suppliers.memoize(
+          () ->
+              getFirstExperimentValueWithoutId(
+                  "use.query.sync", QuerySyncSettingsExperimentLoader.ID, false));
+
+  // If enabled sync before build for Query Sync via a legacy way (set up experimental value)
+  private static final Supplier<Boolean> SYNC_BEFORE_BUILD_ENABLED_LEGACY =
+      Suppliers.memoize(
+          () ->
+              getFirstExperimentValueWithoutId(
+                  "query.sync.before.build", QuerySyncSettingsExperimentLoader.ID, false));
   private final QuerySyncSettings settings = QuerySyncSettings.getInstance();
 
   // Makes sure we have checked query sync enable option before any changes. Otherwise, it may
@@ -76,11 +95,21 @@ public class QuerySyncConfigurable extends BoundSearchableConfigurable
     }
   }
 
+  private static boolean getFirstExperimentValueWithoutId(
+      String key, String id, boolean defaultValue) {
+    for (ExperimentValue experimentValue : ExperimentService.getInstance().getOverrides(key)) {
+      if (!experimentValue.id().equals(id)) {
+        return experimentValue.value().equals("1");
+      }
+    }
+    return defaultValue;
+  }
+
   @Override
   public DialogPanel createPanel() {
     return BuilderKt.panel(
         p -> {
-          boolean enabledByExperimentFile = settings.enableQuerySyncByExperimentFile();
+          boolean enabledByExperimentFile = QUERY_SYNC_ENABLED_LEGACY.get();
           // Enable query sync checkbox
           Cell<JEditorPane> unusedEnableQuerySyncRow =
               p.row(
@@ -98,7 +127,7 @@ public class QuerySyncConfigurable extends BoundSearchableConfigurable
                                     /* prop= */ new MutableProperty<Boolean>() {
                                       @Override
                                       public Boolean get() {
-                                        return settings.useQuerySync();
+                                        return settings.useQuerySync() || enabledByExperimentFile;
                                       }
 
                                       @Override
@@ -166,7 +195,8 @@ public class QuerySyncConfigurable extends BoundSearchableConfigurable
                                           /* prop= */ new MutableProperty<Boolean>() {
                                             @Override
                                             public Boolean get() {
-                                              return settings.syncBeforeBuild();
+                                              return settings.syncBeforeBuild()
+                                                  || SYNC_BEFORE_BUILD_ENABLED_LEGACY.get();
                                             }
 
                                             @Override
@@ -174,7 +204,7 @@ public class QuerySyncConfigurable extends BoundSearchableConfigurable
                                               settings.enableSyncBeforeBuild(selected);
                                             }
                                           });
-                              if (!settings.enableSyncBeforeBuildByExperimentFile()) {
+                              if (!SYNC_BEFORE_BUILD_ENABLED_LEGACY.get()) {
                                 syncBeforeBuildCheckBox =
                                     syncBeforeBuildCheckBox.enabledIf(
                                         ButtonKt.getSelected(enableQuerySyncCheckBoxCell));
