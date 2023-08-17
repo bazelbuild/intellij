@@ -15,34 +15,22 @@
  */
 package com.google.idea.blaze.base.qsync.settings;
 
-import com.google.common.base.Suppliers;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import java.util.function.Supplier;
 
 /** The settings for query sync to be stored per user. */
 @State(
     name = "QuerySyncSettings",
     storages = {@Storage("query.sync.user.settings.xml")})
 public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSettings.State> {
-  // If enabled query Sync via a legacy way (set up experimental value).
-  // Only read the initial value, as the sync mode should not change over a single run of the IDE.
-  public static final Supplier<Boolean> QUERY_SYNC_ENABLED_LEGACY =
-      Suppliers.memoize(new BoolExperiment("use.query.sync", false)::getValue);
-
-  // If enabled sync before build for Query Sync via a legacy way (set up experimental value)
-  private static final Supplier<Boolean> SYNC_BEFORE_BUILD_ENABLED_LEGACY =
-      Suppliers.memoize(new BoolExperiment("query.sync.before.build", false)::getValue);
-
   static class State {
-    public boolean useQuerySync = QUERY_SYNC_ENABLED_LEGACY.get();
+    public boolean useQuerySync = false;
 
-    public boolean showDetailedInformationInEditor = true;
+    public boolean showDetailedInformationInEditor = false;
 
-    public boolean syncBeforeBuild = SYNC_BEFORE_BUILD_ENABLED_LEGACY.get();
+    public boolean syncBeforeBuild = false;
   }
 
   private QuerySyncSettings.State state = new QuerySyncSettings.State();
@@ -89,13 +77,5 @@ public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSett
   @Override
   public void loadState(QuerySyncSettings.State state) {
     this.state = state;
-  }
-
-  public boolean enableQuerySyncByExperimentFile() {
-    return QUERY_SYNC_ENABLED_LEGACY.get();
-  }
-
-  public boolean enableSyncBeforeBuildByExperimentFile() {
-    return SYNC_BEFORE_BUILD_ENABLED_LEGACY.get();
   }
 }

@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.base.Suppliers;
-import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.function.Supplier;
@@ -28,7 +27,7 @@ public class QuerySync {
 
   // Only read the initial value, as the sync mode should not change over a single run of the IDE.
   private static final Supplier<Boolean> ENABLED =
-      Suppliers.memoize(QuerySyncSettings.getInstance()::useQuerySync);
+      Suppliers.memoize(new BoolExperiment("use.query.sync", false)::getValue);
 
   /** Enable compose preview for Query Sync. */
   private static final Supplier<Boolean> COMPOSE_ENABLED =
