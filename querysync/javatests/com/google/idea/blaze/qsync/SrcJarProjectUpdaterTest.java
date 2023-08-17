@@ -17,9 +17,13 @@ package com.google.idea.blaze.qsync;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.qsync.project.ProjectPath;
+import com.google.idea.blaze.qsync.project.ProjectPath.Resolver;
 import com.google.idea.blaze.qsync.project.ProjectProto;
+import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import com.google.idea.blaze.qsync.project.ProjectProto.LibrarySource;
 import com.google.idea.blaze.qsync.testdata.ProjectProtos;
 import com.google.idea.blaze.qsync.testdata.TestData;
@@ -54,9 +58,19 @@ public class SrcJarProjectUpdaterTest {
                 0,
                 project.getLibrary(0).toBuilder()
                     .addSources(
-                        LibrarySource.newBuilder().setSrcjarPath("path/to/sources1.srcjar").build())
+                        LibrarySource.newBuilder()
+                            .setSrcjar(
+                                ProjectProto.ContentRoot.newBuilder()
+                                    .setBase(Base.WORKSPACE)
+                                    .setPath("path/to/sources1.srcjar"))
+                            .build())
                     .addSources(
-                        LibrarySource.newBuilder().setSrcjarPath("path/to/sources2.srcjar").build())
+                        LibrarySource.newBuilder()
+                            .setSrcjar(
+                                ProjectProto.ContentRoot.newBuilder()
+                                    .setBase(Base.WORKSPACE)
+                                    .setPath("path/to/sources2.srcjar"))
+                            .build())
                     .build())
             .build();
 
@@ -64,7 +78,8 @@ public class SrcJarProjectUpdaterTest {
         new SrcJarProjectUpdater(
             project,
             ImmutableList.of(
-                Path.of("path/to/sources1.srcjar"), Path.of("path/to/sources2.srcjar")));
+                ProjectPath.workspaceRelative("path/to/sources1.srcjar"),
+                ProjectPath.workspaceRelative("path/to/sources2.srcjar")));
 
     assertThat(updater.addSrcJars()).isSameInstanceAs(project);
   }
@@ -82,22 +97,33 @@ public class SrcJarProjectUpdaterTest {
                 0,
                 project.getLibrary(0).toBuilder()
                     .addSources(
-                        LibrarySource.newBuilder().setSrcjarPath("path/to/sources1.srcjar").build())
+                        LibrarySource.newBuilder()
+                            .setSrcjar(
+                                ProjectProto.ContentRoot.newBuilder()
+                                    .setBase(Base.WORKSPACE)
+                                    .setPath("path/to/sources1.srcjar"))
+                            .build())
                     .addSources(
-                        LibrarySource.newBuilder().setSrcjarPath("path/to/sources2.srcjar").build())
+                        LibrarySource.newBuilder()
+                            .setSrcjar(
+                                ProjectProto.ContentRoot.newBuilder()
+                                    .setBase(Base.WORKSPACE)
+                                    .setPath("path/to/sources2.srcjar"))
+                            .build())
                     .build())
             .build();
 
     SrcJarProjectUpdater updater =
-        new SrcJarProjectUpdater(project, ImmutableList.of(Path.of("path/to/sources1.srcjar")));
+        new SrcJarProjectUpdater(
+            project, ImmutableList.of(ProjectPath.workspaceRelative("path/to/sources1.srcjar")));
 
     ProjectProto.Project newProject = updater.addSrcJars();
     assertThat(newProject).isNotSameInstanceAs(project);
 
     assertThat(
             newProject.getLibrary(0).getSourcesList().stream()
-                .map(LibrarySource::getSrcjarPath)
-                .collect(toImmutableList()))
+                .map(LibrarySource::getSrcjar)
+                .map(ProjectProto.ContentRoot::getPath))
         .containsExactly("path/to/sources1.srcjar");
   }
 
@@ -114,7 +140,12 @@ public class SrcJarProjectUpdaterTest {
                 0,
                 project.getLibrary(0).toBuilder()
                     .addSources(
-                        LibrarySource.newBuilder().setSrcjarPath("path/to/sources1.srcjar").build())
+                        LibrarySource.newBuilder()
+                            .setSrcjar(
+                                ProjectProto.ContentRoot.newBuilder()
+                                    .setBase(Base.WORKSPACE)
+                                    .setPath("path/to/sources1.srcjar"))
+                            .build())
                     .build())
             .build();
 
@@ -122,15 +153,46 @@ public class SrcJarProjectUpdaterTest {
         new SrcJarProjectUpdater(
             project,
             ImmutableList.of(
-                Path.of("path/to/sources1.srcjar"), Path.of("path/to/sources2.srcjar")));
+                ProjectPath.workspaceRelative("path/to/sources1.srcjar"),
+                ProjectPath.workspaceRelative("path/to/sources2.srcjar")));
 
     ProjectProto.Project newProject = updater.addSrcJars();
     assertThat(newProject).isNotSameInstanceAs(project);
 
     assertThat(
             newProject.getLibrary(0).getSourcesList().stream()
-                .map(LibrarySource::getSrcjarPath)
+                .map(LibrarySource::getSrcjar)
+                .map(ProjectProto.ContentRoot::getPath)
                 .collect(toImmutableList()))
         .containsExactly("path/to/sources1.srcjar", "path/to/sources2.srcjar");
+  }
+
+  @Test
+  public void src_jars_roots() throws Exception {
+    ProjectProto.Project project =
+        ProjectProtos.forTestProject(TestData.JAVA_LIBRARY_NO_DEPS_QUERY);
+    // sanity check:
+    assertThat(project.getLibrary(0).getName()).isEqualTo(".dependencies");
+
+    ProjectPath.Resolver resolver = Resolver.create(Path.of("/workspace"), Path.of("/project"));
+
+    SrcJarProjectUpdater updater =
+        new SrcJarProjectUpdater(
+            project,
+            ImmutableList.of(
+                ProjectPath.workspaceRelative("path/to/sources1.srcjar"),
+                ProjectPath.projectRelative("path/to/sources2.srcjar")));
+
+    ProjectProto.Project newProject = updater.addSrcJars();
+    assertThat(newProject).isNotSameInstanceAs(project);
+
+    assertThat(
+            newProject.getLibrary(0).getSourcesList().stream()
+                .map(LibrarySource::getSrcjar)
+                .map(ProjectPath::create)
+                .map(resolver::resolve)
+                .map(Path::toString)
+                .collect(toImmutableList()))
+        .containsExactly("/workspace/path/to/sources1.srcjar", "/project/path/to/sources2.srcjar");
   }
 }

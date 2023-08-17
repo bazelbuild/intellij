@@ -16,9 +16,7 @@
 package com.google.idea.blaze.base.qsync;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
-import static java.util.function.Predicate.not;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -34,6 +32,7 @@ import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeProjectListener;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.LibrarySource;
 import com.google.idea.common.util.Transactions;
@@ -59,7 +58,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
@@ -73,16 +71,19 @@ public class ProjectUpdater implements BlazeProjectListener {
   private final BlazeImportSettings importSettings;
   private final ProjectViewSet projectViewSet;
   private final WorkspaceRoot workspaceRoot;
+  private final ProjectPath.Resolver projectPathResolver;
 
   public ProjectUpdater(
       Project project,
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
-      WorkspaceRoot workspaceRoot) {
+      WorkspaceRoot workspaceRoot,
+      ProjectPath.Resolver projectPathResolver) {
     this.project = project;
     this.importSettings = importSettings;
     this.projectViewSet = projectViewSet;
     this.workspaceRoot = workspaceRoot;
+    this.projectPathResolver = projectPathResolver;
   }
 
   public static ModuleType<?> mapModuleType(ProjectProto.ModuleType type) {
@@ -103,7 +104,6 @@ public class ProjectUpdater implements BlazeProjectListener {
   private void updateProjectModel(ProjectProto.Project spec, Context context) {
     ModuleManager moduleManager = ModuleManager.getInstance(project);
     File imlDirectory = new File(BlazeDataStorage.getProjectDataDir(importSettings), "modules");
-    Path projectDirectory = Paths.get(Objects.requireNonNull(project.getBasePath()));
     Transactions.submitWriteActionTransactionAndWait(
         () -> {
           for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
@@ -140,25 +140,15 @@ public class ProjectUpdater implements BlazeProjectListener {
               roots.removeContentEntry(entry);
             }
             for (ProjectProto.ContentEntry ceSpec : moduleSpec.getContentEntriesList()) {
-              Path contentEntryBasePath;
-              switch (ceSpec.getRoot().getBase()) {
-                case PROJECT:
-                  contentEntryBasePath = projectDirectory;
-                  break;
-                case WORKSPACE:
-                  contentEntryBasePath = workspaceRoot.path();
-                  break;
-                default:
-                  throw new IllegalStateException(
-                      "Unrecognized content root base type " + ceSpec.getRoot().getBase());
-              }
+              ProjectPath projectPath = ProjectPath.create(ceSpec.getRoot());
 
               ContentEntry contentEntry =
                   roots.addContentEntry(
-                      UrlUtil.pathToIdeaDirectoryUrl(
-                          contentEntryBasePath.resolve(ceSpec.getRoot().getPath())));
+                      UrlUtil.pathToIdeaDirectoryUrl(projectPathResolver.resolve(projectPath)));
               for (ProjectProto.SourceFolder sfSpec : ceSpec.getSourcesList()) {
-                Path sourceFolderPath = contentEntryBasePath.resolve(sfSpec.getPath());
+                Path sourceFolderPath =
+                    projectPathResolver.resolve(
+                        ProjectPath.create(projectPath.rootType(), Path.of(sfSpec.getPath())));
 
                 JavaSourceRootProperties properties =
                     JpsJavaExtensionService.getInstance()
@@ -246,11 +236,11 @@ public class ProjectUpdater implements BlazeProjectListener {
 
     ImmutableSet<String> srcJars =
         libSpec.getSourcesList().stream()
-            .map(LibrarySource::getSrcjarPath)
-            .filter(not(Strings::isNullOrEmpty))
-            .map(Path::of)
-            .map(workspaceRoot.path()::resolve)
-            .map(UrlUtil::pathToIdeaUrl)
+            .filter(LibrarySource::hasSrcjar)
+            .map(LibrarySource::getSrcjar)
+            .map(ProjectPath::create)
+            .map(
+                p -> UrlUtil.pathToUrl(projectPathResolver.resolve(p).toString(), p.innerJarPath()))
             .collect(ImmutableSet.toImmutableSet());
     Set<String> foundSrcJars = Sets.newHashSet();
     for (String url : modifiableModel.getUrls(OrderRootType.SOURCES)) {

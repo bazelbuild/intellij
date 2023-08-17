@@ -59,8 +59,11 @@ message ContentRoot {
     PROJECT = 2;
   }
 
+  // path to the content root, relative to base.
   string path = 1;
   Base base = 2;
+  // inner path within the content root. Only relevant for jar files.
+  string inner_path = 3;
 }
 
 /**
@@ -111,5 +114,6 @@ message JarDirectory {
  * Represents a library source root.
  */
 message LibrarySource {
-  string srcjar_path = 1;
+  reserved 1;
+  ContentRoot srcjar = 2;
 }
