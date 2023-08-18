@@ -64,7 +64,10 @@ def _fast_build_info_impl(target, ctx):
         launcher = None
         if hasattr(ctx.rule.attr, "use_launcher") and not ctx.rule.attr.use_launcher:
             launcher = None
+        elif hasattr(ctx.rule.attr, "launcher") and ctx.rule.attr.launcher:
+            launcher = stringify_label(ctx.rule.attr.launcher.label)
         elif hasattr(ctx.rule.attr, "_java_launcher") and ctx.rule.attr._java_launcher:
+            # TODO: b/295221112 - remove _java_launcher when it's removed from Java rules
             launcher = stringify_label(ctx.rule.attr._java_launcher.label)
         elif hasattr(ctx.rule.attr, "_javabase") and ctx.rule.attr._javabase:
             launcher = stringify_label(ctx.rule.attr._javabase.label)
