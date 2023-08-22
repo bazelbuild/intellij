@@ -19,7 +19,6 @@ import static com.android.tools.idea.profilers.AndroidProfilerLaunchTaskContribu
 
 import com.android.ddmlib.IDevice;
 import com.android.tools.deployer.ApkVerifierTracker;
-import com.android.tools.idea.editors.literals.LiveEditService;
 import com.android.tools.idea.execution.common.debug.AndroidDebugger;
 import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.profilers.AndroidProfilerLaunchTaskContributor;
@@ -29,25 +28,19 @@ import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.android.tools.idea.run.blaze.BlazeLaunchTaskWrapper;
 import com.android.tools.idea.run.blaze.BlazeLaunchTasksProvider;
-import com.android.tools.idea.run.deployment.liveedit.LiveEditApp;
 import com.android.tools.idea.run.tasks.ClearLogcatTask;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.DismissKeyguardTask;
 import com.android.tools.idea.run.tasks.ShowLogcatTask;
-import com.android.tools.idea.run.tasks.StartLiveUpdateMonitoringTask;
 import com.android.tools.ndk.run.editor.AutoAndroidDebuggerState;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import java.nio.file.Path;
 import java.util.List;
-import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,8 +48,6 @@ import org.jetbrains.annotations.Nullable;
 public class BlazeAndroidLaunchTasksProvider implements BlazeLaunchTasksProvider {
   public static final String NATIVE_DEBUGGING_ENABLED = "NATIVE_DEBUGGING_ENABLED";
   private static final Logger LOG = Logger.getInstance(BlazeAndroidLaunchTasksProvider.class);
-  private static final BoolExperiment isLiveEditEnabled =
-      new BoolExperiment("aswb.live.edit.enabled", false);
 
   private final Project project;
   private final BlazeAndroidRunContext runContext;
@@ -146,22 +137,6 @@ public class BlazeAndroidLaunchTasksProvider implements BlazeLaunchTasksProvider
               launchOptions, userId, String.join(" ", amStartOptions.build()));
       if (appLaunchTask != null) {
         launchTasks.add(appLaunchTask);
-        if (isLiveEditEnabled.getValue()) {
-          // TODO(b/277244508): Fix Live Edit for Giraffe
-          Set<Path> apks =
-              runContext.getBuildStep().getDeployInfo().getApksToDeploy().stream()
-                  .map(f -> f.toPath())
-                  .collect(ImmutableSet.toImmutableSet());
-
-          LiveEditApp app = new LiveEditApp(apks, device.getVersion().getApiLevel());
-          launchTasks.add(
-              new BlazeLaunchTaskWrapper(
-                  new StartLiveUpdateMonitoringTask(
-                      () ->
-                          LiveEditService.getInstance(project)
-                              .getDeployMonitor()
-                              .notifyAppDeploy(packageName, device, app))));
-        }
       }
     } catch (ApkProvisionException e) {
       throw new ExecutionException("Unable to determine application id: " + e);

@@ -41,6 +41,7 @@ public class NonBlazeProducerConfigurationTest extends BlazeRunConfigurationProd
 
   private static final ImmutableSet<String> ACCEPTED_NON_BAZEL_PRODUCERS =
       ImmutableSet.of(
+          "org.jetbrains.kotlin.idea.gradleJava.run.KotlinMultiplatformJvmRunConfigurationProducer",
           "com.intellij.execution.jar.JarApplicationConfigurationProducer",
           "com.intellij.execution.scratch.JavaScratchConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer",
@@ -69,6 +70,8 @@ public class NonBlazeProducerConfigurationTest extends BlazeRunConfigurationProd
             .map(producer -> producer.getClass().getName())
             .filter(producer -> !ACCEPTED_NON_BAZEL_PRODUCERS.contains(producer))
             .collect(toCollection(ArrayList::new));
+    System.out.println("unsuppressedProducers");
+    System.out.println(unsuppressedProducers);
 
     // This asserts that all non Bazel producers which were not suppressed are a subset of
     // `ACCEPTED_NON_BAZEL_PRODUCERS`
