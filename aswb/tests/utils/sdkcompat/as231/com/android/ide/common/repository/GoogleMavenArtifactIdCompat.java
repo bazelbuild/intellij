@@ -15,7 +15,6 @@
  */
 package com.android.ide.common.repository;
 
-import com.android.tools.idea.projectsystem.GoogleMavenArtifactId;
 import com.google.idea.blaze.base.model.primitives.Label;
 
 /** Compat class for GoogleMavenArtifactId. */
