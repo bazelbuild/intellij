@@ -20,19 +20,20 @@ import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import icons.BlazeIcons;
 import javax.swing.Icon;
 
 /** A type for run configurations that execute Blaze commands. */
-public class BlazeCommandRunConfigurationType implements ConfigurationType {
+public class BlazeCommandRunConfigurationType implements ConfigurationType, DumbAware {
 
   private final BlazeCommandRunConfigurationFactory factory =
       new BlazeCommandRunConfigurationFactory(this);
 
   /** A run configuration factory */
-  public static class BlazeCommandRunConfigurationFactory extends ConfigurationFactory {
+  public static class BlazeCommandRunConfigurationFactory extends ConfigurationFactory implements DumbAware {
     private BlazeCommandRunConfigurationFactory(ConfigurationType type) {
       super(type);
     }
