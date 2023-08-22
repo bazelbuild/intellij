@@ -15,20 +15,35 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
+import com.android.tools.idea.execution.common.DeployOptions;
+import com.android.tools.idea.run.ApkInfo;
 import com.android.tools.idea.run.blaze.BlazeLaunchContext;
 import com.android.tools.idea.run.blaze.BlazeLaunchTask;
+import com.android.tools.idea.run.tasks.DeployTasksCompat;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.run.LaunchMetrics;
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.project.Project;
+import java.util.Collection;
 
 /** A wrapper launch task that wraps the given deployment task and logs the deployment latency. */
 public class DeploymentTimingReporterTask implements BlazeLaunchTask {
   private final BlazeLaunchTask deployTask;
   private final String launchId;
+  private final ImmutableList<ApkInfo> packages;
 
-  public DeploymentTimingReporterTask(String launchId, BlazeLaunchTask deployTask) {
+  public DeploymentTimingReporterTask(
+      String launchId, Project project, Collection<ApkInfo> packages, DeployOptions deployOptions) {
     this.launchId = launchId;
-    this.deployTask = deployTask;
+    this.deployTask = DeployTasksCompat.createDeployTask(project, packages, deployOptions);
+    this.packages = ImmutableList.copyOf(packages);
+  }
+
+  @VisibleForTesting
+  public ImmutableList<ApkInfo> getPackages() {
+    return packages;
   }
 
   @Override

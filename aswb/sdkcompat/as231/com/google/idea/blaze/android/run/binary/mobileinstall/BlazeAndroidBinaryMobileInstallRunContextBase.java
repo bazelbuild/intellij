@@ -26,7 +26,6 @@ import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.android.tools.idea.run.blaze.BlazeLaunchTasksProvider;
 import com.android.tools.idea.run.editor.ProfilerState;
-import com.android.tools.idea.run.tasks.DeployTasksCompat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationIdProvider;
@@ -140,10 +139,9 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
                 .map(file -> new ApkFileUnit(BlazeDataStorage.WORKSPACE_MODULE_NAME, file))
                 .collect(Collectors.toList()),
             packageName);
-
-    BlazeLaunchTask deployTask =
-        DeployTasksCompat.createDeployTask(project, Collections.singletonList(info), deployOptions);
-    return ImmutableList.of(new DeploymentTimingReporterTask(launchId, deployTask));
+    return ImmutableList.of(
+        new DeploymentTimingReporterTask(
+            launchId, project, Collections.singletonList(info), deployOptions));
   }
 
   @Nullable
