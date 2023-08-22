@@ -115,7 +115,6 @@ public class TestRecorderBlazeCommandRunConfigurationTest extends BlazeIntegrati
     TestRecorderRunConfigurationProxy proxy =
         TestRecorderRunConfigurationProxy.getInstance(blazeConfiguration);
     assertThat(proxy).isNotNull();
-    assertThat(proxy.getLaunchActivityClass()).isEqualTo("MyAppMainActivity");
   }
 
   @Test

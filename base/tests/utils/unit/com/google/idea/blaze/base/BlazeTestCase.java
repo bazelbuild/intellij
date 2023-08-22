@@ -39,7 +39,6 @@ import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-import org.picocontainer.MutablePicoContainer;
 
 /**
  * Test base class.
@@ -68,7 +67,7 @@ public class BlazeTestCase {
 
   @Rule public IgnoreOnWindowsRule rule = new IgnoreOnWindowsRule();
 
-  protected Project project;
+  protected MockProject project;
   private ExtensionsAreaImpl extensionsArea;
   protected Disposable testDisposable;
   private BuildSystemProvider buildSystemProvider;
@@ -96,9 +95,8 @@ public class BlazeTestCase {
   @Before
   public final void setup() {
     testDisposable = new RootDisposable();
-    MockApplication mockApplication = TestUtils.createMockApplication(testDisposable);
-    MutablePicoContainer applicationContainer = mockApplication.getPicoContainer();
-    MockProject mockProject = TestUtils.mockProject(applicationContainer, testDisposable);
+    MockApplication application = TestUtils.createMockApplication(testDisposable);
+    MockProject mockProject = TestUtils.mockProject(application.getPicoContainer(), testDisposable);
 
     extensionsArea = (ExtensionsAreaImpl) Extensions.getRootArea();
 

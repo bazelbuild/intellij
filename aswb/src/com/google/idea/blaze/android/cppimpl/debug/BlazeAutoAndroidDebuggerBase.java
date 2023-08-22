@@ -31,6 +31,10 @@ public abstract class BlazeAutoAndroidDebuggerBase extends AutoAndroidDebugger {
 
   @Override
   protected boolean isNativeProject(Project project) {
+    return isNativeCodeInProject(project);
+  }
+
+  public static boolean isNativeCodeInProject(Project project) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     return blazeProjectData != null
