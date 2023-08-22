@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package blaze.qsync.testdata.kotlinprotodep;
+
+option java_package = "com.google.idea.blaze.qsync.testdata.kotlinprotodep.proto";
+
+message Test {
+  optional string message = 1;
+}

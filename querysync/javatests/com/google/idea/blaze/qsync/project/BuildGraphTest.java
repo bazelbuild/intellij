@@ -100,8 +100,11 @@ public class BuildGraphTest {
         new BlazeQueryParser(NOOP_CONTEXT)
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_PROTO_DEP_QUERY));
     assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("protodep/TestClassProtoDep.java")))
-        .containsExactly(Label.of("//" + TESTDATA_ROOT + "/protodep:proto_java_proto_lite"));
+        .containsExactly(
+            Label.of("//" + TESTDATA_ROOT + "/protodep:proto_java_proto_lite"),
+            Label.of("//tools/proto/toolchains:javalite"));
   }
+
 
   @Test
   public void testJavaLibraryMultiTargets() throws Exception {

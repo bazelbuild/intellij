@@ -59,7 +59,14 @@ public class BlazeQueryParser {
           "java_stubby_library",
           "aar_import");
   private static final ImmutableSet<String> JAVA_RULE_TYPES =
-      ImmutableSet.of("java_library", "java_binary", "kt_jvm_library_helper", "java_test");
+      ImmutableSet.of(
+          "java_library",
+          "java_binary",
+          "kt_jvm_library_helper",
+          "java_test",
+          "java_lite_proto_library",
+          "java_mutable_proto_library",
+          "kt_proto_library_helper");
   private static final ImmutableSet<String> ANDROID_RULE_TYPES =
       ImmutableSet.of(
           "android_library",
@@ -163,7 +170,8 @@ public class BlazeQueryParser {
             targetSources.put(ruleEntry.getKey(), Label.of(ruleEntry.getValue().getManifest()));
           }
         }
-      } else if (ALWAYS_BUILD_RULE_TYPES.contains(ruleClass)) {
+      }
+      if (ALWAYS_BUILD_RULE_TYPES.contains(ruleClass)) {
         projectTargetsToBuild.add(ruleEntry.getKey());
       }
     }
@@ -171,7 +179,7 @@ public class BlazeQueryParser {
 
     // Calculate all the dependencies outside the project.
     for (Label dep : deps) {
-      if (!ruleDeps.containsKey(dep)) {
+      if (!query.getRulesMap().containsKey(dep)) {
         projectDeps.add(dep);
       }
     }
