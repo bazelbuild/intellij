@@ -38,6 +38,6 @@ awaiting-review:
 
 'product: GoLand':
 - base/**/*
-- examples/go/with_proto/**/*
+- examples/go/**/*
 - gazelle/**/*
 - golang/**/*

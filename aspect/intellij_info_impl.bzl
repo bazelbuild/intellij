@@ -379,6 +379,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         "go_binary",
         "go_library",
         "go_test",
+        "go_source",
         "go_appengine_binary",
         "go_appengine_library",
         "go_appengine_test",
@@ -407,11 +408,17 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         import_path = go_semantics.get_import_path(ctx)
 
     library_labels = []
-    if ctx.rule.kind == "go_test" or ctx.rule.kind == "go_appengine_test":
+    if ctx.rule.kind in ("go_test", "go_library", "go_appengine_test"):
         if getattr(ctx.rule.attr, "library", None) != None:
             library_labels = [stringify_label(ctx.rule.attr.library.label)]
         elif getattr(ctx.rule.attr, "embed", None) != None:
-            library_labels = [stringify_label(library.label) for library in ctx.rule.attr.embed]
+            for library in ctx.rule.attr.embed:
+                if library.intellij_info.kind == "go_source":
+                    l = library.intellij_info.output_groups["intellij-sources-go-outputs"].to_list()
+                    sources += l
+                    generated += [f for f in l if not f.is_source]
+                else:
+                    library_labels.append(stringify_label(library.label))
 
     ide_info["go_ide_info"] = struct_omit_none(
         import_path = import_path,
@@ -425,6 +432,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     update_sync_output_groups(output_groups, "intellij-info-go", depset([ide_info_file]))
     update_sync_output_groups(output_groups, "intellij-compile-go", compile_files)
     update_sync_output_groups(output_groups, "intellij-resolve-go", depset(generated))
+    update_sync_output_groups(output_groups, "intellij-sources-go", depset(sources))
     return True
 
 def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
