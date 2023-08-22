@@ -453,8 +453,8 @@ http_archive(
 http_archive(
     name = "android_studio_2023_1",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio231",
-    sha256 = "9c670055da4f934cf4181df0813feb53818503f242f964fddb180fd1ced121b3",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2023.1.1.11/android-studio-2023.1.1.11-linux.tar.gz",
+    sha256 = "8bc1cda24e696bc60dad4426afd08d46643d3a815e75f2ebe6133482beff3df0",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2023.1.1.16/android-studio-2023.1.1.16-linux.tar.gz",
 )
 
 # The plugin api for android_studio_2022_3 android_studio. This is required to build ASwB and run integration tests
@@ -836,6 +836,7 @@ jvm_maven_import_external(
 
 # io_grpc_grpc_java dependencies
 load("@io_grpc_grpc_java//:repositories.bzl", "IO_GRPC_GRPC_JAVA_ARTIFACTS", "IO_GRPC_GRPC_JAVA_OVERRIDE_TARGETS", "grpc_java_repositories")
+
 grpc_java_repositories()
 
 # Java Maven-based repositories.
@@ -847,12 +848,15 @@ http_archive(
 )
 
 load("@rules_jvm_external//:repositories.bzl", "rules_jvm_external_deps")
+
 rules_jvm_external_deps()
 
 load("@rules_jvm_external//:setup.bzl", "rules_jvm_external_setup")
+
 rules_jvm_external_setup()
 
 load("@rules_jvm_external//:defs.bzl", "maven_install")
+
 maven_install(
     artifacts = IO_GRPC_GRPC_JAVA_ARTIFACTS,
     generate_compat_repositories = True,
@@ -865,4 +869,5 @@ maven_install(
 )
 
 load("@maven//:compat.bzl", "compat_repositories")
+
 compat_repositories()
