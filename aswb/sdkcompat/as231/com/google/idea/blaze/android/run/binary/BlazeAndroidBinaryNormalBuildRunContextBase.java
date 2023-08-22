@@ -30,7 +30,6 @@ import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.android.tools.idea.run.blaze.BlazeLaunchTasksProvider;
 import com.android.tools.idea.run.editor.ProfilerState;
-import com.android.tools.idea.run.tasks.DeployTasksCompat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
@@ -138,10 +137,12 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   @Override
   public ImmutableList<BlazeLaunchTask> getDeployTasks(IDevice device, DeployOptions deployOptions)
       throws ExecutionException {
-    BlazeLaunchTask deployTask =
-        DeployTasksCompat.createDeployTask(
-            project, getApkInfoToInstall(device, deployOptions, apkProvider), deployOptions);
-    return ImmutableList.of(new DeploymentTimingReporterTask(launchId, deployTask));
+    return ImmutableList.of(
+        new DeploymentTimingReporterTask(
+            launchId,
+            project,
+            getApkInfoToInstall(device, deployOptions, apkProvider),
+            deployOptions));
   }
 
   /** Returns a list of APKs excluding any APKs for features that are disabled. */

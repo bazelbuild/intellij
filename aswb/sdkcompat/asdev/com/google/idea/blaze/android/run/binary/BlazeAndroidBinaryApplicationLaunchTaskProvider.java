@@ -21,7 +21,7 @@ import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
 import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.android.run.binary.tasks.AndroidDeepLinkLaunchTask;
-import com.google.idea.blaze.android.run.binary.tasks.DefaultActivityLaunchTask;
+import com.google.idea.blaze.android.run.binary.tasks.BlazeDefaultActivityLaunchTask;
 import com.google.idea.blaze.android.run.binary.tasks.SpecificActivityLaunchTask;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,13 +48,8 @@ public class BlazeAndroidBinaryApplicationLaunchTaskProvider {
       case BlazeAndroidBinaryRunConfigurationState.LAUNCH_DEFAULT_ACTIVITY:
         BlazeDefaultActivityLocator activityLocator =
             new BlazeDefaultActivityLocator(mergedManifestParsedManifest);
-        return launchContext ->
-            new DefaultActivityLaunchTask(
-                    applicationId, activityLocator, startActivityFlagsProvider)
-                .run(
-                    launchContext.getDevice(),
-                    launchContext.getProgressIndicator(),
-                    launchContext.getConsoleView());
+        return new BlazeDefaultActivityLaunchTask(
+            applicationId, activityLocator, startActivityFlagsProvider);
       case BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY:
         return launchContext ->
             new SpecificActivityLaunchTask(
