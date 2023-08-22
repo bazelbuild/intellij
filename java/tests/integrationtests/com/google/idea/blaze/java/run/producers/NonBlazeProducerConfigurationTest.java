@@ -70,8 +70,6 @@ public class NonBlazeProducerConfigurationTest extends BlazeRunConfigurationProd
             .map(producer -> producer.getClass().getName())
             .filter(producer -> !ACCEPTED_NON_BAZEL_PRODUCERS.contains(producer))
             .collect(toCollection(ArrayList::new));
-    System.out.println("unsuppressedProducers");
-    System.out.println(unsuppressedProducers);
 
     // This asserts that all non Bazel producers which were not suppressed are a subset of
     // `ACCEPTED_NON_BAZEL_PRODUCERS`
