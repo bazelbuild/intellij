@@ -71,17 +71,22 @@ public abstract class QuerySummary {
    * <p>Whenever changing the logic in this class such that the Query.Summary proto contents will be
    * different for the same input, this version should be incremented.
    */
-  @VisibleForTesting public static final int PROTO_VERSION = 3;
+  @VisibleForTesting public static final int PROTO_VERSION = 4;
 
   public static final QuerySummary EMPTY =
       create(Query.Summary.newBuilder().setVersion(PROTO_VERSION).build());
 
-  // Compile-time dependency attributes
+  // Compile-time dependency attributes, as they appear in streamed_proto output
   private static final ImmutableSet<String> DEPENDENCY_ATTRIBUTES =
       ImmutableSet.of(
           // android_local_test depends on junit implicitly using the _junit attribute.
           "$junit",
           "deps",
+          // java_proto_library and java_lite_proto_library rules depend on the proto runtime
+          // library via these proto_toolchain attributes. In Starlark, the attribute names
+          // begin with an underscore instead of a colon (e.g., _aspect_java_proto_toolchain).
+          ":aspect_java_proto_toolchain",
+          ":aspect_proto_toolchain_for_javalite",
           // This is not strictly correct, as source files of rule with 'export' do not
           // depend on exported targets.
           "exports");
