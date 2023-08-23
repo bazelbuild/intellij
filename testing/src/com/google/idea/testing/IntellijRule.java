@@ -45,7 +45,7 @@ public final class IntellijRule extends ExternalResource {
     application = TestUtils.createMockApplication(testDisposable);
     Assert.assertSame(application, ApplicationManager.getApplication());
     Assert.assertSame(
-        application.getPicoContainer(), ((MockApplication)ApplicationManager.getApplication()).getPicoContainer());
+        application.getPicoContainer(), ((MockApplication) ApplicationManager.getApplication()).getPicoContainer());
     project = TestUtils.mockProject(application.getPicoContainer(), testDisposable);
   }
 

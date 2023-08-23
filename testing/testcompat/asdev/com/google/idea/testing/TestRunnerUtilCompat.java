@@ -15,13 +15,13 @@
  */
 package com.google.idea.testing;
 
-import com.intellij.testFramework.TestRunnerUtil;
+import com.intellij.testFramework.UITestUtil;
 
 /** Compat class for TestRunnerUtil. */
 public class TestRunnerUtilCompat {
   private TestRunnerUtilCompat() {}
 
   public static void replaceIdeEventQueueSafely() {
-    TestRunnerUtil.replaceIdeEventQueueSafely();
+    UITestUtil.replaceIdeEventQueueSafely();
   }
 }

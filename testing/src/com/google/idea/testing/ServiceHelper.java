@@ -18,6 +18,7 @@ package com.google.idea.testing;
 import com.google.idea.sdkcompat.BaseSdkTestCompat;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.mock.MockApplication;
+import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -113,9 +114,12 @@ public class ServiceHelper {
     if (project instanceof ComponentManagerImpl) {
       ServiceContainerUtil.registerComponentInstance(
           project, key, implementation, parentDisposable);
-    } else {
+    } else if (project instanceof MockProject) {
       registerComponentInstance(
-          ((MockProject)project).getPicoContainer(), key, implementation, parentDisposable);
+          ((MockProject) project).getPicoContainer(), key, implementation, parentDisposable);
+    } else {
+      throw new RuntimeException(
+          "Implementation not supported: " + project.getClass().getSimpleName());
     }
   }
 

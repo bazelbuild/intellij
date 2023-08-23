@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -29,7 +30,7 @@ import javax.annotation.Nullable;
  */
 class BlazeVcsHandlerCache {
 
-  private static final NotNullLazyKey<BlazeVcsHandler, Project> VCS_HANDLER_KEY =
+  private static final NotNullLazyKey<Optional<BlazeVcsHandler>, Project> VCS_HANDLER_KEY =
       NotNullLazyKey.create("BlazeVcsHandler", BlazeVcsHandlerCache::createVcsHandlerForProject);
 
   private BlazeVcsHandlerCache() {}
@@ -47,13 +48,14 @@ class BlazeVcsHandlerCache {
   }
 
   @Nullable
-  private static BlazeVcsHandler createVcsHandlerForProject(Project project) {
-    BlazeVcsHandlerProvider provider = vcsHandlerProviderForProject(project);
-    return provider == null ? null : provider.getHandlerForProject(project);
+  static BlazeVcsHandler vcsHandlerForProject(Project project) {
+    return VCS_HANDLER_KEY.getValue(project).orElse(null);
   }
 
-  @Nullable
-  static BlazeVcsHandler vcsHandlerForProject(Project project) {
-    return VCS_HANDLER_KEY.getValue(project);
+  private static Optional<BlazeVcsHandler> createVcsHandlerForProject(Project project) {
+    BlazeVcsHandlerProvider provider = vcsHandlerProviderForProject(project);
+    return provider == null
+        ? Optional.empty()
+        : Optional.ofNullable(provider.getHandlerForProject(project));
   }
 }
