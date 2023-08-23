@@ -42,7 +42,7 @@ public final class RenderResultCompat {
   }
 
   public RenderErrorModel createErrorModel() {
-    return RenderErrorModelFactory.createErrorModel(null, result, null);
+    return RenderErrorModelFactory.createErrorModel(null, result);
   }
 
   public RenderResult get() {
@@ -76,10 +76,8 @@ public final class RenderResultCompat {
 
     @Override
     public RenderErrorContributor getContributor(
-        @Nullable EditorDesignSurface surface,
-        RenderResult result) {
-      return new BlazeRenderErrorContributor(
-          surface, new RenderResultCompat(result), null);
+        @Nullable EditorDesignSurface surface, RenderResult result) {
+      return new BlazeRenderErrorContributor(surface, new RenderResultCompat(result), null);
     }
   }
 }

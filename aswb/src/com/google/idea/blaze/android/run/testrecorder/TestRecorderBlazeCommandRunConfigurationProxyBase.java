@@ -38,7 +38,7 @@ public abstract class TestRecorderBlazeCommandRunConfigurationProxyBase
         (BlazeAndroidBinaryRunConfigurationHandler) baseConfiguration.getHandler();
   }
 
-  @Override
+  // @Override Removed #api232
   public LocatableConfigurationBase getTestRecorderRunConfiguration() {
     return new TestRecorderBlazeCommandRunConfiguration(myBaseConfiguration);
   }
@@ -58,7 +58,7 @@ public abstract class TestRecorderBlazeCommandRunConfigurationProxyBase
         || BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY.equals(mode);
   }
 
-  @Override
+  // @Override Removed #api232
   public String getLaunchActivityClass() {
     BlazeAndroidBinaryRunConfigurationState state = myBaseConfigurationHandler.getState();
 
