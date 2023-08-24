@@ -12,6 +12,7 @@ java_library(
         "com/google/idea/sdkcompat/logging/**",
         "com/google/idea/sdkcompat/platform/**",
         "com/google/idea/sdkcompat/python/**",
+        "com/google/idea/sdkcompat/ui/icons/**",
     ]) + select_for_ide(
         android_studio = glob([
             "com/google/idea/sdkcompat/cpp/**",

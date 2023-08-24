@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2023 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,13 @@
  */
 package com.google.idea.testing;
 
-import com.intellij.testFramework.EdtTestUtil;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+import com.intellij.testFramework.TestRunnerUtil;
 
-/** Rule to run tests on the EDT. */
-public class EdtRule implements TestRule {
+/** Compat class for TestRunnerUtil. */
+public class TestRunnerUtilCompat {
+  private TestRunnerUtilCompat() {}
 
-  @Override
-  public Statement apply(Statement base, Description description) {
-    return new Statement() {
-      @Override
-      public void evaluate() throws Throwable {
-        TestRunnerUtilCompat.replaceIdeEventQueueSafely();
-        EdtTestUtil.runInEdtAndWait(base::evaluate);
-      }
-    };
+  public static void replaceIdeEventQueueSafely() {
+    TestRunnerUtil.replaceIdeEventQueueSafely();
   }
 }

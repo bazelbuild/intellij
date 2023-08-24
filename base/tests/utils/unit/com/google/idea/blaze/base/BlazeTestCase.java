@@ -96,9 +96,8 @@ public class BlazeTestCase {
   @Before
   public final void setup() {
     testDisposable = new RootDisposable();
-    TestUtils.createMockApplication(testDisposable);
-    MutablePicoContainer applicationContainer =
-        (MutablePicoContainer) ((MockApplication)ApplicationManager.getApplication()).getPicoContainer();
+    MockApplication mockApplication = TestUtils.createMockApplication(testDisposable);
+    MutablePicoContainer applicationContainer = mockApplication.getPicoContainer();
     MockProject mockProject = TestUtils.mockProject(applicationContainer, testDisposable);
 
     extensionsArea = (ExtensionsAreaImpl) Extensions.getRootArea();
