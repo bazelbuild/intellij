@@ -871,3 +871,6 @@ maven_install(
 load("@maven//:compat.bzl", "compat_repositories")
 
 compat_repositories()
+
+# Register custom java 17 toolchain
+register_toolchains("//:custom_java_17_toolchain_definition")

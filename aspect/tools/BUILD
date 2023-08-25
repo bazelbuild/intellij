@@ -18,6 +18,7 @@ java_library(
 java_library(
     name = "lib",
     srcs = glob(["src/**/*.java"]),
+    javacopts = ["-source 8 -target 8"],
     deps = [
         ":guava",
         "//proto:proto_deps",
