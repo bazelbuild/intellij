@@ -162,12 +162,14 @@ public abstract class QuerySummary {
               rule.addAllResourceFiles(a.getStringListValueList());
             } else if (a.getName().equals("manifest")) {
               rule.setManifest(a.getStringValue());
-            } else if (a.getName().equals("test_app")) {
+            } else if (a.getName().equals("custom_package")) {
+              rule.setCustomPackage(a.getStringValue());
+            }
+
+            if (a.getName().equals("test_app")) {
               rule.setTestApp(a.getStringValue());
             } else if (a.getName().equals("instruments")) {
               rule.setInstruments(a.getStringValue());
-            } else if (a.getName().equals("custom_package")) {
-              rule.setCustomPackage(a.getStringValue());
             }
           }
           ruleMap.put(target.getRule().getName(), rule.build());
