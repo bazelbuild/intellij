@@ -37,7 +37,11 @@ import java.util.stream.Stream;
 public abstract class ProjectDefinition {
 
   public static final ProjectDefinition EMPTY =
-      create(ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of());
+      create(
+          /* includes= */ ImmutableSet.of(),
+          /* excludes= */ ImmutableSet.of(),
+          /* languageClasses= */ ImmutableSet.of(),
+          /* testSources= */ ImmutableSet.of());
 
   /** A language class that the query sync supports/needs to care about. */
   public enum LanguageClass {
@@ -60,11 +64,18 @@ public abstract class ProjectDefinition {
 
   public abstract ImmutableSet<LanguageClass> languageClasses();
 
+  /**
+   * Test sources. Taken from the user's {@code .blazeproject} file. Paths are relative to the
+   * workspace root, and indicate directories that are considered test sources.
+   */
+  public abstract ImmutableSet<String> testSources();
+
   public static ProjectDefinition create(
       ImmutableSet<Path> includes,
       ImmutableSet<Path> excludes,
-      ImmutableSet<LanguageClass> languageClasses) {
-    return new AutoValue_ProjectDefinition(includes, excludes, languageClasses);
+      ImmutableSet<LanguageClass> languageClasses,
+      ImmutableSet<String> testSources) {
+    return new AutoValue_ProjectDefinition(includes, excludes, languageClasses, testSources);
   }
 
   /**

@@ -52,7 +52,8 @@ public class ProjectProtos {
             ProjectDefinition.create(
                 ImmutableSet.of(workspaceImportDirectory),
                 ImmutableSet.of(),
-                ImmutableSet.of(LanguageClass.JAVA)),
+                ImmutableSet.of(LanguageClass.JAVA),
+                ImmutableSet.of()),
             newDirectExecutorService());
 
     BuildGraphData buildGraphData =

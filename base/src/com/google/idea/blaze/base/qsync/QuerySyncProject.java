@@ -24,6 +24,8 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.projectview.section.Glob;
+import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -283,11 +285,16 @@ public class QuerySyncProject {
             .build();
     WorkspaceLanguageSettings workspaceLanguageSettings =
         LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
+    ImmutableSet<String> testSourceGlobs =
+        projectViewSet.listItems(TestSourceSection.KEY).stream()
+            .map(Glob::toString)
+            .collect(ImmutableSet.toImmutableSet());
     ProjectDefinition projectDefinition =
         ProjectDefinition.create(
             importRoots.rootPaths(),
             importRoots.excludePaths(),
-            LanguageClasses.translateFrom(workspaceLanguageSettings.getActiveLanguages()));
+            LanguageClasses.translateFrom(workspaceLanguageSettings.getActiveLanguages()),
+            testSourceGlobs);
 
     return this.projectDefinition.equals(projectDefinition);
   }
