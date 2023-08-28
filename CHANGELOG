@@ -1,3 +1,7 @@
+v2023.08.29
+===========
+
+
 v2023.08.15
 ===========
 * - Allow to suppress automatic Bazel project opening if .ijwb or so … #5208
