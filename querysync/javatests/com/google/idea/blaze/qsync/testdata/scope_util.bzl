@@ -24,3 +24,12 @@ def scopeForAndroidPackageWithResources(blaze_package):
         "//" + label.package + ":" + label.name + "_resources.jar",
         "//" + label.package + ":" + label.name + "_symbols/R.txt",
     ]
+
+def scopeForAndroidBinary(blaze_package):
+    label = Label(blaze_package)
+    return [
+        label,
+        "//" + label.package + ":" + label.name + ".apk",
+        "//" + label.package + ":" + label.name + "_deploy.jar",
+        "//" + label.package + ":" + label.name + "_unsigned.apk",
+    ]

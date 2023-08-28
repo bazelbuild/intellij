@@ -1,4 +1,10 @@
-load(":scope_util.bzl", "scopeForAndroidPackage", "scopeForAndroidPackageWithResources", "scopeForJavaPackage")
+load(
+    ":scope_util.bzl",
+    "scopeForAndroidBinary",
+    "scopeForAndroidPackage",
+    "scopeForAndroidPackageWithResources",
+    "scopeForJavaPackage",
+)
 
 package(default_visibility = [
     "//base:__subpackages__",
@@ -98,6 +104,20 @@ genquery(
         scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/buildincludes:mylib"),
 )
 
+genquery(
+    name = "instrumentationtest_query",
+    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/instrumentationtest:*",
+    opts = ["--output=streamed_proto"],
+    scope =
+        [
+            "//querysync/javatests/com/google/idea/blaze/qsync/testdata/instrumentationtest:AndroidManifest.xml",
+            "//querysync/javatests/com/google/idea/blaze/qsync/testdata/instrumentationtest:AppManifest.xml",
+            "//querysync/javatests/com/google/idea/blaze/qsync/testdata/instrumentationtest",
+        ] + scopeForAndroidBinary("//querysync/javatests/com/google/idea/blaze/qsync/testdata/instrumentationtest:test_app") +
+        scopeForAndroidBinary("//querysync/javatests/com/google/idea/blaze/qsync/testdata/instrumentationtest:app") +
+        scopeForAndroidPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/instrumentationtest:test_lib"),
+)
+
 java_library(
     name = "testdata",
     srcs = ["TestData.java"],
@@ -105,6 +125,7 @@ java_library(
         ":android_aidl_source_query",
         ":android_lib_query",
         ":buildincludes_query",
+        ":instrumentationtest_query",
         ":java_exported_dep_query",
         ":java_library_external_dep_query",
         ":java_library_internal_dep_query",

@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 
+import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.testdata.TestData;
@@ -175,5 +176,40 @@ public class BuildGraphTest {
     assertThat(graph.projectDeps()).containsExactly(Label.of("//" + TESTDATA_ROOT + "/aidl:aidl"));
     assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("aidl/TestAndroidAidlClass.java")))
         .containsExactly(Label.of("//" + TESTDATA_ROOT + "/aidl:aidl"));
+  }
+
+  @Test
+  public void testInstrumentationTests_containTestApp() throws Exception {
+    BuildGraphData graph =
+        new BlazeQueryParser(NOOP_CONTEXT)
+            .parse(getQuerySummary(TestData.INSTRUMENTATIONTEST_QUERY));
+    assertThat(graph.getAllSourceFiles())
+        .containsExactly(
+            TESTDATA_ROOT.resolve("instrumentationtest/AndroidInstrumentationTest.java"),
+            TESTDATA_ROOT.resolve("instrumentationtest/BUILD"),
+            TESTDATA_ROOT.resolve("instrumentationtest/AppManifest.xml"),
+            TESTDATA_ROOT.resolve("instrumentationtest/AndroidManifest.xml"));
+    assertThat(graph.getJavaSourceFiles())
+        .containsExactly(
+            TESTDATA_ROOT.resolve("instrumentationtest/AndroidInstrumentationTest.java"));
+    assertThat(graph.getAndroidSourceFiles())
+        .containsExactly(
+            TESTDATA_ROOT.resolve("instrumentationtest/AndroidInstrumentationTest.java"));
+
+    BuildTarget testTarget =
+        graph
+            .targetMap()
+            .get(Label.of("//" + TESTDATA_ROOT.resolve("instrumentationtest:instrumentationtest")));
+    assertThat(testTarget).isNotNull();
+    assertThat(testTarget.testApp().orElse(null))
+        .isEqualTo(Label.of("//" + TESTDATA_ROOT.resolve("instrumentationtest:test_app")));
+
+    BuildTarget instrumentingApp =
+        graph
+            .targetMap()
+            .get(Label.of("//" + TESTDATA_ROOT.resolve("instrumentationtest:test_app")));
+    assertThat(instrumentingApp).isNotNull();
+    assertThat(instrumentingApp.instruments().orElse(null))
+        .isEqualTo(Label.of("//" + TESTDATA_ROOT.resolve("instrumentationtest:app")));
   }
 }
