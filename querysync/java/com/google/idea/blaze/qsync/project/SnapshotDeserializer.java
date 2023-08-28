@@ -18,6 +18,7 @@ package com.google.idea.blaze.qsync.project;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
@@ -75,7 +76,8 @@ public class SnapshotDeserializer {
             proto.getExcludePathsList().stream().map(Path::of).collect(toImmutableSet()),
             proto.getLanguageClassesList().stream()
                 .map(LANGUAGE_CLASS_MAP::get)
-                .collect(toImmutableSet())));
+                .collect(toImmutableSet()),
+            ImmutableSet.copyOf(proto.getTestSourcesList())));
   }
 
   private void visitVcsState(SnapshotProto.VcsState proto) {

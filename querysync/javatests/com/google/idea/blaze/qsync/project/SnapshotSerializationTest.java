@@ -46,7 +46,8 @@ public class SnapshotSerializationTest {
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("project/path")),
                     ImmutableSet.of(Path.of("project/path/excluded")),
-                    ImmutableSet.of(LanguageClass.JAVA)))
+                    ImmutableSet.of(LanguageClass.JAVA),
+                    ImmutableSet.of()))
             .setVcsState(
                 Optional.of(
                     new VcsState(
@@ -74,7 +75,8 @@ public class SnapshotSerializationTest {
     PostQuerySyncData original =
         PostQuerySyncData.builder()
             .setProjectDefinition(
-                ProjectDefinition.create(ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of()))
+                ProjectDefinition.create(
+                    ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of()))
             .setVcsState(
                 Optional.of(
                     new VcsState(
@@ -102,7 +104,8 @@ public class SnapshotSerializationTest {
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("project/path")),
                     ImmutableSet.of(Path.of("project/path/excluded")),
-                    ImmutableSet.of(LanguageClass.JAVA)))
+                    ImmutableSet.of(LanguageClass.JAVA),
+                    ImmutableSet.of()))
             .setVcsState(Optional.empty())
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//project/path:path"))
             .build();
@@ -124,7 +127,8 @@ public class SnapshotSerializationTest {
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("project/path")),
                     ImmutableSet.of(Path.of("project/path/excluded")),
-                    ImmutableSet.of(LanguageClass.JAVA)))
+                    ImmutableSet.of(LanguageClass.JAVA),
+                    ImmutableSet.of()))
             .setVcsState(Optional.empty())
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//project/path:path"))
             .build();

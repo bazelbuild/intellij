@@ -185,7 +185,8 @@ public class ProjectRefresherTest {
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("package")),
                     ImmutableSet.of(),
-                    ImmutableSet.of(LanguageClass.JAVA)))
+                    ImmutableSet.of(LanguageClass.JAVA),
+                    ImmutableSet.of()))
             .build();
 
     RefreshOperation update =
@@ -219,7 +220,8 @@ public class ProjectRefresherTest {
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("package")),
                     ImmutableSet.of(),
-                    ImmutableSet.of(LanguageClass.JAVA)))
+                    ImmutableSet.of(LanguageClass.JAVA),
+                    ImmutableSet.of()))
             .build();
 
     RefreshOperation update =
@@ -249,7 +251,8 @@ public class ProjectRefresherTest {
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("package")),
                     ImmutableSet.of(),
-                    ImmutableSet.of(LanguageClass.JAVA)))
+                    ImmutableSet.of(LanguageClass.JAVA),
+                    ImmutableSet.of()))
             .build();
 
     RefreshOperation update =
@@ -281,7 +284,8 @@ public class ProjectRefresherTest {
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("package")),
                     ImmutableSet.of(),
-                    ImmutableSet.of(LanguageClass.JAVA)))
+                    ImmutableSet.of(LanguageClass.JAVA),
+                    ImmutableSet.of()))
             .build();
 
     RefreshOperation update =
@@ -313,7 +317,8 @@ public class ProjectRefresherTest {
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("package")),
                     ImmutableSet.of(),
-                    ImmutableSet.of(LanguageClass.JAVA)))
+                    ImmutableSet.of(LanguageClass.JAVA),
+                    ImmutableSet.of()))
             .build();
 
     RefreshOperation update =

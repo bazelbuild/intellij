@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
@@ -26,6 +27,8 @@ import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.projectview.section.Glob;
+import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTrackerImpl;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -107,11 +110,17 @@ public class ProjectLoader {
     WorkspaceLanguageSettings workspaceLanguageSettings =
         LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
 
+    ImmutableSet<String> testSourceGlobs =
+        projectViewSet.listItems(TestSourceSection.KEY).stream()
+            .map(Glob::toString)
+            .collect(ImmutableSet.toImmutableSet());
+
     ProjectDefinition latestProjectDef =
         ProjectDefinition.create(
             importRoots.rootPaths(),
             importRoots.excludePaths(),
-            LanguageClasses.translateFrom(workspaceLanguageSettings.getActiveLanguages()));
+            LanguageClasses.translateFrom(workspaceLanguageSettings.getActiveLanguages()),
+            testSourceGlobs);
 
     Path snapshotFilePath = getSnapshotFilePath(importSettings);
 

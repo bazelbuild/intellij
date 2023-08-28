@@ -365,6 +365,8 @@ public class GraphToProjectConverter {
 
     ListMultimap<Path, Path> excludesByRootDirectory =
         projectDefinition.getExcludesByRootDirectory();
+    TestSourceGlobMatcher testSourceGlobMatcher =
+        new TestSourceGlobMatcher(projectDefinition.testSources());
     for (Path dir : projectDefinition.projectIncludes()) {
       ProjectProto.ContentEntry.Builder contentEntry =
           ProjectProto.ContentEntry.newBuilder()
@@ -379,7 +381,7 @@ public class GraphToProjectConverter {
             ProjectProto.SourceFolder.newBuilder()
                 .setPath(path.toString())
                 .setPackagePrefix(entry.getValue())
-                .setIsTest(false) // TODO
+                .setIsTest(testSourceGlobMatcher.matches(path))
                 .build());
       }
       for (Path exclude : excludesByRootDirectory.get(dir)) {
