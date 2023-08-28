@@ -713,3 +713,13 @@ compat_repositories()
 
 # Register custom java 17 toolchain
 register_toolchains("//:custom_java_17_toolchain_definition")
+
+ATS_TAG = "axt_05_04_2023"
+http_archive(
+    name = "android_test_support",
+    sha256 = "3e246225460c60342fde0400a43324c0d8040be486f1ddae041cffc7a29dfb68",
+    strip_prefix = "android-test-%s" % ATS_TAG,
+    urls = ["https://github.com/android/android-test/archive/%s.tar.gz" % ATS_TAG],
+)
+load("@android_test_support//:repo.bzl", "android_test_repositories")
+android_test_repositories()
