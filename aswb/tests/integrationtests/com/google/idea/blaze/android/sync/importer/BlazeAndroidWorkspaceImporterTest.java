@@ -88,7 +88,7 @@ import org.junit.runners.JUnit4;
 public class BlazeAndroidWorkspaceImporterTest extends BlazeAndroidIntegrationTestCase {
 
   private static final String FAKE_GEN_ROOT_EXECUTION_PATH_FRAGMENT =
-      "bazel-out/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
+      "dist/out/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
 
   private static final ArtifactLocationDecoder FAKE_ARTIFACT_DECODER =
       new MockArtifactLocationDecoder() {

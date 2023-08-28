@@ -42,8 +42,7 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   @Override
   public ImmutableList<String> buildArtifactDirectories(WorkspaceRoot root) {
     String rootDir = root.directory().getName();
-    return ImmutableList.of(
-        "bazel-bin", "bazel-genfiles", "bazel-out", "bazel-testlogs", "bazel-" + rootDir);
+    return ImmutableList.of("dist");
   }
 
   @Override

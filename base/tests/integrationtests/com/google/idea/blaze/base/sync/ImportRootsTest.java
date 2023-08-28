@@ -58,14 +58,12 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
 
     assertThat(importRoots.rootDirectories()).containsExactly(new WorkspacePath(""));
     assertThat(
-            importRoots
-                .excludeDirectories()
-                .stream()
+            importRoots.excludeDirectories().stream()
                 .map(WorkspacePath::relativePath)
                 .collect(Collectors.toList()))
         .containsExactlyElementsIn(artifactDirs);
 
-    assertThat(artifactDirs).contains("bazel-" + workspaceRoot.directory().getName());
+    assertThat(artifactDirs).contains("dist/" + workspaceRoot.directory().getName());
   }
 
   @Test

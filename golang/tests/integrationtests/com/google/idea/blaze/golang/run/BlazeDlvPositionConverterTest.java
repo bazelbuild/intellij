@@ -93,21 +93,18 @@ public class BlazeDlvPositionConverterTest extends BlazeIntegrationTestCase {
   @Test
   public void testConvertGenfilePaths() {
     mockFileSystem.setResolvablePaths(
-        executionRootPath("bazel-genfiles/foo/bar.go"),
-        executionRootPath("bazel-genfiles/one/two.go"));
+        executionRootPath("dist/bin/foo/bar.go"), executionRootPath("dist/bin/one/two.go"));
     DlvPositionConverter converter =
         DlvPositionConverterFactory.create(
-            getProject(),
-            null,
-            ImmutableSet.of("bazel-genfiles/foo/bar.go", "bazel-genfiles/one/two.go"));
-    assertThatFile(converter.toLocalFile("bazel-genfiles/foo/bar.go"))
-        .hasExecutionRootPath("bazel-genfiles/foo/bar.go");
-    assertThatFile(converter.toLocalFile("bazel-genfiles/one/two.go"))
-        .hasExecutionRootPath("bazel-genfiles/one/two.go");
-    assertThat(converter.toRemotePath(executionRootFile("bazel-genfiles/foo/bar.go")))
-        .isEqualTo("bazel-genfiles/foo/bar.go");
-    assertThat(converter.toRemotePath(executionRootFile("bazel-genfiles/one/two.go")))
-        .isEqualTo("bazel-genfiles/one/two.go");
+            getProject(), null, ImmutableSet.of("dist/bin/foo/bar.go", "dist/bin/one/two.go"));
+    assertThatFile(converter.toLocalFile("dist/bin/foo/bar.go"))
+        .hasExecutionRootPath("dist/bin/foo/bar.go");
+    assertThatFile(converter.toLocalFile("dist/bin/one/two.go"))
+        .hasExecutionRootPath("dist/bin/one/two.go");
+    assertThat(converter.toRemotePath(executionRootFile("dist/bin/foo/bar.go")))
+        .isEqualTo("dist/bin/foo/bar.go");
+    assertThat(converter.toRemotePath(executionRootFile("dist/bin/one/two.go")))
+        .isEqualTo("dist/bin/one/two.go");
   }
 
   @Test

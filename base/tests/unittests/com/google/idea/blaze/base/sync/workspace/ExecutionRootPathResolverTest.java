@@ -58,9 +58,9 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
   public void testGenfilesPathRelativeToExecRoot() {
     ImmutableList<File> files =
         pathResolver.resolveToIncludeDirectories(
-            new ExecutionRootPath("bazel-out/crosstool/genfiles/res/normal"));
+            new ExecutionRootPath("dist/out/crosstool/genfiles/res/normal"));
     assertThat(files)
-        .containsExactly(new File(EXECUTION_ROOT, "bazel-out/crosstool/genfiles/res/normal"));
+        .containsExactly(new File(EXECUTION_ROOT, "dist/out/crosstool/genfiles/res/normal"));
   }
 
   @Test
@@ -74,10 +74,10 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
   public void testGenfilesPathWithDifferentConfigSettingStillResolves() {
     ImmutableList<File> files =
         pathResolver.resolveToIncludeDirectories(
-            new ExecutionRootPath("bazel-out/arm-linux-fastbuild/genfiles/res/normal"));
+            new ExecutionRootPath("dist/out/arm-linux-fastbuild/genfiles/res/normal"));
     assertThat(files)
         .containsExactly(
-            new File(EXECUTION_ROOT, "bazel-out/arm-linux-fastbuild/genfiles/res/normal"));
+            new File(EXECUTION_ROOT, "dist/out/arm-linux-fastbuild/genfiles/res/normal"));
   }
 
   @Test
