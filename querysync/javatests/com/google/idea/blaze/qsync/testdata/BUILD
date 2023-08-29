@@ -1,4 +1,9 @@
-load(":scope_util.bzl", "scopeForAndroidPackage", "scopeForAndroidPackageWithResources", "scopeForJavaPackage")
+load(
+    ":scope_util.bzl",
+    "scopeForAndroidPackage",
+    "scopeForAndroidPackageWithResources",
+    "scopeForJavaPackage",
+)
 
 package(default_visibility = [
     "//base:__subpackages__",
