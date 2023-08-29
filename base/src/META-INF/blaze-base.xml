@@ -169,7 +169,7 @@
     </group>
 `
     <group id="Blaze.MainToolBarActionGroup">
-      <add-to-group group-id="MainToolBar" anchor="before" relative-to-action="HelpTopics" />
+      <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="HelpTopics" />
       <add-to-group group-id="NavBarToolBarOthers" anchor="last"/>
       <reference id="Blaze.IncrementalSyncProject"/>
     </group>
