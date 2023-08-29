@@ -1,6 +1,8 @@
 v2023.08.29
 ===========
-
+* Support embedded go_source rule type in go_test and go_library rules #5205
+* Proper check for git repository #5213
+* Make bazel run configurations dumbaware #5262
 
 v2023.08.15
 ===========
