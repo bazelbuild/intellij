@@ -104,7 +104,7 @@ test_suite(
 default_java_toolchain(
     name = "custom_java_17_toolchain",
     configuration = dict(),
-    java_runtime = "@bazel_tools//tools/jdk:remotejdk_17",
+    java_runtime = "@rules_java//toolchains:remotejdk_17",
     package_configuration = [
         ":java_8",
     ],
