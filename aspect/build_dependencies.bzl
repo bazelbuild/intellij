@@ -2,6 +2,13 @@
 
 ALWAYS_BUILD_RULES = "java_proto_library,java_lite_proto_library,java_mutable_proto_library,kt_proto_library_helper,_java_grpc_library,_java_lite_grpc_library,java_stubby_library,aar_import"
 
+PROTO_RULE_KINDS = [
+    "java_proto_library",
+    "java_lite_proto_library",
+    "java_mutable_proto_library",
+    "kt_proto_library_helper",
+]
+
 def _package_dependencies_impl(target, ctx):
     file_name = target.label.name + ".target-info.txt"
     artifact_info_file = ctx.actions.declare_file(file_name)
@@ -144,7 +151,10 @@ def _collect_own_artifacts(
         generate_aidl_classes,
         target_is_within_project_scope):
     rule = ctx.rule
-    can_follow_dependencies = bool(dependency_infos)
+
+    # Toolchains are collected for proto targets via aspect traversal, but jars
+    # produced for proto deps of the underlying proto_library are not
+    can_follow_dependencies = bool(dependency_infos) and not ctx.rule.kind in PROTO_RULE_KINDS
 
     must_build_main_artifacts = (
         not target_is_within_project_scope or rule.kind in always_build_rules.split(",")
@@ -162,8 +172,9 @@ def _collect_own_artifacts(
         # have further dependencies with JavaInfo or do so in attributes we don't care)
         # we gather all their transitive dependencies. If they have dependencies, we
         # only gather their own compile jars and continue down the tree.
-        # This is done primarily for rules like proto, where they don't have dependencies
-        # and add their "toolchain" classes to transitive deps.
+        # This is done primarily for rules like proto, whose toolchain classes
+        # are collected via attribute traversal, but still requires jars for any
+        # proto deps of the underlying proto_library.
         if JavaInfo in target:
             if can_follow_dependencies:
                 own_jar_depsets.append(target[JavaInfo].compile_jars)
