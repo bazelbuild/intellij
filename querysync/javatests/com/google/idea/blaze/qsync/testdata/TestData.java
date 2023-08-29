@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.util.Locale;
 
 public enum TestData {
+
   ANDROID_AIDL_SOURCE_QUERY("aidl"),
   ANDROID_LIB_QUERY("android"),
   JAVA_EXPORTED_DEP_QUERY("exports"),
