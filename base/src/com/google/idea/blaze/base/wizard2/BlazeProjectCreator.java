@@ -64,7 +64,8 @@ public class BlazeProjectCreator {
     @VisibleForTesting
     public void openProject() {
       ProjectManagerEx.getInstanceEx()
-          .openProject(ideaProjectPath, BaseSdkCompat.createOpenProjectTask(project));
+          .openProject(ideaProjectPath, BaseSdkCompat.createOpenProjectTask(project)
+                  .asNewProject());
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         SaveAndSyncHandler.getInstance().scheduleProjectSave(project);

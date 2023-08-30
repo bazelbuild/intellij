@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
 import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -109,23 +110,21 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
       return ProgressManager.getInstance().run(new Task.WithResult<Project, Exception>(null, "Importing Project...", true) {
         @Override
         protected Project compute(@NotNull ProgressIndicator progressIndicator) {
-          ProjectManager pm = ProjectManager.getInstance();
-          if (projectToClose != null) {
-            pm.closeAndDispose(projectToClose);
-          }
-
           Project newProject = createProject(virtualFile);
           Objects.requireNonNull(newProject);
 
           newProject.putUserData(PROJECT_AUTO_IMPORTED, true);
 
-          Path projectFilePath = Paths.get(Objects.requireNonNull(newProject.getProjectFilePath()));
+          Path projectFilePath = Paths.get(Objects.requireNonNull(newProject.getBasePath()));
           ProjectUtil.updateLastProjectLocation(projectFilePath);
 
           ProjectManagerEx.getInstanceEx()
                   .openProject(
                           projectFilePath,
                           BaseSdkCompat.createOpenProjectTask(newProject)
+                                  .asNewProject()
+                                  .withProjectToClose(projectToClose)
+                                  .withForceOpenInNewFrame(forceOpenInNewFrame)
                   );
           SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject);
           return newProject;
