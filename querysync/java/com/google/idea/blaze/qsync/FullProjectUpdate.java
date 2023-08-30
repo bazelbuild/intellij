@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.qsync;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.vcs.VcsState;
@@ -52,13 +53,14 @@ public class FullProjectUpdate implements RefreshOperation {
       Path effectiveWorkspaceRoot,
       ProjectDefinition definition,
       PackageReader packageReader,
-      Optional<VcsState> vcsState) {
+      Optional<VcsState> vcsState,
+      ImmutableSet<String> handledRuleKinds) {
     this.context = context;
     this.effectiveWorkspaceRoot = effectiveWorkspaceRoot;
     this.result =
         PostQuerySyncData.builder().setProjectDefinition(definition).setVcsState(vcsState);
     this.projectDefinition = definition;
-    this.queryParser = new BlazeQueryParser(context);
+    this.queryParser = new BlazeQueryParser(context, handledRuleKinds);
     this.graphToProjectConverter =
         new GraphToProjectConverter(
             packageReader, effectiveWorkspaceRoot, context, projectDefinition, executor);

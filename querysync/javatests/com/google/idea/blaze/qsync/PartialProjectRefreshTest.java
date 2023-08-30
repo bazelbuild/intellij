@@ -106,6 +106,7 @@ public class PartialProjectRefreshTest {
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,
             /* modifiedPackages= */ ImmutableSet.of(Path.of("my/build/package1")),
+            ImmutableSet.of(),
             ImmutableSet.of());
     queryStrategy.setQueryOutput(delta);
     QuerySummary applied = queryStrategy.applyDelta();
@@ -175,7 +176,8 @@ public class PartialProjectRefreshTest {
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,
             ImmutableSet.of(),
-            /* deletedPackages= */ ImmutableSet.of(Path.of("my/build/package1")));
+            /* deletedPackages= */ ImmutableSet.of(Path.of("my/build/package1")),
+            ImmutableSet.of());
     assertThat(queryStrategy.getQuerySpec()).isEmpty();
     queryStrategy.setQueryOutput(QuerySummary.EMPTY);
     QuerySummary applied = queryStrategy.applyDelta();
@@ -240,6 +242,7 @@ public class PartialProjectRefreshTest {
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,
             /* modifiedPackages= */ ImmutableSet.of(Path.of("my/build/package2")),
+            ImmutableSet.of(),
             ImmutableSet.of());
     queryStrategy.setQueryOutput(delta);
     QuerySummary applied = queryStrategy.applyDelta();
@@ -274,6 +277,7 @@ public class PartialProjectRefreshTest {
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,
             /* modifiedPackages= */ ImmutableSet.of(Path.of("my/build/package")),
+            ImmutableSet.of(),
             ImmutableSet.of());
     queryStrategy.setQueryOutput(delta);
     QuerySummary applied = queryStrategy.applyDelta();

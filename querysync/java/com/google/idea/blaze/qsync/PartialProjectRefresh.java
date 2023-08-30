@@ -62,7 +62,8 @@ class PartialProjectRefresh implements RefreshOperation {
       PostQuerySyncData previousState,
       Optional<VcsState> currentVcsState,
       ImmutableSet<Path> modifiedPackages,
-      ImmutableSet<Path> deletedPackages) {
+      ImmutableSet<Path> deletedPackages,
+      ImmutableSet<String> handledRuleKinds) {
     this.effectiveWorkspaceRoot = effectiveWorkspaceRoot;
     this.previousState = previousState;
     this.newState =
@@ -71,7 +72,7 @@ class PartialProjectRefresh implements RefreshOperation {
             .setProjectDefinition(previousState.projectDefinition());
     this.modifiedPackages = modifiedPackages;
     this.deletedPackages = deletedPackages;
-    this.queryParser = new BlazeQueryParser(context);
+    this.queryParser = new BlazeQueryParser(context, handledRuleKinds);
     this.graphToProjectConverter =
         new GraphToProjectConverter(
             packageReader,

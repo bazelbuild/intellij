@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.qsync.util;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.exception.BuildException;
@@ -84,7 +85,8 @@ public class ProjectSpecBuilder {
             .readFrom(new GZIPInputStream(new FileInputStream(snapshotFile)), context)
             .orElseThrow()
             .getSyncData();
-    BuildGraphData buildGraph = new BlazeQueryParser(context).parse(snapshot.querySummary());
+    BuildGraphData buildGraph =
+        new BlazeQueryParser(context, ImmutableSet.of()).parse(snapshot.querySummary());
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             packageReader, workspaceRoot, context, snapshot.projectDefinition(), executor);
