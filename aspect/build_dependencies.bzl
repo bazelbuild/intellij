@@ -1,6 +1,6 @@
 """Aspects to build and collect project dependencies."""
 
-ALWAYS_BUILD_RULES = "java_proto_library,java_lite_proto_library,java_mutable_proto_library,kt_proto_library_helper,_java_grpc_library,_java_lite_grpc_library,java_stubby_library,aar_import"
+ALWAYS_BUILD_RULES = "java_proto_library,java_lite_proto_library,java_mutable_proto_library,kt_proto_library_helper,_java_grpc_library,_java_lite_grpc_library,kt_grpc_library_helper,java_stubby_library,aar_import"
 
 PROTO_RULE_KINDS = [
     "java_proto_library",
