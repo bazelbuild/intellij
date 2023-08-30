@@ -124,8 +124,9 @@ public class ProjectLoader {
 
     Path snapshotFilePath = getSnapshotFilePath(importSettings);
 
+    ImmutableSet<String> handledRules = getHandledRuleKinds();
     DependencyBuilder dependencyBuilder =
-        createDependencyBuilder(workspaceRoot, importRoots, buildSystem);
+        createDependencyBuilder(workspaceRoot, importRoots, buildSystem, handledRules);
     RenderJarBuilder renderJarBuilder = createRenderJarBuilder(buildSystem);
 
     Path ideProjectBasePath = Paths.get(checkNotNull(project.getBasePath()));
@@ -150,7 +151,8 @@ public class ProjectLoader {
             createWorkspaceRelativePackageReader(),
             vcsHandler.map(BlazeVcsHandler::getVcsStateDiffer).orElse(VcsStateDiffer.NONE),
             workspaceRoot.path(),
-            graph::getCurrent);
+            graph::getCurrent,
+            handledRules);
     QueryRunner queryRunner = createQueryRunner(buildSystem);
     ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner, vcsHandler);
     ProjectUpdater projectUpdater =
@@ -193,8 +195,12 @@ public class ProjectLoader {
   }
 
   protected DependencyBuilder createDependencyBuilder(
-      WorkspaceRoot workspaceRoot, ImportRoots importRoots, BuildSystem buildSystem) {
-    return new BazelDependencyBuilder(project, buildSystem, importRoots, workspaceRoot);
+      WorkspaceRoot workspaceRoot,
+      ImportRoots importRoots,
+      BuildSystem buildSystem,
+      ImmutableSet<String> handledRuleKinds) {
+    return new BazelDependencyBuilder(
+        project, buildSystem, importRoots, workspaceRoot, handledRuleKinds);
   }
 
   protected RenderJarBuilder createRenderJarBuilder(BuildSystem buildSystem) {
@@ -208,5 +214,18 @@ public class ProjectLoader {
   private ArtifactFetcher<OutputArtifact> createArtifactFetcher() {
     return new DynamicallyDispatchingArtifactFetcher(
         ImmutableList.copyOf(ArtifactFetcher.EP_NAME.getExtensions()));
+  }
+
+  /**
+   * Returns an {@link ImmutableSet} of rule kinds that query sync or plugin know how to resolve
+   * symbols for without building. The rules query sync always builds even if they are part of the
+   * project are in {@link BlazeQueryParser.ALWAYS_BUILD_RULE_KINDS}
+   */
+  private ImmutableSet<String> getHandledRuleKinds() {
+    ImmutableSet.Builder<String> defaultRules = ImmutableSet.builder();
+    for (HandledRulesProvider ep : HandledRulesProvider.EP_NAME.getExtensionList()) {
+      defaultRules.addAll(ep.handledRuleKinds());
+    }
+    return defaultRules.build();
   }
 }

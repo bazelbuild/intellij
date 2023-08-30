@@ -7,6 +7,7 @@ java_test(
         "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//shared",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
         "@truth//jar",
     ],

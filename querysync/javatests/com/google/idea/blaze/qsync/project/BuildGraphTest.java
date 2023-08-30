@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.testdata.TestData;
@@ -38,7 +39,7 @@ public class BuildGraphTest {
   @Test
   public void testJavaLibraryNoDeps() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT)
+        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY));
     assertThat(graph.allTargets())
         .containsExactly(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps"));
@@ -58,7 +59,7 @@ public class BuildGraphTest {
   @Test
   public void testJavaLibraryExternalDep() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT)
+        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY));
     assertThat(
             graph.getFileDependencies(
@@ -69,7 +70,7 @@ public class BuildGraphTest {
   @Test
   public void testJavaLibraryInternalDep() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT)
+        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_INTERNAL_DEP_QUERY));
     // Sanity check:
     assertThat(graph.getAllSourceFiles())
@@ -83,7 +84,7 @@ public class BuildGraphTest {
   @Test
   public void testJavaLibraryTransientDep() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT)
+        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_TRANSITIVE_DEP_QUERY));
     // Sanity check:
     assertThat(graph.getAllSourceFiles())
@@ -97,7 +98,7 @@ public class BuildGraphTest {
   @Test
   public void testJavaLibraryProtoDep() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT)
+        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_PROTO_DEP_QUERY));
     assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("protodep/TestClassProtoDep.java")))
         .containsExactly(
@@ -108,7 +109,7 @@ public class BuildGraphTest {
   @Test
   public void testJavaLibraryMultiTargets() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT)
+        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_MULTI_TARGETS));
     assertThat(graph.allTargets())
         .containsExactly(
@@ -131,7 +132,8 @@ public class BuildGraphTest {
   @Test
   public void testJavaLibaryExportingExternalTargets() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT).parse(getQuerySummary(TestData.JAVA_EXPORTED_DEP_QUERY));
+        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
+            .parse(getQuerySummary(TestData.JAVA_EXPORTED_DEP_QUERY));
     Path sourceFile = TESTDATA_ROOT.resolve("exports/TestClassUsingExport.java");
     assertThat(graph.getJavaSourceFiles()).containsExactly(sourceFile);
     assertThat(graph.getFileDependencies(sourceFile))
@@ -141,7 +143,8 @@ public class BuildGraphTest {
   @Test
   public void testAndroidLibrary() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT).parse(getQuerySummary(TestData.ANDROID_LIB_QUERY));
+        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
+            .parse(getQuerySummary(TestData.ANDROID_LIB_QUERY));
     assertThat(graph.getAllSourceFiles())
         .containsExactly(
             TESTDATA_ROOT.resolve("android/TestAndroidClass.java"),
@@ -161,7 +164,7 @@ public class BuildGraphTest {
   @Test
   public void testProjectAndroidLibrariesWithAidlSource_areProjectDeps() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT)
+        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
             .parse(getQuerySummary(TestData.ANDROID_AIDL_SOURCE_QUERY));
     assertThat(graph.getAllSourceFiles())
         .containsExactly(

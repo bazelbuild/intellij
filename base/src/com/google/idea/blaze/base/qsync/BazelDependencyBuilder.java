@@ -24,6 +24,7 @@ import static java.util.stream.Collectors.joining;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException.ThrowOption;
@@ -70,16 +71,19 @@ public class BazelDependencyBuilder implements DependencyBuilder {
   protected final BuildSystem buildSystem;
   protected final ImportRoots importRoots;
   protected final WorkspaceRoot workspaceRoot;
+  protected final ImmutableSet<String> handledRuleKinds;
 
   public BazelDependencyBuilder(
       Project project,
       BuildSystem buildSystem,
       ImportRoots importRoots,
-      WorkspaceRoot workspaceRoot) {
+      WorkspaceRoot workspaceRoot,
+      ImmutableSet<String> handledRuleKinds) {
     this.project = project;
     this.buildSystem = buildSystem;
     this.importRoots = importRoots;
     this.workspaceRoot = workspaceRoot;
+    this.handledRuleKinds = handledRuleKinds;
   }
 
   @Override
@@ -96,7 +100,9 @@ public class BazelDependencyBuilder implements DependencyBuilder {
               .map(BazelDependencyBuilder::directoryToLabel)
               .collect(joining(","));
       String aspectLocation = prepareAspect(context);
-      String alwaysBuildRuleTypes = Joiner.on(",").join(BlazeQueryParser.ALWAYS_BUILD_RULE_TYPES);
+      Set<String> ruleKindsToBuild =
+          Sets.difference(BlazeQueryParser.ALWAYS_BUILD_RULE_KINDS, handledRuleKinds);
+      String alwaysBuildParam = Joiner.on(",").join(ruleKindsToBuild);
 
       ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       // TODO This is not SYNC_CONTEXT, but also not OTHER_CONTEXT, we need to decide what kind
@@ -121,7 +127,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
               .addBlazeFlags(String.format("--aspects_parameters=include=%s", includes))
               .addBlazeFlags(String.format("--aspects_parameters=exclude=%s", excludes))
               .addBlazeFlags(
-                  String.format("--aspects_parameters=always_build_rules=%s", alwaysBuildRuleTypes))
+                  String.format("--aspects_parameters=always_build_rules=%s", alwaysBuildParam))
               .addBlazeFlags("--aspects_parameters=generate_aidl_classes=True")
               .addBlazeFlags("--output_groups=qsync_jars")
               .addBlazeFlags("--output_groups=qsync_aars")
