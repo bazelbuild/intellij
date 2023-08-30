@@ -718,11 +718,11 @@ rules_proto_dependencies()
 rules_proto_toolchains()
 
 # LICENSE: The Apache Software License, Version 2.0
-rules_scala_version = "30f8fbe042b835cc2173a474a6a2b360cd4d440f"
+rules_scala_version = "a42f009ded929070d5c412284c50ba08f0f9e8b8"
 
 http_archive(
     name = "io_bazel_rules_scala",
-    sha256 = "8ecb882997ebbaea341981c63c538674815cabb5b50a0a331ff770c597578715",
+    sha256 = "0074836b631caaf552fd7013d49f18fa5f0a27c86bb1b88bd3fa9371fa36b2c9",
     strip_prefix = "rules_scala-%s" % rules_scala_version,
     type = "zip",
     url = "https://github.com/bazelbuild/rules_scala/archive/%s.zip" % rules_scala_version,
