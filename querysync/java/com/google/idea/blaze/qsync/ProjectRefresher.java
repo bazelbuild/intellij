@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.qsync;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
@@ -38,18 +39,21 @@ public class ProjectRefresher {
   private final VcsStateDiffer vcsDiffer;
   private final Path workspaceRoot;
   private final Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier;
+  private final ImmutableSet<String> handledRuleKinds;
 
   public ProjectRefresher(
       ListeningExecutorService executor,
       PackageReader workspaceRelativePackageReader,
       VcsStateDiffer vcsDiffer,
       Path workspaceRoot,
-      Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier) {
+      Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier,
+      ImmutableSet<String> handledRuleKinds) {
     this.executor = executor;
     this.workspaceRelativePackageReader = workspaceRelativePackageReader;
     this.vcsDiffer = vcsDiffer;
     this.workspaceRoot = workspaceRoot;
     this.latestProjectSnapshotSupplier = latestProjectSnapshotSupplier;
+    this.handledRuleKinds = handledRuleKinds;
   }
 
   public FullProjectUpdate startFullUpdate(
@@ -62,7 +66,8 @@ public class ProjectRefresher {
         effectiveWorkspaceRoot,
         spec,
         new WorkspaceResolvingPackageReader(effectiveWorkspaceRoot, workspaceRelativePackageReader),
-        vcsState);
+        vcsState,
+        handledRuleKinds);
   }
 
   public RefreshOperation startPartialRefresh(
@@ -105,7 +110,8 @@ public class ProjectRefresher {
         params.currentProject,
         params.latestVcsState,
         affected.getModifiedPackages(),
-        affected.getDeletedPackages());
+        affected.getDeletedPackages(),
+        handledRuleKinds);
   }
 
 }

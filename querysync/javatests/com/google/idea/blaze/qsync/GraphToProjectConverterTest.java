@@ -638,7 +638,7 @@ public class GraphToProjectConverterTest {
             newDirectExecutorService());
 
     BuildGraphData buildGraphData =
-        new BlazeQueryParser(NOOP_CONTEXT)
+        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY));
     ProjectProto.Project project = converter.createProject(buildGraphData);
 
@@ -681,7 +681,7 @@ public class GraphToProjectConverterTest {
                 ImmutableSet.of("querysync/javatests/*")),
             newDirectExecutorService());
     BuildGraphData buildGraphData =
-        new BlazeQueryParser(NOOP_CONTEXT)
+        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY));
     ProjectProto.Project project = converter.createProject(buildGraphData);
 
