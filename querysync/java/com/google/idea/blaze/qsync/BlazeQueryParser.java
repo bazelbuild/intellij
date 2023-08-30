@@ -57,6 +57,7 @@ public class BlazeQueryParser {
           "kt_proto_library_helper",
           "_java_grpc_library",
           "_java_lite_grpc_library",
+          "kt_grpc_library_helper",
           "java_stubby_library",
           "aar_import");
 
