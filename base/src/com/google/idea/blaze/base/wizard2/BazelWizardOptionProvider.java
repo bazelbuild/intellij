@@ -36,6 +36,11 @@ public class BazelWizardOptionProvider implements BlazeWizardOptionProvider {
       BlazeNewProjectBuilder builder) {
     ImmutableList.Builder<BlazeSelectProjectViewOption> options = new ImmutableList.Builder<>();
 
+    options.add(new CreateFromScratchProjectViewOption());
+    options.add(new ImportFromWorkspaceProjectViewOption(builder));
+    options.add(new GenerateFromBuildFileSelectProjectViewOption(builder));
+    options.add(new CopyExternalProjectViewOption(builder));
+
     String projectViewFromEnv = System.getenv(AutoImportProjectOpenProcessor.PROJECT_VIEW_FROM_ENV);
     WorkspaceRoot workspaceRoot = builder.getWorkspaceData() != null ? builder.getWorkspaceData().workspaceRoot() : null;
 
@@ -43,18 +48,13 @@ public class BazelWizardOptionProvider implements BlazeWizardOptionProvider {
       if (projectViewFromEnv != null) {
         File projectViewFromEnvFile = new File(projectViewFromEnv);
         if (projectViewFromEnvFile.exists()) {
-          options.add(UseKnownProjectViewOption.fromEnvironmentVariable(projectViewFromEnvFile));
+          options.add(UseKnownProjectViewOption.fromEnvironmentVariable(workspaceRoot, projectViewFromEnvFile));
         }
       }
       if (workspaceRoot.absolutePathFor(AutoImportProjectOpenProcessor.MANAGED_PROJECT_RELATIVE_PATH).toFile().exists()) {
         options.add(UseKnownProjectViewOption.fromManagedProject(workspaceRoot));
       }
     }
-
-    options.add(new CreateFromScratchProjectViewOption());
-    options.add(new ImportFromWorkspaceProjectViewOption(builder));
-    options.add(new GenerateFromBuildFileSelectProjectViewOption(builder));
-    options.add(new CopyExternalProjectViewOption(builder));
 
     return options.build();
   }

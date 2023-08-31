@@ -1,8 +1,11 @@
 package com.google.idea.blaze.base.wizard2;
 
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.project.AutoImportProjectOpenProcessor;
+import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -16,11 +19,16 @@ public class UseKnownProjectViewOption implements BlazeSelectProjectViewOption {
     private final String optionName;
     private final String description;
     private final File projectView;
+    private final JComponent component;
 
-    private UseKnownProjectViewOption(String optionName, String description, File projectView) {
+    private UseKnownProjectViewOption(String optionName, String description, File projectView, WorkspaceRoot workspaceRoot) {
         this.optionName = optionName;
         this.description = description;
         this.projectView = projectView;
+        WorkspacePath workspacePath = workspaceRoot.workspacePathForSafe(projectView);
+        this.component = UiUtil.createHorizontalBox(
+                HORIZONTAL_LAYOUT_GAP, new JBLabel("Project view:"),
+                new JBLabel(workspacePath != null ? workspacePath.relativePath() : projectView.getAbsolutePath()));
     }
 
     @Override
@@ -57,14 +65,20 @@ public class UseKnownProjectViewOption implements BlazeSelectProjectViewOption {
     @Nullable
     @Override
     public JComponent getUiComponent() {
-        return null;
+        return component;
     }
 
     public static UseKnownProjectViewOption fromManagedProject(WorkspaceRoot root) {
-        return new UseKnownProjectViewOption("use-managed-view", "Clone project's default view", root.absolutePathFor(AutoImportProjectOpenProcessor.MANAGED_PROJECT_RELATIVE_PATH).toFile());
+        return new UseKnownProjectViewOption("use-managed-view",
+                "Clone project's default view",
+                root.absolutePathFor(AutoImportProjectOpenProcessor.MANAGED_PROJECT_RELATIVE_PATH).toFile(),
+                root);
     }
 
-    public static UseKnownProjectViewOption fromEnvironmentVariable(File file) {
-        return new UseKnownProjectViewOption("use-view-from-env", "Clone project view provided from environment", file);
+    public static UseKnownProjectViewOption fromEnvironmentVariable(WorkspaceRoot root, File file) {
+        return new UseKnownProjectViewOption("use-view-from-env",
+                "Clone project view provided from environment",
+                file,
+                root);
     }
 }
