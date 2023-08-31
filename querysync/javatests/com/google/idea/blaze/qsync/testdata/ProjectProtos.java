@@ -57,7 +57,7 @@ public class ProjectProtos {
             newDirectExecutorService());
 
     BuildGraphData buildGraphData =
-        new BlazeQueryParser(NOOP_CONTEXT).parse(getQuerySummary(project));
+        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of()).parse(getQuerySummary(project));
     return converter.createProject(buildGraphData);
   }
 }
