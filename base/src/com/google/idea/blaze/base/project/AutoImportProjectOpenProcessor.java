@@ -55,6 +55,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
+  public static final String MANAGED_PROJECT_RELATIVE_PATH = "tools/intellij/.managed.bazelproject";
+  public static final String PROJECT_VIEW_FROM_ENV = "INTELLIJ_BAZEL_PROJECT_VIEW_TEMPLATE";
+
   static final Key<Boolean> PROJECT_AUTO_IMPORTED = Key.create("bazel.project.auto_imported");
 
   private static final Logger LOG = Logger.getInstance(AutoImportProjectOpenProcessor.class);
@@ -216,8 +219,7 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
       WorkspacePathResolver pathResolver) {
 
     // first check env for project view template
-    String projectViewFileFromEnv = System.getenv(
-        "INTELLIJ_BAZEL_PROJECT_VIEW_TEMPLATE");
+    String projectViewFileFromEnv = System.getenv(PROJECT_VIEW_FROM_ENV);
 
     if (projectViewFileFromEnv != null) {
       return fromFileProjectView(Paths.get(projectViewFileFromEnv), pathResolver);
@@ -225,7 +227,7 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
     // second check managed project view template
     Path managedProjectViewFilePath = workspaceRoot.toNioPath()
-        .resolve("tools/intellij/.managed.bazelproject");
+        .resolve(MANAGED_PROJECT_RELATIVE_PATH);
     if (managedProjectViewFilePath.toFile().exists()) {
       return fromFileProjectView(managedProjectViewFilePath, pathResolver);
     }
