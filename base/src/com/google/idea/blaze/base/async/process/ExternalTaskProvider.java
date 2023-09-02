@@ -16,9 +16,15 @@
 package com.google.idea.blaze.base.async.process;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.idea.blaze.base.async.process.ExternalTask.Builder;
-import com.google.idea.blaze.base.async.process.ExternalTask.ExternalTaskImpl;
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Constructs an {@link ExternalTask} from a builder instance. This indirection exists to allow easy
@@ -37,15 +43,47 @@ public interface ExternalTaskProvider {
   class Impl implements ExternalTaskProvider {
     @Override
     public ExternalTask build(Builder builder) {
+      BlazeContext parentContext = builder.context;
+      List<String> command = resolveCustomBinary(builder.command.build());
       return new ExternalTaskImpl(
-          builder.context,
+          parentContext,
           builder.workingDirectory,
-          builder.command.build(),
+          command,
           builder.environmentVariables,
           builder.stdout,
           builder.stderr,
           builder.redirectErrorStream,
           builder.ignoreExitCode);
     }
+  }
+
+  // Allow adding a custom system path to lookup executables in.
+  @Deprecated @VisibleForTesting
+  String CUSTOM_PATH_SYSTEM_PROPERTY = "blaze.external.task.env.path";
+
+  @VisibleForTesting
+  @Nullable
+  static File getCustomBinary(String potentialCommandName) {
+    String customPath = System.getProperty(CUSTOM_PATH_SYSTEM_PROPERTY);
+    if (Strings.isNullOrEmpty(customPath)) {
+      return null;
+    }
+    return PathEnvironmentVariableUtil.findInPath(
+        potentialCommandName, customPath, /* filter= */ null);
+  }
+
+  @VisibleForTesting
+  static List<String> resolveCustomBinary(List<String> command) {
+    if (command.isEmpty()) {
+      return command;
+    }
+    List<String> actualCommand = new ArrayList<>(command);
+    String binary = actualCommand.get(0);
+    File binaryOverride =
+        BinaryPathRemapper.remapBinary(binary).orElseGet(() -> getCustomBinary(binary));
+    if (binaryOverride != null) {
+      actualCommand.set(0, binaryOverride.getAbsolutePath());
+    }
+    return actualCommand;
   }
 }

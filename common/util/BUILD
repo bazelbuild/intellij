@@ -31,3 +31,12 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
     ],
 )
+
+java_library(
+    name = "process",
+    srcs = glob(["src/com/google/idea/async/process/*.java"]),
+    deps = [
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
