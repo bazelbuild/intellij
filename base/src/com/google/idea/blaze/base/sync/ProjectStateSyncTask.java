@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.FutureUtil;
@@ -25,6 +26,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.command.info.BlazeInfoProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -61,10 +63,10 @@ import javax.annotation.Nullable;
 /** Collects information about the project state (VCS, blaze info, .blazeproject contents, etc.). */
 final class ProjectStateSyncTask {
 
-  static SyncProjectState collectProjectState(Project project, BlazeContext context)
+  static SyncProjectState collectProjectState(Project project, BlazeContext context, BlazeSyncParams syncParams)
       throws SyncCanceledException, SyncFailedException {
     ProjectStateSyncTask task = new ProjectStateSyncTask(project);
-    return task.getProjectState(context);
+    return task.getProjectState(context, syncParams);
   }
 
   private final Project project;
@@ -77,7 +79,7 @@ final class ProjectStateSyncTask {
     this.workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
   }
 
-  private SyncProjectState getProjectState(BlazeContext context)
+  private SyncProjectState getProjectState(BlazeContext context, BlazeSyncParams params)
       throws SyncFailedException, SyncCanceledException {
     if (!FileOperationProvider.getInstance().exists(workspaceRoot.directory())) {
       String message = String.format("Workspace '%s' doesn't exist.", workspaceRoot.directory());
@@ -114,17 +116,14 @@ final class ProjectStateSyncTask {
             BlazeInvocationContext.SYNC_CONTEXT);
 
     ListenableFuture<BlazeInfo> blazeInfoFuture =
-        BlazeInfoRunner.getInstance()
-            .runBlazeInfo(
-                project,
-                Blaze.getBuildSystemProvider(project)
-                    .getBuildSystem()
-                    .getDefaultInvoker(project, context),
-                context,
-                importSettings.getBuildSystem(),
-                syncFlags);
+            createBazelInfoFuture(context, syncFlags, params.syncMode());
 
-    ListenableFuture<WorkingSet> workingSetFuture = vcsHandler.getWorkingSet(context, executor);
+    ListenableFuture<WorkingSet> workingSetFuture;
+    if(params.addWorkingSet() || params.syncMode() == SyncMode.FULL) {
+      workingSetFuture = vcsHandler.getWorkingSet(context, executor);
+    } else {
+      workingSetFuture = Futures.immediateFuture(null);
+    }
 
     BlazeInfo blazeInfo =
         FutureUtil.waitForFuture(context, blazeInfoFuture)
@@ -181,6 +180,29 @@ final class ProjectStateSyncTask {
         .setWorkingSet(workingSet)
         .setWorkspacePathResolver(workspacePathResolver)
         .build();
+  }
+
+  private ListenableFuture<BlazeInfo> createBazelInfoFuture(
+          BlazeContext context,
+          List<String> syncFlags,
+          SyncMode syncMode) {
+    boolean useBazelInfoRunner = !BlazeInfoProvider.isEnabled() || syncMode == SyncMode.FULL;
+    if (useBazelInfoRunner) {
+      return BlazeInfoRunner.getInstance()
+              .runBlazeInfo(
+                      project,
+                      Blaze.getBuildSystemProvider(project)
+                              .getBuildSystem()
+                              .getDefaultInvoker(project,
+                                      context),
+                      context,
+                      importSettings.getBuildSystem(),
+                      syncFlags);
+    }
+    return BlazeInfoProvider.getInstance(project)
+            .getBlazeInfo(
+                    context,
+                    syncFlags);
   }
 
   private static class WorkspacePathResolverAndProjectView {
