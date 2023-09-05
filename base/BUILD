@@ -33,6 +33,7 @@ java_library(
         "//common/ui/properties",
         "//common/util:concurrency",
         "//common/util:platform",
+        "//common/util:process",
         "//common/util:transactions",
         "//ext:intellijext",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
@@ -515,6 +516,7 @@ intellij_unit_test_suite(
         ":unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
+        "//common/util:process",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",

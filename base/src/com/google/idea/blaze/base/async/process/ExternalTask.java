@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.idea.async.process.CommandLineTask;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -30,9 +31,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -165,7 +165,6 @@ public interface ExternalTask {
 
   /** The default implementation of {@link ExternalTask}. */
   class ExternalTaskImpl implements ExternalTask {
-    private static final Logger logger = Logger.getInstance(ExternalTask.class);
     private static final OutputStream NULL_STREAM = ByteStreams.nullOutputStream();
 
     private final File workingDirectory;
@@ -216,13 +215,14 @@ public interface ExternalTask {
                     return -1;
                   }
                   int exitValue =
-                      invokeCommand(
-                          resolveCustomBinary(command),
-                          environmentVariables,
-                          redirectErrorStream,
-                          stderr,
-                          stdout,
-                          workingDirectory);
+                      CommandLineTask.builder(workingDirectory)
+                          .args(resolveCustomBinary(command))
+                          .redirectStderr(redirectErrorStream)
+                          .stderr(stderr)
+                          .stdout(stdout)
+                          .environmentVars(environmentVariables)
+                          .build()
+                          .run();
                   if (!ignoreExitCode && exitValue != 0) {
                     context.setHasError();
                   }
@@ -230,7 +230,7 @@ public interface ExternalTask {
                 } catch (IOException e) {
                   outputError(context, e);
                   return -1;
-                } catch (InterruptedException e) {
+                } catch (InterruptedException | TimeoutException e) {
                   context.setCancelled();
                 }
                 return -1;
@@ -251,20 +251,6 @@ public interface ExternalTask {
                   logMessage, /* maxLength= */ 1000, /* suffixLength= */ 0)));
     }
 
-    private static void closeQuietly(OutputStream stream) {
-      try {
-        stream.close();
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    // See GeneralCommandLine#ParentEnvironmentType for an explanation of why we do this.
-    private static void initializeEnvironment(Map<String, String> envMap) {
-      envMap.clear();
-      envMap.putAll(EnvironmentUtil.getEnvironmentMap());
-    }
-
     // Allow adding a custom system path to lookup executables in.
     @Deprecated @VisibleForTesting
     static final String CUSTOM_PATH_SYSTEM_PROPERTY = "blaze.external.task.env.path";
@@ -277,7 +263,7 @@ public interface ExternalTask {
         return null;
       }
       return PathEnvironmentVariableUtil.findInPath(
-          potentialCommandName, customPath, /*filter=*/ null);
+          potentialCommandName, customPath, /* filter= */ null);
     }
 
     @VisibleForTesting
@@ -293,75 +279,6 @@ public interface ExternalTask {
         actualCommand.set(0, binaryOverride.getAbsolutePath());
       }
       return actualCommand;
-    }
-
-    private static int invokeCommand(
-        List<String> command,
-        Map<String, String> environmentVariables,
-        boolean redirectErrorStream,
-        OutputStream stderr,
-        OutputStream stdout,
-        File workingDirectory)
-        throws IOException, InterruptedException {
-
-      String logCommand = ParametersListUtil.join(command);
-      if (logCommand.length() > 2000) {
-        logCommand = logCommand.substring(0, 2000) + " <truncated>";
-      }
-      logger.info(
-          String.format("Running task:\n  %s\n  with PWD: %s", logCommand, workingDirectory));
-
-      try {
-        ProcessBuilder builder =
-            new ProcessBuilder()
-                .command(command)
-                .redirectErrorStream(redirectErrorStream)
-                .directory(workingDirectory);
-
-        Map<String, String> env = builder.environment();
-        initializeEnvironment(env);
-        for (Map.Entry<String, String> entry : environmentVariables.entrySet()) {
-          env.put(entry.getKey(), entry.getValue());
-        }
-        env.put("PWD", workingDirectory.getPath());
-
-        try {
-          final Process process = builder.start();
-          Thread shutdownHook = new Thread(process::destroy);
-          try {
-            Runtime.getRuntime().addShutdownHook(shutdownHook);
-            // These tasks are non-interactive, so close the stream connected to the process's
-            // input.
-            process.getOutputStream().close();
-            Thread stdoutThread = ProcessUtil.forwardAsync(process.getInputStream(), stdout);
-            Thread stderrThread = null;
-            if (!redirectErrorStream) {
-              stderrThread = ProcessUtil.forwardAsync(process.getErrorStream(), stderr);
-            }
-            process.waitFor();
-            stdoutThread.join();
-            if (!redirectErrorStream) {
-              stderrThread.join();
-            }
-            return process.exitValue();
-          } catch (InterruptedException e) {
-            process.destroy();
-            throw e;
-          } finally {
-            try {
-              Runtime.getRuntime().removeShutdownHook(shutdownHook);
-            } catch (IllegalStateException e) {
-              // we can't remove a shutdown hook if we are shutting down, do nothing about it
-            }
-          }
-        } catch (IOException e) {
-          logger.warn(e);
-          throw e;
-        }
-      } finally {
-        closeQuietly(stdout);
-        closeQuietly(stderr);
-      }
     }
   }
 
