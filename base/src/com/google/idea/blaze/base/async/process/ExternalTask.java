@@ -31,7 +31,6 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -212,15 +211,44 @@ public interface ExternalTask {
                   context.push(scope);
                 }
                 try {
-                  return invokeCommand(context);
-                } catch (ProcessCanceledException e) {
-                  // Logging a ProcessCanceledException is an IJ error - mark context canceled
-                  // instead
+                  outputCommand(context, command);
+                  if (context.isEnding()) {
+                    return -1;
+                  }
+                  int exitValue =
+                      invokeCommand(
+                          resolveCustomBinary(command),
+                          environmentVariables,
+                          redirectErrorStream,
+                          stderr,
+                          stdout,
+                          workingDirectory);
+                  if (!ignoreExitCode && exitValue != 0) {
+                    context.setHasError();
+                  }
+                  return exitValue;
+                } catch (IOException e) {
+                  outputError(context, e);
+                  return -1;
+                } catch (InterruptedException e) {
                   context.setCancelled();
                 }
                 return -1;
               });
       return returnValue != null ? returnValue : -1;
+    }
+
+    private static void outputError(BlazeContext context, IOException e) {
+      IssueOutput.error(e.getMessage()).submit(context);
+    }
+
+    private static void outputCommand(BlazeContext context, List<String> command) {
+      String logMessage = "Command: " + ParametersListUtil.join(command);
+
+      context.output(
+          PrintOutput.log(
+              StringUtil.shortenTextWithEllipsis(
+                  logMessage, /* maxLength= */ 1000, /* suffixLength= */ 0)));
     }
 
     private static void closeQuietly(OutputStream stream) {
@@ -267,13 +295,14 @@ public interface ExternalTask {
       return actualCommand;
     }
 
-    private int invokeCommand(BlazeContext context) {
-      String logMessage = "Command: " + ParametersListUtil.join(command);
-
-      context.output(
-          PrintOutput.log(
-              StringUtil.shortenTextWithEllipsis(
-                  logMessage, /* maxLength= */ 1000, /* suffixLength= */ 0)));
+    private static int invokeCommand(
+        List<String> command,
+        Map<String, String> environmentVariables,
+        boolean redirectErrorStream,
+        OutputStream stderr,
+        OutputStream stdout,
+        File workingDirectory)
+        throws IOException, InterruptedException {
 
       String logCommand = ParametersListUtil.join(command);
       if (logCommand.length() > 2000) {
@@ -283,13 +312,9 @@ public interface ExternalTask {
           String.format("Running task:\n  %s\n  with PWD: %s", logCommand, workingDirectory));
 
       try {
-        if (context.isEnding()) {
-          return -1;
-        }
-
         ProcessBuilder builder =
             new ProcessBuilder()
-                .command(resolveCustomBinary(command))
+                .command(command)
                 .redirectErrorStream(redirectErrorStream)
                 .directory(workingDirectory);
 
@@ -318,14 +343,10 @@ public interface ExternalTask {
             if (!redirectErrorStream) {
               stderrThread.join();
             }
-            int exitValue = process.exitValue();
-            if (!ignoreExitCode && exitValue != 0) {
-              context.setHasError();
-            }
-            return exitValue;
+            return process.exitValue();
           } catch (InterruptedException e) {
             process.destroy();
-            throw new ProcessCanceledException();
+            throw e;
           } finally {
             try {
               Runtime.getRuntime().removeShutdownHook(shutdownHook);
@@ -335,13 +356,12 @@ public interface ExternalTask {
           }
         } catch (IOException e) {
           logger.warn(e);
-          IssueOutput.error(e.getMessage()).submit(context);
+          throw e;
         }
       } finally {
         closeQuietly(stdout);
         closeQuietly(stderr);
       }
-      return -1;
     }
   }
 
