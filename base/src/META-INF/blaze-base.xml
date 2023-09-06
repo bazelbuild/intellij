@@ -131,8 +131,6 @@
       <keyboard-shortcut first-keystroke="ctrl alt shift D" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta alt shift D" keymap="macOS System Shortcuts" replace-all="true"/>
     </action>
-    <action id="Blaze.IntelliJExt.Status" class="com.google.idea.blaze.base.ext.IntelliJExtStatusAction" text="Status" >
-    </action>
 
     <group id="Blaze.MainMenuActionGroup" class="com.google.idea.blaze.base.actions.BlazeMenuGroup">
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="HelpMenu"/>
@@ -150,10 +148,7 @@
         <reference id="MakeBlazeProject"/>
         <reference id="MakeBlazeModule"/>
       </group>
-      <group id="Blaze.IntelliJExtMenuGroup" class="com.google.idea.blaze.base.ext.IntelliJExtMenu"
-          text="_Extensions" popup="true">
-        <reference id="Blaze.IntelliJExt.Status"/>
-      </group>
+
       <group id="Blaze.Project" text="_Project" popup="true">
         <reference id="Blaze.EditProjectView"/>
         <reference id="Blaze.AddDirectoryToProjectView"/>
@@ -232,7 +227,7 @@
     <projectService serviceInterface="com.google.idea.blaze.base.sync.libraries.LibraryFilesProviderFactory"
                     serviceImplementation="com.google.idea.blaze.base.sync.libraries.DefaultLibraryFilesProviderFactory"/>
 
-    <applicationService serviceImplementation="com.google.idea.blaze.base.ext.IntelliJExtManager"/>
+
     <applicationService serviceInterface="com.google.idea.blaze.base.async.executor.BlazeExecutor"
                         serviceImplementation="com.google.idea.blaze.base.async.executor.BlazeExecutorImpl"/>
     <fileDocumentManagerListener implementation="com.google.idea.blaze.base.buildmodifier.BuildFileFormatOnSaveHandler" order="first"/>
