@@ -29,7 +29,7 @@ java_library(
         "@io_netty_netty_transport_native_unix_common//jar",
     ] + select({
         "@platforms//os:macos": ["@io_netty_netty_transport//jar_native_kqueue"],
-        "//conditions:default": ["@io_netty_netty_transport_native_epoll//jar"],
+        "//conditions:default": ["@io_netty_netty_transport_classes_epoll//jar"],
     }),
 )
 
