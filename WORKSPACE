@@ -810,38 +810,6 @@ http_archive(
     url = "https://github.com/grpc/grpc-java/archive/v1.57.1.tar.gz",
 )
 
-jvm_maven_import_external(
-    name = "io_netty_netty_common",
-    artifact = "io.netty:netty-common:4.1.96.Final",
-    artifact_sha256 = "da104e80db830922eaf860eb1c5e957cd1d124068253d02e9c7a7843bc66427a",
-    licenses = ["notice"],  # Apache 2.0
-    server_urls = ["https://repo1.maven.org/maven2"],
-)
-
-jvm_maven_import_external(
-    name = "io_netty_netty_transport",
-    artifact = "io.netty:netty-transport:4.1.96.Final",
-    artifact_sha256 = "8fe3afbe8b094a7b9f1eb27becf1cf017e5572343c1744d2b6040d5f331e84e3",
-    licenses = ["notice"],  # Apache 2.0
-    server_urls = ["https://repo1.maven.org/maven2"],
-)
-
-jvm_maven_import_external(
-    name = "io_netty_netty_transport_native_epoll",
-    artifact = "io.netty:netty-transport-classes-epoll:4.1.96.Final",
-    artifact_sha256 = "1591b3ea061932677dc2bab6cb7d82e8f1837a52b3c781f4daa99984ec87a9cd",
-    licenses = ["notice"],  # Apache 2.0
-    server_urls = ["https://repo1.maven.org/maven2"],
-)
-
-jvm_maven_import_external(
-    name = "io_netty_netty_transport_native_unix_common",
-    artifact = "io.netty:netty-transport-native-unix-common:4.1.96.Final",
-    artifact_sha256 = "4f96297a06a544a4cdb6fe6af8b868640f100fa96969e2196be216bd41adef13",
-    licenses = ["notice"],  # Apache 2.0
-    server_urls = ["https://repo1.maven.org/maven2"],
-)
-
 # io_grpc_grpc_java dependencies
 load("@io_grpc_grpc_java//:repositories.bzl", "IO_GRPC_GRPC_JAVA_ARTIFACTS", "IO_GRPC_GRPC_JAVA_OVERRIDE_TARGETS", "grpc_java_repositories")
 
@@ -866,7 +834,7 @@ rules_jvm_external_setup()
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 maven_install(
-    artifacts = IO_GRPC_GRPC_JAVA_ARTIFACTS,
+    artifacts = IO_GRPC_GRPC_JAVA_ARTIFACTS + ["io.netty:netty-transport-classes-epoll:4.1.93.Final"],
     generate_compat_repositories = True,
     override_targets = IO_GRPC_GRPC_JAVA_OVERRIDE_TARGETS,
     repositories = [
