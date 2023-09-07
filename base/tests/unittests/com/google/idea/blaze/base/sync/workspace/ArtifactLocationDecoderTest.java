@@ -151,5 +151,8 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
 
     assertThat(decoder.resolveSource(artifactLocation))
         .isEqualTo(workspaceRootFile.toPath().resolve("something.h").toFile());
+
+    assertThat(decoder.decode(artifactLocation))
+        .isEqualTo(workspaceRootFile.toPath().resolve("something.h").toFile());
   }
 }

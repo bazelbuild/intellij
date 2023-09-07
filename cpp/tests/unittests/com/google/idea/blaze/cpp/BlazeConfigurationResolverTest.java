@@ -18,7 +18,9 @@ package com.google.idea.blaze.cpp;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
 import static java.util.Arrays.stream;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
@@ -37,6 +39,7 @@ import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -55,6 +58,9 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.sync.SyncCache;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -64,6 +70,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
@@ -87,6 +94,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   private MockCompilerVersionChecker compilerVersionChecker;
   private MockXcodeSettingsProvider xcodeSettingsProvider;
   private LocalFileSystem mockFileSystem;
+  private FileOperationProvider spyFileOperationProvider;
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
@@ -101,7 +109,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     xcodeSettingsProvider = new MockXcodeSettingsProvider();
     projectServices.register(XcodeCompilerSettingsProvider.class, xcodeSettingsProvider);
     applicationServices.register(VirtualFileManager.class, mock(VirtualFileManager.class));
-    applicationServices.register(FileOperationProvider.class, new FileOperationProvider());
+    spyFileOperationProvider = spy(FileOperationProvider.class);
+    applicationServices.register(FileOperationProvider.class, spyFileOperationProvider);
     mockFileSystem = mock(LocalFileSystem.class);
     applicationServices.register(
         VirtualFileSystemProvider.class, mock(VirtualFileSystemProvider.class));
@@ -126,6 +135,11 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
 
     registerExtensionPoint(
         BlazeCompilerFlagsProcessor.EP_NAME, BlazeCompilerFlagsProcessor.Provider.class);
+
+    BlazeProjectDataManager mockProjectDataManager =
+        new MockBlazeProjectDataManager(MockBlazeProjectDataBuilder.builder(workspaceRoot).build());
+    projectServices.register(BlazeProjectDataManager.class, mockProjectDataManager);
+    projectServices.register(SyncCache.class, new SyncCache(project));
 
     context.addOutputSink(IssueOutput.class, errorCollector);
 
@@ -778,6 +792,54 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
         targetWith32Dep.build().getKey().toString(), aarch32Toolchain.build());
     assertCToolchainIdeInfoForTarget(
         targetWith64Dep.build().getKey().toString(), aarch64Toolchain.build());
+  }
+
+  @Test
+  public void testExternalDependencyResolvedWhenIsPartOfProject() throws IOException {
+    ProjectView projectView = projectView(directories("test"), targets("//test:target"));
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(createCcToolchain())
+            .addTarget(
+                createCcTarget(
+                    "//test:target",
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                    ImmutableList.of(src("test/test.cc")),
+                    "//:toolchain")
+                    .addDependency("@external_dependency//foo:bar"))
+            .addTarget(
+                createCcTarget(
+                    "@external_dependency//foo:bar",
+                    CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
+                    ImmutableList.of(src("foo/bar.cpp")),
+                    "//:toolchain"))
+            .build();
+
+    File externalRoot = WorkspaceHelper.getExternalSourceRoot(
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData());
+
+    File spyExternalDependencyRoot = spy(new File(externalRoot, "external_dependency"));
+    doReturn(true).when(spyExternalDependencyRoot).isDirectory();
+    Path mockExternalDependencyInWorkspace = mock(Path.class);
+    when(mockExternalDependencyInWorkspace.toRealPath()).thenReturn(
+        mockExternalDependencyInWorkspace);
+    when(mockExternalDependencyInWorkspace.toFile()).thenReturn(
+        workspaceRoot.fileForPath(new WorkspacePath("external_dependency")));
+
+    doReturn(mockExternalDependencyInWorkspace).when(spyExternalDependencyRoot).toPath();
+
+    File mockExternalSourceRootFile = mock(File.class);
+    when(mockExternalSourceRootFile.listFiles()).thenReturn(
+        List.of(spyExternalDependencyRoot).toArray(File[]::new));
+
+    doReturn(mockExternalSourceRootFile.listFiles()).when(spyFileOperationProvider)
+        .listFiles(externalRoot);
+
+    assertThatResolving(projectView,targetMap).producesConfigurationsFor("//test:target and 1 other target(s)");
+    assertThat(resolverResult.getAllConfigurations().get(0).getTargets().stream()
+        .map(targetKey -> targetKey.getLabel().toString())
+        .collect(Collectors.toList())).containsAllOf("//test:target",
+        "@external_dependency//foo:bar");
   }
 
   @Test

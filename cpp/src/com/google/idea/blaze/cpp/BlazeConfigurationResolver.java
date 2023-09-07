@@ -41,10 +41,14 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
+import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
@@ -104,7 +108,8 @@ final class BlazeConfigurationResolver {
     ProjectViewTargetImportFilter projectViewFilter =
         new ProjectViewTargetImportFilter(
             Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet);
-    Predicate<TargetIdeInfo> targetFilter = getTargetFilter(projectViewFilter);
+    Predicate<TargetIdeInfo> targetFilter =
+        getTargetFilter(projectViewFilter, project, blazeProjectData.getWorkspacePathResolver());
     BlazeConfigurationResolverResult.Builder builder = BlazeConfigurationResolverResult.builder();
     buildBlazeConfigurationData(
         context, blazeProjectData, toolchainLookupMap, compilerSettings, targetFilter, builder);
@@ -136,11 +141,40 @@ final class BlazeConfigurationResolver {
   }
 
   private static Predicate<TargetIdeInfo> getTargetFilter(
-      ProjectViewTargetImportFilter projectViewFilter) {
-    return target ->
-        target.getcIdeInfo() != null
-            && projectViewFilter.isSourceTarget(target)
-            && containsCompiledSources(target);
+      ProjectViewTargetImportFilter projectViewFilter,
+      Project project, WorkspacePathResolver workspacePathResolver) {
+    return target -> {
+      boolean targetFromExternalWorkspaceInProject = isExternalWorkspaceTargetInProject(target,
+          project,
+          workspacePathResolver
+      );
+
+      return target.getcIdeInfo() != null
+          && (targetFromExternalWorkspaceInProject || projectViewFilter.isSourceTarget(target))
+          && containsCompiledSources(target);
+    };
+  }
+
+  private static boolean isExternalWorkspaceTargetInProject(
+      TargetIdeInfo target,
+      Project project,
+      WorkspacePathResolver workspacePathResolver) {
+    if (target.toTargetInfo().getLabel().isExternal()) {
+      WorkspaceRoot externalWorkspace = WorkspaceHelper.resolveExternalWorkspace(project,
+          target.getKey().getLabel().externalWorkspaceName());
+
+      if (externalWorkspace != null) {
+        try {
+          Path externalWorkspaceRealPath = externalWorkspace.directory().toPath().toRealPath();
+          if (workspacePathResolver.getWorkspacePath(externalWorkspaceRealPath.toFile()) != null) {
+            return true;
+          }
+        } catch (IOException ioException) {
+          logger.warn("Failed to resolve real external workspace location", ioException);
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean containsCompiledSources(TargetIdeInfo target) {
