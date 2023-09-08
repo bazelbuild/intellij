@@ -689,6 +689,14 @@ jvm_maven_import_external(
     server_urls = ["https://repo1.maven.org/maven2"],
 )
 
+jvm_maven_import_external(
+    name = "io_netty_netty_transport_classes_kqueue",
+    artifact = "io.netty:netty-transport-classes-kqueue:4.1.96.Final",
+    artifact_sha256 = "f2f1fab3b297aee20a3922c79b548c8b4b72bb10b635375434c108ee05f29430",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["https://repo1.maven.org/maven2"],
+)
+
 # io_grpc_grpc_java dependencies
 load("@io_grpc_grpc_java//:repositories.bzl", "IO_GRPC_GRPC_JAVA_ARTIFACTS", "IO_GRPC_GRPC_JAVA_OVERRIDE_TARGETS", "grpc_java_repositories")
 
