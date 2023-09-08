@@ -25,11 +25,13 @@ import com.google.idea.blaze.base.bazel.BazelExitCodeException;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException.ThrowOption;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.output.SummaryOutput;
 import com.google.idea.blaze.base.scope.scopes.SharedStringPoolScope;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
@@ -63,14 +65,19 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
     if (buildResult.status == Status.FATAL_ERROR) {
       return BlazeBuildOutputs.noOutputs(buildResult);
     }
-    context.output(PrintOutput.log("Build command finished. Retrieving BEP outputs..."));
+    context.output(PrintOutput.log("%s Build command finished. Retrieving BEP outputs...", SummaryOutput.Prefix.TIMESTAMP));
     try {
       Interner<String> stringInterner =
           Optional.ofNullable(context.getScope(SharedStringPoolScope.class))
               .map(SharedStringPoolScope::getStringInterner)
               .orElse(null);
-      return BlazeBuildOutputs.fromParsedBepOutput(
-          buildResult, buildResultHelper.getBuildOutput(stringInterner));
+      context.output(PrintOutput.log("%s Parsing BEP outputs...", SummaryOutput.Prefix.TIMESTAMP));
+      ParsedBepOutput buildOutput = buildResultHelper.getBuildOutput(stringInterner);
+      context.output(PrintOutput.log("%s Handling parsed BEP outputs...", SummaryOutput.Prefix.TIMESTAMP));
+      BlazeBuildOutputs blazeBuildOutputs = BlazeBuildOutputs.fromParsedBepOutput(
+              buildResult, buildOutput);
+      context.output(PrintOutput.log("%s BEP outputs has been processed.", SummaryOutput.Prefix.TIMESTAMP));
+      return blazeBuildOutputs;
     } catch (GetArtifactsException e) {
       IssueOutput.error("Failed to get build outputs: " + e.getMessage()).submit(context);
       return BlazeBuildOutputs.noOutputs(buildResult);
