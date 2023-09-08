@@ -28,7 +28,7 @@ java_library(
         "@io_netty_netty_transport//jar",
         "@io_netty_netty_transport_native_unix_common//jar",
     ] + select({
-        "@platforms//os:macos": ["@io_netty_netty_transport//jar_native_kqueue"],
+        "@platforms//os:macos": ["@io_netty_netty_transport_classes_kqueue//jar"],
         "//conditions:default": ["@io_netty_netty_transport_native_epoll//jar"],
     }),
 )
@@ -51,7 +51,7 @@ java_binary(
         "@io_netty_netty_transport//jar",
         "@io_netty_netty_transport_native_unix_common//jar",
     ] + select({
-        "@platforms//os:macos": ["@io_netty_netty_transport//jar_native_kqueue"],
+        "@platforms//os:macos": ["@io_netty_netty_transport_classes_kqueue//jar"],
         "//conditions:default": ["@io_netty_netty_transport_native_epoll//jar"],
     }),
 )
