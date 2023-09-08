@@ -449,7 +449,8 @@ FOLLOW_ATTRIBUTES_BY_RULE_KIND = [
     ("_junit", []),
     ("_aspect_proto_toolchain_for_javalite", []),
     ("_aspect_java_proto_toolchain", []),
-    ("runtime", ["proto_lang_toolchain"]),
+    ("runtime", ["proto_lang_toolchain", "java_rpc_toolchain"]),
+    ("_toolchain", ["_java_grpc_library", "_java_lite_grpc_library"]),
 ]
 
 FOLLOW_ATTRIBUTES = [attr for (attr, _) in FOLLOW_ATTRIBUTES_BY_RULE_KIND]
