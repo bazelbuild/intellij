@@ -59,7 +59,7 @@ public interface ArtifactTracker {
   /**
    * Returns the sources corresponding to an artifact in the cache.
    *
-   * @param libJar A cached jar file.
+   * @param cachedArtifact A cached jar file.
    * @return The list of workspace relative source files from the target that {@code libJar} was
    *     derived from.
    */
