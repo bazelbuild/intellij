@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package qsync.testservice;
+
+option java_package = "com.google.idea.blaze.qsync.testdata.testservice.proto";
+
+message Request {
+  string data = 1;
+}
+
+message Response {
+  int32 status = 1;
+}
+
+service ProtoService {
+  // A sample rpc
+  rpc Post(Request) returns (Response);
+}
