@@ -6,7 +6,7 @@ import com.intellij.refactoring.safeDelete.NonCodeUsageSearchInfo;
 import com.intellij.usageView.UsageInfo;
 import java.util.List;
 
-/** Compat class for BuildFileSafeDeleteProcessor. */
+/** Compat class for JavaSafeDeleteProcessor. */
 public abstract class JavaSafeDeleteProcessorCompat extends JavaSafeDeleteProcessor {
 
   @Override

@@ -19,8 +19,9 @@ import com.intellij.testFramework.UITestUtil;
 
 /** Compat class for TestRunnerUtil. */
 public class TestRunnerUtilCompat {
-  /** #api222 */
+  private TestRunnerUtilCompat() {}
+
   public static void replaceIdeEventQueueSafely() {
-      UITestUtil.replaceIdeEventQueueSafely();
+    UITestUtil.replaceIdeEventQueueSafely();
   }
 }

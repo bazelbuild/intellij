@@ -8,7 +8,8 @@ import java.util.Collection;
 /** Compat class for ChangeListAdapter. */
 public abstract class ChangeListAdapterCompat extends ChangeListAdapter {
   @Override
-  public void changesMoved(Collection<? extends Change> changes, ChangeList fromList, ChangeList toList) {
+  public void changesMoved(
+      Collection<? extends Change> changes, ChangeList fromList, ChangeList toList) {
     doChangesMoved(changes, fromList, toList);
   }
 

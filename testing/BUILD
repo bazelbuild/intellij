@@ -39,6 +39,10 @@ java_library(
             "testcompat/v231/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v231/com/google/idea/testing/**/*.java",
         ]),
+        "android-studio-2023.2": glob([
+            "testcompat/v232/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/v232/com/google/idea/testing/**/*.java",
+        ]),
         "android-studio-dev": glob([
             "testcompat/asdev/com/google/idea/sdkcompat/**/*.java",
             "testcompat/asdev/com/google/idea/testing/**/*.java",

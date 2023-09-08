@@ -56,12 +56,12 @@ public final class UIControllerCreator {
       public void fillHectorPanels(Container container, GridBag bag) {}
 
       @Override
-      public boolean isToolbarEnabled() {
+      public boolean canClosePopup() {
         return true;
       }
 
       @Override
-      public boolean canClosePopup() {
+      public boolean isToolbarEnabled() {
         return true;
       }
     };
