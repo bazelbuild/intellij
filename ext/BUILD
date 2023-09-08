@@ -26,9 +26,10 @@ java_library(
         "@io_grpc_grpc_java//netty",
         "@io_netty_netty_common//jar",
         "@io_netty_netty_transport//jar",
+        "@io_netty_netty_transport_classes_kqueue//jar",
         "@io_netty_netty_transport_native_unix_common//jar",
     ] + select({
-        "@platforms//os:macos": ["@io_netty_netty_transport//jar_native_kqueue"],
+        "@platforms//os:macos": ["@io_netty_netty_transport_native_kqueue//jar"],
         "//conditions:default": ["@io_netty_netty_transport_native_epoll//jar"],
     }),
 )
@@ -44,14 +45,15 @@ java_binary(
     deps = [
         "//ext/proto:intellijext_java_grpc",
         "//ext/proto:intellijext_java_proto",
-        "//third_party/java/grpc:stub",
         "@io_grpc_grpc_java//core",
         "@io_grpc_grpc_java//netty",
+        "@io_grpc_grpc_java//stub",
         "@io_netty_netty_common//jar",
         "@io_netty_netty_transport//jar",
+        "@io_netty_netty_transport_classes_kqueue//jar",
         "@io_netty_netty_transport_native_unix_common//jar",
     ] + select({
-        "@platforms//os:macos": ["@io_netty_netty_transport//jar_native_kqueue"],
+        "@platforms//os:macos": ["@io_netty_netty_transport_native_kqueue//jar"],
         "//conditions:default": ["@io_netty_netty_transport_native_epoll//jar"],
     }),
 )
@@ -69,5 +71,6 @@ java_test(
         "@io_grpc_grpc_java//core",
         "@junit//jar",
         "@truth//jar",
+        "@truth8//jar",
     ],
 )

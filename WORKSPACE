@@ -467,10 +467,10 @@ http_archive(
 
 http_archive(
     name = "rules_java",
+    sha256 = "7b0d9ba216c821ee8697dedc0f9d0a705959ace462a3885fe9ba0347ba950111",
     urls = [
         "https://github.com/bazelbuild/rules_java/releases/download/6.5.1/rules_java-6.5.1.tar.gz",
     ],
-    sha256 = "7b0d9ba216c821ee8697dedc0f9d0a705959ace462a3885fe9ba0347ba950111",
 )
 
 JUNIT_ARTIFACT = "junit:junit:4.13.2"
@@ -830,6 +830,22 @@ jvm_maven_import_external(
     name = "io_netty_netty_transport_native_epoll",
     artifact = "io.netty:netty-transport-classes-epoll:4.1.96.Final",
     artifact_sha256 = "1591b3ea061932677dc2bab6cb7d82e8f1837a52b3c781f4daa99984ec87a9cd",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["https://repo1.maven.org/maven2"],
+)
+
+jvm_maven_import_external(
+    name = "io_netty_netty_transport_native_kqueue",
+    artifact = "io.netty:netty-transport-native-kqueue:4.1.96.Final",
+    artifact_sha256 = "ccc3c040867d9512607af3639839f686a68d8ff836f304a71aa68c9ec6ef94c3",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["https://repo1.maven.org/maven2"],
+)
+
+jvm_maven_import_external(
+    name = "io_netty_netty_transport_classes_kqueue",
+    artifact = "io.netty:netty-transport-classes-kqueue:4.1.96.Final",
+    artifact_sha256 = "f2f1fab3b297aee20a3922c79b548c8b4b72bb10b635375434c108ee05f29430",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )
