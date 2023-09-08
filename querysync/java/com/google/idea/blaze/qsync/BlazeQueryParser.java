@@ -69,7 +69,9 @@ public class BlazeQueryParser {
           "java_test",
           "java_proto_library",
           "java_lite_proto_library",
-          "java_mutable_proto_library");
+          "java_mutable_proto_library",
+          "_java_grpc_library",
+          "_java_lite_grpc_library");
   private static final ImmutableSet<String> ANDROID_RULE_TYPES =
       ImmutableSet.of(
           "android_library",

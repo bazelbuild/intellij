@@ -18,6 +18,7 @@ package com.google.idea.blaze.qsync.query;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.collect.Multimaps.flatteningToMultimap;
+import static java.util.Objects.requireNonNull;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -71,7 +72,7 @@ public abstract class QuerySummary {
    * <p>Whenever changing the logic in this class such that the Query.Summary proto contents will be
    * different for the same input, this version should be incremented.
    */
-  @VisibleForTesting public static final int PROTO_VERSION = 4;
+  @VisibleForTesting public static final int PROTO_VERSION = 5;
 
   public static final QuerySummary EMPTY =
       create(Query.Summary.newBuilder().setVersion(PROTO_VERSION).build());
@@ -90,6 +91,12 @@ public abstract class QuerySummary {
           // This is not strictly correct, as source files of rule with 'export' do not
           // depend on exported targets.
           "exports");
+
+  // Compile time dependency attributes scoped to specific rule kind, for cases where sync does not
+  // need to always need to traverse the attribute.
+  private static final ImmutableMap<String, ImmutableSet<String>> RULE_SCOPED_ATTRIBUTES =
+      ImmutableMap.of(
+          "$toolchain", ImmutableSet.of("_java_grpc_library", "_java_lite_grpc_library"));
 
   // Runtime dependency attributes
   private static final ImmutableSet<String> RUNTIME_DEP_ATTRIBUTES =
@@ -144,7 +151,7 @@ public abstract class QuerySummary {
           for (Build.Attribute a : target.getRule().getAttributeList()) {
             if (a.getName().equals("srcs")) {
               rule.addAllSources(a.getStringListValueList());
-            } else if (DEPENDENCY_ATTRIBUTES.contains(a.getName())) {
+            } else if (attributeIsTrackedDependency(a.getName(), target)) {
               if (a.hasStringValue()) {
                 rule.addDeps(a.getStringValue());
               } else {
@@ -185,6 +192,17 @@ public abstract class QuerySummary {
             .putAllRules(ruleMap)
             .addAllPackagesWithErrors(packagesWithErrors)
             .build());
+  }
+
+  private static boolean attributeIsTrackedDependency(String attributeName, Build.Target target) {
+    if (DEPENDENCY_ATTRIBUTES.contains(attributeName)) {
+      return true;
+    }
+    if (RULE_SCOPED_ATTRIBUTES.containsKey(attributeName)) {
+      return requireNonNull(RULE_SCOPED_ATTRIBUTES.get(attributeName))
+          .contains(target.getRule().getRuleClass());
+    }
+    return false;
   }
 
   public static QuerySummary create(File protoFile) throws IOException {
