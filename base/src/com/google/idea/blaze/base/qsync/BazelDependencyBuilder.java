@@ -45,10 +45,10 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
-import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
+import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.protobuf.TextFormat;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -69,19 +69,19 @@ public class BazelDependencyBuilder implements DependencyBuilder {
 
   protected final Project project;
   protected final BuildSystem buildSystem;
-  protected final ImportRoots importRoots;
+  protected final ProjectDefinition projectDefinition;
   protected final WorkspaceRoot workspaceRoot;
   protected final ImmutableSet<String> handledRuleKinds;
 
   public BazelDependencyBuilder(
       Project project,
       BuildSystem buildSystem,
-      ImportRoots importRoots,
+      ProjectDefinition projectDefinition,
       WorkspaceRoot workspaceRoot,
       ImmutableSet<String> handledRuleKinds) {
     this.project = project;
     this.buildSystem = buildSystem;
-    this.importRoots = importRoots;
+    this.projectDefinition = projectDefinition;
     this.workspaceRoot = workspaceRoot;
     this.handledRuleKinds = handledRuleKinds;
   }
@@ -92,12 +92,12 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
       String includes =
-          importRoots.rootDirectories().stream()
-              .map(BazelDependencyBuilder::directoryToLabel)
+          projectDefinition.projectIncludes().stream()
+              .map(path -> "//" + path)
               .collect(joining(","));
       String excludes =
-          importRoots.excludeDirectories().stream()
-              .map(BazelDependencyBuilder::directoryToLabel)
+          projectDefinition.projectExcludes().stream()
+              .map(path -> "//" + path)
               .collect(joining(","));
       String aspectLocation = prepareAspect(context);
       Set<String> ruleKindsToBuild =
