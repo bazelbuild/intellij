@@ -126,7 +126,7 @@ public class ProjectLoader {
 
     ImmutableSet<String> handledRules = getHandledRuleKinds();
     DependencyBuilder dependencyBuilder =
-        createDependencyBuilder(workspaceRoot, importRoots, buildSystem, handledRules);
+        createDependencyBuilder(workspaceRoot, latestProjectDef, buildSystem, handledRules);
     RenderJarBuilder renderJarBuilder = createRenderJarBuilder(buildSystem);
 
     Path ideProjectBasePath = Paths.get(checkNotNull(project.getBasePath()));
@@ -196,11 +196,11 @@ public class ProjectLoader {
 
   protected DependencyBuilder createDependencyBuilder(
       WorkspaceRoot workspaceRoot,
-      ImportRoots importRoots,
+      ProjectDefinition projectDefinition,
       BuildSystem buildSystem,
       ImmutableSet<String> handledRuleKinds) {
     return new BazelDependencyBuilder(
-        project, buildSystem, importRoots, workspaceRoot, handledRuleKinds);
+        project, buildSystem, projectDefinition, workspaceRoot, handledRuleKinds);
   }
 
   protected RenderJarBuilder createRenderJarBuilder(BuildSystem buildSystem) {
