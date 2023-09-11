@@ -1083,6 +1083,27 @@ java_library(
     ),
 )
 
+# IntelliJ Markdown plugin
+java_library(
+    name = "markdown",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":markdown"],
+    ),
+)
+
+java_library(
+    name = "markdown_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":markdown"],
+    ),
+)
+
 filegroup(
     name = "application_info_json",
     srcs = select_from_plugin_api_directory(
