@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.qsync;
 
 import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy;
@@ -36,6 +37,9 @@ public class QuerySyncNavigationPolicy implements ClsCustomNavigationPolicy {
   @Override
   @Nullable
   public PsiElement getNavigationElement(ClsFileImpl clsFile) {
+    if (!Blaze.isBlazeProject(clsFile.getProject())) {
+      return null;
+    }
     if (!(QuerySync.isEnabled() && ENABLED.getValue())) {
       return null;
     }
