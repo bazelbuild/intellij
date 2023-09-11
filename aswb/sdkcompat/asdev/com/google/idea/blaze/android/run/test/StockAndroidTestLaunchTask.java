@@ -24,7 +24,6 @@ import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.blaze.BlazeLaunchContext;
 import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.android.tools.idea.run.configuration.execution.ExecutionUtils;
-import com.android.tools.idea.testartifacts.instrumented.AndroidTestListener;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
@@ -184,7 +183,8 @@ class StockAndroidTestLaunchTask implements BlazeLaunchTask {
             () -> {
               try {
                 // This issues "am instrument" command and blocks execution.
-                runner.run(new AndroidTestListener(console));
+                runner.run(
+                    new BlazeAndroidTestListener(console, launchContext.getProcessHandler()));
                 // Detach the device from the android process handler manually as soon as "am
                 // instrument" command finishes. This is required because the android process
                 // handler may overlook target process especially when the test
