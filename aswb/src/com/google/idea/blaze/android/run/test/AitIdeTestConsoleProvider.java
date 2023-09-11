@@ -48,8 +48,7 @@ class AitIdeTestConsoleProvider implements ConsoleProvider {
       throws ExecutionException {
     AndroidTestConsoleProperties properties =
         new AndroidTestConsoleProperties(runConfiguration, executor);
-    ConsoleView consoleView =
-        SMTestRunnerConnectionUtil.createAndAttachConsole("Android", handler, properties);
+    ConsoleView consoleView = SMTestRunnerConnectionUtil.createConsole("Android", properties);
     Disposer.register(parent, consoleView);
     return consoleView;
   }
