@@ -20,19 +20,25 @@ import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.util.concurrent.Uninterruptibles.getUninterruptibly;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.AAR_DIRECTORY;
+import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.DEPENDENCIES_SOURCES;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.GEN_SRC_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.LIBRARY_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.RENDER_JARS_DIRECTORY;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.function.Predicate.not;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Multimaps;
+import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.ArtifactTrackerState;
@@ -54,6 +60,7 @@ import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.GeneratedSourceProjectUpdater;
 import com.google.idea.blaze.qsync.SrcJarProjectUpdater;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.protobuf.ExtensionRegistry;
@@ -69,6 +76,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -93,7 +101,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   public static final int STORAGE_VERSION = 2;
   private static final Logger logger = Logger.getInstance(ArtifactTrackerImpl.class);
 
-  // Information about dependency artifacts derviced when the dependencies were built.
+  // Information about dependency artifacts derived when the dependencies were built.
   // Note that artifacts that do not produce files are also stored here.
   private final Map<Label, ArtifactInfo> artifacts = new HashMap<>();
   // Information about the origin of files in the cache. For each file in the cache, stores the
@@ -101,6 +109,8 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   private final Map<Path, Path> cachePathToArtifactKeyMap = new HashMap<>();
 
   private final ArtifactFetcher<OutputArtifact> artifactFetcher;
+  private final ProjectPath.Resolver projectPathResolver;
+  private final ProjectDefinition projectDefinition;
   @VisibleForTesting public final CacheDirectoryManager cacheDirectoryManager;
   private final FileCache jarCache;
   private final Path aarCacheDirectory;
@@ -109,15 +119,21 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   private final FileCache aarCache;
   private final Path generatedSrcFileCacheDirectory;
   private final FileCache generatedSrcFileCache;
+  private final Path generatedExternalSrcFileCacheDirectory;
+  private final FileCache generatedExternalSrcFileCache;
   private final Path persistentFile;
   private final Path ideProjectBasePath;
 
   public ArtifactTrackerImpl(
       Path projectDirectory,
       Path ideProjectBasePath,
-      ArtifactFetcher<OutputArtifact> artifactFetcher) {
+      ArtifactFetcher<OutputArtifact> artifactFetcher,
+      ProjectPath.Resolver projectPathResolver,
+      ProjectDefinition projectDefinition) {
     this.ideProjectBasePath = ideProjectBasePath;
     this.artifactFetcher = artifactFetcher;
+    this.projectPathResolver = projectPathResolver;
+    this.projectDefinition = projectDefinition;
 
     FileCacheCreator fileCacheCreator = new FileCacheCreator();
     jarCache =
@@ -137,6 +153,10 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
             generatedSrcFileCacheDirectory,
             ImmutableSet.of("jar", "srcjar"),
             ImmutableSet.of("java", "kt"));
+    generatedExternalSrcFileCacheDirectory = projectDirectory.resolve(DEPENDENCIES_SOURCES);
+    generatedExternalSrcFileCache =
+        fileCacheCreator.createFileCache(
+            generatedExternalSrcFileCacheDirectory, ImmutableSet.of(), ImmutableSet.of());
     cacheDirectoryManager =
         new CacheDirectoryManager(
             projectDirectory.resolve(DIGESTS_DIRECTORY_NAME),
@@ -390,13 +410,20 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     try (BlazeContext context = BlazeContext.create(outerContext)) {
       DownloadTrackingScope downloads = new DownloadTrackingScope();
       context.push(downloads);
+
+      ImmutableListMultimap<Boolean, OutputArtifact> genSrcsByInclusion =
+          getGensrcsByInclusion(outputInfo);
+
       ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap =
           ImmutableMap.<OutputArtifact, OutputArtifactDestinationAndLayout>builder()
               .putAll(jarCache.prepareDestinationPathsAndDirectories(outputInfo.getJars()))
               .putAll(aarCache.prepareDestinationPathsAndDirectories(outputInfo.getAars()))
               .putAll(
                   generatedSrcFileCache.prepareDestinationPathsAndDirectories(
-                      outputInfo.getGeneratedSources()))
+                      genSrcsByInclusion.get(true)))
+              .putAll(
+                  generatedExternalSrcFileCache.prepareDestinationPathsAndDirectories(
+                      genSrcsByInclusion.get(false)))
               .buildOrThrow();
 
       ListenableFuture<ImmutableMap<Path, Path>> cachePathToArtifactKeyMapFuture =
@@ -421,6 +448,37 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
     }
+  }
+
+  /**
+   * Extracts gensrscs from {@link OutputInfo} and groups them based on where they belong to a
+   * project target ({@code included=true}) or an external target ({@code included=false}).
+   */
+  private ImmutableListMultimap<Boolean, OutputArtifact> getGensrcsByInclusion(
+      OutputInfo outputInfo) {
+    // Create a map of (target) -> (all gensrcs build by that target) from the *.target-info.txt
+    // files produced by the aspect.
+    SetMultimap<Label, String> genSrcsByTarget =
+        outputInfo.getArtifacts().stream()
+            .map(BuildArtifacts::getArtifactsList)
+            .flatMap(List::stream)
+            .collect(
+                Multimaps.flatteningToMultimap(
+                    ta -> Label.of(ta.getTarget()),
+                    ta -> ta.getGenSrcsList().stream(),
+                    MultimapBuilder.hashKeys().hashSetValues()::build));
+    // invert the map so we have a map pf (gensrc artifact) -> (target that built it)
+    SetMultimap<String, Label> genSrcToTargets =
+        Multimaps.invertFrom(genSrcsByTarget, MultimapBuilder.hashKeys().hashSetValues().build());
+
+    // Index the generated sources in the output into using the map above. We rely on the fact that
+    // all gensrcs in the build output are also listed in the *.target-info.txt files processed
+    // above.
+    return Multimaps.index(
+        outputInfo.getGeneratedSources(),
+        oa ->
+            genSrcToTargets.get(oa.getRelativePath()).stream()
+                .anyMatch(projectDefinition::isIncluded));
   }
 
   /**
@@ -455,14 +513,28 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
 
     projectProto = updater.addGenSrcContentEntry();
 
+    ImmutableSet<ProjectPath> workspaceSrcJars =
+        artifacts.values().stream()
+            .map(ArtifactInfo::srcJars)
+            .flatMap(Set::stream)
+            .map(ProjectPath::workspaceRelative)
+            .collect(ImmutableSet.toImmutableSet());
+
+    ImmutableSet<ProjectPath> generatedSrcJars =
+        artifacts.values().stream()
+            .filter(not(ai -> projectDefinition.isIncluded(ai.label())))
+            .map(ArtifactInfo::genSrcs)
+            .flatMap(List::stream)
+            .map(generatedExternalSrcFileCache::getCacheFile)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .map(ideProjectBasePath::relativize)
+            .map(ProjectPath::projectRelative)
+            .collect(ImmutableSet.toImmutableSet());
+
     SrcJarProjectUpdater srcJarUpdater =
         new SrcJarProjectUpdater(
-            projectProto,
-            artifacts.values().stream()
-                .map(ArtifactInfo::srcJars)
-                .flatMap(Set::stream)
-                .map(ProjectPath::workspaceRelative)
-                .collect(ImmutableSet.toImmutableSet()));
+            projectProto, Sets.union(workspaceSrcJars, generatedSrcJars), projectPathResolver);
     projectProto = srcJarUpdater.addSrcJars();
 
     return snapshot.toBuilder().project(projectProto).build();

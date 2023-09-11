@@ -16,6 +16,7 @@
 package com.google.idea.blaze.qsync.project;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import java.nio.file.Path;
 
@@ -98,6 +99,10 @@ public abstract class ProjectPath {
   /** Resolves {@link com.google.idea.blaze.qsync.project.ProjectPath} to an absolute path. */
   @AutoValue
   public abstract static class Resolver {
+
+    @VisibleForTesting
+    public static final Resolver EMPTY_FOR_TESTING = create(Path.of(""), Path.of(""));
+
     abstract Path workspaceRoot();
 
     abstract Path projectRoot();

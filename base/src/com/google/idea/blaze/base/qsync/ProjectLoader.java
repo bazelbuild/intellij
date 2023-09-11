@@ -139,7 +139,9 @@ public class ProjectLoader {
         new ArtifactTrackerImpl(
             BlazeDataStorage.getProjectDataDir(importSettings).toPath(),
             ideProjectBasePath,
-            artifactFetcher);
+            artifactFetcher,
+            projectPathResolver,
+            latestProjectDef);
     artifactTracker.initialize();
     DependencyTracker dependencyTracker =
         new DependencyTracker(project, graph, dependencyBuilder, renderJarBuilder, artifactTracker);

@@ -40,7 +40,8 @@ public class SrcJarProjectUpdaterTest {
     ProjectProto.Project project =
         ProjectProtos.forTestProject(TestData.JAVA_LIBRARY_NO_DEPS_QUERY);
 
-    SrcJarProjectUpdater updater = new SrcJarProjectUpdater(project, ImmutableList.of());
+    SrcJarProjectUpdater updater =
+        new SrcJarProjectUpdater(project, ImmutableList.of(), Resolver.EMPTY_FOR_TESTING);
 
     assertThat(updater.addSrcJars()).isSameInstanceAs(project);
   }
@@ -79,7 +80,8 @@ public class SrcJarProjectUpdaterTest {
             project,
             ImmutableList.of(
                 ProjectPath.workspaceRelative("path/to/sources1.srcjar"),
-                ProjectPath.workspaceRelative("path/to/sources2.srcjar")));
+                ProjectPath.workspaceRelative("path/to/sources2.srcjar")),
+            Resolver.EMPTY_FOR_TESTING);
 
     assertThat(updater.addSrcJars()).isSameInstanceAs(project);
   }
@@ -115,7 +117,9 @@ public class SrcJarProjectUpdaterTest {
 
     SrcJarProjectUpdater updater =
         new SrcJarProjectUpdater(
-            project, ImmutableList.of(ProjectPath.workspaceRelative("path/to/sources1.srcjar")));
+            project,
+            ImmutableList.of(ProjectPath.workspaceRelative("path/to/sources1.srcjar")),
+            Resolver.EMPTY_FOR_TESTING);
 
     ProjectProto.Project newProject = updater.addSrcJars();
     assertThat(newProject).isNotSameInstanceAs(project);
@@ -154,7 +158,8 @@ public class SrcJarProjectUpdaterTest {
             project,
             ImmutableList.of(
                 ProjectPath.workspaceRelative("path/to/sources1.srcjar"),
-                ProjectPath.workspaceRelative("path/to/sources2.srcjar")));
+                ProjectPath.workspaceRelative("path/to/sources2.srcjar")),
+            Resolver.EMPTY_FOR_TESTING);
 
     ProjectProto.Project newProject = updater.addSrcJars();
     assertThat(newProject).isNotSameInstanceAs(project);
@@ -181,7 +186,8 @@ public class SrcJarProjectUpdaterTest {
             project,
             ImmutableList.of(
                 ProjectPath.workspaceRelative("path/to/sources1.srcjar"),
-                ProjectPath.projectRelative("path/to/sources2.srcjar")));
+                ProjectPath.projectRelative("path/to/sources2.srcjar")),
+            resolver);
 
     ProjectProto.Project newProject = updater.addSrcJars();
     assertThat(newProject).isNotSameInstanceAs(project);
