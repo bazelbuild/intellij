@@ -23,6 +23,7 @@ public class BlazeProjectDataStorage {
   public static final String WORKSPACE_MODULE_NAME = ".workspace";
 
   public static final String LIBRARY_DIRECTORY = "libraries";
+  public static final String DEPENDENCIES_SOURCES = "libraries_src";
   public static final String RENDER_JARS_DIRECTORY = "renderjars";
   public static final String AAR_DIRECTORY = "aars";
   public static final String GEN_SRC_DIRECTORY = "generated";

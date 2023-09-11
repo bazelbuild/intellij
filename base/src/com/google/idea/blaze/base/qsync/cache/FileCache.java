@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -102,9 +103,11 @@ public class FileCache {
    * Returns local cached artifact. Returns Optional.empty() if it does not exist in this cache
    * directory.
    */
-  public Optional<Path> getCacheFile(String artifactPath) {
+  public Optional<Path> getCacheFile(Path artifactPath) {
     Path path =
-        cacheLayout.getOutputArtifactDestinationAndLayout(() -> artifactPath).getCopyDestination();
+        cacheLayout
+            .getOutputArtifactDestinationAndLayout(artifactPath::toString)
+            .getCopyDestination();
     return Optional.ofNullable(Files.exists(path) ? path : null);
   }
 
@@ -113,8 +116,7 @@ public class FileCache {
    * be extracted to.
    */
   public ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout>
-      prepareDestinationPathsAndDirectories(ImmutableList<OutputArtifact> artifacts)
-          throws IOException {
+      prepareDestinationPathsAndDirectories(List<OutputArtifact> artifacts) throws IOException {
     final ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> pathMap =
         getLocalPathMap(artifacts);
     // Make sure target directories exists regardless of the cache directory layout, which may
@@ -131,7 +133,7 @@ public class FileCache {
   }
 
   private ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> getLocalPathMap(
-      ImmutableList<OutputArtifact> outputArtifacts) {
+      List<OutputArtifact> outputArtifacts) {
     return outputArtifacts.stream()
         .collect(
             toImmutableMap(
