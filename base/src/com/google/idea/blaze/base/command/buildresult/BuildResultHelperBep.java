@@ -99,6 +99,10 @@ public class BuildResultHelperBep implements BuildResultHelper {
     }
   }
 
+  public File getOutputFile() {
+    return outputFile;
+  }
+
   static class Provider implements BuildResultHelperProvider {
 
     @Override

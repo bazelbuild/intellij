@@ -40,11 +40,6 @@ public class SummaryOutput implements Output {
       public String getDisplayText() {
         return LocalTime.now(ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS).toString();
       }
-
-      @Override
-      public String toString() {
-        return getDisplayText();
-      }
     },
     INFO {
       @Override
