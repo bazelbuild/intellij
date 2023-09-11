@@ -130,6 +130,9 @@ public class SrcJarProjectUpdater {
               String pname = packageReader.readPackage(in);
               Path packageAsPath = Path.of(pname.replace('.', '/'));
               Path zipPath = Path.of(e.getName()).getParent();
+              if (zipPath == null) {
+                return Optional.empty();
+              }
               if (zipPath.equals(packageAsPath)) {
                 // package root is the jar file root.
                 return Optional.empty();
