@@ -55,11 +55,6 @@ package_dependencies = aspect(
     required_aspect_providers = [[DependenciesInfo]],
 )
 
-def generates_idl_jar(target):
-    if AndroidIdeInfo not in target:
-        return False
-    return target[AndroidIdeInfo].idl_class_jar != None
-
 def declares_android_resources(target, ctx):
     """
     Returns true if the target has resource files and an android provider.
@@ -189,12 +184,20 @@ def _collect_own_artifacts(
             own_ide_aar_files.append(rule.attr.aar.files.to_list()[0])
 
     else:
-        if generate_aidl_classes and generates_idl_jar(target):
+        if generate_aidl_classes and AndroidIdeInfo in target:
+            add_base_idl_jar = False
             idl_jar = target[AndroidIdeInfo].idl_class_jar
-            own_jar_files.append(idl_jar)
+            if idl_jar != None:
+                own_jar_files.append(idl_jar)
+                add_base_idl_jar = True
 
-            # An AIDL base jar needed for resolving base classes for aidl generated stubs,
-            if hasattr(rule.attr, "_android_sdk"):
+            generated_java_files = target[AndroidIdeInfo].idl_generated_java_files
+            if generated_java_files:
+                own_gensrc_files += generated_java_files
+                add_base_idl_jar = True
+
+            # An AIDL base jar needed for resolving base classes for aidl generated stubs.
+            if add_base_idl_jar and hasattr(rule.attr, "_android_sdk"):
                 android_sdk_info = getattr(rule.attr, "_android_sdk")[AndroidSdkInfo]
                 own_jar_depsets.append(android_sdk_info.aidl_lib.files)
 
