@@ -178,7 +178,8 @@ public class ProjectLoader {
         workspacePathResolver,
         workspaceLanguageSettings,
         sourceToTargetMap,
-        projectViewManager);
+        projectViewManager,
+        buildSystem);
   }
 
   private ParallelPackageReader createWorkspaceRelativePackageReader() {

@@ -145,11 +145,15 @@ public abstract class ProjectDefinition {
   }
 
   public boolean isIncluded(Label target) {
-    if (projectIncludes().stream().filter(target.getPackage()::startsWith).findAny().isEmpty()) {
+    return isIncluded(target.getPackage());
+  }
+
+  public boolean isIncluded(Path workspacePath) {
+    if (projectIncludes().stream().filter(workspacePath::startsWith).findAny().isEmpty()) {
       // not in any included directory
       return false;
     }
-    return projectExcludes().stream().filter(target.getPackage()::startsWith).findAny().isEmpty();
+    return projectExcludes().stream().filter(workspacePath::startsWith).findAny().isEmpty();
   }
 
   private static boolean isUnderRootDirectory(Path rootDirectory, Path relativePath) {

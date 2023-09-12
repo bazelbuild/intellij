@@ -48,6 +48,11 @@ import javax.annotation.Nullable;
 class AddSourceToProjectAction extends BlazeProjectAction {
 
   @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.HIDDEN;
+  }
+
+  @Override
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     String description = actionDescription(project, file);

@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -87,6 +88,7 @@ public class QuerySyncProject {
   private final QuerySyncSourceToTargetMap sourceToTargetMap;
 
   private final ProjectViewManager projectViewManager;
+  private final BuildSystem buildSystem;
 
   private volatile QuerySyncProjectData projectData;
 
@@ -104,7 +106,8 @@ public class QuerySyncProject {
       WorkspacePathResolver workspacePathResolver,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       QuerySyncSourceToTargetMap sourceToTargetMap,
-      ProjectViewManager projectViewManager) {
+      ProjectViewManager projectViewManager,
+      BuildSystem buildSystem) {
     this.project = project;
     this.snapshotFilePath = snapshotFilePath;
     this.snapshotHolder = snapshotHolder;
@@ -119,6 +122,7 @@ public class QuerySyncProject {
     this.workspaceLanguageSettings = workspaceLanguageSettings;
     this.sourceToTargetMap = sourceToTargetMap;
     this.projectViewManager = projectViewManager;
+    this.buildSystem = buildSystem;
     projectData = new QuerySyncProjectData(workspacePathResolver, workspaceLanguageSettings);
   }
 
@@ -140,6 +144,14 @@ public class QuerySyncProject {
 
   public SourceToTargetMap getSourceToTargetMap() {
     return sourceToTargetMap;
+  }
+
+  public ProjectDefinition getProjectDefinition() {
+    return projectDefinition;
+  }
+
+  public BuildSystem getBuildSystem() {
+    return buildSystem;
   }
 
   public void fullSync(BlazeContext context) {

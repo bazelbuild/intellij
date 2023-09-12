@@ -133,6 +133,10 @@
     </action>
     <action id="Blaze.IntelliJExt.Status" class="com.google.idea.blaze.base.ext.IntelliJExtStatusAction" text="Status" >
     </action>
+    <action id="Blaze.AddToQuerySyncProjectView"
+        class="com.google.idea.blaze.base.qsync.action.AddToProjectAction"
+        text="Add to project"
+        icon="AllIcons.General.Add" />
 
     <group id="Blaze.MainMenuActionGroup" class="com.google.idea.blaze.base.actions.BlazeMenuGroup">
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="HelpMenu"/>
@@ -182,6 +186,7 @@
       <reference ref="Blaze.BuildDependencies"/>
       <reference ref="Blaze.PartialSync"/>
       <reference ref="Blaze.AddSourceToProject"/>
+      <reference ref="Blaze.AddToQuerySyncProjectView"/>
       <reference ref="Blaze.OpenCorrespondingBuildFile"/>
       <reference ref="Blaze.CopyBlazeTargetPathAction"/>
     </group>
@@ -341,6 +346,7 @@
         implementationClass="com.google.idea.blaze.base.run.producers.BuildFileRunLineMarkerContributor"/>
     <actionConfigurationCustomizer implementation="com.google.idea.blaze.base.plugin.BlazeHideMakeActions"/>
     <notificationGroup displayType="BALLOON" id="BuildifierBinaryMissing"/>
+    <notificationGroup displayType="BALLOON" id="AddToProject" />
     <registryKey defaultValue="false" description="Disable auto import of bazel projects" key="bazel.auto.import.disabled"/>
     <registryKey
       key="bazel.sync.resolve.virtual.includes"
