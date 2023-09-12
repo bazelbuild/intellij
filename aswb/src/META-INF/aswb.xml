@@ -19,6 +19,7 @@
   <depends>com.intellij.modules.androidstudio</depends>
   <depends>org.jetbrains.android</depends>
   <depends>com.google.gct.test.recorder</depends>
+  <depends>com.intellij.modules.java</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <programRunner implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryProgramRunner" order="first"/>
