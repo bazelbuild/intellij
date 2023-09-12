@@ -15,10 +15,11 @@
  */
 package com.google.idea.blaze.qsync;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectPath.Resolver;
@@ -27,13 +28,32 @@ import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import com.google.idea.blaze.qsync.project.ProjectProto.LibrarySource;
 import com.google.idea.blaze.qsync.testdata.ProjectProtos;
 import com.google.idea.blaze.qsync.testdata.TestData;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class SrcJarProjectUpdaterTest {
+
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  private Path workspaceRoot;
+  private Path projectRoot;
+
+  @Before
+  public void createWorkspaceAndProjectDir() throws IOException {
+    workspaceRoot = temporaryFolder.newFolder("workspace").toPath();
+    projectRoot = temporaryFolder.newFolder("project").toPath();
+  }
 
   @Test
   public void no_src_jars() throws Exception {
@@ -167,8 +187,7 @@ public class SrcJarProjectUpdaterTest {
     assertThat(
             newProject.getLibrary(0).getSourcesList().stream()
                 .map(LibrarySource::getSrcjar)
-                .map(ProjectProto.ContentRoot::getPath)
-                .collect(toImmutableList()))
+                .map(ProjectProto.ContentRoot::getPath))
         .containsExactly("path/to/sources1.srcjar", "path/to/sources2.srcjar");
   }
 
@@ -197,8 +216,184 @@ public class SrcJarProjectUpdaterTest {
                 .map(LibrarySource::getSrcjar)
                 .map(ProjectPath::create)
                 .map(resolver::resolve)
-                .map(Path::toString)
-                .collect(toImmutableList()))
+                .map(Path::toString))
         .containsExactly("/workspace/path/to/sources1.srcjar", "/project/path/to/sources2.srcjar");
+  }
+
+  @Test
+  public void src_jars_inner_path_root() throws Exception {
+    ProjectProto.Project project =
+        ProjectProtos.forTestProject(TestData.JAVA_LIBRARY_NO_DEPS_QUERY);
+    // sanity check:
+    assertThat(project.getLibrary(0).getName()).isEqualTo(".dependencies");
+
+    createSrcJar(
+        workspaceRoot.resolve("path/to/sources.srcjar"),
+        PathPackage.of("com/package/Class.java", "com.package"));
+
+    SrcJarProjectUpdater updater =
+        new SrcJarProjectUpdater(
+            project,
+            ImmutableList.of(ProjectPath.workspaceRelative("path/to/sources.srcjar")),
+            Resolver.create(workspaceRoot, projectRoot));
+
+    ProjectProto.Project newProject = updater.addSrcJars();
+
+    assertThat(
+            newProject.getLibrary(0).getSourcesList().stream()
+                .map(LibrarySource::getSrcjar)
+                .map(ProjectPath::create)
+                .map(pp -> String.format("%s!/%s", pp.relativePath(), pp.innerJarPath())))
+        .containsExactly("path/to/sources.srcjar!/");
+  }
+
+  @Test
+  public void src_jars_inner_path_not_root() throws Exception {
+    ProjectProto.Project project =
+        ProjectProtos.forTestProject(TestData.JAVA_LIBRARY_NO_DEPS_QUERY);
+    // sanity check:
+    assertThat(project.getLibrary(0).getName()).isEqualTo(".dependencies");
+
+    createSrcJar(
+        workspaceRoot.resolve("path/to/sources.srcjar"),
+        PathPackage.of("java/package/root/com/package/Class.java", "com.package"));
+
+    SrcJarProjectUpdater updater =
+        new SrcJarProjectUpdater(
+            project,
+            ImmutableList.of(ProjectPath.workspaceRelative("path/to/sources.srcjar")),
+            Resolver.create(workspaceRoot, projectRoot));
+
+    ProjectProto.Project newProject = updater.addSrcJars();
+
+    assertThat(
+            newProject.getLibrary(0).getSourcesList().stream()
+                .map(LibrarySource::getSrcjar)
+                .map(ProjectPath::create)
+                .map(pp -> String.format("%s!/%s", pp.relativePath(), pp.innerJarPath())))
+        .containsExactly("path/to/sources.srcjar!/java/package/root");
+  }
+
+  @Test
+  public void src_jars_inner_path_root_default_package() throws Exception {
+    ProjectProto.Project project =
+        ProjectProtos.forTestProject(TestData.JAVA_LIBRARY_NO_DEPS_QUERY);
+    // sanity check:
+    assertThat(project.getLibrary(0).getName()).isEqualTo(".dependencies");
+
+    createSrcJar(workspaceRoot.resolve("path/to/sources.srcjar"), PathPackage.of("Class.java", ""));
+
+    SrcJarProjectUpdater updater =
+        new SrcJarProjectUpdater(
+            project,
+            ImmutableList.of(ProjectPath.workspaceRelative("path/to/sources.srcjar")),
+            Resolver.create(workspaceRoot, projectRoot));
+
+    ProjectProto.Project newProject = updater.addSrcJars();
+
+    assertThat(
+            newProject.getLibrary(0).getSourcesList().stream()
+                .map(LibrarySource::getSrcjar)
+                .map(ProjectPath::create)
+                .map(pp -> String.format("%s!/%s", pp.relativePath(), pp.innerJarPath())))
+        .containsExactly("path/to/sources.srcjar!/");
+  }
+
+  @Test
+  public void src_jars_inner_path_root_non_matching_package() throws Exception {
+    ProjectProto.Project project =
+        ProjectProtos.forTestProject(TestData.JAVA_LIBRARY_NO_DEPS_QUERY);
+    // sanity check:
+    assertThat(project.getLibrary(0).getName()).isEqualTo(".dependencies");
+
+    createSrcJar(
+        workspaceRoot.resolve("path/to/sources.srcjar"),
+        PathPackage.of("Class.java", "com.package"),
+        PathPackage.of("java/root/com/package/AnotherClass.java", "com.package"));
+    // Class.java should be ignored since its path does not match its package
+
+    SrcJarProjectUpdater updater =
+        new SrcJarProjectUpdater(
+            project,
+            ImmutableList.of(ProjectPath.workspaceRelative("path/to/sources.srcjar")),
+            Resolver.create(workspaceRoot, projectRoot));
+
+    ProjectProto.Project newProject = updater.addSrcJars();
+
+    assertThat(
+            newProject.getLibrary(0).getSourcesList().stream()
+                .map(LibrarySource::getSrcjar)
+                .map(ProjectPath::create)
+                .map(pp -> String.format("%s!/%s", pp.relativePath(), pp.innerJarPath())))
+        .containsExactly("path/to/sources.srcjar!/java/root");
+  }
+
+  @Test
+  public void update_src_jars_new_inner_root() throws Exception {
+    ProjectProto.Project project =
+        ProjectProtos.forTestProject(TestData.JAVA_LIBRARY_NO_DEPS_QUERY);
+    // sanity check:
+    assertThat(project.getLibrary(0).getName()).isEqualTo(".dependencies");
+    // add some existing srcjars:
+    project =
+        project.toBuilder()
+            .setLibrary(
+                0,
+                project.getLibrary(0).toBuilder()
+                    .addSources(
+                        LibrarySource.newBuilder()
+                            .setSrcjar(
+                                ProjectProto.ContentRoot.newBuilder()
+                                    .setBase(Base.WORKSPACE)
+                                    .setPath("path/to/sources.srcjar"))
+                            .build())
+                    .build())
+            .build();
+
+    SrcJarProjectUpdater updater =
+        new SrcJarProjectUpdater(
+            project,
+            ImmutableList.of(ProjectPath.workspaceRelative("path/to/sources.srcjar")),
+            Resolver.create(workspaceRoot, projectRoot));
+
+    createSrcJar(
+        workspaceRoot.resolve("path/to/sources.srcjar"),
+        PathPackage.of("java/package/root/com/package/Class.java", "com.package"));
+
+    ProjectProto.Project newProject = updater.addSrcJars();
+
+    assertThat(
+            newProject.getLibrary(0).getSourcesList().stream()
+                .map(LibrarySource::getSrcjar)
+                .map(ProjectProto.ContentRoot::getInnerPath))
+        .containsExactly("java/package/root");
+  }
+
+  @AutoValue
+  abstract static class PathPackage {
+    abstract Path path();
+
+    abstract String pkg();
+
+    static PathPackage of(String path, String pkg) {
+      return new AutoValue_SrcJarProjectUpdaterTest_PathPackage(Path.of(path), pkg);
+    }
+  }
+
+  private static void createSrcJar(Path dest, PathPackage... pathPackages) throws IOException {
+    Files.createDirectories(dest.getParent());
+    try (ZipOutputStream srcJar =
+        new ZipOutputStream(Files.newOutputStream(dest, StandardOpenOption.CREATE_NEW))) {
+      for (PathPackage pathPackage : pathPackages) {
+        ZipEntry src = new ZipEntry(pathPackage.path().toString());
+        srcJar.putNextEntry(src);
+        if (pathPackage.pkg().length() > 0) {
+          srcJar.write(String.format("package %s;\n", pathPackage.pkg()).getBytes(UTF_8));
+        } else {
+          srcJar.write("// default package\n".getBytes(UTF_8));
+        }
+        srcJar.closeEntry();
+      }
+    }
   }
 }
