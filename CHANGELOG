@@ -1,6 +1,8 @@
 v2023.09.12
 ===========
-
+* Handle null function returned from CLion code #5248
+* Add managed project to import wizard project view field #5227
+* Sync process optimizations #5219
 
 v2023.08.29
 ===========
