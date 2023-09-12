@@ -21,6 +21,7 @@ import static com.google.idea.blaze.base.bazel.BazelExitCode.SUCCESS;
 import static com.google.idea.blaze.base.bazel.BazelExitCodeException.ThrowOption.ALLOW_BUILD_FAILURE;
 import static com.google.idea.blaze.base.bazel.BazelExitCodeException.ThrowOption.ALLOW_PARTIAL_SUCCESS;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
@@ -81,7 +82,8 @@ public class BazelExitCodeException extends BuildException {
     return false;
   }
 
-  private BazelExitCodeException(String message, int exitCode) {
+  @VisibleForTesting
+  public BazelExitCodeException(String message, int exitCode) {
     super(message);
     this.exitCode = exitCode;
   }
