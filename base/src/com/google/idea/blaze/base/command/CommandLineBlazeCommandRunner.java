@@ -72,7 +72,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
     context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, "Build command finished. Retrieving BEP outputs ..."));
     if (buildResultHelper instanceof BuildResultHelperBep) {
       File outputFile = ((BuildResultHelperBep) buildResultHelper).getOutputFile();
-      context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, String.format("BEP file '%s' file size %d bytes", outputFile.getAbsolutePath(), outputFile.length())));
+      context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, String.format("BEP file '%s' (%d bytes)", outputFile.getAbsolutePath(), outputFile.length())));
     }
     try {
       Interner<String> stringInterner =
