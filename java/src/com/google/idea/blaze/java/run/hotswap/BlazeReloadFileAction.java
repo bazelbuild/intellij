@@ -77,29 +77,33 @@ public class BlazeReloadFileAction extends AnAction {
                     return;
                 }
 
-                Path relative = ReadAction.compute(() ->
-                        ProjectFileIndex.getInstance(project)
-                                .getSourceRootForFile(vf).toNioPath().
-                                relativize(vf.toNioPath()));
-                String jarDirectory = relative.getParent().toString() + Paths.DELIM;
-                File tempOutputDir;
-                try {
-                    tempOutputDir = Files.createTempDirectory("IjBazelHotswap").toFile();
-                    tempOutputDir.deleteOnExit();
-                } catch (IOException e) {
-                    LOGGER.error("Failed creating temp directory for hotswap", e);
-                    return;
-                }
-
-                ProgressManager.getInstance().run(new Task.Backgroundable(project, "Preparing to hotswap", true) {
-                    @Override
-                    public void run(@NotNull ProgressIndicator progressIndicator) {
-                        findAndCopyOutputFile(vf, tempOutputDir, jarDirectory, outputs);
-                        if (tempOutputDir.listFiles().length > 0) {
-                            hotswapFile(project, jarDirectory, tempOutputDir);
-                        }
+                if (!DebuggerSettings.RUN_HOTSWAP_NEVER.equals(DebuggerSettings.getInstance().RUN_HOTSWAP_AFTER_COMPILE)) {
+                    Path relative = ReadAction.compute(() ->
+                            ProjectFileIndex.getInstance(project)
+                                    .getSourceRootForFile(vf).toNioPath().
+                                    relativize(vf.toNioPath()));
+                    String jarDirectory = relative.getParent().toString() + Paths.DELIM;
+                    File tempOutputDir;
+                    try {
+                        tempOutputDir = Files.createTempDirectory("IjBazelHotswap").toFile();
+                        tempOutputDir.deleteOnExit();
+                    } catch (IOException e) {
+                        LOGGER.error("Failed creating temp directory for hotswap", e);
+                        return;
                     }
-                });
+
+                    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Preparing to hotswap", true) {
+                        @Override
+                        public void run(@NotNull ProgressIndicator progressIndicator) {
+                            findAndCopyOutputFile(vf, tempOutputDir, jarDirectory, outputs);
+                            if (tempOutputDir.listFiles().length > 0) {
+                                hotswapFile(project, jarDirectory, tempOutputDir);
+                            }
+                        }
+                    });
+                } else {
+                    LOGGER.debug("Run hotswap after compile set to 'never'");
+                }
 
             } catch (Exception e) {
                 LOGGER.error("Exception occurred during building file to hotswap", e);
@@ -122,26 +126,31 @@ public class BlazeReloadFileAction extends AnAction {
                         .filter(HotSwapUIImpl::canHotSwap)
                                 .collect(Collectors.toList());
         ApplicationManager.getApplication().invokeLater(() -> {
+            final Collection<DebuggerSession> sessionsToHotswap;
             if (DebuggerSettings.getInstance().RUN_HOTSWAP_AFTER_COMPILE.equals(DebuggerSettings.RUN_HOTSWAP_ASK)) {
                 RunHotswapDialog runHotswapDialog = new RunHotswapDialog(project, sessions, false);
                 if (!runHotswapDialog.showAndGet()) {
                     return;
                 }
-                HotSwapProgressImpl progress = new HotSwapProgressImpl(project);
-                Collection<DebuggerSession> sessionsToHotswap = runHotswapDialog.getSessionsToReload();
-                ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                    try {
-                        Map<DebuggerSession, Map<String, HotSwapFile>> sessionMap = sessionsToHotswap.stream()
-                                .collect(Collectors.toMap(session -> session, session -> hotSwapFileMap));
-                        ProgressManager.getInstance().runProcess(() -> {
-                            HotSwapManager.reloadModifiedClasses(sessionMap, progress);
-                        }, progress.getProgressIndicator());
-                    } finally {
-                        progress.finished();
-                        tempOutputDir.delete();
-                    }
-                });
+
+                sessionsToHotswap = runHotswapDialog.getSessionsToReload();
+            } else {
+                sessionsToHotswap = sessions;
             }
+
+            HotSwapProgressImpl progress = new HotSwapProgressImpl(project);
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                try {
+                    Map<DebuggerSession, Map<String, HotSwapFile>> sessionMap = sessionsToHotswap.stream()
+                            .collect(Collectors.toMap(session -> session, session -> hotSwapFileMap));
+                    ProgressManager.getInstance().runProcess(() -> {
+                        HotSwapManager.reloadModifiedClasses(sessionMap, progress);
+                    }, progress.getProgressIndicator());
+                } finally {
+                    progress.finished();
+                    tempOutputDir.delete();
+                }
+            });
         });
     }
 
