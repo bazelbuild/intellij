@@ -25,11 +25,14 @@ import com.google.idea.blaze.base.bazel.BazelExitCodeException;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException.ThrowOption;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
+import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.output.SummaryOutput;
 import com.google.idea.blaze.base.scope.scopes.SharedStringPoolScope;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
@@ -38,7 +41,9 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -63,14 +68,23 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
     if (buildResult.status == Status.FATAL_ERROR) {
       return BlazeBuildOutputs.noOutputs(buildResult);
     }
-    context.output(PrintOutput.log("Build command finished. Retrieving BEP outputs..."));
+    context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, "Build command finished. Retrieving BEP outputs ..."));
+    if (buildResultHelper instanceof BuildResultHelperBep) {
+      File outputFile = ((BuildResultHelperBep) buildResultHelper).getOutputFile();
+      context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, String.format("BEP file '%s' (%d bytes)", outputFile.getAbsolutePath(), outputFile.length())));
+    }
     try {
       Interner<String> stringInterner =
           Optional.ofNullable(context.getScope(SharedStringPoolScope.class))
               .map(SharedStringPoolScope::getStringInterner)
               .orElse(null);
-      return BlazeBuildOutputs.fromParsedBepOutput(
-          buildResult, buildResultHelper.getBuildOutput(stringInterner));
+      context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, "Parsing BEP outputs..."));
+      ParsedBepOutput buildOutput = buildResultHelper.getBuildOutput(stringInterner);
+      context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, "Handling parsed BEP outputs..."));
+      BlazeBuildOutputs blazeBuildOutputs = BlazeBuildOutputs.fromParsedBepOutput(
+              buildResult, buildOutput);
+      context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, "BEP outputs have been processed."));
+      return blazeBuildOutputs;
     } catch (GetArtifactsException e) {
       IssueOutput.error("Failed to get build outputs: " + e.getMessage()).submit(context);
       return BlazeBuildOutputs.noOutputs(buildResult);
