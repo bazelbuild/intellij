@@ -63,7 +63,6 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       BuildResultHelper buildResultHelper,
       BlazeContext context) {
 
-    context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, "Triggering build with flags '" + buildResultHelper.getBuildFlags() + "' ..."));
     BuildResult buildResult =
         issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), context);
     if (buildResult.status == Status.FATAL_ERROR) {
