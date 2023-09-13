@@ -34,6 +34,8 @@ import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
@@ -79,6 +81,35 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
       return syncedTargets.stream().anyMatch(t -> syncInProgress(t.getLabel()))
           ? SyncStatus.RESYNCING
           : SyncStatus.SYNCED;
+    } else {
+      // For newly added files there is no way to have them synced even though they are, in the majority of cases, are
+      // identical to the rest of files in the folder.
+      // So we are checking 5 other files from the same folder and if TargetKey collection is the same for all
+      // then we are using the same for file that marked as `(unsynced)`.
+      List<ImmutableCollection<TargetKey>> alternativeSources =
+              Arrays.stream(source.getParentFile().listFiles())
+                      .filter(f -> f.isFile() && !SourceToTargetMap.getInstance(project).getRulesForSourceFile(f).isEmpty())
+                      .limit(5)
+                      .map(f -> SourceToTargetMap.getInstance(project).getRulesForSourceFile(f))
+                      .toList();
+      ImmutableCollection<TargetKey> consensusSource = null;
+      for (ImmutableCollection<TargetKey> alternativeSource : alternativeSources) {
+        if (consensusSource == null) {
+          consensusSource = alternativeSource;
+        } else {
+          // If at least one is different we cannot use this approach.
+          if (!alternativeSource.equals(consensusSource)) {
+            consensusSource = null;
+            break;
+          }
+        }
+      }
+      if (consensusSource != null && !consensusSource.isEmpty()) {
+        return consensusSource.stream().anyMatch(t -> syncInProgress(t.getLabel()))
+                ? SyncStatus.RESYNCING
+                : SyncStatus.SYNCED;
+
+      }
     }
     Label label = WorkspaceHelper.getBuildLabel(project, source);
     if (label == null) {
