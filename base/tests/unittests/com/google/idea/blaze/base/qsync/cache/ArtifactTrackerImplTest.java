@@ -22,7 +22,6 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
@@ -290,18 +289,13 @@ public class ArtifactTrackerImplTest {
     }
 
     @Override
-    public ListenableFuture<List<Path>> copy(
+    public ListenableFuture<?> copy(
         ImmutableMap<? extends OutputArtifact, ArtifactDestination> artifactToDest,
         Context<?> context) {
-      return Futures.immediateFuture(
-          ImmutableList.copyOf(
-              Maps.transformEntries(
-                      artifactToDest,
-                      (k, v) -> {
-                        collectedArtifactKeyToMetadata.add(k.getKey());
-                        return v.path;
-                      })
-                  .values()));
+      artifactToDest.keySet().stream()
+          .map(OutputArtifact::getKey)
+          .forEach(collectedArtifactKeyToMetadata::add);
+      return Futures.immediateFuture(null);
     }
   }
 
@@ -316,16 +310,13 @@ public class ArtifactTrackerImplTest {
     }
 
     @Override
-    public ListenableFuture<List<Path>> copy(
+    public ListenableFuture<?> copy(
         ImmutableMap<? extends OutputArtifact, ArtifactDestination> artifactToDest,
         Context<?> context) {
       if (shouldFail) {
         throw new TestException();
       }
-      return Futures.immediateFuture(
-          artifactToDest.values().stream()
-              .map(it -> it.path)
-              .collect(ImmutableList.toImmutableList()));
+      return Futures.immediateFuture(null);
     }
   }
 

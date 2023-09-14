@@ -26,13 +26,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
 import java.util.Map.Entry;
 
 /** Implementation of {@link ArtifactFetcher} that copy file via file api. */
 public class FileApiArtifactFetcher implements ArtifactFetcher<LocalFileOutputArtifact> {
   @Override
-  public ListenableFuture<List<Path>> copy(
+  public ListenableFuture<?> copy(
       ImmutableMap<? extends LocalFileOutputArtifact, ArtifactDestination> artifactToDest,
       Context<?> context) {
     ImmutableList.Builder<ListenableFuture<Path>> tasks = ImmutableList.builder();
