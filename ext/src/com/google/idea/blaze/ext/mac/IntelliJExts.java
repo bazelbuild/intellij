@@ -32,7 +32,7 @@ public final class IntelliJExts {
     return new KQueueEventLoopGroup(threadFactory);
   }
 
-  public static Class<? extends Channel> getClientChannelType() {
+  public static Class<? extends Channel> getServerChannelType() {
     return KQueueDomainSocketChannel.class;
   }
 
