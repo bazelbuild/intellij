@@ -15,8 +15,10 @@
  */
 package com.google.idea.blaze.ext;
 
+import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.ServerChannel;
+import io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerDomainSocketChannel;
 import io.netty.util.concurrent.DefaultThreadFactory;
@@ -31,7 +33,11 @@ public final class IntelliJExts {
     return new EpollEventLoopGroup(threadFactory);
   }
 
-  public static Class<? extends ServerChannel> getChannelType() {
+  public static Class<? extends Channel> getClientChannelType() {
+    return EpollDomainSocketChannel.class;
+  }
+
+  public static Class<? extends ServerChannel> getServerChannelType() {
     return EpollServerDomainSocketChannel.class;
   }
 
