@@ -20,13 +20,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher;
 import com.google.idea.blaze.common.Context;
 import com.intellij.openapi.util.Pair;
-import java.nio.file.Path;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -43,10 +40,10 @@ public class DynamicallyDispatchingArtifactFetcher implements ArtifactFetcher<Ou
   }
 
   @Override
-  public ListenableFuture<List<Path>> copy(
+  public ListenableFuture<?> copy(
       ImmutableMap<? extends OutputArtifact, ArtifactDestination> artifactToDest,
       Context<?> context) {
-    ImmutableList<ListenableFuture<List<Path>>> futures =
+    ImmutableList<ListenableFuture<?>> futures =
         artifactToDest.entrySet().stream()
             .collect(Collectors.groupingBy(it -> it.getKey().getClass()))
             .entrySet()
@@ -55,17 +52,7 @@ public class DynamicallyDispatchingArtifactFetcher implements ArtifactFetcher<Ou
             .map(it -> it.first.copy(ImmutableMap.copyOf(it.second), context))
             .collect(ImmutableList.toImmutableList());
 
-    //noinspection UnstableApiUsage
-    return Futures.whenAllComplete(futures)
-        .call(
-            () -> {
-              ImmutableList.Builder<Path> result = ImmutableList.builder();
-              for (ListenableFuture<List<Path>> future : futures) {
-                result.addAll(future.get());
-              }
-              return result.build();
-            },
-            MoreExecutors.directExecutor() /* concatenating two lists */);
+    return Futures.allAsList(futures);
   }
 
   @Override

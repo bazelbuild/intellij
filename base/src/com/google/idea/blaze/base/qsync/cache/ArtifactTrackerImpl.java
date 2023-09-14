@@ -309,18 +309,16 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
         Duration.ofSeconds(1));
     return Futures.transform(
         artifactFetcher.copy(artifactToDestinationPathMap, context),
-        fetchedArtifacts ->
+        unused ->
             runMeasureAndLog(
                 () -> {
                   ImmutableMap.Builder<T, Path> destinationToArtifactMap = ImmutableMap.builder();
-                  for (Entry<OutputArtifact, ArtifactDestination> entry :
-                      artifactToDestinationPathMap.entrySet()) {
-                    T artifactDestination = artifactToDestinationMap.get(entry.getKey());
+                  for (OutputArtifact artifact : artifactToDestinationPathMap.keySet()) {
+                    T artifactDestination = artifactToDestinationMap.get(artifact);
                     Preconditions.checkNotNull(artifactDestination);
-                    cacheDirectoryManager.setStoredArtifactDigest(
-                        entry.getKey(), entry.getKey().getDigest());
+                    cacheDirectoryManager.setStoredArtifactDigest(artifact, artifact.getDigest());
                     destinationToArtifactMap.put(
-                        artifactDestination, Path.of(entry.getKey().getRelativePath()));
+                        artifactDestination, Path.of(artifact.getRelativePath()));
                   }
                   return destinationToArtifactMap.buildOrThrow();
                 },

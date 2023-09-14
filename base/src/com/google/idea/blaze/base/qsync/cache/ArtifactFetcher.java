@@ -24,7 +24,6 @@ import com.google.idea.blaze.common.Context;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import java.nio.file.Path;
-import java.util.List;
 
 /** Copy a bunch of artifacts. */
 public interface ArtifactFetcher<ArtifactT extends OutputArtifact> {
@@ -48,7 +47,7 @@ public interface ArtifactFetcher<ArtifactT extends OutputArtifact> {
    * Copies artifacts from the {@code keySet()} of the {@code artifactToDest} map to their
    * respective destinations as specified in {@code artifactToDest}.
    */
-  ListenableFuture<List<Path>> copy(
+  ListenableFuture<?> copy(
       ImmutableMap<? extends ArtifactT, ArtifactDestination> artifactToDest, Context<?> context);
 
   Class<ArtifactT> supportedArtifactType();
