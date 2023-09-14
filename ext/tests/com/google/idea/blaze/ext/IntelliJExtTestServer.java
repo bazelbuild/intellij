@@ -73,7 +73,7 @@ public final class IntelliJExtTestServer extends IntelliJExtImplBase {
         IntelliJExts.createGroup(new DefaultThreadFactory(EventLoopGroup.class, true));
     NettyServerBuilder sb =
         NettyServerBuilder.forAddress(new DomainSocketAddress(path.toFile()))
-            .channelType(IntelliJExts.getChannelType())
+            .channelType(IntelliJExts.getServerChannelType())
             .bossEventLoopGroup(group)
             .addService(new IntelliJExtTestServer())
             .workerEventLoopGroup(group);

@@ -36,7 +36,7 @@ public class IntelliJExtClient {
     ManagedChannel channel =
         NettyChannelBuilder.forAddress(address)
             .eventLoopGroup(group)
-            .channelType(IntelliJExts.getChannelType())
+            .channelType(IntelliJExts.getClientChannelType())
             .withOption(ChannelOption.SO_KEEPALIVE, false)
             .usePlaintext()
             .build();

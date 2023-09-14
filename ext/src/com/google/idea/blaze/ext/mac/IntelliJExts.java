@@ -15,8 +15,10 @@
  */
 package com.google.idea.blaze.ext;
 
+import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.ServerChannel;
+import io.netty.channel.kqueue.KQueueDomainSocketChannel;
 import io.netty.channel.kqueue.KQueueEventLoopGroup;
 import io.netty.channel.kqueue.KQueueServerDomainSocketChannel;
 import io.netty.util.concurrent.DefaultThreadFactory;
@@ -30,7 +32,11 @@ public final class IntelliJExts {
     return new KQueueEventLoopGroup(threadFactory);
   }
 
-  public static Class<? extends ServerChannel> getChannelType() {
+  public static Class<? extends Channel> getServerChannelType() {
+    return KQueueDomainSocketChannel.class;
+  }
+
+  public static Class<? extends ServerChannel> getServerChannelType() {
     return KQueueServerDomainSocketChannel.class;
   }
 }
