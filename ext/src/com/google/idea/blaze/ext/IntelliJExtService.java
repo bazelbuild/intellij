@@ -17,6 +17,7 @@ package com.google.idea.blaze.ext;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
+import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -127,5 +128,10 @@ public final class IntelliJExtService {
       status.put(s.getProperty(), s.getValue());
     }
     return status;
+  }
+
+  public IssueTrackerBlockingStub getIssueTrackerService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getIssueTrackerService();
   }
 }
