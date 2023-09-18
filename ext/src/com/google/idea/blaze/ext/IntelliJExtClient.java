@@ -16,6 +16,7 @@
 package com.google.idea.blaze.ext;
 
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
+import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.NettyChannelBuilder;
 import io.netty.channel.ChannelOption;
@@ -28,12 +29,13 @@ import java.nio.file.Path;
 public class IntelliJExtClient {
 
   private final IntelliJExtBlockingStub stub;
+  private final ManagedChannel channel;
 
   public IntelliJExtClient(Path socket) {
     DomainSocketAddress address = new DomainSocketAddress(socket.toFile());
     EventLoopGroup group =
         IntelliJExts.createGroup(new DefaultThreadFactory(EventLoopGroup.class, true));
-    ManagedChannel channel =
+    channel =
         NettyChannelBuilder.forAddress(address)
             .eventLoopGroup(group)
             .channelType(IntelliJExts.getClientChannelType())
@@ -54,5 +56,9 @@ public class IntelliJExtClient {
   public IntelliJExtBlockingStub getStubSafe() {
     PingResponse unused = stub.ping(PingRequest.getDefaultInstance());
     return stub;
+  }
+
+  public IssueTrackerBlockingStub getIssueTrackerService() {
+    return IssueTrackerGrpc.newBlockingStub(channel);
   }
 }

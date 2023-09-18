@@ -3,7 +3,10 @@ load("@io_bazel_rules_go//proto:def.bzl", "go_grpc_library", "go_proto_library")
 
 proto_library(
     name = "intellijext_proto",
-    srcs = ["intellijext.proto"],
+    srcs = [
+        "intellijext.proto",
+        "issuetracker.proto",
+    ],
 )
 
 java_proto_library(
