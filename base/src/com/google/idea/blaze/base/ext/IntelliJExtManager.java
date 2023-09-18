@@ -54,7 +54,7 @@ public class IntelliJExtManager {
   }
 
   @Nullable
-  private Path getBinaryPath() {
+  private static Path getBinaryPath() {
     String binary = System.getProperty(INTELLIJ_EXT_BINARY);
     if (binary == null) {
       return null;
@@ -67,7 +67,7 @@ public class IntelliJExtManager {
     return path;
   }
 
-  boolean isEnabled() {
+  public static boolean isEnabled() {
     return getBinaryPath() != null;
   }
 }
