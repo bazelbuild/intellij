@@ -193,6 +193,7 @@
     <group id="Internal.Blaze" text="Blaze" popup="true" internal="true">
       <action internal="true" id="Blaze.QSync.CleanDependencies" class="com.google.idea.blaze.base.qsync.action.CleanDependencies" text="QSync - Clean Dependencies" />
       <action internal="true" id="Blaze.QSync.ReloadProject" class="com.google.idea.blaze.base.qsync.action.ReloadProject" text="QSync - Reload project" />
+      <action internal="true" id="Blaze.QSync.ShowPromo" class="com.google.idea.blaze.base.qsync.action.ShowPromoAction" text="Show qsync promo" />
       <add-to-group group-id="Internal"/>
     </group>
   </actions>
@@ -347,6 +348,7 @@
     <actionConfigurationCustomizer implementation="com.google.idea.blaze.base.plugin.BlazeHideMakeActions"/>
     <notificationGroup displayType="BALLOON" id="BuildifierBinaryMissing"/>
     <notificationGroup displayType="BALLOON" id="AddToProject" />
+    <notificationGroup displayType="STICKY_BALLOON" id="QuerySyncPromo" />
     <registryKey defaultValue="false" description="Disable auto import of bazel projects" key="bazel.auto.import.disabled"/>
     <registryKey
       key="bazel.sync.resolve.virtual.includes"

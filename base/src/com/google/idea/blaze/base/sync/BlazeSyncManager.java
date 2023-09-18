@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.QuerySyncPromo;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.Scope;
@@ -226,6 +227,7 @@ public class BlazeSyncManager {
   }
 
   private static void executeTask(Project project, BlazeSyncParams params, BlazeContext context) {
+    Future<?> querySyncPromoFuture = new QuerySyncPromo(project).getPromoShowFuture();
     try {
       SyncPhaseCoordinator.getInstance(project).syncProject(params, context).get();
     } catch (InterruptedException e) {
@@ -237,6 +239,8 @@ public class BlazeSyncManager {
     } catch (CancellationException e) {
       context.output(new PrintOutput("Sync cancelled"));
       context.setCancelled();
+    } finally {
+      querySyncPromoFuture.cancel(false);
     }
   }
 
