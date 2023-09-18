@@ -60,9 +60,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2023_2. This is required to build IJwB and run integration tests.
-IC_232_SHA = "c9fd992d9c1510627bb07c5f1dc73cbe15b903fff8d8bcf71ef895580b3acdae"
+IC_232_SHA = "00a6842151a66257dd66bbc9b42053a6ea3a0166689fd2c56e0a2468a769be2b"
 
-IC_232_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2023.2/ideaIC-2023.2.zip"
+IC_232_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2023.2.2/ideaIC-2023.2.2.zip"
 
 http_archive(
     name = "intellij_ce_2023_2",
@@ -125,9 +125,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ue_2023_2. This is required to run UE-specific integration tests.
-IU_232_SHA = "e8587ec0344e6369ae3e986446cda6e9e738776a3b3becabea4cc81f633dffc2"
+IU_232_SHA = "ff0b4843630eee3d5d2aa5b6084aa9c94d2eb33de2ee1726e9021330c8e5c2a9"
 
-IU_232_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2023.2/ideaIU-2023.2.zip"
+IU_232_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2023.2.2/ideaIU-2023.2.2.zip"
 
 http_archive(
     name = "intellij_ue_2023_2",
@@ -189,9 +189,9 @@ http_archive(
 )
 
 # The plugin api for clion_2023_2. This is required to build CLwB\, and run integration tests.
-CLION_232_SHA = "152c7814cf16c4ffda16edfc6c0827cd6a031e6c381f034260ccc806a406b3e3"
+CLION_232_SHA = "b756a2425fad72564f68a0cdfc0a6e7b74e0fe78e5f4b10456746d29d7dee978"
 
-CLION_232_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2023.2/clion-2023.2.zip"
+CLION_232_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2023.2.2/clion-2023.2.2.zip"
 
 http_archive(
     name = "clion_2023_2",
@@ -271,9 +271,9 @@ http_archive(
     url = PYTHON_PLUGIN_231_URL,
 )
 
-PYTHON_PLUGIN_232_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/232.8660.185/PythonCore-232.8660.185.zip"
+PYTHON_PLUGIN_232_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/232.9921.47/PythonCore-232.9921.47.zip"
 
-PYTHON_PLUGIN_232_SHA = "ac69daca683885b62b8cd3d36308fc96363860b227d5d0e764243020fe6979dd"
+PYTHON_PLUGIN_232_SHA = "e744349f353568c18a9e11ec5e3a205f62bbdc1b65c9abc96783c479fe2aa51b"
 
 http_archive(
     name = "python_2023_2",
@@ -354,9 +354,9 @@ http_archive(
     url = GO_PLUGIN_231_URL,
 )
 
-GO_PLUGIN_232_SHA = "62deced01d20e59112e9ee6bbae05682c85a97ed4ff52b27688f7f10efd3c8d4"
+GO_PLUGIN_232_SHA = "2ed1806ce17744b0a0a2f392db925ccf1915335c25fd80f2ca24425190ab1c03"
 
-GO_PLUGIN_232_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/232.8660.142/org.jetbrains.plugins.go-232.8660.142.zip"
+GO_PLUGIN_232_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/232.9921.28/org.jetbrains.plugins.go-232.9921.28.zip"
 
 http_archive(
     name = "go_2023_2",
@@ -411,9 +411,9 @@ http_archive(
     url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2022.3.13/org.intellij.scala-2022.3.13.zip",
 )
 
-SCALA_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.1.19/org.intellij.scala-2023.1.19.zip"
+SCALA_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.1.23/org.intellij.scala-2023.1.23.zip"
 
-SCALA_PLUGIN_231_SHA = "5aec9578129a6a2eedc8e1836f7b7d772d2e78598357d632426e2be930fbe178"
+SCALA_PLUGIN_231_SHA = "a880cf0d0d9fa920cec69f4f26a1d6c068a06b3e257c2bb1f2c96bc7b5f6a1c4"
 
 http_archive(
     name = "scala_2023_1",
@@ -422,9 +422,9 @@ http_archive(
     url = SCALA_PLUGIN_231_URL,
 )
 
-SCALA_PLUGIN_232_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.2.17/org.intellij.scala-2023.2.17.zip"
+SCALA_PLUGIN_232_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.2.23/org.intellij.scala-2023.2.23.zip"
 
-SCALA_PLUGIN_232_SHA = "069751b0add6dc9acfa60eaffae784ca645efb4514fcd9e5f5029f9509a3c585"
+SCALA_PLUGIN_232_SHA = "5b96c1650b8a481cf07288ee3ce140d91dc0fd89618400aec1ea464af0692b0a"
 
 http_archive(
     name = "scala_2023_2",
