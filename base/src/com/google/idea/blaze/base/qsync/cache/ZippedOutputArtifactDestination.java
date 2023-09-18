@@ -18,13 +18,12 @@ package com.google.idea.blaze.base.qsync.cache;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.zip.ZipFile;
 
 /** A record that describes the location of an output artifact in cache directories. */
 public class ZippedOutputArtifactDestination implements OutputArtifactDestinationAndLayout {
@@ -47,17 +46,18 @@ public class ZippedOutputArtifactDestination implements OutputArtifactDestinatio
 
   private static void extract(Path source, Path destination) throws IOException {
     Files.createDirectories(destination);
-    try (InputStream inputStream = Files.newInputStream(source);
-        ZipInputStream zis = new ZipInputStream(inputStream)) {
-      ZipEntry entry;
-      while ((entry = zis.getNextEntry()) != null) {
+    try (ZipFile zip = new ZipFile(source.toFile())) {
+      for (var entries = zip.entries(); entries.hasMoreElements(); ) {
+        ZipEntry entry = entries.nextElement();
         if (entry.isDirectory()) {
           Files.createDirectories(destination.resolve(entry.getName()));
         } else {
           // Srcjars do not contain separate directory entries
           Files.createDirectories(destination.resolve(entry.getName()).getParent());
           Files.copy(
-              zis, destination.resolve(entry.getName()), StandardCopyOption.REPLACE_EXISTING);
+              zip.getInputStream(entry),
+              destination.resolve(entry.getName()),
+              StandardCopyOption.REPLACE_EXISTING);
         }
       }
     }
