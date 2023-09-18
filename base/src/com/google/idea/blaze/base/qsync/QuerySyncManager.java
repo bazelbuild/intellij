@@ -103,6 +103,14 @@ public class QuerySyncManager {
     this.loader = loader;
   }
 
+  /**
+   * Returns a URL wth more information & help about query sync, or empty if no such URL is
+   * available.
+   */
+  public Optional<String> getQuerySyncUrl() {
+    return Optional.empty();
+  }
+
   protected ProjectLoader createProjectLoader(ListeningExecutorService executor, Project project) {
     return new ProjectLoader(executor, project);
   }
