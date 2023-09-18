@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.icons.AllIcons.Actions;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -91,6 +92,11 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     public void actionPerformed(@NotNull AnActionEvent e) {
       buildDepsHelper.enableAnalysis(
           e, PopupPosititioner.showUnderneathClickedComponentOrCentered(e));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
