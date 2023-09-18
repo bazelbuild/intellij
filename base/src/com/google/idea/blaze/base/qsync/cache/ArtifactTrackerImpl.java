@@ -354,12 +354,13 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   private ImmutableMap<Path, Path> prepareFinalLayouts(
       Map<OutputArtifactDestinationAndLayout, Path> destinationToArtifact) {
     ImmutableMap.Builder<Path, Path> result = ImmutableMap.builder();
-    try {
-      for (OutputArtifactDestinationAndLayout destination : destinationToArtifact.keySet()) {
+    for (OutputArtifactDestinationAndLayout destination : destinationToArtifact.keySet()) {
+      try {
         result.put(destination.prepareFinalLayout(), destinationToArtifact.get(destination));
+      } catch (IOException e) {
+        throw new UncheckedIOException(
+            "Failed to prepare " + destinationToArtifact.get(destination), e);
       }
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
     }
     return result.build();
   }
