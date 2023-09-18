@@ -117,7 +117,7 @@ public class BlazeJavaTestEventsHandler implements BlazeTestEventsHandler {
     }
     String filter =
         BlazeJUnitTestFilterFlags.testFilterForClassesAndMethods(failedClassesAndMethods);
-    return filter != null ? BlazeFlags.TEST_FILTER + "=" + filter : null;
+    return filter != null ? String.format("%s='%s'", BlazeFlags.TEST_FILTER, filter) : null;
   }
 
   private static void appendTest(Map<PsiClass, Collection<Location<?>>> map, Location<?> location) {
