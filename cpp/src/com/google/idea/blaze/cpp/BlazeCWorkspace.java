@@ -22,7 +22,11 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.errorprone.annotations.Keep;
-import com.google.idea.blaze.base.ideinfo.*;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.CIdeInfo;
+import com.google.idea.blaze.base.ideinfo.Dependency;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -68,7 +72,13 @@ import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -167,16 +177,24 @@ public final class BlazeCWorkspace implements ProjectComponent {
     String stripPrefix = cIdeInfo.getStripIncludePrefix();
     for (ArtifactLocation header : cIdeInfo.getHeaders()) {
       String realPath = rootPath + "/" + header.getExecutionRootRelativePath();
+      String libPath = targetKey.getLabel().blazePackage().asPath().toString();
       String pathUsedInSourceCode = header.getRelativePath();
-      if (stripPrefix != null && !stripPrefix.isEmpty() && pathUsedInSourceCode.startsWith(stripPrefix)) {
-        pathUsedInSourceCode = pathUsedInSourceCode.substring(stripPrefix.length() +
-                (stripPrefix.endsWith("/") ? 0 : 1));
-      }
-      if (includePrefix != null && !includePrefix.isEmpty()) {
-        pathUsedInSourceCode = includePrefix + "/" + pathUsedInSourceCode;
-      }
+      if (pathUsedInSourceCode != null) {
+        if (libPath != null && !libPath.isEmpty() && pathUsedInSourceCode.startsWith(libPath)) {
+          pathUsedInSourceCode = pathUsedInSourceCode.substring(libPath.length() + 1);
+        }
+        if (stripPrefix != null && !stripPrefix.isEmpty() && pathUsedInSourceCode.startsWith(stripPrefix)) {
+          pathUsedInSourceCode = pathUsedInSourceCode.substring(stripPrefix.length() +
+                  (stripPrefix.endsWith("/") ? 0 : 1));
+          System.out.println("updated path = " + pathUsedInSourceCode);
+        }
+        if (includePrefix != null && !includePrefix.isEmpty()) {
+          pathUsedInSourceCode = includePrefix + "/" + pathUsedInSourceCode;
+          System.out.println("updated path 2 = " + pathUsedInSourceCode);
+        }
 
-      includes.add("-ibazel" + pathUsedInSourceCode + "=" + realPath);
+        includes.add("-ibazel" + pathUsedInSourceCode + "=" + realPath);
+      }
     }
 
     for (Dependency dep : targetIdeInfo.getDependencies()) {
@@ -219,14 +237,13 @@ public final class BlazeCWorkspace implements ProjectComponent {
           continue;
         }
 
-        @NotNull CIdeInfo cIdeInfo = targetIdeInfo.getcIdeInfo();
         // defines and include directories are the same for all sources in a given target, so lets
         // collect them once and reuse for each source file's options
 
         UnfilteredCompilerOptions coptsExtractor =
             UnfilteredCompilerOptions.builder()
                 .registerSingleOrSplitOption("-I")
-                .build(cIdeInfo.getLocalCopts());
+                .build(targetIdeInfo.getcIdeInfo().getLocalCopts());
         ImmutableList<String> plainLocalCopts =
             filterIncompatibleFlags(coptsExtractor.getUninterpretedOptions());
         ImmutableList<ExecutionRootPath> localIncludes =
@@ -236,7 +253,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
         // transitiveDefines are sourced from a target's (and transitive deps) "defines" attribute
         ImmutableList<String> transitiveDefineOptions =
-                cIdeInfo.getTransitiveDefines().stream()
+                targetIdeInfo.getcIdeInfo().getTransitiveDefines().stream()
                 .map(s -> "-D" + s)
                 .collect(toImmutableList());
 
@@ -250,7 +267,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         ImmutableList<String> iOptionIncludeDirectories =
             Stream.concat(
                     localIncludes.stream().flatMap(resolver),
-                    cIdeInfo.getTransitiveIncludeDirectories().stream()
+                    targetIdeInfo.getcIdeInfo().getTransitiveIncludeDirectories().stream()
                         .flatMap(resolver)
                         .filter(configResolveData::isValidHeaderRoot))
                 .map(file -> "-I" + file.getAbsolutePath())
@@ -259,7 +276,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // transitiveQuoteIncludeDirectories are sourced from
         // CcSkylarkApiProvider.quote_include_directories
         ImmutableList<String> iquoteOptionIncludeDirectories =
-                cIdeInfo.getTransitiveQuoteIncludeDirectories().stream()
+            targetIdeInfo.getcIdeInfo().getTransitiveQuoteIncludeDirectories().stream()
                 .flatMap(resolver)
                 .filter(configResolveData::isValidHeaderRoot)
                 .map(file -> "-iquote" + file.getAbsolutePath())
@@ -269,7 +286,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // Note: We would ideally use -isystem here, but it interacts badly with the switches
         // that get built by ClangUtils::addIncludeDirectories (it uses -I for system libraries).
         ImmutableList<String> isystemOptionIncludeDirectories =
-            cIdeInfo.getTransitiveSystemIncludeDirectories().stream()
+            targetIdeInfo.getcIdeInfo().getTransitiveSystemIncludeDirectories().stream()
                 .flatMap(resolver)
                 .filter(configResolveData::isValidHeaderRoot)
                 .map(file -> "-I" + file.getAbsolutePath())
