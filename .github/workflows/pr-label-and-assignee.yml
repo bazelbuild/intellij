@@ -1,41 +1,51 @@
-name: Auto Assign Based on Labels
+name: Auto Add Labels and Assignees
 on:
   pull_request_target:
     types: ["opened", "reopened", "ready_for_review"]
 
 jobs:
-  assign_based_on_labels:
-    runs-on: ubuntu-latest
+  add_label:
     permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/labeler@v4
+    if: ${{ github.event.pull_request.draft == false }}
+  add_assignee:
+    runs-on: ubuntu-latest
+    needs: add_label
+    permissions:
+      contents: read
       pull-requests: write
     steps:
       - name: Check out code
         uses: actions/checkout@v2
-
       - name: Set Assignees
         uses: actions/github-script@v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            let issue_number = context.payload.pull_request.number;
+            let issueDetails =  await github.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+               });
+            let labels = issueDetails.data.labels
+            const assignees = [];
             const labelsToAssignees = {
               'product: CLion': ['tpasternak'],
               'product: IntelliJ': ['mai93'],
               'product: GoLand': ['blorente'],
               'product: Android Studio': ['mai93']
-              // Add more label-assignee mappings here
             };
-
-            const labels = context.payload.pull_request.labels.map(label => label.name);
-            const assignees = [];
-
             for (const label of labels) {
-              if (label in labelsToAssignees) {
-                assignees.push(...labelsToAssignees[label]);
+              if (label.name in labelsToAssignees) {
+                assignees.push(...labelsToAssignees[label.name]);
               }
             }
-
             if (assignees.length > 0) {
-              const issue_number = context.payload.pull_request.number;
               await github.issues.addAssignees({
                 issue_number,
                 owner: context.repo.owner,
