@@ -39,7 +39,6 @@ public class DefaultCacheLayoutTest {
         new DefaultCacheLayout(
             cacheDirectoryManager.cacheDirectory,
             cacheDirectoryManager.cacheDotDirectory,
-            ImmutableSet.of(),
             ImmutableSet.of());
 
     OutputArtifactInfo outputArtifact = testOutputArtifact("libfoo.jar");
@@ -54,42 +53,13 @@ public class DefaultCacheLayoutTest {
   }
 
   @Test
-  public void artifacts_with_directories() {
-    CacheDirectories cacheDirectoryManager = createCacheDirectoryManager();
-    DefaultCacheLayout cacheLayout =
-        new DefaultCacheLayout(
-            cacheDirectoryManager.cacheDirectory,
-            cacheDirectoryManager.cacheDotDirectory,
-            ImmutableSet.of(),
-            ImmutableSet.of("java"));
-
-    // Artifact with dedicated directory
-    OutputArtifactInfo outputArtifact = testOutputArtifact("Class.java");
-    Path relativeCopyDestination =
-        cacheDirectoryManager.cacheDirectory.relativize(
-            cacheLayout.getOutputArtifactDestinationAndLayout(outputArtifact).getCopyDestination());
-    String cacheKey = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact);
-    assertThat(relativeCopyDestination.toString())
-        .isEqualTo(String.format("%s/%s", cacheKey, cacheKey));
-
-    // Regular artifact behavior is unchanged
-    OutputArtifactInfo simpleArtifact = testOutputArtifact("lib-class.jar");
-    Path relativeSimpleCopyDestination =
-        cacheDirectoryManager.cacheDirectory.relativize(
-            cacheLayout.getOutputArtifactDestinationAndLayout(simpleArtifact).getCopyDestination());
-    assertThat(relativeSimpleCopyDestination.toString())
-        .isEqualTo(CacheDirectoryManager.cacheKeyForArtifact(simpleArtifact));
-  }
-
-  @Test
   public void zipped_artifacts() {
     CacheDirectories cacheDirectoryManager = createCacheDirectoryManager();
     DefaultCacheLayout cacheLayout =
         new DefaultCacheLayout(
             cacheDirectoryManager.cacheDirectory,
             cacheDirectoryManager.cacheDotDirectory,
-            ImmutableSet.of("zip"),
-            ImmutableSet.of());
+            ImmutableSet.of("zip"));
 
     // Zipped artifact
     OutputArtifactInfo outputArtifact = testOutputArtifact("archive.zip");

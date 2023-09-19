@@ -50,6 +50,7 @@ import com.google.idea.blaze.base.qsync.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.OutputInfo;
 import com.google.idea.blaze.base.qsync.RenderJarInfo;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher.ArtifactDestination;
+import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestination;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -98,7 +99,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 public class ArtifactTrackerImpl implements ArtifactTracker {
 
   public static final String DIGESTS_DIRECTORY_NAME = ".digests";
-  public static final int STORAGE_VERSION = 2;
+  public static final int STORAGE_VERSION = 3;
   private static final Logger logger = Logger.getInstance(ArtifactTrackerImpl.class);
 
   // Information about dependency artifacts derived when the dependencies were built.
@@ -138,25 +139,20 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     FileCacheCreator fileCacheCreator = new FileCacheCreator();
     jarCache =
         fileCacheCreator.createFileCache(
-            projectDirectory.resolve(LIBRARY_DIRECTORY), ImmutableSet.of(), ImmutableSet.of());
+            projectDirectory.resolve(LIBRARY_DIRECTORY), ImmutableSet.of(), false);
     aarCacheDirectory = projectDirectory.resolve(AAR_DIRECTORY);
-    aarCache =
-        fileCacheCreator.createFileCache(
-            aarCacheDirectory, ImmutableSet.of("aar"), ImmutableSet.of());
+    aarCache = fileCacheCreator.createFileCache(aarCacheDirectory, ImmutableSet.of("aar"), false);
     renderJarCacheDirectory = projectDirectory.resolve(RENDER_JARS_DIRECTORY);
     renderJarCache =
-        fileCacheCreator.createFileCache(
-            renderJarCacheDirectory, ImmutableSet.of(), ImmutableSet.of());
+        fileCacheCreator.createFileCache(renderJarCacheDirectory, ImmutableSet.of(), false);
     generatedSrcFileCacheDirectory = projectDirectory.resolve(GEN_SRC_DIRECTORY);
     generatedSrcFileCache =
         fileCacheCreator.createFileCache(
-            generatedSrcFileCacheDirectory,
-            ImmutableSet.of("jar", "srcjar"),
-            ImmutableSet.of("java", "kt"));
+            generatedSrcFileCacheDirectory, ImmutableSet.of("jar", "srcjar"), true);
     generatedExternalSrcFileCacheDirectory = projectDirectory.resolve(DEPENDENCIES_SOURCES);
     generatedExternalSrcFileCache =
         fileCacheCreator.createFileCache(
-            generatedExternalSrcFileCacheDirectory, ImmutableSet.of(), ImmutableSet.of());
+            generatedExternalSrcFileCacheDirectory, ImmutableSet.of(), false);
     cacheDirectoryManager =
         new CacheDirectoryManager(
             projectDirectory.resolve(DIGESTS_DIRECTORY_NAME),
@@ -168,15 +164,19 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     private final ImmutableList.Builder<Path> cacheDirectories = ImmutableList.builder();
 
     public FileCache createFileCache(
-        Path cacheDirectory,
-        ImmutableSet<String> zipFileExtensions,
-        ImmutableSet<String> directoryFileExtension) {
+        Path cacheDirectory, ImmutableSet<String> zipFileExtensions, boolean handleJavaSources) {
+      // TODO(mathewi) this is a bit messy, make a cleaner way of dealing with zips & java srcs
       Path cacheDotDirectory = cacheDirectory.resolveSibling("." + cacheDirectory.getFileName());
       cacheDirectories.add(cacheDirectory);
       cacheDirectories.add(cacheDotDirectory);
-      return new FileCache(
-          new DefaultCacheLayout(
-              cacheDirectory, cacheDotDirectory, zipFileExtensions, directoryFileExtension));
+      CacheLayout layout =
+          new DefaultCacheLayout(cacheDirectory, cacheDotDirectory, zipFileExtensions);
+      if (handleJavaSources) {
+        layout =
+            new DelegatingCacheLayout(
+                layout, new JavaSourcesCacheLayout(cacheDirectory, cacheDotDirectory));
+      }
+      return new FileCache(layout);
     }
 
     public ImmutableList<Path> getCacheDirectories() {
