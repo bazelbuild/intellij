@@ -315,8 +315,8 @@ http_archive(
 http_archive(
     name = "android_studio_2023_1",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio231",
-    sha256 = "8bc1cda24e696bc60dad4426afd08d46643d3a815e75f2ebe6133482beff3df0",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2023.1.1.16/android-studio-2023.1.1.16-linux.tar.gz",
+    sha256 = "7c8c63c3fc19a1082e37202cc7dc5157ad1d1913986f2391043d57fb67b76977",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2023.1.1.20/android-studio-2023.1.1.20-linux.tar.gz",
 )
 
 # The plugin api for android_studio_2022_3 android_studio. This is required to build ASwB and run integration tests
@@ -329,10 +329,10 @@ http_archive(
 
 http_archive(
     name = "rules_java",
+    sha256 = "7b0d9ba216c821ee8697dedc0f9d0a705959ace462a3885fe9ba0347ba950111",
     urls = [
         "https://github.com/bazelbuild/rules_java/releases/download/6.5.1/rules_java-6.5.1.tar.gz",
     ],
-    sha256 = "7b0d9ba216c821ee8697dedc0f9d0a705959ace462a3885fe9ba0347ba950111",
 )
 
 # LICENSE: Common Public License 1.0
