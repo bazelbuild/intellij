@@ -37,7 +37,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -112,8 +111,6 @@ public class BlazeQueryParser {
     Set<Label> projectTargetsToBuild = new HashSet<>();
     // Counts of all kinds of rules
     Map<String, Integer> ruleCount = new HashMap<>();
-    // All the direct dependencies from source files to things it needs outside the project
-    Map<Label, Set<Label>> sourceDeps = new HashMap<>();
     for (Map.Entry<Label, Query.SourceFile> sourceFileEntry :
         query.getSourceFilesMap().entrySet()) {
       Location l = new Location(sourceFileEntry.getValue().getLocation());
@@ -192,15 +189,6 @@ public class BlazeQueryParser {
     }
     // Treat project targets the aspect needs to build as external deps
     projectDeps.addAll(projectTargetsToBuild);
-
-    // Prune the source deps to only external ones.
-    // This could be technically incorrect, because if there is a path from an internal rule
-    // to an external rule we should consider it too. There is an implementation for it
-    // in #transitiveDeps but that is done for one target, we have to do it for all before hand
-    // here
-    for (Entry<Label, Set<Label>> entry : sourceDeps.entrySet()) {
-      entry.getValue().retainAll(projectDeps);
-    }
 
     long elapsedMs = (System.nanoTime() - now) / 1000000L;
     context.output(PrintOutput.log("%-10d Targets (%d ms):", nTargets, elapsedMs));
