@@ -64,6 +64,7 @@ import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.google.protobuf.ExtensionRegistry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -97,6 +98,9 @@ import org.jetbrains.annotations.VisibleForTesting;
  * <p>This class maps all the targets that have been built to their artifacts.
  */
 public class ArtifactTrackerImpl implements ArtifactTracker {
+
+  private static final BoolExperiment ATTACH_DEP_SRCJARS =
+      new BoolExperiment("querysync.attach.dep.srcjars", true);
 
   public static final String DIGESTS_DIRECTORY_NAME = ".digests";
   public static final int STORAGE_VERSION = 3;
@@ -531,10 +535,14 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
             .map(ProjectPath::projectRelative)
             .collect(ImmutableSet.toImmutableSet());
 
-    SrcJarProjectUpdater srcJarUpdater =
-        new SrcJarProjectUpdater(
-            projectProto, Sets.union(workspaceSrcJars, generatedSrcJars), projectPathResolver);
-    projectProto = srcJarUpdater.addSrcJars();
+    if (ATTACH_DEP_SRCJARS.getValue()) {
+      SrcJarProjectUpdater srcJarUpdater =
+          new SrcJarProjectUpdater(
+              projectProto, Sets.union(workspaceSrcJars, generatedSrcJars), projectPathResolver);
+      projectProto = srcJarUpdater.addSrcJars();
+    } else {
+      logger.info("srcjar attachment disabled.");
+    }
 
     return snapshot.toBuilder().project(projectProto).build();
   }
