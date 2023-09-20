@@ -82,14 +82,6 @@ public abstract class BuildGraphData {
    */
   abstract ImmutableMap<Label, ImmutableSet<Label>> ruleDeps();
 
-  /**
-   * All the runtime dependencies of a java rule.
-   *
-   * <p>Note that we don't use a MultiMap here as that does not allow us to distinguish between a
-   * rule with no runtime dependencies vs a rules that does not exist.
-   */
-  abstract ImmutableMap<Label, ImmutableSet<Label>> ruleRuntimeDeps();
-
   /** All dependencies external to this project */
   public abstract ImmutableSet<Label> projectDeps();
 
@@ -170,8 +162,6 @@ public abstract class BuildGraphData {
 
     public abstract ImmutableMap.Builder<Label, ImmutableSet<Label>> ruleDepsBuilder();
 
-    public abstract ImmutableMap.Builder<Label, ImmutableSet<Label>> ruleRuntimeDepsBuilder();
-
     public abstract ImmutableMap.Builder<Label, BuildTarget> targetMapBuilder();
 
     public abstract ImmutableMultimap.Builder<Label, Label> reverseDepsBuilder();
@@ -179,15 +169,6 @@ public abstract class BuildGraphData {
     @CanIgnoreReturnValue
     public Builder ruleDeps(Map<Label, Set<Label>> value) {
       ImmutableMap.Builder<Label, ImmutableSet<Label>> builder = ruleDepsBuilder();
-      for (Label key : value.keySet()) {
-        builder.put(key, ImmutableSet.copyOf(value.get(key)));
-      }
-      return this;
-    }
-
-    @CanIgnoreReturnValue
-    public Builder ruleRuntimeDeps(Map<Label, Set<Label>> value) {
-      ImmutableMap.Builder<Label, ImmutableSet<Label>> builder = ruleRuntimeDepsBuilder();
       for (Label key : value.keySet()) {
         builder.put(key, ImmutableSet.copyOf(value.get(key)));
       }
