@@ -24,6 +24,7 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.nio.file.Path;
+import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -41,7 +42,10 @@ public class BuildGraphTest {
     BuildGraphData graph =
         new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY));
-    assertThat(graph.allTargets())
+    assertThat(
+            graph.allTargets().asMap().entries().stream()
+                .map(e -> Label.fromPackageAndName(e.getKey(), e.getValue()))
+                .collect(Collectors.toList()))
         .containsExactly(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps"));
     assertThat(graph.getAllSourceFiles())
         .containsExactly(
@@ -111,7 +115,10 @@ public class BuildGraphTest {
     BuildGraphData graph =
         new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_MULTI_TARGETS));
-    assertThat(graph.allTargets())
+    assertThat(
+            graph.allTargets().asMap().entries().stream()
+                .map(e -> Label.fromPackageAndName(e.getKey(), e.getValue()))
+                .collect(Collectors.toList()))
         .containsExactly(
             Label.of("//" + TESTDATA_ROOT + "/multitarget:nodeps"),
             Label.of("//" + TESTDATA_ROOT + "/multitarget:externaldep"));

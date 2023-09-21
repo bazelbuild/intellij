@@ -39,7 +39,7 @@ import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.google.idea.blaze.qsync.query.PackageSet;
+import com.google.idea.blaze.qsync.query.PackageTree;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -217,24 +217,22 @@ public class DependencyTracker {
   @VisibleForTesting
   public static TargetsToBuild getProjectTargets(
       BlazeContext context, BlazeProjectSnapshot snapshot, Path workspaceRelativePath) {
-    PackageSet buildPackages;
     if (workspaceRelativePath.endsWith("BUILD")) {
-      buildPackages = PackageSet.of(workspaceRelativePath.getParent());
+      Path packagePath = workspaceRelativePath.getParent();
+      return TargetsToBuild.targetGroup(
+          snapshot.graph().allTargets().get(packagePath).stream()
+              .map(name -> Label.fromPackageAndName(packagePath, name))
+              .collect(toImmutableSet()));
     } else {
-      // this will only be non-empty for directories:
-      buildPackages = snapshot.graph().packages().getSubpackages(workspaceRelativePath);
-    }
-    if (!buildPackages.isEmpty()) {
-      ImmutableSet<Label> projectTargets =
-          snapshot.graph().allTargets().stream()
-              .filter(l -> buildPackages.contains(l.getPackage()))
-              .collect(toImmutableSet());
-      if (projectTargets.isEmpty()) {
-        context.output(
-            PrintOutput.error("No supported targets found in %s", workspaceRelativePath));
-        context.setHasWarnings();
+      PackageTree<String> targets =
+          snapshot.graph().allTargets().getSubpackages(workspaceRelativePath);
+      if (!targets.isEmpty()) {
+        // this will only be non-empty for directories
+        return TargetsToBuild.targetGroup(
+            targets.asMap().entries().stream()
+                .map(e -> Label.fromPackageAndName(e.getKey(), e.getValue()))
+                .collect(toImmutableSet()));
       }
-      return TargetsToBuild.targetGroup(projectTargets);
     }
     // Not a build file or a directory containing packages.
     if (snapshot.graph().getAllSourceFiles().contains(workspaceRelativePath)) {

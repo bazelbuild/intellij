@@ -250,7 +250,7 @@ public abstract class QuerySummary {
    */
   @Memoized
   public PackageSet getPackages() {
-    return new PackageSet(
+    return new TreePackageSet(
         Stream.concat(
                 getRulesMap().keySet().stream().map(Label::getPackage),
                 getPackagesWithErrors().stream())

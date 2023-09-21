@@ -37,6 +37,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.query.PackageSet;
+import com.google.idea.blaze.qsync.query.PackageTree;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -93,7 +94,7 @@ public abstract class BuildGraphData {
   /** All dependencies external to this project */
   public abstract ImmutableSet<Label> projectDeps();
 
-  public abstract ImmutableSet<Label> allTargets();
+  public abstract PackageTree<String> allTargets();
 
   abstract ImmutableSet<Label> androidTargets();
 
@@ -205,7 +206,7 @@ public abstract class BuildGraphData {
 
     public abstract Builder projectDeps(Set<Label> value);
 
-    public abstract ImmutableSet.Builder<Label> allTargetsBuilder();
+    public abstract PackageTree.Builder<String> allTargetsBuilder();
 
     public abstract ImmutableSet.Builder<Label> androidTargetsBuilder();
 

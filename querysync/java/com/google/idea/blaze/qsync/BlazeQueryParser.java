@@ -30,9 +30,9 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.BuildGraphData.Location;
-import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.QuerySummary;
+import com.google.idea.blaze.qsync.query.TreePackageSet;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -94,7 +94,7 @@ public class BlazeQueryParser {
   public BuildGraphData parse(QuerySummary query) {
     context.output(PrintOutput.log("Analyzing project structure..."));
 
-    PackageSet.Builder packages = new PackageSet.Builder();
+    TreePackageSet.Builder packages = new TreePackageSet.Builder();
     long now = System.nanoTime();
 
     BuildGraphData.Builder graphBuilder = BuildGraphData.builder();
@@ -138,7 +138,9 @@ public class BlazeQueryParser {
       graphBuilder.targetMapBuilder().put(ruleEntry.getKey(), buildTarget.build());
 
       if (isJavaRule(ruleClass)) {
-        graphBuilder.allTargetsBuilder().add(ruleEntry.getKey());
+        graphBuilder
+            .allTargetsBuilder()
+            .add(ruleEntry.getKey().getPackage(), ruleEntry.getKey().getName().toString());
         ImmutableSet<Label> thisSources =
             ImmutableSet.<Label>builder()
                 .addAll(toLabelList(ruleEntry.getValue().getSourcesList()))

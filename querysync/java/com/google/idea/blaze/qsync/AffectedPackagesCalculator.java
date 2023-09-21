@@ -28,6 +28,7 @@ import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
+import com.google.idea.blaze.qsync.query.HashPackageSet;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
@@ -88,8 +89,8 @@ public abstract class AffectedPackagesCalculator {
         projectChanges.stream()
             .filter(c -> c.workspaceRelativePath.getFileName().toString().equals("BUILD"))
             .collect(toImmutableList());
-    PackageSet.Builder addedPackages = new PackageSet.Builder();
-    PackageSet.Builder deletedPackages = new PackageSet.Builder();
+    HashPackageSet.Builder addedPackages = new HashPackageSet.Builder();
+    HashPackageSet.Builder deletedPackages = new HashPackageSet.Builder();
     ImmutableSet.Builder<Path> addedOrDeletePackages = ImmutableSet.builder();
     if (!buildFileChanges.isEmpty()) {
       context().output(PrintOutput.log("Edited %d BUILD files", buildFileChanges.size()));
@@ -181,8 +182,7 @@ public abstract class AffectedPackagesCalculator {
     // When processing added/deleted source files, we need to know what package they're in now,
     // rather than at the time of the last query.
     PackageSet effectivePackages =
-        lastQuery()
-            .getPackages()
+        HashPackageSet.create(lastQuery().getPackages().asPathSet())
             .addPackages(addedPackages.build())
             .deletePackages(deletedPackages.build());
 

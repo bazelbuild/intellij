@@ -38,3 +38,14 @@ java_test(
         "@truth//jar",
     ],
 )
+
+java_test(
+    name = "PackageSetTest",
+    size = "small",
+    srcs = ["PackageSetTest.java"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync/query",
+        "@junit//jar",
+        "@truth//jar",
+    ],
+)
