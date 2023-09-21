@@ -72,7 +72,7 @@ public abstract class QuerySummary {
    * <p>Whenever changing the logic in this class such that the Query.Summary proto contents will be
    * different for the same input, this version should be incremented.
    */
-  @VisibleForTesting public static final int PROTO_VERSION = 5;
+  @VisibleForTesting public static final int PROTO_VERSION = 6;
 
   public static final QuerySummary EMPTY =
       create(Query.Summary.newBuilder().setVersion(PROTO_VERSION).build());
@@ -96,7 +96,12 @@ public abstract class QuerySummary {
   // need to always need to traverse the attribute.
   private static final ImmutableMap<String, ImmutableSet<String>> RULE_SCOPED_ATTRIBUTES =
       ImmutableMap.of(
-          "$toolchain", ImmutableSet.of("_java_grpc_library", "_java_lite_grpc_library"));
+          "$toolchain",
+          ImmutableSet.of(
+              "_java_grpc_library",
+              "_java_lite_grpc_library",
+              "kt_jvm_library_helper",
+              "android_library"));
 
   // Runtime dependency attributes
   private static final ImmutableSet<String> RUNTIME_DEP_ATTRIBUTES =
