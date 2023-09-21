@@ -66,6 +66,7 @@ import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -115,6 +116,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     applicationServices.register(
         VirtualFileSystemProvider.class, mock(VirtualFileSystemProvider.class));
     when(VirtualFileSystemProvider.getInstance().getSystem()).thenReturn(mockFileSystem);
+
+    Registry.get(BlazeConfigurationResolver.SYNC_EXTERNAL_TARGETS_FROM_DIRECTORIES_KEY).setValue(true);
 
     ExtensionPointImpl<Kind.Provider> ep =
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
@@ -796,7 +799,10 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
 
   @Test
   public void testExternalDependencyResolvedWhenIsPartOfProject() throws IOException {
-    ProjectView projectView = projectView(directories("test"), targets("//test:target"));
+    ProjectView projectView = projectView(
+        directories("test", "external_dependency"),
+        targets("//test:target"));
+
     TargetMap targetMap =
         TargetMapBuilder.builder()
             .addTarget(createCcToolchain())

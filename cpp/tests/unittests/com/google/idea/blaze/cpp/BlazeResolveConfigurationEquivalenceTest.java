@@ -63,6 +63,7 @@ import com.intellij.mock.MockPsiManager;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -115,6 +116,8 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     projectServices.register(PsiManager.class, new MockPsiManager(project));
     projectServices.register(
         BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
+
+    Registry.get(BlazeConfigurationResolver.SYNC_EXTERNAL_TARGETS_FROM_DIRECTORIES_KEY).setValue(true);
 
     BlazeImportSettingsManager.getInstance(getProject())
         .setImportSettings(
