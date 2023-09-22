@@ -477,6 +477,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.SyncListener" interface="com.google.idea.blaze.base.sync.SyncListener"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SimpleSyncListener" interface="com.google.idea.blaze.base.sync.SimpleSyncListener"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SyncPlugin" interface="com.google.idea.blaze.base.sync.BlazeSyncPlugin"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.QuerySyncPlugin" interface="com.google.idea.blaze.base.qsync.BlazeQuerySyncPlugin"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.RunConfigurationFactory" interface="com.google.idea.blaze.base.run.BlazeRunConfigurationFactory"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.Prefetcher"
                     interface="com.google.idea.blaze.base.prefetch.Prefetcher"/>

@@ -16,6 +16,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.kotlin.sync.BlazeKotlinSyncPlugin"/>
+    <QuerySyncPlugin implementation="com.google.idea.blaze.kotlin.qsync.BlazeKotlinQuerySyncPlugin"/>
     <SyncListener implementation="com.google.idea.blaze.kotlin.sync.BlazeKotlinSyncPlugin$Listener"/>
     <JavaLikeLanguage implementation="com.google.idea.blaze.kotlin.KotlinJavaLikeLanguage"/>
     <JavaSyncAugmenter implementation="com.google.idea.blaze.kotlin.sync.importer.KotlinSyncAugmenter"/>

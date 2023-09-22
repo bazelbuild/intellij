@@ -183,7 +183,7 @@ public class BuildLanguageSpecProviderImpl implements BuildLanguageSpecProvider 
 
     // Callback is specific to query sync
     @Override
-    public void afterSync(Project project, BlazeContext context) {
+    public void afterQuerySync(Project project, BlazeContext context) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         return;
       }
