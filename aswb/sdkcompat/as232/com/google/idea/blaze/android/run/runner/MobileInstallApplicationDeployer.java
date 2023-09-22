@@ -15,27 +15,20 @@
  */
 package com.google.idea.blaze.android.run.runner;
 
+import static com.android.tools.idea.run.tasks.AbstractDeployTask.getAppToInstall;
+
 import com.android.ddmlib.IDevice;
-import com.android.tools.deployer.ApkParser;
 import com.android.tools.deployer.Deployer;
 import com.android.tools.deployer.DeployerException;
-import com.android.tools.deployer.model.Apk;
 import com.android.tools.deployer.model.App;
 import com.android.tools.idea.execution.common.ApplicationDeployer;
 import com.android.tools.idea.execution.common.DeployOptions;
-import com.android.tools.idea.log.LogWrapper;
-import com.android.tools.idea.run.ApkFileUnit;
 import com.android.tools.idea.run.ApkInfo;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 
 /** Deploys mobile install application. */
 public class MobileInstallApplicationDeployer implements ApplicationDeployer {
-  final Logger log = Logger.getInstance(this.getClass());
 
   public MobileInstallApplicationDeployer() {}
 
@@ -45,15 +38,8 @@ public class MobileInstallApplicationDeployer implements ApplicationDeployer {
       @NotNull IDevice device,
       @NotNull ApkInfo apkInfo,
       @NotNull DeployOptions deployOptions,
-      ProgressIndicator indicator)
-      throws DeployerException {
-    final List<String> apkPaths =
-        apkInfo.getFiles().stream()
-            .map(ApkFileUnit::getApkPath)
-            .map(Path::toString)
-            .collect(Collectors.toList());
-    final List<Apk> apks = new ApkParser().parsePaths(apkPaths);
-    App app = new App(apkInfo.getApplicationId(), apks, device, new LogWrapper(log));
+      ProgressIndicator indicator) {
+    App app = getAppToInstall(apkInfo);
     return new Deployer.Result(false, false, false, app);
   }
 
@@ -63,8 +49,7 @@ public class MobileInstallApplicationDeployer implements ApplicationDeployer {
       @NotNull IDevice device,
       @NotNull ApkInfo app,
       @NotNull DeployOptions deployOptions,
-      ProgressIndicator indicator)
-      throws DeployerException {
+      ProgressIndicator indicator) {
     throw new RuntimeException("Apply changes is not supported for mobile-install");
   }
 
