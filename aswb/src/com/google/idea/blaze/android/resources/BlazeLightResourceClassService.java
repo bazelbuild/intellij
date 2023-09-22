@@ -23,7 +23,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.experiments.FeatureRolloutExperiment;
@@ -42,7 +41,8 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.Nullable;
 
 /** Implementation of {@link LightResourceClassService} set up at Blaze sync time. */
-public class BlazeLightResourceClassService implements LightResourceClassService {
+public class BlazeLightResourceClassService extends BlazeLightResourceClassServiceBase
+    implements LightResourceClassService {
 
   @VisibleForTesting
   public static final FeatureRolloutExperiment workspaceResourcesFeature =
@@ -57,13 +57,10 @@ public class BlazeLightResourceClassService implements LightResourceClassService
 
   private final Project project;
 
-  private Map<String, BlazeRClass> rClasses = Maps.newHashMap();
-  private Map<Module, BlazeRClass> rClassesByModule = Maps.newHashMap();
   private Map<String, PsiPackage> rClassPackages = Maps.newHashMap();
   private Map<String, BlazeRClass> workspaceRClasses = Maps.newHashMap();
   private Set<String> workspaceRClassNames = ImmutableSet.of();
 
-  private final Set<BlazeRClass> allRClasses = Sets.newHashSet();
   private PsiManager psiManager;
 
   public static BlazeLightResourceClassService getInstance(Project project) {
@@ -196,30 +193,6 @@ public class BlazeLightResourceClassService implements LightResourceClassService
   }
 
   @Override
-  public Collection<? extends PsiClass> getLightRClassesAccessibleFromModule(
-      Module module, boolean includeTest) {
-    if (workspaceResourcesFeature.isEnabled()
-        && module.getName().equals(BlazeDataStorage.WORKSPACE_MODULE_NAME)) {
-      // Returns all the packages in resource modules, and all the workspace packages that
-      // have previously been asked for. All `res/` directories in our project should belong to a
-      // resource module. For java sources, IntelliJ will ask for explicit resource package by
-      // calling `getLightRClasses` at which point we can create the package. This is not completely
-      // correct and the autocomplete will be slightly off when initial `R` is typed in the editor,
-      // but this workaround is being used to mitigate issues (b/136685602) while resources
-      // are re-worked.
-      return allRClasses;
-    } else {
-      return rClasses.values();
-    }
-  }
-
-  // @Override #api4.0: override added in as4.1
-  public Collection<? extends PsiClass> getLightRClassesDefinedByModule(
-      Module module, boolean includeTestClasses) {
-    BlazeRClass rClass = rClassesByModule.get(module);
-    return rClass == null ? ImmutableSet.of() : ImmutableSet.of(rClass);
-  }
-
   public Collection<? extends PsiClass> getLightRClassesContainingModuleResources(Module module) {
     return rClasses.values();
   }

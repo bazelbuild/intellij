@@ -15,12 +15,18 @@
  */
 package com.google.idea.blaze.android.cppimpl.debug;
 
+import com.android.ddmlib.Client;
 import com.android.tools.ndk.run.editor.NativeAndroidDebugger;
+import com.android.tools.ndk.run.editor.NativeAndroidDebuggerState;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebugProcessStarter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Extension of {@link NativeAndroidDebugger} with the following key differences compared to {@link
@@ -55,5 +61,18 @@ public class BlazeNativeAndroidDebuggerBase extends NativeAndroidDebugger {
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     return blazeProjectData != null
         && blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C);
+  }
+
+  @Override
+  public XDebugProcessStarter getDebugProcessStarterForExistingProcess(
+      @NotNull Project project,
+      @NotNull Client client,
+      @Nullable String applicationId,
+      @Nullable NativeAndroidDebuggerState state)
+      throws ExecutionException {
+    if (state != null) {
+      BlazeNativeDebuggerStateSourceMapping.addSourceMapping(project, state);
+    }
+    return super.getDebugProcessStarterForExistingProcess(project, client, applicationId, state);
   }
 }
