@@ -23,7 +23,6 @@ import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -106,8 +105,8 @@ public class ProjectUpdater implements BlazeProjectListener {
     File imlDirectory = new File(BlazeDataStorage.getProjectDataDir(importSettings), "modules");
     Transactions.submitWriteActionTransactionAndWait(
         () -> {
-          for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-            syncPlugin.updateProjectSdk(project, context, projectViewSet);
+          for (BlazeQuerySyncPlugin syncPlugin : BlazeQuerySyncPlugin.EP_NAME.getExtensions()) {
+            syncPlugin.updateProjectSettingsForQuerySync(project, context, projectViewSet);
           }
 
           IdeModifiableModelsProvider models =
@@ -181,12 +180,12 @@ public class ProjectUpdater implements BlazeProjectListener {
             WorkspaceLanguageSettings workspaceLanguageSettings =
                 LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
 
-            for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
+            for (BlazeQuerySyncPlugin syncPlugin : BlazeQuerySyncPlugin.EP_NAME.getExtensions()) {
               // TODO update ProjectProto.Module and updateProjectStructure() to allow a more
               // suitable
               //   data type to be passed in here instead of androidResourceDirectories and
               //   androidSourcePackages
-              syncPlugin.updateProjectStructure(
+              syncPlugin.updateProjectStructureForQuerySync(
                   project,
                   context,
                   workspaceRoot,

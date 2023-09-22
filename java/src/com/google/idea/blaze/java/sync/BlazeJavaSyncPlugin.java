@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.Glob;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -42,11 +41,9 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
-import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
-import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.java.projectview.ExcludeLibrarySection;
 import com.google.idea.blaze.java.projectview.ExcludedLibrarySection;
 import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
@@ -170,37 +167,6 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
                 .addAll(projectViewSet.listItems(ExcludedLibrarySection.KEY))
                 .build());
     syncStateBuilder.put(new BlazeJavaSyncData(importResult, excludedLibraries));
-  }
-
-  @Override
-  public void updateProjectSdk(Project project, Context context, ProjectViewSet projectViewSet) {
-    if (!QuerySync.isEnabled()) {
-      return;
-    }
-    WorkspaceLanguageSettings workspaceLanguageSettings =
-        LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
-    if (!workspaceLanguageSettings.isWorkspaceType(WorkspaceType.JAVA)) {
-      return;
-    }
-
-    LanguageLevel javaLanguageLevel =
-        JavaLanguageLevelSection.getLanguageLevel(projectViewSet, LanguageLevel.JDK_11);
-    Sdk currentSdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    Sdk sdk = Jdks.chooseOrCreateJavaSdk(currentSdk, javaLanguageLevel);
-
-    if (sdk == null) {
-      String msg =
-          String.format(
-              "Unable to find a JDK %1$s installed.\n", javaLanguageLevel.getPresentableText());
-      IssueOutput.error(msg).submit(context);
-      return;
-    }
-
-    LanguageLevel currentLanguageLevel =
-        LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
-    if (sdk != currentSdk || javaLanguageLevel != currentLanguageLevel) {
-      setProjectSdkAndLanguageLevel(project, sdk, javaLanguageLevel);
-    }
   }
 
   @Override

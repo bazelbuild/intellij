@@ -71,6 +71,7 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <LintCollector implementation="com.google.idea.blaze.android.libraries.AndroidLintCollector"/>
     <SyncPlugin implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncPlugin"/>
+    <QuerySyncPlugin implementation="com.google.idea.blaze.android.qsync.BlazeAndroidQuerySyncPlugin"/>
     <SyncListener implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncListener"/>
     <SyncListener implementation="com.google.idea.blaze.android.manifest.ParsedManifestService$ClearManifestParser"/>
     <SyncListener implementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemSyncManager$SyncStatusPublisher"/>

@@ -200,7 +200,7 @@ public class QuerySyncProject {
     } finally {
       for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
         // A query sync specific callback.
-        syncListener.afterSync(project, context);
+        syncListener.afterQuerySync(project, context);
       }
     }
   }

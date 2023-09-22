@@ -50,6 +50,7 @@
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.java.sync.BlazeJavaSyncPlugin"/>
+    <QuerySyncPlugin implementation="com.google.idea.blaze.java.qsync.BlazeJavaQuerySyncPlugin"/>
     <PsiFileProvider implementation="com.google.idea.blaze.java.psi.JavaPsiFileProvider" />
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.java.run.BlazeJavaRunConfigurationHandlerProvider"/>
     <SettingsUiContributor implementation="com.google.idea.blaze.java.settings.BlazeJavaUserSettingsConfigurable$UiContributor"/>

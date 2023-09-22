@@ -40,8 +40,8 @@ public interface SyncListener {
    * Called just prior to starting a blaze build during sync.
    *
    * @param fullProjectSync true if all project targets are being synced.
-   * @param buildId a unique ID associated with each sync build. {@link #afterSync} is guaranteed to
-   *     be called with this build ID at some point.
+   * @param buildId a unique ID associated with each sync build. {@link #afterQuerySync} is
+   *     guaranteed to be called with this build ID at some point.
    */
   default void buildStarted(
       Project project,
@@ -70,5 +70,5 @@ public interface SyncListener {
       ImmutableSet<Integer> buildIds) {}
 
   /** Called after sync. Only used in new query-sync * */
-  default void afterSync(Project project, BlazeContext context) {}
+  default void afterQuerySync(Project project, BlazeContext context) {}
 }

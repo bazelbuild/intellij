@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.kotlin.sync;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.idea.blaze.kotlin.sync.KotlinUtils.findToolchain;
 
@@ -27,7 +26,6 @@ import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
@@ -37,10 +35,6 @@ import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
-import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
-import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
-import com.google.idea.blaze.common.Context;
-import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
 import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.sdkcompat.kotlin.KotlinCompat;
@@ -244,27 +238,6 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
         JavaLanguageLevelHelper.getJavaLanguageLevel(projectViewSet, blazeProjectData));
   }
 
-  @Override
-  public void updateProjectStructure(
-      Project project,
-      Context context,
-      WorkspaceRoot workspaceRoot,
-      Module workspaceModule,
-      Set<String> androidResourceDirectories,
-      Set<String> androidSourcePackages,
-      WorkspaceLanguageSettings workspaceLanguageSettings) {
-    if (!isKotlinProject(project)) {
-      return;
-    }
-
-    // Set jvm-target from java language level
-    ProjectViewSet projectViewSet =
-        checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet());
-    LanguageLevel javaLanguageLevel =
-        JavaLanguageLevelSection.getLanguageLevel(projectViewSet, LanguageLevel.JDK_11);
-    setProjectJvmTarget(project, javaLanguageLevel);
-  }
-
   /**
    * This method takes the options that are present on the {@link KotlinPluginOptionsProvider} and
    * adds them as plugin options to the {@link KotlinFacet}. Old options are removed from the facet
@@ -346,12 +319,5 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
       }
       KotlinCompat.configureModule(project, workspaceModule);
     }
-  }
-
-  private static boolean isKotlinProject(Project project) {
-    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    WorkspaceLanguageSettings workspaceLanguageSettings =
-        LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
-    return workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN);
   }
 }
