@@ -15,7 +15,9 @@
  */
 package com.google.idea.blaze.qsync;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.idea.blaze.common.Label.toLabelList;
+import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;
@@ -32,6 +34,7 @@ import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.BuildGraphData.Location;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.query.Query;
+import com.google.idea.blaze.qsync.query.Query.Rule;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -140,10 +143,7 @@ public class BlazeQueryParser {
       if (isJavaRule(ruleClass)) {
         graphBuilder.allTargetsBuilder().add(ruleEntry.getKey());
         ImmutableSet<Label> thisSources =
-            ImmutableSet.<Label>builder()
-                .addAll(toLabelList(ruleEntry.getValue().getSourcesList()))
-                .addAll(toLabelList(ruleEntry.getValue().getResourceFilesList()))
-                .build();
+            sourcesWithExpandedFileGroups(ruleEntry.getValue(), query);
         Set<Label> thisDeps = Sets.newHashSet(toLabelList(ruleEntry.getValue().getDepsList()));
         ruleDeps.computeIfAbsent(ruleEntry.getKey(), x -> Sets.newHashSet()).addAll(thisDeps);
 
@@ -223,5 +223,42 @@ public class BlazeQueryParser {
               }
             });
     return ImmutableMultimap.copyOf(map);
+  }
+
+  /** Returns a set of all sources for a rule, expanding any in-project {@code filegroup} rules */
+  private ImmutableSet<Label> sourcesWithExpandedFileGroups(Rule rule, QuerySummary query) {
+    ImmutableSet<Label> rawLabels =
+        ImmutableSet.<Label>builder()
+            .addAll(toLabelList(rule.getSourcesList()))
+            .addAll(toLabelList(rule.getResourceFilesList()))
+            .build();
+    return rawLabels.stream()
+        .flatMap(l -> expandFileGroups(l, query).stream())
+        .collect(toImmutableSet());
+  }
+
+  private ImmutableSet<Label> expandFileGroups(Label label, QuerySummary summary) {
+    if (!isFileGroup(label, summary)) {
+      return ImmutableSet.of(label);
+    }
+    Set<Label> visited = Sets.newHashSet();
+    ImmutableSet.Builder<Label> result = ImmutableSet.builder();
+
+    for (String source : requireNonNull(summary.getRulesMap().get(label)).getSourcesList()) {
+      Label asLabel = Label.of(source);
+      if (visited.add(asLabel)) {
+        result.addAll(expandFileGroups(asLabel, summary));
+      }
+    }
+
+    return result.build();
+  }
+
+  private boolean isFileGroup(Label label, QuerySummary summary) {
+    Rule rule = summary.getRulesMap().get(label);
+    if (rule == null) {
+      return false;
+    }
+    return rule.getRuleClass().equals("filegroup");
   }
 }

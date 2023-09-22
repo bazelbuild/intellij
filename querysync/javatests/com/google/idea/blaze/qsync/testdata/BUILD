@@ -103,6 +103,15 @@ genquery(
         scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/buildincludes:mylib"),
 )
 
+genquery(
+    name = "filegroup_query",
+    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/filegroup:*",
+    opts = ["--output=streamed_proto"],
+    scope =
+        ["//querysync/javatests/com/google/idea/blaze/qsync/testdata/filegroup:sources"] +
+        scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/filegroup:filegroup"),
+)
+
 java_library(
     name = "testdata",
     srcs = ["TestData.java"],
@@ -110,6 +119,7 @@ java_library(
         ":android_aidl_source_query",
         ":android_lib_query",
         ":buildincludes_query",
+        ":filegroup_query",
         ":java_exported_dep_query",
         ":java_library_external_dep_query",
         ":java_library_internal_dep_query",
