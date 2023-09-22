@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.android;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,7 +32,7 @@ public class AswbTestUtils {
 
   public static void symlinkToSandboxHome(String target, String customLink) {
     try {
-      File file = recursivelySearchForTargetFolder(getWorkspaceRoot(), target);
+      File file = recursivelySearchForTargetFolder(getRunfilesWorkspaceRoot(), target);
       if (file == null) {
         throw new IllegalStateException("Cannot symlink to idea home: " + target);
       }
@@ -67,37 +69,10 @@ public class AswbTestUtils {
     return null;
   }
 
-  static synchronized File getWorkspaceRoot() {
-    File workspaceRoot = null;
-
+  static synchronized File getRunfilesWorkspaceRoot() {
     // Use the sandboxed root provided for bazel tests.
-    String workspace = System.getenv("TEST_WORKSPACE");
-    String workspaceParent = System.getenv("TEST_SRCDIR");
-    File curDir = new File("");
-    if (workspace != null && workspaceParent != null) {
-      curDir = new File(workspaceParent, workspace);
-      workspaceRoot = curDir;
-    }
-    File initialDir = curDir;
-
-    // Look to see if there's a larger outermost workspace since we might be within a nested
-    // workspace.
-    while (curDir != null) {
-      curDir = curDir.getAbsoluteFile();
-      if (new File(curDir, "WORKSPACE").exists()) {
-        workspaceRoot = curDir;
-      }
-      curDir = curDir.getParentFile();
-    }
-
-    if (workspaceRoot == null) {
-      throw new IllegalStateException(
-          "Could not find WORKSPACE root. Is the original working directory a "
-              + "subdirectory of the Android Studio codebase?\n\n"
-              + "pwd = "
-              + initialDir.getAbsolutePath());
-    }
-
-    return workspaceRoot;
+    String workspace = requireNonNull(System.getenv("TEST_WORKSPACE"));
+    String workspaceParent = requireNonNull(System.getenv("TEST_SRCDIR"));
+    return new File(workspaceParent, workspace);
   }
 }
