@@ -19,6 +19,7 @@ import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.ideinfo.Tags;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.ExcludeTargetSection;
@@ -43,6 +44,10 @@ public class ProjectViewTargetImportFilter {
 
   public boolean isSourceTarget(TargetIdeInfo target) {
     return importRoots.importAsSource(target.getKey().getLabel()) && !importTargetOutput(target);
+  }
+
+  public boolean containsWorkspacePath(WorkspacePath workspacePath) {
+    return importRoots.containsWorkspacePath(workspacePath);
   }
 
   private boolean importTargetOutput(TargetIdeInfo target) {

@@ -28,7 +28,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import java.io.File;
+import java.io.IOException;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Converts execution-root-relative paths to absolute files with a minimum of file system calls
@@ -135,7 +137,7 @@ public class ExecutionRootPathResolver {
     if (firstPathComponent.equals(externalPrefix)) { // In external workspace
       // External workspaces accumulate under the output base.
       // The symlinks to them under the execution root are unstable, and only linked per build.
-      return ImmutableList.of(path.getFileRootedAt(outputBase));
+      return resolveToExternalWorkspaceWithSymbolicLinkResolution(path);
     }
     // Else, in main workspace
     WorkspacePath workspacePath =
@@ -145,6 +147,27 @@ public class ExecutionRootPathResolver {
     } else {
       return ImmutableList.of();
     }
+  }
+
+  /**
+   * Resolves ExecutionRootPath to external workspace location and in case if item in external
+   * workspace is a link to workspace root then follows it and returns a path to workspace root
+   */
+  @NotNull
+  private ImmutableList<File> resolveToExternalWorkspaceWithSymbolicLinkResolution(
+      ExecutionRootPath path) {
+    File fileInExecutionRoot = path.getFileRootedAt(outputBase);
+
+    try {
+      File realPath = fileInExecutionRoot.toPath().toRealPath().toFile();
+      if (workspacePathResolver.getWorkspacePath(realPath) != null) {
+        return ImmutableList.of(realPath);
+      }
+    } catch (IOException ioException) {
+      LOG.warn("Failed to resolve real path for " + fileInExecutionRoot, ioException);
+    }
+
+    return ImmutableList.of(fileInExecutionRoot);
   }
 
   public File getExecutionRoot() {

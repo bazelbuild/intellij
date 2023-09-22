@@ -21,13 +21,17 @@ import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /** Decodes intellij_ide_info.proto ArtifactLocation file paths */
 public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecoder {
+  private static final Logger LOG = Logger.getInstance(ArtifactLocationDecoderImpl.class);
   private final BlazeInfo blazeInfo;
   private final WorkspacePathResolver pathResolver;
   private final RemoteOutputArtifacts remoteOutputs;
@@ -55,6 +59,11 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
 
   @Override
   public File resolveSource(ArtifactLocation artifact) {
+    File mainWorkspaceFile = tryToResolveExternalArtifactToMainWorkspace(artifact);
+    if (mainWorkspaceFile != null) {
+      return mainWorkspaceFile;
+    }
+
     return artifact.isMainWorkspaceSourceArtifact()
         ? pathResolver.resolveToFile(artifact.getRelativePath())
         : null;
@@ -65,6 +74,12 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
     if (artifactLocation.isMainWorkspaceSourceArtifact()) {
       return pathResolver.resolveToFile(artifactLocation.getRelativePath());
     }
+
+    File mainWorkspaceFile = tryToResolveExternalArtifactToMainWorkspace(artifactLocation);
+    if (mainWorkspaceFile != null) {
+      return mainWorkspaceFile;
+    }
+
     String path =
         Paths.get(
                 blazeInfo.getExecutionRoot().getPath(),
@@ -72,6 +87,22 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
             .toString();
     // doesn't require file-system operations -- no attempt to resolve symlinks.
     return new File(FileUtil.toCanonicalPath(path));
+  }
+
+  private @Nullable File tryToResolveExternalArtifactToMainWorkspace(ArtifactLocation artifactLocation) {
+    if (artifactLocation.isExternal()) {
+      try {
+        File realFile = blazeInfo.getExecutionRoot().toPath()
+            .resolve(artifactLocation.getExecutionRootRelativePath()).toRealPath().toFile();
+        if (pathResolver.getWorkspacePath(realFile) != null) {
+          return realFile;
+        }
+      } catch (IOException ioException) {
+        LOG.warn("Failed to resolve real path for " + artifactLocation.getExecutionRootRelativePath(),
+            ioException);
+      }
+    }
+    return null;
   }
 
   @Override

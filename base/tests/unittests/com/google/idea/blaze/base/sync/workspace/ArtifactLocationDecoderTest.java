@@ -16,12 +16,18 @@
 package com.google.idea.blaze.base.sync.workspace;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.google.devtools.intellij.aspect.Common;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import java.io.File;
+import java.io.IOException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -114,5 +120,39 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
 
     assertThat(decoder.decode(artifactLocation).getPath())
         .isEqualTo(OUTPUT_BASE + "/execroot/repo_name/blaze-out/crosstool/bin/com/google/Bla.java");
+  }
+
+  @Test
+  public void testResolveSourceToProjectWorkspace() throws IOException {
+    ArtifactLocation artifactLocation =
+        ArtifactLocation.fromProto(
+            Common.ArtifactLocation.newBuilder()
+                .setRelativePath("something.h")
+                .setRootExecutionPathFragment("external/repo_name")
+                .setIsSource(true)
+                .setIsExternal(true)
+                .build());
+
+    BlazeInfo blazeInfo = mock(BlazeInfo.class, RETURNS_DEEP_STUBS);
+
+    File workspaceRootFile = new File("/workspace/root");
+    WorkspacePathResolver resolver =
+        new WorkspacePathResolverImpl(new WorkspaceRoot(workspaceRootFile));
+
+    ArtifactLocationDecoder decoder =
+        new ArtifactLocationDecoderImpl(
+            blazeInfo,
+            resolver,
+            RemoteOutputArtifacts.EMPTY);
+
+    when(blazeInfo.getExecutionRoot().toPath()
+        .resolve(artifactLocation.getExecutionRootRelativePath()).toRealPath()).thenReturn(
+        workspaceRootFile.toPath().resolve("something.h"));
+
+    assertThat(decoder.resolveSource(artifactLocation))
+        .isEqualTo(workspaceRootFile.toPath().resolve("something.h").toFile());
+
+    assertThat(decoder.decode(artifactLocation))
+        .isEqualTo(workspaceRootFile.toPath().resolve("something.h").toFile());
   }
 }
