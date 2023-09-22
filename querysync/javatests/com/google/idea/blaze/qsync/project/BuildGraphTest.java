@@ -192,4 +192,20 @@ public class BuildGraphTest {
             Label.of("//" + TESTDATA_ROOT + "/aidl:aidl"));
   }
 
+  @Test
+  public void testFileGroupSource() throws Exception {
+    BuildGraphData graph =
+        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
+            .parse(getQuerySummary(TestData.FILEGROUP_QUERY));
+    Path sourceFile = TESTDATA_ROOT.resolve("filegroup/TestFileGroupSource.java");
+    Path subgroupSourceFile = TESTDATA_ROOT.resolve("filegroup/TestSubFileGroupSource.java");
+    assertThat(graph.projectDeps())
+        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
+    assertThat(graph.getJavaSourceFiles()).containsExactly(sourceFile, subgroupSourceFile);
+    assertThat(graph.getFileDependencies(sourceFile))
+        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
+    assertThat(graph.getFileDependencies(subgroupSourceFile))
+        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
+  }
+
 }
