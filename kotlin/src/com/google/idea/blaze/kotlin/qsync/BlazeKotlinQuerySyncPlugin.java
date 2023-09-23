@@ -15,11 +15,8 @@
  */
 package com.google.idea.blaze.kotlin.qsync;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.qsync.BlazeQuerySyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
@@ -27,10 +24,8 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
 import com.google.idea.sdkcompat.kotlin.KotlinCompat;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
-import java.util.Set;
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder;
 
@@ -38,21 +33,13 @@ import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgume
 public class BlazeKotlinQuerySyncPlugin implements BlazeQuerySyncPlugin {
 
   @Override
-  public void updateProjectStructureForQuerySync(
-      Project project,
-      Context<?> context,
-      WorkspaceRoot workspaceRoot,
-      Module workspaceModule,
-      Set<String> androidResourceDirectories,
-      Set<String> androidSourcePackages,
-      WorkspaceLanguageSettings workspaceLanguageSettings) {
-    if (!isKotlinProject(project)) {
+  public void updateProjectSettingsForQuerySync(
+      Project project, Context<?> context, ProjectViewSet projectViewSet) {
+    if (!isKotlinProject(projectViewSet)) {
       return;
     }
 
     // Set jvm-target from java language level
-    ProjectViewSet projectViewSet =
-        checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet());
     LanguageLevel javaLanguageLevel =
         JavaLanguageLevelSection.getLanguageLevel(projectViewSet, LanguageLevel.JDK_11);
     setProjectJvmTarget(project, javaLanguageLevel);
@@ -70,8 +57,7 @@ public class BlazeKotlinQuerySyncPlugin implements BlazeQuerySyncPlugin {
         .setSettings(k2JVMCompilerArguments);
   }
 
-  private static boolean isKotlinProject(Project project) {
-    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+  private static boolean isKotlinProject(ProjectViewSet projectViewSet) {
     WorkspaceLanguageSettings workspaceLanguageSettings =
         LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
     return workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN);

@@ -15,8 +15,11 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static java.util.Arrays.stream;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -38,7 +41,6 @@ import com.google.idea.common.util.Transactions;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
@@ -46,7 +48,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.libraries.Library;
@@ -66,7 +68,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 /** An object that monitors the build graph and applies the changes to the project structure. */
 public class ProjectUpdater implements BlazeProjectListener {
 
-  private Project project;
+  private final Project project;
   private final BlazeImportSettings importSettings;
   private final ProjectViewSet projectViewSet;
   private final WorkspaceRoot workspaceRoot;
@@ -101,16 +103,15 @@ public class ProjectUpdater implements BlazeProjectListener {
   }
 
   private void updateProjectModel(ProjectProto.Project spec, Context context) {
-    ModuleManager moduleManager = ModuleManager.getInstance(project);
     File imlDirectory = new File(BlazeDataStorage.getProjectDataDir(importSettings), "modules");
     Transactions.submitWriteActionTransactionAndWait(
         () -> {
+          IdeModifiableModelsProvider models =
+              ProjectDataManager.getInstance().createModifiableModelsProvider(project);
+
           for (BlazeQuerySyncPlugin syncPlugin : BlazeQuerySyncPlugin.EP_NAME.getExtensions()) {
             syncPlugin.updateProjectSettingsForQuerySync(project, context, projectViewSet);
           }
-
-          IdeModifiableModelsProvider models =
-              ProjectDataManager.getInstance().createModifiableModelsProvider(project);
           int removedLibCount = removeUnusedLibraries(models, spec.getLibraryList());
           if (removedLibCount > 0) {
             context.output(PrintOutput.output("Removed " + removedLibCount + " libs"));
@@ -121,15 +122,21 @@ public class ProjectUpdater implements BlazeProjectListener {
             libMapBuilder.put(libSpec.getName(), library);
           }
           ImmutableMap<String, Library> libMap = libMapBuilder.buildOrThrow();
-          models.commit();
 
           for (ProjectProto.Module moduleSpec : spec.getModulesList()) {
             Module module =
-                moduleManager.newModule(
-                    imlDirectory.toPath().resolve(moduleSpec.getName() + ".iml"),
+                models.newModule(
+                    imlDirectory.toPath().resolve(moduleSpec.getName() + ".iml").toString(),
                     mapModuleType(moduleSpec.getType()).getId());
 
-            ModifiableRootModel roots = ModuleRootManager.getInstance(module).getModifiableModel();
+            ModifiableRootModel roots = models.getModifiableRootModel(module);
+            ImmutableList<OrderEntry> existingLibraryOrderEntries =
+                stream(roots.getOrderEntries())
+                    .filter(it -> it instanceof LibraryOrderEntry)
+                    .collect(toImmutableList());
+            for (OrderEntry entry : existingLibraryOrderEntries) {
+              roots.removeOrderEntry(entry);
+            }
             // TODO: should this be encapsulated in ProjectProto.Module?
             roots.inheritSdk();
 
@@ -188,6 +195,7 @@ public class ProjectUpdater implements BlazeProjectListener {
               syncPlugin.updateProjectStructureForQuerySync(
                   project,
                   context,
+                  models,
                   workspaceRoot,
                   module,
                   ImmutableSet.copyOf(moduleSpec.getAndroidResourceDirectoriesList()),
@@ -197,7 +205,7 @@ public class ProjectUpdater implements BlazeProjectListener {
                       .build(),
                   workspaceLanguageSettings);
             }
-            roots.commit();
+            models.commit();
           }
         });
   }
@@ -218,7 +226,7 @@ public class ProjectUpdater implements BlazeProjectListener {
                     Function.identity()));
 
     // make sure the library contains only jar directory urls we want
-    ModifiableModel modifiableModel = library.getModifiableModel();
+    ModifiableModel modifiableModel = models.getModifiableLibraryModel(library);
 
     Set<String> foundJarDirectories = Sets.newHashSet();
     for (String url : modifiableModel.getUrls(OrderRootType.CLASSES)) {
@@ -256,7 +264,6 @@ public class ProjectUpdater implements BlazeProjectListener {
       modifiableModel.addRoot(missing, OrderRootType.SOURCES);
     }
 
-    modifiableModel.commit();
     return library;
   }
 

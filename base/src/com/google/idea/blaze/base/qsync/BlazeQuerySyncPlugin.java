@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.common.Context;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import java.util.Set;
@@ -29,14 +30,15 @@ public interface BlazeQuerySyncPlugin {
   ExtensionPointName<BlazeQuerySyncPlugin> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.QuerySyncPlugin");
 
-  /** Updates the sdk for the project -- only used for the new query-sync */
+  /** Updates the sdk and language settings for the project */
   default void updateProjectSettingsForQuerySync(
       Project project, Context<?> context, ProjectViewSet projectViewSet) {}
 
-  /** Modifies the IDE project structure -- only used for the new query-sync */
+  /** Modifies the IDE project structure */
   default void updateProjectStructureForQuerySync(
       Project project,
       Context<?> context,
+      IdeModifiableModelsProvider models,
       WorkspaceRoot workspaceRoot,
       Module workspaceModule,
       Set<String> androidResourceDirectories,
