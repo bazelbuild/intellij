@@ -18,7 +18,6 @@ package com.google.idea.blaze.java.qsync;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.qsync.BlazeQuerySyncPlugin;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -39,9 +38,6 @@ public class BlazeJavaQuerySyncPlugin implements BlazeQuerySyncPlugin {
   @Override
   public void updateProjectSettingsForQuerySync(
       Project project, Context<?> context, ProjectViewSet projectViewSet) {
-    if (!QuerySync.isEnabled()) {
-      return;
-    }
     WorkspaceLanguageSettings workspaceLanguageSettings =
         LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
     if (!workspaceLanguageSettings.isWorkspaceType(WorkspaceType.JAVA)) {
