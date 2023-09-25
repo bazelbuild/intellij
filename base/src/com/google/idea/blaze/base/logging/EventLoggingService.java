@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.logging.utils.HighlightStats;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
 import com.intellij.openapi.components.ServiceManager;
+import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStats;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Map;
@@ -39,6 +40,8 @@ public interface EventLoggingService {
   }
 
   void log(SyncStats syncStats);
+
+  void log(QuerySyncActionStats querySyncStats);
 
   void logCommand(Class<?> loggingClass, Command command);
 
