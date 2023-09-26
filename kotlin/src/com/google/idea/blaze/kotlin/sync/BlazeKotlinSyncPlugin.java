@@ -64,7 +64,6 @@ import org.jetbrains.kotlin.android.synthetic.AndroidCommandLineProcessor;
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
 import org.jetbrains.kotlin.config.CompilerSettings;
-import org.jetbrains.kotlin.config.KotlinFacetSettings;
 import org.jetbrains.kotlin.config.LanguageVersion;
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
@@ -273,7 +272,7 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
    * @param newPluginOptions new plugin options to be updated to KotlinFacet settings
    */
   private static void updatePluginOptions(KotlinFacet kotlinFacet, List<String> newPluginOptions) {
-    KotlinFacetSettings facetSettings = kotlinFacet.getConfiguration().getSettings();
+    var facetSettings = kotlinFacet.getConfiguration().getSettings();
     // TODO: Unify this part with {@link
     // org.jetbrains.kotlin.android.sync.ng.KotlinSyncModels#setupKotlinAndroidExtensionAsFacetPluginOptions}?
     CommonCompilerArguments commonArguments = facetSettings.getCompilerArguments();
