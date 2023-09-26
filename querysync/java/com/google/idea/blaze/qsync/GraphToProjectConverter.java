@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -353,6 +354,20 @@ public class GraphToProjectConverter {
                     .setRecursive(false))
             .build();
 
+    ImmutableSet.Builder<ProjectProto.CustomPackageInfo> androidCustomPackageInfos =
+        ImmutableSet.builder();
+    ImmutableSetMultimap<String, Path> customPackageToSourceFiles =
+        graph.getCustomPackageToSourceFiles();
+    for (String customPackage : customPackageToSourceFiles.keys()) {
+      ProjectProto.CustomPackageInfo.Builder customPackageInfo =
+          ProjectProto.CustomPackageInfo.newBuilder();
+      customPackageInfo.setAndroidCustomPackage(customPackage);
+      customPackageInfo.addAllOriginalPackages(
+          computeAndroidSourcePackages(
+              customPackageToSourceFiles.get(customPackage).asList(), rootToPrefix));
+      androidCustomPackageInfos.add(customPackageInfo.build());
+    }
+
     ProjectProto.Module.Builder workspaceModule =
         ProjectProto.Module.newBuilder()
             .setName(BlazeProjectDataStorage.WORKSPACE_MODULE_NAME)
@@ -361,7 +376,7 @@ public class GraphToProjectConverter {
             .addAllAndroidResourceDirectories(
                 dirs.stream().map(Path::toString).collect(toImmutableList()))
             .addAllAndroidSourcePackages(pkgs)
-            .addAllAndroidCustomPackages(graph.getAllCustomPackages());
+            .addAllAndroidCustomPackageInfos(androidCustomPackageInfos.build());
 
     ListMultimap<Path, Path> excludesByRootDirectory =
         projectDefinition.getExcludesByRootDirectory();

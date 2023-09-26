@@ -79,6 +79,7 @@ public class QuerySyncProject {
   private final BlazeImportSettings importSettings;
   private final WorkspaceRoot workspaceRoot;
   private final ArtifactTracker artifactTracker;
+  private final CustomPackageMap customPackageMap;
   private final DependencyTracker dependencyTracker;
   private final ProjectQuerier projectQuerier;
   private final ProjectDefinition projectDefinition;
@@ -124,6 +125,7 @@ public class QuerySyncProject {
     this.projectViewManager = projectViewManager;
     this.buildSystem = buildSystem;
     projectData = new QuerySyncProjectData(workspacePathResolver, workspaceLanguageSettings);
+    customPackageMap = new CustomPackageMap();
   }
 
   public QuerySyncProjectData getProjectData() {
@@ -140,6 +142,10 @@ public class QuerySyncProject {
 
   public ArtifactTracker getArtifactTracker() {
     return artifactTracker;
+  }
+
+  public CustomPackageMap getCustomPackageMap() {
+    return customPackageMap;
   }
 
   public SourceToTargetMap getSourceToTargetMap() {
@@ -181,6 +187,7 @@ public class QuerySyncProject {
           lastQuery.isEmpty()
               ? projectQuerier.fullQuery(projectDefinition, context)
               : projectQuerier.update(projectDefinition, lastQuery.get(), context);
+      customPackageMap.setCustomPackageToPackageNameMap(newProject.project());
       newProject = artifactTracker.updateSnapshot(newProject);
       onNewSnapshot(context, newProject);
 
