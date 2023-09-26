@@ -66,7 +66,7 @@ public final class KotlinBlazeRules implements Kind.Provider {
   @Override
   public Function<TargetIdeInfo, Kind> getTargetKindHeuristics() {
     return proto ->
-        proto.getKindString().startsWith("kt_jvm_")
+        proto.getKindString().startsWith("kt_jvm_") || proto.getKindString().startsWith("kt_android_")
             ? Kind.Provider.create(proto.getKindString(), LanguageClass.KOTLIN, RuleType.UNKNOWN)
             : null;
   }
