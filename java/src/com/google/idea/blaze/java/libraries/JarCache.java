@@ -574,7 +574,7 @@ public class JarCache {
 
   private static String artifactKey(BlazeArtifact artifact) {
     if (artifact instanceof OutputArtifactWithoutDigest) {
-      return ((OutputArtifactWithoutDigest) artifact).getKey();
+      return ((OutputArtifactWithoutDigest) artifact).getRelativePath();
     }
     if (artifact instanceof SourceArtifact) {
       return ((SourceArtifact) artifact).getFile().getPath();

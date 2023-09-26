@@ -207,7 +207,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .getBuildResult()
             .getOutputGroupArtifacts(group -> group.startsWith(OutputGroup.INFO.prefix))
             .stream()
-            .filter(f -> ideInfoPredicate.test(f.getKey()))
+            .filter(f -> ideInfoPredicate.test(f.getRelativePath()))
             .distinct()
             .collect(toImmutableList());
 
@@ -390,7 +390,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                     configurations.add(config);
                     TargetKey key = targetFilePair.target.getKey();
                     if (targetMap.putIfAbsent(key, targetFilePair.target) == null) {
-                      state.ideInfoToTargetKey.forcePut(file.getKey(), key);
+                      state.ideInfoToTargetKey.forcePut(file.getRelativePath(), key);
                     } else {
                       if (!newTargets.add(key)) {
                         duplicateTargetLabels++;
@@ -398,7 +398,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                       // prioritize the default configuration over build order
                       if (Objects.equals(config, configHandler.defaultConfigurationPathComponent)) {
                         targetMap.put(key, targetFilePair.target);
-                        state.ideInfoToTargetKey.forcePut(file.getKey(), key);
+                        state.ideInfoToTargetKey.forcePut(file.getRelativePath(), key);
                       }
                     }
                   }
@@ -535,7 +535,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     // TODO: handle prefetching for arbitrary OutputArtifacts
     ImmutableList<File> files =
         artifacts.stream()
-            .filter(a -> filter.test(a.getKey()))
+            .filter(a -> filter.test(a.getRelativePath()))
             .filter(o -> o instanceof LocalFileArtifact)
             .map(o -> ((LocalFileArtifact) o).getFile())
             .collect(toImmutableList());

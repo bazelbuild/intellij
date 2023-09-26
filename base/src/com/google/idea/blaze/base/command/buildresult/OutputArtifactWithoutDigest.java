@@ -25,16 +25,6 @@ public interface OutputArtifactWithoutDigest extends BlazeArtifact, OutputArtifa
   String getConfigurationMnemonic();
 
   /**
-   * A key uniquely identifying an artifact between builds. Different versions of an artifact
-   * produced from different blaze builds will have the same key.
-   *
-   * <p>TODO(brendandouglas): remove this in favor of ArtifactState#getKey
-   */
-  default String getKey() {
-    return getRelativePath();
-  }
-
-  /**
    * Returns the {@link ArtifactState} for this output, used for serialization/diffing purposes. Can
    * require file system operations.
    */

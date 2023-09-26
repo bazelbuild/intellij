@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.io.FileAttributeScanner;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
@@ -54,7 +55,7 @@ public abstract class ArtifactsDiff {
       throws InterruptedException, ExecutionException {
     return diffArtifacts(
         oldState,
-        newArtifacts.stream().collect(toImmutableMap(OutputArtifactWithoutDigest::getKey, a -> a)));
+        newArtifacts.stream().collect(toImmutableMap(OutputArtifactInfo::getRelativePath, a -> a)));
   }
 
   public static ArtifactsDiff diffArtifacts(
@@ -90,13 +91,14 @@ public abstract class ArtifactsDiff {
       return artifacts.stream()
           .collect(
               toImmutableMap(
-                  OutputArtifactWithoutDigest::getKey,
+                  OutputArtifactInfo::getRelativePath,
                   OutputArtifactWithoutDigest::toArtifactState));
     }
     // for local files, diffing requires checking the timestamps, which we multi-thread
     return FileAttributeScanner.readAttributes(artifacts, TO_ARTIFACT_STATE, FetchExecutor.EXECUTOR)
-        .entrySet().stream()
-        .collect(toImmutableMap(e -> e.getKey().getKey(), Map.Entry::getValue));
+        .entrySet()
+        .stream()
+        .collect(toImmutableMap(e -> e.getKey().getRelativePath(), Map.Entry::getValue));
   }
 
   private static FileAttributeScanner.AttributeReader<OutputArtifactWithoutDigest, ArtifactState>

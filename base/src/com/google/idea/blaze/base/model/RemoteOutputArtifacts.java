@@ -87,7 +87,7 @@ public final class RemoteOutputArtifacts
     // more recently built artifacts replace existing ones with the same path
     outputs.forEach(
         a -> {
-          String key = a.getKey();
+          String key = a.getRelativePath();
           if (!(a instanceof RemoteOutputArtifact)) {
             map.remove(key);
           } else {

@@ -59,7 +59,7 @@ public class BlazeApkDeployInfoProtoHelper {
         log.warn("Local execroot: " + bepOutput.getLocalExecRoot());
         log.warn("All output artifacts:");
         for (OutputArtifact outputArtifact : bepOutput.getAllOutputArtifacts(path -> true)) {
-          log.warn(outputArtifact.getKey() + " -> " + outputArtifact.getRelativePath());
+          log.warn(outputArtifact.getRelativePath() + " -> " + outputArtifact.getRelativePath());
         }
         log.warn("All local artifacts for " + target + ":");
         List<OutputArtifact> allBuildArtifacts =
