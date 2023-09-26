@@ -73,7 +73,10 @@ public abstract class BuildGraphData {
   /** All dependencies external to this project */
   public abstract ImmutableSet<Label> projectDeps();
 
-  public abstract TargetTree allTargets();
+  @Memoized
+  public TargetTree allTargets() {
+    return new TargetTree.Builder().addAll(targetMap().keySet()).build();
+  }
 
   abstract ImmutableSet<Label> androidTargets();
 
@@ -157,8 +160,6 @@ public abstract class BuildGraphData {
 
     public abstract Builder projectDeps(Set<Label> value);
 
-    public abstract TargetTree.Builder allTargetsBuilder();
-
     public abstract ImmutableSet.Builder<Label> androidTargetsBuilder();
 
     public abstract Builder packages(PackageSet value);
@@ -171,6 +172,7 @@ public abstract class BuildGraphData {
       // sync time rather than later on.
       ImmutableSetMultimap<Label, Label> unused = result.sourceOwners();
       ImmutableMultimap<Label, Label> unused2 = result.reverseDeps();
+      TargetTree unused3 = result.allTargets();
       return result;
     }
   }

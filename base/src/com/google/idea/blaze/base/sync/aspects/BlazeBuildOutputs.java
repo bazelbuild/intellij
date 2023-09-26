@@ -75,7 +75,10 @@ public class BlazeBuildOutputs {
   private final ImmutableSet<Label> targetsWithErrors;
   public final long bepBytesConsumed;
 
-  /** {@link BepArtifactData} by {@link OutputArtifact#getKey()} for all artifacts from a build. */
+  /**
+   * {@link BepArtifactData} by {@link OutputArtifact#getRelativePath()} for all artifacts from a
+   * build.
+   */
   public final ImmutableMap<String, BepArtifactData> artifacts;
 
   /** The artifacts transitively associated with each top-level target. */

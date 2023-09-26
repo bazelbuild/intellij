@@ -189,7 +189,6 @@ public class BlazeQueryParser {
   }
 
   private void visitJavaRule(Label label, Query.Rule rule, ProjectTarget.Builder targetBuilder) {
-    graphBuilder.allTargetsBuilder().add(label);
     ImmutableSet<Label> thisSources = sourcesWithExpandedFileGroups(rule);
     Set<Label> thisDeps = Sets.newHashSet(toLabelList(rule.getDepsList()));
     targetBuilder.depsBuilder().addAll(thisDeps);
