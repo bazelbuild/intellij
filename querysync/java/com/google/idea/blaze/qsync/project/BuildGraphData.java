@@ -93,7 +93,7 @@ public abstract class BuildGraphData {
   /** All dependencies external to this project */
   public abstract ImmutableSet<Label> projectDeps();
 
-  public abstract ImmutableSet<Label> allTargets();
+  public abstract TargetTree allTargets();
 
   abstract ImmutableSet<Label> androidTargets();
 
@@ -205,7 +205,7 @@ public abstract class BuildGraphData {
 
     public abstract Builder projectDeps(Set<Label> value);
 
-    public abstract ImmutableSet.Builder<Label> allTargetsBuilder();
+    public abstract TargetTree.Builder allTargetsBuilder();
 
     public abstract ImmutableSet.Builder<Label> androidTargetsBuilder();
 

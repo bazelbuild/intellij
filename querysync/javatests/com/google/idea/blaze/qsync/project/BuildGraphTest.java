@@ -41,7 +41,7 @@ public class BuildGraphTest {
     BuildGraphData graph =
         new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY));
-    assertThat(graph.allTargets())
+    assertThat(graph.allTargets().toLabelSet())
         .containsExactly(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps"));
     assertThat(graph.getAllSourceFiles())
         .containsExactly(
@@ -111,7 +111,7 @@ public class BuildGraphTest {
     BuildGraphData graph =
         new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
             .parse(getQuerySummary(TestData.JAVA_LIBRARY_MULTI_TARGETS));
-    assertThat(graph.allTargets())
+    assertThat(graph.allTargets().toLabelSet())
         .containsExactly(
             Label.of("//" + TESTDATA_ROOT + "/multitarget:nodeps"),
             Label.of("//" + TESTDATA_ROOT + "/multitarget:externaldep"));
