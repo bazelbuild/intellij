@@ -54,6 +54,25 @@ public class QuerySummaryTest {
   }
 
   @Test
+  public void testCreate_ccLibrary_noDeps() throws Exception {
+    QuerySummary qs = QuerySummary.create(TestData.getPathFor(TestData.CC_LIBRARY_QUERY).toFile());
+    Label cc = Label.of(TestData.ROOT_PACKAGE + "/cc:cc");
+    assertThat(qs.getRulesMap().keySet()).containsExactly(cc);
+    Query.Rule rule = qs.getRulesMap().get(cc);
+    assertThat(rule.getRuleClass()).isEqualTo("cc_library");
+    assertThat(rule.getSourcesCount()).isEqualTo(1);
+    assertThat(targetName(rule.getSources(0))).isEqualTo("TestClass.cc");
+    assertThat(rule.getHdrsCount()).isEqualTo(1);
+    assertThat(targetName(rule.getHdrs(0))).isEqualTo("TestClass.h");
+    assertThat(rule.getDepsCount()).isEqualTo(0);
+    assertThat(qs.getSourceFilesMap().keySet())
+        .containsExactly(
+            new Label(TestData.ROOT_PACKAGE + "/cc:TestClass.cc"),
+            new Label(TestData.ROOT_PACKAGE + "/cc:TestClass.h"),
+            new Label(TestData.ROOT_PACKAGE + "/cc:BUILD"));
+  }
+
+  @Test
   public void testCreate_androidLibrary_manifest() throws IOException {
     QuerySummary qs = QuerySummary.create(TestData.getPathFor(TestData.ANDROID_LIB_QUERY).toFile());
     Label android = Label.of(TestData.ROOT_PACKAGE + "/android:android");

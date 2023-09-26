@@ -2,6 +2,7 @@ load(
     ":scope_util.bzl",
     "scopeForAndroidPackage",
     "scopeForAndroidPackageWithResources",
+    "scopeForCcPackage",
     "scopeForJavaPackage",
 )
 
@@ -112,6 +113,13 @@ genquery(
         scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/filegroup:filegroup"),
 )
 
+genquery(
+    name = "cc_library_query",
+    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/cc:*",
+    opts = ["--output=streamed_proto"],
+    scope = scopeForCcPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/cc"),
+)
+
 java_library(
     name = "testdata",
     srcs = ["TestData.java"],
@@ -119,6 +127,7 @@ java_library(
         ":android_aidl_source_query",
         ":android_lib_query",
         ":buildincludes_query",
+        ":cc_library_query",
         ":filegroup_query",
         ":java_exported_dep_query",
         ":java_library_external_dep_query",
