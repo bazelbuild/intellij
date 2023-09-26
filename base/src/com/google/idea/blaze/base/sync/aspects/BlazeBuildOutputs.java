@@ -141,14 +141,14 @@ public class BlazeBuildOutputs {
           continue;
         }
         // no longer output by this target; need to update target associations
-        BepArtifactData data = combined.get(old.getKey());
+        BepArtifactData data = combined.get(old.getRelativePath());
         if (data != null) {
           data = data.removeTargetAssociation(target);
         }
         if (data == null) {
-          combined.remove(old.getKey());
+          combined.remove(old.getRelativePath());
         } else {
-          combined.put(old.getKey(), data);
+          combined.put(old.getRelativePath(), data);
         }
       }
     }

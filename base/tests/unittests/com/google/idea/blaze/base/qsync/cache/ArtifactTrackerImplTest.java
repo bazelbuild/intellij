@@ -27,6 +27,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.qsync.ArtifactTracker.UpdateResult;
 import com.google.idea.blaze.base.qsync.OutputInfo;
@@ -293,7 +294,7 @@ public class ArtifactTrackerImplTest {
         ImmutableMap<? extends OutputArtifact, ArtifactDestination> artifactToDest,
         Context<?> context) {
       artifactToDest.keySet().stream()
-          .map(OutputArtifact::getKey)
+          .map(OutputArtifactInfo::getRelativePath)
           .forEach(collectedArtifactKeyToMetadata::add);
       return Futures.immediateFuture(null);
     }

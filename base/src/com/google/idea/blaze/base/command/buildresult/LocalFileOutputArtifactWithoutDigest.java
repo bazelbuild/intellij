@@ -49,7 +49,7 @@ public class LocalFileOutputArtifactWithoutDigest
   @Nullable
   public ArtifactState toArtifactState() {
     long lastModifiedTime = getLastModifiedTime();
-    return lastModifiedTime == 0 ? null : new LocalFileState(getKey(), lastModifiedTime);
+    return lastModifiedTime == 0 ? null : new LocalFileState(getRelativePath(), lastModifiedTime);
   }
 
   @Override
@@ -93,5 +93,4 @@ public class LocalFileOutputArtifactWithoutDigest
   public String toString() {
     return blazeOutRelativePath;
   }
-
 }

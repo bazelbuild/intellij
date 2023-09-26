@@ -37,7 +37,7 @@ public final class UnpackedAarUtils {
   /* Converts {@link BlazeArtifact} to the key which is used to create aar directory name */
   public static String getArtifactKey(BlazeArtifact artifact) {
     if (artifact instanceof OutputArtifactWithoutDigest) {
-      return ((OutputArtifactWithoutDigest) artifact).getKey();
+      return ((OutputArtifactWithoutDigest) artifact).getRelativePath();
     }
     if (artifact instanceof SourceArtifact) {
       return ((SourceArtifact) artifact).getFile().getPath();
@@ -67,8 +67,7 @@ public final class UnpackedAarUtils {
    * Returns aar directory name in the format of <name>_<hashcode>. This provides flexibility to
    * caller to generate aar directory name to deal with different cases. But this method cannot
    * guarantee the uniqueness.
-
-*
+   *
    * @param name the file name of aar file without extension.
    * @param hashCode the file name of aar is not guaranteed to be unique, so a hash code is used to
    *     make sure the directory name is unique. Caller needs to make sure the hashcode provided is

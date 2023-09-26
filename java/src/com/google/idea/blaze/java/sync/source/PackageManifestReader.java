@@ -75,7 +75,9 @@ public class PackageManifestReader {
   private Map<ArtifactState, TargetKey> fileToLabelMap = new HashMap<>();
   private final Map<TargetKey, Map<ArtifactLocation, String>> manifestMap = Maps.newConcurrentMap();
 
-  /** @return A map from java source absolute file path to declared package string. */
+  /**
+   * @return A map from java source absolute file path to declared package string.
+   */
   public Map<TargetKey, Map<ArtifactLocation, String>> readPackageManifestFiles(
       Project project,
       BlazeContext context,
@@ -155,7 +157,12 @@ public class PackageManifestReader {
     }
     this.fileToLabelMap =
         fileToLabelMap.entrySet().stream()
-            .filter(e -> diff.getNewState().containsKey(e.getKey().getKey()))
+            .filter(
+                e -> {
+                  OutputArtifactWithoutDigest outputArtifactWithoutDigest = e.getKey();
+                  return diff.getNewState()
+                      .containsKey(outputArtifactWithoutDigest.getRelativePath());
+                })
             .collect(toImmutableMap(e -> e.getKey().toArtifactState(), Map.Entry::getValue));
 
     try {

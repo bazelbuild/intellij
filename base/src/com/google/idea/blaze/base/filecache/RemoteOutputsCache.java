@@ -225,7 +225,7 @@ public final class RemoteOutputsCache {
    */
   @VisibleForTesting
   static String getCacheKey(RemoteOutputArtifact output) {
-    String key = output.getKey();
+    String key = output.getRelativePath();
     String fileName = PathUtil.getFileName(key);
     List<String> components = Splitter.on('.').limit(2).splitToList(fileName);
     StringBuilder builder =

@@ -318,7 +318,8 @@ public final class ParsedBepOutput {
   public ImmutableMap<String, BepArtifactData> getFullArtifactData() {
     return fileSets.values().stream()
         .flatMap(FileSet::toPerArtifactData)
-        .collect(toImmutableMap(d -> d.artifact.getKey(), d -> d, BepArtifactData::update));
+        .collect(
+            toImmutableMap(d -> d.artifact.getRelativePath(), d -> d, BepArtifactData::update));
   }
 
   /** Returns the set of build targets that had an error. */
