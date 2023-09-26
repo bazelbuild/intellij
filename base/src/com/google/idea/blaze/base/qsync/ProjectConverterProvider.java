@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 public class ProjectConverterProvider extends ConverterProvider {
 
   protected ProjectConverterProvider() {
-    super("query.sync.project.converter");
+    super();
   }
 
   @Override
@@ -73,12 +73,12 @@ public class ProjectConverterProvider extends ConverterProvider {
               throw new CannotConvertException(
                   "The project is created with a newer sync schema that is not supported "
                       + "with the current configuration of the IDE. In order to open this project "
-                      + "switch the IDE to use query sync instead. See: go/query-sync.");
+                      + "switch the IDE to use query sync instead. See: go/query-sync.", null);
             } else {
               throw new CannotConvertException(
                   "The IDE is configured to use query sync, and is not compatible "
                       + "with projects created with the old sync. Please re-create the "
-                      + "project on a new directory. More information: go/query-sync.");
+                      + "project on a new directory. More information: go/query-sync.", null);
             }
           }
         };
