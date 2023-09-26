@@ -44,7 +44,7 @@ import java.util.Set;
 
 /**
  * A class that parses the proto output from a `blaze query --output=streamed_proto` invocation, and
- * yields a {@link BuildGraphData} instance derived from it.
+ * yields a {@link BuildGraphData} instance derived from it. Instances of this class are single use.
  */
 public class BlazeQueryParser {
 
@@ -85,6 +85,17 @@ public class BlazeQueryParser {
   private final Context<?> context;
   private final SetView<String> alwaysBuildRuleKinds;
 
+  private final BuildGraphData.Builder graphBuilder = BuildGraphData.builder();
+  private final PackageSet.Builder packages = new PackageSet.Builder();
+  private final Map<Label, Set<Label>> ruleDeps = Maps.newHashMap();
+  private final Map<Label, Set<Label>> ruleRuntimeDeps = Maps.newHashMap();
+  private final Set<Label> projectDeps = Sets.newHashSet();
+  private final ImmutableMultimap.Builder<Label, Label> targetSources = ImmutableMultimap.builder();
+  // All the project targets the aspect needs to build
+  private final Set<Label> projectTargetsToBuild = new HashSet<>();
+  // An aggregation of all the dependencies of java rules
+  private final Set<Label> javaDeps = new HashSet<>();
+
   public BlazeQueryParser(Context<?> context, ImmutableSet<String> handledRuleKinds) {
     this.context = context;
     this.alwaysBuildRuleKinds = Sets.difference(ALWAYS_BUILD_RULE_KINDS, handledRuleKinds);
@@ -97,21 +108,8 @@ public class BlazeQueryParser {
   public BuildGraphData parse(QuerySummary query) {
     context.output(PrintOutput.log("Analyzing project structure..."));
 
-    PackageSet.Builder packages = new PackageSet.Builder();
     long now = System.nanoTime();
 
-    BuildGraphData.Builder graphBuilder = BuildGraphData.builder();
-    ImmutableMultimap.Builder<Label, Label> targetSources = ImmutableMultimap.builder();
-    Map<Label, Set<Label>> ruleDeps = Maps.newHashMap();
-    Map<Label, Set<Label>> ruleRuntimeDeps = Maps.newHashMap();
-    Set<Label> projectDeps = Sets.newHashSet();
-
-    // A hacky collection the project state. This is the equivalent of the targetmap data:
-
-    // An aggregation of all the dependencies of java rules
-    Set<Label> deps = new HashSet<>();
-    // All the project targets the aspect needs to build
-    Set<Label> projectTargetsToBuild = new HashSet<>();
     // Counts of all kinds of rules
     Map<String, Integer> ruleCount = new HashMap<>();
     for (Map.Entry<Label, Query.SourceFile> sourceFileEntry :
@@ -141,39 +139,7 @@ public class BlazeQueryParser {
       graphBuilder.targetMapBuilder().put(ruleEntry.getKey(), buildTarget.build());
 
       if (isJavaRule(ruleClass)) {
-        graphBuilder.allTargetsBuilder().add(ruleEntry.getKey());
-        ImmutableSet<Label> thisSources =
-            sourcesWithExpandedFileGroups(ruleEntry.getValue(), query);
-        Set<Label> thisDeps = Sets.newHashSet(toLabelList(ruleEntry.getValue().getDepsList()));
-        ruleDeps.computeIfAbsent(ruleEntry.getKey(), x -> Sets.newHashSet()).addAll(thisDeps);
-
-        Set<Label> thisRuntimeDeps =
-            Sets.newHashSet(toLabelList(ruleEntry.getValue().getRuntimeDepsList()));
-        ruleRuntimeDeps
-            .computeIfAbsent(ruleEntry.getKey(), x -> Sets.newHashSet())
-            .addAll(thisRuntimeDeps);
-        targetSources.putAll(ruleEntry.getKey(), thisSources);
-        for (Label thisSource : thisSources) {
-          // Require build step for targets with generated sources.
-          if (!query.getSourceFilesMap().containsKey(thisSource)) {
-            projectTargetsToBuild.add(ruleEntry.getKey());
-          }
-        }
-        graphBuilder.javaSourcesBuilder().addAll(thisSources);
-        deps.addAll(thisDeps);
-
-        if (ANDROID_RULE_TYPES.contains(ruleClass)) {
-          graphBuilder.androidTargetsBuilder().add(ruleEntry.getKey());
-
-          // Add android targets with aidl files as external deps so the aspect generates
-          // the classes
-          if (!ruleEntry.getValue().getIdlSourcesList().isEmpty()) {
-            projectTargetsToBuild.add(ruleEntry.getKey());
-          }
-          if (!ruleEntry.getValue().getManifest().isEmpty()) {
-            targetSources.put(ruleEntry.getKey(), Label.of(ruleEntry.getValue().getManifest()));
-          }
-        }
+        visitJavaRule(query, ruleEntry.getKey(), ruleEntry.getValue());
       }
       if (alwaysBuildRuleKinds.contains(ruleClass)) {
         projectTargetsToBuild.add(ruleEntry.getKey());
@@ -182,7 +148,7 @@ public class BlazeQueryParser {
     int nTargets = query.proto().getRulesCount();
 
     // Calculate all the dependencies outside the project.
-    for (Label dep : deps) {
+    for (Label dep : javaDeps) {
       if (!query.getRulesMap().containsKey(dep)) {
         projectDeps.add(dep);
       }
@@ -200,20 +166,51 @@ public class BlazeQueryParser {
             .ruleRuntimeDeps(ruleRuntimeDeps)
             .projectDeps(projectDeps)
             .packages(packages.build())
-            .reverseDeps(caclulateReverseDeps(ruleDeps, ruleRuntimeDeps))
+            .reverseDeps(calculateReverseDeps())
             .build();
 
     context.output(PrintOutput.log("%-10d Source files", graph.locations().size()));
     context.output(PrintOutput.log("%-10d Java sources", graph.javaSources().size()));
     context.output(PrintOutput.log("%-10d Packages", graph.packages().size()));
-    context.output(PrintOutput.log("%-10d Dependencies", deps.size()));
+    context.output(PrintOutput.log("%-10d Dependencies", javaDeps.size()));
     context.output(PrintOutput.log("%-10d External dependencies", graph.projectDeps().size()));
 
     return graph;
   }
 
-  private ImmutableMultimap<Label, Label> caclulateReverseDeps(
-      Map<Label, Set<Label>> ruleDeps, Map<Label, Set<Label>> ruleRuntimeDeps) {
+  private void visitJavaRule(QuerySummary query, Label label, Query.Rule rule) {
+    graphBuilder.allTargetsBuilder().add(label);
+    ImmutableSet<Label> thisSources = sourcesWithExpandedFileGroups(rule, query);
+    Set<Label> thisDeps = Sets.newHashSet(toLabelList(rule.getDepsList()));
+    ruleDeps.computeIfAbsent(label, x -> Sets.newHashSet()).addAll(thisDeps);
+
+    Set<Label> thisRuntimeDeps = Sets.newHashSet(toLabelList(rule.getRuntimeDepsList()));
+    ruleRuntimeDeps.computeIfAbsent(label, x -> Sets.newHashSet()).addAll(thisRuntimeDeps);
+    targetSources.putAll(label, thisSources);
+    for (Label thisSource : thisSources) {
+      // Require build step for targets with generated sources.
+      if (!query.getSourceFilesMap().containsKey(thisSource)) {
+        projectTargetsToBuild.add(label);
+      }
+    }
+    graphBuilder.javaSourcesBuilder().addAll(thisSources);
+    javaDeps.addAll(thisDeps);
+
+    if (ANDROID_RULE_TYPES.contains(rule.getRuleClass())) {
+      graphBuilder.androidTargetsBuilder().add(label);
+
+      // Add android targets with aidl files as external deps so the aspect generates
+      // the classes
+      if (!rule.getIdlSourcesList().isEmpty()) {
+        projectTargetsToBuild.add(label);
+      }
+      if (!rule.getManifest().isEmpty()) {
+        targetSources.put(label, Label.of(rule.getManifest()));
+      }
+    }
+  }
+
+  private ImmutableMultimap<Label, Label> calculateReverseDeps() {
     ArrayListMultimap<Label, Label> map = ArrayListMultimap.create();
     Streams.concat(ruleDeps.entrySet().stream(), ruleRuntimeDeps.entrySet().stream())
         .forEach(
