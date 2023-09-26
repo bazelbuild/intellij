@@ -1,6 +1,7 @@
 v2023.09.26
 ===========
-
+* Resolve symbolic links from external workspace to workspace root #5228
+* More details on IJ timings in the log #5325
 
 v2023.09.12
 ===========
