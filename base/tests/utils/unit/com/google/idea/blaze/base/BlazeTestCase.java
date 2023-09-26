@@ -33,6 +33,7 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -94,6 +95,7 @@ public class BlazeTestCase {
 
   @Before
   public final void setup() {
+    Registry.get("allow.macros.for.run.configurations").setValue(false);
     testDisposable = new RootDisposable();
     MockApplication application = TestUtils.createMockApplication(testDisposable);
     MockProject mockProject = TestUtils.mockProject(application.getPicoContainer(), testDisposable);
