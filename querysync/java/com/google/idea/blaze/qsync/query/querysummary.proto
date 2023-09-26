@@ -34,4 +34,5 @@ message Rule {
   string test_app = 9;
   string instruments = 10;
   string custom_package = 11;
+  repeated string hdrs = 12;
 }

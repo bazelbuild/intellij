@@ -72,7 +72,7 @@ public abstract class QuerySummary {
    * <p>Whenever changing the logic in this class such that the Query.Summary proto contents will be
    * different for the same input, this version should be incremented.
    */
-  @VisibleForTesting public static final int PROTO_VERSION = 6;
+  @VisibleForTesting public static final int PROTO_VERSION = 7;
 
   public static final QuerySummary EMPTY =
       create(Query.Summary.newBuilder().setVersion(PROTO_VERSION).build());
@@ -156,6 +156,8 @@ public abstract class QuerySummary {
           for (Build.Attribute a : target.getRule().getAttributeList()) {
             if (a.getName().equals("srcs")) {
               rule.addAllSources(a.getStringListValueList());
+            } else if (a.getName().equals("hdrs")) {
+              rule.addAllHdrs(a.getStringListValueList());
             } else if (attributeIsTrackedDependency(a.getName(), target)) {
               if (a.hasStringValue()) {
                 rule.addDeps(a.getStringValue());
