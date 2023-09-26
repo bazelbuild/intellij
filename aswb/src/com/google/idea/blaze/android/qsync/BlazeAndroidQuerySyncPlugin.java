@@ -24,11 +24,11 @@ import com.android.tools.idea.projectsystem.NamedIdeaSourceProviderBuilder;
 import com.android.tools.idea.projectsystem.ScopeType;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
+import com.google.idea.blaze.android.qsync.projectstructure.AndroidFacetModuleCustomizer;
 import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
-import com.google.idea.blaze.android.sync.projectstructure.AndroidFacetModuleCustomizer;
 import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
@@ -40,6 +40,7 @@ import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -76,6 +77,7 @@ public class BlazeAndroidQuerySyncPlugin implements BlazeQuerySyncPlugin {
   public void updateProjectStructureForQuerySync(
       Project project,
       Context<?> context,
+      IdeModifiableModelsProvider models,
       WorkspaceRoot workspaceRoot,
       Module workspaceModule,
       Set<String> androidResourceDirectories,
@@ -86,8 +88,11 @@ public class BlazeAndroidQuerySyncPlugin implements BlazeQuerySyncPlugin {
       return;
     }
 
+    AndroidFacetModuleCustomizer androidFacetModuleCustomizer =
+        new AndroidFacetModuleCustomizer(models);
+
     // Attach AndroidFacet to workspace modules
-    AndroidFacetModuleCustomizer.createAndroidFacet(workspaceModule, false);
+    androidFacetModuleCustomizer.createAndroidFacet(workspaceModule, false);
 
     // Add all source resource directories to this AndroidFacet
     AndroidFacet workspaceFacet = AndroidFacet.getInstance(workspaceModule);
