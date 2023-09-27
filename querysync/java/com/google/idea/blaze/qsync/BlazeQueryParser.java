@@ -143,19 +143,15 @@ public class BlazeQueryParser {
 
       ProjectTarget.Builder targetBuilder = ProjectTarget.builder();
 
-      targetBuilder.buildTargetBuilder().setLabel(ruleEntry.getKey()).setKind(ruleClass);
+      targetBuilder.label(ruleEntry.getKey()).kind(ruleClass);
       if (!ruleEntry.getValue().getTestApp().isEmpty()) {
-        targetBuilder.buildTargetBuilder().setTestApp(Label.of(ruleEntry.getValue().getTestApp()));
+        targetBuilder.testApp(Label.of(ruleEntry.getValue().getTestApp()));
       }
       if (!ruleEntry.getValue().getInstruments().isEmpty()) {
-        targetBuilder
-            .buildTargetBuilder()
-            .setInstruments(Label.of(ruleEntry.getValue().getInstruments()));
+        targetBuilder.instruments(Label.of(ruleEntry.getValue().getInstruments()));
       }
       if (!ruleEntry.getValue().getCustomPackage().isEmpty()) {
-        targetBuilder
-            .buildTargetBuilder()
-            .setCustomPackage(ruleEntry.getValue().getCustomPackage());
+        targetBuilder.customPackage(ruleEntry.getValue().getCustomPackage());
       }
 
       if (isJavaRule(ruleClass)) {
@@ -181,11 +177,7 @@ public class BlazeQueryParser {
     long elapsedMs = (System.nanoTime() - now) / 1000000L;
     context.output(PrintOutput.log("%-10d Targets (%d ms):", nTargets, elapsedMs));
 
-    BuildGraphData graph =
-        graphBuilder
-            .projectDeps(projectDeps)
-            .packages(packages.build())
-            .build();
+    BuildGraphData graph = graphBuilder.projectDeps(projectDeps).packages(packages.build()).build();
 
     context.output(PrintOutput.log("%-10d Source files", graph.locations().size()));
     context.output(PrintOutput.log("%-10d Java sources", graph.javaSources().size()));

@@ -24,8 +24,8 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.qsync.QuerySync;
-import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
+import com.google.idea.blaze.qsync.project.ProjectTarget;
 import javax.annotation.Nullable;
 
 /**
@@ -78,7 +78,8 @@ public class InstrumentationInfo {
       Label instrumentationTestLabel, BlazeProjectData projectData)
       throws InstrumentationParserException {
     if (QuerySync.isEnabled()) {
-      BuildTarget testTarget = projectData.getBuildTarget(instrumentationTestLabel);
+      ProjectTarget testTarget =
+          (ProjectTarget) projectData.getBuildTarget(instrumentationTestLabel);
       if (testTarget == null) {
         String msg = "Unable to identify target \"" + instrumentationTestLabel + "\".";
         throw new InstrumentationParserException(msg);
@@ -88,7 +89,7 @@ public class InstrumentationInfo {
         throw new InstrumentationParserException(msg);
       }
       Label testApp = Label.create(testTarget.testApp().get().toString());
-      BuildTarget targetApp = projectData.getBuildTarget(testApp);
+      ProjectTarget targetApp = (ProjectTarget) projectData.getBuildTarget(testApp);
       Label instruments = null;
       if (targetApp != null && targetApp.instruments().isPresent()) {
         instruments = Label.create(targetApp.instruments().get().toString());

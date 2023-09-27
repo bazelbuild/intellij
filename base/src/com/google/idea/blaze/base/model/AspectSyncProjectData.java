@@ -137,10 +137,8 @@ public final class AspectSyncProjectData implements BlazeProjectData {
     if (targetInfo == null) {
       return null;
     }
-    return BuildTarget.builder()
-        .setLabel(com.google.idea.blaze.common.Label.of(targetInfo.label.toString()))
-        .setKind(targetInfo.kindString)
-        .build();
+    return BuildTarget.create(
+        com.google.idea.blaze.common.Label.of(targetInfo.label.toString()), targetInfo.kindString);
   }
 
   @Override

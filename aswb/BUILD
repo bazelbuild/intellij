@@ -3,6 +3,14 @@
 #
 
 load(
+    "//:build-visibility.bzl",
+    "ASWB_PACKAGES_VISIBILITY",
+    "ASWB_PLUGIN_PACKAGES_VISIBILITY",
+    "ASWB_SUBPACKAGES_VISIBILITY",
+    "TEST_ASWB_SUBPACKAGES_VISIBILITY",
+)
+load("//:version.bzl", "VERSION")
+load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
     "intellij_plugin_library",
@@ -15,23 +23,15 @@ load(
     "//build_defs:intellij_plugin_debug_target.bzl",
     "intellij_plugin_debug_target",
 )
-load("//:version.bzl", "VERSION")
-load(
-    "//intellij_platform_sdk:build_defs.bzl",
-    "combine_visibilities",
-    "select_for_plugin_api",
-)
 load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
 load(
-    "//:build-visibility.bzl",
-    "ASWB_PACKAGES_VISIBILITY",
-    "ASWB_PLUGIN_PACKAGES_VISIBILITY",
-    "ASWB_SUBPACKAGES_VISIBILITY",
-    "TEST_ASWB_SUBPACKAGES_VISIBILITY",
+    "//intellij_platform_sdk:build_defs.bzl",
+    "combine_visibilities",
+    "select_for_plugin_api",
 )
 
 licenses(["notice"])
@@ -179,6 +179,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//java",
         "//proto:proto_deps",
+        "//querysync",
         "//shared",
         "//third_party/auto_value",
         "@gson//jar",
