@@ -233,13 +233,13 @@ def _collect_own_artifacts(
                     else:
                         own_gensrc_files.append(file)
 
-    return (
-        own_jar_files,
-        own_jar_depsets,
-        own_ide_aar_files,
-        own_gensrc_files,
-        own_src_files,
-        own_srcjar_files,
+    return struct(
+        jars = own_jar_files,
+        jar_depsets = own_jar_depsets,
+        ide_aars = own_ide_aar_files,
+        gensrcs = own_gensrc_files,
+        srcs = own_src_files,
+        srcjars = own_srcjar_files,
     )
 
 def _collect_own_and_dependency_artifacts(
@@ -249,7 +249,7 @@ def _collect_own_and_dependency_artifacts(
         always_build_rules,
         generate_aidl_classes,
         target_is_within_project_scope):
-    own_jar_files, own_jar_depsets, own_ide_aar_files, own_gensrc_files, own_src_files, own_srcjar_files = _collect_own_artifacts(
+    own_files = _collect_own_artifacts(
         target,
         ctx,
         dependency_infos,
@@ -259,25 +259,25 @@ def _collect_own_and_dependency_artifacts(
     )
 
     has_own_artifacts = (
-        len(own_jar_files) + len(own_jar_depsets) + len(own_ide_aar_files) + len(own_gensrc_files) + len(own_src_files) + len(own_srcjar_files)
+        len(own_files.jars) + len(own_files.jar_depsets) + len(own_files.ide_aars) + len(own_files.gensrcs) + len(own_files.srcs) + len(own_files.srcjars)
     ) > 0
 
     target_to_artifacts = {}
     if has_own_artifacts:
-        jars = depset(own_jar_files, transitive = own_jar_depsets).to_list()
+        jars = depset(own_files.jars, transitive = own_files.jar_depsets).to_list()
 
         # Pass the following lists through depset() too to remove any duplicates.
-        ide_aars = depset(own_ide_aar_files).to_list()
-        gen_srcs = depset(own_gensrc_files).to_list()
+        ide_aars = depset(own_files.ide_aars).to_list()
+        gen_srcs = depset(own_files.gensrcs).to_list()
         target_to_artifacts[str(target.label)] = {
             "jars": [_output_relative_path(file.path) for file in jars],
             "ide_aars": [_output_relative_path(file.path) for file in ide_aars],
             "gen_srcs": [_output_relative_path(file.path) for file in gen_srcs],
-            "srcs": own_src_files,
-            "srcjars": own_srcjar_files,
+            "srcs": own_files.srcs,
+            "srcjars": own_files.srcjars,
         }
 
-    own_and_transitive_jar_depsets = list(own_jar_depsets)  # Copy to prevent changes to own_jar_depsets.
+    own_and_transitive_jar_depsets = list(own_files.jar_depsets)  # Copy to prevent changes to own_jar_depsets.
     own_and_transitive_ide_aar_depsets = []
     own_and_transitive_gensrc_depsets = []
 
@@ -289,9 +289,9 @@ def _collect_own_and_dependency_artifacts(
 
     return (
         target_to_artifacts,
-        depset(own_jar_files, transitive = own_and_transitive_jar_depsets),
-        depset(own_ide_aar_files, transitive = own_and_transitive_ide_aar_depsets),
-        depset(own_gensrc_files, transitive = own_and_transitive_gensrc_depsets),
+        depset(own_files.jars, transitive = own_and_transitive_jar_depsets),
+        depset(own_files.ide_aars, transitive = own_and_transitive_ide_aar_depsets),
+        depset(own_files.gensrcs, transitive = own_and_transitive_gensrc_depsets),
     )
 
 def _collect_dependencies_core_impl(
@@ -316,14 +316,7 @@ def _collect_dependencies_core_impl(
 
     test_mode_own_files = None
     if test_mode:
-        (
-            within_scope_own_jar_files,
-            within_scope_own_jar_depsets,
-            within_scope_own_ide_aar_files,
-            within_scope_own_gensrc_files,
-            _,
-            _,
-        ) = _collect_own_artifacts(
+        within_scope_own_files = _collect_own_artifacts(
             target,
             ctx,
             dependency_infos,
@@ -332,9 +325,9 @@ def _collect_dependencies_core_impl(
             target_is_within_project_scope = True,
         )
         test_mode_own_files = struct(
-            test_mode_within_scope_own_jar_files = depset(within_scope_own_jar_files, transitive = within_scope_own_jar_depsets).to_list(),
-            test_mode_within_scope_own_ide_aar_files = within_scope_own_ide_aar_files,
-            test_mode_within_scope_own_gensrc_files = within_scope_own_gensrc_files,
+            test_mode_within_scope_own_jar_files = depset(within_scope_own_files.jars, transitive = within_scope_own_files.jar_depsets).to_list(),
+            test_mode_within_scope_own_ide_aar_files = within_scope_own_files.ide_aars,
+            test_mode_within_scope_own_gensrc_files = within_scope_own_files.gensrcs,
         )
 
     return [
