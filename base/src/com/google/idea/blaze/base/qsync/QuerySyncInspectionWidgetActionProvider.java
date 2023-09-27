@@ -84,7 +84,7 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     public BuildDependencies(@NotNull Editor editor) {
       super("Build file dependencies");
       this.editor = editor;
-      buildDepsHelper = new BuildDependenciesHelper(editor.getProject());
+      buildDepsHelper = new BuildDependenciesHelper(editor.getProject(), getClass());
     }
 
     @Override

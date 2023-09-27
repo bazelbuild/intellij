@@ -21,6 +21,9 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.bazel.BuildSystem;
+import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
+import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
+import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -174,33 +177,37 @@ public class QuerySyncProject {
     sync(context, snapshotHolder.getCurrent().map(BlazeProjectSnapshot::queryData));
   }
 
-  public void sync(BlazeContext context, Optional<PostQuerySyncData> lastQuery) throws Exception {
-    try {
-      SaveUtil.saveAllFiles();
-      BlazeProjectSnapshot newProject =
-          lastQuery.isEmpty()
-              ? projectQuerier.fullQuery(projectDefinition, context)
-              : projectQuerier.update(projectDefinition, lastQuery.get(), context);
-      newProject = artifactTracker.updateSnapshot(newProject);
-      onNewSnapshot(context, newProject);
+  public void sync(BlazeContext parentContext, Optional<PostQuerySyncData> lastQuery)
+      throws Exception {
+    try (BlazeContext context = BlazeContext.create(parentContext)) {
+      context.push(new SyncQueryStatsScope());
+      try {
+        SaveUtil.saveAllFiles();
+        BlazeProjectSnapshot newProject =
+            lastQuery.isEmpty()
+                ? projectQuerier.fullQuery(projectDefinition, context)
+                : projectQuerier.update(projectDefinition, lastQuery.get(), context);
+        newProject = artifactTracker.updateSnapshot(newProject);
+        onNewSnapshot(context, newProject);
 
-      // TODO: Revisit SyncListeners once we switch fully to qsync
-      for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
-        // A callback shared between the old and query sync implementations.
-        syncListener.onSyncComplete(
-            project,
-            context,
-            importSettings,
-            projectViewSet,
-            ImmutableSet.of(),
-            projectData,
-            SyncMode.FULL,
-            SyncResult.SUCCESS);
-      }
-    } finally {
-      for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
-        // A query sync specific callback.
-        syncListener.afterQuerySync(project, context);
+        // TODO: Revisit SyncListeners once we switch fully to qsync
+        for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
+          // A callback shared between the old and query sync implementations.
+          syncListener.onSyncComplete(
+              project,
+              context,
+              importSettings,
+              projectViewSet,
+              ImmutableSet.of(),
+              projectData,
+              SyncMode.FULL,
+              SyncResult.SUCCESS);
+        }
+      } finally {
+        for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
+          // A query sync specific callback.
+          syncListener.afterQuerySync(project, context);
+        }
       }
     }
   }
@@ -219,18 +226,24 @@ public class QuerySyncProject {
     return dependencyTracker.getProjectTargets(context, workspaceRelativePath);
   }
 
-  public void build(BlazeContext context, Set<Label> projectTargets)
+  public void build(BlazeContext parentContext, Set<Label> projectTargets)
       throws IOException, BuildException {
-    if (getDependencyTracker().buildDependenciesForTargets(context, projectTargets)) {
-      BlazeProjectSnapshot newSnapshot =
-          artifactTracker.updateSnapshot(snapshotHolder.getCurrent().orElseThrow());
-      onNewSnapshot(context, newSnapshot);
+    try (BlazeContext context = BlazeContext.create(parentContext)) {
+      context.push(new BuildDepsStatsScope());
+      if (getDependencyTracker().buildDependenciesForTargets(context, projectTargets)) {
+        BlazeProjectSnapshot newSnapshot =
+            artifactTracker.updateSnapshot(snapshotHolder.getCurrent().orElseThrow());
+        onNewSnapshot(context, newSnapshot);
+      }
     }
   }
 
-  public void buildRenderJar(BlazeContext context, List<Path> wps)
+  public void buildRenderJar(BlazeContext parentContext, List<Path> wps)
       throws IOException, BuildException {
-    getDependencyTracker().buildRenderJarForFile(context, wps);
+    try (BlazeContext context = BlazeContext.create(parentContext)) {
+      context.push(new BuildDepsStatsScope());
+      getDependencyTracker().buildRenderJarForFile(context, wps);
+    }
   }
 
   public DependencyTracker getDependencyTracker() {
@@ -339,6 +352,11 @@ public class QuerySyncProject {
       throws IOException {
     snapshotHolder.setCurrent(context, newSnapshot);
     projectData = projectData.withSnapshot(newSnapshot);
+    QuerySyncActionStatsScope.fromContext(context)
+        .ifPresent(
+            stats ->
+                stats.setLanguagesActive(
+                    newSnapshot.queryData().projectDefinition().languageClasses()));
     writeToDisk(newSnapshot);
   }
 }

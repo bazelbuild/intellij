@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.intellij.icons.AllIcons.Actions;
@@ -73,7 +74,9 @@ public class ComposePreviewQuerySyncInspectionWidgetActionProvider
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = editor.getProject();
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      QuerySyncManager.getInstance(project).generateRenderJar(psiFile);
+      QuerySyncManager.getInstance(project)
+          .generateRenderJar(
+              psiFile, new QuerySyncActionStatsScope(getClass(), e, psiFile.getVirtualFile()));
     }
 
     @Override

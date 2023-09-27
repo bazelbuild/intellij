@@ -26,6 +26,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
+import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -116,8 +117,8 @@ public class QuerySyncManager {
   }
 
   @CanIgnoreReturnValue
-  public ListenableFuture<Boolean> reloadProject() {
-    return run("Loading project", "Re-loading project", this::loadProject);
+  public ListenableFuture<Boolean> reloadProject(QuerySyncActionStatsScope querySyncActionStats) {
+    return run("Loading project", "Re-loading project", querySyncActionStats, this::loadProject);
   }
 
   public void loadProject(BlazeContext context) {
@@ -157,31 +158,55 @@ public class QuerySyncManager {
   }
 
   @CanIgnoreReturnValue
-  public ListenableFuture<Boolean> onStartup() {
-    return run("Loading project", "Initializing project structure", this::loadProject);
+  public ListenableFuture<Boolean> onStartup(QuerySyncActionStatsScope querySyncActionStats) {
+    return run(
+        "Loading project",
+        "Initializing project structure",
+        querySyncActionStats,
+        this::loadProject);
   }
 
   @CanIgnoreReturnValue
-  public ListenableFuture<Boolean> fullSync() {
+  public ListenableFuture<Boolean> fullSync(QuerySyncActionStatsScope querySyncActionStats) {
     if (!isProjectLoaded() || projectDefinitionHasChanged()) {
-      return run("Updating project structure", "Re-importing project", this::loadProject);
+      return run(
+          "Updating project structure",
+          "Re-importing project",
+          querySyncActionStats,
+          this::loadProject);
 
     } else {
-      return run("Updating project structure", "Re-importing project", loadedProject::fullSync);
+      return run(
+          "Updating project structure",
+          "Re-importing project",
+          querySyncActionStats,
+          loadedProject::fullSync);
     }
   }
 
   @CanIgnoreReturnValue
-  public ListenableFuture<Boolean> deltaSync() {
+  public ListenableFuture<Boolean> deltaSync(QuerySyncActionStatsScope querySyncActionStats) {
     assertProjectLoaded();
     if (projectDefinitionHasChanged()) {
-      return run("Updating project structure", "Re-importing project", this::loadProject);
+      return run(
+          "Updating project structure",
+          "Re-importing project",
+          querySyncActionStats,
+          this::loadProject);
     } else {
-      return run("Updating project structure", "Refreshing project", loadedProject::deltaSync);
+      return run(
+          "Updating project structure",
+          "Refreshing project",
+          querySyncActionStats,
+          loadedProject::deltaSync);
     }
   }
 
-  private ListenableFuture<Boolean> run(String title, String subTitle, ScopedOperation operation) {
+  private ListenableFuture<Boolean> run(
+      String title,
+      String subTitle,
+      QuerySyncActionStatsScope querySyncActionStatsScope,
+      ScopedOperation operation) {
     SettableFuture<Boolean> result = SettableFuture.create();
     BlazeSyncStatus syncStatus = BlazeSyncStatus.getInstance(project);
     syncStatus.syncStarted();
@@ -206,7 +231,7 @@ public class QuerySyncManager {
         MoreExecutors.directExecutor());
     try {
       ListenableFuture<Boolean> innerResultFuture =
-          createAndSubmitRunTask(title, subTitle, operation);
+          createAndSubmitRunTask(title, subTitle, querySyncActionStatsScope, operation);
       result.setFuture(innerResultFuture);
     } catch (Throwable t) {
       result.setException(t);
@@ -216,7 +241,10 @@ public class QuerySyncManager {
   }
 
   private ListenableFuture<Boolean> createAndSubmitRunTask(
-      String title, String subTitle, ScopedOperation operation) {
+      String title,
+      String subTitle,
+      QuerySyncActionStatsScope querySyncActionStatsScope,
+      ScopedOperation operation) {
     return ProgressiveTaskWithProgressIndicator.builder(project, title)
         .submitTaskWithResult(
             indicator ->
@@ -237,6 +265,7 @@ public class QuerySyncManager {
                       context
                           .push(new ProgressIndicatorScope(indicator))
                           .push(scope)
+                          .push(querySyncActionStatsScope)
                           .push(new ProblemsViewScope(project, FocusBehavior.ALWAYS))
                           .push(new IdeaLogScope());
                       operation.execute(context);
@@ -270,11 +299,13 @@ public class QuerySyncManager {
   }
 
   @CanIgnoreReturnValue
-  public ListenableFuture<Boolean> enableAnalysis(Set<Label> targets) {
+  public ListenableFuture<Boolean> enableAnalysis(
+      Set<Label> targets, QuerySyncActionStatsScope querySyncActionStats) {
     assertProjectLoaded();
     return run(
         "Building dependencies",
         "Building...",
+        querySyncActionStats,
         context -> loadedProject.enableAnalysis(context, targets));
   }
 
@@ -286,11 +317,13 @@ public class QuerySyncManager {
   }
 
   @CanIgnoreReturnValue
-  public ListenableFuture<Boolean> generateRenderJar(PsiFile psiFile) {
+  public ListenableFuture<Boolean> generateRenderJar(
+      PsiFile psiFile, QuerySyncActionStatsScope querySyncActionStats) {
     assertProjectLoaded();
     return run(
         "Building Render jar for Compose preview",
         "Building...",
+        querySyncActionStats,
         context -> loadedProject.enableRenderJar(context, psiFile));
   }
 

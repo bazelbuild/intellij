@@ -21,6 +21,8 @@ import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.info.BlazeInfoException;
+import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
+import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
@@ -63,7 +65,10 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
       throws BuildException {
     command = blazeCommandBuilder.build();
     try {
-      return resultsFunction.runBuild(buildResultHelper);
+      BlazeBuildOutputs blazeBuildOutputs = resultsFunction.runBuild(buildResultHelper);
+      int exitCode = blazeBuildOutputs.buildResult.exitCode;
+      BuildDepsStatsScope.fromContext(context).ifPresent(stats -> stats.setBazelExitCode(exitCode));
+      return blazeBuildOutputs;
     } catch (GetArtifactsException e) {
       return BlazeBuildOutputs.noOutputs(BuildResult.FATAL_ERROR);
     }
@@ -85,6 +90,7 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
       BuildResultHelper buildResultHelper,
       BlazeContext context)
       throws BuildException {
+    SyncQueryStatsScope.fromContext(context).ifPresent(stats -> stats.setBazelExitCode(0));
     return InputStream.nullInputStream();
   }
 

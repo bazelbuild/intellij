@@ -29,6 +29,7 @@ import com.google.common.collect.Sets.SetView;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.base.bazel.BazelExitCode;
+import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.qsync.ArtifactTracker.UpdateResult;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
@@ -147,6 +148,8 @@ public class DependencyTracker {
    */
   public boolean buildDependenciesForTargets(BlazeContext context, Set<Label> projectTargets)
       throws IOException, BuildException {
+    BuildDepsStatsScope.fromContext(context)
+        .ifPresent(stats -> stats.setRequestedTargets(projectTargets));
     BlazeProjectSnapshot snapshot = getCurrentSnapshot();
 
     Optional<RequestedTargets> maybeRequestedTargets =
@@ -186,13 +189,13 @@ public class DependencyTracker {
   private void buildDependencies(
       BlazeContext context, BlazeProjectSnapshot snapshot, RequestedTargets requestedTargets)
       throws IOException, BuildException {
+    BuildDepsStatsScope.fromContext(context)
+        .ifPresent(stats -> stats.setBuildTargets(requestedTargets.buildTargets));
     OutputInfo outputInfo = builder.build(context, requestedTargets.buildTargets);
-
     reportErrorsAndWarnings(context, snapshot, outputInfo);
 
     ImmutableSet<Path> updatedFiles =
         updateCaches(context, requestedTargets.expectedDependencyTargets, outputInfo);
-
     refreshFiles(context, updatedFiles);
   }
 
@@ -487,7 +490,8 @@ public class DependencyTracker {
         return;
       }
     }
-
+    BuildDepsStatsScope.fromContext(context)
+        .ifPresent(stats -> stats.setRequestedTargets(targets).setBuildTargets(buildTargets));
     RenderJarInfo renderJarInfo = renderJarBuilder.buildRenderJar(context, buildTargets);
 
     if (renderJarInfo.isEmpty()) {

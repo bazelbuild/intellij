@@ -28,6 +28,8 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtif
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
+import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -65,6 +67,8 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
 
     BuildResult buildResult =
         issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), context);
+    BuildDepsStatsScope.fromContext(context)
+        .ifPresent(stats -> stats.setBazelExitCode(buildResult.exitCode));
     if (buildResult.status == Status.FATAL_ERROR) {
       return BlazeBuildOutputs.noOutputs(buildResult);
     }
@@ -146,6 +150,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
               .ignoreExitCode(true)
               .build()
               .run();
+      SyncQueryStatsScope.fromContext(context).ifPresent(stats -> stats.setBazelExitCode(retVal));
       BazelExitCodeException.throwIfFailed(
           blazeCommandBuilder, retVal, ThrowOption.ALLOW_PARTIAL_SUCCESS);
       return new BufferedInputStream(

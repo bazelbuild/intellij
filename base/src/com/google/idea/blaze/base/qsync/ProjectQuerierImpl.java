@@ -20,6 +20,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStats;
+import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.vcs.VcsState;
@@ -66,6 +68,8 @@ public class ProjectQuerierImpl implements ProjectQuerier {
       throws IOException, BuildException {
 
     Optional<VcsState> vcsState = getVcsState(context);
+    SyncQueryStatsScope.fromContext(context)
+        .ifPresent(stats -> stats.setSyncMode(SyncQueryStats.SyncMode.FULL));
 
     logger.info(
         String.format(
@@ -115,6 +119,8 @@ public class ProjectQuerierImpl implements ProjectQuerier {
       throws IOException, BuildException {
 
     Optional<VcsState> vcsState = getVcsState(context);
+    SyncQueryStatsScope.fromContext(context)
+        .ifPresent(stats -> stats.setSyncMode(SyncQueryStats.SyncMode.DELTA));
     logger.info(
         String.format(
             "Starting partial query update; upstream rev=%s; snapshot path=%s",
