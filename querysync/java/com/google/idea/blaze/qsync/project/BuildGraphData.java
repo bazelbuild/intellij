@@ -33,7 +33,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
-import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import java.nio.file.Path;
@@ -89,10 +88,10 @@ public abstract class BuildGraphData {
     ImmutableMultimap.Builder<Label, Label> map = ImmutableMultimap.builder();
     for (ProjectTarget t : targetMap().values()) {
       for (Label dep : t.deps()) {
-        map.put(dep, t.buildTarget().label());
+        map.put(dep, t.label());
       }
       for (Label runtimeDep : t.runtimeDeps()) {
-        map.put(runtimeDep, t.buildTarget().label());
+        map.put(runtimeDep, t.label());
       }
     }
     return map.build();
@@ -105,7 +104,7 @@ public abstract class BuildGraphData {
    * <p>If project target A depends on external target B, and external target B depends on project
    * target C, target A is *not* included in {@code getReverseDeps} for a source file in target C.
    */
-  public Collection<BuildTarget> getReverseDepsForSource(Path sourcePath) {
+  public Collection<ProjectTarget> getReverseDepsForSource(Path sourcePath) {
 
     ImmutableSet<Label> targetOwners = getTargetOwners(sourcePath);
 
@@ -126,7 +125,6 @@ public abstract class BuildGraphData {
     return visited.stream()
         .map(label -> targetMap().get(label))
         .filter(Objects::nonNull)
-        .map(ProjectTarget::buildTarget)
         .collect(toImmutableList());
   }
 
@@ -229,10 +227,7 @@ public abstract class BuildGraphData {
   @Memoized
   public ImmutableSetMultimap<Label, Label> sourceOwners() {
     return targetMap().values().stream()
-        .flatMap(
-            t ->
-                t.sourceLabels().stream()
-                    .map(src -> new SimpleEntry<>(src, t.buildTarget().label())))
+        .flatMap(t -> t.sourceLabels().stream().map(src -> new SimpleEntry<>(src, t.label())))
         .collect(toImmutableSetMultimap(e -> e.getKey(), e -> e.getValue()));
   }
 
@@ -307,8 +302,7 @@ public abstract class BuildGraphData {
   /** Returns a list of custom_package fields that used by current project. */
   public ImmutableSet<String> getAllCustomPackages() {
     return targetMap().values().stream()
-        .map(ProjectTarget::buildTarget)
-        .map(BuildTarget::customPackage)
+        .map(ProjectTarget::customPackage)
         .flatMap(Optional::stream)
         .collect(toImmutableSet());
   }

@@ -19,6 +19,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Label;
+import java.util.Optional;
 
 /**
  * A build target that's included in the project.
@@ -27,9 +28,13 @@ import com.google.idea.blaze.common.Label;
  * required by query sync.
  */
 @AutoValue
-public abstract class ProjectTarget {
+public abstract class ProjectTarget implements BuildTarget {
 
-  public abstract BuildTarget buildTarget();
+  @Override
+  public abstract Label label();
+
+  @Override
+  public abstract String kind();
 
   /** All the dependencies of a rule. */
   public abstract ImmutableSet<Label> deps();
@@ -39,6 +44,12 @@ public abstract class ProjectTarget {
 
   public abstract ImmutableSet<Label> sourceLabels();
 
+  public abstract Optional<Label> testApp();
+
+  public abstract Optional<Label> instruments();
+
+  public abstract Optional<String> customPackage();
+
   public static Builder builder() {
     return new AutoValue_ProjectTarget.Builder();
   }
@@ -46,13 +57,21 @@ public abstract class ProjectTarget {
   /** Builder for {@link ProjectTarget}. */
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract BuildTarget.Builder buildTargetBuilder();
+    public abstract Builder label(Label label);
+
+    public abstract Builder kind(String kind);
 
     public abstract ImmutableSet.Builder<Label> depsBuilder();
 
     public abstract ImmutableSet.Builder<Label> runtimeDepsBuilder();
 
     public abstract ImmutableSet.Builder<Label> sourceLabelsBuilder();
+
+    public abstract Builder testApp(Label testApp);
+
+    public abstract Builder instruments(Label instruments);
+
+    public abstract Builder customPackage(String customPackage);
 
     public abstract ProjectTarget build();
   }

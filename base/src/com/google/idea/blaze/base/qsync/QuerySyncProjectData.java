@@ -27,7 +27,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.intellij.openapi.diagnostic.Logger;
@@ -67,11 +66,10 @@ public class QuerySyncProjectData implements BlazeProjectData {
 
   @Nullable
   @Override
-  public BuildTarget getBuildTarget(Label label) {
+  public ProjectTarget getBuildTarget(Label label) {
     return blazeProject
         .map(BlazeProjectSnapshot::getTargetMap)
         .map(map -> map.get(com.google.idea.blaze.common.Label.of(label.toString())))
-        .map(ProjectTarget::buildTarget)
         .orElse(null);
   }
 
@@ -82,7 +80,7 @@ public class QuerySyncProjectData implements BlazeProjectData {
    * <p>If project target A depends on external target B, and external target B depends on project
    * target C, target A is *not* included in {@code getReverseDeps} for a source file in target C.
    */
-  public Collection<BuildTarget> getReverseDeps(Path sourcePath) {
+  public Collection<ProjectTarget> getReverseDeps(Path sourcePath) {
     return blazeProject
         .map(BlazeProjectSnapshot::graph)
         .map(graph -> graph.getReverseDepsForSource(sourcePath))
@@ -93,7 +91,6 @@ public class QuerySyncProjectData implements BlazeProjectData {
   public ImmutableList<TargetInfo> targets() {
     if (blazeProject.isPresent()) {
       return blazeProject.get().getTargetMap().values().stream()
-          .map(ProjectTarget::buildTarget)
           .map(TargetInfo::fromBuildTarget)
           .collect(ImmutableList.toImmutableList());
     }

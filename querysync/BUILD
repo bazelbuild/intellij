@@ -1,5 +1,6 @@
 package(default_visibility = [
     ":__subpackages__",
+    "//aswb:__subpackages__",
     "//base:__subpackages__",
     "//java/com/google/devtools/intellij/blaze/plugin/base:__subpackages__",
     "//java/com/google/devtools/intellij/blaze/plugin/querysync:__subpackages__",

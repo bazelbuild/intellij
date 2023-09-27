@@ -16,38 +16,28 @@
 package com.google.idea.blaze.common;
 
 import com.google.auto.value.AutoValue;
-import java.util.Optional;
 
-/** Represents a build target */
-@AutoValue
-public abstract class BuildTarget {
-  public abstract Label label();
+/**
+ * Represents a build target.
+ *
+ * <p>This interface exists for compatibility with the legacy (aspect) sync only.
+ */
+public interface BuildTarget {
+  Label label();
 
-  public abstract String kind();
+  String kind();
 
-  public abstract Optional<Label> testApp();
-
-  public abstract Optional<Label> instruments();
-
-  public abstract Optional<String> customPackage();
-
-  public static Builder builder() {
-    return new AutoValue_BuildTarget.Builder();
+  static BuildTarget create(Label label, String kind) {
+    return new AutoValue_BuildTarget_Impl(label, kind);
   }
 
-  /** Builder class for {@link BuildTarget} */
-  @AutoValue.Builder
-  public abstract static class Builder {
-    public abstract Builder setLabel(Label label);
+  /** Simple autovalue implementation of {@link BuildTarget}. */
+  @AutoValue
+  abstract class Impl implements BuildTarget {
+    @Override
+    public abstract Label label();
 
-    public abstract Builder setKind(String kind);
-
-    public abstract Builder setTestApp(Label testApp);
-
-    public abstract Builder setInstruments(Label instruments);
-
-    public abstract Builder setCustomPackage(String customPackage);
-
-    public abstract BuildTarget build();
+    @Override
+    public abstract String kind();
   }
 }
