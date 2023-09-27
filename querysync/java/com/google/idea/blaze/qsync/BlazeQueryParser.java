@@ -19,19 +19,15 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.idea.blaze.common.Label.toLabelList;
 import static java.util.Objects.requireNonNull;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
-import com.google.common.collect.Streams;
-import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.BuildGraphData.Location;
+import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.Query.Rule;
@@ -107,10 +103,8 @@ public class BlazeQueryParser {
 
   private final BuildGraphData.Builder graphBuilder = BuildGraphData.builder();
   private final PackageSet.Builder packages = new PackageSet.Builder();
-  private final Map<Label, Set<Label>> ruleDeps = Maps.newHashMap();
-  private final Map<Label, Set<Label>> ruleRuntimeDeps = Maps.newHashMap();
+
   private final Set<Label> projectDeps = Sets.newHashSet();
-  private final ImmutableMultimap.Builder<Label, Label> targetSources = ImmutableMultimap.builder();
   // All the project targets the aspect needs to build
   private final Set<Label> projectTargetsToBuild = new HashSet<>();
   // An aggregation of all the dependencies of java rules
@@ -147,25 +141,31 @@ public class BlazeQueryParser {
       String ruleClass = ruleEntry.getValue().getRuleClass();
       ruleCount.compute(ruleClass, (k, v) -> (v == null ? 0 : v) + 1);
 
-      BuildTarget.Builder buildTarget =
-          BuildTarget.builder().setLabel(ruleEntry.getKey()).setKind(ruleClass);
+      ProjectTarget.Builder targetBuilder = ProjectTarget.builder();
+
+      targetBuilder.buildTargetBuilder().setLabel(ruleEntry.getKey()).setKind(ruleClass);
       if (!ruleEntry.getValue().getTestApp().isEmpty()) {
-        buildTarget.setTestApp(Label.of(ruleEntry.getValue().getTestApp()));
+        targetBuilder.buildTargetBuilder().setTestApp(Label.of(ruleEntry.getValue().getTestApp()));
       }
       if (!ruleEntry.getValue().getInstruments().isEmpty()) {
-        buildTarget.setInstruments(Label.of(ruleEntry.getValue().getInstruments()));
+        targetBuilder
+            .buildTargetBuilder()
+            .setInstruments(Label.of(ruleEntry.getValue().getInstruments()));
       }
       if (!ruleEntry.getValue().getCustomPackage().isEmpty()) {
-        buildTarget.setCustomPackage(ruleEntry.getValue().getCustomPackage());
+        targetBuilder
+            .buildTargetBuilder()
+            .setCustomPackage(ruleEntry.getValue().getCustomPackage());
       }
-      graphBuilder.targetMapBuilder().put(ruleEntry.getKey(), buildTarget.build());
 
       if (isJavaRule(ruleClass)) {
-        visitJavaRule(ruleEntry.getKey(), ruleEntry.getValue());
+        visitJavaRule(ruleEntry.getKey(), ruleEntry.getValue(), targetBuilder);
       }
       if (alwaysBuildRuleKinds.contains(ruleClass)) {
         projectTargetsToBuild.add(ruleEntry.getKey());
       }
+
+      graphBuilder.targetMapBuilder().put(ruleEntry.getKey(), targetBuilder.build());
     }
     int nTargets = query.proto().getRulesCount();
 
@@ -183,12 +183,8 @@ public class BlazeQueryParser {
 
     BuildGraphData graph =
         graphBuilder
-            .targetSources(targetSources.build())
-            .ruleDeps(ruleDeps)
-            .ruleRuntimeDeps(ruleRuntimeDeps)
             .projectDeps(projectDeps)
             .packages(packages.build())
-            .reverseDeps(calculateReverseDeps())
             .build();
 
     context.output(PrintOutput.log("%-10d Source files", graph.locations().size()));
@@ -200,15 +196,14 @@ public class BlazeQueryParser {
     return graph;
   }
 
-  private void visitJavaRule(Label label, Query.Rule rule) {
+  private void visitJavaRule(Label label, Query.Rule rule, ProjectTarget.Builder targetBuilder) {
     graphBuilder.allTargetsBuilder().add(label);
     ImmutableSet<Label> thisSources = sourcesWithExpandedFileGroups(rule);
     Set<Label> thisDeps = Sets.newHashSet(toLabelList(rule.getDepsList()));
-    ruleDeps.computeIfAbsent(label, x -> Sets.newHashSet()).addAll(thisDeps);
+    targetBuilder.depsBuilder().addAll(thisDeps);
 
-    Set<Label> thisRuntimeDeps = Sets.newHashSet(toLabelList(rule.getRuntimeDepsList()));
-    ruleRuntimeDeps.computeIfAbsent(label, x -> Sets.newHashSet()).addAll(thisRuntimeDeps);
-    targetSources.putAll(label, thisSources);
+    targetBuilder.runtimeDepsBuilder().addAll(toLabelList(rule.getRuntimeDepsList()));
+    targetBuilder.sourceLabelsBuilder().addAll(thisSources);
     for (Label thisSource : thisSources) {
       // Require build step for targets with generated sources.
       if (!query.getSourceFilesMap().containsKey(thisSource)) {
@@ -227,21 +222,9 @@ public class BlazeQueryParser {
         projectTargetsToBuild.add(label);
       }
       if (!rule.getManifest().isEmpty()) {
-        targetSources.put(label, Label.of(rule.getManifest()));
+        targetBuilder.sourceLabelsBuilder().add(Label.of(rule.getManifest()));
       }
     }
-  }
-
-  private ImmutableMultimap<Label, Label> calculateReverseDeps() {
-    ArrayListMultimap<Label, Label> map = ArrayListMultimap.create();
-    Streams.concat(ruleDeps.entrySet().stream(), ruleRuntimeDeps.entrySet().stream())
-        .forEach(
-            entry -> {
-              for (Label dep : entry.getValue()) {
-                map.put(dep, entry.getKey());
-              }
-            });
-    return ImmutableMultimap.copyOf(map);
   }
 
   /** Returns a set of all sources for a rule, expanding any in-project {@code filegroup} rules */
