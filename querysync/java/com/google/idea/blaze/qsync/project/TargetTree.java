@@ -192,6 +192,12 @@ public class TargetTree {
     }
 
     @CanIgnoreReturnValue
+    public Builder addAll(Iterable<Label> targets) {
+      targets.forEach(this::add);
+      return this;
+    }
+
+    @CanIgnoreReturnValue
     public Builder add(Iterator<Path> pkg, String targetName) {
       if (!pkg.hasNext()) {
         content.add(targetName);
