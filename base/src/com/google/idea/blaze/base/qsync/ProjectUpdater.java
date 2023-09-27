@@ -15,8 +15,11 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static java.util.Arrays.stream;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -45,6 +48,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.libraries.Library;
@@ -126,6 +130,13 @@ public class ProjectUpdater implements BlazeProjectListener {
                     mapModuleType(moduleSpec.getType()).getId());
 
             ModifiableRootModel roots = models.getModifiableRootModel(module);
+            ImmutableList<OrderEntry> existingLibraryOrderEntries =
+                stream(roots.getOrderEntries())
+                    .filter(it -> it instanceof LibraryOrderEntry)
+                    .collect(toImmutableList());
+            for (OrderEntry entry : existingLibraryOrderEntries) {
+              roots.removeOrderEntry(entry);
+            }
             // TODO: should this be encapsulated in ProjectProto.Module?
             roots.inheritSdk();
 
