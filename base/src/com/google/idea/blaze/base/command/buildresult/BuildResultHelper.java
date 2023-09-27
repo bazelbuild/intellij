@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Interner;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.exception.BuildException;
 import java.io.InputStream;
 import java.util.List;
@@ -106,9 +107,12 @@ public interface BuildResultHelper extends AutoCloseable {
    * build should not use this since {@link ExternalTask} provide stdout handler.
    *
    * @param completedBuildId build id.
+   * @param stderrConsumer process stderr
+   * @param blazeContext blaze context may contains logging scope
    * @return a list of message on stdout.
    */
-  default InputStream getStdout(String completedBuildId, Consumer<String> stderrConsumer)
+  default InputStream getStdout(
+      String completedBuildId, Consumer<String> stderrConsumer, BlazeContext blazeContext)
       throws BuildException {
     return InputStream.nullInputStream();
   }

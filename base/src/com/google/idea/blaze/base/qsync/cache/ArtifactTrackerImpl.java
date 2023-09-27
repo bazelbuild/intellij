@@ -46,6 +46,7 @@ import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.CachedArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.qsync.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.OutputInfo;
 import com.google.idea.blaze.base.qsync.RenderJarInfo;
@@ -397,6 +398,8 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
 
       ImmutableMap<Path, Path> updated = getUninterruptibly(artifactPaths);
       saveState();
+      BuildDepsStatsScope.fromContext(context)
+          .ifPresent(stats -> stats.setUpdatedFilesCount(updated.size()));
       return UpdateResult.create(updated.keySet(), ImmutableSet.of());
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
@@ -447,6 +450,8 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
         updateMaps(targets, artifacts);
       }
       saveState();
+      BuildDepsStatsScope.fromContext(context)
+          .ifPresent(stats -> stats.setUpdatedFilesCount(cachePathToArtifactKeyMap.size()));
       return UpdateResult.create(cachePathToArtifactKeyMap.keySet(), ImmutableSet.of());
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);

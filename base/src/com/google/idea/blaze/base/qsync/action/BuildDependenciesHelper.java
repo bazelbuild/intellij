@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.qsync.action;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.qsync.TargetsToBuild;
@@ -87,10 +88,12 @@ public class BuildDependenciesHelper {
 
   private final Project project;
   private final QuerySyncManager syncManager;
+  private final Class<?> actionClass;
 
-  public BuildDependenciesHelper(Project project) {
+  public BuildDependenciesHelper(Project project, Class<?> actionClass) {
     this.project = project;
     this.syncManager = QuerySyncManager.getInstance(project);
+    this.actionClass = actionClass;
   }
 
   boolean canEnableAnalysisNow() {
@@ -136,16 +139,21 @@ public class BuildDependenciesHelper {
     if (toBuild.isEmpty()) {
       return;
     }
+    QuerySyncActionStatsScope querySyncActionStats =
+        new QuerySyncActionStatsScope(actionClass, e, vfile);
     if (!toBuild.isAmbiguous()) {
-      syncManager.enableAnalysis(toBuild.targets());
+      syncManager.enableAnalysis(toBuild.targets(), querySyncActionStats);
       return;
     }
     chooseTargetToBuildFor(
-        vfile, toBuild, positioner, label -> enableAnalysis(ImmutableSet.of(label)));
+        vfile,
+        toBuild,
+        positioner,
+        label -> enableAnalysis(ImmutableSet.of(label), querySyncActionStats));
   }
 
-  void enableAnalysis(ImmutableSet<Label> targets) {
-    syncManager.enableAnalysis(targets);
+  void enableAnalysis(ImmutableSet<Label> targets, QuerySyncActionStatsScope querySyncActionStats) {
+    syncManager.enableAnalysis(targets, querySyncActionStats);
   }
 
   public void chooseTargetToBuildFor(

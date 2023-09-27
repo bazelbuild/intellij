@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
+import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewEdit;
@@ -201,7 +202,8 @@ public class AddToProjectAction extends BlazeProjectAction {
       }
       edit.apply();
       notify(NotificationType.INFORMATION, "Added %s to project view; starting sync", chosen.path);
-      QuerySyncManager.getInstance(project).fullSync();
+      QuerySyncManager.getInstance(project)
+          .fullSync(new QuerySyncActionStatsScope(getClass(), event));
     }
   }
 

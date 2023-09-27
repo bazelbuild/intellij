@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.actions;
 
+import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
@@ -32,7 +33,7 @@ public class FullSyncProjectAction extends BlazeProjectSyncAction {
   @Override
   protected void runSync(Project project, AnActionEvent e) {
     if (QuerySync.isEnabled()) {
-      QuerySyncManager.getInstance(project).fullSync();
+      QuerySyncManager.getInstance(project).fullSync(new QuerySyncActionStatsScope(getClass(), e));
     } else {
       BlazeSyncManager.getInstance(project).fullProjectSync(/* reason= */ "FullSyncProjectAction");
     }

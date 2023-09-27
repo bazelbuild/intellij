@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.actions;
 
+import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -41,13 +42,14 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
   protected void runSync(Project project, AnActionEvent e) {
     if (QuerySync.isEnabled()) {
       QuerySyncManager qsm = QuerySyncManager.getInstance(project);
+      QuerySyncActionStatsScope scope = new QuerySyncActionStatsScope(getClass(), e);
       if (!qsm.isProjectLoaded()) {
-        qsm.onStartup();
+        qsm.onStartup(scope);
       } else if ((e.getInputEvent() != null)
           && (e.getInputEvent().getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0) {
-        qsm.fullSync();
+        qsm.fullSync(scope);
       } else {
-        qsm.deltaSync();
+        qsm.deltaSync(scope);
       }
     } else {
       BlazeSyncManager.getInstance(project)
