@@ -638,8 +638,11 @@ public class GraphToProjectConverterTest {
             newDirectExecutorService());
 
     BuildGraphData buildGraphData =
-        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
-            .parse(getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY));
+        new BlazeQueryParser(
+                getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY),
+                NOOP_CONTEXT,
+                ImmutableSet.of())
+            .parse();
     ProjectProto.Project project = converter.createProject(buildGraphData);
 
     // Sanity check
@@ -681,8 +684,11 @@ public class GraphToProjectConverterTest {
                 ImmutableSet.of("querysync/javatests/*")),
             newDirectExecutorService());
     BuildGraphData buildGraphData =
-        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
-            .parse(getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY));
+        new BlazeQueryParser(
+                getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY),
+                NOOP_CONTEXT,
+                ImmutableSet.of())
+            .parse();
     ProjectProto.Project project = converter.createProject(buildGraphData);
 
     assertThat(project.getModulesCount()).isEqualTo(1);

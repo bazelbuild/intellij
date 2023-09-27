@@ -39,8 +39,11 @@ public class BuildGraphTest {
   @Test
   public void testJavaLibraryNoDeps() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
-            .parse(getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY));
+        new BlazeQueryParser(
+                getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY),
+                NOOP_CONTEXT,
+                ImmutableSet.of())
+            .parse();
     assertThat(graph.allTargets().toLabelSet())
         .containsExactly(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps"));
     assertThat(graph.getAllSourceFiles())
@@ -59,8 +62,11 @@ public class BuildGraphTest {
   @Test
   public void testJavaLibraryExternalDep() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
-            .parse(getQuerySummary(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY));
+        new BlazeQueryParser(
+                getQuerySummary(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY),
+                NOOP_CONTEXT,
+                ImmutableSet.of())
+            .parse();
     assertThat(
             graph.getFileDependencies(
                 TESTDATA_ROOT.resolve("externaldep/TestClassExternalDep.java")))
@@ -70,8 +76,11 @@ public class BuildGraphTest {
   @Test
   public void testJavaLibraryInternalDep() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
-            .parse(getQuerySummary(TestData.JAVA_LIBRARY_INTERNAL_DEP_QUERY));
+        new BlazeQueryParser(
+                getQuerySummary(TestData.JAVA_LIBRARY_INTERNAL_DEP_QUERY),
+                NOOP_CONTEXT,
+                ImmutableSet.of())
+            .parse();
     // Sanity check:
     assertThat(graph.getAllSourceFiles())
         .contains(TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java"));
@@ -84,8 +93,11 @@ public class BuildGraphTest {
   @Test
   public void testJavaLibraryTransientDep() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
-            .parse(getQuerySummary(TestData.JAVA_LIBRARY_TRANSITIVE_DEP_QUERY));
+        new BlazeQueryParser(
+                getQuerySummary(TestData.JAVA_LIBRARY_TRANSITIVE_DEP_QUERY),
+                NOOP_CONTEXT,
+                ImmutableSet.of())
+            .parse();
     // Sanity check:
     assertThat(graph.getAllSourceFiles())
         .contains(TESTDATA_ROOT.resolve("externaldep/TestClassExternalDep.java"));
@@ -98,8 +110,11 @@ public class BuildGraphTest {
   @Test
   public void testJavaLibraryProtoDep() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
-            .parse(getQuerySummary(TestData.JAVA_LIBRARY_PROTO_DEP_QUERY));
+        new BlazeQueryParser(
+                getQuerySummary(TestData.JAVA_LIBRARY_PROTO_DEP_QUERY),
+                NOOP_CONTEXT,
+                ImmutableSet.of())
+            .parse();
     assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("protodep/TestClassProtoDep.java")))
         .containsExactly(
             Label.of("//" + TESTDATA_ROOT + "/protodep:proto_java_proto_lite"),
@@ -109,8 +124,11 @@ public class BuildGraphTest {
   @Test
   public void testJavaLibraryMultiTargets() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
-            .parse(getQuerySummary(TestData.JAVA_LIBRARY_MULTI_TARGETS));
+        new BlazeQueryParser(
+                getQuerySummary(TestData.JAVA_LIBRARY_MULTI_TARGETS),
+                NOOP_CONTEXT,
+                ImmutableSet.of())
+            .parse();
     assertThat(graph.allTargets().toLabelSet())
         .containsExactly(
             Label.of("//" + TESTDATA_ROOT + "/multitarget:nodeps"),
@@ -132,8 +150,9 @@ public class BuildGraphTest {
   @Test
   public void testJavaLibaryExportingExternalTargets() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
-            .parse(getQuerySummary(TestData.JAVA_EXPORTED_DEP_QUERY));
+        new BlazeQueryParser(
+                getQuerySummary(TestData.JAVA_EXPORTED_DEP_QUERY), NOOP_CONTEXT, ImmutableSet.of())
+            .parse();
     Path sourceFile = TESTDATA_ROOT.resolve("exports/TestClassUsingExport.java");
     assertThat(graph.getJavaSourceFiles()).containsExactly(sourceFile);
     assertThat(graph.getFileDependencies(sourceFile))
@@ -143,8 +162,9 @@ public class BuildGraphTest {
   @Test
   public void testAndroidLibrary() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
-            .parse(getQuerySummary(TestData.ANDROID_LIB_QUERY));
+        new BlazeQueryParser(
+                getQuerySummary(TestData.ANDROID_LIB_QUERY), NOOP_CONTEXT, ImmutableSet.of())
+            .parse();
     assertThat(graph.getAllSourceFiles())
         .containsExactly(
             TESTDATA_ROOT.resolve("android/TestAndroidClass.java"),
@@ -169,8 +189,11 @@ public class BuildGraphTest {
   @Test
   public void testProjectAndroidLibrariesWithAidlSource_areProjectDeps() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
-            .parse(getQuerySummary(TestData.ANDROID_AIDL_SOURCE_QUERY));
+        new BlazeQueryParser(
+                getQuerySummary(TestData.ANDROID_AIDL_SOURCE_QUERY),
+                NOOP_CONTEXT,
+                ImmutableSet.of())
+            .parse();
     assertThat(graph.getAllSourceFiles())
         .containsExactly(
             TESTDATA_ROOT.resolve("aidl/TestAndroidAidlClass.java"),
@@ -195,8 +218,9 @@ public class BuildGraphTest {
   @Test
   public void testFileGroupSource() throws Exception {
     BuildGraphData graph =
-        new BlazeQueryParser(NOOP_CONTEXT, ImmutableSet.of())
-            .parse(getQuerySummary(TestData.FILEGROUP_QUERY));
+        new BlazeQueryParser(
+                getQuerySummary(TestData.FILEGROUP_QUERY), NOOP_CONTEXT, ImmutableSet.of())
+            .parse();
     Path sourceFile = TESTDATA_ROOT.resolve("filegroup/TestFileGroupSource.java");
     Path subgroupSourceFile = TESTDATA_ROOT.resolve("filegroup/TestSubFileGroupSource.java");
     assertThat(graph.projectDeps())
