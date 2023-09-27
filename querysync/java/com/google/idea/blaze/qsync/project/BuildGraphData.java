@@ -17,6 +17,7 @@ package com.google.idea.blaze.qsync.project;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.google.common.collect.ImmutableSetMultimap.toImmutableSetMultimap;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -30,20 +31,19 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import java.nio.file.Path;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -71,25 +71,6 @@ public abstract class BuildGraphData {
   /** A map from a file path to its target */
   abstract ImmutableMap<Path, Label> fileToTarget();
 
-  /** Map from build rule targets to their sources. */
-  abstract ImmutableSetMultimap<Label, Label> targetSources();
-
-  /**
-   * All the dependencies of a java rule.
-   *
-   * <p>Note that we don't use a MultiMap here as that does not allow us to distinguish between a
-   * rule with no dependencies vs a rules that does not exist.
-   */
-  abstract ImmutableMap<Label, ImmutableSet<Label>> ruleDeps();
-
-  /**
-   * All the runtime dependencies of a java rule.
-   *
-   * <p>Note that we don't use a MultiMap here as that does not allow us to distinguish between a
-   * rule with no runtime dependencies vs a rules that does not exist.
-   */
-  abstract ImmutableMap<Label, ImmutableSet<Label>> ruleRuntimeDeps();
-
   /** All dependencies external to this project */
   public abstract ImmutableSet<Label> projectDeps();
 
@@ -97,13 +78,25 @@ public abstract class BuildGraphData {
 
   abstract ImmutableSet<Label> androidTargets();
 
-  abstract ImmutableMap<Label, BuildTarget> targetMap();
+  abstract ImmutableMap<Label, ProjectTarget> targetMap();
 
   /**
    * All in-project targets with a direct compile or runtime dependency on a specified target, which
    * may be external.
    */
-  abstract ImmutableMultimap<Label, Label> reverseDeps();
+  @Memoized
+  ImmutableMultimap<Label, Label> reverseDeps() {
+    ImmutableMultimap.Builder<Label, Label> map = ImmutableMultimap.builder();
+    for (ProjectTarget t : targetMap().values()) {
+      for (Label dep : t.deps()) {
+        map.put(dep, t.buildTarget().label());
+      }
+      for (Label runtimeDep : t.runtimeDeps()) {
+        map.put(runtimeDep, t.buildTarget().label());
+      }
+    }
+    return map.build();
+  }
 
   /**
    * Returns all in project targets that depend on the source file at {@code sourcePath} via an
@@ -133,6 +126,7 @@ public abstract class BuildGraphData {
     return visited.stream()
         .map(label -> targetMap().get(label))
         .filter(Objects::nonNull)
+        .map(ProjectTarget::buildTarget)
         .collect(toImmutableList());
   }
 
@@ -149,12 +143,7 @@ public abstract class BuildGraphData {
 
   @VisibleForTesting
   public static final BuildGraphData EMPTY =
-      builder()
-          .targetSources(ImmutableMultimap.of())
-          .ruleDeps(ImmutableMap.of())
-          .projectDeps(ImmutableSet.of())
-          .packages(PackageSet.EMPTY)
-          .build();
+      builder().projectDeps(ImmutableSet.of()).packages(PackageSet.EMPTY).build();
 
   /** Builder for {@link BuildGraphData}. */
   @AutoValue.Builder
@@ -166,42 +155,7 @@ public abstract class BuildGraphData {
 
     public abstract ImmutableMap.Builder<Path, Label> fileToTargetBuilder();
 
-    public abstract Builder targetSources(Multimap<Label, Label> value);
-
-    public abstract ImmutableMap.Builder<Label, ImmutableSet<Label>> ruleDepsBuilder();
-
-    public abstract ImmutableMap.Builder<Label, ImmutableSet<Label>> ruleRuntimeDepsBuilder();
-
-    public abstract ImmutableMap.Builder<Label, BuildTarget> targetMapBuilder();
-
-    public abstract ImmutableMultimap.Builder<Label, Label> reverseDepsBuilder();
-
-    @CanIgnoreReturnValue
-    public Builder ruleDeps(Map<Label, Set<Label>> value) {
-      ImmutableMap.Builder<Label, ImmutableSet<Label>> builder = ruleDepsBuilder();
-      for (Label key : value.keySet()) {
-        builder.put(key, ImmutableSet.copyOf(value.get(key)));
-      }
-      return this;
-    }
-
-    @CanIgnoreReturnValue
-    public Builder ruleRuntimeDeps(Map<Label, Set<Label>> value) {
-      ImmutableMap.Builder<Label, ImmutableSet<Label>> builder = ruleRuntimeDepsBuilder();
-      for (Label key : value.keySet()) {
-        builder.put(key, ImmutableSet.copyOf(value.get(key)));
-      }
-      return this;
-    }
-
-    @CanIgnoreReturnValue
-    public Builder reverseDeps(Multimap<Label, Label> value) {
-      ImmutableMultimap.Builder<Label, Label> builder = reverseDepsBuilder();
-      for (Label key : value.keySet()) {
-        builder.putAll(key, value.get(key));
-      }
-      return this;
-    }
+    public abstract ImmutableMap.Builder<Label, ProjectTarget> targetMapBuilder();
 
     public abstract Builder projectDeps(Set<Label> value);
 
@@ -215,9 +169,10 @@ public abstract class BuildGraphData {
 
     public final BuildGraphData build() {
       BuildGraphData result = autoBuild();
-      // sourceOwners is memoized, but we choose to pay the cost of building it now so that
-      // it's done by sync time rather than later on.
+      // these are memoized, but we choose to pay the cost of building it now so that it's done at
+      // sync time rather than later on.
       ImmutableSetMultimap<Label, Label> unused = result.sourceOwners();
+      ImmutableMultimap<Label, Label> unused2 = result.reverseDeps();
       return result;
     }
   }
@@ -258,13 +213,13 @@ public abstract class BuildGraphData {
   private ImmutableSet<Label> calculateTransitiveExternalDependencies(Label target) {
     ImmutableSet.Builder<Label> builder = ImmutableSet.builder();
     // There are no cycles in blaze, so we can recursively call down
-    if (!ruleDeps().containsKey(target)) {
+    if (!targetMap().containsKey(target)) {
       builder.add(target);
     } else {
       if (projectDeps().contains(target)) {
         builder.add(target);
       }
-      for (Label dep : ruleDeps().get(target)) {
+      for (Label dep : targetMap().get(target).deps()) {
         builder.addAll(getTransitiveExternalDependencies(dep));
       }
     }
@@ -273,7 +228,12 @@ public abstract class BuildGraphData {
 
   @Memoized
   public ImmutableSetMultimap<Label, Label> sourceOwners() {
-    return targetSources().inverse();
+    return targetMap().values().stream()
+        .flatMap(
+            t ->
+                t.sourceLabels().stream()
+                    .map(src -> new SimpleEntry<>(src, t.buildTarget().label())))
+        .collect(toImmutableSetMultimap(e -> e.getKey(), e -> e.getValue()));
   }
 
   @Nullable
@@ -291,7 +251,7 @@ public abstract class BuildGraphData {
   @Nullable
   public Label selectLabelWithLeastDeps(Collection<Label> candidates) {
     return candidates.stream()
-        .min(Comparator.comparingInt(label -> ruleDeps().get(label).size()))
+        .min(Comparator.comparingInt(label -> targetMap().get(label).deps().size()))
         .orElse(null);
   }
 
@@ -346,12 +306,10 @@ public abstract class BuildGraphData {
 
   /** Returns a list of custom_package fields that used by current project. */
   public ImmutableSet<String> getAllCustomPackages() {
-    ImmutableSet.Builder<String> customPackages = ImmutableSet.builder();
-    for (BuildTarget target : targetMap().values()) {
-      if (target.customPackage().isPresent()) {
-        customPackages.add(target.customPackage().get());
-      }
-    }
-    return customPackages.build();
+    return targetMap().values().stream()
+        .map(ProjectTarget::buildTarget)
+        .map(BuildTarget::customPackage)
+        .flatMap(Optional::stream)
+        .collect(toImmutableSet());
   }
 }

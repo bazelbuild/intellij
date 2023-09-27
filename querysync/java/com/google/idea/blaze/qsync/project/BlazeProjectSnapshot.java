@@ -95,7 +95,7 @@ public abstract class BlazeProjectSnapshot {
   }
 
   /** Returns mapping of targets to {@link BuildTarget} */
-  public ImmutableMap<Label, BuildTarget> getTargetMap() {
+  public ImmutableMap<Label, ProjectTarget> getTargetMap() {
     return graph().targetMap();
   }
 

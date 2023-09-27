@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.intellij.openapi.diagnostic.Logger;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -70,6 +71,7 @@ public class QuerySyncProjectData implements BlazeProjectData {
     return blazeProject
         .map(BlazeProjectSnapshot::getTargetMap)
         .map(map -> map.get(com.google.idea.blaze.common.Label.of(label.toString())))
+        .map(ProjectTarget::buildTarget)
         .orElse(null);
   }
 
@@ -91,6 +93,7 @@ public class QuerySyncProjectData implements BlazeProjectData {
   public ImmutableList<TargetInfo> targets() {
     if (blazeProject.isPresent()) {
       return blazeProject.get().getTargetMap().values().stream()
+          .map(ProjectTarget::buildTarget)
           .map(TargetInfo::fromBuildTarget)
           .collect(ImmutableList.toImmutableList());
     }
