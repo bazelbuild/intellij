@@ -48,6 +48,24 @@ import java.util.Set;
  */
 public class BlazeQueryParser {
 
+  /**
+   * Factory class to allow the creation of the the parser to be decoupled from the injection of its
+   * dependencies.
+   */
+  public static class Factory {
+    private final Context<?> context;
+    private final ImmutableSet<String> alwaysBuildRuleKinds;
+
+    public Factory(Context<?> context, ImmutableSet<String> alwaysBuildRuleKinds) {
+      this.context = context;
+      this.alwaysBuildRuleKinds = alwaysBuildRuleKinds;
+    }
+
+    public BlazeQueryParser newParser(QuerySummary querySummary) {
+      return new BlazeQueryParser(querySummary, context, alwaysBuildRuleKinds);
+    }
+  }
+
   // Rules that will need to be built, whether or not the target is included in the
   // project.
   public static final ImmutableSet<String> ALWAYS_BUILD_RULE_KINDS =
@@ -85,6 +103,8 @@ public class BlazeQueryParser {
   private final Context<?> context;
   private final SetView<String> alwaysBuildRuleKinds;
 
+  private final QuerySummary query;
+
   private final BuildGraphData.Builder graphBuilder = BuildGraphData.builder();
   private final PackageSet.Builder packages = new PackageSet.Builder();
   private final Map<Label, Set<Label>> ruleDeps = Maps.newHashMap();
@@ -96,16 +116,18 @@ public class BlazeQueryParser {
   // An aggregation of all the dependencies of java rules
   private final Set<Label> javaDeps = new HashSet<>();
 
-  public BlazeQueryParser(Context<?> context, ImmutableSet<String> handledRuleKinds) {
+  public BlazeQueryParser(
+      QuerySummary query, Context<?> context, ImmutableSet<String> handledRuleKinds) {
     this.context = context;
     this.alwaysBuildRuleKinds = Sets.difference(ALWAYS_BUILD_RULE_KINDS, handledRuleKinds);
+    this.query = query;
   }
 
   private static boolean isJavaRule(String ruleClass) {
     return JAVA_RULE_TYPES.contains(ruleClass) || ANDROID_RULE_TYPES.contains(ruleClass);
   }
 
-  public BuildGraphData parse(QuerySummary query) {
+  public BuildGraphData parse() {
     context.output(PrintOutput.log("Analyzing project structure..."));
 
     long now = System.nanoTime();
@@ -139,7 +161,7 @@ public class BlazeQueryParser {
       graphBuilder.targetMapBuilder().put(ruleEntry.getKey(), buildTarget.build());
 
       if (isJavaRule(ruleClass)) {
-        visitJavaRule(query, ruleEntry.getKey(), ruleEntry.getValue());
+        visitJavaRule(ruleEntry.getKey(), ruleEntry.getValue());
       }
       if (alwaysBuildRuleKinds.contains(ruleClass)) {
         projectTargetsToBuild.add(ruleEntry.getKey());
@@ -178,9 +200,9 @@ public class BlazeQueryParser {
     return graph;
   }
 
-  private void visitJavaRule(QuerySummary query, Label label, Query.Rule rule) {
+  private void visitJavaRule(Label label, Query.Rule rule) {
     graphBuilder.allTargetsBuilder().add(label);
-    ImmutableSet<Label> thisSources = sourcesWithExpandedFileGroups(rule, query);
+    ImmutableSet<Label> thisSources = sourcesWithExpandedFileGroups(rule);
     Set<Label> thisDeps = Sets.newHashSet(toLabelList(rule.getDepsList()));
     ruleDeps.computeIfAbsent(label, x -> Sets.newHashSet()).addAll(thisDeps);
 
@@ -223,36 +245,34 @@ public class BlazeQueryParser {
   }
 
   /** Returns a set of all sources for a rule, expanding any in-project {@code filegroup} rules */
-  private ImmutableSet<Label> sourcesWithExpandedFileGroups(Rule rule, QuerySummary query) {
+  private ImmutableSet<Label> sourcesWithExpandedFileGroups(Rule rule) {
     ImmutableSet<Label> rawLabels =
         ImmutableSet.<Label>builder()
             .addAll(toLabelList(rule.getSourcesList()))
             .addAll(toLabelList(rule.getResourceFilesList()))
             .build();
-    return rawLabels.stream()
-        .flatMap(l -> expandFileGroups(l, query).stream())
-        .collect(toImmutableSet());
+    return rawLabels.stream().flatMap(l -> expandFileGroups(l).stream()).collect(toImmutableSet());
   }
 
-  private ImmutableSet<Label> expandFileGroups(Label label, QuerySummary summary) {
-    if (!isFileGroup(label, summary)) {
+  private ImmutableSet<Label> expandFileGroups(Label label) {
+    if (!isFileGroup(label)) {
       return ImmutableSet.of(label);
     }
     Set<Label> visited = Sets.newHashSet();
     ImmutableSet.Builder<Label> result = ImmutableSet.builder();
 
-    for (String source : requireNonNull(summary.getRulesMap().get(label)).getSourcesList()) {
+    for (String source : requireNonNull(query.getRulesMap().get(label)).getSourcesList()) {
       Label asLabel = Label.of(source);
       if (visited.add(asLabel)) {
-        result.addAll(expandFileGroups(asLabel, summary));
+        result.addAll(expandFileGroups(asLabel));
       }
     }
 
     return result.build();
   }
 
-  private boolean isFileGroup(Label label, QuerySummary summary) {
-    Rule rule = summary.getRulesMap().get(label);
+  private boolean isFileGroup(Label label) {
+    Rule rule = query.getRulesMap().get(label);
     if (rule == null) {
       return false;
     }

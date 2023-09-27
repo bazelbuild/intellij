@@ -47,7 +47,7 @@ class PartialProjectRefresh implements RefreshOperation {
 
   private final Path effectiveWorkspaceRoot;
   private final PostQuerySyncData previousState;
-  private final BlazeQueryParser queryParser;
+  private final BlazeQueryParser.Factory queryParserFactory;
   private final GraphToProjectConverter graphToProjectConverter;
   private final PostQuerySyncData.Builder newState;
   @VisibleForTesting final ImmutableSet<Path> modifiedPackages;
@@ -72,7 +72,7 @@ class PartialProjectRefresh implements RefreshOperation {
             .setProjectDefinition(previousState.projectDefinition());
     this.modifiedPackages = modifiedPackages;
     this.deletedPackages = deletedPackages;
-    this.queryParser = new BlazeQueryParser(context, handledRuleKinds);
+    this.queryParserFactory = new BlazeQueryParser.Factory(context, handledRuleKinds);
     this.graphToProjectConverter =
         new GraphToProjectConverter(
             packageReader,
@@ -111,7 +111,7 @@ class PartialProjectRefresh implements RefreshOperation {
     Preconditions.checkNotNull(partialQuery, "queryOutput");
     QuerySummary effectiveQuery = applyDelta();
     PostQuerySyncData postQuerySyncData = newState.setQuerySummary(effectiveQuery).build();
-    BuildGraphData graph = queryParser.parse(effectiveQuery);
+    BuildGraphData graph = queryParserFactory.newParser(effectiveQuery).parse();
     ProjectProto.Project project = graphToProjectConverter.createProject(graph);
     return BlazeProjectSnapshot.builder()
         .queryData(postQuerySyncData)
