@@ -16,7 +16,6 @@
 
 package com.google.idea.blaze.base.toolwindow;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.scope.output.StateUpdate;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
@@ -24,18 +23,9 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.project.Project;
-import java.time.Instant;
 
 /** Service that controls the Blaze Outputs Tool Window. */
 public interface TasksToolWindowService {
-
-  /** Provider for the current value of "now" for users of {@code java.time}. */
-  @FunctionalInterface
-  @VisibleForTesting
-  interface TimeSource {
-    /** Returns the current {@link Instant} according to this time source. */
-    Instant now();
-  }
 
   static TasksToolWindowService getInstance(Project project) {
     return project.getService(TasksToolWindowService.class);
