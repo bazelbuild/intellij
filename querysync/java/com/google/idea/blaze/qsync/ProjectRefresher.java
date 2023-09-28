@@ -56,7 +56,7 @@ public class ProjectRefresher {
     this.handledRuleKinds = handledRuleKinds;
   }
 
-  public FullProjectUpdate startFullUpdate(
+  public RefreshOperation startFullUpdate(
       Context<?> context, ProjectDefinition spec, Optional<VcsState> vcsState) {
     Path effectiveWorkspaceRoot =
         vcsState.flatMap(s -> s.workspaceSnapshotPath).orElse(workspaceRoot);
