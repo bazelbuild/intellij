@@ -27,6 +27,7 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.BuildGraphData.Location;
+import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.query.Query;
@@ -190,6 +191,7 @@ public class BlazeQueryParser {
 
   private void visitJavaRule(Label label, Query.Rule rule, ProjectTarget.Builder targetBuilder) {
     graphBuilder.allTargetsBuilder().add(label);
+    targetBuilder.languagesBuilder().add(LanguageClass.JAVA);
     ImmutableSet<Label> thisSources = sourcesWithExpandedFileGroups(rule);
     Set<Label> thisDeps = Sets.newHashSet(toLabelList(rule.getDepsList()));
     targetBuilder.depsBuilder().addAll(thisDeps);
