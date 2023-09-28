@@ -39,7 +39,6 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -227,9 +226,5 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     } catch (IOException e) {
       throw new BuildException(e);
     }
-  }
-
-  private static String directoryToLabel(WorkspacePath directory) {
-    return String.format("//%s", directory);
   }
 }
