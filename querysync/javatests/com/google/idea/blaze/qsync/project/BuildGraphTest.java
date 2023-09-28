@@ -23,6 +23,7 @@ import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
+import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.nio.file.Path;
 import org.junit.Test;
@@ -58,6 +59,8 @@ public class BuildGraphTest {
         .containsExactly(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps"));
     assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java")))
         .isEmpty();
+    assertThat(graph.targetMap().get(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps")).languages())
+        .containsExactly(LanguageClass.JAVA);
   }
 
   @Test
