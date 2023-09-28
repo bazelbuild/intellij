@@ -30,6 +30,8 @@ import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.qsync.ArtifactTracker.UpdateResult;
+import com.google.idea.blaze.base.qsync.GroupedOutputArtifacts;
+import com.google.idea.blaze.base.qsync.OutputGroup;
 import com.google.idea.blaze.base.qsync.OutputInfo;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Context;
@@ -74,9 +76,13 @@ public class ArtifactTrackerImplTest {
                     artifactTracker.update(
                         ImmutableSet.of(Label.of("//test:test")),
                         OutputInfo.builder()
-                            .setJars(
-                                artifactWithNameAndDigest("abc", "abc_digest"),
-                                artifactWithNameAndDigest("klm", "klm_digest"))
+                            .setOutputGroups(
+                                GroupedOutputArtifacts.builder()
+                                    .putAll(
+                                        OutputGroup.JARS,
+                                        artifactWithNameAndDigest("abc", "abc_digest"),
+                                        artifactWithNameAndDigest("klm", "klm_digest"))
+                                    .build())
                             .build(),
                         BlazeContext.create())))
         .containsExactly("somewhere/abc", "somewhere/klm");
@@ -111,9 +117,13 @@ public class ArtifactTrackerImplTest {
         artifactTracker.update(
             ImmutableSet.of(Label.of("//test:test")),
             OutputInfo.builder()
-                .setJars(
-                    artifactWithNameAndDigest("abc", "abc_digest"),
-                    artifactWithNameAndDigest("klm", "klm_digest"))
+                .setOutputGroups(
+                    GroupedOutputArtifacts.builder()
+                        .putAll(
+                            OutputGroup.JARS,
+                            artifactWithNameAndDigest("abc", "abc_digest"),
+                            artifactWithNameAndDigest("klm", "klm_digest"))
+                        .build())
                 .build(),
             BlazeContext.create());
 
@@ -123,9 +133,13 @@ public class ArtifactTrackerImplTest {
           artifactTracker.update(
               ImmutableSet.of(Label.of("//test:test2")),
               OutputInfo.builder()
-                  .setJars(
-                      artifactWithNameAndDigest("abc", "abc_digest"),
-                      artifactWithNameAndDigest("klm", "klm_digest_diff"))
+                  .setOutputGroups(
+                      GroupedOutputArtifacts.builder()
+                          .putAll(
+                              OutputGroup.JARS,
+                              artifactWithNameAndDigest("abc", "abc_digest"),
+                              artifactWithNameAndDigest("klm", "klm_digest_diff"))
+                          .build())
                   .build(),
               BlazeContext.create());
     } catch (TestException e) {
@@ -160,9 +174,13 @@ public class ArtifactTrackerImplTest {
                     artifactTracker.update(
                         ImmutableSet.of(Label.of("//test:test")),
                         OutputInfo.builder()
-                            .setJars(
-                                artifactWithNameAndDigest("abc", "abc_digest"),
-                                artifactWithNameAndDigest("klm", "klm_digest"))
+                            .setOutputGroups(
+                                GroupedOutputArtifacts.builder()
+                                    .putAll(
+                                        OutputGroup.JARS,
+                                        artifactWithNameAndDigest("abc", "abc_digest"),
+                                        artifactWithNameAndDigest("klm", "klm_digest"))
+                                    .build())
                             .build(),
                         BlazeContext.create())))
         .containsExactly("somewhere/abc", "somewhere/klm");
@@ -174,10 +192,14 @@ public class ArtifactTrackerImplTest {
                     artifactTracker.update(
                         ImmutableSet.of(Label.of("//test:test2")),
                         OutputInfo.builder()
-                            .setJars(
-                                artifactWithNameAndDigest("abc", "abc_digest"),
-                                artifactWithNameAndDigest("klm", "klm_digest_diff"),
-                                artifactWithNameAndDigest("xyz", "xyz_digest"))
+                            .setOutputGroups(
+                                GroupedOutputArtifacts.builder()
+                                    .putAll(
+                                        OutputGroup.JARS,
+                                        artifactWithNameAndDigest("abc", "abc_digest"),
+                                        artifactWithNameAndDigest("klm", "klm_digest_diff"),
+                                        artifactWithNameAndDigest("xyz", "xyz_digest"))
+                                    .build())
                             .build(),
                         BlazeContext.create())))
         .containsExactly("somewhere/klm", "somewhere/xyz");
@@ -199,16 +221,20 @@ public class ArtifactTrackerImplTest {
         artifactTracker.update(
             ImmutableSet.of(Label.of("//test:test"), Label.of("//test:anothertest")),
             OutputInfo.builder()
-                .setJars(
-                    TestOutputArtifact.builder()
-                        .setRelativePath("out/test.jar")
-                        .setDigest("jar_digest")
-                        .build(),
-                    TestOutputArtifact.builder()
-                        .setRelativePath("out/anothertest.jar")
-                        .setDigest("anotherjar_digest")
+                .setOutputGroups(
+                    GroupedOutputArtifacts.builder()
+                        .putAll(
+                            OutputGroup.JARS,
+                            TestOutputArtifact.builder()
+                                .setRelativePath("out/test.jar")
+                                .setDigest("jar_digest")
+                                .build(),
+                            TestOutputArtifact.builder()
+                                .setRelativePath("out/anothertest.jar")
+                                .setDigest("anotherjar_digest")
+                                .build())
                         .build())
-                .setArtifacts(
+                .setArtifactInfo(
                     BuildArtifacts.newBuilder()
                         .addArtifacts(
                             TargetArtifacts.newBuilder()
@@ -250,12 +276,16 @@ public class ArtifactTrackerImplTest {
         artifactTracker.update(
             ImmutableSet.of(Label.of("//test:test"), Label.of("//test:anothertest")),
             OutputInfo.builder()
-                .setJars(
-                    TestOutputArtifact.builder()
-                        .setRelativePath("out/test.jar")
-                        .setDigest("jar_digest")
+                .setOutputGroups(
+                    GroupedOutputArtifacts.builder()
+                        .put(
+                            OutputGroup.JARS,
+                            TestOutputArtifact.builder()
+                                .setRelativePath("out/test.jar")
+                                .setDigest("jar_digest")
+                                .build())
                         .build())
-                .setArtifacts(
+                .setArtifactInfo(
                     BuildArtifacts.newBuilder()
                         .addArtifacts(
                             TargetArtifacts.newBuilder()

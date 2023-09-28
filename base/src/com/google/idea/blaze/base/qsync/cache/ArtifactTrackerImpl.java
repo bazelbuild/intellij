@@ -48,6 +48,7 @@ import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.qsync.ArtifactTracker;
+import com.google.idea.blaze.base.qsync.OutputGroup;
 import com.google.idea.blaze.base.qsync.OutputInfo;
 import com.google.idea.blaze.base.qsync.RenderJarInfo;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher.ArtifactDestination;
@@ -421,8 +422,10 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
 
       ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap =
           ImmutableMap.<OutputArtifact, OutputArtifactDestinationAndLayout>builder()
-              .putAll(jarCache.prepareDestinationPathsAndDirectories(outputInfo.getJars()))
-              .putAll(aarCache.prepareDestinationPathsAndDirectories(outputInfo.getAars()))
+              .putAll(
+                  jarCache.prepareDestinationPathsAndDirectories(outputInfo.get(OutputGroup.JARS)))
+              .putAll(
+                  aarCache.prepareDestinationPathsAndDirectories(outputInfo.get(OutputGroup.AARS)))
               .putAll(
                   generatedSrcFileCache.prepareDestinationPathsAndDirectories(
                       genSrcsByInclusion.get(true)))
@@ -445,7 +448,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
 
       this.cachePathToArtifactKeyMap.putAll(cachePathToArtifactKeyMap);
 
-      for (BuildArtifacts artifacts : outputInfo.getArtifacts()) {
+      for (BuildArtifacts artifacts : outputInfo.getArtifactInfo()) {
         updateMaps(targets, artifacts);
       }
       saveState();
@@ -466,7 +469,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     // Create a map of (target) -> (all gensrcs build by that target) from the *.target-info.txt
     // files produced by the aspect.
     SetMultimap<Label, String> genSrcsByTarget =
-        outputInfo.getArtifacts().stream()
+        outputInfo.getArtifactInfo().stream()
             .map(BuildArtifacts::getArtifactsList)
             .flatMap(List::stream)
             .collect(

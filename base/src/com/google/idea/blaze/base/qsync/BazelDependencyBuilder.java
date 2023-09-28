@@ -22,7 +22,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
@@ -36,9 +36,7 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -48,11 +46,11 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.protobuf.TextFormat;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -60,6 +58,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -85,8 +84,19 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     this.handledRuleKinds = handledRuleKinds;
   }
 
+  private static final ImmutableMultimap<LanguageClass, OutputGroup> OUTPUT_GROUPS_BY_LANGUAGE =
+      ImmutableMultimap.<LanguageClass, OutputGroup>builder()
+          .putAll(
+              LanguageClass.JAVA,
+              OutputGroup.JARS,
+              OutputGroup.AARS,
+              OutputGroup.GENSRCS,
+              OutputGroup.ARTIFACT_INFO_FILE)
+          .build();
+
   @Override
-  public OutputInfo build(BlazeContext context, Set<Label> buildTargets)
+  public OutputInfo build(
+      BlazeContext context, Set<Label> buildTargets, Set<LanguageClass> languages)
       throws IOException, BuildException {
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
@@ -102,6 +112,12 @@ public class BazelDependencyBuilder implements DependencyBuilder {
       Set<String> ruleKindsToBuild =
           Sets.difference(BlazeQueryParser.ALWAYS_BUILD_RULE_KINDS, handledRuleKinds);
       String alwaysBuildParam = Joiner.on(",").join(ruleKindsToBuild);
+
+      ImmutableSet<OutputGroup> outputGroups =
+          languages.stream()
+              .map(OUTPUT_GROUPS_BY_LANGUAGE::get)
+              .flatMap(Collection::stream)
+              .collect(ImmutableSet.toImmutableSet());
 
       ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       // TODO This is not SYNC_CONTEXT, but also not OTHER_CONTEXT, we need to decide what kind
@@ -128,12 +144,11 @@ public class BazelDependencyBuilder implements DependencyBuilder {
               .addBlazeFlags(
                   String.format("--aspects_parameters=always_build_rules=%s", alwaysBuildParam))
               .addBlazeFlags("--aspects_parameters=generate_aidl_classes=True")
-              .addBlazeFlags("--output_groups=qsync_jars")
-              .addBlazeFlags("--output_groups=qsync_aars")
-              .addBlazeFlags("--output_groups=qsync_gensrcs")
-              .addBlazeFlags("--output_groups=artifact_info_file")
               .addBlazeFlags("--noexperimental_run_validations")
               .addBlazeFlags("--keep_going");
+      outputGroups.stream()
+          .map(g -> "--output_groups=" + g.outputGroupName())
+          .forEach(builder::addBlazeFlags);
 
       BlazeBuildOutputs outputs =
           invoker.getCommandRunner().run(project, builder, buildResultHelper, context);
@@ -143,7 +158,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
           ThrowOption.ALLOW_PARTIAL_SUCCESS,
           ThrowOption.ALLOW_BUILD_FAILURE);
 
-      return createOutputInfo(outputs);
+      return createOutputInfo(outputs, outputGroups);
     }
   }
 
@@ -167,54 +182,23 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     return "//:.aswb.bzl";
   }
 
-  private OutputInfo createOutputInfo(BlazeBuildOutputs blazeBuildOutputs) throws BuildException {
-    ImmutableList<OutputArtifact> jars =
-        translateOutputArtifacts(
-            blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("qsync_jars")));
-    ImmutableList<OutputArtifact> aars =
-        translateOutputArtifacts(
-            blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("qsync_aars")));
-    ImmutableList<OutputArtifact> generatedSources =
-        translateOutputArtifacts(
-            blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("qsync_gensrcs")));
-    ImmutableList<OutputArtifact> artifactInfoFiles =
-        translateOutputArtifacts(
-            blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("artifact_info_file")));
+  private OutputInfo createOutputInfo(
+      BlazeBuildOutputs blazeBuildOutputs, Set<OutputGroup> outputGroups) throws BuildException {
+    GroupedOutputArtifacts allArtifacts =
+        new GroupedOutputArtifacts(blazeBuildOutputs, outputGroups);
     ImmutableSet.Builder<BuildArtifacts> artifactInfoFilesBuilder = ImmutableSet.builder();
-    for (OutputArtifact artifactInfoFile : artifactInfoFiles) {
+
+    for (OutputArtifact artifactInfoFile : allArtifacts.get(OutputGroup.ARTIFACT_INFO_FILE)) {
       artifactInfoFilesBuilder.add(readArtifactInfoFile(artifactInfoFile));
     }
     return OutputInfo.create(
+        allArtifacts,
         artifactInfoFilesBuilder.build(),
-        jars,
-        aars,
-        generatedSources,
         blazeBuildOutputs.getTargetsWithErrors().stream()
             .map(Object::toString)
             .map(Label::of)
             .collect(toImmutableSet()),
         blazeBuildOutputs.buildResult.exitCode);
-  }
-
-  private ImmutableList<OutputArtifact> translateOutputArtifacts(
-      ImmutableList<OutputArtifact> artifacts) {
-    return artifacts.stream()
-        .map(BazelDependencyBuilder::translateOutputArtifact)
-        .collect(ImmutableList.toImmutableList());
-  }
-
-  private static OutputArtifact translateOutputArtifact(OutputArtifact it) {
-    if (!(it instanceof RemoteOutputArtifact)) {
-      return it;
-    }
-    RemoteOutputArtifact remoteOutputArtifact = (RemoteOutputArtifact) it;
-    String hashId = remoteOutputArtifact.getHashId();
-    if (!(hashId.startsWith("/google_src") || hashId.startsWith("/google/src"))) {
-      return it;
-    }
-    File srcfsArtifact = new File(hashId.replaceFirst("/google_src", "/google/src"));
-    return new LocalFileOutputArtifact(
-        srcfsArtifact, it.getRelativePath(), it.getConfigurationMnemonic(), it.getDigest());
   }
 
   private BuildArtifacts readArtifactInfoFile(BlazeArtifact file) throws BuildException {

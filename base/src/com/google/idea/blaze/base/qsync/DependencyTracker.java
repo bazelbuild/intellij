@@ -39,6 +39,8 @@ import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.project.TargetTree;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -191,12 +193,25 @@ public class DependencyTracker {
       throws IOException, BuildException {
     BuildDepsStatsScope.fromContext(context)
         .ifPresent(stats -> stats.setBuildTargets(requestedTargets.buildTargets));
-    OutputInfo outputInfo = builder.build(context, requestedTargets.buildTargets);
+    OutputInfo outputInfo =
+        builder.build(
+            context,
+            requestedTargets.buildTargets,
+            getTargetLanguages(snapshot, requestedTargets.buildTargets));
     reportErrorsAndWarnings(context, snapshot, outputInfo);
 
     ImmutableSet<Path> updatedFiles =
         updateCaches(context, requestedTargets.expectedDependencyTargets, outputInfo);
     refreshFiles(context, updatedFiles);
+  }
+
+  private static ImmutableSet<LanguageClass> getTargetLanguages(
+      BlazeProjectSnapshot snapshot, ImmutableSet<Label> targets) {
+    return targets.stream()
+        .map(snapshot.graph().targetMap()::get)
+        .map(ProjectTarget::languages)
+        .reduce((a, b) -> Sets.union(a, b).immutableCopy())
+        .orElse(ImmutableSet.of());
   }
 
   /**
