@@ -61,7 +61,6 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.GeneratedSourceProjectUpdater;
 import com.google.idea.blaze.qsync.SrcJarProjectUpdater;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
@@ -510,8 +509,8 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   }
 
   @Override
-  public BlazeProjectSnapshot updateSnapshot(BlazeProjectSnapshot snapshot) throws IOException {
-    ProjectProto.Project projectProto = snapshot.project();
+  public ProjectProto.Project updateProjectProto(ProjectProto.Project projectProto)
+      throws IOException {
 
     Path genSrcCacheRelativeToProject =
         ideProjectBasePath.relativize(generatedSrcFileCacheDirectory);
@@ -549,7 +548,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
       logger.info("srcjar attachment disabled.");
     }
 
-    return snapshot.toBuilder().project(projectProto).build();
+    return projectProto;
   }
 
   private ImmutableList<Path> getGenSrcSubfolders() throws IOException {
