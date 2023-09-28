@@ -26,7 +26,7 @@ A file explorer window should open in the `Contents` directory of your IntelliJ 
 
 Make sure that the `Internal Java Platform` is set to the JDK you want to use to develop your plugin. It is recommended to use JBR 17.
 
-<img width="463" alt="image" src="https://github.com/bazelbuild/intellij/assets/326857/d276ca32-9b63-478f-9805-47bbf1295e2b">
+<img width="464" alt="image" src="https://github.com/rogerhu/intellij/assets/326857/28f05554-a4d8-43f4-b2bb-b971a7ee6da7">
 
 ## Set the project-wide SDK
 
