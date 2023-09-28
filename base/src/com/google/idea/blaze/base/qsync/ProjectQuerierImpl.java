@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.FullProjectUpdate;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.RefreshOperation;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
@@ -77,7 +76,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
             vcsState.map(s -> s.upstreamRevision).orElse("<unknown>"),
             vcsState.flatMap(s -> s.workspaceSnapshotPath).map(Object::toString).orElse("<none>")));
 
-    FullProjectUpdate fullQuery = projectRefresher.startFullUpdate(context, projectDef, vcsState);
+    RefreshOperation fullQuery = projectRefresher.startFullUpdate(context, projectDef, vcsState);
 
     QuerySpec querySpec = fullQuery.getQuerySpec().get();
     fullQuery.setQueryOutput(queryRunner.runQuery(querySpec, context));
