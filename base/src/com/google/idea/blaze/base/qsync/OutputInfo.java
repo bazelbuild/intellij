@@ -29,56 +29,56 @@ public abstract class OutputInfo {
 
   @VisibleForTesting
   public static final OutputInfo EMPTY =
-      create(
-          ImmutableSet.of(),
-          ImmutableList.of(),
-          ImmutableList.of(),
-          ImmutableList.of(),
-          ImmutableSet.of(),
-          0);
+      create(GroupedOutputArtifacts.EMPTY, ImmutableSet.of(), ImmutableSet.of(), 0);
 
-  public abstract ImmutableSet<BuildArtifacts> getArtifacts();
+  /** Returns the proto containing details of artifacts per target produced by the aspect. */
+  public abstract ImmutableSet<BuildArtifacts> getArtifactInfo();
 
-  public abstract ImmutableList<OutputArtifact> getJars();
-
-  public abstract ImmutableList<OutputArtifact> getAars();
-
-  public abstract ImmutableList<OutputArtifact> getGeneratedSources();
+  public abstract GroupedOutputArtifacts getOutputGroups();
 
   public abstract ImmutableSet<Label> getTargetsWithErrors();
 
   public abstract int getExitCode();
 
+  public ImmutableList<OutputArtifact> get(OutputGroup group) {
+    return getOutputGroups().get(group);
+  }
+
+  public ImmutableList<OutputArtifact> getJars() {
+    return getOutputGroups().get(OutputGroup.JARS);
+  }
+
+  public ImmutableList<OutputArtifact> getAars() {
+    return getOutputGroups().get(OutputGroup.AARS);
+  }
+
+  public ImmutableList<OutputArtifact> getGeneratedSources() {
+    return getOutputGroups().get(OutputGroup.GENSRCS);
+  }
+
   public boolean isEmpty() {
-    return getArtifacts().isEmpty()
-        && getJars().isEmpty()
-        && getAars().isEmpty()
-        && getGeneratedSources().isEmpty();
+    return getOutputGroups().isEmpty();
   }
 
   @VisibleForTesting
   public abstract Builder toBuilder();
 
-  public static OutputInfo create(
-      ImmutableSet<BuildArtifacts> artifacts,
-      ImmutableList<OutputArtifact> jars,
-      ImmutableList<OutputArtifact> aars,
-      ImmutableList<OutputArtifact> generatedSources,
-      ImmutableSet<Label> targetsWithErrors,
-      int exitCode) {
-    return new AutoValue_OutputInfo.Builder()
-        .setArtifacts(artifacts)
-        .setJars(jars)
-        .setAars(aars)
-        .setGeneratedSources(generatedSources)
-        .setTargetsWithErrors(targetsWithErrors)
-        .setExitCode(exitCode)
-        .build();
-  }
-
   @VisibleForTesting
   public static Builder builder() {
     return EMPTY.toBuilder();
+  }
+
+  public static OutputInfo create(
+      GroupedOutputArtifacts allArtifacts,
+      ImmutableSet<BuildArtifacts> artifacts,
+      ImmutableSet<Label> targetsWithErrors,
+      int exitCode) {
+    return new AutoValue_OutputInfo.Builder()
+        .setArtifactInfo(artifacts)
+        .setOutputGroups(allArtifacts)
+        .setTargetsWithErrors(targetsWithErrors)
+        .setExitCode(exitCode)
+        .build();
   }
 
   /** Builder for {@link OutputInfo}. */
@@ -86,21 +86,11 @@ public abstract class OutputInfo {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    public abstract Builder setArtifacts(ImmutableSet<BuildArtifacts> value);
+    public abstract Builder setArtifactInfo(ImmutableSet<BuildArtifacts> value);
 
-    public abstract Builder setArtifacts(BuildArtifacts... values);
+    public abstract Builder setArtifactInfo(BuildArtifacts... values);
 
-    public abstract Builder setJars(ImmutableList<OutputArtifact> value);
-
-    public abstract Builder setJars(OutputArtifact... values);
-
-    public abstract Builder setAars(ImmutableList<OutputArtifact> value);
-
-    public abstract Builder setAars(OutputArtifact... values);
-
-    public abstract Builder setGeneratedSources(ImmutableList<OutputArtifact> value);
-
-    public abstract Builder setGeneratedSources(OutputArtifact... values);
+    public abstract Builder setOutputGroups(GroupedOutputArtifacts artifcts);
 
     public abstract Builder setTargetsWithErrors(ImmutableSet<Label> value);
 

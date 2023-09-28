@@ -77,7 +77,7 @@ public abstract class BuildGraphData {
 
   abstract ImmutableSet<Label> androidTargets();
 
-  abstract ImmutableMap<Label, ProjectTarget> targetMap();
+  public abstract ImmutableMap<Label, ProjectTarget> targetMap();
 
   /**
    * All in-project targets with a direct compile or runtime dependency on a specified target, which

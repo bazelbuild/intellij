@@ -15,16 +15,20 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.common.Label;
-import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
-import java.io.IOException;
-import java.util.Set;
+/** Represents an output group produced by the {@code build_dependencies.bzl} aspect. */
+public enum OutputGroup {
+  JARS("qsync_jars"),
+  AARS("qsync_aars"),
+  GENSRCS("qsync_gensrcs"),
+  ARTIFACT_INFO_FILE("artifact_info_file");
 
-/** A query sync service that knows how to build dependencies for given targets */
-public interface DependencyBuilder {
+  private final String name;
 
-  OutputInfo build(BlazeContext context, Set<Label> buildTargets, Set<LanguageClass> languages)
-      throws IOException, BuildException;
+  OutputGroup(String name) {
+    this.name = name;
+  }
+
+  public String outputGroupName() {
+    return name;
+  }
 }
