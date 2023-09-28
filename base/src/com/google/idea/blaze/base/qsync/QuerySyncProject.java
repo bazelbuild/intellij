@@ -183,12 +183,15 @@ public class QuerySyncProject {
       context.push(new SyncQueryStatsScope());
       try {
         SaveUtil.saveAllFiles();
-        BlazeProjectSnapshot newProject =
+        BlazeProjectSnapshot newSnapshot =
             lastQuery.isEmpty()
                 ? projectQuerier.fullQuery(projectDefinition, context)
                 : projectQuerier.update(projectDefinition, lastQuery.get(), context);
-        newProject = artifactTracker.updateSnapshot(newProject);
-        onNewSnapshot(context, newProject);
+        newSnapshot =
+            newSnapshot.toBuilder()
+                .project(artifactTracker.updateProjectProto(newSnapshot.project()))
+                .build();
+        onNewSnapshot(context, newSnapshot);
 
         // TODO: Revisit SyncListeners once we switch fully to qsync
         for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
@@ -231,8 +234,11 @@ public class QuerySyncProject {
     try (BlazeContext context = BlazeContext.create(parentContext)) {
       context.push(new BuildDepsStatsScope());
       if (getDependencyTracker().buildDependenciesForTargets(context, projectTargets)) {
-        BlazeProjectSnapshot newSnapshot =
-            artifactTracker.updateSnapshot(snapshotHolder.getCurrent().orElseThrow());
+        BlazeProjectSnapshot newSnapshot = snapshotHolder.getCurrent().orElseThrow();
+        newSnapshot =
+            newSnapshot.toBuilder()
+                .project(artifactTracker.updateProjectProto(newSnapshot.project()))
+                .build();
         onNewSnapshot(context, newSnapshot);
       }
     }
