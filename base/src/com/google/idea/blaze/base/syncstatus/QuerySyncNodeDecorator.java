@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.qsync.DependencyTracker;
 import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.common.Label;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -42,6 +43,10 @@ public class QuerySyncNodeDecorator implements ProjectViewNodeDecorator {
     if (project == null) {
       return;
     }
+    if (!Blaze.isBlazeProject(project)) {
+      return;
+    }
+
     VirtualFile vf = node.getVirtualFile();
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     if (vf == null || !workspaceRoot.isInWorkspace(vf)) {
