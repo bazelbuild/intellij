@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStats.Result;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
+import com.google.idea.blaze.common.TimeSource;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.time.Duration;
@@ -106,13 +107,5 @@ public class QuerySyncActionStatsScope implements BlazeScope {
                             .setTotalClockTime(Duration.between(builder.startTime(), Instant.now()))
                             .setResult(getSyncResult(context))
                             .build()));
-  }
-
-  /**
-   * Provider for the current value of "now" for users. This allows unit tests to set now
-   * specifically.
-   */
-  public interface TimeSource {
-    Instant now();
   }
 }
