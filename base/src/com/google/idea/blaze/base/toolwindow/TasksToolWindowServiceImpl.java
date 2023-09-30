@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.scope.output.StateUpdate;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.TimeSource;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.Disposable;
