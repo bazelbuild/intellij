@@ -30,8 +30,8 @@ import java.util.Optional;
  * <ol>
  *   <li>Acquire an implementation, e.g. from {@link ProjectRefresher}
  *   <li>Run a {@code query} invocation based on the spec from {@link #getQuerySpec()}
- *   <li>Pass the results of that query to {@link #setQueryOutput(QuerySummary)}
- *   <li>Call {@link #createBlazeProject()} to get the updated project snapshot.
+ *   <li>To get the updated project snapshot pass the results of that query to {@link
+ *       #createBlazeProject(QuerySummary)}.
  * </ol>
  */
 public interface RefreshOperation {
@@ -39,12 +39,6 @@ public interface RefreshOperation {
   /** Returns the spec of the query to be run for this strategy. */
   Optional<QuerySpec> getQuerySpec() throws IOException;
 
-  /** Passes the output from the query specified by {@link #getQuerySpec()}. */
-  void setQueryOutput(QuerySummary output);
-
-  /**
-   * Creates the new project snapshot. Must only be called after {@link
-   * #setQueryOutput(QuerySummary)}.
-   */
-  BlazeProjectSnapshot createBlazeProject() throws BuildException;
+  /** Creates the new project snapshot. */
+  BlazeProjectSnapshot createBlazeProject(QuerySummary output) throws BuildException;
 }

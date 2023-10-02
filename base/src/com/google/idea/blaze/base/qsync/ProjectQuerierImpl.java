@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -79,9 +78,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
     RefreshOperation fullQuery = projectRefresher.startFullUpdate(context, projectDef, vcsState);
 
     QuerySpec querySpec = fullQuery.getQuerySpec().get();
-    fullQuery.setQueryOutput(queryRunner.runQuery(querySpec, context));
-
-    return fullQuery.createBlazeProject();
+    return fullQuery.createBlazeProject(queryRunner.runQuery(querySpec, context));
   }
 
   private Optional<VcsState> getVcsState(BlazeContext context) {
@@ -130,11 +127,12 @@ public class ProjectQuerierImpl implements ProjectQuerier {
         projectRefresher.startPartialRefresh(context, previousState, vcsState, currentProjectDef);
 
     Optional<QuerySpec> spec = refresh.getQuerySpec();
+    QuerySummary querySummary;
     if (spec.isPresent()) {
-      refresh.setQueryOutput(queryRunner.runQuery(spec.get(), context));
+      querySummary = queryRunner.runQuery(spec.get(), context);
     } else {
-      refresh.setQueryOutput(QuerySummary.EMPTY);
+      querySummary = QuerySummary.EMPTY;
     }
-    return refresh.createBlazeProject();
+    return refresh.createBlazeProject(querySummary);
   }
 }

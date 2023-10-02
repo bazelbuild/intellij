@@ -52,7 +52,6 @@ class PartialProjectRefresh implements RefreshOperation {
   private final PostQuerySyncData.Builder newState;
   @VisibleForTesting final ImmutableSet<Path> modifiedPackages;
   @VisibleForTesting final ImmutableSet<Path> deletedPackages;
-  private QuerySummary partialQuery;
 
   PartialProjectRefresh(
       Context context,
@@ -102,14 +101,9 @@ class PartialProjectRefresh implements RefreshOperation {
   }
 
   @Override
-  public void setQueryOutput(QuerySummary output) {
-    this.partialQuery = output;
-  }
-
-  @Override
-  public BlazeProjectSnapshot createBlazeProject() throws BuildException {
+  public BlazeProjectSnapshot createBlazeProject(QuerySummary partialQuery) throws BuildException {
     Preconditions.checkNotNull(partialQuery, "queryOutput");
-    QuerySummary effectiveQuery = applyDelta();
+    QuerySummary effectiveQuery = applyDelta(partialQuery);
     PostQuerySyncData postQuerySyncData = newState.setQuerySummary(effectiveQuery).build();
     BuildGraphData graph = queryParserFactory.newParser(effectiveQuery).parse();
     ProjectProto.Project project = graphToProjectConverter.createProject(graph);
@@ -125,7 +119,7 @@ class PartialProjectRefresh implements RefreshOperation {
    * partial query, and any deleted packages.
    */
   @VisibleForTesting
-  QuerySummary applyDelta() {
+  QuerySummary applyDelta(QuerySummary partialQuery) {
     // copy all unaffected rules / source files to result:
     Map<Label, SourceFile> newSourceFiles = Maps.newHashMap();
     for (Map.Entry<Label, SourceFile> sfEntry :

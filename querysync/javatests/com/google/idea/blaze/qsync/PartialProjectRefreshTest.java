@@ -108,8 +108,7 @@ public class PartialProjectRefreshTest {
             /* modifiedPackages= */ ImmutableSet.of(Path.of("my/build/package1")),
             ImmutableSet.of(),
             ImmutableSet.of());
-    queryStrategy.setQueryOutput(delta);
-    QuerySummary applied = queryStrategy.applyDelta();
+    QuerySummary applied = queryStrategy.applyDelta(delta);
     assertThat(applied.getRulesMap().keySet())
         .containsExactly(
             Label.of("//my/build/package1:newrule"), Label.of("//my/build/package2:rule"));
@@ -179,8 +178,7 @@ public class PartialProjectRefreshTest {
             /* deletedPackages= */ ImmutableSet.of(Path.of("my/build/package1")),
             ImmutableSet.of());
     assertThat(queryStrategy.getQuerySpec()).isEmpty();
-    queryStrategy.setQueryOutput(QuerySummary.EMPTY);
-    QuerySummary applied = queryStrategy.applyDelta();
+    QuerySummary applied = queryStrategy.applyDelta(QuerySummary.EMPTY);
     assertThat(applied.getRulesMap().keySet())
         .containsExactly(Label.of("//my/build/package2:rule"));
     assertThat(applied.getSourceFilesMap().keySet())
@@ -244,8 +242,7 @@ public class PartialProjectRefreshTest {
             /* modifiedPackages= */ ImmutableSet.of(Path.of("my/build/package2")),
             ImmutableSet.of(),
             ImmutableSet.of());
-    queryStrategy.setQueryOutput(delta);
-    QuerySummary applied = queryStrategy.applyDelta();
+    QuerySummary applied = queryStrategy.applyDelta(delta);
     assertThat(applied.getRulesMap().keySet())
         .containsExactly(
             Label.of("//my/build/package1:rule"), Label.of("//my/build/package2:rule"));
@@ -279,8 +276,7 @@ public class PartialProjectRefreshTest {
             /* modifiedPackages= */ ImmutableSet.of(Path.of("my/build/package")),
             ImmutableSet.of(),
             ImmutableSet.of());
-    queryStrategy.setQueryOutput(delta);
-    QuerySummary applied = queryStrategy.applyDelta();
+    QuerySummary applied = queryStrategy.applyDelta(delta);
     assertThat(applied.getPackagesWithErrors()).containsExactly(Path.of("my/build/package"));
   }
 }

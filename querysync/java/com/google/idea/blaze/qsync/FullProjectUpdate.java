@@ -43,9 +43,8 @@ public class FullProjectUpdate implements RefreshOperation {
   private final Path effectiveWorkspaceRoot;
   private final BlazeQueryParser.Factory queryParserFactory;
   private final ProjectDefinition projectDefinition;
+  private final Optional<VcsState> vcsState;
   private final GraphToProjectConverter graphToProjectConverter;
-
-  private final PostQuerySyncData.Builder result;
 
   public FullProjectUpdate(
       Context<?> context,
@@ -57,9 +56,8 @@ public class FullProjectUpdate implements RefreshOperation {
       ImmutableSet<String> handledRuleKinds) {
     this.context = context;
     this.effectiveWorkspaceRoot = effectiveWorkspaceRoot;
-    this.result =
-        PostQuerySyncData.builder().setProjectDefinition(definition).setVcsState(vcsState);
     this.projectDefinition = definition;
+    this.vcsState = vcsState;
     this.queryParserFactory = new BlazeQueryParser.Factory(context, handledRuleKinds);
     this.graphToProjectConverter =
         new GraphToProjectConverter(
@@ -73,13 +71,13 @@ public class FullProjectUpdate implements RefreshOperation {
   }
 
   @Override
-  public void setQueryOutput(QuerySummary output) {
-    result.setQuerySummary(output);
-  }
-
-  @Override
-  public BlazeProjectSnapshot createBlazeProject() throws BuildException {
-    PostQuerySyncData newData = result.build();
+  public BlazeProjectSnapshot createBlazeProject(QuerySummary output) throws BuildException {
+    PostQuerySyncData newData =
+        PostQuerySyncData.builder()
+            .setProjectDefinition(projectDefinition)
+            .setVcsState(vcsState)
+            .setQuerySummary(output)
+            .build();
     BuildGraphData graph = queryParserFactory.newParser(newData.querySummary()).parse();
     ProjectProto.Project project = graphToProjectConverter.createProject(graph);
     return BlazeProjectSnapshot.builder().queryData(newData).graph(graph).project(project).build();
