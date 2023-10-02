@@ -33,7 +33,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class DependencyTrackerTest {
+public class DependencyTrackerImplTest {
 
   public final BlazeContext context = BlazeContext.create();
   public final TestDataSyncRunner syncRunner =
@@ -43,9 +43,9 @@ public class DependencyTrackerTest {
   public void computeRequestedTargets_srcFile() throws Exception {
     BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
     Optional<RequestedTargets> targets =
-        DependencyTracker.computeRequestedTargets(
+        DependencyTrackerImpl.computeRequestedTargets(
             snapshot,
-            DependencyTracker.getProjectTargets(
+            DependencyTrackerImpl.getProjectTargets(
                     context,
                     snapshot,
                     Iterables.getOnlyElement(
@@ -66,9 +66,9 @@ public class DependencyTrackerTest {
   public void computeRequestedTargets_buildFile_multiTarget() throws Exception {
     BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_MULTI_TARGETS);
     Optional<RequestedTargets> targets =
-        DependencyTracker.computeRequestedTargets(
+        DependencyTrackerImpl.computeRequestedTargets(
             snapshot,
-            DependencyTracker.getProjectTargets(
+            DependencyTrackerImpl.getProjectTargets(
                     context,
                     snapshot,
                     Iterables.getOnlyElement(
@@ -90,9 +90,9 @@ public class DependencyTrackerTest {
   public void computeRequestedTargets_buildFile_nested() throws Exception {
     BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_NESTED_PACKAGE);
     Optional<RequestedTargets> targets =
-        DependencyTracker.computeRequestedTargets(
+        DependencyTrackerImpl.computeRequestedTargets(
             snapshot,
-            DependencyTracker.getProjectTargets(
+            DependencyTrackerImpl.getProjectTargets(
                     context,
                     snapshot,
                     Iterables.getOnlyElement(
@@ -113,9 +113,9 @@ public class DependencyTrackerTest {
   public void computeRequestedTargets_directory() throws Exception {
     BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_NESTED_PACKAGE);
     Optional<RequestedTargets> targets =
-        DependencyTracker.computeRequestedTargets(
+        DependencyTrackerImpl.computeRequestedTargets(
             snapshot,
-            DependencyTracker.getProjectTargets(
+            DependencyTrackerImpl.getProjectTargets(
                     context,
                     snapshot,
                     Iterables.getOnlyElement(
