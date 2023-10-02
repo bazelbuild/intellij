@@ -145,7 +145,8 @@ public class ProjectLoader {
             latestProjectDef);
     artifactTracker.initialize();
     DependencyTracker dependencyTracker =
-        new DependencyTracker(project, graph, dependencyBuilder, renderJarBuilder, artifactTracker);
+        new DependencyTrackerImpl(
+            project, graph, dependencyBuilder, renderJarBuilder, artifactTracker);
     Optional<BlazeVcsHandler> vcsHandler =
         Optional.ofNullable(BlazeVcsHandlerProvider.vcsHandlerForProject(project));
     ProjectRefresher projectRefresher =
