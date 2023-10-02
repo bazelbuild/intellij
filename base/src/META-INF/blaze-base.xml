@@ -17,6 +17,7 @@
   <actions>
       <action id="Blaze.ImportProject2"
           class="com.google.idea.blaze.base.wizard2.BlazeImportProjectAction"
+          text= "Import Bazel Project"
           icon="BlazeIcons.Logo">
         <add-to-group group-id="FileOpenGroup" anchor="first"/>
         <add-to-group group-id="WelcomeScreen.QuickStart" anchor="before"
