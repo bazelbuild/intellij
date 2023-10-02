@@ -19,15 +19,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.vcs.VcsState;
-import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
-import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
-import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.Query.SourceFile;
 import com.google.idea.blaze.qsync.query.QuerySpec;
@@ -47,38 +41,21 @@ class PartialProjectRefresh implements RefreshOperation {
 
   private final Path effectiveWorkspaceRoot;
   private final PostQuerySyncData previousState;
-  private final BlazeQueryParser.Factory queryParserFactory;
-  private final GraphToProjectConverter graphToProjectConverter;
-  private final PostQuerySyncData.Builder newState;
+  private final Optional<VcsState> currentVcsState;
   @VisibleForTesting final ImmutableSet<Path> modifiedPackages;
   @VisibleForTesting final ImmutableSet<Path> deletedPackages;
 
   PartialProjectRefresh(
-      Context context,
-      ListeningExecutorService executor,
       Path effectiveWorkspaceRoot,
-      PackageReader packageReader,
       PostQuerySyncData previousState,
       Optional<VcsState> currentVcsState,
       ImmutableSet<Path> modifiedPackages,
-      ImmutableSet<Path> deletedPackages,
-      ImmutableSet<String> handledRuleKinds) {
+      ImmutableSet<Path> deletedPackages) {
     this.effectiveWorkspaceRoot = effectiveWorkspaceRoot;
     this.previousState = previousState;
-    this.newState =
-        PostQuerySyncData.builder()
-            .setVcsState(currentVcsState)
-            .setProjectDefinition(previousState.projectDefinition());
+    this.currentVcsState = currentVcsState;
     this.modifiedPackages = modifiedPackages;
     this.deletedPackages = deletedPackages;
-    this.queryParserFactory = new BlazeQueryParser.Factory(context, handledRuleKinds);
-    this.graphToProjectConverter =
-        new GraphToProjectConverter(
-            packageReader,
-            effectiveWorkspaceRoot,
-            context,
-            previousState.projectDefinition(),
-            executor);
   }
 
   private Optional<QuerySpec> createQuerySpec() {
@@ -96,21 +73,17 @@ class PartialProjectRefresh implements RefreshOperation {
 
   @Override
   public Optional<QuerySpec> getQuerySpec() {
-    Optional<QuerySpec> querySpec = createQuerySpec();
-    return querySpec;
+    return createQuerySpec();
   }
 
   @Override
-  public BlazeProjectSnapshot createBlazeProject(QuerySummary partialQuery) throws BuildException {
+  public PostQuerySyncData createPostQuerySyncData(QuerySummary partialQuery) {
     Preconditions.checkNotNull(partialQuery, "queryOutput");
     QuerySummary effectiveQuery = applyDelta(partialQuery);
-    PostQuerySyncData postQuerySyncData = newState.setQuerySummary(effectiveQuery).build();
-    BuildGraphData graph = queryParserFactory.newParser(effectiveQuery).parse();
-    ProjectProto.Project project = graphToProjectConverter.createProject(graph);
-    return BlazeProjectSnapshot.builder()
-        .queryData(postQuerySyncData)
-        .graph(graph)
-        .project(project)
+    return PostQuerySyncData.builder()
+        .setVcsState(currentVcsState)
+        .setProjectDefinition(previousState.projectDefinition())
+        .setQuerySummary(effectiveQuery)
         .build();
   }
 

@@ -15,16 +15,10 @@
  */
 package com.google.idea.blaze.qsync;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.vcs.VcsState;
-import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
-import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.io.IOException;
@@ -41,27 +35,18 @@ public class FullProjectUpdate implements RefreshOperation {
 
   private final Context<?> context;
   private final Path effectiveWorkspaceRoot;
-  private final BlazeQueryParser.Factory queryParserFactory;
   private final ProjectDefinition projectDefinition;
   private final Optional<VcsState> vcsState;
-  private final GraphToProjectConverter graphToProjectConverter;
 
   public FullProjectUpdate(
       Context<?> context,
-      ListeningExecutorService executor,
       Path effectiveWorkspaceRoot,
       ProjectDefinition definition,
-      PackageReader packageReader,
-      Optional<VcsState> vcsState,
-      ImmutableSet<String> handledRuleKinds) {
+      Optional<VcsState> vcsState) {
     this.context = context;
     this.effectiveWorkspaceRoot = effectiveWorkspaceRoot;
     this.projectDefinition = definition;
     this.vcsState = vcsState;
-    this.queryParserFactory = new BlazeQueryParser.Factory(context, handledRuleKinds);
-    this.graphToProjectConverter =
-        new GraphToProjectConverter(
-            packageReader, effectiveWorkspaceRoot, context, projectDefinition, executor);
   }
 
   @Override
@@ -71,15 +56,11 @@ public class FullProjectUpdate implements RefreshOperation {
   }
 
   @Override
-  public BlazeProjectSnapshot createBlazeProject(QuerySummary output) throws BuildException {
-    PostQuerySyncData newData =
-        PostQuerySyncData.builder()
-            .setProjectDefinition(projectDefinition)
-            .setVcsState(vcsState)
-            .setQuerySummary(output)
-            .build();
-    BuildGraphData graph = queryParserFactory.newParser(newData.querySummary()).parse();
-    ProjectProto.Project project = graphToProjectConverter.createProject(graph);
-    return BlazeProjectSnapshot.builder().queryData(newData).graph(graph).project(project).build();
+  public PostQuerySyncData createPostQuerySyncData(QuerySummary output) {
+    return PostQuerySyncData.builder()
+        .setProjectDefinition(projectDefinition)
+        .setVcsState(vcsState)
+        .setQuerySummary(output)
+        .build();
   }
 }

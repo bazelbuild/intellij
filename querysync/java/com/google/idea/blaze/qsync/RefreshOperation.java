@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.qsync;
 
-import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.io.IOException;
@@ -30,8 +30,8 @@ import java.util.Optional;
  * <ol>
  *   <li>Acquire an implementation, e.g. from {@link ProjectRefresher}
  *   <li>Run a {@code query} invocation based on the spec from {@link #getQuerySpec()}
- *   <li>To get the updated project snapshot pass the results of that query to {@link
- *       #createBlazeProject(QuerySummary)}.
+ *   <li>To get the updated {@link PostQuerySyncData} pass the results of that query to {@link
+ *       #createPostQuerySyncData(QuerySummary)}.
  * </ol>
  */
 public interface RefreshOperation {
@@ -40,5 +40,5 @@ public interface RefreshOperation {
   Optional<QuerySpec> getQuerySpec() throws IOException;
 
   /** Creates the new project snapshot. */
-  BlazeProjectSnapshot createBlazeProject(QuerySummary output) throws BuildException;
+  PostQuerySyncData createPostQuerySyncData(QuerySummary output);
 }
