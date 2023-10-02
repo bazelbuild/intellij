@@ -157,9 +157,7 @@ public class ProjectLoader {
         new BlazeProjectSnapshotBuilder(
             executor, createWorkspaceRelativePackageReader(), workspaceRoot.path(), handledRules);
     QueryRunner queryRunner = createQueryRunner(buildSystem);
-    ProjectQuerier projectQuerier =
-        createProjectQuerier(
-            projectRefresher, blazeProjectSnapshotBuilder, queryRunner, vcsHandler);
+    ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner, vcsHandler);
     ProjectUpdater projectUpdater =
         new ProjectUpdater(
             project, importSettings, projectViewSet, workspaceRoot, projectPathResolver);
@@ -176,6 +174,7 @@ public class ProjectLoader {
         artifactTracker,
         dependencyTracker,
         projectQuerier,
+        blazeProjectSnapshotBuilder,
         latestProjectDef,
         projectViewSet,
         workspacePathResolver,
@@ -191,11 +190,9 @@ public class ProjectLoader {
 
   private ProjectQuerierImpl createProjectQuerier(
       ProjectRefresher projectRefresher,
-      BlazeProjectSnapshotBuilder blazeProjectSnapshotBuilder,
       QueryRunner queryRunner,
       Optional<BlazeVcsHandler> vcsHandler) {
-    return new ProjectQuerierImpl(
-        queryRunner, projectRefresher, blazeProjectSnapshotBuilder, vcsHandler);
+    return new ProjectQuerierImpl(queryRunner, projectRefresher, vcsHandler);
   }
 
   protected QueryRunner createQueryRunner(BuildSystem buildSystem) {

@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import java.io.IOException;
@@ -28,10 +27,10 @@ import java.io.IOException;
  */
 public interface ProjectQuerier {
 
-  BlazeProjectSnapshot fullQuery(ProjectDefinition projectDef, BlazeContext context)
+  PostQuerySyncData fullQuery(ProjectDefinition projectDef, BlazeContext context)
       throws IOException, BuildException;
 
-  BlazeProjectSnapshot update(
+  PostQuerySyncData update(
       ProjectDefinition currentProjectDef, PostQuerySyncData previousState, BlazeContext context)
       throws IOException, BuildException;
 }
