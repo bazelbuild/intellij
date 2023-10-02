@@ -45,6 +45,7 @@ import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeProject;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
 import com.google.idea.blaze.qsync.PackageStatementParser;
 import com.google.idea.blaze.qsync.ParallelPackageReader;
 import com.google.idea.blaze.qsync.ProjectRefresher;
@@ -149,14 +150,16 @@ public class ProjectLoader {
         Optional.ofNullable(BlazeVcsHandlerProvider.vcsHandlerForProject(project));
     ProjectRefresher projectRefresher =
         new ProjectRefresher(
-            executor,
-            createWorkspaceRelativePackageReader(),
             vcsHandler.map(BlazeVcsHandler::getVcsStateDiffer).orElse(VcsStateDiffer.NONE),
             workspaceRoot.path(),
-            graph::getCurrent,
-            handledRules);
+            graph::getCurrent);
+    BlazeProjectSnapshotBuilder blazeProjectSnapshotBuilder =
+        new BlazeProjectSnapshotBuilder(
+            executor, createWorkspaceRelativePackageReader(), workspaceRoot.path(), handledRules);
     QueryRunner queryRunner = createQueryRunner(buildSystem);
-    ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner, vcsHandler);
+    ProjectQuerier projectQuerier =
+        createProjectQuerier(
+            projectRefresher, blazeProjectSnapshotBuilder, queryRunner, vcsHandler);
     ProjectUpdater projectUpdater =
         new ProjectUpdater(
             project, importSettings, projectViewSet, workspaceRoot, projectPathResolver);
@@ -188,9 +191,11 @@ public class ProjectLoader {
 
   private ProjectQuerierImpl createProjectQuerier(
       ProjectRefresher projectRefresher,
+      BlazeProjectSnapshotBuilder blazeProjectSnapshotBuilder,
       QueryRunner queryRunner,
       Optional<BlazeVcsHandler> vcsHandler) {
-    return new ProjectQuerierImpl(queryRunner, projectRefresher, vcsHandler);
+    return new ProjectQuerierImpl(
+        queryRunner, projectRefresher, blazeProjectSnapshotBuilder, vcsHandler);
   }
 
   protected QueryRunner createQueryRunner(BuildSystem buildSystem) {
@@ -222,7 +227,7 @@ public class ProjectLoader {
   /**
    * Returns an {@link ImmutableSet} of rule kinds that query sync or plugin know how to resolve
    * symbols for without building. The rules query sync always builds even if they are part of the
-   * project are in {@link BlazeQueryParser.ALWAYS_BUILD_RULE_KINDS}
+   * project are in {@link com.google.idea.blaze.qsync.BlazeQueryParser.ALWAYS_BUILD_RULE_KINDS}
    */
   private ImmutableSet<String> getHandledRuleKinds() {
     ImmutableSet.Builder<String> defaultRules = ImmutableSet.builder();

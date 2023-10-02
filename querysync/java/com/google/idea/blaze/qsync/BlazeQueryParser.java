@@ -45,24 +45,6 @@ import java.util.Set;
  */
 public class BlazeQueryParser {
 
-  /**
-   * Factory class to allow the creation of the the parser to be decoupled from the injection of its
-   * dependencies.
-   */
-  public static class Factory {
-    private final Context<?> context;
-    private final ImmutableSet<String> alwaysBuildRuleKinds;
-
-    public Factory(Context<?> context, ImmutableSet<String> alwaysBuildRuleKinds) {
-      this.context = context;
-      this.alwaysBuildRuleKinds = alwaysBuildRuleKinds;
-    }
-
-    public BlazeQueryParser newParser(QuerySummary querySummary) {
-      return new BlazeQueryParser(querySummary, context, alwaysBuildRuleKinds);
-    }
-  }
-
   // Rules that will need to be built, whether or not the target is included in the
   // project.
   public static final ImmutableSet<String> ALWAYS_BUILD_RULE_KINDS =
