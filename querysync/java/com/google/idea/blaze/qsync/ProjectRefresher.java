@@ -15,17 +15,13 @@
  */
 package com.google.idea.blaze.qsync;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
-import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.google.idea.blaze.qsync.project.ProjectProto;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -36,26 +32,17 @@ import java.util.function.Supplier;
  */
 public class ProjectRefresher {
 
-  private final ListeningExecutorService executor;
-  private final PackageReader workspaceRelativePackageReader;
   private final VcsStateDiffer vcsDiffer;
   private final Path workspaceRoot;
   private final Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier;
-  private final ImmutableSet<String> handledRuleKinds;
 
   public ProjectRefresher(
-      ListeningExecutorService executor,
-      PackageReader workspaceRelativePackageReader,
       VcsStateDiffer vcsDiffer,
       Path workspaceRoot,
-      Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier,
-      ImmutableSet<String> handledRuleKinds) {
-    this.executor = executor;
-    this.workspaceRelativePackageReader = workspaceRelativePackageReader;
+      Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier) {
     this.vcsDiffer = vcsDiffer;
     this.workspaceRoot = workspaceRoot;
     this.latestProjectSnapshotSupplier = latestProjectSnapshotSupplier;
-    this.handledRuleKinds = handledRuleKinds;
   }
 
   public RefreshOperation startFullUpdate(
@@ -103,29 +90,5 @@ public class ProjectRefresher {
         params.latestVcsState,
         affected.getModifiedPackages(),
         affected.getDeletedPackages());
-  }
-
-  public BlazeProjectSnapshot createBlazeProjectSnapshot(
-      Context<?> context, PostQuerySyncData postQuerySyncData) throws BuildException {
-    BlazeQueryParser.Factory queryParserFactory =
-        new BlazeQueryParser.Factory(context, handledRuleKinds);
-    Path effectiveWorkspaceRoot =
-        postQuerySyncData.vcsState().flatMap(s -> s.workspaceSnapshotPath).orElse(workspaceRoot);
-    WorkspaceResolvingPackageReader packageReader =
-        new WorkspaceResolvingPackageReader(effectiveWorkspaceRoot, workspaceRelativePackageReader);
-    GraphToProjectConverter graphToProjectConverter =
-        new GraphToProjectConverter(
-            packageReader,
-            effectiveWorkspaceRoot,
-            context,
-            postQuerySyncData.projectDefinition(),
-            executor);
-    BuildGraphData graph = queryParserFactory.newParser(postQuerySyncData.querySummary()).parse();
-    ProjectProto.Project project = graphToProjectConverter.createProject(graph);
-    return BlazeProjectSnapshot.builder()
-        .queryData(postQuerySyncData)
-        .graph(graph)
-        .project(project)
-        .build();
   }
 }
