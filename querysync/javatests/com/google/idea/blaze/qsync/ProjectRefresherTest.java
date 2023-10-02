@@ -106,7 +106,7 @@ public class ProjectRefresherTest {
                 project.vcsState(),
                 project.projectDefinition());
     assertThat(update).isInstanceOf(NoopProjectRefresh.class);
-    assertThat(update.createBlazeProject()).isSameInstanceAs(existingProject);
+    assertThat(update.createBlazeProject(QuerySummary.EMPTY)).isSameInstanceAs(existingProject);
   }
 
   @Test

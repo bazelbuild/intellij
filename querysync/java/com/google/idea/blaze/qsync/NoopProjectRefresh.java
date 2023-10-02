@@ -41,10 +41,7 @@ public class NoopProjectRefresh implements RefreshOperation {
   }
 
   @Override
-  public void setQueryOutput(QuerySummary output) {}
-
-  @Override
-  public BlazeProjectSnapshot createBlazeProject() {
+  public BlazeProjectSnapshot createBlazeProject(QuerySummary output) {
     return latestProjectSnapshotSupplier.get();
   }
 }
