@@ -46,6 +46,7 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -84,6 +85,7 @@ public class QuerySyncProject {
   private final ArtifactTracker artifactTracker;
   private final DependencyTracker dependencyTracker;
   private final ProjectQuerier projectQuerier;
+  private final BlazeProjectSnapshotBuilder blazeProjectSnapshotBuilder;
   private final ProjectDefinition projectDefinition;
   private final ProjectViewSet projectViewSet;
   private final WorkspacePathResolver workspacePathResolver;
@@ -104,6 +106,7 @@ public class QuerySyncProject {
       ArtifactTracker artifactTracker,
       DependencyTracker dependencyTracker,
       ProjectQuerier projectQuerier,
+      BlazeProjectSnapshotBuilder blazeProjectSnapshotBuilder,
       ProjectDefinition projectDefinition,
       ProjectViewSet projectViewSet,
       WorkspacePathResolver workspacePathResolver,
@@ -119,6 +122,7 @@ public class QuerySyncProject {
     this.artifactTracker = artifactTracker;
     this.dependencyTracker = dependencyTracker;
     this.projectQuerier = projectQuerier;
+    this.blazeProjectSnapshotBuilder = blazeProjectSnapshotBuilder;
     this.projectDefinition = projectDefinition;
     this.projectViewSet = projectViewSet;
     this.workspacePathResolver = workspacePathResolver;
@@ -183,10 +187,12 @@ public class QuerySyncProject {
       context.push(new SyncQueryStatsScope());
       try {
         SaveUtil.saveAllFiles();
-        BlazeProjectSnapshot newSnapshot =
+        PostQuerySyncData postQuerySyncData =
             lastQuery.isEmpty()
                 ? projectQuerier.fullQuery(projectDefinition, context)
                 : projectQuerier.update(projectDefinition, lastQuery.get(), context);
+        BlazeProjectSnapshot newSnapshot =
+            blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(context, postQuerySyncData);
         newSnapshot =
             newSnapshot.toBuilder()
                 .project(artifactTracker.updateProjectProto(newSnapshot.project()))

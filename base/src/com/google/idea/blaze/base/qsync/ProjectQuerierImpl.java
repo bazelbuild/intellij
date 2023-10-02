@@ -25,10 +25,8 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.RefreshOperation;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.query.QuerySpec;
@@ -45,18 +43,15 @@ public class ProjectQuerierImpl implements ProjectQuerier {
 
   private final QueryRunner queryRunner;
   private final ProjectRefresher projectRefresher;
-  private final BlazeProjectSnapshotBuilder blazeProjectSnapshotBuilder;
   private final Optional<BlazeVcsHandler> vcsHandler;
 
   @VisibleForTesting
   public ProjectQuerierImpl(
       QueryRunner queryRunner,
       ProjectRefresher projectRefresher,
-      BlazeProjectSnapshotBuilder blazeProjectSnapshotBuilder,
       Optional<BlazeVcsHandler> vcsHandler) {
     this.queryRunner = queryRunner;
     this.projectRefresher = projectRefresher;
-    this.blazeProjectSnapshotBuilder = blazeProjectSnapshotBuilder;
     this.vcsHandler = vcsHandler;
   }
 
@@ -66,7 +61,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
    * <p>This includes reloading the project view.
    */
   @Override
-  public BlazeProjectSnapshot fullQuery(ProjectDefinition projectDef, BlazeContext context)
+  public PostQuerySyncData fullQuery(ProjectDefinition projectDef, BlazeContext context)
       throws IOException, BuildException {
 
     Optional<VcsState> vcsState = getVcsState(context);
@@ -82,8 +77,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
     RefreshOperation fullQuery = projectRefresher.startFullUpdate(context, projectDef, vcsState);
 
     QuerySpec querySpec = fullQuery.getQuerySpec().get();
-    return blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(
-        context, fullQuery.createPostQuerySyncData(queryRunner.runQuery(querySpec, context)));
+    return fullQuery.createPostQuerySyncData(queryRunner.runQuery(querySpec, context));
   }
 
   private Optional<VcsState> getVcsState(BlazeContext context) {
@@ -115,7 +109,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
    * </ul>
    */
   @Override
-  public BlazeProjectSnapshot update(
+  public PostQuerySyncData update(
       ProjectDefinition currentProjectDef, PostQuerySyncData previousState, BlazeContext context)
       throws IOException, BuildException {
 
@@ -138,7 +132,6 @@ public class ProjectQuerierImpl implements ProjectQuerier {
     } else {
       querySummary = QuerySummary.EMPTY;
     }
-    return blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(
-        context, refresh.createPostQuerySyncData(querySummary));
+    return refresh.createPostQuerySyncData(querySummary);
   }
 }
