@@ -513,11 +513,16 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
 
   @Override
   public ProjectProto.Project updateProjectProto(ProjectProto.Project projectProto)
-      throws IOException {
+      throws BuildException {
 
     Path genSrcCacheRelativeToProject =
         ideProjectBasePath.relativize(generatedSrcFileCacheDirectory);
-    ImmutableList<Path> subfolders = getGenSrcSubfolders();
+    ImmutableList<Path> subfolders;
+    try {
+      subfolders = getGenSrcSubfolders();
+    } catch (IOException e) {
+      throw new BuildException(e);
+    }
     GeneratedSourceProjectUpdater updater =
         new GeneratedSourceProjectUpdater(projectProto, genSrcCacheRelativeToProject, subfolders);
 

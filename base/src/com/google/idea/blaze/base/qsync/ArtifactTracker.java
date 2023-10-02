@@ -48,7 +48,7 @@ public interface ArtifactTracker {
    * <p>When additional artifacts are brought into the IDE they may require additional configuration
    * to be applied to the IDE project.
    */
-  ProjectProto.Project updateProjectProto(ProjectProto.Project projectProto) throws IOException;
+  ProjectProto.Project updateProjectProto(ProjectProto.Project projectProto) throws BuildException;
 
   /**
    * Returns a list of local cache files that build by target provided. Returns Optional.empty() if

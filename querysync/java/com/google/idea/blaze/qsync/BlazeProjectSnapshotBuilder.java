@@ -23,6 +23,7 @@ import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectProto;
+import com.google.idea.blaze.qsync.project.ProjectProto.Project;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
 
@@ -48,8 +49,22 @@ public class BlazeProjectSnapshotBuilder {
     this.handledRuleKinds = handledRuleKinds;
   }
 
+  /** {@code Function<ProjectProto.Project, ProjectProto.Project>} that can throw exceptions. */
+  @FunctionalInterface
+  public interface ProjectProtoTransform {
+    ProjectProto.Project apply(ProjectProto.Project proto) throws BuildException;
+  }
+
+  /**
+   * Creates a {@link BlazeProjectSnapshot}, which includes an expected IDE project structure, from
+   * the {@code postQuerySyncData} and a function {@code applyBuiltDependenciesTransform} that
+   * applies transformations required to account for any currently synced(i.e. built) dependencies.
+   */
   public BlazeProjectSnapshot createBlazeProjectSnapshot(
-      Context<?> context, PostQuerySyncData postQuerySyncData) throws BuildException {
+      Context<?> context,
+      PostQuerySyncData postQuerySyncData,
+      ProjectProtoTransform applyBuiltDependenciesTransform)
+      throws BuildException {
     Path effectiveWorkspaceRoot =
         postQuerySyncData.vcsState().flatMap(s -> s.workspaceSnapshotPath).orElse(workspaceRoot);
     WorkspaceResolvingPackageReader packageReader =
@@ -63,7 +78,12 @@ public class BlazeProjectSnapshotBuilder {
             executor);
     QuerySummary querySummary = postQuerySyncData.querySummary();
     BuildGraphData graph = new BlazeQueryParser(querySummary, context, handledRuleKinds).parse();
-    ProjectProto.Project project = graphToProjectConverter.createProject(graph);
+    Project project = null;
+    try {
+      project = applyBuiltDependenciesTransform.apply(graphToProjectConverter.createProject(graph));
+    } catch (Exception e) {
+      throw new BuildException(e);
+    }
     return BlazeProjectSnapshot.builder()
         .queryData(postQuerySyncData)
         .graph(graph)
