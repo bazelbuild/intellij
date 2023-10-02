@@ -78,7 +78,8 @@ public class ProjectQuerierImpl implements ProjectQuerier {
     RefreshOperation fullQuery = projectRefresher.startFullUpdate(context, projectDef, vcsState);
 
     QuerySpec querySpec = fullQuery.getQuerySpec().get();
-    return fullQuery.createBlazeProject(queryRunner.runQuery(querySpec, context));
+    return projectRefresher.createBlazeProjectSnapshot(
+        context, fullQuery.createPostQuerySyncData(queryRunner.runQuery(querySpec, context)));
   }
 
   private Optional<VcsState> getVcsState(BlazeContext context) {
@@ -133,6 +134,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
     } else {
       querySummary = QuerySummary.EMPTY;
     }
-    return refresh.createBlazeProject(querySummary);
+    return projectRefresher.createBlazeProjectSnapshot(
+        context, refresh.createPostQuerySyncData(querySummary));
   }
 }

@@ -17,7 +17,6 @@ package com.google.idea.blaze.qsync;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
-import static com.google.common.util.concurrent.MoreExecutors.newDirectExecutorService;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Label;
@@ -99,14 +98,10 @@ public class PartialProjectRefreshTest {
 
     PartialProjectRefresh queryStrategy =
         new PartialProjectRefresh(
-            QuerySyncTestUtils.NOOP_CONTEXT,
-            newDirectExecutorService(),
             Path.of("/workspace/root"),
-            QuerySyncTestUtils.EMPTY_PACKAGE_READER,
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,
             /* modifiedPackages= */ ImmutableSet.of(Path.of("my/build/package1")),
-            ImmutableSet.of(),
             ImmutableSet.of());
     QuerySummary applied = queryStrategy.applyDelta(delta);
     assertThat(applied.getRulesMap().keySet())
@@ -168,15 +163,11 @@ public class PartialProjectRefreshTest {
 
     PartialProjectRefresh queryStrategy =
         new PartialProjectRefresh(
-            QuerySyncTestUtils.NOOP_CONTEXT,
-            newDirectExecutorService(),
             Path.of("/workspace/root"),
-            QuerySyncTestUtils.EMPTY_PACKAGE_READER,
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,
             ImmutableSet.of(),
-            /* deletedPackages= */ ImmutableSet.of(Path.of("my/build/package1")),
-            ImmutableSet.of());
+            /* deletedPackages= */ ImmutableSet.of(Path.of("my/build/package1")));
     assertThat(queryStrategy.getQuerySpec()).isEmpty();
     QuerySummary applied = queryStrategy.applyDelta(QuerySummary.EMPTY);
     assertThat(applied.getRulesMap().keySet())
@@ -233,14 +224,10 @@ public class PartialProjectRefreshTest {
 
     PartialProjectRefresh queryStrategy =
         new PartialProjectRefresh(
-            QuerySyncTestUtils.NOOP_CONTEXT,
-            newDirectExecutorService(),
             Path.of("/workspace/root"),
-            QuerySyncTestUtils.EMPTY_PACKAGE_READER,
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,
             /* modifiedPackages= */ ImmutableSet.of(Path.of("my/build/package2")),
-            ImmutableSet.of(),
             ImmutableSet.of());
     QuerySummary applied = queryStrategy.applyDelta(delta);
     assertThat(applied.getRulesMap().keySet())
@@ -267,14 +254,10 @@ public class PartialProjectRefreshTest {
 
     PartialProjectRefresh queryStrategy =
         new PartialProjectRefresh(
-            QuerySyncTestUtils.NOOP_CONTEXT,
-            newDirectExecutorService(),
             Path.of("/workspace/root"),
-            QuerySyncTestUtils.EMPTY_PACKAGE_READER,
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,
             /* modifiedPackages= */ ImmutableSet.of(Path.of("my/build/package")),
-            ImmutableSet.of(),
             ImmutableSet.of());
     QuerySummary applied = queryStrategy.applyDelta(delta);
     assertThat(applied.getPackagesWithErrors()).containsExactly(Path.of("my/build/package"));

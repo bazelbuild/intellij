@@ -22,8 +22,10 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.blaze.qsync.project.ProjectProto;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -60,14 +62,7 @@ public class ProjectRefresher {
       Context<?> context, ProjectDefinition spec, Optional<VcsState> vcsState) {
     Path effectiveWorkspaceRoot =
         vcsState.flatMap(s -> s.workspaceSnapshotPath).orElse(workspaceRoot);
-    return new FullProjectUpdate(
-        context,
-        executor,
-        effectiveWorkspaceRoot,
-        spec,
-        new WorkspaceResolvingPackageReader(effectiveWorkspaceRoot, workspaceRelativePackageReader),
-        vcsState,
-        handledRuleKinds);
+    return new FullProjectUpdate(context, effectiveWorkspaceRoot, spec, vcsState);
   }
 
   public RefreshOperation startPartialRefresh(
@@ -103,15 +98,34 @@ public class ProjectRefresher {
     Path effectiveWorkspaceRoot =
         params.latestVcsState.flatMap(s -> s.workspaceSnapshotPath).orElse(workspaceRoot);
     return new PartialProjectRefresh(
-        context,
-        executor,
         effectiveWorkspaceRoot,
-        new WorkspaceResolvingPackageReader(effectiveWorkspaceRoot, workspaceRelativePackageReader),
         params.currentProject,
         params.latestVcsState,
         affected.getModifiedPackages(),
-        affected.getDeletedPackages(),
-        handledRuleKinds);
+        affected.getDeletedPackages());
   }
 
+  public BlazeProjectSnapshot createBlazeProjectSnapshot(
+      Context<?> context, PostQuerySyncData postQuerySyncData) throws BuildException {
+    BlazeQueryParser.Factory queryParserFactory =
+        new BlazeQueryParser.Factory(context, handledRuleKinds);
+    Path effectiveWorkspaceRoot =
+        postQuerySyncData.vcsState().flatMap(s -> s.workspaceSnapshotPath).orElse(workspaceRoot);
+    WorkspaceResolvingPackageReader packageReader =
+        new WorkspaceResolvingPackageReader(effectiveWorkspaceRoot, workspaceRelativePackageReader);
+    GraphToProjectConverter graphToProjectConverter =
+        new GraphToProjectConverter(
+            packageReader,
+            effectiveWorkspaceRoot,
+            context,
+            postQuerySyncData.projectDefinition(),
+            executor);
+    BuildGraphData graph = queryParserFactory.newParser(postQuerySyncData.querySummary()).parse();
+    ProjectProto.Project project = graphToProjectConverter.createProject(graph);
+    return BlazeProjectSnapshot.builder()
+        .queryData(postQuerySyncData)
+        .graph(graph)
+        .project(project)
+        .build();
+  }
 }
