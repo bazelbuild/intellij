@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import java.io.File;
+import java.nio.file.Path;
 
 /**
  * A variant of {@link LocalFileOutputArtifactWithoutDigest} implementing {@link OutputArtifact}.
@@ -25,8 +26,8 @@ public class LocalFileOutputArtifact extends LocalFileOutputArtifactWithoutDiges
   private final String digest;
 
   public LocalFileOutputArtifact(
-      File file, String blazeOutRelativePath, String configurationMnemonic, String digest) {
-    super(file, blazeOutRelativePath, configurationMnemonic);
+      File file, Path blazeOutPath, String configurationMnemonic, String digest) {
+    super(file, blazeOutPath, configurationMnemonic);
     this.digest = digest;
   }
 

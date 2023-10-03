@@ -96,11 +96,6 @@ public class DefaultCacheLayoutTest {
   }
 
   private static OutputArtifactInfo testOutputArtifact(String fileName) {
-    return new OutputArtifactInfo() {
-      @Override
-      public String getRelativePath() {
-        return "somewhere/" + fileName;
-      }
-    };
+    return () -> Path.of("bazel-out/somewhere/" + fileName);
   }
 }

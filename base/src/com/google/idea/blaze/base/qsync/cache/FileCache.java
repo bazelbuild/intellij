@@ -105,9 +105,7 @@ public class FileCache {
    */
   public Optional<Path> getCacheFile(Path artifactPath) {
     Path path =
-        cacheLayout
-            .getOutputArtifactDestinationAndLayout(artifactPath::toString)
-            .getCopyDestination();
+        cacheLayout.getOutputArtifactDestinationAndLayout(() -> artifactPath).getCopyDestination();
     return Optional.ofNullable(Files.exists(path) ? path : null);
   }
 

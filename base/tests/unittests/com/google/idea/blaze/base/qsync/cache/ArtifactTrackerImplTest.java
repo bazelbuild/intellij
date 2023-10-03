@@ -226,11 +226,11 @@ public class ArtifactTrackerImplTest {
                         .putAll(
                             OutputGroup.JARS,
                             TestOutputArtifact.builder()
-                                .setRelativePath("out/test.jar")
+                                .setPath("bazel-out/out/test.jar")
                                 .setDigest("jar_digest")
                                 .build(),
                             TestOutputArtifact.builder()
-                                .setRelativePath("out/anothertest.jar")
+                                .setPath("bazel-out/out/anothertest.jar")
                                 .setDigest("anotherjar_digest")
                                 .build())
                         .build())
@@ -281,7 +281,7 @@ public class ArtifactTrackerImplTest {
                         .put(
                             OutputGroup.JARS,
                             TestOutputArtifact.builder()
-                                .setRelativePath("out/test.jar")
+                                .setPath("bazel-out/out/test.jar")
                                 .setDigest("jar_digest")
                                 .build())
                         .build())
@@ -358,7 +358,7 @@ public class ArtifactTrackerImplTest {
         new AutoValue_ArtifactTrackerImplTest_TestOutputArtifact.Builder()
             .setLength(0)
             .setDigest("digest")
-            .setRelativePath("path/file")
+            .setPath("bazel-out/path/file")
             .setConfigurationMnemonic("mnemonic")
             .build();
 
@@ -378,7 +378,7 @@ public class ArtifactTrackerImplTest {
     public abstract String getDigest();
 
     @Override
-    public abstract String getRelativePath();
+    public abstract Path getPath();
 
     @Override
     public abstract String getConfigurationMnemonic();
@@ -398,7 +398,11 @@ public class ArtifactTrackerImplTest {
 
       public abstract Builder setDigest(String value);
 
-      public abstract Builder setRelativePath(String value);
+      public abstract Builder setPath(Path value);
+
+      public Builder setPath(String path) {
+        return setPath(Path.of(path));
+      }
 
       public abstract Builder setConfigurationMnemonic(String value);
 
@@ -408,7 +412,7 @@ public class ArtifactTrackerImplTest {
 
   private static OutputArtifact artifactWithNameAndDigest(String fileName, String digest) {
     return TestOutputArtifact.builder()
-        .setRelativePath("somewhere/" + fileName)
+        .setPath("bazel-out/somewhere/" + fileName)
         .setDigest(digest)
         .build();
   }

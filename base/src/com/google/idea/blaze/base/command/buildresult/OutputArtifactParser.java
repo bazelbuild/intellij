@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
-import com.google.common.base.Joiner;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.io.URLUtil;
@@ -23,7 +22,6 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -60,27 +58,10 @@ public interface OutputArtifactParser {
       try {
         File f = new File(new URI(uri));
         return new LocalFileOutputArtifact(
-            f,
-            getBlazeOutRelativePath(file, configurationMnemonic),
-            configurationMnemonic,
-            file.getDigest());
+            f, OutputArtifactInfo.pathFromBesFile(file), configurationMnemonic, file.getDigest());
       } catch (URISyntaxException | IllegalArgumentException e) {
         return null;
       }
     }
-  }
-
-  default String getBlazeOutRelativePath(
-      BuildEventStreamProtos.File file, String configurationMnemonic) {
-    List<String> pathPrefixList = file.getPathPrefixList();
-    if (pathPrefixList.size() <= 1) {
-      // fall back to using the configuration mnemonic
-      // TODO(brendandouglas): remove this backwards compatibility code after September 2019
-      return configurationMnemonic + "/" + file.getName();
-    }
-
-    // remove the initial 'bazel-out' path component
-    String prefix = Joiner.on('/').join(pathPrefixList.subList(1, pathPrefixList.size()));
-    return prefix + "/" + file.getName();
   }
 }

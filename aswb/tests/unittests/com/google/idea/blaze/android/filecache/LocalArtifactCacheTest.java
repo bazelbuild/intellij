@@ -114,7 +114,9 @@ public class LocalArtifactCacheTest {
     String execRoot = workspaceRoot.directory().getAbsolutePath();
     String mnemonic = "k8-opt";
     return new LocalFileOutputArtifactWithoutDigest(
-        new File(execRoot + "/blaze-out" + mnemonic + "/" + path), mnemonic + "/" + path, mnemonic);
+        new File(execRoot + "/blaze-out" + mnemonic + "/" + path),
+        Path.of("blaze-out" + mnemonic + "/" + path),
+        mnemonic);
   }
 
   @Test
