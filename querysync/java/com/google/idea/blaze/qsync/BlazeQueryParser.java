@@ -17,6 +17,7 @@ package com.google.idea.blaze.qsync;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.idea.blaze.common.Label.toLabelList;
+import static java.util.Arrays.stream;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.ImmutableSet;
@@ -36,8 +37,10 @@ import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * A class that parses the proto output from a `blaze query --output=streamed_proto` invocation, and
@@ -79,8 +82,12 @@ public class BlazeQueryParser {
           "android_instrumentation_test",
           "kt_android_library_helper");
 
+  private static final ImmutableSet<String> CC_RULE_TYPES =
+      ImmutableSet.of("cc_library", "cc_binary", "cc_shared_library", "cc_test");
+
   private final Context<?> context;
   private final SetView<String> alwaysBuildRuleKinds;
+  private final Supplier<Boolean> ccEnabledFlag;
 
   private final QuerySummary query;
 
@@ -94,14 +101,22 @@ public class BlazeQueryParser {
   private final Set<Label> javaDeps = new HashSet<>();
 
   public BlazeQueryParser(
-      QuerySummary query, Context<?> context, ImmutableSet<String> handledRuleKinds) {
+      QuerySummary query,
+      Context<?> context,
+      ImmutableSet<String> handledRuleKinds,
+      Supplier<Boolean> ccEnabledFlag) {
     this.context = context;
     this.alwaysBuildRuleKinds = Sets.difference(ALWAYS_BUILD_RULE_KINDS, handledRuleKinds);
     this.query = query;
+    this.ccEnabledFlag = ccEnabledFlag;
   }
 
   private static boolean isJavaRule(String ruleClass) {
     return JAVA_RULE_TYPES.contains(ruleClass) || ANDROID_RULE_TYPES.contains(ruleClass);
+  }
+
+  private static boolean isCcRule(String ruleClass) {
+    return CC_RULE_TYPES.contains(ruleClass);
   }
 
   public BuildGraphData parse() {
@@ -140,6 +155,9 @@ public class BlazeQueryParser {
       if (isJavaRule(ruleClass)) {
         visitJavaRule(ruleEntry.getKey(), ruleEntry.getValue(), targetBuilder);
       }
+      if (isCcRule(ruleClass)) {
+        visitCcRule(ruleEntry.getKey(), ruleEntry.getValue(), targetBuilder);
+      }
       if (alwaysBuildRuleKinds.contains(ruleClass)) {
         projectTargetsToBuild.add(ruleEntry.getKey());
       }
@@ -174,17 +192,16 @@ public class BlazeQueryParser {
   private void visitJavaRule(Label label, Query.Rule rule, ProjectTarget.Builder targetBuilder) {
     graphBuilder.allTargetsBuilder().add(label);
     targetBuilder.languagesBuilder().add(LanguageClass.JAVA);
-    ImmutableSet<Label> thisSources = sourcesWithExpandedFileGroups(rule);
+    ImmutableSet<Label> thisSources =
+        expandFileGroupValues(rule.getSourcesList(), rule.getResourceFilesList());
+    targetBuilder.sourceLabelsBuilder().addAll(thisSources);
+
     Set<Label> thisDeps = Sets.newHashSet(toLabelList(rule.getDepsList()));
     targetBuilder.depsBuilder().addAll(thisDeps);
 
     targetBuilder.runtimeDepsBuilder().addAll(toLabelList(rule.getRuntimeDepsList()));
-    targetBuilder.sourceLabelsBuilder().addAll(thisSources);
     for (Label thisSource : thisSources) {
-      // Require build step for targets with generated sources.
-      if (!query.getSourceFilesMap().containsKey(thisSource)) {
-        projectTargetsToBuild.add(label);
-      }
+      addProjectTargetsToBuildIfGenerated(label, thisSource);
     }
     graphBuilder.javaSourcesBuilder().addAll(thisSources);
     javaDeps.addAll(thisDeps);
@@ -203,14 +220,39 @@ public class BlazeQueryParser {
     }
   }
 
-  /** Returns a set of all sources for a rule, expanding any in-project {@code filegroup} rules */
-  private ImmutableSet<Label> sourcesWithExpandedFileGroups(Rule rule) {
-    ImmutableSet<Label> rawLabels =
-        ImmutableSet.<Label>builder()
-            .addAll(toLabelList(rule.getSourcesList()))
-            .addAll(toLabelList(rule.getResourceFilesList()))
-            .build();
-    return rawLabels.stream().flatMap(l -> expandFileGroups(l).stream()).collect(toImmutableSet());
+  private void visitCcRule(Label label, Query.Rule rule, ProjectTarget.Builder targetBuilder) {
+    if (!ccEnabledFlag.get()) {
+      return;
+    }
+    graphBuilder.allTargetsBuilder().add(label);
+    targetBuilder.languagesBuilder().add(LanguageClass.CC);
+    ImmutableSet<Label> thisSources =
+        expandFileGroupValues(rule.getSourcesList(), rule.getHdrsList());
+
+    Set<Label> thisDeps = Sets.newHashSet(toLabelList(rule.getDepsList()));
+    targetBuilder.depsBuilder().addAll(thisDeps);
+
+    targetBuilder.sourceLabelsBuilder().addAll(thisSources);
+    for (Label thisSource : thisSources) {
+      addProjectTargetsToBuildIfGenerated(label, thisSource);
+    }
+  }
+
+  /** Require build step for targets with generated sources. */
+  private void addProjectTargetsToBuildIfGenerated(Label label, Label source) {
+    if (!query.getSourceFilesMap().containsKey(source)) {
+      projectTargetsToBuild.add(label);
+    }
+  }
+
+  /** Returns a set of sources for a rule, expanding any in-project {@code filegroup} rules */
+  private ImmutableSet<Label> expandFileGroupValues(List<String>... labelLists) {
+    return stream(labelLists)
+        .map(Label::toLabelList)
+        .flatMap(List::stream)
+        .map(this::expandFileGroups)
+        .flatMap(Set::stream)
+        .collect(toImmutableSet());
   }
 
   private ImmutableSet<Label> expandFileGroups(Label label) {

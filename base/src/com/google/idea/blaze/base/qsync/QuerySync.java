@@ -37,6 +37,9 @@ public class QuerySync {
   private static final Supplier<Boolean> COMPOSE_ENABLED =
       Suppliers.memoize(new BoolExperiment("aswb.query.sync.enable.compose", false)::getValue);
 
+  public static final BoolExperiment CC_SUPPORT_ENABLED =
+      new BoolExperiment("querysync.cc.support", false);
+
   private QuerySync() {}
 
   public static boolean isEnabled() {

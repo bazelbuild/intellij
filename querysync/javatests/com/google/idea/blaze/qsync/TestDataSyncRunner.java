@@ -19,6 +19,7 @@ import static com.google.common.util.concurrent.MoreExecutors.newDirectExecutorS
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 
 import com.google.common.base.Predicates;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.exception.BuildException;
@@ -61,7 +62,8 @@ public class TestDataSyncRunner {
             .setVcsState(Optional.empty())
             .build();
     BuildGraphData buildGraphData =
-        new BlazeQueryParser(querySummary, context, ImmutableSet.of()).parse();
+        new BlazeQueryParser(querySummary, context, ImmutableSet.of(), Suppliers.ofInstance(true))
+            .parse();
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             packageReader,
@@ -72,7 +74,10 @@ public class TestDataSyncRunner {
     Project project = converter.createProject(buildGraphData);
     return BlazeProjectSnapshot.builder()
         .queryData(pqsd)
-        .graph(new BlazeQueryParser(querySummary, context, ImmutableSet.of()).parse())
+        .graph(
+            new BlazeQueryParser(
+                    querySummary, context, ImmutableSet.of(), Suppliers.ofInstance(true))
+                .parse())
         .project(project)
         .build();
   }

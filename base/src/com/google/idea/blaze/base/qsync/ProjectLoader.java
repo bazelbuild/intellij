@@ -156,7 +156,11 @@ public class ProjectLoader {
             graph::getCurrent);
     BlazeProjectSnapshotBuilder blazeProjectSnapshotBuilder =
         new BlazeProjectSnapshotBuilder(
-            executor, createWorkspaceRelativePackageReader(), workspaceRoot.path(), handledRules);
+            executor,
+            createWorkspaceRelativePackageReader(),
+            workspaceRoot.path(),
+            handledRules,
+            QuerySync.CC_SUPPORT_ENABLED::getValue);
     QueryRunner queryRunner = createQueryRunner(buildSystem);
     ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner, vcsHandler);
     ProjectUpdater projectUpdater =

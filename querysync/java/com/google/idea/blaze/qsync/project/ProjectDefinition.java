@@ -46,7 +46,8 @@ public abstract class ProjectDefinition {
   /** A language class that the query sync supports/needs to care about. */
   public enum LanguageClass {
     JAVA,
-    KOTLIN
+    KOTLIN,
+    CC
   }
 
   /**

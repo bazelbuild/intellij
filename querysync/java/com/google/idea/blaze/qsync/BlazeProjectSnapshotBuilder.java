@@ -26,6 +26,7 @@ import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
+import java.util.function.Supplier;
 
 /**
  * Project refresher creates an appropriate {@link RefreshOperation} based on the project and
@@ -37,16 +38,19 @@ public class BlazeProjectSnapshotBuilder {
   private final PackageReader workspaceRelativePackageReader;
   private final Path workspaceRoot;
   private final ImmutableSet<String> handledRuleKinds;
+  private final Supplier<Boolean> ccEnabledFlag;
 
   public BlazeProjectSnapshotBuilder(
       ListeningExecutorService executor,
       PackageReader workspaceRelativePackageReader,
       Path workspaceRoot,
-      ImmutableSet<String> handledRuleKinds) {
+      ImmutableSet<String> handledRuleKinds,
+      Supplier<Boolean> ccEnabledFlag) {
     this.executor = executor;
     this.workspaceRelativePackageReader = workspaceRelativePackageReader;
     this.workspaceRoot = workspaceRoot;
     this.handledRuleKinds = handledRuleKinds;
+    this.ccEnabledFlag = ccEnabledFlag;
   }
 
   /** {@code Function<ProjectProto.Project, ProjectProto.Project>} that can throw exceptions. */
@@ -77,7 +81,8 @@ public class BlazeProjectSnapshotBuilder {
             postQuerySyncData.projectDefinition(),
             executor);
     QuerySummary querySummary = postQuerySyncData.querySummary();
-    BuildGraphData graph = new BlazeQueryParser(querySummary, context, handledRuleKinds).parse();
+    BuildGraphData graph =
+        new BlazeQueryParser(querySummary, context, handledRuleKinds, ccEnabledFlag).parse();
     Project project = null;
     try {
       project = applyBuiltDependenciesTransform.apply(graphToProjectConverter.createProject(graph));
