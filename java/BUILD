@@ -149,6 +149,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:truth",
         "//proto:proto_deps",
         "//shared",
+        "//testing:lib",
         "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
