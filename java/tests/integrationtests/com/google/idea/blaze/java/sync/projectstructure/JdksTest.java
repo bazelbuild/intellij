@@ -237,7 +237,7 @@ public class JdksTest extends BlazeIntegrationTestCase {
   @NotNull
   private static LanguageLevelWithPreview getLatestLevelWithPreview() {
     return stream(LanguageLevel.values())
-            .filter(it -> it.getPreviewLevel() != null)
+            .filter(it -> it.getPreviewLevel() != null && !it.getPreviewLevel().name().endsWith("_X"))
             .map(it -> new LanguageLevelWithPreview(it, it.getPreviewLevel()))
             .max(Comparator.comparingInt(it -> it.stableLevel.toJavaVersion().feature))
             .orElseThrow(() -> new RuntimeException("Test can't be run, no preview language levels found in this IntelliJ version"));
