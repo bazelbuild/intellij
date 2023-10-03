@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth8.assertThat;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
@@ -44,7 +45,8 @@ public class BuildGraphTest {
         new BlazeQueryParser(
                 getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY),
                 NOOP_CONTEXT,
-                ImmutableSet.of())
+                ImmutableSet.of(),
+                Suppliers.ofInstance(true))
             .parse();
     assertThat(graph.allTargets().toLabelSet())
         .containsExactly(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps"));
@@ -69,7 +71,8 @@ public class BuildGraphTest {
         new BlazeQueryParser(
                 getQuerySummary(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY),
                 NOOP_CONTEXT,
-                ImmutableSet.of())
+                ImmutableSet.of(),
+                Suppliers.ofInstance(true))
             .parse();
     assertThat(
             graph.getFileDependencies(
@@ -83,7 +86,8 @@ public class BuildGraphTest {
         new BlazeQueryParser(
                 getQuerySummary(TestData.JAVA_LIBRARY_INTERNAL_DEP_QUERY),
                 NOOP_CONTEXT,
-                ImmutableSet.of())
+                ImmutableSet.of(),
+                Suppliers.ofInstance(true))
             .parse();
     // Sanity check:
     assertThat(graph.getAllSourceFiles())
@@ -100,7 +104,8 @@ public class BuildGraphTest {
         new BlazeQueryParser(
                 getQuerySummary(TestData.JAVA_LIBRARY_TRANSITIVE_DEP_QUERY),
                 NOOP_CONTEXT,
-                ImmutableSet.of())
+                ImmutableSet.of(),
+                Suppliers.ofInstance(true))
             .parse();
     // Sanity check:
     assertThat(graph.getAllSourceFiles())
@@ -117,7 +122,8 @@ public class BuildGraphTest {
         new BlazeQueryParser(
                 getQuerySummary(TestData.JAVA_LIBRARY_PROTO_DEP_QUERY),
                 NOOP_CONTEXT,
-                ImmutableSet.of())
+                ImmutableSet.of(),
+                Suppliers.ofInstance(true))
             .parse();
     assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("protodep/TestClassProtoDep.java")))
         .containsExactly(
@@ -131,7 +137,8 @@ public class BuildGraphTest {
         new BlazeQueryParser(
                 getQuerySummary(TestData.JAVA_LIBRARY_MULTI_TARGETS),
                 NOOP_CONTEXT,
-                ImmutableSet.of())
+                ImmutableSet.of(),
+                Suppliers.ofInstance(true))
             .parse();
     assertThat(graph.allTargets().toLabelSet())
         .containsExactly(
@@ -152,10 +159,13 @@ public class BuildGraphTest {
   }
 
   @Test
-  public void testJavaLibaryExportingExternalTargets() throws Exception {
+  public void testJavaLibraryExportingExternalTargets() throws Exception {
     BuildGraphData graph =
         new BlazeQueryParser(
-                getQuerySummary(TestData.JAVA_EXPORTED_DEP_QUERY), NOOP_CONTEXT, ImmutableSet.of())
+                getQuerySummary(TestData.JAVA_EXPORTED_DEP_QUERY),
+                NOOP_CONTEXT,
+                ImmutableSet.of(),
+                Suppliers.ofInstance(true))
             .parse();
     Path sourceFile = TESTDATA_ROOT.resolve("exports/TestClassUsingExport.java");
     assertThat(graph.getJavaSourceFiles()).containsExactly(sourceFile);
@@ -167,7 +177,10 @@ public class BuildGraphTest {
   public void testAndroidLibrary() throws Exception {
     BuildGraphData graph =
         new BlazeQueryParser(
-                getQuerySummary(TestData.ANDROID_LIB_QUERY), NOOP_CONTEXT, ImmutableSet.of())
+                getQuerySummary(TestData.ANDROID_LIB_QUERY),
+                NOOP_CONTEXT,
+                ImmutableSet.of(),
+                Suppliers.ofInstance(true))
             .parse();
     assertThat(graph.getAllSourceFiles())
         .containsExactly(
@@ -196,7 +209,8 @@ public class BuildGraphTest {
         new BlazeQueryParser(
                 getQuerySummary(TestData.ANDROID_AIDL_SOURCE_QUERY),
                 NOOP_CONTEXT,
-                ImmutableSet.of())
+                ImmutableSet.of(),
+                Suppliers.ofInstance(true))
             .parse();
     assertThat(graph.getAllSourceFiles())
         .containsExactly(
@@ -223,7 +237,10 @@ public class BuildGraphTest {
   public void testFileGroupSource() throws Exception {
     BuildGraphData graph =
         new BlazeQueryParser(
-                getQuerySummary(TestData.FILEGROUP_QUERY), NOOP_CONTEXT, ImmutableSet.of())
+                getQuerySummary(TestData.FILEGROUP_QUERY),
+                NOOP_CONTEXT,
+                ImmutableSet.of(),
+                Suppliers.ofInstance(true))
             .parse();
     Path sourceFile = TESTDATA_ROOT.resolve("filegroup/TestFileGroupSource.java");
     Path subgroupSourceFile = TESTDATA_ROOT.resolve("filegroup/TestSubFileGroupSource.java");
@@ -234,6 +251,41 @@ public class BuildGraphTest {
         .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
     assertThat(graph.getFileDependencies(subgroupSourceFile))
         .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
+  }
+
+  @Test
+  public void testCcLibrary() throws Exception {
+    BuildGraphData graph =
+        new BlazeQueryParser(
+                getQuerySummary(TestData.CC_LIBRARY_QUERY),
+                NOOP_CONTEXT,
+                ImmutableSet.of(),
+                Suppliers.ofInstance(true))
+            .parse();
+    assertThat(graph.getAllSourceFiles())
+        .containsExactly(
+            TESTDATA_ROOT.resolve("cc/TestClass.cc"),
+            TESTDATA_ROOT.resolve("cc/TestClass.h"),
+            TESTDATA_ROOT.resolve("cc/BUILD"));
+    assertThat(graph.getJavaSourceFiles()).isEmpty();
+    assertThat(graph.getAndroidSourceFiles()).isEmpty();
+    assertThat(graph.getTargetOwners(TESTDATA_ROOT.resolve("cc/TestClass.cc")))
+        .containsExactly(Label.of("//" + TESTDATA_ROOT + "/cc:cc"));
+    assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("cc/TestClass.cc"))).isEmpty();
+    assertThat(graph.targetMap().get(Label.of("//" + TESTDATA_ROOT + "/cc:cc")).languages())
+        .containsExactly(LanguageClass.CC);
+  }
+
+  @Test
+  public void testCcLibrary_disabled() throws Exception {
+    BuildGraphData graph =
+        new BlazeQueryParser(
+                getQuerySummary(TestData.CC_LIBRARY_QUERY),
+                NOOP_CONTEXT,
+                ImmutableSet.of(),
+                Suppliers.ofInstance(false))
+            .parse();
+    assertThat(graph.getTargetOwners(TESTDATA_ROOT.resolve("cc/TestClass.cc"))).isEmpty();
   }
 
 }
