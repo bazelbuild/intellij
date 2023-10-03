@@ -53,11 +53,14 @@ public class BlazeReloadFileAction extends AnAction {
     private static final Logger LOGGER = Logger.getInstance(BlazeReloadFileAction.class);
     private static final Pattern INNER_CLASS_PATTERN = Pattern.compile("^(?:\\$\\w+)*$");
 
+    private final AnAction delegate;
+
     public BlazeReloadFileAction(AnAction delegate) {
         super(
                 delegate.getTemplatePresentation().getTextWithMnemonic(),
                 delegate.getTemplatePresentation().getDescription(),
                 delegate.getTemplatePresentation().getIcon());
+        this.delegate = delegate;
     }
 
     @Override
@@ -190,8 +193,17 @@ public class BlazeReloadFileAction extends AnAction {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-        DebuggerSession session =
-                DebuggerManagerEx.getInstanceEx(e.getProject()).getContext().getDebuggerSession();
-        e.getPresentation().setEnabled(session != null);
+        delegate.update(e);
+        if (e.getPresentation().isEnabled()) {
+            DebuggerSession session =
+                    DebuggerManagerEx.getInstanceEx(e.getProject()).getContext().getDebuggerSession();
+            VirtualFile vf = e.getData(CommonDataKeys.VIRTUAL_FILE);
+            if (session != null && vf != null) {
+                VirtualFile sourceRoot = ProjectFileIndex.getInstance(e.getProject()).getSourceRootForFile(vf);
+                e.getPresentation().setEnabled(sourceRoot != null);
+            } else {
+                e.getPresentation().setEnabled(false);
+            }
+        }
     }
 }

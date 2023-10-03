@@ -90,12 +90,12 @@ public class BlazeBuildService {
     this.buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
   }
 
-  public Future<BlazeBuildOutputs> buildFileForLabels(
+  public void buildFileForLabels(
       String fileName, ImmutableSet<com.google.idea.blaze.common.Label> labels) {
     buildFile(fileName, labels.stream().map(Label::create).collect(toImmutableSet()));
   }
 
-  public void buildFile(String fileName, ImmutableCollection<Label> targets) {
+  public Future<BlazeBuildOutputs> buildFile(String fileName, ImmutableCollection<Label> targets) {
     if (!Blaze.isBlazeProject(project) || fileName == null) {
       return null;
     }
