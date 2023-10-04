@@ -43,6 +43,9 @@ public class IntelliJExtManager {
   // Keep all the experiments together for ease of maintenance
   private static final BoolExperiment ENABLED = new BoolExperiment("use.intellij.ext", false);
 
+  private static final BoolExperiment ISSUETRACKER =
+      new BoolExperiment("use.intellij.ext.issuetracker", false);
+
   public static IntelliJExtManager getInstance() {
     return ApplicationManager.getApplication().getService(IntelliJExtManager.class);
   }
@@ -87,5 +90,9 @@ public class IntelliJExtManager {
 
   public boolean isEnabled() {
     return getBinaryPath() != null;
+  }
+
+  public boolean isIssueTrackerEnabled() {
+    return isEnabled() && ISSUETRACKER.getValue();
   }
 }
