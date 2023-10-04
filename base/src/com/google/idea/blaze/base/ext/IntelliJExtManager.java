@@ -16,8 +16,10 @@
 package com.google.idea.blaze.base.ext;
 
 import com.google.idea.blaze.ext.IntelliJExtService;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,8 +40,25 @@ public class IntelliJExtManager {
 
   private static final Logger logger = Logger.getInstance(IntelliJExtManager.class);
 
+  // Keep all the experiments together for ease of maintenance
+  private static final BoolExperiment ENABLED = new BoolExperiment("use.intellij.ext", false);
+
   public static IntelliJExtManager getInstance() {
     return ApplicationManager.getApplication().getService(IntelliJExtManager.class);
+  }
+
+  private final String binaryPath;
+
+  public IntelliJExtManager() {
+    String path = null;
+    if (ENABLED.getValue()) {
+      // If the VM option is set, override the path
+      path = System.getProperty(INTELLIJ_EXT_BINARY);
+      if (path == null) {
+        path = SystemInfo.isMac ? "/usr/local/bin/intellij-ext" : "/opt/intellij-ext/intellij-ext";
+      }
+    }
+    this.binaryPath = path;
   }
 
   public synchronized IntelliJExtService getService() {
@@ -54,12 +73,11 @@ public class IntelliJExtManager {
   }
 
   @Nullable
-  private static Path getBinaryPath() {
-    String binary = System.getProperty(INTELLIJ_EXT_BINARY);
-    if (binary == null) {
+  private Path getBinaryPath() {
+    if (binaryPath == null) {
       return null;
     }
-    Path path = Paths.get(binary);
+    Path path = Paths.get(binaryPath);
     if (!Files.exists(path)) {
       logger.warn(String.format("intellij-ext binary path %s does not exist", path));
       return null;
@@ -67,7 +85,7 @@ public class IntelliJExtManager {
     return path;
   }
 
-  public static boolean isEnabled() {
+  public boolean isEnabled() {
     return getBinaryPath() != null;
   }
 }
