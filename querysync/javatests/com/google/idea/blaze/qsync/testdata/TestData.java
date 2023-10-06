@@ -27,7 +27,7 @@ import java.util.Locale;
 public enum TestData {
 
   ANDROID_AIDL_SOURCE_QUERY("aidl"),
-  ANDROID_LIB_QUERY("android"),
+  ANDROID_LIB_QUERY("org/jetbrains/android"),
   JAVA_EXPORTED_DEP_QUERY("exports"),
   JAVA_LIBRARY_EXTERNAL_DEP_QUERY("externaldep"),
   JAVA_LIBRARY_INTERNAL_DEP_QUERY("internaldep", "nodeps"),

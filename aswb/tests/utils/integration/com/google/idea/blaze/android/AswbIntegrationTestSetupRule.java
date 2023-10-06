@@ -40,7 +40,8 @@ public class AswbIntegrationTestSetupRule extends ExternalResource {
      * {@link com.android.tools.idea.startup.ExternalAnnotationsSupport.DEVELOPMENT_ANNOTATIONS_PATHS}
      */
     symlinkToSandboxHome(
-        "tools/adt/idea/android/annotations", SANDBOX_IDEA_HOME + "android/android/annotations");
+        "tools/adt/idea/android/annotations",
+        SANDBOX_IDEA_HOME + "org/jetbrains/android/android/annotations");
     symlinkToSandboxHome("prebuilts/studio/layoutlib", "prebuilts/studio/layoutlib");
     symlinkToSandboxHome("prebuilts/studio/sdk", "prebuilts/studio/sdk");
   }

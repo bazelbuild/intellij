@@ -20,7 +20,7 @@ import javax.annotation.Nullable;
 
 /** Enumerates the sets of aspect output groups corresponding to each language */
 public enum LanguageOutputGroup {
-  ANDROID(LanguageClass.ANDROID, "android"),
+  ANDROID(LanguageClass.ANDROID, "org/jetbrains/android"),
   C(LanguageClass.C, "cpp"),
   JAVA(LanguageClass.JAVA, "java"),
   KOTLIN(LanguageClass.KOTLIN, "kt"),

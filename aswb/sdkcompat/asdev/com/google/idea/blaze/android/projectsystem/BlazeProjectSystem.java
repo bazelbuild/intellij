@@ -83,6 +83,12 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
             new AndroidResourceClassPsiElementFinder(getLightResourceClassService()));
   }
 
+  @NotNull
+  @Override
+  public Project getProject() {
+    return project;
+  }
+
   @Override
   public boolean allowsFileCreation() {
     return true;

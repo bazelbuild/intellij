@@ -40,8 +40,7 @@ public abstract class BlazeLightResourceClassServiceBase implements LightResourc
   final Set<BlazeRClass> allRClasses = Sets.newHashSet();
 
   @Override
-  public Collection<? extends PsiClass> getLightRClassesAccessibleFromModule(
-      Module module, boolean includeTest) {
+  public Collection<? extends PsiClass> getLightRClassesAccessibleFromModule(Module module) {
     if (workspaceResourcesFeature.isEnabled()
         && module.getName().equals(BlazeDataStorage.WORKSPACE_MODULE_NAME)) {
       // Returns all the packages in resource modules, and all the workspace packages that
@@ -58,8 +57,7 @@ public abstract class BlazeLightResourceClassServiceBase implements LightResourc
   }
 
   @Override
-  public Collection<? extends PsiClass> getLightRClassesDefinedByModule(
-      Module module, boolean includeTestClasses) {
+  public Collection<? extends PsiClass> getLightRClassesDefinedByModule(Module module) {
     BlazeRClass rClass = rClassesByModule.get(module);
     return rClass == null ? ImmutableSet.of() : ImmutableSet.of(rClass);
   }

@@ -25,7 +25,7 @@ public enum LanguageClass implements ProtoWrapper<String> {
   GENERIC("generic", ImmutableSet.of()),
   C("c", ImmutableSet.of("c", "cc", "cpp", "h", "hh", "hpp")),
   JAVA("java", ImmutableSet.of("java")),
-  ANDROID("android", ImmutableSet.of("aidl")),
+  ANDROID("org/jetbrains/android", ImmutableSet.of("aidl")),
   JAVASCRIPT("javascript", ImmutableSet.of("js", "applejs")),
   TYPESCRIPT("typescript", ImmutableSet.of("ts", "ats")),
   DART("dart", ImmutableSet.of("dart")),

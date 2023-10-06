@@ -29,7 +29,7 @@ final class DisableAndroidFrameworkActivity implements StartupActivity, DumbAwar
   public void runActivity(Project project) {
     if (Blaze.isBlazeProject(project)) {
       for (FrameworkDetector frameworkDetector : FrameworkDetector.EP_NAME.getExtensions()) {
-        if (frameworkDetector.getDetectorId().equals("android")) {
+        if (frameworkDetector.getDetectorId().equals("org/jetbrains/android")) {
           DetectionExcludesConfiguration.getInstance(project)
               .addExcludedFramework(frameworkDetector.getFrameworkType());
         }

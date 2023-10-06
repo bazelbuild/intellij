@@ -25,7 +25,7 @@ import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
  * enum ordinal.
  */
 public enum WorkspaceType implements ProtoWrapper<String> {
-  ANDROID("android", LanguageClass.ANDROID, LanguageClass.JAVA),
+  ANDROID("org/jetbrains/android", LanguageClass.ANDROID, LanguageClass.JAVA),
   C("c", LanguageClass.C),
   JAVA("java", LanguageClass.JAVA),
   DART("dart", LanguageClass.DART),

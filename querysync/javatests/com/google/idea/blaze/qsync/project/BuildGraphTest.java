@@ -184,16 +184,20 @@ public class BuildGraphTest {
             .parse();
     assertThat(graph.getAllSourceFiles())
         .containsExactly(
-            TESTDATA_ROOT.resolve("android/TestAndroidClass.java"),
-            TESTDATA_ROOT.resolve("android/BUILD"),
-            TESTDATA_ROOT.resolve("android/AndroidManifest.xml"));
+            TESTDATA_ROOT.resolve("org/jetbrains/android/TestAndroidClass.java"),
+            TESTDATA_ROOT.resolve("org/jetbrains/android/BUILD"),
+            TESTDATA_ROOT.resolve("org/jetbrains/android/AndroidManifest.xml"));
     assertThat(graph.getJavaSourceFiles())
-        .containsExactly(TESTDATA_ROOT.resolve("android/TestAndroidClass.java"));
+        .containsExactly(TESTDATA_ROOT.resolve("org/jetbrains/android/TestAndroidClass.java"));
     assertThat(graph.getAndroidSourceFiles())
-        .containsExactly(TESTDATA_ROOT.resolve("android/TestAndroidClass.java"));
-    assertThat(graph.getTargetOwners(TESTDATA_ROOT.resolve("android/TestAndroidClass.java")))
+        .containsExactly(TESTDATA_ROOT.resolve("org/jetbrains/android/TestAndroidClass.java"));
+    assertThat(
+            graph.getTargetOwners(
+                TESTDATA_ROOT.resolve("org/jetbrains/android/TestAndroidClass.java")))
         .containsExactly(Label.of("//" + TESTDATA_ROOT + "/android:android"));
-    assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("android/TestAndroidClass.java")))
+    assertThat(
+            graph.getFileDependencies(
+                TESTDATA_ROOT.resolve("org/jetbrains/android/TestAndroidClass.java")))
         .containsExactly(
             Label.of(
                 "//third_party/bazel_rules/rules_kotlin/toolchains/kotlin_jvm:kt_jvm_toolchain_linux_sts_jdk"));
