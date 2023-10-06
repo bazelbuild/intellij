@@ -68,6 +68,7 @@ import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.protobuf.ExtensionRegistry;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
 import java.io.IOException;
@@ -511,6 +512,13 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     }
   }
 
+  private static final ImmutableSet<String> JAR_ZIP_EXTENSIONS =
+      ImmutableSet.of("jar", "zip", "srcjar");
+
+  private static boolean hasJarOrZipExtension(Path p) {
+    return JAR_ZIP_EXTENSIONS.contains(FileUtil.getExtension(p.toString()));
+  }
+
   @Override
   public ProjectProto.Project updateProjectProto(ProjectProto.Project projectProto)
       throws BuildException {
@@ -535,11 +543,12 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
             .map(ProjectPath::workspaceRelative)
             .collect(ImmutableSet.toImmutableSet());
 
-    ImmutableSet<ProjectPath> generatedSrcJars =
+    ImmutableSet<ProjectPath> generatedExternalSrcJars =
         artifacts.values().stream()
             .filter(not(ai -> projectDefinition.isIncluded(ai.label())))
             .map(ArtifactInfo::genSrcs)
             .flatMap(List::stream)
+            .filter(ArtifactTrackerImpl::hasJarOrZipExtension)
             .map(generatedExternalSrcFileCache::getCacheFile)
             .filter(Optional::isPresent)
             .map(Optional::get)
@@ -550,7 +559,9 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     if (ATTACH_DEP_SRCJARS.getValue()) {
       SrcJarProjectUpdater srcJarUpdater =
           new SrcJarProjectUpdater(
-              projectProto, Sets.union(workspaceSrcJars, generatedSrcJars), projectPathResolver);
+              projectProto,
+              Sets.union(workspaceSrcJars, generatedExternalSrcJars),
+              projectPathResolver);
       projectProto = srcJarUpdater.addSrcJars();
     } else {
       logger.info("srcjar attachment disabled.");
