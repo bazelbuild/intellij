@@ -1,5 +1,5 @@
-load("@rules_python//python:proto.bzl", "py_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_python//python:proto.bzl", "py_proto_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -162,6 +162,16 @@ java_proto_library(
 )
 
 proto_library(
+    name = "remote_scrubbing_proto",
+    srcs = ["remote_scrubbing.proto"],
+)
+
+java_proto_library(
+    name = "remote_scrubbing_java_proto",
+    deps = [":remote_scrubbing_proto"],
+)
+
+proto_library(
     name = "spawn_proto",
     srcs = ["spawn.proto"],
     deps = [
@@ -206,6 +216,7 @@ filegroup(
         ":option_filters_java_proto_srcs",
         ":profile_java_proto_srcs",
         ":remote_execution_log_java_proto_srcs",
+        ":remote_scrubbing_java_proto_srcs",
         ":spawn_java_proto_srcs",
         ":xcode_java_proto_srcs",
     ],
