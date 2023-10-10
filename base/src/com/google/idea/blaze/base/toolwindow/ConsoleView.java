@@ -44,8 +44,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -298,11 +300,17 @@ final class ConsoleView implements Disposable {
 
   /** Add the global filters, wrapped to separate them from blaze problems. */
   private void addWrappedPredefinedFilters() {
-    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    for (ConsoleFilterProvider provider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
-      Arrays.stream(getFilters(scope, provider))
-          .forEach(f -> consoleView.addMessageFilter(NonProblemFilterWrapper.wrap(f)));
-    }
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() ->
+                    ApplicationManager.getApplication().runReadAction(() -> {
+                      GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+                      for (ConsoleFilterProvider provider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
+                        Arrays.stream(getFilters(scope, provider))
+                                .forEach(f -> consoleView.addMessageFilter(NonProblemFilterWrapper.wrap(f)));
+                      }
+                    }),
+            "Setting Console Filters",
+            false,
+            null);
   }
 
   private Filter[] getFilters(GlobalSearchScope scope, ConsoleFilterProvider provider) {

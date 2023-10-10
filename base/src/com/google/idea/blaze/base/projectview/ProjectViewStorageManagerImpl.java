@@ -20,7 +20,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.idea.blaze.base.io.InputStreamProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -43,6 +45,12 @@ final class ProjectViewStorageManagerImpl extends ProjectViewStorageManager {
     try (Writer fileWriter = Files.newBufferedWriter(projectViewFile.toPath(), UTF_8)) {
       fileWriter.write(projectViewText);
     }
-    LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(projectViewFile));
+
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+            () -> LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(projectViewFile)),
+            "Updating VFS",
+            false,
+            null
+    );
   }
 }
