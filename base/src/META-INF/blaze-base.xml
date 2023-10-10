@@ -591,6 +591,7 @@
     <SyncDataExtractor implementation="com.google.idea.blaze.base.lang.buildfile.sync.LanguageSpecResult$Extractor"/>
     <LoggedSettingsProvider implementation="com.google.idea.blaze.base.settings.BlazeUserSettings$SettingsLogger" id="BlazeUserSettingsLogger"/>
     <LoggedSettingsProvider implementation="com.google.idea.blaze.base.sync.autosync.AutoSyncSettings$SettingsLogger" order="after BlazeUserSettingsLogger"/>
+    <LoggedSettingsProvider implementation="com.google.idea.blaze.base.qsync.settings.QuerySyncSettings$SettingsLogger" order="after BlazeUserSettingsLogger"/>
     <LoggedDirectoryProvider implementation="com.google.idea.blaze.base.sync.data.BlazeDataStorage$LoggedProjectDataDirectory"/>
     <LoggedDirectoryProvider implementation="com.google.idea.blaze.base.sync.data.BlazeDataStorage$LoggedProjectCacheDirectory"/>
     <LoggedDirectoryProvider implementation="com.google.idea.blaze.base.filecache.RemoteOutputsCache$LoggedRemoteOutputsCacheDirectory"/>
