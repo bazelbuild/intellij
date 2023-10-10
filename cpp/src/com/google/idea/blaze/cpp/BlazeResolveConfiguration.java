@@ -32,7 +32,6 @@ import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCFileTypeHelpers;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.preprocessor.OCImportGraph;
-import com.jetbrains.cidr.lang.workspace.OCLanguageKindCalculator;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import java.io.File;
 import java.util.Collection;
@@ -116,7 +115,10 @@ final class BlazeResolveConfiguration {
   }
 
   private OCLanguageKind getLanguageKind(@Nullable VirtualFile sourceFile) {
-    OCLanguageKind kind = OCLanguageKindCalculator.tryFileTypeAndExtension(project, sourceFile);
+    if (sourceFile == null)
+      return getMaximumLanguageKind();
+
+    OCLanguageKind kind = OCFileTypeHelpers.getLanguageKind(sourceFile.getName());
     return kind != null ? kind : getMaximumLanguageKind();
   }
 
