@@ -16,8 +16,10 @@
 package com.google.idea.blaze.base.logging.utils.querysync;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.common.Label;
 import java.time.Duration;
 import java.util.Optional;
@@ -30,15 +32,28 @@ public abstract class BuildDepsStats implements QuerySyncOperationStats {
       new AutoValue_BuildDepsStats.Builder()
           .setBuildTargets(ImmutableSet.of())
           .setRequestedTargets(ImmutableSet.of())
+          .setBuildFlags(ImmutableList.of())
+          .setBuildIds(ImmutableList.of())
+          .setBlazeBinaryType(BuildBinaryType.NONE)
           .build();
 
   public abstract Optional<Integer> bazelExitCode();
+
+  public abstract BuildBinaryType blazeBinaryType();
+
+  public abstract ImmutableList<String> buildFlags();
+
+  public abstract ImmutableList<String> buildIds();
 
   public abstract ImmutableSet<Label> requestedTargets();
 
   public abstract ImmutableSet<Label> buildTargets();
 
   public abstract Optional<Integer> updatedFilesCount();
+
+  public abstract Optional<Long> bepByteConsumed();
+
+  public abstract Optional<Long> artifactBytesConsumed();
 
   @Override
   public abstract Optional<Duration> totalClockTime();
@@ -54,6 +69,8 @@ public abstract class BuildDepsStats implements QuerySyncOperationStats {
   public abstract static class Builder {
 
     public abstract Builder setBazelExitCode(@Nullable Integer value);
+
+    public abstract Builder setBlazeBinaryType(BuildBinaryType value);
 
     public abstract Builder setRequestedTargets(ImmutableSet<Label> value);
 
@@ -71,7 +88,15 @@ public abstract class BuildDepsStats implements QuerySyncOperationStats {
       return this;
     }
 
+    public abstract Builder setBuildFlags(ImmutableList<String> value);
+
+    public abstract Builder setBuildIds(ImmutableList<String> value);
+
     public abstract Builder setUpdatedFilesCount(@Nullable Integer value);
+
+    public abstract Builder setBepByteConsumed(@Nullable Long value);
+
+    public abstract Builder setArtifactBytesConsumed(@Nullable Long value);
 
     public abstract Builder setTotalClockTime(@Nullable Duration value);
 

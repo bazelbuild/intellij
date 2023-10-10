@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
-import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -361,11 +360,6 @@ public class QuerySyncProject {
       throws IOException {
     snapshotHolder.setCurrent(context, newSnapshot);
     projectData = projectData.withSnapshot(newSnapshot);
-    QuerySyncActionStatsScope.fromContext(context)
-        .ifPresent(
-            stats ->
-                stats.setLanguagesActive(
-                    newSnapshot.queryData().projectDefinition().languageClasses()));
     writeToDisk(newSnapshot);
   }
 }
