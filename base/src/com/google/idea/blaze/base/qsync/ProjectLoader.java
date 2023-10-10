@@ -231,7 +231,7 @@ public class ProjectLoader {
   /**
    * Returns an {@link ImmutableSet} of rule kinds that query sync or plugin know how to resolve
    * symbols for without building. The rules query sync always builds even if they are part of the
-   * project are in {@link com.google.idea.blaze.qsync.BlazeQueryParser.ALWAYS_BUILD_RULE_KINDS}
+   * project are in {@link com.google.idea.blaze.qsync.BlazeQueryParser#ALWAYS_BUILD_RULE_KINDS}
    */
   private ImmutableSet<String> getHandledRuleKinds() {
     ImmutableSet.Builder<String> defaultRules = ImmutableSet.builder();
