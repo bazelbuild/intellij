@@ -94,4 +94,7 @@ public interface ArtifactTracker {
 
   /** Returns the list of render jars */
   ImmutableList<File> getRenderJars();
+
+  /** Returns the count of .jar files. */
+  Integer getJarsCount();
 }

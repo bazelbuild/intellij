@@ -22,6 +22,8 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStats;
+import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
@@ -36,6 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /** The default implementation of QueryRunner. */
@@ -56,6 +59,10 @@ public class BazelQueryRunner implements QueryRunner {
       throws IOException, BuildException {
     Stopwatch timer = Stopwatch.createStarted();
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
+    Optional<SyncQueryStats.Builder> syncQueryStatsBuilder =
+        SyncQueryStatsScope.fromContext(context);
+    syncQueryStatsBuilder.ifPresent(stats -> stats.setBlazeBinaryType(invoker.getType()));
+
     BlazeCommandRunner commandRunner = invoker.getCommandRunner();
     logger.info(
         String.format(
@@ -79,6 +86,9 @@ public class BazelQueryRunner implements QueryRunner {
     }
     commandBuilder.setWorkspaceRoot(query.workspaceRoot());
     addExtraFlags(commandBuilder);
+
+    syncQueryStatsBuilder.ifPresent(
+        stats -> stats.setQueryFlags(commandBuilder.build().toArgumentList()));
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper();
         InputStream in =
             commandRunner.runQuery(project, commandBuilder, buildResultHelper, context)) {

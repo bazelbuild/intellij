@@ -35,6 +35,8 @@ import javax.annotation.Nullable;
 /** Stores @{QuerySyncActionStats} so that it can be logged by the BlazeContext creator owner. */
 public class QuerySyncActionStatsScope implements BlazeScope {
   private final QuerySyncActionStats.Builder builder;
+  private final ProjectInfoStats.Builder projectInfoStatsBuilder;
+  private final DependenciesInfoStats.Builder dependenciesInfoStatsBuilder;
   private final TimeSource timeSource;
 
   public QuerySyncActionStatsScope(Class<?> actionClass, @Nullable AnActionEvent event) {
@@ -66,10 +68,20 @@ public class QuerySyncActionStatsScope implements BlazeScope {
             .setRequestedFiles(
                 requestFiles.stream().map(VirtualFile::toNioPath).collect(toImmutableSet()));
     this.timeSource = timeSource;
+    projectInfoStatsBuilder = ProjectInfoStats.builder();
+    dependenciesInfoStatsBuilder = DependenciesInfoStats.builder();
   }
 
   public QuerySyncActionStats.Builder getBuilder() {
     return builder;
+  }
+
+  public ProjectInfoStats.Builder getProjectInfoStatsBuilder() {
+    return projectInfoStatsBuilder;
+  }
+
+  public DependenciesInfoStats.Builder getDependenciesInfoStatsBuilder() {
+    return dependenciesInfoStatsBuilder;
   }
 
   public static Optional<QuerySyncActionStats.Builder> fromContext(BlazeContext context) {
@@ -104,6 +116,8 @@ public class QuerySyncActionStatsScope implements BlazeScope {
                 EventLoggingService.getInstance()
                     .log(
                         builder
+                            .setDependenciesInfo(dependenciesInfoStatsBuilder.build())
+                            .setProjectInfo(projectInfoStatsBuilder.build())
                             .setTotalClockTime(Duration.between(builder.startTime(), Instant.now()))
                             .setResult(getSyncResult(context))
                             .build()));

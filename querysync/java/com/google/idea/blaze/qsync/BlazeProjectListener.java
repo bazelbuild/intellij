@@ -22,5 +22,5 @@ import java.io.IOException;
 /** A listener interface for new project snapshots. */
 public interface BlazeProjectListener {
   /** A new snapshot has been created, replacing any existing instance. */
-  void graphCreated(Context context, BlazeProjectSnapshot instance) throws IOException;
+  void graphCreated(Context<?> context, BlazeProjectSnapshot instance) throws IOException;
 }

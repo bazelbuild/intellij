@@ -168,6 +168,7 @@ public class ProjectLoader {
         new ProjectUpdater(
             project, importSettings, projectViewSet, workspaceRoot, projectPathResolver);
     graph.addListener(projectUpdater);
+    graph.addListener(new ProjectStatsLogger(artifactTracker, projectViewSet));
     QuerySyncSourceToTargetMap sourceToTargetMap =
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
 

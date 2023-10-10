@@ -46,6 +46,7 @@ import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.CachedArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStats;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.qsync.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.OutputGroup;
@@ -89,6 +90,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -119,6 +121,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   private final ProjectPath.Resolver projectPathResolver;
   private final ProjectDefinition projectDefinition;
   @VisibleForTesting public final CacheDirectoryManager cacheDirectoryManager;
+  private final Path jarCacheDirectory;
   private final FileCache jarCache;
   private final Path aarCacheDirectory;
   private final Path renderJarCacheDirectory;
@@ -143,9 +146,8 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     this.projectDefinition = projectDefinition;
 
     FileCacheCreator fileCacheCreator = new FileCacheCreator();
-    jarCache =
-        fileCacheCreator.createFileCache(
-            projectDirectory.resolve(LIBRARY_DIRECTORY), ImmutableSet.of(), false);
+    jarCacheDirectory = projectDirectory.resolve(LIBRARY_DIRECTORY);
+    jarCache = fileCacheCreator.createFileCache(jarCacheDirectory, ImmutableSet.of(), false);
     aarCacheDirectory = projectDirectory.resolve(AAR_DIRECTORY);
     aarCache = fileCacheCreator.createFileCache(aarCacheDirectory, ImmutableSet.of("aar"), false);
     renderJarCacheDirectory = projectDirectory.resolve(RENDER_JARS_DIRECTORY);
@@ -390,17 +392,24 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
               .buildOrThrow();
 
       ListenableFuture<ImmutableMap<Path, Path>> artifactPaths = cache(artifactMap, context);
+      Optional<BuildDepsStats.Builder> builder = BuildDepsStatsScope.fromContext(context);
       if (downloads.getFileCount() > 0) {
         context.output(
             PrintOutput.log(
                 "Downloading %d render jar artifacts (%s)",
                 downloads.getFileCount(), StringUtil.formatFileSize(downloads.getTotalBytes())));
+        builder.ifPresent(
+            stats -> {
+              stats.setArtifactBytesConsumed(downloads.getTotalBytes());
+            });
       }
 
       ImmutableMap<Path, Path> updated = getUninterruptibly(artifactPaths);
       saveState();
-      BuildDepsStatsScope.fromContext(context)
-          .ifPresent(stats -> stats.setUpdatedFilesCount(updated.size()));
+      builder.ifPresent(
+          stats -> {
+            stats.setUpdatedFilesCount(updated.size());
+          });
       return UpdateResult.create(updated.keySet(), ImmutableSet.of());
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
@@ -614,5 +623,17 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   public ImmutableList<File> getRenderJars() {
     return ImmutableList.copyOf(
         renderJarCacheDirectory.toFile().listFiles((file, name) -> name.endsWith(".jar")));
+  }
+
+  @Override
+  public Integer getJarsCount() {
+    try (Stream<Path> pathsStream = Files.walk(jarCacheDirectory)) {
+      return pathsStream
+          .filter(path -> !Files.isDirectory(path) && path.endsWith(".jar"))
+          .collect(Collectors.reducing(0, e -> 1, Integer::sum));
+    } catch (IOException e) {
+      logger.warn("Faled to read jar cache directory " + jarCacheDirectory);
+      throw new UncheckedIOException(e);
+    }
   }
 }
