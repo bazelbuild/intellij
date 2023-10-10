@@ -37,6 +37,8 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStats;
+import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -60,6 +62,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /** An object that knows how to build dependencies for given targets */
@@ -99,6 +102,9 @@ public class BazelDependencyBuilder implements DependencyBuilder {
       BlazeContext context, Set<Label> buildTargets, Set<LanguageClass> languages)
       throws IOException, BuildException {
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
+    Optional<BuildDepsStats.Builder> buildDepsStatsBuilder =
+        BuildDepsStatsScope.fromContext(context);
+    buildDepsStatsBuilder.ifPresent(stats -> stats.setBlazeBinaryType(invoker.getType()));
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
       String includes =
           projectDefinition.projectIncludes().stream()
@@ -149,9 +155,16 @@ public class BazelDependencyBuilder implements DependencyBuilder {
       outputGroups.stream()
           .map(g -> "--output_groups=" + g.outputGroupName())
           .forEach(builder::addBlazeFlags);
-
+      buildDepsStatsBuilder.ifPresent(
+          stats -> stats.setBuildFlags(builder.build().toArgumentList()));
       BlazeBuildOutputs outputs =
           invoker.getCommandRunner().run(project, builder, buildResultHelper, context);
+      buildDepsStatsBuilder.ifPresent(
+          stats -> {
+            stats.setBuildIds(outputs.getBuildIds());
+            stats.setBepByteConsumed(outputs.bepBytesConsumed);
+          });
+
       BazelExitCodeException.throwIfFailed(
           builder,
           outputs.buildResult,
