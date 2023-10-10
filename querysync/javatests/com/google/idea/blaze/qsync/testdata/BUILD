@@ -121,6 +121,15 @@ genquery(
 )
 
 genquery(
+    name = "cc_multisrc_query",
+    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/cc_multisrc:*",
+    opts = ["--output=streamed_proto"],
+    scope =
+        scopeForCcPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/cc_multisrc:testclass") +
+        scopeForCcPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/cc_multisrc:testclass2"),
+)
+
+genquery(
     name = "proto_only_query",
     expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/protoonly:*",
     opts = ["--output=streamed_proto"],
@@ -140,6 +149,7 @@ java_library(
         ":android_lib_query",
         ":buildincludes_query",
         ":cc_library_query",
+        ":cc_multisrc_query",
         ":filegroup_query",
         ":java_exported_dep_query",
         ":java_library_external_dep_query",
@@ -152,6 +162,7 @@ java_library(
         ":proto_only_query",
     ],
     deps = [
+        "//shared",
         "@bazel_tools//tools/java/runfiles",
         "@com_google_guava_guava//jar",
     ],

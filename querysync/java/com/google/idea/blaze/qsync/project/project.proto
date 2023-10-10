@@ -119,6 +119,85 @@ message LibrarySource {
   ContentRoot srcjar = 2;
 }
 
+
+/**
+ * A single compiler flag that supports resolving to an absolute path when
+ * configuring the project model.
+ */
+message CcCompilerFlag {
+  string flag = 1;  // The flag itself, e.g. -D, -i, etc. (including the "-")
+  oneof Value {
+    ContentRoot path = 2;
+    string plain_value = 3;
+  }
+}
+
+/**
+ * A set of C/C++ compiler flags.
+ *
+ * @see com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches
+ */
+message CcCompilerFlagSet {
+  repeated CcCompilerFlag flags = 2;
+}
+
+/**
+ * A C based language.
+ *
+ * @see com.jetbrains.cidr.lang.CLanguageKind
+ */
+enum CcLanguage {
+  CC_LANGUAGE_UNKNOWN = 0;
+  C = 1;
+  OBJ_C = 2;
+  CPP = 3;
+  OBJ_CPP = 4;
+  NEW = 5;
+}
+
+/**
+ * A single source file.
+ *
+ * @see  com.jetbrains.cidr.lang.workspace.OCResolveConfiguration.ModifiableModel#addSource
+ */
+message CcSourceFile {
+  string workspace_path = 1;
+  CcLanguage language = 2;
+  CcCompilerSettings compiler_settings = 4;
+}
+
+/**
+ * A compilation context (or resolve configuration in IJ parlance).
+ *
+ * @see com.jetbrains.cidr.lang.workspace.OCResolveConfiguration
+ */
+message CcCompilationContext {
+  string id = 1;
+  string human_readable_name = 2;
+  // Map keys are CcLanguage.name:
+  map<string, CcCompilerSettings> language_to_compiler_settings = 3;
+  repeated CcSourceFile sources = 4;
+}
+
+/**
+ * Compiler settings.
+ *
+ * @see com.jetbrains.cidr.lang.workspace.OCCompilerSettings
+ */
+message CcCompilerSettings {
+  ContentRoot compiler_executable_path = 1;
+  // ID of the flag set within CcWorkspace.flag_sets
+  string flag_set_id = 2;
+}
+
+/**
+ * A C based workspace.
+ *
+ * @see com.jetbrains.cidr.lang.workspace.OCWorkspace
+ */
 message CcWorkspace {
-  // TODO(b/301235884) implement this.
+  // Unique flags sets, by ID.
+  // The IDs are referred to from CcCompilerSettings.flag_set_id
+  map<string, CcCompilerFlagSet> flag_sets = 1;
+  repeated CcCompilationContext contexts = 3;
 }
