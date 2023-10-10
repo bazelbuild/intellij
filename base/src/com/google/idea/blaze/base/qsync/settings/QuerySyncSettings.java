@@ -15,10 +15,14 @@
  */
 package com.google.idea.blaze.base.qsync.settings;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.base.logging.LoggedSettingsProvider;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import java.util.function.Supplier;
 
 /** The settings for query sync to be stored per user. */
 @State(
@@ -77,5 +81,44 @@ public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSett
   @Override
   public void loadState(QuerySyncSettings.State state) {
     this.state = state;
+  }
+
+  /**
+   * Implementation of {@link LoggedSettingsProvider} which provides query sync related settings to
+   * logger.
+   */
+  public static class SettingsLogger implements LoggedSettingsProvider {
+    private final Supplier<Boolean> isQuerySyncEnabled;
+
+    public SettingsLogger() {
+      this(QuerySync::isEnabled);
+    }
+
+    public SettingsLogger(Supplier<Boolean> isQuerySyncEnabled) {
+      this.isQuerySyncEnabled = isQuerySyncEnabled;
+    }
+
+    @Override
+    public String getNamespace() {
+      return "QuerySyncSettings";
+    }
+
+    @Override
+    public ImmutableMap<String, String> getApplicationSettings() {
+      QuerySyncSettings settings = QuerySyncSettings.getInstance();
+
+      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+      // This settings can be empty (default value) for first time user, but they may have enabled
+      // query sync via experiment value. So use QuerySync.isEnabled() instead of this setting data.
+      // And QuerySync is enabled based on QuerySync.isEnabled() not only settings.useQuerySync().
+      // Eventually users will stop using experiment value and settings.useQuerySync() would always
+      // be the same as QuerySync.isEnabled().
+      builder.put("useQuerySync", Boolean.toString(isQuerySyncEnabled.get()));
+      builder.put(
+          "showDetailedInformationInEditor",
+          Boolean.toString(settings.showDetailedInformationInEditor()));
+      builder.put("syncBeforeBuild", Boolean.toString(settings.syncBeforeBuild()));
+      return builder.buildOrThrow();
+    }
   }
 }
