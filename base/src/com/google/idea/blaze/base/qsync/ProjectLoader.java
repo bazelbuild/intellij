@@ -145,8 +145,9 @@ public class ProjectLoader {
             latestProjectDef);
     artifactTracker.initialize();
     DependencyTracker dependencyTracker =
-        new DependencyTrackerImpl(
-            project, graph, dependencyBuilder, renderJarBuilder, artifactTracker);
+        new DependencyTrackerImpl(project, graph, dependencyBuilder, artifactTracker);
+    RenderJarTracker renderJarTracker =
+        new RenderJarTrackerImpl(graph, renderJarBuilder, artifactTracker);
     Optional<BlazeVcsHandler> vcsHandler =
         Optional.ofNullable(BlazeVcsHandlerProvider.vcsHandlerForProject(project));
     ProjectRefresher projectRefresher =
@@ -178,6 +179,7 @@ public class ProjectLoader {
         workspaceRoot,
         artifactTracker,
         dependencyTracker,
+        renderJarTracker,
         projectQuerier,
         blazeProjectSnapshotBuilder,
         latestProjectDef,
