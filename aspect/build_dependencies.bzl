@@ -10,19 +10,24 @@ PROTO_RULE_KINDS = [
 ]
 
 def _package_dependencies_impl(target, ctx):
-    file_name = target.label.name + ".target-info.txt"
-    artifact_info_file = ctx.actions.declare_file(file_name)
-    ctx.actions.write(
-        artifact_info_file,
-        _encode_target_info_proto(target),
-    )
-
+    java_info_file = _write_java_target_info(target, ctx)
     return [OutputGroupInfo(
         qsync_jars = target[DependenciesInfo].compile_time_jars.to_list(),
-        artifact_info_file = [artifact_info_file],
+        artifact_info_file = java_info_file,
         qsync_aars = target[DependenciesInfo].aars.to_list(),
         qsync_gensrcs = target[DependenciesInfo].gensrcs.to_list(),
     )]
+
+def _write_java_target_info(target, ctx):
+    if not target[DependenciesInfo].target_to_artifacts:
+        return []
+    file_name = target.label.name + ".java-info.txt"
+    artifact_info_file = ctx.actions.declare_file(file_name)
+    ctx.actions.write(
+        artifact_info_file,
+        _encode_target_info_proto(target[DependenciesInfo].target_to_artifacts),
+    )
+    return [artifact_info_file]
 
 DependenciesInfo = provider(
     "The out-of-project dependencies",
@@ -35,9 +40,9 @@ DependenciesInfo = provider(
     },
 )
 
-def _encode_target_info_proto(target):
+def _encode_target_info_proto(target_to_artifacts):
     contents = []
-    for label, target_info in target[DependenciesInfo].target_to_artifacts.items():
+    for label, target_info in target_to_artifacts.items():
         contents.append(
             struct(
                 target = label,
@@ -122,14 +127,14 @@ def _target_within_project_scope(label, include, exclude):
                     break
     return result
 
-def _get_followed_dependency_infos(rule):
+def _get_followed_java_dependency_infos(rule):
     deps = []
-    for (attr, kinds) in FOLLOW_ATTRIBUTES_BY_RULE_KIND:
+    for (attr, kinds) in FOLLOW_JAVA_ATTRIBUTES_BY_RULE_KIND:
         if hasattr(rule.attr, attr) and (not kinds or rule.kind in kinds):
             to_add = getattr(rule.attr, attr)
             if type(to_add) == "list":
                 deps += to_add
-            else:
+            elif to_add != None:
                 deps.append(to_add)
 
     return [
@@ -138,7 +143,7 @@ def _get_followed_dependency_infos(rule):
         if DependenciesInfo in dep and dep[DependenciesInfo].target_to_artifacts
     ]
 
-def _collect_own_artifacts(
+def _collect_own_java_artifacts(
         target,
         ctx,
         dependency_infos,
@@ -242,14 +247,14 @@ def _collect_own_artifacts(
         srcjars = own_srcjar_files,
     )
 
-def _collect_own_and_dependency_artifacts(
+def _collect_own_and_dependency_java_artifacts(
         target,
         ctx,
         dependency_infos,
         always_build_rules,
         generate_aidl_classes,
         target_is_within_project_scope):
-    own_files = _collect_own_artifacts(
+    own_files = _collect_own_java_artifacts(
         target,
         ctx,
         dependency_infos,
@@ -302,10 +307,29 @@ def _collect_dependencies_core_impl(
         always_build_rules,
         generate_aidl_classes,
         test_mode):
-    target_is_within_project_scope = _target_within_project_scope(str(target.label), include, exclude) and not test_mode
-    dependency_infos = _get_followed_dependency_infos(ctx.rule)
+    dep_infos = _collect_java_dependencies_core_impl(
+        target,
+        ctx,
+        include,
+        exclude,
+        always_build_rules,
+        generate_aidl_classes,
+        test_mode,
+    )
+    return dep_infos
 
-    target_to_artifacts, compile_jars, aars, gensrcs = _collect_own_and_dependency_artifacts(
+def _collect_java_dependencies_core_impl(
+        target,
+        ctx,
+        include,
+        exclude,
+        always_build_rules,
+        generate_aidl_classes,
+        test_mode):
+    target_is_within_project_scope = _target_within_project_scope(str(target.label), include, exclude) and not test_mode
+    dependency_infos = _get_followed_java_dependency_infos(ctx.rule)
+
+    target_to_artifacts, compile_jars, aars, gensrcs = _collect_own_and_dependency_java_artifacts(
         target,
         ctx,
         dependency_infos,
@@ -316,7 +340,7 @@ def _collect_dependencies_core_impl(
 
     test_mode_own_files = None
     if test_mode:
-        within_scope_own_files = _collect_own_artifacts(
+        within_scope_own_files = _collect_own_java_artifacts(
             target,
             ctx,
             dependency_infos,
@@ -444,7 +468,7 @@ def _output_relative_path(path):
 #   2. A list of rule kinds to specify which rules for which the attribute labels
 #      need to be added as dependencies. If empty, the attribute is followed for
 #      all rules.
-FOLLOW_ATTRIBUTES_BY_RULE_KIND = [
+FOLLOW_JAVA_ATTRIBUTES_BY_RULE_KIND = [
     ("deps", []),
     ("exports", []),
     ("_junit", []),
@@ -455,7 +479,7 @@ FOLLOW_ATTRIBUTES_BY_RULE_KIND = [
     ("kotlin_libs", ["kt_jvm_toolchain"]),
 ]
 
-FOLLOW_ATTRIBUTES = [attr for (attr, _) in FOLLOW_ATTRIBUTES_BY_RULE_KIND]
+FOLLOW_ATTRIBUTES = [attr for (attr, _) in FOLLOW_JAVA_ATTRIBUTES_BY_RULE_KIND]
 
 collect_dependencies = aspect(
     implementation = _collect_dependencies_impl,
