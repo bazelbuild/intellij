@@ -28,6 +28,16 @@ import java.util.Optional;
 
 /** Updates project info according to the newly generated build graph. */
 public class ProjectStatsLogger implements BlazeProjectListener {
+
+  /** Entry point for instantiating {@link ProjectStatsLogger}. */
+  public static class Provider implements BlazeProjectListenerProvider {
+    @Override
+    public BlazeProjectListener createListener(QuerySyncProject querySyncProject) {
+      return new ProjectStatsLogger(
+          querySyncProject.getArtifactTracker(), querySyncProject.getProjectViewSet());
+    }
+  }
+
   private ArtifactTracker artifactTracker;
   private ProjectViewSet projectViewSet;
 

@@ -49,6 +49,7 @@ import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.SnapshotDeserializer;
 import com.google.idea.blaze.qsync.project.SnapshotSerializer;
 import com.intellij.openapi.project.Project;
@@ -88,7 +89,9 @@ public class QuerySyncProject {
   private final BlazeProjectSnapshotBuilder blazeProjectSnapshotBuilder;
   private final ProjectDefinition projectDefinition;
   private final ProjectViewSet projectViewSet;
+  // TODO(mathewi) only one of these two should strictly be necessary:
   private final WorkspacePathResolver workspacePathResolver;
+  private final ProjectPath.Resolver projectPathResolver;
   private final WorkspaceLanguageSettings workspaceLanguageSettings;
   private final QuerySyncSourceToTargetMap sourceToTargetMap;
 
@@ -111,6 +114,7 @@ public class QuerySyncProject {
       ProjectDefinition projectDefinition,
       ProjectViewSet projectViewSet,
       WorkspacePathResolver workspacePathResolver,
+      ProjectPath.Resolver projectPathResolver,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       QuerySyncSourceToTargetMap sourceToTargetMap,
       ProjectViewManager projectViewManager,
@@ -128,11 +132,32 @@ public class QuerySyncProject {
     this.projectDefinition = projectDefinition;
     this.projectViewSet = projectViewSet;
     this.workspacePathResolver = workspacePathResolver;
+    this.projectPathResolver = projectPathResolver;
     this.workspaceLanguageSettings = workspaceLanguageSettings;
     this.sourceToTargetMap = sourceToTargetMap;
     this.projectViewManager = projectViewManager;
     this.buildSystem = buildSystem;
     projectData = new QuerySyncProjectData(workspacePathResolver, workspaceLanguageSettings);
+  }
+
+  public Project getIdeProject() {
+    return project;
+  }
+
+  public BlazeImportSettings getImportSettings() {
+    return importSettings;
+  }
+
+  public ProjectViewSet getProjectViewSet() {
+    return projectViewSet;
+  }
+
+  public WorkspaceRoot getWorkspaceRoot() {
+    return workspaceRoot;
+  }
+
+  public BlazeProject getSnapshotHolder() {
+    return snapshotHolder;
   }
 
   public QuerySyncProjectData getProjectData() {
@@ -141,6 +166,10 @@ public class QuerySyncProject {
 
   public WorkspacePathResolver getWorkspacePathResolver() {
     return workspacePathResolver;
+  }
+
+  public ProjectPath.Resolver getProjectPathResolver() {
+    return projectPathResolver;
   }
 
   public WorkspaceLanguageSettings getWorkspaceLanguageSettings() {
@@ -194,8 +223,7 @@ public class QuerySyncProject {
                 ? projectQuerier.fullQuery(projectDefinition, context)
                 : projectQuerier.update(projectDefinition, lastQuery.get(), context);
         BlazeProjectSnapshot newSnapshot =
-            blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(
-                context, postQuerySyncData, artifactTracker::updateProjectProto);
+            blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(context, postQuerySyncData);
         onNewSnapshot(context, newSnapshot);
 
         // TODO: Revisit SyncListeners once we switch fully to qsync
@@ -241,9 +269,7 @@ public class QuerySyncProject {
       if (getDependencyTracker().buildDependenciesForTargets(context, projectTargets)) {
         BlazeProjectSnapshot newSnapshot =
             blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(
-                context,
-                snapshotHolder.getCurrent().orElseThrow().queryData(),
-                artifactTracker::updateProjectProto);
+                context, snapshotHolder.getCurrent().orElseThrow().queryData());
         onNewSnapshot(context, newSnapshot);
       }
     }

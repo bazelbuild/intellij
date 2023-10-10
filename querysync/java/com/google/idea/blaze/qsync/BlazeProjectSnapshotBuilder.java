@@ -39,24 +39,37 @@ public class BlazeProjectSnapshotBuilder {
   private final Path workspaceRoot;
   private final ImmutableSet<String> handledRuleKinds;
   private final Supplier<Boolean> ccEnabledFlag;
+  private final ProjectProtoTransform projectProtoTransform;
 
   public BlazeProjectSnapshotBuilder(
       ListeningExecutorService executor,
       PackageReader workspaceRelativePackageReader,
       Path workspaceRoot,
       ImmutableSet<String> handledRuleKinds,
-      Supplier<Boolean> ccEnabledFlag) {
+      Supplier<Boolean> ccEnabledFlag,
+      ProjectProtoTransform projectProtoTransform) {
     this.executor = executor;
     this.workspaceRelativePackageReader = workspaceRelativePackageReader;
     this.workspaceRoot = workspaceRoot;
     this.handledRuleKinds = handledRuleKinds;
     this.ccEnabledFlag = ccEnabledFlag;
+    this.projectProtoTransform = projectProtoTransform;
   }
 
   /** {@code Function<ProjectProto.Project, ProjectProto.Project>} that can throw exceptions. */
   @FunctionalInterface
   public interface ProjectProtoTransform {
-    ProjectProto.Project apply(ProjectProto.Project proto) throws BuildException;
+    ProjectProto.Project apply(ProjectProto.Project proto, BuildGraphData graph)
+        throws BuildException;
+
+    public static ProjectProtoTransform compose(ProjectProtoTransform... transforms) {
+      return (proto, graph) -> {
+        for (ProjectProtoTransform transform : transforms) {
+          proto = transform.apply(proto, graph);
+        }
+        return proto;
+      };
+    }
   }
 
   /**
@@ -65,10 +78,7 @@ public class BlazeProjectSnapshotBuilder {
    * applies transformations required to account for any currently synced(i.e. built) dependencies.
    */
   public BlazeProjectSnapshot createBlazeProjectSnapshot(
-      Context<?> context,
-      PostQuerySyncData postQuerySyncData,
-      ProjectProtoTransform applyBuiltDependenciesTransform)
-      throws BuildException {
+      Context<?> context, PostQuerySyncData postQuerySyncData) throws BuildException {
     Path effectiveWorkspaceRoot =
         postQuerySyncData.vcsState().flatMap(s -> s.workspaceSnapshotPath).orElse(workspaceRoot);
     WorkspaceResolvingPackageReader packageReader =
@@ -83,12 +93,8 @@ public class BlazeProjectSnapshotBuilder {
     QuerySummary querySummary = postQuerySyncData.querySummary();
     BuildGraphData graph =
         new BlazeQueryParser(querySummary, context, handledRuleKinds, ccEnabledFlag).parse();
-    Project project = null;
-    try {
-      project = applyBuiltDependenciesTransform.apply(graphToProjectConverter.createProject(graph));
-    } catch (Exception e) {
-      throw new BuildException(e);
-    }
+    Project project =
+        projectProtoTransform.apply(graphToProjectConverter.createProject(graph), graph);
     return BlazeProjectSnapshot.builder()
         .queryData(postQuerySyncData)
         .graph(graph)

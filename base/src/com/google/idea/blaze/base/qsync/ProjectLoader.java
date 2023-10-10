@@ -161,35 +161,36 @@ public class ProjectLoader {
             createWorkspaceRelativePackageReader(),
             workspaceRoot.path(),
             handledRules,
-            QuerySync.CC_SUPPORT_ENABLED::getValue);
+            QuerySync.CC_SUPPORT_ENABLED::getValue,
+            artifactTracker::updateProjectProto);
     QueryRunner queryRunner = createQueryRunner(buildSystem);
     ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner, vcsHandler);
-    ProjectUpdater projectUpdater =
-        new ProjectUpdater(
-            project, importSettings, projectViewSet, workspaceRoot, projectPathResolver);
-    graph.addListener(projectUpdater);
-    graph.addListener(new ProjectStatsLogger(artifactTracker, projectViewSet));
     QuerySyncSourceToTargetMap sourceToTargetMap =
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
 
-    return new QuerySyncProject(
-        project,
-        snapshotFilePath,
-        graph,
-        importSettings,
-        workspaceRoot,
-        artifactTracker,
-        dependencyTracker,
-        renderJarTracker,
-        projectQuerier,
-        blazeProjectSnapshotBuilder,
-        latestProjectDef,
-        projectViewSet,
-        workspacePathResolver,
-        workspaceLanguageSettings,
-        sourceToTargetMap,
-        projectViewManager,
-        buildSystem);
+    QuerySyncProject querySyncProject =
+        new QuerySyncProject(
+            project,
+            snapshotFilePath,
+            graph,
+            importSettings,
+            workspaceRoot,
+            artifactTracker,
+            dependencyTracker,
+            renderJarTracker,
+            projectQuerier,
+            blazeProjectSnapshotBuilder,
+            latestProjectDef,
+            projectViewSet,
+            workspacePathResolver,
+            projectPathResolver,
+            workspaceLanguageSettings,
+            sourceToTargetMap,
+            projectViewManager,
+            buildSystem);
+    BlazeProjectListenerProvider.registerListenersFor(querySyncProject);
+
+    return querySyncProject;
   }
 
   private ParallelPackageReader createWorkspaceRelativePackageReader() {

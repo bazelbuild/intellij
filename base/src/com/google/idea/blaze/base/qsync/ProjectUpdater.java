@@ -68,6 +68,19 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 /** An object that monitors the build graph and applies the changes to the project structure. */
 public class ProjectUpdater implements BlazeProjectListener {
 
+  /** Entry point for instantiating {@link ProjectUpdater}. */
+  public static class Provider implements BlazeProjectListenerProvider {
+    @Override
+    public BlazeProjectListener createListener(QuerySyncProject querySyncProject) {
+      return new ProjectUpdater(
+          querySyncProject.getIdeProject(),
+          querySyncProject.getImportSettings(),
+          querySyncProject.getProjectViewSet(),
+          querySyncProject.getWorkspaceRoot(),
+          querySyncProject.getProjectPathResolver());
+    }
+  }
+
   private final Project project;
   private final BlazeImportSettings importSettings;
   private final ProjectViewSet projectViewSet;
