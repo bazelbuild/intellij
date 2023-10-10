@@ -19,7 +19,6 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -34,8 +33,9 @@ public abstract class QuerySyncActionStats {
       new AutoValue_QuerySyncActionStats.Builder()
           .setStartTime(Instant.EPOCH)
           .setResult(Result.UNKNOWN)
-          .setLanguagesActive(ImmutableSet.of())
           .setRequestedFiles(ImmutableSet.of())
+          .setProjectInfo(ProjectInfoStats.builder().build())
+          .setDependenciesInfo(DependenciesInfoStats.builder().build())
           .build();
 
   /** The result of query sync operations. */
@@ -59,11 +59,13 @@ public abstract class QuerySyncActionStats {
 
   public abstract Optional<String> triggerActionName();
 
-  public abstract ImmutableSet<LanguageClass> languagesActive();
-
   public abstract ImmutableSet<Path> requestedFiles();
 
   public abstract ImmutableList<QuerySyncOperationStats> operationStats();
+
+  public abstract ProjectInfoStats projectInfo();
+
+  public abstract DependenciesInfoStats dependenciesInfo();
 
   public abstract Builder toBuilder();
 
@@ -86,9 +88,11 @@ public abstract class QuerySyncActionStats {
 
     public abstract Builder setTriggerActionName(String value);
 
-    public abstract Builder setLanguagesActive(ImmutableSet<LanguageClass> value);
-
     public abstract Builder setRequestedFiles(ImmutableSet<Path> value);
+
+    public abstract Builder setProjectInfo(ProjectInfoStats value);
+
+    public abstract Builder setDependenciesInfo(DependenciesInfoStats value);
 
     abstract ImmutableList.Builder<QuerySyncOperationStats> operationStatsBuilder();
 

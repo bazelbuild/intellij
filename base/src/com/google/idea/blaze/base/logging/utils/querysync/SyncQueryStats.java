@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base.logging.utils.querysync;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.settings.BuildBinaryType;
 import java.time.Duration;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -24,7 +26,11 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class SyncQueryStats implements QuerySyncOperationStats {
   private static final SyncQueryStats EMPTY =
-      new AutoValue_SyncQueryStats.Builder().setSyncMode(SyncMode.UNKNOWN).build();
+      new AutoValue_SyncQueryStats.Builder()
+          .setBlazeBinaryType(BuildBinaryType.NONE)
+          .setSyncMode(SyncMode.UNKNOWN)
+          .setQueryFlags(ImmutableList.of())
+          .build();
 
   /** The kind of sync. */
   public enum SyncMode {
@@ -34,6 +40,10 @@ public abstract class SyncQueryStats implements QuerySyncOperationStats {
   }
 
   public abstract Optional<Integer> bazelExitCode();
+
+  public abstract BuildBinaryType blazeBinaryType();
+
+  public abstract ImmutableList<String> queryFlags();
 
   public abstract SyncMode syncMode();
 
@@ -51,6 +61,10 @@ public abstract class SyncQueryStats implements QuerySyncOperationStats {
   public abstract static class Builder {
 
     public abstract Builder setBazelExitCode(@Nullable Integer value);
+
+    public abstract Builder setBlazeBinaryType(BuildBinaryType value);
+
+    public abstract Builder setQueryFlags(ImmutableList<String> value);
 
     public abstract Builder setSyncMode(SyncMode value);
 
