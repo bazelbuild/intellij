@@ -467,7 +467,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
    */
   private ImmutableListMultimap<Boolean, OutputArtifact> getGensrcsByInclusion(
       OutputInfo outputInfo) {
-    // Create a map of (target) -> (all gensrcs build by that target) from the *.target-info.txt
+    // Create a map of (target) -> (all gensrcs build by that target) from the *.java-info.txt
     // files produced by the aspect.
     SetMultimap<Label, String> genSrcsByTarget =
         outputInfo.getArtifactInfo().stream()
@@ -483,7 +483,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
         Multimaps.invertFrom(genSrcsByTarget, MultimapBuilder.hashKeys().hashSetValues().build());
 
     // Index the generated sources in the output into using the map above. We rely on the fact that
-    // all gensrcs in the build output are also listed in the *.target-info.txt files processed
+    // all gensrcs in the build output are also listed in the *.java-info.txt files processed
     // above.
     return Multimaps.index(
         outputInfo.getGeneratedSources(),
