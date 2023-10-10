@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
-import org.eclipse.sisu.Nullable;
+import javax.annotation.Nullable;
 
 /** Stores @{QuerySyncActionStats} so that it can be logged by the BlazeContext creator owner. */
 public class QuerySyncActionStatsScope implements BlazeScope {
