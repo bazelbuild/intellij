@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.logging.utils.querysync;
 
 import com.google.auto.value.AutoValue;
 import java.util.Optional;
-import org.eclipse.sisu.Nullable;
+import javax.annotation.Nullable;
 
 /** The basic dependencies information to track of a query sync project. */
 @AutoValue
