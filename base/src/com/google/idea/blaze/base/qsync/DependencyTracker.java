@@ -21,7 +21,6 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -76,10 +75,6 @@ public interface DependencyTracker {
    * the target has not yet been built.
    */
   Optional<ImmutableSet<Path>> getCachedArtifacts(Label target);
-
-  /** Builds the render jars of the given files and adds then to the cache */
-  void buildRenderJarForFile(BlazeContext context, List<Path> workspaceRelativePaths)
-      throws IOException, BuildException;
 
   /**
    * A data structure that describes what targets were requested to be built and what targets

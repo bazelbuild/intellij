@@ -83,6 +83,7 @@ public class QuerySyncProject {
   private final WorkspaceRoot workspaceRoot;
   private final ArtifactTracker artifactTracker;
   private final DependencyTracker dependencyTracker;
+  private final RenderJarTracker renderJarTracker;
   private final ProjectQuerier projectQuerier;
   private final BlazeProjectSnapshotBuilder blazeProjectSnapshotBuilder;
   private final ProjectDefinition projectDefinition;
@@ -104,6 +105,7 @@ public class QuerySyncProject {
       WorkspaceRoot workspaceRoot,
       ArtifactTracker artifactTracker,
       DependencyTracker dependencyTracker,
+      RenderJarTracker renderJarTracker,
       ProjectQuerier projectQuerier,
       BlazeProjectSnapshotBuilder blazeProjectSnapshotBuilder,
       ProjectDefinition projectDefinition,
@@ -120,6 +122,7 @@ public class QuerySyncProject {
     this.workspaceRoot = workspaceRoot;
     this.artifactTracker = artifactTracker;
     this.dependencyTracker = dependencyTracker;
+    this.renderJarTracker = renderJarTracker;
     this.projectQuerier = projectQuerier;
     this.blazeProjectSnapshotBuilder = blazeProjectSnapshotBuilder;
     this.projectDefinition = projectDefinition;
@@ -250,7 +253,7 @@ public class QuerySyncProject {
       throws IOException, BuildException {
     try (BlazeContext context = BlazeContext.create(parentContext)) {
       context.push(new BuildDepsStatsScope());
-      getDependencyTracker().buildRenderJarForFile(context, wps);
+      renderJarTracker.buildRenderJarForFile(context, wps);
     }
   }
 
