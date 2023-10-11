@@ -336,23 +336,6 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   }
 
   /**
-   * Caches {@code artifacts} in the local cache and returns a map from paths that the IDE should
-   * use to find them to the original artifact path.
-   *
-   * @noinspection UnstableApiUsage
-   */
-  @VisibleForTesting
-  public ListenableFuture<ImmutableMap<Path, Path>> cache(
-      ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactToDestinationMap,
-      BlazeContext context)
-      throws IOException {
-    return Futures.transform(
-        fetchArtifacts(context, artifactToDestinationMap),
-        this::prepareFinalLayouts,
-        ArtifactFetcher.EXECUTOR);
-  }
-
-  /**
    * Extracts zip-like files in the {@code sourcePaths} into the final destination directories.
    *
    * <p>Any existing files and directories at the destination paths are deleted.
@@ -373,43 +356,44 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     return result.build();
   }
 
-  /**
-   * Merges TargetToDeps into tracker maps and cache necessary OutputArtifact to local. The
-   * artifacts will not be added into tracker if it's failed to be cached.
-   */
+  /** Fetches, caches and sets up new render jar artifacts. */
   @Override
   public UpdateResult update(
       Set<Label> targets, RenderJarInfo renderJarInfo, BlazeContext outerContext)
       throws BuildException {
+    ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap;
+    try {
+      artifactMap = renderJarInfoToArtifactMap(renderJarInfo);
+    } catch (IOException e) {
+      throw new BuildException(e);
+    }
     try (BlazeContext context = BlazeContext.create(outerContext)) {
-      DownloadTrackingScope downloads = new DownloadTrackingScope();
-      context.push(downloads);
-      ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap =
-          ImmutableMap.<OutputArtifact, OutputArtifactDestinationAndLayout>builder()
-              .putAll(
-                  renderJarCache.prepareDestinationPathsAndDirectories(
-                      renderJarInfo.getRenderJars()))
-              .buildOrThrow();
-
-      ListenableFuture<ImmutableMap<Path, Path>> artifactPaths = cache(artifactMap, context);
-      Optional<BuildDepsStats.Builder> builder = BuildDepsStatsScope.fromContext(context);
-      if (downloads.getFileCount() > 0) {
-        context.output(
-            PrintOutput.log(
-                "Downloading %d render jar artifacts (%s)",
-                downloads.getFileCount(), StringUtil.formatFileSize(downloads.getTotalBytes())));
-        builder.ifPresent(
-            stats -> {
-              stats.setArtifactBytesConsumed(downloads.getTotalBytes());
-            });
-      }
-
-      ImmutableMap<Path, Path> updated = getUninterruptibly(artifactPaths);
+      ImmutableMap<Path, Path> updated = cache(context, artifactMap);
       saveState();
-      builder.ifPresent(
-          stats -> {
-            stats.setUpdatedFilesCount(updated.size());
-          });
+      return UpdateResult.create(updated.keySet(), ImmutableSet.of());
+    } catch (ExecutionException | IOException e) {
+      throw new BuildException(e);
+    }
+  }
+
+  /** Fetches, caches and sets up new artifacts. */
+  @Override
+  public UpdateResult update(Set<Label> targets, OutputInfo outputInfo, BlazeContext outerContext)
+      throws BuildException {
+    ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap;
+    try {
+      artifactMap = outputInfoToArtifactMap(outputInfo);
+    } catch (IOException e) {
+      throw new BuildException(e);
+    }
+    try (BlazeContext context = BlazeContext.create(outerContext)) {
+      ImmutableMap<Path, Path> updated = cache(context, artifactMap);
+
+      this.cachePathToArtifactKeyMap.putAll(updated);
+      for (BuildArtifacts artifacts : outputInfo.getArtifactInfo()) {
+        updateMaps(targets, artifacts);
+      }
+      saveState();
       return UpdateResult.create(updated.keySet(), ImmutableSet.of());
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
@@ -417,57 +401,70 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   }
 
   /**
-   * Merges TargetToDeps into tracker maps and cache necessary OutputArtifact to local. The
-   * artifacts will not be added into tracker if it's failed to be cached.
+   * Caches {@code artifacts} in the local cache and returns a map from paths that the IDE should
+   * use to find them to the original artifact path.
+   *
+   * @noinspection UnstableApiUsage
    */
-  @Override
-  public UpdateResult update(Set<Label> targets, OutputInfo outputInfo, BlazeContext outerContext)
-      throws BuildException {
-    try (BlazeContext context = BlazeContext.create(outerContext)) {
-      DownloadTrackingScope downloads = new DownloadTrackingScope();
-      context.push(downloads);
+  private ImmutableMap<Path, Path> cache(
+      BlazeContext context,
+      ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap)
+      throws ExecutionException {
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    DownloadTrackingScope downloads = new DownloadTrackingScope();
+    context.push(downloads);
+    Optional<BuildDepsStats.Builder> builder = BuildDepsStatsScope.fromContext(context);
 
-      ImmutableListMultimap<Boolean, OutputArtifact> genSrcsByInclusion =
-          getGensrcsByInclusion(outputInfo);
-
-      ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap =
-          ImmutableMap.<OutputArtifact, OutputArtifactDestinationAndLayout>builder()
-              .putAll(
-                  jarCache.prepareDestinationPathsAndDirectories(outputInfo.get(OutputGroup.JARS)))
-              .putAll(
-                  aarCache.prepareDestinationPathsAndDirectories(outputInfo.get(OutputGroup.AARS)))
-              .putAll(
-                  generatedSrcFileCache.prepareDestinationPathsAndDirectories(
-                      genSrcsByInclusion.get(true)))
-              .putAll(
-                  generatedExternalSrcFileCache.prepareDestinationPathsAndDirectories(
-                      genSrcsByInclusion.get(false)))
-              .buildOrThrow();
-
-      ListenableFuture<ImmutableMap<Path, Path>> cachePathToArtifactKeyMapFuture =
-          cache(artifactMap, context);
-      if (downloads.getFileCount() > 0) {
-        context.output(
-            PrintOutput.log(
-                "Downloading %d build artifacts (%s)",
-                downloads.getFileCount(), StringUtil.formatFileSize(downloads.getTotalBytes())));
-      }
-
-      ImmutableMap<Path, Path> cachePathToArtifactKeyMap =
-          getUninterruptibly(cachePathToArtifactKeyMapFuture);
-
-      this.cachePathToArtifactKeyMap.putAll(cachePathToArtifactKeyMap);
-
-      for (BuildArtifacts artifacts : outputInfo.getArtifactInfo()) {
-        updateMaps(targets, artifacts);
-      }
-      saveState();
-      BuildDepsStatsScope.fromContext(context)
-          .ifPresent(stats -> stats.setUpdatedFilesCount(cachePathToArtifactKeyMap.size()));
-      return UpdateResult.create(cachePathToArtifactKeyMap.keySet(), ImmutableSet.of());
-    } catch (ExecutionException | IOException e) {
-      throw new BuildException(e);
+    ListenableFuture<ImmutableMap<Path, Path>> cachePathToArtifactKeyMapFuture =
+        Futures.transform(
+            fetchArtifacts(context, artifactMap),
+            this::prepareFinalLayouts,
+            ArtifactFetcher.EXECUTOR);
+    if (downloads.getFileCount() > 0) {
+      context.output(
+          PrintOutput.log(
+              "Downloading %d artifacts (%s)",
+              downloads.getFileCount(), StringUtil.formatFileSize(downloads.getTotalBytes())));
+      builder.ifPresent(
+          stats -> {
+            stats.setArtifactBytesConsumed(downloads.getTotalBytes());
+          });
     }
+
+    ImmutableMap<Path, Path> updated = getUninterruptibly(cachePathToArtifactKeyMapFuture);
+    builder.ifPresent(stats -> stats.setUpdatedFilesCount(updated.size()));
+    ImmutableSet<Path> updatedFiles = updated.keySet();
+    ImmutableSet<String> removedKeys = ImmutableSet.of();
+    context.output(
+        PrintOutput.log(
+            String.format(
+                "Updated cache in %d ms: updated %d artifacts, removed %d artifacts",
+                stopwatch.elapsed().toMillis(), updatedFiles.size(), removedKeys.size())));
+    return updated;
+  }
+
+  private ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout>
+      renderJarInfoToArtifactMap(RenderJarInfo renderJarInfo) throws IOException {
+    return ImmutableMap.<OutputArtifact, OutputArtifactDestinationAndLayout>builder()
+        .putAll(renderJarCache.prepareDestinationPathsAndDirectories(renderJarInfo.getRenderJars()))
+        .buildOrThrow();
+  }
+
+  private ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> outputInfoToArtifactMap(
+      OutputInfo outputInfo) throws IOException {
+
+    ImmutableListMultimap<Boolean, OutputArtifact> genSrcsByInclusion =
+        getGensrcsByInclusion(outputInfo);
+    return ImmutableMap.<OutputArtifact, OutputArtifactDestinationAndLayout>builder()
+        .putAll(jarCache.prepareDestinationPathsAndDirectories(outputInfo.get(OutputGroup.JARS)))
+        .putAll(aarCache.prepareDestinationPathsAndDirectories(outputInfo.get(OutputGroup.AARS)))
+        .putAll(
+            generatedSrcFileCache.prepareDestinationPathsAndDirectories(
+                genSrcsByInclusion.get(true)))
+        .putAll(
+            generatedExternalSrcFileCache.prepareDestinationPathsAndDirectories(
+                genSrcsByInclusion.get(false)))
+        .buildOrThrow();
   }
 
   /**

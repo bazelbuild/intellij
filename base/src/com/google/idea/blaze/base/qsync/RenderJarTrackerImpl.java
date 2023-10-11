@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
 import com.google.idea.blaze.base.bazel.BazelExitCode;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.qsync.ArtifactTracker.UpdateResult;
@@ -96,15 +95,7 @@ public class RenderJarTrackerImpl implements RenderJarTracker {
       context.output(PrintOutput.error("There were build errors when generating render jar."));
     }
 
-    Stopwatch stopwatch = Stopwatch.createStarted();
     UpdateResult updateResult = artifactTracker.update(targets, renderJarInfo, context);
-    context.output(
-        PrintOutput.log(
-            String.format(
-                "Updated cache in %d ms: updated %d artifacts, removed %d artifacts",
-                stopwatch.elapsed().toMillis(),
-                updateResult.updatedFiles().size(),
-                updateResult.removedKeys().size())));
     if (updateResult.updatedFiles().isEmpty()) {
       context.output(
           PrintOutput.log(
