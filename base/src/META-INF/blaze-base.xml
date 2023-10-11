@@ -458,6 +458,8 @@
                     interface="com.google.idea.blaze.base.qsync.cache.ArtifactFetcher"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.base.qsync.HandledRulesProvider"
       interface="com.google.idea.blaze.base.qsync.HandledRulesProvider" />
+    <extensionPoint qualifiedName="com.google.idea.blaze.qsync.BlazeProjectListenerProvider"
+      interface="com.google.idea.blaze.base.qsync.BlazeProjectListenerProvider"/>
   </extensionPoints>
 
   <application-components>
@@ -625,7 +627,10 @@
     <ExperimentLoader implementation="com.google.idea.common.experiments.DefaultValuesExperimentLoader" order="last" id="DefaultValuesExperimentLoader"/>
     <ExperimentLoader implementation="com.google.idea.blaze.base.qsync.settings.QuerySyncSettingsExperimentLoader" order="after UserOverridesExperimentLoader" id="QuerySyncSettingsExperimentLoader"/>
   </extensions>
+
   <extensions defaultExtensionNs="com.google.idea.blaze.qsync">
     <ArtifactFetcher implementation="com.google.idea.blaze.base.qsync.cache.FileApiArtifactFetcher"/>
+    <BlazeProjectListenerProvider implementation="com.google.idea.blaze.base.qsync.ProjectUpdater$Provider" />
+    <BlazeProjectListenerProvider implementation="com.google.idea.blaze.base.qsync.ProjectStatsLogger$Provider" />
   </extensions>
 </idea-plugin>
