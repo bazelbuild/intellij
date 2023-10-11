@@ -1,0 +1,102 @@
+/*
+ * Copyright 2023 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+
+package com.google.idea.blaze.ext;
+
+option java_package = "com.google.idea.blaze.ext";
+option java_multiple_files = true;
+option java_outer_classname = "BuildServiceProto";
+
+
+service BuildService {
+  // Creates a build for the current user with the given information
+  rpc CreateBuild(IntellijCreateBuildRequest) returns (Build) {}
+
+  // Cancels the given build
+  rpc CancelBuild(IntellijCancelBuildRequest) returns (Empty) {}
+}
+
+message CreateBuildRequest {
+  Build build = 1;
+
+  string project_id = 2;
+}
+
+message CancelBuildRequest {
+  string id = 1;
+}
+
+message Build {
+  string id = 1;
+
+  string creation_time = 3;
+
+  map<string, string> labels = 4;
+
+  BuildCommand command = 5;
+
+  int32 priority = 6;
+
+  string state = 7;
+
+  ExecutionContext execution_context = 11;
+
+  string invocation_deadline = 8;
+
+  string request_deadline = 10;
+
+  string build_output_root_uri = 9;
+
+  message BuildCommand {
+    string binary = 1;
+
+    repeated string args = 2;
+
+    string defaults_file = 18;
+  }
+
+  message ExecutionContext {
+    string source_uri = 1;
+  }
+}
+
+// Status used for both invocation attempt and overall build completion.
+message BuildStatus {
+  int32 result = 1;
+
+  string final_invocation_id = 3;
+
+  int32 build_tool_exit_code = 4;
+
+  string error_message = 5;
+
+  bytes details = 2;
+}
+
+// Request to create a build.
+message IntellijCreateBuildRequest {
+  CreateBuildRequest create_build_request = 1;
+
+  string sso_ticket = 3;
+}
+
+// Request to cancel a build.
+message IntellijCancelBuildRequest {
+  CancelBuildRequest cancel_build_request = 1;
+}
+
+message Empty {}

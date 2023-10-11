@@ -1,9 +1,15 @@
 load("@io_grpc_grpc_java//:java_grpc_library.bzl", "java_grpc_library")
 load("@io_bazel_rules_go//proto:def.bzl", "go_grpc_library", "go_proto_library")
 
+package_group(
+    name = "intellijext_packages",
+    packages = ["//ext/..."],
+)
+
 proto_library(
     name = "intellijext_proto",
     srcs = [
+        "build_service.proto",
         "intellijext.proto",
         "issuetracker.proto",
     ],
