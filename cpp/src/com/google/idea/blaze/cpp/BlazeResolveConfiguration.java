@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCFileTypeHelpers;
 import com.jetbrains.cidr.lang.OCLanguageKind;
-import com.jetbrains.cidr.lang.preprocessor.OCImportGraph;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import java.io.File;
 import java.util.Collection;
@@ -108,7 +107,7 @@ final class BlazeResolveConfiguration {
     }
 
     if (OCFileTypeHelpers.isHeaderFile(fileName)) {
-      return getLanguageKind(getSourceFileForHeaderFile(sourceOrHeaderFile));
+      return getLanguageKind(SourceFileFinder.findAndGetSourceFileForHeaderFile(project, sourceOrHeaderFile));
     }
 
     return null;
@@ -120,20 +119,6 @@ final class BlazeResolveConfiguration {
 
     OCLanguageKind kind = OCFileTypeHelpers.getLanguageKind(sourceFile.getName());
     return kind != null ? kind : getMaximumLanguageKind();
-  }
-
-  @Nullable
-  private VirtualFile getSourceFileForHeaderFile(VirtualFile headerFile) {
-    Collection<VirtualFile> roots =
-        OCImportGraph.getInstance(project).getAllHeaderRoots(headerFile);
-
-    final String headerNameWithoutExtension = headerFile.getNameWithoutExtension();
-    for (VirtualFile root : roots) {
-      if (root.getNameWithoutExtension().equals(headerNameWithoutExtension)) {
-        return root;
-      }
-    }
-    return null;
   }
 
   private static OCLanguageKind getMaximumLanguageKind() {

@@ -22,5 +22,6 @@
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncStatusContributor implementation="com.google.idea.blaze.cpp.oclang.CppSyncStatusContributor"/>
+    <cpp.SourceFileFinder implementation="com.google.idea.blaze.cpp.oclang.OCSourceFileFinder"/>
   </extensions>
 </idea-plugin>
