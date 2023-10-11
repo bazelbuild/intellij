@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.clwb.run.test;
+package com.google.idea.blaze.clwb.oclang.run.test;
 
 import com.google.common.base.Joiner;
 import com.intellij.openapi.util.text.StringUtil;

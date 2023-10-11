@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.clwb.run;
+package com.google.idea.blaze.clwb.oclang.run;
 
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.clwb.run.RunConfigurationUtils;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.jetbrains.cidr.execution.debugger.OCDebuggerLanguageSupport;

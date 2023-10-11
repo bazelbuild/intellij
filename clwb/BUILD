@@ -7,6 +7,7 @@ load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
     "intellij_plugin_library",
+    "optional_plugin_xml",
     "plugin_deploy_zip",
     "repackaged_files",
     "stamped_plugin_xml",
@@ -30,8 +31,15 @@ licenses(["notice"])
 intellij_plugin_library(
     name = "plugin_library",
     plugin_xmls = ["src/META-INF/clwb.xml"],
+    optional_plugin_xmls = ["optional_clwb_oclang"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":clwb_lib"],
+)
+
+optional_plugin_xml(
+    name = "optional_clwb_oclang",
+    module = "com.intellij.modules.cidr.lang",
+    plugin_xml = "src/META-INF/clwb-oclang.xml",
 )
 
 stamped_plugin_xml(

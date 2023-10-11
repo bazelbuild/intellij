@@ -31,15 +31,10 @@
     <registryKey defaultValue="false" description="Disable the extra debug flags in debug C/C++ builds" key="bazel.clwb.debug.extraflags.disabled"/>
   </extensions>
 
-  <extensions defaultExtensionNs="cidr.debugger">
-    <languageSupport language="" implementationClass="com.google.idea.blaze.clwb.run.BlazeCidrDebuggerSupportFactory"/>
-  </extensions>
-
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.clwb.sync.BlazeCLionSyncPlugin"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.clwb.run.BlazeCidrRunConfigurationHandlerProvider" order="first"/>
-    <BlazeTestEventsHandler implementation="com.google.idea.blaze.clwb.run.test.BlazeCidrTestEventsHandler"/>
-    <TestContextProvider implementation="com.google.idea.blaze.clwb.run.producers.CppTestContextProvider"/>
+    <BlazeTestEventsHandler implementation="com.google.idea.blaze.clwb.oclang.run.test.BlazeCidrTestEventsHandler"/>
   </extensions>
 
   <project-components>
