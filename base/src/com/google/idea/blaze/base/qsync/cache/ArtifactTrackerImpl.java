@@ -64,6 +64,7 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.GeneratedSourceProjectUpdater;
 import com.google.idea.blaze.qsync.SrcJarProjectUpdater;
+import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
@@ -526,7 +527,12 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   }
 
   @Override
-  public ProjectProto.Project updateProjectProto(ProjectProto.Project projectProto)
+  public ProjectProto.Project updateProjectProto(
+      ProjectProto.Project projectProto, BuildGraphData graph) throws BuildException {
+    return updateProjectProtoForJavaDeps(projectProto);
+  }
+
+  private ProjectProto.Project updateProjectProtoForJavaDeps(ProjectProto.Project projectProto)
       throws BuildException {
 
     Path genSrcCacheRelativeToProject =
