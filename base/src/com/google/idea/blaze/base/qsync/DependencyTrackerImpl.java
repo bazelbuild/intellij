@@ -19,7 +19,6 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -30,7 +29,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.base.bazel.BazelExitCode;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
-import com.google.idea.blaze.base.qsync.ArtifactTracker.UpdateResult;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
@@ -323,16 +321,7 @@ public class DependencyTrackerImpl implements DependencyTracker {
 
   private ImmutableSet<Path> updateCaches(
       BlazeContext context, Set<Label> targets, OutputInfo outputInfo) throws BuildException {
-    Stopwatch stopwatch = Stopwatch.createStarted();
-    UpdateResult updateResult = artifactTracker.update(targets, outputInfo, context);
-    context.output(
-        PrintOutput.log(
-            String.format(
-                "Updated cache in %d ms: updated %d artifacts, removed %d artifacts",
-                stopwatch.elapsed().toMillis(),
-                updateResult.updatedFiles().size(),
-                updateResult.removedKeys().size())));
-    return updateResult.updatedFiles();
+    return artifactTracker.update(targets, outputInfo, context).updatedFiles();
   }
 
   private void refreshFiles(BlazeContext context, ImmutableSet<Path> updatedFiles) {
