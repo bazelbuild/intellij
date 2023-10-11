@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import java.io.File;
 import java.io.IOException;
@@ -48,7 +49,8 @@ public interface ArtifactTracker {
    * <p>When additional artifacts are brought into the IDE they may require additional configuration
    * to be applied to the IDE project.
    */
-  ProjectProto.Project updateProjectProto(ProjectProto.Project projectProto) throws BuildException;
+  ProjectProto.Project updateProjectProto(ProjectProto.Project projectProto, BuildGraphData graph)
+      throws BuildException;
 
   /**
    * Returns a list of local cache files that build by target provided. Returns Optional.empty() if

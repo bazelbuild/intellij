@@ -194,8 +194,7 @@ public class QuerySyncProject {
                 ? projectQuerier.fullQuery(projectDefinition, context)
                 : projectQuerier.update(projectDefinition, lastQuery.get(), context);
         BlazeProjectSnapshot newSnapshot =
-            blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(
-                context, postQuerySyncData, artifactTracker::updateProjectProto);
+            blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(context, postQuerySyncData);
         onNewSnapshot(context, newSnapshot);
 
         // TODO: Revisit SyncListeners once we switch fully to qsync
@@ -241,9 +240,7 @@ public class QuerySyncProject {
       if (getDependencyTracker().buildDependenciesForTargets(context, projectTargets)) {
         BlazeProjectSnapshot newSnapshot =
             blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(
-                context,
-                snapshotHolder.getCurrent().orElseThrow().queryData(),
-                artifactTracker::updateProjectProto);
+                context, snapshotHolder.getCurrent().orElseThrow().queryData());
         onNewSnapshot(context, newSnapshot);
       }
     }
