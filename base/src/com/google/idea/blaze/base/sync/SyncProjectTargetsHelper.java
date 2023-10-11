@@ -89,7 +89,7 @@ public final class SyncProjectTargetsHelper {
     return viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
   }
 
-  private static boolean shouldSyncManualTargets(ProjectViewSet viewSet) {
+  public static boolean shouldSyncManualTargets(ProjectViewSet viewSet) {
     return viewSet.getScalarValue(SyncManualTargetsSection.KEY).orElse(false);
   }
 

@@ -40,6 +40,7 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.SyncProjectTargetsHelper;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
@@ -64,6 +65,7 @@ import javax.annotation.Nullable;
 /** Expands wildcard target patterns into individual blaze targets. */
 public class WildcardTargetExpander {
 
+  public static final String MANUAL_EXCLUDE_TAG = "^((?!manual).)*$";
   private static final BoolExperiment filterByRuleType =
       new BoolExperiment("blaze.build.filter.by.rule.type", true);
 
@@ -195,7 +197,7 @@ public class WildcardTargetExpander {
             BlazeCommandName.BUILD,
             context,
             BlazeInvocationContext.SYNC_CONTEXT)
-        .contains("--build_manual_tests");
+        .contains("--build_manual_tests") && !SyncProjectTargetsHelper.shouldSyncManualTargets(projectView);
   }
 
   /** Runs a blaze query to expand the input target patterns to individual blaze targets. */
@@ -272,7 +274,7 @@ public class WildcardTargetExpander {
       return targetList;
     }
     return excludeManualTargets
-        ? String.format("attr('tags', '^((?!manual).)*$', %s)", targetList)
+        ? String.format("attr('tags', '%s', %s)", MANUAL_EXCLUDE_TAG, targetList)
         : targetList;
   }
 }
