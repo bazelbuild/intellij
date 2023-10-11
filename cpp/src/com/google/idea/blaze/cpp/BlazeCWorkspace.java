@@ -166,7 +166,8 @@ public final class BlazeCWorkspace implements ProjectComponent {
       ProgressIndicator indicator) {
 
     OCWorkspaceImpl.ModifiableModel workspaceModifiable =
-        OCWorkspaceImpl.getInstanceImpl(project).getModifiableModel(/* clear= */ true);
+        OCWorkspaceImpl.getInstanceImpl(project)
+            .getModifiableModel(OCWorkspace.LEGACY_CLIENT_KEY, true);
     ImmutableList<BlazeResolveConfiguration> configurations =
         configResolveData.getAllConfigurations();
     ExecutionRootPathResolver executionRootPathResolver =

@@ -21,7 +21,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
+import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
+import com.jetbrains.cidr.lang.workspace.compiler.UnknownCompilerKind;
 import java.io.File;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -53,9 +55,9 @@ final class BlazeCompilerSettings {
 
   OCCompilerKind getCompiler(OCLanguageKind languageKind) {
     if (languageKind == CLanguageKind.C || languageKind == CLanguageKind.CPP) {
-      return OCCompilerKind.CLANG;
+      return ClangCompilerKind.INSTANCE;
     }
-    return OCCompilerKind.UNKNOWN;
+    return UnknownCompilerKind.INSTANCE;
   }
 
   File getCompilerExecutable(OCLanguageKind lang) {
