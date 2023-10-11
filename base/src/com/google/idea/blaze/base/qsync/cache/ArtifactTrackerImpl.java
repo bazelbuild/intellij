@@ -27,6 +27,7 @@ import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.RENDER
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.function.Predicate.not;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ArrayListMultimap;
@@ -94,7 +95,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * A class that track the artifacts during build and its local copy.
@@ -110,9 +110,9 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   public static final int STORAGE_VERSION = 3;
   private static final Logger logger = Logger.getInstance(ArtifactTrackerImpl.class);
 
-  // Information about dependency artifacts derived when the dependencies were built.
+  // Information about java dependency artifacts derived when the dependencies were built.
   // Note that artifacts that do not produce files are also stored here.
-  private final Map<Label, ArtifactInfo> artifacts = new HashMap<>();
+  private final Map<Label, ArtifactInfo> javaArtifacts = new HashMap<>();
   // Information about the origin of files in the cache. For each file in the cache, stores the
   // artifact key that the file was derived from.
   private final Map<Path, Path> cachePathToArtifactKeyMap = new HashMap<>();
@@ -199,14 +199,14 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
 
   @Override
   public void clear() throws IOException {
-    artifacts.clear();
+    javaArtifacts.clear();
     cacheDirectoryManager.clear();
     saveState();
   }
 
   private void saveState() throws IOException {
     BuildArtifacts.Builder builder = BuildArtifacts.newBuilder();
-    artifacts.values().stream().map(ArtifactInfo::toProto).forEach(builder::addArtifacts);
+    javaArtifacts.values().stream().map(ArtifactInfo::toProto).forEach(builder::addArtifacts);
     CachedArtifacts.Builder cachedArtifactsBuilder = CachedArtifacts.newBuilder();
     for (Map.Entry<Path, Path> entry : cachePathToArtifactKeyMap.entrySet()) {
       cachedArtifactsBuilder.putCachePathToArtifactPath(
@@ -226,7 +226,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     if (!Files.exists(persistentFile)) {
       return;
     }
-    artifacts.clear();
+    javaArtifacts.clear();
     cachePathToArtifactKeyMap.clear();
     try (InputStream stream = new GZIPInputStream(Files.newInputStream(persistentFile))) {
       ArtifactTrackerState saved =
@@ -237,13 +237,13 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
       cachePathToArtifactKeyMap.putAll(
           saved.getCachedArtifacts().getCachePathToArtifactPathMap().entrySet().stream()
               .collect(toImmutableMap(e -> Path.of(e.getKey()), e -> Path.of(e.getValue()))));
-      artifacts.putAll(
+      javaArtifacts.putAll(
           saved.getArtifactInfo().getArtifactsList().stream()
               .map(ArtifactInfo::create)
               .collect(toImmutableMap(ArtifactInfo::label, Function.identity())));
       for (TargetArtifacts targetArtifact : saved.getArtifactInfo().getArtifactsList()) {
         ArtifactInfo artifactInfo = ArtifactInfo.create(targetArtifact);
-        artifacts.put(artifactInfo.label(), artifactInfo);
+        javaArtifacts.put(artifactInfo.label(), artifactInfo);
       }
     } catch (IOException e) {
       // TODO: If there is an error parsing the index, reinitialize the cache properly.
@@ -256,7 +256,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
       return ImmutableSet.of();
     }
     Path artifactPath = cachePathToArtifactKeyMap.get(cachedArtifact);
-    return artifacts.values().stream()
+    return javaArtifacts.values().stream()
         .filter(d -> d.containsPath(artifactPath))
         .map(ArtifactInfo::sources)
         .flatMap(Set::stream)
@@ -265,7 +265,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
 
   @Override
   public Optional<ImmutableSet<Path>> getCachedFiles(Label target) {
-    ArtifactInfo artifactInfo = artifacts.get(target);
+    ArtifactInfo artifactInfo = javaArtifacts.get(target);
     if (artifactInfo == null) {
       return Optional.empty();
     }
@@ -507,13 +507,13 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   private void updateMaps(Set<Label> targets, BuildArtifacts newArtifacts) {
     for (TargetArtifacts targetArtifacts : newArtifacts.getArtifactsList()) {
       ArtifactInfo artifactInfo = ArtifactInfo.create(targetArtifacts);
-      artifacts.put(artifactInfo.label(), artifactInfo);
+      javaArtifacts.put(artifactInfo.label(), artifactInfo);
     }
     for (Label label : targets) {
-      if (!artifacts.containsKey(label)) {
+      if (!javaArtifacts.containsKey(label)) {
         logger.warn(
             "Target " + label + " was not built. If the target is an alias, this is expected");
-        artifacts.put(label, ArtifactInfo.empty(label));
+        javaArtifacts.put(label, ArtifactInfo.empty(label));
       }
     }
   }
@@ -543,14 +543,14 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     projectProto = updater.addGenSrcContentEntry();
 
     ImmutableSet<ProjectPath> workspaceSrcJars =
-        artifacts.values().stream()
+        javaArtifacts.values().stream()
             .map(ArtifactInfo::srcJars)
             .flatMap(Set::stream)
             .map(ProjectPath::workspaceRelative)
             .collect(ImmutableSet.toImmutableSet());
 
     ImmutableSet<ProjectPath> generatedExternalSrcJars =
-        artifacts.values().stream()
+        javaArtifacts.values().stream()
             .filter(not(ai -> projectDefinition.isIncluded(ai.label())))
             .map(ArtifactInfo::genSrcs)
             .flatMap(List::stream)
@@ -584,7 +584,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
 
   @Override
   public Set<Label> getLiveCachedTargets() {
-    return artifacts.keySet();
+    return javaArtifacts.keySet();
   }
 
   @Override
