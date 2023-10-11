@@ -82,12 +82,16 @@ class BlazeCoverageData {
           return hits;
         }
         if (line.startsWith(DA)) {
-          // DA:line,hits
-          int comma = line.indexOf(',');
+          // DA:line,hits,sha
+          String[] segments = line.substring(DA.length()).split(",");
+          if (segments.length < 2) {
+            logger.warn(String.format("Cannot parse LCOV line: Expected entry to have format DA:<number>,<number>, was: %s", line));
+            continue;
+          }
           try {
             hits.put(
-                Integer.parseInt(line.substring(DA.length(), comma)),
-                Integer.parseInt(line.substring(comma + 1)));
+                Integer.parseInt(segments[0]),
+                Integer.parseInt(segments[1]));
           } catch (NumberFormatException e) {
             logger.warn("Cannot parse LCOV line: " + line, e);
           }
