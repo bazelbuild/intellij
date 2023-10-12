@@ -17,7 +17,7 @@ package com.google.idea.blaze.clwb.oclang.run.test;
 
 import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.google.idea.blaze.base.syncstatus.SyncStatusContributor;
-import com.google.idea.blaze.clwb.CidrGoogleTestUtilAdapter;
+import com.google.idea.blaze.clwb.oclang.run.CidrGoogleTestUtilAdapter;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.project.Project;

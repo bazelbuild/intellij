@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.clwb;
+package com.google.idea.blaze.clwb.oclang.run;
 
 import com.google.common.collect.Iterables;
+import com.google.idea.blaze.clwb.run.GoogleTestUtilAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiElement;
@@ -33,12 +34,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Adapter to bridge different SDK versions. */
-public class CidrGoogleTestUtilAdapter {
-  @Nullable
-  public static PsiElement findGoogleTestSymbol(Project project) {
-    return findGoogleTestSymbol(project, testScopeElement -> true);
-  }
-
+public class CidrGoogleTestUtilAdapter implements GoogleTestUtilAdapter {
   @Nullable
   public static PsiElement findGoogleTestSymbol(
       Project project, String suiteName, String testName) {
@@ -132,7 +128,7 @@ public class CidrGoogleTestUtilAdapter {
   }
 
   @Nullable
-  private static PsiElement findGoogleTestSymbol(
+  public PsiElement findGoogleTestSymbol(
       Project project, Predicate<CidrTestScopeElement> predicate) {
     CidrGoogleTestFramework instance = CidrGoogleTestFramework.getInstance();
     FindFirstWithPredicateProcessor<CidrTestScopeElement> processor =

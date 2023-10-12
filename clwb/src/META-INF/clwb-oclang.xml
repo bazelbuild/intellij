@@ -19,6 +19,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
+    <clwb.googleTestUtilAdapter implementation="com.google.idea.blaze.clwb.oclang.run.CidrGoogleTestUtilAdapter"/>
     <TestContextProvider implementation="com.google.idea.blaze.clwb.oclang.run.producers.CppTestContextProvider"/>
   </extensions>
 </idea-plugin>

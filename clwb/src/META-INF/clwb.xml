@@ -19,6 +19,10 @@
   <depends>com.intellij.modules.clion</depends>
   <depends>org.jetbrains.plugins.clion.test.google</depends>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.google.idea.blaze.clwb.googleTestUtilAdapter" interface="com.google.idea.blaze.clwb.run.GoogleTestUtilAdapter"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <consoleFilterProvider implementation="com.google.idea.blaze.clwb.run.BlazeCppPathConsoleFilter$Provider"/>
 
