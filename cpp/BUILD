@@ -25,6 +25,7 @@ java_library(
         "src/com/google/idea/blaze/cpp/includes/*.java",
         "src/com/google/idea/blaze/cpp/syncstatus/*.java",
         "src/com/google/idea/blaze/cpp/navigation/*.java",
+        "src/com/google/idea/blaze/cpp/oclang/*.java",
     ]),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
@@ -40,14 +41,20 @@ java_library(
     ],
 )
 
+stamped_plugin_xml(
+    name = "non_optional_cidr",
+    plugin_xml = "src/META-INF/blaze-cpp.xml",
+)
+
 optional_plugin_xml(
     name = "optional_cidr",
     module = "com.intellij.modules.cidr.lang",
-    plugin_xml = "src/META-INF/blaze-cpp.xml",
+    plugin_xml = "src/META-INF/blaze-cpp-oclang.xml",
 )
 
 intellij_plugin_library(
     name = "plugin_library",
+    plugin_xmls = [":non_optional_cidr"],
     optional_plugin_xmls = [":optional_cidr"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":cpp"],
