@@ -70,6 +70,7 @@ public class QuerySummaryTest {
             new Label(TestData.ROOT_PACKAGE + "/cc:TestClass.cc"),
             new Label(TestData.ROOT_PACKAGE + "/cc:TestClass.h"),
             new Label(TestData.ROOT_PACKAGE + "/cc:BUILD"));
+    assertThat(rule.getCoptsList()).containsExactly("-w");
   }
 
   @Test

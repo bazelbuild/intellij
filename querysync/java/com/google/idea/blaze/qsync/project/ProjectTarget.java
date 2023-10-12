@@ -16,6 +16,7 @@
 package com.google.idea.blaze.qsync.project;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Label;
@@ -51,6 +52,8 @@ public abstract class ProjectTarget implements BuildTarget {
 
   public abstract Optional<String> customPackage();
 
+  public abstract ImmutableList<String> copts();
+
   public abstract ImmutableSet<LanguageClass> languages();
 
   public static Builder builder() {
@@ -69,6 +72,8 @@ public abstract class ProjectTarget implements BuildTarget {
     public abstract ImmutableSet.Builder<Label> runtimeDepsBuilder();
 
     public abstract ImmutableSet.Builder<Label> sourceLabelsBuilder();
+
+    public abstract ImmutableList.Builder<String> coptsBuilder();
 
     public abstract Builder testApp(Label testApp);
 

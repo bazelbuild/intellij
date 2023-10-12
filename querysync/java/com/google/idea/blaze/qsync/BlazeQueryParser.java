@@ -226,6 +226,7 @@ public class BlazeQueryParser {
     }
     graphBuilder.allTargetsBuilder().add(label);
     targetBuilder.languagesBuilder().add(LanguageClass.CC);
+    targetBuilder.coptsBuilder().addAll(rule.getCoptsList());
     ImmutableSet<Label> thisSources =
         expandFileGroupValues(rule.getSourcesList(), rule.getHdrsList());
 

@@ -35,4 +35,5 @@ message Rule {
   string instruments = 10;
   string custom_package = 11;
   repeated string hdrs = 12;
+  repeated string copts = 13;
 }

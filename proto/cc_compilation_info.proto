@@ -24,6 +24,7 @@ message CcToolchainInfo {
   string compiler_executable = 2;
   string cpu = 3;
   string target_name = 4;
+  repeated string built_in_include_directories = 5;
 }
 
 message CcTargetInfo {
