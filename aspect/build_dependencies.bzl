@@ -459,6 +459,7 @@ def _collect_cc_toolchain_info(target):
         cpu = toolchain_info.cpu,
         compiler = toolchain_info.compiler,
         target_name = toolchain_info.target_gnu_system_name,
+        built_in_include_directories = toolchain_info.built_in_include_directories,
     )
     return DependenciesInfo(
         target_to_artifacts = {},

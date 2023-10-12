@@ -178,6 +178,8 @@ public abstract class QuerySummary {
               rule.setManifest(a.getStringValue());
             } else if (a.getName().equals("custom_package")) {
               rule.setCustomPackage(a.getStringValue());
+            } else if (a.getName().equals("copts")) {
+              rule.addAllCopts(a.getStringListValueList());
             }
 
             if (a.getName().equals("test_app")) {
