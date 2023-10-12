@@ -59,13 +59,13 @@ public class BlazeProjectSnapshotBuilder {
   /** {@code Function<ProjectProto.Project, ProjectProto.Project>} that can throw exceptions. */
   @FunctionalInterface
   public interface ProjectProtoTransform {
-    ProjectProto.Project apply(ProjectProto.Project proto, BuildGraphData graph)
+    ProjectProto.Project apply(ProjectProto.Project proto, BuildGraphData graph, Context<?> context)
         throws BuildException;
 
     public static ProjectProtoTransform compose(ProjectProtoTransform... transforms) {
-      return (proto, graph) -> {
+      return (proto, graph, context) -> {
         for (ProjectProtoTransform transform : transforms) {
-          proto = transform.apply(proto, graph);
+          proto = transform.apply(proto, graph, context);
         }
         return proto;
       };
@@ -94,7 +94,7 @@ public class BlazeProjectSnapshotBuilder {
     BuildGraphData graph =
         new BlazeQueryParser(querySummary, context, handledRuleKinds, ccEnabledFlag).parse();
     Project project =
-        projectProtoTransform.apply(graphToProjectConverter.createProject(graph), graph);
+        projectProtoTransform.apply(graphToProjectConverter.createProject(graph), graph, context);
     return BlazeProjectSnapshot.builder()
         .queryData(postQuerySyncData)
         .graph(graph)
