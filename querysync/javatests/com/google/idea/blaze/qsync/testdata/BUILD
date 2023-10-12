@@ -149,12 +149,26 @@ java_library(
     testonly = 1,
     srcs = ["ProjectProtos.java"],
     deps = [
+        ":build_graphs",
         ":testdata",
         "//querysync/java/com/google/idea/blaze/qsync",
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
         "//shared:exception",
+        "@com_google_guava_guava//jar",
+    ],
+)
+
+java_library(
+    name = "build_graphs",
+    testonly = 1,
+    srcs = ["BuildGraphs.java"],
+    deps = [
+        ":testdata",
+        "//querysync/java/com/google/idea/blaze/qsync",
+        "//querysync/java/com/google/idea/blaze/qsync/project",
+        "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
         "@com_google_guava_guava//jar",
     ],
 )

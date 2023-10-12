@@ -18,15 +18,11 @@ package com.google.idea.blaze.qsync.testdata;
 import static com.google.common.util.concurrent.MoreExecutors.newDirectExecutorService;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.EMPTY_PACKAGE_READER;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
-import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 
 import com.google.common.base.Predicates;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.GraphToProjectConverter;
-import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
@@ -57,13 +53,6 @@ public class ProjectProtos {
                 ImmutableSet.of()),
             newDirectExecutorService());
 
-    BuildGraphData buildGraphData =
-        new BlazeQueryParser(
-                getQuerySummary(project),
-                NOOP_CONTEXT,
-                ImmutableSet.of(),
-                Suppliers.ofInstance(true))
-            .parse();
-    return converter.createProject(buildGraphData);
+    return converter.createProject(BuildGraphs.forTestProject(project));
   }
 }
