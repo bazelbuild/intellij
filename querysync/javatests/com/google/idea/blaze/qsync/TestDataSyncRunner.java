@@ -50,7 +50,7 @@ public class TestDataSyncRunner {
   public BlazeProjectSnapshot sync(TestData testProject) throws IOException, BuildException {
     ProjectDefinition projectDefinition =
         ProjectDefinition.create(
-            /* includes= */ ImmutableSet.copyOf(TestData.getRelativeSourcePathsFor(testProject)),
+            /* includes= */ ImmutableSet.copyOf(testProject.getRelativeSourcePaths()),
             /* excludes= */ ImmutableSet.of(),
             /* languageClasses= */ ImmutableSet.of(),
             /* testSources= */ ImmutableSet.of());

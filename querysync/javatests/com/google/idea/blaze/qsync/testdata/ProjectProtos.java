@@ -44,7 +44,7 @@ public class ProjectProtos {
   private ProjectProtos() {}
 
   public static Project forTestProject(TestData project) throws IOException, BuildException {
-    Path workspaceImportDirectory = TestData.getPathFor(project);
+    Path workspaceImportDirectory = project.getQueryOutputPath();
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             EMPTY_PACKAGE_READER,

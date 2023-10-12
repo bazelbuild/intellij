@@ -49,8 +49,7 @@ public class DependencyTrackerImplTest {
                     context,
                     snapshot,
                     Iterables.getOnlyElement(
-                            TestData.getRelativeSourcePathsFor(
-                                TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY))
+                            TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.getRelativeSourcePaths())
                         .resolve(Path.of("TestClassExternalDep.java")))
                 .getUnambiguousTargets()
                 .orElseThrow());
@@ -72,7 +71,7 @@ public class DependencyTrackerImplTest {
                     context,
                     snapshot,
                     Iterables.getOnlyElement(
-                            TestData.getRelativeSourcePathsFor(TestData.JAVA_LIBRARY_MULTI_TARGETS))
+                            TestData.JAVA_LIBRARY_MULTI_TARGETS.getRelativeSourcePaths())
                         .resolve(Path.of("BUILD")))
                 .getUnambiguousTargets()
                 .orElseThrow());
@@ -96,8 +95,7 @@ public class DependencyTrackerImplTest {
                     context,
                     snapshot,
                     Iterables.getOnlyElement(
-                            TestData.getRelativeSourcePathsFor(
-                                TestData.JAVA_LIBRARY_NESTED_PACKAGE))
+                            TestData.JAVA_LIBRARY_NESTED_PACKAGE.getRelativeSourcePaths())
                         .resolve(Path.of("BUILD")))
                 .getUnambiguousTargets()
                 .orElseThrow());
@@ -119,7 +117,7 @@ public class DependencyTrackerImplTest {
                     context,
                     snapshot,
                     Iterables.getOnlyElement(
-                        TestData.getRelativeSourcePathsFor(TestData.JAVA_LIBRARY_NESTED_PACKAGE)))
+                        TestData.JAVA_LIBRARY_NESTED_PACKAGE.getRelativeSourcePaths()))
                 .getUnambiguousTargets()
                 .orElseThrow());
     assertThat(targets).isPresent();

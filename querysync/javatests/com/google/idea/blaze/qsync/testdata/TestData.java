@@ -54,12 +54,12 @@ public enum TestData {
 
   public static final String ROOT_PACKAGE = "//" + ROOT;
 
-  public static Path getPathFor(TestData name) throws IOException {
+  public Path getQueryOutputPath() throws IOException {
     return Path.of(Runfiles.preload().unmapped().rlocation(WORKSPACE_NAME + "/" + ROOT))
-        .resolve(name.toString().toLowerCase(Locale.ROOT));
+        .resolve(name().toLowerCase(Locale.ROOT));
   }
 
-  public static ImmutableList<Path> getRelativeSourcePathsFor(TestData name) {
-    return name.srcPaths.stream().map(ROOT::resolve).collect(toImmutableList());
+  public ImmutableList<Path> getRelativeSourcePaths() {
+    return srcPaths.stream().map(ROOT::resolve).collect(toImmutableList());
   }
 }
