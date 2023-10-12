@@ -46,7 +46,7 @@ public class QuerySyncTestUtils {
       Optional.of(new VcsState("workspaceId", "1", ImmutableSet.of(), Optional.empty()));
 
   public static QuerySummary getQuerySummary(TestData genQueryName) throws IOException {
-    return QuerySummary.create(TestData.getPathFor(genQueryName).toFile());
+    return QuerySummary.create(genQueryName.getQueryOutputPath().toFile());
   }
 
   private static final ImmutableSet<String> JAVA_ROOT_DIRS = ImmutableSet.of("java", "javatests");

@@ -38,7 +38,7 @@ public class QuerySummaryTest {
   @Test
   public void testCreate_javaLibrary_noDeps() throws IOException {
     QuerySummary qs =
-        QuerySummary.create(TestData.getPathFor(TestData.JAVA_LIBRARY_NO_DEPS_QUERY).toFile());
+        QuerySummary.create(TestData.JAVA_LIBRARY_NO_DEPS_QUERY.getQueryOutputPath().toFile());
     Label nodeps = Label.of(TestData.ROOT_PACKAGE + "/nodeps:nodeps");
     assertThat(qs.getRulesMap().keySet()).containsExactly(nodeps);
     Query.Rule rule = qs.getRulesMap().get(nodeps);
@@ -55,7 +55,7 @@ public class QuerySummaryTest {
 
   @Test
   public void testCreate_ccLibrary_noDeps() throws Exception {
-    QuerySummary qs = QuerySummary.create(TestData.getPathFor(TestData.CC_LIBRARY_QUERY).toFile());
+    QuerySummary qs = QuerySummary.create(TestData.CC_LIBRARY_QUERY.getQueryOutputPath().toFile());
     Label cc = Label.of(TestData.ROOT_PACKAGE + "/cc:cc");
     assertThat(qs.getRulesMap().keySet()).containsExactly(cc);
     Query.Rule rule = qs.getRulesMap().get(cc);
@@ -75,7 +75,7 @@ public class QuerySummaryTest {
 
   @Test
   public void testCreate_androidLibrary_manifest() throws IOException {
-    QuerySummary qs = QuerySummary.create(TestData.getPathFor(TestData.ANDROID_LIB_QUERY).toFile());
+    QuerySummary qs = QuerySummary.create(TestData.ANDROID_LIB_QUERY.getQueryOutputPath().toFile());
     Label android = Label.of(TestData.ROOT_PACKAGE + "/android:android");
     assertThat(qs.getRulesMap().keySet()).contains(android);
     Query.Rule rule = qs.getRulesMap().get(android);
@@ -138,7 +138,7 @@ public class QuerySummaryTest {
   @Test
   public void testBuildIncludes() throws IOException {
     QuerySummary qs =
-        QuerySummary.create(TestData.getPathFor(TestData.BUILDINCLUDES_QUERY).toFile());
+        QuerySummary.create(TestData.BUILDINCLUDES_QUERY.getQueryOutputPath().toFile());
     Label buildLabel = Label.of(TestData.ROOT_PACKAGE + "/buildincludes:BUILD");
     assertThat(qs.getSourceFilesMap()).containsKey(buildLabel);
     SourceFile buildSrc = qs.getSourceFilesMap().get(buildLabel);
