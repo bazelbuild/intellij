@@ -1,5 +1,7 @@
 # An IntelliJ plugin for [Bazel](http://bazel.build) projects
 
+This project uses binary bundles licensed under JetBrains User Agreement (https://www.jetbrains.com/legal/docs/toolbox/user/).
+
 This is an early-access version of our Bazel plugins for IntelliJ,
 Android Studio, and CLion.
 
