@@ -82,6 +82,7 @@ def _encode_cc_info_proto(label, cc_info, cc_toolchain_info):
                 include_directories = cc_info.transitive_include_directory,
                 quote_include_directories = cc_info.transitive_quote_include_directory,
                 system_include_directories = cc_info.transitive_system_include_directory,
+                framework_include_directories = cc_info.framework_include_directory,
                 gen_hdrs = cc_info.gen_headers,
                 cc_toolchain_info = cc_toolchain_info,
             ),
