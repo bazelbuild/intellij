@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
+import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcCompilationInfo;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException.ThrowOption;
 import com.google.idea.blaze.base.bazel.BuildSystem;
@@ -49,6 +50,7 @@ import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.protobuf.Message;
 import com.google.protobuf.TextFormat;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -95,6 +97,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
               OutputGroup.AARS,
               OutputGroup.GENSRCS,
               OutputGroup.ARTIFACT_INFO_FILE)
+          .putAll(LanguageClass.CC, OutputGroup.CC_HEADERS, OutputGroup.CC_INFO_FILE)
           .build();
 
   @Override
@@ -200,13 +203,18 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     GroupedOutputArtifacts allArtifacts =
         new GroupedOutputArtifacts(blazeBuildOutputs, outputGroups);
     ImmutableSet.Builder<BuildArtifacts> artifactInfoFilesBuilder = ImmutableSet.builder();
+    ImmutableSet.Builder<CcCompilationInfo> ccInfoBuilder = ImmutableSet.builder();
 
     for (OutputArtifact artifactInfoFile : allArtifacts.get(OutputGroup.ARTIFACT_INFO_FILE)) {
       artifactInfoFilesBuilder.add(readArtifactInfoFile(artifactInfoFile));
     }
+    for (OutputArtifact artifactInfoFile : allArtifacts.get(OutputGroup.CC_INFO_FILE)) {
+      ccInfoBuilder.add(readCcInfoFile(artifactInfoFile));
+    }
     return OutputInfo.create(
         allArtifacts,
         artifactInfoFilesBuilder.build(),
+        ccInfoBuilder.build(),
         blazeBuildOutputs.getTargetsWithErrors().stream()
             .map(Object::toString)
             .map(Label::of)
@@ -215,11 +223,19 @@ public class BazelDependencyBuilder implements DependencyBuilder {
   }
 
   private BuildArtifacts readArtifactInfoFile(BlazeArtifact file) throws BuildException {
+    return readProtoFile(BuildArtifacts.newBuilder(), file).build();
+  }
+
+  private CcCompilationInfo readCcInfoFile(BlazeArtifact file) throws BuildException {
+    return readProtoFile(CcCompilationInfo.newBuilder(), file).build();
+  }
+
+  private <B extends Message.Builder> B readProtoFile(B builder, BlazeArtifact file)
+      throws BuildException {
     try (InputStream inputStream = file.getInputStream()) {
-      BuildArtifacts.Builder builder = BuildArtifacts.newBuilder();
       TextFormat.Parser parser = TextFormat.Parser.newBuilder().build();
       parser.merge(new InputStreamReader(inputStream, UTF_8), builder);
-      return builder.build();
+      return builder;
     } catch (IOException e) {
       throw new BuildException(e);
     }

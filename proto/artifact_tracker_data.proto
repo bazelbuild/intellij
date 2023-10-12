@@ -19,6 +19,8 @@ package blaze;
 // option java_api_version = 2;
 option java_package = "com.google.devtools.intellij.qsync";
 
+import "proto/cc_compilation_info.proto";
+
 // The artifacts built for a given target
 message TargetArtifacts {
   string target = 1;
@@ -49,4 +51,5 @@ message ArtifactTrackerState {
   BuildArtifacts artifact_info = 1;
   CachedArtifacts cached_artifacts = 2;
   int32 version = 3;
+  CcCompilationInfo cc_compilation_info = 4;
 }

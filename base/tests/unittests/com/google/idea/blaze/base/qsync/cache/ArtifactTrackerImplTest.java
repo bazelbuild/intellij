@@ -19,15 +19,14 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.qsync.ArtifactTracker.UpdateResult;
 import com.google.idea.blaze.base.qsync.GroupedOutputArtifacts;
@@ -41,8 +40,7 @@ import com.google.idea.blaze.qsync.project.ProjectPath.Resolver;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.junit.Rule;
@@ -71,20 +69,22 @@ public class ArtifactTrackerImplTest {
     artifactTracker.initialize();
 
     assertThat(
-            testArtifactFetcher.runAndCollectFetches(
-                () ->
-                    artifactTracker.update(
-                        ImmutableSet.of(Label.of("//test:test")),
-                        OutputInfo.builder()
-                            .setOutputGroups(
-                                GroupedOutputArtifacts.builder()
-                                    .putAll(
-                                        OutputGroup.JARS,
-                                        artifactWithNameAndDigest("abc", "abc_digest"),
-                                        artifactWithNameAndDigest("klm", "klm_digest"))
-                                    .build())
-                            .build(),
-                        BlazeContext.create())))
+            testArtifactFetcher
+                .runAndCollectFetches(
+                    () ->
+                        artifactTracker.update(
+                            ImmutableSet.of(Label.of("//test:test")),
+                            OutputInfo.builder()
+                                .setOutputGroups(
+                                    GroupedOutputArtifacts.builder()
+                                        .putAll(
+                                            OutputGroup.JARS,
+                                            artifactWithNameAndDigest("abc", "abc_digest"),
+                                            artifactWithNameAndDigest("klm", "klm_digest"))
+                                        .build())
+                                .build(),
+                            BlazeContext.create()))
+                .keySet())
         .containsExactly("somewhere/abc", "somewhere/klm");
     assertThat(
             artifactTracker.cacheDirectoryManager.getStoredArtifactDigest(
@@ -169,39 +169,43 @@ public class ArtifactTrackerImplTest {
     artifactTracker.initialize();
 
     assertThat(
-            testArtifactFetcher.runAndCollectFetches(
-                () ->
-                    artifactTracker.update(
-                        ImmutableSet.of(Label.of("//test:test")),
-                        OutputInfo.builder()
-                            .setOutputGroups(
-                                GroupedOutputArtifacts.builder()
-                                    .putAll(
-                                        OutputGroup.JARS,
-                                        artifactWithNameAndDigest("abc", "abc_digest"),
-                                        artifactWithNameAndDigest("klm", "klm_digest"))
-                                    .build())
-                            .build(),
-                        BlazeContext.create())))
+            testArtifactFetcher
+                .runAndCollectFetches(
+                    () ->
+                        artifactTracker.update(
+                            ImmutableSet.of(Label.of("//test:test")),
+                            OutputInfo.builder()
+                                .setOutputGroups(
+                                    GroupedOutputArtifacts.builder()
+                                        .putAll(
+                                            OutputGroup.JARS,
+                                            artifactWithNameAndDigest("abc", "abc_digest"),
+                                            artifactWithNameAndDigest("klm", "klm_digest"))
+                                        .build())
+                                .build(),
+                            BlazeContext.create()))
+                .keySet())
         .containsExactly("somewhere/abc", "somewhere/klm");
 
     // Second cache operation.
     assertThat(
-            testArtifactFetcher.runAndCollectFetches(
-                () ->
-                    artifactTracker.update(
-                        ImmutableSet.of(Label.of("//test:test2")),
-                        OutputInfo.builder()
-                            .setOutputGroups(
-                                GroupedOutputArtifacts.builder()
-                                    .putAll(
-                                        OutputGroup.JARS,
-                                        artifactWithNameAndDigest("abc", "abc_digest"),
-                                        artifactWithNameAndDigest("klm", "klm_digest_diff"),
-                                        artifactWithNameAndDigest("xyz", "xyz_digest"))
-                                    .build())
-                            .build(),
-                        BlazeContext.create())))
+            testArtifactFetcher
+                .runAndCollectFetches(
+                    () ->
+                        artifactTracker.update(
+                            ImmutableSet.of(Label.of("//test:test2")),
+                            OutputInfo.builder()
+                                .setOutputGroups(
+                                    GroupedOutputArtifacts.builder()
+                                        .putAll(
+                                            OutputGroup.JARS,
+                                            artifactWithNameAndDigest("abc", "abc_digest"),
+                                            artifactWithNameAndDigest("klm", "klm_digest_diff"),
+                                            artifactWithNameAndDigest("xyz", "xyz_digest"))
+                                        .build())
+                                .build(),
+                            BlazeContext.create()))
+                .keySet())
         .containsExactly("somewhere/klm", "somewhere/xyz");
   }
 
@@ -261,7 +265,7 @@ public class ArtifactTrackerImplTest {
   }
 
   @Test
-  public void library_sources_unbknown_lib() throws Throwable {
+  public void library_sources_unknown_lib() throws Throwable {
     TestArtifactFetcher testArtifactFetcher = new TestArtifactFetcher();
     ArtifactTrackerImpl artifactTracker =
         new ArtifactTrackerImpl(
@@ -301,16 +305,59 @@ public class ArtifactTrackerImplTest {
     assertThat(testSources).isEmpty();
   }
 
+  @Test
+  public void generated_headers() throws Throwable {
+    TestArtifactFetcher testArtifactFetcher = new TestArtifactFetcher();
+    ArtifactTrackerImpl artifactTracker =
+        new ArtifactTrackerImpl(
+            temporaryFolder.getRoot().toPath(),
+            temporaryFolder.getRoot().toPath().resolve("ide_project"),
+            testArtifactFetcher,
+            Resolver.EMPTY_FOR_TESTING,
+            ProjectDefinition.EMPTY);
+    artifactTracker.initialize();
+
+    assertThat(
+            testArtifactFetcher
+                .runAndCollectFetches(
+                    () ->
+                        artifactTracker.update(
+                            ImmutableSet.of(
+                                Label.of("//test:test"), Label.of("//test:anothertest")),
+                            OutputInfo.builder()
+                                .setOutputGroups(
+                                    GroupedOutputArtifacts.builder()
+                                        .putAll(
+                                            OutputGroup.CC_HEADERS,
+                                            TestOutputArtifact.builder()
+                                                .setRelativePath("build-out/path/to/header.h")
+                                                .setDigest("header_digest")
+                                                .build(),
+                                            TestOutputArtifact.builder()
+                                                .setRelativePath(
+                                                    "build-out/path/to/another/header.h")
+                                                .setDigest("anotherheader_digest")
+                                                .build())
+                                        .build())
+                                .build(),
+                            BlazeContext.create()))
+                .values()
+                .stream()
+                .map(artifactTracker.generatedHeadersDirectory::relativize))
+        .containsExactly(
+            Path.of("build-out/path/to/header.h"), Path.of("build-out/path/to/another/header.h"));
+  }
+
   private static class TestArtifactFetcher implements ArtifactFetcher<OutputArtifact> {
 
-    private List<String> collectedArtifactKeyToMetadata = new ArrayList<>();
+    private final Map<String, Path> collectedArtifactOriginToDestPathPap = Maps.newHashMap();
 
-    public ImmutableList<String> runAndCollectFetches(ThrowingRunnable runnable) throws Throwable {
+    public Map<String, Path> runAndCollectFetches(ThrowingRunnable runnable) throws Throwable {
       try {
         runnable.run();
-        return ImmutableList.copyOf(collectedArtifactKeyToMetadata);
+        return ImmutableMap.copyOf(collectedArtifactOriginToDestPathPap);
       } finally {
-        collectedArtifactKeyToMetadata.clear();
+        collectedArtifactOriginToDestPathPap.clear();
       }
     }
 
@@ -323,9 +370,12 @@ public class ArtifactTrackerImplTest {
     public ListenableFuture<?> copy(
         ImmutableMap<? extends OutputArtifact, ArtifactDestination> artifactToDest,
         Context<?> context) {
-      artifactToDest.keySet().stream()
-          .map(OutputArtifactInfo::getRelativePath)
-          .forEach(collectedArtifactKeyToMetadata::add);
+      artifactToDest
+          .entrySet()
+          .forEach(
+              e ->
+                  collectedArtifactOriginToDestPathPap.put(
+                      e.getKey().getRelativePath(), e.getValue().path));
       return Futures.immediateFuture(null);
     }
   }
