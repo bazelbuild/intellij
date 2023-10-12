@@ -47,6 +47,8 @@ public abstract class SyncQueryStats implements QuerySyncOperationStats {
 
   public abstract SyncMode syncMode();
 
+  public abstract Optional<Long> queryResultSizeBytes();
+
   @Override
   public abstract Optional<Duration> totalClockTime();
 
@@ -67,6 +69,8 @@ public abstract class SyncQueryStats implements QuerySyncOperationStats {
     public abstract Builder setQueryFlags(ImmutableList<String> value);
 
     public abstract Builder setSyncMode(SyncMode value);
+
+    public abstract Builder setQueryResultSizeBytes(@Nullable Long value);
 
     public abstract Builder setTotalClockTime(@Nullable Duration value);
 
