@@ -85,6 +85,7 @@ proto_library(
     name = "artifact_tracker_data_proto",
     srcs = ["artifact_tracker_data.proto"],
     deps = [
+        ":cc_compilation_info_proto",
         ":project_data_proto",
         "//third_party/bazel/src/main/protobuf:build_proto",
     ],
@@ -107,6 +108,17 @@ proto_library(
 java_proto_library(
     name = "intellij_plugin_target_deploy_info_java_proto",
     deps = [":intellij_plugin_target_deploy_info_proto"],
+)
+
+proto_library(
+    name = "cc_compilation_info_proto",
+    srcs = ["cc_compilation_info.proto"],
+)
+
+java_proto_library(
+    name = "cc_compilation_info_java_proto",
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
+    deps = [":cc_compilation_info_proto"],
 )
 
 # TODO delete this build rule. Dependants should use the proto targets they use

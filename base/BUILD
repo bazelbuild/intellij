@@ -38,6 +38,7 @@ java_library(
         "//ext:intellijext",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
+        "//proto:cc_compilation_info_java_proto",
         "//proto:proto_deps",
         "//querysync",
         "//sdkcompat",

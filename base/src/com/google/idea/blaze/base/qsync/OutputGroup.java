@@ -20,7 +20,9 @@ public enum OutputGroup {
   JARS("qsync_jars"),
   AARS("qsync_aars"),
   GENSRCS("qsync_gensrcs"),
-  ARTIFACT_INFO_FILE("artifact_info_file");
+  ARTIFACT_INFO_FILE("artifact_info_file"),
+  CC_HEADERS("cc_headers"),
+  CC_INFO_FILE("cc_info_file");
 
   private final String name;
 

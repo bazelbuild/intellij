@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
+import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcCompilationInfo;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.common.Label;
 
@@ -29,10 +30,13 @@ public abstract class OutputInfo {
 
   @VisibleForTesting
   public static final OutputInfo EMPTY =
-      create(GroupedOutputArtifacts.EMPTY, ImmutableSet.of(), ImmutableSet.of(), 0);
+      create(
+          GroupedOutputArtifacts.EMPTY, ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of(), 0);
 
   /** Returns the proto containing details of artifacts per target produced by the aspect. */
   public abstract ImmutableSet<BuildArtifacts> getArtifactInfo();
+
+  public abstract ImmutableSet<CcCompilationInfo> getCcCompilationInfo();
 
   public abstract GroupedOutputArtifacts getOutputGroups();
 
@@ -71,10 +75,12 @@ public abstract class OutputInfo {
   public static OutputInfo create(
       GroupedOutputArtifacts allArtifacts,
       ImmutableSet<BuildArtifacts> artifacts,
+      ImmutableSet<CcCompilationInfo> ccInfo,
       ImmutableSet<Label> targetsWithErrors,
       int exitCode) {
     return new AutoValue_OutputInfo.Builder()
         .setArtifactInfo(artifacts)
+        .setCcCompilationInfo(ccInfo)
         .setOutputGroups(allArtifacts)
         .setTargetsWithErrors(targetsWithErrors)
         .setExitCode(exitCode)
@@ -89,6 +95,8 @@ public abstract class OutputInfo {
     public abstract Builder setArtifactInfo(ImmutableSet<BuildArtifacts> value);
 
     public abstract Builder setArtifactInfo(BuildArtifacts... values);
+
+    public abstract Builder setCcCompilationInfo(ImmutableSet<CcCompilationInfo> value);
 
     public abstract Builder setOutputGroups(GroupedOutputArtifacts artifcts);
 

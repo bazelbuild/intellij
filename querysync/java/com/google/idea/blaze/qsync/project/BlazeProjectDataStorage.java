@@ -27,6 +27,7 @@ public class BlazeProjectDataStorage {
   public static final String RENDER_JARS_DIRECTORY = "renderjars";
   public static final String AAR_DIRECTORY = "aars";
   public static final String GEN_SRC_DIRECTORY = "generated";
+  public static final String GEN_HEADERS_DIRECTORY = "hdrs";
 
   public static final String DEPENDENCIES_LIBRARY = ".dependencies";
 }
