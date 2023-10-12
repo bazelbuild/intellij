@@ -62,6 +62,7 @@ import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestination;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.DownloadTrackingScope;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
@@ -558,7 +559,8 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
 
   @Override
   public ProjectProto.Project updateProjectProto(
-      ProjectProto.Project projectProto, BuildGraphData graph) throws BuildException {
+      ProjectProto.Project projectProto, BuildGraphData graph, Context<?> context)
+      throws BuildException {
     return updateProjectProtoForJavaDeps(projectProto);
   }
 

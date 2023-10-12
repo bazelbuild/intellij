@@ -19,6 +19,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
@@ -49,7 +50,8 @@ public interface ArtifactTracker {
    * <p>When additional artifacts are brought into the IDE they may require additional configuration
    * to be applied to the IDE project.
    */
-  ProjectProto.Project updateProjectProto(ProjectProto.Project projectProto, BuildGraphData graph)
+  ProjectProto.Project updateProjectProto(
+      ProjectProto.Project projectProto, BuildGraphData graph, Context<?> context)
       throws BuildException;
 
   /**
