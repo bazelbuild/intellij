@@ -60,6 +60,7 @@ public class BlazeLightResourceClassService extends BlazeLightResourceClassServi
   private Map<String, PsiPackage> rClassPackages = Maps.newHashMap();
   private Map<String, BlazeRClass> workspaceRClasses = Maps.newHashMap();
   private Set<String> workspaceRClassNames = ImmutableSet.of();
+  private Set<String> workspaceResourcePackages = ImmutableSet.of();
 
   private PsiManager psiManager;
 
@@ -77,6 +78,7 @@ public class BlazeLightResourceClassService extends BlazeLightResourceClassServi
     Map<Module, BlazeRClass> rClassByModuleMap = Maps.newHashMap();
     Map<String, PsiPackage> rClassPackages = Maps.newHashMap();
     Set<String> workspaceRClassNames = ImmutableSet.of();
+    Set<String> workspaceResourcePackages = ImmutableSet.of();
 
     PsiManager psiManager;
 
@@ -101,6 +103,7 @@ public class BlazeLightResourceClassService extends BlazeLightResourceClassServi
       if (!workspaceResourcesFeature.isEnabled()) {
         return;
       }
+      this.workspaceResourcePackages = resourceJavaPackages;
       this.workspaceRClassNames =
           resourceJavaPackages.stream()
               .map(Builder::getQualifiedRClassName)
@@ -129,11 +132,16 @@ public class BlazeLightResourceClassService extends BlazeLightResourceClassServi
     }
   }
 
+  public Set<String> getWorkspaceResourcePackages() {
+    return workspaceResourcePackages;
+  }
+
   public void installRClasses(Builder builder) {
     this.rClasses = builder.rClassMap;
     this.rClassesByModule = builder.rClassByModuleMap;
     this.rClassPackages = builder.rClassPackages;
 
+    this.workspaceResourcePackages = builder.workspaceResourcePackages;
     this.workspaceRClasses = new HashMap<>();
     this.workspaceRClassNames = ImmutableSet.copyOf(builder.workspaceRClassNames);
     this.psiManager = builder.psiManager;
