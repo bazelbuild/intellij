@@ -168,13 +168,13 @@ public class ImportFromWorkspaceProjectViewOption implements BlazeSelectProjectV
     }
     VirtualFile file = files[0];
 
-    if (!FileUtil.startsWith(file.getPath(), fileBrowserRoot.getPath())) {
+    if (!FileUtil.startsWith(file.getPath(), fileBrowserRoot.getPath().replace('\\', '/'))) {
       Messages.showErrorDialog(
           String.format(
               "You must choose a project view file under %s. "
                   + "To use an external project view, please use the 'Copy external' option.",
               fileBrowserRoot.getPath()),
-          "Cannot Use Project View File");
+              String.format("Cannot Use Project View File %s", file.getPath()));
       return;
     }
 

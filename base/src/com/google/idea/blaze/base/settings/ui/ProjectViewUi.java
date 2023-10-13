@@ -184,7 +184,7 @@ public class ProjectViewUi {
         .runWriteAction(
             () -> {
               projectViewEditor.getDocument().setReadOnly(false);
-              projectViewEditor.getDocument().setText(projectViewText);
+              projectViewEditor.getDocument().setText(projectViewText.replace("\r", ""));
             });
     updateTextAreasEnabled();
   }

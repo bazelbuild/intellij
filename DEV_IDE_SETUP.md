@@ -8,11 +8,11 @@ When asked, use the bundled project view file (`ijwb/ijwb.bazelproject`). This w
 - Set the plugin to build with the latest development version by default.
 - Automatically import the relevant target, and exclude the irrelevant ones.
 
-Depending on which JetBrains product you're targetting, you may want to adjust the `--define` flag in the `build_flags` section. For more information on which values you can pass, please refer to [Building the Plugin](README.md#building-the-plugin)
+Depending on which JetBrains product you're targeting, you may want to adjust the `--define` flag in the `build_flags` section. For more information on which values you can pass, please refer to [Building the Plugin](README.md#building-the-plugin)
 
 ## Download and Install the JetBrains Runtime SDK
 
-Most of the time, the IntelliJ Platform Plugin SDK bundled with your IntelliJ installation shuould be enuogh to compile and run the plugin.
+Most of the time, the IntelliJ Platform Plugin SDK bundled with your IntelliJ installation should be enough to compile and run the plugin.
 
 To install it, please head to the SDK menu (`Cmd+;` or `Ctrl+;`), and then to `Platform Settings -> SDKs`.
 
