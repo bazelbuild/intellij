@@ -64,12 +64,13 @@ _intellij_aspect_test_fixture = rule(
     },
 )
 
-def intellij_aspect_test_fixture(name, deps):
+def intellij_aspect_test_fixture(name, deps, transitive_configs = []):
     _intellij_aspect_test_fixture(
         name = name,
         output = name + ".intellij-aspect-test-fixture",
         deps = deps,
         testonly = 1,
+        transitive_configs = transitive_configs,
     )
 
 def test_sources(outs):

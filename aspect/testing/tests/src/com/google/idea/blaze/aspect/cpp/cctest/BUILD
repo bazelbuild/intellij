@@ -12,6 +12,7 @@ cc_test(
 
 intellij_aspect_test_fixture(
     name = "simple_fixture",
+    transitive_configs = ["//command_line_option/fragment:test"],
     deps = [":simple"],
 )
 
