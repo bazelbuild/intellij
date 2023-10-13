@@ -40,6 +40,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.LanguageTextField;
 import com.intellij.ui.LanguageTextField.SimpleDocumentCreator;
 import com.intellij.ui.components.JBLabel;
@@ -184,7 +185,11 @@ public class ProjectViewUi {
         .runWriteAction(
             () -> {
               projectViewEditor.getDocument().setReadOnly(false);
-              projectViewEditor.getDocument().setText(projectViewText.replace("\r", ""));
+              if (SystemInfo.isWindows) {
+                projectViewEditor.getDocument().setText(projectViewText.replace("\r", ""));
+              } else {
+                projectViewEditor.getDocument().setText(projectViewText);
+              }
             });
     updateTextAreasEnabled();
   }
