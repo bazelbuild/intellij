@@ -23,7 +23,7 @@ java_library(
 
 optional_plugin_xml(
     name = "optional_xml",
-    module = "org.jetbrains.plugins.terminal",
+    module = ["org.jetbrains.plugins.terminal"],
     plugin_xml = "src/META-INF/terminal-contents.xml",
 )
 
