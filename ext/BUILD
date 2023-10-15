@@ -78,3 +78,11 @@ test_suite(
         ":IntelliJExtServiceTest",
     ],
 )
+
+config_setting(
+    name = "intellijext_config",
+    values = {
+        "define": "INTELLIJ_EXT=1",
+    },
+    visibility = ["//visibility:public"],
+)
