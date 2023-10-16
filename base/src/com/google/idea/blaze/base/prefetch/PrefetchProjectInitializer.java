@@ -52,7 +52,7 @@ public class PrefetchProjectInitializer implements StartupActivity.DumbAware {
     if (!Blaze.isBlazeProject(project)) {
       return;
     }
-    if (QuerySync.isEnabled()) {
+    if (QuerySync.isEnabled(project)) {
       // TODO(querysync)
       return;
     }
