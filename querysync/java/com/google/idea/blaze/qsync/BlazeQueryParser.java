@@ -61,7 +61,8 @@ public class BlazeQueryParser {
           "_java_lite_grpc_library",
           "kt_grpc_library_helper",
           "java_stubby_library",
-          "aar_import");
+          "aar_import",
+          "java_import");
 
   private static final ImmutableSet<String> JAVA_RULE_TYPES =
       ImmutableSet.of(
