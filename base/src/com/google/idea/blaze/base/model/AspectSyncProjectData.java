@@ -192,6 +192,11 @@ public final class AspectSyncProjectData implements BlazeProjectData {
     return syncState;
   }
 
+  @Override
+  public boolean isQuerySync() {
+    return false;
+  }
+
   public static AspectSyncProjectData loadFromDisk(BuildSystemName buildSystemName, File file)
       throws IOException {
     try (InputStream stream = new GZIPInputStream(new FileInputStream(file))) {

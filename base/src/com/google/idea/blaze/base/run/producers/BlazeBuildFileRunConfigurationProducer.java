@@ -73,10 +73,11 @@ public class BlazeBuildFileRunConfigurationProducer
       BlazeCommandRunConfiguration configuration,
       ConfigurationContext context,
       Ref<PsiElement> sourceElement) {
+    Project project = configuration.getProject();
     BlazeProjectData blazeProjectData =
-        BlazeProjectDataManager.getInstance(configuration.getProject()).getBlazeProjectData();
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     // With query sync we don't need a sync to run a configuration
-    if (blazeProjectData == null && !QuerySync.isEnabled()) {
+    if (blazeProjectData == null && !QuerySync.isEnabled(project)) {
       return false;
     }
     BuildTarget target = getBuildTarget(context);

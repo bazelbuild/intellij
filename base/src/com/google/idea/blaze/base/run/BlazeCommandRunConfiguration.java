@@ -388,7 +388,7 @@ public class BlazeCommandRunConfiguration
     // Our handler check is not valid when we don't have BlazeProjectData.
     if (BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData() == null) {
       // With query sync we don't need a sync to run a configuration
-      if (!QuerySync.isEnabled()) {
+      if (!QuerySync.isEnabled(getProject())) {
         throw new RuntimeConfigurationError(
             "Configuration cannot be run until project has been synced.");
       }

@@ -73,7 +73,7 @@ public class PendingWebTestContext extends TestContext implements PendingRunConf
       return null;
     }
     // TODO(b/274800785): Add query sync support
-    if (QuerySync.isEnabled()) {
+    if (QuerySync.isEnabled(project)) {
       return null;
     }
     ImmutableList<TargetInfo> wrapperTests = getWebTestWrappers(project, target);

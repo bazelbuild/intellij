@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import javax.annotation.Nullable;
@@ -75,9 +74,8 @@ public class InstrumentationInfo {
    */
   @VisibleForTesting
   public static InstrumentationInfo getInstrumentationInfo(
-      Label instrumentationTestLabel, BlazeProjectData projectData)
-      throws InstrumentationParserException {
-    if (QuerySync.isEnabled()) {
+      Label instrumentationTestLabel, BlazeProjectData projectData) {
+    if (projectData.isQuerySync()) {
       ProjectTarget testTarget =
           (ProjectTarget) projectData.getBuildTarget(instrumentationTestLabel);
       if (testTarget == null) {
