@@ -152,4 +152,9 @@ public class QuerySyncProjectData implements BlazeProjectData {
   public SyncState getSyncState() {
     throw new NotSupportedWithQuerySyncException("getSyncState");
   }
+
+  @Override
+  public boolean isQuerySync() {
+    return true;
+  }
 }

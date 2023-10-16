@@ -229,7 +229,7 @@ public class TargetExpressionListUi extends JPanel {
               .add(projectViewSet)
               .build();
 
-      if (QuerySync.isEnabled()) {
+      if (QuerySync.isEnabled(project)) {
         return projectData.targets().stream()
             .map(TargetInfo::getLabel)
             .filter(importRoots::importAsSource)
