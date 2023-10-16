@@ -46,6 +46,8 @@ public class IntelliJExtManager {
   private static final BoolExperiment ISSUETRACKER =
       new BoolExperiment("use.intellij.ext.issuetracker", false);
 
+  private static final BoolExperiment KYTHE = new BoolExperiment("use.intellij.ext.kythe", false);
+
   public static IntelliJExtManager getInstance() {
     return ApplicationManager.getApplication().getService(IntelliJExtManager.class);
   }
@@ -94,5 +96,9 @@ public class IntelliJExtManager {
 
   public boolean isIssueTrackerEnabled() {
     return isEnabled() && ISSUETRACKER.getValue();
+  }
+
+  public boolean isKytheEnabled() {
+    return isEnabled() && KYTHE.getValue();
   }
 }
