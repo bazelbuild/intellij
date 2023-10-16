@@ -6,6 +6,7 @@ proto_library(
     srcs = [
         "intellijext.proto",
         "issuetracker.proto",
+        "kythe.proto",
     ],
 )
 

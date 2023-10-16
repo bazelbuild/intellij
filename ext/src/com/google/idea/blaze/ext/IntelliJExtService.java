@@ -18,7 +18,9 @@ package com.google.idea.blaze.ext;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
 import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
+import com.google.idea.blaze.ext.KytheGrpc.KytheFutureStub;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -133,5 +135,14 @@ public final class IntelliJExtService {
   public IssueTrackerBlockingStub getIssueTrackerService() throws IOException {
     IntelliJExtBlockingStub unused = connect();
     return client.getIssueTrackerService();
+  }
+
+  public KytheFutureStub getKytheService() {
+    try {
+      IntelliJExtBlockingStub unused = connect();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    return client.getKytheService();
   }
 }
