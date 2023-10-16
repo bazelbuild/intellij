@@ -118,7 +118,7 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
   @Override
   @Nullable
   public Iterable<File> getLintRuleJarsOverride() {
-    if (QuerySync.isEnabled()) {
+    if (QuerySync.isEnabled(project)) {
       return ImmutableList.of();
     }
     BlazeProjectData blazeProjectData =

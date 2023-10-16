@@ -36,10 +36,10 @@ public class QuerySyncNodeDecorator implements ProjectViewNodeDecorator {
 
   @Override
   public void decorate(ProjectViewNode<?> node, PresentationData data) {
-    if (!QuerySync.isEnabled()) {
+    Project project = node.getProject();
+    if (!QuerySync.isEnabled(project)) {
       return;
     }
-    Project project = node.getProject();
     if (project == null) {
       return;
     }

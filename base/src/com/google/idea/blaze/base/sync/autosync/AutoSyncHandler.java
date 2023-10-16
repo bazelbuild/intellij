@@ -92,7 +92,7 @@ public class AutoSyncHandler implements ProjectComponent {
       return;
     }
     // TODO(b/278770777): Support auto-sync for query sync
-    if (QuerySync.isEnabled()) {
+    if (QuerySync.isEnabled(project)) {
       return;
     }
     // listen for changes to the VFS

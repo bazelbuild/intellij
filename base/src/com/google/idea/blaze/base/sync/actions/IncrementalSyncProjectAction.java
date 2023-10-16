@@ -40,7 +40,7 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
 
   @Override
   protected void runSync(Project project, AnActionEvent e) {
-    if (QuerySync.isEnabled()) {
+    if (QuerySync.isEnabled(project)) {
       QuerySyncManager qsm = QuerySyncManager.getInstance(project);
       QuerySyncActionStatsScope scope = new QuerySyncActionStatsScope(getClass(), e);
       if (!qsm.isProjectLoaded()) {
@@ -67,7 +67,7 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
     Presentation presentation = e.getPresentation();
     BlazeSyncStatus statusHelper = BlazeSyncStatus.getInstance(project);
     presentation.setEnabled(!statusHelper.syncInProgress());
-    if (QuerySync.isEnabled()) {
+    if (QuerySync.isEnabled(project)) {
       return;
     }
     BlazeSyncStatus.SyncStatus status = statusHelper.getStatus();

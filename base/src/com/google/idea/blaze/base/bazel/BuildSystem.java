@@ -125,7 +125,7 @@ public interface BuildSystem {
    * otherwise returns the standard invoker.
    */
   default BuildInvoker getDefaultInvoker(Project project, BlazeContext context) {
-    if (!QuerySync.isEnabled() && getSyncStrategy(project) == SyncStrategy.PARALLEL) {
+    if (!QuerySync.isEnabled(project) && getSyncStrategy(project) == SyncStrategy.PARALLEL) {
       return getParallelBuildInvoker(project, context).orElse(getBuildInvoker(project, context));
     } else {
       return getBuildInvoker(project, context);

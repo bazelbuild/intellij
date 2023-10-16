@@ -131,7 +131,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
     classFileFinder = new RenderJarClassFileFinder(module);
     sampleDataDirectoryProvider = new BlazeSampleDataDirectoryProvider(module);
     isWorkspaceModule = module.getName().equals(BlazeDataStorage.WORKSPACE_MODULE_NAME);
-    if (QuerySync.isEnabled()) {
+    if (QuerySync.isEnabled(project)) {
       androidExternalLibraryManager =
           new AndroidExternalLibraryManager(
               () -> {
@@ -294,7 +294,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
 
   @Nullable
   private TargetKey getResolvedTarget(GradleCoordinate coordinate) {
-    if (QuerySync.isEnabled()) {
+    if (QuerySync.isEnabled(project)) {
       // TODO (b/262289199): While there is a way of mapping a gradle coordinate to a target,
       //  that is a very tricky practice that while it could be supported with Query Sync, we
       //  should try to avoid it.
@@ -385,7 +385,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
   @Override
   @Nullable
   public Path getDependencyPath(GradleCoordinate coordinate) {
-    if (QuerySync.isEnabled()) {
+    if (QuerySync.isEnabled(project)) {
       Label label = getResolvedLabel(coordinate);
       if (label == null) {
         return null;
@@ -443,7 +443,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
    */
   @Override
   public List<Module> getResourceModuleDependencies() {
-    if (QuerySync.isEnabled()) {
+    if (QuerySync.isEnabled(project)) {
       return ImmutableList.of();
     }
     AndroidResourceModuleRegistry resourceModuleRegistry =
@@ -561,7 +561,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
   }
 
   public Collection<ExternalAndroidLibrary> getDependentLibraries() {
-    if (QuerySync.isEnabled()) {
+    if (QuerySync.isEnabled(project)) {
       return androidExternalLibraryManager.getExternalLibraries();
     }
     BlazeProjectData blazeProjectData =

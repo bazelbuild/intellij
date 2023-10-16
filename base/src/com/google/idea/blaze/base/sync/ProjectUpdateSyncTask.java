@@ -156,7 +156,8 @@ final class ProjectUpdateSyncTask {
     if (syncMode == SyncMode.FULL) {
       return null;
     }
-    Preconditions.checkState(!QuerySync.isEnabled(), "This should only happen in legacy sync");
+    Preconditions.checkState(
+        !QuerySync.isEnabled(project), "This should only happen in legacy sync");
     BlazeProjectData data = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (data == null) {
       return null;
