@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.ext;
 
+import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
 import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
 import io.grpc.ManagedChannel;
@@ -60,5 +61,9 @@ public class IntelliJExtClient {
 
   public IssueTrackerBlockingStub getIssueTrackerService() {
     return IssueTrackerGrpc.newBlockingStub(channel);
+  }
+
+  public BuildServiceFutureStub getBuildService() {
+    return BuildServiceGrpc.newFutureStub(channel);
   }
 }
