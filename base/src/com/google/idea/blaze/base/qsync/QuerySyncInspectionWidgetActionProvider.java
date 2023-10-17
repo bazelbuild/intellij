@@ -63,11 +63,10 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
   @Nullable
   @Override
   public AnAction createAction(@NotNull Editor editor) {
-    Project project = editor.getProject();
-    if (!QuerySync.isEnabled(project)) {
+    if (!QuerySync.isEnabled()) {
       return null;
     }
-    if (!Blaze.isBlazeProject(project)) {
+    if (!Blaze.isBlazeProject(editor.getProject())) {
       return null;
     }
     if (!editor.getEditorKind().equals(EditorKind.MAIN_EDITOR)) {

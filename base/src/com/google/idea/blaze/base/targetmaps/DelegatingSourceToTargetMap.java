@@ -31,7 +31,7 @@ public class DelegatingSourceToTargetMap implements SourceToTargetMap {
   private final Supplier<SourceToTargetMap> delegateSupplier;
 
   public DelegatingSourceToTargetMap(Project project) {
-    if (QuerySync.isEnabled(project)) {
+    if (QuerySync.isEnabled()) {
       delegateSupplier = QuerySyncManager.getInstance(project)::getSourceToTargetMap;
     } else {
       delegateSupplier = Suppliers.ofInstance(new AspectSyncSourceToTargetMap(project));

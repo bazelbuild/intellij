@@ -69,7 +69,7 @@ public class BlazeClassJarProvider implements ClassJarProvider {
   @Override
   public List<File> getModuleExternalLibraries(Module module) {
 
-    if (QuerySync.isEnabled(project)) {
+    if (QuerySync.isEnabled()) {
       // As Query Sync has a single workspace module but multiple resource modules
       // (TODO(b/283282438): for setting up the resources). All render jars are mapped to the same
       // workspace module

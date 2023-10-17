@@ -37,10 +37,10 @@ public class SyncStatusNodeDecorator implements ProjectViewNodeDecorator {
   @Override
   @SuppressWarnings("rawtypes")
   public void decorate(ProjectViewNode node, PresentationData data) {
-    Project project = node.getProject();
-    if (QuerySync.isEnabled(project)) {
+    if (QuerySync.isEnabled()) {
       return;
     }
+    Project project = node.getProject();
     if (project == null) {
       return;
     }

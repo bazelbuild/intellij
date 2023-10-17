@@ -86,7 +86,7 @@ public final class KotlinProjectTraversingService {
       return Optional.empty();
     }
     // TODO(b/271477324): implement for query sync
-    if (QuerySync.isEnabled(project)) {
+    if (QuerySync.isEnabled()) {
       return Optional.empty();
     }
     return findKotlinxCoroutinesTransitiveDep(

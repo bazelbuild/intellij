@@ -15,8 +15,6 @@
  */
 package com.google.idea.blaze.base.sync.data;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncProjectDataManager;
@@ -27,31 +25,30 @@ import javax.annotation.Nullable;
 /** Stores a cache of blaze project data and issues any side effects when that data is updated. */
 public class DelegatingBlazeProjectDataManager implements BlazeProjectDataManager {
 
-  private final Supplier<BlazeProjectDataManager> delegate;
+  private final BlazeProjectDataManager delegate;
 
   public DelegatingBlazeProjectDataManager(Project project) {
-    delegate =
-        Suppliers.memoize(
-            () ->
-                QuerySync.isEnabled(project)
-                    ? new QuerySyncProjectDataManager(project)
-                    : new AspectSyncProjectDataManager(project));
+    if (QuerySync.isEnabled()) {
+      delegate = new QuerySyncProjectDataManager(project);
+    } else {
+      delegate = new AspectSyncProjectDataManager(project);
+    }
   }
 
   @Override
   @Nullable
   public BlazeProjectData getBlazeProjectData() {
-    return delegate.get().getBlazeProjectData();
+    return delegate.getBlazeProjectData();
   }
 
   @Nullable
   @Override
   public BlazeProjectData loadProject(BlazeImportSettings importSettings) {
-    return delegate.get().loadProject(importSettings);
+    return delegate.loadProject(importSettings);
   }
 
   @Override
   public void saveProject(BlazeImportSettings importSettings, BlazeProjectData projectData) {
-    delegate.get().saveProject(importSettings, projectData);
+    delegate.saveProject(importSettings, projectData);
   }
 }
