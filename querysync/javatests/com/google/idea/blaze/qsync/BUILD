@@ -45,6 +45,7 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata:build_graphs",
         "@com_google_guava_guava//jar",
         "@junit//jar",
         "@truth//jar",

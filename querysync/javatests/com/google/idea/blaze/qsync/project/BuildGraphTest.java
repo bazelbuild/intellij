@@ -129,6 +129,8 @@ public class BuildGraphTest {
         .containsExactly(
             Label.of("//" + TESTDATA_ROOT + "/protodep:proto_java_proto_lite"),
             Label.of("//tools/proto/toolchains:javalite"));
+    assertThat(graph.getProtoSourceFiles())
+        .containsExactly(TESTDATA_ROOT.resolve("protodep/testproto.proto"));
   }
 
   @Test

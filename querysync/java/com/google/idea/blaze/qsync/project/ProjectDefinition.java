@@ -27,6 +27,7 @@ import com.google.idea.blaze.qsync.query.QuerySpec;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -150,11 +151,31 @@ public abstract class ProjectDefinition {
   }
 
   public boolean isIncluded(Path workspacePath) {
-    if (projectIncludes().stream().filter(workspacePath::startsWith).findAny().isEmpty()) {
-      // not in any included directory
-      return false;
+    return getIncludingContentRoot(workspacePath).isPresent();
+  }
+
+  /**
+   * Returns the content root containing a workspace-relative path
+   *
+   * @param workspacePath {@link Path} relative to the workspace
+   * @return {@link Optional<Path>} of the content root that contains {@code workspacePath}. Returns
+   *     an empty Optional if no content entry contains {@code workspacePath} or if {@code
+   *     workspacePath} is contained in an excluded directory.
+   */
+  public Optional<Path> getIncludingContentRoot(Path workspacePath) {
+    Optional<Path> contentRoot =
+        projectIncludes().stream().filter(workspacePath::startsWith).findAny();
+
+    if (contentRoot.isEmpty()) {
+      return contentRoot;
     }
-    return projectExcludes().stream().filter(workspacePath::startsWith).findAny().isEmpty();
+
+    if (projectExcludes().stream().anyMatch(workspacePath::startsWith)) {
+      // Path is excluded
+      return Optional.empty();
+    }
+
+    return contentRoot;
   }
 
   private static boolean isUnderRootDirectory(Path rootDirectory, Path relativePath) {

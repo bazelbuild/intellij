@@ -25,6 +25,7 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -32,6 +33,7 @@ import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import com.google.idea.blaze.qsync.query.PackageSet;
+import com.google.idea.blaze.qsync.testdata.BuildGraphs;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -704,5 +706,83 @@ public class GraphToProjectConverterTest {
         .isEqualTo(
             "querysync/javatests/com/google/idea/blaze/qsync/testdata/nodeps");
     assertThat(sourceFolder.getIsTest()).isTrue();
+  }
+
+  @Test
+  public void testCreateProject_protoInStandaloneFolder_createsSourceFolder() throws Exception {
+    ImmutableMap<Path, String> sourcePackages = ImmutableMap.of();
+
+    GraphToProjectConverter converter =
+        new GraphToProjectConverter(
+            sourcePackages::get,
+            Predicates.alwaysTrue(),
+            NOOP_CONTEXT,
+            ProjectDefinition.create(
+                ImmutableSet.of(TestData.ROOT.resolve("protoonly")),
+                ImmutableSet.of(),
+                ImmutableSet.of(LanguageClass.JAVA),
+                ImmutableSet.of()),
+            newDirectExecutorService());
+
+    ProjectProto.Project project =
+        converter.createProject(BuildGraphs.forTestProject(TestData.PROTO_ONLY_QUERY));
+    assertThat(project.getModulesCount()).isEqualTo(1);
+    ProjectProto.Module module = project.getModules(0);
+
+    assertThat(module.getContentEntriesCount()).isEqualTo(1);
+    ProjectProto.ContentEntry contentEntry = module.getContentEntries(0);
+    assertThat(contentEntry.getRoot().getPath())
+        .isEqualTo(TestData.ROOT.resolve("protoonly").toString());
+
+    assertThat(contentEntry.getSourcesCount()).isEqualTo(1);
+    ProjectProto.SourceFolder sourceFolder = contentEntry.getSources(0);
+
+    assertThat(sourceFolder.getPath()).isEqualTo(TestData.ROOT.resolve("protoonly").toString());
+  }
+
+  @Test
+  public void testProtoSourceFolders_returnsParentDirectory() throws Exception {
+    ImmutableMap<Path, String> sourcePackages =
+        ImmutableMap.of(Path.of("myproject/java/com/test/Class1.java"), "com.test");
+
+    GraphToProjectConverter converter =
+        new GraphToProjectConverter(
+            sourcePackages::get,
+            Predicates.alwaysTrue(),
+            NOOP_CONTEXT,
+            ProjectDefinition.create(
+                ImmutableSet.of(Path.of("myproject")),
+                ImmutableSet.of(),
+                ImmutableSet.of(LanguageClass.JAVA),
+                ImmutableSet.of()),
+            newDirectExecutorService());
+
+    ImmutableMultimap<Path, Path> additionalProtoSourceFolders =
+        converter.protoSourceFolders(ImmutableSet.of(Path.of("myproject/protos/test.proto")));
+    assertThat(additionalProtoSourceFolders)
+        .containsExactly(Path.of("myproject"), Path.of("protos"));
+  }
+
+  @Test
+  public void testProtoSourceFolders_whenDirectoryIsExcluded_returnsEmpty() throws Exception {
+    ImmutableMap<Path, String> sourcePackages =
+        ImmutableMap.of(Path.of("myproject/java/com/test/Class1.java"), "com.test");
+
+    GraphToProjectConverter converter =
+        new GraphToProjectConverter(
+            sourcePackages::get,
+            Predicates.alwaysTrue(),
+            NOOP_CONTEXT,
+            ProjectDefinition.create(
+                ImmutableSet.of(Path.of("myproject")),
+                ImmutableSet.of(Path.of("myproject/excluded")),
+                ImmutableSet.of(LanguageClass.JAVA),
+                ImmutableSet.of()),
+            newDirectExecutorService());
+
+    ImmutableMultimap<Path, Path> additionalProtoSourceFolders =
+        converter.protoSourceFolders(
+            ImmutableSet.of(Path.of("myproject/excluded/protos/excluded.proto")));
+    assertThat(additionalProtoSourceFolders).isEmpty();
   }
 }
