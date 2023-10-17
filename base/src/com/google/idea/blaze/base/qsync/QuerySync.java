@@ -56,10 +56,12 @@ public class QuerySync {
    * application service.
    */
   public static boolean isEnabled(Project project) {
-    return BlazeImportSettingsManager.getInstance(project)
-        .getImportSettings()
-        .getProjectType()
-        .equals(ProjectType.QUERY_SYNC);
+    BlazeImportSettings importSettings =
+        BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    if (importSettings == null) {
+      return isEnabled();
+    }
+    return importSettings.getProjectType().equals(ProjectType.QUERY_SYNC);
   }
 
   public static boolean isComposeEnabled() {
