@@ -15,9 +15,14 @@
  */
 package com.google.idea.blaze.android.projectsystem;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.android.tools.idea.projectsystem.AndroidModuleSystem;
 import com.android.tools.module.ModuleDependencies;
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.openapi.module.Module;
+import java.nio.file.Path;
 
 /** Blaze implementation of {@link AndroidModuleSystem}. */
 public class BlazeModuleSystem extends BlazeModuleSystemBase {
@@ -29,5 +34,24 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
   @Override
   public ModuleDependencies getModuleDependencies() {
     return new BlazeModuleDependencies(getModule());
+  }
+
+  /** Check every supporting extension point if they contain desugaring library config files */
+  @Override
+  public boolean getDesugarLibraryConfigFilesKnown() {
+    return DesugaringLibraryConfigFilesLocator.forBuildSystem(
+            Blaze.getBuildSystemName(module.getProject()))
+        .stream()
+        .anyMatch(provider -> provider.getDesugarLibraryConfigFilesKnown());
+  }
+
+  /** Collect desugarig library config files from every supporting extension and return the list */
+  @Override
+  public ImmutableList<Path> getDesugarLibraryConfigFiles() {
+    return DesugaringLibraryConfigFilesLocator.forBuildSystem(
+            Blaze.getBuildSystemName(module.getProject()))
+        .stream()
+        .flatMap(provider -> provider.getDesugarLibraryConfigFiles(project).stream())
+        .collect(toImmutableList());
   }
 }

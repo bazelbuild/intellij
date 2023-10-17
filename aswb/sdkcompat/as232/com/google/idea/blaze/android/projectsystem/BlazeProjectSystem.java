@@ -60,6 +60,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.sdk.AndroidPlatforms;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -278,8 +279,7 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
 
   @Override
   public Collection<String> getBootClasspath(@NotNull Module module) {
-    // TODO: b/266586669
-    return ImmutableList.of();
+    return AndroidPlatforms.getInstance(module).getTarget().getBootClasspath();
   }
 
   private static boolean hasPackageName(AndroidFacet facet, String packageName) {
