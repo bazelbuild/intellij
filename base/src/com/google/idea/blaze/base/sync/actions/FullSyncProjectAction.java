@@ -32,7 +32,7 @@ public class FullSyncProjectAction extends BlazeProjectSyncAction {
 
   @Override
   protected void runSync(Project project, AnActionEvent e) {
-    if (QuerySync.isEnabled(project)) {
+    if (QuerySync.isEnabled()) {
       QuerySyncManager.getInstance(project).fullSync(new QuerySyncActionStatsScope(getClass(), e));
     } else {
       BlazeSyncManager.getInstance(project).fullProjectSync(/* reason= */ "FullSyncProjectAction");
@@ -47,7 +47,7 @@ public class FullSyncProjectAction extends BlazeProjectSyncAction {
   @Override
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
     super.updateForBlazeProject(project, e);
-    if (QuerySync.isEnabled(project)) {
+    if (QuerySync.isEnabled()) {
       e.getPresentation().setVisible(false);
     }
   }

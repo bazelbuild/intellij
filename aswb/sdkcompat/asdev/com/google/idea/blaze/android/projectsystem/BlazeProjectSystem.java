@@ -146,7 +146,7 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
 
       private SourceProviders createForModel(BlazeAndroidModel model) {
         NamedIdeaSourceProvider mainSourceProvider = model.getDefaultSourceProvider();
-        if (QuerySync.isEnabled(project)) {
+        if (QuerySync.isEnabled()) {
           return new SourceProvidersImpl(
               mainSourceProvider,
               ImmutableList.of(mainSourceProvider),
@@ -251,7 +251,7 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
   @NotNull
   @Override
   public Collection<Module> findModulesWithApplicationId(@NotNull String applicationId) {
-    if (QuerySync.isEnabled(project)) {
+    if (QuerySync.isEnabled()) {
       Module workspaceModule =
           ModuleManager.getInstance(project).findModuleByName(WORKSPACE_MODULE_NAME);
       if (workspaceModule != null) {

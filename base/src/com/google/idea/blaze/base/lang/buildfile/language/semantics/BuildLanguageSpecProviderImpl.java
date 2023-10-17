@@ -62,7 +62,7 @@ public class BuildLanguageSpecProviderImpl implements BuildLanguageSpecProvider 
 
   @Override
   public BuildLanguageSpec getLanguageSpec() {
-    if (QuerySync.isEnabled(project)) {
+    if (QuerySync.isEnabled()) {
       return getLanguageSpecInternal();
     }
 

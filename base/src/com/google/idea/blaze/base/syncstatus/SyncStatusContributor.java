@@ -45,7 +45,7 @@ public interface SyncStatusContributor {
    */
   @Nullable
   static SyncStatus getSyncStatus(Project project, VirtualFile vf) {
-    if (QuerySync.isEnabled(project)) {
+    if (QuerySync.isEnabled()) {
       // TODO(b/260643753) update this for querysync
       return null;
     }

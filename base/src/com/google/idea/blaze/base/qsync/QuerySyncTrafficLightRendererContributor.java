@@ -23,7 +23,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.AnalyzerStatus;
 import com.intellij.openapi.editor.markup.UIController;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,14 +36,13 @@ public class QuerySyncTrafficLightRendererContributor implements TrafficLightRen
   @Override
   @Nullable
   public TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile psiFile) {
-    Project project = psiFile.getProject();
-    if (!QuerySync.isEnabled(project)) {
+    if (!QuerySync.isEnabled()) {
       return null;
     }
-    if (!Blaze.isBlazeProject(project)) {
+    if (!Blaze.isBlazeProject(psiFile.getProject())) {
       return null;
     }
-    return new TrafficLightRenderer(project, editor.getDocument()) {
+    return new TrafficLightRenderer(psiFile.getProject(), editor.getDocument()) {
       @Override
       @NotNull
       public AnalyzerStatus getStatus() {

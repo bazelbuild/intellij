@@ -54,7 +54,7 @@ public class SdkUtil {
   @Nullable
   private static String getAndroidSdkPlatform(Project project, BlazeProjectData blazeProjectData) {
     // TODO(b/271874279): Retrieve sdk from project data
-    if (QuerySync.isEnabled(project)) {
+    if (QuerySync.isEnabled()) {
       ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       if (projectViewSet == null) {
         return null;

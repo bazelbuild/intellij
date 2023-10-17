@@ -48,7 +48,7 @@ public class WorkspacePathResolverProviderImpl implements WorkspacePathResolverP
     if (tempOverride != null) {
       return tempOverride;
     }
-    if (!QuerySync.isEnabled(project)) {
+    if (!QuerySync.isEnabled()) {
       BlazeProjectData projectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
       if (projectData != null) {
