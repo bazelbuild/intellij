@@ -17,6 +17,7 @@ package com.google.idea.blaze.qsync;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.util.Comparator.comparingInt;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -24,6 +25,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
@@ -57,6 +59,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.TreeSet;
@@ -158,6 +161,33 @@ public class GraphToProjectConverter {
     mergeCompatibleSourceRoots(rootToPrefix);
 
     return rootToPrefix;
+  }
+
+  /**
+   * Calculates directories containing proto files.
+   *
+   * @param protoFiles all the proto files in the project
+   * @return mapping of content roots (project includes) to directories (relative to the content
+   *     root) containing proto files.
+   */
+  @VisibleForTesting
+  public ImmutableMultimap<Path, Path> protoSourceFolders(Collection<Path> protoFiles) {
+    ImmutableMultimap.Builder<Path, Path> contentRootToProtoSource = ImmutableMultimap.builder();
+
+    // Calculate all proto directories.
+    ImmutableSet<Path> protoDirectories =
+        protoFiles.stream().map(Path::getParent).filter(Objects::nonNull).collect(toImmutableSet());
+
+    // Separate by project includes
+    for (Path protoDir : protoDirectories) {
+      projectDefinition
+          .getIncludingContentRoot(protoDir)
+          .ifPresent(
+              contentRoot ->
+                  contentRootToProtoSource.put(contentRoot, contentRoot.relativize(protoDir)));
+    }
+
+    return contentRootToProtoSource.build();
   }
 
   @VisibleForTesting
@@ -333,6 +363,8 @@ public class GraphToProjectConverter {
   public ProjectProto.Project createProject(BuildGraphData graph) throws BuildException {
     Map<Path, Map<Path, String>> rootToPrefix =
         calculateRootSources(graph.getJavaSourceFiles(), graph.packages());
+    ImmutableMultimap<Path, Path> rootToProtoSource =
+        protoSourceFolders(graph.getProtoSourceFiles());
     ImmutableSet<Path> dirs = computeAndroidResourceDirectories(graph.getAllSourceFiles());
     ImmutableSet<String> pkgs =
         computeAndroidSourcePackages(graph.getAndroidSourceFiles(), rootToPrefix);
@@ -383,6 +415,21 @@ public class GraphToProjectConverter {
                 .setPackagePrefix(entry.getValue())
                 .setIsTest(testSourceGlobMatcher.matches(path))
                 .build());
+      }
+      for (Path protoDirPath : rootToProtoSource.get(dir)) {
+        if (rootToPrefix.get(dir).keySet().stream()
+            .map(protoDirPath::resolve)
+            .noneMatch(protoDirPath::startsWith)) {
+          Path path = dir.resolve(protoDirPath);
+          // TODO(b/305743519): make java source properties like package prefix specific to java
+          // source folders only.
+          contentEntry.addSources(
+              ProjectProto.SourceFolder.newBuilder()
+                  .setPath(path.toString())
+                  .setPackagePrefix("")
+                  .setIsTest(testSourceGlobMatcher.matches(path))
+                  .build());
+        }
       }
       for (Path exclude : excludesByRootDirectory.get(dir)) {
         contentEntry.addExcludes(exclude.toString());

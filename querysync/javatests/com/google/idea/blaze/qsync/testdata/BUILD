@@ -120,6 +120,18 @@ genquery(
     scope = scopeForCcPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/cc"),
 )
 
+genquery(
+    name = "proto_only_query",
+    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/protoonly:*",
+    opts = ["--output=streamed_proto"],
+    scope =
+        [
+            "//querysync/javatests/com/google/idea/blaze/qsync/testdata/protoonly:BUILD",
+            "//querysync/javatests/com/google/idea/blaze/qsync/testdata/protoonly:proto",
+            "//querysync/javatests/com/google/idea/blaze/qsync/testdata/protoonly:proto_java_proto_lite",
+        ],
+)
+
 java_library(
     name = "testdata",
     srcs = ["TestData.java"],
@@ -137,6 +149,7 @@ java_library(
         ":java_library_no_deps_query",
         ":java_library_proto_dep_query",
         ":java_library_transitive_dep_query",
+        ":proto_only_query",
     ],
     deps = [
         "@bazel_tools//tools/java/runfiles",

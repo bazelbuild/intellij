@@ -26,6 +26,7 @@ import com.google.common.collect.Sets.SetView;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.RuleKinds;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.BuildGraphData.Location;
 import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
@@ -64,28 +65,6 @@ public class BlazeQueryParser {
           "aar_import",
           "java_import");
 
-  private static final ImmutableSet<String> JAVA_RULE_TYPES =
-      ImmutableSet.of(
-          "java_library",
-          "java_binary",
-          "kt_jvm_library_helper",
-          "java_test",
-          "java_proto_library",
-          "java_lite_proto_library",
-          "java_mutable_proto_library",
-          "_java_grpc_library",
-          "_java_lite_grpc_library");
-  private static final ImmutableSet<String> ANDROID_RULE_TYPES =
-      ImmutableSet.of(
-          "android_library",
-          "android_binary",
-          "android_local_test",
-          "android_instrumentation_test",
-          "kt_android_library_helper");
-
-  private static final ImmutableSet<String> CC_RULE_TYPES =
-      ImmutableSet.of("cc_library", "cc_binary", "cc_shared_library", "cc_test");
-
   private final Context<?> context;
   private final SetView<String> alwaysBuildRuleKinds;
   private final Supplier<Boolean> ccEnabledFlag;
@@ -113,11 +92,12 @@ public class BlazeQueryParser {
   }
 
   private static boolean isJavaRule(String ruleClass) {
-    return JAVA_RULE_TYPES.contains(ruleClass) || ANDROID_RULE_TYPES.contains(ruleClass);
+    return RuleKinds.JAVA_RULE_KINDS.contains(ruleClass)
+        || RuleKinds.ANDROID_RULE_KINDS.contains(ruleClass);
   }
 
   private static boolean isCcRule(String ruleClass) {
-    return CC_RULE_TYPES.contains(ruleClass);
+    return RuleKinds.CC_RULE_KINDS.contains(ruleClass);
   }
 
   public BuildGraphData parse() {
@@ -159,6 +139,9 @@ public class BlazeQueryParser {
       if (isCcRule(ruleClass)) {
         visitCcRule(ruleEntry.getKey(), ruleEntry.getValue(), targetBuilder);
       }
+      if (RuleKinds.PROTO_SOURCE_RULE_KINDS.contains(ruleClass)) {
+        visitProtoRule(ruleEntry.getValue(), targetBuilder);
+      }
       if (alwaysBuildRuleKinds.contains(ruleClass)) {
         projectTargetsToBuild.add(ruleEntry.getKey());
       }
@@ -190,6 +173,10 @@ public class BlazeQueryParser {
     return graph;
   }
 
+  private void visitProtoRule(Query.Rule rule, ProjectTarget.Builder targetBuilder) {
+    targetBuilder.sourceLabelsBuilder().addAll(expandFileGroupValues(rule.getSourcesList()));
+  }
+
   private void visitJavaRule(Label label, Query.Rule rule, ProjectTarget.Builder targetBuilder) {
     graphBuilder.allTargetsBuilder().add(label);
     targetBuilder.languagesBuilder().add(LanguageClass.JAVA);
@@ -207,7 +194,7 @@ public class BlazeQueryParser {
     graphBuilder.javaSourcesBuilder().addAll(thisSources);
     javaDeps.addAll(thisDeps);
 
-    if (ANDROID_RULE_TYPES.contains(rule.getRuleClass())) {
+    if (RuleKinds.ANDROID_RULE_KINDS.contains(rule.getRuleClass())) {
       graphBuilder.androidTargetsBuilder().add(label);
 
       // Add android targets with aidl files as external deps so the aspect generates

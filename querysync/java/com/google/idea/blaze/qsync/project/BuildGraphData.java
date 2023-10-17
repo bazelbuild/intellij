@@ -34,6 +34,7 @@ import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.RuleKinds;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import java.nio.file.Path;
 import java.util.AbstractMap.SimpleEntry;
@@ -263,17 +264,36 @@ public abstract class BuildGraphData {
         .collect(toImmutableSet());
   }
 
-  /** Returns a list of all the source files of the project, relative to the workspace root. */
+  /** Returns a list of all the java source files of the project, relative to the workspace root. */
   public List<Path> getJavaSourceFiles() {
-    List<Path> files = new ArrayList<>();
-    for (Label src : javaSources()) {
+    return pathListFromLabels(javaSources());
+  }
+
+  /**
+   * Returns a list of all the proto source files of the project, relative to the workspace root.
+   */
+  @Memoized
+  public List<Path> getProtoSourceFiles() {
+    return pathListFromLabels(protoSources());
+  }
+
+  private ImmutableSet<Label> protoSources() {
+    return targetMap().values().stream()
+        .filter(t -> RuleKinds.PROTO_SOURCE_RULE_KINDS.contains(t.kind()))
+        .flatMap(t -> t.sourceLabels().stream())
+        .collect(toImmutableSet());
+  }
+
+  private List<Path> pathListFromLabels(Collection<Label> labels) {
+    List<Path> paths = new ArrayList<>();
+    for (Label src : labels) {
       Location location = locations().get(src);
       if (location == null) {
         continue;
       }
-      files.add(location.file);
+      paths.add(location.file);
     }
-    return files;
+    return paths;
   }
 
   public List<Path> getAllSourceFiles() {

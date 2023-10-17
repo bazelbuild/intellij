@@ -38,7 +38,8 @@ public enum TestData {
   JAVA_LIBRARY_TRANSITIVE_DEP_QUERY("transitivedep", "externaldep"),
   BUILDINCLUDES_QUERY("buildincludes"),
   FILEGROUP_QUERY("filegroup"),
-  CC_LIBRARY_QUERY("cc");
+  CC_LIBRARY_QUERY("cc"),
+  PROTO_ONLY_QUERY("protoonly");
 
   public final ImmutableList<Path> srcPaths;
 

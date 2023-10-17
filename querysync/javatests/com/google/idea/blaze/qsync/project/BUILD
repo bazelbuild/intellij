@@ -38,3 +38,15 @@ java_test(
         "@truth//jar",
     ],
 )
+
+java_test(
+    name = "ProjectDefinitionTest",
+    size = "small",
+    srcs = ["ProjectDefinitionTest.java"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync/project",
+        "@com_google_guava_guava//jar",
+        "@junit//jar",
+        "@truth//jar",
+    ],
+)
