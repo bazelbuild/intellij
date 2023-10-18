@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.ShardBlazeBuildsSection;
+import com.google.idea.blaze.base.projectview.section.sections.SyncManualTargetsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetShardSizeSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
@@ -87,7 +88,9 @@ public class BlazeBuildTargetSharder {
   }
 
   private static boolean shardingRequested(ProjectViewSet projectViewSet) {
-    return projectViewSet.getScalarValue(ShardBlazeBuildsSection.KEY).orElse(false);
+    // We need to perform expansion of query targets if we are to allow for manual targets to be synced.
+    return projectViewSet.getScalarValue(ShardBlazeBuildsSection.KEY).orElse(false) ||
+            projectViewSet.getScalarValue(SyncManualTargetsSection.KEY).orElse(false);
   }
 
   /** Number of individual targets per blaze build shard. */
