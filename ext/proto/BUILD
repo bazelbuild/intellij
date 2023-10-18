@@ -7,6 +7,7 @@ proto_library(
         "build_service.proto",
         "intellijext.proto",
         "issuetracker.proto",
+        "kythe.proto",
     ],
 )
 

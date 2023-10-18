@@ -18,6 +18,7 @@ package com.google.idea.blaze.ext;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
 import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
+import com.google.idea.blaze.ext.KytheGrpc.KytheFutureStub;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.NettyChannelBuilder;
 import io.netty.channel.ChannelOption;
@@ -62,8 +63,11 @@ public class IntelliJExtClient {
   public IssueTrackerBlockingStub getIssueTrackerService() {
     return IssueTrackerGrpc.newBlockingStub(channel);
   }
-
   public BuildServiceFutureStub getBuildService() {
     return BuildServiceGrpc.newFutureStub(channel);
+  }
+
+  public KytheFutureStub getKytheService() {
+    return KytheGrpc.newFutureStub(channel);
   }
 }
