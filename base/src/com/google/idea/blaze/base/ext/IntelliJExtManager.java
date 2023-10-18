@@ -49,6 +49,8 @@ public class IntelliJExtManager {
   private static final BoolExperiment BUILD_SERVICE =
       new BoolExperiment("use.intellij.ext.buildservice", false);
 
+  private static final BoolExperiment KYTHE = new BoolExperiment("use.intellij.ext.kythe", false);
+
   public static IntelliJExtManager getInstance() {
     return ApplicationManager.getApplication().getService(IntelliJExtManager.class);
   }
@@ -101,5 +103,9 @@ public class IntelliJExtManager {
 
   public boolean isBuildServiceEnabled() {
     return isEnabled() && BUILD_SERVICE.getValue();
+  }
+
+  public boolean isKytheEnabled() {
+    return isEnabled() && KYTHE.getValue();
   }
 }
