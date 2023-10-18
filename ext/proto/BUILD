@@ -9,6 +9,7 @@ proto_library(
         "intellijext.proto",
         "issuetracker.proto",
         "kythe.proto",
+        "languagemodel.proto",
         "linter.proto",
     ],
 )

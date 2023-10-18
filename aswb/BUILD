@@ -148,21 +148,46 @@ java_library(
 )
 
 java_library(
+    name = "languagemodel_lib",
+    srcs = glob(
+        ["src/com/google/idea/blaze/android/languagemodel/*.java"],
+    ),
+    visibility = combine_visibilities(
+        ASWB_SUBPACKAGES_VISIBILITY,
+        TEST_ASWB_SUBPACKAGES_VISIBILITY,
+    ),
+    deps = [
+        "//ext/proto:intellijext_java_proto",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
+        "//intellij_platform_sdk:kotlin",
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+java_library(
     name = "aswb_lib",
     srcs = glob(
         ["src/**/*.java"],
-        # These source files below should be omitted for versions < 2023.1.1.11
-        exclude = ["src/com/google/idea/blaze/android/run/binary/tasks/*.java"],
+        exclude = [
+            # Source files below should be omitted for versions < 2023.1.1.11
+            "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
+            # Source files below are built in the languagemodel_lib target
+            # above and supported for versions >= 2023.2.1.6
+            "src/com/google/idea/blaze/android/languagemodel/*.java",
+        ],
     ) + select_for_plugin_api({
         "android-studio-2022.2": glob(["sdkcompat/as222/**/*.java"]),
         "android-studio-2022.3": glob(["sdkcompat/as223/**/*.java"]),
-        "android-studio-2023.1": glob(["sdkcompat/as231/**/*.java"] + [
+        "android-studio-2023.1": glob([
+            "sdkcompat/as231/**/*.java",
             "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
         ]),
-        "android-studio-2023.2": glob(["sdkcompat/as232/**/*.java"] + [
+        "android-studio-2023.2": glob([
+            "sdkcompat/as232/**/*.java",
             "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
         ]),
-        "android-studio-dev": glob(["sdkcompat/asdev/**/*.java"] + [
+        "android-studio-dev": glob([
+            "sdkcompat/asdev/**/*.java",
             "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
         ]),
     }),
@@ -174,6 +199,7 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
+        "//ext/proto:intellijext_java_proto",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:kotlin",
         "//intellij_platform_sdk:plugin_api",
