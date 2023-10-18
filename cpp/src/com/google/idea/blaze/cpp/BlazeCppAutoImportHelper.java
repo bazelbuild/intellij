@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -44,7 +45,8 @@ public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelper {
     if (rootAndConfiguration.getConfiguration() == null) {
       return false;
     }
-    return Blaze.isBlazeProject(rootAndConfiguration.getConfiguration().getProject());
+    Project project = rootAndConfiguration.getConfiguration().getProject();
+    return Blaze.isBlazeProject(project) && !QuerySync.isEnabled(project);
   }
 
   /**

@@ -17,6 +17,7 @@ package com.google.idea.blaze.cpp;
 
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
@@ -56,7 +57,8 @@ public class BlazeCustomHeaderProvider extends CustomHeaderProvider {
     if (rootAndConfig == null || rootAndConfig.getConfiguration() == null) {
       return false;
     }
-    return Blaze.isBlazeProject(rootAndConfig.getConfiguration().getProject());
+    Project project = rootAndConfig.getConfiguration().getProject();
+    return Blaze.isBlazeProject(project) && !QuerySync.isEnabled(project);
   }
   
   @Nullable
