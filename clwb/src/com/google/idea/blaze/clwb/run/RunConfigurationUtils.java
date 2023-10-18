@@ -30,7 +30,7 @@ public class RunConfigurationUtils {
         || kind == CppBlazeRules.RuleTypes.CC_BINARY.getKind();
   }
 
-  static boolean canUseClionRunner(BlazeCommandRunConfiguration config) {
+  public static boolean canUseClionRunner(BlazeCommandRunConfiguration config) {
     Kind kind = config.getTargetKind();
     BlazeCommandRunConfigurationCommonState handlerState =
         config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);

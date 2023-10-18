@@ -14,7 +14,6 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
-  <depends>com.intellij.modules.cidr.lang</depends>
   <depends>com.intellij.modules.cidr.debugger</depends>
 
   <project-components>
@@ -26,12 +25,14 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.google.idea.blaze.cpp.BlazeCompilerFlagsProcessorProvider"
                     interface="com.google.idea.blaze.cpp.BlazeCompilerFlagsProcessor$Provider"/>
+
+    <extensionPoint qualifiedName="com.google.idea.blaze.cpp.SourceFileFinder"
+                    interface="com.google.idea.blaze.cpp.SourceFileFinder"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.cpp.BlazeCSyncPlugin"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.cpp.CPrefetchFileSource"/>
-    <SyncStatusContributor implementation="com.google.idea.blaze.cpp.syncstatus.CppSyncStatusContributor"/>
     <cpp.BlazeCompilerFlagsProcessorProvider implementation="com.google.idea.blaze.cpp.IncludeRootFlagsProcessor$Provider"/>
     <cpp.BlazeCompilerFlagsProcessorProvider implementation="com.google.idea.blaze.cpp.SysrootFlagsProcessor$Provider"/>
     <TargetKindProvider implementation="com.google.idea.blaze.cpp.CppBlazeRules"/>
@@ -39,9 +40,6 @@
 
   <extensions defaultExtensionNs="cidr.lang">
     <languageKindHelper implementation="com.google.idea.blaze.cpp.BlazeLanguageKindCalculatorHelper"/>
-    <autoImportHelper implementation="com.google.idea.blaze.cpp.BlazeCppAutoImportHelper"/>
-    <customHeaderProvider implementation="com.google.idea.blaze.cpp.BlazeCustomHeaderProvider"/>
-    <includeHelper implementation="com.google.idea.blaze.cpp.BlazeIncludeHelper"/>
     <ownModuleDetector implementation="com.google.idea.blaze.cpp.BlazeOwnModuleDetector"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">

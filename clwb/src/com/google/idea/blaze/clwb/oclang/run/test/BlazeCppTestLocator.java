@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.clwb.run.test;
+package com.google.idea.blaze.clwb.oclang.run.test;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.clwb.CidrGoogleTestUtilAdapter;
+import com.google.idea.blaze.clwb.oclang.run.CidrGoogleTestUtilAdapter;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;

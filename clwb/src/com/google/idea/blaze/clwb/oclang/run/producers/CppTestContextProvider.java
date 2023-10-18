@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.clwb.run.producers;
+package com.google.idea.blaze.clwb.oclang.run.producers;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -25,8 +25,8 @@ import com.google.idea.blaze.base.run.producers.RunConfigurationContext;
 import com.google.idea.blaze.base.run.producers.TestContext;
 import com.google.idea.blaze.base.run.producers.TestContextProvider;
 import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
-import com.google.idea.blaze.clwb.run.test.GoogleTestLocation;
-import com.google.idea.blaze.clwb.run.test.GoogleTestSpecification;
+import com.google.idea.blaze.clwb.oclang.run.test.GoogleTestLocation;
+import com.google.idea.blaze.clwb.oclang.run.test.GoogleTestSpecification;
 import com.google.idea.blaze.cpp.CppBlazeRules.RuleTypes;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;

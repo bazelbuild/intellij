@@ -44,7 +44,6 @@ import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.blaze.clwb.CidrGoogleTestUtilAdapter;
 import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.google.idea.blaze.cpp.CppBlazeRules;
 import com.intellij.execution.ExecutionException;
@@ -296,7 +295,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         && handlerState.getTestFilterFlag() != null
         && !PropertiesComponent.getInstance()
             .getBoolean(DISABLE_BAZEL_GOOGLETEST_FILTER_WARNING, false)
-        && CidrGoogleTestUtilAdapter.findGoogleTestSymbol(getProject()) != null;
+        && GoogleTestUtilAdapter.findGoogleTestSymbol(getProject()) != null;
   }
 
   /**
