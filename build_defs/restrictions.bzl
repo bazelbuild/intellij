@@ -22,6 +22,10 @@ _valid = [
 _allowed = [
 ]
 
+# A list of targets currently with not allowed dependencies
+_existing_violations = [
+]
+
 def _in_set(target, set):
     pkg = target.label.package
     for p in set:
@@ -53,6 +57,13 @@ def _restricted_deps_aspect_impl(target, ctx):
     if invalid:
         tgts = ", ".join([str(t.label) for t in invalid])
         error = "Invalid dependencies for target " + str(target.label) + " [" + tgts + "]\n"
+        error += "For more information see restrictions.bzl"
+        fail(error)
+
+    allowed = [dep for dep in outside_project if _in_set(dep, _allowed)]
+    if allowed and not _in_set(target, _existing_violations):
+        tgts = ", ".join([str(t.label) for t in allowed])
+        error = "Target not allowed to have external dependencies: " + str(target.label) + " [" + tgts + "]\n"
         error += "For more information see restrictions.bzl"
         fail(error)
 
