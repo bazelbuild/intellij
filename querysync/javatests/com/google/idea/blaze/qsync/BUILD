@@ -2,6 +2,7 @@ java_library(
     name = "TestUtils",
     testonly = 1,
     srcs = [
+        "GraphToProjectConverters.java",
         "LoggingContext.java",
         "NoopContext.java",
         "QuerySyncTestUtils.java",
@@ -19,6 +20,7 @@ java_library(
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//shared",
         "//shared:vcs",
+        "//third_party/auto_value",
         "@com_google_guava_guava//jar",
         "@flogger//jar",
         "@flogger_system_backend//jar",
