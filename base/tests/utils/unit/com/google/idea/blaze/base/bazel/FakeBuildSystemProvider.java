@@ -37,7 +37,8 @@ public abstract class FakeBuildSystemProvider implements BuildSystemProvider {
         .setRuleDocumentationUrlFunction(r -> "")
         .setLanguageSupportDocumentationUrlFunction(s -> "")
         .setPossibleBuildFileNames(ImmutableList.of())
-        .setPossibleWorkspaceFileNames(ImmutableList.of());
+        .setPossibleWorkspaceFileNames(ImmutableList.of())
+        .setpossibleModuleFileNames(ImmutableList.of());
   }
 
   @Override
@@ -88,6 +89,13 @@ public abstract class FakeBuildSystemProvider implements BuildSystemProvider {
     return getPossibleWorkspaceFileNames();
   }
 
+  public abstract ImmutableList<String> getPossibleModuleFileNames();
+
+  @Override
+  public ImmutableList<String> possibleModuleFileNames() {
+    return getPossibleModuleFileNames();
+  }
+
   /**
    * Builder for {@link FakeBuildSystemProvider}.
    *
@@ -118,5 +126,7 @@ public abstract class FakeBuildSystemProvider implements BuildSystemProvider {
     public abstract Builder setPossibleBuildFileNames(ImmutableList<String> value);
 
     public abstract Builder setPossibleWorkspaceFileNames(ImmutableList<String> value);
+
+    public abstract Builder setpossibleModuleFileNames(ImmutableList<String> value);
   }
 }

@@ -42,6 +42,7 @@ public class BuildFile extends PsiFileBase implements BuildElement, DocStringOwn
     SkylarkExtension,
     BuildPackage, // "BUILD", "BUILD.bazel"
     Workspace, // the top-level WORKSPACE file
+    MODULE, // the top-level MODULE.bazel file
   }
 
   public static String getBuildFileString(Project project, String filePath) {
@@ -64,11 +65,24 @@ public class BuildFile extends PsiFileBase implements BuildElement, DocStringOwn
 
   public BlazeFileType getBlazeFileType() {
     String fileName = getFileName();
+    switch (fileName) {
+      case "BUILD":
+        return BlazeFileType.BuildPackage;
+      case "WORKSPACE":
+        return BlazeFileType.Workspace;
+      case "MODULE.bazel":
+        return BlazeFileType.MODULE;
+      case "SkylarkExtension":
+        return BlazeFileType.SkylarkExtension;
+    }
     if (fileName.startsWith("BUILD")) {
       return BlazeFileType.BuildPackage;
     }
     if (fileName.startsWith("WORKSPACE")) {
       return BlazeFileType.Workspace;
+    }
+    if (fileName.equals("MODULE.bazel")) {
+      return BlazeFileType.MODULE;
     }
     return BlazeFileType.SkylarkExtension;
   }

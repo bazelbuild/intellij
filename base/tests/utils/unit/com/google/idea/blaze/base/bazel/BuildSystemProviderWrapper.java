@@ -169,6 +169,11 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
     return inner().possibleWorkspaceFileNames();
   }
 
+  @Override
+  public ImmutableList<String> possibleModuleFileNames() {
+    return inner().possibleModuleFileNames();
+  }
+
   /**
    * Sets a boolean value to toggle the outcome of getBlazeInfo() to be returned by {@code
    * getBuildSystem().getBuildInvoker().getBlazeInfo()}.
