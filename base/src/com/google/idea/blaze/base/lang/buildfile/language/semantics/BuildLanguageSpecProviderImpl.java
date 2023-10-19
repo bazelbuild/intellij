@@ -28,10 +28,10 @@ import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.lang.buildfile.sync.LanguageSpecResult;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.protobuf.ExtensionRegistry;
@@ -62,7 +62,7 @@ public class BuildLanguageSpecProviderImpl implements BuildLanguageSpecProvider 
 
   @Override
   public BuildLanguageSpec getLanguageSpec() {
-    if (QuerySync.isEnabled()) {
+    if (!Blaze.getProjectType(project).equals(ProjectType.ASPECT_SYNC)) {
       return getLanguageSpecInternal();
     }
 

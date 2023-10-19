@@ -26,8 +26,9 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -86,7 +87,7 @@ public final class KotlinProjectTraversingService {
       return Optional.empty();
     }
     // TODO(b/271477324): implement for query sync
-    if (QuerySync.isEnabled()) {
+    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
       return Optional.empty();
     }
     return findKotlinxCoroutinesTransitiveDep(

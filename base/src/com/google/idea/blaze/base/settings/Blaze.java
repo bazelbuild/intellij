@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.settings;
 
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -36,10 +37,33 @@ public class Blaze {
     return false;
   }
 
-  /** Returns whether this project was imported from blaze. */
+  /**
+   * Returns whether this project was imported from blaze.
+   *
+   * @deprecated use {@link #getProjectType(Project)}.
+   */
+  @Deprecated
   public static boolean isBlazeProject(@Nullable Project project) {
     return project != null
         && BlazeImportSettingsManager.getInstance(project).getImportSettings() != null;
+  }
+
+  /**
+   * Returns the ProjectType of this imported project. {@code ProjectType.UNKNOWN} will be returned
+   * if th project is not available, not imported from blaze, or we failed to access its import
+   * settings.
+   */
+  public static ProjectType getProjectType(@Nullable Project project) {
+    if (project == null) {
+      return ProjectType.UNKNOWN;
+    }
+
+    BlazeImportSettings blazeImportSettings =
+        BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    if (blazeImportSettings == null) {
+      return ProjectType.UNKNOWN;
+    }
+    return BlazeImportSettingsManager.getInstance(project).getImportSettings().getProjectType();
   }
 
   /**

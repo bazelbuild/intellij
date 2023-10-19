@@ -16,8 +16,9 @@
 package com.google.idea.blaze.base.sync.actions;
 
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -32,7 +33,7 @@ public class FullSyncProjectAction extends BlazeProjectSyncAction {
 
   @Override
   protected void runSync(Project project, AnActionEvent e) {
-    if (QuerySync.isEnabled()) {
+    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
       QuerySyncManager.getInstance(project).fullSync(new QuerySyncActionStatsScope(getClass(), e));
     } else {
       BlazeSyncManager.getInstance(project).fullProjectSync(/* reason= */ "FullSyncProjectAction");
@@ -47,7 +48,7 @@ public class FullSyncProjectAction extends BlazeProjectSyncAction {
   @Override
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
     super.updateForBlazeProject(project, e);
-    if (QuerySync.isEnabled()) {
+    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
       e.getPresentation().setVisible(false);
     }
   }
