@@ -21,7 +21,8 @@ import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.LibraryKey;
-import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LibraryEditor;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
@@ -57,12 +58,12 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
   @Override
   public Collection<AttachSourcesAction> getActions(
       List untypedOrderEntries, final PsiFile psiFile) {
-    if (QuerySync.isEnabled()) {
+    Project project = psiFile.getProject();
+    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
       return ImmutableList.of();
     }
     List<? extends LibraryOrderEntry> orderEntries =
         (List<? extends LibraryOrderEntry>) untypedOrderEntries;
-    Project project = psiFile.getProject();
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
