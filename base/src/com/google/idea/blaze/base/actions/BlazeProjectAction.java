@@ -17,9 +17,7 @@ package com.google.idea.blaze.base.actions;
 
 import static com.google.idea.blaze.base.actions.BlazeProjectAction.QuerySyncStatus.HIDDEN;
 import static com.google.idea.blaze.base.actions.BlazeProjectAction.QuerySyncStatus.REQUIRED;
-import static com.google.idea.blaze.base.actions.BlazeProjectAction.QuerySyncStatus.SUPPORTED;
 
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -66,32 +64,35 @@ public abstract class BlazeProjectAction extends AnAction {
   @Override
   public final void update(AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null || !Blaze.isBlazeProject(project)) {
+    if (project == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    final QuerySyncStatus querySyncStatus = querySyncSupport();
-    if (QuerySync.isEnabled()) {
-      if (querySyncStatus == HIDDEN) {
+    switch (Blaze.getProjectType(project)) {
+      case UNKNOWN:
         e.getPresentation().setEnabledAndVisible(false);
         return;
-      }
-    } else {
-      if (querySyncStatus == REQUIRED) {
-        e.getPresentation().setEnabledAndVisible(false);
-        return;
-      }
+      case QUERY_SYNC:
+        switch (querySyncSupport()) {
+          case HIDDEN:
+          case REQUIRED:
+            e.getPresentation().setEnabledAndVisible(false);
+            return;
+          case DISABLED:
+            e.getPresentation().setVisible(true);
+            e.getPresentation().setEnabled(false);
+            return;
+          case SUPPORTED:
+            e.getPresentation().setEnabledAndVisible(true);
+            break;
+        }
+        break;
+      case ASPECT_SYNC:
+        e.getPresentation().setEnabledAndVisible(true);
+        break;
     }
-
-    e.getPresentation().setEnabledAndVisible(true);
 
     if (!compatibleBuildSystem(project)) {
-      e.getPresentation().setEnabled(false);
-      return;
-    }
-    if (QuerySync.isEnabled() && querySyncStatus != SUPPORTED && querySyncStatus != REQUIRED) {
-      // TODO(b/260643753) disabling all blaze actions for querysync is way too broad, instead we
-      //  should investigate which can be supported and update them accordingly.
       e.getPresentation().setEnabled(false);
       return;
     }

@@ -24,7 +24,8 @@ import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
@@ -61,7 +62,7 @@ class BlazeCreateResourceUtils {
     // Reset the item list before filling it back up.
     resDirComboAndBrowser.getComboBox().removeAllItems();
 
-    if (QuerySync.isEnabled()) {
+    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
       if (contextFile == null) {
         return;
       }

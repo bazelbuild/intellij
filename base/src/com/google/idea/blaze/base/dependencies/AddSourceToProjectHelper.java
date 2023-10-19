@@ -40,8 +40,8 @@ import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeri
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.ui.OpenProjectViewAction;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -335,7 +335,7 @@ class AddSourceToProjectHelper {
   /** Returns the location context related to a source file to be added to the project. */
   @Nullable
   static LocationContext getContext(Project project, VirtualFile file) {
-    if (QuerySync.isEnabled()) {
+    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
       // TODO(b/260643753) understand usages of this, and implement using BlazeProject instead
       // Note the return type LocationContext includes BlazeProjectData to callers will need to
       // change too.
