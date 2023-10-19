@@ -16,12 +16,14 @@
 package com.google.idea.blaze.base.qsync.action;
 
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /** An internal action to reload the querysync project. */
@@ -30,11 +32,12 @@ public class ReloadProject extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation p = e.getPresentation();
-    if (!QuerySync.isEnabled()) {
+    Project project = e.getProject();
+    if (!Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
       p.setVisible(false);
       return;
     }
-    p.setEnabled(!BlazeSyncStatus.getInstance(e.getProject()).syncInProgress());
+    p.setEnabled(!BlazeSyncStatus.getInstance(project).syncInProgress());
   }
 
   @Override

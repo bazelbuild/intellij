@@ -26,7 +26,8 @@ import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,7 +55,7 @@ public class SdkUtil {
   @Nullable
   private static String getAndroidSdkPlatform(Project project, BlazeProjectData blazeProjectData) {
     // TODO(b/271874279): Retrieve sdk from project data
-    if (QuerySync.isEnabled()) {
+    if (!Blaze.getProjectType(project).equals(ProjectType.ASPECT_SYNC)) {
       ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       if (projectViewSet == null) {
         return null;

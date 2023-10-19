@@ -15,40 +15,44 @@
  */
 package com.google.idea.blaze.base.sync.data;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncProjectDataManager;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 
 /** Stores a cache of blaze project data and issues any side effects when that data is updated. */
 public class DelegatingBlazeProjectDataManager implements BlazeProjectDataManager {
 
-  private final BlazeProjectDataManager delegate;
+  private final Supplier<BlazeProjectDataManager> delegate;
 
   public DelegatingBlazeProjectDataManager(Project project) {
-    if (QuerySync.isEnabled()) {
-      delegate = new QuerySyncProjectDataManager(project);
-    } else {
-      delegate = new AspectSyncProjectDataManager(project);
-    }
+    delegate =
+        Suppliers.memoize(
+            () ->
+                Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)
+                    ? new QuerySyncProjectDataManager(project)
+                    : new AspectSyncProjectDataManager(project));
   }
 
   @Override
   @Nullable
   public BlazeProjectData getBlazeProjectData() {
-    return delegate.getBlazeProjectData();
+    return delegate.get().getBlazeProjectData();
   }
 
   @Nullable
   @Override
   public BlazeProjectData loadProject(BlazeImportSettings importSettings) {
-    return delegate.loadProject(importSettings);
+    return delegate.get().loadProject(importSettings);
   }
 
   @Override
   public void saveProject(BlazeImportSettings importSettings, BlazeProjectData projectData) {
-    delegate.saveProject(importSettings, projectData);
+    delegate.get().saveProject(importSettings, projectData);
   }
 }

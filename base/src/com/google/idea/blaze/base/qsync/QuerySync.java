@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.base.Suppliers;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.common.experiments.BoolExperiment;
@@ -35,7 +37,6 @@ public class QuerySync {
   private static final Supplier<Boolean> ENABLED =
       Suppliers.memoize(new BoolExperiment("use.query.sync", false)::getValue);
 
-
   /** Enable compose preview for Query Sync. */
   private static final Supplier<Boolean> COMPOSE_ENABLED =
       Suppliers.memoize(new BoolExperiment("aswb.query.sync.enable.compose", false)::getValue);
@@ -49,7 +50,15 @@ public class QuerySync {
     return ENABLED.get();
   }
 
-  /** Returns whether query sync is enabled for this project. */
+  /**
+   * Returns whether query sync is enabled for this project. Caller needs to make sure {@link
+   * BlazeImportSettings} has been loaded before calling it. Otherwise, caller may receive
+   * unexpected NPE. e.g. {@link BlazeImportSettings} has not been loaded when initializing an
+   * application service.
+   *
+   * @deprecated use {@link Blaze#getProjectType}.
+   */
+  @Deprecated
   public static boolean isEnabled(Project project) {
     return BlazeImportSettingsManager.getInstance(project)
         .getImportSettings()
