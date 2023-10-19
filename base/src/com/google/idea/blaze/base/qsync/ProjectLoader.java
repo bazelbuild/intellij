@@ -238,7 +238,7 @@ public class ProjectLoader {
   private ImmutableSet<String> getHandledRuleKinds() {
     ImmutableSet.Builder<String> defaultRules = ImmutableSet.builder();
     for (HandledRulesProvider ep : HandledRulesProvider.EP_NAME.getExtensionList()) {
-      defaultRules.addAll(ep.handledRuleKinds());
+      defaultRules.addAll(ep.handledRuleKinds(project));
     }
     return defaultRules.build();
   }
