@@ -116,7 +116,7 @@ public class QuerySyncConfigurable extends BoundSearchableConfigurable
                       /* label= */ ((JLabel) null),
                       /* init= */ r -> {
                         enableQuerySyncCheckBoxCell =
-                            r.checkBox("Enable Query Sync")
+                            r.checkBox("Enable Query Sync for new projects")
                                 .enabled(!enabledByExperimentFile)
                                 .bind(
                                     /* componentGet= */ AbstractButton::isSelected,
@@ -144,6 +144,9 @@ public class QuerySyncConfigurable extends BoundSearchableConfigurable
                                     HyperlinkEventAction.HTML_HYPERLINK_INSTANCE);
                         return Unit.INSTANCE;
                       })
+                  // TODO (b/303698519): remove the restart requirement after removing query sync
+                  // experiment checks and only use settings.useQuerySync() to decide if query sync
+                  // is enabled.
                   .comment(
                       enabledByExperimentFile ? "" : "Requires restart",
                       UtilsKt.DEFAULT_COMMENT_WIDTH,
