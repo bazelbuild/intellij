@@ -46,6 +46,8 @@ public class IntelliJExtManager {
   private static final BoolExperiment ISSUETRACKER =
       new BoolExperiment("use.intellij.ext.issuetracker", false);
 
+  private static final BoolExperiment LINTER = new BoolExperiment("use.intellij.ext.linter", false);
+
   private static final BoolExperiment BUILD_SERVICE =
       new BoolExperiment("use.intellij.ext.buildservice", false);
 
@@ -101,6 +103,10 @@ public class IntelliJExtManager {
 
   public boolean isIssueTrackerEnabled() {
     return isEnabled() && ISSUETRACKER.getValue();
+  }
+
+  public boolean isLinterEnabled() {
+    return isEnabled() && LINTER.getValue();
   }
 
   public boolean isBuildServiceEnabled() {
