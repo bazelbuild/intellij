@@ -17,6 +17,7 @@ package com.google.idea.blaze.ext;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
+import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlockingStub;
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
 import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
 import com.google.idea.blaze.ext.KytheGrpc.KytheFutureStub;
@@ -137,6 +138,7 @@ public final class IntelliJExtService {
     IntelliJExtBlockingStub unused = connect();
     return client.getIssueTrackerService();
   }
+
   public BuildServiceFutureStub getBuildService() throws IOException {
     IntelliJExtBlockingStub unused = connect();
     return client.getBuildService();
@@ -149,5 +151,10 @@ public final class IntelliJExtService {
       throw new UncheckedIOException(e);
     }
     return client.getKytheService();
+  }
+
+  public ExperimentsServiceBlockingStub getExperimentsService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getExperimentsService();
   }
 }

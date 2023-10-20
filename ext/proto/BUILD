@@ -5,6 +5,7 @@ proto_library(
     name = "intellijext_proto",
     srcs = [
         "build_service.proto",
+        "experiments.proto",
         "intellijext.proto",
         "issuetracker.proto",
         "kythe.proto",
