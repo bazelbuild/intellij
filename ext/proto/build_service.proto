@@ -76,7 +76,7 @@ message Build {
 
 // Status used for both invocation attempt and overall build completion.
 message BuildStatus {
-  int32 result = 1;
+  Result result = 1;
 
   string final_invocation_id = 3;
 
@@ -84,7 +84,36 @@ message BuildStatus {
 
   string error_message = 5;
 
-  bytes details = 2;
+  Any details = 2;
+
+  enum Result {
+    // Unspecified or unknown.
+    UNKNOWN_STATUS = 0;
+
+    // Build was successful and tests (if requested) all pass.
+    COMMAND_SUCCEEDED = 1;
+
+    // Build error and/or test failure.
+    COMMAND_FAILED = 2;
+
+    // Unable to obtain a result due to input provided by the user.
+    USER_ERROR = 3;
+
+    // Unable to obtain a result due to a failure within the build system.
+    SYSTEM_ERROR = 4;
+
+    // Build required too many resources, such as build tool RAM.
+    RESOURCE_EXHAUSTED = 5;
+
+    // An invocation attempt time exceeded its deadline.
+    INVOCATION_DEADLINE_EXCEEDED = 6;
+
+    // Build request time exceeded the request_deadline
+    REQUEST_DEADLINE_EXCEEDED = 8;
+
+    // The build was cancelled by a call to CancelBuild.
+    CANCELLED = 7;
+  }
 }
 
 // Request to create a build.
@@ -97,6 +126,150 @@ message IntellijCreateBuildRequest {
 // Request to cancel a build.
 message IntellijCancelBuildRequest {
   CancelBuildRequest cancel_build_request = 1;
+}
+
+message WatchBuildRequest {
+  string id = 1;
+  repeated Filter filters = 2;
+  bytes continuation_token = 3;
+  message Filter {
+    string invocation_id = 1;
+    BuildComponent component = 2;
+  }
+}
+
+enum BuildComponent {
+  // Unknown or unspecified; callers should never set this value.
+  BUILD_COMPONENT_UNKNOWN = 0;
+  // A component that coordinates builds.
+  BUILD_COMPONENT_CONTROLLER = 1;
+  // A component that runs executables needed to complete a build.
+  BUILD_COMPONENT_WORKER = 2;
+  // A component that builds something.
+  BUILD_COMPONENT_TOOL = 3;
+}
+// One or more chunks of build event streams.
+message BuildEventBatch {
+  // The ID of the build
+  string build_id = 3;
+
+  // The unique invocation ID within this build.
+  // It should be the same as {invocation} (below) during the migration.
+  string invocation_id = 6;
+  BuildComponent build_component = 4;
+
+  repeated BuildEvent build_event = 5;
+
+  bytes continuation_token = 7;
+}
+
+message BuildEvent {
+  oneof event {
+    // An invocation attempt has started.
+    InvocationAttemptStarted invocation_attempt_started = 51;
+
+    // An invocation attempt has finished.
+    InvocationAttemptFinished invocation_attempt_finished = 52;
+
+    // The build is enqueued.
+    BuildEnqueued build_enqueued = 53;
+
+    // The build has finished. Set when the build is terminated.
+    BuildFinished build_finished = 55;
+
+    // An event containing printed text.
+    ConsoleOutput console_output = 56;
+
+    // Indicates the end of a build event stream (with the same StreamId) from
+    // a build component executing the requested build task.
+    // *** This field does not indicate the WatchBuild RPC is finished. ***
+    BuildComponentStreamFinished component_stream_finished = 59;
+
+    Any bazel_event = 63;
+  }
+
+  // Notification that the build system has attempted to run the build tool.
+  message InvocationAttemptStarted {
+    // The number of the invocation attempt, starting at 1 and increasing by 1
+    // for each new attempt.
+    int64 attempt_number = 1;
+
+    Any details = 2;
+  }
+
+  // Notification that an invocation attempt has finished.
+  message InvocationAttemptFinished {
+    // Final status of the invocation.
+    BuildStatus invocation_status = 3;
+
+    // Arbitrary details about the invocation attempt.
+    Any details = 4;
+  }
+
+  // Notification that the build request is enqueued.
+  message BuildEnqueued {
+    // Additional details about the Build.
+    Any details = 1;
+  }
+
+  // Notification that the build request has finished, and no further
+  // invocations will occur.  Note that this applies to the entire Build.
+  // Individual invocations trigger InvocationFinished when they finish.
+  message BuildFinished {
+    // Final status of the build.
+    BuildStatus status = 1;
+
+    Any details = 2;
+  }
+
+  // Textual output written to standard output or standard error.
+  message ConsoleOutput {
+    // The output stream type.
+    ConsoleOutputStream type = 1;
+
+    // The output stream content.
+    oneof output {
+      // Regular UTF-8 output; normal text.
+      string text_output = 2;
+
+      // Used if the output is not UTF-8 text (for example, a binary proto).
+      bytes binary_output = 3;
+    }
+  }
+
+  // Notification of the end of a build event stream published by a build
+  // component other than CONTROLLER (See StreamId.BuildComponents).
+  message BuildComponentStreamFinished {
+    // How did the event stream finish.
+    enum FinishType {
+      // Unknown or unspecified; callers should never set this value.
+      FINISH_TYPE_UNSPECIFIED = 0;
+      // Set by the event publisher to indicate a build event stream is
+      // finished.
+      FINISH_TYPE_FINISHED = 1;
+      // Set by the WatchBuild RPC server when the publisher of a build event
+      // stream stops publishing events without publishing a
+      // BuildComponentStreamFinished event whose type equals FINISHED.
+      FINISH_TYPE_EXPIRED = 2;
+    }
+    // How the event stream finished.
+    FinishType type = 1;
+  }
+}
+
+message Any {
+  string url = 1;
+  bytes value = 2;
+}
+
+// The type of console output stream.
+enum ConsoleOutputStream {
+  // Unspecified or unknown.
+  OUTPUT_TYPE_UNKNOWN = 0;
+  // Normal output stream.
+  OUTPUT_TYPE_STDOUT = 1;
+  // Error output stream.
+  OUTPUT_TYPE_STDERR = 2;
 }
 
 message Empty {}
