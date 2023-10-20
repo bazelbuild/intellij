@@ -42,6 +42,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -61,7 +62,6 @@ import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
@@ -321,9 +321,7 @@ final class SyncPhaseCoordinator {
     }
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
-    Preconditions.checkState(
-        Blaze.getProjectType(project).equals(ProjectType.ASPECT_SYNC),
-        "This should only happen in legacy sync");
+    Preconditions.checkState(!QuerySync.isEnabled(), "This should only happen in legacy sync");
 
     BlazeProjectData data =
         BlazeProjectDataManager.getInstance(project).loadProject(importSettings);

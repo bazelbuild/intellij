@@ -16,9 +16,9 @@
 package com.google.idea.blaze.base.sync.actions;
 
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
@@ -40,7 +40,7 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
 
   @Override
   protected void runSync(Project project, AnActionEvent e) {
-    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
+    if (QuerySync.isEnabled()) {
       QuerySyncManager qsm = QuerySyncManager.getInstance(project);
       QuerySyncActionStatsScope scope = new QuerySyncActionStatsScope(getClass(), e);
       if (!qsm.isProjectLoaded()) {
@@ -67,7 +67,7 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
     Presentation presentation = e.getPresentation();
     BlazeSyncStatus statusHelper = BlazeSyncStatus.getInstance(project);
     presentation.setEnabled(!statusHelper.syncInProgress());
-    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
+    if (QuerySync.isEnabled()) {
       return;
     }
     BlazeSyncStatus.SyncStatus status = statusHelper.getStatus();
