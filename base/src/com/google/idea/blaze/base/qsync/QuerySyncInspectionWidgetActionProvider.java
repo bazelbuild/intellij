@@ -20,7 +20,6 @@ import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.PopupPosi
 import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurable;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.intellij.icons.AllIcons.Actions;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -64,8 +63,10 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
   @Nullable
   @Override
   public AnAction createAction(@NotNull Editor editor) {
-    Project project = editor.getProject();
-    if (!Blaze.getProjectType(project).equals(ProjectType.ASPECT_SYNC)) {
+    if (!QuerySync.isEnabled()) {
+      return null;
+    }
+    if (!Blaze.isBlazeProject(editor.getProject())) {
       return null;
     }
     if (!editor.getEditorKind().equals(EditorKind.MAIN_EDITOR)) {

@@ -41,8 +41,7 @@ import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
 import com.google.idea.blaze.android.sync.model.idea.BlazeClassJarProvider;
 import com.google.idea.blaze.base.build.BlazeBuildService;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -147,7 +146,7 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
 
       private SourceProviders createForModel(BlazeAndroidModel model) {
         NamedIdeaSourceProvider mainSourceProvider = model.getDefaultSourceProvider();
-        if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
+        if (QuerySync.isEnabled()) {
           return new SourceProvidersImpl(
               mainSourceProvider,
               ImmutableList.of(mainSourceProvider),
@@ -252,7 +251,7 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
   @NotNull
   @Override
   public Collection<Module> findModulesWithApplicationId(@NotNull String applicationId) {
-    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
+    if (QuerySync.isEnabled()) {
       Module workspaceModule =
           ModuleManager.getInstance(project).findModuleByName(WORKSPACE_MODULE_NAME);
       if (workspaceModule != null) {
