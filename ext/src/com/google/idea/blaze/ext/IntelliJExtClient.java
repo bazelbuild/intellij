@@ -20,6 +20,7 @@ import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlocki
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
 import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
 import com.google.idea.blaze.ext.KytheGrpc.KytheFutureStub;
+import com.google.idea.blaze.ext.LinterGrpc.LinterFutureStub;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.NettyChannelBuilder;
 import io.netty.channel.ChannelOption;
@@ -75,5 +76,9 @@ public class IntelliJExtClient {
 
   public ExperimentsServiceBlockingStub getExperimentsService() {
     return ExperimentsServiceGrpc.newBlockingStub(channel);
+  }
+
+  public LinterFutureStub getLinterService() {
+    return LinterGrpc.newFutureStub(channel);
   }
 }

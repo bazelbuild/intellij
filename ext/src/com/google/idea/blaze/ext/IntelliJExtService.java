@@ -21,6 +21,7 @@ import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlocki
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
 import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
 import com.google.idea.blaze.ext.KytheGrpc.KytheFutureStub;
+import com.google.idea.blaze.ext.LinterGrpc.LinterFutureStub;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
@@ -156,5 +157,10 @@ public final class IntelliJExtService {
   public ExperimentsServiceBlockingStub getExperimentsService() throws IOException {
     IntelliJExtBlockingStub unused = connect();
     return client.getExperimentsService();
+  }
+
+  public LinterFutureStub getLinterService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getLinterService();
   }
 }
