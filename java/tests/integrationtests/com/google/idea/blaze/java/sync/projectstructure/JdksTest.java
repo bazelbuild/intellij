@@ -31,7 +31,10 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.containers.MultiMap;
 import java.io.File;
+import java.util.Comparator;
 import java.util.Optional;
+
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -220,6 +223,62 @@ public class JdksTest extends BlazeIntegrationTestCase {
 
     Sdk chosenSdk = Jdks.chooseOrCreateJavaSdk(currentJdk7, LanguageLevel.JDK_1_7);
     assertThat(chosenSdk).isNotEqualTo(currentJdk7);
+  }
+
+  static class LanguageLevelWithPreview {
+    LanguageLevelWithPreview(LanguageLevel stableLevel, LanguageLevel previewLevel){
+      this.stableLevel = stableLevel;
+      this.previewLevel = previewLevel;
+    }
+    private final LanguageLevel stableLevel;
+    private final LanguageLevel previewLevel;
+  }
+
+  @NotNull
+  private static LanguageLevelWithPreview getLatestLevelWithPreview() {
+    return stream(LanguageLevel.values())
+            .filter(it -> it.getPreviewLevel() != null && !it.getPreviewLevel().name().endsWith("_X"))
+            .map(it -> new LanguageLevelWithPreview(it, it.getPreviewLevel()))
+            .max(Comparator.comparingInt(it -> it.stableLevel.toJavaVersion().feature))
+            .orElseThrow(() -> new RuntimeException("Test can't be run, no preview language levels found in this IntelliJ version"));
+  }
+
+  @Test
+  public void testChooseJdkProvidingRequestedPreviewLanguageLevel() {
+    LanguageLevelWithPreview levelToTest = getLatestLevelWithPreview();
+
+    Sdk jdk11 = getUniqueMockJdk(LanguageLevel.JDK_11);
+    Sdk jdkWithPreview = getUniqueMockJdk(levelToTest.stableLevel);
+
+    registerJdkProvider(
+        ImmutableMap.of(
+            LanguageLevel.JDK_11, jdk11,
+            levelToTest.stableLevel, jdkWithPreview));
+
+    setJdkTable(jdk11, jdkWithPreview);
+
+    Sdk chosenSdk = Jdks.chooseOrCreateJavaSdk(jdk11, levelToTest.previewLevel);
+    assertThat(chosenSdk).isNotEqualTo(jdk11);
+    assertThat(chosenSdk).isEqualTo(jdkWithPreview);
+  }
+
+  @Test
+  public void testChoosesJdkProvidingLevelWhenMultipleLevelsProvided() {
+    LanguageLevelWithPreview levelToTest = getLatestLevelWithPreview();
+    Sdk jdk11 = getUniqueMockJdk(LanguageLevel.JDK_11);
+    Sdk jdkWithPreview = getUniqueMockJdk(levelToTest.stableLevel);
+
+    registerJdkProvider(
+        ImmutableMap.of(
+            LanguageLevel.JDK_11, jdk11,
+            levelToTest.stableLevel, jdkWithPreview,
+            levelToTest.previewLevel, jdkWithPreview
+        ));
+
+    setJdkTable(jdk11, jdkWithPreview);
+
+    Sdk chosenSdk = Jdks.chooseOrCreateJavaSdk(jdk11, levelToTest.previewLevel);
+    assertThat(chosenSdk).isEqualTo(jdkWithPreview);
   }
 
   private void setJdkTable(Sdk... jdks) {

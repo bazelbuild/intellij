@@ -18,20 +18,21 @@ package com.google.idea.blaze.base.ui;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.fileChooser.ex.FileLookup.Finder;
 import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFile;
 import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFilter;
 import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder.FileChooserFilter;
-import com.intellij.openapi.fileChooser.ex.LocalFsFinder.IoFile;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder.VfsFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBTextField;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import javax.swing.JTextField;
 
@@ -48,7 +49,7 @@ public final class WorkspaceFileTextField extends FileTextFieldImpl {
     super(textField, new WorkspaceFinder(pathResolver), filter, ImmutableMap.of(), parent);
   }
 
-  public static FileTextField create(
+  public static WorkspaceFileTextField create(
       WorkspacePathResolver pathResolver,
       FileChooserDescriptor descriptor,
       int columns,
@@ -59,10 +60,19 @@ public final class WorkspaceFileTextField extends FileTextFieldImpl {
   }
 
   @Nullable
-  @Override
-  public VirtualFile getSelectedFile() {
+  public VirtualFile getVirtualFile() {
     LookupFile lookupFile = getFile();
-    return lookupFile != null ? ((VfsFile) lookupFile).getFile() : null;
+    if (lookupFile instanceof VfsFile) {
+      return ((VfsFile) lookupFile).getFile();
+    }
+    return null;
+  }
+
+  // Scheduled for removal in a future IJ version.
+  @Override
+  @Nullable
+  public VirtualFile getSelectedFile() {
+    return getVirtualFile();
   }
 
   private static class WorkspaceFinder implements Finder {
@@ -75,13 +85,13 @@ public final class WorkspaceFileTextField extends FileTextFieldImpl {
 
     @Nullable
     @Override
-    public LookupFile find(String path) {
-      File file = new File(normalize(path));
-      VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    public LookupFile find(String filePath) {
+      Path path = Paths.get(normalize(filePath));
+      VirtualFile vFile = LocalFileSystem.getInstance().findFileByNioFile(path);
       if (vFile != null) {
-        return new VfsFile(/* unused LocalFsFinder */ null, vFile);
-      } else if (file.isAbsolute()) {
-        return new IoFile(new File(path));
+        return BaseSdkCompat.getVfsFile(vFile);
+      } else if (path.isAbsolute()) {
+        return BaseSdkCompat.getIoFile(path);
       }
       return null;
     }

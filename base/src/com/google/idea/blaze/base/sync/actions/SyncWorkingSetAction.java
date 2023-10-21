@@ -26,4 +26,9 @@ public class SyncWorkingSetAction extends BlazeProjectSyncAction {
   protected void runSync(Project project, AnActionEvent e) {
     BlazeSyncManager.getInstance(project).workingSetSync(/* reason= */ "SyncWorkingSetAction");
   }
+
+  @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.HIDDEN;
+  }
 }

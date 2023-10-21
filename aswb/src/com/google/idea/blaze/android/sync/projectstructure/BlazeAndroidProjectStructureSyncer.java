@@ -53,10 +53,10 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.BuildFlagsSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -388,7 +388,8 @@ public class BlazeAndroidProjectStructureSyncer {
 
   /**
    * Parses the provided manifest to calculate applicationId. Returns the provided default if the
-   * manifest file does not exist, or is invalid
+   * manifest file does not exist, or is invalid. This method is potentially called concurrently
+   * from background threads so it must be thread safe.
    */
   static String getApplicationIdFromManifestOrDefault(
       Project project,

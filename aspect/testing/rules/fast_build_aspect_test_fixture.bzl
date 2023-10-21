@@ -29,7 +29,7 @@ def _impl(ctx):
         mnemonic = "FastBuildAspectTestFixtureBuilder",
         progress_message = "Building Fast Build Aspect Test Fixture",
     )
-    return struct(
+    return DefaultInfo(
         files = depset([output]),
         runfiles = ctx.runfiles(
             files = [output],
@@ -43,7 +43,7 @@ _fast_build_aspect_test_fixture = rule(
         "output": attr.string(mandatory = True),
         "_fast_build_aspect_test_fixture_builder": attr.label(
             default = Label("//aspect/testing/rules:FastBuildAspectTestFixtureBuilder"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_files = True,
         ),

@@ -129,11 +129,14 @@ public class RunConfigurationSerializer {
     runWithPathVariableSet(
         project,
         () -> {
-          RunnerAndConfigurationSettings settings =
-              RunManagerImpl.getInstanceImpl(project).loadConfiguration(element, false);
+          RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
+          RunnerAndConfigurationSettings settings = runManager.loadConfiguration(element, false);
           RunConfiguration config = settings != null ? settings.getConfiguration() : null;
           if (config instanceof BlazeRunConfiguration) {
             ((BlazeRunConfiguration) config).setKeepInSync(true);
+          }
+          if (runManager.getSelectedConfiguration() == null) {
+            runManager.setSelectedConfiguration(settings);
           }
         });
   }
@@ -148,7 +151,7 @@ public class RunConfigurationSerializer {
       throws InvalidDataException {
     RunManagerImpl manager = RunManagerImpl.getInstanceImpl(project);
     RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(manager);
-    settings.readExternal(element, /* isShared= */ false);
+    settings.readExternal(element, /* isStoredInDotIdeaFolder= */ false);
     RunConfiguration config = settings.getConfiguration();
     if (config == null) {
       return null;

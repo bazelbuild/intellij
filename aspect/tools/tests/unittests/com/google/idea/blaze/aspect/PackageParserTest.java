@@ -23,7 +23,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.devtools.intellij.aspect.Common.ArtifactLocation;
-import com.google.repackaged.bazel.protobuf.MessageLite;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.protobuf.MessageLite;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -51,6 +52,7 @@ public class PackageParserTest {
     private final List<ArtifactLocation> sourceLocations = Lists.newArrayList();
     private StringWriter writer = new StringWriter();
 
+    @CanIgnoreReturnValue
     public MockPackageParserIoProvider addSource(ArtifactLocation source, String javaSrc) {
       try {
         Path path = Paths.get(source.getRootExecutionPathFragment(), source.getRelativePath());

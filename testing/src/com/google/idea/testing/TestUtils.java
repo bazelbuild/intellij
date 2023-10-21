@@ -21,6 +21,7 @@ import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
@@ -115,6 +116,11 @@ public final class TestUtils {
     }
 
     @Override
+    public void invokeLater(Runnable runnable, ModalityState state) {
+      runnable.run();
+    }
+
+    @Override
     public Future<?> executeOnPooledThread(Runnable action) {
       return executor.submit(action);
     }
@@ -125,10 +131,11 @@ public final class TestUtils {
     }
   }
 
-  public static void createMockApplication(Disposable parentDisposable) {
+  public static MockApplication createMockApplication(Disposable parentDisposable) {
     final MyMockApplication instance = new MyMockApplication(parentDisposable);
     ApplicationManager.setApplication(instance, FileTypeManager::getInstance, parentDisposable);
     instance.registerService(EncodingManager.class, EncodingManagerImpl.class);
+    return instance;
   }
 
   public static MockProject mockProject(

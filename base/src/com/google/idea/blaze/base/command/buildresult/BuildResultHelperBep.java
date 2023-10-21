@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
+import com.google.idea.blaze.base.io.InputStreamProvider;
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.BufferedInputStream;
@@ -25,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * Build event protocol implementation to get build results.
@@ -39,6 +42,11 @@ public class BuildResultHelperBep implements BuildResultHelper {
 
   public BuildResultHelperBep() {
     outputFile = BuildEventProtocolUtils.createTempOutputFile();
+  }
+
+  @VisibleForTesting
+  public BuildResultHelperBep(File outputFile) {
+    this.outputFile = outputFile;
   }
 
   @Override
@@ -58,6 +66,24 @@ public class BuildResultHelperBep implements BuildResultHelper {
   }
 
   @Override
+  public BlazeTestResults getTestResults(Optional<String> completedBuildId) {
+    try (InputStream inputStream =
+        new BufferedInputStream(InputStreamProvider.getInstance().forFile(outputFile))) {
+      return BuildEventProtocolOutputReader.parseTestResults(inputStream);
+    } catch (IOException | BuildEventStreamException e) {
+      logger.warn(e);
+      return BlazeTestResults.NO_RESULTS;
+    }
+  }
+
+  @Override
+  public void deleteTemporaryOutputFiles() {
+    if (!outputFile.delete()) {
+      logger.warn("Could not delete BEP output file: " + outputFile);
+    }
+  }
+
+  @Override
   public BuildFlags getBlazeFlags(Optional<String> completedBuildId) throws GetFlagsException {
     try (InputStream inputStream = new BufferedInputStream(new FileInputStream(outputFile))) {
       return BuildFlags.parseBep(inputStream);
@@ -71,6 +97,10 @@ public class BuildResultHelperBep implements BuildResultHelper {
     if (!outputFile.delete()) {
       logger.warn("Could not delete BEP output file: " + outputFile);
     }
+  }
+
+  public File getOutputFile() {
+    return outputFile;
   }
 
   static class Provider implements BuildResultHelperProvider {

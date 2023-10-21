@@ -96,10 +96,22 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
               .setter(BlazeUserSettings::setShowProblemsViewOnRun)
               .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
 
+  private static final ConfigurableSetting<?, ?>  ALLOW_JAVASCRIPT_TESTS =
+          setting("Enable Javascript test configuration producers (Requires application restart to take effect)")
+                  .getter(BlazeUserSettings::isJavascriptTestrunnersEnabled)
+                  .setter(BlazeUserSettings::setJavascriptTestrunnersEnabled)
+                  .componentFactory(SimpleComponent::createCheckBox);
+
   private static final ConfigurableSetting<?, ?> COLLAPSE_PROJECT_VIEW =
       setting("Collapse project view directory roots")
           .getter(BlazeUserSettings::getCollapseProjectView)
           .setter(BlazeUserSettings::setCollapseProjectView)
+          .componentFactory(SimpleComponent::createCheckBox);
+
+  private static final ConfigurableSetting<?, ?> ALWAYS_SELECT_NEWEST_CHILD_TASK =
+      setting("Always select the newest child task in Blaze view")
+          .getter(BlazeUserSettings::getSelectNewestChildTask)
+          .setter(BlazeUserSettings::setSelectNewestChildTask)
           .componentFactory(SimpleComponent::createCheckBox);
 
   private static final ConfigurableSetting<?, ?> FORMAT_BUILD_FILES_ON_SAVE =
@@ -144,9 +156,11 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
           SHOW_CONSOLE_ON_RUN,
           SHOW_PROBLEMS_VIEW_ON_SYNC,
           SHOW_PROBLEMS_VIEW_ON_RUN,
+          ALLOW_JAVASCRIPT_TESTS,
           COLLAPSE_PROJECT_VIEW,
           FORMAT_BUILD_FILES_ON_SAVE,
           SHOW_ADD_FILE_TO_PROJECT,
+          ALWAYS_SELECT_NEWEST_CHILD_TASK,
           BLAZE_BINARY_PATH,
           BAZEL_BINARY_PATH,
           BUILDIFIER_BINARY_PATH);
@@ -173,8 +187,10 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
         getFocusBehaviorSettingsUi(),
         createVerticalPanel(
             COLLAPSE_PROJECT_VIEW,
+            ALLOW_JAVASCRIPT_TESTS,
             FORMAT_BUILD_FILES_ON_SAVE,
             SHOW_ADD_FILE_TO_PROJECT,
+            ALWAYS_SELECT_NEWEST_CHILD_TASK,
             BLAZE_BINARY_PATH,
             BAZEL_BINARY_PATH,
             BUILDIFIER_BINARY_PATH));

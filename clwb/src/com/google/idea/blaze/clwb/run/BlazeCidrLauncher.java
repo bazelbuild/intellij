@@ -18,12 +18,14 @@ package com.google.idea.blaze.clwb.run;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
+import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -31,18 +33,17 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
-import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
 import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
+import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
-import com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider;
+import com.google.idea.blaze.base.run.testlogs.LocalBuildEventProtocolTestFinderStrategy;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.blaze.clwb.CidrGoogleTestUtilAdapter;
 import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.google.idea.blaze.cpp.CppBlazeRules;
 import com.intellij.execution.ExecutionException;
@@ -67,7 +68,6 @@ import com.jetbrains.cidr.execution.TrivialInstaller;
 import com.jetbrains.cidr.execution.TrivialRunParameters;
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
 import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess;
-import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemoteDebugParameters;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemotePathMapping;
 import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestConsoleProperties;
@@ -109,11 +109,23 @@ public final class BlazeCidrLauncher extends CidrLauncher {
   private ProcessHandler createProcess(CommandLineState state, List<String> extraBlazeFlags)
       throws ExecutionException {
     ImmutableList<String> testHandlerFlags = ImmutableList.of();
-    BlazeTestUiSession testUiSession =
-        useTestUi()
-            ? TestUiSessionProvider.getInstance(project)
-                .getTestUiSession(configuration.getTargets())
-            : null;
+    BlazeContext context = BlazeContext.create();
+    BuildInvoker invoker =
+        Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
+    BlazeTestUiSession testUiSession = null;
+    if (useTestUi()
+        && BlazeTestEventsHandler.targetsSupported(project, configuration.getTargets())) {
+      try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
+        testUiSession =
+            BlazeTestUiSession.create(
+                ImmutableList.<String>builder()
+                    .add("--runs_per_test=1")
+                    .add("--flaky_test_attempts=1")
+                    .addAll(buildResultHelper.getBuildFlags())
+                    .build(),
+                new LocalBuildEventProtocolTestFinderStrategy(buildResultHelper));
+      }
+    }
     if (testUiSession != null) {
       testHandlerFlags = testUiSession.getBlazeFlags();
     }
@@ -155,7 +167,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
                     project,
                     projectViewSet,
                     handlerState.getCommandState().getCommand(),
-                    BlazeContext.create(),
+                    context,
                     BlazeInvocationContext.runConfigContext(
                         ExecutorType.fromExecutor(env.getExecutor()),
                         configuration.getType(),
@@ -236,7 +248,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
       TrivialRunParameters parameters =
           new TrivialRunParameters(
               ToolchainUtils.getToolchain().getDebuggerKind() == Kind.BUNDLED_LLDB
-                  ? new LLDBDriverConfiguration()
+                  ? new BlazeLLDBDriverConfiguration(project, workspaceRoot.directory().toPath())
                   : new BlazeGDBDriverConfiguration(project, startupCommands, workspaceRoot),
               installer);
 
@@ -283,7 +295,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         && handlerState.getTestFilterFlag() != null
         && !PropertiesComponent.getInstance()
             .getBoolean(DISABLE_BAZEL_GOOGLETEST_FILTER_WARNING, false)
-        && CidrGoogleTestUtilAdapter.findGoogleTestSymbol(getProject()) != null;
+        && GoogleTestUtilAdapter.findGoogleTestSymbol(getProject()) != null;
   }
 
   /**
@@ -309,13 +321,11 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
   private ImmutableList<Filter> getConsoleFilters() {
     return ImmutableList.of(
-        new BlazeTargetFilter(true),
         new UrlFilter(),
-        new IssueOutputFilter(
+        ToolWindowTaskIssueOutputFilter.createWithDefaultParsers(
             project,
             WorkspaceRoot.fromProject(project),
-            BlazeInvocationContext.ContextType.RunConfiguration,
-            false));
+            BlazeInvocationContext.ContextType.RunConfiguration));
   }
 
   private CidrConsoleBuilder createConsoleBuilder(@Nullable BlazeTestUiSession testUiSession) {

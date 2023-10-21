@@ -16,7 +16,7 @@ load(
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 java_library(
     name = "cpp",
@@ -25,6 +25,7 @@ java_library(
         "src/com/google/idea/blaze/cpp/includes/*.java",
         "src/com/google/idea/blaze/cpp/syncstatus/*.java",
         "src/com/google/idea/blaze/cpp/navigation/*.java",
+        "src/com/google/idea/blaze/cpp/oclang/*.java",
     ]),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
@@ -34,19 +35,26 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//sdkcompat",
+        "//shared",
         "//third_party/auto_value",
         "@error_prone_annotations//jar",
     ],
 )
 
+stamped_plugin_xml(
+    name = "non_optional_cidr",
+    plugin_xml = "src/META-INF/blaze-cpp.xml",
+)
+
 optional_plugin_xml(
     name = "optional_cidr",
     module = "com.intellij.modules.cidr.lang",
-    plugin_xml = "src/META-INF/blaze-cpp.xml",
+    plugin_xml = "src/META-INF/blaze-cpp-oclang.xml",
 )
 
 intellij_plugin_library(
     name = "plugin_library",
+    plugin_xmls = [":non_optional_cidr"],
     optional_plugin_xmls = [":optional_cidr"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":cpp"],
@@ -61,6 +69,18 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "@junit//jar",
+    ],
+)
+
+java_library(
+    name = "mock_xcode_settings_provider",
+    testonly = 1,
+    srcs = ["tests/utils/com/google/idea/blaze/cpp/MockXcodeSettingsProvider.java"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
+    deps = [
+        ":cpp",
+        "//base",
+        "//intellij_platform_sdk:plugin_api",
     ],
 )
 
@@ -95,12 +115,14 @@ intellij_unit_test_suite(
     runtime_deps = ["//intellij_platform_sdk:test_libs"],
     deps = [
         ":cpp",
+        ":mock_xcode_settings_provider",
         "//base",
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ] + select_for_ide(
         clion = [":clion_sysprop_rule"],
@@ -118,6 +140,9 @@ intellij_plugin(
     name = "cpp_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":cpp_plugin_xml",
+    tags = [
+        "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
+    ],
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -140,6 +165,7 @@ java_library(
         "//intellij_platform_sdk:test_libs",
         "//sdkcompat",
         "//testing:lib",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -168,6 +194,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//sdkcompat",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )

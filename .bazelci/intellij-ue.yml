@@ -38,27 +38,27 @@ tasks:
       - //:ijwb_ue_tests
     soft_fail:
       - exit_status: 1
-  IntelliJ-UE-OSS-stable:
-    name: IntelliJ UE OSS Stable
+  IntelliJ-UE-OSS-oldest-stable:
+    name: IntelliJ UE OSS Oldest Stable
     platform: ubuntu1804
     build_flags:
-      - --define=ij_product=intellij-ue-oss-stable
+      - --define=ij_product=intellij-ue-oss-oldest-stable
     build_targets:
       - //ijwb/...
     test_flags:
-      - --define=ij_product=intellij-ue-oss-stable
+      - --define=ij_product=intellij-ue-oss-oldest-stable
       - --test_output=errors
     test_targets:
       - //:ijwb_ue_tests
-  IntelliJ-UE-OSS-beta:
-    name: IntelliJ UE OSS Beta
+  IntelliJ-UE-OSS-latest-stable:
+    name: IntelliJ UE OSS Latest Stable
     platform: ubuntu1804
     build_flags:
-      - --define=ij_product=intellij-ue-oss-beta
+      - --define=ij_product=intellij-ue-oss-latest-stable
     build_targets:
       - //ijwb/...
     test_flags:
-      - --define=ij_product=intellij-ue-oss-beta
+      - --define=ij_product=intellij-ue-oss-latest-stable
       - --test_output=errors
     test_targets:
       - //:ijwb_ue_tests

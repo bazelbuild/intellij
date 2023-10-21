@@ -20,10 +20,14 @@ import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
 import com.google.common.base.Functions;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.Keep;
@@ -46,8 +50,8 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -80,8 +84,11 @@ import javax.annotation.Nullable;
  */
 public final class RemoteOutputsCache {
 
+  static final BoolExperiment useSHA256 =
+      new BoolExperiment("blaze.base.filecache.remoteOutputsCache.sha256.enable", true);
+
   public static RemoteOutputsCache getInstance(Project project) {
-    return ServiceManager.getService(project, RemoteOutputsCache.class);
+    return project.getService(RemoteOutputsCache.class);
   }
 
   private static final Logger logger = Logger.getInstance(RemoteOutputsCache.class);
@@ -173,11 +180,13 @@ public final class RemoteOutputsCache {
           return;
         }
       }
+      ImmutableList<RemoteOutputArtifact> artifactsToDownload =
+          BlazeArtifact.getRemoteArtifacts(updatedOutputs.values());
       ListenableFuture<?> downloadArtifactsFuture =
           RemoteArtifactPrefetcher.getInstance()
               .downloadArtifacts(
-                  /* projectName= */ project.getName(),
-                  /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(updatedOutputs.values()));
+                  /* projectName= */ project.getName(), /* outputArtifacts= */ artifactsToDownload);
+      logger.info(String.format("Prefetching %d output artifacts", artifactsToDownload.size()));
       FutureUtil.waitForFuture(context, downloadArtifactsFuture)
           .timed("PrefetchRemoteOutput", EventType.Prefetching)
           .withProgressMessage("Prefetching output artifacts...")
@@ -216,18 +225,25 @@ public final class RemoteOutputsCache {
    */
   @VisibleForTesting
   static String getCacheKey(RemoteOutputArtifact output) {
-    String key = output.getKey();
+    String key = output.getRelativePath();
     String fileName = PathUtil.getFileName(key);
     List<String> components = Splitter.on('.').limit(2).splitToList(fileName);
     StringBuilder builder =
-        new StringBuilder(components.get(0))
-            .append('_')
-            .append(Integer.toHexString(key.hashCode()));
+        new StringBuilder(components.get(0)).append('_').append(Integer.toHexString(hashKey(key)));
     if (components.size() > 1) {
       // file extension(s)
       builder.append('.').append(components.get(1));
     }
     return builder.toString();
+  }
+
+  private static int hashKey(String key) {
+    if (!useSHA256.getValue()) {
+      return key.hashCode();
+    }
+    Hasher hasher = Hashing.sha256().newHasher();
+    hasher.putString(key, Charsets.UTF_8);
+    return hasher.hash().asInt();
   }
 
   private static File getCacheDir(Project project) {

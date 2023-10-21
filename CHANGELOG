@@ -1,6 +1,190 @@
-v2022.05.31
+v2023.10.10
+===========
+* Fix a bug where C++ debugging is broken after IDE restart on Mac #5420
+
+v2023.09.26
+===========
+* Resolve symbolic links from external workspace to workspace root #5228
+* More details on IJ timings in the log #5325
+
+v2023.09.12
+===========
+* Handle null function returned from CLion code #5248
+* Add managed project to import wizard project view field #5227
+* Sync process optimizations #5219
+
+v2023.08.29
+===========
+* Support embedded go_source rule type in go_test and go_library rules #5205
+* Proper check for git repository #5213
+* Make bazel run configurations dumbaware #5262
+
+v2023.08.15
+===========
+* - Allow to suppress automatic Bazel project opening if .ijwb or so … #5208
+* Support BUILD.bazel files along BUILDin errors parsing #5206
+* Fix detecting custom test_suite macros #5184
+* Do not suggest to add .ijwb and others to project view. #5168
+* Fix the "No display name is specified' error #5196
+* Select source roots for library jars that have interim folders like `… #5117
+
+v2023.08.01
+===========
+* Fix references for repo-relative labels in external workspaces #5164
+* Make the default projectview empty during autoimport and add some com… #5162
+* Allow manual tags to be synced to the project #5085
+* Folding builder #5110
+
+v2023.07.18
+===========
+* We now support C++ strip_include_prefix parameter (done in Resolve _virtual_includes to local or external workspace #5059)
+* "Build dependecies for open files" action adcfaae
+* Aspect-sync to query-sync conversion 3f268d0
+* Open project view file after auto import of project #5088
+
+v2023.07.04
+===========
+* fix(clion): Handle (possibly broken) CommandLineTools installations #5010
+* [query-sync] Support the "Build dependencies" action for directories and BUILD files.
+
+v2023.06.13
+===========
+* fix(cpp): Only register Xcode settings provider on macOS #4976
+* Fix path separator in run configuration generator #4846
+* Add associates to dep attributes #4915
+* Added a registry key to disable passing the extra compiler flags to Bazel when building a C/C++ target in debug mode. #4913
+* Move oldest supported Bazel version to 4.0.0
+
+v2023.05.30
+===========
+* The plugin now supports Xcode toolchain, not only the Xcode Command Line Tools fix(clion): Add Xcode information to Cpp compiler wrapper #4651
+
+v2023.05.16
+===========
+* Improve performance of Java package parser by making it a Bazel worker #3686
+* plugin_dev: Allow plugin development on Windows #4843
+
+v2023.05.02
+===========
+* Fix gdbserver wrapper passing incorrect arguments #4783
+* fix(cc): Run main function-style tests in CLion #4786
+* remove-suppression-of-jest-run-configuration #4647
+
+v2023.04.18
+===========
+* Remove the dependencies on CLion's bundled plugins for Boost tests and Catch tests. #4715
+* plugin_dev: Fix run configuration on Mac OS X #4702
+* fix(clion): Correctly parse copts with spaces in a single string. #4654
+* Fixes Allow setting custom blaze-script file location #4253
+* Fixes Internal errors when synchronizing on a newly created git branch #4609
+* Fixes Partial Query fails on test targets due to input stream reader issue #4738
+
+v2023.04.04
+===========
+* Superclass method test runs run the correct method #4632
+* Internal cleanup.
+
+v2023.03.21
+===========
+* Internal cleanup
+
+v2023.03.07
+===========
+* Pass --path to buildifier when possible #4550
+* Fixes for IJ and CLion 2023.1 (Bump to IntelliJ 231.7864.76 and CLion 231.7864.77 #4541)
+* Internal cleanup
+
+v2023.02.22
+===========
+* Fix ambiguous labels for Go #4470
+* Fix issue with passing of oso_prefix flag with a space when using fish shell on MacOS #4404
+* Resolve external paths to their workspaces #4063
+* Fix broken task names in "Bazel" window in 2023.1 #4400
+
+v2023.02.07
+===========
+* fix(run): Properly expand IntelliJ macros in run configurations #4368
+* Bug fixes and internal cleanup.
+
+v2023.01.24
+===========
+* Allow for more flexibility when reporting test failures #2148
+* Add Scala support to plugin workspace #3553
+* remove site-packages from import string #3808
+* Bazel 'info' command doesn't require target specification #4281
+* Fixes: Syncing is incompatible with bazel-6 #4067
+
+v2023.01.10
+===========
+* Plugin Development: add jsp-base.jar library to run configuration. #4206
+* Check whether the glogin command exists before running it. #4239
+* Mark module as clion's own module #4250
+* Configure the Scala version properly for the Scala plugin #3737
+* fix(go) Correctly identify subscoped tests #4131
+* Extension point to configure the way BlazePyRunConfigurationRunner selects the executable file #4180
+
+v2022.12.13
+===========
+* Remove ProjectFrameUpdater workaround (fixes UI components repeated on titlebar when NewUI is enabled, on 2022.3 EAP #4094)
+* Include implicit dependencies from proto compilers #3248
+* Support Preview Java Language Levels #4061
+
+v2022.11.29
+===========
+* feat: Add gazelle to plugin #3910
+* fix(test-go): add test_env to output all test results #3028
+
+v2022.11.15
+===========
+* Do not include absolute paths in debug build items #4003
+* Build with IJ 223 #4019
+
+v2022.11.01
+===========
+* Enable the Autoscroll to console by default #4006
+* Support Starlark nested function definitions #4035
+* Internal cleanup to support IJ 2022.3
+
+v2022.10.18
+===========
+* Allow running single Scalatest method in IntelliJ
+* Internal cleanup
+
+v2022.10.04
+===========
+* Fix the native rules documentation URL
+* Fix fast-test rerun notification
+
+v2022.09.20
+===========
+* Set project data directory based on IDE product for project auto-import #3901
+* Added registry key to disable project auto-import #3885
+
+v2022.09.07
+===========
+* Restrict printing sponge links of build shards only to blaze builds(fixes #3877)
+
+v2022.08.24
+===========
+* Display Go external libraries in tree structure (currently experimental)
+* Remove --nolaunch_app flag to fix running mobile-install
+* Oldest supported Bazel version will be upgraded to 1.2.0
+
+v2022.08.09
+===========
+* Automatically import projects from directory.
+* Roll out Kotlin coroutines debugging to 50% of users
+* Roll out the new sync window to 50% of users
+* Fix Blaze target highlighting in the integrated terminal
+
+v2022.06.28
 ===========
 * Bug fixes and internal cleanup.
+
+v2022.06.14
+===========
+* Kotlin: Fix the detection of which test target to run for a newly created
+  Kotlin test. This allows the test to be run without requiring a Blaze sync.
 
 v2022.05.03
 ===========

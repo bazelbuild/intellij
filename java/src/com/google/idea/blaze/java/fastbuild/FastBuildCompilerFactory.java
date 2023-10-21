@@ -16,14 +16,13 @@
 package com.google.idea.blaze.java.fastbuild;
 
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.util.Map;
 
 interface FastBuildCompilerFactory {
 
   static FastBuildCompilerFactory getInstance(Project project) {
-    return ServiceManager.getService(project, FastBuildCompilerFactory.class);
+    return project.getService(FastBuildCompilerFactory.class);
   }
 
   FastBuildCompiler getCompilerFor(Label label, Map<Label, FastBuildBlazeData> blazeData)

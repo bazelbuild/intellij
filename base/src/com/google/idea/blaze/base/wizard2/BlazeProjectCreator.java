@@ -15,67 +15,98 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
+import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.ide.SaveAndSyncHandler;
-import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.swing.SwingUtilities;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-class BlazeProjectCreator {
+/** A class that knows how to create IDE projects described by a {@link ProjectBuilder}. */
+@VisibleForTesting
+public class BlazeProjectCreator {
   private static final Logger logger = Logger.getInstance(BlazeProjectCreator.class);
 
-  private final WizardContext wizardContext;
   private final ProjectBuilder projectBuilder;
 
-  BlazeProjectCreator(WizardContext wizardContext, ProjectBuilder projectBuilder) {
-    this.wizardContext = wizardContext;
-    this.projectBuilder = projectBuilder;
-  }
+  /**
+   * A descriptor and reference to a created IDE project together with some metadata that knows how
+   * to open the project in the IDE.
+   */
+  @VisibleForTesting
+  public static class CreatedProjectDescriptor {
+    public final Path ideaProjectPath;
+    public final Project project;
 
-  void createFromWizard() {
-    try {
-      doCreate();
-    } catch (final IOException e) {
-      ApplicationManager.getApplication()
-          .invokeLater(
-              () -> Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed"));
+    public CreatedProjectDescriptor(Path ideaProjectPath, Project project) {
+      this.ideaProjectPath = ideaProjectPath;
+      this.project = project;
+    }
+
+    @VisibleForTesting
+    public void openProject() {
+      ProjectManagerEx.getInstanceEx()
+          .openProject(ideaProjectPath, BaseSdkCompat.createOpenProjectTask(project));
+
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        SaveAndSyncHandler.getInstance().scheduleProjectSave(project);
+      }
     }
   }
 
-  private void doCreate() throws IOException {
-    String projectFilePath = wizardContext.getProjectFileDirectory();
+  public BlazeProjectCreator(ProjectBuilder projectBuilder) {
+    this.projectBuilder = projectBuilder;
+  }
 
+  public void doCreate(
+      String projectFilePath, String projectName, StorageScheme projectStorageFormat)
+      throws IOException {
+
+    CreatedProjectDescriptor createdProjectDescriptor =
+        createProject(projectFilePath, projectName, projectStorageFormat);
+    if (createdProjectDescriptor == null) {
+      return;
+    }
+
+    createdProjectDescriptor.openProject();
+  }
+
+  @Nullable
+  @VisibleForTesting
+  public BlazeProjectCreator.CreatedProjectDescriptor createProject(
+      String projectFilePath, String projectName, StorageScheme projectStorageFormat)
+      throws IOException {
     File projectDir = new File(projectFilePath).getParentFile();
     logger.assertTrue(
         projectDir != null,
         "Cannot create project in '" + projectFilePath + "': no parent file exists");
     FileUtil.ensureExists(projectDir);
-    if (wizardContext.getProjectStorageFormat() == StorageScheme.DIRECTORY_BASED) {
+    if (projectStorageFormat == StorageScheme.DIRECTORY_BASED) {
       final File ideaDir = new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER);
       FileUtil.ensureExists(ideaDir);
     }
 
-    String name = wizardContext.getProjectName();
-    Project newProject = projectBuilder.createProject(name, projectFilePath);
+    Project newProject = projectBuilder.createProject(projectName, projectFilePath);
     if (newProject == null) {
-      return;
+      return null;
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -83,46 +114,44 @@ class BlazeProjectCreator {
     }
 
     if (!projectBuilder.validate(null, newProject)) {
-      return;
+      return null;
     }
 
     projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
 
-    StartupManager.getInstance(newProject)
-        .registerPostStartupActivity(
+    class MyStartup implements Runnable, DumbAware {
+      @Override
+      public void run() {
+        // ensure the dialog is shown after all startup activities are done
+        SwingUtilities.invokeLater(
             () -> {
-              // ensure the dialog is shown after all startup activities are done
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(
-                  () -> {
-                    if (newProject.isDisposed()
-                        || ApplicationManager.getApplication().isUnitTestMode()) {
-                      return;
-                    }
-                    ApplicationManager.getApplication()
-                        .invokeLater(
-                            () -> {
-                              if (newProject.isDisposed()) {
-                                return;
-                              }
-                              final ToolWindow toolWindow =
-                                  ToolWindowManager.getInstance(newProject)
-                                      .getToolWindow(ToolWindowId.PROJECT_VIEW);
-                              if (toolWindow != null) {
-                                toolWindow.activate(null);
-                              }
-                            },
-                            ModalityState.NON_MODAL);
-                  });
+              if (newProject.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
+                return;
+              }
+              ApplicationManager.getApplication()
+                  .invokeLater(
+                      () -> {
+                        if (newProject.isDisposed()) {
+                          return;
+                        }
+                        final ToolWindow toolWindow =
+                            ToolWindowManager.getInstance(newProject)
+                                .getToolWindow(ToolWindowId.PROJECT_VIEW);
+                        if (toolWindow != null) {
+                          toolWindow.activate(null);
+                        }
+                      },
+                      ModalityState.NON_MODAL);
             });
-
-    ProjectUtil.updateLastProjectLocation(projectFilePath);
-
-    ProjectManagerEx.getInstanceEx()
-        .openProject(Paths.get(projectFilePath), OpenProjectTask.withCreatedProject(newProject));
-
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject);
+      }
     }
+
+    //noinspection deprecation
+    StartupManager.getInstance(newProject).registerPostStartupActivity(new MyStartup());
+
+    Path path = Paths.get(projectFilePath);
+    ProjectUtil.updateLastProjectLocation(path);
+
+    return new CreatedProjectDescriptor(path, newProject);
   }
 }

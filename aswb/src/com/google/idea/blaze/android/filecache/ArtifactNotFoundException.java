@@ -15,12 +15,12 @@
  */
 package com.google.idea.blaze.android.filecache;
 
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import java.io.IOException;
 
 /** Signals that a particular artifact cannot be located. */
 public class ArtifactNotFoundException extends IOException {
-  public ArtifactNotFoundException(OutputArtifact artifact) {
+  public ArtifactNotFoundException(OutputArtifactWithoutDigest artifact) {
     super(artifact.getRelativePath() + " not found.");
   }
 }

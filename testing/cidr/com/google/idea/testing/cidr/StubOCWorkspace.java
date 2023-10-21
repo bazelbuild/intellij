@@ -44,7 +44,7 @@ public class StubOCWorkspace implements OCWorkspace {
     return (StubOCResolveConfigurationBase) resolveConfigurations.get(0);
   }
 
-  @Override
+  // @Override removed in #api223
   public int getClientVersion() {
     return 0;
   }
@@ -82,7 +82,7 @@ public class StubOCWorkspace implements OCWorkspace {
     return ContainerUtil.find(resolveConfigurations, it -> Objects.equals(id, it.getUniqueId()));
   }
 
-  @Override
+  // @Override removed in #api223
   public ModifiableModel getModifiableModel() {
     throw new UnsupportedOperationException();
   }

@@ -75,6 +75,7 @@ public class TargetExpressionTest extends BlazeTestCase {
     assertThat(TargetExpression.validate("//foo/...:all")).isNull();
 
     assertThat(TargetExpression.validate("//...")).isNull();
+    assertThat(TargetExpression.validate("@//package_path:rule")).isNull();
     assertThat(TargetExpression.validate("@repo//foo:bar")).isNull();
     assertThat(TargetExpression.validate("@repo//foo:all")).isNull();
     assertThat(TargetExpression.validate("-@repo//:bar")).isNull();
@@ -82,7 +83,7 @@ public class TargetExpressionTest extends BlazeTestCase {
 
   @Test
   public void testFailingValidations() {
-    assertThat(TargetExpression.validate("@//package_path:rule")).isNotNull();
+    assertThat(TargetExpression.validate("@/package_path:rule")).isNotNull();
     assertThat(TargetExpression.validate("@repo&//package_path:rule")).isNotNull();
     assertThat(TargetExpression.validate("../path")).isNotNull();
     assertThat(TargetExpression.validate("path/../other")).isNotNull();

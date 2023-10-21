@@ -15,13 +15,13 @@
  */
 package com.google.idea.blaze.android.run;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes.ANDROID_BINARY;
 import static com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST;
 
-import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerInfoProvider;
-import com.android.tools.idea.run.editor.AndroidJavaDebugger;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.cppimpl.debug.BlazeNativeAndroidDebugger;
@@ -29,6 +29,7 @@ import com.google.idea.blaze.android.run.binary.AndroidBinaryLaunchMethodsUtils;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationState;
+import com.google.idea.blaze.android.tools.idea.run.editor.AndroidDebuggerCompat;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -36,8 +37,6 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.RunManagerImpl;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,37 +67,48 @@ public class DebuggerInfoProviderTest extends BlazeAndroidIntegrationTestCase {
 
   @Test
   public void getDebuggerFromProvider_nonNativeDebugging_returnsAndroidJavaDebugger() {
-    AndroidDebugger debugger =
-        debuggerInfoProvider.getSelectedAndroidDebugger(createAndroidBinaryRunConfiguration(false));
-    assertThat(debugger).isInstanceOf(AndroidJavaDebugger.class);
+    assertThat(
+            AndroidDebuggerCompat.getSelectedAndroidDebugger(
+                debuggerInfoProvider, createAndroidBinaryRunConfiguration(false)))
+        .isInstanceOf(AndroidDebuggerCompat.getAndroidJavaDebugger().getClass());
   }
 
   @Test
   public void getDebuggerFromProvider_withNativeDebugging_returnsBlazeAndroidNativeDebugger() {
-    AndroidDebugger debugger =
-        debuggerInfoProvider.getSelectedAndroidDebugger(createAndroidBinaryRunConfiguration(true));
-    // Always prefer "Java" debugger for the "Connect Debugger to Android Process" dialog.
-    assertThat(debugger).isInstanceOf(AndroidJavaDebugger.class);
+    assertThat(
+            AndroidDebuggerCompat.getSelectedAndroidDebugger(
+                debuggerInfoProvider, createAndroidBinaryRunConfiguration(true)))
+        .isInstanceOf(AndroidDebuggerCompat.getAndroidJavaDebugger().getClass());
   }
 
   @Test
+  @SuppressWarnings({"rawtypes"}) // Raw type from upstream.
   public void getAndroidDebuggers_withAndroidBinaryRunConfiguration_returnsJavaAndNative() {
-    List<AndroidDebugger> debuggers =
-        debuggerInfoProvider.getAndroidDebuggers(createAndroidBinaryRunConfiguration(true));
-
-    List<Class> classList = debuggers.stream().map(Object::getClass).collect(Collectors.toList());
+    ImmutableList<Class> classList =
+        AndroidDebuggerCompat.getAndroidDebuggers(
+                debuggerInfoProvider, createAndroidBinaryRunConfiguration(true))
+            .stream()
+            .map(Object::getClass)
+            .collect(toImmutableList());
     assertThat(classList)
-        .containsExactly(AndroidJavaDebugger.class, BlazeNativeAndroidDebugger.class);
+        .containsExactly(
+            AndroidDebuggerCompat.getAndroidJavaDebugger().getClass(),
+            BlazeNativeAndroidDebugger.class);
   }
 
   @Test
+  @SuppressWarnings({"rawtypes"}) // Raw type from upstream.
   public void getAndroidDebuggers_withAndroidTestRunConfiguration_returnsJavaAndNative() {
-    List<AndroidDebugger> debuggers =
-        debuggerInfoProvider.getAndroidDebuggers(createAndroidTestRunConfiguration(true));
-
-    List<Class> classList = debuggers.stream().map(Object::getClass).collect(Collectors.toList());
+    ImmutableList<Class> classList =
+        AndroidDebuggerCompat.getAndroidDebuggers(
+                debuggerInfoProvider, createAndroidTestRunConfiguration(true))
+            .stream()
+            .map(Object::getClass)
+            .collect(toImmutableList());
     assertThat(classList)
-        .containsExactly(AndroidJavaDebugger.class, BlazeNativeAndroidDebugger.class);
+        .containsExactly(
+            AndroidDebuggerCompat.getAndroidJavaDebugger().getClass(),
+            BlazeNativeAndroidDebugger.class);
   }
 
   private BlazeCommandRunConfiguration createAndroidBinaryRunConfiguration(

@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
 import java.util.HashSet;
@@ -40,7 +39,7 @@ public class TransitiveDependencyMap {
   private final Project project;
 
   public static TransitiveDependencyMap getInstance(Project project) {
-    return ServiceManager.getService(project, TransitiveDependencyMap.class);
+    return project.getService(TransitiveDependencyMap.class);
   }
 
   public TransitiveDependencyMap(Project project) {

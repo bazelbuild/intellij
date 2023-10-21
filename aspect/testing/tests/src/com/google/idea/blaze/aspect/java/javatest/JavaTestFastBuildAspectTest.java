@@ -31,6 +31,7 @@ import org.junit.runners.JUnit4;
 public final class JavaTestFastBuildAspectTest {
 
   private static final String NO_LAUNCHER_TARGET = "";
+  private static final String LAUNCHER_ALIAS = "@bazel_tools//tools/jdk:launcher_flag_alias";
 
   @Rule
   public FastBuildAspectRule aspectLoader =
@@ -45,7 +46,8 @@ public final class JavaTestFastBuildAspectTest {
         aspectLoader.loadTestFixture(":footest_no_launcher_fast_build_fixture");
     FastBuildBlazeData data =
         getDataForTarget(aspectLoader.testRelative(":FooTestNoLauncher"), fixture);
-    assertThat(data.getJavaInfo().getLauncher()).isEqualTo(NO_LAUNCHER_TARGET);
+    // TODO: b/295221112 - remove LAUNCHER_ALIAS once label_flag is used
+    assertThat(data.getJavaInfo().getLauncher()).isAnyOf(NO_LAUNCHER_TARGET, LAUNCHER_ALIAS);
   }
 
   @Test

@@ -31,6 +31,13 @@ def get_go_import_path(ctx):
         import_path += "/" + ctx.label.name
     return import_path
 
+def is_go_proto_library(target, _ctx):
+    return hasattr(target[OutputGroupInfo], "go_generated_srcs")
+
+def get_go_proto_library_generated_srcs(target):
+    files = target[OutputGroupInfo].go_generated_srcs.to_list()
+    return [f for f in files if f.basename.endswith(".go")]
+
 def get_py_launcher(target, ctx):
     """Returns the python launcher for a given rule."""
 
@@ -44,8 +51,11 @@ def get_py_launcher(target, ctx):
 semantics = struct(
     tool_label = tool_label,
     extra_deps = EXTRA_DEPS,
+    extra_required_aspect_providers = [],
     go = struct(
         get_import_path = get_go_import_path,
+        is_proto_library = is_go_proto_library,
+        get_proto_library_generated_srcs = get_go_proto_library_generated_srcs,
     ),
     py = struct(
         get_launcher = get_py_launcher,

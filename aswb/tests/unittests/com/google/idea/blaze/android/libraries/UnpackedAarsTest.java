@@ -49,8 +49,8 @@ import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.OutputSink;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
@@ -59,6 +59,7 @@ import com.google.idea.blaze.base.sync.libraries.BlazeLibrarySorter;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.util.io.FileUtil;
@@ -140,7 +141,12 @@ public class UnpackedAarsTest extends BlazeTestCase {
       File projectDataDirectory = folder.newFolder("projectdata");
       BlazeImportSettings dummyImportSettings =
           new BlazeImportSettings(
-              "", "", projectDataDirectory.getAbsolutePath(), "", BuildSystemName.Bazel);
+              "",
+              "",
+              projectDataDirectory.getAbsolutePath(),
+              "",
+              BuildSystemName.Bazel,
+              ProjectType.ASPECT_SYNC);
       BlazeImportSettingsManager.getInstance(project).setImportSettings(dummyImportSettings);
     } catch (IOException e) {
       throw new AssertionError("Fail to create directory for test", e);
@@ -201,6 +207,13 @@ public class UnpackedAarsTest extends BlazeTestCase {
     public long getSyncTimeMillis() {
       return 0;
     }
+
+    @Override
+    public String getDigest() {
+      // The digest algorithm depends on the build system and thus in-memory hash code is suitable
+      // in tests.
+      return String.valueOf(FileUtil.fileHashCode(file));
+    }
   }
 
   private ArtifactLocation generateArtifactLocation(String relativePath) {
@@ -209,6 +222,89 @@ public class UnpackedAarsTest extends BlazeTestCase {
         .setRelativePath(relativePath)
         .setIsSource(false)
         .build();
+  }
+
+  @Test
+  public void refresh_localArtifact_srcJarIsCopied() throws IOException {
+    testRefreshSrcJarIsCopied(localArtifactLocationDecoder);
+  }
+
+  @Test
+  public void refresh_remoteArtifact_srcJarIsCopied() throws IOException {
+    testRefreshSrcJarIsCopied(remoteArtifactLocationDecoder);
+  }
+
+  private void testRefreshSrcJarIsCopied(ArtifactLocationDecoder decoder) throws IOException {
+    UnpackedAars unpackedAars = UnpackedAars.getInstance(project);
+    File aarCacheDir = unpackedAars.getCacheDir();
+
+    // new aar with jar files
+    String importedAar = "import.aar";
+    String importedAarJar = "importAar.jar";
+    String importedAarSrcJar = "importAar-src.jar";
+    String colorsXmlRelativePath = "res/values/colors.xml";
+    LibraryFileBuilder.aar(workspaceRoot, importedAar)
+        .addContent(colorsXmlRelativePath, ImmutableList.of(COLORS_XML_CONTENT))
+        .build();
+    File jar = workspaceRoot.fileForPath(new WorkspacePath(importedAarJar));
+    try (ZipOutputStream zo = new ZipOutputStream(new FileOutputStream(jar))) {
+      zo.putNextEntry(new ZipEntry("com/google/foo/gen/Gen.java"));
+      zo.write("package gen; class Gen {}".getBytes(UTF_8));
+      zo.closeEntry();
+    }
+
+    File srcJar = workspaceRoot.fileForPath(new WorkspacePath(importedAarSrcJar));
+    try (ZipOutputStream zo = new ZipOutputStream(new FileOutputStream(srcJar))) {
+      zo.putNextEntry(new ZipEntry("com/google/foo/gen/Gen.class"));
+      zo.write("package gen; class Gen {}".getBytes(UTF_8));
+      zo.closeEntry();
+    }
+    ArtifactLocation importedAarArtifactLocation = generateArtifactLocation(importedAar);
+    ArtifactLocation jarArtifactLocation = generateArtifactLocation(importedAarJar);
+    ArtifactLocation srcJarArtifactLocation = generateArtifactLocation(importedAarSrcJar);
+    LibraryArtifact libraryArtifact =
+        LibraryArtifact.builder()
+            .setInterfaceJar(jarArtifactLocation)
+            .addSourceJar(srcJarArtifactLocation)
+            .build();
+    AarLibrary importedAarLibrary =
+        new AarLibrary(libraryArtifact, importedAarArtifactLocation, null);
+
+    BlazeAndroidImportResult importResult =
+        new BlazeAndroidImportResult(
+            ImmutableList.of(),
+            ImmutableMap.of(
+                LibraryKey.libraryNameFromArtifactLocation(importedAarArtifactLocation),
+                importedAarLibrary),
+            ImmutableList.of(),
+            ImmutableList.of());
+    BlazeAndroidSyncData syncData =
+        new BlazeAndroidSyncData(importResult, new AndroidSdkPlatform("stable", 15));
+    BlazeProjectData blazeProjectData =
+        MockBlazeProjectDataBuilder.builder(workspaceRoot)
+            .setWorkspaceLanguageSettings(
+                new WorkspaceLanguageSettings(WorkspaceType.ANDROID, ImmutableSet.of()))
+            .setSyncState(new SyncState.Builder().put(syncData).build())
+            .setArtifactLocationDecoder(decoder)
+            .build();
+    FileCache.EP_NAME
+        .extensions()
+        .forEach(
+            ep ->
+                ep.onSync(
+                    getProject(),
+                    context,
+                    ProjectViewSet.builder().add(ProjectView.builder().build()).build(),
+                    blazeProjectData,
+                    null,
+                    SyncMode.INCREMENTAL));
+
+    assertThat(aarCacheDir.list()).hasLength(1);
+
+    ImmutableList<File> cachedSrcJars = unpackedAars.getCachedSrcJars(decoder, importedAarLibrary);
+    assertThat(cachedSrcJars).hasSize(1);
+    assertThat(Files.readAllBytes(cachedSrcJars.get(0).toPath()))
+        .isEqualTo(Files.readAllBytes(srcJar.toPath()));
   }
 
   @Test
@@ -291,7 +387,7 @@ public class UnpackedAarsTest extends BlazeTestCase {
       zo.closeEntry();
     }
     byte[] expectedJarContent = Files.readAllBytes(lintJar.toPath());
-    AarLibraryFileBuilder.aar(workspaceRoot, aar).setLintJar(expectedJarContent).build();
+    LibraryFileBuilder.aar(workspaceRoot, aar).addContent(FN_LINT_JAR, expectedJarContent).build();
     ArtifactLocation aarArtifactLocation = generateArtifactLocation(aar);
     AarLibrary aarLibrary = new AarLibrary(aarArtifactLocation, null);
 
@@ -352,8 +448,8 @@ public class UnpackedAarsTest extends BlazeTestCase {
 
     // new aar without jar files
     String resourceAar = "resource.aar";
-    AarLibraryFileBuilder.aar(workspaceRoot, resourceAar)
-        .src(stringsXmlRelativePath, ImmutableList.of(STRINGS_XML_CONTENT))
+    LibraryFileBuilder.aar(workspaceRoot, resourceAar)
+        .addContent(stringsXmlRelativePath, ImmutableList.of(STRINGS_XML_CONTENT))
         .build();
     ArtifactLocation resourceAarArtifactLocation = generateArtifactLocation(resourceAar);
     AarLibrary resourceAarLibrary = new AarLibrary(resourceAarArtifactLocation, null);
@@ -362,8 +458,8 @@ public class UnpackedAarsTest extends BlazeTestCase {
     String importedAar = "import.aar";
     String importedAarJar = "importAar.jar";
     String colorsXmlRelativePath = "res/values/colors.xml";
-    AarLibraryFileBuilder.aar(workspaceRoot, importedAar)
-        .src(colorsXmlRelativePath, ImmutableList.of(COLORS_XML_CONTENT))
+    LibraryFileBuilder.aar(workspaceRoot, importedAar)
+        .addContent(colorsXmlRelativePath, ImmutableList.of(COLORS_XML_CONTENT))
         .build();
     File jar = workspaceRoot.fileForPath(new WorkspacePath(importedAarJar));
     try (ZipOutputStream zo = new ZipOutputStream(new FileOutputStream(jar))) {
@@ -461,7 +557,7 @@ public class UnpackedAarsTest extends BlazeTestCase {
       zo.closeEntry();
     }
     byte[] expectedJarContent = Files.readAllBytes(lintJar.toPath());
-    AarLibraryFileBuilder.aar(workspaceRoot, aar).setLintJar(expectedJarContent).build();
+    LibraryFileBuilder.aar(workspaceRoot, aar).addContent(FN_LINT_JAR, expectedJarContent).build();
     ArtifactLocation aarArtifactLocation = generateArtifactLocation(aar);
     AarLibrary aarLibrary = new AarLibrary(aarArtifactLocation, null);
 
@@ -520,7 +616,7 @@ public class UnpackedAarsTest extends BlazeTestCase {
     UnpackedAars unpackedAars = UnpackedAars.getInstance(project);
 
     String aar = "noLint.aar";
-    AarLibraryFileBuilder.aar(workspaceRoot, aar).build();
+    LibraryFileBuilder.aar(workspaceRoot, aar).build();
     ArtifactLocation aarArtifactLocation = generateArtifactLocation(aar);
     AarLibrary aarLibrary = new AarLibrary(aarArtifactLocation, null);
 
@@ -574,7 +670,7 @@ public class UnpackedAarsTest extends BlazeTestCase {
     UnpackedAars unpackedAars = UnpackedAars.getInstance(project);
 
     String notImportedAar = "notImported.aar";
-    AarLibraryFileBuilder.aar(workspaceRoot, notImportedAar).build();
+    LibraryFileBuilder.aar(workspaceRoot, notImportedAar).build();
     ArtifactLocation notImportedAarArtifactLocation = generateArtifactLocation(notImportedAar);
     AarLibrary notImportedAarLibrary = new AarLibrary(notImportedAarArtifactLocation, null);
 

@@ -27,9 +27,9 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.OutputSink;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaToolchainInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildCompiler.CompileInstructions;
@@ -276,7 +276,7 @@ public final class FastBuildCompilerFactoryImplTest {
             + "\n"
             + "final class Main {\n"
             + "  private static void main(String[] args) {\n"
-            + "    Runnable r = () -> {};\n"
+            + "    var x = 100;\n"
             + "  }\n"
             + "}\n";
     StringWriter javacOutput = new StringWriter();
@@ -285,15 +285,13 @@ public final class FastBuildCompilerFactoryImplTest {
               JavaToolchainInfo.create(
                   /* javacJars= */ ImmutableList.of(),
                   /* bootJars= */ ImmutableList.of(),
-                  /* sourceVersion= */ "7",
+                  /* sourceVersion= */ "8",
                   /* targetVersion= */ "8"))
-          .compile(
-              createBlazeContext(javacOutput),
-              createCompileInstructions(java, javacOutput).build());
+          .compile(createBlazeContext(javacOutput), createCompileInstructions(java).build());
       fail("Should have thrown FastBuildIncrementalCompileException");
     } catch (FastBuildIncrementalCompileException e) {
-      assertThat(javacOutput.toString()).contains("lambda");
-      assertThat(javacOutput.toString()).contains("-source");
+      // Compiler error expected on line 7, because var is not supported in java 8
+      assertThat(javacOutput.toString()).contains("7: error: cannot find symbol");
     }
   }
 
@@ -317,7 +315,7 @@ public final class FastBuildCompilerFactoryImplTest {
     try {
       compiler.compile(
           createBlazeContext(javacOutput),
-          createCompileInstructions(java, javacOutput, AUTO_VALUE_JAR)
+          createCompileInstructions(java, AUTO_VALUE_JAR)
               .annotationProcessorClasspath(ImmutableSet.of(AUTO_VALUE_PLUGIN_JAR))
               .annotationProcessorClassNames(ImmutableSet.of(AUTO_VALUE_PROCESSOR))
               .build());
@@ -330,19 +328,17 @@ public final class FastBuildCompilerFactoryImplTest {
       throws IOException, FastBuildException {
     getCompiler()
         .compile(
-            createBlazeContext(javacOutput),
-            createCompileInstructions(source, javacOutput, classpath).build());
+            createBlazeContext(javacOutput), createCompileInstructions(source, classpath).build());
   }
 
-  private CompileInstructions.Builder createCompileInstructions(
-      String source, Writer javacOutput, File... classpath) throws IOException {
+  private CompileInstructions.Builder createCompileInstructions(String source, File... classpath)
+      throws IOException {
     Path outputDirectory = createOutputDirectory();
     Path javaFile = createJavaFile(source);
     return CompileInstructions.builder()
         .outputDirectory(outputDirectory.toFile())
         .filesToCompile(ImmutableList.of(javaFile.toFile()))
-        .classpath(ImmutableList.copyOf(classpath))
-        .outputWriter(javacOutput);
+        .classpath(ImmutableList.copyOf(classpath));
   }
 
   private Path createJavaFile(String java) throws IOException {

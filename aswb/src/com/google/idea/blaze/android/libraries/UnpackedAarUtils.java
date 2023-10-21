@@ -20,7 +20,7 @@ import static com.android.SdkConstants.FN_LINT_JAR;
 
 import com.android.SdkConstants;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
@@ -28,11 +28,16 @@ import java.io.File;
 
 /** Utility methods to convert aar to other type that needed by {@link UnpackedAars} */
 public final class UnpackedAarUtils {
+  /**
+   * The name of imported_aar' ijar. It will always be same for any aars due to aar's format (more
+   * details http://tools.android.com/tech-docs/new-build-system/aar-format).
+   */
+  public static final String CLASS_JAR_FILE_NAME = "classes_and_libs_merged.jar";
 
   /* Converts {@link BlazeArtifact} to the key which is used to create aar directory name */
   public static String getArtifactKey(BlazeArtifact artifact) {
-    if (artifact instanceof OutputArtifact) {
-      return ((OutputArtifact) artifact).getKey();
+    if (artifact instanceof OutputArtifactWithoutDigest) {
+      return ((OutputArtifactWithoutDigest) artifact).getRelativePath();
     }
     if (artifact instanceof SourceArtifact) {
       return ((SourceArtifact) artifact).getFile().getPath();
@@ -49,11 +54,20 @@ public final class UnpackedAarUtils {
   }
 
   /**
+   * Returns the source jar name according to {@link BlazeArtifact}. Differen with ijar that share
+   * same name accoss different aars, source jars can have different names.
+   */
+  public static String getSrcJarName(BlazeArtifact srcJar) {
+    String key = getArtifactKey(srcJar);
+    String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(key));
+    return name + SdkConstants.DOT_SRCJAR;
+  }
+
+  /**
    * Returns aar directory name in the format of <name>_<hashcode>. This provides flexibility to
    * caller to generate aar directory name to deal with different cases. But this method cannot
    * guarantee the uniqueness.
-
-*
+   *
    * @param name the file name of aar file without extension.
    * @param hashCode the file name of aar is not guaranteed to be unique, so a hash code is used to
    *     make sure the directory name is unique. Caller needs to make sure the hashcode provided is
@@ -72,7 +86,7 @@ public final class UnpackedAarUtils {
     // At this point, we don't know the name of the original jar, but we must give the cache
     // file a name. Just use a name similar to what bazel currently uses, and that conveys
     // the origin of the jar (merged from classes.jar and libs/*.jar).
-    return new File(jarsDirectory, "classes_and_libs_merged.jar");
+    return new File(jarsDirectory, CLASS_JAR_FILE_NAME);
   }
 
   /**

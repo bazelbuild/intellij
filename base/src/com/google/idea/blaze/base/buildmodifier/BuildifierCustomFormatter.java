@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.buildmodifier;
 
+import static com.google.idea.blaze.base.buildmodifier.BuildifierFormattingService.useNewBuildifierFormattingService;
+
 import com.google.idea.blaze.base.formatter.CustomFormatter;
 import com.google.idea.blaze.base.formatter.FormatUtils.FileContentsProvider;
 import com.google.idea.blaze.base.formatter.FormatUtils.Replacements;
@@ -31,7 +33,7 @@ final class BuildifierCustomFormatter implements CustomFormatter {
 
   @Override
   public boolean appliesToFile(Project project, PsiFile file) {
-    return file instanceof BuildFile;
+    return !useNewBuildifierFormattingService.isEnabled() && file instanceof BuildFile;
   }
 
   @Nullable
@@ -41,8 +43,8 @@ final class BuildifierCustomFormatter implements CustomFormatter {
     if (!(fileContents.file instanceof BuildFile)) {
       return null;
     }
-    BlazeFileType type = ((BuildFile) fileContents.file).getBlazeFileType();
-    return BuildFileFormatter.getReplacements(type, fileContents, ranges);
+    BuildFile buildFile = (BuildFile) fileContents.file;
+    return BuildFileFormatter.getReplacements(buildFile, fileContents, ranges);
   }
 
   @Override

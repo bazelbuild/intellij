@@ -171,7 +171,7 @@ final class UnfilteredCompilerOptions {
         return this;
       }
       if (optionValue.startsWith(optionName)) {
-        values.add(optionValue.substring(optionName.length()));
+        values.add(optionValue.substring(optionName.length()).trim());
         return baseOptionParser;
       }
       Preconditions.checkState(

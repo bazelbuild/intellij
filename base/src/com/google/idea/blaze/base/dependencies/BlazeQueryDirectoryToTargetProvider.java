@@ -15,45 +15,50 @@
  */
 package com.google.idea.blaze.base.dependencies;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
-import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystem;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.query.BlazeQueryLabelKindParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /** Runs a blaze query to derive a set of targets from the project's {@link ImportRoots}. */
 public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetProvider {
-
   private static final Logger logger =
       Logger.getInstance(BlazeQueryDirectoryToTargetProvider.class);
 
-  @Override
   @Nullable
+  @Override
   public List<TargetInfo> doExpandDirectoryTargets(
       Project project,
+      Boolean shouldManualTargetSync,
       ImportRoots directories,
       WorkspacePathResolver pathResolver,
       BlazeContext context) {
-    return runQuery(project, getQueryString(directories), context);
+    return runQuery(project, getQueryString(directories, shouldManualTargetSync), context);
   }
 
-  private static String getQueryString(ImportRoots directories) {
+  protected static String getQueryString(ImportRoots directories, boolean allowManualTargetsSync) {
     StringBuilder targets = new StringBuilder();
     targets.append(
         directories.rootDirectories().stream()
@@ -61,6 +66,10 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
             .collect(joining(" + ")));
     for (WorkspacePath excluded : directories.excludeDirectories()) {
       targets.append(" - " + TargetExpression.allFromPackageRecursive(excluded).toString());
+    }
+
+    if (allowManualTargetsSync) {
+      return targets.toString();
     }
 
     // exclude 'manual' targets, which shouldn't be built when expanding wildcard target patterns
@@ -79,39 +88,25 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
   @Nullable
   private static ImmutableList<TargetInfo> runQuery(
       Project project, String query, BlazeContext context) {
-    BlazeCommand command =
-        BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.QUERY)
+    BuildSystem buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
+    BlazeCommand.Builder command =
+        BlazeCommand.builder(
+                buildSystem.getDefaultInvoker(project, context), BlazeCommandName.QUERY)
             .addBlazeFlags("--output=label_kind")
             .addBlazeFlags("--keep_going")
-            .addBlazeFlags(query)
-            .build();
-
+            .addBlazeFlags(query);
+    BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
     BlazeQueryLabelKindParser outputProcessor = new BlazeQueryLabelKindParser(t -> true);
-    int retVal =
-        ExternalTask.builder(WorkspaceRoot.fromProject(project))
-            .addBlazeCommand(command)
-            .context(context)
-            .stdout(LineProcessingOutputStream.of(outputProcessor))
-            .stderr(
-                LineProcessingOutputStream.of(
-                    line -> {
-                      // errors are expected, so limit logging to info level
-                      logger.info(line);
-                      return true;
-                    }))
-            .build()
-            .run();
-    if (retVal != 0 && retVal != 3) {
-      // A return value of 3 indicates that the query completed, but there were some
-      // errors in the query, like querying a directory with no build files / no targets.
-      // Instead of returning null, we allow returning the parsed targets, if any.
+    try (BuildResultHelper helper = invoker.createBuildResultHelper();
+        InputStream queryResultStream =
+            invoker.getCommandRunner().runQuery(project, command, helper, context)) {
+      new BufferedReader(new InputStreamReader(queryResultStream, UTF_8))
+          .lines()
+          .forEach(outputProcessor::processLine);
+      return outputProcessor.getTargets();
+    } catch (IOException | BuildException e) {
+      logger.error(e.getMessage(), e);
       return null;
     }
-    return outputProcessor.getTargets();
-  }
-
-  private static String getBinaryPath(Project project) {
-    BuildSystemProvider buildSystemProvider = Blaze.getBuildSystemProvider(project);
-    return buildSystemProvider.getSyncBinaryPath(project);
   }
 }

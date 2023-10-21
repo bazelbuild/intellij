@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.projectsystem;
 
+import static com.android.ide.common.repository.GoogleMavenArtifactIdCompat.APP_COMPAT_V7;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -22,7 +23,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import com.android.tools.idea.projectsystem.GoogleMavenArtifactId;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
@@ -39,10 +39,11 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.model.primitives.Kind.Provider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -80,10 +81,11 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
-    ExtensionPointImpl<Provider> kindProvider =
+    ExtensionPointImpl<Kind.Provider> kindProvider =
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
     kindProvider.registerExtension(new AndroidBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
+    applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
 
     module = new MockModule(project, () -> {});
 
@@ -111,8 +113,7 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
     assertThat(buildFile).isNotNull();
     when(psiFile.getVirtualFile()).thenReturn(buildFile);
 
-    BlazeModuleSystem.create(module)
-        .registerDependency(GoogleMavenArtifactId.APP_COMPAT_V7.getCoordinate("+"));
+    BlazeModuleSystem.create(module).registerDependency(APP_COMPAT_V7);
 
     ArgumentCaptor<OpenFileDescriptor> descriptorCaptor =
         ArgumentCaptor.forClass(OpenFileDescriptor.class);
@@ -135,8 +136,7 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
         VirtualFileSystemProvider.getInstance().getSystem().findFileByPath("/foo/BUILD");
     assertThat(buildFile).isNotNull();
 
-    BlazeModuleSystem.create(module)
-        .registerDependency(GoogleMavenArtifactId.APP_COMPAT_V7.getCoordinate("+"));
+    BlazeModuleSystem.create(module).registerDependency(APP_COMPAT_V7);
 
     verify(FileEditorManager.getInstance(project)).openFile(buildFile, true);
     verifyNoMoreInteractions(FileEditorManager.getInstance(project));
@@ -145,16 +145,13 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
   @Test
   public void testGetResolvedDependencyWithoutLocators() throws Exception {
     registerExtensionPoint(MavenArtifactLocator.EP_NAME, MavenArtifactLocator.class);
-    assertThat(
-            BlazeModuleSystem.create(module)
-                .getResolvedDependency(GoogleMavenArtifactId.APP_COMPAT_V7.getCoordinate("+")))
-        .isNull();
+    assertThat(BlazeModuleSystem.create(module).getResolvedDependency(APP_COMPAT_V7)).isNull();
   }
 
   private void mockBlazeImportSettings(Container projectServices) {
     BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
     importSettingsManager.setImportSettings(
-        new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze));
+        new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze, ProjectType.ASPECT_SYNC));
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
   }
 

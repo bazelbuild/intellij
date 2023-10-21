@@ -42,6 +42,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -130,7 +132,6 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
     mockSync(SyncResult.SUCCESS);
     assertThat(getExternalLibrary().getSourceRoots()).containsExactly(oldFile);
 
-    libraryProvider.setFiles(newFile.getPath());
     mockSync(SyncResult.FAILURE);
     // files list should remain the same if sync failed
     assertThat(getExternalLibrary().getSourceRoots()).containsExactly(oldFile);
@@ -222,7 +223,8 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
   }
 
   private static final class MockExternalLibraryProvider extends BlazeExternalLibraryProvider {
-    private ImmutableList<File> files = ImmutableList.of();
+    private ImmutableList<File> libraryFiles = ImmutableList.of();
+    private Set<File> files = new HashSet<>();
 
     @Override
     protected String getLibraryName() {
@@ -231,11 +233,12 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
 
     @Override
     protected ImmutableList<File> getLibraryFiles(Project project, BlazeProjectData projectData) {
-      return files;
+      return libraryFiles;
     }
 
     void setFiles(String... paths) {
-      this.files = Arrays.stream(paths).map(File::new).collect(toImmutableList());
+      this.libraryFiles = Arrays.stream(paths).map(File::new).collect(toImmutableList());
+      files.addAll(libraryFiles);
     }
   }
 }

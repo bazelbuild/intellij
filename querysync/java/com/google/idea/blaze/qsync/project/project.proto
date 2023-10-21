@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package ij.qsync;
+
+// option java_api_version = 2;
+option java_outer_classname = "ProjectProto";
+option java_package = "com.google.idea.blaze.qsync.project";
+
+message Project {
+  repeated Library library = 1;
+  repeated Module modules = 2;
+}
+
+/**
+ * Represents a module in the IntelliJ project model.
+ *
+ * @see com.intellij.openapi.module.Module
+ */
+message Module {
+  /** Name of the module. Unique within the project. */
+  string name = 1;
+  ModuleType type = 2;
+  repeated ContentEntry content_entries = 3;
+  /**
+   * Libraries for this module. The entries in this set refer to names of
+   * libraries in the containing project proto.
+   */
+  repeated string library_name = 4;
+
+  // TODO these two are temporary. They should be better represented, reflecting
+  //  the IJ project model API, and the syncPlugin.updateProjectStructure call
+  //  should be updated to accept a ModuleSpec or other suitable data type.
+  repeated string android_resource_directories = 5;
+  repeated string android_source_packages = 6;
+
+  // Separate custom package with source packages as it's only used by R class.
+  repeated string android_custom_packages = 7;
+}
+
+/**
+ * Represents the type of a module in the IJ project model.
+ *
+ * @see com.intellij.openapi.module.ModuleType
+ */
+enum ModuleType {
+  MODULE_TYPE_DEFAULT = 0;
+}
+
+/**
+ * A path within the IJ project model, relative to a root.
+ */
+message ContentRoot {
+  /**
+   * Specifies base to which the root path is relative.
+   */
+  enum Base {
+    UNSPECIFIED = 0;
+    WORKSPACE = 1;
+    PROJECT = 2;
+  }
+
+  // path to the content root, relative to base.
+  string path = 1;
+  Base base = 2;
+  // inner path within the content root. Only relevant for jar files.
+  string inner_path = 3;
+}
+
+/**
+ * Represents a content entry within the IJ project model.
+ *
+ * @see com.intellij.openapi.roots.ContentEntry
+ */
+message ContentEntry {
+  /** Root of the content entry. Unique within the module. */
+  ContentRoot root = 1;
+  repeated SourceFolder sources = 3;
+  repeated string excludes = 2;
+}
+
+/**
+ * A source folder within a content entry.
+ *
+ * @see com.intellij.openapi.roots.SourceFolder
+ */
+message SourceFolder {
+  string path = 1;
+  bool is_test = 2;
+  string package_prefix = 3;
+  bool is_generated = 4;
+}
+
+/** Represents a library within the IJ project model. */
+message Library {
+  /** Unique name for the library */
+  string name = 1;
+  /** classes.jar directories */
+  repeated JarDirectory classes_jar = 2;
+  repeated LibrarySource sources = 3;
+}
+
+/**
+ * Represents a jar directory for a library within the IJ project model.
+ *
+ * @see
+ * com.intellij.openapi.roots.libraries.Library.ModifiableModel#addJarDirectory
+ */
+message JarDirectory {
+  string path = 1;
+  bool recursive = 2;
+}
+
+/**
+ * Represents a library source root.
+ */
+message LibrarySource {
+  reserved 1;
+  ContentRoot srcjar = 2;
+}

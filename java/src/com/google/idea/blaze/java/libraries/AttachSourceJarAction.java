@@ -20,11 +20,11 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LibraryEditor;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
-import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.project.Project;
 
 class AttachSourceJarAction extends BlazeProjectAction {
@@ -72,9 +72,8 @@ class AttachSourceJarAction extends BlazeProjectAction {
         .runWriteAction(
             () -> {
               IdeModifiableModelsProvider modelsProvider =
-                  BaseSdkCompat.createModifiableModelsProvider(project);
-              LibraryEditor.updateLibrary(
-                  project, projectData.getArtifactLocationDecoder(), modelsProvider, library);
+                  new IdeModifiableModelsProviderImpl(project);
+              LibraryEditor.updateLibrary(project, projectData, modelsProvider, library);
               modelsProvider.commit();
             });
   }

@@ -23,8 +23,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ordering;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -190,8 +188,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
       throw new ExecutionException("No sandbox specified for IntelliJ Platform Plugin SDK", e);
     }
     String buildNumber = IdeaJdkHelper.getBuildNumber(ideaJdk);
-    final BlazeIntellijPluginDeployer deployer =
-        new BlazeIntellijPluginDeployer(sandboxHome, target);
+    final BlazeIntellijPluginDeployer deployer = new BlazeIntellijPluginDeployer(sandboxHome);
     env.putUserData(BlazeIntellijPluginDeployer.USER_DATA_KEY, deployer);
 
     // copy license from running instance of idea
@@ -200,7 +197,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     return new JavaCommandLineState(env) {
       @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
-        DeployedPluginInfo deployedPluginInfo = deployer.deployNonBlocking();
+        DeployedPluginInfo deployedPluginInfo = deployer.deployNonBlocking(buildSystem);
 
         final JavaParameters params = new JavaParameters();
 
@@ -370,10 +367,9 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     if (projectData == null) {
       return ImmutableSet.of();
     }
-    return projectData.getTargetMap().targets().stream()
+    return projectData.targets().stream()
         .filter(IntellijPluginRule::isPluginTarget)
-        .map(TargetIdeInfo::getKey)
-        .map(TargetKey::getLabel)
+        .map(info -> info.label)
         .collect(toImmutableSet());
   }
 

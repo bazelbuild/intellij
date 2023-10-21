@@ -24,14 +24,17 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.SourceTestConfig;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceFileFinder;
 import com.google.idea.blaze.base.util.UrlUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SourceFolder;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.Collection;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -57,6 +60,7 @@ public class ContentEntryEditor {
 
     SourceTestConfig testConfig = new SourceTestConfig(projectViewSet);
     SourceFolderProvider provider = SourceFolderProvider.getSourceFolderProvider(blazeProjectData);
+    WorkspaceFileFinder finder = WorkspaceFileFinder.Provider.getInstance(project).getWorkspaceFileFinder();
 
     for (WorkspacePath rootDirectory : rootDirectories) {
       File rootFile = workspaceRoot.fileForPath(rootDirectory);
@@ -66,6 +70,16 @@ public class ContentEntryEditor {
       for (WorkspacePath exclude : excludesByRootDirectory.get(rootDirectory)) {
         File excludeFolder = workspaceRoot.fileForPath(exclude);
         contentEntry.addExcludeFolder(UrlUtil.fileToIdeaUrl(excludeFolder));
+      }
+
+      File directory = new File(workspaceRoot.toString());
+      File[] files = directory
+              .listFiles((dir, name) ->
+                      finder != null && finder.isInProject(dir) && BlazeDataStorage.ALL_PROJECT_SUBDIRECTORIES.containsValue(name));
+      if (files != null) {
+        for (File file : files) {
+          contentEntry.addExcludeFolder(UrlUtil.fileToIdeaUrl(file));
+        }
       }
 
       ImmutableMap<File, SourceFolder> sourceFolders =
@@ -100,11 +114,18 @@ public class ContentEntryEditor {
     File file = workspaceRoot.fileForPath(workspacePath);
     boolean isTest = testConfig.isTestSource(workspacePath.relativePath());
     SourceFolder current = sourceFolders.get(new File(file.getPath()));
-    SourceFolder currentOrParent = current != null ? current : parent;
-    if (currentOrParent != null && isTest != currentOrParent.isTestSource()) {
-      currentOrParent =
-          provider.setSourceFolderForLocation(contentEntry, currentOrParent, file, isTest);
-      if (current != null) {
+    SourceFolder next;
+    if (current == null) {
+      if (parent != null && isTest != parent.isTestSource()) {
+        next = provider.setSourceFolderForLocation(contentEntry, parent, file, isTest);
+      } else {
+        next = parent;
+      }
+    } else {
+      if (isTest == current.isTestSource()) {
+        next = current;
+      } else {
+        next = provider.setSourceFolderForLocation(contentEntry, current, file, isTest);
         contentEntry.removeSourceFolder(current);
       }
     }
@@ -117,7 +138,7 @@ public class ContentEntryEditor {
           contentEntry,
           provider,
           sourceFolders,
-          currentOrParent,
+          next,
           child.getKey(),
           child.getValue());
     }

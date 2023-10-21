@@ -15,21 +15,30 @@
  */
 package com.google.idea.blaze.android.functional;
 
+import static com.android.ide.common.repository.GoogleMavenArtifactIdCompat.CONSTRAINT_LAYOUT_COORDINATE;
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.android.targetmapbuilder.NbAarTarget.aar_import;
 import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.android_library;
 
+import com.android.SdkConstants;
 import com.android.ide.common.repository.GradleCoordinate;
-import com.android.tools.idea.projectsystem.GoogleMavenArtifactId;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
+import com.google.idea.blaze.android.libraries.LibraryFileBuilder;
+import com.google.idea.blaze.android.libraries.UnpackedAarUtils;
+import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.projectsystem.BlazeModuleSystem;
 import com.google.idea.blaze.android.projectsystem.MavenArtifactLocator;
+import com.google.idea.blaze.android.targetmapbuilder.NbAarTarget;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.PathUtil;
+import java.io.File;
 import java.nio.file.Path;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,8 +52,6 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BlazeModuleSystemExternalDependencyIntegrationTest
     extends BlazeAndroidIntegrationTestCase {
-  private static final GradleCoordinate CONSTRAINT_LAYOUT_COORDINATE =
-      GoogleMavenArtifactId.CONSTRAINT_LAYOUT.getCoordinate("+");
   private static final String CONSTRAINT_LAYOUT_LABEL =
       "//third_party/java/android/android_sdk_linux/extras/android/compatibility/constraint_layout:constraint_layout";
 
@@ -200,5 +207,38 @@ public class BlazeModuleSystemExternalDependencyIntegrationTest
     Path artifactPath = workspaceModuleSystem.getDependencyPath(CONSTRAINT_LAYOUT_COORDINATE);
     assertThat(artifactPath.toString())
         .endsWith(Label.create(CONSTRAINT_LAYOUT_LABEL).blazePackage().relativePath());
+  }
+
+  @Test
+  public void getDependencyArtifactLocation_aarImport_aarDirReturn() {
+    NbAarTarget aarTarget =
+        aar_import(CONSTRAINT_LAYOUT_LABEL)
+            .aar("lib_aar.aar")
+            .generated_jar("classes_and_libs_merged.jar");
+    File aarLibraryFile =
+        LibraryFileBuilder.aar(workspaceRoot, aarTarget.getAar().getRelativePath()).build();
+    setTargetMap(
+        android_library("//java/com/foo/gallery/activities:activities")
+            .src("MainActivity.java")
+            .dep(CONSTRAINT_LAYOUT_LABEL)
+            .res("res"),
+        aarTarget);
+    runFullBlazeSyncWithNoIssues();
+
+    Module workspaceModule =
+        ModuleFinder.getInstance(getProject())
+            .findModuleByName("java.com.foo.gallery.activities.activities");
+    BlazeModuleSystem workspaceModuleSystem = BlazeModuleSystem.getInstance(workspaceModule);
+    Path path = workspaceModuleSystem.getDependencyPath(CONSTRAINT_LAYOUT_COORDINATE);
+    assertThat(path.toFile()).isEqualTo(getAarDir(aarLibraryFile));
+  }
+
+  private File getAarDir(File aarLibraryFile) {
+    String path = aarLibraryFile.getAbsolutePath();
+    String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(path));
+    String aarDirName =
+        UnpackedAarUtils.generateAarDirectoryName(name, path.hashCode()) + SdkConstants.DOT_AAR;
+    UnpackedAars unpackedAars = UnpackedAars.getInstance(getProject());
+    return new File(unpackedAars.getCacheDir(), aarDirName);
   }
 }

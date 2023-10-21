@@ -27,19 +27,14 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
 import com.google.idea.blaze.android.projectview.GenfilesPath;
 import com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter;
 import com.google.idea.blaze.android.sync.BlazeAndroidLibrarySource;
-import com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceRetentionFilter;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
-import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.async.executor.BlazeExecutor;
-import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
-import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
-import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -47,68 +42,50 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.LibraryKey;
-import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
-import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.model.primitives.Kind.Provider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
-import com.google.idea.blaze.base.prefetch.MockPrefetchService;
-import com.google.idea.blaze.base.prefetch.PrefetchService;
-import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.blaze.base.sync.MockRemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
-import com.google.idea.blaze.java.AndroidBlazeRules;
-import com.google.idea.blaze.java.JavaBlazeRules;
-import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.google.idea.blaze.java.sync.importer.BlazeJavaWorkspaceImporter;
 import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
-import com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyLibraryFilterSettings;
 import com.google.idea.blaze.java.sync.jdeps.MockJdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
-import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
-import com.google.idea.blaze.java.sync.source.JavaSourcePackageReader;
-import com.google.idea.blaze.java.sync.source.PackageManifestReader;
-import com.google.idea.blaze.java.sync.source.SourceArtifact;
 import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** Tests for BlazeAndroidWorkspaceImporter */
 @RunWith(JUnit4.class)
-public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
-
-  private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
+public class BlazeAndroidWorkspaceImporterTest extends BlazeAndroidIntegrationTestCase {
 
   private static final String FAKE_GEN_ROOT_EXECUTION_PATH_FRAGMENT =
       "bazel-out/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
@@ -122,10 +99,9 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
       };
 
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
-      new BlazeImportSettings("", "", "", "", BuildSystemName.Bazel);
+      new BlazeImportSettings("", "", "", "", BuildSystemName.Bazel, ProjectType.ASPECT_SYNC);
 
   private BlazeContext context;
-  private ErrorCollector errorCollector = new ErrorCollector();
   private final MockJdepsMap jdepsMap = new MockJdepsMap();
   private final JavaWorkingSet workingSet =
       new JavaWorkingSet(
@@ -135,68 +111,20 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   private final WorkspaceLanguageSettings workspaceLanguageSettings =
       new WorkspaceLanguageSettings(
           WorkspaceType.ANDROID, ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA));
-  private ExtensionPointImpl<GeneratedResourceRetentionFilter> retentionFilterEp;
   private MockExperimentService experimentService;
 
-  @Override
-  protected void initTest(Container applicationServices, Container projectServices) {
+  @Before
+  public void importerSetUp() {
     experimentService = new MockExperimentService();
-    applicationServices.register(ExperimentService.class, experimentService);
+    registerApplicationComponent(ExperimentService.class, experimentService);
 
-    BlazeExecutor blazeExecutor = new MockBlazeExecutor();
-    applicationServices.register(BlazeExecutor.class, blazeExecutor);
-
-    projectServices.register(
-        BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
     MockFileOperationProvider mockFileOperationProvider = new MockFileOperationProvider();
-    applicationServices.register(FileOperationProvider.class, mockFileOperationProvider);
-
-    ExtensionPointImpl<Provider> targetKindEp =
-        registerExtensionPoint(Provider.EP_NAME, Provider.class);
-    targetKindEp.registerExtension(new AndroidBlazeRules());
-    targetKindEp.registerExtension(new JavaBlazeRules());
-    targetKindEp.registerExtension(new GenericBlazeRules());
-    applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
-
-    retentionFilterEp =
-        registerExtensionPoint(
-            GeneratedResourceRetentionFilter.EP_NAME, GeneratedResourceRetentionFilter.class);
+    registerApplicationService(FileOperationProvider.class, mockFileOperationProvider);
 
     context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
-
-    registerExtensionPoint(BlazeJavaSyncAugmenter.EP_NAME, BlazeJavaSyncAugmenter.class);
-    registerExtensionPoint(EmptyLibraryFilterSettings.EP_NAME, EmptyLibraryFilterSettings.class);
-
-    // For importJavaWorkspace.
-    applicationServices.register(
-        JavaSourcePackageReader.class,
-        new JavaSourcePackageReader() {
-          @Nullable
-          @Override
-          public String getDeclaredPackageOfJavaFile(
-              BlazeContext context,
-              ArtifactLocationDecoder artifactLocationDecoder,
-              SourceArtifact sourceArtifact) {
-            return null;
-          }
-        });
-
-    applicationServices.register(PackageManifestReader.class, new PackageManifestReader());
-    applicationServices.register(PrefetchService.class, new MockPrefetchService());
-
-    registerExtensionPoint(JavaLikeLanguage.EP_NAME, JavaLikeLanguage.class)
-        .registerExtension(new JavaLikeLanguage.Java());
-
-    applicationServices.register(
-        RemoteArtifactPrefetcher.class, new MockRemoteArtifactPrefetcher());
-  }
-
-  @Override
-  protected BuildSystemProvider createBuildSystemProvider() {
-    return new BazelBuildSystemProvider();
   }
 
   private BlazeAndroidImportResult importWorkspace(
@@ -204,10 +132,10 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
     BlazeAndroidWorkspaceImporter workspaceImporter =
         new BlazeAndroidWorkspaceImporter(
-            project,
+            getProject(),
             context,
             BlazeImportInput.forProject(
-                project, workspaceRoot, projectViewSet, targetMap, FAKE_ARTIFACT_DECODER));
+                getProject(), workspaceRoot, projectViewSet, targetMap, FAKE_ARTIFACT_DECODER));
 
     return workspaceImporter.importWorkspace();
   }
@@ -215,13 +143,13 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   private BlazeJavaImportResult importJavaWorkspace(
       WorkspaceRoot workspaceRoot, TargetMap targetMap, ProjectView projectView) {
 
-    BuildSystemName buildSystemName = Blaze.getBuildSystemName(project);
+    BuildSystemName buildSystemName = Blaze.getBuildSystemName(getProject());
     ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
     JavaSourceFilter sourceFilter =
         new JavaSourceFilter(buildSystemName, workspaceRoot, projectViewSet, targetMap);
     BlazeJavaWorkspaceImporter blazeWorkspaceImporter =
         new BlazeJavaWorkspaceImporter(
-            project,
+            getProject(),
             workspaceRoot,
             projectViewSet,
             workspaceLanguageSettings,
@@ -628,9 +556,6 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
    */
   @Test
   public void generatedResourceRetentionFilter_retainsPassingResourceDependency() {
-    retentionFilterEp.registerExtension(
-        artifactLocation -> artifactLocation.getRelativePath().startsWith("common_deps"));
-
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -1264,10 +1189,10 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
     MockBlazeAndroidWorkspaceImporter mockBlazeAndroidWorkspaceImporter =
         new MockBlazeAndroidWorkspaceImporter(
-            project,
+            getProject(),
             context,
             BlazeImportInput.forProject(
-                project, workspaceRoot, projectViewSet, targetMap, FAKE_ARTIFACT_DECODER));
+                getProject(), workspaceRoot, projectViewSet, targetMap, FAKE_ARTIFACT_DECODER));
     AndroidResourceModule expectedAndroidResourceModule1 =
         AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//foo:lib")))
             .addResourceAndTransitiveResource(source("foo/res"))

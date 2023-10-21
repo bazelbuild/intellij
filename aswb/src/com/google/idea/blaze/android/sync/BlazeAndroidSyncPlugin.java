@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.sync;
 
+
 import com.android.tools.idea.model.AndroidModel;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

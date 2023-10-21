@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
 /** Extension point for exposing common macros in completion results. */
@@ -57,11 +58,13 @@ public interface CommonMacroContributor {
 
       protected abstract ImmutableList.Builder<String> functionNamesBuilder();
 
+      @CanIgnoreReturnValue
       public Builder addFunctionName(String fn) {
         functionNamesBuilder().add(fn);
         return this;
       }
 
+      @CanIgnoreReturnValue
       public Builder addFunctionNames(String... functions) {
         functionNamesBuilder().add(functions);
         return this;

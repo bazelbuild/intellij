@@ -98,6 +98,11 @@ public class ReplaceActionHelper {
         delegate.update(e);
       }
     }
+
+    @Override
+    public boolean isDumbAware() {
+      return delegate.isDumbAware();
+    }
   }
 
   /** Conditionally replaces one action with another. */

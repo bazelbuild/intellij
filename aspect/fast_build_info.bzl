@@ -6,6 +6,10 @@ load(
     "sources_from_target",
     "struct_omit_none",
 )
+load(
+    ":intellij_info_impl.bzl",
+    "stringify_label",
+)
 
 _DEP_ATTRS = ["deps", "exports", "runtime_deps", "_java_toolchain"]
 
@@ -17,8 +21,8 @@ def _fast_build_info_impl(target, ctx):
 
     info = {
         "workspace_name": ctx.workspace_name,
-        "label": str(target.label),
-        "dependencies": [str(t.label) for t in dep_targets],
+        "label": stringify_label(target.label),
+        "dependencies": [stringify_label(t.label) for t in dep_targets],
     }
 
     write_output = False
@@ -28,7 +32,7 @@ def _fast_build_info_impl(target, ctx):
         write_output = True
         info["data"] = [
             struct(
-                label = str(datadep.label),
+                label = stringify_label(datadep.label),
                 artifacts = [artifact_location(file) for file in datadep.files.to_list()],
             )
             for datadep in ctx.rule.attr.data
@@ -60,24 +64,20 @@ def _fast_build_info_impl(target, ctx):
         launcher = None
         if hasattr(ctx.rule.attr, "use_launcher") and not ctx.rule.attr.use_launcher:
             launcher = None
+        elif hasattr(ctx.rule.attr, "launcher") and ctx.rule.attr.launcher:
+            launcher = stringify_label(ctx.rule.attr.launcher.label)
         elif hasattr(ctx.rule.attr, "_java_launcher") and ctx.rule.attr._java_launcher:
-            launcher = str(ctx.rule.attr._java_launcher.label)
+            # TODO: b/295221112 - remove _java_launcher when it's removed from Java rules
+            launcher = stringify_label(ctx.rule.attr._java_launcher.label)
         elif hasattr(ctx.rule.attr, "_javabase") and ctx.rule.attr._javabase:
-            launcher = str(ctx.rule.attr._javabase.label)
-
-        expanded_jvm_flags = []
-        for flag in getattr(ctx.rule.attr, "jvm_flags", []):
-            expanded_jvm_flags.append(ctx.expand_make_variables("jvm_flag", flag, {}))
-
-        print(expanded_jvm_flags)
-
+            launcher = stringify_label(ctx.rule.attr._javabase.label)
         java_info = {
             "sources": sources_from_target(ctx),
             "test_class": getattr(ctx.rule.attr, "test_class", None),
             "test_size": getattr(ctx.rule.attr, "size", None),
             "launcher": launcher,
             "swigdeps": getattr(ctx.rule.attr, "swigdeps", True),
-            "jvm_flags": expanded_jvm_flags,
+            "jvm_flags": getattr(ctx.rule.attr, "jvm_flags", []),
         }
         annotation_processing = target[JavaInfo].annotation_processing
         if annotation_processing:
@@ -97,7 +97,7 @@ def _fast_build_info_impl(target, ctx):
 
     if write_output:
         output_file = ctx.actions.declare_file(target.label.name + ".ide-fast-build-info.txt")
-        ctx.actions.write(output_file, struct_omit_none(**info).to_proto())
+        ctx.actions.write(output_file, proto.encode_text(struct_omit_none(**info)))
         output_files += [output_file]
 
     output_groups = depset(output_files, transitive = dep_outputs)

@@ -31,6 +31,11 @@ import java.io.File;
 class OpenCorrespondingBuildFile extends BlazeProjectAction {
 
   @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.SUPPORTED;
+  }
+
+  @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     VirtualFile vf = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (vf == null) {

@@ -73,10 +73,8 @@ public class Jdks {
       if (jdkHomePaths.stream().anyMatch(homePath -> jdkPathMatches(currentSdk, homePath))) {
         return currentSdk;
       } else if (jdkHomePaths.isEmpty()) {
-        LanguageLevel currentLangLevel = getJavaLanguageLevel(currentSdk);
-        if (currentLangLevel != null
-            && currentLangLevel.isAtLeast(langLevel)
-            && isValid(currentSdk)) {
+        if (isLanguageLevelSupportedBySdk(langLevel, currentSdk) && isValid(
+            currentSdk)) {
           return currentSdk;
         }
       }
@@ -122,14 +120,36 @@ public class Jdks {
   @VisibleForTesting
   static Sdk findClosestMatch(LanguageLevel langLevel) {
     return ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()).stream()
-        .filter(
-            sdk -> {
-              LanguageLevel level = getJavaLanguageLevel(sdk);
-              return level != null && level.isAtLeast(langLevel);
-            })
+        .filter(sdk -> isLanguageLevelSupportedBySdk(langLevel, sdk))
         .filter(Jdks::isValid)
         .min(Comparator.comparing(Jdks::getJavaLanguageLevel))
         .orElse(null);
+  }
+
+
+  private static boolean isLanguageLevelSupportedBySdk(LanguageLevel requestedLanguageLevel,
+      Sdk sdk) {
+    if (!(sdk.getSdkType() instanceof JavaSdk)) {
+      return false;
+    }
+
+    JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
+    return isLanguageLevelSupportedBySdkVersion(requestedLanguageLevel, version);
+  }
+
+  private static boolean isLanguageLevelSupportedBySdkVersion(LanguageLevel requestedLanguageLevel,
+      JavaSdkVersion javaSdkVersion) {
+    if (javaSdkVersion == null) {
+      return false;
+    } else {
+      /*
+       Language levels cannot simply be compared below because the preview level of a given major
+       version is considered greater than the non-preview language level but the max language level
+       of an SDK is the non-preview level.
+       */
+      return javaSdkVersion.getMaxLanguageLevel().toJavaVersion()
+          .isAtLeast(requestedLanguageLevel.toJavaVersion().feature);
+    }
   }
 
   private static boolean isValid(Sdk jdk) {
@@ -207,7 +227,7 @@ public class Jdks {
   private static String getBestJdk(List<String> jdkRoots, LanguageLevel langLevel) {
     return jdkRoots.stream()
         .filter(root -> JavaSdk.getInstance().isValidSdkHome(root))
-        .filter(root -> getVersion(root).getMaxLanguageLevel().isAtLeast(langLevel))
+        .filter(root -> isLanguageLevelSupportedBySdkVersion(langLevel, getVersion(root)))
         .min(Comparator.comparing(o -> getVersion(o).getMaxLanguageLevel()))
         .orElse(null);
   }

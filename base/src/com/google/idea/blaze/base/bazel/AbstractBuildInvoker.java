@@ -28,8 +28,8 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.command.info.BlazeInfoProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -104,6 +104,11 @@ public abstract class AbstractBuildInvoker implements BuildInvoker {
   }
 
   @Override
+  public BuildSystem getBuildSystem() {
+    return buildSystem;
+  }
+
+  @Override
   @Nullable
   public synchronized BlazeInfo getBlazeInfo() throws SyncFailedException {
     if (blazeInfo == null) {
@@ -140,12 +145,15 @@ public abstract class AbstractBuildInvoker implements BuildInvoker {
             BlazeCommandName.INFO,
             blazeContext,
             BlazeInvocationContext.SYNC_CONTEXT);
+    if (BlazeInfoProvider.isEnabled()) {
+      return BlazeInfoProvider.getInstance(project)
+              .getBlazeInfo(blazeContext, syncFlags);
+    }
     return BlazeInfoRunner.getInstance()
-        .runBlazeInfo(
-            blazeContext,
-            buildSystem.getName(),
-            getBinaryPathForBlazeInfo(),
-            WorkspaceRoot.fromProject(project),
-            syncFlags);
+            .runBlazeInfo(project,
+                    this,
+                    blazeContext,
+                    buildSystem.getName(),
+                    syncFlags);
   }
 }

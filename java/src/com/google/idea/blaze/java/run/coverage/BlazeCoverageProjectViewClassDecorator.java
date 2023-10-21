@@ -44,10 +44,10 @@ public class BlazeCoverageProjectViewClassDecorator
 
   @Override
   public void decorate(@SuppressWarnings("rawtypes") ProjectViewNode node, PresentationData data) {
-    CoverageDataManager manager = getCoverageDataManager();
+    Project project = node.getProject();
+    CoverageDataManager manager = getCoverageDataManager(project);
     CoverageSuitesBundle currentSuite = manager.getCurrentSuitesBundle();
 
-    Project project = node.getProject();
     BlazeCoverageAnnotator annotator = getAnnotator(project, currentSuite);
     if (annotator == null) {
       return;
@@ -68,9 +68,9 @@ public class BlazeCoverageProjectViewClassDecorator
     if (file == null) {
       return;
     }
-    CoverageDataManager manager = getCoverageDataManager();
-    CoverageSuitesBundle currentSuite = manager.getCurrentSuitesBundle();
     Project project = file.getProject();
+    CoverageDataManager manager = getCoverageDataManager(project);
+    CoverageSuitesBundle currentSuite = manager.getCurrentSuitesBundle();
     BlazeCoverageAnnotator annotator = getAnnotator(project, currentSuite);
     if (annotator == null) {
       return;

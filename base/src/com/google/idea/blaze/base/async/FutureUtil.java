@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.async;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -75,17 +76,20 @@ public class FutureUtil {
       this.future = future;
     }
 
+    @CanIgnoreReturnValue
     public Builder<T> timed(String timingCategory, EventType eventType) {
       this.timingCategory = timingCategory;
       this.eventType = eventType;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder<T> withProgressMessage(String message) {
       this.progressMessage = message;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder<T> onError(String errorMessage) {
       this.errorMessage = errorMessage;
       return this;

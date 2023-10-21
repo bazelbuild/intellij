@@ -21,9 +21,11 @@ import com.android.sdklib.AndroidVersion;
 import com.android.tools.idea.model.AndroidModel;
 import com.android.tools.idea.model.ClassJarProvider;
 import com.android.tools.lint.detector.api.Desugaring;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LintCollector;
 import com.intellij.openapi.diagnostic.Logger;
@@ -113,9 +115,12 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
     return desugarJava8Libs ? Desugaring.FULL : Desugaring.DEFAULT;
   }
 
-  // #api211 @Override
+  @Override
   @Nullable
   public Iterable<File> getLintRuleJarsOverride() {
+    if (QuerySync.isEnabled()) {
+      return ImmutableList.of();
+    }
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     return LintCollector.getLintJars(project, blazeProjectData);

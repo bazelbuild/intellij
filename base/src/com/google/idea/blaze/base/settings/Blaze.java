@@ -16,10 +16,13 @@
 package com.google.idea.blaze.base.settings;
 
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.SwingUtilities;
 
 /** Blaze project utilities. */
@@ -40,6 +43,14 @@ public class Blaze {
   public static boolean isBlazeProject(@Nullable Project project) {
     return project != null
         && BlazeImportSettingsManager.getInstance(project).getImportSettings() != null;
+  }
+
+  public static BlazeProjectData getProjectData(@Nullable Project project) {
+    if (!isBlazeProject(project)) {
+      return null;
+    }
+
+    return BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
   }
 
   /**

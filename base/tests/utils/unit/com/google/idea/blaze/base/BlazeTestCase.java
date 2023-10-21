@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.bazel.FakeBuildSystem;
 import com.google.idea.blaze.base.bazel.FakeBuildSystemProvider;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.testing.TestUtils;
+import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockComponentManager;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
@@ -32,13 +33,13 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-import org.picocontainer.MutablePicoContainer;
 
 /**
  * Test base class.
@@ -67,7 +68,7 @@ public class BlazeTestCase {
 
   @Rule public IgnoreOnWindowsRule rule = new IgnoreOnWindowsRule();
 
-  protected Project project;
+  protected MockProject project;
   private ExtensionsAreaImpl extensionsArea;
   protected Disposable testDisposable;
   private BuildSystemProvider buildSystemProvider;
@@ -94,11 +95,10 @@ public class BlazeTestCase {
 
   @Before
   public final void setup() {
+    Registry.get("allow.macros.for.run.configurations").setValue(false);
     testDisposable = new RootDisposable();
-    TestUtils.createMockApplication(testDisposable);
-    MutablePicoContainer applicationContainer =
-        (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer();
-    MockProject mockProject = TestUtils.mockProject(applicationContainer, testDisposable);
+    MockApplication application = TestUtils.createMockApplication(testDisposable);
+    MockProject mockProject = TestUtils.mockProject(application.getPicoContainer(), testDisposable);
 
     extensionsArea = (ExtensionsAreaImpl) Extensions.getRootArea();
 

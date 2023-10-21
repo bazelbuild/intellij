@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -29,11 +30,15 @@ import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
 import com.google.common.collect.Queues;
 import com.google.common.collect.SetMultimap;
-import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.NamedSetOfFilesId;
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.File;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.NamedSetOfFiles;
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.OutputGroup;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -41,6 +46,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
@@ -52,8 +58,21 @@ import javax.annotation.Nullable;
 /** A data class representing blaze's build event protocol (BEP) output for a build. */
 public final class ParsedBepOutput {
 
+  @VisibleForTesting
+  public static final ParsedBepOutput EMPTY =
+      new ParsedBepOutput(
+          "build-id",
+          null,
+          ImmutableMap.of(),
+          ImmutableSetMultimap.of(),
+          0,
+          BuildResult.SUCCESS,
+          0,
+          ImmutableSet.of());
+
   /** Parses BEP events into {@link ParsedBepOutput} */
-  static ParsedBepOutput parseBepArtifacts(InputStream bepStream) throws BuildEventStreamException {
+  public static ParsedBepOutput parseBepArtifacts(InputStream bepStream)
+      throws BuildEventStreamException {
     return parseBepArtifacts(BuildEventStreamProvider.fromInputStream(bepStream));
   }
 
@@ -64,8 +83,8 @@ public final class ParsedBepOutput {
   }
 
   /**
-   * Parses BEP events into {@link ParsedBepOutput}. String references in {@link
-   * BuildEventStreamProtos.NamedSetOfFiles} are interned to conserve memory.
+   * Parses BEP events into {@link ParsedBepOutput}. String references in {@link NamedSetOfFiles}
+   * are interned to conserve memory.
    *
    * <p>BEP protos often contain many duplicate strings both within a single stream and across
    * shards running in parallel, so a {@link Interner} is used to share references.
@@ -78,11 +97,12 @@ public final class ParsedBepOutput {
       interner = Interners.newStrongInterner();
     }
 
-    BuildEventStreamProtos.BuildEvent event;
+    BuildEvent event;
     Map<String, String> configIdToMnemonic = new HashMap<>();
     Set<String> topLevelFileSets = new HashSet<>();
     Map<String, FileSet.Builder> fileSets = new LinkedHashMap<>();
     ImmutableSetMultimap.Builder<String, String> targetToFileSets = ImmutableSetMultimap.builder();
+    ImmutableSet.Builder<Label> targetsWithErrors = ImmutableSet.builder();
     String localExecRoot = null;
     String buildId = null;
     long startTimeMillis = 0L;
@@ -106,6 +126,12 @@ public final class ParsedBepOutput {
               (k, v) ->
                   v != null ? v.setNamedSet(namedSet) : FileSet.builder().setNamedSet(namedSet));
           continue;
+        case ACTION_COMPLETED:
+          Preconditions.checkState(event.hasAction());
+          if (!event.getAction().getSuccess()) {
+            targetsWithErrors.add(Label.create(event.getId().getActionCompleted().getLabel()));
+          }
+          break;
         case TARGET_COMPLETED:
           String label = event.getId().getTargetCompleted().getLabel();
           String configId = event.getId().getTargetCompleted().getConfiguration().getId();
@@ -156,10 +182,11 @@ public final class ParsedBepOutput {
         targetToFileSets.build(),
         startTimeMillis,
         buildResult,
-        stream.getBytesConsumed());
+        stream.getBytesConsumed(),
+        targetsWithErrors.build());
   }
 
-  private static List<String> getFileSets(BuildEventStreamProtos.OutputGroup group) {
+  private static List<String> getFileSets(OutputGroup group) {
     return group.getFileSetsList().stream()
         .map(NamedSetOfFilesId::getId)
         .collect(Collectors.toList());
@@ -196,7 +223,7 @@ public final class ParsedBepOutput {
         .filter(e -> e.getValue().isValid(configIdToMnemonic))
         .collect(
             toImmutableMap(
-                Map.Entry::getKey, e -> e.getValue().build(configIdToMnemonic, startTimeMillis)));
+                Entry::getKey, e -> e.getValue().build(configIdToMnemonic, startTimeMillis)));
   }
 
   @Nullable public final String buildId;
@@ -214,16 +241,17 @@ public final class ParsedBepOutput {
 
   private final BuildResult buildResult;
   private final long bepBytesConsumed;
+  private final ImmutableSet<Label> targetsWithErrors;
 
-  @VisibleForTesting
-  public ParsedBepOutput(
+  private ParsedBepOutput(
       @Nullable String buildId,
       @Nullable String localExecRoot,
       ImmutableMap<String, FileSet> fileSets,
       ImmutableSetMultimap<String, String> targetFileSets,
       long syncStartTimeMillis,
       BuildResult buildResult,
-      long bepBytesConsumed) {
+      long bepBytesConsumed,
+      ImmutableSet<Label> targetsWithErrors) {
     this.buildId = buildId;
     this.localExecRoot = localExecRoot;
     this.fileSets = fileSets;
@@ -231,6 +259,7 @@ public final class ParsedBepOutput {
     this.syncStartTimeMillis = syncStartTimeMillis;
     this.buildResult = buildResult;
     this.bepBytesConsumed = bepBytesConsumed;
+    this.targetsWithErrors = targetsWithErrors;
   }
 
   /** Returns the local execroot. */
@@ -278,6 +307,10 @@ public final class ParsedBepOutput {
         .collect(toImmutableList());
   }
 
+  public ImmutableList<OutputArtifact> getOutputGroupArtifacts(String outputGroup) {
+    return getOutputGroupArtifacts(outputGroup, s -> true);
+  }
+
   /**
    * Returns a map from artifact key to {@link BepArtifactData} for all artifacts reported during
    * the build.
@@ -285,7 +318,13 @@ public final class ParsedBepOutput {
   public ImmutableMap<String, BepArtifactData> getFullArtifactData() {
     return fileSets.values().stream()
         .flatMap(FileSet::toPerArtifactData)
-        .collect(toImmutableMap(d -> d.artifact.getKey(), d -> d, BepArtifactData::update));
+        .collect(
+            toImmutableMap(d -> d.artifact.getRelativePath(), d -> d, BepArtifactData::update));
+  }
+
+  /** Returns the set of build targets that had an error. */
+  public ImmutableSet<Label> getTargetsWithErrors() {
+    return targetsWithErrors;
   }
 
   private static ImmutableList<OutputArtifact> parseFiles(
@@ -326,6 +365,7 @@ public final class ParsedBepOutput {
       final Set<String> outputGroups = new HashSet<>();
       final Set<String> targets = new HashSet<>();
 
+      @CanIgnoreReturnValue
       Builder updateFromParent(Builder parent) {
         configId = parent.configId;
         outputGroups.addAll(parent.outputGroups);
@@ -333,21 +373,25 @@ public final class ParsedBepOutput {
         return this;
       }
 
+      @CanIgnoreReturnValue
       Builder setNamedSet(NamedSetOfFiles namedSet) {
         this.namedSet = namedSet;
         return this;
       }
 
+      @CanIgnoreReturnValue
       Builder setConfigId(String configId) {
         this.configId = configId;
         return this;
       }
 
+      @CanIgnoreReturnValue
       Builder addOutputGroups(Set<String> outputGroups) {
         this.outputGroups.addAll(outputGroups);
         return this;
       }
 
+      @CanIgnoreReturnValue
       Builder addTargets(Set<String> targets) {
         this.targets.addAll(targets);
         return this;
@@ -364,29 +408,32 @@ public final class ParsedBepOutput {
     }
   }
 
-  /**
-   * Returns a copy of a {@link BuildEventStreamProtos.NamedSetOfFiles} with interned string
-   * references.
-   */
+  /** Returns a copy of a {@link NamedSetOfFiles} with interned string references. */
   private static NamedSetOfFiles internNamedSet(
       NamedSetOfFiles namedSet, Interner<String> interner) {
+    final boolean isQuerySyncEnabled = QuerySync.isEnabled();
     return namedSet.toBuilder()
         .clearFiles()
         .addAllFiles(
             namedSet.getFilesList().stream()
                 .map(
-                    file ->
-                        file.toBuilder()
-                            // The digest is not used when parsing output artifacts
-                            .setDigest("")
-                            .setUri(interner.intern(file.getUri()))
-                            .setName(interner.intern(file.getName()))
-                            .clearPathPrefix()
-                            .addAllPathPrefix(
-                                file.getPathPrefixList().stream()
-                                    .map(interner::intern)
-                                    .collect(Collectors.toUnmodifiableList()))
-                            .build())
+                    file -> {
+                      File.Builder builder =
+                          file.toBuilder()
+                              .setUri(interner.intern(file.getUri()))
+                              .setName(interner.intern(file.getName()))
+                              .clearPathPrefix()
+                              .addAllPathPrefix(
+                                  file.getPathPrefixList().stream()
+                                      .map(interner::intern)
+                                      .collect(Collectors.toUnmodifiableList()));
+                      if (!isQuerySyncEnabled) {
+                        // The digest is not used when parsing output artifacts in the non-query
+                        // sync mode.
+                        builder.setDigest("");
+                      }
+                      return builder.build();
+                    })
                 .collect(Collectors.toUnmodifiableList()))
         .build();
   }

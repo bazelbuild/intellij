@@ -16,6 +16,7 @@
 package com.google.idea.blaze.clwb.run;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Streams;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -25,12 +26,14 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtif
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.cpp.BlazeCompilerInfoMapService;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
@@ -38,18 +41,21 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
+
+import java.util.Collections;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+import java.util.stream.Stream;
 
 /** CLion-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
-
   private final BlazeCommandRunConfiguration configuration;
 
   /** Calculated during the before-run task, and made available to the debugger. */
@@ -107,19 +113,28 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
     try (BuildResultHelper buildResultHelper =
         BuildResultHelperProvider.createForLocalBuild(env.getProject())) {
 
-      List<String> extraDebugFlags;
-      if (!BlazeGDBServerProvider.shouldUseGdbserver()) {
-        extraDebugFlags =
-            ImmutableList.of(
-                "--compilation_mode=dbg",
-                "--copt=-O0",
-                "--copt=-g",
-                "--strip=never",
-                "--dynamic_mode=off",
-                "--fission=yes");
-      } else {
-        extraDebugFlags =
-            BlazeGDBServerProvider.getFlagsForDebugging(configuration.getHandler().getState());
+      List<String> extraDebugFlags = Collections.emptyList();
+      if(!Registry.is("bazel.clwb.debug.extraflags.disabled")) {
+        if (!BlazeGDBServerProvider.shouldUseGdbserver()) {
+          ImmutableList<String> extraClangFlags =
+              isClangBuild() && !Registry.is("bazel.trim.absolute.path.disabled")
+                  ? ImmutableList.of(
+                  "--copt=-fdebug-compilation-dir=" + WorkspaceRoot.fromProject(env.getProject()),
+                  "--linkopt=-Wl,-oso_prefix,.")
+                  : ImmutableList.of();
+          extraDebugFlags =
+              Streams.concat(
+                  Stream.of(
+                      "--compilation_mode=dbg",
+                      "--copt=-O0",
+                      "--copt=-g",
+                      "--strip=never",
+                      "--dynamic_mode=off",
+                      "--fission=yes"), extraClangFlags.stream()).collect(Collectors.toList());
+        } else {
+          extraDebugFlags =
+              BlazeGDBServerProvider.getFlagsForDebugging(configuration.getHandler().getState());
+        }
       }
 
       ListenableFuture<BuildResult> buildOperation =
@@ -172,6 +187,11 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
       LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
       return file;
     }
+  }
+
+  private boolean isClangBuild() throws ExecutionException {
+    Label target = getSingleTarget(configuration);
+    return BlazeCompilerInfoMapService.getInstance(configuration.getProject()).isClangTarget(target);
   }
 
   /**

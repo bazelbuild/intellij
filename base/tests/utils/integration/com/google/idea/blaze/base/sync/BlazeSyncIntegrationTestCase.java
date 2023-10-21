@@ -34,7 +34,7 @@ import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
-import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.AspectSyncProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
@@ -60,7 +60,7 @@ import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
-import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.google.idea.testing.ServiceHelper;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
@@ -95,8 +95,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   private static final JavaVersion JAVA_VERSION = LanguageLevel.JDK_1_9.toJavaVersion();
   // Mimic JavaLanguageLevelSection.KEY as we don't want to add a dependency on the whole :java
   // package for this language-independent class.
-  private static final SectionKey<Integer, ScalarSection<Integer>> JAVA_LANGUAGE_LEVEL_SECTION_KEY =
-      new SectionKey<>("java_language_level");
+  private static final SectionKey<LanguageLevel, ScalarSection<LanguageLevel>> JAVA_LANGUAGE_LEVEL_SECTION_KEY = new SectionKey<>(
+      "java_language_level");
 
   private Disposable thisClassDisposable; // disposed prior to calling parent class's @After methods
   private MockProjectViewManager projectViewManager;
@@ -106,14 +106,14 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   @Nullable private ProjectModuleMocker moduleMocker; // this will be null for heavy test cases
 
   protected ErrorCollector errorCollector;
-  private String execRoot;
+  protected String execRoot;
 
   @Before
   public void doSetup() throws Throwable {
     thisClassDisposable = Disposer.newDisposable();
     projectViewManager = new MockProjectViewManager(getProject());
     ServiceHelper.registerExtension(
-        BlazeVcsHandler.EP_NAME, new MockBlazeVcsHandler(), thisClassDisposable);
+        BlazeVcsHandlerProvider.EP_NAME, new MockBlazeVcsHandlerProvider(), thisClassDisposable);
     blazeInfoData = new MockBlazeInfoRunner();
     blazeIdeInterface = new MockBlazeIdeInterface();
     eventLogger = new MockEventLoggingService(thisClassDisposable);
@@ -218,7 +218,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         && projectViewSet.getScalarValue(JAVA_LANGUAGE_LEVEL_SECTION_KEY).isEmpty()) {
       ProjectView additionalProjectView =
           ProjectView.builder()
-              .add(ScalarSection.builder(JAVA_LANGUAGE_LEVEL_SECTION_KEY).set(JAVA_VERSION.feature))
+              .add(ScalarSection.builder(JAVA_LANGUAGE_LEVEL_SECTION_KEY)
+                  .set(LanguageLevel.parse(Integer.toString(JAVA_VERSION.feature))))
               .build();
       return ProjectViewSet.builder()
           .add(additionalProjectView)
@@ -256,7 +257,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
             .submit(
                 () -> {
                   SyncPhaseCoordinator.getInstance(getProject()).runSync(syncParams, true, context);
-                  context.endScope();
+                  context.close();
                 });
     while (!future.isDone()) {
       IdeEventQueue.getInstance().flushQueue();
@@ -276,20 +277,10 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     private final Map<String, String> results = Maps.newHashMap();
 
     @Override
-    public ListenableFuture<byte[]> runBlazeInfoGetBytes(
-        @Nullable BlazeContext context,
-        String binaryPath,
-        WorkspaceRoot workspaceRoot,
-        List<String> blazeFlags,
-        String key) {
-      return Futures.immediateFuture(null);
-    }
-
-    @Override
     public ListenableFuture<String> runBlazeInfo(
-        @Nullable BlazeContext context,
-        String binaryPath,
-        WorkspaceRoot workspaceRoot,
+        Project project,
+        BuildInvoker invoker,
+        BlazeContext context,
         List<String> blazeFlags,
         String key) {
       return Futures.immediateFuture(results.get(key));
@@ -297,13 +288,23 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
 
     @Override
     public ListenableFuture<BlazeInfo> runBlazeInfo(
-        @Nullable BlazeContext context,
+        Project project,
+        BuildInvoker invoker,
+        BlazeContext context,
         BuildSystemName buildSystemName,
-        String binaryPath,
-        WorkspaceRoot workspaceRoot,
         List<String> blazeFlags) {
       return Futures.immediateFuture(
           BlazeInfo.create(buildSystemName, ImmutableMap.copyOf(results)));
+    }
+
+    @Override
+    public ListenableFuture<byte[]> runBlazeInfoGetBytes(
+        Project project,
+        BuildInvoker invoker,
+        BlazeContext context,
+        List<String> blazeFlags,
+        String key) {
+      return Futures.immediateFuture(null);
     }
 
     public void setResults(Map<String, String> results) {
@@ -311,7 +312,6 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
       this.results.putAll(results);
     }
   }
-
   private static class MockBlazeIdeInterface implements BlazeIdeInterface {
     private TargetMap targetMap = new TargetMap(ImmutableMap.of());
 
@@ -323,7 +323,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         SyncProjectState projectState,
         BlazeSyncBuildResult buildResult,
         boolean mergeWithOldState,
-        @Nullable BlazeProjectData oldProjectData) {
+        @Nullable AspectSyncProjectData oldProjectData) {
       return new ProjectTargetData(targetMap, null, RemoteOutputArtifacts.fromProjectData(null));
     }
 
@@ -338,7 +338,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         ShardedTargetList shardedTargets,
         WorkspaceLanguageSettings workspaceLanguageSettings,
         ImmutableSet<OutputGroup> outputGroups,
-        BlazeInvocationContext blazeInvocationContext) {
+        BlazeInvocationContext blazeInvocationContext,
+        boolean invokeParallel) {
       return BlazeBuildOutputs.noOutputs(BuildResult.SUCCESS);
     }
   }

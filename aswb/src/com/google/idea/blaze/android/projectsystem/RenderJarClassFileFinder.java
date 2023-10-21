@@ -30,6 +30,9 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.qsync.ArtifactTracker;
+import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -134,6 +137,28 @@ public class RenderJarClassFileFinder implements ClassFileFinder {
     if (isResourceClass(fqcn) && !resolveResourceClasses.getValue()) {
       log.warn(String.format("Attempting to load resource '%s' from RenderJAR.", fqcn));
       return null;
+    }
+
+    if (QuerySync.isEnabled()) {
+      if (QuerySync.isComposeEnabled()) {
+        ArtifactTracker artifactTracker =
+            QuerySyncManager.getInstance(project).getArtifactTracker();
+        // TODO(b/283280194): Setup fqcn -> target and target -> Render jar mappings to avoid
+        // iterating over all render jars when trying to locate class for fqcn.
+        // TODO(b/284002836): Collect metrics on time taken to iterate over the jars
+        for (File renderJar : artifactTracker.getRenderJars()) {
+          VirtualFile renderResolveJarVf =
+              VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(renderJar);
+          if (renderResolveJarVf != null) {
+            return findClassInJar(renderResolveJarVf, fqcn);
+          }
+          log.warn(String.format("Could not find class `%1$s` with Query Sync", fqcn));
+          return null;
+        }
+      } else {
+        // Disable this class for Query Sync if Compose is not enabled
+        return null;
+      }
     }
 
     BlazeProjectData projectData =

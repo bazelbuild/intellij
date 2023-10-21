@@ -15,16 +15,15 @@
  */
 package com.google.idea.blaze.android.run;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
 
-import com.android.tools.idea.run.editor.AndroidDebugger;
-import com.android.tools.idea.run.editor.AndroidJavaDebugger;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger;
 import com.google.idea.blaze.android.cppimpl.debug.BlazeNativeAndroidDebugger;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.google.idea.blaze.android.tools.idea.run.editor.AndroidDebuggerCompat;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -38,14 +37,13 @@ public class AvailableDebuggersTest extends BlazeAndroidIntegrationTestCase {
     MockSdkUtil.registerSdk(workspace, "27");
     runFullBlazeSyncWithNoIssues();
 
-    List<Class<? extends AndroidDebugger>> availableDebuggers =
-        AndroidDebugger.EP_NAME.getExtensionList().stream()
-            .filter((debugger) -> debugger.supportsProject(getProject()))
-            .map(AndroidDebugger::getClass)
-            .collect(Collectors.toList());
-    assertThat(availableDebuggers).hasSize(2);
-    assertThat(availableDebuggers).contains(AndroidJavaDebugger.class);
-    assertThat(availableDebuggers).contains(BlazeAutoAndroidDebugger.class);
+    assertThat(
+            AndroidDebuggerCompat.getAvailableDebuggerExtensionList().stream()
+                .filter((debugger) -> debugger.supportsProject(getProject()))
+                .map(Object::getClass))
+        .containsExactly(
+            AndroidDebuggerCompat.getAndroidJavaDebugger().getClass(),
+            BlazeAutoAndroidDebugger.class);
   }
 
   @Test
@@ -59,14 +57,14 @@ public class AvailableDebuggersTest extends BlazeAndroidIntegrationTestCase {
     MockSdkUtil.registerSdk(workspace, "27");
     runFullBlazeSyncWithNoIssues();
 
-    List<Class<? extends AndroidDebugger>> availableDebuggers =
-        AndroidDebugger.EP_NAME.getExtensionList().stream()
-            .filter((debugger) -> debugger.supportsProject(getProject()))
-            .map(AndroidDebugger::getClass)
-            .collect(Collectors.toList());
-    assertThat(availableDebuggers).hasSize(3);
-    assertThat(availableDebuggers).contains(AndroidJavaDebugger.class);
-    assertThat(availableDebuggers).contains(BlazeAutoAndroidDebugger.class);
-    assertThat(availableDebuggers).contains(BlazeNativeAndroidDebugger.class);
+    assertThat(
+            AndroidDebuggerCompat.getAvailableDebuggerExtensionList().stream()
+                .filter((debugger) -> debugger.supportsProject(getProject()))
+                .map(Object::getClass)
+                .collect(toImmutableList()))
+        .containsExactly(
+            AndroidDebuggerCompat.getAndroidJavaDebugger().getClass(),
+            BlazeAutoAndroidDebugger.class,
+            BlazeNativeAndroidDebugger.class);
   }
 }

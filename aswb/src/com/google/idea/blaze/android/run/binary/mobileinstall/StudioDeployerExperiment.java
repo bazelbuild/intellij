@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.run.binary.mobileinstall;
 
 import com.google.idea.common.experiments.FeatureRolloutExperiment;
+import com.intellij.openapi.util.SystemInfo;
 
 /**
  * A utility class that manages the experiment to use studio's built in deployer for deploying apks
@@ -24,10 +25,16 @@ import com.google.idea.common.experiments.FeatureRolloutExperiment;
 public class StudioDeployerExperiment {
   /** Indicates if we should deploy via Studio or via MI. */
   private static final FeatureRolloutExperiment useStudioDeployer =
-      new FeatureRolloutExperiment("aswb.use.studio.deployer");
+      new FeatureRolloutExperiment("aswb.use.studio.deployer.2");
 
   /** Returns whether mobile install deployments should happen via the studio deployer. */
   public static boolean isEnabled() {
+    // The Studio deployer experiment is specific to local builds on Linux. For other platforms,
+    // we'll rely entirely on the new Blaze specific deployment flow.
+    if (!SystemInfo.isLinux) {
+      return false;
+    }
+
     return useStudioDeployer.isEnabled();
   }
 

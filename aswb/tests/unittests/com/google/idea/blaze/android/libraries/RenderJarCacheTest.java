@@ -27,8 +27,8 @@ import com.google.idea.blaze.base.MockProjectViewManager;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifactWithoutDigest;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -46,12 +46,13 @@ import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
@@ -60,6 +61,7 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncPlugin;
@@ -143,6 +145,7 @@ public class RenderJarCacheTest {
     intellijRule.registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
     intellijRule.registerExtension(Kind.Provider.EP_NAME, new AndroidBlazeRules());
     intellijRule.registerApplicationService(ApplicationState.class, new ApplicationState());
+    intellijRule.registerApplicationService(QuerySyncSettings.class, new QuerySyncSettings());
 
     // registered because `RenderJarCache` uses it to filter source targets
     projectViewManager = new MockProjectViewManager();
@@ -177,7 +180,7 @@ public class RenderJarCacheTest {
                     SyncMode.INCREMENTAL));
 
     @SuppressWarnings("unchecked") // irrelevant unchecked conversion warning for artifactsCaptor
-    ArgumentCaptor<Collection<OutputArtifact>> artifactsCaptor =
+    ArgumentCaptor<Collection<OutputArtifactWithoutDigest>> artifactsCaptor =
         ArgumentCaptor.forClass(Collection.class);
 
     ArgumentCaptor<BlazeContext> contextCaptor = ArgumentCaptor.forClass(BlazeContext.class);
@@ -186,7 +189,7 @@ public class RenderJarCacheTest {
     verify(mockedArtifactCache, Mockito.times(1))
         .putAll(artifactsCaptor.capture(), contextCaptor.capture(), removeCaptor.capture());
 
-    Collection<OutputArtifact> passedArtifact = artifactsCaptor.getValue();
+    Collection<OutputArtifactWithoutDigest> passedArtifact = artifactsCaptor.getValue();
     assertThat(passedArtifact.stream().map(Object::toString))
         .containsExactly(
             "com/foo/bar/baz/baz_render_jar.jar", "com/foo/bar/qux/qux_render_jar.jar");
@@ -229,7 +232,7 @@ public class RenderJarCacheTest {
     BlazeArtifact bazRenderJar =
         artifactLocationDecoder.resolveOutput(
             getArtifactLocation("com/foo/bar/baz/baz_render_jar.jar"));
-    File bazRenderJarFile = ((LocalFileOutputArtifact) bazRenderJar).getFile();
+    File bazRenderJarFile = ((LocalFileOutputArtifactWithoutDigest) bazRenderJar).getFile();
     assertThat(Paths.get(bazRenderJarFile.getParent()).toFile().mkdirs()).isTrue();
     assertThat(bazRenderJarFile.createNewFile()).isTrue();
     assertThat(bazRenderJarFile.setLastModified(100000L)).isTrue();
@@ -238,7 +241,7 @@ public class RenderJarCacheTest {
     BlazeArtifact quxRenderJar =
         artifactLocationDecoder.resolveOutput(
             getArtifactLocation("com/foo/bar/qux/qux_render_jar.jar"));
-    File quxRenderJarFile = ((LocalFileOutputArtifact) quxRenderJar).getFile();
+    File quxRenderJarFile = ((LocalFileOutputArtifactWithoutDigest) quxRenderJar).getFile();
     assertThat(Paths.get(quxRenderJarFile.getParent()).toFile().mkdirs()).isTrue();
     assertThat(quxRenderJarFile.createNewFile()).isTrue();
     assertThat(quxRenderJarFile.setLastModified(100000L)).isTrue();
@@ -251,11 +254,12 @@ public class RenderJarCacheTest {
     File projectDataDir = temporaryFolder.newFolder("project_data");
     importSettingsManager.setImportSettings(
         new BlazeImportSettings(
-            /*workspaceRoot=*/ "",
+            /* workspaceRoot= */ "",
             intellijRule.getProject().getName(),
             projectDataDir.getAbsolutePath(),
-            /*projectViewFile=*/ "",
-            BuildSystemName.Blaze));
+            /* projectViewFile= */ "",
+            BuildSystemName.Blaze,
+            ProjectType.ASPECT_SYNC));
     intellijRule.registerProjectService(BlazeImportSettingsManager.class, importSettingsManager);
   }
 

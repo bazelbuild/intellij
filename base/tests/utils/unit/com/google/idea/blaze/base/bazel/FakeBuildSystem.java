@@ -19,6 +19,7 @@ import com.google.auto.value.AutoValue;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.BazelQueryRunner;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.project.Project;
@@ -56,6 +57,13 @@ public abstract class FakeBuildSystem implements BuildSystem {
 
   abstract Optional<BuildInvoker> getParallelBuildInvoker();
 
+  abstract Optional<BuildInvoker> getLocalBuildInvoker();
+
+  @Override
+  public Optional<BuildInvoker> getLocalBuildInvoker(Project project, BlazeContext context) {
+    return getParallelBuildInvoker();
+  }
+
   @Override
   public Optional<BuildInvoker> getParallelBuildInvoker(Project project, BlazeContext context) {
     return getParallelBuildInvoker();
@@ -72,6 +80,11 @@ public abstract class FakeBuildSystem implements BuildSystem {
   public void populateBlazeVersionData(
       WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo, BlazeVersionData.Builder builder) {}
 
+  @Override
+  public BazelQueryRunner createQueryRunner(Project project) {
+    return null;
+  }
+
   /**
    * Builder for {@link FakeBuildSystem}. Use {@link FakeBuildSystem#builder(BuildSystemName)} to
    * get an instance.
@@ -86,6 +99,8 @@ public abstract class FakeBuildSystem implements BuildSystem {
     public abstract Builder setBuildInvoker(BuildInvoker value);
 
     public abstract Builder setParallelBuildInvoker(Optional<BuildInvoker> value);
+
+    public abstract Builder setLocalBuildInvoker(Optional<BuildInvoker> value);
 
     public abstract Builder setSyncStrategy(SyncStrategy value);
   }

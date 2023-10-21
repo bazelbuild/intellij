@@ -100,6 +100,8 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
               BlazeCommandRunConfigurationRunner.getBlazeCommand(env))) {
         return new BlazeCommandRunProfileState(env);
       }
+      // Create place holders for the debugging setup handlers data in the user data storage.
+      BlazeJavaDebuggingSetupHandler.initHandlersData(env);
       ClassFileManifestBuilder.initState(env);
       return new BlazeJavaRunProfileState(env);
     }
@@ -111,6 +113,11 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
               BlazeCommandRunConfigurationRunner.getBlazeCommand(env))) {
         return true;
       }
+
+      if (!BlazeJavaDebuggingSetupHandler.setUpJavaDebugging(env)) {
+        return false;
+      }
+
       try {
         ClassFileManifestBuilder.buildManifest(env, null);
         return true;

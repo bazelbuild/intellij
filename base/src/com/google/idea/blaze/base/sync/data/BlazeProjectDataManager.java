@@ -16,16 +16,24 @@
 package com.google.idea.blaze.base.sync.data;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.intellij.openapi.components.ServiceManager;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 
 /** Stores a cache of blaze project data. */
 public interface BlazeProjectDataManager {
   static BlazeProjectDataManager getInstance(Project project) {
-    return ServiceManager.getService(project, BlazeProjectDataManager.class);
+    return project.getService(BlazeProjectDataManager.class);
   }
 
+  /** Returns project data that was previously loaded. */
   @Nullable
   BlazeProjectData getBlazeProjectData();
+
+  /** Loads the project data from disk and returns it. */
+  @Nullable
+  BlazeProjectData loadProject(BlazeImportSettings importSettings);
+
+  /** Updated the project data, and persists it to disk. */
+  void saveProject(final BlazeImportSettings importSettings, final BlazeProjectData projectData);
 }

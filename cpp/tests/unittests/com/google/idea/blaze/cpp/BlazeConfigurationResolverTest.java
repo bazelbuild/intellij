@@ -17,7 +17,10 @@ package com.google.idea.blaze.cpp;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
+import static java.util.Arrays.stream;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
@@ -36,9 +39,9 @@ import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.model.primitives.Kind.Provider;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -48,20 +51,28 @@ import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.sync.SyncCache;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -82,25 +93,33 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   private BlazeConfigurationResolver resolver;
   private BlazeConfigurationResolverResult resolverResult;
   private MockCompilerVersionChecker compilerVersionChecker;
+  private MockXcodeSettingsProvider xcodeSettingsProvider;
   private LocalFileSystem mockFileSystem;
+  private FileOperationProvider spyFileOperationProvider;
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(BlazeExecutor.class, new MockBlazeExecutor());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
+    applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
     compilerVersionChecker = new MockCompilerVersionChecker("1234");
     applicationServices.register(CompilerVersionChecker.class, compilerVersionChecker);
     applicationServices.register(ProgressManager.class, new ProgressManagerImpl());
     applicationServices.register(CompilerWrapperProvider.class, new CompilerWrapperProviderImpl());
+    xcodeSettingsProvider = new MockXcodeSettingsProvider();
+    projectServices.register(XcodeCompilerSettingsProvider.class, xcodeSettingsProvider);
     applicationServices.register(VirtualFileManager.class, mock(VirtualFileManager.class));
-    applicationServices.register(FileOperationProvider.class, new FileOperationProvider());
+    spyFileOperationProvider = spy(FileOperationProvider.class);
+    applicationServices.register(FileOperationProvider.class, spyFileOperationProvider);
     mockFileSystem = mock(LocalFileSystem.class);
     applicationServices.register(
         VirtualFileSystemProvider.class, mock(VirtualFileSystemProvider.class));
     when(VirtualFileSystemProvider.getInstance().getSystem()).thenReturn(mockFileSystem);
 
-    ExtensionPointImpl<Provider> ep =
+    Registry.get(BlazeConfigurationResolver.SYNC_EXTERNAL_TARGETS_FROM_DIRECTORIES_KEY).setValue(true);
+
+    ExtensionPointImpl<Kind.Provider> ep =
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
     ep.registerExtension(new CppBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
@@ -110,10 +129,20 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     BlazeImportSettingsManager.getInstance(getProject())
         .setImportSettings(
             new BlazeImportSettings(
-                "", "", "", "", getBuildSystemProvider().getBuildSystem().getName()));
+                "",
+                "",
+                "",
+                "",
+                getBuildSystemProvider().getBuildSystem().getName(),
+                ProjectType.ASPECT_SYNC));
 
     registerExtensionPoint(
         BlazeCompilerFlagsProcessor.EP_NAME, BlazeCompilerFlagsProcessor.Provider.class);
+
+    BlazeProjectDataManager mockProjectDataManager =
+        new MockBlazeProjectDataManager(MockBlazeProjectDataBuilder.builder(workspaceRoot).build());
+    projectServices.register(BlazeProjectDataManager.class, mockProjectDataManager);
+    projectServices.register(SyncCache.class, new SyncCache(project));
 
     context.addOutputSink(IssueOutput.class, errorCollector);
 
@@ -516,7 +545,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .build();
 
     assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary");
-    Collection<BlazeResolveConfiguration> initialConfigurations =
+    ImmutableList<BlazeResolveConfiguration> initialConfigurations =
         resolverResult.getAllConfigurations();
     BlazeConfigurationResolverResult oldResult = resolverResult;
 
@@ -768,6 +797,69 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
         targetWith64Dep.build().getKey().toString(), aarch64Toolchain.build());
   }
 
+  @Test
+  public void testExternalDependencyResolvedWhenIsPartOfProject() throws IOException {
+    ProjectView projectView = projectView(
+        directories("test", "external_dependency"),
+        targets("//test:target"));
+
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(createCcToolchain())
+            .addTarget(
+                createCcTarget(
+                    "//test:target",
+                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                    ImmutableList.of(src("test/test.cc")),
+                    "//:toolchain")
+                    .addDependency("@external_dependency//foo:bar"))
+            .addTarget(
+                createCcTarget(
+                    "@external_dependency//foo:bar",
+                    CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
+                    ImmutableList.of(src("foo/bar.cpp")),
+                    "//:toolchain"))
+            .build();
+
+    File externalRoot = WorkspaceHelper.getExternalSourceRoot(
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData());
+
+    File spyExternalDependencyRoot = spy(new File(externalRoot, "external_dependency"));
+    doReturn(true).when(spyExternalDependencyRoot).isDirectory();
+    Path mockExternalDependencyInWorkspace = mock(Path.class);
+    when(mockExternalDependencyInWorkspace.toRealPath()).thenReturn(
+        mockExternalDependencyInWorkspace);
+    when(mockExternalDependencyInWorkspace.toFile()).thenReturn(
+        workspaceRoot.fileForPath(new WorkspacePath("external_dependency")));
+
+    doReturn(mockExternalDependencyInWorkspace).when(spyExternalDependencyRoot).toPath();
+
+    File mockExternalSourceRootFile = mock(File.class);
+    when(mockExternalSourceRootFile.listFiles()).thenReturn(
+        List.of(spyExternalDependencyRoot).toArray(File[]::new));
+
+    doReturn(mockExternalSourceRootFile.listFiles()).when(spyFileOperationProvider)
+        .listFiles(externalRoot);
+
+    assertThatResolving(projectView,targetMap).producesConfigurationsFor("//test:target and 1 other target(s)");
+    assertThat(resolverResult.getAllConfigurations().get(0).getTargets().stream()
+        .map(targetKey -> targetKey.getLabel().toString())
+        .collect(Collectors.toList())).containsAllOf("//test:target",
+        "@external_dependency//foo:bar");
+  }
+
+  @Test
+  public void xcodeSettingsAreChecked() {
+    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(createCcToolchain())
+            .build();
+    XcodeCompilerSettings expected = XcodeCompilerSettings.create(Path.of("/tmp/dev_dir"), Path.of("/tmp/dev_dir/sdk"));
+    xcodeSettingsProvider.setXcodeSettings(expected);
+    assertThatResolving(projectView, targetMap).producesXcodeConfiguration(expected);
+  }
+
   private static ArtifactLocation src(String path) {
     return ArtifactLocation.builder().setRelativePath(path).setIsSource(true).build();
   }
@@ -822,18 +914,15 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   private static ListSection<DirectoryEntry> directories(String... directories) {
     return ListSection.builder(DirectorySection.KEY)
         .addAll(
-            Arrays.stream(directories)
+            stream(directories)
                 .map(directory -> DirectoryEntry.include(WorkspacePath.createIfValid(directory)))
-                .collect(Collectors.toList()))
+                .collect(toImmutableList()))
         .build();
   }
 
   private static ListSection<TargetExpression> targets(String... targets) {
     return ListSection.builder(TargetSection.KEY)
-        .addAll(
-            Arrays.stream(targets)
-                .map(TargetExpression::fromStringSafe)
-                .collect(Collectors.toList()))
+        .addAll(stream(targets).map(TargetExpression::fromStringSafe).collect(toImmutableList()))
         .build();
   }
 
@@ -918,6 +1007,13 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 .collect(Collectors.toList());
         assertThat(notReusedTargets).containsExactly((Object[]) expectedNotReused);
       }
+
+      @Override
+      public void producesXcodeConfiguration(XcodeCompilerSettings expected) {
+        assertThat(resolverResult.getXcodeProperties().isPresent()).isTrue();
+        XcodeCompilerSettings actual = resolverResult.getXcodeProperties().get();
+        assertThat(actual).isEqualTo(expected);
+      }
     };
   }
 
@@ -938,5 +1034,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     void producesNoConfigurations();
 
     void reusedConfigurations(Collection<BlazeResolveConfiguration> reused, String... notReused);
+
+    void producesXcodeConfiguration(XcodeCompilerSettings expected);
   }
 }

@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.android.filecache;
 
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,7 +43,9 @@ public class MockArtifactCache implements ArtifactCache {
 
   @Override
   public void putAll(
-      Collection<OutputArtifact> artifacts, BlazeContext context, boolean removeMissingArtifacts) {
+      Collection<? extends OutputArtifactWithoutDigest> artifacts,
+      BlazeContext context,
+      boolean removeMissingArtifacts) {
     throw new UnsupportedOperationException(
         "MockArtifactCache does not support putting files in file system. Use `addTrackedFile`"
             + " instead");
@@ -51,7 +53,7 @@ public class MockArtifactCache implements ArtifactCache {
 
   @Nullable
   @Override
-  public Path get(OutputArtifact artifact) {
+  public Path get(OutputArtifactWithoutDigest artifact) {
     CacheEntry cacheEntry;
     try {
       cacheEntry = CacheEntry.forArtifact(artifact);
@@ -63,7 +65,7 @@ public class MockArtifactCache implements ArtifactCache {
             cacheEntry.getArtifacts().stream().findFirst().get().getRelativePath()));
   }
 
-  public void addTrackedFile(OutputArtifact artifact, String trackedFilePath) {
+  public void addTrackedFile(OutputArtifactWithoutDigest artifact, String trackedFilePath) {
     CacheEntry cacheEntry = null;
     try {
       cacheEntry = CacheEntry.forArtifact(artifact);

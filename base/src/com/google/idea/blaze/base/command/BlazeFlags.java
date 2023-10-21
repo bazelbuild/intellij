@@ -23,9 +23,11 @@ import com.google.idea.blaze.base.projectview.section.sections.BuildFlagsSection
 import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TestFlagsSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformUtils;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /** The collection of all the Bazel flag strings we use. */
@@ -48,12 +50,18 @@ public final class BlazeFlags {
   public static final String TEST_FILTER = "--test_filter";
   // Re-run the test even if the results are cached.
   public static final String NO_CACHE_TEST_RESULTS = "--nocache_test_results";
+  // Environment variables for the test runner
+  public static final String TEST_ENV = "--test_env";
+
 
   public static final String DELETED_PACKAGES = "--deleted_packages";
 
   // Avoid running validation actions at the end of build. This flag is expected to be set only
   // during syncing projects.
   public static final String DISABLE_VALIDATIONS = "--noexperimental_run_validations";
+
+  // Custom build metadata. This option takes a key-value pair as an argument.
+  public static final String BUILD_METADATA = "--build_metadata=";
 
   /** Flags to add to blaze/bazel invocations of the given type. */
   public static List<String> blazeFlags(
@@ -117,9 +125,11 @@ public final class BlazeFlags {
   public static List<String> expandBuildFlags(List<String> flags) {
     // This built-in IntelliJ class will do macro expansion using
     // both your environment and your Settings > Behavior > Path Variables
-    ParametersList parametersList = new ParametersList();
-    parametersList.addAll(flags);
-    return parametersList.getList();
+    List<String> expandedFlags = new ArrayList<>();
+    for (String flag : flags) {
+        expandedFlags.add(ProgramParametersConfigurator.expandMacros(flag));
+    }
+    return expandedFlags;
   }
 
   private BlazeFlags() {}

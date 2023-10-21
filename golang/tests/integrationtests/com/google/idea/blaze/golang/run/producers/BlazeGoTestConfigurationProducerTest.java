@@ -17,7 +17,11 @@ package com.google.idea.blaze.golang.run.producers;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.goide.project.GoPackageFactory;
+import com.goide.psi.GoFile;
 import com.goide.psi.GoFunctionDeclaration;
+import com.goide.psi.impl.GoPackage;
+import com.goide.psi.impl.imports.GoImportResolver;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
@@ -30,10 +34,16 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducerTestCase;
 import com.google.idea.blaze.base.run.producers.TestContextRunConfigurationProducer;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.golang.utils.MockGoImportResolver;
+import com.google.idea.blaze.golang.utils.MockGoPackageFactory;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import java.util.List;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,20 +53,47 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BlazeGoTestConfigurationProducerTest extends BlazeRunConfigurationProducerTestCase {
 
+  private final MockGoImportResolver importResolver = new MockGoImportResolver();
+  private final MockGoPackageFactory packageFactory = new MockGoPackageFactory();
   @Before
-  public final void suppressNativeProducers() {
+  public final void init() {
+    registerExtensionFirst(GoImportResolver.EP_NAME, importResolver);
+    registerExtension(GoPackageFactory.EP_NAME, packageFactory);
+
+    suppressNativeProducers();
+    setupMockTestingPackage();
+  }
+
+  private void suppressNativeProducers() {
     // Project components triggered before we can set up BlazeImportSettings.
     NonBlazeProducerSuppressor.suppressProducers(getProject());
   }
 
-  @Test
-  public void testProducedFromGoFile() throws Throwable {
+  // These tests need to resolve references to the Go `testing` package.
+  // We don't want to pull in a full Go SDK, so we mock just the bits we need here.
+  private void setupMockTestingPackage() {
+    GoFile testingSrc = (GoFile) workspace.createPsiFile(new WorkspacePath("testing/testing.go"),
+        "package testing",
+        "type T struct {}",
+        "func (*T) Run(string, func(*T) {}"
+    );
+    // This has to be a custom implementation of GoPackage, because we want to bypass the usual
+    // methods of figuring out the import path, as they are all broken if we don't have a full
+    // sdk installed.
+    GoPackage testingPkg = new GoPackage(getProject(), "testing", testingSrc.getContainingDirectory().getVirtualFile()) {
+      public @NotNull String getImportPath(boolean withVendoring) {
+        return "testing";
+      }
+    };
+    importResolver.put("testing", testingPkg);
+    packageFactory.put("testing", testingPkg);
+  }
+
+  private PsiFile setupWithSingleFile(String... contents) throws Throwable {
     PsiFile goFile =
         createAndIndexFile(
             new WorkspacePath("foo/bar/foo_test.go"),
-            "package foo",
-            "import \"testing\"",
-            "func TestFoo(t *testing.T) {}");
+        contents);
 
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
@@ -71,6 +108,18 @@ public class BlazeGoTestConfigurationProducerTest extends BlazeRunConfigurationP
     registerProjectService(
         BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
 
+    testFixture.configureFromExistingVirtualFile(goFile.getVirtualFile());
+
+    return goFile;
+  }
+
+  @Test
+  public void testProducedFromGoFile() throws Throwable {
+    PsiFile goFile = setupWithSingleFile(
+        "package foo",
+        "import \"testing\"",
+        "func TestFoo(t *testing.T) {}"
+    );
     ConfigurationContext context = createContextFromPsi(goFile);
     List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
     assertThat(configurations).isNotNull();
@@ -90,32 +139,80 @@ public class BlazeGoTestConfigurationProducerTest extends BlazeRunConfigurationP
 
   @Test
   public void testProducedFromTestCase() throws Throwable {
-    PsiFile goFile =
-        createAndIndexFile(
-            new WorkspacePath("foo/bar/foo_test.go"),
+    PsiFile goFile = setupWithSingleFile(
             "package foo",
             "import \"testing\"",
-            "func TestFoo(t *testing.T) {}");
+            "func T<caret>estFoo(t *testing.T) {}");
 
-    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
-    builder.setTargetMap(
-        TargetMapBuilder.builder()
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setKind("go_test")
-                    .setLabel("//foo/bar:foo_test")
-                    .addSource(sourceRoot("foo/bar/foo_test.go"))
-                    .build())
-            .build());
-    registerProjectService(
-        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+    assertElementGeneratesTestFilter(getElementAtCaret(0, goFile), "^TestFoo$");
+  }
 
-    List<GoFunctionDeclaration> functions =
-        PsiUtils.findAllChildrenOfClassRecursive(goFile, GoFunctionDeclaration.class);
-    assertThat(functions).hasSize(1);
+  @Test
+  public void testNestedTests() throws Throwable {
+    PsiFile goFile = setupWithSingleFile(
+        "package lib",
+        "import \"testing\"",
+        "func TestFoo(t *testing.T) {",
+        "   t.R<caret>un(\"with_nested\", func(t *testing.T) {",
+        "     t.R<caret>un(\"subtest\", func(t *testing.T) {})",
+        "   })",
+        "}"
+    );
 
-    GoFunctionDeclaration function = functions.get(0);
-    ConfigurationContext context = createContextFromPsi(function);
+    assertElementGeneratesTestFilter(getElementAtCaret(0, goFile), "^TestFoo/with_nested$");
+    assertElementGeneratesTestFilter(getElementAtCaret(1, goFile), "^TestFoo/with_nested/subtest$");
+  }
+  @Test
+  public void testCodeBetweenTests() throws Throwable {
+    PsiFile goFile = setupWithSingleFile(
+        "package foo",
+        "import (",
+        "   \"testing\"",
+        "   \"fmt\"",
+        ")",
+        "func TestFoo(t *testing.T) {",
+        "   fmt.Println(\"Just some other call\")",
+        "   t.R<caret>un(\"subtest\", func(t *testing.T) {})",
+        "}"
+    );
+
+    assertElementGeneratesTestFilter(getElementAtCaret(0, goFile), "^TestFoo/subtest$");
+  }
+
+  @Test
+  public void testTestsInStruct() throws Throwable {
+    PsiFile goFile = setupWithSingleFile(
+        "package foo",
+        "import (",
+        "   \"testing\"",
+        "   \"fmt\"",
+        ")",
+        "func TestFoo(t *testing.T) {",
+        "  testCases := []struct { name string }{ ",
+        "     {<caret> name: \"TestCase1\",},",
+        "     {<caret> name: \"TestCase2\",},",
+        "  }",
+        "  ",
+        "  for _, tc := range testCases {",
+        "    t.Run(tc.name, func(t *testing.T) {",
+        "      log.Println(\"running test: \" + tc.name)",
+        "    })",
+        "  }",
+        "}"
+    );
+
+    assertElementGeneratesTestFilter(getElementAtCaret(0, goFile), "^TestFoo/TestCase1$");
+    assertElementGeneratesTestFilter(getElementAtCaret(1, goFile), "^TestFoo/TestCase2$");
+  }
+
+  private PsiElement getElementAtCaret(int caretIndex, PsiFile goFile) {
+    Editor editor = testFixture.getEditor();
+    Caret caret = editor.getCaretModel().getAllCarets().get(caretIndex);
+    return goFile.findElementAt(caret.getOffset());
+  }
+
+  private void assertElementGeneratesTestFilter(PsiElement element, String expectedTestFilter) {
+    ConfigurationContext context = createContextFromPsi(element);
     List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
     assertThat(configurations).isNotNull();
     assertThat(configurations).hasSize(1);
@@ -128,7 +225,7 @@ public class BlazeGoTestConfigurationProducerTest extends BlazeRunConfigurationP
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
     assertThat(config.getTargets())
         .containsExactly(TargetExpression.fromStringSafe("//foo/bar:foo_test"));
-    assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=^TestFoo$");
+    assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=" + expectedTestFilter);
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
 }

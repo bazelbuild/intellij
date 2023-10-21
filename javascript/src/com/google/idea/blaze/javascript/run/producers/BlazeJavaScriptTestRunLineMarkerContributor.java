@@ -41,7 +41,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.icons.AllIcons.RunConfigurations.TestState;
 import com.intellij.javascript.testFramework.JsTestElementPath;
 import com.intellij.javascript.testFramework.jasmine.JasmineFileStructureBuilder;
-import com.intellij.javascript.testing.JSTestRunLineMarkersProvider;
 import com.intellij.lang.javascript.JSTokenTypes;
 import com.intellij.lang.javascript.psi.JSFile;
 import com.intellij.lang.javascript.psi.JSFunction;

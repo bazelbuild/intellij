@@ -18,17 +18,15 @@ package com.google.idea.common.experiments;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.util.Map;
 
-interface ExperimentLoader {
+/** An experiment loader that retrieves experiments with a name and a string value. */
+public interface ExperimentLoader {
 
   ExtensionPointName<ExperimentLoader> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.ExperimentLoader");
-  /**
-   * Load the map of experiment names to values. Experiment names must be hashed from their
-   * canonical value with SHA-512.
-   *
-   * @see HashingExperimentLoader
-   */
+
   Map<String, String> getExperiments();
 
   void initialize();
+
+  String getId();
 }

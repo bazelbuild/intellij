@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.sync.aspects;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.AspectSyncProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -53,7 +53,7 @@ public interface BlazeIdeInterface {
       SyncProjectState projectState,
       BlazeSyncBuildResult buildResult,
       boolean mergeWithOldState,
-      @Nullable BlazeProjectData oldProjectData);
+      @Nullable AspectSyncProjectData oldProjectData);
 
   /**
    * Invokes a blaze build for the given output groups.
@@ -70,5 +70,6 @@ public interface BlazeIdeInterface {
       ShardedTargetList shardedTargets,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       ImmutableSet<OutputGroup> outputGroups,
-      BlazeInvocationContext blazeInvocationContext);
+      BlazeInvocationContext blazeInvocationContext,
+      boolean invokeParallel);
 }

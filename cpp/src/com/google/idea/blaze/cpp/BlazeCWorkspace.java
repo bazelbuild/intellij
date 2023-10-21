@@ -33,7 +33,6 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
-import com.google.idea.sdkcompat.cpp.CppCompat;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -67,6 +66,7 @@ import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Message;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Session;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
+
 import java.io.File;
 import java.util.Collection;
 import java.util.Comparator;
@@ -126,6 +126,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
     BlazeConfigurationResolverResult newResult =
         configurationResolver.update(
             context, workspaceRoot, projectViewSet, blazeProjectData, oldResult);
+    BlazeCompilerInfoMapService.getInstance(project).setState(newResult.getTargetToCompilerVersion());
     // calculateConfigurations is expensive, so run async without a read lock (b/78570947)
     ProgressManager.getInstance()
         .run(
@@ -165,7 +166,8 @@ public final class BlazeCWorkspace implements ProjectComponent {
       ProgressIndicator indicator) {
 
     OCWorkspaceImpl.ModifiableModel workspaceModifiable =
-        OCWorkspaceImpl.getInstanceImpl(project).getModifiableModel(/* clear= */ true);
+        OCWorkspaceImpl.getInstanceImpl(project)
+            .getModifiableModel(OCWorkspace.LEGACY_CLIENT_KEY, true);
     ImmutableList<BlazeResolveConfiguration> configurations =
         configResolveData.getAllConfigurations();
     ExecutionRootPathResolver executionRootPathResolver =
@@ -173,7 +175,9 @@ public final class BlazeCWorkspace implements ProjectComponent {
             Blaze.getBuildSystemProvider(project),
             workspaceRoot,
             blazeProjectData.getBlazeInfo().getExecutionRoot(),
-            blazeProjectData.getWorkspacePathResolver());
+            blazeProjectData.getBlazeInfo().getOutputBase(),
+            blazeProjectData.getWorkspacePathResolver(),
+            blazeProjectData.getTargetMap());
 
     int progress = 0;
 
@@ -322,7 +326,6 @@ public final class BlazeCWorkspace implements ProjectComponent {
       fileCompilerSettings.setCompilerSwitches(compilerOpts.switches);
     }
   }
-
   /** Group compiler options for a specific file. */
   private static class PerFileCompilerOpts {
     final OCLanguageKind kind;
@@ -454,8 +457,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
     try {
       int i = 0;
       for (OCResolveConfiguration.ModifiableModel config : model.getConfigurations()) {
-        CppCompat.scheduleInSession(
-            session, i++, config, toolEnvironment, workspaceRoot.directory().getAbsolutePath());
+        session.schedule(i++, config, toolEnvironment, workspaceRoot.directory().getAbsolutePath());
       }
       MultiMap<Integer, Message> messages = new MultiMap<>();
       session.waitForAll(messages);

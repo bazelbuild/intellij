@@ -47,7 +47,7 @@ public class BlazeAndroidIntegrationTestCase extends BlazeSyncIntegrationTestCas
   }
 
   @Override
-  protected final BuildSystemName buildSystem() {
+  protected BuildSystemName buildSystem() {
     return BuildSystemName.Bazel;
   }
 

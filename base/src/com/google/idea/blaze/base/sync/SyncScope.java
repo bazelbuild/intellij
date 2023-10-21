@@ -107,7 +107,7 @@ public final class SyncScope {
       logger.error(e);
       throw e;
     } finally {
-      context.endScope();
+      context.close();
     }
   }
 }

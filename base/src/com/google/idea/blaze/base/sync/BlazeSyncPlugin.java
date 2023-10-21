@@ -79,19 +79,25 @@ public interface BlazeSyncPlugin {
     return ImmutableList.of();
   }
 
-  /** @return The default workspace type recommended by this plugin. */
+  /**
+   * @return The default workspace type recommended by this plugin.
+   */
   @Nullable
   default WorkspaceType getDefaultWorkspaceType() {
     return null;
   }
 
-  /** @return The module type for the workspace given the workspace type. */
+  /**
+   * @return The module type for the workspace given the workspace type.
+   */
   @Nullable
   default ModuleType<?> getWorkspaceModuleType(WorkspaceType workspaceType) {
     return null;
   }
 
-  /** @return The set of supported languages under this workspace type. */
+  /**
+   * @return The set of supported languages under this workspace type.
+   */
   default Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
     return ImmutableSet.of();
   }

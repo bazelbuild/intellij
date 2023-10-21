@@ -24,13 +24,18 @@ import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.RuleType;
+import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.qsync.QuerySyncProjectData;
 import com.google.idea.blaze.base.run.SourceToTargetFinder;
 import com.google.idea.blaze.base.sync.SyncCache;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -45,6 +50,32 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
   @Override
   public Future<Collection<TargetInfo>> targetsForSourceFiles(
       Project project, Set<File> sourceFiles, Optional<RuleType> ruleType) {
+    if (QuerySync.isEnabled()) {
+      QuerySyncProjectData projectData =
+          (QuerySyncProjectData) BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+      if (projectData == null) {
+        return Futures.immediateFuture(ImmutableList.of());
+      }
+      ImmutableSet<TargetInfo> targets =
+          sourceFiles.stream()
+              .map(file -> projectData.getWorkspacePathResolver().getWorkspacePath(file))
+              .filter(Objects::nonNull)
+              .flatMap(path -> projectData.getReverseDeps(path.asPath()).stream())
+              .filter(
+                  buildTarget -> {
+                    if (ruleType.isEmpty()) {
+                      return true;
+                    }
+                    Kind kind = Kind.fromRuleName(buildTarget.kind());
+                    if (kind == null) {
+                      return false;
+                    }
+                    return kind.getRuleType().equals(ruleType.get());
+                  })
+              .map(TargetInfo::fromBuildTarget)
+              .collect(toImmutableSet());
+      return Futures.immediateFuture(targets);
+    }
     FilteredTargetMap targetMap =
         SyncCache.getInstance(project)
             .get(ProjectSourceToTargetFinder.class, ProjectSourceToTargetFinder::computeTargetMap);

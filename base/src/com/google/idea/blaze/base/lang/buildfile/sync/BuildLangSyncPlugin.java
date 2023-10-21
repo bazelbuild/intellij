@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.lang.buildfile.sync;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -38,7 +39,7 @@ import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
-import com.google.repackaged.bazel.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -68,7 +69,7 @@ public class BuildLangSyncPlugin implements BlazeSyncPlugin {
       return;
     }
     LanguageSpecResult spec =
-        getBuildLanguageSpec(project, workspaceRoot, projectViewSet, previousSyncState, context);
+        getBuildLanguageSpec(project, projectViewSet, previousSyncState, context);
     if (spec != null) {
       syncStateBuilder.put(spec);
     }
@@ -77,7 +78,6 @@ public class BuildLangSyncPlugin implements BlazeSyncPlugin {
   @Nullable
   private static LanguageSpecResult getBuildLanguageSpec(
       Project project,
-      WorkspaceRoot workspace,
       ProjectViewSet projectViewSet,
       @Nullable SyncState previousSyncState,
       BlazeContext parentContext) {
@@ -91,8 +91,7 @@ public class BuildLangSyncPlugin implements BlazeSyncPlugin {
             parentContext,
             (context) -> {
               context.push(new TimingScope("BUILD language spec", EventType.BlazeInvocation));
-              BuildLanguageSpec spec =
-                  parseLanguageSpec(project, workspace, projectViewSet, context);
+              BuildLanguageSpec spec = parseLanguageSpec(project, projectViewSet, context);
               if (spec != null) {
                 return new LanguageSpecResult(spec, System.currentTimeMillis());
               }
@@ -104,16 +103,17 @@ public class BuildLangSyncPlugin implements BlazeSyncPlugin {
   @Nullable
   private static BuildLanguageSpec parseLanguageSpec(
       Project project,
-      WorkspaceRoot workspace,
       ProjectViewSet projectViewSet,
       BlazeContext context) {
+    BuildInvoker invoker =
+        Blaze.getBuildSystemProvider(project).getBuildSystem().getDefaultInvoker(project, context);
     try {
       ListenableFuture<byte[]> future =
           BlazeInfoRunner.getInstance()
               .runBlazeInfoGetBytes(
+                  project,
+                  invoker,
                   context,
-                  Blaze.getBuildSystemProvider(project).getSyncBinaryPath(project),
-                  workspace,
                   BlazeFlags.blazeFlags(
                       project,
                       projectViewSet,

@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -174,6 +175,24 @@ public abstract class TestContext implements RunConfigurationContext {
         }
       };
     }
+
+    static BlazeFlagsModification testEnv(String testEnv) {
+      return new BlazeFlagsModification() {
+        @Override
+        public void modifyFlags(List<String> flags) {
+          if (testEnv != null) {
+            flags.add(BlazeFlags.TEST_ENV + "=" + BlazeParametersListUtil.encodeParam(testEnv));
+          }
+        }
+
+        @Override
+        public boolean matchesConfigState(RunConfigurationFlagsState state) {
+          return state
+              .getRawFlags()
+              .contains(BlazeFlags.TEST_ENV + "=" + BlazeParametersListUtil.encodeParam(testEnv));
+        }
+      };
+    }
   }
 
   public static Builder builder(
@@ -196,21 +215,25 @@ public abstract class TestContext implements RunConfigurationContext {
       this.supportedExecutors = supportedExecutors;
     }
 
+    @CanIgnoreReturnValue
     public Builder setContextFuture(ListenableFuture<RunConfigurationContext> contextFuture) {
       this.contextFuture = contextFuture;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setTarget(ListenableFuture<TargetInfo> future) {
       this.targetFuture = future;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setTarget(TargetInfo target) {
       this.targetFuture = Futures.immediateFuture(target);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setTestFilter(@Nullable String filter) {
       if (filter != null) {
         blazeFlags.add(BlazeFlagsModification.testFilter(filter));
@@ -218,13 +241,20 @@ public abstract class TestContext implements RunConfigurationContext {
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addBlazeFlagsModification(BlazeFlagsModification modification) {
       this.blazeFlags.add(modification);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setDescription(String description) {
       this.description = description;
+      return this;
+    }
+
+    public Builder addTestEnv(String env) {
+      this.blazeFlags.add(BlazeFlagsModification.testEnv(env));
       return this;
     }
 

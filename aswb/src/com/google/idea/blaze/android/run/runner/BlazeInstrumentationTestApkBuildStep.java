@@ -32,13 +32,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
-import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
-import com.google.idea.blaze.base.ideinfo.AndroidInstrumentationInfo;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -48,10 +42,8 @@ import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
-import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 import com.intellij.openapi.project.Project;
 import java.io.File;
-import javax.annotation.Nullable;
 
 /** Builds the APKs required for an android instrumentation test. */
 public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
@@ -60,7 +52,7 @@ public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
   private static final String DEPLOY_INFO_FILE_SUFFIX = ".deployinfo.pb";
 
   private final Project project;
-  private final Label instrumentationTestLabel;
+  private final InstrumentationInfo instrumentationInfo;
   private final ImmutableList<String> buildFlags;
   private final BlazeApkDeployInfoProtoHelper deployInfoHelper;
   private BlazeAndroidDeployInfo deployInfo = null;
@@ -69,18 +61,18 @@ public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
    * Note: Target kind of {@param instrumentationTestlabel} must be "android_instrumentation_test".
    */
   public BlazeInstrumentationTestApkBuildStep(
-      Project project, Label instrumentationTestLabel, ImmutableList<String> buildFlags) {
-    this(project, instrumentationTestLabel, buildFlags, new BlazeApkDeployInfoProtoHelper());
+      Project project, InstrumentationInfo instrumentationInfo, ImmutableList<String> buildFlags) {
+    this(project, instrumentationInfo, buildFlags, new BlazeApkDeployInfoProtoHelper());
   }
 
   @VisibleForTesting
   public BlazeInstrumentationTestApkBuildStep(
       Project project,
-      Label instrumentationTestLabel,
+      InstrumentationInfo instrumentationInfo,
       ImmutableList<String> buildFlags,
       BlazeApkDeployInfoProtoHelper deployInfoHelper) {
     this.project = project;
-    this.instrumentationTestLabel = instrumentationTestLabel;
+    this.instrumentationInfo = instrumentationInfo;
     this.buildFlags = buildFlags;
     this.deployInfoHelper = deployInfoHelper;
   }
@@ -94,11 +86,6 @@ public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
       return;
     }
 
-    InstrumentorToTarget testComponents = getInstrumentorToTargetPair(context, projectData);
-    if (testComponents == null) {
-      return;
-    }
-
     BuildInvoker invoker =
         Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
     BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.BUILD);
@@ -108,10 +95,10 @@ public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
     //   will always return a local invoker (deployInfoHelper below required that the artifacts
     //   are on the local filesystem).
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
-      if (testComponents.isSelfInstrumentingTest()) {
-        command.addTargets(testComponents.instrumentor);
+      if (instrumentationInfo.isSelfInstrumentingTest()) {
+        command.addTargets(instrumentationInfo.testApp);
       } else {
-        command.addTargets(testComponents.target, testComponents.instrumentor);
+        command.addTargets(instrumentationInfo.targetApp, instrumentationInfo.testApp);
       }
       command
           .addBlazeFlags("--output_groups=+android_deploy_info")
@@ -138,8 +125,7 @@ public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
       }
       try {
         context.output(new StatusOutput("Reading deployment information..."));
-        String executionRoot =
-            ExecRootUtil.getExecutionRoot(buildResultHelper, project, buildFlags, context);
+        String executionRoot = ExecRootUtil.getExecutionRoot(invoker, context);
         if (executionRoot == null) {
           IssueOutput.error("Could not locate execroot!").submit(context);
           return;
@@ -147,17 +133,17 @@ public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
 
         AndroidDeployInfo instrumentorDeployInfoProto =
             deployInfoHelper.readDeployInfoProtoForTarget(
-                testComponents.instrumentor,
+                instrumentationInfo.testApp,
                 buildResultHelper,
                 fileName -> fileName.endsWith(DEPLOY_INFO_FILE_SUFFIX));
-        if (testComponents.isSelfInstrumentingTest()) {
+        if (instrumentationInfo.isSelfInstrumentingTest()) {
           deployInfo =
               deployInfoHelper.extractDeployInfoAndInvalidateManifests(
                   project, new File(executionRoot), instrumentorDeployInfoProto);
         } else {
           AndroidDeployInfo targetDeployInfoProto =
               deployInfoHelper.readDeployInfoProtoForTarget(
-                  testComponents.target,
+                  instrumentationInfo.targetApp,
                   buildResultHelper,
                   fileName -> fileName.endsWith(DEPLOY_INFO_FILE_SUFFIX));
           deployInfo =
@@ -184,98 +170,5 @@ public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
     throw new ApkProvisionException(
         "Failed to read APK deploy info.  Either build step hasn't been executed or there was an"
             + " error obtaining deploy info after build.");
-  }
-
-  /**
-   * Extracts test instrumentor and instrumentation target labels from the target map.
-   *
-   * @return The labels contained in an {@link InstrumentorToTarget} object.
-   */
-  @Nullable
-  @VisibleForTesting
-  public InstrumentorToTarget getInstrumentorToTargetPair(
-      BlazeContext context, BlazeProjectData projectData) {
-    // The following extracts the dependency info required during an instrumentation test.
-    // To disambiguate, the following terms are used:
-    // - test: The android_instrumentation_test target.
-    // - instrumentor: The target of kind android_binary that's used as the binary that
-    // orchestrates the instrumentation test.
-    // - app: The android_binary app that's being tested in this instrumentation test through
-    // the instrumentor.
-    TargetMap targetMap = projectData.getTargetMap();
-    TargetIdeInfo testTarget = targetMap.get(TargetKey.forPlainTarget(instrumentationTestLabel));
-    if (testTarget == null
-        || testTarget.getKind() != RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind()) {
-      IssueOutput.error(
-              "Unable to identify target \""
-                  + instrumentationTestLabel
-                  + "\". Please sync the project and try again.")
-          .submit(context);
-      return null;
-    }
-    AndroidInstrumentationInfo testInstrumentationInfo = testTarget.getAndroidInstrumentationInfo();
-    if (testInstrumentationInfo == null) {
-      IssueOutput.error(
-              "Required target data missing for \""
-                  + instrumentationTestLabel
-                  + "\".  Has the target definition changed recently? Please sync the project and"
-                  + " try again.")
-          .submit(context);
-      return null;
-    }
-
-    Label instrumentorLabel = testInstrumentationInfo.getTestApp();
-    if (instrumentorLabel == null) {
-      IssueOutput.error(
-              "No \"test_app\" in target definition for "
-                  + testTarget.getKey().getLabel()
-                  + ". Please ensure \"test_app\" attribute is set.  See"
-                  + " https://docs.bazel.build/versions/master/be/android.html#android_instrumentation_test.test_app"
-                  + " for more information.")
-          .submit(context);
-      return null;
-    }
-
-    TargetIdeInfo instrumentorTarget = targetMap.get(TargetKey.forPlainTarget(instrumentorLabel));
-    if (instrumentorTarget == null) {
-      IssueOutput.error(
-              "Unable to identify target \""
-                  + instrumentorLabel
-                  + "\". Please sync the project and try again.")
-          .submit(context);
-      return null;
-    }
-    AndroidIdeInfo instrumentorAndroidInfo = instrumentorTarget.getAndroidIdeInfo();
-    if (instrumentorAndroidInfo == null) {
-      IssueOutput.error(
-              "Required target data missing for \""
-                  + instrumentorLabel
-                  + "\".  Has the target definition changed recently? Please sync the project and"
-                  + " try again.")
-          .submit(context);
-      return null;
-    }
-    Label appLabel = instrumentorAndroidInfo.getInstruments();
-    return new InstrumentorToTarget(appLabel, instrumentorLabel);
-  }
-
-  /**
-   * A container for a instrumentation test instrumentor and the target app it instruments. If the
-   * target label is null, the test is considered to be self-instrumenting.
-   */
-  @VisibleForTesting
-  public static class InstrumentorToTarget {
-    @Nullable public final Label target;
-    public final Label instrumentor;
-
-    InstrumentorToTarget(@Nullable Label target, Label instrumentor) {
-      this.target = target;
-      this.instrumentor = instrumentor;
-    }
-
-    /** Returns whether the instrumentor contains the target itself (self-instrumenting). */
-    public boolean isSelfInstrumentingTest() {
-      return target == null;
-    }
   }
 }

@@ -17,14 +17,16 @@
 package com.google.idea.blaze.android.libraries;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import javax.annotation.Nullable;
 
 /*  Provides BlazeArtifacts to unpack an Aar. */
 @AutoValue
 abstract class AarLibraryContents {
-  static AarLibraryContents create(BlazeArtifact aar, @Nullable BlazeArtifact jar) {
-    return new AutoValue_AarLibraryContents(aar, jar);
+  static AarLibraryContents create(
+      BlazeArtifact aar, @Nullable BlazeArtifact jar, ImmutableList<BlazeArtifact> srcJars) {
+    return new AutoValue_AarLibraryContents(aar, jar, srcJars);
   }
 
   /* Provides BlazeArtifact of the .aar file that we need to fetch and copy locally */
@@ -40,4 +42,7 @@ abstract class AarLibraryContents {
    */
   @Nullable
   abstract BlazeArtifact jar();
+
+  /** Returns the source jar specified in the srcjar attribute of aar_import. */
+  abstract ImmutableList<BlazeArtifact> srcJars();
 }

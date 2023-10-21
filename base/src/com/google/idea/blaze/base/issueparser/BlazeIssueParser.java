@@ -47,6 +47,8 @@ import javax.annotation.Nullable;
 /** Parses blaze output for compile errors. */
 public class BlazeIssueParser {
 
+  private static final String BAZEL_BUILD_FILES_PATTERN = "(/.*?BUILD(?:\\.bazel)?)";
+
   public static ImmutableList<BlazeIssueParser.Parser> defaultIssueParsers(
       Project project,
       WorkspaceRoot workspaceRoot,
@@ -294,7 +296,7 @@ public class BlazeIssueParser {
 
   static class BuildParser extends SingleLineParser {
     BuildParser() {
-      super("^ERROR: (/.*?BUILD):([0-9]+):([0-9]+): (.*)$");
+      super("^ERROR: " + BAZEL_BUILD_FILES_PATTERN + ":([0-9]+):([0-9]+): (.*)$");
     }
 
     @Nullable
@@ -440,7 +442,7 @@ public class BlazeIssueParser {
             + "(.*: Process exited with status [0-9]+\\.)|"
             + "(build interrupted\\.)|"
             + "(Couldn't start the build. Unable to run tests.)|"
-            + "(/.*?BUILD:[0-9]+:[0-9]+: Couldn't build file .*)|"
+            + "(" + BAZEL_BUILD_FILES_PATTERN + ":[0-9]+:[0-9]+: Couldn't build file .*)|"
             + "(.*))$";
 
     private GenericErrorParser() {

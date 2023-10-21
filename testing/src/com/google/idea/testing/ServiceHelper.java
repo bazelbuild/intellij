@@ -17,6 +17,8 @@ package com.google.idea.testing;
 
 import com.google.idea.sdkcompat.BaseSdkTestCompat;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.mock.MockApplication;
+import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,12 +27,14 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.testFramework.ServiceContainerUtil;
 import org.picocontainer.MutablePicoContainer;
-import org.picocontainer.defaults.UnsatisfiableDependenciesException;
+import com.intellij.mock.MockApplication;
+import com.intellij.mock.MockProject;
 
 /** Utility class for registering project services, application services and extensions. */
 public class ServiceHelper {
@@ -48,6 +52,13 @@ public class ServiceHelper {
     ExtensionPoint<T> ep = Extensions.getRootArea().getExtensionPoint(name);
     ep.registerExtension(instance);
     Disposer.register(parentDisposable, () -> ep.unregisterExtension(instance));
+  }
+
+  public static <T> void registerExtensionFirst(
+      ExtensionPointName<T> name, T instance, Disposable parentDisposable) {
+    ExtensionPoint<T> ep =
+        ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(name);
+    ep.registerExtension(instance, LoadingOrder.FIRST, parentDisposable);
   }
 
   /** Unregister all extensions of the given class, for the given extension point. */
@@ -81,17 +92,20 @@ public class ServiceHelper {
       if (!application.hasComponent(key)) {
         // registers component from scratch
         ServiceContainerUtil.registerComponentImplementation(
-            application, key, key, /* shouldBeAlreadyRegistered=*/ false);
+            application, key, key, /* shouldBeRegistered= */ false);
       }
       // replaces existing component
       ServiceContainerUtil.registerComponentInstance(
           application, key, implementation, parentDisposable);
-    } else {
+    } else if (application instanceof MockApplication) {
       registerComponentInstance(
-          (MutablePicoContainer) application.getPicoContainer(),
+          ((MockApplication) application).getPicoContainer(),
           key,
           implementation,
           parentDisposable);
+    } else {
+      throw new RuntimeException(
+          "Implementation not supported: " + application.getClass().getSimpleName());
     }
   }
 
@@ -100,29 +114,26 @@ public class ServiceHelper {
     if (project instanceof ComponentManagerImpl) {
       ServiceContainerUtil.registerComponentInstance(
           project, key, implementation, parentDisposable);
-    } else {
+    } else if (project instanceof MockProject) {
       registerComponentInstance(
-          (MutablePicoContainer) project.getPicoContainer(), key, implementation, parentDisposable);
+          ((MockProject) project).getPicoContainer(), key, implementation, parentDisposable);
+    } else {
+      throw new RuntimeException(
+          "Implementation not supported: " + project.getClass().getSimpleName());
     }
   }
 
   private static <T> void registerComponentInstance(
       MutablePicoContainer container, Class<T> key, T implementation, Disposable parentDisposable) {
-    Object old;
-    try {
-      old = container.getComponentInstance(key);
-    } catch (UnsatisfiableDependenciesException e) {
-      old = null;
-    }
+    Object old = container.getComponentInstance(key);
     container.unregisterComponent(key.getName());
     container.registerComponentInstance(key.getName(), implementation);
-    Object finalOld = old;
     Disposer.register(
         parentDisposable,
         () -> {
           container.unregisterComponent(key.getName());
-          if (finalOld != null) {
-            container.registerComponentInstance(key.getName(), finalOld);
+          if (old != null) {
+            container.registerComponentInstance(key.getName(), old);
           }
         });
   }
@@ -145,6 +156,6 @@ public class ServiceHelper {
     }
     Disposer.register(
         parentDisposable,
-        () -> BaseSdkTestCompat.unregisterComponent(componentManager, key.getName()));
+        () -> BaseSdkTestCompat.unregisterComponent(componentManager, key));
   }
 }

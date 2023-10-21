@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.sync.model;
 
 import com.google.common.base.Objects;
 import com.google.devtools.intellij.model.ProjectData;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import java.io.File;
 import java.util.Comparator;
@@ -46,16 +47,19 @@ public final class BlazeSourceDirectory implements ProtoWrapper<ProjectData.Blaz
       this.directory = directory;
     }
 
+    @CanIgnoreReturnValue
     public Builder setPackagePrefix(String packagePrefix) {
       this.packagePrefix = packagePrefix;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setResource(boolean isResource) {
       this.isResource = isResource;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setGenerated(boolean isGenerated) {
       this.isGenerated = isGenerated;
       return this;

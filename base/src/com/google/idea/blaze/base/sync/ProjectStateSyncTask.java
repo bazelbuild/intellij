@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.FutureUtil;
@@ -25,6 +26,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.command.info.BlazeInfoProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -36,7 +38,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewVerifier;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
@@ -50,19 +51,22 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
-import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
+import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.openapi.project.Project;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /** Collects information about the project state (VCS, blaze info, .blazeproject contents, etc.). */
 final class ProjectStateSyncTask {
 
-  static SyncProjectState collectProjectState(Project project, BlazeContext context)
+  static SyncProjectState collectProjectState(Project project, BlazeContext context, BlazeSyncParams syncParams)
       throws SyncCanceledException, SyncFailedException {
     ProjectStateSyncTask task = new ProjectStateSyncTask(project);
-    return task.getProjectState(context);
+    return task.getProjectState(context, syncParams);
   }
 
   private final Project project;
@@ -75,17 +79,20 @@ final class ProjectStateSyncTask {
     this.workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
   }
 
-  private SyncProjectState getProjectState(BlazeContext context)
+  private SyncProjectState getProjectState(BlazeContext context, BlazeSyncParams params)
       throws SyncFailedException, SyncCanceledException {
     if (!FileOperationProvider.getInstance().exists(workspaceRoot.directory())) {
-      IssueOutput.error(String.format("Workspace '%s' doesn't exist.", workspaceRoot.directory()))
-          .submit(context);
+      String message = String.format("Workspace '%s' doesn't exist.", workspaceRoot.directory());
+      IssueOutput.error(message).submit(context);
+      BlazeSyncManager.printAndLogError(message, context);
       throw new SyncFailedException();
     }
 
-    BlazeVcsHandler vcsHandler = BlazeVcsHandler.vcsHandlerForProject(project);
+    BlazeVcsHandler vcsHandler = BlazeVcsHandlerProvider.vcsHandlerForProject(project);
     if (vcsHandler == null) {
-      IssueOutput.error("Could not find a VCS handler").submit(context);
+      String message = "Could not find a VCS handler";
+      IssueOutput.error(message).submit(context);
+      BlazeSyncManager.printAndLogError("Could not find a VCS handler", context);
       throw new SyncFailedException();
     }
 
@@ -93,6 +100,9 @@ final class ProjectStateSyncTask {
     WorkspacePathResolverAndProjectView workspacePathResolverAndProjectView =
         computeWorkspacePathResolverAndProjectView(context, vcsHandler, executor);
     if (workspacePathResolverAndProjectView == null) {
+      BlazeSyncManager.printAndLogError(
+          "Sync failed: Could not resolve the workspace path and/or parse the project view",
+          context);
       throw new SyncFailedException();
     }
     ProjectViewSet projectViewSet = workspacePathResolverAndProjectView.projectViewSet;
@@ -104,17 +114,16 @@ final class ProjectStateSyncTask {
             BlazeCommandName.INFO,
             context,
             BlazeInvocationContext.SYNC_CONTEXT);
-    ListenableFuture<BlazeInfo> blazeInfoFuture =
-        BlazeInfoRunner.getInstance()
-            .runBlazeInfo(
-                context,
-                importSettings.getBuildSystem(),
-                Blaze.getBuildSystemProvider(project).getBinaryPath(project),
-                workspaceRoot,
-                syncFlags);
 
-    ListenableFuture<WorkingSet> workingSetFuture =
-        vcsHandler.getWorkingSet(project, context, workspaceRoot, executor);
+    ListenableFuture<BlazeInfo> blazeInfoFuture =
+            createBazelInfoFuture(context, syncFlags, params.syncMode());
+
+    ListenableFuture<WorkingSet> workingSetFuture;
+    if(params.addWorkingSet() || params.syncMode() == SyncMode.FULL) {
+      workingSetFuture = vcsHandler.getWorkingSet(context, executor);
+    } else {
+      workingSetFuture = Futures.immediateFuture(null);
+    }
 
     BlazeInfo blazeInfo =
         FutureUtil.waitForFuture(context, blazeInfoFuture)
@@ -142,6 +151,7 @@ final class ProjectStateSyncTask {
 
     if (!ProjectViewVerifier.verifyProjectView(
         project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings)) {
+      BlazeSyncManager.printAndLogError("Sync failed: Could not verify the project view", context);
       throw new SyncFailedException();
     }
 
@@ -156,6 +166,7 @@ final class ProjectStateSyncTask {
       throw new SyncCanceledException();
     }
     if (context.hasErrors()) {
+      BlazeSyncManager.printAndLogError("Sync failed: Could not compute working set", context);
       throw new SyncFailedException();
     }
 
@@ -171,6 +182,29 @@ final class ProjectStateSyncTask {
         .build();
   }
 
+  private ListenableFuture<BlazeInfo> createBazelInfoFuture(
+          BlazeContext context,
+          List<String> syncFlags,
+          SyncMode syncMode) {
+    boolean useBazelInfoRunner = !BlazeInfoProvider.isEnabled() || syncMode == SyncMode.FULL;
+    if (useBazelInfoRunner) {
+      return BlazeInfoRunner.getInstance()
+              .runBlazeInfo(
+                      project,
+                      Blaze.getBuildSystemProvider(project)
+                              .getBuildSystem()
+                              .getDefaultInvoker(project,
+                                      context),
+                      context,
+                      importSettings.getBuildSystem(),
+                      syncFlags);
+    }
+    return BlazeInfoProvider.getInstance(project)
+            .getBlazeInfo(
+                    context,
+                    syncFlags);
+  }
+
   private static class WorkspacePathResolverAndProjectView {
     final WorkspacePathResolver workspacePathResolver;
     final ProjectViewSet projectViewSet;
@@ -182,14 +216,14 @@ final class ProjectStateSyncTask {
     }
   }
 
+  @Nullable
   private WorkspacePathResolverAndProjectView computeWorkspacePathResolverAndProjectView(
       BlazeContext context, BlazeVcsHandler vcsHandler, ListeningExecutorService executor) {
     context.output(new StatusOutput("Updating VCS..."));
 
     for (int i = 0; i < 3; ++i) {
       WorkspacePathResolver vcsWorkspacePathResolver = null;
-      BlazeVcsHandler.BlazeVcsSyncHandler vcsSyncHandler =
-          vcsHandler.createSyncHandler(project, workspaceRoot);
+      BlazeVcsHandlerProvider.BlazeVcsSyncHandler vcsSyncHandler = vcsHandler.createSyncHandler();
       if (vcsSyncHandler != null) {
         boolean ok =
             Scope.push(
@@ -216,7 +250,7 @@ final class ProjectStateSyncTask {
       }
 
       if (vcsSyncHandler != null) {
-        BlazeVcsHandler.BlazeVcsSyncHandler.ValidationResult validationResult =
+        BlazeVcsHandlerProvider.BlazeVcsSyncHandler.ValidationResult validationResult =
             vcsSyncHandler.validateProjectView(context, projectViewSet);
         switch (validationResult) {
           case OK:

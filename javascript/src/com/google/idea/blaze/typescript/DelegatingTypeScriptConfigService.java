@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.sdkcompat.javascript.TypeScriptConfigServiceAdapter;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigServiceImpl;
@@ -37,8 +38,13 @@ import javax.annotation.Nullable;
  * Switches between {@link BlazeTypeScriptConfigServiceImpl} if the project is an applicable blaze
  * project, or {@link TypeScriptConfigServiceImpl} if it isn't.
  */
-class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
+class DelegatingTypeScriptConfigService extends TypeScriptConfigServiceAdapter {
   private final TypeScriptConfigService impl;
+
+  @Override
+  public TypeScriptConfigService getImpl() {
+    return impl;
+  }
 
   private static final BoolExperiment useBlazeTypeScriptConfig =
       new BoolExperiment("use.blaze.typescript.config", true);
@@ -49,11 +55,6 @@ class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
     } else {
       this.impl = new TypeScriptConfigServiceImpl(project);
     }
-  }
-
-  @Override
-  public List<VirtualFile> getConfigFiles() {
-    return impl.getConfigFiles();
   }
 
   void update(ImmutableMap<Label, File> tsconfigs) {
@@ -111,16 +112,6 @@ class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
       return ((BlazeTypeScriptConfigServiceImpl) impl).getTypeScriptConfigs();
     }
     return ImmutableList.of();
-  }
-
-  @Override
-  public void addChangeListener(TypeScriptConfigsChangedListener listener) {
-    impl.addChangeListener(listener);
-  }
-
-  @Override
-  public ModificationTracker getConfigTracker(@Nullable VirtualFile file) {
-    return impl.getConfigTracker(file);
   }
 
   @Override

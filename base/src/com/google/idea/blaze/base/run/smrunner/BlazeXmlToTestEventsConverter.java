@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -49,6 +50,7 @@ import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import java.io.InputStream;
@@ -83,38 +85,44 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   @Override
   public void flushBufferOnProcessTermination(int exitCode) {
     super.flushBufferOnProcessTermination(exitCode);
-    BlazeTestResults testResults = testResultFinderStrategy.findTestResults();
-    if (testResults == null || testResults == BlazeTestResults.NO_RESULTS) {
-      BlazeTestExitStatus exitStatus = BlazeTestExitStatus.forExitCode(exitCode);
-      if (exitStatus == null) {
-        reportTestRuntimeError(
-            "Unknown Error",
-            "Test runtime terminated unexpectedly with exit code " + exitCode + ".");
+
+    try {
+      BlazeTestResults testResults = testResultFinderStrategy.findTestResults();
+      if (testResults == BlazeTestResults.NO_RESULTS) {
+        reportError(exitCode);
       } else {
-        reportTestRuntimeError(exitStatus.title, exitStatus.message);
+        processAllTestResults(testResults);
       }
-    } else {
-      processAllTestResults(testResults);
+    } catch (GetArtifactsException e) {
+      Logger.getInstance(this.getClass()).error(e.getMessage());
+    } finally {
+      testResultFinderStrategy.deleteTemporaryOutputFiles();
     }
   }
 
   private void processAllTestResults(BlazeTestResults testResults) {
     onStartTesting();
     getProcessor().onTestsReporterAttached();
-    try {
-      List<ListenableFuture<ParsedTargetResults>> futures = new ArrayList<>();
-      for (Label label : testResults.perTargetResults.keySet()) {
-        futures.add(
-            FetchExecutor.EXECUTOR.submit(
-                () -> parseTestXml(label, testResults.perTargetResults.get(label))));
-      }
-      List<ParsedTargetResults> parsedResults =
-          FuturesUtil.getIgnoringErrors(Futures.allAsList(futures));
-      if (parsedResults != null) {
-        parsedResults.forEach(this::processParsedTestResults);
-      }
-    } finally {
-      testResultFinderStrategy.deleteTemporaryOutputXmlFiles();
+    List<ListenableFuture<ParsedTargetResults>> futures = new ArrayList<>();
+    for (Label label : testResults.perTargetResults.keySet()) {
+      futures.add(
+          FetchExecutor.EXECUTOR.submit(
+              () -> parseTestXml(label, testResults.perTargetResults.get(label))));
+    }
+    List<ParsedTargetResults> parsedResults =
+        FuturesUtil.getIgnoringErrors(Futures.allAsList(futures));
+    if (parsedResults != null) {
+      parsedResults.forEach(this::processParsedTestResults);
+    }
+  }
+
+  private void reportError(int exitCode) {
+    BlazeTestExitStatus exitStatus = BlazeTestExitStatus.forExitCode(exitCode);
+    if (exitStatus == null) {
+      reportTestRuntimeError(
+          "Unknown Error", "Test runtime terminated unexpectedly with exit code " + exitCode + ".");
+    } else {
+      reportTestRuntimeError(exitStatus.title, exitStatus.message);
     }
   }
 
@@ -186,7 +194,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   private void reportTestRuntimeError(String errorName, String errorMessage) {
     GeneralTestEventsProcessor processor = getProcessor();
     processor.onTestFailure(
-        getTestFailedEvent(errorName, errorMessage, null, BlazeComparisonFailureData.NONE, 0));
+        getTestFailedEvent(errorName, errorMessage, null, BlazeComparisonFailureData.NONE, 0, true));
   }
 
   /** Return false if there's output XML which should be parsed. */
@@ -221,7 +229,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
                 + " See console output for details",
             /* content= */ null,
             BlazeComparisonFailureData.NONE,
-            /* duration= */ 0));
+            /* duration= */ 0, true));
     processor.onTestFinished(new TestFinishedEvent(targetName, /*duration=*/ 0L));
     processor.onSuiteFinished(new TestSuiteFinishedEvent(label.toString()));
   }
@@ -351,7 +359,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
       processor.onTestOutput(new TestOutputEvent(displayName, test.sysOut, true));
     }
     if (test.sysErr != null) {
-      processor.onTestOutput(new TestOutputEvent(displayName, test.sysErr, true));
+      processor.onTestOutput(new TestOutputEvent(displayName, test.sysErr, false));
     }
 
     if (isIgnored(test)) {
@@ -364,8 +372,9 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
           !test.failures.isEmpty()
               ? test.failures
               : !test.errors.isEmpty() ? test.errors : ImmutableList.of(NO_ERROR);
+      boolean isError = test.failures.isEmpty();
       for (ErrorOrFailureOrSkipped err : errors) {
-        processor.onTestFailure(getTestFailedEvent(displayName, err, parseTimeMillis(test.time)));
+        processor.onTestFailure(getTestFailedEvent(displayName, err, parseTimeMillis(test.time), isError));
       }
     }
     processor.onTestFinished(new TestFinishedEvent(displayName, parseTimeMillis(test.time)));
@@ -384,11 +393,11 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   }
 
   private static TestFailedEvent getTestFailedEvent(
-      String name, ErrorOrFailureOrSkipped error, long duration) {
+      String name, ErrorOrFailureOrSkipped error, long duration, boolean isError) {
     String message =
         error.message != null ? error.message : "Test failed (no error message present)";
     String content = pruneErrorMessage(error.message, BlazeXmlSchema.getErrorContent(error));
-    return getTestFailedEvent(name, message, content, parseComparisonData(error), duration);
+    return getTestFailedEvent(name, message, content, parseComparisonData(error), duration, isError);
   }
 
   private static TestFailedEvent getTestFailedEvent(
@@ -396,13 +405,14 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
       String message,
       @Nullable String content,
       BlazeComparisonFailureData comparisonData,
-      long duration) {
+      long duration,
+      boolean isError) {
     return new TestFailedEvent(
         name,
         null,
         message,
         content,
-        true,
+        isError,
         comparisonData.actual,
         comparisonData.expected,
         null,

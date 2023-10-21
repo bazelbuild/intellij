@@ -19,6 +19,7 @@
   <depends>com.intellij.modules.androidstudio</depends>
   <depends>org.jetbrains.android</depends>
   <depends>com.google.gct.test.recorder</depends>
+  <depends>com.intellij.modules.java</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <programRunner implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryProgramRunner" order="first"/>
@@ -31,8 +32,6 @@
     <projectService serviceImplementation="com.google.idea.blaze.android.resources.BlazeLightResourceClassService"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemSyncManager$LastSyncResultCache"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.editor.ProjectUnresolvedResourceStatsCollector"/>
-    <projectService serviceInterface="com.google.idea.blaze.android.run.BlazeAndroidDeploymentService"
-        serviceImplementation="com.google.idea.blaze.android.run.BlazeAndroidDeploymentService$DefaultDeploymentService"/>
     <projectService serviceInterface="com.google.idea.blaze.android.run.runner.BlazeDeployTargetService"
         serviceImplementation="com.google.idea.blaze.android.run.runner.BlazeDeployTargetService$DefaultService"/>
     <projectService serviceInterface="com.google.idea.blaze.android.run.runner.BlazeAndroidDebuggerService"
@@ -66,11 +65,13 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.RemoteApkDownloader" interface="com.google.idea.blaze.android.run.RemoteApkDownloader"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.ComposeStatusProvider" interface="com.google.idea.blaze.android.compose.ComposeStatusProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.android.ApkBuildStepProvider" interface="com.google.idea.blaze.android.run.ApkBuildStepProvider" />
+    <extensionPoint qualifiedName="com.google.idea.blaze.NativeSymbolFinder" interface="com.google.idea.blaze.android.run.NativeSymbolFinder" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <LintCollector implementation="com.google.idea.blaze.android.libraries.AndroidLintCollector"/>
     <SyncPlugin implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncPlugin"/>
+    <QuerySyncPlugin implementation="com.google.idea.blaze.android.qsync.BlazeAndroidQuerySyncPlugin"/>
     <SyncListener implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncListener"/>
     <SyncListener implementation="com.google.idea.blaze.android.manifest.ParsedManifestService$ClearManifestParser"/>
     <SyncListener implementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemSyncManager$SyncStatusPublisher"/>
@@ -94,7 +95,6 @@
     <ComposeStatusProvider implementation="com.google.idea.blaze.android.compose.ExperimentComposeStatusProvider"/>
     <BlazeBuildListener implementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemBuildManager$BuildCallbackPublisher"/>
     <android.ApkBuildStepProvider implementation="com.google.idea.blaze.android.run.BazelApkBuildStepProvider" />
-    <BuildFlagsProvider implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncBuildFlagsProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.ide">
@@ -106,7 +106,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.android.rendering">
-    <renderErrorContributor implementation="com.google.idea.blaze.android.rendering.BlazeRenderErrorContributor$BlazeProvider"/>
+    <renderErrorContributor implementation="com.android.tools.rendering.RenderResultCompat$BlazeProvider"/>
     <renderSecurityManagerOverrides implementation="com.google.idea.blaze.android.rendering.BlazeRenderSecurityManagerOverrides"/>
   </extensions>
 

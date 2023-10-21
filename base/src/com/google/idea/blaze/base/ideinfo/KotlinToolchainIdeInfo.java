@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.Objects;
 
@@ -114,16 +115,19 @@ public final class KotlinToolchainIdeInfo
     ImmutableList<Label> sdkTargets;
     ImmutableList<String> kotlinCompilerCommonFlags;
 
+    @CanIgnoreReturnValue
     public KotlinToolchainIdeInfo.Builder setLanguageVersion(String languageVersion) {
       this.languageVersion = languageVersion;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public KotlinToolchainIdeInfo.Builder setSdkTargets(ImmutableList<Label> sdkTargets) {
       this.sdkTargets = sdkTargets;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public KotlinToolchainIdeInfo.Builder setKotlinCompilerCommonFlags(
         ImmutableList<String> kotlinCompilerCommonFlags) {
       this.kotlinCompilerCommonFlags = kotlinCompilerCommonFlags;

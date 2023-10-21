@@ -27,8 +27,10 @@ import javax.annotation.Nullable;
 public class BepArtifactData {
 
   public final OutputArtifact artifact;
+
   /** The output groups this artifact belongs to. */
   public final ImmutableSet<String> outputGroups;
+
   /** The top-level targets this artifact is transitively associated with. */
   public final ImmutableSet<String> topLevelTargets;
 
@@ -43,7 +45,7 @@ public class BepArtifactData {
 
   @Override
   public int hashCode() {
-    return artifact.getKey().hashCode();
+    return artifact.getRelativePath().hashCode();
   }
 
   @Override
@@ -61,7 +63,7 @@ public class BepArtifactData {
 
   /** Combines this data with a newer version. */
   public BepArtifactData update(BepArtifactData newer) {
-    Preconditions.checkState(artifact.getKey().equals(newer.artifact.getKey()));
+    Preconditions.checkState(artifact.getRelativePath().equals(newer.artifact.getRelativePath()));
     return new BepArtifactData(
         newer.artifact,
         Sets.union(outputGroups, newer.outputGroups).immutableCopy(),

@@ -17,9 +17,11 @@
   <vendor>Google</vendor>
 
   <depends>com.intellij.modules.clion</depends>
-  <depends>org.jetbrains.plugins.clion.test.boost</depends>
-  <depends>org.jetbrains.plugins.clion.test.catch</depends>
   <depends>org.jetbrains.plugins.clion.test.google</depends>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.google.idea.blaze.clwb.googleTestUtilAdapter" interface="com.google.idea.blaze.clwb.run.GoogleTestUtilAdapter"/>
+  </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <consoleFilterProvider implementation="com.google.idea.blaze.clwb.run.BlazeCppPathConsoleFilter$Provider"/>
@@ -30,17 +32,13 @@
     <moduleType id="BLAZE_CPP_MODULE" implementationClass="com.google.idea.blaze.clwb.BlazeCppModuleType"/>
     <postStartupActivity implementation="com.google.idea.blaze.clwb.run.producers.NonBlazeProducerSuppressor"/>
     <actionConfigurationCustomizer implementation="com.google.idea.blaze.plugin.ClwbHideMakeActions"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="cidr.debugger">
-    <languageSupport language="" implementationClass="com.google.idea.blaze.clwb.run.BlazeCidrDebuggerSupportFactory"/>
+    <registryKey defaultValue="false" description="Disable the extra debug flags in debug C/C++ builds" key="bazel.clwb.debug.extraflags.disabled"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.clwb.sync.BlazeCLionSyncPlugin"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.clwb.run.BlazeCidrRunConfigurationHandlerProvider" order="first"/>
-    <BlazeTestEventsHandler implementation="com.google.idea.blaze.clwb.run.test.BlazeCidrTestEventsHandler"/>
-    <TestContextProvider implementation="com.google.idea.blaze.clwb.run.producers.CppTestContextProvider"/>
+    <BlazeTestEventsHandler implementation="com.google.idea.blaze.clwb.oclang.run.test.BlazeCidrTestEventsHandler"/>
   </extensions>
 
   <project-components>

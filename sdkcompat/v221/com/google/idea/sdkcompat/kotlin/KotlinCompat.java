@@ -41,9 +41,17 @@ public class KotlinCompat {
           configurator.configureModule(module, collector, writeActions);
         });
 
-    application.invokeLater(
-        () -> {
-          writeActions.stream().forEach(Function0::invoke);
-        });
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // do not invoke it later since serviceContainer may be disposed before it get completed
+      application.invokeAndWait(
+          () -> {
+            writeActions.stream().forEach(Function0::invoke);
+          });
+    } else {
+      application.invokeLater(
+          () -> {
+            writeActions.stream().forEach(Function0::invoke);
+          });
+    }
   }
 }

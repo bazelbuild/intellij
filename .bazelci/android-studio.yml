@@ -38,27 +38,27 @@ tasks:
       - //:aswb_tests
     soft_fail:
       - exit_status: 1
-  Android-Studio-OSS-stable:
-    name: Android Studio OSS Stable
+  Android-Studio-OSS-oldest-stable:
+    name: Android Studio OSS Oldest Stable
     platform: ubuntu1804
     build_flags:
-      - --define=ij_product=android-studio-oss-stable
+      - --define=ij_product=android-studio-oss-oldest-stable
     build_targets:
       - //aswb/...
     test_flags:
-      - --define=ij_product=android-studio-oss-stable
+      - --define=ij_product=android-studio-oss-oldest-stable
       - --test_output=errors
     test_targets:
       - //:aswb_tests
-  Android-Studio-OSS-beta:
-    name: Android Studio OSS Beta
+  Android-Studio-OSS-latest-stable:
+    name: Android Studio OSS Latest Stable
     platform: ubuntu1804
     build_flags:
-      - --define=ij_product=android-studio-oss-beta
+      - --define=ij_product=android-studio-oss-latest-stable
     build_targets:
       - //aswb/...
     test_flags:
-      - --define=ij_product=android-studio-oss-beta
+      - --define=ij_product=android-studio-oss-latest-stable
       - --test_output=errors
     test_targets:
       - //:aswb_tests

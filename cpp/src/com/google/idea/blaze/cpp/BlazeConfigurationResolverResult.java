@@ -19,9 +19,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
+
+import java.util.Optional;
+import javax.annotation.concurrent.Immutable;
 import java.io.File;
 import java.util.Map;
-import javax.annotation.concurrent.Immutable;
 
 /**
  * Resolve configuration maps, etc. obtained from running the {@link BlazeConfigurationResolver}.
@@ -33,15 +35,20 @@ final class BlazeConfigurationResolverResult {
       uniqueResolveConfigurations;
   private final ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings;
   private final ImmutableSet<File> validHeaderRoots;
+  private final ImmutableMap<String, String> targetToCompilerVersion;
+  private final Optional<XcodeCompilerSettings> xcodeProperties;
 
   private BlazeConfigurationResolverResult(
-      ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration>
-          uniqueResolveConfigurations,
+      ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration> uniqueResolveConfigurations,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings,
-      ImmutableSet<File> validHeaderRoots) {
+      ImmutableSet<File> validHeaderRoots,
+      ImmutableMap<String, String> targetToCompilerVersion,
+      Optional<XcodeCompilerSettings> xcodeProperties) {
     this.uniqueResolveConfigurations = uniqueResolveConfigurations;
     this.compilerSettings = compilerSettings;
     this.validHeaderRoots = validHeaderRoots;
+    this.targetToCompilerVersion = targetToCompilerVersion;
+    this.xcodeProperties = xcodeProperties;
   }
 
   static Builder builder() {
@@ -64,6 +71,10 @@ final class BlazeConfigurationResolverResult {
     return compilerSettings;
   }
 
+  public Optional<XcodeCompilerSettings> getXcodeProperties() {
+    return xcodeProperties;
+  }
+
   boolean isValidHeaderRoot(File absolutePath) {
     return validHeaderRoots.contains(absolutePath);
   }
@@ -81,7 +92,12 @@ final class BlazeConfigurationResolverResult {
         return false;
       }
     }
-    return validHeaderRoots.equals(other.validHeaderRoots);
+    return validHeaderRoots.equals(other.validHeaderRoots) &&
+        xcodeProperties.equals(other.xcodeProperties);
+  }
+
+  public ImmutableMap<String, String> getTargetToCompilerVersion() {
+    return targetToCompilerVersion;
   }
 
   static class Builder {
@@ -89,12 +105,15 @@ final class BlazeConfigurationResolverResult {
         ImmutableMap.of();
     ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings = ImmutableMap.of();
     ImmutableSet<File> validHeaderRoots = ImmutableSet.of();
+    Optional<XcodeCompilerSettings> xcodeSettings;
+    private ImmutableMap<String, String> setTargetToVersionMap;
 
     public Builder() {}
 
     BlazeConfigurationResolverResult build() {
       return new BlazeConfigurationResolverResult(
-          uniqueConfigurations, compilerSettings, validHeaderRoots);
+          uniqueConfigurations, compilerSettings, validHeaderRoots, setTargetToVersionMap,
+          xcodeSettings);
     }
 
     void setUniqueConfigurations(
@@ -110,6 +129,15 @@ final class BlazeConfigurationResolverResult {
 
     void setValidHeaderRoots(ImmutableSet<File> validHeaderRoots) {
       this.validHeaderRoots = validHeaderRoots;
+    }
+
+    public void setTargetToVersionMap(ImmutableMap<String, String> targetToVersionMap) {
+      this.setTargetToVersionMap = targetToVersionMap;
+    }
+
+    public void setXcodeSettings(
+        Optional<XcodeCompilerSettings> xcodeSettings) {
+      this.xcodeSettings = xcodeSettings;
     }
   }
 }

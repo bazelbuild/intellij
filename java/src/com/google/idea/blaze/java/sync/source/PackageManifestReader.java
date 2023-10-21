@@ -18,7 +18,6 @@ package com.google.idea.blaze.java.sync.source;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -31,7 +30,7 @@ import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.JavaSourcePackage;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PackageManifest;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
@@ -51,7 +50,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -75,7 +73,9 @@ public class PackageManifestReader {
   private Map<ArtifactState, TargetKey> fileToLabelMap = new HashMap<>();
   private final Map<TargetKey, Map<ArtifactLocation, String>> manifestMap = Maps.newConcurrentMap();
 
-  /** @return A map from java source absolute file path to declared package string. */
+  /**
+   * @return A map from java source absolute file path to declared package string.
+   */
   public Map<TargetKey, Map<ArtifactLocation, String>> readPackageManifestFiles(
       Project project,
       BlazeContext context,
@@ -83,12 +83,12 @@ public class PackageManifestReader {
       Map<TargetKey, ArtifactLocation> javaPackageManifests,
       ListeningExecutorService executorService) {
 
-    Map<OutputArtifact, TargetKey> fileToLabelMap = Maps.newHashMap();
+    Map<OutputArtifactWithoutDigest, TargetKey> fileToLabelMap = Maps.newHashMap();
     for (Map.Entry<TargetKey, ArtifactLocation> entry : javaPackageManifests.entrySet()) {
       TargetKey key = entry.getKey();
       BlazeArtifact artifact = decoder.resolveOutput(entry.getValue());
-      if (artifact instanceof OutputArtifact) {
-        fileToLabelMap.put((OutputArtifact) artifact, key);
+      if (artifact instanceof OutputArtifactWithoutDigest) {
+        fileToLabelMap.put((OutputArtifactWithoutDigest) artifact, key);
       }
     }
     ArtifactsDiff diff;
@@ -138,7 +138,7 @@ public class PackageManifestReader {
     }
 
     List<ListenableFuture<Void>> futures = Lists.newArrayList();
-    for (OutputArtifact file : diff.getUpdatedOutputs()) {
+    for (OutputArtifactWithoutDigest file : diff.getUpdatedOutputs()) {
       futures.add(
           executorService.submit(
               () -> {
@@ -155,7 +155,12 @@ public class PackageManifestReader {
     }
     this.fileToLabelMap =
         fileToLabelMap.entrySet().stream()
-            .filter(e -> diff.getNewState().containsKey(e.getKey().getKey()))
+            .filter(
+                e -> {
+                  OutputArtifactWithoutDigest outputArtifactWithoutDigest = e.getKey();
+                  return diff.getNewState()
+                      .containsKey(outputArtifactWithoutDigest.getRelativePath());
+                })
             .collect(toImmutableMap(e -> e.getKey().toArtifactState(), Map.Entry::getValue));
 
     try {
@@ -168,7 +173,8 @@ public class PackageManifestReader {
   }
 
   @Nullable
-  private static File findArtifactInCache(Project project, OutputArtifact outputArtifact) {
+  private static File findArtifactInCache(
+      Project project, OutputArtifactWithoutDigest outputArtifact) {
     if (outputArtifact instanceof RemoteOutputArtifact) {
       return RemoteOutputsCache.getInstance(project)
           .resolveOutput((RemoteOutputArtifact) outputArtifact);
@@ -177,7 +183,7 @@ public class PackageManifestReader {
   }
 
   private static Map<ArtifactLocation, String> parseManifestFile(
-      Project project, OutputArtifact packageManifest) {
+      Project project, OutputArtifactWithoutDigest packageManifest) {
     Map<ArtifactLocation, String> outputMap = Maps.newHashMap();
     InputStreamProvider inputStreamProvider = InputStreamProvider.getInstance();
 
@@ -201,17 +207,6 @@ public class PackageManifestReader {
   private static ArtifactLocation fromProto(Common.ArtifactLocation location) {
     String relativePath = location.getRelativePath();
     String rootExecutionPathFragment = location.getRootExecutionPathFragment();
-    if (!location.getIsNewExternalVersion() && location.getIsExternal()) {
-      // fix up incorrect paths created with older aspect version
-      // Note: bazel always uses the '/' separator here, even on windows.
-      List<String> components = StringUtil.split(relativePath, "/");
-      if (components.size() > 2) {
-        relativePath = Joiner.on('/').join(components.subList(2, components.size()));
-        String prefix = components.get(0) + "/" + components.get(1);
-        rootExecutionPathFragment =
-            rootExecutionPathFragment.isEmpty() ? prefix : rootExecutionPathFragment + "/" + prefix;
-      }
-    }
     return ArtifactLocation.builder()
         .setRootExecutionPathFragment(rootExecutionPathFragment)
         .setRelativePath(relativePath)

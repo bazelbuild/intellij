@@ -30,6 +30,8 @@ import java.util.Collection;
 
 /** Temporary workaround for b/157683101 and b/154056735. */
 class KotlinSyncAugmenter implements BlazeJavaSyncAugmenter {
+  // TODO(b/246958300): remove once cl/487579008 is rolled out to all users
+
   // We cannot use genjars for kotlin target until https://youtrack.jetbrains.com/issue/KT-24309 get
   // fixed. Without generated jars, b/154056735 will be an issue, so we prefer to use class  jar
   // instead of interface jar. However, using class jar may affect indexing performance. The
@@ -39,9 +41,9 @@ class KotlinSyncAugmenter implements BlazeJavaSyncAugmenter {
   //  - INTERFACE_JAR: generated code may resolve methods incorrectly to class in
   //  META-INF/TRANSITIVE
   private static final BoolExperiment attachGenJar =
-      new BoolExperiment("blaze.sync.kotlin.attach.genjar", false);
+      new BoolExperiment("blaze.sync.kotlin.attach.genjar", true);
   private static final BoolExperiment attachClassJar =
-      new BoolExperiment("blaze.sync.kotlin.attach.classjar", true);
+      new BoolExperiment("blaze.sync.kotlin.attach.classjar", false);
 
   @Override
   public void addJarsForSourceTarget(
@@ -55,15 +57,12 @@ class KotlinSyncAugmenter implements BlazeJavaSyncAugmenter {
       return;
     }
     JavaIdeInfo javaInfo = target.getJavaIdeInfo();
-    if (javaInfo == null
-        || javaInfo.getFilteredGenJar() != null
-        || (!javaInfo.getGeneratedJars().isEmpty() && shouldAttachGenJar(target))) {
+    if (javaInfo == null || javaInfo.getFilteredGenJar() != null || shouldAttachGenJar(target)) {
       return;
     }
     // this is a temporary hack to include annotation processing genjars, by including *all* jars
     // produced by source targets. Currently, we get genjars of kotlin targets, but kotlin plugin
     // cannot resolve methods when genjars depend on sources of the project.
-    // TODO(b/157683101): remove once https://youtrack.jetbrains.com/issue/KT-24309 is fixed
     javaInfo
         .getJars()
         .forEach(

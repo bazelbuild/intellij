@@ -44,6 +44,7 @@ def stamped_plugin_xml(
         vendor_file = None,
         since_build_numbers = None,
         until_build_numbers = None,
+        application_info_json = None,
         **kwargs):
     """Stamps a plugin xml file with the IJ build number.
 
@@ -66,6 +67,7 @@ def stamped_plugin_xml(
       until_build_numbers: A map from plugin-api versions to the until build number
           that should be used in their supporting plugin, the default is all minor
           versions of plugin_api major version. Example: {"212": "212.1.*"}
+      application_info_json: A product info file, if provided, overrides the default.
       **kwargs: Any additional arguments to pass to the final target.
     """
     stamp_tool = "//build_defs:stamp_plugin_xml"
@@ -74,6 +76,7 @@ def stamped_plugin_xml(
     api_version_txt(
         name = api_version_txt_name,
         check_eap = True,
+        application_info_json = application_info_json,
     )
 
     args = [
@@ -155,15 +158,17 @@ def stamped_plugin_xml(
         **kwargs
     )
 
-def api_version_txt(name, check_eap, **kwargs):
+def api_version_txt(name, check_eap, application_info_json = None, **kwargs):
     """Produces an api_version.txt file with the api version, including the product code.
 
     Args:
       name: name of this target
       check_eap: whether the produced api_version should mark the build number with `EAP` if it is or this is not needed.
+      application_info_json: A product info file, if provided, overrides the default.
       **kwargs: Any additional arguments to pass to the final target.
     """
-    application_info_json = "//intellij_platform_sdk:application_info_json"
+    if application_info_json == None:
+        application_info_json = "//intellij_platform_sdk:application_info_json"
     api_version_txt_tool = "//build_defs:api_version_txt"
 
     args = [
@@ -205,6 +210,7 @@ def _repackaged_files_impl(ctx):
             files = input_files,
             prefix = prefix,
             strip_prefix = ctx.attr.strip_prefix,
+            executable = ctx.attr.executable,
         ),
     ]
 
@@ -214,10 +220,11 @@ _repackaged_files = rule(
         "srcs": attr.label_list(mandatory = True, allow_files = True),
         "prefix": attr.string(mandatory = True),
         "strip_prefix": attr.string(mandatory = True),
+        "executable": attr.bool(mandatory = False),
     },
 )
 
-def repackaged_files(name, srcs, prefix, strip_prefix = ".", **kwargs):
+def repackaged_files(name, srcs, prefix, strip_prefix = ".", executable = False, **kwargs):
     """Assembles files together so that they can be packaged as an IntelliJ plugin.
 
     A cut-down version of the internal 'pkgfilegroup' rule.
@@ -232,7 +239,7 @@ def repackaged_files(name, srcs, prefix, strip_prefix = ".", **kwargs):
           is used. Default is "."
       **kwargs: Any further arguments to be passed to the target
     """
-    _repackaged_files(name = name, srcs = srcs, prefix = prefix, strip_prefix = strip_prefix, **kwargs)
+    _repackaged_files(name = name, srcs = srcs, prefix = prefix, strip_prefix = strip_prefix, executable = executable, **kwargs)
 
 def _strip_external_workspace_prefix(short_path):
     """If this target is sitting in an external workspace, return the workspace-relative path."""
@@ -272,12 +279,12 @@ def _plugin_deploy_zip_impl(ctx):
         data = target[repackaged_files_data]
         input_files = depset(transitive = [input_files, data.files])
         for f in data.files.to_list():
-            exec_path_to_zip_path[f.path] = output_path(f, data)
+            exec_path_to_zip_path[f.path] = (output_path(f, data), data.executable)
 
     args = []
     args.extend(["--output", zip_file.path])
-    for exec_path, zip_path in exec_path_to_zip_path.items():
-        args.extend([exec_path, zip_path])
+    for exec_path, (zip_path, exec) in exec_path_to_zip_path.items():
+        args.extend([exec_path, zip_path, "True" if exec else "False"])
     ctx.actions.run(
         executable = ctx.executable._zip_plugin_files,
         arguments = args,
@@ -299,7 +306,7 @@ _plugin_deploy_zip = rule(
         "_zip_plugin_files": attr.label(
             default = Label("//build_defs:zip_plugin_files"),
             executable = True,
-            cfg = "host",
+            cfg = "exec",
         ),
     },
 )

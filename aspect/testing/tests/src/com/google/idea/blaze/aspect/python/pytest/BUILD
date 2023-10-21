@@ -1,9 +1,10 @@
+load("@rules_python//python:defs.bzl", "py_test")
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 py_test(
     name = "simple",

@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.sync.projectview;
 
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.util.Optional;
 
@@ -30,6 +29,6 @@ public interface WorkspaceLanguageChecker {
   Optional<Boolean> isLanguageActiveInProject(LanguageClass language);
 
   static WorkspaceLanguageChecker getInstance(Project project) {
-    return ServiceManager.getService(project, WorkspaceLanguageChecker.class);
+    return project.getService(WorkspaceLanguageChecker.class);
   }
 }

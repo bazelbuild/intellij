@@ -17,10 +17,9 @@ package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.console.NonProblemFilterWrapper;
-import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.PrintOutput.OutputType;
 import com.intellij.codeEditor.printing.PrintAction;
 import com.intellij.execution.actions.ClearConsoleAction;
 import com.intellij.execution.filters.ConsoleDependentFilterProvider;
@@ -45,8 +44,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -63,12 +64,7 @@ import javax.annotation.Nullable;
 import javax.swing.JComponent;
 import javax.swing.LayoutFocusTraversalPolicy;
 
-/**
- * Simplified copy and replacement of {@link com.google.idea.blaze.base.console.BlazeConsoleView},
- * (which can be deleted after the new tool-window is released).
- *
- * <p>The class handles how the output of a single task is displayed in the tool-window.
- */
+/** ConsoleView handles how the output of a single task is displayed in the tool-window. */
 final class ConsoleView implements Disposable {
 
   /** The counter that is used to create IntelliJ UI components ids. */
@@ -118,8 +114,6 @@ final class ConsoleView implements Disposable {
     this.customFilters.setCustomFilters(customFilters);
     consoleView.addMessageFilter(this.customFilters);
     addWrappedPredefinedFilters();
-    // add target filter last, so it doesn't override other links containing a target string
-    consoleView.addMessageFilter(new BlazeTargetFilter(false));
   }
 
   public void setStopHandler(@Nullable Runnable stopHandler) {
@@ -306,11 +300,17 @@ final class ConsoleView implements Disposable {
 
   /** Add the global filters, wrapped to separate them from blaze problems. */
   private void addWrappedPredefinedFilters() {
-    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    for (ConsoleFilterProvider provider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
-      Arrays.stream(getFilters(scope, provider))
-          .forEach(f -> consoleView.addMessageFilter(NonProblemFilterWrapper.wrap(f)));
-    }
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() ->
+                    ApplicationManager.getApplication().runReadAction(() -> {
+                      GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+                      for (ConsoleFilterProvider provider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
+                        Arrays.stream(getFilters(scope, provider))
+                                .forEach(f -> consoleView.addMessageFilter(NonProblemFilterWrapper.wrap(f)));
+                      }
+                    }),
+            "Setting Console Filters",
+            false,
+            null);
   }
 
   private Filter[] getFilters(GlobalSearchScope scope, ConsoleFilterProvider provider) {

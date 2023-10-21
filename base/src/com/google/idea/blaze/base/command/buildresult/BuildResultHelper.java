@@ -18,8 +18,13 @@ package com.google.idea.blaze.base.command.buildresult;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Interner;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.exception.BuildException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /** Assists in getting build artifacts from a build operation. */
@@ -35,6 +40,10 @@ public interface BuildResultHelper extends AutoCloseable {
   /**
    * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
    * called once, after the build is complete.
+   *
+   * <p>As BEP retrieval can be memory-intensive for large projects, implementations of
+   * getBuildOutput may restrict parallelism for cases in which many builds are executed in parallel
+   * (e.g. remote builds).
    */
   default ParsedBepOutput getBuildOutput() throws GetArtifactsException {
     return getBuildOutput(Optional.empty());
@@ -43,6 +52,10 @@ public interface BuildResultHelper extends AutoCloseable {
   /**
    * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
    * called once, after the build is complete.
+   *
+   * <p>As BEP retrieval can be memory-intensive for large projects, implementations of
+   * getBuildOutput may restrict parallelism for cases in which many builds are executed in parallel
+   * (e.g. remote builds).
    */
   default ParsedBepOutput getBuildOutput(Interner<String> stringInterner)
       throws GetArtifactsException {
@@ -52,6 +65,10 @@ public interface BuildResultHelper extends AutoCloseable {
   /**
    * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
    * called once, after the build is complete.
+   *
+   * <p>As BEP retrieval can be memory-intensive for large projects, implementations of
+   * getBuildOutput may restrict parallelism for cases in which many builds are executed in parallel
+   * (e.g. remote builds).
    */
   default ParsedBepOutput getBuildOutput(
       Optional<String> completionBuildId, Interner<String> stringInterner)
@@ -62,8 +79,21 @@ public interface BuildResultHelper extends AutoCloseable {
   /**
    * Retrieves BEP build events according to given id, parses them and returns the corresponding
    * {@link ParsedBepOutput}. May only be called once, after the build is complete.
+   *
+   * <p>As BEP retrieval can be memory-intensive for large projects, implementations of
+   * getBuildOutput may restrict parallelism for cases in which many builds are executed in parallel
+   * (e.g. remote builds).
    */
   ParsedBepOutput getBuildOutput(Optional<String> completedBuildId) throws GetArtifactsException;
+
+  /**
+   * Retrieves test results, parses them and returns the corresponding {@link BlazeTestResults}. May
+   * only be called once, after the build is complete.
+   */
+  BlazeTestResults getTestResults(Optional<String> completedBuildId) throws GetArtifactsException;
+
+  /** Deletes the local BEP output file associated with the test results */
+  default void deleteTemporaryOutputFiles() {}
 
   /**
    * Parses the BEP output data to collect all build flags used. Return all flags that pass filters
@@ -71,16 +101,33 @@ public interface BuildResultHelper extends AutoCloseable {
   BuildFlags getBlazeFlags(Optional<String> completedBuildId) throws GetFlagsException;
 
   /**
-   * Parses the BEP output data to collect message on stderr
+   * Parses the BEP output data to collect message on stdout.
+   *
+   * <p>This function is designed for remote build which does not have local console output. Local
+   * build should not use this since {@link ExternalTask} provide stdout handler.
+   *
+   * @param completedBuildId build id.
+   * @param stderrConsumer process stderr
+   * @param blazeContext blaze context may contains logging scope
+   * @return a list of message on stdout.
+   */
+  default InputStream getStdout(
+      String completedBuildId, Consumer<String> stderrConsumer, BlazeContext blazeContext)
+      throws BuildException {
+    return InputStream.nullInputStream();
+  }
+
+  /**
+   * Parses the BEP output data to collect message on stderr.
    *
    * <p>This function is designed for remote build which does not have local console output. Local
    * build should not use this since {@link ExternalTask} provide stderr handler.
    *
    * @param completedBuildId build id.
-   * @return a list of message on stderr
+   * @return a list of message on stderr.
    */
-  default ImmutableList<String> getStderr(String completedBuildId) throws GetStderrException {
-    return ImmutableList.of();
+  default InputStream getStderr(String completedBuildId) throws BuildException {
+    return InputStream.nullInputStream();
   }
 
   /**
@@ -125,9 +172,17 @@ public interface BuildResultHelper extends AutoCloseable {
   void close();
 
   /** Indicates a failure to get artifact information */
-  class GetArtifactsException extends Exception {
+  class GetArtifactsException extends BuildException {
+    public GetArtifactsException(Throwable cause) {
+      super(cause);
+    }
+
     public GetArtifactsException(String message) {
       super(message);
+    }
+
+    public GetArtifactsException(String message, Throwable cause) {
+      super(message, cause);
     }
   }
 
@@ -143,13 +198,6 @@ public interface BuildResultHelper extends AutoCloseable {
 
     public GetFlagsException(Throwable cause) {
       super(cause);
-    }
-  }
-
-  /** Indicates a failure to get stderr messages */
-  class GetStderrException extends Exception {
-    public GetStderrException(String message) {
-      super(message);
     }
   }
 }

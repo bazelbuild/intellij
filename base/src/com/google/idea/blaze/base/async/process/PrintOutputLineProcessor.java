@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.async.process;
 
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.common.PrintOutput;
 import org.jetbrains.annotations.NotNull;
 
 /** Simple adapter between stdout and context print output. */

@@ -55,7 +55,7 @@ public class BuildDocumentationProvider extends AbstractDocumentationProvider {
   /** Returns the corresponding built-in rule in the BUILD file language, if one exists. */
   @Nullable
   private static RuleDefinition getBuiltInRule(Project project, @Nullable String ruleName) {
-    BuildLanguageSpec spec = BuildLanguageSpecProvider.getInstance().getLanguageSpec(project);
+    BuildLanguageSpec spec = BuildLanguageSpecProvider.getInstance(project).getLanguageSpec();
     return spec != null ? spec.getRule(ruleName) : null;
   }
 

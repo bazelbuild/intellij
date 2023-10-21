@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguagesSection;
 import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection;
 import com.google.idea.blaze.base.projectview.section.sections.BazelBinarySection;
+import com.google.idea.blaze.base.projectview.section.sections.BuildConfigSection;
 import com.google.idea.blaze.base.projectview.section.sections.BuildFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
@@ -44,6 +45,7 @@ import com.google.idea.blaze.base.projectview.section.sections.RunConfigurations
 import com.google.idea.blaze.base.projectview.section.sections.Sections;
 import com.google.idea.blaze.base.projectview.section.sections.ShardBlazeBuildsSection;
 import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
+import com.google.idea.blaze.base.projectview.section.sections.SyncManualTargetsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetShardSizeSection;
 import com.google.idea.blaze.base.projectview.section.sections.TestFlagsSection;
@@ -102,11 +104,15 @@ public class ProjectViewSetTest extends BlazeTestCase {
                         ListSection.builder(RunConfigurationsSection.KEY)
                             .add(new WorkspacePath("test")))
                     .add(ScalarSection.builder(AutomaticallyDeriveTargetsSection.KEY).set(false))
+                    .add(ScalarSection.builder(SyncManualTargetsSection.KEY).set(false))
                     .add(ScalarSection.builder(ShardBlazeBuildsSection.KEY).set(false))
                     .add(ScalarSection.builder(TargetShardSizeSection.KEY).set(500))
                     .add(
                         ScalarSection.builder(BazelBinarySection.KEY)
                             .set(new File("/bazel/path/override")))
+                    .add(
+                        ScalarSection.builder(BuildConfigSection.KEY)
+                            .set(new WorkspacePath("test")))
                     .build())
             .build();
 

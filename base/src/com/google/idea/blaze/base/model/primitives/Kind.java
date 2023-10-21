@@ -201,6 +201,6 @@ public abstract class Kind {
 
   private static boolean isTestSuite(String ruleName) {
     // handle plain test_suite targets and macros producing a test/test_suite
-    return "test_suite".equals(ruleName) || ruleName.endsWith("test_suites");
+    return ruleName.endsWith("test_suite") || ruleName.endsWith("test_suites");
   }
 }

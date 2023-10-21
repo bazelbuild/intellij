@@ -25,13 +25,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.io.HttpRequests;
+
+import javax.annotation.Nullable;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.List;
-import javax.annotation.Nullable;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.HeadMethod;
-import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
+import java.util.concurrent.CompletableFuture;
+
+import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled;
 
 /** Provides quick docs for some .blazeproject elements. */
 public class ProjectViewDocumentationProvider extends AbstractDocumentationProvider
@@ -111,26 +114,19 @@ public class ProjectViewDocumentationProvider extends AbstractDocumentationProvi
     }
     return url;
   }
-
-  private static boolean pageExists(String url) {
-    final HttpClient client = new HttpClient();
-    final HttpConnectionManagerParams params = client.getHttpConnectionManager().getParams();
-    params.setSoTimeout(5 * 1000);
-    params.setConnectionTimeout(5 * 1000);
-
-    try {
-      final HeadMethod method = new HeadMethod(url);
-      final int rc = client.executeMethod(method);
-      if (rc == 404) {
-        return false;
-      }
-    } catch (IllegalArgumentException e) {
-      return false;
-    } catch (IOException e) {
-      // ignore
+    private static boolean pageExists(String url) {
+        CompletableFuture<Boolean> f = CompletableFuture.supplyAsync(() -> {
+            try {
+                return HttpRequests.head(url)
+                        .forceHttps(true)
+                        .connectTimeout(5 * 1000)
+                        .tryConnect() == HttpURLConnection.HTTP_OK;
+            } catch (IOException e) {
+                return false;
+            }
+        });
+        return awaitWithCheckCanceled(f);
     }
-    return true;
-  }
 
   @Nullable
   @Override

@@ -24,6 +24,7 @@ import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
@@ -50,6 +51,8 @@ class BlazeCreateResourceUtils {
   private static final String PLACEHOLDER_TEXT =
       "choose a res/ directory with dropdown or browse button";
 
+  // TODO(b/295880481): Revisit how resources are created. This file conflates logic and UI, but it
+  // also reveals that the integration with Studio is done at the wrong level.
   static void setupResDirectoryChoices(
       Project project,
       @Nullable VirtualFile contextFile,
@@ -57,6 +60,31 @@ class BlazeCreateResourceUtils {
       ComboboxWithBrowseButton resDirComboAndBrowser) {
     // Reset the item list before filling it back up.
     resDirComboAndBrowser.getComboBox().removeAllItems();
+
+    if (QuerySync.isEnabled()) {
+      if (contextFile == null) {
+        return;
+      }
+      // For query sync, populates the combo box with either the directory itself, if a directory
+      // was right-clicked, or the containing directory, if a file was right-clicked. This
+      // could be augmented with additional options (i.e. res folders in higher directories and
+      // perhaps other res folders)
+      File fileFromContext = VfsUtilCore.virtualToIoFile(contextFile);
+      if (!fileFromContext.isDirectory()) {
+        fileFromContext = fileFromContext.getParentFile();
+      }
+      File closestDirToContext = new File(fileFromContext.getPath(), "res");
+
+      @SuppressWarnings({"unchecked", "rawtypes"}) // Class comes with raw type from JetBrains
+      JComboBox resDirCombo = resDirComboAndBrowser.getComboBox();
+      resDirCombo.setEditable(true);
+      resDirCombo.addItem(closestDirToContext);
+      resDirCombo.setSelectedItem(closestDirToContext);
+      resDirComboAndBrowser.setVisible(true);
+      resDirLabel.setVisible(true);
+      return;
+    }
+
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData != null) {

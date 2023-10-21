@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.model;
 
 import com.google.devtools.intellij.model.ProjectData;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
@@ -132,16 +133,19 @@ public final class BlazeVersionData implements ProtoWrapper<ProjectData.BlazeVer
     @Nullable private Long clientCl;
     @Nullable private BazelVersion bazelVersion;
 
+    @CanIgnoreReturnValue
     public Builder setBlazeCl(@Nullable Long blazeCl) {
       this.blazeCl = blazeCl;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setClientCl(@Nullable Long clientCl) {
       this.clientCl = clientCl;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setBazelVersion(BazelVersion bazelVersion) {
       this.bazelVersion = bazelVersion;
       return this;

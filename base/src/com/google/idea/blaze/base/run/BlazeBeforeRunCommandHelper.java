@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.async.process.ExternalTask;
@@ -28,7 +30,7 @@ import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.TempDirectoryProvider;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -36,7 +38,6 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -46,6 +47,7 @@ import com.google.idea.blaze.base.toolwindow.Task;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -57,10 +59,16 @@ import java.util.List;
  */
 public final class BlazeBeforeRunCommandHelper {
   private static final String TASK_TITLE = "Blaze before run task";
+  // A vm option overriding the directory used for the Bazel run script.
+  private static final String BAZEL_RUN_SCRIPT_VM_OVERRIDE = "bazel.run.script.path";
 
   private BlazeBeforeRunCommandHelper() {}
 
-  /** Kicks off the blaze task, returning a corresponding {@link ListenableFuture}. */
+  /**
+   * Kicks off the blaze task, returning a corresponding {@link ListenableFuture}.
+   *
+   * <p>Runs the blaze command on the targets specified in the given {@code configuration}.
+   */
   public static ListenableFuture<BuildResult> runBlazeCommand(
       BlazeCommandName commandName,
       BlazeCommandRunConfiguration configuration,
@@ -69,6 +77,31 @@ public final class BlazeBeforeRunCommandHelper {
       List<String> overridableExtraBlazeFlags,
       BlazeInvocationContext invocationContext,
       String progressMessage) {
+    return runBlazeCommand(
+        commandName,
+        configuration,
+        buildResultHelper,
+        requiredExtraBlazeFlags,
+        overridableExtraBlazeFlags,
+        invocationContext,
+        progressMessage,
+        configuration.getTargets());
+  }
+
+  /**
+   * Runs the given blaze command on the given list of {@code targets} instead of retrieving the
+   * targets from the run {@code configuration}.
+   */
+  public static ListenableFuture<BuildResult> runBlazeCommand(
+      BlazeCommandName commandName,
+      BlazeCommandRunConfiguration configuration,
+      BuildResultHelper buildResultHelper,
+      List<String> requiredExtraBlazeFlags,
+      List<String> overridableExtraBlazeFlags,
+      BlazeInvocationContext invocationContext,
+      String progressMessage,
+      ImmutableList<TargetExpression> targets) {
+
     Project project = configuration.getProject();
     BlazeCommandRunConfigurationCommonState handlerState =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
@@ -97,21 +130,13 @@ public final class BlazeBeforeRunCommandHelper {
                             .build())
                     .push(
                         new ProblemsViewScope(
-                            project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()))
-                    .push(
-                        new BlazeConsoleScope.Builder(project)
-                            .setPopupBehavior(
-                                BlazeUserSettings.getInstance().getShowBlazeConsoleOnRun())
-                            .addConsoleFilters(
-                                new IssueOutputFilter(
-                                    project, workspaceRoot, invocationContext.type(), true))
-                            .build());
+                            project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()));
 
                 context.output(new StatusOutput(progressMessage));
 
                 BlazeCommand.Builder command =
                     BlazeCommand.builder(binaryPath, commandName)
-                        .addTargets(configuration.getTargets())
+                        .addTargets(targets)
                         .addBlazeFlags(overridableExtraBlazeFlags)
                         .addBlazeFlags(
                             BlazeFlags.blazeFlags(
@@ -142,7 +167,14 @@ public final class BlazeBeforeRunCommandHelper {
 
   /** Creates a temporary output file to write the shell script to. */
   public static Path createScriptPathFile() throws IOException {
-    Path tempDir = TempDirectoryProvider.getInstance().getTempDirectory();
+    Path tempDir;
+    String dirPath = System.getProperty(BAZEL_RUN_SCRIPT_VM_OVERRIDE);
+    if (Strings.isNullOrEmpty(dirPath)) {
+      tempDir = TempDirectoryProvider.getInstance().getTempDirectory();
+    } else {
+      tempDir = Paths.get(dirPath);
+    }
+
     Path tempFile =
         FileOperationProvider.getInstance().createTempFile(tempDir, "blaze-script-", "");
     tempFile.toFile().deleteOnExit();

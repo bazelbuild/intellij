@@ -17,8 +17,8 @@ package com.google.idea.blaze.base.scope.scopes;
 
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SystemNotifications;
 

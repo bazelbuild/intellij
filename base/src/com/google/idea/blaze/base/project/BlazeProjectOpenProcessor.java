@@ -17,15 +17,15 @@ package com.google.idea.blaze.base.project;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
+import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import icons.BlazeIcons;
-import java.io.IOException;
+
 import javax.annotation.Nullable;
 import javax.swing.Icon;
-import org.jdom.JDOMException;
 
 /** Allows directly opening a project with project data directory embedded within the project. */
 public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
@@ -43,7 +43,7 @@ public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
   private static final String DEPRECATED_PROJECT_DATA_SUBDIRECTORY = ".project";
 
   @Nullable
-  private static VirtualFile getIdeaSubdirectory(VirtualFile file) {
+  public static VirtualFile getIdeaSubdirectory(VirtualFile file) {
     VirtualFile projectSubdirectory = file.findChild(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY);
     if (projectSubdirectory == null || !projectSubdirectory.isDirectory()) {
       projectSubdirectory = file.findChild(DEPRECATED_PROJECT_DATA_SUBDIRECTORY);
@@ -69,7 +69,7 @@ public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Override
   public boolean isStrongProjectInfoHolder() {
-    return true;
+    return Registry.is("bazel.project.auto.open.if.present", true);
   }
 
   @Override
@@ -81,19 +81,11 @@ public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
   @Override
   public Project doOpenProject(
       VirtualFile file, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
-    ProjectManager pm = ProjectManager.getInstance();
-    if (projectToClose != null) {
-      pm.closeProject(projectToClose);
-    }
-    try {
-      VirtualFile ideaSubdirectory = getIdeaSubdirectory(file);
-      if (ideaSubdirectory == null) {
-        return null;
-      }
-      VirtualFile projectSubdirectory = ideaSubdirectory.getParent();
-      return pm.loadAndOpenProject(projectSubdirectory.getPath());
-    } catch (IOException | JDOMException e) {
+    VirtualFile ideaSubdirectory = getIdeaSubdirectory(file);
+    if (ideaSubdirectory == null) {
       return null;
     }
+    VirtualFile projectSubdirectory = ideaSubdirectory.getParent();
+    return BaseSdkCompat.openProject(projectSubdirectory,projectToClose, forceOpenInNewFrame);
   }
 }

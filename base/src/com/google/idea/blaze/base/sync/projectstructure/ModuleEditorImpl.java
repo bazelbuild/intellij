@@ -20,15 +20,15 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
-import com.google.idea.sdkcompat.general.BaseSdkCompat;
+import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -59,7 +59,7 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
 
   public ModuleEditorImpl(Project project, BlazeImportSettings importSettings) {
     this.project = project;
-    modelsProvider = BaseSdkCompat.createModifiableModelsProvider(project);
+    modelsProvider = new IdeModifiableModelsProviderImpl(project);
     this.moduleModel = modelsProvider.getModifiableModuleModel();
 
     this.imlDirectory = getImlDirectory(importSettings);

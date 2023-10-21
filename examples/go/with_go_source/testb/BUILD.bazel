@@ -1,0 +1,51 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_source", "go_test")
+
+package(default_visibility = ["//:__subpackages__"])
+
+genrule(
+    name = "gen",
+    outs = ["gen.go"],
+    cmd = """
+cat <<EOF > "$@"
+package testb
+
+import (
+	"github.com/bazelbuild/intellij/examples/go/with_go_source/otherlib"
+)
+
+func FromGeneratedFile() {
+	otherlib.Foo()
+}
+EOF
+""",
+)
+
+go_source(
+    name = "srcs",
+    srcs = [
+        "src.go",  # A Go source file for package testb
+        ":gen",  # A generated Go file for package testb
+    ],
+    deps = ["//otherlib"],  # A simple Go library dependency
+)
+
+#
+# Test with a Go test embedding our `go_source` rule target +
+#  the default library of the test to infer the importpath.
+#
+
+go_library(
+    name = "testb",
+    srcs = ["testb.go"],  # keep
+    importpath = "github.com/bazelbuild/intellij/examples/go/with_go_source/testb",
+    deps = [],  # keep
+)
+
+go_test(
+    name = "testb_test",
+    srcs = ["testb_test.go"],
+    embed = [
+        ":testb",
+        ":srcs",  # keep
+    ],
+)

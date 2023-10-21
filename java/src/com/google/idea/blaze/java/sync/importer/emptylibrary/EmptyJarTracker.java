@@ -18,6 +18,7 @@ package com.google.idea.blaze.java.sync.importer.emptylibrary;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.model.ProjectData;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactStateProtoConverter;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
@@ -135,6 +136,7 @@ public class EmptyJarTracker implements ProtoWrapper<ProjectData.EmptyJarTracker
   public static class Builder {
     private final Map<ArtifactState, Boolean> trackerBuilder = new HashMap<>();
 
+    @CanIgnoreReturnValue
     public Builder addEntry(ArtifactState artifactState, Boolean isEmpty) {
       // Remove currently present entry to ensure the updated artifact is used as key
       // No-op if artifactState is not present
@@ -143,15 +145,18 @@ public class EmptyJarTracker implements ProtoWrapper<ProjectData.EmptyJarTracker
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addAllEntries(Map<ArtifactState, Boolean> map) {
       map.forEach(this::addEntry);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addAllEntries(EmptyJarTracker other) {
       return addAllEntries(other.stateToEmptyStatus);
     }
 
+    @CanIgnoreReturnValue
     public Builder removeEntries(ImmutableSet<ArtifactState> removedOutputs) {
       removedOutputs.forEach(trackerBuilder::remove);
       return this;

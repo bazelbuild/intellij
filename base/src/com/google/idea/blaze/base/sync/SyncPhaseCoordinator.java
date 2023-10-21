@@ -32,24 +32,23 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.logging.utils.BuildPhaseSyncStats;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
+import com.google.idea.blaze.base.model.AspectSyncProjectData;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput.Prefix;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.NetworkTrafficTrackingScope;
 import com.google.idea.blaze.base.scope.scopes.NotificationScope;
@@ -69,16 +68,17 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.common.util.ConcurrencyUtil;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -105,7 +105,7 @@ final class SyncPhaseCoordinator {
   private static final Logger logger = Logger.getInstance(SyncPhaseCoordinator.class);
 
   static SyncPhaseCoordinator getInstance(Project project) {
-    return ServiceManager.getService(project, SyncPhaseCoordinator.class);
+    return project.getService(SyncPhaseCoordinator.class);
   }
 
   private enum SyncPhase {
@@ -315,20 +315,26 @@ final class SyncPhaseCoordinator {
   }
 
   @Nullable
-  private BlazeProjectData getOldProjectData(BlazeContext context, SyncMode mode) {
+  private AspectSyncProjectData getOldProjectData(BlazeContext context, SyncMode mode) {
     if (mode == SyncMode.FULL) {
       return null;
     }
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
-    BlazeProjectData blazeProjectData =
-        BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(importSettings);
-    if (blazeProjectData == null && mode != SyncMode.NO_BUILD) {
+    Preconditions.checkState(!QuerySync.isEnabled(), "This should only happen in legacy sync");
+
+    BlazeProjectData data =
+        BlazeProjectDataManager.getInstance(project).loadProject(importSettings);
+    if (data == null && mode != SyncMode.NO_BUILD) {
       context.output(
           new StatusOutput(
               "Couldn't load previously cached project data; full sync will be needed"));
     }
-    return blazeProjectData;
+    if (data == null) {
+      return null;
+    }
+    Preconditions.checkState(data instanceof AspectSyncProjectData, "Invalid project data type");
+    return (AspectSyncProjectData) data;
   }
 
   private void doFilterProjectTargets(
@@ -342,7 +348,7 @@ final class SyncPhaseCoordinator {
       if (!context.shouldContinue()) {
         return;
       }
-      BlazeProjectData oldProjectData = getOldProjectData(context, params.syncMode());
+      AspectSyncProjectData oldProjectData = getOldProjectData(context, params.syncMode());
       if (oldProjectData == null) {
         String message = "Can't filter project targets: project has never been synced.";
         context.output(PrintOutput.error(message));
@@ -355,7 +361,7 @@ final class SyncPhaseCoordinator {
               context,
               childContext -> {
                 SyncProjectState projectState =
-                    ProjectStateSyncTask.collectProjectState(project, context);
+                    ProjectStateSyncTask.collectProjectState(project, context, params);
                 if (projectState == null) {
                   return;
                 }
@@ -375,8 +381,11 @@ final class SyncPhaseCoordinator {
               },
               new TimingScope("Filtering project targets", EventType.Other));
       stats.addTimedEvents(timedEvents);
-      syncResult = context.getSyncResult();
-
+      if (context.shouldContinue()) {
+        syncResult = SyncResult.SUCCESS;
+      } else {
+        syncResult = context.getSyncResult();
+      }
     } catch (Throwable e) {
       logSyncError(context, e);
     } finally {
@@ -427,7 +436,7 @@ final class SyncPhaseCoordinator {
             SyncStats.builder());
         return;
       }
-      SyncProjectState projectState = ProjectStateSyncTask.collectProjectState(project, context);
+      SyncProjectState projectState = ProjectStateSyncTask.collectProjectState(project, context, params);
       BlazeSyncBuildResult buildResult =
           BuildPhaseSyncTask.runBuildPhase(
               project, params, projectState, buildId, context, buildSystem);
@@ -455,7 +464,11 @@ final class SyncPhaseCoordinator {
       }
     } catch (Throwable e) {
       logSyncError(context, e);
-      context.onException(e);
+      if (e instanceof SyncCanceledException || e instanceof ProcessCanceledException) {
+        context.setCancelled();
+      } else {
+        context.setHasError();
+      }
       finishSync(
           params,
           startTime,
@@ -501,14 +514,26 @@ final class SyncPhaseCoordinator {
   }
 
   private SyncResult syncResultFromBuildPhase(
-      BlazeSyncBuildResult buildResult, BlazeContext context) {
-    if (!context.shouldContinue()) {
-      return context.getSyncResult();
+      BlazeSyncBuildResult syncBuildResult, BlazeContext context) {
+    if (context.isCancelled()) {
+      return SyncResult.CANCELLED;
     }
-    if (!buildResult.isValid()) {
+    BlazeBuildOutputs buildOutputs = syncBuildResult.getBuildResult();
+    if (buildOutputs == null || !syncBuildResult.hasValidOutputs()) {
       return SyncResult.FAILURE;
     }
-    if (buildResult.getBuildResult().buildResult.status == BuildResult.Status.BUILD_ERROR) {
+    if (buildOutputs.buildResult.status == Status.FATAL_ERROR) {
+      if (BuildPhaseSyncTask.continueSyncOnOom.getValue()) {
+        context.output(
+            PrintOutput.error(
+                "One or more build shards failed to complete. "
+                    + "The project may not be fully updated or resolve for affected targets."));
+        return SyncResult.PARTIAL_SUCCESS;
+      } else {
+        return SyncResult.FAILURE;
+      }
+    }
+    if (buildOutputs.buildResult.status == BuildResult.Status.BUILD_ERROR) {
       String buildSystem = Blaze.buildSystemName(project);
       String message =
           String.format(
@@ -530,7 +555,7 @@ final class SyncPhaseCoordinator {
     SyncResult syncResult = updateTask.syncResult();
     try {
       fillInBuildStats(stats, updateTask.projectState(), updateTask.buildResult());
-      if (!syncResult.successful() || !updateTask.buildResult().isValid()) {
+      if (!syncResult.successful() || !updateTask.buildResult().hasValidOutputs()) {
         return;
       }
       List<TimedEvent> timedEvents =
@@ -669,17 +694,6 @@ final class SyncPhaseCoordinator {
                         project, WorkspaceRoot.fromProject(project), ContextType.Sync))
                 .build())
         .push(
-            new BlazeConsoleScope.Builder(project, indicator)
-                .setPopupBehavior(
-                    syncParams.backgroundSync()
-                        ? FocusBehavior.NEVER
-                        : userSettings.getShowBlazeConsoleOnSync())
-                .addConsoleFilters(
-                    new IssueOutputFilter(
-                        project, WorkspaceRoot.fromProject(project), ContextType.Sync, true))
-                .setClearPreviousState(clearProblems)
-                .build())
-        .push(
             new ProblemsViewScope(
                 project,
                 syncParams.backgroundSync()
@@ -798,7 +812,7 @@ final class SyncPhaseCoordinator {
   private static void validate(
       Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
     for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-      syncPlugin.validate(project, context, blazeProjectData);
+      boolean unused = syncPlugin.validate(project, context, blazeProjectData);
     }
   }
 

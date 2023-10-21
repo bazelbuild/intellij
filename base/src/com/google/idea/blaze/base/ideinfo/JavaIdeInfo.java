@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.ideinfo;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -128,7 +129,7 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
     return javaBinaryMainClass;
   }
 
-  /** Jars needed to apply the encapsulated annotation processors. . */
+  /** Jars needed to apply the encapsulated annotation processors. */
   public ImmutableList<LibraryArtifact> getPluginProcessorJars() {
     return pluginProcessorJars;
   }
@@ -153,36 +154,43 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
     @Nullable ArtifactLocation jdepsFile;
     ImmutableList.Builder<LibraryArtifact> pluginProcessorJars = ImmutableList.builder();
 
+    @CanIgnoreReturnValue
     public Builder addJar(LibraryArtifact.Builder jar) {
       jars.add(jar.build());
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addGeneratedJar(LibraryArtifact.Builder jar) {
       generatedJars.add(jar.build());
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setFilteredGenJar(LibraryArtifact.Builder jar) {
       this.filteredGenJar = jar.build();
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setMainClass(@Nullable String mainClass) {
       this.mainClass = mainClass;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setTestClass(@Nullable String testClass) {
       this.testClass = testClass;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setJdepsFile(@Nullable ArtifactLocation jdepsFile) {
       this.jdepsFile = jdepsFile;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addPluginProcessorJars(LibraryArtifact.Builder jar) {
       pluginProcessorJars.add(jar.build());
       return this;

@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.android.filecache;
 
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -35,19 +35,21 @@ public interface ArtifactCache {
   void clearCache();
 
   /**
-   * Fetches and caches the given collection of {@link OutputArtifact} to disk.
+   * Fetches and caches the given collection of {@link OutputArtifactWithoutDigest} to disk.
    *
    * @param artifacts Collection of artifacts to add to cache
    * @param removeMissingArtifacts if true, will remove any cached artifact that is not present in
    *     {@code artifacts}.
    */
   void putAll(
-      Collection<OutputArtifact> artifacts, BlazeContext context, boolean removeMissingArtifacts);
+      Collection<? extends OutputArtifactWithoutDigest> artifacts,
+      BlazeContext context,
+      boolean removeMissingArtifacts);
 
   /**
-   * Returns the {@link Path} corresponding to the given {@link OutputArtifact}, or {@code null} if
-   * the artifact is not tracked in cache.
+   * Returns the {@link Path} corresponding to the given {@link OutputArtifactWithoutDigest}, or
+   * {@code null} if the artifact is not tracked in cache.
    */
   @Nullable
-  Path get(OutputArtifact artifact);
+  Path get(OutputArtifactWithoutDigest artifact);
 }

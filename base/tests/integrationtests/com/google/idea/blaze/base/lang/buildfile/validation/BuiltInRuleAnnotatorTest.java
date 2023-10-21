@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.sdkcompat.BaseSdkTestCompat;
 import com.intellij.lang.annotation.Annotation;
-import com.intellij.openapi.project.Project;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -73,7 +72,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
   @Before
   public final void before() {
     specProvider = new MockBuildLanguageSpecProvider();
-    registerApplicationService(BuildLanguageSpecProvider.class, specProvider);
+    registerProjectService(BuildLanguageSpecProvider.class, specProvider);
   }
 
   @Test
@@ -319,7 +318,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
 
     @Nullable
     @Override
-    public BuildLanguageSpec getLanguageSpec(Project project) {
+    public BuildLanguageSpec getLanguageSpec() {
       return languageSpec;
     }
   }

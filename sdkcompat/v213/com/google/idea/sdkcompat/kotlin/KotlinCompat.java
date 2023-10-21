@@ -44,7 +44,13 @@ public class KotlinCompat {
   /* #api213: directly call KotlinJavaModuleConfigurator$configureModule from {@link
    * BlazeKotlinSyncPlugin}*/
   public static void configureModule(Project project, Module module) {
-    ApplicationManager.getApplication()
-        .invokeLater(() -> KotlinLibraryConfigurator.INSTANCE.configureModule(project, module));
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // do not invoke it later since serviceContainer may be disposed before it get completed
+      ApplicationManager.getApplication()
+          .invokeAndWait(() -> KotlinLibraryConfigurator.INSTANCE.configureModule(project, module));
+    } else {
+      ApplicationManager.getApplication()
+          .invokeLater(() -> KotlinLibraryConfigurator.INSTANCE.configureModule(project, module));
+    }
   }
 }

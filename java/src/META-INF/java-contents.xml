@@ -50,6 +50,7 @@
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.java.sync.BlazeJavaSyncPlugin"/>
+    <QuerySyncPlugin implementation="com.google.idea.blaze.java.qsync.BlazeJavaQuerySyncPlugin"/>
     <PsiFileProvider implementation="com.google.idea.blaze.java.psi.JavaPsiFileProvider" />
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.java.run.BlazeJavaRunConfigurationHandlerProvider"/>
     <SettingsUiContributor implementation="com.google.idea.blaze.java.settings.BlazeJavaUserSettingsConfigurable$UiContributor"/>
@@ -65,6 +66,7 @@
     <JavaClasspathAspectStrategy implementation="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy$BazelStrategy"/>
     <TestComparisonFailureParser implementation="com.google.idea.blaze.java.run.smrunner.JunitTestComparisonFailureParser"/>
     <FastBuildAspectStrategy implementation="com.google.idea.blaze.java.fastbuild.BazelFastBuildAspectStrategy"/>
+    <FastBuildDeployJarStrategy implementation="com.google.idea.blaze.java.fastbuild.BazelFastBuildDeployJarStrategy"/>
     <FastBuildTestEnvironmentCreator implementation="com.google.idea.blaze.java.run.fastbuild.BazelFastBuildTestEnvironmentCreator"/>
     <FastBuildTestEnvironmentModifier implementation="com.google.idea.blaze.java.run.fastbuild.BazelTestEnvironmentVariables"/>
     <SyncStatusContributor implementation="com.google.idea.blaze.java.syncstatus.JavaSyncStatusContributor"/>
@@ -115,7 +117,8 @@
     <useScopeEnlarger implementation="com.google.idea.blaze.java.psi.DaggerUseScopeEnlarger"/>
     <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.DaggerImplicitUsageProvider"/>
     <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.GuiceImplicitUsageProvider"/>
-    <psi.clsCustomNavigationPolicy implementation="com.google.idea.blaze.java.libraries.BlazeSourceJarNavigationPolicy"/>
+    <useScopeEnlarger implementation="com.google.idea.blaze.java.psi.ForAutoConverterUseScopeEnlarger"/>
+    <implicitUsageProvider implementation="com.google.idea.blaze.java.psi.ForAutoConverterImplicitUsageProvider"/>
     <!-- Need to come first to prevent overriding other position managers. -->
     <debugger.positionManagerFactory implementation="com.google.idea.blaze.java.run.ExternalFilePositionManager$Factory" order="first"/>
     <projectService serviceInterface="com.google.idea.blaze.java.fastbuild.FastBuildCompilerFactory"
@@ -134,6 +137,8 @@
         overrides="true"/>
     <postStartupActivity implementation="com.google.idea.blaze.java.run.producers.NonBlazeProducerSuppressor"/>
     <actionConfigurationCustomizer implementation="com.google.idea.blaze.java.run.hotswap.BlazeHotSwapAction$Customizer"/>
+    <notificationGroup id="Fastbuild failed notification"
+        displayType="STICKY_BALLOON"/>
   </extensions>
 
   <project-components>
@@ -158,6 +163,8 @@
                     interface="com.google.idea.blaze.java.run.fastbuild.FastBuildTestEnvironmentCreator"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildAspectStrategy"
                     interface="com.google.idea.blaze.java.fastbuild.FastBuildAspectStrategy"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildDeployJarStrategy"
+                    interface="com.google.idea.blaze.java.fastbuild.FastBuildDeployJarStrategy"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildTestEnvironmentModifier"
                     interface="com.google.idea.blaze.java.run.fastbuild.FastBuildTestEnvironmentModifier"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildCompilationModification"
@@ -166,5 +173,7 @@
                     interface="com.google.idea.blaze.java.sync.model.AttachSourcesFilter"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.HotSwapCommandBuilder"
                     interface="com.google.idea.blaze.java.run.hotswap.HotSwapCommandBuilder"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.blazeJavaDebuggingSetupHandler"
+                    interface="com.google.idea.blaze.java.run.BlazeJavaDebuggingSetupHandler"/>
   </extensionPoints>
 </idea-plugin>

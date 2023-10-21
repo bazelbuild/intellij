@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.base.sync.actions;
 
+import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
+import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -29,6 +32,23 @@ public class FullSyncProjectAction extends BlazeProjectSyncAction {
 
   @Override
   protected void runSync(Project project, AnActionEvent e) {
-    BlazeSyncManager.getInstance(project).fullProjectSync(/* reason= */ "FullSyncProjectAction");
+    if (QuerySync.isEnabled()) {
+      QuerySyncManager.getInstance(project).fullSync(new QuerySyncActionStatsScope(getClass(), e));
+    } else {
+      BlazeSyncManager.getInstance(project).fullProjectSync(/* reason= */ "FullSyncProjectAction");
+    }
+  }
+
+  @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.SUPPORTED;
+  }
+
+  @Override
+  protected void updateForBlazeProject(Project project, AnActionEvent e) {
+    super.updateForBlazeProject(project, e);
+    if (QuerySync.isEnabled()) {
+      e.getPresentation().setVisible(false);
+    }
   }
 }

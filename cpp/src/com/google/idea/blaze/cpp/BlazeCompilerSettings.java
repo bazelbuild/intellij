@@ -16,11 +16,14 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
+import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
+import com.jetbrains.cidr.lang.workspace.compiler.UnknownCompilerKind;
 import java.io.File;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -32,6 +35,7 @@ final class BlazeCompilerSettings {
   private final ImmutableList<String> cCompilerSwitches;
   private final ImmutableList<String> cppCompilerSwitches;
   private final String compilerVersion;
+  private final ImmutableMap<String, String> compilerEnvironment;
 
   BlazeCompilerSettings(
       Project project,
@@ -39,19 +43,21 @@ final class BlazeCompilerSettings {
       @Nullable File cppCompiler,
       ImmutableList<String> cFlags,
       ImmutableList<String> cppFlags,
-      String compilerVersion) {
+      String compilerVersion,
+      ImmutableMap<String, String> compilerEnvironment) {
     this.cCompiler = cCompiler;
     this.cppCompiler = cppCompiler;
     this.cCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cFlags));
     this.cppCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cppFlags));
     this.compilerVersion = compilerVersion;
+    this.compilerEnvironment = compilerEnvironment;
   }
 
   OCCompilerKind getCompiler(OCLanguageKind languageKind) {
     if (languageKind == CLanguageKind.C || languageKind == CLanguageKind.CPP) {
-      return OCCompilerKind.CLANG;
+      return ClangCompilerKind.INSTANCE;
     }
-    return OCCompilerKind.UNKNOWN;
+    return UnknownCompilerKind.INSTANCE;
   }
 
   File getCompilerExecutable(OCLanguageKind lang) {
@@ -80,5 +86,9 @@ final class BlazeCompilerSettings {
 
   String getCompilerVersion() {
     return compilerVersion;
+  }
+
+  String getCompilerEnvironment(String variable) {
+    return compilerEnvironment.get(variable);
   }
 }

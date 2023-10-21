@@ -29,7 +29,7 @@ class JavaSyncStatusContributor implements SyncStatusContributor {
 
   @Nullable
   @Override
-  public PsiFileAndName toPsiFileAndName(BlazeProjectData projectData, ProjectViewNode<?> node) {
+  public PsiFileAndName toPsiFileAndName(ProjectViewNode<?> node) {
     if (!(node instanceof ClassTreeNode)) {
       return null;
     }
@@ -39,6 +39,12 @@ class JavaSyncStatusContributor implements SyncStatusContributor {
     }
     PsiFile file = psiClass.getContainingFile();
     return file != null ? new PsiFileAndName(file, psiClass.getName()) : null;
+  }
+
+  @Nullable
+  @Override
+  public PsiFileAndName toPsiFileAndName(BlazeProjectData projectData, ProjectViewNode<?> node) {
+    return toPsiFileAndName(node);
   }
 
   @Override

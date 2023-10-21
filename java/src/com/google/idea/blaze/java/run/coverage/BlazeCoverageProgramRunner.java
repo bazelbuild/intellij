@@ -24,14 +24,12 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.logging.EventLoggingService;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.coverage.CoverageUtils;
-import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedFunction;
@@ -86,8 +84,7 @@ public class BlazeCoverageProgramRunner extends DefaultProgramRunner {
   }
 
   @Nullable
-  private static ListenableFuture<BlazeInfo> getBlazeInfo(
-      Project project, BlazeCommandRunConfiguration config) {
+  private static ListenableFuture<BlazeInfo> getBlazeInfo(Project project) {
     ProjectViewSet viewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
     if (viewSet == null) {
       return null;
@@ -107,27 +104,20 @@ public class BlazeCoverageProgramRunner extends DefaultProgramRunner {
             context ->
                 BlazeInfoRunner.getInstance()
                     .runBlazeInfo(
+                        project,
+                        Blaze.getBuildSystemProvider(project)
+                            .getBuildSystem()
+                            .getDefaultInvoker(project, context),
                         context,
                         buildSystemName,
-                        getBlazeBinary(config),
-                        WorkspaceRoot.fromProject(project),
                         infoFlags));
   }
-
-  private static String getBlazeBinary(BlazeCommandRunConfiguration config) {
-    BlazeCommandRunConfigurationCommonState state =
-        (BlazeCommandRunConfigurationCommonState) config.getHandler().getState();
-    return state.getBlazeBinaryState().getBlazeBinary() != null
-        ? state.getBlazeBinaryState().getBlazeBinary()
-        : Blaze.getBuildSystemProvider(config.getProject()).getBinaryPath(config.getProject());
-  }
-
   @Nullable
   @Override
   protected RunContentDescriptor doExecute(RunProfileState profile, ExecutionEnvironment env)
       throws ExecutionException {
     BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) env.getRunProfile();
-    ListenableFuture<BlazeInfo> blazeInfo = getBlazeInfo(env.getProject(), blazeConfig);
+    ListenableFuture<BlazeInfo> blazeInfo = getBlazeInfo(env.getProject());
     if (blazeInfo == null) {
       throw new ExecutionException(
           "Can't run with coverage: no sync data found. Please sync your project and retry.");

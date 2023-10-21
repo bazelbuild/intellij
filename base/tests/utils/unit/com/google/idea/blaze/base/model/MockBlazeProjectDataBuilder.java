@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.model;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -58,44 +59,52 @@ public class MockBlazeProjectDataBuilder {
     return new MockBlazeProjectDataBuilder(workspaceRoot);
   }
 
+  @CanIgnoreReturnValue
   public MockBlazeProjectDataBuilder setTargetMap(TargetMap targetMap) {
     this.targetMap = targetMap;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public MockBlazeProjectDataBuilder setOutputBase(String outputBase) {
     this.outputBase = outputBase;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public MockBlazeProjectDataBuilder setBlazeInfo(BlazeInfo blazeInfo) {
     this.blazeInfo = blazeInfo;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public MockBlazeProjectDataBuilder setBlazeVersionData(BlazeVersionData blazeVersionData) {
     this.blazeVersionData = blazeVersionData;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public MockBlazeProjectDataBuilder setWorkspacePathResolver(
       WorkspacePathResolver workspacePathResolver) {
     this.workspacePathResolver = workspacePathResolver;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public MockBlazeProjectDataBuilder setArtifactLocationDecoder(
       ArtifactLocationDecoder artifactLocationDecoder) {
     this.artifactLocationDecoder = artifactLocationDecoder;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public MockBlazeProjectDataBuilder setWorkspaceLanguageSettings(
       WorkspaceLanguageSettings workspaceLanguageSettings) {
     this.workspaceLanguageSettings = workspaceLanguageSettings;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public MockBlazeProjectDataBuilder setSyncState(SyncState syncState) {
     this.syncState = syncState;
     return this;
@@ -133,7 +142,7 @@ public class MockBlazeProjectDataBuilder {
     SyncState syncState =
         this.syncState != null ? this.syncState : new SyncState(ImmutableMap.of());
 
-    return new BlazeProjectData(
+    return new AspectSyncProjectData(
         new ProjectTargetData(
             targetMap, /* ideInterfaceState= */ null, RemoteOutputArtifacts.EMPTY),
         blazeInfo,

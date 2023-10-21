@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
+import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
@@ -27,7 +28,6 @@ import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.intellij.util.io.URLUtil;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -41,20 +41,26 @@ import javax.annotation.Nullable;
 public final class BuildEventProtocolOutputReader {
 
   private BuildEventProtocolOutputReader() {}
-
+  /** Returns all test results from a BEP-formatted {@link InputStream}. */
+  public static BlazeTestResults parseTestResults(InputStream inputStream)
+      throws BuildEventStreamException {
+    return parseTestResults(BuildEventStreamProvider.fromInputStream(inputStream));
+  }
   /**
-   * Returns all test results from a BEP-formatted {@link InputStream}.
+   * Returns all test results from {@link BuildEventStreamProvider}.
    *
-   * @throws IOException if the BEP {@link InputStream} is incorrectly formatted
+   * @throws BuildEventStreamException if the BEP {@link BuildEventStreamProvider} is incorrectly
+   *     formatted
    */
-  public static BlazeTestResults parseTestResults(InputStream inputStream) throws IOException {
+  public static BlazeTestResults parseTestResults(BuildEventStreamProvider streamProvider)
+      throws BuildEventStreamException {
     Map<String, String> configIdToMnemonic = new HashMap<>();
     Map<String, Kind> labelToKind = new HashMap<>();
     Map<String, String> labelToMnemonic = new HashMap<>();
     long startTimeMillis = 0L;
     ImmutableList.Builder<BlazeTestResult> results = ImmutableList.builder();
     BuildEventStreamProtos.BuildEvent event;
-    while ((event = BuildEventStreamProtos.BuildEvent.parseDelimitedFrom(inputStream)) != null) {
+    while ((event = streamProvider.getNext()) != null) {
       switch (event.getId().getIdCase()) {
         case STARTED:
           startTimeMillis = event.getStarted().getStartTimeMillis();
@@ -143,10 +149,11 @@ public final class BuildEventProtocolOutputReader {
     return output == null || !fileFilter.test(output.getRelativePath()) ? null : output;
   }
 
+  @Nullable
   private static SourceArtifact parseLocalFile(
       BuildEventStreamProtos.File file, Predicate<String> fileFilter) {
     String uri = file.getUri();
-    if (uri == null || !uri.startsWith(URLUtil.FILE_PROTOCOL)) {
+    if (!uri.startsWith(URLUtil.FILE_PROTOCOL)) {
       return null;
     }
     try {

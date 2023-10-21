@@ -58,7 +58,6 @@ import org.jetbrains.kotlin.android.synthetic.AndroidCommandLineProcessor;
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
 import org.jetbrains.kotlin.config.CompilerSettings;
-import org.jetbrains.kotlin.config.KotlinFacetSettings;
 import org.jetbrains.kotlin.config.LanguageVersion;
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
@@ -75,6 +74,9 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
   private static final LanguageVersion DEFAULT_VERSION = LanguageVersion.KOTLIN_1_2;
   private static final BoolExperiment setCompilerFlagsExperiment =
       new BoolExperiment("blaze.kotlin.sync.set.compiler.flags", true);
+  // Creates K2JVMCompilerArguments for the .workspace module
+  private static final BoolExperiment createK2JVMCompilerArgumentsWorkspaceModuleExperiment =
+      new BoolExperiment("blaze.kotlin.sync.create.k2jvmcompilerarguments.workspace.module", true);
 
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
@@ -243,12 +245,19 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
    * @param newPluginOptions new plugin options to be updated to KotlinFacet settings
    */
   private static void updatePluginOptions(KotlinFacet kotlinFacet, List<String> newPluginOptions) {
-    KotlinFacetSettings facetSettings = kotlinFacet.getConfiguration().getSettings();
+    var facetSettings = kotlinFacet.getConfiguration().getSettings();
     // TODO: Unify this part with {@link
     // org.jetbrains.kotlin.android.sync.ng.KotlinSyncModels#setupKotlinAndroidExtensionAsFacetPluginOptions}?
     CommonCompilerArguments commonArguments = facetSettings.getCompilerArguments();
     if (commonArguments == null) {
-      commonArguments = new CommonCompilerArguments.DummyImpl();
+      // Need to initialize to K2JVMCompilerArguments instance to allow Live-Edit to extract the
+      // module name. Using K2JVMCompilerArguments.DummyImpl() does not work as it still return
+      // CommonCompilerArguments.
+      if (createK2JVMCompilerArgumentsWorkspaceModuleExperiment.getValue()) {
+        commonArguments = new K2JVMCompilerArguments();
+      } else {
+        commonArguments = new CommonCompilerArguments.DummyImpl();
+      }
     }
 
     String[] oldPluginOptions = commonArguments.getPluginOptions();
@@ -265,20 +274,26 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
 
   private static void setJavaLanguageLevel(KotlinFacet kotlinFacet, LanguageLevel languageLevel) {
     Project project = kotlinFacet.getModule().getProject();
-    K2JVMCompilerArguments k2JVMCompilerArguments =
-        (K2JVMCompilerArguments)
-            KotlinCompat.unfreezeSettings(
-                Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project).getSettings());
-    String javaVersion = languageLevel.toJavaVersion().toString();
-    k2JVMCompilerArguments.setJvmTarget(javaVersion);
-    Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project)
-        .setSettings(k2JVMCompilerArguments);
+    setProjectJvmTarget(project, languageLevel);
 
     CommonCompilerArguments commonArguments =
         kotlinFacet.getConfiguration().getSettings().getCompilerArguments();
     if (commonArguments instanceof K2JVMCompilerArguments) {
+      String javaVersion = languageLevel.toJavaVersion().toString();
       ((K2JVMCompilerArguments) commonArguments).setJvmTarget(javaVersion);
     }
+  }
+
+  private static void setProjectJvmTarget(Project project, LanguageLevel javaLanguageLevel) {
+    K2JVMCompilerArguments k2JVMCompilerArguments =
+        (K2JVMCompilerArguments)
+            KotlinCompat.unfreezeSettings(
+                Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project).getSettings());
+
+    String javaVersion = javaLanguageLevel.toJavaVersion().toString();
+    k2JVMCompilerArguments.setJvmTarget(javaVersion);
+    Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project)
+        .setSettings(k2JVMCompilerArguments);
   }
 
   static class Listener implements SyncListener {

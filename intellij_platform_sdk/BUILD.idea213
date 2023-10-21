@@ -58,6 +58,11 @@ java_import(
 )
 
 java_import(
+    name = "intellilang",
+    jars = [],
+)
+
+java_import(
     name = "kotlin",
     jars = glob(["plugins/Kotlin/lib/*.jar"]),
 )
@@ -81,6 +86,16 @@ java_import(
     jars = [
         "plugins/indexing-shared/lib/indexing-shared.jar",
     ],
+)
+
+java_import(
+    name = "git4idea",
+    jars = glob(["plugins/git4idea/lib/*.jar"]),
+)
+
+java_import(
+    name = "cwm",
+    jars = glob(["plugins/cwm-plugin/lib/*.jar"]),
 )
 
 # The plugins required by IJwB. We need to include them

@@ -7,6 +7,7 @@ load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
     "intellij_plugin_library",
+    "optional_plugin_xml",
     "plugin_deploy_zip",
     "repackaged_files",
     "stamped_plugin_xml",
@@ -25,13 +26,20 @@ load(
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 intellij_plugin_library(
     name = "plugin_library",
     plugin_xmls = ["src/META-INF/clwb.xml"],
+    optional_plugin_xmls = ["optional_clwb_oclang"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":clwb_lib"],
+)
+
+optional_plugin_xml(
+    name = "optional_clwb_oclang",
+    module = "com.intellij.modules.cidr.lang",
+    plugin_xml = "src/META-INF/clwb-oclang.xml",
 )
 
 stamped_plugin_xml(
@@ -39,7 +47,7 @@ stamped_plugin_xml(
     changelog_file = "//:changelog",
     description_file = "src/META-INF/description.html",
     plugin_id = "com.google.idea.bazel.clwb",
-    plugin_name = "Bazel",
+    plugin_name = "Bazel for CLion",
     # #api212: We depend on an API which is only contained in 2021.2.1+.
     since_build_numbers = {"212": "212.5080.55"},
     stamp_since_build = True,
@@ -64,6 +72,9 @@ java_library(
 intellij_plugin(
     name = "clwb_bazel",
     plugin_xml = ":stamped_plugin_xml",
+    tags = [
+        "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
+    ],
     deps = [
         ":plugin_library",
         "//base:plugin_library",

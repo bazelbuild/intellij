@@ -23,6 +23,7 @@ import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.DeviceFutures;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -167,8 +168,8 @@ public class MobileInstallBuildStep implements ApkBuildStep {
     }
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    final String deployInfoSuffix = getDeployInfoSuffix(Blaze.getBuildSystemName(project));
-
+    BuildSystemName buildSystemName = Blaze.getBuildSystemName(project);
+    String deployInfoSuffix = getDeployInfoSuffix(buildSystemName);
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper();
         AdbTunnelConfigurator tunnelConfig = getTunnelConfigurator(context)) {
       tunnelConfig.setupConnection(context);
@@ -185,7 +186,8 @@ public class MobileInstallBuildStep implements ApkBuildStep {
                         + " to the default adb server.")
                 .submit(context);
           } else {
-            deviceFlag += ":tcp:" + adbAddr.getPort();
+            command.addBlazeFlags(
+                BlazeFlags.ADB_ARG + "-P ", BlazeFlags.ADB_ARG + adbAddr.getPort());
           }
         }
         command.addBlazeFlags(BlazeFlags.DEVICE, deviceFlag);
@@ -195,9 +197,12 @@ public class MobileInstallBuildStep implements ApkBuildStep {
           .addTargets(label)
           .addBlazeFlags(blazeFlags)
           .addBlazeFlags(buildResultHelper.getBuildFlags())
-          .addExeFlags(exeFlags)
-          // MI launches apps by default. Defer app launch to BlazeAndroidLaunchTasksProvider.
-          .addExeFlags("--nolaunch_app");
+          .addExeFlags(exeFlags);
+
+      if (buildSystemName == BuildSystemName.Blaze) {
+        // MI launches apps by default. Defer app launch to BlazeAndroidLaunchTasksProvider.
+        command.addExeFlags("--nolaunch_app");
+      }
 
       if (StudioDeployerExperiment.isEnabled()) {
         command.addExeFlags("--nodeploy");
@@ -217,7 +222,8 @@ public class MobileInstallBuildStep implements ApkBuildStep {
 
       Stopwatch s = Stopwatch.createStarted();
       int exitCode = task.run();
-      logBuildTime(launchId, StudioDeployerExperiment.isEnabled(), s.elapsed(), exitCode);
+      logBuildTime(
+          launchId, StudioDeployerExperiment.isEnabled(), s.elapsed(), exitCode, ImmutableMap.of());
 
       if (exitCode != 0) {
         IssueOutput.error("Blaze build failed. See Blaze Console for details.").submit(context);
@@ -229,8 +235,7 @@ public class MobileInstallBuildStep implements ApkBuildStep {
               project, context, BlazeBuildOutputs.noOutputs(BuildResult.fromExitCode(exitCode)));
 
       context.output(new StatusOutput("Reading deployment information..."));
-      String executionRoot =
-          ExecRootUtil.getExecutionRoot(buildResultHelper, project, blazeFlags, context);
+      String executionRoot = ExecRootUtil.getExecutionRoot(invoker, context);
       if (executionRoot == null) {
         IssueOutput.error("Could not locate execroot!").submit(context);
         return;
@@ -256,6 +261,11 @@ public class MobileInstallBuildStep implements ApkBuildStep {
       IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())
           .submit(context);
     }
+  }
+
+  @Override
+  public boolean needsIdeDeploy() {
+    return StudioDeployerExperiment.isEnabled();
   }
 
   @Override

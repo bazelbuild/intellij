@@ -1,6 +1,8 @@
 # Description:
 #
 # Scripts for building IntelliJ plugins
+
+load("@rules_python//python:defs.bzl", "py_binary")
 load(
     "//:build-visibility.bzl",
     "INTELLIJ_PLUGINS_VISIBILITY",
@@ -8,7 +10,7 @@ load(
 
 package(default_visibility = INTELLIJ_PLUGINS_VISIBILITY)
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 py_binary(
     name = "merge_xml",

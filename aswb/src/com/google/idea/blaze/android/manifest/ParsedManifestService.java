@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,20 +40,22 @@ public class ParsedManifestService {
       Maps.newHashMap();
 
   public static ParsedManifestService getInstance(Project project) {
-    return ServiceManager.getService(project, ParsedManifestService.class);
+    return project.getService(ParsedManifestService.class);
   }
 
   /**
    * Returns parsed manifest from the given manifest file. Returns null if the manifest is invalid.
    *
    * <p>An invalid manifest is anything that could not be parsed by the parser, such as a malformed
-   * manifest file.
+   * manifest file. This method must be thread safe as it's invoked from concurrent background
+   * threads.
    *
    * @throws IOException only when an IO error occurs. Errors related to malformed manifests are
    *     indicated by returning null.
    */
   @Nullable
-  public ManifestParser.ParsedManifest getParsedManifest(File file) throws IOException {
+  public synchronized ManifestParser.ParsedManifest getParsedManifest(File file)
+      throws IOException {
     if (!manifestFileToParsedManifests.containsKey(file)) {
       try (InputStream inputStream = new FileInputStream(file)) {
         ManifestParser.ParsedManifest parsedManifest = parseManifestFromInputStream(inputStream);

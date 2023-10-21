@@ -15,9 +15,9 @@
  */
 package com.google.idea.blaze.base.ui;
 
-import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.TextComponentAccessors;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TextFieldWithStoredHistory;
 import javax.annotation.Nullable;
@@ -39,7 +39,7 @@ public class FileSelectorWithStoredHistory
         "",
         null,
         BrowseFilesListener.SINGLE_FILE_DESCRIPTOR,
-        BaseSdkCompat.TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT);
+        TextComponentAccessors.TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT);
   }
 
   /** Set the text without altering the history. */

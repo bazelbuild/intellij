@@ -41,7 +41,6 @@ import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.WithBrowserHyperlinkExecutionException;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationRunner.BlazeCommandRunProfileState;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
-import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -68,7 +67,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
@@ -227,7 +225,6 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
 
   private static ImmutableList<Filter> getFilters() {
     return ImmutableList.<Filter>builder()
-        .add(new BlazeTargetFilter(true))
         .add(new UrlFilter())
         .build();
   }
@@ -388,13 +385,10 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
   @VisibleForTesting
   @Nullable
   static File findExecutable(Label target, List<File> outputs) {
-    if (outputs.size() == 1) {
-      return outputs.get(0);
-    }
-    String name = PathUtil.getFileName(target.targetName().toString());
-    for (File file : outputs) {
-      if (file.getName().equals(name)) {
-        return file;
+    for (BlazePyExecutableOutputFinder outputFinder : BlazePyExecutableOutputFinder.EP_NAME.getExtensionList()) {
+      File executable = outputFinder.findExecutableOutput(target, outputs);
+      if (executable != null && outputs.contains(executable)) {
+        return executable;
       }
     }
     return null;

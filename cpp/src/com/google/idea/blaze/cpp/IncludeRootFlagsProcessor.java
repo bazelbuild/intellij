@@ -47,7 +47,9 @@ public class IncludeRootFlagsProcessor implements BlazeCompilerFlagsProcessor {
               Blaze.getBuildSystemProvider(project),
               workspaceRoot,
               projectData.getBlazeInfo().getExecutionRoot(),
-              projectData.getWorkspacePathResolver());
+              projectData.getBlazeInfo().getOutputBase(),
+              projectData.getWorkspacePathResolver(),
+              projectData.getTargetMap());
       return Optional.of(new IncludeRootFlagsProcessor(executionRootPathResolver));
     }
   }

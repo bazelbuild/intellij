@@ -22,7 +22,9 @@ import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.SyncCache;
@@ -117,7 +119,8 @@ public abstract class BlazeIntegrationTestCase {
                 "test-project",
                 projectDataDirectory.getPath(),
                 workspaceRoot.fileForPath(new WorkspacePath("project-view-file")).getPath(),
-                buildSystem()));
+                buildSystem(),
+                ProjectType.ASPECT_SYNC));
 
     registerApplicationService(
         InputStreamProvider.class,
@@ -139,6 +142,8 @@ public abstract class BlazeIntegrationTestCase {
             throw new RuntimeException("Can't handle output artifact type: " + output.getClass());
           }
         });
+
+    registerApplicationService(QuerySyncSettings.class, new QuerySyncSettings());
 
     if (isLightTestCase()) {
       registerApplicationService(
@@ -193,8 +198,8 @@ public abstract class BlazeIntegrationTestCase {
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
 
     if (isLightTestCase()) {
-      TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
-          factory.createLightFixtureBuilder(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+      TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = 
+          factory.createLightFixtureBuilder(LightJavaCodeInsightFixtureTestCase.JAVA_8, "test-project");
       IdeaProjectTestFixture lightFixture = fixtureBuilder.getFixture();
       return factory.createCodeInsightFixture(lightFixture, new LightTempDirTestFixtureImpl(true));
     }
@@ -251,5 +256,9 @@ public abstract class BlazeIntegrationTestCase {
 
   protected <T> void registerExtension(ExtensionPointName<T> name, T instance) {
     ServiceHelper.registerExtension(name, instance, getTestRootDisposable());
+  }
+
+  protected <T> void registerExtensionFirst(ExtensionPointName<T> name, T instance) {
+    ServiceHelper.registerExtensionFirst(name, instance, getTestRootDisposable());
   }
 }

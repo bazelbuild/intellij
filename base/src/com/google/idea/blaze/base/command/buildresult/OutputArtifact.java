@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Bazel Authors. All rights reserved.
+ * Copyright 2023 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,13 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
-import com.google.idea.blaze.base.filecache.ArtifactState;
-import javax.annotation.Nullable;
-
-/** A blaze output artifact, generated during some build action. */
-public interface OutputArtifact extends BlazeArtifact {
-
-  /** The path component related to the build configuration. */
-  String getConfigurationMnemonic();
-
-  /** The blaze-out-relative path. */
-  String getRelativePath();
-
+/** A variant of {@link OutputArtifactWithoutDigest} that includes the digest of its content. */
+public interface OutputArtifact extends OutputArtifactWithoutDigest {
   /**
-   * A key uniquely identifying an artifact between builds. Different versions of an artifact
-   * produced from different blaze builds will have the same key.
+   * The digest of the artifact file.
    *
-   * <p>TODO(brendandouglas): remove this in favor of ArtifactState#getKey
+   * <p>The digest of the artifact file; using the build tool's configured digest algorithm. It
+   * represents the content of the file and can be used to detect whether the content has changed.
    */
-  default String getKey() {
-    return getRelativePath();
-  }
-
-  /**
-   * Returns the {@link ArtifactState} for this output, used for serialization/diffing purposes. Can
-   * require file system operations.
-   */
-  @Nullable
-  ArtifactState toArtifactState();
+  String getDigest();
 }

@@ -68,30 +68,30 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-oss-stable",
+    name = "intellij-oss-oldest-stable",
     values = {
-        "define": "ij_product=intellij-oss-stable",
+        "define": "ij_product=intellij-oss-oldest-stable",
     },
 )
 
 config_setting(
-    name = "intellij-ue-oss-stable",
+    name = "intellij-ue-oss-oldest-stable",
     values = {
-        "define": "ij_product=intellij-ue-oss-stable",
+        "define": "ij_product=intellij-ue-oss-oldest-stable",
     },
 )
 
 config_setting(
-    name = "intellij-oss-beta",
+    name = "intellij-oss-latest-stable",
     values = {
-        "define": "ij_product=intellij-oss-beta",
+        "define": "ij_product=intellij-oss-latest-stable",
     },
 )
 
 config_setting(
-    name = "intellij-ue-oss-beta",
+    name = "intellij-ue-oss-latest-stable",
     values = {
-        "define": "ij_product=intellij-ue-oss-beta",
+        "define": "ij_product=intellij-ue-oss-latest-stable",
     },
 )
 
@@ -120,21 +120,6 @@ config_setting(
     name = "intellij-ue-under-dev",
     values = {
         "define": "ij_product=intellij-ue-under-dev",
-    },
-)
-
-config_setting(
-    name = "intellij-2021.2",
-    values = {
-        "define": "ij_product=intellij-2021.2",
-    },
-)
-
-config_setting(
-    name = "intellij-2021.2-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=intellij-2021.2",
     },
 )
 
@@ -184,17 +169,62 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-ue-2021.2",
+    name = "intellij-2022.3",
     values = {
-        "define": "ij_product=intellij-ue-2021.2",
+        "define": "ij_product=intellij-2022.3",
     },
 )
 
 config_setting(
-    name = "intellij-ue-2021.2-mac",
+    name = "intellij-2022.3-mac",
     values = {
         "cpu": "darwin_x86_64",
-        "define": "ij_product=intellij-ue-2021.2",
+        "define": "ij_product=intellij-2022.3",
+    },
+)
+
+config_setting(
+    name = "intellij-2023.1",
+    values = {
+        "define": "ij_product=intellij-2023.1",
+    },
+)
+
+config_setting(
+    name = "intellij-2023.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-2023.1",
+    },
+)
+
+config_setting(
+    name = "intellij-2023.2",
+    values = {
+        "define": "ij_product=intellij-2023.2",
+    },
+)
+
+config_setting(
+    name = "intellij-2023.2-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-2023.2",
+    },
+)
+
+config_setting(
+    name = "intellij-2023.3",
+    values = {
+        "define": "ij_product=intellij-2023.3",
+    },
+)
+
+config_setting(
+    name = "intellij-2023.3-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-2023.3",
     },
 )
 
@@ -244,6 +274,66 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-ue-2022.3",
+    values = {
+        "define": "ij_product=intellij-ue-2022.3",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2022.3-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-ue-2022.3",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2023.1",
+    values = {
+        "define": "ij_product=intellij-ue-2023.1",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2023.2-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-ue-2023.2",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2023.2",
+    values = {
+        "define": "ij_product=intellij-ue-2023.2",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2023.3-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-ue-2023.3",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2023.3",
+    values = {
+        "define": "ij_product=intellij-ue-2023.3",
+    },
+)
+
+
+config_setting(
+    name = "intellij-ue-2023.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-ue-2023.1",
+    },
+)
+config_setting(
     name = "android-studio-latest",
     values = {
         "define": "ij_product=android-studio-latest",
@@ -281,16 +371,39 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-oss-stable",
+    name = "android-studio-canary-mac",
     values = {
-        "define": "ij_product=android-studio-oss-stable",
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=android-studio-canary",
     },
 )
 
 config_setting(
-    name = "android-studio-oss-beta",
+    name = "android-studio-dev",
     values = {
-        "define": "ij_product=android-studio-oss-beta",
+        "define": "ij_product=android-studio-dev",
+    },
+)
+
+config_setting(
+    name = "android-studio-dev-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=android-studio-dev",
+    },
+)
+
+config_setting(
+    name = "android-studio-oss-oldest-stable",
+    values = {
+        "define": "ij_product=android-studio-oss-oldest-stable",
+    },
+)
+
+config_setting(
+    name = "android-studio-oss-latest-stable",
+    values = {
+        "define": "ij_product=android-studio-oss-latest-stable",
     },
 )
 
@@ -302,32 +415,62 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-2021.2",
+    name = "android-studio-2022.2",
     values = {
-        "define": "ij_product=android-studio-2021.2",
+        "define": "ij_product=android-studio-2022.2",
     },
 )
 
 config_setting(
-    name = "android-studio-2021.2-mac",
+    name = "android-studio-2022.2-mac",
     values = {
         "cpu": "darwin_x86_64",
-        "define": "ij_product=android-studio-2021.2",
+        "define": "ij_product=android-studio-2022.2",
     },
 )
 
 config_setting(
-    name = "android-studio-2021.3",
+    name = "android-studio-2022.3",
     values = {
-        "define": "ij_product=android-studio-2021.3",
+        "define": "ij_product=android-studio-2022.3",
     },
 )
 
 config_setting(
-    name = "android-studio-2021.3-mac",
+    name = "android-studio-2022.3-mac",
     values = {
         "cpu": "darwin_x86_64",
-        "define": "ij_product=android-studio-2021.3",
+        "define": "ij_product=android-studio-2022.3",
+    },
+)
+
+config_setting(
+    name = "android-studio-2023.1",
+    values = {
+        "define": "ij_product=android-studio-2023.1",
+    },
+)
+
+config_setting(
+    name = "android-studio-2023.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=android-studio-2023.1",
+    },
+)
+
+config_setting(
+    name = "android-studio-2023.2",
+    values = {
+        "define": "ij_product=android-studio-2023.2",
+    },
+)
+
+config_setting(
+    name = "android-studio-2023.2-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=android-studio-2023.2",
     },
 )
 
@@ -339,16 +482,16 @@ config_setting(
 )
 
 config_setting(
-    name = "clion-oss-stable",
+    name = "clion-oss-oldest-stable",
     values = {
-        "define": "ij_product=clion-oss-stable",
+        "define": "ij_product=clion-oss-oldest-stable",
     },
 )
 
 config_setting(
-    name = "clion-oss-beta",
+    name = "clion-oss-latest-stable",
     values = {
-        "define": "ij_product=clion-oss-beta",
+        "define": "ij_product=clion-oss-latest-stable",
     },
 )
 
@@ -378,21 +521,6 @@ config_setting(
     name = "clion-under-dev",
     values = {
         "define": "ij_product=clion-under-dev",
-    },
-)
-
-config_setting(
-    name = "clion-2021.2",
-    values = {
-        "define": "ij_product=clion-2021.2",
-    },
-)
-
-config_setting(
-    name = "clion-2021.2-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=clion-2021.2",
     },
 )
 
@@ -441,6 +569,109 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "clion-2022.3",
+    values = {
+        "define": "ij_product=clion-2022.3",
+    },
+)
+
+config_setting(
+    name = "clion-2022.3-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=clion-2022.3",
+    },
+)
+
+config_setting(
+    name = "clion-2023.1",
+    values = {
+        "define": "ij_product=clion-2023.1",
+    },
+)
+
+config_setting(
+    name = "clion-2023.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=clion-2023.1",
+    },
+)
+
+config_setting(
+    name = "clion-2023.2",
+    values = {
+        "define": "ij_product=clion-2023.2",
+    },
+)
+
+config_setting(
+    name = "clion-2023.2-mac",
+    values = {
+        "cpu": "darwin_x86_64", #todo how about m1?
+        "define": "ij_product=clion-2023.2",
+    },
+)
+
+config_setting(
+    name = "clion-2023.3",
+    values = {
+        "define": "ij_product=clion-2023.3",
+    },
+)
+
+config_setting(
+    name = "clion-2023.3-mac",
+    values = {
+        "cpu": "darwin_x86_64", #todo how about m1?
+        "define": "ij_product=clion-2023.3",
+    },
+)
+
+
+config_setting(
+    name = "intellij-cc-oldest-stable",
+    values = {
+        "define": "ij_product=intellij-cc-oldest-stable",
+    },
+)
+
+config_setting(
+    name = "intellij-cc-latest-stable",
+    values = {
+        "define": "ij_product=intellij-cc-latest-stable",
+    },
+)
+
+config_setting(
+    name = "intellij-cc-under-dev",
+    values = {
+        "define": "ij_product=intellij-cc-under-dev",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-cc-oldest-stable",
+    values = {
+        "define": "ij_product=intellij-ue-cc-oldest-stable",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-cc-latest-stable",
+    values = {
+        "define": "ij_product=intellij-ue-cc-latest-stable",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-cc-under-dev",
+    values = {
+        "define": "ij_product=intellij-ue-cc-under-dev",
+    },
+)
+
 # The purpose of this rule is to hide the versioning
 # complexity from users of this api.
 # There will be additional versions added in the future
@@ -484,6 +715,7 @@ java_library(
     data = select_from_plugin_api_directory(
         android_studio = [
             ":layoutlib_data",
+            ":kotlinc_version",
         ],
         clion = [],
         # From 2022.1 forward, the version of kotlinc will be obtained
@@ -506,6 +738,7 @@ java_library(
         "@bytebuddy-agent//jar",
         "@bytebuddy//jar",
         "@mockito//jar",
+        "@objenesis//jar"
     ],
 )
 
@@ -535,20 +768,29 @@ java_library(
 java_library(
     name = "jsr305",
     exports = select_for_plugin_api({
-        "clion-2021.2": [":bundled_jsr305"],
         "clion-2021.3": [":bundled_jsr305"],
         "clion-2022.1": ["@jsr305_annotations//jar"],
         "clion-2022.2": ["@jsr305_annotations//jar"],
-        "intellij-2021.2": ["@jsr305_annotations//jar"],
+        "clion-2022.3": ["@jsr305_annotations//jar"],
         "intellij-2021.3": ["@jsr305_annotations//jar"],
         "intellij-2022.1": ["@jsr305_annotations//jar"],
         "intellij-2022.2": ["@jsr305_annotations//jar"],
-        "intellij-ue-2021.2": ["@jsr305_annotations//jar"],
+        "intellij-2022.3": ["@jsr305_annotations//jar"],
+        "intellij-2023.1": ["@jsr305_annotations//jar"],
+        "intellij-2023.2": ["@jsr305_annotations//jar"],
+        "intellij-2023.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2021.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.2": ["@jsr305_annotations//jar"],
-        "android-studio-2021.2": ["@jsr305_annotations//jar"],
-        "android-studio-2021.3": ["@jsr305_annotations//jar"],
+        "intellij-ue-2022.3": ["@jsr305_annotations//jar"],
+        "intellij-ue-2023.1": ["@jsr305_annotations//jar"],
+        "intellij-ue-2023.2": ["@jsr305_annotations//jar"],
+        "intellij-ue-2023.3": ["@jsr305_annotations//jar"],
+        "android-studio-2022.2": ["@jsr305_annotations//jar"],
+        "android-studio-2022.3": ["@jsr305_annotations//jar"],
+        "android-studio-2023.1": ["@jsr305_annotations//jar"],
+        "android-studio-2023.2": ["@jsr305_annotations//jar"],
+        "android-studio-dev": ["@jsr305_annotations//jar"],
         # We default to intellij-latest when no plugin api is selected.
         "default": [":bundled_jsr305"],
     }),
@@ -600,7 +842,7 @@ java_library(
     name = "devkit",
     neverlink = 1,
     exports = select_from_plugin_api_directory(
-        android_studio = [],
+        android_studio = [":devkit"],
         clion = [],
         intellij = [":devkit"],
     ),
@@ -614,6 +856,17 @@ java_library(
         android_studio = [":hg4idea"],
         clion = [":hg4idea"],
         intellij = [":hg4idea"],
+    ),
+)
+
+# IntelliJ IntelliLang plugin
+java_library(
+    name = "intellilang_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":intellilang"],
     ),
 )
 
@@ -661,6 +914,16 @@ java_library(
     ),
 )
 
+java_library(
+    name = "terminal_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [":terminal"],
+        clion = [":terminal"],
+        intellij = [":terminal"],
+    ),
+)
+
 # Bundled plugins required by integration tests
 java_library(
     name = "bundled_plugins",
@@ -693,6 +956,199 @@ java_library(
         clion = [],
         intellij = [":shared_indexes"],
         intellij_ue = [":shared_indexes"],
+    ),
+)
+
+# IntelliJ Git4Idea plugin
+java_library(
+    name = "git4idea",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":git4idea"],
+    ),
+)
+
+java_library(
+    name = "git4idea_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":git4idea"],
+    ),
+)
+
+# JetBrains com.jetbrains.codeWithMe plugin
+java_library(
+    name = "cwm",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":cwm"],
+    ),
+)
+
+java_library(
+    name = "cwm_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":cwm"],
+    ),
+)
+
+# IntelliJ maven plugin
+java_library(
+    name = "maven",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":maven"],
+    ),
+)
+
+java_library(
+    name = "maven_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":maven_bundled_plugins"],
+    ),
+)
+
+# IntelliJ maven model plugin
+java_library(
+    name = "maven_model",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":maven_model"],
+    ),
+)
+
+java_library(
+    name = "maven_model_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":maven_model"],
+    ),
+)
+
+# IntelliJ yaml plugin
+java_library(
+    name = "yaml",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":yaml"],
+    ),
+)
+
+java_library(
+    name = "yaml_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":yaml"],
+    ),
+)
+
+# IntelliJ gradle plugin
+java_library(
+    name = "gradle",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":gradle"],
+    ),
+)
+
+java_library(
+    name = "gradle_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":gradle"],
+    ),
+)
+
+# IntelliJ DatabaseTools plugin
+java_library(
+    name = "database_tools",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [],
+        intellij_ue = [":database_tools"],
+    ),
+)
+
+java_library(
+    name = "database_tools_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [],
+        intellij_ue = [":database_tools"],
+    ),
+)
+
+# IntelliJ JavaEE plugin
+java_library(
+    name = "javaee",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [],
+        intellij_ue = [":javaee"],
+    ),
+)
+
+java_library(
+    name = "javaee_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [],
+        intellij_ue = [":javaee"],
+    ),
+)
+
+# IntelliJ Markdown plugin
+java_library(
+    name = "markdown",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":markdown"],
+    ),
+)
+
+java_library(
+    name = "markdown_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":markdown"],
     ),
 )
 

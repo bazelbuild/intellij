@@ -16,7 +16,11 @@
 package com.google.idea.blaze.base.model.primitives;
 
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
+import com.intellij.openapi.util.SystemInfo;
+
 import java.io.Serializable;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
@@ -48,12 +52,17 @@ public class WorkspacePath implements ProtoWrapper<String>, Serializable {
    * @throws IllegalArgumentException if the path is invalid
    */
   public WorkspacePath(String relativePath) {
-    String error = validate(relativePath);
+    String normalizedRelativePath = normalizePathSeparator(relativePath);
+    String error = validate(normalizedRelativePath);
     if (error != null) {
       throw new IllegalArgumentException(
           String.format("Invalid workspace path '%s': %s", relativePath, error));
     }
-    this.relativePath = relativePath;
+    this.relativePath = normalizedRelativePath;
+  }
+
+  private static String normalizePathSeparator(String relativePath) {
+    return SystemInfo.isWindows ? relativePath.replace('\\', BLAZE_COMPONENT_SEPARATOR) : relativePath;
   }
 
   public WorkspacePath(WorkspacePath parentPath, String childPath) {
@@ -101,6 +110,11 @@ public class WorkspacePath implements ProtoWrapper<String>, Serializable {
     String parentPath =
         lastSeparatorIndex == -1 ? "" : relativePath.substring(0, lastSeparatorIndex);
     return new WorkspacePath(parentPath);
+  }
+
+  /** Returns this workspace path, relative to the workspace root. */
+  public Path asPath() {
+    return Paths.get(relativePath);
   }
 
   public boolean isWorkspaceRoot() {

@@ -20,13 +20,12 @@ import static com.android.tools.idea.run.TargetSelectionMode.DEVICE_AND_SNAPSHOT
 import com.android.tools.idea.run.TargetSelectionMode;
 import com.android.tools.idea.run.editor.DeployTarget;
 import com.android.tools.idea.run.editor.DeployTargetProvider;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
 /** A service that provides the {@link DeployTarget} selected in the current project. */
 public interface BlazeDeployTargetService {
   static BlazeDeployTargetService getInstance(Project project) {
-    return ServiceManager.getService(project, BlazeDeployTargetService.class);
+    return project.getService(BlazeDeployTargetService.class);
   }
 
   DeployTarget getDeployTarget();

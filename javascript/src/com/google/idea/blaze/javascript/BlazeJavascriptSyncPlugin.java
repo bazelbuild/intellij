@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.GenericSourceFolderProvider;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
@@ -196,6 +197,7 @@ public class BlazeJavascriptSyncPlugin implements BlazeSyncPlugin {
                 + "from the list of requested languages in your project view file";
       }
       IssueOutput.error(message).submit(context);
+      BlazeSyncManager.printAndLogError(message, context);
     }
     return true;
   }

@@ -30,7 +30,9 @@ import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleType;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.run.SourceToTargetFinder;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.common.experiments.ExperimentService;
@@ -57,6 +59,8 @@ public class TestMapTest extends BlazeTestCase {
       @NotNull Container applicationServices, @NotNull Container projectServices) {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(ExperimentService.class, new MockExperimentService());
+    applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
+
     mockBlazeProjectDataManager = new MockBlazeProjectDataManager();
     projectServices.register(BlazeProjectDataManager.class, mockBlazeProjectDataManager);
     projectServices.register(SyncCache.class, new SyncCache(project));
@@ -271,6 +275,17 @@ public class TestMapTest extends BlazeTestCase {
     @Override
     public BlazeProjectData getBlazeProjectData() {
       return MockBlazeProjectDataBuilder.builder().setTargetMap(targetMap).build();
+    }
+
+    @Nullable
+    @Override
+    public BlazeProjectData loadProject(BlazeImportSettings importSettings) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void saveProject(BlazeImportSettings importSettings, BlazeProjectData projectData) {
+      throw new UnsupportedOperationException();
     }
   }
 }

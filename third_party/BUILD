@@ -14,6 +14,7 @@ java_library(
 java_library(
     name = "truth",
     exports = [
+        "@diffutils//jar",
         "@truth//jar",
         "@truth8//jar",
     ],

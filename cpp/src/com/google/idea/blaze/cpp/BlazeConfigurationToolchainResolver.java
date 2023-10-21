@@ -45,9 +45,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException;
-import com.intellij.notification.NotificationGroupManager;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider.XcodeCompilerSettingsException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.NavigatableAdapter;
@@ -58,6 +56,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -116,51 +115,15 @@ public final class BlazeConfigurationToolchainResolver {
 
   private static void verifyToolchainDeps(
       BlazeContext context, ImmutableMap<TargetIdeInfo, List<TargetKey>> toolchainDepsTable) {
-    boolean skippedToolchainWarning = false;
     ListMultimap<Integer, TargetIdeInfo> warningTargets = ArrayListMultimap.create();
     for (Map.Entry<TargetIdeInfo, List<TargetKey>> entry : toolchainDepsTable.entrySet()) {
       List<TargetKey> toolchainDeps = entry.getValue();
       if (toolchainDeps.size() != 1) {
         TargetIdeInfo target = entry.getKey();
-        // Starlark cc_library targets depend on cc_toolchain_alias targets instead of
-        // cc_toolchain_suite, but the CToolchainIdeInfo from cc_toolchain_alias targets is
-        // only parsed after a specific change. Even after the change rolls out, users with
-        // stale cache can still observe an empty toolchainDeps, so we skip toolchain warning
-        // in this specific case. Note that this is safe because it's guaranteed that a
-        // cc_toolchain_suite target will also be in the target map, which will be chosen and
-        // provide the CToolchainIdeInfo the IDE needs.
-        if (target.getDependencies().stream()
-            .anyMatch(
-                dep ->
-                    dep.getTargetKey()
-                        .getLabel()
-                        .toString()
-                        .contains("//tools/cpp:current_cc_toolchain"))) {
-          skippedToolchainWarning = true;
-        } else {
           warningTargets.put(toolchainDeps.size(), target);
-        }
       }
     }
     issueToolchainWarning(context, warningTargets);
-
-    // Log that we skipped the toolchain warning so we can monitor how often this happens. And
-    // show a dialog to users and ask them to do a non-incremental Blaze sync so the IDE reads
-    // from aspect artifacts and add the previously missing cc_toolchain_alias target to the
-    // target map.
-    if (skippedToolchainWarning) {
-      // We will monitor the number of the following log entries and IDE version overtime, and
-      // remove the special code that bypasses the toolchain dependency size check and
-      // suppresses toolchain warning, when most users have updated their IDE and g3plugins
-      // version to one that includes this change and have updated their cache either via
-      // non-incremental sync or other changes from their end that introduce cache
-      // invalidation.
-      logger.info("Bypassing the toolchain warning for Starlark cc_library target.");
-      notify(
-          "To adapt to the Starlarkification of cc_library, please do a non-incremental sync"
-              + " so the IDE can add the previously missing cc_toolchain_alias target to the"
-              + " target map.");
-    }
   }
 
   private static ImmutableMap<TargetKey, CToolchainIdeInfo> buildLookupTable(
@@ -182,13 +145,6 @@ public final class BlazeConfigurationToolchainResolver {
       }
     }
     return lookupTable.build();
-  }
-
-  private static void notify(String content) {
-    Notifications.Bus.notify(
-        NotificationGroupManager.getInstance()
-            .getNotificationGroup("StarlarkifiedCcLibraryCacheRefresh")
-            .createNotification(content, NotificationType.WARNING));
   }
 
   private static void issueToolchainWarning(
@@ -233,19 +189,24 @@ public final class BlazeConfigurationToolchainResolver {
         .anyMatch(s -> s.startsWith("//tools/osx/crosstool"));
   }
 
-  /** Returns the compiler settings for each toolchain. */
+  /**
+   * Returns the compiler settings for each toolchain.
+   */
   static ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> buildCompilerSettingsMap(
       BlazeContext context,
       Project project,
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
       ExecutionRootPathResolver executionRootPathResolver,
-      ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings) {
+      ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings,
+      Optional<XcodeCompilerSettings> xcodeCompilerSettings
+  ) {
     return Scope.push(
         context,
         childContext -> {
           childContext.push(new TimingScope("Build compiler settings map", EventType.Other));
           return doBuildCompilerSettingsMap(
-              context, project, toolchainLookupMap, executionRootPathResolver, oldCompilerSettings);
+              context, project, toolchainLookupMap, executionRootPathResolver,
+              xcodeCompilerSettings, oldCompilerSettings);
         });
   }
 
@@ -254,6 +215,7 @@ public final class BlazeConfigurationToolchainResolver {
       Project project,
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
       ExecutionRootPathResolver executionRootPathResolver,
+      Optional<XcodeCompilerSettings> xcodeCompilerSettings,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings) {
     Set<CToolchainIdeInfo> toolchains = new HashSet<>(toolchainLookupMap.values());
     List<ListenableFuture<Map.Entry<CToolchainIdeInfo, BlazeCompilerSettings>>>
@@ -272,7 +234,7 @@ public final class BlazeConfigurationToolchainResolver {
                   return null;
                 }
                 String compilerVersion =
-                    getCompilerVersion(project, context, executionRootPathResolver, cppExecutable);
+                    getCompilerVersion(project, context, executionRootPathResolver, xcodeCompilerSettings, cppExecutable);
                 if (compilerVersion == null) {
                   return null;
                 }
@@ -285,6 +247,7 @@ public final class BlazeConfigurationToolchainResolver {
                     createBlazeCompilerSettings(
                         project,
                         toolchain,
+                        xcodeCompilerSettings,
                         executionRootPathResolver.getExecutionRoot(),
                         cppExecutable,
                         compilerVersion);
@@ -320,11 +283,13 @@ public final class BlazeConfigurationToolchainResolver {
       Project project,
       BlazeContext context,
       ExecutionRootPathResolver executionRootPathResolver,
+      Optional<XcodeCompilerSettings> xcodeCompilerSettings,
       File cppExecutable) {
     File executionRoot = executionRootPathResolver.getExecutionRoot();
+    ImmutableMap<String, String> compilerEnvFlags = XcodeCompilerSettingsProvider.getInstance(project).asEnvironmentVariables(xcodeCompilerSettings);
     try {
       return CompilerVersionChecker.getInstance()
-          .checkCompilerVersion(executionRoot, cppExecutable);
+          .checkCompilerVersion(executionRoot, cppExecutable, compilerEnvFlags);
     } catch (VersionCheckException e) {
       switch (e.kind) {
         case MISSING_EXEC_ROOT:
@@ -369,12 +334,15 @@ public final class BlazeConfigurationToolchainResolver {
   private static BlazeCompilerSettings createBlazeCompilerSettings(
       Project project,
       CToolchainIdeInfo toolchainIdeInfo,
+      Optional<XcodeCompilerSettings> xcodeCompilerSettings,
       File executionRoot,
       File cppExecutable,
       String compilerVersion) {
+    ImmutableMap<String, String> compilerWrapperEnvVars =
+        XcodeCompilerSettingsProvider.getInstance(project).asEnvironmentVariables(xcodeCompilerSettings);
     File compilerWrapper =
         CompilerWrapperProvider.getInstance()
-            .createCompilerExecutableWrapper(executionRoot, cppExecutable);
+            .createCompilerExecutableWrapper(executionRoot, cppExecutable, compilerWrapperEnvVars);
     if (compilerWrapper == null) {
       return null;
     }
@@ -383,16 +351,37 @@ public final class BlazeConfigurationToolchainResolver {
 
     ImmutableList.Builder<String> cppFlagsBuilder = ImmutableList.builder();
     cppFlagsBuilder.addAll(toolchainIdeInfo.getCppCompilerOptions());
+
+    ImmutableMap.Builder<String, String> compilerEnv = ImmutableMap.builder();
+    compilerEnv.putAll(compilerWrapperEnvVars);
     return new BlazeCompilerSettings(
         project,
         compilerWrapper,
         compilerWrapper,
         cFlagsBuilder.build(),
         cppFlagsBuilder.build(),
-        compilerVersion);
+        compilerVersion,
+        compilerEnv.build());
   }
 
   private static <T> ListenableFuture<T> submit(Callable<T> callable) {
     return BlazeExecutor.getInstance().submit(callable);
+  }
+
+  public static Optional<XcodeCompilerSettings> resolveXcodeCompilerSettings(BlazeContext context,
+      Project project) {
+    return Scope.push(
+        context,
+        childContext -> {
+          childContext.push(new TimingScope("Resolve Xcode information", EventType.Other));
+          try {
+            return XcodeCompilerSettingsProvider.getInstance(project).fromContext(context, project);
+          } catch (XcodeCompilerSettingsException e) {
+            IssueOutput.warn(
+                String.format("There was an error fetching the Xcode information from the build: %s\n\nSome C++ functionality may not be available.", e.toString())
+            ).submit(childContext);
+            return Optional.empty();
+          }
+        });
   }
 }

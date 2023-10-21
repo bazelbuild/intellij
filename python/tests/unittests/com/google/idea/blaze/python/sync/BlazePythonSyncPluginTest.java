@@ -17,6 +17,7 @@ package com.google.idea.blaze.python.sync;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PyIdeInfo.PythonSrcsVersion;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PyIdeInfo.PythonVersion;
 import com.google.idea.blaze.base.BlazeTestCase;
@@ -28,7 +29,10 @@ import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.python.PythonBlazeRules;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -47,6 +51,8 @@ public class BlazePythonSyncPluginTest extends BlazeTestCase {
     registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class)
         .registerExtension(new PythonBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
+    applicationServices.register(ExperimentService.class, new MockExperimentService());
+    applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
   }
 
   @Test
@@ -77,7 +83,8 @@ public class BlazePythonSyncPluginTest extends BlazeTestCase {
     BlazeProjectData blazeProjectData =
         MockBlazeProjectDataBuilder.builder().setTargetMap(targetMap).build();
 
-    List<PythonVersion> versions = BlazePythonSyncPlugin.suggestPythonVersions(blazeProjectData);
+    ImmutableList<PythonVersion> versions =
+        BlazePythonSyncPlugin.suggestPythonVersions(blazeProjectData);
     assertThat(versions).isEmpty();
   }
 
@@ -109,7 +116,8 @@ public class BlazePythonSyncPluginTest extends BlazeTestCase {
     BlazeProjectData blazeProjectData =
         MockBlazeProjectDataBuilder.builder().setTargetMap(targetMap).build();
 
-    List<PythonVersion> versions = BlazePythonSyncPlugin.suggestPythonVersions(blazeProjectData);
+    ImmutableList<PythonVersion> versions =
+        BlazePythonSyncPlugin.suggestPythonVersions(blazeProjectData);
     assertThat(versions).containsExactly(PythonVersion.PY2);
   }
 
@@ -141,7 +149,8 @@ public class BlazePythonSyncPluginTest extends BlazeTestCase {
     BlazeProjectData blazeProjectData =
         MockBlazeProjectDataBuilder.builder().setTargetMap(targetMap).build();
 
-    List<PythonVersion> versions = BlazePythonSyncPlugin.suggestPythonVersions(blazeProjectData);
+    ImmutableList<PythonVersion> versions =
+        BlazePythonSyncPlugin.suggestPythonVersions(blazeProjectData);
     assertThat(versions).containsExactly(PythonVersion.PY3);
   }
 

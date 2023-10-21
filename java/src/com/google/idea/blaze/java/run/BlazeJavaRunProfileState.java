@@ -16,15 +16,18 @@
 package com.google.idea.blaze.java.run;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.BlazeCommandRunnerExperiments;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.RuleType;
@@ -34,18 +37,19 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
-import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
 import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
+import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
-import com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.google.idea.blaze.base.run.testlogs.LocalBuildEventProtocolTestFinderStrategy;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.java.TargetKindUtil;
 import com.google.idea.blaze.java.run.hotswap.HotSwapCommandBuilder;
 import com.google.idea.blaze.java.run.hotswap.HotSwapUtils;
 import com.intellij.execution.DefaultExecutionResult;
@@ -60,19 +64,25 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtilRt;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * A Blaze run configuration set up with a an executor, program runner, and other settings, ready to
+ * A Blaze run configuration set up with an executor, program runner, and other settings, ready to
  * be executed. This class creates a command line for Blaze and exposes debug connection information
  * when using a debug executor.
  */
 public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState {
   private static final Logger logger = Logger.getInstance(BlazeJavaRunProfileState.class);
-
+  private static final String JAVA_RUNFILES_ENV = "JAVA_RUNFILES=";
+  private static final String TEST_DIAGNOSTICS_OUTPUT_DIR_ENV = "TEST_DIAGNOSTICS_OUTPUT_DIR=";
+  private static final String TEST_SIZE_ENV = "TEST_SIZE=";
+  private static final String TEST_TIMEOUT_ENV = "TEST_TIMEOUT=";
+  private static final String TEST_DIAGNOSTICS_OUTPUT_DIR = "/tmp/test.test_diagnostics";
   @Nullable private String kotlinxCoroutinesJavaAgent;
 
   BlazeJavaRunProfileState(ExecutionEnvironment environment) {
@@ -88,11 +98,61 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
     Project project = getConfiguration().getProject();
 
     BlazeCommand.Builder blazeCommand;
-    BlazeTestUiSession testUiSession =
-        useTestUi()
-            ? TestUiSessionProvider.getInstance(project)
-                .getTestUiSession(getConfiguration().getTargets())
-            : null;
+    BuildInvoker invoker =
+        Blaze.getBuildSystemProvider(project)
+            .getBuildSystem()
+            .getBuildInvoker(
+                project,
+                BlazeContext.create(),
+                getExecutorType(),
+                getConfiguration().getTargetKind());
+    BlazeTestUiSession testUiSession = null;
+    if (TargetKindUtil.isLocalTest(getConfiguration().getTargetKind())
+        && !invoker.getCommandRunner().canUseCli()
+        && getExecutorType().isDebugType()) {
+      File downloadDir = getDownloadDir();
+      WorkspaceRoot workspaceRoot =
+          new WorkspaceRoot(
+              new File(downloadDir, WorkspaceRoot.fromProject(project).directory().getName()));
+      ImmutableList.Builder<String> commandBuilder =
+          ImmutableList.<String>builder()
+              .add("env")
+              .add("-")
+              .add(JAVA_RUNFILES_ENV + downloadDir.getAbsolutePath());
+
+      // android_local_tests need additional env variables
+      if (TargetKindUtil.isAndroidLocalTest(getConfiguration().getTargetKind())) {
+        commandBuilder
+            .add(TEST_TIMEOUT_ENV + "300")
+            .add(TEST_SIZE_ENV + "medium")
+            .add(
+                TEST_DIAGNOSTICS_OUTPUT_DIR_ENV
+                    + downloadDir.getAbsolutePath()
+                    + TEST_DIAGNOSTICS_OUTPUT_DIR);
+      }
+      commandBuilder
+          .add(getEntryPointScript())
+          .add(debugPortFlag(false, getState(getConfiguration()).getDebugPortState().port));
+      if (TargetKindUtil.isAndroidLocalTest(getConfiguration().getTargetKind())
+          && BlazeCommandRunnerExperiments.USE_SINGLEJAR_FOR_DEBUGGING.getValue()) {
+        commandBuilder.add("--singlejar");
+      }
+      return getScopedProcessHandler(project, commandBuilder.build(), workspaceRoot);
+    }
+
+    try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
+      if (useTestUi()
+          && BlazeTestEventsHandler.targetsSupported(project, getConfiguration().getTargets())) {
+        testUiSession =
+            BlazeTestUiSession.create(
+                ImmutableList.<String>builder()
+                    .add("--runs_per_test=1")
+                    .add("--flaky_test_attempts=1")
+                    .addAll(buildResultHelper.getBuildFlags())
+                    .build(),
+                new LocalBuildEventProtocolTestFinderStrategy(buildResultHelper));
+      }
+    }
     if (testUiSession != null) {
       blazeCommand =
           getBlazeCommandBuilder(
@@ -101,12 +161,13 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
               testUiSession.getBlazeFlags(),
               getExecutorType(),
               kotlinxCoroutinesJavaAgent);
+      final BlazeTestUiSession finalTestUiSession = testUiSession;
       setConsoleBuilder(
           new TextConsoleBuilderImpl(project) {
             @Override
             protected ConsoleView createConsole() {
               return SmRunnerUtils.getConsoleView(
-                  project, getConfiguration(), getEnvironment().getExecutor(), testUiSession);
+                  project, getConfiguration(), getEnvironment().getExecutor(), finalTestUiSession);
             }
           });
     } else {
@@ -119,18 +180,12 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
               kotlinxCoroutinesJavaAgent);
     }
     addConsoleFilters(
-        new BlazeTargetFilter(true),
-        new IssueOutputFilter(
-            project,
-            WorkspaceRoot.fromProject(project),
-            BlazeInvocationContext.ContextType.RunConfiguration,
-            false),
         ToolWindowTaskIssueOutputFilter.createWithDefaultParsers(
             project,
             WorkspaceRoot.fromProject(project),
             BlazeInvocationContext.ContextType.RunConfiguration));
 
-    List<String> command;
+    ImmutableList<String> command;
     if (HotSwapUtils.canHotSwap(getEnvironment())) {
       try {
         command = HotSwapCommandBuilder.getBashCommandsToRunScript(project, blazeCommand);
@@ -141,30 +196,7 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
     } else {
       command = blazeCommand.build().toList();
     }
-
-    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    return new ScopedBlazeProcessHandler(
-        project,
-        command,
-        workspaceRoot,
-        new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
-          @Override
-          public void onBlazeContextStart(BlazeContext context) {
-            context
-                .push(
-                    new ProblemsViewScope(
-                        project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()))
-                .push(new IdeaLogScope());
-          }
-
-          @Override
-          public ImmutableList<ProcessListener> createProcessListeners(BlazeContext context) {
-            LineProcessingOutputStream outputStream =
-                LineProcessingOutputStream.of(
-                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context));
-            return ImmutableList.of(new LineProcessingProcessAdapter(outputStream));
-          }
-        });
+    return getScopedProcessHandler(project, command, WorkspaceRoot.fromProject(project));
   }
 
   @Override
@@ -244,9 +276,49 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
     return command;
   }
 
+  private ProcessHandler getScopedProcessHandler(
+      Project project, ImmutableList<String> command, WorkspaceRoot workspaceRoot)
+      throws ExecutionException {
+    return new ScopedBlazeProcessHandler(
+        project,
+        command,
+        workspaceRoot,
+        new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
+          @Override
+          public void onBlazeContextStart(BlazeContext context) {
+            context
+                .push(
+                    new ProblemsViewScope(
+                        project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()))
+                .push(new IdeaLogScope());
+          }
+
+          @Override
+          public ImmutableList<ProcessListener> createProcessListeners(BlazeContext context) {
+            LineProcessingOutputStream outputStream =
+                LineProcessingOutputStream.of(
+                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context));
+            return ImmutableList.of(new LineProcessingProcessAdapter(outputStream));
+          }
+        });
+  }
+
+  private File getDownloadDir() {
+    String testTargetString = getConfiguration().getSingleTarget().toString();
+    return new File(
+        FileUtilRt.getTempDirectory(),
+        testTargetString.substring(testTargetString.lastIndexOf(":") + 1) + ".runfiles");
+  }
+
   private static String debugPortFlag(boolean isTest, int port) {
     String flag = "--wrapper_script_flag=--debug=" + port;
     return isTest ? testArg(flag) : flag;
+  }
+
+  private String getEntryPointScript() {
+    return CharMatcher.is('/')
+        .trimLeadingFrom(getConfiguration().getSingleTarget().toString())
+        .replace(':', '/');
   }
 
   private static String testArg(String flag) {

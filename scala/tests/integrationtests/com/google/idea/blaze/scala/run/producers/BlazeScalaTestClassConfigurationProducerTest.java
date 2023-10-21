@@ -27,11 +27,13 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducerTestCase;
 import com.google.idea.blaze.base.run.producers.TestContextRunConfigurationProducer;
+import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+
 import java.util.List;
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile;
 import org.junit.Test;
@@ -136,7 +138,11 @@ public class BlazeScalaTestClassConfigurationProducerTest
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
     assertThat(config.getTargets())
         .containsExactly(TargetExpression.fromStringSafe("//scala/com/google/test:TestClass"));
-    assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=com.google.test.TestClass");
+    BlazeCommandRunConfigurationCommonState handlerState =
+        config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    assertThat(handlerState).isNotNull();
+    List<String> testArgs = handlerState.getTestArgs();
+    assertThat(testArgs).containsExactly("-s", "com.google.test.TestClass").inOrder();
     assertThat(config.getName()).isEqualTo("Bazel test TestClass");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }

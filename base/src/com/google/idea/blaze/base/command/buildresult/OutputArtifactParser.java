@@ -35,9 +35,7 @@ public interface OutputArtifactParser {
 
   @Nullable
   static OutputArtifact parseArtifact(
-      BuildEventStreamProtos.File file,
-      String configurationMnemonic,
-      long syncStartTimeMillis) {
+      BuildEventStreamProtos.File file, String configurationMnemonic, long syncStartTimeMillis) {
     return Arrays.stream(EP_NAME.getExtensions())
         .map(p -> p.parse(file, configurationMnemonic, syncStartTimeMillis))
         .filter(Objects::nonNull)
@@ -47,43 +45,42 @@ public interface OutputArtifactParser {
 
   @Nullable
   OutputArtifact parse(
-      BuildEventStreamProtos.File file,
-      String configurationMnemonic,
-      long syncStartTimeMillis);
+      BuildEventStreamProtos.File file, String configurationMnemonic, long syncStartTimeMillis);
 
   /** The default implementation of {@link OutputArtifactParser}, for local, absolute file paths. */
   class LocalFileParser implements OutputArtifactParser {
     @Override
     @Nullable
     public OutputArtifact parse(
-        BuildEventStreamProtos.File file,
-        String configurationMnemonic,
-        long syncStartTimeMillis) {
+        BuildEventStreamProtos.File file, String configurationMnemonic, long syncStartTimeMillis) {
       String uri = file.getUri();
-      if (uri == null || !uri.startsWith(URLUtil.FILE_PROTOCOL)) {
+      if (!uri.startsWith(URLUtil.FILE_PROTOCOL)) {
         return null;
       }
       try {
         File f = new File(new URI(uri));
         return new LocalFileOutputArtifact(
-            f, getBlazeOutRelativePath(file, configurationMnemonic), configurationMnemonic);
+            f,
+            getBlazeOutRelativePath(file, configurationMnemonic),
+            configurationMnemonic,
+            file.getDigest());
       } catch (URISyntaxException | IllegalArgumentException e) {
         return null;
       }
     }
+  }
 
-    private static String getBlazeOutRelativePath(
-        BuildEventStreamProtos.File file, String configurationMnemonic) {
-      List<String> pathPrefixList = file.getPathPrefixList();
-      if (pathPrefixList.size() <= 1) {
-        // fall back to using the configuration mnemonic
-        // TODO(brendandouglas): remove this backwards compatibility code after September 2019
-        return configurationMnemonic + "/" + file.getName();
-      }
-
-      // remove the initial 'bazel-out' path component
-      String prefix = Joiner.on('/').join(pathPrefixList.subList(1, pathPrefixList.size()));
-      return prefix + "/" + file.getName();
+  default String getBlazeOutRelativePath(
+      BuildEventStreamProtos.File file, String configurationMnemonic) {
+    List<String> pathPrefixList = file.getPathPrefixList();
+    if (pathPrefixList.size() <= 1) {
+      // fall back to using the configuration mnemonic
+      // TODO(brendandouglas): remove this backwards compatibility code after September 2019
+      return configurationMnemonic + "/" + file.getName();
     }
+
+    // remove the initial 'bazel-out' path component
+    String prefix = Joiner.on('/').join(pathPrefixList.subList(1, pathPrefixList.size()));
+    return prefix + "/" + file.getName();
   }
 }

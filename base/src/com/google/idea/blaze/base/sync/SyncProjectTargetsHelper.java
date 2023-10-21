@@ -24,11 +24,11 @@ import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection;
+import com.google.idea.blaze.base.projectview.section.sections.SyncManualTargetsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
@@ -39,6 +39,7 @@ import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.openapi.project.Project;
 import java.util.List;
 
@@ -88,6 +89,10 @@ public final class SyncProjectTargetsHelper {
     return viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
   }
 
+  public static boolean shouldSyncManualTargets(ProjectViewSet viewSet) {
+    return viewSet.getScalarValue(SyncManualTargetsSection.KEY).orElse(false);
+  }
+
   private static ImmutableList<TargetExpression> deriveTargetsFromDirectories(
       Project project,
       BlazeContext context,
@@ -120,7 +125,7 @@ public final class SyncProjectTargetsHelper {
               // We don't want blaze build errors to fail the whole sync
               childContext.setPropagatesErrors(false);
               return DirectoryToTargetProvider.expandDirectoryTargets(
-                  project, importRoots, pathResolver, childContext);
+                  project, shouldSyncManualTargets(projectViewSet), importRoots, pathResolver, childContext);
             });
     if (context.isCancelled()) {
       throw new SyncCanceledException();

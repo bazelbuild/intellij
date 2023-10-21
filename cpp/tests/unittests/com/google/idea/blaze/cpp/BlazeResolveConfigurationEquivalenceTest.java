@@ -50,10 +50,12 @@ import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
@@ -61,6 +63,7 @@ import com.intellij.mock.MockPsiManager;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -91,11 +94,13 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(BlazeExecutor.class, new MockBlazeExecutor());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
+    applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
     applicationServices.register(
         CompilerVersionChecker.class, new MockCompilerVersionChecker("1234"));
 
     applicationServices.register(ProgressManager.class, new ProgressManagerImpl());
     applicationServices.register(CompilerWrapperProvider.class, new CompilerWrapperProviderImpl());
+    projectServices.register(XcodeCompilerSettingsProvider.class, new MockXcodeSettingsProvider());
     applicationServices.register(VirtualFileManager.class, mock(VirtualFileManager.class));
     applicationServices.register(FileOperationProvider.class, new FileOperationProvider());
     mockFileSystem = mock(LocalFileSystem.class);
@@ -112,10 +117,17 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     projectServices.register(
         BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
 
+    Registry.get(BlazeConfigurationResolver.SYNC_EXTERNAL_TARGETS_FROM_DIRECTORIES_KEY).setValue(true);
+
     BlazeImportSettingsManager.getInstance(getProject())
         .setImportSettings(
             new BlazeImportSettings(
-                "", "", "", "", getBuildSystemProvider().getBuildSystem().getName()));
+                "",
+                "",
+                "",
+                "",
+                getBuildSystemProvider().getBuildSystem().getName(),
+                ProjectType.ASPECT_SYNC));
 
     registerExtensionPoint(
         BlazeCompilerFlagsProcessor.EP_NAME, BlazeCompilerFlagsProcessor.Provider.class);
@@ -327,53 +339,53 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   public void changeDefines_testIncrementalUpdate_0() {
     Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 0);
-    do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
+    doChangeDefinesTestIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_1() {
     Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 1);
-    do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
+    doChangeDefinesTestIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_2() {
     Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 2);
-    do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
+    doChangeDefinesTestIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_3() {
     Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 3);
-    do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
+    doChangeDefinesTestIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_4() {
     Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 4);
-    do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
+    doChangeDefinesTestIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_5() {
     Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 5);
-    do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
+    doChangeDefinesTestIncrementalUpdate(testCase.getKey(), testCase.getValue());
   }
 
   @Test
   public void changeDefines_testIncrementalUpdate_6() {
     Map.Entry<List<String>, ImmutableList<String>> testCase =
         Iterables.get(permutationsAndExpectations.entrySet(), 6);
-    do_changeDefines_testIncrementalUpdate(testCase.getKey(), testCase.getValue());
+    doChangeDefinesTestIncrementalUpdate(testCase.getKey(), testCase.getValue());
     assertThat(permutationsAndExpectations.size()).isEqualTo(7);
   }
 
-  private void do_changeDefines_testIncrementalUpdate(
+  private void doChangeDefinesTestIncrementalUpdate(
       List<String> labelsToFlip, ImmutableList<String> newConfigurationLabels) {
     ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:...:all"));
     List<BlazeResolveConfiguration> configurations =

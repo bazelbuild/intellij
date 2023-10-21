@@ -20,25 +20,17 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.goide.psi.GoFile;
 import com.goide.psi.GoFunctionDeclaration;
-import com.goide.psi.impl.GoPackage;
 import com.goide.psi.impl.imports.GoImportResolver;
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.golang.utils.MockGoImportResolver;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.LoadingOrder;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.ResolveState;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import javax.annotation.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -188,22 +180,4 @@ public class BlazeGoPackageTest extends BlazeIntegrationTestCase {
                 .collect(toImmutableList())));
   }
 
-  private static class MockGoImportResolver implements GoImportResolver {
-    private final Map<String, GoPackage> map = new HashMap<>();
-
-    @Nullable
-    @Override
-    public Collection<GoPackage> resolve(
-        String importPath,
-        Project project,
-        @Nullable Module module,
-        @Nullable ResolveState resolveState) {
-      GoPackage goPackage = map.get(importPath);
-      return goPackage != null ? ImmutableList.of(goPackage) : null;
-    }
-
-    void put(String importPath, GoPackage goPackage) {
-      map.put(importPath, goPackage);
-    }
-  }
 }

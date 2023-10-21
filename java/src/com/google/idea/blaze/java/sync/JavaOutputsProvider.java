@@ -53,6 +53,7 @@ class JavaOutputsProvider implements OutputsProvider {
     javaInfo.getSources().forEach(s -> addArtifact(list, s));
     javaInfo.getJars().forEach(l -> addLibrary(list, l));
     javaInfo.getGeneratedJars().forEach(l -> addLibrary(list, l));
+    javaInfo.getPluginProcessorJars().forEach(l -> addLibrary(list, l));
     addLibrary(list, javaInfo.getFilteredGenJar());
     addArtifact(list, javaInfo.getPackageManifest());
     addArtifact(list, javaInfo.getJdepsFile());

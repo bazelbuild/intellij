@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+package(default_visibility = ["//:__subpackages__"])
+
+go_library(
+    name = "otherlib",
+    srcs = ["otherlib.go"],
+    importpath = "github.com/bazelbuild/intellij/examples/go/with_go_source/otherlib",
+)

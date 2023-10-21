@@ -284,6 +284,9 @@ public class BlazeCreateXmlResourcePanel implements CreateXmlResourcePanel, Pare
     return myPanel;
   }
 
+  // @Override #api223
+  public void setAllowValueEditing(boolean enabled) {}
+
   private void setChangeFileNameVisible(boolean isVisible) {
     myFileNameLabel.setVisible(isVisible);
     myFileNameCombo.setVisible(isVisible);

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.run;
 
 import com.android.tools.idea.run.ValidationError;
+import com.android.tools.idea.run.ValidationErrorCompat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.state.DebuggerSettingsState;
@@ -46,11 +47,10 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
   private static final String USER_BLAZE_FLAG_TAG = "blaze-user-flag";
   private static final String USER_EXE_FLAG_TAG = "blaze-user-exe-flag";
 
-  // We need to split "-c dbg" into two flags because we pass flags
-  // as a list of strings to the command line executor and we need blaze
-  // to see -c and dbg as two separate entities, not one.
+  // "-c dbg" defines both the copt and strip flags below; however, we want to allow users to
+  // override -c (to fastbuild or opt) without entirely compromising the generation of debug info.
   private static final ImmutableList<String> NATIVE_DEBUG_FLAGS =
-      ImmutableList.of("--fission=no", "-c", "dbg");
+      ImmutableList.of("--copt=-g", "--fission=no", "--strip=never", "-c", "dbg");
 
   private final RunConfigurationFlagsState blazeFlags;
   private final RunConfigurationFlagsState exeFlags;
@@ -87,10 +87,12 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
       BlazeCommandName command,
       BlazeInvocationContext context) {
     return ImmutableList.<String>builder()
+        // Add Native Debugging flags first to allow for overriding -c dbg in .blazeproject or run
+        // configurations.
+        .addAll(getNativeDebuggerFlags())
         .addAll(
             BlazeFlags.blazeFlags(project, projectViewSet, command, BlazeContext.create(), context))
         .addAll(getBlazeFlagsState().getFlagsForExternalProcesses())
-        .addAll(getNativeDebuggerFlags())
         .build();
   }
 
@@ -114,7 +116,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     if (isNativeDebuggingEnabled()
         && !blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C)) {
       errors.add(
-          ValidationError.fatal(
+          ValidationErrorCompat.fatal(
               "Native debugging requires C language support.",
               () ->
                   AdditionalLanguagesHelper.enableLanguageSupport(

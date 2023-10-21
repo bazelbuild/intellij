@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
@@ -88,8 +89,11 @@ public class ClassFileManifestBuilder {
     if (projectData == null) {
       throw new ExecutionException("Not synced yet; please sync project");
     }
+
+    BlazeVersionData versionData = projectData.getBlazeVersionData();
+
     JavaClasspathAspectStrategy aspectStrategy =
-        JavaClasspathAspectStrategy.findStrategy(projectData.getBlazeVersionData());
+        JavaClasspathAspectStrategy.findStrategy(versionData);
     if (aspectStrategy == null) {
       return null;
     }
@@ -105,7 +109,7 @@ public class ClassFileManifestBuilder {
               BlazeCommandName.BUILD,
               configuration,
               buildResultHelper,
-              aspectStrategy.getBuildFlags(),
+              aspectStrategy.getBuildFlags(versionData),
               ImmutableList.of(),
               BlazeInvocationContext.runConfigContext(
                   ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),

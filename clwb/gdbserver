@@ -49,15 +49,29 @@ gdbserver_wrapper::setup() {
   gdbserver_stdout="${work_directory}/gdbserver.out"
   inferior_stderr="${work_directory}/inferior.err"
   inferior_stdout="${work_directory}/inferior.out"
+  redirection_wrapper="${work_directory}/redirection_wrapper.sh"
+}
+
+gdbserver_wrapper::setup_redirection_wrapper() {
+  {
+    # The shebang ensures that an extra exec happens which is necessary for gdb's internal pending_execs to be accurate
+    echo "#!/bin/bash"
+    echo "exec \"\$@\" 1>${inferior_stdout} 2>${inferior_stderr}"
+  } >> "${redirection_wrapper}"
+
+  chmod +x "${redirection_wrapper}"
 }
 
 gdbserver_wrapper::parse_args() {
   local inferior
   inferior=0
   for old_arg in "${original_args[@]}"; do
-    # first arg is path to gdbserver, but inject extra args after it
-    if [[ ${#new_args[@]} -eq 1 && -n "${GDBSERVER_WRAPPER_EXTRA_ARGS}" ]]; then
-      new_args+=(${GDBSERVER_WRAPPER_EXTRA_ARGS})
+    # first arg is path to gdbserver so inject redirection wrapper and possible extra args after that
+    if [[ ${#new_args[@]} -eq 1 ]]; then
+      new_args+=("--wrapper" "${redirection_wrapper}" "--")
+      if [[ -n "${GDBSERVER_WRAPPER_EXTRA_ARGS}" ]]; then
+        new_args+=("${GDBSERVER_WRAPPER_EXTRA_ARGS}")
+      fi
     fi
     if [[ $inferior -eq 0 ]]; then
       if [[ "${old_arg}" == "--keep_work_directory" ]]; then
@@ -75,8 +89,6 @@ gdbserver_wrapper::parse_args() {
       fi
     elif [[ $inferior -eq 1 ]]; then
       new_args+=("${old_arg}")
-      new_args+=("1>${inferior_stdout}")
-      new_args+=("2>${inferior_stderr}")
       # the rest are params for inferior
       inferior=2
     else
@@ -146,6 +158,7 @@ gdbserver_wrapper::main() {
   local original_args new_args work_directory
   local gdbserver_stderr gdbserver_stdout
   local inferior_stderr inferior_stdout
+  local redirection_wrapper
   local keep_work_directory verbose
   keep_work_directory="${GDBSERVER_WRAPPER_KEEP_WORK_DIRECTORY}"
   verbose="${GDB_WRAPPER_VERBOSE}"
@@ -153,6 +166,8 @@ gdbserver_wrapper::main() {
   original_args=("$@")
 
   gdbserver_wrapper::setup
+
+  gdbserver_wrapper::setup_redirection_wrapper
 
   gdbserver_wrapper::parse_args
 
