@@ -30,7 +30,7 @@ import java.util.function.Supplier;
     storages = {@Storage("query.sync.user.settings.xml")})
 public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSettings.State> {
   static class State {
-    public boolean useQuerySync = false;
+    public boolean useQuerySync = true;
 
     public boolean showDetailedInformationInEditor = false;
 

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.base.Suppliers;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
@@ -34,9 +35,6 @@ public class QuerySync {
   public static final Supplier<Boolean> BETA_ENABLED =
       Suppliers.memoize(new BoolExperiment("use.query.sync.beta", false)::getValue);
 
-  private static final Supplier<Boolean> ENABLED =
-      Suppliers.memoize(new BoolExperiment("use.query.sync", false)::getValue);
-
   /** Enable compose preview for Query Sync. */
   private static final Supplier<Boolean> COMPOSE_ENABLED =
       Suppliers.memoize(new BoolExperiment("aswb.query.sync.enable.compose", false)::getValue);
@@ -47,7 +45,7 @@ public class QuerySync {
   private QuerySync() {}
 
   public static boolean isEnabled() {
-    return ENABLED.get();
+    return QuerySyncSettings.getInstance().useQuerySync();
   }
 
   /**
