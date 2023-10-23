@@ -16,9 +16,10 @@
 package com.google.idea.blaze.base.sync;
 
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -37,7 +38,7 @@ public class BlazeSyncStartupActivity implements StartupActivity {
     if (importSettings == null) {
       return;
     }
-    if (QuerySync.isEnabled()) {
+    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
       // When query sync is not enabled hasProjectData triggers the load
       QuerySyncManager.getInstance(project)
           .onStartup(new QuerySyncActionStatsScope(getClass(), null));

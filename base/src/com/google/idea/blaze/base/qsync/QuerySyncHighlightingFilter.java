@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.psi.PsiFile;
@@ -27,13 +28,11 @@ public class QuerySyncHighlightingFilter implements HighlightInfoFilter {
 
   @Override
   public boolean accept(@NotNull HighlightInfo highlightInfo, @Nullable PsiFile psiFile) {
-    if (QuerySync.isEnabled()) {
-      if (psiFile == null) {
-        return true;
-      }
-      if (!Blaze.isBlazeProject(psiFile.getProject())) {
-        return true;
-      }
+    if (psiFile == null) {
+      return true;
+    }
+
+    if (Blaze.getProjectType(psiFile.getProject()) == ProjectType.QUERY_SYNC) {
       return QuerySyncManager.getInstance(psiFile.getProject()).isReadyForAnalysis(psiFile);
     } else {
       return true;
