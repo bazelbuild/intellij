@@ -25,6 +25,9 @@ message CcToolchainInfo {
   string cpu = 3;
   string target_name = 4;
   repeated string built_in_include_directories = 5;
+  repeated string c_options = 6;
+  repeated string cpp_options = 7;
+  string id = 8;
 }
 
 message CcTargetInfo {
@@ -35,11 +38,12 @@ message CcTargetInfo {
   repeated string system_include_directories = 5;
   repeated string framework_include_directories = 6;
   repeated string gen_hdrs = 7;
-  CcToolchainInfo cc_toolchain_info = 8;
+  string toolchain_id = 8;
 }
 
 // This proto message represents the structure written by
 // build_dependencies.bzl%_encode_cc_info_proto
 message CcCompilationInfo {
   repeated CcTargetInfo targets = 1;
+  repeated CcToolchainInfo toolchains = 2;
 }

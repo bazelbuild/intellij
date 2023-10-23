@@ -1,5 +1,11 @@
 """Aspects to build and collect project dependencies."""
 
+load(
+    "//tools/build_defs/cc:action_names.bzl",
+    "CPP_COMPILE_ACTION_NAME",
+    "C_COMPILE_ACTION_NAME",
+)
+
 ALWAYS_BUILD_RULES = "java_proto_library,java_lite_proto_library,java_mutable_proto_library,kt_proto_library_helper,_java_grpc_library,_java_lite_grpc_library,kt_grpc_library_helper,java_stubby_library,aar_import,java_import"
 
 PROTO_RULE_KINDS = [
@@ -19,7 +25,7 @@ def _package_dependencies_impl(target, ctx):
         qsync_aars = target[DependenciesInfo].aars.to_list(),
         qsync_gensrcs = target[DependenciesInfo].gensrcs.to_list(),
         cc_headers = target[DependenciesInfo].cc_headers,
-        cc_info_file = cc_info_file,
+        cc_info_file = cc_info_file + [target[DependenciesInfo].cc_toolchain_info.file] if target[DependenciesInfo].cc_toolchain_info else [],
     )]
 
 def _write_java_target_info(target, ctx):
@@ -36,11 +42,11 @@ def _write_java_target_info(target, ctx):
 def _write_cc_target_info(target, ctx):
     if not target[DependenciesInfo].cc_info:
         return []
-    file_name = target.label.name + ".cc-info.txt"
-    cc_info_file = ctx.actions.declare_file(file_name)
+    cc_info_file_name = target.label.name + ".cc-info.txt"
+    cc_info_file = ctx.actions.declare_file(cc_info_file_name)
     ctx.actions.write(
         cc_info_file,
-        _encode_cc_info_proto(target.label, target[DependenciesInfo].cc_info, target[DependenciesInfo].cc_toolchain_info),
+        _encode_cc_info_proto(target.label, target[DependenciesInfo].cc_info),
     )
     return [cc_info_file]
 
@@ -54,7 +60,7 @@ DependenciesInfo = provider(
         "test_mode_own_files": "a structure describing artifacts required when the target is requested within the project scope",
         "cc_info": "a structure containing info required to compile cc sources",
         "cc_headers": "a list of generated headers required to compile cc sources",
-        "cc_toolchain_info": "a structure containing info about the cc toolchain",
+        "cc_toolchain_info": "struct containing cc toolchain info, with keys file (the output file) and id (unique ID for the toolchain info, referred to from elsewhere)",
     },
 )
 
@@ -73,7 +79,7 @@ def _encode_target_info_proto(target_to_artifacts):
         )
     return proto.encode_text(struct(artifacts = contents))
 
-def _encode_cc_info_proto(label, cc_info, cc_toolchain_info):
+def _encode_cc_info_proto(label, cc_info):
     return proto.encode_text(
         struct(targets = [
             struct(
@@ -84,7 +90,7 @@ def _encode_cc_info_proto(label, cc_info, cc_toolchain_info):
                 system_include_directories = cc_info.transitive_system_include_directory,
                 framework_include_directories = cc_info.framework_include_directory,
                 gen_hdrs = cc_info.gen_headers,
-                cc_toolchain_info = cc_toolchain_info,
+                toolchain_id = cc_info.toolchain_id,
             ),
         ]),
     )
@@ -358,6 +364,7 @@ def _collect_own_and_dependency_cc_info(target, dependency_info):
             transitive_system_include_directory = compilation_context.system_includes.to_list() + compilation_context.external_includes.to_list(),
             framework_include_directory = compilation_context.framework_includes.to_list(),
             gen_headers = [f.path for f in gen_headers],
+            toolchain_id = cc_toolchain_info.id if cc_toolchain_info else None,
         )
     return struct(
         compilation_info = compilation_info,
@@ -385,7 +392,7 @@ def _collect_dependencies_core_impl(
     if CcInfo in target:
         dep_infos.append(_collect_cc_dependencies_core_impl(target, ctx))
     if cc_common.CcToolchainInfo in target:
-        dep_infos.append(_collect_cc_toolchain_info(target))
+        dep_infos.append(_collect_cc_toolchain_info(target, ctx))
     return dep_infos
 
 def _collect_java_dependencies_core_impl(
@@ -453,15 +460,71 @@ def _collect_cc_dependencies_core_impl(target, ctx):
         cc_toolchain_info = cc_info.cc_toolchain_info,
     )
 
-def _collect_cc_toolchain_info(target):
+def _collect_cc_toolchain_info(target, ctx):
     toolchain_info = target[cc_common.CcToolchainInfo]
+
+    cpp_fragment = ctx.fragments.cpp
+
+    # TODO(b/301235884): This logis is not quite right. `ctx` here is the context for for
+    #  cc_toolchain target itself, so the `features` and `disabled_features` were using here are
+    #  for the cc_toolchain, not the individual targets that this information will ultimately be
+    #  used for. Instead, we should attach `toolchain_info` itself to the `DependenciesInfo`
+    #  provider, and execute this logic once per top level cc target that we're building, to ensure
+    #  that the right features are used.
+    feature_config = cc_common.configure_features(
+        ctx = ctx,
+        cc_toolchain = toolchain_info,
+        requested_features = ctx.features,
+        unsupported_features = ctx.disabled_features + [
+            # Note: module_maps appears to be necessary here to ensure the API works
+            # in all cases, and to avoid the error:
+            # Invalid toolchain configuration: Cannot find variable named 'module_name'
+            # yaqs/3227912151964319744
+            "module_maps",
+        ],
+    )
+    c_variables = cc_common.create_compile_variables(
+        feature_configuration = feature_config,
+        cc_toolchain = toolchain_info,
+        user_compile_flags = cpp_fragment.copts + cpp_fragment.conlyopts,
+    )
+    cpp_variables = cc_common.create_compile_variables(
+        feature_configuration = feature_config,
+        cc_toolchain = toolchain_info,
+        user_compile_flags = cpp_fragment.copts + cpp_fragment.cxxopts,
+    )
+    c_options = cc_common.get_memory_inefficient_command_line(
+        feature_configuration = feature_config,
+        action_name = C_COMPILE_ACTION_NAME,
+        variables = c_variables,
+    )
+    cpp_options = cc_common.get_memory_inefficient_command_line(
+        feature_configuration = feature_config,
+        action_name = CPP_COMPILE_ACTION_NAME,
+        variables = cpp_variables,
+    )
+    toolchain_id = str(target.label) + "%" + toolchain_info.target_gnu_system_name
+
     cc_toolchain_info = struct(
+        id = toolchain_id,
         compiler_executable = toolchain_info.compiler_executable,
         cpu = toolchain_info.cpu,
         compiler = toolchain_info.compiler,
         target_name = toolchain_info.target_gnu_system_name,
         built_in_include_directories = toolchain_info.built_in_include_directories,
+        c_options = c_options,
+        cpp_options = cpp_options,
     )
+
+    cc_toolchain_file_name = target.label.name + "." + cc_toolchain_info.target_name + ".txt"
+    cc_toolchain_file = ctx.actions.declare_file(cc_toolchain_file_name)
+    ctx.actions.write(
+        cc_toolchain_file,
+        proto.encode_text(
+            struct(toolchains = cc_toolchain_info),
+        ),
+    )
+
     return DependenciesInfo(
         target_to_artifacts = {},
         compile_time_jars = depset(),
@@ -470,7 +533,7 @@ def _collect_cc_toolchain_info(target):
         test_mode_own_files = None,
         cc_info = None,
         cc_headers = depset(),
-        cc_toolchain_info = cc_toolchain_info,
+        cc_toolchain_info = struct(file = cc_toolchain_file, id = toolchain_id),
     )
 
 def _get_ide_aar_file(target, ctx):
@@ -620,6 +683,7 @@ collect_dependencies = aspect(
             default = "@//tools/genzip:build_zip",
         ),
     },
+    fragments = ["cpp"],
 )
 
 collect_all_dependencies_for_tests = aspect(
@@ -642,4 +706,5 @@ collect_all_dependencies_for_tests = aspect(
             default = "@//tools/genzip:build_zip",
         ),
     },
+    fragments = ["cpp"],
 )
