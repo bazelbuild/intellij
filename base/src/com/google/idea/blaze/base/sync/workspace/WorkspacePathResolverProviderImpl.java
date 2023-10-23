@@ -17,7 +17,8 @@ package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
@@ -48,7 +49,7 @@ public class WorkspacePathResolverProviderImpl implements WorkspacePathResolverP
     if (tempOverride != null) {
       return tempOverride;
     }
-    if (!QuerySync.isEnabled()) {
+    if (Blaze.getProjectType(project) == ProjectType.ASPECT_SYNC) {
       BlazeProjectData projectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
       if (projectData != null) {
