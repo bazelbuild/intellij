@@ -61,7 +61,7 @@ public class Blaze {
 
   /**
    * Returns the ProjectType of this imported project. {@code ProjectType.UNKNOWN} will be returned
-   * if th project is not available, not imported from blaze, or we failed to access its import
+   * if the project is not available, not imported from blaze, or we failed to access its import
    * settings.
    */
   public static ProjectType getProjectType(@Nullable Project project) {

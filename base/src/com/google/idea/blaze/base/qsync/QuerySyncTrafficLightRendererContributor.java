@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.sdkcompat.editor.markup.UIControllerCreator;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor;
@@ -36,10 +37,7 @@ public class QuerySyncTrafficLightRendererContributor implements TrafficLightRen
   @Override
   @Nullable
   public TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile psiFile) {
-    if (!QuerySync.isEnabled()) {
-      return null;
-    }
-    if (!Blaze.isBlazeProject(psiFile.getProject())) {
+    if (Blaze.getProjectType(psiFile.getProject()) != ProjectType.QUERY_SYNC) {
       return null;
     }
     return new TrafficLightRenderer(psiFile.getProject(), editor.getDocument()) {
