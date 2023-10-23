@@ -16,3 +16,10 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [":devkit_internal"],
 )
+
+java_library(
+    name = "devkit_for_tests",
+    testonly = 1,
+    visibility = ["//plugin_dev:__pkg__"],
+    exports = [":devkit_internal"],
+)
