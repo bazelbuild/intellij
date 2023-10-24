@@ -28,10 +28,10 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.intellij.ide.actions.ShowFilePathAction;
@@ -105,7 +105,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
   @Override
   public void projectOpened() {
-    if (Blaze.isBlazeProject(project) && QuerySync.isEnabled(project)) {
+    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
       return;
     }
     CMakeWorkspaceOverride.undoCMakeModifications(project);

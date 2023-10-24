@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.cpp;
 
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
 final class BlazeLanguageKindCalculatorHelper implements OCLanguageKindCalculatorHelper {
 
   private static boolean isEnabled(Project project) {
-    return Blaze.isBlazeProject(project) && !QuerySync.isEnabled(project);
+    return Blaze.getProjectType(project) == ProjectType.ASPECT_SYNC;
   }
 
   /** #api212: add @Override */

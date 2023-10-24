@@ -16,13 +16,8 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.base.Suppliers;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
-import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import java.util.function.Supplier;
 
 /** Holder class for basic information about querysync, e.g. is it enabled? */
@@ -48,22 +43,6 @@ public class QuerySync {
 
   public static boolean isEnabled() {
     return ENABLED.get();
-  }
-
-  /**
-   * Returns whether query sync is enabled for this project. Caller needs to make sure {@link
-   * BlazeImportSettings} has been loaded before calling it. Otherwise, caller may receive
-   * unexpected NPE. e.g. {@link BlazeImportSettings} has not been loaded when initializing an
-   * application service.
-   *
-   * @deprecated use {@link Blaze#getProjectType}.
-   */
-  @Deprecated
-  public static boolean isEnabled(Project project) {
-    return BlazeImportSettingsManager.getInstance(project)
-        .getImportSettings()
-        .getProjectType()
-        .equals(ProjectType.QUERY_SYNC);
   }
 
   public static boolean isComposeEnabled() {
