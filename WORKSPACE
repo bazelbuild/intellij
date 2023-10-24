@@ -858,6 +858,16 @@ jvm_maven_import_external(
     server_urls = ["https://repo1.maven.org/maven2"],
 )
 
+# Usually, we'd get this from the JetBrains SDK, but the bundled one not aware of Bazel platforms,
+# so it fails on certain setups.
+jvm_maven_import_external(
+    name = "jna",
+    artifact = "net.java.dev.jna:jna:5.13.0",
+    artifact_sha256 = "66d4f819a062a51a1d5627bffc23fac55d1677f0e0a1feba144aabdd670a64bb",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["https://repo1.maven.org/maven2"],
+)
+
 # io_grpc_grpc_java dependencies
 load("@io_grpc_grpc_java//:repositories.bzl", "IO_GRPC_GRPC_JAVA_ARTIFACTS", "IO_GRPC_GRPC_JAVA_OVERRIDE_TARGETS", "grpc_java_repositories")
 
