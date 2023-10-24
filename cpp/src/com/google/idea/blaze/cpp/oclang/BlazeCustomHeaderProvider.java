@@ -17,8 +17,8 @@ package com.google.idea.blaze.cpp.oclang;
 
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.project.Project;
@@ -58,7 +58,7 @@ public class BlazeCustomHeaderProvider extends CustomHeaderProvider {
       return false;
     }
     Project project = rootAndConfig.getConfiguration().getProject();
-    return Blaze.isBlazeProject(project) && !QuerySync.isEnabled(project);
+    return Blaze.getProjectType(project) == ProjectType.ASPECT_SYNC;
   }
   
   @Nullable
