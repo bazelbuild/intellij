@@ -39,7 +39,7 @@ public class SyncStatusNodeDecorator implements ProjectViewNodeDecorator {
   @SuppressWarnings("rawtypes")
   public void decorate(ProjectViewNode node, PresentationData data) {
     Project project = node.getProject();
-    if (project == null || Blaze.getProjectType(project) != ProjectType.QUERY_SYNC) {
+    if (project == null || Blaze.getProjectType(project) != ProjectType.ASPECT_SYNC) {
       return;
     }
     BlazeProjectData projectData =
