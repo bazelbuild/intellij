@@ -75,20 +75,26 @@ public abstract class BlazeProjectAction extends AnAction {
       case QUERY_SYNC:
         switch (querySyncSupport()) {
           case HIDDEN:
-          case REQUIRED:
             e.getPresentation().setEnabledAndVisible(false);
             return;
           case DISABLED:
             e.getPresentation().setVisible(true);
             e.getPresentation().setEnabled(false);
             return;
+          case REQUIRED:
           case SUPPORTED:
             e.getPresentation().setEnabledAndVisible(true);
             break;
         }
         break;
       case ASPECT_SYNC:
-        e.getPresentation().setEnabledAndVisible(true);
+        switch (querySyncSupport()) {
+          case REQUIRED:
+            e.getPresentation().setEnabledAndVisible(false);
+            return;
+          default:
+            e.getPresentation().setEnabledAndVisible(true);
+        }
         break;
     }
 
