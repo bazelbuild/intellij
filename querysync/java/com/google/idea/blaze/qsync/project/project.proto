@@ -9,6 +9,7 @@ option java_package = "com.google.idea.blaze.qsync.project";
 message Project {
   repeated Library library = 1;
   repeated Module modules = 2;
+  CcWorkspace cc_workspace = 3;
 }
 
 /**
@@ -116,4 +117,49 @@ message JarDirectory {
 message LibrarySource {
   reserved 1;
   ContentRoot srcjar = 2;
+}
+
+message CcCompilerFlag {
+  string flag = 1;  // The flag itself, e.g. -D, -i, etc.
+  oneof Value {
+    ContentRoot path = 2;
+    string plain_value = 3;
+  }
+}
+
+message CcCompilerFlagSet {
+  repeated CcCompilerFlag flags = 2;
+}
+
+enum CcLanguage {
+  CC_LANGUAGE_UNKNOWN = 0;
+  C = 1;
+  OBJ_C = 2;
+  CPP = 3;
+  OBJ_CPP = 4;
+  NEW = 5;
+}
+
+message CcSourceFile {
+  string workspace_path = 1;
+  CcLanguage language = 2;
+  CcCompilerSettings compiler_settings = 4;
+}
+
+message CcCompilationContext {
+  string id = 1;
+  string human_readable_name = 2;
+  // Map keys are CcLanguage.name:
+  map<string, CcCompilerSettings> language_to_compiler_settings = 3;
+  repeated CcSourceFile sources = 4;
+}
+
+message CcCompilerSettings {
+  ContentRoot compiler_executable_path = 1;
+  string flag_set_id = 2;
+}
+
+message CcWorkspace {
+  map<string, CcCompilerFlagSet> flag_sets = 1;
+  repeated CcCompilationContext contexts = 3;
 }

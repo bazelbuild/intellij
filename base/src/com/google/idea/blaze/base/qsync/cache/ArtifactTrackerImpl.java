@@ -36,7 +36,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Multimaps;
@@ -49,7 +48,6 @@ import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.CachedArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
 import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcCompilationInfo;
-import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcTargetInfo;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStats;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
@@ -69,6 +67,7 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.GeneratedSourceProjectUpdater;
 import com.google.idea.blaze.qsync.SrcJarProjectUpdater;
+import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
@@ -119,7 +118,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   // Information about java dependency artifacts derived when the dependencies were built.
   // Note that artifacts that do not produce files are also stored here.
   private final Map<Label, ArtifactInfo> javaArtifacts = new HashMap<>();
-  private final Map<Label, CcTargetInfo> ccTargetInfo = new HashMap<>();
+  private CcDependenciesInfo ccDepencenciesInfo = CcDependenciesInfo.EMPTY;
   // Information about the origin of files in the cache. For each file in the cache, stores the
   // artifact key that the file was derived from.
   private final Map<Path, Path> cachePathToArtifactKeyMap = new HashMap<>();
@@ -223,8 +222,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   private void saveState() throws IOException {
     BuildArtifacts.Builder builder = BuildArtifacts.newBuilder();
     javaArtifacts.values().stream().map(ArtifactInfo::toProto).forEach(builder::addArtifacts);
-    CcCompilationInfo ccCompilationInfo =
-        CcCompilationInfo.newBuilder().addAllTargets(ccTargetInfo.values()).build();
+    CcCompilationInfo ccCompilationInfo = ccDepencenciesInfo.toProto();
     CachedArtifacts.Builder cachedArtifactsBuilder = CachedArtifacts.newBuilder();
     for (Map.Entry<Path, Path> entry : cachePathToArtifactKeyMap.entrySet()) {
       cachedArtifactsBuilder.putCachePathToArtifactPath(
@@ -246,7 +244,6 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
       return;
     }
     javaArtifacts.clear();
-    ccTargetInfo.clear();
     cachePathToArtifactKeyMap.clear();
     try (InputStream stream = new GZIPInputStream(Files.newInputStream(persistentFile))) {
       ArtifactTrackerState saved =
@@ -265,11 +262,9 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
         ArtifactInfo artifactInfo = ArtifactInfo.create(targetArtifact);
         javaArtifacts.put(artifactInfo.label(), artifactInfo);
       }
-      ccTargetInfo.putAll(
-          Maps.uniqueIndex(
-              saved.getCcCompilationInfo().getTargetsList(),
-              target -> Label.of(target.getLabel())));
+      ccDepencenciesInfo = CcDependenciesInfo.create(saved.getCcCompilationInfo());
     } catch (IOException e) {
+      logger.warn("Failed to load artifact tracker state", e);
       // TODO: If there is an error parsing the index, reinitialize the cache properly.
     }
   }
@@ -417,11 +412,10 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
       for (BuildArtifacts artifacts : outputInfo.getArtifactInfo()) {
         updateMaps(targets, artifacts);
       }
-      for (CcCompilationInfo ccInfo : outputInfo.getCcCompilationInfo()) {
-        for (CcTargetInfo targetInfo : ccInfo.getTargetsList()) {
-          ccTargetInfo.put(Label.of(targetInfo.getLabel()), targetInfo);
-        }
-      }
+      CcDependenciesInfo.Builder ccDepsBuilder = ccDepencenciesInfo.toBuilder();
+      outputInfo.getCcCompilationInfo().forEach(ccDepsBuilder::add);
+      ccDepencenciesInfo = ccDepsBuilder.build();
+
       saveState();
       return UpdateResult.create(updated.keySet(), ImmutableSet.of());
     } catch (ExecutionException | IOException e) {
@@ -628,6 +622,11 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   @Override
   public Path getExternalAarDirectory() {
     return aarCacheDirectory;
+  }
+
+  @Override
+  public CcDependenciesInfo getCcDependenciesInfo() {
+    return ccDepencenciesInfo;
   }
 
   private <T> T runMeasureAndLog(

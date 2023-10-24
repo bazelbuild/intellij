@@ -24,6 +24,8 @@ import java.nio.file.Path;
 @AutoValue
 public abstract class ProjectPath {
 
+  public static final ProjectPath WORKSPACE_ROOT = ProjectPath.create(Root.WORKSPACE, Path.of(""));
+
   /** The root that this path is relative to. */
   public enum Root {
     WORKSPACE,

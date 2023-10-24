@@ -2,7 +2,9 @@ package(default_visibility = [
     ":__subpackages__",
     "//aswb:__subpackages__",
     "//base:__subpackages__",
+    "//cpp:__subpackages__",
     "//java/com/google/devtools/intellij/blaze/plugin/base:__subpackages__",
+    "//java/com/google/devtools/intellij/blaze/plugin/cpp:__subpackages__",
     "//java/com/google/devtools/intellij/blaze/plugin/querysync:__subpackages__",
     "//querysync/javatests:__subpackages__",
 ])
@@ -12,6 +14,7 @@ java_library(
     name = "querysync",
     exports = [
         "//querysync/java/com/google/idea/blaze/qsync",
+        "//querysync/java/com/google/idea/blaze/qsync/cc",
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/query",
@@ -30,6 +33,7 @@ test_suite(
         "//querysync/javatests/com/google/idea/blaze/qsync:QuerySyncTestUtilsTest",
         "//querysync/javatests/com/google/idea/blaze/qsync:SrcJarProjectUpdaterTest",
         "//querysync/javatests/com/google/idea/blaze/qsync:TestSourceGlobMatcherTest",
+        "//querysync/javatests/com/google/idea/blaze/qsync/cc:CcWorkspaceBuilderTest",
         "//querysync/javatests/com/google/idea/blaze/qsync/project:BuildGraphTest",
         "//querysync/javatests/com/google/idea/blaze/qsync/project:ProjectDefinitionTest",
         "//querysync/javatests/com/google/idea/blaze/qsync/project:SnapshotSerializationTest",
