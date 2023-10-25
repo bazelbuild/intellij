@@ -75,7 +75,8 @@ public class ProjectRefresher {
       if (latestProjectSnapshotSupplier.get().isPresent()) {
         // We have full project state. We don't need to do anything.
         context.output(PrintOutput.log("Nothing has changed since last sync."));
-        return new NoopProjectRefresh(latestProjectSnapshotSupplier.get()::get);
+        return new NoopProjectRefresh(
+            latestProjectSnapshotSupplier.get()::get, params.latestVcsState);
       }
       // else we need to recalculate the project structure. This happens on the first sync after
       // reloading the project.

@@ -77,7 +77,7 @@ public class ProjectRefresherTest {
   }
 
   @Test
-  public void testStartPartialRefresh_vcsSnapshotUnchanged_existingProjectSnapshot()
+  public void testStartPartialRefresh_vcsSnapshotUnchanged_existingProjectSnapshotWithVcsState()
       throws Exception {
     VcsState vcsState =
         new VcsState(
@@ -100,7 +100,8 @@ public class ProjectRefresherTest {
                 project.projectDefinition());
     assertThat(update).isInstanceOf(NoopProjectRefresh.class);
     assertThat(update.createPostQuerySyncData(QuerySummary.EMPTY))
-        .isSameInstanceAs(existingProject.queryData());
+        .isEqualTo(
+            existingProject.queryData().toBuilder().setVcsState(Optional.of(vcsState)).build());
   }
 
   @Test
