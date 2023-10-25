@@ -1,4 +1,8 @@
 load(
+    "//:build-visibility.bzl",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
+load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
     "intellij_plugin_library",
@@ -11,10 +15,6 @@ load(
     "intellij_unit_test_suite",
 )
 load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
-load(
-    "//:build-visibility.bzl",
-    "PLUGIN_PACKAGES_VISIBILITY",
-)
 
 licenses(["notice"])
 
@@ -23,6 +23,7 @@ java_library(
     srcs = glob([
         "src/com/google/idea/blaze/cpp/*.java",
         "src/com/google/idea/blaze/cpp/includes/*.java",
+        "src/com/google/idea/blaze/cpp/qsync/*.java",
         "src/com/google/idea/blaze/cpp/syncstatus/*.java",
         "src/com/google/idea/blaze/cpp/navigation/*.java",
     ]),
@@ -33,6 +34,8 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//querysync",
+        "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//sdkcompat",
         "//shared",
         "//third_party/auto_value",
