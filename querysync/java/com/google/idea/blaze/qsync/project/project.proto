@@ -9,6 +9,7 @@ option java_package = "com.google.idea.blaze.qsync.project";
 message Project {
   repeated Library library = 1;
   repeated Module modules = 2;
+  CcWorkspace cc_workspace = 3;
 }
 
 /**
@@ -116,4 +117,8 @@ message JarDirectory {
 message LibrarySource {
   reserved 1;
   ContentRoot srcjar = 2;
+}
+
+message CcWorkspace {
+  // TODO(b/301235884) implement this.
 }

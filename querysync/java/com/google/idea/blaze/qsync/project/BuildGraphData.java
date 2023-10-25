@@ -129,6 +129,15 @@ public abstract class BuildGraphData {
         .collect(toImmutableList());
   }
 
+  public ImmutableSet<Path> getTargetSources(Label target) {
+    return Optional.ofNullable(targetMap().get(target)).stream()
+        .map(ProjectTarget::sourceLabels)
+        .flatMap(Set::stream)
+        .map(locations()::get)
+        .map(l -> l.file)
+        .collect(toImmutableSet());
+  }
+
   @Override
   public final String toString() {
     // The default autovalue toString() implementation can result in a very large string which
