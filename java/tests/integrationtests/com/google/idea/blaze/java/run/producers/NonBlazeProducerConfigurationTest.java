@@ -41,7 +41,6 @@ public class NonBlazeProducerConfigurationTest extends BlazeRunConfigurationProd
 
   private static final ImmutableSet<String> ACCEPTED_NON_BAZEL_PRODUCERS =
       ImmutableSet.of(
-          "org.jetbrains.kotlin.idea.gradleJava.run.KotlinMultiplatformJvmRunConfigurationProducer",
           "com.intellij.execution.jar.JarApplicationConfigurationProducer",
           "com.intellij.execution.scratch.JavaScratchConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer",
@@ -53,7 +52,8 @@ public class NonBlazeProducerConfigurationTest extends BlazeRunConfigurationProd
           "org.jetbrains.kotlin.idea.gradle.testing.common.KotlinMultiplatformCommonTestMethodGradleConfigurationProducer",
           "org.jetbrains.kotlin.idea.gradleJava.run.KotlinMultiplatformJvmRunConfigurationProducer",
           "org.jetbrains.kotlin.ide.konan.KotlinNativeRunConfigurationProducer",
-          "com.android.tools.idea.compose.preview.runconfiguration.ComposePreviewRunConfigurationProducer");
+          "com.android.tools.idea.compose.preview.runconfiguration.ComposePreviewRunConfigurationProducer",
+          "com.android.tools.idea.run.configuration.BaselineProfileConfigurationProducer");
 
   @Before
   public final void suppressNativeProducers() {

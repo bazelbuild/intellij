@@ -86,6 +86,11 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
   }
 
   @Override
+  public Project getProject() {
+    return project;
+  }
+
+  @Override
   public boolean allowsFileCreation() {
     return true;
   }
