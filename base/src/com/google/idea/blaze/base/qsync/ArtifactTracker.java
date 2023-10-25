@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import java.io.File;
@@ -82,6 +83,12 @@ public interface ArtifactTracker {
    * manifests) in the layout expected by the IDE.
    */
   Path getExternalAarDirectory();
+
+  /**
+   * Returns the CC target info from the cache. This is the compilation info created by the aspect
+   * when dependencies are build for a CC targets.
+   */
+  CcDependenciesInfo getCcDependenciesInfo();
 
   /** A data class representing the result of updating artifacts. */
   @AutoValue

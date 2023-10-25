@@ -12,6 +12,7 @@ java_library(
     name = "querysync",
     exports = [
         "//querysync/java/com/google/idea/blaze/qsync",
+        "//querysync/java/com/google/idea/blaze/qsync/cc",
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/query",
