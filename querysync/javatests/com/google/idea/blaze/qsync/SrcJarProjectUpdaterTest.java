@@ -24,8 +24,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectPath.Resolver;
 import com.google.idea.blaze.qsync.project.ProjectProto;
-import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import com.google.idea.blaze.qsync.project.ProjectProto.LibrarySource;
+import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import com.google.idea.blaze.qsync.testdata.ProjectProtos;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.io.IOException;
@@ -81,14 +81,14 @@ public class SrcJarProjectUpdaterTest {
                     .addSources(
                         LibrarySource.newBuilder()
                             .setSrcjar(
-                                ProjectProto.ContentRoot.newBuilder()
+                                ProjectProto.ProjectPath.newBuilder()
                                     .setBase(Base.WORKSPACE)
                                     .setPath("path/to/sources1.srcjar"))
                             .build())
                     .addSources(
                         LibrarySource.newBuilder()
                             .setSrcjar(
-                                ProjectProto.ContentRoot.newBuilder()
+                                ProjectProto.ProjectPath.newBuilder()
                                     .setBase(Base.WORKSPACE)
                                     .setPath("path/to/sources2.srcjar"))
                             .build())
@@ -121,14 +121,14 @@ public class SrcJarProjectUpdaterTest {
                     .addSources(
                         LibrarySource.newBuilder()
                             .setSrcjar(
-                                ProjectProto.ContentRoot.newBuilder()
+                                ProjectProto.ProjectPath.newBuilder()
                                     .setBase(Base.WORKSPACE)
                                     .setPath("path/to/sources1.srcjar"))
                             .build())
                     .addSources(
                         LibrarySource.newBuilder()
                             .setSrcjar(
-                                ProjectProto.ContentRoot.newBuilder()
+                                ProjectProto.ProjectPath.newBuilder()
                                     .setBase(Base.WORKSPACE)
                                     .setPath("path/to/sources2.srcjar"))
                             .build())
@@ -147,7 +147,7 @@ public class SrcJarProjectUpdaterTest {
     assertThat(
             newProject.getLibrary(0).getSourcesList().stream()
                 .map(LibrarySource::getSrcjar)
-                .map(ProjectProto.ContentRoot::getPath))
+                .map(ProjectProto.ProjectPath::getPath))
         .containsExactly("path/to/sources1.srcjar");
   }
 
@@ -166,7 +166,7 @@ public class SrcJarProjectUpdaterTest {
                     .addSources(
                         LibrarySource.newBuilder()
                             .setSrcjar(
-                                ProjectProto.ContentRoot.newBuilder()
+                                ProjectProto.ProjectPath.newBuilder()
                                     .setBase(Base.WORKSPACE)
                                     .setPath("path/to/sources1.srcjar"))
                             .build())
@@ -187,7 +187,7 @@ public class SrcJarProjectUpdaterTest {
     assertThat(
             newProject.getLibrary(0).getSourcesList().stream()
                 .map(LibrarySource::getSrcjar)
-                .map(ProjectProto.ContentRoot::getPath))
+                .map(ProjectProto.ProjectPath::getPath))
         .containsExactly("path/to/sources1.srcjar", "path/to/sources2.srcjar");
   }
 
@@ -343,7 +343,7 @@ public class SrcJarProjectUpdaterTest {
                     .addSources(
                         LibrarySource.newBuilder()
                             .setSrcjar(
-                                ProjectProto.ContentRoot.newBuilder()
+                                ProjectProto.ProjectPath.newBuilder()
                                     .setBase(Base.WORKSPACE)
                                     .setPath("path/to/sources.srcjar"))
                             .build())
@@ -365,7 +365,7 @@ public class SrcJarProjectUpdaterTest {
     assertThat(
             newProject.getLibrary(0).getSourcesList().stream()
                 .map(LibrarySource::getSrcjar)
-                .map(ProjectProto.ContentRoot::getInnerPath))
+                .map(ProjectProto.ProjectPath::getInnerPath))
         .containsExactly("java/package/root");
   }
 

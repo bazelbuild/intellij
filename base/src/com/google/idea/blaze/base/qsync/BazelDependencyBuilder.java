@@ -25,7 +25,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
+import com.google.devtools.intellij.qsync.ArtifactTrackerData.JavaArtifacts;
 import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcCompilationInfo;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException.ThrowOption;
@@ -202,7 +202,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
       BlazeBuildOutputs blazeBuildOutputs, Set<OutputGroup> outputGroups) throws BuildException {
     GroupedOutputArtifacts allArtifacts =
         new GroupedOutputArtifacts(blazeBuildOutputs, outputGroups);
-    ImmutableSet.Builder<BuildArtifacts> artifactInfoFilesBuilder = ImmutableSet.builder();
+    ImmutableSet.Builder<JavaArtifacts> artifactInfoFilesBuilder = ImmutableSet.builder();
     ImmutableSet.Builder<CcCompilationInfo> ccInfoBuilder = ImmutableSet.builder();
 
     for (OutputArtifact artifactInfoFile : allArtifacts.get(OutputGroup.ARTIFACT_INFO_FILE)) {
@@ -222,8 +222,8 @@ public class BazelDependencyBuilder implements DependencyBuilder {
         blazeBuildOutputs.buildResult.exitCode);
   }
 
-  private BuildArtifacts readArtifactInfoFile(BlazeArtifact file) throws BuildException {
-    return readProtoFile(BuildArtifacts.newBuilder(), file).build();
+  private JavaArtifacts readArtifactInfoFile(BlazeArtifact file) throws BuildException {
+    return readProtoFile(JavaArtifacts.newBuilder(), file).build();
   }
 
   private CcCompilationInfo readCcInfoFile(BlazeArtifact file) throws BuildException {

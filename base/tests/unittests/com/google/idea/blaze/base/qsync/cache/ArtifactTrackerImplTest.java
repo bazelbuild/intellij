@@ -24,8 +24,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
+import com.google.devtools.intellij.qsync.ArtifactTrackerData.JavaArtifacts;
+import com.google.devtools.intellij.qsync.ArtifactTrackerData.JavaTargetArtifacts;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.qsync.ArtifactTracker.UpdateResult;
@@ -239,15 +239,15 @@ public class ArtifactTrackerImplTest {
                                 .build())
                         .build())
                 .setArtifactInfo(
-                    BuildArtifacts.newBuilder()
+                    JavaArtifacts.newBuilder()
                         .addArtifacts(
-                            TargetArtifacts.newBuilder()
+                            JavaTargetArtifacts.newBuilder()
                                 .setTarget("//test:test")
                                 .addJars("out/test.jar")
                                 .addSrcs("test/Test.java")
                                 .build())
                         .addArtifacts(
-                            TargetArtifacts.newBuilder()
+                            JavaTargetArtifacts.newBuilder()
                                 .setTarget("//test:anothertest")
                                 .addJars("out/anothertest.jar")
                                 .addSrcs("test/AnotherTest.java")
@@ -290,9 +290,9 @@ public class ArtifactTrackerImplTest {
                                 .build())
                         .build())
                 .setArtifactInfo(
-                    BuildArtifacts.newBuilder()
+                    JavaArtifacts.newBuilder()
                         .addArtifacts(
-                            TargetArtifacts.newBuilder()
+                            JavaTargetArtifacts.newBuilder()
                                 .setTarget("//test:test")
                                 .addJars("out/test.jar")
                                 .addSrcs("test/Test.java")

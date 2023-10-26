@@ -19,7 +19,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
+import com.google.devtools.intellij.qsync.ArtifactTrackerData.JavaArtifacts;
 import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcCompilationInfo;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.common.Label;
@@ -34,7 +34,7 @@ public abstract class OutputInfo {
           GroupedOutputArtifacts.EMPTY, ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of(), 0);
 
   /** Returns the proto containing details of artifacts per target produced by the aspect. */
-  public abstract ImmutableSet<BuildArtifacts> getArtifactInfo();
+  public abstract ImmutableSet<JavaArtifacts> getArtifactInfo();
 
   public abstract ImmutableSet<CcCompilationInfo> getCcCompilationInfo();
 
@@ -74,7 +74,7 @@ public abstract class OutputInfo {
 
   public static OutputInfo create(
       GroupedOutputArtifacts allArtifacts,
-      ImmutableSet<BuildArtifacts> artifacts,
+      ImmutableSet<JavaArtifacts> artifacts,
       ImmutableSet<CcCompilationInfo> ccInfo,
       ImmutableSet<Label> targetsWithErrors,
       int exitCode) {
@@ -92,9 +92,9 @@ public abstract class OutputInfo {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    public abstract Builder setArtifactInfo(ImmutableSet<BuildArtifacts> value);
+    public abstract Builder setArtifactInfo(ImmutableSet<JavaArtifacts> value);
 
-    public abstract Builder setArtifactInfo(BuildArtifacts... values);
+    public abstract Builder setArtifactInfo(JavaArtifacts... values);
 
     public abstract Builder setCcCompilationInfo(ImmutableSet<CcCompilationInfo> value);
 

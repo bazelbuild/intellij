@@ -17,7 +17,7 @@ package com.google.idea.blaze.qsync.project;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
+import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import java.nio.file.Path;
 
 /** A path to a project artifact, either in the workspace or the project directory. */
@@ -43,8 +43,8 @@ public abstract class ProjectPath {
     return create(rootType(), relativePath(), inner);
   }
 
-  public ProjectProto.ContentRoot toProto() {
-    ProjectProto.ContentRoot.Builder proto = ProjectProto.ContentRoot.newBuilder();
+  public ProjectProto.ProjectPath toProto() {
+    ProjectProto.ProjectPath.Builder proto = ProjectProto.ProjectPath.newBuilder();
     switch (rootType()) {
       case WORKSPACE:
         proto.setBase(Base.WORKSPACE);
@@ -72,7 +72,7 @@ public abstract class ProjectPath {
     return projectRelative(Path.of(path));
   }
 
-  static Root convertContentRootBase(ProjectProto.ContentRoot.Base base) {
+  static Root convertContentRootBase(ProjectProto.ProjectPath.Base base) {
     switch (base) {
       case PROJECT:
         return Root.PROJECT;
@@ -83,7 +83,7 @@ public abstract class ProjectPath {
     }
   }
 
-  public static ProjectPath create(ProjectProto.ContentRoot path) {
+  public static ProjectPath create(ProjectProto.ProjectPath path) {
     return create(
         convertContentRootBase(path.getBase()),
         Path.of(path.getPath()),

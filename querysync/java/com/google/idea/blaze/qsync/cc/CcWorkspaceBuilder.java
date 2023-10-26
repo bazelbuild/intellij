@@ -42,8 +42,8 @@ import com.google.idea.blaze.qsync.project.ProjectProto.CcCompilerFlagSet;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcCompilerSettings;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcLanguage;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcSourceFile;
-import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot;
-import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
+import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath;
+import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -75,7 +75,7 @@ public class CcWorkspaceBuilder {
   private final Map<String, Multimap<CcLanguage, CcCompilerFlag>> toolchainLanguageFlags =
       Maps.newHashMap();
   /* Map from toolchain ID -> compiler executable. */
-  private final Map<String, ContentRoot> compilerExecutableMap = Maps.newHashMap();
+  private final Map<String, ProjectPath> compilerExecutableMap = Maps.newHashMap();
   /* Map of unique sets of compiler flags to an ID to identify them.
    * We do this as the downstream code turns each set of flags into a CidrCompilerSwitches instance
    * which can have a large memory footprint. */
@@ -129,7 +129,7 @@ public class CcWorkspaceBuilder {
   private void visitToolchain(CcToolchainInfo toolchainInfo) {
     compilerExecutableMap.put(
         toolchainInfo.getId(),
-        ContentRoot.newBuilder()
+        ProjectPath.newBuilder()
             .setPath(toolchainInfo.getCompilerExecutable())
             .setBase(Base.WORKSPACE)
             .build());
@@ -268,7 +268,7 @@ public class CcWorkspaceBuilder {
   }
 
   private CcCompilerFlag makePathFlag(String flag, Path path) {
-    ContentRoot.Builder pathBuilder = ContentRoot.newBuilder();
+    ProjectPath.Builder pathBuilder = ProjectPath.newBuilder();
     if (topLevelGenHdrsPaths.contains(path.getName(0))) {
       // The directories given by blaze include the "bazel-out" component, but that is not present
       // in the paths of the generated headers themselves due to the legacy semantics of

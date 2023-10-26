@@ -22,7 +22,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
+import com.google.devtools.intellij.qsync.ArtifactTrackerData.JavaTargetArtifacts;
 import com.google.idea.blaze.common.Label;
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -57,7 +57,7 @@ public abstract class ArtifactInfo {
 
   public abstract ImmutableSet<Path> srcJars();
 
-  public static ArtifactInfo create(TargetArtifacts proto) {
+  public static ArtifactInfo create(JavaTargetArtifacts proto) {
     // Note, the proto contains a list of sources, we take the parent as we want directories instead
     return new AutoValue_ArtifactInfo(
         Label.of(proto.getTarget()),
@@ -68,8 +68,8 @@ public abstract class ArtifactInfo {
         proto.getSrcjarsList().stream().map(Path::of).collect(toImmutableSet()));
   }
 
-  public TargetArtifacts toProto() {
-    return TargetArtifacts.newBuilder()
+  public JavaTargetArtifacts toProto() {
+    return JavaTargetArtifacts.newBuilder()
         .setTarget(label().toString())
         .addAllJars(jars().stream().map(Path::toString).collect(toImmutableList()))
         .addAllIdeAars(ideAars().stream().map(Path::toString).collect(toImmutableList()))
