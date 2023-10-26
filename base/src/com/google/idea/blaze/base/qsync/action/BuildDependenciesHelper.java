@@ -46,6 +46,14 @@ import java.util.function.Consumer;
  */
 public class BuildDependenciesHelper {
 
+  /** Enum specifying which target(s) dependencies are built for */
+  public enum DepsBuildType {
+    /** Build dependencies of the specified target(s) */
+    SELF,
+    /** Build dependencies of the reverse depependencies of the specified target(s) */
+    REVERSE_DEPS
+  }
+
   /** Encapsulates a relative position to show the target selection popup at. */
   public interface PopupPosititioner {
     void showInCorrectPosition(JBPopup popup);
@@ -89,11 +97,13 @@ public class BuildDependenciesHelper {
   private final Project project;
   private final QuerySyncManager syncManager;
   private final Class<?> actionClass;
+  private final DepsBuildType depsBuildType;
 
-  public BuildDependenciesHelper(Project project, Class<?> actionClass) {
+  public BuildDependenciesHelper(Project project, Class<?> actionClass, DepsBuildType buildType) {
     this.project = project;
     this.syncManager = QuerySyncManager.getInstance(project);
     this.actionClass = actionClass;
+    this.depsBuildType = buildType;
   }
 
   boolean canEnableAnalysisNow() {
@@ -142,7 +152,7 @@ public class BuildDependenciesHelper {
     QuerySyncActionStatsScope querySyncActionStats =
         new QuerySyncActionStatsScope(actionClass, e, vfile);
     if (!toBuild.isAmbiguous()) {
-      syncManager.enableAnalysis(toBuild.targets(), querySyncActionStats);
+      enableAnalysis(toBuild.targets(), querySyncActionStats);
       return;
     }
     chooseTargetToBuildFor(
@@ -153,7 +163,13 @@ public class BuildDependenciesHelper {
   }
 
   void enableAnalysis(ImmutableSet<Label> targets, QuerySyncActionStatsScope querySyncActionStats) {
-    syncManager.enableAnalysis(targets, querySyncActionStats);
+    switch (depsBuildType) {
+      case SELF:
+        syncManager.enableAnalysis(targets, querySyncActionStats);
+        break;
+      case REVERSE_DEPS:
+        syncManager.enableAnalysisForReverseDeps(targets, querySyncActionStats);
+    }
   }
 
   public void chooseTargetToBuildFor(

@@ -35,11 +35,13 @@ import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.RuleKinds;
+import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import java.nio.file.Path;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -96,6 +98,26 @@ public abstract class BuildGraphData {
       }
     }
     return map.build();
+  }
+
+  /**
+   * Calculates the set of direct reverse dependencies for a set of targets (including the targets
+   * themselves).
+   */
+  public ImmutableSet<Label> getSameLanguageTargetsDependingOn(Set<Label> targets) {
+    ImmutableMultimap<Label, Label> rdeps = reverseDeps();
+    ImmutableSet.Builder<Label> directRdeps = ImmutableSet.builder();
+    directRdeps.addAll(targets);
+    for (Label target : targets) {
+      ImmutableSet<LanguageClass> targetLanguages = targetMap().get(target).languages();
+      // filter the rdeps based on the languages, removing those that don't have a common
+      // language. This ensures we don't follow reverse deps of (e.g.) a java target depending on
+      // a cc target.
+      rdeps.get(target).stream()
+          .filter(d -> !Collections.disjoint(targetMap().get(d).languages(), targetLanguages))
+          .forEach(directRdeps::add);
+    }
+    return directRdeps.build();
   }
 
   /**

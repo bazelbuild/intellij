@@ -48,6 +48,19 @@ genquery(
 )
 
 genquery(
+    name = "java_library_transitive_internal_dep_query",
+    expression = " + ".join([
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata/transitiveinternaldep:*",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata/internaldep:*",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata/nodeps:*",
+    ]),
+    opts = ["--output=streamed_proto"],
+    scope = scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/transitiveinternaldep") +
+            scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/internaldep") +
+            scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/nodeps"),
+)
+
+genquery(
     name = "java_library_proto_dep_query",
     expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/protodep:*",
     opts = ["--output=streamed_proto"],
@@ -159,6 +172,7 @@ java_library(
         ":java_library_no_deps_query",
         ":java_library_proto_dep_query",
         ":java_library_transitive_dep_query",
+        ":java_library_transitive_internal_dep_query",
         ":proto_only_query",
     ],
     deps = [

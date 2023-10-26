@@ -6,6 +6,7 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata:build_graphs",
         "//shared",
         "@com_google_guava_guava//jar",
         "@junit//jar",

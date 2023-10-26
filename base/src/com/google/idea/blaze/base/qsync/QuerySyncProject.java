@@ -262,6 +262,12 @@ public class QuerySyncProject {
     return dependencyTracker.getProjectTargets(context, workspaceRelativePath);
   }
 
+  /** Returns the set of targets with direct dependencies on {@code targets}. */
+  public ImmutableSet<Label> getTargetsDependingOn(Set<Label> targets) {
+    BlazeProjectSnapshot snapshot = snapshotHolder.getCurrent().orElseThrow();
+    return snapshot.graph().getSameLanguageTargetsDependingOn(targets);
+  }
+
   public void build(BlazeContext parentContext, Set<Label> projectTargets)
       throws IOException, BuildException {
     try (BlazeContext context = BlazeContext.create(parentContext)) {

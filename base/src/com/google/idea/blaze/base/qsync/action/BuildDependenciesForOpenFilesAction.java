@@ -23,6 +23,7 @@ import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.qsync.TargetsToBuild;
+import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.PopupPosititioner;
 import com.google.idea.blaze.common.Label;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -53,7 +54,8 @@ public class BuildDependenciesForOpenFilesAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent event) {
-    BuildDependenciesHelper helper = new BuildDependenciesHelper(project, getClass());
+    BuildDependenciesHelper helper =
+        new BuildDependenciesHelper(project, getClass(), DepsBuildType.SELF);
     if (!helper.canEnableAnalysisNow()) {
       return;
     }

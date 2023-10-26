@@ -309,6 +309,18 @@ public class QuerySyncManager {
         context -> loadedProject.enableAnalysis(context, targets));
   }
 
+  @CanIgnoreReturnValue
+  public ListenableFuture<Boolean> enableAnalysisForReverseDeps(
+      Set<Label> targets, QuerySyncActionStatsScope querySyncActionStats) {
+    assertProjectLoaded();
+    return run(
+        "Building dependencies for affected targets",
+        "Building...",
+        querySyncActionStats,
+        context ->
+            loadedProject.enableAnalysis(context, loadedProject.getTargetsDependingOn(targets)));
+  }
+
   public boolean canEnableAnalysisFor(Path workspaceRelativePath) {
     if (loadedProject == null) {
       return false;
