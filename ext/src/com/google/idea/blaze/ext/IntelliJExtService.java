@@ -17,6 +17,7 @@ package com.google.idea.blaze.ext;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
+import com.google.idea.blaze.ext.ChatBotModelGrpc.ChatBotModelBlockingStub;
 import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlockingStub;
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
 import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
@@ -157,6 +158,11 @@ public final class IntelliJExtService {
   public ExperimentsServiceBlockingStub getExperimentsService() throws IOException {
     IntelliJExtBlockingStub unused = connect();
     return client.getExperimentsService();
+  }
+
+  public ChatBotModelBlockingStub getChatBotModelService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getChatBotModelService();
   }
 
   public LinterFutureStub getLinterService() throws IOException {
