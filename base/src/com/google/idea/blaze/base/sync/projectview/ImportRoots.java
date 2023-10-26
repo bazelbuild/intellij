@@ -94,10 +94,22 @@ public final class ImportRoots {
     @VisibleForTesting
     public Builder add(DirectoryEntry entry) {
       if (entry.included) {
-        rootDirectoriesBuilder.add(entry.directory);
+        include(entry.directory);
       } else {
-        excludeDirectoriesBuilder.add(entry.directory);
+        exclude(entry.directory);
       }
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public Builder include(WorkspacePath directory) {
+      rootDirectoriesBuilder.add(directory);
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public Builder exclude(WorkspacePath entry) {
+      excludeDirectoriesBuilder.add(entry);
       return this;
     }
 
@@ -134,12 +146,12 @@ public final class ImportRoots {
       for (String dir :
           BuildSystemProvider.getBuildSystemProvider(buildSystemName)
               .buildArtifactDirectories(workspaceRoot)) {
-        excludeDirectoriesBuilder.add(new WorkspacePath(dir));
+        exclude(new WorkspacePath(dir));
       }
     }
 
     private void excludeProjectDataSubDirectory() {
-      excludeDirectoriesBuilder.add(new WorkspacePath(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY));
+      exclude(new WorkspacePath(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY));
     }
 
     private void excludeBazelIgnoredPaths() {
