@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -41,6 +42,10 @@ public class IntelliJExtManager {
   private static final Logger logger = Logger.getInstance(IntelliJExtManager.class);
 
   // Keep all the experiments together for ease of maintenance
+  /**
+   * Controls whether the intellij-ext binary is used at all. Ignored if EXPERIMENT_SERVICE_PROPERTY
+   * is set.
+   */
   private static final BoolExperiment ENABLED = new BoolExperiment("use.intellij.ext", false);
 
   private static final BoolExperiment ISSUETRACKER =
@@ -53,6 +58,10 @@ public class IntelliJExtManager {
 
   private static final BoolExperiment KYTHE = new BoolExperiment("use.intellij.ext.kythe", false);
 
+  /**
+   * System property controlling the experiments service. If set to 1, forces intellij-ext binary to
+   * be available (regardless of ENABLED value)
+   */
   private static final String EXPERIMENT_SERVICE_PROPERTY = "use.intellij.ext.experiments";
 
   public static IntelliJExtManager getInstance() {
@@ -63,7 +72,7 @@ public class IntelliJExtManager {
 
   public IntelliJExtManager() {
     String path = null;
-    if (ENABLED.getValue()) {
+    if (isExperimentsServiceEnabled() || ENABLED.getValue()) {
       // If the VM option is set, override the path
       path = System.getProperty(INTELLIJ_EXT_BINARY);
       if (path == null) {
@@ -117,7 +126,10 @@ public class IntelliJExtManager {
     return isEnabled() && KYTHE.getValue();
   }
 
-  public boolean isExperimentsServiceEnabled() {
-    return System.getProperty(EXPERIMENT_SERVICE_PROPERTY).equals("1");
+  // This method cannot rely on reading any experiment values (such as those in the constructor of
+  // this class), as they will cause circular service instantiation errors when the IDE tries to
+  // obtain an experiments service client
+  public static boolean isExperimentsServiceEnabled() {
+    return Objects.equals(System.getProperty(EXPERIMENT_SERVICE_PROPERTY), "1");
   }
 }
