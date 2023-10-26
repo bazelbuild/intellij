@@ -55,7 +55,7 @@ public class CcProjectModelUpdater implements BlazeProjectListener {
   }
 
   @Override
-  public void graphCreated(Context<?> context, BlazeProjectSnapshot instance) {
+  public void onNewProjectSnapshot(Context<?> context, BlazeProjectSnapshot instance) {
     updateProjectModel(instance.project(), context);
   }
 

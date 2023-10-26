@@ -47,7 +47,7 @@ public class ProjectStatsLogger implements BlazeProjectListener {
   }
 
   @Override
-  public void graphCreated(Context<?> context, BlazeProjectSnapshot instance) {
+  public void onNewProjectSnapshot(Context<?> context, BlazeProjectSnapshot instance) {
     Optional.ofNullable(context.getScope(QuerySyncActionStatsScope.class))
         .ifPresent(
             scope -> {

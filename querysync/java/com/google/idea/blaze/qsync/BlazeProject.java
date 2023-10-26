@@ -50,7 +50,7 @@ public class BlazeProject {
       listeners = ImmutableList.copyOf(this.listeners);
     }
     for (BlazeProjectListener l : listeners) {
-      l.graphCreated(context, newInstance);
+      l.onNewProjectSnapshot(context, newInstance);
     }
   }
 
