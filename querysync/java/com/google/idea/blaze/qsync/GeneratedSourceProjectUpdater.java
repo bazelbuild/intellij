@@ -17,8 +17,8 @@ package com.google.idea.blaze.qsync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.qsync.project.ProjectProto;
-import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
+import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import java.nio.file.Path;
 
 /** Updates project protos with a content entry for generated sources */
@@ -50,7 +50,7 @@ public class GeneratedSourceProjectUpdater {
     ProjectProto.ContentEntry.Builder genSourcesContentEntry =
         ProjectProto.ContentEntry.newBuilder()
             .setRoot(
-                ProjectProto.ContentRoot.newBuilder()
+                ProjectProto.ProjectPath.newBuilder()
                     .setBase(Base.PROJECT)
                     .setPath(genSrcCacheDirectory.toString()));
 

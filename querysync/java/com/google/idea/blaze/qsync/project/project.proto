@@ -50,7 +50,7 @@ enum ModuleType {
 /**
  * A path within the IJ project model, relative to a root.
  */
-message ContentRoot {
+message ProjectPath {
   /**
    * Specifies base to which the root path is relative.
    */
@@ -74,7 +74,7 @@ message ContentRoot {
  */
 message ContentEntry {
   /** Root of the content entry. Unique within the module. */
-  ContentRoot root = 1;
+  ProjectPath root = 1;
   repeated SourceFolder sources = 3;
   repeated string excludes = 2;
 }
@@ -116,7 +116,7 @@ message JarDirectory {
  */
 message LibrarySource {
   reserved 1;
-  ContentRoot srcjar = 2;
+  ProjectPath srcjar = 2;
 }
 
 
@@ -127,7 +127,7 @@ message LibrarySource {
 message CcCompilerFlag {
   string flag = 1;  // The flag itself, e.g. -D, -i, etc. (including the "-")
   oneof Value {
-    ContentRoot path = 2;
+    ProjectPath path = 2;
     string plain_value = 3;
   }
 }
@@ -185,7 +185,7 @@ message CcCompilationContext {
  * @see com.jetbrains.cidr.lang.workspace.OCCompilerSettings
  */
 message CcCompilerSettings {
-  ContentRoot compiler_executable_path = 1;
+  ProjectPath compiler_executable_path = 1;
   // ID of the flag set within CcWorkspace.flag_sets
   string flag_set_id = 2;
 }

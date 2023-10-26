@@ -44,9 +44,9 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.ArtifactTrackerState;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.CachedArtifacts;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
+import com.google.devtools.intellij.qsync.ArtifactTrackerData.JavaArtifacts;
+import com.google.devtools.intellij.qsync.ArtifactTrackerData.JavaTargetArtifacts;
 import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcCompilationInfo;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStats;
@@ -220,7 +220,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   }
 
   private void saveState() throws IOException {
-    BuildArtifacts.Builder builder = BuildArtifacts.newBuilder();
+    JavaArtifacts.Builder builder = JavaArtifacts.newBuilder();
     javaArtifacts.values().stream().map(ArtifactInfo::toProto).forEach(builder::addArtifacts);
     CcCompilationInfo ccCompilationInfo = ccDepencenciesInfo.toProto();
     CachedArtifacts.Builder cachedArtifactsBuilder = CachedArtifacts.newBuilder();
@@ -258,7 +258,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
           saved.getArtifactInfo().getArtifactsList().stream()
               .map(ArtifactInfo::create)
               .collect(toImmutableMap(ArtifactInfo::label, Function.identity())));
-      for (TargetArtifacts targetArtifact : saved.getArtifactInfo().getArtifactsList()) {
+      for (JavaTargetArtifacts targetArtifact : saved.getArtifactInfo().getArtifactsList()) {
         ArtifactInfo artifactInfo = ArtifactInfo.create(targetArtifact);
         javaArtifacts.put(artifactInfo.label(), artifactInfo);
       }
@@ -409,7 +409,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
       ImmutableMap<Path, Path> updated = cache(context, artifactMap);
 
       this.cachePathToArtifactKeyMap.putAll(updated);
-      for (BuildArtifacts artifacts : outputInfo.getArtifactInfo()) {
+      for (JavaArtifacts artifacts : outputInfo.getArtifactInfo()) {
         updateMaps(targets, artifacts);
       }
       CcDependenciesInfo.Builder ccDepsBuilder = ccDepencenciesInfo.toBuilder();
@@ -503,7 +503,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     // files produced by the aspect.
     SetMultimap<Label, String> genSrcsByTarget =
         outputInfo.getArtifactInfo().stream()
-            .map(BuildArtifacts::getArtifactsList)
+            .map(JavaArtifacts::getArtifactsList)
             .flatMap(List::stream)
             .collect(
                 Multimaps.flatteningToMultimap(
@@ -530,8 +530,8 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
    * @param targets the list of targets that were expected to be built. (From blaze query)
    * @param newArtifacts the artifacts that were actually built. From (blaze build)
    */
-  private void updateMaps(Set<Label> targets, BuildArtifacts newArtifacts) {
-    for (TargetArtifacts targetArtifacts : newArtifacts.getArtifactsList()) {
+  private void updateMaps(Set<Label> targets, JavaArtifacts newArtifacts) {
+    for (JavaTargetArtifacts targetArtifacts : newArtifacts.getArtifactsList()) {
       ArtifactInfo artifactInfo = ArtifactInfo.create(targetArtifacts);
       javaArtifacts.put(artifactInfo.label(), artifactInfo);
     }

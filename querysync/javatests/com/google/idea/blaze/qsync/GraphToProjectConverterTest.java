@@ -27,7 +27,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectProto;
-import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
+import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.testdata.BuildGraphs;
 import com.google.idea.blaze.qsync.testdata.TestData;

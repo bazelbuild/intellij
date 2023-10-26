@@ -32,7 +32,7 @@ import com.google.idea.blaze.qsync.project.ProjectProto.CcCompilationContext;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcCompilerSettings;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcLanguage;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcSourceFile;
-import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
+import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import com.google.idea.blaze.qsync.testdata.BuildGraphs;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.nio.file.Path;
