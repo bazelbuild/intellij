@@ -64,6 +64,9 @@ public class IntelliJExtManager {
    */
   private static final String EXPERIMENT_SERVICE_PROPERTY = "use.intellij.ext.experiments";
 
+  private static final BoolExperiment CHATBOT =
+      new BoolExperiment("use.intellij.ext.chatbot", false);
+
   public static IntelliJExtManager getInstance() {
     return ApplicationManager.getApplication().getService(IntelliJExtManager.class);
   }
@@ -131,5 +134,9 @@ public class IntelliJExtManager {
   // obtain an experiments service client
   public static boolean isExperimentsServiceEnabled() {
     return Objects.equals(System.getProperty(EXPERIMENT_SERVICE_PROPERTY), "1");
+  }
+
+  public boolean isChatBotEnabled() {
+    return isEnabled() && CHATBOT.getValue();
   }
 }
