@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync.action;
 
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
+import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.PopupPosititioner;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.icons.AllIcons.Actions;
@@ -57,7 +58,8 @@ public class BuildDependenciesAction extends BlazeProjectAction {
     presentation.setIcon(Actions.Compile);
     presentation.setText(NAME);
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    BuildDependenciesHelper helper = new BuildDependenciesHelper(project, getClass());
+    BuildDependenciesHelper helper =
+        new BuildDependenciesHelper(project, getClass(), DepsBuildType.SELF);
     Optional<Path> relativePath = helper.getRelativePathToEnableAnalysisFor(virtualFile);
     if (relativePath.isEmpty()) {
       presentation.setEnabledAndVisible(false);
@@ -72,7 +74,8 @@ public class BuildDependenciesAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    BuildDependenciesHelper helper = new BuildDependenciesHelper(project, getClass());
+    BuildDependenciesHelper helper =
+        new BuildDependenciesHelper(project, getClass(), DepsBuildType.SELF);
     helper.enableAnalysis(e, PopupPosititioner.showAtMousePointerOrCentered(e));
   }
 }

@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.idea.blaze.qsync.testdata.BuildGraphs;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.nio.file.Path;
 import org.junit.Test;
@@ -288,6 +289,36 @@ public class BuildGraphTest {
                 Suppliers.ofInstance(false))
             .parse();
     assertThat(graph.getTargetOwners(TESTDATA_ROOT.resolve("cc/TestClass.cc"))).isEmpty();
+  }
+
+  @Test
+  public void testGetSameLanguageTargetsDependingOn_returnsTargetAndDirectDependent()
+      throws Exception {
+    BuildGraphData graph =
+        BuildGraphs.forTestProject(TestData.JAVA_LIBRARY_TRANSITIVE_INTERNAL_DEP_QUERY);
+    assertThat(
+            graph.getSameLanguageTargetsDependingOn(
+                ImmutableSet.of(Label.of("//" + TestData.ROOT.resolve("nodeps:nodeps")))))
+        .containsExactly(
+            Label.of("//" + TestData.ROOT.resolve("nodeps:nodeps")),
+            Label.of("//" + TestData.ROOT.resolve("internaldep:internaldep")));
+
+    assertThat(
+            graph.getSameLanguageTargetsDependingOn(
+                ImmutableSet.of(Label.of("//" + TestData.ROOT.resolve("internaldep:internaldep")))))
+        .containsExactly(
+            Label.of("//" + TestData.ROOT.resolve("internaldep:internaldep")),
+            Label.of("//" + TestData.ROOT.resolve("transitiveinternaldep:transitiveinternaldep")));
+
+    assertThat(
+            graph.getSameLanguageTargetsDependingOn(
+                ImmutableSet.of(
+                    Label.of(
+                        "//"
+                            + TestData.ROOT.resolve(
+                                "transitiveinternaldep:transitiveinternaldep")))))
+        .containsExactly(
+            Label.of("//" + TestData.ROOT.resolve("transitiveinternaldep:transitiveinternaldep")));
   }
 
 }

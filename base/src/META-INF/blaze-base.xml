@@ -125,6 +125,10 @@
       <keyboard-shortcut first-keystroke="ctrl shift D" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta shift D" keymap="macOS System Shortcuts" replace-all="true"/>
     </action>
+    <action id="Blaze.BuildReverseDependencies"
+        class="com.google.idea.blaze.base.qsync.action.BuildDependenciesForDirectReverseDepsAction"
+        text="Enable Analysis For Reverse Dependencies">
+    </action>
     <action id="Blaze.BuildOpenFileDependencies"
         class="com.google.idea.blaze.base.qsync.action.BuildDependenciesForOpenFilesAction"
         text="Build dependencies for open files">
