@@ -195,6 +195,13 @@ http_archive(
     url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/231.8770.65/PythonCore-231.8770.65.zip",
 )
 
+http_archive(
+    name = "python_2023_2",
+    build_file_content = _PYTHON_CE_BUILD_FILE,
+    sha256 = "e744349f353568c18a9e11ec5e3a205f62bbdc1b65c9abc96783c479fe2aa51b",
+    url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/232.9921.47/PythonCore-232.9921.47.zip",
+)
+
 _GO_BUILD_FILE = """
 java_import(
     name = "go",
@@ -307,8 +314,8 @@ http_archive(
 http_archive(
     name = "android_studio_2023_2",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio232",
-    sha256 = "eee6fd1a425df49dfb9c6d9dad73ae53baf8c3f808fa6f6795600da8893675d9",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2023.2.1.1/android-studio-2023.2.1.1-linux.tar.gz",
+    sha256 = "44be6356aed5bb7ccc50cf17c75e78e74a78ea333b81d6b058926aa8806b6503",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2023.2.1.7/android-studio-2023.2.1.7-linux.tar.gz",
 )
 
 # The plugin api for android_studio_2023_1 android_studio. This is required to build ASwB and run integration tests

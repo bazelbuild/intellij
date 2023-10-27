@@ -47,7 +47,7 @@ java_import(
     name = "cidr_plugins",
     jars = glob([
         "android-studio/plugins/c-plugin/lib/*.jar",  # com.intellij.cidr.lang: C/C++ Language Support
-        "android-studio/plugins/c-clangd/lib/*.jar",  # required for NDK debugging
+        "android-studio/plugins/c-clangd-plugin/lib/*.jar",  # required for NDK debugging
         "android-studio/plugins/cidr-base-plugin/lib/*.jar",  # com.intellij.cidr.base: CIDR Base
         "android-studio/plugins/cidr-debugger-plugin/lib/*.jar",  # com.jetbrains.cidr.execution.debugger: CIDR Debugger
     ]),
@@ -55,7 +55,7 @@ java_import(
 
 java_import(
     name = "guava",
-    jars = ["android-studio/lib/3rd-party-rt.jar"],
+    jars = ["android-studio/lib/lib.jar"],
 )
 
 java_library(name = "jsr305")  # not bundled
