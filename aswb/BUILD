@@ -247,7 +247,6 @@ intellij_integration_test_suite(
         ],
         exclude = [
             "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",  # Extracted to separate target
-            "tests/integrationtests/com/google/idea/blaze/android/functional/AswbRenderTaskTest.java",  # b/177371104
             "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",  #b/222322106
         ],
     ),

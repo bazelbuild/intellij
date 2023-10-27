@@ -6,15 +6,15 @@
 #   listed here may depend on these libraries.
 
 load(
-    ":build_defs.bzl",
-    "select_for_plugin_api",
-    "select_from_plugin_api_directory",
-)
-load(
     "//:build-visibility.bzl",
     "ASPECT_TOOLS_PACKAGE",
     "INTELLIJ_PLUGINS_VISIBILITY",
     "create_test_libs_visibility_package",
+)
+load(
+    ":build_defs.bzl",
+    "select_for_plugin_api",
+    "select_from_plugin_api_directory",
 )
 
 package(default_visibility = INTELLIJ_PLUGINS_VISIBILITY)
@@ -578,7 +578,6 @@ java_library(
     testonly = 1,
     data = select_from_plugin_api_directory(
         android_studio = [
-            ":layoutlib_data",
             ":kotlinc_version",
         ],
         clion = [":javascript-lsp"],
