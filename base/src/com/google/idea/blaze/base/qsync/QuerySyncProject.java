@@ -83,6 +83,7 @@ public class QuerySyncProject {
   private final BlazeImportSettings importSettings;
   private final WorkspaceRoot workspaceRoot;
   private final ArtifactTracker artifactTracker;
+  private final RenderJarArtifactTracker renderJarArtifactTracker;
   private final DependencyTracker dependencyTracker;
   private final RenderJarTracker renderJarTracker;
   private final ProjectQuerier projectQuerier;
@@ -107,6 +108,7 @@ public class QuerySyncProject {
       BlazeImportSettings importSettings,
       WorkspaceRoot workspaceRoot,
       ArtifactTracker artifactTracker,
+      RenderJarArtifactTracker renderJarArtifactTracker,
       DependencyTracker dependencyTracker,
       RenderJarTracker renderJarTracker,
       ProjectQuerier projectQuerier,
@@ -125,6 +127,7 @@ public class QuerySyncProject {
     this.importSettings = importSettings;
     this.workspaceRoot = workspaceRoot;
     this.artifactTracker = artifactTracker;
+    this.renderJarArtifactTracker = renderJarArtifactTracker;
     this.dependencyTracker = dependencyTracker;
     this.renderJarTracker = renderJarTracker;
     this.projectQuerier = projectQuerier;
@@ -178,6 +181,10 @@ public class QuerySyncProject {
 
   public ArtifactTracker getArtifactTracker() {
     return artifactTracker;
+  }
+
+  public RenderJarArtifactTracker getRenderJarArtifactTracker() {
+    return renderJarArtifactTracker;
   }
 
   public SourceToTargetMap getSourceToTargetMap() {

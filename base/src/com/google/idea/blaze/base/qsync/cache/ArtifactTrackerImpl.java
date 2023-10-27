@@ -52,8 +52,10 @@ import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStats;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.qsync.ArtifactTracker;
+import com.google.idea.blaze.base.qsync.ArtifactTrackerUpdateResult;
 import com.google.idea.blaze.base.qsync.OutputGroup;
 import com.google.idea.blaze.base.qsync.OutputInfo;
+import com.google.idea.blaze.base.qsync.RenderJarArtifactTracker;
 import com.google.idea.blaze.base.qsync.RenderJarInfo;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher.ArtifactDestination;
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
@@ -106,7 +108,7 @@ import java.util.zip.GZIPOutputStream;
  *
  * <p>This class maps all the targets that have been built to their artifacts.
  */
-public class ArtifactTrackerImpl implements ArtifactTracker {
+public class ArtifactTrackerImpl implements ArtifactTracker, RenderJarArtifactTracker {
 
   private static final BoolExperiment ATTACH_DEP_SRCJARS =
       new BoolExperiment("querysync.attach.dep.srcjars", true);
@@ -377,7 +379,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
 
   /** Fetches, caches and sets up new render jar artifacts. */
   @Override
-  public UpdateResult update(
+  public ArtifactTrackerUpdateResult update(
       Set<Label> targets, RenderJarInfo renderJarInfo, BlazeContext outerContext)
       throws BuildException {
     ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap;
@@ -389,7 +391,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     try (BlazeContext context = BlazeContext.create(outerContext)) {
       ImmutableMap<Path, Path> updated = cache(context, artifactMap);
       saveState();
-      return UpdateResult.create(updated.keySet(), ImmutableSet.of());
+      return ArtifactTrackerUpdateResult.create(updated.keySet(), ImmutableSet.of());
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
     }
@@ -397,8 +399,8 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
 
   /** Fetches, caches and sets up new artifacts. */
   @Override
-  public UpdateResult update(Set<Label> targets, OutputInfo outputInfo, BlazeContext outerContext)
-      throws BuildException {
+  public ArtifactTrackerUpdateResult update(
+      Set<Label> targets, OutputInfo outputInfo, BlazeContext outerContext) throws BuildException {
     ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap;
     try {
       artifactMap = outputInfoToArtifactMap(outputInfo);
@@ -417,7 +419,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
       ccDepencenciesInfo = ccDepsBuilder.build();
 
       saveState();
-      return UpdateResult.create(updated.keySet(), ImmutableSet.of());
+      return ArtifactTrackerUpdateResult.create(updated.keySet(), ImmutableSet.of());
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
     }
