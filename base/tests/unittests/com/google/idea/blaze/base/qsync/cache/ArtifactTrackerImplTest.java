@@ -28,7 +28,7 @@ import com.google.devtools.intellij.qsync.ArtifactTrackerData.JavaArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.JavaTargetArtifacts;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
-import com.google.idea.blaze.base.qsync.ArtifactTracker.UpdateResult;
+import com.google.idea.blaze.base.qsync.ArtifactTrackerUpdateResult;
 import com.google.idea.blaze.base.qsync.GroupedOutputArtifacts;
 import com.google.idea.blaze.base.qsync.OutputGroup;
 import com.google.idea.blaze.base.qsync.OutputInfo;
@@ -113,7 +113,7 @@ public class ArtifactTrackerImplTest {
             ProjectDefinition.EMPTY);
     artifactTracker.initialize();
 
-    final UpdateResult unused =
+    final ArtifactTrackerUpdateResult unused =
         artifactTracker.update(
             ImmutableSet.of(Label.of("//test:test")),
             OutputInfo.builder()
@@ -129,7 +129,7 @@ public class ArtifactTrackerImplTest {
 
     testArtifactFetcher.shouldFail = true;
     try {
-      final UpdateResult unused2 =
+      final ArtifactTrackerUpdateResult unused2 =
           artifactTracker.update(
               ImmutableSet.of(Label.of("//test:test2")),
               OutputInfo.builder()
@@ -221,7 +221,7 @@ public class ArtifactTrackerImplTest {
             ProjectDefinition.EMPTY);
     artifactTracker.initialize();
 
-    final UpdateResult unused =
+    final ArtifactTrackerUpdateResult unused =
         artifactTracker.update(
             ImmutableSet.of(Label.of("//test:test"), Label.of("//test:anothertest")),
             OutputInfo.builder()
@@ -276,7 +276,7 @@ public class ArtifactTrackerImplTest {
             ProjectDefinition.EMPTY);
     artifactTracker.initialize();
 
-    final UpdateResult unused =
+    final ArtifactTrackerUpdateResult unused =
         artifactTracker.update(
             ImmutableSet.of(Label.of("//test:test"), Label.of("//test:anothertest")),
             OutputInfo.builder()

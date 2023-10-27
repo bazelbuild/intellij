@@ -32,8 +32,8 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.qsync.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.qsync.RenderJarArtifactTracker;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -74,8 +74,9 @@ public class BlazeClassJarProvider implements ClassJarProvider {
       // As Query Sync has a single workspace module but multiple resource modules
       // (TODO(b/283282438): for setting up the resources). All render jars are mapped to the same
       // workspace module
-      ArtifactTracker artifactTracker = QuerySyncManager.getInstance(project).getArtifactTracker();
-      return artifactTracker.getRenderJars();
+      RenderJarArtifactTracker renderJarArtifactTracker =
+          QuerySyncManager.getInstance(project).getRenderJarArtifactTracker();
+      return renderJarArtifactTracker.getRenderJars();
     }
 
     BlazeProjectData blazeProjectData =

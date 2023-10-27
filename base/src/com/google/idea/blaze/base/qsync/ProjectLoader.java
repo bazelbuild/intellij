@@ -179,6 +179,7 @@ public class ProjectLoader {
             importSettings,
             workspaceRoot,
             artifactTracker,
+            artifactTracker,
             dependencyTracker,
             renderJarTracker,
             projectQuerier,
