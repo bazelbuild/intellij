@@ -32,7 +32,8 @@ public final class TargetKindUtil {
   }
 
   public static boolean isJavaTest(Kind targetKind) {
-    return targetKind != null && targetKind.equals(JavaBlazeRules.RuleTypes.JAVA_TEST.getKind());
+    return targetKind != null && (targetKind.equals(JavaBlazeRules.RuleTypes.JAVA_TEST.getKind()) ||
+            targetKind.equals(JavaBlazeRules.RuleTypes.JAVA_TEST_SUITE.getKind()));
   }
 
   private TargetKindUtil() {}
