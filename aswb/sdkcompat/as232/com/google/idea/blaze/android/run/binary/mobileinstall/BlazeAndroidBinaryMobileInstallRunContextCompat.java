@@ -19,6 +19,7 @@ import com.android.ddmlib.IDevice;
 import com.android.tools.idea.execution.common.debug.AndroidDebugger;
 import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.execution.common.debug.DebugSessionStarter;
+import com.google.idea.blaze.android.run.BazelApplicationProjectContext;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -65,7 +66,7 @@ public class BlazeAndroidBinaryMobileInstallRunContextCompat
           (scope, continuation) ->
               DebugSessionStarter.INSTANCE.attachDebuggerToStartedProcess(
                   device,
-                  packageName,
+                  new BazelApplicationProjectContext(project, packageName),
                   env,
                   androidDebugger,
                   androidDebuggerState,

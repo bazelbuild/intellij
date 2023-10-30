@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.android.tools.idea.rendering.RenderErrorContributor;
+import com.android.tools.idea.rendering.RenderIssueCollectionConsumer;
 import com.android.tools.idea.rendering.errors.ui.RenderErrorModel;
 import com.android.tools.rendering.RenderResultCompat;
 import com.google.common.collect.ImmutableCollection;
@@ -130,8 +131,13 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
         registerExtensionPoint(
             ExtensionPointName.create("com.android.rendering.renderErrorContributor"),
             RenderErrorContributor.Provider.class);
-    extensionPoint.registerExtension(new RenderErrorContributor.Provider());
     extensionPoint.registerExtension(new RenderResultCompat.BlazeProvider());
+    ExtensionPoint<RenderIssueCollectionConsumer.Provider> consumerExtensionPoint =
+        registerExtensionPoint(
+            ExtensionPointName.create(
+                "com.android.tools.idea.rendering.renderIssueCollectionConsumer"),
+            RenderIssueCollectionConsumer.Provider.class);
+    // no consumers needed for this test.
 
     module = new MockModule(project, () -> {});
 

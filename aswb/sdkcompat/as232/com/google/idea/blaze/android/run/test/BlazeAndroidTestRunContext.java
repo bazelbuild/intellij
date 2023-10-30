@@ -22,6 +22,7 @@ import com.android.tools.idea.execution.common.DeployOptions;
 import com.android.tools.idea.execution.common.debug.AndroidDebugger;
 import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.execution.common.debug.DebugSessionStarter;
+import com.android.tools.idea.projectsystem.ApplicationProjectContext;
 import com.android.tools.idea.run.ApkProvider;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
@@ -33,6 +34,7 @@ import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.DeployTasksCompat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.android.run.BazelApplicationProjectContext;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
@@ -133,6 +135,11 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
     return applicationIdProvider;
   }
 
+  @Override
+  public ApplicationProjectContext getApplicationProjectContext() {
+    return new BazelApplicationProjectContext(project, getApplicationIdProvider());
+  }
+
   @Nullable
   @Override
   public ApkBuildStep getBuildStep() {
@@ -224,7 +231,7 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
                     });
                 return DebugSessionStarter.INSTANCE.attachReattachingDebuggerToStartedProcess(
                     device,
-                    packageName,
+                    new BazelApplicationProjectContext(project, packageName),
                     masterProcessHandler,
                     env,
                     androidDebugger,
@@ -237,7 +244,7 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
               case MOBILE_INSTALL:
                 return DebugSessionStarter.INSTANCE.attachDebuggerToStartedProcess(
                     device,
-                    packageName,
+                    new BazelApplicationProjectContext(project, packageName),
                     env,
                     androidDebugger,
                     androidDebuggerState,

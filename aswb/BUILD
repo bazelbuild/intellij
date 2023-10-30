@@ -213,8 +213,13 @@ intellij_integration_test_suite(
         exclude = [
             "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",  # Extracted to separate target
             "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",  #b/222322106
-        ],
-    ),
+        ] + glob(["tests/integrationtests/sdkcompat/**"]),
+    ) + select_for_plugin_api({
+        "android-studio-2022.3": glob(["tests/integrationtests/sdkcompat/as223/**/*.java"]),
+        "android-studio-2023.1": glob(["tests/integrationtests/sdkcompat/as231/**/*.java"]),
+        "android-studio-2023.2": glob(["tests/integrationtests/sdkcompat/as232/**/*.java"]),
+        "default": [],
+    }),
     additional_class_rules = select_for_plugin_api({
         "android-studio-2022.2": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "android-studio-2022.3": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
