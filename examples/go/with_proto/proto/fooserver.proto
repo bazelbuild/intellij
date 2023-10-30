@@ -21,3 +21,7 @@ message HelloRequest {
 message HelloReply {
   optional string message = 1;
 }
+
+message Time {
+  string value = 1;
+}
