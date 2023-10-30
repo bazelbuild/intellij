@@ -192,6 +192,9 @@ def intellij_integration_test_suite(
     deps = list(deps)
     deps.extend([
         "//testing:lib",
+        # Usually, we'd get this from the JetBrains SDK, but the bundled one not aware of Bazel platforms,
+        # so it fails on certain setups.
+        "@jna",
     ])
     runtime_deps = list(runtime_deps)
     runtime_deps.extend([
