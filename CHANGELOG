@@ -1,6 +1,11 @@
 v2023.10.24
 ===========
-
+* Bump to newest EAPs #5522
+* Make //clwb(plugin) and //cpp(plugin) dependency on cidr.lang optional: plugin xmls split #5473
+* Adapt paths and line breaks for Windows #5471
+* Fix manual targets sync for target explicitly specified #5458
+* Make //cpp dependency on cidr.lang optional: remove dead code #5474
+* fix: Mark package with BUILD.bazel file in completion #5526
 
 v2023.10.10
 ===========
