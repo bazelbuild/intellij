@@ -651,4 +651,33 @@ public class GraphToProjectConverterTest {
             ImmutableSet.of(Path.of("myproject/excluded/protos/excluded.proto")));
     assertThat(additionalProtoSourceFolders).isEmpty();
   }
+
+  @Test
+  public void testProtoSourceFolders_whenSubfolderOfJavaRoot_notCreated() throws Exception {
+
+    ImmutableMap<Path, String> sourcePackages =
+        ImmutableMap.of(
+            TestData.ROOT.resolve(
+                "nestedproto/java/com/testdata/nestedproto/NestedProtoConsumer.java"),
+            "com.testdata.nestedproto");
+
+    GraphToProjectConverter converter =
+        GraphToProjectConverters.builder()
+            .setPackageReader(sourcePackages::get)
+            .setProjectIncludes(ImmutableSet.of(TestData.ROOT.resolve("nestedproto")))
+            .setLanguageClasses(ImmutableSet.of(LanguageClass.JAVA))
+            .build();
+    BuildGraphData buildGraphData = BuildGraphs.forTestProject(TestData.NESTED_PROTO_QUERY);
+
+    ProjectProto.Project projectProto = converter.createProject(buildGraphData);
+    assertThat(projectProto.getModulesCount()).isEqualTo(1);
+    ProjectProto.Module workspaceModule = projectProto.getModules(0);
+
+    ProjectProto.ContentEntry contentEntry = workspaceModule.getContentEntries(0);
+    assertThat(contentEntry.getSourcesList())
+        .containsExactly(
+            ProjectProto.SourceFolder.newBuilder()
+                .setPath(TestData.ROOT.resolve("nestedproto/java").toString())
+                .build());
+  }
 }

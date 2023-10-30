@@ -154,6 +154,16 @@ genquery(
         ],
 )
 
+genquery(
+    name = "nested_proto_query",
+    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/nestedproto:*",
+    opts = ["--output=streamed_proto"],
+    scope = scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/nestedproto:consumer") + [
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata/nestedproto:nested_proto",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata/nestedproto:nested_java_proto_lite",
+    ],
+)
+
 java_library(
     name = "testdata",
     srcs = ["TestData.java"],
@@ -173,6 +183,7 @@ java_library(
         ":java_library_proto_dep_query",
         ":java_library_transitive_dep_query",
         ":java_library_transitive_internal_dep_query",
+        ":nested_proto_query",
         ":proto_only_query",
     ],
     deps = [
