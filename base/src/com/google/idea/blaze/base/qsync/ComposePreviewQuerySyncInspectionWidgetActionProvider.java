@@ -76,7 +76,8 @@ public class ComposePreviewQuerySyncInspectionWidgetActionProvider
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       QuerySyncManager.getInstance(project)
           .generateRenderJar(
-              psiFile, new QuerySyncActionStatsScope(getClass(), e, psiFile.getVirtualFile()));
+              psiFile,
+              QuerySyncActionStatsScope.createForFile(getClass(), e, psiFile.getVirtualFile()));
     }
 
     @Override

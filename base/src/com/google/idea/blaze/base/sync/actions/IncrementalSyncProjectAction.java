@@ -42,7 +42,7 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
   protected void runSync(Project project, AnActionEvent e) {
     if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
       QuerySyncManager qsm = QuerySyncManager.getInstance(project);
-      QuerySyncActionStatsScope scope = new QuerySyncActionStatsScope(getClass(), e);
+      QuerySyncActionStatsScope scope = QuerySyncActionStatsScope.create(getClass(), e);
       if (!qsm.isProjectLoaded()) {
         qsm.onStartup(scope);
       } else if ((e.getInputEvent() != null)

@@ -150,7 +150,7 @@ public class BuildDependenciesHelper {
       return;
     }
     QuerySyncActionStatsScope querySyncActionStats =
-        new QuerySyncActionStatsScope(actionClass, e, vfile);
+        QuerySyncActionStatsScope.createForFile(actionClass, e, vfile);
     if (!toBuild.isAmbiguous()) {
       enableAnalysis(toBuild.targets(), querySyncActionStats);
       return;

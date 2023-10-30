@@ -41,7 +41,7 @@ public class BlazeSyncStartupActivity implements StartupActivity {
     if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
       // When query sync is not enabled hasProjectData triggers the load
       QuerySyncManager.getInstance(project)
-          .onStartup(new QuerySyncActionStatsScope(getClass(), null));
+          .onStartup(QuerySyncActionStatsScope.create(getClass(), null));
       return;
     }
     if (hasProjectData(project, importSettings)) {
