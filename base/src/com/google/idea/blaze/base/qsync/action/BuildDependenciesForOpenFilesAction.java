@@ -77,7 +77,7 @@ public class BuildDependenciesForOpenFilesAction extends BlazeProjectAction {
     TargetDisambiguator disambiguator = new TargetDisambiguator(targetsToBuild.keySet());
     ImmutableSet<TargetsToBuild> ambiguousTargets = disambiguator.calculateUnresolvableTargets();
     QuerySyncActionStatsScope querySyncActionStats =
-        new QuerySyncActionStatsScope(getClass(), event, targetsToBuild.values());
+        QuerySyncActionStatsScope.createForFiles(getClass(), event, targetsToBuild.values());
 
     if (ambiguousTargets.isEmpty()) {
       // there are no ambiguous targets that could not be automatically disambiguated.
