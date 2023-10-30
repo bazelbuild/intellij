@@ -418,7 +418,6 @@ public class GraphToProjectConverter {
       }
       for (Path protoDirPath : rootToProtoSource.get(dir)) {
         if (rootToPrefix.get(dir).keySet().stream()
-            .map(protoDirPath::resolve)
             .noneMatch(protoDirPath::startsWith)) {
           Path path = dir.resolve(protoDirPath);
           // TODO(b/305743519): make java source properties like package prefix specific to java

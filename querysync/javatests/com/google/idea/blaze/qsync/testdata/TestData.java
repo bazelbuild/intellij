@@ -43,7 +43,8 @@ public enum TestData {
   FILEGROUP_QUERY("filegroup"),
   CC_LIBRARY_QUERY("cc"),
   CC_MULTISRC_QUERY("cc_multisrc"),
-  PROTO_ONLY_QUERY("protoonly");
+  PROTO_ONLY_QUERY("protoonly"),
+  NESTED_PROTO_QUERY("nestedproto");
 
   public final ImmutableList<Path> srcPaths;
 
