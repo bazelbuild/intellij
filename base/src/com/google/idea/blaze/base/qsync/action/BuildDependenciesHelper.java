@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.qsync.TargetsToBuild;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
@@ -117,6 +118,13 @@ public class BuildDependenciesHelper {
     return syncManager.getTargetsToBuild(virtualFile);
   }
 
+  public TargetsToBuild getTargetsToEnableAnalysisFor(Path workspaceRelativeFile) {
+    if (!syncManager.isProjectLoaded() || BlazeSyncStatus.getInstance(project).syncInProgress()) {
+      return TargetsToBuild.NONE;
+    }
+    return syncManager.getTargetsToBuild(workspaceRelativeFile);
+  }
+
   public int getSourceFileMissingDepsCount(TargetsToBuild toBuild) {
     Preconditions.checkState(toBuild.type() == TargetsToBuild.Type.SOURCE_FILE);
     return syncManager.getDependencyTracker().getPendingExternalDeps(toBuild.targets()).size();
@@ -143,6 +151,10 @@ public class BuildDependenciesHelper {
     return e.getData(CommonDataKeys.VIRTUAL_FILE);
   }
 
+  public ImmutableSet<Path> getWorkingSet() throws BuildException {
+    return syncManager.getLoadedProject().orElseThrow().getWorkingSet();
+  }
+
   public void enableAnalysis(AnActionEvent e, PopupPosititioner positioner) {
     VirtualFile vfile = getVirtualFile(e);
     TargetsToBuild toBuild = getTargetsToEnableAnalysisFor(vfile);
@@ -156,7 +168,7 @@ public class BuildDependenciesHelper {
       return;
     }
     chooseTargetToBuildFor(
-        vfile,
+        vfile.getName(),
         toBuild,
         positioner,
         label -> enableAnalysis(ImmutableSet.of(label), querySyncActionStats));
@@ -173,23 +185,23 @@ public class BuildDependenciesHelper {
   }
 
   public void chooseTargetToBuildFor(
-      VirtualFile vfile,
+      String fileName,
       TargetsToBuild toBuild,
       PopupPosititioner positioner,
       Consumer<Label> chosenConsumer) {
     JBPopupFactory factory = JBPopupFactory.getInstance();
     ListPopup popup =
-        factory.createListPopup(SelectTargetPopupStep.create(toBuild, vfile, chosenConsumer));
+        factory.createListPopup(SelectTargetPopupStep.create(toBuild, fileName, chosenConsumer));
     positioner.showInCorrectPosition(popup);
   }
 
   static class SelectTargetPopupStep extends BaseListPopupStep<Label> {
     static SelectTargetPopupStep create(
-        TargetsToBuild toBuild, VirtualFile forFile, Consumer<Label> onChosen) {
+        TargetsToBuild toBuild, String fileName, Consumer<Label> onChosen) {
       ImmutableList<Label> rows =
           ImmutableList.sortedCopyOf(Comparator.comparing(Label::toString), toBuild.targets());
 
-      return new SelectTargetPopupStep(rows, forFile.getName(), onChosen);
+      return new SelectTargetPopupStep(rows, fileName, onChosen);
     }
 
     private final Consumer<Label> onChosen;

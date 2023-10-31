@@ -130,6 +130,10 @@
         class="com.google.idea.blaze.base.qsync.action.BuildDependenciesForDirectReverseDepsAction"
         text="Enable Analysis For Reverse Dependencies">
     </action>
+    <action id="Blaze.BuildDependenciesForWorkingSet"
+        class="com.google.idea.blaze.base.qsync.action.BuildDependenciesForWorkingSetAction"
+        text="Enable Analysis For Working Set">
+    </action>
     <action id="Blaze.BuildOpenFileDependencies"
         class="com.google.idea.blaze.base.qsync.action.BuildDependenciesForOpenFilesAction"
         text="Build dependencies for open files">
@@ -354,6 +358,7 @@
     <notificationGroup displayType="BALLOON" id="BuildifierBinaryMissing"/>
     <notificationGroup displayType="BALLOON" id="AddToProject" />
     <notificationGroup displayType="STICKY_BALLOON" id="QuerySyncPromo" />
+    <notificationGroup displayType="BALLOON" id="QuerySyncBuild" />
     <registryKey defaultValue="false" description="Disable auto import of bazel projects" key="bazel.auto.import.disabled"/>
     <registryKey
       key="bazel.sync.resolve.virtual.includes"
