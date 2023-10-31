@@ -22,9 +22,14 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.JavaArtifacts;
 import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcCompilationInfo;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException;
@@ -41,20 +46,24 @@ import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStats;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.google.protobuf.Message;
 import com.google.protobuf.TextFormat;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtilRt;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -66,9 +75,25 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /** An object that knows how to build dependencies for given targets */
 public class BazelDependencyBuilder implements DependencyBuilder {
+
+  public static final BoolExperiment fetchArtifactInfoInParallel =
+      new BoolExperiment("qsync.parallel.artifact.info.fetch", true);
+
+  /**
+   * Logs message if the number of artifact info files fetched is greater than
+   * FILE_NUMBER_LOG_THRESHOLD
+   */
+  private static final int FILE_NUMBER_LOG_THRESHOLD = 1;
+
+  /**
+   * Logs message if the size of all artifact info files fetched is greater than
+   * FETCH_SIZE_LOG_THRESHOLD
+   */
+  private static final long FETCH_SIZE_LOG_THRESHOLD = (1 << 20); // 1 mB
 
   protected final Project project;
   protected final BuildSystem buildSystem;
@@ -174,7 +199,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
           ThrowOption.ALLOW_PARTIAL_SUCCESS,
           ThrowOption.ALLOW_BUILD_FAILURE);
 
-      return createOutputInfo(outputs, outputGroups);
+      return createOutputInfo(outputs, outputGroups, context);
     }
   }
 
@@ -199,18 +224,61 @@ public class BazelDependencyBuilder implements DependencyBuilder {
   }
 
   private OutputInfo createOutputInfo(
-      BlazeBuildOutputs blazeBuildOutputs, Set<OutputGroup> outputGroups) throws BuildException {
+      BlazeBuildOutputs blazeBuildOutputs, Set<OutputGroup> outputGroups, BlazeContext context)
+      throws BuildException {
     GroupedOutputArtifacts allArtifacts =
         new GroupedOutputArtifacts(blazeBuildOutputs, outputGroups);
+
+    ImmutableList<OutputArtifact> artifactInfoFiles =
+        allArtifacts.get(OutputGroup.ARTIFACT_INFO_FILE);
+    ImmutableList<OutputArtifact> ccArtifactInfoFiles = allArtifacts.get(OutputGroup.CC_INFO_FILE);
+    long startTime = System.currentTimeMillis();
+    int totalFilesToFetch = artifactInfoFiles.size() + ccArtifactInfoFiles.size();
+    long totalBytesToFetch =
+        artifactInfoFiles.stream().mapToLong(OutputArtifact::getLength).sum()
+            + ccArtifactInfoFiles.stream().mapToLong(OutputArtifact::getLength).sum();
+
+    boolean shouldLog =
+        totalFilesToFetch > FILE_NUMBER_LOG_THRESHOLD
+            || totalBytesToFetch > FETCH_SIZE_LOG_THRESHOLD;
+    if (shouldLog) {
+      context.output(
+          PrintOutput.log(
+              String.format(
+                  "Fetching %d artifact info files (%s)",
+                  totalFilesToFetch, StringUtilRt.formatFileSize(totalBytesToFetch))));
+    }
+
     ImmutableSet.Builder<JavaArtifacts> artifactInfoFilesBuilder = ImmutableSet.builder();
     ImmutableSet.Builder<CcCompilationInfo> ccInfoBuilder = ImmutableSet.builder();
 
-    for (OutputArtifact artifactInfoFile : allArtifacts.get(OutputGroup.ARTIFACT_INFO_FILE)) {
-      artifactInfoFilesBuilder.add(readArtifactInfoFile(artifactInfoFile));
+    if (fetchArtifactInfoInParallel.getValue()) {
+      try {
+        ListenableFuture<List<JavaArtifacts>> artifactInfoFutures =
+            readAndTransformInfoFiles(artifactInfoFiles, this::readArtifactInfoFile);
+        ListenableFuture<List<CcCompilationInfo>> ccInfoFutures =
+            readAndTransformInfoFiles(ccArtifactInfoFiles, this::readCcInfoFile);
+
+        artifactInfoFilesBuilder.addAll(Uninterruptibles.getUninterruptibly(artifactInfoFutures));
+        ccInfoBuilder.addAll(Uninterruptibles.getUninterruptibly(ccInfoFutures));
+      } catch (ExecutionException e) {
+        throw new BuildException(e);
+      }
+    } else {
+      for (OutputArtifact artifactInfoFile : artifactInfoFiles) {
+        artifactInfoFilesBuilder.add(readArtifactInfoFile(artifactInfoFile));
+      }
+      for (OutputArtifact artifactInfoFile : ccArtifactInfoFiles) {
+        ccInfoBuilder.add(readCcInfoFile(artifactInfoFile));
+      }
     }
-    for (OutputArtifact artifactInfoFile : allArtifacts.get(OutputGroup.CC_INFO_FILE)) {
-      ccInfoBuilder.add(readCcInfoFile(artifactInfoFile));
+
+    long elapsed = System.currentTimeMillis() - startTime;
+    if (shouldLog) {
+      context.output(
+          PrintOutput.log(String.format("Fetched artifact info files in %d ms", elapsed)));
     }
+
     return OutputInfo.create(
         allArtifacts,
         artifactInfoFilesBuilder.build(),
@@ -222,15 +290,30 @@ public class BazelDependencyBuilder implements DependencyBuilder {
         blazeBuildOutputs.buildResult.exitCode);
   }
 
+  @FunctionalInterface
+  private interface CheckedTransform<T, R> {
+    R apply(T t) throws BuildException;
+  }
+
+  private <T> ListenableFuture<List<T>> readAndTransformInfoFiles(
+      ImmutableList<OutputArtifact> artifactInfoFiles,
+      CheckedTransform<OutputArtifact, T> transform) {
+    List<ListenableFuture<T>> futures = Lists.newArrayList();
+    for (OutputArtifact artifactInfoFile : artifactInfoFiles) {
+      futures.add(Futures.submit(() -> transform.apply(artifactInfoFile), FetchExecutor.EXECUTOR));
+    }
+    return Futures.allAsList(futures);
+  }
+
   private JavaArtifacts readArtifactInfoFile(BlazeArtifact file) throws BuildException {
-    return readProtoFile(JavaArtifacts.newBuilder(), file).build();
+    return readArtifactInfoProtoFile(JavaArtifacts.newBuilder(), file).build();
   }
 
   private CcCompilationInfo readCcInfoFile(BlazeArtifact file) throws BuildException {
-    return readProtoFile(CcCompilationInfo.newBuilder(), file).build();
+    return readArtifactInfoProtoFile(CcCompilationInfo.newBuilder(), file).build();
   }
 
-  private <B extends Message.Builder> B readProtoFile(B builder, BlazeArtifact file)
+  protected <B extends Message.Builder> B readArtifactInfoProtoFile(B builder, BlazeArtifact file)
       throws BuildException {
     try (InputStream inputStream = file.getInputStream()) {
       TextFormat.Parser parser = TextFormat.Parser.newBuilder().build();
