@@ -123,7 +123,7 @@ public class FileLookupData {
   private final QuoteType quoteType;
   @Nullable private final VirtualFileFilter fileFilter;
 
-  private FileLookupData(
+  protected FileLookupData(
       String originalLabel,
       @Nullable BuildFile containingFile,
       @Nullable String containingPackage,
