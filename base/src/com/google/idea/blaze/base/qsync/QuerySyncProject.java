@@ -43,6 +43,7 @@ import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
@@ -273,6 +274,18 @@ public class QuerySyncProject {
   public ImmutableSet<Label> getTargetsDependingOn(Set<Label> targets) {
     BlazeProjectSnapshot snapshot = snapshotHolder.getCurrent().orElseThrow();
     return snapshot.graph().getSameLanguageTargetsDependingOn(targets);
+  }
+
+  /** Returns workspace-relative paths of modified files, according to the VCS */
+  public ImmutableSet<Path> getWorkingSet() throws BuildException {
+    BlazeProjectSnapshot snapshot = snapshotHolder.getCurrent().orElseThrow();
+    VcsState vcsState =
+        snapshot
+            .queryData()
+            .vcsState()
+            .orElseThrow(
+                () -> new BuildException("No VCS state, cannot calculate affected targets"));
+    return vcsState.modifiedFiles();
   }
 
   public void build(BlazeContext parentContext, Set<Label> projectTargets)

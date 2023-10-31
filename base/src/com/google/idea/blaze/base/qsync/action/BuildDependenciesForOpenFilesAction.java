@@ -86,7 +86,7 @@ public class BuildDependenciesForOpenFilesAction extends BlazeProjectAction {
       // there is a single ambiguous target set. Show the UI to disambiguate it.
       TargetsToBuild ambiguousOne = Iterables.getOnlyElement(ambiguousTargets);
       helper.chooseTargetToBuildFor(
-          targetsToBuild.get(ambiguousOne),
+          targetsToBuild.get(ambiguousOne).getName(),
           ambiguousOne,
           PopupPosititioner.showAtMousePointerOrCentered(event),
           chosen ->
