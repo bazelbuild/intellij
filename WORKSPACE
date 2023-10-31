@@ -900,9 +900,9 @@ http_archive(
 # gRPC Java
 http_archive(
     name = "io_grpc_grpc_java",
-    sha256 = "4a021ea9ebb96f5841a135c168209cf2413587a0f8ce71a2bf37b3aad847b0d0",
-    strip_prefix = "grpc-java-1.57.1",
-    url = "https://github.com/grpc/grpc-java/archive/v1.57.1.tar.gz",
+    sha256 = "3bcf6be49fc7ab8187577a5211421258cb8e6d179f46023cc82e42e3a6188e51",
+    strip_prefix = "grpc-java-1.59.0",
+    url = "https://github.com/grpc/grpc-java/archive/refs/tags/v1.59.0.tar.gz",
 )
 
 jvm_maven_import_external(
