@@ -18,12 +18,10 @@ package com.google.idea.blaze.base.qsync.action;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -85,22 +83,16 @@ public class BuildDependenciesForWorkingSetAction extends BlazeProjectAction {
   }
 
   private void notifyFailureWorkingSet(Project project, Throwable e) {
-    Notifications.Bus.notify(
-        new Notification(
-            "QuerySyncBuild",
+    QuerySyncManager.getInstance(project)
+        .notifyError(
             "Could not obtain working set",
-            String.format("Encountered error when trying to get working set: %s", e.getMessage()),
-            NotificationType.ERROR),
-        project);
+            String.format("Encountered error when trying to get working set: %s", e.getMessage()));
   }
 
   private void notifyEmptyWorkingSet(Project project) {
-    Notifications.Bus.notify(
-        new Notification(
-            "QuerySyncBuild",
+    QuerySyncManager.getInstance(project)
+        .notifyWarning(
             "Nothing to build",
-            "If you have edited project files recently, please re-sync and try again.",
-            NotificationType.WARNING),
-        project);
+            "If you have edited project files recently, please re-sync and try again.");
   }
 }
