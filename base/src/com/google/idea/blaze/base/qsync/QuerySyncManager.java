@@ -48,6 +48,9 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -364,5 +367,20 @@ public class QuerySyncManager {
     // Ensure edits to the project view and any imports have been saved
     SaveUtil.saveAllFiles();
     return !loadedProject.isDefinitionCurrent();
+  }
+
+  /** Displays error notification popup balloon in IDE. */
+  public void notifyError(String title, String content) {
+    notifyInternal(title, content, NotificationType.ERROR);
+  }
+
+  /** Displays warning notification popup balloon in IDE. */
+  public void notifyWarning(String title, String content) {
+    notifyInternal(title, content, NotificationType.WARNING);
+  }
+
+  private void notifyInternal(String title, String content, NotificationType notificationType) {
+    Notifications.Bus.notify(
+        new Notification("QuerySyncBuild", title, content, notificationType), project);
   }
 }
