@@ -277,14 +277,21 @@ public class QuerySyncProject {
   }
 
   /** Returns workspace-relative paths of modified files, according to the VCS */
-  public ImmutableSet<Path> getWorkingSet() throws BuildException {
-    BlazeProjectSnapshot snapshot = snapshotHolder.getCurrent().orElseThrow();
-    VcsState vcsState =
-        snapshot
-            .queryData()
-            .vcsState()
-            .orElseThrow(
-                () -> new BuildException("No VCS state, cannot calculate affected targets"));
+  public ImmutableSet<Path> getWorkingSet(BlazeContext context) throws BuildException {
+    VcsState vcsState;
+    Optional<VcsState> computed = projectQuerier.getVcsState(context);
+    if (computed.isPresent()) {
+      vcsState = computed.get();
+    } else {
+      context.output(new PrintOutput("Failed to compute working set. Falling back on sync data"));
+      BlazeProjectSnapshot snapshot = snapshotHolder.getCurrent().orElseThrow();
+      vcsState =
+          snapshot
+              .queryData()
+              .vcsState()
+              .orElseThrow(
+                  () -> new BuildException("No VCS state, cannot calculate affected targets"));
+    }
     return vcsState.modifiedFiles();
   }
 

@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsSc
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.qsync.TargetsToBuild;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
@@ -51,7 +52,7 @@ public class BuildDependenciesHelper {
   public enum DepsBuildType {
     /** Build dependencies of the specified target(s) */
     SELF,
-    /** Build dependencies of the reverse depependencies of the specified target(s) */
+    /** Build dependencies of the reverse dependencies of the specified target(s) */
     REVERSE_DEPS
   }
 
@@ -152,7 +153,8 @@ public class BuildDependenciesHelper {
   }
 
   public ImmutableSet<Path> getWorkingSet() throws BuildException {
-    return syncManager.getLoadedProject().orElseThrow().getWorkingSet();
+    // TODO: Any output from the context here is not shown in the console.
+    return syncManager.getLoadedProject().orElseThrow().getWorkingSet(BlazeContext.create());
   }
 
   public void enableAnalysis(AnActionEvent e, PopupPosititioner positioner) {
