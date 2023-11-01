@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.qsync.cache;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -44,22 +45,26 @@ public class ZippedOutputArtifactDestination implements OutputArtifactDestinatio
     this.copyDestination = copyDestination;
   }
 
-  private static void extract(Path source, Path destination) throws IOException {
-    Files.createDirectories(destination);
-    try (ZipFile zip = new ZipFile(source.toFile())) {
-      for (var entries = zip.entries(); entries.hasMoreElements(); ) {
-        ZipEntry entry = entries.nextElement();
-        if (entry.isDirectory()) {
-          Files.createDirectories(destination.resolve(entry.getName()));
-        } else {
-          // Srcjars do not contain separate directory entries
-          Files.createDirectories(destination.resolve(entry.getName()).getParent());
-          Files.copy(
-              zip.getInputStream(entry),
-              destination.resolve(entry.getName()),
-              StandardCopyOption.REPLACE_EXISTING);
+  private static void extract(Path source, Path destination) {
+    try {
+      Files.createDirectories(destination);
+      try (ZipFile zip = new ZipFile(source.toFile())) {
+        for (var entries = zip.entries(); entries.hasMoreElements(); ) {
+          ZipEntry entry = entries.nextElement();
+          if (entry.isDirectory()) {
+            Files.createDirectories(destination.resolve(entry.getName()));
+          } else {
+            // Srcjars do not contain separate directory entries
+            Files.createDirectories(destination.resolve(entry.getName()).getParent());
+            Files.copy(
+                zip.getInputStream(entry),
+                destination.resolve(entry.getName()),
+                StandardCopyOption.REPLACE_EXISTING);
+          }
         }
       }
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to extract " + source + " to " + destination, e);
     }
   }
 
@@ -79,7 +84,7 @@ public class ZippedOutputArtifactDestination implements OutputArtifactDestinatio
   }
 
   @Override
-  public Path prepareFinalLayout() throws IOException {
+  public Path prepareFinalLayout() {
     if (Files.exists(finalDestination)) {
       FileUtil.delete(finalDestination.toFile());
     }

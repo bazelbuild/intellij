@@ -90,7 +90,7 @@ public class FileCache {
      * <p>Note, that this might be an no-op and in this case the method should simply return {@link
      * #getCopyDestination()}.
      */
-    Path prepareFinalLayout() throws IOException;
+    Path prepareFinalLayout();
   }
 
   private final CacheLayout cacheLayout;

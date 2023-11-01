@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.qsync.cache;
 
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -51,7 +50,7 @@ public class PreparedOutputArtifactDestination implements OutputArtifactDestinat
   }
 
   @Override
-  public Path prepareFinalLayout() throws IOException {
+  public Path prepareFinalLayout() {
     return finalDestination;
   }
 
