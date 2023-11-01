@@ -24,7 +24,7 @@ def _package_dependencies_impl(target, ctx):
         artifact_info_file = java_info_file,
         qsync_aars = target[DependenciesInfo].aars.to_list(),
         qsync_gensrcs = target[DependenciesInfo].gensrcs.to_list(),
-        cc_headers = target[DependenciesInfo].cc_headers,
+        cc_headers = target[DependenciesInfo].cc_headers.to_list(),
         cc_info_file = cc_info_file + [target[DependenciesInfo].cc_toolchain_info.file] if target[DependenciesInfo].cc_toolchain_info else [],
     )]
 
@@ -89,7 +89,7 @@ def _encode_cc_info_proto(label, cc_info):
                 quote_include_directories = cc_info.transitive_quote_include_directory,
                 system_include_directories = cc_info.transitive_system_include_directory,
                 framework_include_directories = cc_info.framework_include_directory,
-                gen_hdrs = cc_info.gen_headers,
+                gen_hdrs = cc_info.gen_headers.to_list(),
                 toolchain_id = cc_info.toolchain_id,
             ),
         ]),
@@ -352,10 +352,10 @@ def _collect_own_and_dependency_cc_info(target, dependency_info):
     if dependency_info:
         cc_toolchain_info = dependency_info.cc_toolchain_info
 
-    gen_headers = []
+    gen_headers = depset()
     compilation_info = None
     if compilation_context:
-        gen_headers = [f for f in compilation_context.headers.to_list() if not f.is_source]
+        gen_headers = depset([f for f in compilation_context.headers.to_list() if not f.is_source])
 
         compilation_info = struct(
             transitive_defines = compilation_context.defines.to_list(),
@@ -363,7 +363,7 @@ def _collect_own_and_dependency_cc_info(target, dependency_info):
             transitive_quote_include_directory = compilation_context.quote_includes.to_list(),
             transitive_system_include_directory = compilation_context.system_includes.to_list() + compilation_context.external_includes.to_list(),
             framework_include_directory = compilation_context.framework_includes.to_list(),
-            gen_headers = [f.path for f in gen_headers],
+            gen_headers = gen_headers,
             toolchain_id = cc_toolchain_info.id if cc_toolchain_info else None,
         )
     return struct(
@@ -465,7 +465,7 @@ def _collect_cc_toolchain_info(target, ctx):
 
     cpp_fragment = ctx.fragments.cpp
 
-    # TODO(b/301235884): This logis is not quite right. `ctx` here is the context for for
+    # TODO(b/301235884): This logic is not quite right. `ctx` here is the context for the
     #  cc_toolchain target itself, so the `features` and `disabled_features` were using here are
     #  for the cc_toolchain, not the individual targets that this information will ultimately be
     #  used for. Instead, we should attach `toolchain_info` itself to the `DependenciesInfo`
