@@ -78,6 +78,7 @@ public class SnapshotSerializer {
     projectDefinition.languageClasses().stream()
         .map(LANGUAGE_CLASS_MAP::get)
         .forEach(proto::addLanguageClasses);
+    projectDefinition.testSources().forEach(proto::addTestSources);
   }
 
   private void visitVcsState(VcsState vcsState) {

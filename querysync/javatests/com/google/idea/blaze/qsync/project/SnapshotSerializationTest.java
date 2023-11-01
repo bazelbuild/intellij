@@ -47,7 +47,7 @@ public class SnapshotSerializationTest {
                     ImmutableSet.of(Path.of("project/path")),
                     ImmutableSet.of(Path.of("project/path/excluded")),
                     ImmutableSet.of(LanguageClass.JAVA),
-                    ImmutableSet.of()))
+                    ImmutableSet.of("javatests/*")))
             .setVcsState(
                 Optional.of(
                     new VcsState(
@@ -105,7 +105,7 @@ public class SnapshotSerializationTest {
                     ImmutableSet.of(Path.of("project/path")),
                     ImmutableSet.of(Path.of("project/path/excluded")),
                     ImmutableSet.of(LanguageClass.JAVA),
-                    ImmutableSet.of()))
+                    ImmutableSet.of("javatests/*")))
             .setVcsState(Optional.empty())
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//project/path:path"))
             .build();
@@ -128,7 +128,7 @@ public class SnapshotSerializationTest {
                     ImmutableSet.of(Path.of("project/path")),
                     ImmutableSet.of(Path.of("project/path/excluded")),
                     ImmutableSet.of(LanguageClass.JAVA),
-                    ImmutableSet.of()))
+                    ImmutableSet.of("javatests/*")))
             .setVcsState(Optional.empty())
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//project/path:path"))
             .build();
