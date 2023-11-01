@@ -271,7 +271,7 @@ public class SrcJarProjectUpdaterTest {
                 .map(LibrarySource::getSrcjar)
                 .map(ProjectPath::create)
                 .map(pp -> String.format("%s!/%s", pp.relativePath(), pp.innerJarPath())))
-        .containsExactly("path/to/sources.srcjar!/java/package/root");
+        .containsExactly("path/to/sources.srcjar!/", "path/to/sources.srcjar!/java/package/root");
   }
 
   @Test
@@ -325,7 +325,7 @@ public class SrcJarProjectUpdaterTest {
                 .map(LibrarySource::getSrcjar)
                 .map(ProjectPath::create)
                 .map(pp -> String.format("%s!/%s", pp.relativePath(), pp.innerJarPath())))
-        .containsExactly("path/to/sources.srcjar!/java/root");
+        .containsExactly("path/to/sources.srcjar!/", "path/to/sources.srcjar!/java/root");
   }
 
   @Test
@@ -366,7 +366,7 @@ public class SrcJarProjectUpdaterTest {
             newProject.getLibrary(0).getSourcesList().stream()
                 .map(LibrarySource::getSrcjar)
                 .map(ProjectProto.ProjectPath::getInnerPath))
-        .containsExactly("java/package/root");
+        .containsExactly("", "java/package/root");
   }
 
   @AutoValue

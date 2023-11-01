@@ -111,9 +111,9 @@ public class SrcJarProjectUpdater {
   private ImmutableList<ProjectPath> resolveSrcJarInnerPaths(Collection<ProjectPath> srcJars) {
     ImmutableList.Builder<ProjectPath> newSrcJars = ImmutableList.builder();
     for (ProjectPath srcJar : srcJars) {
+      newSrcJars.add(srcJar);
       Path jarFile = resolver.resolve(srcJar);
-      Optional<Path> innerPath = findInnerJarPath(jarFile.toFile());
-      newSrcJars.add(innerPath.map(srcJar::withInnerJarPath).orElse(srcJar));
+      findInnerJarPath(jarFile.toFile()).map(srcJar::withInnerJarPath).ifPresent(newSrcJars::add);
     }
     return newSrcJars.build();
   }
