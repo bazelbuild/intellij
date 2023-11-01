@@ -80,7 +80,8 @@ public class ProjectQuerierImpl implements ProjectQuerier {
     return fullQuery.createPostQuerySyncData(queryRunner.runQuery(querySpec, context));
   }
 
-  private Optional<VcsState> getVcsState(BlazeContext context) {
+  @Override
+  public Optional<VcsState> getVcsState(BlazeContext context) {
     Optional<ListenableFuture<VcsState>> stateFuture =
         vcsHandler.flatMap(h -> h.getVcsState(context, BlazeExecutor.getInstance().getExecutor()));
     if (stateFuture.isEmpty()) {
