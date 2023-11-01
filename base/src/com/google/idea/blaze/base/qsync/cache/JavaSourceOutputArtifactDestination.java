@@ -19,6 +19,7 @@ import com.google.auto.value.AutoValue;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import com.google.idea.blaze.qsync.PackageStatementParser;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -47,14 +48,25 @@ public abstract class JavaSourceOutputArtifactDestination
   }
 
   @Override
-  public Path prepareFinalLayout() throws IOException {
-    String pkg = packageStatementParser.readPackage(getCopyDestination());
-    Path finalDest =
-        getDestinationJavaSourceDir()
-            .resolve(Path.of(pkg.replace('.', '/')))
-            .resolve(getOriginalFilename());
-    Files.createDirectories(finalDest.getParent());
-    Files.copy(getCopyDestination(), finalDest, StandardCopyOption.REPLACE_EXISTING);
-    return finalDest;
+  public Path prepareFinalLayout() {
+    Path finalDest;
+    try {
+      String pkg = packageStatementParser.readPackage(getCopyDestination());
+      finalDest =
+          getDestinationJavaSourceDir()
+              .resolve(Path.of(pkg.replace('.', '/')))
+              .resolve(getOriginalFilename());
+    } catch (IOException e) {
+      throw new UncheckedIOException(
+          "Failed to determine the final destination for " + getCopyDestination(), e);
+    }
+    try {
+      Files.createDirectories(finalDest.getParent());
+      Files.copy(getCopyDestination(), finalDest, StandardCopyOption.REPLACE_EXISTING);
+      return finalDest;
+    } catch (IOException e) {
+      throw new UncheckedIOException(
+          "Failed to copy " + getCopyDestination() + " to its final destination " + finalDest, e);
+    }
   }
 }

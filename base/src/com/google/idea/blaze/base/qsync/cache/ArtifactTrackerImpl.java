@@ -367,12 +367,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker, RenderJarArtifactTr
       Map<OutputArtifactDestinationAndLayout, Path> destinationToArtifact) {
     ImmutableMap.Builder<Path, Path> result = ImmutableMap.builder();
     for (OutputArtifactDestinationAndLayout destination : destinationToArtifact.keySet()) {
-      try {
-        result.put(destination.prepareFinalLayout(), destinationToArtifact.get(destination));
-      } catch (IOException e) {
-        throw new UncheckedIOException(
-            "Failed to prepare " + destinationToArtifact.get(destination), e);
-      }
+      result.put(destination.prepareFinalLayout(), destinationToArtifact.get(destination));
     }
     return result.build();
   }
