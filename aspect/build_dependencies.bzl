@@ -64,6 +64,27 @@ DependenciesInfo = provider(
     },
 )
 
+def create_dependencies_info(
+        compile_time_jars = depset(),
+        target_to_artifacts = {},
+        aars = depset(),
+        gensrcs = depset(),
+        test_mode_own_files = None,
+        cc_info = None,
+        cc_headers = depset(),
+        cc_toolchain_info = None):
+    """A helper function to create a DependenciesInfo provider instance."""
+    return DependenciesInfo(
+        compile_time_jars = compile_time_jars,
+        target_to_artifacts = target_to_artifacts,
+        aars = aars,
+        gensrcs = gensrcs,
+        test_mode_own_files = test_mode_own_files,
+        cc_info = cc_info,
+        cc_headers = cc_headers,
+        cc_toolchain_info = cc_toolchain_info,
+    )
+
 def _encode_target_info_proto(target_to_artifacts):
     contents = []
     for label, target_info in target_to_artifacts.items():
@@ -432,15 +453,12 @@ def _collect_java_dependencies_core_impl(
         )
 
     return [
-        DependenciesInfo(
+        create_dependencies_info(
             target_to_artifacts = target_to_artifacts,
             compile_time_jars = compile_jars,
             aars = aars,
             gensrcs = gensrcs,
             test_mode_own_files = test_mode_own_files,
-            cc_info = None,
-            cc_headers = depset(),
-            cc_toolchain_info = None,
         ),
     ]
 
@@ -449,12 +467,7 @@ def _collect_cc_dependencies_core_impl(target, ctx):
 
     cc_info = _collect_own_and_dependency_cc_info(target, dependency_info)
 
-    return DependenciesInfo(
-        target_to_artifacts = {},
-        compile_time_jars = depset(),
-        aars = depset(),
-        gensrcs = depset(),
-        test_mode_own_files = None,
+    return create_dependencies_info(
         cc_info = cc_info.compilation_info,
         cc_headers = cc_info.gen_headers,
         cc_toolchain_info = cc_info.cc_toolchain_info,
@@ -525,14 +538,7 @@ def _collect_cc_toolchain_info(target, ctx):
         ),
     )
 
-    return DependenciesInfo(
-        target_to_artifacts = {},
-        compile_time_jars = depset(),
-        aars = depset(),
-        gensrcs = depset(),
-        test_mode_own_files = None,
-        cc_info = None,
-        cc_headers = depset(),
+    return create_dependencies_info(
         cc_toolchain_info = struct(file = cc_toolchain_file, id = toolchain_id),
     )
 
