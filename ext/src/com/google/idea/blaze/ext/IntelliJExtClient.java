@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.ext;
 
+import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
 import com.google.idea.blaze.ext.ChatBotModelGrpc.ChatBotModelBlockingStub;
 import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlockingStub;
@@ -69,6 +70,10 @@ public class IntelliJExtClient {
 
   public BuildServiceFutureStub getBuildService() {
     return BuildServiceGrpc.newFutureStub(channel);
+  }
+
+  public BuildServiceBlockingStub getBuildServiceBlocking() {
+    return BuildServiceGrpc.newBlockingStub(channel);
   }
 
   public KytheFutureStub getKytheService() {
