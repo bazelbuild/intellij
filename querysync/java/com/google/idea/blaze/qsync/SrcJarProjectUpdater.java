@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Library;
@@ -31,7 +32,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -112,42 +113,54 @@ public class SrcJarProjectUpdater {
     ImmutableList.Builder<ProjectPath> newSrcJars = ImmutableList.builder();
     for (ProjectPath srcJar : srcJars) {
       Path jarFile = resolver.resolve(srcJar);
-      Optional<Path> innerPath = findInnerJarPath(jarFile.toFile());
-      newSrcJars.add(innerPath.map(srcJar::withInnerJarPath).orElse(srcJar));
+      findInnerJarPaths(jarFile.toFile()).stream()
+          .map(srcJar::withInnerJarPath)
+          .forEach(newSrcJars::add);
     }
     return newSrcJars.build();
   }
 
-  private Optional<Path> findInnerJarPath(File jarFile) {
+  private ImmutableSet<Path> findInnerJarPaths(File jarFile) {
+    Set<Path> paths = Sets.newHashSet();
     try {
       ZipFile zip = new ZipFile(jarFile);
       Enumeration<? extends ZipEntry> entries = zip.entries();
+      Set<Path> topLevelPaths = Sets.newHashSet();
       while (entries.hasMoreElements()) {
         ZipEntry e = entries.nextElement();
-        if (!e.isDirectory()) {
-          if (e.getName().endsWith(".java") || e.getName().endsWith(".kt")) {
-            try (InputStream in = zip.getInputStream(e)) {
-              String pname = packageReader.readPackage(in);
-              Path packageAsPath = Path.of(pname.replace('.', '/'));
-              Path zipPath = Path.of(e.getName()).getParent();
-              if (zipPath == null) {
-                zipPath = Path.of("");
-              }
-              if (zipPath.equals(packageAsPath)) {
-                // package root is the jar file root.
-                return Optional.empty();
-              }
-              if (zipPath.endsWith(packageAsPath)) {
-                return Optional.of(
-                    zipPath.subpath(0, zipPath.getNameCount() - packageAsPath.getNameCount()));
-              }
-            }
+        if (e.isDirectory()) {
+          continue;
+        }
+        Path zipfilePath = Path.of(e.getName());
+        if (!(zipfilePath.getFileName().toString().endsWith(".java")
+            || zipfilePath.getFileName().toString().endsWith(".kt"))) {
+          continue;
+        }
+        if (!topLevelPaths.add(zipfilePath.getName(0))) {
+          continue;
+        }
+        try (InputStream in = zip.getInputStream(e)) {
+          String pname = packageReader.readPackage(in);
+          Path packageAsPath = Path.of(pname.replace('.', '/'));
+          Path zipPath = zipfilePath.getParent();
+          if (zipPath == null) {
+            zipPath = Path.of("");
+          }
+          if (zipPath.equals(packageAsPath)) {
+            // package root is the jar file root.
+            paths.add(Path.of(""));
+          } else if (zipPath.endsWith(packageAsPath)) {
+            paths.add(zipPath.subpath(0, zipPath.getNameCount() - packageAsPath.getNameCount()));
           }
         }
       }
     } catch (IOException ioe) {
       logger.log(Level.WARNING, "Failed to examine " + jarFile, ioe);
     }
-    return Optional.empty();
+    if (paths.isEmpty()) {
+      // we didn't find any java/kt sources. Add the jar file root to ensure we don't ignore it.
+      paths.add(Path.of(""));
+    }
+    return ImmutableSet.copyOf(paths);
   }
 }

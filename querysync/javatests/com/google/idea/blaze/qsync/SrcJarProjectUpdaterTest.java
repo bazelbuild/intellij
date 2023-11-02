@@ -329,6 +329,38 @@ public class SrcJarProjectUpdaterTest {
   }
 
   @Test
+  public void src_jars_inner_path_multiple_roots() throws Exception {
+    ProjectProto.Project project =
+        ProjectProtos.forTestProject(TestData.JAVA_LIBRARY_NO_DEPS_QUERY);
+    // sanity check:
+    assertThat(project.getLibrary(0).getName()).isEqualTo(".dependencies");
+
+    createSrcJar(
+        workspaceRoot.resolve("path/to/sources.srcjar"),
+        PathPackage.of("java/root/com/package/Class.java", "com.package"),
+        PathPackage.of("com/package/AnotherClass.java", "com.package"),
+        PathPackage.of("otherroot/com/package/YetAnotherClass.java", "com.package"));
+
+    SrcJarProjectUpdater updater =
+        new SrcJarProjectUpdater(
+            project,
+            ImmutableList.of(ProjectPath.workspaceRelative("path/to/sources.srcjar")),
+            Resolver.create(workspaceRoot, projectRoot));
+
+    ProjectProto.Project newProject = updater.addSrcJars();
+
+    assertThat(
+            newProject.getLibrary(0).getSourcesList().stream()
+                .map(LibrarySource::getSrcjar)
+                .map(ProjectPath::create)
+                .map(pp -> String.format("%s!/%s", pp.relativePath(), pp.innerJarPath())))
+        .containsExactly(
+            "path/to/sources.srcjar!/java/root",
+            "path/to/sources.srcjar!/",
+            "path/to/sources.srcjar!/otherroot");
+  }
+
+  @Test
   public void update_src_jars_new_inner_root() throws Exception {
     ProjectProto.Project project =
         ProjectProtos.forTestProject(TestData.JAVA_LIBRARY_NO_DEPS_QUERY);
