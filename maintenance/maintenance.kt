@@ -15,6 +15,8 @@ fun main(args: Array<String>) { // run with WORKSPACE file path as the first arg
     Files.copy(Paths.get(args[0]), out, StandardCopyOption.REPLACE_EXISTING)
     bumpRelease("2023.2", "232", out)
     bumpPlugins("232", out)
+    bumpEap("233", out)
+    bumpPlugins("233", out)
     bumpRelease("2023.1", "231", out)
     bumpPlugins("231", out)
     bumpMavenPackages("junit:junit", "JUNIT", out)
