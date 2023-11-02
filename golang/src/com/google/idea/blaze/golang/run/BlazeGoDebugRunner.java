@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.golang.run.BlazeGoRunConfigurationRunner.BlazeGoDummyDebugProfileState;
+import com.google.idea.sdkcompat.go.GoSdkCompat;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
@@ -35,6 +36,8 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -82,6 +85,11 @@ public class BlazeGoDebugRunner extends GoBuildingRunner {
       throws ExecutionException {
     EventLoggingService.getInstance().logEvent(getClass(), "debugging-go");
     GoApplicationRunningState goState = blazeState.toNativeState(environment);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+            () -> ReadAction.run(() -> GoSdkCompat.prepareState(goState)),
+            "Preparing Go Application Running State",
+            false,
+            environment.getProject());
     ExecutionResult executionResult = goState.execute(environment.getExecutor(), this);
     return XDebuggerManager.getInstance(environment.getProject())
         .startSession(
