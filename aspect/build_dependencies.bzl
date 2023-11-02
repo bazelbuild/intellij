@@ -1,7 +1,7 @@
 """Aspects to build and collect project dependencies."""
 
 load(
-    "//tools/build_defs/cc:action_names.bzl",
+    "@bazel_tools//tools/build_defs/cc:action_names.bzl",
     "CPP_COMPILE_ACTION_NAME",
     "C_COMPILE_ACTION_NAME",
 )
@@ -612,34 +612,22 @@ def _build_ide_aar_file_map(manifest_file, resource_files):
             file_map[res_dir_path] = f
     return file_map
 
-_CONTROL_FILE_ENTRY = '''entry {
-  zip_path: "%s"
-  exec_path: "%s"
-}'''
-
 def _package_ide_aar(ctx, aar, file_map):
     """
     Declares a file and defines actions to build .aar according to file_map.
-
-    The IDE.aar file is produces by an aspect and therefore it cannot define
-    additional targets and thus cannot use genzip() rule. This function reuses
-    //tools/genzip:build_zip tool, which is used by getzip() rule.
     """
-    actions = ctx.actions
-    control_file = actions.declare_file(".control", sibling = aar)
-    control_content = ['output_filename: "%s"' % aar.path]
+    files_map_args = []
     files = []
     for aar_dir_path, f in file_map.items():
         files.append(f)
-        control_content.append(_CONTROL_FILE_ENTRY % (aar_dir_path, f.path))
-    control_content.append("compression: STORED")
-    actions.write(control_file, "\n".join(control_content))
-    actions.run(
+        files_map_args.append("%s=%s" % (aar_dir_path, f.path))
+
+    ctx.actions.run(
         mnemonic = "GenerateIdeAar",
         executable = ctx.executable._build_zip,
-        inputs = files + [control_file],
+        inputs = files,
         outputs = [aar],
-        arguments = ["--control", control_file.path],
+        arguments = ["c", aar.path] + files_map_args,
     )
 
 def _output_relative_path(path):
@@ -701,7 +689,7 @@ collect_dependencies = aspect(
             allow_files = True,
             cfg = "exec",
             executable = True,
-            default = "@//tools/genzip:build_zip",
+            default = "@@bazel_tools//tools/zip:zipper",
         ),
     },
     fragments = ["cpp"],
@@ -724,7 +712,7 @@ collect_all_dependencies_for_tests = aspect(
             allow_files = True,
             cfg = "exec",
             executable = True,
-            default = "@//tools/genzip:build_zip",
+            default = "@@bazel_tools//tools/zip:zipper",
         ),
     },
     fragments = ["cpp"],
