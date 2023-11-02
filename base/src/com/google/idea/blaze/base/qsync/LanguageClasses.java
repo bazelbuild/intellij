@@ -18,7 +18,8 @@ package com.google.idea.blaze.base.qsync;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
+import java.util.Collection;
 import java.util.Optional;
 
 /** A utility class to translate variants of {@link LanguageClass} enumerations. */
@@ -32,7 +33,7 @@ class LanguageClasses {
    * context.
    */
   static ImmutableSet<LanguageClass> translateFrom(
-      ImmutableSet<com.google.idea.blaze.base.model.primitives.LanguageClass> from) {
+      Collection<com.google.idea.blaze.base.model.primitives.LanguageClass> from) {
     return from.stream().flatMap(it -> translateFrom(it).stream()).collect(toImmutableSet());
   }
 
@@ -47,6 +48,8 @@ class LanguageClasses {
         return Optional.of(LanguageClass.JAVA);
       case KOTLIN:
         return Optional.of(LanguageClass.KOTLIN);
+      case C:
+        return Optional.of(LanguageClass.CC);
       default:
         return Optional.<LanguageClass>empty();
     }

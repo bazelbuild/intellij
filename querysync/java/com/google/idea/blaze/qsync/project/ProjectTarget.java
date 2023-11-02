@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Label;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import java.util.Optional;
 
 /**

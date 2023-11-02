@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.logging.utils.querysync;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import java.nio.file.Path;
 
 /** The basic information to track of a query sync project. */

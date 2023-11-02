@@ -35,7 +35,7 @@ import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.RuleKinds;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import java.nio.file.Path;
 import java.util.AbstractMap.SimpleEntry;
@@ -310,7 +310,7 @@ public abstract class BuildGraphData {
 
   private ImmutableSet<Label> protoSources() {
     return targetMap().values().stream()
-        .filter(t -> RuleKinds.PROTO_SOURCE_RULE_KINDS.contains(t.kind()))
+        .filter(t -> RuleKinds.isProtoSource(t.kind()))
         .flatMap(t -> t.sourceLabels().stream())
         .collect(toImmutableSet());
   }

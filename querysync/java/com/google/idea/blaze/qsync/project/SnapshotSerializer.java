@@ -21,7 +21,6 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.project.SnapshotProto.WorkspaceSnapshot;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.protobuf.AbstractMessageLite;
@@ -37,12 +36,6 @@ public class SnapshotSerializer {
           Operation.ADD, SnapshotProto.WorkspaceFileChange.VcsOperation.ADD,
           Operation.DELETE, SnapshotProto.WorkspaceFileChange.VcsOperation.DELETE,
           Operation.MODIFY, SnapshotProto.WorkspaceFileChange.VcsOperation.MODIFY);
-
-  static final ImmutableBiMap<LanguageClass, SnapshotProto.ProjectDefinition.LanguageClass>
-      LANGUAGE_CLASS_MAP =
-          ImmutableBiMap.of(
-              LanguageClass.JAVA, SnapshotProto.ProjectDefinition.LanguageClass.JAVA,
-              LanguageClass.KOTLIN, SnapshotProto.ProjectDefinition.LanguageClass.KOTLIN);
 
   private final SnapshotProto.Snapshot.Builder proto;
 
@@ -68,17 +61,17 @@ public class SnapshotSerializer {
   }
 
   private void visitProjectDefinition(ProjectDefinition projectDefinition) {
-    SnapshotProto.ProjectDefinition.Builder proto = this.proto.getProjectDefinitionBuilder();
+    SnapshotProto.ProjectDefinition.Builder proto =
+        this.proto
+            .getProjectDefinitionBuilder()
+            .addAllLanguageClasses(projectDefinition.languageClasses())
+            .addAllTestSources(projectDefinition.testSources());
     projectDefinition.projectIncludes().stream()
         .map(Path::toString)
         .forEach(proto::addIncludePaths);
     projectDefinition.projectExcludes().stream()
         .map(Path::toString)
         .forEach(proto::addExcludePaths);
-    projectDefinition.languageClasses().stream()
-        .map(LANGUAGE_CLASS_MAP::get)
-        .forEach(proto::addLanguageClasses);
-    projectDefinition.testSources().forEach(proto::addTestSources);
   }
 
   private void visitVcsState(VcsState vcsState) {

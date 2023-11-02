@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.qsync;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import java.io.IOException;
 import java.util.Set;
 

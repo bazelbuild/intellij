@@ -29,7 +29,7 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.RuleKinds;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.BuildGraphData.Location;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.query.Query;
@@ -91,15 +91,6 @@ public class BlazeQueryParser {
     this.ccEnabledFlag = ccEnabledFlag;
   }
 
-  private static boolean isJavaRule(String ruleClass) {
-    return RuleKinds.JAVA_RULE_KINDS.contains(ruleClass)
-        || RuleKinds.ANDROID_RULE_KINDS.contains(ruleClass);
-  }
-
-  private static boolean isCcRule(String ruleClass) {
-    return RuleKinds.CC_RULE_KINDS.contains(ruleClass);
-  }
-
   public BuildGraphData parse() {
     context.output(PrintOutput.log("Analyzing project structure..."));
 
@@ -133,13 +124,13 @@ public class BlazeQueryParser {
         targetBuilder.customPackage(ruleEntry.getValue().getCustomPackage());
       }
 
-      if (isJavaRule(ruleClass)) {
+      if (RuleKinds.isJava(ruleClass)) {
         visitJavaRule(ruleEntry.getKey(), ruleEntry.getValue(), targetBuilder);
       }
-      if (isCcRule(ruleClass)) {
+      if (RuleKinds.isCc(ruleClass)) {
         visitCcRule(ruleEntry.getKey(), ruleEntry.getValue(), targetBuilder);
       }
-      if (RuleKinds.PROTO_SOURCE_RULE_KINDS.contains(ruleClass)) {
+      if (RuleKinds.isProtoSource(ruleClass)) {
         visitProtoRule(ruleEntry.getValue(), targetBuilder);
       }
       if (alwaysBuildRuleKinds.contains(ruleClass)) {
@@ -194,7 +185,7 @@ public class BlazeQueryParser {
     graphBuilder.javaSourcesBuilder().addAll(thisSources);
     javaDeps.addAll(thisDeps);
 
-    if (RuleKinds.ANDROID_RULE_KINDS.contains(rule.getRuleClass())) {
+    if (RuleKinds.isAndroid(rule.getRuleClass())) {
       graphBuilder.androidTargetsBuilder().add(label);
 
       // Add android targets with aidl files as external deps so the aspect generates

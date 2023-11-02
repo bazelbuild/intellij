@@ -23,6 +23,7 @@ import com.google.common.collect.ListMultimap;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -43,13 +44,6 @@ public abstract class ProjectDefinition {
           /* excludes= */ ImmutableSet.of(),
           /* languageClasses= */ ImmutableSet.of(),
           /* testSources= */ ImmutableSet.of());
-
-  /** A language class that the query sync supports/needs to care about. */
-  public enum LanguageClass {
-    JAVA,
-    KOTLIN,
-    CC
-  }
 
   /**
    * Project includes, also know as root directories. Taken from the users {@code .blazeproject}

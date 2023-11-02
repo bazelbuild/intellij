@@ -22,7 +22,7 @@ public final class RuleKinds {
   private RuleKinds() {}
 
   /** Java rule kinds */
-  public static final ImmutableSet<String> JAVA_RULE_KINDS =
+  private static final ImmutableSet<String> JAVA_RULE_KINDS =
       ImmutableSet.of(
           "java_library",
           "java_binary",
@@ -35,7 +35,7 @@ public final class RuleKinds {
           "_java_lite_grpc_library");
 
   /** Android rule kinds */
-  public static final ImmutableSet<String> ANDROID_RULE_KINDS =
+  private static final ImmutableSet<String> ANDROID_RULE_KINDS =
       ImmutableSet.of(
           "android_library",
           "android_binary",
@@ -44,10 +44,26 @@ public final class RuleKinds {
           "kt_android_library_helper");
 
   /** C++ rule kinds */
-  public static final ImmutableSet<String> CC_RULE_KINDS =
+  private static final ImmutableSet<String> CC_RULE_KINDS =
       ImmutableSet.of("cc_library", "cc_binary", "cc_shared_library", "cc_test");
 
   /** Rule kinds that have proto files for sources. */
-  public static final ImmutableSet<String> PROTO_SOURCE_RULE_KINDS =
+  private static final ImmutableSet<String> PROTO_SOURCE_RULE_KINDS =
       ImmutableSet.of("proto_library");
+
+  public static boolean isJava(String ruleClass) {
+    return JAVA_RULE_KINDS.contains(ruleClass) || ANDROID_RULE_KINDS.contains(ruleClass);
+  }
+
+  public static boolean isAndroid(String ruleClass) {
+    return ANDROID_RULE_KINDS.contains(ruleClass);
+  }
+
+  public static boolean isCc(String ruleClass) {
+    return CC_RULE_KINDS.contains(ruleClass);
+  }
+
+  public static boolean isProtoSource(String ruleClass) {
+    return PROTO_SOURCE_RULE_KINDS.contains(ruleClass);
+  }
 }
