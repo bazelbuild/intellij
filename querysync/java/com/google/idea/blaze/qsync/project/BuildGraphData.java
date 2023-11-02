@@ -310,7 +310,7 @@ public abstract class BuildGraphData {
 
   private ImmutableSet<Label> protoSources() {
     return targetMap().values().stream()
-        .filter(t -> RuleKinds.PROTO_SOURCE_RULE_KINDS.contains(t.kind()))
+        .filter(t -> RuleKinds.isProtoSource(t.kind()))
         .flatMap(t -> t.sourceLabels().stream())
         .collect(toImmutableSet());
   }
