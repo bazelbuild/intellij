@@ -247,8 +247,14 @@ public class GraphToProjectConverter {
                     new PriorityQueue<>(Comparator.comparing(Path::getFileName));
                 dirFiles.addAll(filesByPath.get(dir));
                 Path candidate = dirFiles.poll();
-                while (candidate != null && !fileExistenceCheck.test(candidate)) {
-                  candidate = dirFiles.poll();
+                // Prefer java/kotlin files to others, such as manifests.
+                while (!dirFiles.isEmpty()
+                    && candidate != null
+                    && !(candidate.endsWith(".java") || candidate.endsWith(".kt"))) {
+                  Path next = dirFiles.poll();
+                  if (next != null && fileExistenceCheck.test(next)) {
+                    candidate = next;
+                  }
                 }
                 if (candidate != null) {
                   candidates.put(dir, candidate);
@@ -417,8 +423,7 @@ public class GraphToProjectConverter {
                 .build());
       }
       for (Path protoDirPath : rootToProtoSource.get(dir)) {
-        if (rootToPrefix.get(dir).keySet().stream()
-            .noneMatch(protoDirPath::startsWith)) {
+        if (rootToPrefix.get(dir).keySet().stream().noneMatch(protoDirPath::startsWith)) {
           Path path = dir.resolve(protoDirPath);
           // TODO(b/305743519): make java source properties like package prefix specific to java
           // source folders only.

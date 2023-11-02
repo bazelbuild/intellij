@@ -13,13 +13,13 @@ android_binary(
 
 android_library(
     name = "test_lib",
-    srcs = ["AndroidInstrumentationTest.java"],
+    srcs = ["test/AndroidInstrumentationTest.java"],
 )
 
 android_binary(
     name = "test_app",
     instruments = ":app",
-    manifest = "AndroidManifest.xml",
+    manifest = "test/AndroidManifest.xml",
     deps = [":test_lib"],
 )
 

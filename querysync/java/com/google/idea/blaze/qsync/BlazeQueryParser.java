@@ -186,6 +186,10 @@ public class BlazeQueryParser {
     javaDeps.addAll(thisDeps);
 
     if (RuleKinds.isAndroid(rule.getRuleClass())) {
+      if (!rule.getManifest().isEmpty()) {
+        graphBuilder.javaSourcesBuilder().add(Label.of(rule.getManifest()));
+      }
+
       graphBuilder.androidTargetsBuilder().add(label);
 
       // Add android targets with aidl files as external deps so the aspect generates

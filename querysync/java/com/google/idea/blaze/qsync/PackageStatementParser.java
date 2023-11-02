@@ -26,23 +26,35 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Package reader that parses package statements from java source files. */
+/** Package reader that parses package statements from java source files and android manifests. */
 public class PackageStatementParser implements PackageReader {
 
-  private static final Pattern PACKAGE_PATTERN = Pattern.compile("^\\s*package\\s+([\\w\\.]+)");
+  private static final Pattern JAVA_PACKAGE_PATTERN =
+      Pattern.compile("^\\s*package\\s+([\\w\\.]+)");
+
+  private static final Pattern ANDROID_MANIFEST_PACKAGE_PATTERN =
+      Pattern.compile("package\\s*=\\s*\"([\\w\\.]+)\"");
 
   @Override
   public String readPackage(Path path) throws IOException {
     try (InputStream in = new FileInputStream(path.toFile())) {
-      return readPackage(in);
+      if (path.endsWith("AndroidManifest.xml")) {
+        return readPackageInternal(in, ANDROID_MANIFEST_PACKAGE_PATTERN);
+      } else {
+        return readJavaPackage(in);
+      }
     }
   }
 
-  public String readPackage(InputStream in) throws IOException {
-    BufferedReader javaReader = new BufferedReader(new InputStreamReader(in, UTF_8));
-    String javaLine;
-    while ((javaLine = javaReader.readLine()) != null) {
-      Matcher packageMatch = PACKAGE_PATTERN.matcher(javaLine);
+  public String readJavaPackage(InputStream in) throws IOException {
+    return readPackageInternal(in, JAVA_PACKAGE_PATTERN);
+  }
+
+  private String readPackageInternal(InputStream in, Pattern pattern) throws IOException {
+    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in, UTF_8));
+    String line;
+    while ((line = bufferedReader.readLine()) != null) {
+      Matcher packageMatch = pattern.matcher(line);
       if (packageMatch.find()) {
         return packageMatch.group(1);
       }

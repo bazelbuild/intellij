@@ -191,9 +191,13 @@ public class BuildGraphTest {
             TESTDATA_ROOT.resolve("android/BUILD"),
             TESTDATA_ROOT.resolve("android/AndroidManifest.xml"));
     assertThat(graph.getJavaSourceFiles())
-        .containsExactly(TESTDATA_ROOT.resolve("android/TestAndroidClass.java"));
+        .containsExactly(
+            TESTDATA_ROOT.resolve("android/TestAndroidClass.java"),
+            TESTDATA_ROOT.resolve("android/AndroidManifest.xml"));
     assertThat(graph.getAndroidSourceFiles())
-        .containsExactly(TESTDATA_ROOT.resolve("android/TestAndroidClass.java"));
+        .containsExactly(
+            TESTDATA_ROOT.resolve("android/TestAndroidClass.java"),
+            TESTDATA_ROOT.resolve("android/AndroidManifest.xml"));
     assertThat(graph.getTargetOwners(TESTDATA_ROOT.resolve("android/TestAndroidClass.java")))
         .containsExactly(Label.of("//" + TESTDATA_ROOT + "/android:android"));
     assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("android/TestAndroidClass.java")))
