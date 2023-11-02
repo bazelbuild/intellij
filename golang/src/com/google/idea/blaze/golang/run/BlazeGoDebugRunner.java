@@ -36,6 +36,7 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
@@ -85,7 +86,7 @@ public class BlazeGoDebugRunner extends GoBuildingRunner {
     EventLoggingService.getInstance().logEvent(getClass(), "debugging-go");
     GoApplicationRunningState goState = blazeState.toNativeState(environment);
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            () -> GoSdkCompat.prepareState(goState),
+            () -> ReadAction.run(() -> GoSdkCompat.prepareState(goState)),
             "Preparing Go Application Running State",
             false,
             environment.getProject());
