@@ -67,9 +67,6 @@ java_library(
     name = "unit_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/unit/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2022.2": [
-            "tests/utils/sdkcompat/as222/com/android/ide/common/repository/GoogleMavenArtifactIdCompat.java",
-        ],
         "android-studio-2022.3": [
             "tests/utils/sdkcompat/as223/com/android/ide/common/repository/GoogleMavenArtifactIdCompat.java",
         ],
@@ -97,12 +94,6 @@ java_library(
     name = "integration_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2022.2": [
-            "sdkcompat/as222/com/android/tools/rendering/RenderResultCompat.java",
-            "tests/utils/sdkcompat/as222/com/android/tools/idea/sdk/IdeSdksCompat.java",
-            "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
-            "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
-        ],
         "android-studio-2022.3": [
             "sdkcompat/as223/com/android/tools/rendering/RenderResultCompat.java",
             "tests/utils/sdkcompat/as223/com/android/tools/idea/sdk/IdeSdksCompat.java",
@@ -154,7 +145,6 @@ java_library(
         # These source files below should be omitted for versions < 2023.1.1.11
         exclude = ["src/com/google/idea/blaze/android/run/binary/tasks/*.java"],
     ) + select_for_plugin_api({
-        "android-studio-2022.2": glob(["sdkcompat/as222/**/*.java"]),
         "android-studio-2022.3": glob(["sdkcompat/as223/**/*.java"]),
         "android-studio-2023.1": glob(["sdkcompat/as231/**/*.java"] + [
             "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
