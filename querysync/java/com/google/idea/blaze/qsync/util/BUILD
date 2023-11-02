@@ -35,3 +35,16 @@ java_library(
         "//shared",
     ],
 )
+
+java_binary(
+    name = "get_jar_roots",
+    srcs = ["GetJarRoots.java"],
+    main_class = "com.google.idea.blaze.qsync.util.GetJarRoots",
+    visibility = ["//querysync:__pkg__"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync",
+        "//querysync/java/com/google/idea/blaze/qsync/project",
+        "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
+        "@com_google_guava_guava//jar",
+    ],
+)
