@@ -95,12 +95,12 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
         new LogWrapper(BlazeProjectSystem.class));
   }
 
-  // @Override #api42
+  @Override
   public void buildProject() {
     BlazeBuildService.getInstance(project).buildProject();
   }
 
-  // @Override #api42
+  @Override
   public ProjectSystemBuildManager getBuildManager() {
     return buildManager;
   }
@@ -171,7 +171,7 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
     };
   }
 
-  // @Override #api212
+  @Override
   public ClassJarProvider getClassJarProvider() {
     return new BlazeClassJarProvider(project);
   }
