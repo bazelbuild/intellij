@@ -72,9 +72,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2023_2. This is required to build IJwB and run integration tests.
-IC_233_SHA = "96ae52f43c7029688031288437d3b79474ebd7974ce6cbfa7824d02e010f2998"
+IC_233_SHA = "19fe849d33faca93c692c42df480fabb741de8506393b92f313fcbd65acc65b3"
 
-IC_233_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/233.11361.10-EAP-SNAPSHOT/ideaIC-233.11361.10-EAP-SNAPSHOT.zip"
+IC_233_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/233.11555.11-EAP-SNAPSHOT/ideaIC-233.11555.11-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ce_2023_3",
@@ -149,9 +149,9 @@ http_archive(
     url = IU_232_URL,
 )
 
-IU_233_SHA = "c21fd4ff9ccc54915a1b20e1001a7a5aa99720d8a8f9fc6b28565de3a67849d3"
+IU_233_SHA = "0dd7efba1302946ee795211965be969714098b67bb774e896c2a943c5137f5fe"
 
-IU_233_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/233.11361.10-EAP-SNAPSHOT/ideaIU-233.11361.10-EAP-SNAPSHOT.zip"
+IU_233_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/233.11555.11-EAP-SNAPSHOT/ideaIU-233.11555.11-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ue_2023_3",
@@ -224,9 +224,9 @@ http_archive(
     url = CLION_232_URL,
 )
 
-CLION_233_SHA = "8c76231875c4d13c2e933fa111e4f8d6ac72daf9d78f27d2d285331bad8c752f"
+CLION_233_SHA = "11f0a16418bc9626ca7fd20f7032997e673ac53017feb3c23441a72da6a079bd"
 
-CLION_233_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/233.11361.11-EAP-SNAPSHOT/clion-233.11361.11-EAP-SNAPSHOT.zip"
+CLION_233_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/233.11555.2-EAP-SNAPSHOT/clion-233.11555.2-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "clion_2023_3",
