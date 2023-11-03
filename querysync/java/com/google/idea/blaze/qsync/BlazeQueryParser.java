@@ -29,8 +29,8 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.RuleKinds;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.BuildGraphData.Location;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
+import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.Query.Rule;
@@ -170,7 +170,7 @@ public class BlazeQueryParser {
 
   private void visitJavaRule(Label label, Query.Rule rule, ProjectTarget.Builder targetBuilder) {
     graphBuilder.allTargetsBuilder().add(label);
-    targetBuilder.languagesBuilder().add(LanguageClass.JAVA);
+    targetBuilder.languagesBuilder().add(QuerySyncLanguage.JAVA);
     ImmutableSet<Label> thisSources =
         expandFileGroupValues(rule.getSourcesList(), rule.getResourceFilesList());
     targetBuilder.sourceLabelsBuilder().addAll(thisSources);
@@ -204,7 +204,7 @@ public class BlazeQueryParser {
       return;
     }
     graphBuilder.allTargetsBuilder().add(label);
-    targetBuilder.languagesBuilder().add(LanguageClass.CC);
+    targetBuilder.languagesBuilder().add(QuerySyncLanguage.CC);
     targetBuilder.coptsBuilder().addAll(rule.getCoptsList());
     ImmutableSet<Label> thisSources =
         expandFileGroupValues(rule.getSourcesList(), rule.getHdrsList());

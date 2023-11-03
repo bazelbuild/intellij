@@ -25,7 +25,6 @@ import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.query.QuerySummaryTestUtil;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -46,7 +45,7 @@ public class SnapshotSerializationTest {
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("project/path")),
                     ImmutableSet.of(Path.of("project/path/excluded")),
-                    ImmutableSet.of(LanguageClass.JAVA),
+                    ImmutableSet.of(QuerySyncLanguage.JAVA),
                     ImmutableSet.of("javatests/*")))
             .setVcsState(
                 Optional.of(
@@ -104,7 +103,7 @@ public class SnapshotSerializationTest {
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("project/path")),
                     ImmutableSet.of(Path.of("project/path/excluded")),
-                    ImmutableSet.of(LanguageClass.JAVA),
+                    ImmutableSet.of(QuerySyncLanguage.JAVA),
                     ImmutableSet.of("javatests/*")))
             .setVcsState(Optional.empty())
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//project/path:path"))
@@ -127,7 +126,7 @@ public class SnapshotSerializationTest {
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("project/path")),
                     ImmutableSet.of(Path.of("project/path/excluded")),
-                    ImmutableSet.of(LanguageClass.JAVA),
+                    ImmutableSet.of(QuerySyncLanguage.JAVA),
                     ImmutableSet.of("javatests/*")))
             .setVcsState(Optional.empty())
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//project/path:path"))

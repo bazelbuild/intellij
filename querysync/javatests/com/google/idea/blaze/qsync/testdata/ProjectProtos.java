@@ -24,8 +24,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.GraphToProjectConverter;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
+import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -49,7 +49,7 @@ public class ProjectProtos {
             ProjectDefinition.create(
                 ImmutableSet.of(workspaceImportDirectory),
                 ImmutableSet.of(),
-                ImmutableSet.of(LanguageClass.JAVA),
+                ImmutableSet.of(QuerySyncLanguage.JAVA),
                 ImmutableSet.of()),
             newDirectExecutorService());
 

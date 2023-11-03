@@ -56,7 +56,7 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.protobuf.Message;
 import com.google.protobuf.TextFormat;
@@ -114,20 +114,20 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     this.handledRuleKinds = handledRuleKinds;
   }
 
-  private static final ImmutableMultimap<LanguageClass, OutputGroup> OUTPUT_GROUPS_BY_LANGUAGE =
-      ImmutableMultimap.<LanguageClass, OutputGroup>builder()
+  private static final ImmutableMultimap<QuerySyncLanguage, OutputGroup> OUTPUT_GROUPS_BY_LANGUAGE =
+      ImmutableMultimap.<QuerySyncLanguage, OutputGroup>builder()
           .putAll(
-              LanguageClass.JAVA,
+              QuerySyncLanguage.JAVA,
               OutputGroup.JARS,
               OutputGroup.AARS,
               OutputGroup.GENSRCS,
               OutputGroup.ARTIFACT_INFO_FILE)
-          .putAll(LanguageClass.CC, OutputGroup.CC_HEADERS, OutputGroup.CC_INFO_FILE)
+          .putAll(QuerySyncLanguage.CC, OutputGroup.CC_HEADERS, OutputGroup.CC_INFO_FILE)
           .build();
 
   @Override
   public OutputInfo build(
-      BlazeContext context, Set<Label> buildTargets, Set<LanguageClass> languages)
+      BlazeContext context, Set<Label> buildTargets, Set<QuerySyncLanguage> languages)
       throws IOException, BuildException {
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
     Optional<BuildDepsStats.Builder> buildDepsStatsBuilder =

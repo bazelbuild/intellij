@@ -122,7 +122,7 @@ public class ProjectLoader {
         ProjectDefinition.create(
             importRoots.rootPaths(),
             importRoots.excludePaths(),
-            LanguageClasses.translateFrom(workspaceLanguageSettings.getActiveLanguages()),
+            LanguageClasses.toQuerySync(workspaceLanguageSettings.getActiveLanguages()),
             testSourceGlobs);
 
     Path snapshotFilePath = getSnapshotFilePath(importSettings);

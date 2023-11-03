@@ -7,6 +7,7 @@ java_library(
     ],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/project",
+        "//querysync/java/com/google/idea/blaze/qsync/project:language_class_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",

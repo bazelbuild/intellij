@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.logging.utils.querysync;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import java.nio.file.Path;
 
 /** The basic information to track of a query sync project. */
@@ -31,7 +31,7 @@ public abstract class ProjectInfoStats {
 
   public abstract ImmutableSet<Path> blazeProjectFiles();
 
-  public abstract ImmutableSet<LanguageClass> languagesActive();
+  public abstract ImmutableSet<QuerySyncLanguage> languagesActive();
 
   public abstract Builder toBuilder();
 
@@ -45,7 +45,7 @@ public abstract class ProjectInfoStats {
 
     public abstract Builder setBlazeProjectFiles(ImmutableSet<Path> value);
 
-    public abstract Builder setLanguagesActive(ImmutableSet<LanguageClass> value);
+    public abstract Builder setLanguagesActive(ImmutableSet<QuerySyncLanguage> value);
 
     public abstract ProjectInfoStats build();
   }

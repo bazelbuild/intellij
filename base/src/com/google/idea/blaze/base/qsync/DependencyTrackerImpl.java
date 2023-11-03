@@ -37,8 +37,8 @@ import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
+import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import com.google.idea.blaze.qsync.project.TargetTree;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -191,7 +191,7 @@ public class DependencyTrackerImpl implements DependencyTracker {
     refreshFiles(context, updatedFiles);
   }
 
-  private static ImmutableSet<LanguageClass> getTargetLanguages(
+  private static ImmutableSet<QuerySyncLanguage> getTargetLanguages(
       BlazeProjectSnapshot snapshot, ImmutableSet<Label> targets) {
     return targets.stream()
         .map(snapshot.graph().targetMap()::get)

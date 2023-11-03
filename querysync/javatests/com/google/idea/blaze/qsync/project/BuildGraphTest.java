@@ -24,7 +24,6 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.testdata.BuildGraphs;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.nio.file.Path;
@@ -63,7 +62,7 @@ public class BuildGraphTest {
     assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java")))
         .isEmpty();
     assertThat(graph.targetMap().get(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps")).languages())
-        .containsExactly(LanguageClass.JAVA);
+        .containsExactly(QuerySyncLanguage.JAVA);
   }
 
   @Test
@@ -276,7 +275,7 @@ public class BuildGraphTest {
         .containsExactly(Label.of("//" + TESTDATA_ROOT + "/cc:cc"));
     assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("cc/TestClass.cc"))).isEmpty();
     assertThat(graph.targetMap().get(Label.of("//" + TESTDATA_ROOT + "/cc:cc")).languages())
-        .containsExactly(LanguageClass.CC);
+        .containsExactly(QuerySyncLanguage.CC);
   }
 
   @Test

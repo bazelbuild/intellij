@@ -388,7 +388,7 @@ public class QuerySyncProject {
         ProjectDefinition.create(
             importRoots.rootPaths(),
             importRoots.excludePaths(),
-            LanguageClasses.translateFrom(workspaceLanguageSettings.getActiveLanguages()),
+            LanguageClasses.toQuerySync(workspaceLanguageSettings.getActiveLanguages()),
             testSourceGlobs);
 
     return this.projectDefinition.equals(projectDefinition);
