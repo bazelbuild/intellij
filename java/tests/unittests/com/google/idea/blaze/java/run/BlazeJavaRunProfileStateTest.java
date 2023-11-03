@@ -191,6 +191,32 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
   }
 
   @Test
+  public void debugFlagShouldBeIncludedForJavaTestSuite() {
+      configuration.setTargetInfo(
+              TargetInfo.builder(Label.create("//label:java_test_suite_rule"), "java_test_suite").build());
+      BlazeCommandRunConfigurationCommonState handlerState =
+              (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
+      handlerState.getCommandState().setCommand(BlazeCommandName.fromString("test"));
+      assertThat(
+          BlazeJavaRunProfileState.getBlazeCommandBuilder(
+              project,
+              configuration,
+              ImmutableList.of(),
+              ExecutorType.DEBUG,
+              /*kotlinxCoroutinesJavaAgent=*/ null)
+              .build()
+              .toList())
+          .isEqualTo(
+              ImmutableList.of(
+              "/usr/bin/blaze",
+              "test",
+              BlazeFlags.getToolTagFlag(),
+              "--java_debug",
+              "--test_arg=--wrapper_script_flag=--debug=5005",
+              "--",
+              "//label:java_test_suite_rule"));
+  }
+  @Test
   public void debugFlagShouldBeIncludedForJavaBinary() {
     configuration.setTargetInfo(
         TargetInfo.builder(Label.create("//label:java_binary_rule"), "java_binary").build());
