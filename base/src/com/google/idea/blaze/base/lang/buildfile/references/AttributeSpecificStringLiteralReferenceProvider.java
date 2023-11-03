@@ -18,6 +18,8 @@ package com.google.idea.blaze.base.lang.buildfile.references;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiReference;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /** Non-default reference provider for {@link StringLiteral} values for a given attribute type. */
 public interface AttributeSpecificStringLiteralReferenceProvider {
@@ -28,13 +30,11 @@ public interface AttributeSpecificStringLiteralReferenceProvider {
 
   /** Find a reference type specific to values of this attribute. */
   static PsiReference[] findReferences(String attributeName, StringLiteral literal) {
+    ArrayList<PsiReference> results = new ArrayList<>();
     for (AttributeSpecificStringLiteralReferenceProvider provider : EP_NAME.getExtensions()) {
-      PsiReference[] refs = provider.getReferences(attributeName, literal);
-      if (refs.length != 0) {
-        return refs;
-      }
+      results.addAll(Arrays.asList(provider.getReferences(attributeName, literal)));
     }
-    return PsiReference.EMPTY_ARRAY;
+    return results.toArray(PsiReference[]::new);
   }
 
   /** Find references specific to this attribute. */
