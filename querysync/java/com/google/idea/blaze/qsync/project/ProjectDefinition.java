@@ -44,13 +44,6 @@ public abstract class ProjectDefinition {
           /* languageClasses= */ ImmutableSet.of(),
           /* testSources= */ ImmutableSet.of());
 
-  /** A language class that the query sync supports/needs to care about. */
-  public enum LanguageClass {
-    JAVA,
-    KOTLIN,
-    CC
-  }
-
   /**
    * Project includes, also know as root directories. Taken from the users {@code .blazeproject}
    * file. Paths are relative to the workspace root.
@@ -64,7 +57,7 @@ public abstract class ProjectDefinition {
    */
   public abstract ImmutableSet<Path> projectExcludes();
 
-  public abstract ImmutableSet<LanguageClass> languageClasses();
+  public abstract ImmutableSet<QuerySyncLanguage> languageClasses();
 
   /**
    * Test sources. Taken from the user's {@code .blazeproject} file. Paths are relative to the
@@ -75,7 +68,7 @@ public abstract class ProjectDefinition {
   public static ProjectDefinition create(
       ImmutableSet<Path> includes,
       ImmutableSet<Path> excludes,
-      ImmutableSet<LanguageClass> languageClasses,
+      ImmutableSet<QuerySyncLanguage> languageClasses,
       ImmutableSet<String> testSources) {
     return new AutoValue_ProjectDefinition(includes, excludes, languageClasses, testSources);
   }

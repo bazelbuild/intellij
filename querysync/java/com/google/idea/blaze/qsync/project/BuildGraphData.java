@@ -35,7 +35,6 @@ import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.RuleKinds;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import java.nio.file.Path;
 import java.util.AbstractMap.SimpleEntry;
@@ -109,7 +108,7 @@ public abstract class BuildGraphData {
     ImmutableSet.Builder<Label> directRdeps = ImmutableSet.builder();
     directRdeps.addAll(targets);
     for (Label target : targets) {
-      ImmutableSet<LanguageClass> targetLanguages = targetMap().get(target).languages();
+      ImmutableSet<QuerySyncLanguage> targetLanguages = targetMap().get(target).languages();
       // filter the rdeps based on the languages, removing those that don't have a common
       // language. This ensures we don't follow reverse deps of (e.g.) a java target depending on
       // a cc target.

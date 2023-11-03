@@ -23,7 +23,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import java.nio.file.Path;
 import java.util.function.Predicate;
 
@@ -38,7 +38,7 @@ abstract class GraphToProjectConverters {
 
   public abstract ImmutableSet<Path> projectExcludes();
 
-  public abstract ImmutableSet<LanguageClass> languageClasses();
+  public abstract ImmutableSet<QuerySyncLanguage> languageClasses();
 
   public abstract ImmutableSet<String> testSources();
 
@@ -62,7 +62,7 @@ abstract class GraphToProjectConverters {
 
     public abstract Builder setProjectExcludes(ImmutableSet<Path> value);
 
-    abstract Builder setLanguageClasses(ImmutableSet<LanguageClass> languages);
+    abstract Builder setLanguageClasses(ImmutableSet<QuerySyncLanguage> languages);
 
     abstract Builder setTestSources(ImmutableSet<String> value);
 

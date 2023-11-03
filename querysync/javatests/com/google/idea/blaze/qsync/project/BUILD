@@ -51,3 +51,16 @@ java_test(
         "@truth//jar",
     ],
 )
+
+java_test(
+    name = "QuerySyncLanguageTest",
+    size = "small",
+    srcs = ["QuerySyncLanguageTest.java"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync/project",
+        "//querysync/java/com/google/idea/blaze/qsync/project:language_class_java_proto",
+        "@com_google_protobuf//:protobuf_java",
+        "@junit//jar",
+        "@truth//jar",
+    ],
+)

@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Label;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import java.util.Optional;
 
 /**
@@ -54,7 +53,7 @@ public abstract class ProjectTarget implements BuildTarget {
 
   public abstract ImmutableList<String> copts();
 
-  public abstract ImmutableSet<LanguageClass> languages();
+  public abstract ImmutableSet<QuerySyncLanguage> languages();
 
   public static Builder builder() {
     return new AutoValue_ProjectTarget.Builder();
@@ -81,7 +80,7 @@ public abstract class ProjectTarget implements BuildTarget {
 
     public abstract Builder customPackage(String customPackage);
 
-    public abstract ImmutableSet.Builder<LanguageClass> languagesBuilder();
+    public abstract ImmutableSet.Builder<QuerySyncLanguage> languagesBuilder();
 
     public abstract ProjectTarget build();
   }

@@ -15,16 +15,21 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.common.Label;
-import com.google.idea.blaze.exception.BuildException;
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
-import java.io.IOException;
-import java.util.Set;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-/** A query sync service that knows how to build dependencies for given targets */
-public interface DependencyBuilder {
+@RunWith(JUnit4.class)
+public class LanguageClassesTest {
 
-  OutputInfo build(BlazeContext context, Set<Label> buildTargets, Set<QuerySyncLanguage> languages)
-      throws IOException, BuildException;
+  @Test
+  public void enum_map_is_exhaustive() {
+    for (QuerySyncLanguage lc : QuerySyncLanguage.values()) {
+      assertThat(LanguageClasses.QUERY_SYNC_TO_BASE_LANGUAGE_CLASS_MAP).containsKey(lc);
+      assertThat(LanguageClasses.fromQuerySync(lc)).isNotNull();
+    }
+  }
 }
