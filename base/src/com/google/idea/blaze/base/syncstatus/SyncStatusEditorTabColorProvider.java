@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.syncstatus;
 
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.intellij.openapi.fileEditor.impl.EditorTabColorProvider;
 import com.intellij.openapi.project.Project;
@@ -31,6 +33,9 @@ public class SyncStatusEditorTabColorProvider implements EditorTabColorProvider 
   @Nullable
   @Override
   public Color getEditorTabColor(Project project, VirtualFile file) {
+    if(Blaze.getProjectType(project) == BlazeImportSettings.ProjectType.UNKNOWN) {
+      return null;
+    }
     if (SyncStatusContributor.getSyncStatus(project, file) == SyncStatus.UNSYNCED) {
       return UNSYNCED_COLOR;
     }

@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsCompositeConfigurable;
@@ -108,6 +109,10 @@ public class ExternalFileProjectManagementHelper
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(VirtualFile vf, FileEditor fileEditor) {
+    if(Blaze.getProjectType(project) == BlazeImportSettings.ProjectType.UNKNOWN) {
+      return null;
+    }
+
     if (!enabled.getValue()) {
       return null;
     }
