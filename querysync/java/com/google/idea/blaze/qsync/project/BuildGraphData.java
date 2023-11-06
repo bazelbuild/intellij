@@ -23,6 +23,7 @@ import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -304,15 +305,26 @@ public abstract class BuildGraphData {
    */
   @Memoized
   public List<Path> getProtoSourceFiles() {
-    return pathListFromLabels(protoSources());
+    return getSourceFilesByRuleKind(RuleKinds::isProtoSource);
   }
 
-  private ImmutableSet<Label> protoSources() {
+  /** Returns a list of all the cc source files of the project, relative to the workspace root. */
+  @Memoized
+  public List<Path> getCcSourceFiles() {
+    return getSourceFilesByRuleKind(RuleKinds::isCc);
+  }
+
+  public List<Path> getSourceFilesByRuleKind(Predicate<String> ruleKindPredicate) {
+    return pathListFromLabels(sourcesByRuleKind(ruleKindPredicate));
+  }
+
+  private ImmutableSet<Label> sourcesByRuleKind(Predicate<String> ruleKindPredicate) {
     return targetMap().values().stream()
-        .filter(t -> RuleKinds.isProtoSource(t.kind()))
+        .filter(t -> ruleKindPredicate.test(t.kind()))
         .flatMap(t -> t.sourceLabels().stream())
         .collect(toImmutableSet());
   }
+
 
   private List<Path> pathListFromLabels(Collection<Label> labels) {
     List<Path> paths = new ArrayList<>();
