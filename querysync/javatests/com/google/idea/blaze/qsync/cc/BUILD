@@ -5,6 +5,7 @@ java_test(
         "//proto:cc_compilation_info_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/cc",
         "//querysync/java/com/google/idea/blaze/qsync/project",
+        "//querysync/java/com/google/idea/blaze/qsync/project:language_class_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
