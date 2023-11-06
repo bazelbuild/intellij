@@ -45,6 +45,7 @@ import com.google.idea.blaze.qsync.project.ProjectProto.CcSourceFile;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
+import com.google.idea.blaze.qsync.project.ProjectTarget.SourceType;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -207,7 +208,7 @@ public class CcWorkspaceBuilder {
     // TODO(mathewi): The handling of flag sets here is not optimal, since we recalculate an
     //  identical flag set for each source of the same language, then immediately de-dupe them in
     //  the addFlagSet call. For large flag sets this may be slow.
-    for (Path srcPath : graph.getTargetSources(label)) {
+    for (Path srcPath : graph.getTargetSources(label, SourceType.all())) {
       Optional<CcLanguage> lang = getLanguage(srcPath);
       if (lang.isPresent()) {
         srcsBuilder.add(
