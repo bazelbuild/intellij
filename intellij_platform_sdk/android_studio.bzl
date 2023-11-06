@@ -28,7 +28,7 @@ def _file_list(files, dir, extension, recursive = False, exclude = []):
             ret.append("android-studio/" + file)
     return ret
 
-def android_studio(name, tar = None, files = None):
+def android_studio(name, tar = None, files = None, **kwargs):
     """
     Macro that creates the rules to depend on for android studio plugin development
 
@@ -45,18 +45,19 @@ def android_studio(name, tar = None, files = None):
     if not tar or not files:
         if tar or files:
             fail("Specify both tar and files or none of them")
-        _android_studio(name, files, _glob)
+        _android_studio(name, files, _glob, **kwargs)
     else:
-        all_files = _android_studio(name, files, _file_list)
+        all_files = _android_studio(name, files, _file_list, **kwargs)
 
         native.genrule(
             name = name,
             srcs = [tar],
             outs = all_files,
             cmd = "tar -xzvf $< -C $(RULEDIR) 1>/dev/null 2>&1 " + " ".join(all_files),
+            **kwargs
         )
 
-def _android_studio(name, files, my_glob):
+def _android_studio(name, files, my_glob, **kwargs):
     unpacked = []
 
     # TODO: All these targets should be prefixed with ${name}, but for now keeping backwards compatibility.
@@ -65,7 +66,7 @@ def _android_studio(name, files, my_glob):
         name = "kotlin",
         jars = kotlin_jars,
         tags = ["incomplete-deps"],
-        visibility = ["//visibility:public"],
+        **kwargs
     )
     unpacked += kotlin_jars
 
@@ -74,6 +75,7 @@ def _android_studio(name, files, my_glob):
         name = "terminal",
         jars = terminal_jars,
         tags = ["incomplete-deps"],
+        **kwargs
     )
     unpacked += terminal_jars
 
@@ -82,6 +84,7 @@ def _android_studio(name, files, my_glob):
         name = "java",
         jars = java_jars,
         tags = ["incomplete-deps"],
+        **kwargs
     )
     unpacked += java_jars
 
@@ -90,6 +93,7 @@ def _android_studio(name, files, my_glob):
         name = "platform_images",
         jars = platform_images_jars,
         tags = ["incomplete-deps"],
+        **kwargs
     )
     unpacked += platform_images_jars
 
@@ -98,6 +102,7 @@ def _android_studio(name, files, my_glob):
         name = "devkit",
         jars = devkit_jars,
         tags = ["incomplete-deps"],
+        **kwargs
     )
     unpacked += devkit_jars
 
@@ -106,6 +111,7 @@ def _android_studio(name, files, my_glob):
         name = "hg4idea",
         jars = hg4idea_jars,
         tags = ["incomplete-deps"],
+        **kwargs
     )
     unpacked += hg4idea_jars
 
@@ -125,6 +131,7 @@ def _android_studio(name, files, my_glob):
         runtime_deps = [
             ":kotlin",
         ],
+        **kwargs
     )
     unpacked += android_jars
 
@@ -152,6 +159,7 @@ def _android_studio(name, files, my_glob):
             "incomplete-deps",
             "intellij-provided-by-sdk",
         ],
+        **kwargs
     )
     unpacked += bundled_plugins_jars + bundled_plugins_data
 
@@ -160,6 +168,7 @@ def _android_studio(name, files, my_glob):
         name = "test_recorder",
         jars = test_recorder_jars,
         tags = ["incomplete-deps"],
+        **kwargs
     )
     unpacked += test_recorder_jars
 
@@ -168,6 +177,7 @@ def _android_studio(name, files, my_glob):
         name = "coverage",
         jars = coverage_jars,
         tags = ["incomplete-deps"],
+        **kwargs
     )
     unpacked += coverage_jars
 
@@ -176,6 +186,7 @@ def _android_studio(name, files, my_glob):
         name = "junit",
         jars = junit_jars,
         tags = ["incomplete-deps"],
+        **kwargs
     )
     # unpacked += junit_jars # Already present in the bundled_plugins
 
@@ -195,6 +206,7 @@ def _android_studio(name, files, my_glob):
             # guava v20+ requires this at compile-time when using annotation processors.
             "@error_prone_annotations//jar",
         ],
+        **kwargs
     )
     unpacked += sdk_import_jars
 
@@ -208,6 +220,7 @@ def _android_studio(name, files, my_glob):
         name = "cidr_plugins",
         jars = cidr_plugins_jars,
         tags = ["incomplete-deps"],
+        **kwargs
     )
     unpacked += cidr_plugins_jars
 
@@ -216,6 +229,7 @@ def _android_studio(name, files, my_glob):
         name = "guava",
         jars = guava_jars,
         tags = ["incomplete-deps"],
+        **kwargs
     )
     # unpacked += guava_jars # Already extracted in sdk_import
 
@@ -225,6 +239,7 @@ def _android_studio(name, files, my_glob):
             ":jars_without_mockito_extensions",
             ":sdk_import",
         ],
+        **kwargs
     )
 
     no_mockito_extensions_jars = ["android-studio/lib/testFramework.jar"]
@@ -232,18 +247,21 @@ def _android_studio(name, files, my_glob):
         name = "jars_without_mockito_extensions",
         jars = no_mockito_extensions_jars,
         tags = ["incomplete-deps"],
+        **kwargs
     )
     unpacked += no_mockito_extensions_jars
 
     native.filegroup(
         name = "application_info_json",
         srcs = ["android-studio/product-info.json"],
+        **kwargs
     )
     unpacked.append("android-studio/product-info.json")
 
     native.filegroup(
         name = "kotlinc_version",
         srcs = ["android-studio/plugins/Kotlin/kotlinc/build.txt"],
+        **kwargs
     )
     unpacked.append("android-studio/plugins/Kotlin/kotlinc/build.txt")
 
