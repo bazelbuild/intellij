@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.util.concurrent.Uninterruptibles.getUninterruptibly;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.AAR_DIRECTORY;
+import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.APP_INSPECTOR_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.DEPENDENCIES_SOURCES;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.GEN_HEADERS_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.GEN_SRC_DIRECTORY;
@@ -51,6 +52,8 @@ import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcCompilat
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStats;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
+import com.google.idea.blaze.base.qsync.AppInspectorArtifactTracker;
+import com.google.idea.blaze.base.qsync.AppInspectorInfo;
 import com.google.idea.blaze.base.qsync.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.ArtifactTrackerUpdateResult;
 import com.google.idea.blaze.base.qsync.OutputGroup;
@@ -108,7 +111,8 @@ import java.util.zip.GZIPOutputStream;
  *
  * <p>This class maps all the targets that have been built to their artifacts.
  */
-public class ArtifactTrackerImpl implements ArtifactTracker, RenderJarArtifactTracker {
+public class ArtifactTrackerImpl
+    implements ArtifactTracker, RenderJarArtifactTracker, AppInspectorArtifactTracker {
 
   private static final BoolExperiment ATTACH_DEP_SRCJARS =
       new BoolExperiment("querysync.attach.dep.srcjars", true);
@@ -141,6 +145,8 @@ public class ArtifactTrackerImpl implements ArtifactTracker, RenderJarArtifactTr
   private final Path generatedExternalSrcFileCacheDirectory;
   private final FileCache generatedExternalSrcFileCache;
   private final FileCache generatedHeadersCache;
+  private final Path appInspectorCacheDirectory;
+  private final FileCache appInspectorCache;
   private final Path persistentFile;
   private final Path ideProjectBasePath;
 
@@ -175,6 +181,9 @@ public class ArtifactTrackerImpl implements ArtifactTracker, RenderJarArtifactTr
     generatedHeadersCache =
         fileCacheCreator.createFileCache(
             new ArtifactPathCacheLayout(generatedHeadersDirectory), generatedHeadersDirectory);
+    appInspectorCacheDirectory = projectDirectory.resolve(APP_INSPECTOR_DIRECTORY);
+    appInspectorCache =
+        fileCacheCreator.createFileCache(appInspectorCacheDirectory, ImmutableSet.of("aar"), false);
     cacheDirectoryManager =
         new CacheDirectoryManager(
             projectDirectory.resolve(DIGESTS_DIRECTORY_NAME),
@@ -392,6 +401,29 @@ public class ArtifactTrackerImpl implements ArtifactTracker, RenderJarArtifactTr
     }
   }
 
+  @Override
+  public ImmutableSet<Path> update(
+      Set<Label> targets, AppInspectorInfo appInspectorInfo, BlazeContext outerContext)
+      throws BuildException {
+    ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap;
+    try {
+      artifactMap = appInspectorInfoToArtifactMap(appInspectorInfo);
+    } catch (IOException e) {
+      throw new BuildException(e);
+    }
+    try (BlazeContext context = BlazeContext.create(outerContext)) {
+      ImmutableMap<Path, Path> unused = cache(context, artifactMap);
+      ImmutableSet<Path> paths =
+          artifactMap.values().stream()
+              .map(OutputArtifactDestinationAndLayout::prepareFinalLayout)
+              .collect(toImmutableSet());
+      saveState();
+      return paths;
+    } catch (ExecutionException | IOException e) {
+      throw new BuildException(e);
+    }
+  }
+
   /** Fetches, caches and sets up new artifacts. */
   @Override
   public ArtifactTrackerUpdateResult update(
@@ -467,6 +499,13 @@ public class ArtifactTrackerImpl implements ArtifactTracker, RenderJarArtifactTr
       renderJarInfoToArtifactMap(RenderJarInfo renderJarInfo) throws IOException {
     return ImmutableMap.<OutputArtifact, OutputArtifactDestinationAndLayout>builder()
         .putAll(renderJarCache.prepareDestinationPathsAndDirectories(renderJarInfo.getRenderJars()))
+        .buildOrThrow();
+  }
+
+  private ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout>
+      appInspectorInfoToArtifactMap(AppInspectorInfo appInspectorInfo) throws IOException {
+    return ImmutableMap.<OutputArtifact, OutputArtifactDestinationAndLayout>builder()
+        .putAll(appInspectorCache.prepareDestinationPathsAndDirectories(appInspectorInfo.getJars()))
         .buildOrThrow();
   }
 

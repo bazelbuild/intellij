@@ -160,6 +160,11 @@ public class QuerySyncManager {
     return loadedProject.getRenderJarArtifactTracker();
   }
 
+  public AppInspectorArtifactTracker getAppInspectorArtifactTracker() {
+    assertProjectLoaded();
+    return loadedProject.getAppInspectorArtifactTracker();
+  }
+
   public SourceToTargetMap getSourceToTargetMap() {
     assertProjectLoaded();
     return loadedProject.getSourceToTargetMap();

@@ -17,8 +17,10 @@ package com.google.idea.blaze.base.qsync.cache;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
+import static one.util.streamex.MoreCollectors.onlyOne;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -28,6 +30,7 @@ import com.google.devtools.intellij.qsync.ArtifactTrackerData.JavaArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.JavaTargetArtifacts;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
+import com.google.idea.blaze.base.qsync.AppInspectorInfo;
 import com.google.idea.blaze.base.qsync.ArtifactTrackerUpdateResult;
 import com.google.idea.blaze.base.qsync.GroupedOutputArtifacts;
 import com.google.idea.blaze.base.qsync.OutputGroup;
@@ -346,6 +349,58 @@ public class ArtifactTrackerImplTest {
                 .map(artifactTracker.generatedHeadersDirectory::relativize))
         .containsExactly(
             Path.of("build-out/path/to/header.h"), Path.of("build-out/path/to/another/header.h"));
+  }
+
+  @Test
+  public void update_appInspectorArtifacts() throws Throwable {
+    TestArtifactFetcher testArtifactFetcher = new TestArtifactFetcher();
+    Path root = temporaryFolder.getRoot().toPath();
+    ArtifactTrackerImpl artifactTracker =
+        new ArtifactTrackerImpl(
+            root,
+            root.resolve("ide_project"),
+            testArtifactFetcher,
+            Resolver.EMPTY_FOR_TESTING,
+            ProjectDefinition.EMPTY);
+    artifactTracker.initialize();
+
+    ImmutableSet<Path> update =
+        artifactTracker.update(
+            ImmutableSet.of(Label.of("//app/inspector:inspector")),
+            AppInspectorInfo.create(
+                ImmutableList.of(artifactWithNameAndDigest("inspector.jar", "digest")), 0),
+            BlazeContext.create());
+    assertThat(update).hasSize(1);
+    assertThat(update.stream().collect(onlyOne()).orElseThrow().toString())
+        .startsWith(root.resolve("app_inspectors").toString());
+  }
+
+  @Test
+  public void update_appInspectorArtifacts_notChanged() throws Throwable {
+    TestArtifactFetcher testArtifactFetcher = new TestArtifactFetcher();
+    Path root = temporaryFolder.getRoot().toPath();
+    ArtifactTrackerImpl artifactTracker =
+        new ArtifactTrackerImpl(
+            root,
+            root.resolve("ide_project"),
+            testArtifactFetcher,
+            Resolver.EMPTY_FOR_TESTING,
+            ProjectDefinition.EMPTY);
+    artifactTracker.initialize();
+
+    ImmutableSet<Path> unused =
+        artifactTracker.update(
+            ImmutableSet.of(Label.of("//app/inspector:inspector")),
+            AppInspectorInfo.create(
+                ImmutableList.of(artifactWithNameAndDigest("inspector.jar", "digest")), 0),
+            BlazeContext.create());
+    ImmutableSet<Path> update =
+        artifactTracker.update(
+            ImmutableSet.of(Label.of("//app/inspector:inspector")),
+            AppInspectorInfo.create(
+                ImmutableList.of(artifactWithNameAndDigest("inspector.jar", "digest")), 0),
+            BlazeContext.create());
+    assertThat(update).hasSize(1);
   }
 
   private static class TestArtifactFetcher implements ArtifactFetcher<OutputArtifact> {
