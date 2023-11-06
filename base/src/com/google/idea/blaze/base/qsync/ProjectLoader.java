@@ -131,6 +131,7 @@ public class ProjectLoader {
     DependencyBuilder dependencyBuilder =
         createDependencyBuilder(workspaceRoot, latestProjectDef, buildSystem, handledRules);
     RenderJarBuilder renderJarBuilder = createRenderJarBuilder(buildSystem);
+    AppInspectorBuilder appInspectorBuilder = createAppInspectorBuilder(buildSystem);
 
     Path ideProjectBasePath = Paths.get(checkNotNull(project.getBasePath()));
     ProjectPath.Resolver projectPathResolver =
@@ -150,6 +151,8 @@ public class ProjectLoader {
         new DependencyTrackerImpl(project, graph, dependencyBuilder, artifactTracker);
     RenderJarTracker renderJarTracker =
         new RenderJarTrackerImpl(graph, renderJarBuilder, artifactTracker);
+    AppInspectorTracker appInspectorTracker =
+        new AppInspectorTrackerImpl(appInspectorBuilder, artifactTracker);
     Optional<BlazeVcsHandler> vcsHandler =
         Optional.ofNullable(BlazeVcsHandlerProvider.vcsHandlerForProject(project));
     ProjectRefresher projectRefresher =
@@ -180,8 +183,10 @@ public class ProjectLoader {
             workspaceRoot,
             artifactTracker,
             artifactTracker,
+            artifactTracker,
             dependencyTracker,
             renderJarTracker,
+            appInspectorTracker,
             projectQuerier,
             blazeProjectSnapshotBuilder,
             latestProjectDef,
@@ -223,6 +228,10 @@ public class ProjectLoader {
 
   protected RenderJarBuilder createRenderJarBuilder(BuildSystem buildSystem) {
     return new BazelRenderJarBuilder(project, buildSystem);
+  }
+
+  protected AppInspectorBuilder createAppInspectorBuilder(BuildSystem buildSystem) {
+    return new BazelAppInspectorBuilder(project, buildSystem);
   }
 
   private Path getSnapshotFilePath(BlazeImportSettings importSettings) {

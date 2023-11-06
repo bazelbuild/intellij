@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.qsync;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.bazel.BuildSystem;
@@ -85,8 +86,10 @@ public class QuerySyncProject {
   private final WorkspaceRoot workspaceRoot;
   private final ArtifactTracker artifactTracker;
   private final RenderJarArtifactTracker renderJarArtifactTracker;
+  private final AppInspectorArtifactTracker appInspectorArtifactTracker;
   private final DependencyTracker dependencyTracker;
   private final RenderJarTracker renderJarTracker;
+  private final AppInspectorTracker appInspectorTracker;
   private final ProjectQuerier projectQuerier;
   private final BlazeProjectSnapshotBuilder blazeProjectSnapshotBuilder;
   private final ProjectDefinition projectDefinition;
@@ -110,8 +113,10 @@ public class QuerySyncProject {
       WorkspaceRoot workspaceRoot,
       ArtifactTracker artifactTracker,
       RenderJarArtifactTracker renderJarArtifactTracker,
+      AppInspectorArtifactTracker appInspectorArtifactTracker,
       DependencyTracker dependencyTracker,
       RenderJarTracker renderJarTracker,
+      AppInspectorTracker appInspectorTracker,
       ProjectQuerier projectQuerier,
       BlazeProjectSnapshotBuilder blazeProjectSnapshotBuilder,
       ProjectDefinition projectDefinition,
@@ -129,8 +134,10 @@ public class QuerySyncProject {
     this.workspaceRoot = workspaceRoot;
     this.artifactTracker = artifactTracker;
     this.renderJarArtifactTracker = renderJarArtifactTracker;
+    this.appInspectorArtifactTracker = appInspectorArtifactTracker;
     this.dependencyTracker = dependencyTracker;
     this.renderJarTracker = renderJarTracker;
+    this.appInspectorTracker = appInspectorTracker;
     this.projectQuerier = projectQuerier;
     this.blazeProjectSnapshotBuilder = blazeProjectSnapshotBuilder;
     this.projectDefinition = projectDefinition;
@@ -186,6 +193,10 @@ public class QuerySyncProject {
 
   public RenderJarArtifactTracker getRenderJarArtifactTracker() {
     return renderJarArtifactTracker;
+  }
+
+  public AppInspectorArtifactTracker getAppInspectorArtifactTracker() {
+    return appInspectorArtifactTracker;
   }
 
   public SourceToTargetMap getSourceToTargetMap() {
@@ -313,6 +324,14 @@ public class QuerySyncProject {
     try (BlazeContext context = BlazeContext.create(parentContext)) {
       context.push(new BuildDepsStatsScope());
       renderJarTracker.buildRenderJarForFile(context, wps);
+    }
+  }
+
+  public ImmutableCollection<Path> buildAppInspector(
+      BlazeContext parentContext, List<Label> inspectors) throws IOException, BuildException {
+    try (BlazeContext context = BlazeContext.create(parentContext)) {
+      context.push(new BuildDepsStatsScope());
+      return appInspectorTracker.buildAppInspector(context, inspectors);
     }
   }
 
