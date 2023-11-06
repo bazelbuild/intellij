@@ -26,6 +26,7 @@ import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcTargetIn
 import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcToolchainInfo;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.QuerySyncTestUtils;
+import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcCompilationContext;
@@ -51,7 +52,9 @@ public class CcWorkspaceBuilderTest {
             CcDependenciesInfo.EMPTY,
             BuildGraphs.forTestProject(TestData.CC_LIBRARY_QUERY),
             QuerySyncTestUtils.NOOP_CONTEXT);
-    assertThat(builder.createWorkspace()).isEmpty();
+    ProjectProto.Project project =
+        builder.updateProjectProtoForCcDeps(ProjectProto.Project.getDefaultInstance());
+    assertThat(project.hasCcWorkspace()).isFalse();
   }
 
   @Test
@@ -103,7 +106,10 @@ public class CcWorkspaceBuilderTest {
             BuildGraphs.forTestProject(TestData.CC_LIBRARY_QUERY),
             QuerySyncTestUtils.NOOP_CONTEXT);
 
-    ProjectProto.CcWorkspace workspace = builder.createWorkspace().orElseThrow();
+    ProjectProto.Project project =
+        builder.updateProjectProtoForCcDeps(ProjectProto.Project.getDefaultInstance());
+    assertThat(project.getActiveLanguagesList()).contains(LanguageClass.LANGUAGE_CLASS_CC);
+    ProjectProto.CcWorkspace workspace = project.getCcWorkspace();
     CcCompilationContext context = getOnlyElement(workspace.getContextsList());
     assertThat(context.getHumanReadableName()).isNotEmpty();
     CcSourceFile sourceFile = getOnlyElement(context.getSourcesList());
@@ -202,7 +208,9 @@ public class CcWorkspaceBuilderTest {
             CcDependenciesInfo.create(ccCi),
             BuildGraphs.forTestProject(TestData.CC_MULTISRC_QUERY),
             QuerySyncTestUtils.NOOP_CONTEXT);
-    ProjectProto.CcWorkspace workspace = builder.createWorkspace().orElseThrow();
+    ProjectProto.Project project =
+        builder.updateProjectProtoForCcDeps(ProjectProto.Project.getDefaultInstance());
+    ProjectProto.CcWorkspace workspace = project.getCcWorkspace();
 
     assertThat(workspace.getContextsList()).hasSize(2);
     // Assert that both compilation contexts share a flagset ID (since the two targets share the

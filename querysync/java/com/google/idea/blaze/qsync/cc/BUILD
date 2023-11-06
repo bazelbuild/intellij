@@ -9,6 +9,7 @@ java_library(
     deps = [
         "//proto:cc_compilation_info_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/project",
+        "//querysync/java/com/google/idea/blaze/qsync/project:language_class_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//shared",
         "//third_party/auto_value",

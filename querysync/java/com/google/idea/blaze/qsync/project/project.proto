@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package ij.qsync;
 
+import "querysync/java/com/google/idea/blaze/qsync/project/language_class.proto";
+
+
 // option java_api_version = 2;
 option java_outer_classname = "ProjectProto";
 option java_package = "com.google.idea.blaze.qsync.project";
@@ -10,7 +13,14 @@ message Project {
   repeated Library library = 1;
   repeated Module modules = 2;
   CcWorkspace cc_workspace = 3;
+  /**
+   * Active languages are those that appear in the project and/or have had
+   * analysis enabled for them. The exact semantics depend on the language in
+   * question.
+   */
+  repeated LanguageClass active_languages = 4;
 }
+
 
 /**
  * Represents a module in the IntelliJ project model.

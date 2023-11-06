@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
+import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
@@ -679,5 +680,33 @@ public class GraphToProjectConverterTest {
             ProjectProto.SourceFolder.newBuilder()
                 .setPath(TestData.ROOT.resolve("nestedproto/java").toString())
                 .build());
+  }
+
+  @Test
+  public void testActiveLanguages_emptyProject() throws Exception {
+    GraphToProjectConverter converter = GraphToProjectConverters.builder().build();
+    ProjectProto.Project project = converter.createProject(BuildGraphData.EMPTY);
+    assertThat(project.getActiveLanguagesList()).isEmpty();
+  }
+
+  @Test
+  public void testActiveLanguages_java() throws Exception {
+    Path workspaceImportDirectory = TestData.ROOT.resolve("nodeps");
+    GraphToProjectConverter converter =
+        GraphToProjectConverters.builder()
+            .setProjectIncludes(ImmutableSet.of(workspaceImportDirectory))
+            .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
+            .build();
+
+    BuildGraphData buildGraphData =
+        new BlazeQueryParser(
+                getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY),
+                NOOP_CONTEXT,
+                ImmutableSet.of(),
+                Suppliers.ofInstance(true))
+            .parse();
+    ProjectProto.Project project = converter.createProject(buildGraphData);
+
+    assertThat(project.getActiveLanguagesList()).contains(LanguageClass.LANGUAGE_CLASS_JAVA);
   }
 }

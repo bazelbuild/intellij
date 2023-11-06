@@ -42,9 +42,11 @@ import com.google.idea.blaze.common.RuleKinds;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectDataStorage;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
+import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
+import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -436,9 +438,15 @@ public class GraphToProjectConverter {
       workspaceModule.addContentEntries(contentEntry);
     }
 
+    ImmutableSet.Builder<LanguageClass> activeLanguages = ImmutableSet.builder();
+    if (graph.targetMap().values().stream().map(ProjectTarget::kind).anyMatch(RuleKinds::isJava)) {
+      activeLanguages.add(LanguageClass.LANGUAGE_CLASS_JAVA);
+    }
+
     return ProjectProto.Project.newBuilder()
         .addLibrary(depsLib)
         .addModules(workspaceModule)
+        .addAllActiveLanguages(activeLanguages.build())
         .build();
   }
 

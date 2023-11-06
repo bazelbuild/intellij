@@ -21,7 +21,6 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.BLAZE_DATA_SUBDIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.GEN_HEADERS_DIRECTORY;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
@@ -35,6 +34,7 @@ import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
+import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcCompilationContext;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcCompilerFlag;
@@ -106,12 +106,16 @@ public class CcWorkspaceBuilder {
 
   public ProjectProto.Project updateProjectProtoForCcDeps(ProjectProto.Project projectProto) {
     return createWorkspace()
-        .map(w -> projectProto.toBuilder().setCcWorkspace(w).build())
+        .map(
+            w ->
+                projectProto.toBuilder()
+                    .setCcWorkspace(w)
+                    .addActiveLanguages(LanguageClass.LANGUAGE_CLASS_CC)
+                    .build())
         .orElse(projectProto);
   }
 
-  @VisibleForTesting
-  Optional<ProjectProto.CcWorkspace> createWorkspace() {
+  private Optional<ProjectProto.CcWorkspace> createWorkspace() {
     if (ccDependenciesInfo.targetInfoMap().isEmpty()) {
       return Optional.empty();
     }
