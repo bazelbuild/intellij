@@ -186,7 +186,7 @@ public class GraphToProjectConverterTest {
             .build();
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet(), packages);
+        converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
   }
@@ -205,7 +205,7 @@ public class GraphToProjectConverterTest {
             .build();
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet(), packages);
+        converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
   }
@@ -226,7 +226,7 @@ public class GraphToProjectConverterTest {
             .build();
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet(), packages);
+        converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
   }
@@ -247,7 +247,7 @@ public class GraphToProjectConverterTest {
             .build();
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet(), packages);
+        converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet())
         .containsExactly(Path.of("java/com/app"), Path.of("java/com/lib"));
     assertThat(rootSources.get(Path.of("java/com/app"))).containsExactly(Path.of(""), "com.app");
@@ -271,7 +271,7 @@ public class GraphToProjectConverterTest {
             .build();
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet(), packages);
+        converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test")))
         .containsExactly(
@@ -296,7 +296,7 @@ public class GraphToProjectConverterTest {
             .build();
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet(), packages);
+        converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
   }
@@ -317,7 +317,7 @@ public class GraphToProjectConverterTest {
             .build();
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet(), packages);
+        converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
   }
@@ -338,7 +338,7 @@ public class GraphToProjectConverterTest {
             .build();
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet(), packages);
+        converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test")))
         .containsExactly(
@@ -364,7 +364,7 @@ public class GraphToProjectConverterTest {
             .build();
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet(), packages);
+        converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("third_party"));
     assertThat(rootSources.get(Path.of("third_party")))
         .containsExactly(
@@ -389,7 +389,7 @@ public class GraphToProjectConverterTest {
             .build();
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet(), packages);
+        converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test")))
         .containsExactly(
@@ -628,7 +628,7 @@ public class GraphToProjectConverterTest {
             .build();
 
     ImmutableMultimap<Path, Path> additionalProtoSourceFolders =
-        converter.protoSourceFolders(ImmutableSet.of(Path.of("myproject/protos/test.proto")));
+        converter.nonJavaSourceFolders(ImmutableSet.of(Path.of("myproject/protos/test.proto")));
     assertThat(additionalProtoSourceFolders)
         .containsExactly(Path.of("myproject"), Path.of("protos"));
   }
@@ -647,7 +647,7 @@ public class GraphToProjectConverterTest {
             .build();
 
     ImmutableMultimap<Path, Path> additionalProtoSourceFolders =
-        converter.protoSourceFolders(
+        converter.nonJavaSourceFolders(
             ImmutableSet.of(Path.of("myproject/excluded/protos/excluded.proto")));
     assertThat(additionalProtoSourceFolders).isEmpty();
   }
