@@ -140,7 +140,7 @@ public class SrcJarProjectUpdater {
           continue;
         }
         try (InputStream in = zip.getInputStream(e)) {
-          String pname = packageReader.readPackage(in);
+          String pname = packageReader.readJavaPackage(in);
           Path packageAsPath = Path.of(pname.replace('.', '/'));
           Path zipPath = zipfilePath.getParent();
           if (zipPath == null) {

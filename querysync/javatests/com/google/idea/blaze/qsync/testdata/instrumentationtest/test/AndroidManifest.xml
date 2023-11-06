@@ -3,6 +3,6 @@
     package="com.google.idea.blaze.qsync.testdata.instrumentationtest.test">
   <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="33"/>
   <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-      android:targetPackage="com.google.idea.blaze.qsync.testdata.android"
+      android:targetPackage="com.google.idea.blaze.qsync.testdata.instrumentationtest"
       android:label="Instrumentation Test" />
 </manifest>

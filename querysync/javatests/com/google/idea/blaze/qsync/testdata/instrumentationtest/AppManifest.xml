@@ -1,5 +1,5 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.google.idea.blaze.qsync.testdata.android">
+    package="com.google.idea.blaze.qsync.testdata.instrumentationtest">
   <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="33"/>
 </manifest>
