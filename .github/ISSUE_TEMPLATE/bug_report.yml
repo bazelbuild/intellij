@@ -2,7 +2,7 @@ name: Bug Report
 description: File a bug report
 labels: ["type: bug", "awaiting-maintainer"]
 assignees:
-  - pavank1992
+  - rakshitasingh05
   - sgowroji
   - iancha1992
 body:
