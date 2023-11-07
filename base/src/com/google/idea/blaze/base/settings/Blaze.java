@@ -15,16 +15,24 @@
  */
 package com.google.idea.blaze.base.settings;
 
+import com.google.common.base.Suppliers;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import javax.swing.SwingUtilities;
 
 /** Blaze project utilities. */
 public class Blaze {
+  // Only read the initial value, as the sync mode should not change over a single run of the IDE.
+  public static final Supplier<Boolean> NEW_PROJECT_USE_QUERY_SYNC =
+      Suppliers.memoize(new BoolExperiment("use.query.sync.new.project", false)::getValue);
 
   private Blaze() {}
 
@@ -63,7 +71,11 @@ public class Blaze {
     if (blazeImportSettings == null) {
       return ProjectType.UNKNOWN;
     }
-    return BlazeImportSettingsManager.getInstance(project).getImportSettings().getProjectType();
+    if (ApplicationManager.getApplication().isUnitTestMode() || NEW_PROJECT_USE_QUERY_SYNC.get()) {
+      return BlazeImportSettingsManager.getInstance(project).getImportSettings().getProjectType();
+    } else {
+      return QuerySync.isEnabled() ? ProjectType.QUERY_SYNC : ProjectType.ASPECT_SYNC;
+    }
   }
 
   /**

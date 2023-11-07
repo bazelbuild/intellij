@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.conversion.CannotConvertException;
 import com.intellij.conversion.ConversionContext;
 import com.intellij.conversion.ConversionProcessor;
@@ -56,6 +57,10 @@ public class ProjectConverterProvider extends ConverterProvider {
         return new ConversionProcessor<WorkspaceSettings>() {
           @Override
           public boolean isConversionNeeded(WorkspaceSettings workspaceSettings) {
+            // We do not need any conversion when only new project are forced to use query sync.
+            if (Blaze.NEW_PROJECT_USE_QUERY_SYNC.get()) {
+              return false;
+            }
             Optional<String> projectType = getProjectType(workspaceSettings);
             boolean isQuerySync = projectType.isPresent() && projectType.get().equals("QUERY_SYNC");
             // If the IDE setting does not match the project, needs conversion.
