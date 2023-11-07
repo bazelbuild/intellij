@@ -200,7 +200,6 @@ def jars_from_output(output):
     if output == None:
         return []
     source_jars = get_source_jars(output)
-    jars = source_jars
     return [
         jar
         for jar in ([output.ijar if len(source_jars) > 0 and output.ijar else output.class_jar] + source_jars)
