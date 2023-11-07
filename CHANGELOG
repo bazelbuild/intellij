@@ -1,5 +1,13 @@
 v2023.11.07
 ===========
+* New feature:
+* feat: Support gutter icons in java_test_suite #5579
+* Fixes:
+* Fix go debugging #5585
+* fix: Allow multiple providers to contribute attribute specific references #5507
+* Fix "slow operations exception" in welcome screen #5598
+* Fix missing "Bazel" item in main menu. #5610
+* Fix "Non-blaze project is provided" error #5596
 
 
 v2023.10.24
