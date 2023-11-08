@@ -1,10 +1,4 @@
 load(
-    "//:build-visibility.bzl",
-    "G3PLUGINS_VISIBILITY",
-    "INTELLIJ_PLUGINS_VISIBILITY",
-    "PLUGIN_PACKAGES_VISIBILITY",
-)
-load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
     "intellij_plugin_library",
@@ -14,6 +8,12 @@ load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
+)
+load(
+    "//:build-visibility.bzl",
+    "G3PLUGINS_VISIBILITY",
+    "INTELLIJ_PLUGINS_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
 )
 load("//intellij_platform_sdk:build_defs.bzl", "java_version_flags")
 
@@ -544,8 +544,6 @@ intellij_integration_test_suite(
         ":base",
         ":integration_test_utils",
         ":unit_test_utils",
-        "//common/experiments",
-        "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
