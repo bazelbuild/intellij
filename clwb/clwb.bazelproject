@@ -4,6 +4,12 @@ directories:
   -aswb
   -plugin_dev
   -examples
+  #api233 remove the ignore rules below once 233 support is dropped
+  -sdkcompat/v233/com/google/idea/sdkcompat/kotlin
+  -sdkcompat/v233/com/google/idea/sdkcompat/go
+  -sdkcompat/v233/com/google/idea/sdkcompat/java
+  -sdkcompat/v233/com/google/idea/sdkcompat/scala
+  -sdkcompat/v233/com/google/idea/sdkcompat/vcs
 
 targets:
   //clwb:clwb_bazel_dev
