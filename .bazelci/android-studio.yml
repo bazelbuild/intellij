@@ -36,8 +36,6 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:aswb_tests
-    soft_fail:
-      - exit_status: 1
   Android-Studio-OSS-oldest-stable:
     name: Android Studio OSS Oldest Stable
     platform: ubuntu1804
