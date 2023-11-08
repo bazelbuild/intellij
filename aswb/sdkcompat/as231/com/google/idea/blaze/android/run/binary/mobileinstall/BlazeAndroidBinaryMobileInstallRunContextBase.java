@@ -100,7 +100,7 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
   }
 
   @Override
-  public ApplicationIdProvider getApplicationIdProvider() throws ExecutionException {
+  public ApplicationIdProvider getApplicationIdProvider() {
     return applicationIdProvider;
   }
 

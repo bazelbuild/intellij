@@ -107,7 +107,7 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   }
 
   @Override
-  public ApplicationIdProvider getApplicationIdProvider() throws ExecutionException {
+  public ApplicationIdProvider getApplicationIdProvider() {
     return applicationIdProvider;
   }
 
