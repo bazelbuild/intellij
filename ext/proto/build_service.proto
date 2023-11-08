@@ -28,6 +28,10 @@ service BuildService {
 
   // Cancels the given build
   rpc CancelBuild(IntellijCancelBuildRequest) returns (Empty) {}
+
+  // Watches the given build
+  rpc WatchBuild(WatchBuildRequest)
+      returns (stream.com.google.idea.blaze.ext.BuildEventBatch) {}
 }
 
 message CreateBuildRequest {
