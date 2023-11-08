@@ -46,7 +46,7 @@ public interface BlazeAndroidRunContext {
 
   ApkBuildStep getBuildStep();
 
-  ApplicationIdProvider getApplicationIdProvider() throws ExecutionException;
+  ApplicationIdProvider getApplicationIdProvider();
 
   BlazeLaunchTasksProvider getLaunchTasksProvider(LaunchOptions launchOptions)
       throws ExecutionException;
