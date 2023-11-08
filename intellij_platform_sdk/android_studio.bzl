@@ -28,7 +28,7 @@ def _file_list(files, dir, extension, recursive = False, exclude = []):
             ret.append("android-studio/" + file)
     return ret
 
-def android_studio(name, tar = None, files = None, **kwargs):
+def android_studio(name, major, minor, revision, tar = None, files = None, **kwargs):
     """
     Macro that creates the rules to depend on for android studio plugin development
 
@@ -45,9 +45,9 @@ def android_studio(name, tar = None, files = None, **kwargs):
     if not tar or not files:
         if tar or files:
             fail("Specify both tar and files or none of them")
-        _android_studio(name, files, _glob, **kwargs)
+        _android_studio(name, files, major, minor, revision, _glob, **kwargs)
     else:
-        all_files = _android_studio(name, files, _file_list, **kwargs)
+        all_files = _android_studio(name, files, major, minor, revision, _file_list, **kwargs)
 
         native.genrule(
             name = name,
@@ -57,7 +57,18 @@ def android_studio(name, tar = None, files = None, **kwargs):
             **kwargs
         )
 
-def _android_studio(name, files, my_glob, **kwargs):
+# Retuns if major.minor.revision is version or newer
+def _version_equals_or_newer(major, minor, revision, version):
+    _version = [int(x) for x in version.split(".")]
+    _current = [int(major), int(minor)] + [int(x) for x in revision.split(".")]
+    for i in range(min(len(_version), len(_current))):
+        if _current[i] < _version[i]:
+            return False
+        elif _current[i] > _version[i]:
+            return True
+    return True
+
+def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
     unpacked = []
 
     # TODO: All these targets should be prefixed with ${name}, but for now keeping backwards compatibility.
@@ -212,10 +223,14 @@ def _android_studio(name, files, my_glob, **kwargs):
 
     cidr_plugins_jars = (
         my_glob(files, "plugins/c-plugin/lib", ".jar") +  # com.intellij.cidr.lang: C/C++ Language Support
-        my_glob(files, "plugins/c-clangd-plugin/lib", ".jar") +  # required for NDK debugging
         my_glob(files, "plugins/cidr-base-plugin/lib", ".jar") +  # com.intellij.cidr.base: CIDR Base
         my_glob(files, "plugins/cidr-debugger-plugin/lib", ".jar")  # com.jetbrains.cidr.execution.debugger: CIDR Debugger
     )
+    if _version_equals_or_newer(major, minor, revision, "2023.2"):
+        cidr_plugins_jars += my_glob(files, "plugins/c-clangd-plugin/lib", ".jar")  # required for NDK debugging
+    else:
+        cidr_plugins_jars += my_glob(files, "plugins/c-clangd/lib", ".jar")  # required for NDK debugging
+
     native.java_import(
         name = "cidr_plugins",
         jars = cidr_plugins_jars,
@@ -224,7 +239,10 @@ def _android_studio(name, files, my_glob, **kwargs):
     )
     unpacked += cidr_plugins_jars
 
-    guava_jars = ["android-studio/lib/lib.jar"]
+    if _version_equals_or_newer(major, minor, revision, "2023.2"):
+        guava_jars = ["android-studio/lib/lib.jar"]
+    else:
+        guava_jars = ["android-studio/lib/3rd-party-rt.jar"]
     native.java_import(
         name = "guava",
         jars = guava_jars,

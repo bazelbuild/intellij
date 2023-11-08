@@ -12,5 +12,8 @@ licenses(["restricted"])
 exports_files(["LICENSE"])
 
 android_studio(
-    name = "android_studio"
+    name = "android_studio",
+    major = "2023",
+    minor = "2",
+    revision = "1.7"
 )
