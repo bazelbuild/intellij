@@ -11,6 +11,9 @@ py_test(
     srcs = ["simple.py"],
     python_version = "PY3",
     srcs_version = "PY3",
+    deps = [
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
+    ],
 )
 
 intellij_aspect_test_fixture(
