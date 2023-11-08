@@ -125,6 +125,7 @@ DIRECT_IJ_PRODUCTS = {
     "android-studio-2023.2": struct(
         ide = "android-studio",
         archive = "android_studio_with_blaze_2023_2",
+        directory = "android_studio_2023_2",
     ),
     "android-studio-dev": struct(
         ide = "android-studio",
@@ -271,8 +272,6 @@ def select_for_ide(intellij = None, intellij_ue = None, android_studio = None, c
     return select_for_plugin_api(params)
 
 def _plugin_api_directory(value):
-    if hasattr(value, "archive"):
-        return "//third_party/corp_installers/jetbrains/android_studio_with_blaze/" + value.archive + "/linux_archive"
     return "@" + value.directory + "//"
 
 def select_from_plugin_api_directory(intellij, android_studio, clion, intellij_ue = None):
