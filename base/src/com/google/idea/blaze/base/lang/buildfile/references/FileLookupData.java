@@ -180,7 +180,7 @@ public class FileLookupData {
     String fullLabel =
         workspacePath != null ? getFullLabel(workspacePath.relativePath()) : file.getPath();
     String itemText = workspacePath != null ? getItemText(workspacePath.relativePath()) : fullLabel;
-    return new FilePathLookupElement(fullLabel, itemText, quoteType, icon);
+    return new FilePathLookupElement(fullLabel, itemText, quoteType, file.isDirectory(), icon);
   }
 
   private String getFullLabel(String relativePath) {

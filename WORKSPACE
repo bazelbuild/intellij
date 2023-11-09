@@ -83,7 +83,6 @@ http_archive(
     url = IC_233_URL,
 )
 
-
 # The plugin api for IntelliJ UE 2021.2. This is required to run UE-specific
 # integration tests.
 http_archive(

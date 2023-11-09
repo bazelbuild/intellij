@@ -21,7 +21,7 @@ java_library(
         "intellij-2023.2": ["@python_2023_2//:python"],
         "intellij-ue-2023.2": ["@python_2023_2//:python"],
         "intellij-2023.3": ["@python_2023_3//:python"],
-        "intellij-ue-2023.3": ["@python_2023_3//:python"],	
+        "intellij-ue-2023.3": ["@python_2023_3//:python"],
         "clion-2021.3": ["@clion_2021_3//:python"],
         "clion-2022.1": ["@clion_2022_1//:python"],
         "clion-2022.2": ["@clion_2022_2//:python"],

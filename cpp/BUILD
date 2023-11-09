@@ -57,8 +57,8 @@ optional_plugin_xml(
 
 intellij_plugin_library(
     name = "plugin_library",
-    plugin_xmls = [":non_optional_cidr"],
     optional_plugin_xmls = [":optional_cidr"],
+    plugin_xmls = [":non_optional_cidr"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":cpp"],
 )
