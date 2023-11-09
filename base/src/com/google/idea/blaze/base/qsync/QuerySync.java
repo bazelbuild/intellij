@@ -34,7 +34,7 @@ public class QuerySync {
 
   private QuerySync() {}
 
-  public static boolean isEnabled() {
+  public static boolean isDefaultForNewProjects() {
     return ENABLED.get();
   }
 

@@ -26,6 +26,6 @@ import org.junit.runners.JUnit4;
 public class QuerySyncTest extends BlazeIntegrationTestCase {
   @Test
   public void testQuerySyncExperimentDisabledByDefault() {
-    Truth.assertThat(QuerySync.isEnabled()).isFalse();
+    Truth.assertThat(QuerySync.isDefaultForNewProjects()).isFalse();
   }
 }
