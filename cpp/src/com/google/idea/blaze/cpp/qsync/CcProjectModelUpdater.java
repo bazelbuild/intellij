@@ -22,7 +22,7 @@ import com.google.idea.blaze.qsync.BlazeProjectListener;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 
@@ -68,9 +68,12 @@ public class CcProjectModelUpdater implements BlazeProjectListener {
     //   get out of sync.
     CcProjectModelUpdateOperation updateOp =
         new CcProjectModelUpdateOperation(context, readonlyOcWorkspace, pathResolver);
-    updateOp.visitWorkspace(spec.getCcWorkspace());
-    updateOp.preCommit();
-
-    ApplicationManager.getApplication().invokeLaterOnWriteThread(updateOp::commit);
+    try {
+      updateOp.visitWorkspace(spec.getCcWorkspace());
+      updateOp.preCommit();
+      WriteAction.runAndWait(updateOp::commit);
+    } finally {
+      updateOp.dispose();
+    }
   }
 }
