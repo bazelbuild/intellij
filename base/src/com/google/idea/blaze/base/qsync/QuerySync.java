@@ -16,14 +16,14 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.base.Suppliers;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import java.util.function.Supplier;
 
 /** Holder class for basic information about querysync, e.g. is it enabled? */
 public class QuerySync {
-
-  private static final Logger logger = Logger.getInstance(QuerySync.class);
 
   private static final Supplier<Boolean> ENABLED =
       Suppliers.memoize(new BoolExperiment("use.query.sync", false)::getValue);
@@ -38,16 +38,7 @@ public class QuerySync {
     return ENABLED.get();
   }
 
-  public static boolean isComposeEnabled() {
-    return isEnabled() && COMPOSE_ENABLED.get();
-  }
-
-  public static void assertNotEnabled(String reason) {
-    if (isEnabled()) {
-      NotSupportedWithQuerySyncException e = new NotSupportedWithQuerySyncException(reason);
-      // make sure the exception doesn't get silently swallowed later:
-      logger.error(e);
-      throw e;
-    }
+  public static boolean isComposeEnabled(Project project) {
+    return Blaze.getProjectType(project) == ProjectType.QUERY_SYNC && COMPOSE_ENABLED.get();
   }
 }

@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.intellij.icons.AllIcons.Actions;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -48,10 +47,7 @@ public class ComposePreviewQuerySyncInspectionWidgetActionProvider
   @Nullable
   @Override
   public AnAction createAction(@NotNull Editor editor) {
-    if (!QuerySync.isComposeEnabled()) {
-      return null;
-    }
-    if (!Blaze.isBlazeProject(editor.getProject())) {
+    if (!QuerySync.isComposeEnabled(editor.getProject())) {
       return null;
     }
     if (!editor.getEditorKind().equals(EditorKind.MAIN_EDITOR)) {

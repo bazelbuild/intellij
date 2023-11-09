@@ -142,7 +142,7 @@ public class RenderJarClassFileFinder implements ClassFileFinder {
     }
 
     if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
-      if (QuerySync.isComposeEnabled()) {
+      if (QuerySync.isComposeEnabled(project)) {
         RenderJarArtifactTracker renderJarArtifactTracker =
             QuerySyncManager.getInstance(project).getRenderJarArtifactTracker();
         // TODO(b/283280194): Setup fqcn -> target and target -> Render jar mappings to avoid
