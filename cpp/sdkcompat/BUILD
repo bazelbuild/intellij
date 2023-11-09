@@ -1,0 +1,17 @@
+load(
+    "//intellij_platform_sdk:build_defs.bzl",
+    "select_for_plugin_api",
+)
+
+java_library(
+    name = "sdkcompat",
+    visibility = ["//cpp:__pkg__"],
+    exports = select_for_plugin_api({
+        "android-studio-2022.3": ["//cpp/sdkcompat/v223"],
+        "android-studio-2023.1": ["//cpp/sdkcompat/v231"],
+        "android-studio-2023.2": ["//cpp/sdkcompat/v232"],
+        "android-studio-dev": ["//cpp/sdkcompat/v232"],
+        "clion-2022.3": ["//cpp/sdkcompat/v223"],
+        "intellij-ue-2022.3": ["//cpp/sdkcompat/v223"],
+    }),
+)
