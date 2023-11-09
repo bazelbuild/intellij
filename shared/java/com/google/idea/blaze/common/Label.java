@@ -60,6 +60,10 @@ public class Label {
       Preconditions.checkArgument(doubleSlash > 0, label);
       int colon = label.indexOf(":");
       Preconditions.checkArgument(colon > doubleSlash, label);
+      if (!label.startsWith("@@")) {
+        // Normalize `label` to either start with double-at or start with double-slash.
+        label = '@' + label;
+      }
     } else {
       Preconditions.checkArgument(label.startsWith("//"), label);
       Preconditions.checkArgument(label.contains(":"), label);
@@ -78,10 +82,10 @@ public class Label {
   }
 
   public String getWorkspaceName() {
-    if (!label.startsWith("@")) {
-      return "";
+    if (label.startsWith("@@")) {
+      return label.substring(2, label.indexOf("//"));
     } else {
-      return label.substring(1, label.indexOf("//"));
+      return "";
     }
   }
 
