@@ -116,7 +116,8 @@ DIRECT_IJ_PRODUCTS = {
     ),
     "android-studio-2022.3": struct(
         ide = "android-studio",
-        directory = "android_studio_2022_3",
+        archive = "android_studio_with_blaze_2022_3",
+        oss_workspace = "android_studio_2022_3",
     ),
     "android-studio-2023.1": struct(
         ide = "android-studio",
