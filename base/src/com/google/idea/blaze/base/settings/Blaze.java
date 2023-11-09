@@ -63,7 +63,7 @@ public class Blaze {
     if (blazeImportSettings == null) {
       return ProjectType.UNKNOWN;
     }
-    return BlazeImportSettingsManager.getInstance(project).getImportSettings().getProjectType();
+    return blazeImportSettings.getProjectType();
   }
 
   /**
