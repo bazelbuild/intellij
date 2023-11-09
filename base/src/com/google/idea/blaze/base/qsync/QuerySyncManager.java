@@ -51,9 +51,11 @@ import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -81,7 +83,7 @@ import javax.annotation.Nullable;
  *       from {@link PostQuerySyncData}.
  * </ul>
  */
-public class QuerySyncManager {
+public class QuerySyncManager implements Disposable {
   private final Logger logger = Logger.getInstance(getClass());
 
   private final Project project;
@@ -99,6 +101,10 @@ public class QuerySyncManager {
   public QuerySyncManager(Project project) {
     this.project = project;
     this.loader = createProjectLoader(executor, project);
+    if (QuerySync.AUTO_SYNC_SUPPORT_ENABLED.getValue()) {
+      VirtualFileManager.getInstance()
+          .addAsyncFileListener(new QuerySyncAsyncFileListener(project, this), this);
+    }
   }
 
   @NonInjectable
@@ -388,4 +394,7 @@ public class QuerySyncManager {
     Notifications.Bus.notify(
         new Notification("QuerySyncBuild", title, content, notificationType), project);
   }
+
+  @Override
+  public void dispose() {}
 }
