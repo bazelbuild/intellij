@@ -98,10 +98,6 @@
     <android.ApkBuildStepProvider implementation="com.google.idea.blaze.android.run.BazelApkBuildStepProvider" />
   </extensions>
 
-  <extensions defaultExtensionNs="com.google.idea.blaze.qsync">
-    <BlazeProjectListenerProvider implementation="com.google.idea.blaze.android.cppimpl.BlazeNdkSupportEnabler" />
-  </extensions>
-
   <extensions defaultExtensionNs="com.android.ide">
     <sdkEventListener implementation="com.google.idea.blaze.android.sdk.AndroidSdkListener"/>
   </extensions>
