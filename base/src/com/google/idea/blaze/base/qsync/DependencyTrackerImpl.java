@@ -235,7 +235,7 @@ public class DependencyTrackerImpl implements DependencyTracker {
     if (snapshot.graph().getAllSourceFiles().contains(workspaceRelativePath)) {
       ImmutableSet<Label> targetOwner = snapshot.getTargetOwners(workspaceRelativePath);
       if (!targetOwner.isEmpty()) {
-        return TargetsToBuild.forSourceFile(targetOwner);
+        return TargetsToBuild.forSourceFile(targetOwner, workspaceRelativePath);
       }
     } else {
       context.output(

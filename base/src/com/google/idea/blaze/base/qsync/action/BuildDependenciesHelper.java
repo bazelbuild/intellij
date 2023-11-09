@@ -170,7 +170,8 @@ public class BuildDependenciesHelper {
               "Ambiguous target sets found",
               "Ambiguous target sets for some files; not building them: "
                   + ambiguousTargets.stream()
-                      .map(disambiguator::pathForTargetSet)
+                      .map(TargetsToBuild::sourceFilePath)
+                      .flatMap(Optional::stream)
                       .map(Path::toString)
                       .collect(joining(", ")));
     }
