@@ -22,6 +22,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Label;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
@@ -67,6 +68,11 @@ public abstract class TargetsToBuild {
 
   public Optional<ImmutableSet<Label>> getUnambiguousTargets() {
     return isAmbiguous() ? Optional.empty() : Optional.of(targets());
+  }
+
+  /** Returns true if {@code labels} overlaps with any of the targets to build */
+  public boolean overlapsWith(ImmutableSet<Label> labels) {
+    return !Collections.disjoint(targets(), labels);
   }
 
   static TargetsToBuild targetGroup(Collection<Label> targets) {

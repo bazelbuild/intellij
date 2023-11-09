@@ -183,6 +183,34 @@ public class QuerySyncConfigurable extends BoundSearchableConfigurable
                               }
                               return Unit.INSTANCE;
                             });
+                    Row unusedBuildWorkingSetRow =
+                        ip.row(
+                            /* label= */ ((JLabel) null),
+                            /* init= */ r -> {
+                              Cell<JBCheckBox> buildWorkingSetCheckBox =
+                                  r.checkBox("Include working set when building dependencies")
+                                      .bind(
+                                          AbstractButton::isSelected,
+                                          (jbCheckBox, selected) -> {
+                                            jbCheckBox.setSelected(selected);
+                                            return Unit.INSTANCE;
+                                          },
+                                          new MutableProperty<>() {
+                                            @Override
+                                            public Boolean get() {
+                                              return settings.buildWorkingSet();
+                                            }
+
+                                            @Override
+                                            public void set(Boolean selected) {
+                                              settings.enableBuildWorkingSet(selected);
+                                            }
+                                          });
+                              buildWorkingSetCheckBox =
+                                  buildWorkingSetCheckBox.enabledIf(
+                                      ButtonKt.getSelected(enableQuerySyncCheckBoxCell));
+                              return Unit.INSTANCE;
+                            });
                     return Unit.INSTANCE;
                   });
           return Unit.INSTANCE;

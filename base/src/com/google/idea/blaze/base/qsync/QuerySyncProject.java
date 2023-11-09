@@ -289,6 +289,7 @@ public class QuerySyncProject {
 
   /** Returns workspace-relative paths of modified files, according to the VCS */
   public ImmutableSet<Path> getWorkingSet(BlazeContext context) throws BuildException {
+    SaveUtil.saveAllFiles();
     VcsState vcsState;
     Optional<VcsState> computed = projectQuerier.getVcsState(context);
     if (computed.isPresent()) {
