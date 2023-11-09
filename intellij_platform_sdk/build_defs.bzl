@@ -120,7 +120,8 @@ DIRECT_IJ_PRODUCTS = {
     ),
     "android-studio-2023.1": struct(
         ide = "android-studio",
-        directory = "android_studio_2023_1",
+        archive = "android_studio_with_blaze_2023_1",
+        oss_workspace = "android_studio_2023_1",
     ),
     "android-studio-2023.2": struct(
         ide = "android-studio",
