@@ -34,6 +34,7 @@ import com.google.idea.blaze.qsync.project.ProjectProto.CcCompilerSettings;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcLanguage;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcSourceFile;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcWorkspace;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -54,7 +55,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /** Updates the IJ project model based a {@link CcWorkspace} proto message. */
-public class CcProjectModelUpdateOperation {
+public class CcProjectModelUpdateOperation implements Disposable {
 
   private static final String CLIENT_KEY = "ASwB";
   private static final int CLIENT_VERSION = 1;
@@ -197,5 +198,10 @@ public class CcProjectModelUpdateOperation {
     frozenMessages.forEach(
         m -> context.output(PrintOutput.output(m.getType().name() + ": " + m.getText())));
     session.dispose();
+  }
+
+  @Override
+  public void dispose() {
+    OCWorkspaceModifiableModelDisposer.dispose(modifiableOcWorkspace);
   }
 }
