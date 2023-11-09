@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package fooproto;
+
+import "google/protobuf/empty.proto";
+
+service FooService {
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+  // This function exists to validate that the well known types (such as google.protobuf.Empty)
+  // are picked up by the plugin.
+  // To validate that they are working, navigate to "External Libraries" > "Go Libraries" >
+  //   "github.com/bazelbuild/intellij/examples/go/with_proto/proto/fooserver.pb.go",
+  // and validate that "google.golang.org/protobuf/types/known/emptypb" is resolved correctly.
+  rpc EmptyFunction (google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+message HelloRequest {
+  optional string name = 1;
+}
+
+message HelloReply {
+  optional string message = 1;
+}
+
+message Time {
+  string value = 1;
+}
