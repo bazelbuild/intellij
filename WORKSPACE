@@ -346,20 +346,6 @@ http_archive(
     url = PYTHON_PLUGIN_233_URL,
 )
 
-http_archive(
-    name = "python_2023_1",
-    build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = "825c30d2cbcce405fd18fddf356eb1f425607e9c780f8eff95d21ac23f8d90fd",
-    url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/231.8770.65/PythonCore-231.8770.65.zip",
-)
-
-http_archive(
-    name = "python_2023_2",
-    build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = "e744349f353568c18a9e11ec5e3a205f62bbdc1b65c9abc96783c479fe2aa51b",
-    url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/232.9921.47/PythonCore-232.9921.47.zip",
-)
-
 _GO_BUILD_FILE = """
 java_import(
     name = "go",
