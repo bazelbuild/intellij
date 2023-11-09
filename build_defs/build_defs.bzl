@@ -294,9 +294,7 @@ def _plugin_deploy_zip_impl(ctx):
         progress_message = "Creating final plugin zip archive",
     )
     files = depset([zip_file])
-    return struct(
-        files = files,
-    )
+    return [DefaultInfo(files = files)]
 
 _plugin_deploy_zip = rule(
     implementation = _plugin_deploy_zip_impl,
