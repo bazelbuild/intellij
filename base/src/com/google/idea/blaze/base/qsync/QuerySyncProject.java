@@ -426,6 +426,15 @@ public class QuerySyncProject {
     }
   }
 
+  /** Returns true if {@code absolutePath} is in a project include */
+  public boolean containsPath(Path absolutePath) {
+    if (!workspaceRoot.isInWorkspace(absolutePath.toFile())) {
+      return false;
+    }
+    Path workspaceRelative = workspaceRoot.path().relativize(absolutePath);
+    return projectDefinition.isIncluded(workspaceRelative);
+  }
+
   private void writeToDisk(BlazeProjectSnapshot snapshot) throws IOException {
     File f = snapshotFilePath.toFile();
     if (!f.getParentFile().exists()) {
