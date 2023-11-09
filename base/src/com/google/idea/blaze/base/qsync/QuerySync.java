@@ -25,8 +25,7 @@ import java.util.function.Supplier;
 /** Holder class for basic information about querysync, e.g. is it enabled? */
 public class QuerySync {
 
-  private static final Supplier<Boolean> ENABLED =
-      Suppliers.memoize(new BoolExperiment("use.query.sync", false)::getValue);
+  private static final BoolExperiment ENABLED = new BoolExperiment("use.query.sync", false);
 
   /** Enable compose preview for Query Sync. */
   private static final Supplier<Boolean> COMPOSE_ENABLED =
@@ -35,7 +34,7 @@ public class QuerySync {
   private QuerySync() {}
 
   public static boolean isDefaultForNewProjects() {
-    return ENABLED.get();
+    return ENABLED.getValue();
   }
 
   public static boolean isComposeEnabled(Project project) {
