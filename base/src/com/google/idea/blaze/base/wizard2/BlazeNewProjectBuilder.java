@@ -232,6 +232,6 @@ public final class BlazeNewProjectBuilder {
         projectDataDirectory,
         Optional.ofNullable(projectViewFile).map(File::getPath).orElse(null),
         getBuildSystem(),
-        QuerySync.isEnabled() ? ProjectType.QUERY_SYNC : ProjectType.ASPECT_SYNC);
+        QuerySync.isDefaultForNewProjects() ? ProjectType.QUERY_SYNC : ProjectType.ASPECT_SYNC);
   }
 }

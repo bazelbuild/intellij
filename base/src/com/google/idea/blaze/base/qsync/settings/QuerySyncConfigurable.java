@@ -63,7 +63,7 @@ public class QuerySyncConfigurable extends BoundSearchableConfigurable
 
   // Makes sure we have checked query sync enable option before any changes. Otherwise, it may
   // memorize the changed value.
-  private final boolean useQuerySync = QuerySync.isEnabled();
+  private final boolean useQuerySync = QuerySync.isDefaultForNewProjects();
 
   // Provides access to enableQuerySyncCheckBoxCell for other rows
   private Cell<JBCheckBox> enableQuerySyncCheckBoxCell = null;
