@@ -56,9 +56,6 @@ public class QuerySyncPromo {
   }
 
   public void show() {
-    if (!QuerySync.BETA_ENABLED.get()) {
-      return;
-    }
     Notification promo =
         NotificationGroupManager.getInstance()
             .getNotificationGroup("QuerySyncPromo")

@@ -25,10 +25,6 @@ public class QuerySync {
 
   private static final Logger logger = Logger.getInstance(QuerySync.class);
 
-  // Only read the initial value, as the sync mode should not change over a single run of the IDE.
-  public static final Supplier<Boolean> BETA_ENABLED =
-      Suppliers.memoize(new BoolExperiment("use.query.sync.beta", false)::getValue);
-
   private static final Supplier<Boolean> ENABLED =
       Suppliers.memoize(new BoolExperiment("use.query.sync", false)::getValue);
 
