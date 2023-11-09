@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.nio.file.Path;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
 /** Action to build dependencies and enable analysis for all open editor tabs. */
@@ -79,7 +80,7 @@ public class BuildDependenciesForOpenFilesAction extends BlazeProjectAction {
       // there is a single ambiguous target set. Show the UI to disambiguate it.
       TargetsToBuild ambiguousOne = Iterables.getOnlyElement(ambiguousTargets);
       helper.chooseTargetToBuildFor(
-          disambiguator.pathForTargetSet(ambiguousOne),
+          ambiguousOne.sourceFilePath().orElseThrow(),
           ambiguousOne,
           PopupPosititioner.showAtMousePointerOrCentered(event),
           chosen ->
@@ -93,7 +94,8 @@ public class BuildDependenciesForOpenFilesAction extends BlazeProjectAction {
       logger.warn(
           "Multiple ambiguous target sets for open files; not building them: "
               + ambiguousTargets.stream()
-                  .map(disambiguator::pathForTargetSet)
+                  .map(TargetsToBuild::sourceFilePath)
+                  .flatMap(Optional::stream)
                   .map(Path::toString)
                   .collect(joining(", ")));
       if (!disambiguator.unambiguousTargets.isEmpty()) {

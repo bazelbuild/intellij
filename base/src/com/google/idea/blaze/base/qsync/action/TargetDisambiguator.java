@@ -31,16 +31,10 @@ import java.util.Collections;
 public class TargetDisambiguator {
   public final ImmutableSet<Label> unambiguousTargets;
   public final ImmutableSet<TargetsToBuild> ambiguousTargetSets;
-  private final ImmutableMap<TargetsToBuild, Path> targetsToPath;
 
   private TargetDisambiguator(ImmutableMap<TargetsToBuild, Path> targetsToPath) {
     unambiguousTargets = TargetsToBuild.getAllUnambiguous(targetsToPath.keySet());
     ambiguousTargetSets = TargetsToBuild.getAllAmbiguous(targetsToPath.keySet());
-    this.targetsToPath = targetsToPath;
-  }
-
-  public Path pathForTargetSet(TargetsToBuild targetsToBuild) {
-    return targetsToPath.get(targetsToBuild);
   }
 
   public static TargetDisambiguator createForFiles(
