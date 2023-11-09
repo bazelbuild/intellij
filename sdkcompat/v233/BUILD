@@ -24,8 +24,8 @@ java_library(
         ]) + ["com/google/idea/sdkcompat/refactoring/safedelete/JavaSafeDeleteProcessorCompat.java"],
         clion = glob([
             "com/google/idea/sdkcompat/cpp/**",
-            "com/google/idea/sdkcompat/clion/**", # For classes incompatible with Android Studio
-            "com/google/idea/sdkcompat/javascript/**", #api223
+            "com/google/idea/sdkcompat/clion/**",  # For classes incompatible with Android Studio
+            "com/google/idea/sdkcompat/javascript/**",  #api223
         ]),
         intellij = glob([
             "com/google/idea/sdkcompat/java/**",

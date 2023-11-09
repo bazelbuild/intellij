@@ -24,18 +24,28 @@ import javax.swing.Icon;
 public class FilePathLookupElement extends BuildLookupElement {
 
   private final String itemText;
+  private final Boolean isDirectory;
   private final NullableLazyValue<Icon> icon;
 
   public FilePathLookupElement(
-      String fullLabel, String itemText, QuoteType quoteWrapping, NullableLazyValue<Icon> icon) {
+      String fullLabel,
+      String itemText,
+      QuoteType quoteWrapping,
+      Boolean isDirectory,
+      NullableLazyValue<Icon> icon) {
     super(fullLabel, quoteWrapping);
     this.itemText = itemText;
+    this.isDirectory = isDirectory;
     this.icon = icon;
   }
 
   @Override
   protected String getItemText() {
     return itemText;
+  }
+
+  public Boolean getIsDirectory() {
+    return isDirectory;
   }
 
   @Nullable
