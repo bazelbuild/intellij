@@ -22,7 +22,6 @@ import com.google.devtools.intellij.model.ProjectData.TargetData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceState;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import java.util.Objects;
@@ -46,7 +45,6 @@ public final class ProjectTargetData implements ProtoWrapper<ProjectData.TargetD
   }
 
   public TargetMap targetMap() {
-    QuerySync.assertNotEnabled("targetMap");
     return targetMap;
   }
 
@@ -75,7 +73,6 @@ public final class ProjectTargetData implements ProtoWrapper<ProjectData.TargetD
    */
   public ProjectTargetData filter(
       Predicate<TargetKey> targetsToKeep, WorkspaceLanguageSettings settings) {
-    QuerySync.assertNotEnabled("targetMap");
     TargetMap newTargets =
         new TargetMap(ImmutableMap.copyOf(Maps.filterKeys(targetMap.map(), targetsToKeep::test)));
     BlazeIdeInterfaceState newState =
