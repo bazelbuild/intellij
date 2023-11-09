@@ -36,6 +36,7 @@ public abstract class QuerySyncActionStats {
           .setRequestedFiles(ImmutableSet.of())
           .setProjectInfo(ProjectInfoStats.builder().build())
           .setDependenciesInfo(DependenciesInfoStats.builder().build())
+          .setBuildWorkingSetEnabled(false)
           .build();
 
   /** The result of query sync operations. */
@@ -67,6 +68,8 @@ public abstract class QuerySyncActionStats {
 
   public abstract DependenciesInfoStats dependenciesInfo();
 
+  public abstract boolean buildWorkingSetEnabled();
+
   public abstract Builder toBuilder();
 
   public static Builder builder() {
@@ -93,6 +96,8 @@ public abstract class QuerySyncActionStats {
     public abstract Builder setProjectInfo(ProjectInfoStats value);
 
     public abstract Builder setDependenciesInfo(DependenciesInfoStats value);
+
+    public abstract Builder setBuildWorkingSetEnabled(boolean value);
 
     abstract ImmutableList.Builder<QuerySyncOperationStats> operationStatsBuilder();
 

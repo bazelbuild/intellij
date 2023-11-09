@@ -33,6 +33,8 @@ public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSett
     public boolean showDetailedInformationInEditor = false;
 
     public boolean syncBeforeBuild = false;
+
+    public boolean buildWorkingSet = false;
   }
 
   private QuerySyncSettings.State state = new QuerySyncSettings.State();
@@ -71,6 +73,14 @@ public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSett
     return state.syncBeforeBuild;
   }
 
+  public void enableBuildWorkingSet(boolean buildWorkingSet) {
+    state.buildWorkingSet = buildWorkingSet;
+  }
+
+  public boolean buildWorkingSet() {
+    return state.buildWorkingSet;
+  }
+
   @Override
   public QuerySyncSettings.State getState() {
     return state;
@@ -104,6 +114,7 @@ public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSett
           "showDetailedInformationInEditor",
           Boolean.toString(settings.showDetailedInformationInEditor()));
       builder.put("syncBeforeBuild", Boolean.toString(settings.syncBeforeBuild()));
+      builder.put("buildWorkingSet", Boolean.toString(settings.buildWorkingSet()));
       return builder.buildOrThrow();
     }
   }

@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStats.Result;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.common.TimeSource;
@@ -92,7 +93,8 @@ public class QuerySyncActionStatsScope implements BlazeScope {
         QuerySyncActionStats.builder()
             .handleActionClass(actionClass)
             .handleActionEvent(event)
-            .setRequestedFiles(ImmutableSet.copyOf(requestFiles));
+            .setRequestedFiles(ImmutableSet.copyOf(requestFiles))
+            .setBuildWorkingSetEnabled(QuerySyncSettings.getInstance().buildWorkingSet());
     this.timeSource = timeSource;
     projectInfoStatsBuilder = ProjectInfoStats.builder();
     dependenciesInfoStatsBuilder = DependenciesInfoStats.builder();
