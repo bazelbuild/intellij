@@ -34,6 +34,10 @@ load("//build_defs:build_defs.bzl", "output_path", "repackaged_files_data")
 
 SUFFIX = ".intellij-plugin-debug-target-deploy-info"
 
+_AspectIntellijPluginDeployInfo = provider("", fields = ["input_files", "deploy_info"])
+
+_IntellijPluginDeployInfo = provider("", fields = ["deploy_files", "java_agent_deploy_files"])
+
 def _repackaged_deploy_file(f, repackaging_data):
     return struct(
         src = f,
@@ -51,7 +55,7 @@ def _intellij_plugin_debug_target_aspect_impl(target, ctx):
 
     files = target.files
     if ctx.rule.kind == "intellij_plugin_debug_target":
-        aspect_intellij_plugin_deploy_info = target.intellij_plugin_deploy_info
+        aspect_intellij_plugin_deploy_info = target[_IntellijPluginDeployInfo]
     elif ctx.rule.kind == "_repackaged_files":
         data = target[repackaged_files_data]
         aspect_intellij_plugin_deploy_info = struct(
@@ -67,9 +71,9 @@ def _intellij_plugin_debug_target_aspect_impl(target, ctx):
             deploy_files = [_flat_deploy_file(f) for f in target.files.to_list()],
             java_agent_deploy_files = [],
         )
-    return struct(
+    return _AspectIntellijPluginDeployInfo(
         input_files = files,
-        aspect_intellij_plugin_deploy_info = aspect_intellij_plugin_deploy_info,
+        deploy_info = aspect_intellij_plugin_deploy_info,
     )
 
 _intellij_plugin_debug_target_aspect = aspect(
@@ -87,13 +91,13 @@ def _intellij_plugin_debug_target_impl(ctx):
     deploy_files = []
     java_agent_deploy_files = []
     for target in ctx.attr.deps:
-        files = depset(transitive = [files, target.input_files])
-        deploy_files.extend(target.aspect_intellij_plugin_deploy_info.deploy_files)
-        java_agent_deploy_files.extend(target.aspect_intellij_plugin_deploy_info.java_agent_deploy_files)
+        files = depset(transitive = [files, target[_AspectIntellijPluginDeployInfo].input_files])
+        deploy_files.extend(target[_AspectIntellijPluginDeployInfo].deploy_info.deploy_files)
+        java_agent_deploy_files.extend(target[_AspectIntellijPluginDeployInfo].deploy_info.java_agent_deploy_files)
     for target in ctx.attr.javaagents:
-        files = depset(transitive = [files, target.input_files])
-        java_agent_deploy_files.extend(target.aspect_intellij_plugin_deploy_info.deploy_files)
-        java_agent_deploy_files.extend(target.aspect_intellij_plugin_deploy_info.java_agent_deploy_files)
+        files = depset(transitive = [files, target[_AspectIntellijPluginDeployInfo].input_files])
+        java_agent_deploy_files.extend(target[_AspectIntellijPluginDeployInfo].deploy_info.deploy_files)
+        java_agent_deploy_files.extend(target[_AspectIntellijPluginDeployInfo].deploy_info.java_agent_deploy_files)
     deploy_info = struct(
         deploy_files = [_build_deploy_info_file(f) for f in deploy_files],
         java_agent_deploy_files = [_build_deploy_info_file(f) for f in java_agent_deploy_files],
@@ -106,13 +110,13 @@ def _intellij_plugin_debug_target_impl(ctx):
     files = depset([f for f in files.to_list() if not f.path.endswith(SUFFIX)])
     files = depset([output], transitive = [files])
 
-    return struct(
-        files = files,
-        intellij_plugin_deploy_info = struct(
+    return [
+        DefaultInfo(files = files),
+        _IntellijPluginDeployInfo(
             deploy_files = deploy_files,
             java_agent_deploy_files = java_agent_deploy_files,
         ),
-    )
+    ]
 
 intellij_plugin_debug_target = rule(
     implementation = _intellij_plugin_debug_target_impl,
