@@ -26,7 +26,6 @@ import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
-import java.util.function.Supplier;
 
 /**
  * Project refresher creates an appropriate {@link RefreshOperation} based on the project and
@@ -38,7 +37,6 @@ public class BlazeProjectSnapshotBuilder {
   private final PackageReader workspaceRelativePackageReader;
   private final Path workspaceRoot;
   private final ImmutableSet<String> handledRuleKinds;
-  private final Supplier<Boolean> ccEnabledFlag;
   private final ProjectProtoTransform projectProtoTransform;
 
   public BlazeProjectSnapshotBuilder(
@@ -46,13 +44,11 @@ public class BlazeProjectSnapshotBuilder {
       PackageReader workspaceRelativePackageReader,
       Path workspaceRoot,
       ImmutableSet<String> handledRuleKinds,
-      Supplier<Boolean> ccEnabledFlag,
       ProjectProtoTransform projectProtoTransform) {
     this.executor = executor;
     this.workspaceRelativePackageReader = workspaceRelativePackageReader;
     this.workspaceRoot = workspaceRoot;
     this.handledRuleKinds = handledRuleKinds;
-    this.ccEnabledFlag = ccEnabledFlag;
     this.projectProtoTransform = projectProtoTransform;
   }
 
@@ -91,8 +87,7 @@ public class BlazeProjectSnapshotBuilder {
             postQuerySyncData.projectDefinition(),
             executor);
     QuerySummary querySummary = postQuerySyncData.querySummary();
-    BuildGraphData graph =
-        new BlazeQueryParser(querySummary, context, handledRuleKinds, ccEnabledFlag).parse();
+    BuildGraphData graph = new BlazeQueryParser(querySummary, context, handledRuleKinds).parse();
     Project project =
         projectProtoTransform.apply(graphToProjectConverter.createProject(graph), graph, context);
     return BlazeProjectSnapshot.builder()

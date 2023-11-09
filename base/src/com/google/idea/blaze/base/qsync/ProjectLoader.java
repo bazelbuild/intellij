@@ -166,7 +166,6 @@ public class ProjectLoader {
             createWorkspaceRelativePackageReader(),
             workspaceRoot.path(),
             handledRules,
-            QuerySync.CC_SUPPORT_ENABLED::getValue,
             ProjectProtoTransform.compose(
                 artifactTracker::updateProjectProto, new CcProjectProtoTransform(artifactTracker)));
     QueryRunner queryRunner = createQueryRunner(buildSystem);
