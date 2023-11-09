@@ -28,15 +28,6 @@ public class Blaze {
 
   private Blaze() {}
 
-  public static boolean isBlazeProjectOpen() {
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (isBlazeProject(project)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   /**
    * Returns whether this project was imported from blaze.
    *
