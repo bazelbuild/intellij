@@ -42,7 +42,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 
 /**
  * A class that parses the proto output from a `blaze query --output=streamed_proto` invocation, and
@@ -68,7 +67,6 @@ public class BlazeQueryParser {
 
   private final Context<?> context;
   private final SetView<String> alwaysBuildRuleKinds;
-  private final Supplier<Boolean> ccEnabledFlag;
 
   private final QuerySummary query;
 
@@ -82,14 +80,10 @@ public class BlazeQueryParser {
   private final Set<Label> javaDeps = new HashSet<>();
 
   public BlazeQueryParser(
-      QuerySummary query,
-      Context<?> context,
-      ImmutableSet<String> handledRuleKinds,
-      Supplier<Boolean> ccEnabledFlag) {
+      QuerySummary query, Context<?> context, ImmutableSet<String> handledRuleKinds) {
     this.context = context;
     this.alwaysBuildRuleKinds = Sets.difference(ALWAYS_BUILD_RULE_KINDS, handledRuleKinds);
     this.query = query;
-    this.ccEnabledFlag = ccEnabledFlag;
   }
 
   public BuildGraphData parse() {
@@ -205,9 +199,6 @@ public class BlazeQueryParser {
   }
 
   private void visitCcRule(Label label, Query.Rule rule, ProjectTarget.Builder targetBuilder) {
-    if (!ccEnabledFlag.get()) {
-      return;
-    }
     graphBuilder.allTargetsBuilder().add(label);
     targetBuilder.languagesBuilder().add(QuerySyncLanguage.CC);
     targetBuilder.coptsBuilder().addAll(rule.getCoptsList());
