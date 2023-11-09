@@ -16,16 +16,11 @@
 package com.google.idea.blaze.base.qsync.settings;
 
 import com.google.common.base.Suppliers;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.ExperimentValue;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.BoundSearchableConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.ui.DialogPanel;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.dsl.builder.BuilderKt;
 import com.intellij.ui.dsl.builder.ButtonKt;
@@ -37,7 +32,6 @@ import com.intellij.ui.dsl.builder.RowsRange;
 import com.intellij.ui.dsl.builder.UtilsKt;
 import java.util.function.Supplier;
 import javax.swing.AbstractButton;
-import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import kotlin.Unit;
 
@@ -61,38 +55,11 @@ public class QuerySyncConfigurable extends BoundSearchableConfigurable
                   "query.sync.before.build", QuerySyncSettingsExperimentLoader.ID, false));
   private final QuerySyncSettings settings = QuerySyncSettings.getInstance();
 
-  // Makes sure we have checked query sync enable option before any changes. Otherwise, it may
-  // memorize the changed value.
-  private final boolean useQuerySync = QuerySync.isDefaultForNewProjects();
-
   // Provides access to enableQuerySyncCheckBoxCell for other rows
   private Cell<JBCheckBox> enableQuerySyncCheckBoxCell = null;
 
   public QuerySyncConfigurable() {
     super(/* displayName= */ "Query Sync", /* helpTopic= */ "", /* _id= */ "query.sync");
-  }
-
-  private void popupRestartDialogue() {
-    int result =
-        Messages.showYesNoDialog(
-            "Restart "
-                + ApplicationNamesInfo.getInstance().getFullProductName()
-                + " for the changes to take effect",
-            "Restart Required",
-            ApplicationManager.getApplication().isRestartCapable() ? "Restart" : "Shutdown",
-            "Not Now",
-            Messages.getQuestionIcon());
-    if (result == Messages.YES) {
-      ApplicationManagerEx.getApplicationEx().restart(true);
-    }
-  }
-
-  @Override
-  public void apply() {
-    super.apply();
-    if (useQuerySync != settings.useQuerySync()) {
-      popupRestartDialogue();
-    }
   }
 
   private static boolean getFirstExperimentValueWithoutId(
@@ -111,46 +78,39 @@ public class QuerySyncConfigurable extends BoundSearchableConfigurable
         p -> {
           boolean enabledByExperimentFile = QUERY_SYNC_ENABLED_LEGACY.get();
           // Enable query sync checkbox
-          Cell<JEditorPane> unusedEnableQuerySyncRow =
+          Row unusedEnableQuerySyncRow =
               p.row(
-                      /* label= */ ((JLabel) null),
-                      /* init= */ r -> {
-                        enableQuerySyncCheckBoxCell =
-                            r.checkBox("Enable Query Sync for new projects")
-                                .enabled(!enabledByExperimentFile)
-                                .bind(
-                                    /* componentGet= */ AbstractButton::isSelected,
-                                    /* componentSet= */ (jbCheckBox, selected) -> {
-                                      jbCheckBox.setSelected(selected);
-                                      return Unit.INSTANCE;
-                                    },
-                                    /* prop= */ new MutableProperty<Boolean>() {
-                                      @Override
-                                      public Boolean get() {
-                                        return settings.useQuerySync() || enabledByExperimentFile;
-                                      }
+                  /* label= */ ((JLabel) null),
+                  /* init= */ r -> {
+                    enableQuerySyncCheckBoxCell =
+                        r.checkBox("Enable Query Sync for new projects")
+                            .enabled(!enabledByExperimentFile)
+                            .bind(
+                                /* componentGet= */ AbstractButton::isSelected,
+                                /* componentSet= */ (jbCheckBox, selected) -> {
+                                  jbCheckBox.setSelected(selected);
+                                  return Unit.INSTANCE;
+                                },
+                                /* prop= */ new MutableProperty<Boolean>() {
+                                  @Override
+                                  public Boolean get() {
+                                    return settings.useQuerySync() || enabledByExperimentFile;
+                                  }
 
-                                      @Override
-                                      public void set(Boolean selected) {
-                                        settings.enableUseQuerySync(selected);
-                                      }
-                                    })
-                                .comment(
-                                    enabledByExperimentFile
-                                        ? "query sync is forcefully enabled by the old flag from"
-                                            + " the .intellij-experiments file. "
-                                        : "",
-                                    UtilsKt.DEFAULT_COMMENT_WIDTH,
-                                    HyperlinkEventAction.HTML_HYPERLINK_INSTANCE);
-                        return Unit.INSTANCE;
-                      })
-                  // TODO (b/303698519): remove the restart requirement after removing query sync
-                  // experiment checks and only use settings.useQuerySync() to decide if query sync
-                  // is enabled.
-                  .comment(
-                      enabledByExperimentFile ? "" : "Requires restart",
-                      UtilsKt.DEFAULT_COMMENT_WIDTH,
-                      HyperlinkEventAction.HTML_HYPERLINK_INSTANCE);
+                                  @Override
+                                  public void set(Boolean selected) {
+                                    settings.enableUseQuerySync(selected);
+                                  }
+                                })
+                            .comment(
+                                enabledByExperimentFile
+                                    ? "query sync is forcefully enabled by the old flag from"
+                                        + " the .intellij-experiments file. "
+                                    : "",
+                                UtilsKt.DEFAULT_COMMENT_WIDTH,
+                                HyperlinkEventAction.HTML_HYPERLINK_INSTANCE);
+                    return Unit.INSTANCE;
+                  });
 
           // Other sub options
           RowsRange unusedRowRange =
