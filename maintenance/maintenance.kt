@@ -107,7 +107,7 @@ private fun bumpPluginVersion(intellijMajorVersion: String, out: Path, mavenCoor
     bump(
             workspaceShaVarName = "${pythonPluginVarPrefix}_${intellijMajorVersion}_SHA",
             workspaceUrlVarName = "${pythonPluginVarPrefix}_${intellijMajorVersion}_URL",
-            downloadUrl = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/$mavenCoordinates/${pythonPluginVersion}/PythonCore-${pythonPluginVersion}.zip",
+            downloadUrl = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/$mavenCoordinates/${pythonPluginVersion}/$mavenCoordinates-${pythonPluginVersion}.zip",
             workspace = out
     )
 }
