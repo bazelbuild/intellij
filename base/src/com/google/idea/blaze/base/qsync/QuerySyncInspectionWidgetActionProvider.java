@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.qsync;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.PopupPosititioner;
-import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurable;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurableProvider;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
@@ -154,7 +154,8 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
                           @Override
                           public void run() {
                             ShowSettingsUtil.getInstance()
-                                .showSettingsDialog(project, QuerySyncConfigurable.class);
+                                .showSettingsDialog(
+                                    project, QuerySyncConfigurableProvider.getConfigurableClass());
                           }
                         })
                     .installOn(this);
