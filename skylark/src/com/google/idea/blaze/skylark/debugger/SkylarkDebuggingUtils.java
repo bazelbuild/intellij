@@ -35,7 +35,12 @@ public final class SkylarkDebuggingUtils {
       new BoolExperiment("skylark.debugging.enabled", true);
 
   public static boolean debuggingEnabled(Project project) {
-    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
+    ProjectType projectType = Blaze.getProjectType(project);
+    // In non-bazel projects, don't even try to debug skylark.
+    if (projectType.equals(ProjectType.UNKNOWN)) {
+      return false;
+    }
+    if (projectType.equals(ProjectType.QUERY_SYNC)) {
       // Skylark debugging only needs a blaze version past EARLIEST_SUPPORTED_BLAZE_CL, which
       // greatly predates query sync
       return true;
