@@ -249,6 +249,9 @@ public class ExpressionParsing extends Parsing {
       case INT:
         buildTokenElement(BuildElementTypes.INTEGER_LITERAL);
         return;
+      case FLOAT:
+        buildTokenElement(BuildElementTypes.FLOAT_LITERAL);
+        return;
       case STRING:
         parseStringLiteral(true);
         return;
