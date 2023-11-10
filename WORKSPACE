@@ -242,9 +242,9 @@ java_import(
 )
 """
 
-DEVKIT_233_SHA = "4202185d9500f9c7e57c80a5ad87f72ef91db6fa9cfc57ef829b9c88a4e03799"
+DEVKIT_233_SHA = "53a1f12286e256c989b3ac7408db52d0feeb43e7bb08e40a99338e4540b5d1f6"
 
-DEVKIT_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/233.9802.14/DevKit-233.9802.14.zip"
+DEVKIT_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/233.11799.10/DevKit-233.11799.10.zip"
 
 http_archive(
     name = "devkit_2023_3",
