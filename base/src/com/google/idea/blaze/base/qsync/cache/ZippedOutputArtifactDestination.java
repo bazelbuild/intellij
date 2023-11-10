@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base.qsync.cache;
 
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
+import com.google.idea.blaze.qsync.PackageStatementParser;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -31,6 +33,12 @@ public class ZippedOutputArtifactDestination implements OutputArtifactDestinatio
 
   private final String key;
 
+  private final PackageStatementParser packageStatementParser = new PackageStatementParser();
+
+  // If set, extracts java and kotlin files to a directory matching their package.
+  private static final BoolExperiment readPackageFromFiles =
+      new BoolExperiment("qsync.srcjar.read.package", true);
+
   /**
    * The location where in the cache directory the representation of the artifact for the IDE should
    * be placed.
@@ -45,12 +53,26 @@ public class ZippedOutputArtifactDestination implements OutputArtifactDestinatio
     this.copyDestination = copyDestination;
   }
 
-  private static void extract(Path source, Path destination) {
+  private void extract(Path source, Path destination) {
     try {
       Files.createDirectories(destination);
       try (ZipFile zip = new ZipFile(source.toFile())) {
         for (var entries = zip.entries(); entries.hasMoreElements(); ) {
           ZipEntry entry = entries.nextElement();
+          if (readPackageFromFiles.getValue()) {
+            if (entry.getName().endsWith(".java") || entry.getName().endsWith(".kt")) {
+              String packageName = packageStatementParser.readPackage(zip.getInputStream(entry));
+              String filename = entry.getName().substring(entry.getName().lastIndexOf('/') + 1);
+              Path packageDir = destination.resolve(Path.of(packageName.replace('.', '/')));
+              Files.createDirectories(packageDir);
+              Files.copy(
+                  zip.getInputStream(entry),
+                  destination.resolve(packageDir).resolve(filename),
+                  StandardCopyOption.REPLACE_EXISTING);
+              continue;
+            }
+          }
+
           if (entry.isDirectory()) {
             Files.createDirectories(destination.resolve(entry.getName()));
           } else {
