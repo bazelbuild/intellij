@@ -96,27 +96,19 @@ private fun bumpEap(intellijMajorVersion: String, out: Path) {
 }
 
 private fun bumpPlugins(intellijMajorVersion: String, out: Path) {
-    val goPluginLatestVersion = pluginLatestVersion("org.jetbrains.plugins.go", intellijMajorVersion)
-    val scalaPluginVersion = pluginLatestVersion("org.intellij.scala", intellijMajorVersion)
-    val pythonPluginVersion = pluginLatestVersion("PythonCore", intellijMajorVersion)
-    bump(
-        workspaceShaVarName = "PYTHON_PLUGIN_${intellijMajorVersion}_SHA",
-        workspaceUrlVarName = "PYTHON_PLUGIN_${intellijMajorVersion}_URL",
-        downloadUrl = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/${pythonPluginVersion}/PythonCore-${pythonPluginVersion}.zip",
-        workspace = out
-    )
+    bumpPluginVersion(intellijMajorVersion, out, "PythonCore", "PYTHON_PLUGIN")
+    bumpPluginVersion(intellijMajorVersion, out,  "org.jetbrains.plugins.go", "GO_PLUGIN" )
+    bumpPluginVersion(intellijMajorVersion, out, "org.intellij.scala", "SCALA_PLUGIN")
+    bumpPluginVersion(intellijMajorVersion, out, "DevKit", "DEVKIT")
+}
 
+private fun bumpPluginVersion(intellijMajorVersion: String, out: Path, mavenCoordinates: String, pythonPluginVarPrefix: String) {
+    val pythonPluginVersion = pluginLatestVersion(mavenCoordinates, intellijMajorVersion)
     bump(
-        workspaceShaVarName = "GO_PLUGIN_${intellijMajorVersion}_SHA",
-        workspaceUrlVarName = "GO_PLUGIN_${intellijMajorVersion}_URL",
-        downloadUrl = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/${goPluginLatestVersion}/org.jetbrains.plugins.go-${goPluginLatestVersion}.zip",
-        workspace = out
-    )
-    bump(
-        workspaceShaVarName = "SCALA_PLUGIN_${intellijMajorVersion}_SHA",
-        workspaceUrlVarName = "SCALA_PLUGIN_${intellijMajorVersion}_URL",
-        downloadUrl = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/${scalaPluginVersion}/org.intellij.scala-${scalaPluginVersion}.zip",
-        workspace = out
+            workspaceShaVarName = "${pythonPluginVarPrefix}_${intellijMajorVersion}_SHA",
+            workspaceUrlVarName = "${pythonPluginVarPrefix}_${intellijMajorVersion}_URL",
+            downloadUrl = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/$mavenCoordinates/${pythonPluginVersion}/PythonCore-${pythonPluginVersion}.zip",
+            workspace = out
     )
 }
 
