@@ -25,7 +25,14 @@ import java.util.function.Supplier;
 /** Holder class for basic information about querysync, e.g. is it enabled? */
 public class QuerySync {
 
-  private static final BoolExperiment ENABLED = new BoolExperiment("use.query.sync", false);
+  /**
+   * Previously, query sync was enabled by an experiment. Some users still have that experiment set
+   * and we don't want to inadvertently disable query sync for them.
+   *
+   * <p>TODO(b/303698519) Remove this workaround once query sync is enabled by default.
+   */
+  private static final BoolExperiment LEGACY_EXPERIMENT =
+      new BoolExperiment("use.query.sync", false);
 
   /** Enable compose preview for Query Sync. */
   private static final Supplier<Boolean> COMPOSE_ENABLED =
@@ -37,8 +44,8 @@ public class QuerySync {
 
   private QuerySync() {}
 
-  public static boolean isDefaultForNewProjects() {
-    return ENABLED.getValue();
+  public static boolean isLegacyExperimentEnabled() {
+    return LEGACY_EXPERIMENT.getValue();
   }
 
   public static boolean isComposeEnabled(Project project) {
