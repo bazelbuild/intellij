@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.google.idea.blaze.base.qsync.TargetsToBuild;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -235,10 +236,11 @@ public class BuildDependenciesHelper {
   void enableAnalysis(ImmutableSet<Label> targets, QuerySyncActionStatsScope querySyncActionStats) {
     switch (depsBuildType) {
       case SELF:
-        syncManager.enableAnalysis(targets, querySyncActionStats);
+        syncManager.enableAnalysis(targets, querySyncActionStats, TaskOrigin.USER_ACTION);
         break;
       case REVERSE_DEPS:
-        syncManager.enableAnalysisForReverseDeps(targets, querySyncActionStats);
+        syncManager.enableAnalysisForReverseDeps(
+            targets, querySyncActionStats, TaskOrigin.USER_ACTION);
     }
   }
 
