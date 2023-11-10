@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.qsync;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 import com.google.common.util.concurrent.Futures;
-import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurable;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurableProvider;
 import com.google.idea.common.experiments.IntExperiment;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
@@ -78,7 +78,8 @@ public class QuerySyncPromo {
         new AnAction("Enable now") {
           @Override
           public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
-            ShowSettingsUtil.getInstance().showSettingsDialog(project, QuerySyncConfigurable.class);
+            ShowSettingsUtil.getInstance()
+                .showSettingsDialog(project, QuerySyncConfigurableProvider.getConfigurableClass());
           }
         });
     promo.notify(project);

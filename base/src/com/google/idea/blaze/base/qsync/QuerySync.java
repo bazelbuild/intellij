@@ -19,11 +19,15 @@ import com.google.common.base.Suppliers;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.intellij.openapi.project.Project;
 import java.util.function.Supplier;
 
 /** Holder class for basic information about querysync, e.g. is it enabled? */
 public class QuerySync {
+
+  private static final FeatureRolloutExperiment ENABLED =
+      new FeatureRolloutExperiment("query.sync");
 
   /**
    * Previously, query sync was enabled by an experiment. Some users still have that experiment set
@@ -43,6 +47,10 @@ public class QuerySync {
       new BoolExperiment("querysync.autosync.support", false);
 
   private QuerySync() {}
+
+  public static boolean useByDefault() {
+    return ENABLED.isEnabled();
+  }
 
   public static boolean isLegacyExperimentEnabled() {
     return LEGACY_EXPERIMENT.getValue();

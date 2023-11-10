@@ -34,8 +34,7 @@ import javax.swing.JLabel;
 import kotlin.Unit;
 
 /** A configuration page for the settings dialog for query sync. */
-public class QuerySyncConfigurable extends BoundSearchableConfigurable
-    implements Configurable.Beta {
+class QuerySyncConfigurable extends BoundSearchableConfigurable implements Configurable {
 
   private static final BoolExperiment LEGACY_SYNC_BEFORE_BUILD =
       new BoolExperiment("query.sync.before.build", false);
@@ -53,7 +52,8 @@ public class QuerySyncConfigurable extends BoundSearchableConfigurable
   public DialogPanel createPanel() {
     return BuilderKt.panel(
         p -> {
-          boolean enabledByExperimentFile = QuerySync.isLegacyExperimentEnabled();
+          boolean enabledByExperimentFile =
+              QuerySync.useByDefault() ? false : QuerySync.isLegacyExperimentEnabled();
           boolean syncBeforeBuildExperiment = LEGACY_SYNC_BEFORE_BUILD.getValue();
           // Enable query sync checkbox
           Row unusedEnableQuerySyncRow =
@@ -72,12 +72,20 @@ public class QuerySyncConfigurable extends BoundSearchableConfigurable
                                 /* prop= */ new MutableProperty<Boolean>() {
                                   @Override
                                   public Boolean get() {
-                                    return settings.useQuerySync() || enabledByExperimentFile;
+                                    if (QuerySync.useByDefault()) {
+                                      return settings.useQuerySync();
+                                    } else {
+                                      return settings.useQuerySyncBeta() || enabledByExperimentFile;
+                                    }
                                   }
 
                                   @Override
                                   public void set(Boolean selected) {
-                                    settings.enableUseQuerySync(selected);
+                                    if (QuerySync.useByDefault()) {
+                                      settings.enableUseQuerySync(selected);
+                                    } else {
+                                      settings.enableUseQuerySyncBeta(selected);
+                                    }
                                   }
                                 })
                             .comment(

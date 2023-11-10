@@ -227,8 +227,14 @@ public final class BlazeNewProjectBuilder {
   }
 
   private BlazeImportSettings getImportSettings() {
-    boolean useQuerySync =
-        QuerySync.isLegacyExperimentEnabled() || QuerySyncSettings.getInstance().useQuerySync();
+    boolean useQuerySync;
+    if (QuerySync.useByDefault()) {
+      useQuerySync = QuerySyncSettings.getInstance().useQuerySync();
+    } else {
+      useQuerySync =
+          QuerySync.isLegacyExperimentEnabled()
+              || QuerySyncSettings.getInstance().useQuerySyncBeta();
+    }
     return new BlazeImportSettings(
         workspaceRoot.directory().getPath(),
         projectName,
