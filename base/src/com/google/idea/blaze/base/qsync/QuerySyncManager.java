@@ -48,6 +48,7 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -94,6 +95,20 @@ public class QuerySyncManager implements Disposable {
   private final ProjectLoader loader;
   private volatile QuerySyncProject loadedProject;
 
+  private static final BoolExperiment showWindowOnAutomaticSyncErrors =
+      new BoolExperiment("querysync.autosync.show.console.on.error", true);
+
+  /** An enum represent the origin of a task performed by the {@link QuerySyncManager} */
+  public enum TaskOrigin {
+    /** Tasks run when opening a project */
+    STARTUP,
+    /** User-initiated tasks */
+    USER_ACTION,
+    /** Tasks run automatically */
+    AUTOMATIC,
+    UNKNOWN
+  }
+
   public static QuerySyncManager getInstance(Project project) {
     return project.getService(QuerySyncManager.class);
   }
@@ -126,8 +141,14 @@ public class QuerySyncManager implements Disposable {
   }
 
   @CanIgnoreReturnValue
-  public ListenableFuture<Boolean> reloadProject(QuerySyncActionStatsScope querySyncActionStats) {
-    return run("Loading project", "Re-loading project", querySyncActionStats, this::loadProject);
+  public ListenableFuture<Boolean> reloadProject(
+      QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
+    return run(
+        "Loading project",
+        "Re-loading project",
+        querySyncActionStats,
+        this::loadProject,
+        taskOrigin);
   }
 
   public void loadProject(BlazeContext context) {
@@ -182,42 +203,49 @@ public class QuerySyncManager implements Disposable {
         "Loading project",
         "Initializing project structure",
         querySyncActionStats,
-        this::loadProject);
+        this::loadProject,
+        TaskOrigin.STARTUP);
   }
 
   @CanIgnoreReturnValue
-  public ListenableFuture<Boolean> fullSync(QuerySyncActionStatsScope querySyncActionStats) {
+  public ListenableFuture<Boolean> fullSync(
+      QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
     if (!isProjectLoaded() || projectDefinitionHasChanged()) {
       return run(
           "Updating project structure",
           "Re-importing project",
           querySyncActionStats,
-          this::loadProject);
+          this::loadProject,
+          taskOrigin);
 
     } else {
       return run(
           "Updating project structure",
           "Re-importing project",
           querySyncActionStats,
-          loadedProject::fullSync);
+          loadedProject::fullSync,
+          taskOrigin);
     }
   }
 
   @CanIgnoreReturnValue
-  public ListenableFuture<Boolean> deltaSync(QuerySyncActionStatsScope querySyncActionStats) {
+  public ListenableFuture<Boolean> deltaSync(
+      QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
     assertProjectLoaded();
     if (projectDefinitionHasChanged()) {
       return run(
           "Updating project structure",
           "Re-importing project",
           querySyncActionStats,
-          this::loadProject);
+          this::loadProject,
+          taskOrigin);
     } else {
       return run(
           "Updating project structure",
           "Refreshing project",
           querySyncActionStats,
-          loadedProject::deltaSync);
+          loadedProject::deltaSync,
+          taskOrigin);
     }
   }
 
@@ -225,7 +253,8 @@ public class QuerySyncManager implements Disposable {
       String title,
       String subTitle,
       QuerySyncActionStatsScope querySyncActionStatsScope,
-      ScopedOperation operation) {
+      ScopedOperation operation,
+      TaskOrigin taskOrigin) {
     SettableFuture<Boolean> result = SettableFuture.create();
     BlazeSyncStatus syncStatus = BlazeSyncStatus.getInstance(project);
     syncStatus.syncStarted();
@@ -250,7 +279,7 @@ public class QuerySyncManager implements Disposable {
         MoreExecutors.directExecutor());
     try {
       ListenableFuture<Boolean> innerResultFuture =
-          createAndSubmitRunTask(title, subTitle, querySyncActionStatsScope, operation);
+          createAndSubmitRunTask(title, subTitle, querySyncActionStatsScope, operation, taskOrigin);
       result.setFuture(innerResultFuture);
     } catch (Throwable t) {
       result.setException(t);
@@ -263,7 +292,8 @@ public class QuerySyncManager implements Disposable {
       String title,
       String subTitle,
       QuerySyncActionStatsScope querySyncActionStatsScope,
-      ScopedOperation operation) {
+      ScopedOperation operation,
+      TaskOrigin taskOrigin) {
     return ProgressiveTaskWithProgressIndicator.builder(project, title)
         .submitTaskWithResult(
             indicator ->
@@ -274,7 +304,12 @@ public class QuerySyncManager implements Disposable {
                           new ToolWindowScope.Builder(project, task)
                               .setProgressIndicator(indicator)
                               .showSummaryOutput()
-                              .setPopupBehavior(FocusBehavior.ALWAYS)
+                              .setPopupBehavior(
+                                  taskOrigin == TaskOrigin.AUTOMATIC
+                                      ? showWindowOnAutomaticSyncErrors.getValue()
+                                          ? FocusBehavior.ON_ERROR
+                                          : FocusBehavior.NEVER
+                                      : FocusBehavior.ALWAYS)
                               .setIssueParsers(
                                   BlazeIssueParser.defaultIssueParsers(
                                       project,
@@ -322,25 +357,27 @@ public class QuerySyncManager implements Disposable {
 
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> enableAnalysis(
-      Set<Label> targets, QuerySyncActionStatsScope querySyncActionStats) {
+      Set<Label> targets, QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
     assertProjectLoaded();
     return run(
         "Building dependencies",
         "Building...",
         querySyncActionStats,
-        context -> loadedProject.enableAnalysis(context, targets));
+        context -> loadedProject.enableAnalysis(context, targets),
+        taskOrigin);
   }
 
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> enableAnalysisForReverseDeps(
-      Set<Label> targets, QuerySyncActionStatsScope querySyncActionStats) {
+      Set<Label> targets, QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
     assertProjectLoaded();
     return run(
         "Building dependencies for affected targets",
         "Building...",
         querySyncActionStats,
         context ->
-            loadedProject.enableAnalysis(context, loadedProject.getTargetsDependingOn(targets)));
+            loadedProject.enableAnalysis(context, loadedProject.getTargetsDependingOn(targets)),
+        taskOrigin);
   }
 
   public boolean canEnableAnalysisFor(Path workspaceRelativePath) {
@@ -352,13 +389,14 @@ public class QuerySyncManager implements Disposable {
 
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> generateRenderJar(
-      PsiFile psiFile, QuerySyncActionStatsScope querySyncActionStats) {
+      PsiFile psiFile, QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
     assertProjectLoaded();
     return run(
         "Building Render jar for Compose preview",
         "Building...",
         querySyncActionStats,
-        context -> loadedProject.enableRenderJar(context, psiFile));
+        context -> loadedProject.enableRenderJar(context, psiFile),
+        taskOrigin);
   }
 
   public boolean isReadyForAnalysis(PsiFile psiFile) {

@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
+import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
@@ -139,7 +140,9 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
 
     private void requestSyncInternal() {
       QuerySyncManager.getInstance(project)
-          .deltaSync(QuerySyncActionStatsScope.create(QuerySyncAsyncFileListener.class, null));
+          .deltaSync(
+              QuerySyncActionStatsScope.create(QuerySyncAsyncFileListener.class, null),
+              TaskOrigin.AUTOMATIC);
       changePending.set(false);
     }
   }

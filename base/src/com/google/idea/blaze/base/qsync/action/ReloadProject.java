@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.qsync.action;
 
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
@@ -41,6 +42,7 @@ public class ReloadProject extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
     QuerySyncManager.getInstance(anActionEvent.getProject())
-        .reloadProject(QuerySyncActionStatsScope.create(getClass(), anActionEvent));
+        .reloadProject(
+            QuerySyncActionStatsScope.create(getClass(), anActionEvent), TaskOrigin.USER_ACTION);
   }
 }
