@@ -19,3 +19,6 @@ additional_languages:
   # kotlin
   # python
   # scala
+
+build_flags:
+  --explicit_java_test_deps
