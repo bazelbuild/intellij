@@ -28,7 +28,7 @@ def _file_list(files, dir, extension, recursive = False, exclude = []):
             ret.append("android-studio/" + file)
     return ret
 
-def android_studio(name, major, minor, revision, tar = None, files = None, **kwargs):
+def android_studio(name, major, minor, revision, tar = None, zip = None, files = None, **kwargs):
     """
     Macro that creates the rules to depend on for android studio plugin development
 
@@ -39,26 +39,49 @@ def android_studio(name, major, minor, revision, tar = None, files = None, **kwa
 
     Args:
       name: Currently unused, for backwards compatibility all rules are named top-level
+      major: The major version number. The 2023 in 2023.1.2.16
+      minor: The minor version number. The 1 in 2023.1.2.16
+      revision: The revision number. The 2.16 in 2023.1.2.16
       tar: the tar that contains android studio.
+      zip: the zip that contains android studio.
       files: the list of files inside the tar.
     """
-    if not tar or not files:
-        if tar or files:
-            fail("Specify both tar and files or none of them")
+    if tar and zip:
+        fail("Specify either tar or zip archive, not both.")
+
+    if (tar or zip) and not files:
+        fail("When specifying archive you must specify a file list")
+
+    if not tar and not zip and files:
+        fail("Files should only be specified together with an archive")
+
+    if not files:
         _android_studio(name, files, major, minor, revision, _glob, **kwargs)
     else:
         all_files = _android_studio(name, files, major, minor, revision, _file_list, **kwargs)
 
-        native.genrule(
-            name = name,
-            srcs = [tar],
-            outs = all_files,
-            cmd = "tar -xzvf $< -C $(RULEDIR) 1>/dev/null 2>&1 " + " ".join(all_files),
-            **kwargs
-        )
+        if tar:
+            native.genrule(
+                name = name,
+                srcs = [tar],
+                outs = all_files,
+                cmd = "tar -xzvf $< -C $(RULEDIR) 1>/dev/null 2>&1 " + " ".join(all_files),
+                **kwargs
+            )
+        elif zip:
+            native.genrule(
+                name = name,
+                outs = all_files,
+                tools = ["//third_party/unzip:unzip"],
+                srcs = [zip],
+                cmd = "$(location //third_party/unzip:unzip) -q $(location {}) -d $(RULEDIR) ".format(zip) + " ".join(all_files),
+            )
 
 # Retuns if major.minor.revision is version or newer
 def _version_equals_or_newer(major, minor, revision, version):
+    if revision == "dev.dev":
+        return True
+
     _version = [int(x) for x in version.split(".")]
     _current = [int(major), int(minor)] + [int(x) for x in revision.split(".")]
     for i in range(min(len(_version), len(_current))):

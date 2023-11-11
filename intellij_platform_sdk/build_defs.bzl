@@ -127,7 +127,8 @@ DIRECT_IJ_PRODUCTS = {
     ),
     "android-studio-dev": struct(
         ide = "android-studio",
-        directory = "android_studio_dev",
+        archive = "android_studio_with_blaze_dev",
+        oss_workspace = "android_studio_dev",
     ),
     "clion-2021.3": struct(
         ide = "clion",
