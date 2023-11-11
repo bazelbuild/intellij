@@ -21,4 +21,5 @@ additional_languages:
   # scala
 
 build_flags:
+  # make sure the junit version loaded in the WORKSPACE is the one used
   --explicit_java_test_deps
