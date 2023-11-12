@@ -85,6 +85,7 @@ public class BlazeLexerTest extends AbstractLexerTest {
     assertEquals("DOT IDENTIFIER(abc)", values(tokens(".abc")));
 
     assertEquals("IDENTIFIER(foo) FLOAT(0.123)", values(tokens("foo.123")));
+    assertEquals("IDENTIFIER(foo456) FLOAT(0.123)", values(tokens("foo456.123")));
     assertEquals(
         "IDENTIFIER(foo) DOT IDENTIFIER(bcd)", values(tokens("foo.bcd"))); // 'b' are hex chars
     assertEquals("IDENTIFIER(foo) DOT IDENTIFIER(xyz)", values(tokens("foo.xyz")));
