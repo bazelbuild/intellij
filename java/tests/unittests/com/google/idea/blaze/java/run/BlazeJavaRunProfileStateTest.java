@@ -176,7 +176,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                     configuration,
                     ImmutableList.of(),
                     ExecutorType.DEBUG,
-                    /*kotlinxCoroutinesJavaAgent=*/ null)
+                    /* kotlinxCoroutinesJavaAgent= */ null)
                 .build()
                 .toList())
         .isEqualTo(
@@ -185,7 +185,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                 "command",
                 BlazeFlags.getToolTagFlag(),
                 "--java_debug",
-                "--test_arg=--wrapper_script_flag=--debug=5005",
+                "--test_arg=--wrapper_script_flag=--debug=127.0.0.1:5005",
                 "--",
                 "//label:rule"));
   }
@@ -203,7 +203,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                     configuration,
                     ImmutableList.of(),
                     ExecutorType.DEBUG,
-                    /*kotlinxCoroutinesJavaAgent=*/ null)
+                    /* kotlinxCoroutinesJavaAgent= */ null)
                 .build()
                 .toList())
         .isEqualTo(
@@ -213,7 +213,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                 BlazeFlags.getToolTagFlag(),
                 "--",
                 "//label:java_binary_rule",
-                "--wrapper_script_flag=--debug=5005"));
+                "--wrapper_script_flag=--debug=127.0.0.1:5005"));
   }
 
   @Test

@@ -311,7 +311,7 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
   }
 
   private static String debugPortFlag(boolean isTest, int port) {
-    String flag = "--wrapper_script_flag=--debug=" + port;
+    String flag = "--wrapper_script_flag=--debug=127.0.0.1:" + port;
     return isTest ? testArg(flag) : flag;
   }
 
