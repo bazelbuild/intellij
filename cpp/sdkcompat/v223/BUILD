@@ -1,6 +1,5 @@
-java_library(
+filegroup(
     name = "v223",
     srcs = glob(["**/*.java"]),
     visibility = ["//cpp/sdkcompat:__pkg__"],
-    deps = ["//intellij_platform_sdk:plugin_api"],
 )
