@@ -154,6 +154,7 @@ public abstract class BuildGraphData {
         .flatMap(m -> stream(types).map(m::get))
         .flatMap(Set::stream)
         .map(locations()::get)
+        .filter(Objects::nonNull) // filter out generated sources
         .map(l -> l.file)
         .collect(toImmutableSet());
   }
