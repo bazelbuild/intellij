@@ -142,27 +142,31 @@ public class RenderJarClassFileFinder implements ClassFileFinder {
     }
 
     if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
-      if (QuerySync.isComposeEnabled(project)) {
-        RenderJarArtifactTracker renderJarArtifactTracker =
-            QuerySyncManager.getInstance(project).getRenderJarArtifactTracker();
-        // TODO(b/283280194): Setup fqcn -> target and target -> Render jar mappings to avoid
-        // iterating over all render jars when trying to locate class for fqcn.
-        // TODO(b/284002836): Collect metrics on time taken to iterate over the jars
-        for (File renderJar : renderJarArtifactTracker.getRenderJars()) {
-          VirtualFile renderResolveJarVf =
-              VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(renderJar);
-          if (renderResolveJarVf != null) {
-            return findClassInJar(renderResolveJarVf, fqcn);
-          }
-          log.warn(String.format("Could not find class `%1$s` with Query Sync", fqcn));
-          return null;
-        }
-      } else {
-        // Disable this class for Query Sync if Compose is not enabled
-        return null;
-      }
+      return findClassQuerySync(fqcn);
     }
+    return findClassLegacySync(fqcn);
+  }
 
+  private VirtualFile findClassQuerySync(String fqcn) {
+    if (QuerySync.isComposeEnabled(project)) {
+      RenderJarArtifactTracker renderJarArtifactTracker =
+          QuerySyncManager.getInstance(project).getRenderJarArtifactTracker();
+      // TODO(b/283280194): Setup fqcn -> target and target -> Render jar mappings to avoid
+      // iterating over all render jars when trying to locate class for fqcn.
+      // TODO(b/284002836): Collect metrics on time taken to iterate over the jars
+      for (File renderJar : renderJarArtifactTracker.getRenderJars()) {
+        VirtualFile renderResolveJarVf =
+            VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(renderJar);
+        if (renderResolveJarVf != null) {
+          return findClassInJar(renderResolveJarVf, fqcn);
+        }
+      }
+      log.warn(String.format("Could not find class `%1$s` with Query Sync", fqcn));
+    }
+    return null;
+  }
+
+  private VirtualFile findClassLegacySync(String fqcn) {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null) {
@@ -193,7 +197,6 @@ public class RenderJarClassFileFinder implements ClassFileFinder {
         return classFile;
       }
     }
-
     log.warn(String.format("Could not find class `%1$s` (module: `%2$s`)", fqcn, module.getName()));
     return null;
   }
