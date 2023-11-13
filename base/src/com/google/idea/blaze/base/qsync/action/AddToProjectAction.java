@@ -108,6 +108,9 @@ public class AddToProjectAction extends BlazeProjectAction {
       if (virtualFile == null) {
         return Optional.empty();
       }
+      if (!virtualFile.isInLocalFileSystem()) {
+        return Optional.empty();
+      }
       Path file = virtualFile.toNioPath();
       if (!file.startsWith(workspaceRoot)) {
         return Optional.empty();
