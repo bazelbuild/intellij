@@ -20,6 +20,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurableProvider;
 import com.google.idea.common.experiments.IntExperiment;
+import com.google.idea.common.util.MorePlatformUtils;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroupManager;
@@ -56,6 +57,13 @@ public class QuerySyncPromo {
   }
 
   public void show() {
+    if (!MorePlatformUtils.isAndroidStudio()) {
+      return;
+    }
+    querySyncManager.getQuerySyncUrl().ifPresent(this::displayPopupWithUrl);
+  }
+
+  private void displayPopupWithUrl(String url) {
     Notification promo =
         NotificationGroupManager.getInstance()
             .getNotificationGroup("QuerySyncPromo")
@@ -63,19 +71,15 @@ public class QuerySyncPromo {
                 "Sync taking a long time?",
                 "Try query sync, the new improved sync solution. Now in beta!",
                 NotificationType.INFORMATION);
-    querySyncManager
-        .getQuerySyncUrl()
-        .ifPresent(
-            url ->
-                promo.addAction(
-                    new AnAction("Learn more") {
-                      @Override
-                      public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
-                        BrowserUtil.browse(url);
-                      }
-                    }));
     promo.addAction(
-        new AnAction("Enable now") {
+        new AnAction("Learn More") {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
+            BrowserUtil.browse(url);
+          }
+        });
+    promo.addAction(
+        new AnAction("Enable Now") {
           @Override
           public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
             ShowSettingsUtil.getInstance()
