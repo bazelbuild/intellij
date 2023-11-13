@@ -44,14 +44,17 @@ public class CcProjectModelUpdater implements BlazeProjectListener {
 
   private final ProjectPath.Resolver pathResolver;
   private final OCWorkspace readonlyOcWorkspace;
+  private final Project project;
 
   public static CcProjectModelUpdater create(Project project, ProjectPath.Resolver pathResolver) {
-    return new CcProjectModelUpdater(pathResolver, OCWorkspace.getInstance(project));
+    return new CcProjectModelUpdater(pathResolver, OCWorkspace.getInstance(project), project);
   }
 
-  public CcProjectModelUpdater(ProjectPath.Resolver pathResolver, OCWorkspace ocWorkspace) {
+  public CcProjectModelUpdater(
+      ProjectPath.Resolver pathResolver, OCWorkspace ocWorkspace, Project project) {
     this.pathResolver = pathResolver;
     this.readonlyOcWorkspace = ocWorkspace;
+    this.project = project;
   }
 
   @Override
@@ -71,7 +74,12 @@ public class CcProjectModelUpdater implements BlazeProjectListener {
     try {
       updateOp.visitWorkspace(spec.getCcWorkspace());
       updateOp.preCommit();
-      WriteAction.runAndWait(updateOp::commit);
+      WriteAction.runAndWait(
+          () -> {
+            if (!project.isDisposed()) {
+              updateOp.commit();
+            }
+          });
     } finally {
       updateOp.dispose();
     }
