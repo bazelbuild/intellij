@@ -19,6 +19,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -37,6 +38,7 @@ public abstract class QuerySyncActionStats {
           .setProjectInfo(ProjectInfoStats.builder().build())
           .setDependenciesInfo(DependenciesInfoStats.builder().build())
           .setBuildWorkingSetEnabled(false)
+          .setTaskOrigin(TaskOrigin.UNKNOWN)
           .build();
 
   /** The result of query sync operations. */
@@ -70,6 +72,8 @@ public abstract class QuerySyncActionStats {
 
   public abstract boolean buildWorkingSetEnabled();
 
+  public abstract TaskOrigin taskOrigin();
+
   public abstract Builder toBuilder();
 
   public static Builder builder() {
@@ -98,6 +102,8 @@ public abstract class QuerySyncActionStats {
     public abstract Builder setDependenciesInfo(DependenciesInfoStats value);
 
     public abstract Builder setBuildWorkingSetEnabled(boolean value);
+
+    public abstract Builder setTaskOrigin(TaskOrigin value);
 
     abstract ImmutableList.Builder<QuerySyncOperationStats> operationStatsBuilder();
 
