@@ -54,7 +54,7 @@ public class ImportSection {
         File projectViewFile = parseContext.getWorkspacePathResolver().resolveToFile(workspacePath);
         if (projectViewFile != null) {
           boolean projectViewImportsMandatory = !Registry.is("bazel.projectview.optional.imports");
-          if (projectViewFile.exists() || projectViewImportsMandatory) {
+          if (projectViewImportsMandatory || projectViewFile.exists()) {
             parser.parseProjectView(projectViewFile);
           } else {
             IssueOutput.warn(
