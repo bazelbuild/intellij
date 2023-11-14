@@ -79,9 +79,6 @@ def android_studio(name, major, minor, revision, tar = None, zip = None, files =
 
 # Retuns if major.minor.revision is version or newer
 def _version_equals_or_newer(major, minor, revision, version):
-    if revision == "dev.dev":
-        return True
-
     _version = [int(x) for x in version.split(".")]
     _current = [int(major), int(minor)] + [int(x) for x in revision.split(".")]
     for i in range(min(len(_version), len(_current))):
