@@ -294,6 +294,7 @@ public class QuerySyncManager implements Disposable {
       QuerySyncActionStatsScope querySyncActionStatsScope,
       ScopedOperation operation,
       TaskOrigin taskOrigin) {
+    querySyncActionStatsScope.getBuilder().setTaskOrigin(taskOrigin);
     return ProgressiveTaskWithProgressIndicator.builder(project, title)
         .submitTaskWithResult(
             indicator ->
