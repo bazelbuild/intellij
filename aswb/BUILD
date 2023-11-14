@@ -76,9 +76,6 @@ java_library(
         "android-studio-2023.2": [
             "tests/utils/sdkcompat/as232/com/android/ide/common/repository/GoogleMavenArtifactIdCompat.java",
         ],
-        "android-studio-dev": [
-            "tests/utils/sdkcompat/asdev/com/android/ide/common/repository/GoogleMavenArtifactIdCompat.java",
-        ],
     }),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
@@ -112,12 +109,6 @@ java_library(
             "tests/utils/sdkcompat/as232/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
             "tests/utils/sdkcompat/as232/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
         ],
-        "android-studio-dev": [
-            "sdkcompat/asdev/com/android/tools/rendering/RenderResultCompat.java",
-            "tests/utils/sdkcompat/asdev/com/android/tools/idea/sdk/IdeSdksCompat.java",
-            "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
-            "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
-        ],
     }),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
@@ -150,9 +141,6 @@ java_library(
             "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
         ]),
         "android-studio-2023.2": glob(["sdkcompat/as232/**/*.java"] + [
-            "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
-        ]),
-        "android-studio-dev": glob(["sdkcompat/asdev/**/*.java"] + [
             "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
         ]),
     }),
@@ -196,9 +184,6 @@ intellij_unit_test_suite(
         ],
         "android-studio-2023.2": [
             "tests/unittests/sdkcompat/as232/com/google/idea/blaze/android/projectsystem/BlazeModuleSystemTest.java",
-        ],
-        "android-studio-dev": [
-            "tests/unittests/sdkcompat/asdev/com/google/idea/blaze/android/projectsystem/BlazeModuleSystemTest.java",
         ],
     }),
     test_package_root = "com.google.idea.blaze.android",
@@ -245,7 +230,6 @@ intellij_integration_test_suite(
         "android-studio-2022.3": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "android-studio-2023.1": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "android-studio-2023.2": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
-        "android-studio-dev": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "default": [],
     }),
     data = [

@@ -9,7 +9,6 @@ java_library(
         "android-studio-2022.3": ["//cpp/sdkcompat/v223"],
         "android-studio-2023.1": ["//cpp/sdkcompat/v231"],
         "android-studio-2023.2": ["//cpp/sdkcompat/v232"],
-        "android-studio-dev": ["//cpp/sdkcompat/v232"],
         "clion-2022.3": ["//cpp/sdkcompat/v223"],
         "clion-2023.1": ["//cpp/sdkcompat/v231"],
         "clion-2023.2": ["//cpp/sdkcompat/v232"],
