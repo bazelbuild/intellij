@@ -39,6 +39,11 @@ import javax.swing.JPanel;
 final class OpenBlazeWorkspaceFileAction extends BlazeProjectAction {
 
   @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.SUPPORTED;
+  }
+
+  @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
