@@ -116,10 +116,8 @@ public class QuerySyncManager implements Disposable {
   public QuerySyncManager(Project project) {
     this.project = project;
     this.loader = createProjectLoader(executor, project);
-    if (QuerySync.AUTO_SYNC_SUPPORT_ENABLED.getValue()) {
-      VirtualFileManager.getInstance()
-          .addAsyncFileListener(new QuerySyncAsyncFileListener(project, this), this);
-    }
+    VirtualFileManager.getInstance()
+        .addAsyncFileListener(new QuerySyncAsyncFileListener(project, this), this);
   }
 
   @NonInjectable

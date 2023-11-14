@@ -42,10 +42,6 @@ public class QuerySync {
   private static final Supplier<Boolean> COMPOSE_ENABLED =
       Suppliers.memoize(new BoolExperiment("aswb.query.sync.enable.compose", false)::getValue);
 
-  /** Enables auto-sync functionality */
-  public static final BoolExperiment AUTO_SYNC_SUPPORT_ENABLED =
-      new BoolExperiment("querysync.autosync.support", false);
-
   private QuerySync() {}
 
   public static boolean useByDefault() {
