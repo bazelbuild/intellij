@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
@@ -52,6 +53,10 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
   @Override
   @Nullable
   public ChangeApplier prepareChange(List<? extends VFileEvent> events) {
+    if (!QuerySyncSettings.getInstance().syncOnFileChanges()) {
+      return null;
+    }
+
     ImmutableList<? extends VFileEvent> projectEvents = filterForProject(events);
 
     if (projectEvents.stream().anyMatch(this::requiresSync)) {

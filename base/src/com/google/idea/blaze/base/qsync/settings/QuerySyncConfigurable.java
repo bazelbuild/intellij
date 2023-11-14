@@ -197,6 +197,35 @@ class QuerySyncConfigurable extends BoundSearchableConfigurable implements Confi
                                       ButtonKt.getSelected(enableQuerySyncCheckBoxCell));
                               return Unit.INSTANCE;
                             });
+                    Row unusedSyncOnFileChangeRow =
+                        ip.row(
+                            /* label= */ ((JLabel) null),
+                            /* init= */ r -> {
+                              Cell<JBCheckBox> syncOnFileChangeCheckBox =
+                                  r.checkBox("Automatically sync project on file changes")
+                                      .bind(
+                                          AbstractButton::isSelected,
+                                          (jbCheckBox, selected) -> {
+                                            jbCheckBox.setSelected(selected);
+                                            return Unit.INSTANCE;
+                                          },
+                                          new MutableProperty<>() {
+                                            @Override
+                                            public Boolean get() {
+                                              return settings.syncOnFileChanges();
+                                            }
+
+                                            @Override
+                                            public void set(Boolean selected) {
+                                              settings.enableSyncOnFileChanges(selected);
+                                            }
+                                          });
+                              syncOnFileChangeCheckBox =
+                                  syncOnFileChangeCheckBox.enabledIf(
+                                      ButtonKt.getSelected(enableQuerySyncCheckBoxCell));
+                              return Unit.INSTANCE;
+                            });
+
                     return Unit.INSTANCE;
                   });
           return Unit.INSTANCE;
