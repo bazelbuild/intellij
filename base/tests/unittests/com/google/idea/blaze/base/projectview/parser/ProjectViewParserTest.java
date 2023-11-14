@@ -51,6 +51,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import javax.annotation.Nullable;
+
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -303,9 +306,24 @@ public class ProjectViewParserTest extends BlazeTestCase {
 
   @Test
   public void testImportMissingFileResultsInIssue() {
+    Registry.get("bazel.projectview.optional.imports").setValue(false);
     projectViewStorageManager.add(".blazeproject", "import parent.blazeproject");
     projectViewParser.parseProjectView(new File(".blazeproject"));
     errorCollector.assertIssues("Could not load project view file: '/parent.blazeproject'");
+  }
+
+  @Test
+  public void testImportMissingFileResultsInWarning() {
+    RegistryValue importsTreatmentRegistryValue = Registry.get("bazel.projectview.optional.imports");
+    try {
+      importsTreatmentRegistryValue.setValue(true);
+      projectViewStorageManager.add(".blazeproject", "import parent.blazeproject");
+      projectViewParser.parseProjectView(new File(".blazeproject"));
+      errorCollector.assertIssues("Could not load project view file: '/parent.blazeproject'");
+      errorCollector.assertHasNoErrors();
+    } finally {
+      importsTreatmentRegistryValue.setValue(false);
+    }
   }
 
   @Test

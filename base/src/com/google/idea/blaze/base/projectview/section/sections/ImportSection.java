@@ -22,6 +22,9 @@ import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.ScalarSectionParser;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
+import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.intellij.openapi.util.registry.Registry;
+
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -50,7 +53,14 @@ public class ImportSection {
       if (parser.isRecursive()) {
         File projectViewFile = parseContext.getWorkspacePathResolver().resolveToFile(workspacePath);
         if (projectViewFile != null) {
-          parser.parseProjectView(projectViewFile);
+          boolean projectViewImportsMandatory = !Registry.is("bazel.projectview.optional.imports");
+          if (projectViewFile.exists() || projectViewImportsMandatory) {
+            parser.parseProjectView(projectViewFile);
+          } else {
+            IssueOutput.warn(
+                            String.format("Could not load project view file: '%s'", projectViewFile.getPath()))
+                    .submit(parseContext.getContext());
+          }
         } else {
           parseContext.addError("Could not resolve import: " + workspacePath);
         }
