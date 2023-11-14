@@ -149,9 +149,17 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
       // jar manifest for third party libraries. This breaks the Scala IntelliJ plugin in some ways.
       // This gets around that in the Bazel IntelliJ plugin, but doesn't fix the places the Scala
       // IntelliJ plugin checks that jars start with scala-library or similar.
-      String rulesJvmExternalPrefix = "header_";
-      if (libraryName.startsWith(rulesJvmExternalPrefix)) {
-        libraryName = libraryName.substring(rulesJvmExternalPrefix.length());
+      String rulesJvmExternalPrefixHeader = "header_";
+      if (libraryName.startsWith(rulesJvmExternalPrefixHeader)) {
+        libraryName = libraryName.substring(rulesJvmExternalPrefixHeader.length());
+      }
+
+      // Same issue as above, but for the prefix "processed_" instead of "header_"
+      // TODO: we should figure out if we should be getting the header_ or processed_ jars
+      //       or if there's a way for us to get the jars without a prefix instead
+      String rulesJvmExternalPrefixProcessed = "processed_";
+      if (libraryName.startsWith(rulesJvmExternalPrefixProcessed)) {
+        libraryName = libraryName.substring(rulesJvmExternalPrefixProcessed.length());
       }
 
       // Go find the highest version of all the Scala SDK deps in the project LibraryTable
