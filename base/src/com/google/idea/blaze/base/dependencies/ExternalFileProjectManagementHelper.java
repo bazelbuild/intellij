@@ -43,30 +43,29 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.UserBinaryFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
 import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Detects opened files which are in the workspace, but aren't in the project or libraries, and
  * offers to add them to the project (updating the project's 'targets' and 'directories' as
  * required).
  */
-public class ExternalFileProjectManagementHelper
-    extends EditorNotifications.Provider<EditorNotificationPanel> {
+public class ExternalFileProjectManagementHelper implements EditorNotificationProvider {
 
   private static final BoolExperiment enabled =
       new BoolExperiment("project.external.source.management.enabled", true);
-
-  private static final Key<EditorNotificationPanel> KEY = Key.create("add.source.to.project");
 
   private final Set<File> suppressedFiles = new HashSet<>();
 
@@ -77,17 +76,6 @@ public class ExternalFileProjectManagementHelper
           PlainTextFileType.INSTANCE.getName(),
           UnknownFileType.INSTANCE.getName(),
           BuildFileType.INSTANCE.getName());
-
-  private final Project project;
-
-  public ExternalFileProjectManagementHelper(Project project) {
-    this.project = project;
-  }
-
-  @Override
-  public Key<EditorNotificationPanel> getKey() {
-    return KEY;
-  }
 
   /** Whether the editor notification should be shown for this file type. */
   private static boolean supportedFileType(File file) {
@@ -104,9 +92,9 @@ public class ExternalFileProjectManagementHelper
     return true;
   }
 
-  @Nullable
   @Override
-  public EditorNotificationPanel createNotificationPanel(VirtualFile vf, FileEditor fileEditor) {
+  public @Nullable Function<? super FileEditor, EditorNotificationPanel> collectNotificationData(
+      @NotNull Project project, @NotNull VirtualFile vf) {
     if (!enabled.getValue()) {
       return null;
     }
@@ -137,6 +125,17 @@ public class ExternalFileProjectManagementHelper
       return null;
     }
 
+    return (editor) -> getPanel(project, vf, file, context, inProjectDirectories, targetsFuture);
+  }
+
+  @NotNull
+  private EditorNotificationPanel getPanel(
+      @NotNull Project project,
+      @NotNull VirtualFile vf,
+      File file,
+      LocationContext context,
+      boolean inProjectDirectories,
+      ListenableFuture<List<TargetInfo>> targetsFuture) {
     EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setVisible(false); // starts off not visible until we get the query results
     panel.setText("Do you want to add this file to your project sources?");
@@ -178,7 +177,6 @@ public class ExternalFileProjectManagementHelper
           }
         },
         MoreExecutors.directExecutor());
-
     return panel;
   }
 
