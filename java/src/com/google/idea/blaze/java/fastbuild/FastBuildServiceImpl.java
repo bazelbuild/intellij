@@ -41,6 +41,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -287,10 +288,16 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
             .addBlazeFlags(buildParameters.buildFlags())
             .addBlazeFlags(resultHelper.getBuildFlags());
 
-    aspectStrategy.addAspectAndOutputGroups(command, /* additionalOutputGroups...= */ "default");
+    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+
+    aspectStrategy.addAspectAndOutputGroups(
+        command,
+        BlazeVersionData.build(
+            Blaze.getBuildSystemProvider(project).getBuildSystem(), workspaceRoot, blazeInfo),
+        /* additionalOutputGroups...= */ "default");
 
     int exitCode =
-        ExternalTask.builder(WorkspaceRoot.fromProject(project))
+        ExternalTask.builder(workspaceRoot)
             .addBlazeCommand(command.build())
             .context(context)
             .stderr(

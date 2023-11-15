@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.devtools.intellij.aspect.FastBuildInfo;
 import com.google.idea.blaze.base.command.BlazeCommand;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
 import com.google.protobuf.TextFormat;
@@ -52,7 +53,7 @@ abstract class FastBuildAspectStrategy implements BuildSystemExtensionPoint {
     return BuildSystemExtensionPoint.getInstance(EP_NAME, buildSystemName);
   }
 
-  protected abstract List<String> getAspectFlags();
+  protected abstract List<String> getAspectFlags(BlazeVersionData versionData);
 
   final Predicate<String> getAspectOutputFilePredicate() {
     return OUTPUT_FILE_PREDICATE;
@@ -67,12 +68,14 @@ abstract class FastBuildAspectStrategy implements BuildSystemExtensionPoint {
    * provided by the aspect. This method should only be called once.
    */
   final void addAspectAndOutputGroups(
-      BlazeCommand.Builder blazeCommandBuilder, String... additionalOutputGroups) {
+      BlazeCommand.Builder blazeCommandBuilder,
+      BlazeVersionData versionData,
+      String... additionalOutputGroups) {
     String outputGroups =
         Stream.concat(Arrays.stream(additionalOutputGroups), Stream.of(OUTPUT_GROUP))
             .collect(joining(","));
     blazeCommandBuilder
-        .addBlazeFlags(getAspectFlags())
+        .addBlazeFlags(getAspectFlags(versionData))
         .addBlazeFlags("--output_groups=" + outputGroups);
   }
 
