@@ -93,6 +93,10 @@ public class AdditionalLanguagesHelper
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(VirtualFile file, FileEditor fileEditor) {
+    if (Blaze.getProjectType(project).equals(ProjectType.UNKNOWN)) {
+      return null;
+    }
+
     String ext = file.getExtension();
     if (ext == null) {
       return null;
