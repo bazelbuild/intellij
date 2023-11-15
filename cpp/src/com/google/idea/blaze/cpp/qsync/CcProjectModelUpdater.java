@@ -24,6 +24,7 @@ import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 
 /**
@@ -81,7 +82,7 @@ public class CcProjectModelUpdater implements BlazeProjectListener {
             }
           });
     } finally {
-      updateOp.dispose();
+      Disposer.dispose(updateOp);
     }
   }
 }
