@@ -103,21 +103,25 @@ private fun bumpPlugins(intellijMajorVersion: String, out: Path) {
 }
 
 private fun bumpPluginVersion(intellijMajorVersion: String, out: Path, mavenCoordinates: String, pythonPluginVarPrefix: String) {
-    val pythonPluginVersion = pluginLatestVersion(mavenCoordinates, intellijMajorVersion)
+    val pluginVersion = pluginLatestVersion(mavenCoordinates, intellijMajorVersion)
     bump(
             workspaceShaVarName = "${pythonPluginVarPrefix}_${intellijMajorVersion}_SHA",
             workspaceUrlVarName = "${pythonPluginVarPrefix}_${intellijMajorVersion}_URL",
-            downloadUrl = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/$mavenCoordinates/${pythonPluginVersion}/$mavenCoordinates-${pythonPluginVersion}.zip",
+            downloadUrl = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/$mavenCoordinates/${pluginVersion}/$mavenCoordinates-${pluginVersion}.zip",
             workspace = out
     )
 }
 
 private fun bump(downloadUrl: String, workspace: Path?, workspaceShaVarName: String, workspaceUrlVarName: String) {
     val regex = "$workspaceUrlVarName = \"(.*)\"".toRegex()
-    val currentURL = regex.find(Files.readString(workspace))!!.destructured.toList()[0]
+    val currentURL = regex.find(Files.readString(workspace))?.destructured?.toList()?.firstOrNull()
+    if(currentURL == null) {
+        println("Couldn't bump $workspaceUrlVarName")
+        return
+    }
     if(currentURL == downloadUrl) {
         println("${Paths.get(currentURL).fileName} is up to date");
-        return;
+        return
     }
     val icSha = shaOfUrl(downloadUrl)
     val content = Files.readString(workspace)
