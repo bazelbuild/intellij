@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.fastbuild;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -27,7 +28,12 @@ import java.util.List;
 final class BazelFastBuildAspectStrategy extends FastBuildAspectStrategy {
 
   @Override
-  protected List<String> getAspectFlags() {
+  protected List<String> getAspectFlags(BlazeVersionData versionData) {
+    if (versionData.bazelIsAtLeastVersion(6, 0, 0)) {
+      return ImmutableList.of(
+          "--aspects=@@intellij_aspect//:fast_build_info_bundled.bzl%fast_build_info_aspect",
+          getAspectRepositoryOverrideFlag());
+    }
     return ImmutableList.of(
         "--aspects=@intellij_aspect//:fast_build_info_bundled.bzl%fast_build_info_aspect",
         getAspectRepositoryOverrideFlag());
