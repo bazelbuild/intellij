@@ -23,6 +23,6 @@ public class OCWorkspaceModifiableModelDisposer {
   private OCWorkspaceModifiableModelDisposer() {}
 
   public static void dispose(OCWorkspace.ModifiableModel modifiableModel) {
-    // Nothing to do - the modifiable model does not implement dispose in 22.3
+    modifiableModel.dispose();
   }
 }

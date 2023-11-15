@@ -67,7 +67,7 @@ public class CcProjectModelUpdateOperation implements Disposable {
   private final OCWorkspace.ModifiableModel modifiableOcWorkspace;
   private final Map<String, CidrCompilerSwitches> compilerSwitches = Maps.newHashMap();
   private final Map<String, OCResolveConfiguration.ModifiableModel> resolveConfigs =
-      Maps.newHashMap();
+      Maps.newLinkedHashMap();
   private final File compilerWorkingDir;
 
   CcProjectModelUpdateOperation(
