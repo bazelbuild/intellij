@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.syncstatus;
 
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
 import com.intellij.openapi.project.DumbAware;
@@ -27,6 +29,10 @@ public class SyncStatusEditorTabTitleProvider implements EditorTabTitleProvider,
   @Nullable
   @Override
   public String getEditorTabTitle(Project project, VirtualFile file) {
+    if (Blaze.getProjectType(project) == BlazeImportSettings.ProjectType.UNKNOWN) {
+      return null;
+    }
+
     SyncStatus status = SyncStatusContributor.getSyncStatus(project, file);
     if (status == SyncStatus.UNSYNCED) {
       return file.getPresentableName() + " (unsynced)";
