@@ -21,7 +21,10 @@ import com.android.tools.idea.projectsystem.AndroidModuleSystem;
 import com.android.tools.module.ModuleDependencies;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VirtualFile;
+import java.io.File;
 import java.nio.file.Path;
 
 /** Blaze implementation of {@link AndroidModuleSystem}. */
@@ -34,6 +37,24 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
   @Override
   public ModuleDependencies getModuleDependencies() {
     return new BlazeModuleDependencies(getModule());
+  }
+
+  public String blazeTargetNameToKotlinModuleName(String blazeTargetName) {
+    // Before: //third_party/java_src/android_app/compose_samples/Rally:lib
+    // After: third_party_java_src_android_app_compose_samples_Rally_lib
+    assert blazeTargetName.substring(0, 2).equals("//");
+    return blazeTargetName.substring(2).replaceAll("['/',':']", "_");
+  }
+
+  @Override
+  public String getModuleNameForCompilation(VirtualFile virtualFile) {
+    String moduleName =
+        blazeTargetNameToKotlinModuleName(
+            SourceToTargetMap.getInstance(project)
+                .getTargetsToBuildForSourceFile(new File(virtualFile.getPath()))
+                .get(0) // use the first target
+                .toString());
+    return moduleName;
   }
 
   /** Check every supporting extension point if they contain desugaring library config files */
