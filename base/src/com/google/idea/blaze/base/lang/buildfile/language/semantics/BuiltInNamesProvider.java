@@ -41,6 +41,7 @@ public class BuiltInNamesProvider {
           "enumerate",
           "fail",
           "False",
+          "float",
           "getattr",
           "hasattr",
           "hash",
