@@ -216,13 +216,11 @@ def is_valid_aspect_target(target):
     """Returns whether the target has had the aspect run on it."""
     return hasattr(target, "intellij_info")
 
-def get_aspect_ids(ctx, target):
+def get_aspect_ids(ctx):
     """Returns the all aspect ids, filtering out self."""
     aspect_ids = None
     if hasattr(ctx, "aspect_ids"):
         aspect_ids = ctx.aspect_ids
-    elif hasattr(target, "aspect_ids"):
-        aspect_ids = target.aspect_ids
     else:
         return None
     return [aspect_id for aspect_id in aspect_ids if "intellij_info_aspect" not in aspect_id]
@@ -1106,7 +1104,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     # bazel allows target names differing only by case, so append a hash to support
     # case-insensitive file systems
     file_name = file_name + "-" + str(hash(file_name))
-    aspect_ids = get_aspect_ids(ctx, target)
+    aspect_ids = get_aspect_ids(ctx)
     if aspect_ids:
         aspect_hash = hash(".".join(aspect_ids))
         file_name = file_name + "-" + str(aspect_hash)
