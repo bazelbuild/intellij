@@ -652,7 +652,7 @@ public class ArtifactTrackerImpl
 
   @Override
   public Set<Label> getLiveCachedTargets() {
-    return javaArtifacts.keySet();
+    return Sets.union(javaArtifacts.keySet(), ccDepencenciesInfo.targetInfoMap().keySet());
   }
 
   @Override
