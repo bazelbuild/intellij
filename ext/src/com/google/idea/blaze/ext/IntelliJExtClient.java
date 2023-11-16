@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.ext;
 
+import com.google.idea.blaze.ext.BuildCleanerServiceGrpc.BuildCleanerServiceFutureStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
 import com.google.idea.blaze.ext.ChatBotModelGrpc.ChatBotModelBlockingStub;
@@ -90,5 +91,9 @@ public class IntelliJExtClient {
 
   public LinterFutureStub getLinterService() {
     return LinterGrpc.newFutureStub(channel);
+  }
+
+  public BuildCleanerServiceFutureStub getBuildCleanerService() {
+    return BuildCleanerServiceGrpc.newFutureStub(channel);
   }
 }
