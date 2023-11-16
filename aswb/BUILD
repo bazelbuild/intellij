@@ -170,21 +170,11 @@ intellij_unit_test_suite(
         ["tests/unittests/**/*.java"],
         exclude = [
             "tests/unittests/com/google/idea/blaze/android/sync/model/idea/BlazeClassJarProviderTest.java",  # b/145809318
-            "tests/unittests/sdkcompat/as223/com/google/idea/blaze/android/projectsystem/BlazeModuleSystemTest.java",
-            "tests/unittests/sdkcompat/as231/com/google/idea/blaze/android/projectsystem/BlazeModuleSystemTest.java",
-            "tests/unittests/sdkcompat/as232/com/google/idea/blaze/android/projectsystem/BlazeModuleSystemTest.java",
-            "tests/unittests/sdkcompat/asdev/com/google/idea/blaze/android/projectsystem/BlazeModuleSystemTest.java",
-        ],
+        ] + glob(["tests/unittests/sdkcompat/**"]),
     ) + select_for_plugin_api({
-        "android-studio-2022.3": [
-            "tests/unittests/sdkcompat/as223/com/google/idea/blaze/android/projectsystem/BlazeModuleSystemTest.java",
-        ],
-        "android-studio-2023.1": [
-            "tests/unittests/sdkcompat/as231/com/google/idea/blaze/android/projectsystem/BlazeModuleSystemTest.java",
-        ],
-        "android-studio-2023.2": [
-            "tests/unittests/sdkcompat/as232/com/google/idea/blaze/android/projectsystem/BlazeModuleSystemTest.java",
-        ],
+        "android-studio-2022.3": glob(["tests/unittests/sdkcompat/as223/**/*.java"]),
+        "android-studio-2023.1": glob(["tests/unittests/sdkcompat/as231/**/*.java"]),
+        "android-studio-2023.2": glob(["tests/unittests/sdkcompat/as232/**/*.java"]),
     }),
     test_package_root = "com.google.idea.blaze.android",
     deps = [
