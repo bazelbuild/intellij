@@ -82,13 +82,17 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
 
   private static final ImmutableSetMultimap<BuildSystemName, Kind> SUPPORTED_KINDS =
       ImmutableSetMultimap.<BuildSystemName, Kind>builder()
-          .putAll(BuildSystemName.Bazel, JavaBlazeRules.RuleTypes.JAVA_TEST.getKind())
+          .putAll(
+              BuildSystemName.Bazel,
+              JavaBlazeRules.RuleTypes.JAVA_TEST.getKind(),
+              JavaBlazeRules.RuleTypes.JAVA_JUNIT5_TEST.getKind())
           .putAll(
               BuildSystemName.Blaze,
               AndroidBlazeRules.RuleTypes.ANDROID_ROBOLECTRIC_TEST.getKind(),
               AndroidBlazeRules.RuleTypes.ANDROID_LOCAL_TEST.getKind(),
               AndroidBlazeRules.RuleTypes.KT_ANDROID_LOCAL_TEST.getKind(),
-              JavaBlazeRules.RuleTypes.JAVA_TEST.getKind())
+              JavaBlazeRules.RuleTypes.JAVA_TEST.getKind(),
+              JavaBlazeRules.RuleTypes.JAVA_JUNIT5_TEST.getKind())
           .build();
 
   private final Project project;

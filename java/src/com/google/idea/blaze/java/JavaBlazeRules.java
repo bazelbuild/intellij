@@ -33,6 +33,7 @@ public final class JavaBlazeRules implements Kind.Provider {
   public enum RuleTypes {
     JAVA_LIBRARY("java_library", LanguageClass.JAVA, RuleType.LIBRARY),
     JAVA_TEST("java_test", LanguageClass.JAVA, RuleType.TEST),
+    JAVA_JUNIT5_TEST("java_junit5_test", LanguageClass.JAVA, RuleType.TEST),
     JAVA_TEST_SUITE("java_test_suite", LanguageClass.JAVA, RuleType.TEST),
     JAVA_BINARY("java_binary", LanguageClass.JAVA, RuleType.BINARY),
     JAVA_IMPORT("java_import", LanguageClass.JAVA, RuleType.UNKNOWN),

@@ -50,6 +50,7 @@ message JavaInfo {
   repeated ArtifactLocation annotation_processor_classpath = 6;
   repeated string jvm_flags = 7;
   bool swigdeps = 8;
+  string main_class = 9;
 }
 
 message JavaToolchainInfo {

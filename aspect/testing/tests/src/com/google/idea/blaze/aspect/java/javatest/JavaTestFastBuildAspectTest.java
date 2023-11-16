@@ -60,6 +60,16 @@ public final class JavaTestFastBuildAspectTest {
         .isEqualTo(aspectLoader.testRelative(":custom_java_launcher"));
   }
 
+  @Test
+  public void testCustomMainClass() throws Exception {
+    FastBuildAspectTestFixture fixture =
+            aspectLoader.loadTestFixture(":footest_with_custom_main_class_fast_build_fixture");
+    FastBuildBlazeData data =
+            getDataForTarget(aspectLoader.testRelative(":FooTestWithCustomMainClass"), fixture);
+    assertThat(data.getJavaInfo().getMainClass())
+            .isEqualTo("com.google.idea.blaze.aspect.java.javatest.mock.MainClass");
+  }
+
 
   private FastBuildBlazeData getDataForTarget(String target, FastBuildAspectTestFixture fixture) {
     return fixture.getTargetList().stream()
