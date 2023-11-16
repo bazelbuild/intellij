@@ -55,10 +55,20 @@ public final class ImportRoots {
   @Nullable
   public static ImportRoots forProjectSafe(Project project) {
     WorkspaceRoot root = WorkspaceRoot.fromProjectSafe(project);
-    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    if (root == null || projectViewSet == null) {
+    if (root == null) {
       return null;
     }
+
+    ProjectViewManager manager = ProjectViewManager.getInstance(project);
+    if (manager == null) {
+      return null;
+    }
+
+    ProjectViewSet projectViewSet = manager.getProjectViewSet();
+    if (projectViewSet == null) {
+      return null;
+    }
+
     return ImportRoots.builder(root, Blaze.getBuildSystemName(project)).add(projectViewSet).build();
   }
 
