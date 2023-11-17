@@ -17,10 +17,10 @@ package com.google.idea.blaze.qsync;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static com.google.idea.blaze.qsync.QuerySyncTestUtils.createSrcJar;
 
-import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.qsync.QuerySyncTestUtils.PathPackage;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectPath.Resolver;
 import com.google.idea.blaze.qsync.project.ProjectProto;
@@ -29,11 +29,7 @@ import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import com.google.idea.blaze.qsync.testdata.ProjectProtos;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -399,33 +395,5 @@ public class SrcJarProjectUpdaterTest {
                 .map(LibrarySource::getSrcjar)
                 .map(ProjectProto.ProjectPath::getInnerPath))
         .containsExactly("java/package/root");
-  }
-
-  @AutoValue
-  abstract static class PathPackage {
-    abstract Path path();
-
-    abstract String pkg();
-
-    static PathPackage of(String path, String pkg) {
-      return new AutoValue_SrcJarProjectUpdaterTest_PathPackage(Path.of(path), pkg);
-    }
-  }
-
-  private static void createSrcJar(Path dest, PathPackage... pathPackages) throws IOException {
-    Files.createDirectories(dest.getParent());
-    try (ZipOutputStream srcJar =
-        new ZipOutputStream(Files.newOutputStream(dest, StandardOpenOption.CREATE_NEW))) {
-      for (PathPackage pathPackage : pathPackages) {
-        ZipEntry src = new ZipEntry(pathPackage.path().toString());
-        srcJar.putNextEntry(src);
-        if (pathPackage.pkg().length() > 0) {
-          srcJar.write(String.format("package %s;\n", pathPackage.pkg()).getBytes(UTF_8));
-        } else {
-          srcJar.write("// default package\n".getBytes(UTF_8));
-        }
-        srcJar.closeEntry();
-      }
-    }
   }
 }
