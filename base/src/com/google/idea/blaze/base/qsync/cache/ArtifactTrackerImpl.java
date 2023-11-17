@@ -117,6 +117,39 @@ public class ArtifactTrackerImpl
   private static final BoolExperiment ATTACH_DEP_SRCJARS =
       new BoolExperiment("querysync.attach.dep.srcjars", true);
 
+  /**
+   * Adds source folders for extracted generated source archives.
+   *
+   * <p>Previously, source jars were extracted and placed in dedicated subdirectories of the
+   * generated sources director.
+   *
+   * <p>E.g.:
+   *
+   * <pre>
+   *   generated/
+   *     classes.srcjar/
+   *       com/
+   *         example/
+   *           Class.java
+   *     more_classes.srcjar/
+   *       com/
+   *         ...
+   * </pre>
+   *
+   * <p>Now, sources jars are all placed in the java_srcjars directory without extraction E.g.:
+   *
+   * <pre>
+   *   generated/
+   *     java_srcjars/
+   *       classes.srcjar
+   *       more_classes.srcjar
+   * </pre>
+   *
+   * <p>This experiment can be removed when projects have updated to the new model (b/311661541)
+   */
+  private static final BoolExperiment LEGACY_EXTRACTED_SRCJAR_FOLDERS =
+      new BoolExperiment("querysync.legacy.srcjar.folders", true);
+
   public static final String DIGESTS_DIRECTORY_NAME = ".digests";
   public static final int STORAGE_VERSION = 3;
   private static final Logger logger = Logger.getInstance(ArtifactTrackerImpl.class);
@@ -171,8 +204,7 @@ public class ArtifactTrackerImpl
         fileCacheCreator.createFileCache(renderJarCacheDirectory, ImmutableSet.of(), false);
     generatedSrcFileCacheDirectory = projectDirectory.resolve(GEN_SRC_DIRECTORY);
     generatedSrcFileCache =
-        fileCacheCreator.createFileCache(
-            generatedSrcFileCacheDirectory, ImmutableSet.of("jar", "srcjar"), true);
+        fileCacheCreator.createFileCache(generatedSrcFileCacheDirectory, ImmutableSet.of(), true);
     generatedExternalSrcFileCacheDirectory = projectDirectory.resolve(DEPENDENCIES_SOURCES);
     generatedExternalSrcFileCache =
         fileCacheCreator.createFileCache(
@@ -203,7 +235,9 @@ public class ArtifactTrackerImpl
       if (handleJavaSources) {
         layout =
             new DelegatingCacheLayout(
-                layout, new JavaSourcesCacheLayout(cacheDirectory, cacheDotDirectory));
+                layout,
+                new JavaSourcesCacheLayout(cacheDirectory, cacheDotDirectory),
+                new JavaSourcesArchiveCacheLayout(cacheDirectory));
       }
       return createFileCache(layout, cacheDirectory, cacheDotDirectory);
     }
@@ -597,16 +631,45 @@ public class ArtifactTrackerImpl
   private ProjectProto.Project updateProjectProtoForJavaDeps(ProjectProto.Project projectProto)
       throws BuildException {
 
-    Path genSrcCacheRelativeToProject =
-        ideProjectBasePath.relativize(generatedSrcFileCacheDirectory);
-    ImmutableList<Path> subfolders;
-    try {
-      subfolders = getGenSrcSubfolders();
+    Set<ProjectPath> generatedJavaSrcRoots = Sets.newHashSet();
+
+    ProjectPath javaSrcRoot =
+        ProjectPath.projectRelative(
+            ideProjectBasePath.relativize(
+                generatedSrcFileCacheDirectory.resolve(
+                    JavaSourcesCacheLayout.ROOT_DIRECTORY_NAME)));
+    if (projectPathResolver.resolve(javaSrcRoot).toFile().exists()) {
+      generatedJavaSrcRoots.add(javaSrcRoot);
+    }
+
+    if (LEGACY_EXTRACTED_SRCJAR_FOLDERS.getValue()) {
+      int previousSize = generatedJavaSrcRoots.size();
+      generatedJavaSrcRoots.addAll(getGenSrcSubfolders());
+      if (generatedJavaSrcRoots.size() > previousSize) {
+        logger.info("Adding source folder for extracted srcjar");
+      }
+    }
+
+    ImmutableSet<ProjectPath> generatedProjectSrcJars;
+    Path srcJarDir =
+        generatedSrcFileCacheDirectory.resolve(JavaSourcesArchiveCacheLayout.ROOT_DIRECTORY_NAME);
+    try (Stream<Path> pathStream =
+        srcJarDir.toFile().exists() ? Files.list(srcJarDir) : Stream.empty()) {
+      generatedProjectSrcJars =
+          pathStream
+              .map(ideProjectBasePath::relativize)
+              .map(ProjectPath::projectRelative)
+              .collect(toImmutableSet());
     } catch (IOException e) {
       throw new BuildException(e);
     }
+
     GeneratedSourceProjectUpdater updater =
-        new GeneratedSourceProjectUpdater(projectProto, genSrcCacheRelativeToProject, subfolders);
+        new GeneratedSourceProjectUpdater(
+            projectProto,
+            ImmutableSet.copyOf(generatedJavaSrcRoots),
+            generatedProjectSrcJars,
+            projectPathResolver);
 
     projectProto = updater.addGenSrcContentEntry();
 
@@ -644,9 +707,24 @@ public class ArtifactTrackerImpl
     return projectProto;
   }
 
-  private ImmutableList<Path> getGenSrcSubfolders() throws IOException {
+  /**
+   * Returns all subfolders in the generated source directory, except "java_srcjars". Only used for
+   * legacy layouts {@link ArtifactTrackerImpl#LEGACY_EXTRACTED_SRCJAR_FOLDERS}.
+   */
+  private ImmutableList<ProjectPath> getGenSrcSubfolders() throws BuildException {
     try (Stream<Path> pathStream = Files.list(generatedSrcFileCacheDirectory)) {
-      return pathStream.collect(toImmutableList());
+      return pathStream
+          .filter(
+              p ->
+                  p.toFile().isDirectory()
+                      && !p.getFileName()
+                          .toString()
+                          .equals(JavaSourcesArchiveCacheLayout.ROOT_DIRECTORY_NAME))
+          .map(ideProjectBasePath::relativize)
+          .map(ProjectPath::projectRelative)
+          .collect(toImmutableList());
+    } catch (IOException e) {
+      throw new BuildException(e);
     }
   }
 
