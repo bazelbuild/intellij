@@ -167,8 +167,7 @@ public class ProjectUpdater implements BlazeProjectListener {
                       UrlUtil.pathToIdeaDirectoryUrl(projectPathResolver.resolve(projectPath)));
               for (ProjectProto.SourceFolder sfSpec : ceSpec.getSourcesList()) {
                 Path sourceFolderPath =
-                    projectPathResolver.resolve(
-                        ProjectPath.create(projectPath.rootType(), Path.of(sfSpec.getPath())));
+                    projectPathResolver.resolve(ProjectPath.create(sfSpec.getProjectPath()));
 
                 JavaSourceRootProperties properties =
                     JpsJavaExtensionService.getInstance()

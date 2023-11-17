@@ -416,7 +416,10 @@ public class GraphToProjectConverter {
         Path path = dir.resolve(entry.getKey());
         contentEntry.addSources(
             ProjectProto.SourceFolder.newBuilder()
-                .setPath(path.toString())
+                .setProjectPath(
+                    ProjectProto.ProjectPath.newBuilder()
+                        .setBase(Base.WORKSPACE)
+                        .setPath(path.toString()))
                 .setPackagePrefix(entry.getValue())
                 .setIsTest(testSourceGlobMatcher.matches(path))
                 .build());
@@ -428,7 +431,10 @@ public class GraphToProjectConverter {
           // source folders only.
           contentEntry.addSources(
               ProjectProto.SourceFolder.newBuilder()
-                  .setPath(path.toString())
+                  .setProjectPath(
+                      ProjectProto.ProjectPath.newBuilder()
+                          .setBase(Base.WORKSPACE)
+                          .setPath(path.toString()))
                   .setPackagePrefix("")
                   .setIsTest(testSourceGlobMatcher.matches(path))
                   .build());

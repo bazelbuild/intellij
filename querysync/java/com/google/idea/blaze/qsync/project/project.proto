@@ -4,7 +4,6 @@ package ij.qsync;
 
 import "querysync/java/com/google/idea/blaze/qsync/project/language_class.proto";
 
-
 // option java_api_version = 2;
 option java_outer_classname = "ProjectProto";
 option java_package = "com.google.idea.blaze.qsync.project";
@@ -20,7 +19,6 @@ message Project {
    */
   repeated LanguageClass active_languages = 4;
 }
-
 
 /**
  * Represents a module in the IntelliJ project model.
@@ -95,10 +93,10 @@ message ContentEntry {
  * @see com.intellij.openapi.roots.SourceFolder
  */
 message SourceFolder {
-  string path = 1;
   bool is_test = 2;
   string package_prefix = 3;
   bool is_generated = 4;
+  ProjectPath project_path = 5;
 }
 
 /** Represents a library within the IJ project model. */
@@ -128,7 +126,6 @@ message LibrarySource {
   reserved 1;
   ProjectPath srcjar = 2;
 }
-
 
 /**
  * A single compiler flag that supports resolving to an absolute path when
@@ -168,7 +165,8 @@ enum CcLanguage {
 /**
  * A single source file.
  *
- * @see  com.jetbrains.cidr.lang.workspace.OCResolveConfiguration.ModifiableModel#addSource
+ * @see
+ * com.jetbrains.cidr.lang.workspace.OCResolveConfiguration.ModifiableModel#addSource
  */
 message CcSourceFile {
   string workspace_path = 1;

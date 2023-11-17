@@ -57,7 +57,11 @@ public class GeneratedSourceProjectUpdater {
     for (Path path : genSrcFolders) {
       genSourcesContentEntry.addSources(
           ProjectProto.SourceFolder.newBuilder()
-              .setPath(genSrcCacheDirectory.resolve(path.getFileName()).toString())
+              .setProjectPath(
+                  ProjectProto.ProjectPath.newBuilder()
+                      .setBase(Base.PROJECT)
+                      .setPath(genSrcCacheDirectory.resolve(path.getFileName()).toString())
+                      .build())
               .setIsTest(false)
               .setIsGenerated(true)
               .setPackagePrefix(""));
