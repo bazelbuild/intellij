@@ -22,20 +22,19 @@ import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinatio
 import java.nio.file.Path;
 import javax.annotation.Nullable;
 
-/** Places java/kt source files in a subdirectory matching their package name. */
-public class JavaSourcesCacheLayout implements CacheLayout {
+/** Places java source archives in a dedicated subdirectory. */
+public class JavaSourcesArchiveCacheLayout implements CacheLayout {
 
-  private static final ImmutableSet<String> JAVA_EXTENSIONS = ImmutableSet.of("java", "kt");
+  private static final ImmutableSet<String> JAVA_ARCHIVE_EXTENSIONS =
+      ImmutableSet.of("jar", "srcjar");
 
-  /** Cache subdirectory in which all source files (w/ package subdirectories) are placed. */
-  public static final String ROOT_DIRECTORY_NAME = "java";
+  /** Cache subdirectory in which all source jars are placed. */
+  public static final String ROOT_DIRECTORY_NAME = "java_srcjars";
 
   private final Path cacheDirectory;
-  private final Path dotCacheDirectory;
 
-  public JavaSourcesCacheLayout(Path cacheDirectory, Path dotCacheDirectory) {
+  public JavaSourcesArchiveCacheLayout(Path cacheDirectory) {
     this.cacheDirectory = cacheDirectory;
-    this.dotCacheDirectory = dotCacheDirectory;
   }
 
   private static String getExtension(Path p) {
@@ -51,14 +50,12 @@ public class JavaSourcesCacheLayout implements CacheLayout {
   public OutputArtifactDestinationAndLayout getOutputArtifactDestinationAndLayout(
       OutputArtifactInfo outputArtifact) {
     Path artifactPath = Path.of(outputArtifact.getRelativePath());
-    if (!JAVA_EXTENSIONS.contains(getExtension(artifactPath))) {
+    if (!JAVA_ARCHIVE_EXTENSIONS.contains(getExtension(artifactPath))) {
       return null;
     }
     String key = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact);
-    return JavaSourceOutputArtifactDestination.create(
-        key,
-        artifactPath.getFileName().toString(),
-        dotCacheDirectory.resolve(".gensrc").resolve(key),
-        cacheDirectory.resolve(ROOT_DIRECTORY_NAME));
+    String filename = artifactPath.getFileName().toString();
+    return new PreparedOutputArtifactDestination(
+        key, cacheDirectory.resolve(ROOT_DIRECTORY_NAME).resolve(filename));
   }
 }
