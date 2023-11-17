@@ -312,7 +312,8 @@ def _collect_own_java_artifacts(
                     else:
                         own_gensrc_files.append(file)
         if hasattr(rule.attr, "srcjar"):
-            if rule.attr.srcjar:
+            # The "srcjar" attribute might be a label
+            if rule.attr.srcjar and hasattr(rule.attr.srcjar, "files"):
                 for file in rule.attr.srcjar.files.to_list():
                     if file.is_source:
                         own_srcjar_files.append(file.path)
