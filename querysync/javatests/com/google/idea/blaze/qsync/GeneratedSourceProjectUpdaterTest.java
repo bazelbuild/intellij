@@ -18,6 +18,7 @@ package com.google.idea.blaze.qsync;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.ContentEntry;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
@@ -71,12 +72,22 @@ public class GeneratedSourceProjectUpdaterTest {
     assertThat(contentEntry.getSourcesCount()).isEqualTo(2);
 
     SourceFolder source1 = contentEntry.getSources(0);
-    assertThat(source1.getPath()).isEqualTo("generated/gensrc1");
+    assertThat(source1.getProjectPath())
+        .isEqualTo(
+            ProjectProto.ProjectPath.newBuilder()
+                .setBase(Base.PROJECT)
+                .setPath("generated/gensrc1")
+                .build());
     assertThat(source1.getPackagePrefix()).isEmpty();
     assertThat(source1.getIsGenerated()).isTrue();
 
     SourceFolder source2 = contentEntry.getSources(1);
-    assertThat(source2.getPath()).isEqualTo("generated/gensrc2");
+    assertThat(source1.getProjectPath())
+        .isEqualTo(
+            ProjectProto.ProjectPath.newBuilder()
+                .setBase(Base.PROJECT)
+                .setPath("generated/gensrc1")
+                .build());
     assertThat(source2.getPackagePrefix()).isEmpty();
     assertThat(source2.getIsGenerated()).isTrue();
   }

@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectProto;
+import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import com.google.idea.blaze.qsync.query.PackageSet;
@@ -552,7 +553,12 @@ public class GraphToProjectConverterTest {
     assertThat(javaContentEntry.getSourcesCount()).isEqualTo(1);
 
     ProjectProto.SourceFolder javaSource = javaContentEntry.getSources(0);
-    assertThat(javaSource.getPath()).isEqualTo(workspaceImportDirectory.toString());
+    assertThat(javaSource.getProjectPath())
+        .isEqualTo(
+            ProjectPath.newBuilder()
+                .setBase(Base.WORKSPACE)
+                .setPath(workspaceImportDirectory.toString())
+                .build());
     assertThat(javaSource.getIsGenerated()).isFalse();
     assertThat(javaSource.getIsTest()).isFalse();
   }
@@ -581,9 +587,13 @@ public class GraphToProjectConverterTest {
     ProjectProto.SourceFolder sourceFolder =
         project.getModules(0).getContentEntries(0).getSources(0);
 
-    assertThat(sourceFolder.getPath())
+    assertThat(sourceFolder.getProjectPath())
         .isEqualTo(
-            "querysync/javatests/com/google/idea/blaze/qsync/testdata/nodeps");
+            ProjectPath.newBuilder()
+                .setBase(Base.WORKSPACE)
+                .setPath(
+                    "querysync/javatests/com/google/idea/blaze/qsync/testdata/nodeps")
+                .build());
     assertThat(sourceFolder.getIsTest()).isTrue();
   }
 
@@ -611,7 +621,12 @@ public class GraphToProjectConverterTest {
     assertThat(contentEntry.getSourcesCount()).isEqualTo(1);
     ProjectProto.SourceFolder sourceFolder = contentEntry.getSources(0);
 
-    assertThat(sourceFolder.getPath()).isEqualTo(TestData.ROOT.resolve("protoonly").toString());
+    assertThat(sourceFolder.getProjectPath())
+        .isEqualTo(
+            ProjectPath.newBuilder()
+                .setBase(Base.WORKSPACE)
+                .setPath(TestData.ROOT.resolve("protoonly").toString())
+                .build());
   }
 
   @Test
@@ -676,7 +691,10 @@ public class GraphToProjectConverterTest {
     assertThat(contentEntry.getSourcesList())
         .containsExactly(
             ProjectProto.SourceFolder.newBuilder()
-                .setPath(TestData.ROOT.resolve("nestedproto/java").toString())
+                .setProjectPath(
+                    ProjectPath.newBuilder()
+                        .setBase(Base.WORKSPACE)
+                        .setPath(TestData.ROOT.resolve("nestedproto/java").toString()))
                 .build());
   }
 
