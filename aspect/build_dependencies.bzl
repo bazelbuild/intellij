@@ -273,12 +273,16 @@ def _collect_own_java_artifacts(
                 android_sdk_info = getattr(rule.attr, "_android_sdk")[AndroidSdkInfo]
                 own_jar_depsets.append(android_sdk_info.aidl_lib.files)
 
-        # Add generated java_outputs (e.g. from annotation processing
+        # Add generated java_outputs (e.g. from annotation processing)
         generated_class_jars = []
         if JavaInfo in target:
             for java_output in target[JavaInfo].java_outputs:
-                if java_output.generated_class_jar:
+                # Prefer source jars if they exist:
+                if java_output.generated_source_jar:
+                    own_gensrc_files.append(java_output.generated_source_jar)
+                elif java_output.generated_class_jar:
                     generated_class_jars.append(java_output.generated_class_jar)
+
         if generated_class_jars:
             own_jar_files += generated_class_jars
 
