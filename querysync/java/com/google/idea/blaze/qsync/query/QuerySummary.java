@@ -72,7 +72,7 @@ public abstract class QuerySummary {
    * <p>Whenever changing the logic in this class such that the Query.Summary proto contents will be
    * different for the same input, this version should be incremented.
    */
-  @VisibleForTesting public static final int PROTO_VERSION = 7;
+  @VisibleForTesting public static final int PROTO_VERSION = 8;
 
   public static final QuerySummary EMPTY =
       create(Query.Summary.newBuilder().setVersion(PROTO_VERSION).build());
@@ -180,6 +180,8 @@ public abstract class QuerySummary {
               rule.setCustomPackage(a.getStringValue());
             } else if (a.getName().equals("copts")) {
               rule.addAllCopts(a.getStringListValueList());
+            } else if (a.getName().equals("tags")) {
+              rule.addAllTags(a.getStringListValueList());
             }
 
             if (a.getName().equals("test_app")) {

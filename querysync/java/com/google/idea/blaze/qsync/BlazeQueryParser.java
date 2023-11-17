@@ -223,13 +223,13 @@ public class BlazeQueryParser {
     return stream(labelLists)
         .map(Label::toLabelList)
         .flatMap(List::stream)
-        .map(this::expandFileGroups)
+        .map(this::expandSourceLabel)
         .flatMap(Set::stream)
         .collect(toImmutableSet());
   }
 
-  private ImmutableSet<Label> expandFileGroups(Label label) {
-    if (!isFileGroup(label)) {
+  private ImmutableSet<Label> expandSourceLabel(Label label) {
+    if (!shouldExpandSourceLabel(label)) {
       return ImmutableSet.of(label);
     }
     Set<Label> visited = Sets.newHashSet();
@@ -238,18 +238,28 @@ public class BlazeQueryParser {
     for (String source : requireNonNull(query.getRulesMap().get(label)).getSourcesList()) {
       Label asLabel = Label.of(source);
       if (visited.add(asLabel)) {
-        result.addAll(expandFileGroups(asLabel));
+        result.addAll(expandSourceLabel(asLabel));
       }
     }
 
     return result.build();
   }
 
-  private boolean isFileGroup(Label label) {
+  private boolean shouldExpandSourceLabel(Label label) {
     Rule rule = query.getRulesMap().get(label);
     if (rule == null) {
       return false;
     }
-    return rule.getRuleClass().equals("filegroup");
+    if (rule.getRuleClass().equals("filegroup")) {
+      return true;
+    }
+    if (rule.getTagsList().contains("ij-ignore-source-transform")) {
+      // This rule has a tag asking us to skip some source transformation and use its sources
+      // directly instead - i.e. expand it as we would for a filegroup. This ensures that the IDE
+      // considers the workspace sources as the actual sources, rather than the generated
+      // (transformed) sources.
+      return true;
+    }
+    return false;
   }
 }
