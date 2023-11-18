@@ -1,5 +1,6 @@
 """Implementation of IntelliJ-specific information collecting aspect."""
 
+load("@rules_python//python:py_info.bzl", "PyInfo")
 load(
     ":artifacts.bzl",
     "artifact_location",
