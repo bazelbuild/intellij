@@ -29,14 +29,15 @@ public class SyncStatusEditorTabTitleProvider implements EditorTabTitleProvider,
   @Nullable
   @Override
   public String getEditorTabTitle(Project project, VirtualFile file) {
-    if(Blaze.getProjectType(project) == BlazeImportSettings.ProjectType.UNKNOWN) {
+    if (Blaze.getProjectType(project).equals(BlazeImportSettings.ProjectType.UNKNOWN)) {
       return null;
     }
+    
     SyncStatus status = SyncStatusContributor.getSyncStatus(project, file);
-    if (status == SyncStatus.UNSYNCED) {
+    if (status.equals(SyncStatus.UNSYNCED)) {
       return file.getPresentableName() + " (unsynced)";
     }
-    if (status == SyncStatus.IN_PROGRESS) {
+    if (status.equals(SyncStatus.IN_PROGRESS)) {
       return file.getPresentableName() + " (syncing...)";
     }
     return null;
