@@ -71,7 +71,7 @@ class BlazeGoImportResolver implements GoImportResolver {
 
   @Nullable
   static BlazeGoPackage doResolve(String importPath, Project project) {
-    if (Blaze.getProjectType(project) == BlazeImportSettings.ProjectType.UNKNOWN) {
+    if (Blaze.getProjectType(project).equals(BlazeImportSettings.ProjectType.UNKNOWN)) {
       return null;
     }
 

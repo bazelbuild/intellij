@@ -33,11 +33,11 @@ public class SyncStatusEditorTabColorProvider implements EditorTabColorProvider 
   @Nullable
   @Override
   public Color getEditorTabColor(Project project, VirtualFile file) {
-    if (Blaze.getProjectType(project) == BlazeImportSettings.ProjectType.UNKNOWN) {
+    if (Blaze.getProjectType(project).equals(BlazeImportSettings.ProjectType.UNKNOWN)) {
       return null;
     }
 
-    if (SyncStatusContributor.getSyncStatus(project, file) == SyncStatus.UNSYNCED) {
+    if (SyncStatusContributor.getSyncStatus(project, file).equals(SyncStatus.UNSYNCED)) {
       return UNSYNCED_COLOR;
     }
     return null;
