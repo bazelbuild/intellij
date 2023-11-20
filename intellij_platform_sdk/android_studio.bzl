@@ -3,6 +3,7 @@ This module contains the rules that exposes a plugin api for android studio.
 """
 
 load("//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
+load("//tools/build_defs/run_binary_test:def.bzl", "run_binary_test")
 
 def _glob(files, dir, extension, recursive = False, exclude = []):
     if files:
@@ -28,7 +29,17 @@ def _file_list(files, dir, extension, recursive = False, exclude = []):
             ret.append("android-studio/" + file)
     return ret
 
-def android_studio(name, major, minor, revision, tar = None, zip = None, files = None, **kwargs):
+def android_studio(
+        name,
+        major = None,
+        minor = None,
+        revision = None,
+        filelist_bzl = None,
+        version_bzl = None,
+        tar = None,
+        zip = None,
+        files = None,
+        **kwargs):
     """
     Macro that creates the rules to depend on for android studio plugin development
 
@@ -75,6 +86,17 @@ def android_studio(name, major, minor, revision, tar = None, zip = None, files =
                 tools = ["//third_party/unzip:unzip"],
                 srcs = [zip],
                 cmd = "$(location //third_party/unzip:unzip) -q $(location {}) -d $(RULEDIR) ".format(zip) + " ".join(all_files),
+            )
+
+            run_binary_test(
+                name = name + "_checks",
+                binary = "//third_party/corp_installers/jetbrains/android_studio_with_blaze/update:check",
+                args = [
+                    "--archive $(location {})".format(zip),
+                    "--file_list $(location {})".format(filelist_bzl),
+                    "--version $(location {})".format(version_bzl),
+                ],
+                data = [zip, filelist_bzl, version_bzl],
             )
 
 # Retuns if major.minor.revision is version or newer
