@@ -38,7 +38,7 @@ public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSett
     /** Query sync enabled setting, used when in beta only. */
     public boolean useQuerySync = false;
 
-    public boolean showDetailedInformationInEditor = false;
+    public boolean showDetailedInformationInEditor = true;
 
     public boolean syncBeforeBuild = false;
 
