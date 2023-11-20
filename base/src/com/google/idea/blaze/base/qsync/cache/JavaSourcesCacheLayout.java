@@ -15,11 +15,13 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import java.nio.file.Path;
+import java.util.Collection;
 import javax.annotation.Nullable;
 
 /** Places java/kt source files in a subdirectory matching their package name. */
@@ -33,9 +35,9 @@ public class JavaSourcesCacheLayout implements CacheLayout {
   private final Path cacheDirectory;
   private final Path dotCacheDirectory;
 
-  public JavaSourcesCacheLayout(Path cacheDirectory, Path dotCacheDirectory) {
+  public JavaSourcesCacheLayout(Path cacheDirectory) {
     this.cacheDirectory = cacheDirectory;
-    this.dotCacheDirectory = dotCacheDirectory;
+    this.dotCacheDirectory = cacheDirectory.resolveSibling("." + cacheDirectory.getFileName());
   }
 
   private static String getExtension(Path p) {
@@ -60,5 +62,10 @@ public class JavaSourcesCacheLayout implements CacheLayout {
         artifactPath.getFileName().toString(),
         dotCacheDirectory.resolve(".gensrc").resolve(key),
         cacheDirectory.resolve(ROOT_DIRECTORY_NAME));
+  }
+
+  @Override
+  public Collection<Path> getCachePaths() {
+    return ImmutableList.of(cacheDirectory, dotCacheDirectory);
   }
 }

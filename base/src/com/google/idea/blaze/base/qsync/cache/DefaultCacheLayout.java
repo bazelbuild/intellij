@@ -16,12 +16,14 @@
 package com.google.idea.blaze.base.qsync.cache;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import com.intellij.openapi.util.io.FileUtilRt;
 import java.nio.file.Path;
+import java.util.Collection;
 
 /**
  * A cache layout implementation building its cache directory in a way that can be consumed by the
@@ -45,11 +47,14 @@ public class DefaultCacheLayout implements CacheLayout {
   private final ImmutableSet<String> zipFileExtensions;
   private final Path cacheDirectory;
 
-  public DefaultCacheLayout(
-      Path cacheDirectory, Path cacheDotDirectory, ImmutableSet<String> zipFileExtensions) {
+  public DefaultCacheLayout(Path cacheDirectory, ImmutableSet<String> zipFileExtensions) {
     this.cacheDirectory = cacheDirectory;
-    this.cacheDotDirectory = cacheDotDirectory;
+    this.cacheDotDirectory = cacheDirectory.resolveSibling("." + cacheDirectory.getFileName());
     this.zipFileExtensions = zipFileExtensions;
+  }
+
+  public DefaultCacheLayout(Path cacheDirectory) {
+    this(cacheDirectory, ImmutableSet.of());
   }
 
   /**
@@ -88,5 +93,10 @@ public class DefaultCacheLayout implements CacheLayout {
 
   private boolean shouldExtractFile(Path sourcePath) {
     return zipFileExtensions.contains(FileUtilRt.getExtension(sourcePath.getFileName().toString()));
+  }
+
+  @Override
+  public Collection<Path> getCachePaths() {
+    return ImmutableList.of(cacheDirectory, cacheDotDirectory);
   }
 }

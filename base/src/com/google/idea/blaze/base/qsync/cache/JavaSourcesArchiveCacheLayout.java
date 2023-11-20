@@ -15,11 +15,13 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import java.nio.file.Path;
+import java.util.Collection;
 import javax.annotation.Nullable;
 
 /** Places java source archives in a dedicated subdirectory. */
@@ -57,5 +59,10 @@ public class JavaSourcesArchiveCacheLayout implements CacheLayout {
     String filename = artifactPath.getFileName().toString();
     return new PreparedOutputArtifactDestination(
         key, cacheDirectory.resolve(ROOT_DIRECTORY_NAME).resolve(filename));
+  }
+
+  @Override
+  public Collection<Path> getCachePaths() {
+    return ImmutableList.of(cacheDirectory);
   }
 }

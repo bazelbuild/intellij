@@ -16,9 +16,12 @@
 package com.google.idea.blaze.base.qsync.cache;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
+import java.nio.file.Path;
+import java.util.Collection;
 
 /**
  * Delegates to one of a number of other cache layouts, using the first one which returns non-null
@@ -45,5 +48,12 @@ public class DelegatingCacheLayout implements CacheLayout {
       }
     }
     return fallback.getOutputArtifactDestinationAndLayout(outputArtifact);
+  }
+
+  @Override
+  public Collection<Path> getCachePaths() {
+    ImmutableSet.Builder<Path> builder = ImmutableSet.builder();
+    layouts.forEach(l -> builder.addAll(l.getCachePaths()));
+    return builder.build();
   }
 }
