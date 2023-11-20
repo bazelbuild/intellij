@@ -150,6 +150,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
         my_glob(files, "plugins/android/lib", ".jar") +
         my_glob(files, "plugins/studio-bot/lib", ".jar") +
         my_glob(files, "plugins/android-layoutlib/lib", ".jar") +
+        my_glob(files, "plugins/design-tools/lib", "design-tools.jar") +
         my_glob(files, "plugins/android-wizardTemplate-plugin/lib", ".jar") +
         my_glob(files, "plugins/android-wizardTemplate-impl/lib", ".jar") +
         my_glob(files, "plugins/android-ndk/lib", ".jar") +
@@ -174,6 +175,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
         my_glob(files, "plugins/Groovy/lib", ".jar") +
         my_glob(files, "plugins/java-i18n/lib", ".jar") +
         my_glob(files, "plugins/junit/lib", ".jar") +
+        my_glob(files, "plugins/design-tools/lib", "layoutlib.jar") +
         my_glob(files, "plugins/platform-langInjection/lib", ".jar") +
         my_glob(files, "plugins/properties/lib", ".jar") +
         my_glob(files, "plugins/smali/lib", ".jar") +

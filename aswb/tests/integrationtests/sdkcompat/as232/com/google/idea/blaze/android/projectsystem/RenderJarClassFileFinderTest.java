@@ -133,7 +133,7 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
 
   /** Tests that .workspace module can find classes from all binaries in the projectview. */
   @Test
-  public void workspaceModule_canFindAllClassesInAllBinaries() throws ArtifactNotFoundException {
+  public void workspaceModule_canFindAllClassesInAllBinaries() throws Exception {
     Module workspaceModule =
         ModuleManager.getInstance(getProject()).findModuleByName(WORKSPACE_MODULE_NAME);
     assertThat(workspaceModule).isNotNull();
@@ -163,53 +163,122 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
                     getArtifactLocation("com/google/example/simple/bin_c.jar")));
     String binCJar = cacheDir.getAbsoluteFile() + "/" + binCCacheEntry.getFileName();
 
-    assertThat(classFileFinder.findClassFile("com.google.example.simple.src_a.SrcA"))
-        .isEqualTo(fileSystem.findFile(binAJar + "!/com/google/example/simple/src_a/SrcA.class"));
-    assertThat(classFileFinder.findClassFile("com.google.example.simple.src_a.SrcA$Inner"))
-        .isEqualTo(
-            fileSystem.findFile(binAJar + "!/com/google/example/simple/src_a/SrcA$Inner.class"));
-
-    assertThat(classFileFinder.findClassFile("com.google.example.simple.src_b.SrcB"))
-        .isEqualTo(fileSystem.findFile(binBJar + "!/com/google/example/simple/src_b/SrcB.class"));
-    assertThat(classFileFinder.findClassFile("com.google.example.simple.src_b.SrcB$Inner"))
-        .isEqualTo(
-            fileSystem.findFile(binBJar + "!/com/google/example/simple/src_b/SrcB$Inner.class"));
-
-    assertThat(classFileFinder.findClassFile("com.google.example.simple.src_c.SrcC"))
-        .isEqualTo(fileSystem.findFile(binCJar + "!/com/google/example/simple/src_c/SrcC.class"));
-    assertThat(classFileFinder.findClassFile("com.google.example.simple.src_c.SrcC$Inner"))
-        .isEqualTo(
-            fileSystem.findFile(binCJar + "!/com/google/example/simple/src_c/SrcC$Inner.class"));
-
-    assertThat(classFileFinder.findClassFile("com.google.example.simple.trans_dep_a.TransDepA"))
-        .isEqualTo(
-            fileSystem.findFile(
-                binAJar + "!/com/google/example/simple/trans_dep_a/TransDepA.class"));
     assertThat(
-            classFileFinder.findClassFile("com.google.example.simple.trans_dep_a.TransDepA$Inner"))
+            Objects.requireNonNull(
+                    classFileFinder.findClassFile("com.google.example.simple.src_a.SrcA"))
+                .getContent())
         .isEqualTo(
-            fileSystem.findFile(
-                binAJar + "!/com/google/example/simple/trans_dep_a/TransDepA$Inner.class"));
-
-    assertThat(classFileFinder.findClassFile("com.google.example.simple.trans_dep_b.TransDepB"))
-        .isEqualTo(
-            fileSystem.findFile(
-                binBJar + "!/com/google/example/simple/trans_dep_b/TransDepB.class"));
+            Objects.requireNonNull(
+                    fileSystem.findFile(binAJar + "!/com/google/example/simple/src_a/SrcA.class"))
+                .contentsToByteArray());
     assertThat(
-            classFileFinder.findClassFile("com.google.example.simple.trans_dep_b.TransDepB$Inner"))
+            Objects.requireNonNull(
+                    classFileFinder.findClassFile("com.google.example.simple.src_a.SrcA$Inner"))
+                .getContent())
         .isEqualTo(
-            fileSystem.findFile(
-                binBJar + "!/com/google/example/simple/trans_dep_b/TransDepB$Inner.class"));
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binAJar + "!/com/google/example/simple/src_a/SrcA$Inner.class"))
+                .contentsToByteArray());
 
-    assertThat(classFileFinder.findClassFile("com.google.example.simple.trans_dep_c.TransDepC"))
-        .isEqualTo(
-            fileSystem.findFile(
-                binCJar + "!/com/google/example/simple/trans_dep_c/TransDepC.class"));
     assertThat(
-            classFileFinder.findClassFile("com.google.example.simple.trans_dep_c.TransDepC$Inner"))
+            Objects.requireNonNull(
+                    classFileFinder.findClassFile("com.google.example.simple.src_b.SrcB"))
+                .getContent())
         .isEqualTo(
-            fileSystem.findFile(
-                binCJar + "!/com/google/example/simple/trans_dep_c/TransDepC$Inner.class"));
+            Objects.requireNonNull(
+                    fileSystem.findFile(binBJar + "!/com/google/example/simple/src_b/SrcB.class"))
+                .contentsToByteArray());
+    assertThat(
+            Objects.requireNonNull(
+                    classFileFinder.findClassFile("com.google.example.simple.src_b.SrcB$Inner"))
+                .getContent())
+        .isEqualTo(
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binBJar + "!/com/google/example/simple/src_b/SrcB$Inner.class"))
+                .contentsToByteArray());
+
+    assertThat(
+            Objects.requireNonNull(
+                    classFileFinder.findClassFile("com.google.example.simple.src_c.SrcC"))
+                .getContent())
+        .isEqualTo(
+            Objects.requireNonNull(
+                    fileSystem.findFile(binCJar + "!/com/google/example/simple/src_c/SrcC.class"))
+                .contentsToByteArray());
+    assertThat(
+            Objects.requireNonNull(
+                    classFileFinder.findClassFile("com.google.example.simple.src_c.SrcC$Inner"))
+                .getContent())
+        .isEqualTo(
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binCJar + "!/com/google/example/simple/src_c/SrcC$Inner.class"))
+                .contentsToByteArray());
+
+    assertThat(
+            Objects.requireNonNull(
+                    classFileFinder.findClassFile(
+                        "com.google.example.simple.trans_dep_a.TransDepA"))
+                .getContent())
+        .isEqualTo(
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binAJar + "!/com/google/example/simple/trans_dep_a/TransDepA.class"))
+                .contentsToByteArray());
+    assertThat(
+            Objects.requireNonNull(
+                    classFileFinder.findClassFile(
+                        "com.google.example.simple.trans_dep_a.TransDepA$Inner"))
+                .getContent())
+        .isEqualTo(
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binAJar + "!/com/google/example/simple/trans_dep_a/TransDepA$Inner.class"))
+                .contentsToByteArray());
+
+    assertThat(
+            Objects.requireNonNull(
+                    classFileFinder.findClassFile(
+                        "com.google.example.simple.trans_dep_b.TransDepB"))
+                .getContent())
+        .isEqualTo(
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binBJar + "!/com/google/example/simple/trans_dep_b/TransDepB.class"))
+                .contentsToByteArray());
+    assertThat(
+            Objects.requireNonNull(
+                    classFileFinder.findClassFile(
+                        "com.google.example.simple.trans_dep_b.TransDepB$Inner"))
+                .getContent())
+        .isEqualTo(
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binBJar + "!/com/google/example/simple/trans_dep_b/TransDepB$Inner.class"))
+                .contentsToByteArray());
+
+    assertThat(
+            Objects.requireNonNull(
+                    classFileFinder.findClassFile(
+                        "com.google.example.simple.trans_dep_c.TransDepC"))
+                .getContent())
+        .isEqualTo(
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binCJar + "!/com/google/example/simple/trans_dep_c/TransDepC.class"))
+                .contentsToByteArray());
+    assertThat(
+            Objects.requireNonNull(
+                    classFileFinder.findClassFile(
+                        "com.google.example.simple.trans_dep_c.TransDepC$Inner"))
+                .getContent())
+        .isEqualTo(
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binCJar + "!/com/google/example/simple/trans_dep_c/TransDepC$Inner.class"))
+                .contentsToByteArray());
   }
 
   /**
@@ -217,7 +286,7 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
    * that comprise the resource module.
    */
   @Test
-  public void resourceModule_canFindSourceClasses() throws ArtifactNotFoundException {
+  public void resourceModule_canFindSourceClasses() throws Exception {
     AndroidResourceModuleRegistry moduleRegistry =
         AndroidResourceModuleRegistry.getInstance(getProject());
     Module aResourceModule =
@@ -247,26 +316,62 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
                     getArtifactLocation("com/google/example/simple/bin_c.jar")));
     String binCJar = cacheDir.getAbsoluteFile() + "/" + binCCacheEntry.getFileName();
 
-    assertThat(aClassFileFinder.findClassFile("com.google.example.simple.src_a.SrcA"))
-        .isEqualTo(fileSystem.findFile(binAJar + "!/com/google/example/simple/src_a/SrcA.class"));
-    assertThat(aClassFileFinder.findClassFile("com.google.example.simple.src_a.SrcA$Inner"))
+    assertThat(
+            Objects.requireNonNull(
+                    aClassFileFinder.findClassFile("com.google.example.simple.src_a.SrcA"))
+                .getContent())
         .isEqualTo(
-            fileSystem.findFile(binAJar + "!/com/google/example/simple/src_a/SrcA$Inner.class"));
+            Objects.requireNonNull(
+                    fileSystem.findFile(binAJar + "!/com/google/example/simple/src_a/SrcA.class"))
+                .contentsToByteArray());
+    assertThat(
+            Objects.requireNonNull(
+                    aClassFileFinder.findClassFile("com.google.example.simple.src_a.SrcA$Inner"))
+                .getContent())
+        .isEqualTo(
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binAJar + "!/com/google/example/simple/src_a/SrcA$Inner.class"))
+                .contentsToByteArray());
 
-    assertThat(aClassFileFinder.findClassFile("com.google.example.simple.src_b.SrcB"))
-        .isEqualTo(fileSystem.findFile(binBJar + "!/com/google/example/simple/src_b/SrcB.class"));
-    assertThat(aClassFileFinder.findClassFile("com.google.example.simple.src_b.SrcB$Inner"))
+    assertThat(
+            Objects.requireNonNull(
+                    aClassFileFinder.findClassFile("com.google.example.simple.src_b.SrcB"))
+                .getContent())
         .isEqualTo(
-            fileSystem.findFile(binBJar + "!/com/google/example/simple/src_b/SrcB$Inner.class"));
+            Objects.requireNonNull(
+                    fileSystem.findFile(binBJar + "!/com/google/example/simple/src_b/SrcB.class"))
+                .contentsToByteArray());
+    assertThat(
+            Objects.requireNonNull(
+                    aClassFileFinder.findClassFile("com.google.example.simple.src_b.SrcB$Inner"))
+                .getContent())
+        .isEqualTo(
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binBJar + "!/com/google/example/simple/src_b/SrcB$Inner.class"))
+                .contentsToByteArray());
 
     Module cResourceModule =
         moduleRegistry.getModuleContainingResourcesOf(getTargetKey("/src_c:src_c"));
     RenderJarClassFileFinder cClassFileFinder = new RenderJarClassFileFinder(cResourceModule);
-    assertThat(cClassFileFinder.findClassFile("com.google.example.simple.src_c.SrcC"))
-        .isEqualTo(fileSystem.findFile(binCJar + "!/com/google/example/simple/src_c/SrcC.class"));
-    assertThat(cClassFileFinder.findClassFile("com.google.example.simple.src_c.SrcC$Inner"))
+    assertThat(
+            Objects.requireNonNull(
+                    cClassFileFinder.findClassFile("com.google.example.simple.src_c.SrcC"))
+                .getContent())
         .isEqualTo(
-            fileSystem.findFile(binCJar + "!/com/google/example/simple/src_c/SrcC$Inner.class"));
+            Objects.requireNonNull(
+                    fileSystem.findFile(binCJar + "!/com/google/example/simple/src_c/SrcC.class"))
+                .contentsToByteArray());
+    assertThat(
+            Objects.requireNonNull(
+                    cClassFileFinder.findClassFile("com.google.example.simple.src_c.SrcC$Inner"))
+                .getContent())
+        .isEqualTo(
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binCJar + "!/com/google/example/simple/src_c/SrcC$Inner.class"))
+                .contentsToByteArray());
   }
 
   /**
@@ -274,7 +379,7 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
    * the resource module.
    */
   @Test
-  public void resourceModule_canFindDependencyClasses() throws ArtifactNotFoundException {
+  public void resourceModule_canFindDependencyClasses() throws Exception {
     AndroidResourceModuleRegistry moduleRegistry =
         AndroidResourceModuleRegistry.getInstance(getProject());
     Module aResourceModule =
@@ -304,38 +409,71 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
                     getArtifactLocation("com/google/example/simple/bin_c.jar")));
     String binCJar = cacheDir.getAbsoluteFile() + "/" + binCCacheEntry.getFileName();
 
-    assertThat(aClassFileFinder.findClassFile("com.google.example.simple.trans_dep_a.TransDepA"))
-        .isEqualTo(
-            fileSystem.findFile(
-                binAJar + "!/com/google/example/simple/trans_dep_a/TransDepA.class"));
     assertThat(
-            aClassFileFinder.findClassFile("com.google.example.simple.trans_dep_a.TransDepA$Inner"))
+            Objects.requireNonNull(
+                    aClassFileFinder.findClassFile(
+                        "com.google.example.simple.trans_dep_a.TransDepA"))
+                .getContent())
         .isEqualTo(
-            fileSystem.findFile(
-                binAJar + "!/com/google/example/simple/trans_dep_a/TransDepA$Inner.class"));
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binAJar + "!/com/google/example/simple/trans_dep_a/TransDepA.class"))
+                .contentsToByteArray());
+    assertThat(
+            Objects.requireNonNull(
+                    aClassFileFinder.findClassFile(
+                        "com.google.example.simple.trans_dep_a.TransDepA$Inner"))
+                .getContent())
+        .isEqualTo(
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binAJar + "!/com/google/example/simple/trans_dep_a/TransDepA$Inner.class"))
+                .contentsToByteArray());
 
-    assertThat(aClassFileFinder.findClassFile("com.google.example.simple.trans_dep_b.TransDepB"))
-        .isEqualTo(
-            fileSystem.findFile(
-                binBJar + "!/com/google/example/simple/trans_dep_b/TransDepB.class"));
     assertThat(
-            aClassFileFinder.findClassFile("com.google.example.simple.trans_dep_b.TransDepB$Inner"))
+            Objects.requireNonNull(
+                    aClassFileFinder.findClassFile(
+                        "com.google.example.simple.trans_dep_b.TransDepB"))
+                .getContent())
         .isEqualTo(
-            fileSystem.findFile(
-                binBJar + "!/com/google/example/simple/trans_dep_b/TransDepB$Inner.class"));
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binBJar + "!/com/google/example/simple/trans_dep_b/TransDepB.class"))
+                .contentsToByteArray());
+    assertThat(
+            Objects.requireNonNull(
+                    aClassFileFinder.findClassFile(
+                        "com.google.example.simple.trans_dep_b.TransDepB$Inner"))
+                .getContent())
+        .isEqualTo(
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binBJar + "!/com/google/example/simple/trans_dep_b/TransDepB$Inner.class"))
+                .contentsToByteArray());
 
     Module cResourceModule =
         moduleRegistry.getModuleContainingResourcesOf(getTargetKey("/src_c:src_c"));
     RenderJarClassFileFinder cClassFileFinder = new RenderJarClassFileFinder(cResourceModule);
-    assertThat(cClassFileFinder.findClassFile("com.google.example.simple.trans_dep_c.TransDepC"))
-        .isEqualTo(
-            fileSystem.findFile(
-                binCJar + "!/com/google/example/simple/trans_dep_c/TransDepC.class"));
     assertThat(
-            cClassFileFinder.findClassFile("com.google.example.simple.trans_dep_c.TransDepC$Inner"))
+            Objects.requireNonNull(
+                    cClassFileFinder.findClassFile(
+                        "com.google.example.simple.trans_dep_c.TransDepC"))
+                .getContent())
         .isEqualTo(
-            fileSystem.findFile(
-                binCJar + "!/com/google/example/simple/trans_dep_c/TransDepC$Inner.class"));
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binCJar + "!/com/google/example/simple/trans_dep_c/TransDepC.class"))
+                .contentsToByteArray());
+    assertThat(
+            Objects.requireNonNull(
+                    cClassFileFinder.findClassFile(
+                        "com.google.example.simple.trans_dep_c.TransDepC$Inner"))
+                .getContent())
+        .isEqualTo(
+            Objects.requireNonNull(
+                    fileSystem.findFile(
+                        binCJar + "!/com/google/example/simple/trans_dep_c/TransDepC$Inner.class"))
+                .contentsToByteArray());
   }
 
   @Test
