@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -53,6 +54,14 @@ public class FileCache {
      */
     OutputArtifactDestinationAndLayout getOutputArtifactDestinationAndLayout(
         OutputArtifactInfo outputArtifact);
+
+    /**
+     * Returns the set of cache paths used by this layout.
+     *
+     * <p>This information is used to ensure that all cache paths are created & cleared when
+     * necessary.
+     */
+    Collection<Path> getCachePaths();
   }
 
   /** A descriptor of the artifact's intended fetch location in a specific cache layout. */

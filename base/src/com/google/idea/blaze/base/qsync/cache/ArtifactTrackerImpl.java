@@ -33,6 +33,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
@@ -196,26 +197,32 @@ public class ArtifactTrackerImpl
 
     FileCacheCreator fileCacheCreator = new FileCacheCreator();
     jarCacheDirectory = projectDirectory.resolve(LIBRARY_DIRECTORY);
-    jarCache = fileCacheCreator.createFileCache(jarCacheDirectory, ImmutableSet.of(), false);
+    jarCache = fileCacheCreator.createFileCache(new DefaultCacheLayout(jarCacheDirectory));
     aarCacheDirectory = projectDirectory.resolve(AAR_DIRECTORY);
-    aarCache = fileCacheCreator.createFileCache(aarCacheDirectory, ImmutableSet.of("aar"), false);
+    aarCache =
+        fileCacheCreator.createFileCache(
+            new DefaultCacheLayout(aarCacheDirectory, ImmutableSet.of("aar")));
     renderJarCacheDirectory = projectDirectory.resolve(RENDER_JARS_DIRECTORY);
     renderJarCache =
-        fileCacheCreator.createFileCache(renderJarCacheDirectory, ImmutableSet.of(), false);
+        fileCacheCreator.createFileCache(new DefaultCacheLayout(renderJarCacheDirectory));
     generatedSrcFileCacheDirectory = projectDirectory.resolve(GEN_SRC_DIRECTORY);
     generatedSrcFileCache =
-        fileCacheCreator.createFileCache(generatedSrcFileCacheDirectory, ImmutableSet.of(), true);
+        fileCacheCreator.createFileCache(
+            new DelegatingCacheLayout(
+                new DefaultCacheLayout(generatedSrcFileCacheDirectory),
+                new JavaSourcesCacheLayout(generatedSrcFileCacheDirectory),
+                new JavaSourcesArchiveCacheLayout(generatedSrcFileCacheDirectory)));
     generatedExternalSrcFileCacheDirectory = projectDirectory.resolve(DEPENDENCIES_SOURCES);
     generatedExternalSrcFileCache =
         fileCacheCreator.createFileCache(
-            generatedExternalSrcFileCacheDirectory, ImmutableSet.of(), false);
+            new DefaultCacheLayout(generatedExternalSrcFileCacheDirectory));
     generatedHeadersDirectory = projectDirectory.resolve(GEN_HEADERS_DIRECTORY);
     generatedHeadersCache =
-        fileCacheCreator.createFileCache(
-            new ArtifactPathCacheLayout(generatedHeadersDirectory), generatedHeadersDirectory);
+        fileCacheCreator.createFileCache(new ArtifactPathCacheLayout(generatedHeadersDirectory));
     appInspectorCacheDirectory = projectDirectory.resolve(APP_INSPECTOR_DIRECTORY);
     appInspectorCache =
-        fileCacheCreator.createFileCache(appInspectorCacheDirectory, ImmutableSet.of("aar"), false);
+        fileCacheCreator.createFileCache(
+            new DefaultCacheLayout(appInspectorCacheDirectory, ImmutableSet.of("aar")));
     cacheDirectoryManager =
         new CacheDirectoryManager(
             projectDirectory.resolve(DIGESTS_DIRECTORY_NAME),
@@ -224,30 +231,14 @@ public class ArtifactTrackerImpl
   }
 
   private static class FileCacheCreator {
-    private final ImmutableList.Builder<Path> cacheDirectories = ImmutableList.builder();
+    private final ImmutableSet.Builder<Path> cacheDirectories = ImmutableSet.builder();
 
-    public FileCache createFileCache(
-        Path cacheDirectory, ImmutableSet<String> zipFileExtensions, boolean handleJavaSources) {
-      // TODO(mathewi) this is a bit messy, make a cleaner way of dealing with zips & java srcs
-      Path cacheDotDirectory = cacheDirectory.resolveSibling("." + cacheDirectory.getFileName());
-      CacheLayout layout =
-          new DefaultCacheLayout(cacheDirectory, cacheDotDirectory, zipFileExtensions);
-      if (handleJavaSources) {
-        layout =
-            new DelegatingCacheLayout(
-                layout,
-                new JavaSourcesCacheLayout(cacheDirectory, cacheDotDirectory),
-                new JavaSourcesArchiveCacheLayout(cacheDirectory));
-      }
-      return createFileCache(layout, cacheDirectory, cacheDotDirectory);
-    }
-
-    public FileCache createFileCache(CacheLayout layout, Path... cacheDirs) {
-      cacheDirectories.add(cacheDirs);
+    public FileCache createFileCache(CacheLayout layout) {
+      cacheDirectories.addAll(layout.getCachePaths());
       return new FileCache(layout);
     }
 
-    public ImmutableList<Path> getCacheDirectories() {
+    public ImmutableCollection<Path> getCacheDirectories() {
       return cacheDirectories.build();
     }
   }
