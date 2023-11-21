@@ -56,9 +56,8 @@ public class JavaSourcesArchiveCacheLayout implements CacheLayout {
       return null;
     }
     String key = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact);
-    String filename = artifactPath.getFileName().toString();
     return new PreparedOutputArtifactDestination(
-        key, cacheDirectory.resolve(ROOT_DIRECTORY_NAME).resolve(filename));
+        key, cacheDirectory.resolve(ROOT_DIRECTORY_NAME).resolve(artifactPath));
   }
 
   @Override

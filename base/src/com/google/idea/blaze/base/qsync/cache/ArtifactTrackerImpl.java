@@ -645,9 +645,10 @@ public class ArtifactTrackerImpl
     Path srcJarDir =
         generatedSrcFileCacheDirectory.resolve(JavaSourcesArchiveCacheLayout.ROOT_DIRECTORY_NAME);
     try (Stream<Path> pathStream =
-        srcJarDir.toFile().exists() ? Files.list(srcJarDir) : Stream.empty()) {
+        srcJarDir.toFile().exists() ? Files.walk(srcJarDir) : Stream.empty()) {
       generatedProjectSrcJars =
           pathStream
+              .filter(Files::isRegularFile)
               .map(ideProjectBasePath::relativize)
               .map(ProjectPath::projectRelative)
               .collect(toImmutableSet());
