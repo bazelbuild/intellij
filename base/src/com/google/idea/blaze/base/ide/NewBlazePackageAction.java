@@ -43,6 +43,11 @@ class NewBlazePackageAction extends BlazeProjectAction implements DumbAware {
   }
 
   @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.SUPPORTED;
+  }
+
+  @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent event) {
     IdeView view = event.getData(LangDataKeys.IDE_VIEW);
     if (view == null) {
