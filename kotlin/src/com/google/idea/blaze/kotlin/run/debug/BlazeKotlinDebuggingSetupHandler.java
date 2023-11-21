@@ -18,6 +18,8 @@ package com.google.idea.blaze.kotlin.run.debug;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.java.run.BlazeJavaDebuggingSetupHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.Key;
@@ -40,6 +42,14 @@ public class BlazeKotlinDebuggingSetupHandler implements BlazeJavaDebuggingSetup
   public boolean setUpDebugging(ExecutionEnvironment env) {
       BlazeCommandRunConfiguration config =
           BlazeCommandRunConfigurationRunner.getConfiguration(env);
+    if (Blaze.getProjectType(config.getProject()).equals(ProjectType.QUERY_SYNC)) {
+      if (KotlinProjectTraversingService.getInstance().dependsOnKotlinxCoroutinesLib(config)) {
+        getCoroutinesDebuggingLib(null, config)
+            .ifPresent(path -> env.getCopyableUserData(COROUTINES_LIB_PATH).set(path));
+      }
+      return true;
+    }
+
       Optional<ArtifactLocation> libArtifact =
           KotlinProjectTraversingService.getInstance().findKotlinxCoroutinesLib(config);
 
