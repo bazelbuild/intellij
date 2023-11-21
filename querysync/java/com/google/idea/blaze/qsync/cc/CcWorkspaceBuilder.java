@@ -174,6 +174,13 @@ public class CcWorkspaceBuilder {
   }
 
   private void visitTarget(Label label, CcTargetInfo target) {
+    if (!graph.targetMap().containsKey(label)) {
+      // This target is no longer present in the project. Ignore it.
+      // We should really clean up the dependency cache itself to remove any artifacts relating to
+      // no-longer-present targets, but that will be a lot more work. For now, just ensure we don't
+      // crash.
+      return;
+    }
     ProjectTarget projectTarget = Preconditions.checkNotNull(graph.targetMap().get(label));
 
     CcToolchainInfo toolchain = ccDependenciesInfo.toolchainInfoMap().get(target.getToolchainId());
