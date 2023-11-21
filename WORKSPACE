@@ -223,9 +223,9 @@ http_archive(
     url = CLION_232_URL,
 )
 
-CLION_233_SHA = "11f0a16418bc9626ca7fd20f7032997e673ac53017feb3c23441a72da6a079bd"
+CLION_233_SHA = "f6bc6d55af7971a494d272260f192f85bf5cef15e1073b93450ad5fb56154b1b"
 
-CLION_233_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/233.11555.2-EAP-SNAPSHOT/clion-233.11555.2-EAP-SNAPSHOT.zip"
+CLION_233_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/233.11799.37-EAP-SNAPSHOT/clion-233.11799.37-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "clion_2023_3",
@@ -242,9 +242,9 @@ java_import(
 )
 """
 
-DEVKIT_233_SHA = "89ad4c3718c993622946f4448f82c1159451418f63daaad0ef7ab0a2e612fef3"
+DEVKIT_233_SHA = "425cefbcb7a3efaf2b1eb6da683211a976b0496c96a967769971e43217c29c88"
 
-DEVKIT_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/233.11799.21/DevKit-233.11799.21.zip"
+DEVKIT_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/233.11799.32/DevKit-233.11799.32.zip"
 
 http_archive(
     name = "devkit_2023_3",
@@ -515,9 +515,9 @@ http_archive(
     url = SCALA_PLUGIN_232_URL,
 )
 
-SCALA_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.3.10/org.intellij.scala-2023.3.10.zip"
+SCALA_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.3.13/org.intellij.scala-2023.3.13.zip"
 
-SCALA_PLUGIN_233_SHA = "3bb42371b33fbacde805f63c1e0a6e05913eca1314eb23250ea1e147482dc0cf"
+SCALA_PLUGIN_233_SHA = "77175dd633ac4c57afc0b3f8f9b368c3ce32c5ed1d7f83b7212222fbb9acd177"
 
 http_archive(
     name = "scala_2023_3",
