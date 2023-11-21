@@ -67,7 +67,7 @@ public final class JavaTestFastBuildAspectTest {
     FastBuildBlazeData data =
             getDataForTarget(aspectLoader.testRelative(":FooTestWithCustomMainClass"), fixture);
     assertThat(data.getJavaInfo().getMainClass())
-            .isEqualTo("com.google.idea.blaze.aspect.java.javatest.mock.MainClass");
+            .isEqualTo("com.google.idea.blaze.aspect.java.javatest.fake.TestRunner");
   }
 
 

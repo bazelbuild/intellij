@@ -69,7 +69,8 @@ fast_build_aspect_test_fixture(
 java_test(
     name = "FooTestWithCustomMainClass",
     srcs = ["FooTest.java"],
-    main_class = "com.google.idea.blaze.aspect.java.javatest.mock.MainClass",
+    main_class = "com.google.idea.blaze.aspect.java.javatest.fake.TestRunner",
+    tags = ["manual"],  # This test is not meant to be ran on its own. The main class represents a custom test runner.
     test_class = "com.google.idea.blaze.aspect.java.javatest.FooTest",
     deps = ["@junit//jar"],
 )
