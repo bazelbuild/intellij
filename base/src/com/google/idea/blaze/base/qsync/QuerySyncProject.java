@@ -435,6 +435,15 @@ public class QuerySyncProject {
     return projectDefinition.isIncluded(workspaceRelative);
   }
 
+  /** Returns all external dependencies of a given label */
+  public ImmutableSet<Label> externalDependenciesFor(Label label) {
+    return snapshotHolder
+        .getCurrent()
+        .map(BlazeProjectSnapshot::graph)
+        .map(graph -> graph.getTransitiveExternalDependencies(label))
+        .orElse(ImmutableSet.of());
+  }
+
   private void writeToDisk(BlazeProjectSnapshot snapshot) throws IOException {
     File f = snapshotFilePath.toFile();
     if (!f.getParentFile().exists()) {
