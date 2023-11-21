@@ -212,7 +212,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
               "test",
               BlazeFlags.getToolTagFlag(),
               "--java_debug",
-              "--test_arg=--wrapper_script_flag=--debug=5005",
+              "--test_arg=--wrapper_script_flag=--debug=127.0.0.1:5005",
               "--",
               "//label:java_test_suite_rule"));
   }
