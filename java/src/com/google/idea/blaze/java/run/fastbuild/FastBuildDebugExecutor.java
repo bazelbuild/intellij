@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.LayeredIcon;
 import icons.BlazeIcons;
 import javax.swing.Icon;
+
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /** An executor for debugging fast builds. */
@@ -30,7 +32,16 @@ final class FastBuildDebugExecutor extends DefaultDebugExecutor {
   public static final String ID = "BlazeFastDebug";
 
   @Override
-  public String getStartActionText() {
+  @Nls(capitalization = Nls.Capitalization.Title)
+  public @NotNull String getStartActionText(@NotNull String configurationName) {
+    if(configurationName.isEmpty()){
+      return getStartActionText();
+    }
+    return String.format("%s: '%s'", getStartActionText(), shortenNameIfNeeded(configurationName));
+  }
+
+  @Override
+  public @NotNull String getStartActionText() {
     return "Fast Debug";
   }
 
