@@ -200,8 +200,8 @@ def _get_followed_java_dependency_infos(rule):
         if hasattr(rule.attr, attr) and (not kinds or rule.kind in kinds):
             to_add = getattr(rule.attr, attr)
             if type(to_add) == "list":
-                deps += to_add
-            elif to_add != None:
+                deps += [t for t in to_add if type(t) == "Target"]
+            elif type(to_add) == "Target":
                 deps.append(to_add)
 
     return {
@@ -312,8 +312,7 @@ def _collect_own_java_artifacts(
                     else:
                         own_gensrc_files.append(file)
         if hasattr(rule.attr, "srcjar"):
-            # The "srcjar" attribute might be a label
-            if rule.attr.srcjar and hasattr(rule.attr.srcjar, "files"):
+            if rule.attr.srcjar and type(rule.attr.srcjar) == "Target":
                 for file in rule.attr.srcjar.files.to_list():
                     if file.is_source:
                         own_srcjar_files.append(file.path)
