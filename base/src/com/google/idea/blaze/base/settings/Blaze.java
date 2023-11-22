@@ -60,8 +60,12 @@ public class Blaze {
       return ProjectType.UNKNOWN;
     }
 
-    BlazeImportSettings blazeImportSettings =
-        BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    BlazeImportSettingsManager blazeImportSettingsManager =
+        BlazeImportSettingsManager.getInstance(project);
+    if (blazeImportSettingsManager == null) {
+      return ProjectType.UNKNOWN;
+    }
+    BlazeImportSettings blazeImportSettings = blazeImportSettingsManager.getImportSettings();
     if (blazeImportSettings == null) {
       return ProjectType.UNKNOWN;
     }

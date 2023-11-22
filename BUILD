@@ -36,6 +36,7 @@ test_suite(
         "//plugin_dev:integration_tests",
         "//scala:integration_tests",
         "//scala:unit_tests",
+        "//skylark:unit_tests",
     ],
 )
 
@@ -78,6 +79,7 @@ test_suite(
         "//dart:unit_tests",
         "//java:integration_tests",
         "//java:unit_tests",
+        "//skylark:unit_tests",
     ],
 )
 
@@ -98,6 +100,7 @@ test_suite(
         "//cpp:unit_tests",
         "//dart:unit_tests",
         "//python:unit_tests",
+        "//skylark:unit_tests",
     ],
 )
 

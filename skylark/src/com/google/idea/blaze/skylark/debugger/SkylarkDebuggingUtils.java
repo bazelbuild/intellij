@@ -35,6 +35,7 @@ public final class SkylarkDebuggingUtils {
       new BoolExperiment("skylark.debugging.enabled", true);
 
   public static boolean debuggingEnabled(Project project) {
+    // In non-bazel projects, don't even try to debug skylark.
     if (Blaze.getProjectType(project).equals(ProjectType.UNKNOWN)) {
       return false;
     }
