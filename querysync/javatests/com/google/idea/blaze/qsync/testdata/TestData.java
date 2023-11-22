@@ -42,6 +42,7 @@ public enum TestData {
   BUILDINCLUDES_QUERY("buildincludes"),
   FILEGROUP_QUERY("filegroup"),
   CC_LIBRARY_QUERY("cc"),
+  CC_EXTERNAL_DEP_QUERY("cc_externaldep"),
   CC_MULTISRC_QUERY("cc_multisrc"),
   PROTO_ONLY_QUERY("protoonly"),
   NESTED_PROTO_QUERY("nestedproto");
@@ -81,5 +82,9 @@ public enum TestData {
     return srcPaths.stream()
         .map(p -> Label.fromPackageAndName(ROOT.resolve(p), p.toString()))
         .collect(toImmutableList());
+  }
+
+  public Label getAssumedOnlyLabel() {
+    return Iterables.getOnlyElement(getAssumedLabels());
   }
 }

@@ -24,15 +24,19 @@ import java.util.Optional;
 
 /** A language class that the query sync supports/needs to care about. */
 public enum QuerySyncLanguage {
-  JAVA(LanguageClass.LANGUAGE_CLASS_JAVA),
-  KOTLIN(LanguageClass.LANGUAGE_CLASS_KOTLIN),
-  CC(LanguageClass.LANGUAGE_CLASS_CC);
+  JAVA(LanguageClass.LANGUAGE_CLASS_JAVA, DependencyTrackingBehavior.EXTERNAL_DEPENDENCIES),
+  KOTLIN(LanguageClass.LANGUAGE_CLASS_KOTLIN, DependencyTrackingBehavior.EXTERNAL_DEPENDENCIES),
+  CC(LanguageClass.LANGUAGE_CLASS_CC, DependencyTrackingBehavior.SELF);
 
-  QuerySyncLanguage(LanguageClassProto.LanguageClass protoValue) {
+  QuerySyncLanguage(
+      LanguageClassProto.LanguageClass protoValue,
+      DependencyTrackingBehavior dependencyTrackingBehavior) {
     this.protoValue = protoValue;
+    this.dependencyTrackingBehavior = dependencyTrackingBehavior;
   }
 
   public final LanguageClassProto.LanguageClass protoValue;
+  public final DependencyTrackingBehavior dependencyTrackingBehavior;
 
   public static Optional<QuerySyncLanguage> fromProto(LanguageClassProto.LanguageClass proto) {
     for (QuerySyncLanguage lang : values()) {

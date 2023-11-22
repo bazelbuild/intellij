@@ -60,7 +60,7 @@ public class QuerySyncNodeDecorator implements ProjectViewNodeDecorator {
       return;
     }
     Set<Label> targets = deps.getPendingTargets(workspaceRoot.relativize(vf));
-    if (targets != null && !targets.isEmpty()) {
+    if (!targets.isEmpty()) {
       String text = data.getPresentableText();
       data.clearText();
       data.addText(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);

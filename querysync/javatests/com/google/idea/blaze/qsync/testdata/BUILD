@@ -134,6 +134,13 @@ genquery(
 )
 
 genquery(
+    name = "cc_external_dep_query",
+    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/cc_externaldep:*",
+    opts = ["--output=streamed_proto"],
+    scope = scopeForCcPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/cc_externaldep"),
+)
+
+genquery(
     name = "cc_multisrc_query",
     expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/cc_multisrc:*",
     opts = ["--output=streamed_proto"],
@@ -171,6 +178,7 @@ java_library(
         ":android_aidl_source_query",
         ":android_lib_query",
         ":buildincludes_query",
+        ":cc_external_dep_query",
         ":cc_library_query",
         ":cc_multisrc_query",
         ":filegroup_query",
