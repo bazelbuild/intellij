@@ -1,11 +1,11 @@
 /*
- * Copyright 2023 The Bazel Authors. All rights reserved.
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.tools.idea.rendering;
+package com.google.idea.blaze.android.rendering;
 
+import com.android.tools.idea.rendering.RenderErrorContributor;
+import com.android.tools.idea.rendering.RenderErrorContributorImpl;
 import com.android.tools.idea.ui.designer.EditorDesignSurface;
 import com.android.tools.rendering.RenderResultCompat;
 import com.intellij.openapi.actionSystem.DataContext;
-import groovyjarjarantlr4.v4.runtime.misc.Nullable;
+import org.jetbrains.annotations.Nullable;
 
-/** Contribute blaze specific render errors. */
-public class RenderErrorContributorCompat extends RenderErrorContributorImpl {
-  public RenderErrorContributorCompat(
+/** Collects and uploads render errors by hooking into {@link RenderErrorContributor}. */
+abstract class RenderErrorLoggingContributorCompat extends RenderErrorContributorImpl {
+  public RenderErrorLoggingContributorCompat(
       EditorDesignSurface surface, RenderResultCompat result, @Nullable DataContext dataContext) {
+    super(surface, result.get());
+  }
+
+  public RenderErrorLoggingContributorCompat(
+      EditorDesignSurface surface, RenderResultCompat result) {
     super(surface, result.get());
   }
 }
