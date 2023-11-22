@@ -71,6 +71,11 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
           });
 
   @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.DISABLED;
+  }
+
+  @Override
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
     // Hide and disable this action for Google-internal usage.
     if (!enabled.getValue()

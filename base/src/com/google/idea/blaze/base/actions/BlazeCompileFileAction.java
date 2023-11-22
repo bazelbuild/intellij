@@ -30,6 +30,11 @@ import java.io.File;
 class BlazeCompileFileAction extends BlazeProjectAction {
 
   @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.DISABLED;
+  }
+
+  @Override
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
     ActionPresentationHelper.of(e)
         .disableIf(getTargets(e).isEmpty())
