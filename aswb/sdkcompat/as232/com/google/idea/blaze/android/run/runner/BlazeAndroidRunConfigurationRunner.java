@@ -25,6 +25,7 @@ import com.android.tools.idea.execution.common.ApplicationDeployer;
 import com.android.tools.idea.execution.common.ComponentLaunchOptions;
 import com.android.tools.idea.execution.common.DeployOptions;
 import com.android.tools.idea.execution.common.stats.RunStats;
+import com.android.tools.idea.projectsystem.ApplicationProjectContext;
 import com.android.tools.idea.run.ApkProvider;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.DeviceFutures;
@@ -210,6 +211,7 @@ public final class BlazeAndroidRunConfigurationRunner
 
     AndroidConfigurationExecutor configurationExecutor;
     ApplicationIdProvider appIdProvider = runContext.getApplicationIdProvider();
+    ApplicationProjectContext applicationProjectContext = runContext.getApplicationProjectContext();
     ApkProvider apkProvider =
         BlazeApkProviderService.getInstance()
             .getApkProvider(env.getProject(), runContext.getBuildStep());
@@ -223,15 +225,33 @@ public final class BlazeAndroidRunConfigurationRunner
     if (launchOptions instanceof TileLaunchOptions) {
       configurationExecutor =
           new AndroidTileConfigurationExecutor(
-              env, deviceFutures, settings, appIdProvider, apkProvider, deployer);
+              env,
+              deviceFutures,
+              settings,
+              appIdProvider,
+              apkProvider,
+              applicationProjectContext,
+              deployer);
     } else if (launchOptions instanceof WatchFaceLaunchOptions) {
       configurationExecutor =
           new AndroidWatchFaceConfigurationExecutor(
-              env, deviceFutures, settings, appIdProvider, apkProvider, deployer);
+              env,
+              deviceFutures,
+              settings,
+              appIdProvider,
+              apkProvider,
+              applicationProjectContext,
+              deployer);
     } else if (launchOptions instanceof ComplicationLaunchOptions) {
       configurationExecutor =
           new AndroidComplicationConfigurationExecutor(
-              env, deviceFutures, settings, appIdProvider, apkProvider, deployer);
+              env,
+              deviceFutures,
+              settings,
+              appIdProvider,
+              apkProvider,
+              applicationProjectContext,
+              deployer);
     } else {
       throw new RuntimeException("Unknown launch options " + launchOptions.getClass().getName());
     }
