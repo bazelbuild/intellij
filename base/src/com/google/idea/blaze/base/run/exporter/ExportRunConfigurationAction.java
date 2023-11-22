@@ -29,7 +29,7 @@ public class ExportRunConfigurationAction extends BlazeProjectAction implements 
 
   @Override
   protected QuerySyncStatus querySyncSupport() {
-    return QuerySyncStatus.DISABLED;
+    return QuerySyncStatus.SUPPORTED;
   }
 
   @Override
