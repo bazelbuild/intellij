@@ -46,12 +46,4 @@ public class FullSyncProjectAction extends BlazeProjectSyncAction {
   protected QuerySyncStatus querySyncSupport() {
     return QuerySyncStatus.SUPPORTED;
   }
-
-  @Override
-  protected void updateForBlazeProject(Project project, AnActionEvent e) {
-    super.updateForBlazeProject(project, e);
-    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
-      e.getPresentation().setVisible(false);
-    }
-  }
 }
