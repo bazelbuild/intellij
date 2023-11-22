@@ -744,3 +744,10 @@ compat_repositories()
 
 # Register custom java 17 toolchain
 register_toolchains("//:custom_java_17_toolchain_definition")
+
+# abseil
+http_archive(
+  name = "com_google_absl",
+  urls = ["https://github.com/abseil/abseil-cpp/archive/98eb410c93ad059f9bba1bf43f5bb916fc92a5ea.zip"],
+  strip_prefix = "abseil-cpp-98eb410c93ad059f9bba1bf43f5bb916fc92a5ea",
+)

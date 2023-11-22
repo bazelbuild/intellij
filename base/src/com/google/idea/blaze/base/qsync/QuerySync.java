@@ -23,7 +23,7 @@ import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.intellij.openapi.project.Project;
 import java.util.function.Supplier;
 
-/** Holder class for basic information about querysync, e.g. is it enabled? */
+/** Holder class for basic information about querysync, e.g. is it enabled? Test comment. */
 public class QuerySync {
 
   private static final FeatureRolloutExperiment ENABLED =
