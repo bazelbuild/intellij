@@ -41,7 +41,7 @@ class NewBlazePackageAction extends BlazeProjectAction implements DumbAware {
 
   @Override
   protected QuerySyncStatus querySyncSupport() {
-    return QuerySyncStatus.DISABLED;
+    return QuerySyncStatus.SUPPORTED;
   }
 
   @Override
