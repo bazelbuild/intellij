@@ -8,6 +8,8 @@ v2023.11.21
 * fix: Do not complete ignored directories #5573
 * fix: Fix NPE when accessing xcodeProperties #5714
 * fix: Pass -include compilation flags down to OC language model #5645
+* fix: Rename 'fast' run configurations to 'Fast Run' and 'Fast Debug' … #5743
+* Fix Fast Test with Bzlmod enabled
 
 v2023.11.07
 ===========
