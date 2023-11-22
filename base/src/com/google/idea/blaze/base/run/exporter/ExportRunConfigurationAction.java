@@ -28,6 +28,11 @@ import com.intellij.openapi.project.Project;
 public class ExportRunConfigurationAction extends BlazeProjectAction implements DumbAware {
 
   @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.DISABLED;
+  }
+
+  @Override
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
     ActionPresentationHelper.of(e)
         .disableIf(RunManager.getInstance(project).getAllConfigurationsList().isEmpty())

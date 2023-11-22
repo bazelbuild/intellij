@@ -23,6 +23,11 @@ import com.intellij.openapi.project.Project;
 class BlazeMakeProjectAction extends BlazeProjectAction {
 
   @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.DISABLED;
+  }
+
+  @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     EventLoggingService.getInstance().logEvent(getClass(), "make");
     BlazeBuildService.getInstance(project).buildProject();

@@ -41,6 +41,11 @@ import java.util.List;
 class DetachAllSourceJarsAction extends BlazeProjectAction {
 
   @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.DISABLED;
+  }
+
+  @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     detachAll(project);
   }
