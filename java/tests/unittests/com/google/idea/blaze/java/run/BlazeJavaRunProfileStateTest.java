@@ -308,11 +308,10 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
       return ProjectViewSet.builder().build();
     }
 
-    @Nullable
     @Override
     public ProjectViewSet reloadProjectView(
         BlazeContext context, WorkspacePathResolver workspacePathResolver) {
-      return ProjectViewSet.builder().build();
+      return ProjectViewSet.EMPTY;
     }
   }
 

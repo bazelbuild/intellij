@@ -45,6 +45,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder.ProjectProtoTransform;
@@ -55,7 +56,6 @@ import com.google.idea.blaze.qsync.VcsStateDiffer;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.intellij.openapi.project.Project;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -78,7 +78,7 @@ public class ProjectLoader {
   }
 
   @Nullable
-  public QuerySyncProject loadProject(BlazeContext context) throws IOException {
+  public QuerySyncProject loadProject(BlazeContext context) throws BuildException {
     BlazeImportSettings importSettings =
         Preconditions.checkNotNull(
             BlazeImportSettingsManager.getInstance(project).getImportSettings());
@@ -102,7 +102,7 @@ public class ProjectLoader {
 
     ProjectViewManager projectViewManager = ProjectViewManager.getInstance(project);
     ProjectViewSet projectViewSet =
-        checkNotNull(projectViewManager.reloadProjectView(context, workspacePathResolver));
+        projectViewManager.reloadProjectView(context, workspacePathResolver);
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
             .add(projectViewSet)

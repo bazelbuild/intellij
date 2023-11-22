@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -32,7 +31,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.Scope;
-import com.google.idea.blaze.base.scope.ScopedOperation;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
@@ -45,6 +43,8 @@ import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -60,6 +60,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
@@ -109,6 +110,10 @@ public class QuerySyncManager implements Disposable {
     UNKNOWN
   }
 
+  interface ThrowingScopedOperation {
+    void execute(BlazeContext context) throws BuildException;
+  }
+
   public static QuerySyncManager getInstance(Project project) {
     return project.getService(QuerySyncManager.class);
   }
@@ -149,15 +154,16 @@ public class QuerySyncManager implements Disposable {
         taskOrigin);
   }
 
-  public void loadProject(BlazeContext context) {
+  public void loadProject(BlazeContext context) throws BuildException {
     try {
       QuerySyncProject newProject = loader.loadProject(context);
       if (!context.hasErrors()) {
-        loadedProject = Preconditions.checkNotNull(newProject);
-        loadedProject.sync(context, loadedProject.readSnapshotFromDisk(context));
+        Optional<PostQuerySyncData> projectData = newProject.readSnapshotFromDisk(context);
+        loadedProject = newProject;
+        loadedProject.sync(context, projectData);
       }
-    } catch (Exception e) {
-      context.handleException("Failed to load project", e);
+    } catch (IOException e) {
+      throw new BuildException("Failed to load project", e);
     }
   }
 
@@ -208,50 +214,47 @@ public class QuerySyncManager implements Disposable {
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> fullSync(
       QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
-    if (!isProjectLoaded() || projectDefinitionHasChanged()) {
-      return run(
-          "Updating project structure",
-          "Re-importing project",
-          querySyncActionStats,
-          this::loadProject,
-          taskOrigin);
-
-    } else {
-      return run(
-          "Updating project structure",
-          "Re-importing project",
-          querySyncActionStats,
-          loadedProject::fullSync,
-          taskOrigin);
-    }
+    return run(
+        "Updating project structure",
+        "Re-importing project",
+        querySyncActionStats,
+        context -> {
+          if (!isProjectLoaded()) {
+            loadProject(context);
+          } else if (projectDefinitionHasChanged(context)) {
+            context.output(PrintOutput.log("Project definition has changed, reloading."));
+            loadProject(context);
+          } else {
+            loadedProject.fullSync(context);
+          }
+        },
+        taskOrigin);
   }
 
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> deltaSync(
       QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
     assertProjectLoaded();
-    if (projectDefinitionHasChanged()) {
-      return run(
-          "Updating project structure",
-          "Re-importing project",
-          querySyncActionStats,
-          this::loadProject,
-          taskOrigin);
-    } else {
-      return run(
-          "Updating project structure",
-          "Refreshing project",
-          querySyncActionStats,
-          loadedProject::deltaSync,
-          taskOrigin);
-    }
+    return run(
+        "Updating project structure",
+        "Refreshing project",
+        querySyncActionStats,
+        context -> {
+          if (projectDefinitionHasChanged(context)) {
+            context.output(PrintOutput.log("Project definition has changed, reloading."));
+            loadProject(context);
+          } else {
+            loadedProject.deltaSync(context);
+          }
+        },
+        taskOrigin);
   }
 
   private ListenableFuture<Boolean> run(
       String title,
       String subTitle,
       QuerySyncActionStatsScope querySyncActionStatsScope,
-      ScopedOperation operation,
+      ThrowingScopedOperation operation,
       TaskOrigin taskOrigin) {
     SettableFuture<Boolean> result = SettableFuture.create();
     BlazeSyncStatus syncStatus = BlazeSyncStatus.getInstance(project);
@@ -290,7 +293,7 @@ public class QuerySyncManager implements Disposable {
       String title,
       String subTitle,
       QuerySyncActionStatsScope querySyncActionStatsScope,
-      ScopedOperation operation,
+      ThrowingScopedOperation operation,
       TaskOrigin taskOrigin) {
     querySyncActionStatsScope.getBuilder().setTaskOrigin(taskOrigin);
     return ProgressiveTaskWithProgressIndicator.builder(project, title)
@@ -321,7 +324,11 @@ public class QuerySyncManager implements Disposable {
                           .push(querySyncActionStatsScope)
                           .push(new ProblemsViewScope(project, FocusBehavior.ALWAYS))
                           .push(new IdeaLogScope());
-                      operation.execute(context);
+                      try {
+                        operation.execute(context);
+                      } catch (Exception e) {
+                        context.handleException(title + " failed", e);
+                      }
                       return !context.hasErrors();
                     }));
   }
@@ -411,10 +418,10 @@ public class QuerySyncManager implements Disposable {
    *
    * @return true if the {@link ProjectDefinition} has changed.
    */
-  private boolean projectDefinitionHasChanged() {
+  private boolean projectDefinitionHasChanged(BlazeContext context) throws BuildException {
     // Ensure edits to the project view and any imports have been saved
     SaveUtil.saveAllFiles();
-    return !loadedProject.isDefinitionCurrent();
+    return !loadedProject.isDefinitionCurrent(context);
   }
 
   /** Displays error notification popup balloon in IDE. */

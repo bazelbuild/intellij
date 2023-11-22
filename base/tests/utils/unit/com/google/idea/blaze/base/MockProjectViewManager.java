@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
 /** Provides a {@link ProjectViewSet} for integration tests. */
 public class MockProjectViewManager extends ProjectViewManager {
 
-  private ProjectViewSet projectViewSet = ProjectViewSet.builder().build();
+  private ProjectViewSet projectViewSet = ProjectViewSet.EMPTY;
 
   public MockProjectViewManager() {}
 
@@ -50,7 +50,6 @@ public class MockProjectViewManager extends ProjectViewManager {
     return getProjectViewSet();
   }
 
-  @Nullable
   @Override
   public ProjectViewSet reloadProjectView(
       BlazeContext context, WorkspacePathResolver workspacePathResolver) {

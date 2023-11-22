@@ -181,11 +181,10 @@ public class BlazeClassJarProviderTest extends BlazeTestCase {
       return null;
     }
 
-    @Nullable
     @Override
     public ProjectViewSet reloadProjectView(
         BlazeContext context, WorkspacePathResolver workspacePathResolver) {
-      return null;
+      return ProjectViewSet.EMPTY;
     }
   }
 

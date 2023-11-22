@@ -15,8 +15,6 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -211,28 +209,20 @@ public class QuerySyncProject {
     return buildSystem;
   }
 
-  public void fullSync(BlazeContext context) {
-    try {
-      sync(context, Optional.empty());
-    } catch (Exception e) {
-      context.handleException("Project full sync failed", e);
-    }
+  public void fullSync(BlazeContext context) throws BuildException {
+    sync(context, Optional.empty());
   }
 
-  public void deltaSync(BlazeContext context) {
-    try {
-      syncWithCurrentSnapshot(context);
-    } catch (Exception e) {
-      context.handleException("Project delta sync failed", e);
-    }
+  public void deltaSync(BlazeContext context) throws BuildException {
+    syncWithCurrentSnapshot(context);
   }
 
-  private void syncWithCurrentSnapshot(BlazeContext context) throws Exception {
+  private void syncWithCurrentSnapshot(BlazeContext context) throws BuildException {
     sync(context, snapshotHolder.getCurrent().map(BlazeProjectSnapshot::queryData));
   }
 
   public void sync(BlazeContext parentContext, Optional<PostQuerySyncData> lastQuery)
-      throws Exception {
+      throws BuildException {
     try (BlazeContext context = BlazeContext.create(parentContext)) {
       context.push(new SyncQueryStatsScope());
       try {
@@ -258,6 +248,8 @@ public class QuerySyncProject {
               SyncMode.FULL,
               SyncResult.SUCCESS);
         }
+      } catch (IOException e) {
+        throw new BuildException(e);
       } finally {
         for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
           // A query sync specific callback.
@@ -340,7 +332,8 @@ public class QuerySyncProject {
     return dependencyTracker;
   }
 
-  public void enableAnalysis(BlazeContext context, Set<Label> projectTargets) {
+  public void enableAnalysis(BlazeContext context, Set<Label> projectTargets)
+      throws BuildException {
     try {
       if (QuerySyncSettings.getInstance().syncBeforeBuild()) {
         syncWithCurrentSnapshot(context);
@@ -349,8 +342,8 @@ public class QuerySyncProject {
           PrintOutput.output(
               "Building dependencies for:\n  " + Joiner.on("\n  ").join(projectTargets)));
       build(context, projectTargets);
-    } catch (Exception e) {
-      context.handleException("Failed to build dependencies", e);
+    } catch (IOException e) {
+      throw new BuildException("Failed to build dependencies", e);
     }
   }
 
@@ -358,13 +351,13 @@ public class QuerySyncProject {
     return !getProjectTargets(BlazeContext.create(), workspacePath).isEmpty();
   }
 
-  public void enableRenderJar(BlazeContext context, PsiFile psiFile) {
+  public void enableRenderJar(BlazeContext context, PsiFile psiFile) throws BuildException {
     try {
       Path path = Paths.get(psiFile.getVirtualFile().getPath());
       String rel = workspaceRoot.path().relativize(path).toString();
       buildRenderJar(context, ImmutableList.of(WorkspacePath.createIfValid(rel).asPath()));
-    } catch (Exception e) {
-      context.handleException("Failed to build render jar", e);
+    } catch (IOException e) {
+      throw new BuildException("Failed to build render jar", e);
     }
   }
 
@@ -390,10 +383,9 @@ public class QuerySyncProject {
    * @return true if the stored {@link ProjectDefinition} matches that derived from the {@link
    *     ProjectViewSet}
    */
-  public boolean isDefinitionCurrent() {
+  public boolean isDefinitionCurrent(BlazeContext context) throws BuildException {
     ProjectViewSet projectViewSet =
-        checkNotNull(
-            projectViewManager.reloadProjectView(BlazeContext.create(), workspacePathResolver));
+        projectViewManager.reloadProjectView(context, workspacePathResolver);
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
             .add(projectViewSet)
