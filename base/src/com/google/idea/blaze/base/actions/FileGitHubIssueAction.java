@@ -72,7 +72,7 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
 
   @Override
   protected QuerySyncStatus querySyncSupport() {
-    return QuerySyncStatus.DISABLED;
+    return QuerySyncStatus.SUPPORTED;
   }
 
   @Override
