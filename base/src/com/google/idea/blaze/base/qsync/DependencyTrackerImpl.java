@@ -36,6 +36,7 @@ import com.google.idea.blaze.common.PrintOutput.OutputType;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.DependencyTrackingBehavior;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
@@ -57,11 +58,13 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 
 /**
  * A file that tracks what files in the project can be analyzed and what is the status of their
  * dependencies.
+ *
+ * <p>The dependencies tracked for a target depends on its {@link DependencyTrackingBehavior}, which
+ * is in turn determined by the source code language of the target.
  */
 public class DependencyTrackerImpl implements DependencyTracker {
 
@@ -91,21 +94,31 @@ public class DependencyTrackerImpl implements DependencyTracker {
    * have pending dependencies.
    */
   @Override
-  @Nullable
   public Set<Label> getPendingExternalDeps(Set<Label> projectTargets) {
-    Optional<BlazeProjectSnapshot> currentSnapshot = blazeProject.getCurrent();
-    if (currentSnapshot.isEmpty()) {
-      return null;
+    BlazeProjectSnapshot currentSnapshot = blazeProject.getCurrent().orElse(null);
+    if (currentSnapshot == null) {
+      return ImmutableSet.of();
     }
 
     ImmutableList.Builder<ImmutableSet<Label>> targetSets = ImmutableList.builder();
     for (Label projectTarget : projectTargets) {
-      ImmutableSet<Label> targets =
-          currentSnapshot.get().graph().getTransitiveExternalDependencies(projectTarget);
-      if (targets == null) {
-        return null;
+      ImmutableSet<DependencyTrackingBehavior> depTracking =
+          currentSnapshot.graph().getDependencyTrackingBehaviors(projectTarget);
+
+      ImmutableSet.Builder<Label> deps = ImmutableSet.builder();
+      for (DependencyTrackingBehavior behavior : depTracking) {
+        switch (behavior) {
+          case EXTERNAL_DEPENDENCIES:
+            deps.addAll(currentSnapshot.graph().getTransitiveExternalDependencies(projectTarget));
+            break;
+          case SELF:
+            // For C/C++, we don't need to build external deps, but we do need to extract
+            // compilation information for the target itself.
+            deps.add(projectTarget);
+            break;
+        }
       }
-      targetSets.add(targets);
+      targetSets.add(deps.build());
     }
 
     Set<Label> cachedTargets = artifactTracker.getLiveCachedTargets();
@@ -113,22 +126,21 @@ public class DependencyTrackerImpl implements DependencyTracker {
         .map(targets -> Sets.difference(targets, cachedTargets))
         .min(Comparator.comparingInt(SetView::size))
         .map(SetView::immutableCopy)
-        .orElse(null);
+        .orElse(ImmutableSet.of());
   }
 
   /** Recursively get all the transitive deps outside the project */
   @Override
-  @Nullable
   public Set<Label> getPendingTargets(Path workspaceRelativePath) {
     Preconditions.checkState(!workspaceRelativePath.isAbsolute(), workspaceRelativePath);
 
     Optional<BlazeProjectSnapshot> currentSnapshot = blazeProject.getCurrent();
     if (currentSnapshot.isEmpty()) {
-      return null;
+      return ImmutableSet.of();
     }
     ImmutableSet<Label> owners = currentSnapshot.get().getTargetOwners(workspaceRelativePath);
     if (owners == null) {
-      return null;
+      return ImmutableSet.of();
     }
     return getPendingExternalDeps(owners);
   }
@@ -252,10 +264,24 @@ public class DependencyTrackerImpl implements DependencyTracker {
       BlazeProjectSnapshot snapshot, Set<Label> projectTargets) {
     ImmutableSet<Label> externalDeps =
         projectTargets.stream()
+            .filter(
+                t ->
+                    snapshot.graph().getDependencyTrackingBehaviors(t).stream()
+                        .anyMatch(DependencyTrackerImpl::shouldIncludeExternalDependencies))
             .flatMap(t -> snapshot.graph().getTransitiveExternalDependencies(t).stream())
             .collect(ImmutableSet.toImmutableSet());
 
     return Optional.of(new RequestedTargets(ImmutableSet.copyOf(projectTargets), externalDeps));
+  }
+
+  private static boolean shouldIncludeExternalDependencies(DependencyTrackingBehavior behavior) {
+    switch (behavior) {
+      case EXTERNAL_DEPENDENCIES:
+        return true;
+      case SELF:
+        return false;
+    }
+    throw new UnsupportedOperationException(behavior.name());
   }
 
   private void reportErrorsAndWarnings(

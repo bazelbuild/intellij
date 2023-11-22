@@ -93,6 +93,14 @@ public class Label {
     return fromPackageAndName(getPackage(), name);
   }
 
+  public Label siblingWithPathAndName(String pathAndName) {
+    int colonPos = pathAndName.indexOf(':');
+    Preconditions.checkArgument(colonPos > 0, pathAndName);
+    return fromPackageAndName(
+        getPackage().resolve(pathAndName.substring(0, colonPos)),
+        pathAndName.substring(colonPos + 1));
+  }
+
   /** When this label refers to a source file, returns the workspace relative path to that file. */
   public Path toFilePath() {
     return getPackage().resolve(getName());
