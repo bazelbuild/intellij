@@ -29,21 +29,11 @@ service BuildCleanerService {
 message ExecuteTasksRequest {
   CitcClientSpec citc_client_spec = 1;
 
-  PackageSpec package_spec = 2;
-
-  ChangeSpec change_spec = 3;
-
-  ExecutionMode execution_mode = 4;
+  ChangeSpec change_spec = 2;
 }
 
 message CitcClientSpec {
   string workspace_id = 1;
-
-  int64 snapshot_version = 2;
-}
-
-message PackageSpec {
-  string cl_number = 1;
 }
 
 message ChangeSpec {
@@ -58,16 +48,4 @@ message BuildozerCommand {
   string blaze_package = 1;
 
   repeated string buildozer_commands = 2;
-}
-
-enum ExecutionMode {
-  EXECUTION_MODE_UNKNOWN = 0;  // Illegal value.
-
-  // Return only the buildozer commands which would have been executed
-  // to make the changes.
-  EXECUTION_MODE_RETURN_COMMANDS = 1;
-
-  // Return the contents of modified BUILD file AND the underlying buildozer
-  // commands.
-  EXECUTION_MODE_RETURN_MODIFIED_BUILD_FILE = 2;
 }
