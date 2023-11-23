@@ -72,9 +72,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2023_2. This is required to build IJwB and run integration tests.
-IC_233_SHA = "4a97686397a96de6e13c428bf0def76c1ec17974edc5380c508a9e352ee503eb"
+IC_233_SHA = "f22ae025e7e91ef3c6b5b5cc0012b16d500280c9571bb6254022b6929b32c4e6"
 
-IC_233_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/233.11799.30-EAP-SNAPSHOT/ideaIC-233.11799.30-EAP-SNAPSHOT.zip"
+IC_233_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/233.11799.67-EAP-SNAPSHOT/ideaIC-233.11799.67-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ce_2023_3",
@@ -148,9 +148,9 @@ http_archive(
     url = IU_232_URL,
 )
 
-IU_233_SHA = "5fcfe1e74cbf7fe9194f0b40ff84b62f38150da1e3bc5a206aca24b8018e9e0f"
+IU_233_SHA = "08f44ab91efd2beb05de85e0e709276262828add893ff07204e2c58c2fbc6991"
 
-IU_233_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/233.11799.30-EAP-SNAPSHOT/ideaIU-233.11799.30-EAP-SNAPSHOT.zip"
+IU_233_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/233.11799.67-EAP-SNAPSHOT/ideaIU-233.11799.67-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ue_2023_3",
@@ -242,9 +242,9 @@ java_import(
 )
 """
 
-DEVKIT_233_SHA = "425cefbcb7a3efaf2b1eb6da683211a976b0496c96a967769971e43217c29c88"
+DEVKIT_233_SHA = "cb5e9f5cde7e977bcf9c525682c90f2fe7e45f8a44c5bd73f506fa5b714bff24"
 
-DEVKIT_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/233.11799.32/DevKit-233.11799.32.zip"
+DEVKIT_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/233.11799.68/DevKit-233.11799.68.zip"
 
 http_archive(
     name = "devkit_2023_3",
@@ -335,9 +335,9 @@ http_archive(
     url = PYTHON_PLUGIN_232_URL,
 )
 
-PYTHON_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/233.11799.30/PythonCore-233.11799.30.zip"
+PYTHON_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/233.11799.67/PythonCore-233.11799.67.zip"
 
-PYTHON_PLUGIN_233_SHA = "6fe822fd97e2b15468b3c150ee0754232259e604a9e3fde62fface778f88942b"
+PYTHON_PLUGIN_233_SHA = "cd5f6e7800b11f894e0c1d5b9aea251a043a026a522f9fc1f543da1687f77fb2"
 
 http_archive(
     name = "python_2023_3",
@@ -436,9 +436,9 @@ http_archive(
     url = GO_PLUGIN_232_URL,
 )
 
-GO_PLUGIN_233_SHA = "9228ebd4b5beb8895e0308f107cc455f151310f62767d6528f5a397101717067"
+GO_PLUGIN_233_SHA = "a11a2fb6b92f56cb07accb6b87cf25faa9bcc055176c01161a6d77cff8201645"
 
-GO_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/233.11799.30/org.jetbrains.plugins.go-233.11799.30.zip"
+GO_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/233.11799.67/org.jetbrains.plugins.go-233.11799.67.zip"
 
 http_archive(
     name = "go_2023_3",
