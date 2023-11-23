@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.common.base.Suppliers;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
+import com.google.idea.blaze.common.ProjectType;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.intellij.openapi.project.Project;
