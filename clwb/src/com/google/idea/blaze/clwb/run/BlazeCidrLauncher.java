@@ -182,9 +182,16 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     final BlazeCommand command = commandBuilder.build();
 
+    final GeneralCommandLine commandLine = new GeneralCommandLine(command.toList());
+
+    EnvironmentVariablesData envState = handlerState.getEnvVarsState().getData();
+    commandLine.withParentEnvironmentType(
+        envState.isPassParentEnvs() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.NONE);
+    commandLine.getEnvironment().putAll(envState.getEnvs());
+
     return new ScopedBlazeProcessHandler(
         project,
-        command,
+        commandLine,
         workspaceRoot,
         new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
           @Override
@@ -233,11 +240,6 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
       commandLine.addParameters(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
       commandLine.addParameters(handlerState.getTestArgs());
-
-      EnvironmentVariablesData envState = handlerState.getEnvVarsState().getData();
-      commandLine.withParentEnvironmentType(
-          envState.isPassParentEnvs() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.NONE);
-      commandLine.getEnvironment().putAll(envState.getEnvs());
 
       if (CppBlazeRules.RuleTypes.CC_TEST.getKind().equals(configuration.getTargetKind())) {
         convertBlazeTestFilterToExecutableFlag().ifPresent(commandLine::addParameters);
