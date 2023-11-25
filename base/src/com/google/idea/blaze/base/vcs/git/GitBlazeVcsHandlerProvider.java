@@ -165,7 +165,7 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
     ByteArrayOutputStream stderr = new ByteArrayOutputStream();
 
-    String[] args = new String[] {"git", "rev-parse", "@{u}"};
+    String[] args = new String[] {"git", "rev-parse", "\"@{u}\""};
     int retVal =
         ExternalTask.builder(workspaceRoot).args(args).stdout(stdout).stderr(stderr).build().run();
     if (retVal != 0) {
