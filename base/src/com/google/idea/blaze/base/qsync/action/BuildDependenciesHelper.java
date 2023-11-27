@@ -200,37 +200,59 @@ public class BuildDependenciesHelper {
   public void enableAnalysis(
       AnActionEvent e, PopupPosititioner positioner, ImmutableSet<Label> additionalTargetsToBuild) {
     VirtualFile vfile = getVirtualFile(e);
-    TargetsToBuild toBuild = getTargetsToEnableAnalysisFor(vfile);
-    QuerySyncActionStatsScope querySyncActionStats =
-        QuerySyncActionStatsScope.createForFile(actionClass, e, vfile);
+    determineTargetsAndRun(
+        vfile,
+        positioner,
+        labels -> {
+          if (labels.isEmpty()) {
+            return;
+          }
+          QuerySyncActionStatsScope querySyncActionStats =
+              QuerySyncActionStatsScope.createForFile(actionClass, e, vfile);
+          enableAnalysis(labels, querySyncActionStats);
+        },
+        additionalTargetsToBuild);
+  }
+
+  public void determineTargetsAndRun(
+      VirtualFile vf, PopupPosititioner positioner, Consumer<ImmutableSet<Label>> consumer) {
+    determineTargetsAndRun(vf, positioner, consumer, ImmutableSet.of());
+  }
+
+  public void determineTargetsAndRun(
+      VirtualFile vf,
+      PopupPosititioner positioner,
+      Consumer<ImmutableSet<Label>> consumer,
+      ImmutableSet<Label> additionalTargetsToBuild) {
+    TargetsToBuild toBuild = getTargetsToEnableAnalysisFor(vf);
 
     if (toBuild.overlapsWith(additionalTargetsToBuild)
         || (toBuild.isEmpty() && !additionalTargetsToBuild.isEmpty())) {
-      enableAnalysis(additionalTargetsToBuild, querySyncActionStats);
+      consumer.accept(additionalTargetsToBuild);
       return;
     }
 
     if (toBuild.isEmpty()) {
+      consumer.accept(ImmutableSet.of());
       return;
     }
 
     if (!toBuild.isAmbiguous()) {
-      enableAnalysis(
+      consumer.accept(
           ImmutableSet.<Label>builder()
               .addAll(toBuild.targets())
               .addAll(additionalTargetsToBuild)
-              .build(),
-          querySyncActionStats);
+              .build());
       return;
     }
+
     chooseTargetToBuildFor(
-        vfile.getName(),
+        vf.getName(),
         toBuild,
         positioner,
         label ->
-            enableAnalysis(
-                ImmutableSet.<Label>builder().add(label).addAll(additionalTargetsToBuild).build(),
-                querySyncActionStats));
+            consumer.accept(
+                ImmutableSet.<Label>builder().add(label).addAll(additionalTargetsToBuild).build()));
   }
 
   void enableAnalysis(ImmutableSet<Label> targets, QuerySyncActionStatsScope querySyncActionStats) {
