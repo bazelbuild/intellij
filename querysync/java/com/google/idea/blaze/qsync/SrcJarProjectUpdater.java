@@ -20,33 +20,21 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Library;
 import com.google.idea.blaze.qsync.project.ProjectProto.LibrarySource;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 /** Updates the project proto with the provided source jars. */
 public class SrcJarProjectUpdater {
 
-  private final Logger logger = Logger.getLogger(SrcJarProjectUpdater.class.getSimpleName());
-
   private final ProjectProto.Project project;
   private final Collection<ProjectPath> srcJars;
   private final ProjectPath.Resolver resolver;
-  private final PackageStatementParser packageReader;
+  private final SrcJarInnerPathFinder srcJarInnerPathFinder;
 
   public SrcJarProjectUpdater(
       ProjectProto.Project project,
@@ -55,7 +43,7 @@ public class SrcJarProjectUpdater {
     this.project = project;
     this.srcJars = srcJars;
     this.resolver = resolver;
-    packageReader = new PackageStatementParser();
+    srcJarInnerPathFinder = new SrcJarInnerPathFinder(new PackageStatementParser());
   }
 
   private int findDepsLib(List<Library> libs) {
@@ -113,54 +101,10 @@ public class SrcJarProjectUpdater {
     ImmutableList.Builder<ProjectPath> newSrcJars = ImmutableList.builder();
     for (ProjectPath srcJar : srcJars) {
       Path jarFile = resolver.resolve(srcJar);
-      findInnerJarPaths(jarFile.toFile()).stream()
+      srcJarInnerPathFinder.findInnerJarPaths(jarFile.toFile()).stream()
           .map(srcJar::withInnerJarPath)
           .forEach(newSrcJars::add);
     }
     return newSrcJars.build();
-  }
-
-  private ImmutableSet<Path> findInnerJarPaths(File jarFile) {
-    Set<Path> paths = Sets.newHashSet();
-    try {
-      ZipFile zip = new ZipFile(jarFile);
-      Enumeration<? extends ZipEntry> entries = zip.entries();
-      Set<Path> topLevelPaths = Sets.newHashSet();
-      while (entries.hasMoreElements()) {
-        ZipEntry e = entries.nextElement();
-        if (e.isDirectory()) {
-          continue;
-        }
-        Path zipfilePath = Path.of(e.getName());
-        if (!(zipfilePath.getFileName().toString().endsWith(".java")
-            || zipfilePath.getFileName().toString().endsWith(".kt"))) {
-          continue;
-        }
-        if (!topLevelPaths.add(zipfilePath.getName(0))) {
-          continue;
-        }
-        try (InputStream in = zip.getInputStream(e)) {
-          String pname = packageReader.readPackage(in);
-          Path packageAsPath = Path.of(pname.replace('.', '/'));
-          Path zipPath = zipfilePath.getParent();
-          if (zipPath == null) {
-            zipPath = Path.of("");
-          }
-          if (zipPath.equals(packageAsPath)) {
-            // package root is the jar file root.
-            paths.add(Path.of(""));
-          } else if (zipPath.endsWith(packageAsPath)) {
-            paths.add(zipPath.subpath(0, zipPath.getNameCount() - packageAsPath.getNameCount()));
-          }
-        }
-      }
-    } catch (IOException ioe) {
-      logger.log(Level.WARNING, "Failed to examine " + jarFile, ioe);
-    }
-    if (paths.isEmpty()) {
-      // we didn't find any java/kt sources. Add the jar file root to ensure we don't ignore it.
-      paths.add(Path.of(""));
-    }
-    return ImmutableSet.copyOf(paths);
   }
 }

@@ -56,7 +56,6 @@ public class BuildDependenciesForWorkingSetAction extends BlazeProjectAction {
     if (!helper.canEnableAnalysisNow()) {
       return;
     }
-    ImmutableSet.Builder<Label> affectedTargetsBuilder = ImmutableSet.builder();
     ImmutableSet<Path> workingSet;
 
     try {
@@ -67,11 +66,7 @@ public class BuildDependenciesForWorkingSetAction extends BlazeProjectAction {
       return;
     }
 
-    for (Path modified : workingSet) {
-      affectedTargetsBuilder.addAll(helper.getTargetsToEnableAnalysisFor(modified).targets());
-    }
-
-    ImmutableSet<Label> affectedTargets = affectedTargetsBuilder.build();
+    ImmutableSet<Label> affectedTargets = helper.getAffectedTargetsForPaths(workingSet);
     if (affectedTargets.isEmpty()) {
       notifyEmptyWorkingSet(project);
       return;

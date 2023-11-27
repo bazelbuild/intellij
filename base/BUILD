@@ -17,7 +17,6 @@ load(
 )
 load("//intellij_platform_sdk:build_defs.bzl", "java_version_flags")
 
-
 licenses(["notice"])
 
 java_library(

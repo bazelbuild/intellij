@@ -45,6 +45,7 @@ import com.google.idea.blaze.qsync.project.ProjectProto.CcSourceFile;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
+import com.google.idea.blaze.qsync.project.ProjectTarget.SourceType;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -173,6 +174,13 @@ public class CcWorkspaceBuilder {
   }
 
   private void visitTarget(Label label, CcTargetInfo target) {
+    if (!graph.targetMap().containsKey(label)) {
+      // This target is no longer present in the project. Ignore it.
+      // We should really clean up the dependency cache itself to remove any artifacts relating to
+      // no-longer-present targets, but that will be a lot more work. For now, just ensure we don't
+      // crash.
+      return;
+    }
     ProjectTarget projectTarget = Preconditions.checkNotNull(graph.targetMap().get(label));
 
     CcToolchainInfo toolchain = ccDependenciesInfo.toolchainInfoMap().get(target.getToolchainId());
@@ -207,7 +215,7 @@ public class CcWorkspaceBuilder {
     // TODO(mathewi): The handling of flag sets here is not optimal, since we recalculate an
     //  identical flag set for each source of the same language, then immediately de-dupe them in
     //  the addFlagSet call. For large flag sets this may be slow.
-    for (Path srcPath : graph.getTargetSources(label)) {
+    for (Path srcPath : graph.getTargetSources(label, SourceType.all())) {
       Optional<CcLanguage> lang = getLanguage(srcPath);
       if (lang.isPresent()) {
         srcsBuilder.add(

@@ -35,11 +35,7 @@ public class DefaultCacheLayoutTest {
   @Test
   public void basic_artifact() {
     CacheDirectories cacheDirectoryManager = createCacheDirectoryManager();
-    DefaultCacheLayout cacheLayout =
-        new DefaultCacheLayout(
-            cacheDirectoryManager.cacheDirectory,
-            cacheDirectoryManager.cacheDotDirectory,
-            ImmutableSet.of());
+    DefaultCacheLayout cacheLayout = new DefaultCacheLayout(cacheDirectoryManager.cacheDirectory);
 
     OutputArtifactInfo outputArtifact = testOutputArtifact("libfoo.jar");
 
@@ -56,10 +52,7 @@ public class DefaultCacheLayoutTest {
   public void zipped_artifacts() {
     CacheDirectories cacheDirectoryManager = createCacheDirectoryManager();
     DefaultCacheLayout cacheLayout =
-        new DefaultCacheLayout(
-            cacheDirectoryManager.cacheDirectory,
-            cacheDirectoryManager.cacheDotDirectory,
-            ImmutableSet.of("zip"));
+        new DefaultCacheLayout(cacheDirectoryManager.cacheDirectory, ImmutableSet.of("zip"));
 
     // Zipped artifact
     OutputArtifactInfo outputArtifact = testOutputArtifact("archive.zip");

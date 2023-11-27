@@ -18,27 +18,18 @@ package com.google.idea.blaze.base.settings;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import org.jetbrains.annotations.Nullable;
-
+import javax.annotation.Nullable;
 import javax.swing.SwingUtilities;
 
 /** Blaze project utilities. */
 public class Blaze {
 
   private Blaze() {}
-
-  public static boolean isBlazeProjectOpen() {
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (isBlazeProject(project)) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   /**
    * Returns whether this project was imported from blaze.
@@ -69,12 +60,16 @@ public class Blaze {
       return ProjectType.UNKNOWN;
     }
 
-    BlazeImportSettings blazeImportSettings =
-        BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    BlazeImportSettingsManager blazeImportSettingsManager =
+        BlazeImportSettingsManager.getInstance(project);
+    if (blazeImportSettingsManager == null) {
+      return ProjectType.UNKNOWN;
+    }
+    BlazeImportSettings blazeImportSettings = blazeImportSettingsManager.getImportSettings();
     if (blazeImportSettings == null) {
       return ProjectType.UNKNOWN;
     }
-    return BlazeImportSettingsManager.getInstance(project).getImportSettings().getProjectType();
+    return blazeImportSettings.getProjectType();
   }
 
   /**

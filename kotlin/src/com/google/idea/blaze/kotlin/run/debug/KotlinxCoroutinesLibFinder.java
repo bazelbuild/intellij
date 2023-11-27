@@ -17,6 +17,7 @@ package com.google.idea.blaze.kotlin.run.debug;
 
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.common.Label;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import java.util.Optional;
@@ -30,4 +31,7 @@ public interface KotlinxCoroutinesLibFinder {
   Optional<ArtifactLocation> getKotlinxCoroutinesLib(TargetIdeInfo depInfo);
 
   boolean isApplicable(Project project);
+
+  /** Returns true if {@code label} depends on the kotlinx coroutines library. Query-sync only. */
+  boolean dependsOnKotlinxCoroutines(Project project, Label label);
 }

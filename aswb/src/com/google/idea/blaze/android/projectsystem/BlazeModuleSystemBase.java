@@ -383,7 +383,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
    * @param coordinate external coordinates for the dependency.
    * @return the absolute path of the dependency including workspace root and path.
    */
-  @Override
+  // @Override removed in 232
   @Nullable
   public Path getDependencyPath(GradleCoordinate coordinate) {
     if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {

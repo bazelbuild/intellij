@@ -17,6 +17,7 @@ package com.android.tools.rendering;
 
 import com.android.ide.common.rendering.api.Result;
 import com.android.tools.idea.rendering.RenderErrorContributor;
+import com.android.tools.idea.rendering.RenderErrorContributorImpl;
 import com.android.tools.idea.rendering.RenderErrorModelFactory;
 import com.android.tools.idea.rendering.RenderResults;
 import com.android.tools.idea.rendering.errors.ui.RenderErrorModel;
@@ -68,7 +69,7 @@ public final class RenderResultCompat {
   private RenderResultCompat() {}
 
   /** Extension to provide {@link BlazeRenderErrorContributor}. */
-  public static class BlazeProvider extends RenderErrorContributor.Provider {
+  public static class BlazeProvider extends RenderErrorContributorImpl.Provider {
     @Override
     public boolean isApplicable(Project project) {
       return Blaze.isBlazeProject(project);

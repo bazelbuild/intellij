@@ -15,9 +15,10 @@
  */
 package com.google.idea.blaze.base.qsync.action;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.joining;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
@@ -33,7 +34,8 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import java.util.Collections;
+import java.nio.file.Path;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
 /** Action to build dependencies and enable analysis for all open editor tabs. */
@@ -61,23 +63,15 @@ public class BuildDependenciesForOpenFilesAction extends BlazeProjectAction {
     }
     // Each open source file may map to multiple targets, either because they're a build file
     // or because a source file is included in multiple targets.
-
-    // Find the targets to build per source file, and de-dupe then such that if several source files
-    // are built by the same set of targets, we consider them as one. Map these results back to an
-    // original source file to so we can show it in the UI:
-    ImmutableMap.Builder<TargetsToBuild, VirtualFile> targetsByFileBuilder = ImmutableMap.builder();
-    for (FileEditor tab : FileEditorManager.getInstance(project).getAllEditors()) {
-      VirtualFile file = tab.getFile();
-      TargetsToBuild tabTargets = helper.getTargetsToEnableAnalysisFor(file);
-      targetsByFileBuilder.put(tabTargets, file);
-    }
-    ImmutableMap<TargetsToBuild, VirtualFile> targetsToBuild =
-        targetsByFileBuilder.buildKeepingLast();
-
-    TargetDisambiguator disambiguator = new TargetDisambiguator(targetsToBuild.keySet());
+    ImmutableSet<VirtualFile> openFiles =
+        stream(FileEditorManager.getInstance(project).getAllEditors())
+            .map(FileEditor::getFile)
+            .collect(toImmutableSet());
+    TargetDisambiguator disambiguator =
+        TargetDisambiguator.createForFiles(project, openFiles, helper);
     ImmutableSet<TargetsToBuild> ambiguousTargets = disambiguator.calculateUnresolvableTargets();
     QuerySyncActionStatsScope querySyncActionStats =
-        QuerySyncActionStatsScope.createForFiles(getClass(), event, targetsToBuild.values());
+        QuerySyncActionStatsScope.createForFiles(getClass(), event, openFiles);
 
     if (ambiguousTargets.isEmpty()) {
       // there are no ambiguous targets that could not be automatically disambiguated.
@@ -86,7 +80,7 @@ public class BuildDependenciesForOpenFilesAction extends BlazeProjectAction {
       // there is a single ambiguous target set. Show the UI to disambiguate it.
       TargetsToBuild ambiguousOne = Iterables.getOnlyElement(ambiguousTargets);
       helper.chooseTargetToBuildFor(
-          targetsToBuild.get(ambiguousOne).getName(),
+          ambiguousOne.sourceFilePath().orElseThrow(),
           ambiguousOne,
           PopupPosititioner.showAtMousePointerOrCentered(event),
           chosen ->
@@ -100,8 +94,9 @@ public class BuildDependenciesForOpenFilesAction extends BlazeProjectAction {
       logger.warn(
           "Multiple ambiguous target sets for open files; not building them: "
               + ambiguousTargets.stream()
-                  .map(targetsToBuild::get)
-                  .map(VirtualFile::getPath)
+                  .map(TargetsToBuild::sourceFilePath)
+                  .flatMap(Optional::stream)
+                  .map(Path::toString)
                   .collect(joining(", ")));
       if (!disambiguator.unambiguousTargets.isEmpty()) {
         helper.enableAnalysis(disambiguator.unambiguousTargets, querySyncActionStats);
@@ -109,35 +104,6 @@ public class BuildDependenciesForOpenFilesAction extends BlazeProjectAction {
         // TODO(mathewi) show an error?
         // or should we show multiple popups in parallel? (doesn't seem great if there are lots)
       }
-    }
-  }
-
-  static class TargetDisambiguator {
-    private final ImmutableSet<Label> unambiguousTargets;
-    private final ImmutableSet<TargetsToBuild> ambiguousTargetSets;
-
-    TargetDisambiguator(ImmutableSet<TargetsToBuild> targets) {
-      unambiguousTargets = TargetsToBuild.getAllUnambiguous(targets);
-      ambiguousTargetSets = TargetsToBuild.getAllAmbiguous(targets);
-    }
-
-    /**
-     * Finds the sets of targets that cannot be unambiguously resolved.
-     *
-     * <p>The is the set of ambiguous targets sets which contain no targets that overlap with the
-     * unambiguous set of targets.
-     */
-    public ImmutableSet<TargetsToBuild> calculateUnresolvableTargets() {
-      ImmutableSet.Builder<TargetsToBuild> ambiguousTargetsBuilder = ImmutableSet.builder();
-      for (TargetsToBuild ambiguous : ambiguousTargetSets) {
-        if (!Collections.disjoint(ambiguous.targets(), unambiguousTargets)) {
-          // we already have (at least) one of these targets from the unambiguous set, so don't need
-          // to choose one.
-        } else {
-          ambiguousTargetsBuilder.add(ambiguous);
-        }
-      }
-      return ambiguousTargetsBuilder.build();
     }
   }
 }

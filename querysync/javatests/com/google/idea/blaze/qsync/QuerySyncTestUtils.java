@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.qsync;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import com.google.auto.value.AutoValue;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
@@ -22,8 +25,12 @@ import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Optional;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /** Helpers for unit tests. */
 public class QuerySyncTestUtils {
@@ -68,5 +75,37 @@ public class QuerySyncTestUtils {
 
   public static VcsStateDiffer noFilesChangedDiffer() {
     return differForFiles();
+  }
+
+  @AutoValue
+  abstract static class PathPackage {
+    abstract Path path();
+
+    abstract String pkg();
+
+    static PathPackage of(String path, String pkg) {
+      return new AutoValue_QuerySyncTestUtils_PathPackage(Path.of(path), pkg);
+    }
+  }
+
+  /**
+   * Creates a dummy source jar at the specified destination with a package structure defined by
+   * {@code pathPackages}
+   */
+  public static void createSrcJar(Path dest, PathPackage... pathPackages) throws IOException {
+    Files.createDirectories(dest.getParent());
+    try (ZipOutputStream srcJar =
+        new ZipOutputStream(Files.newOutputStream(dest, StandardOpenOption.CREATE_NEW))) {
+      for (PathPackage pathPackage : pathPackages) {
+        ZipEntry src = new ZipEntry(pathPackage.path().toString());
+        srcJar.putNextEntry(src);
+        if (pathPackage.pkg().length() > 0) {
+          srcJar.write(String.format("package %s;\n", pathPackage.pkg()).getBytes(UTF_8));
+        } else {
+          srcJar.write("// default package\n".getBytes(UTF_8));
+        }
+        srcJar.closeEntry();
+      }
+    }
   }
 }

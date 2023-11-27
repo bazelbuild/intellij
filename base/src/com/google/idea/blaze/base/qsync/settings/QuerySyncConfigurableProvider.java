@@ -26,11 +26,19 @@ public class QuerySyncConfigurableProvider extends ConfigurableProvider {
   @Override
   @Nullable
   public Configurable createConfigurable() {
-    return new QuerySyncConfigurable();
+    if (QuerySync.useByDefault()) {
+      return new QuerySyncConfigurable();
+    } else {
+      return new QuerySyncBetaConfigurable();
+    }
   }
 
-  @Override
-  public boolean canCreateConfigurable() {
-    return QuerySync.BETA_ENABLED.get() || QuerySync.isEnabled();
+  public static Class<? extends QuerySyncConfigurable> getConfigurableClass() {
+    if (QuerySync.useByDefault()) {
+      return QuerySyncConfigurable.class;
+    } else {
+      return QuerySyncBetaConfigurable.class;
+    }
   }
+
 }

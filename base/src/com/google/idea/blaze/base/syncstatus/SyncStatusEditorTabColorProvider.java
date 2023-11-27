@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import java.awt.Color;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Changes the color for unsynced files. */
@@ -33,10 +34,12 @@ public class SyncStatusEditorTabColorProvider implements EditorTabColorProvider 
   @Nullable
   @Override
   public Color getEditorTabColor(Project project, VirtualFile file) {
-    if(Blaze.getProjectType(project) == BlazeImportSettings.ProjectType.UNKNOWN) {
+    if (Blaze.getProjectType(project).equals(BlazeImportSettings.ProjectType.UNKNOWN)) {
       return null;
     }
-    if (SyncStatusContributor.getSyncStatus(project, file) == SyncStatus.UNSYNCED) {
+
+    SyncStatus syncStatus = SyncStatusContributor.getSyncStatus(project, file);
+    if (Objects.equals(syncStatus, SyncStatus.UNSYNCED)) {
       return UNSYNCED_COLOR;
     }
     return null;

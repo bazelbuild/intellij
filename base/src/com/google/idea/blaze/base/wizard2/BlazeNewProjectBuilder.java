@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
@@ -226,12 +227,20 @@ public final class BlazeNewProjectBuilder {
   }
 
   private BlazeImportSettings getImportSettings() {
+    boolean useQuerySync;
+    if (QuerySync.useByDefault()) {
+      useQuerySync = QuerySyncSettings.getInstance().useQuerySync();
+    } else {
+      useQuerySync =
+          QuerySync.isLegacyExperimentEnabled()
+              || QuerySyncSettings.getInstance().useQuerySyncBeta();
+    }
     return new BlazeImportSettings(
         workspaceRoot.directory().getPath(),
         projectName,
         projectDataDirectory,
         Optional.ofNullable(projectViewFile).map(File::getPath).orElse(null),
         getBuildSystem(),
-        QuerySync.isEnabled() ? ProjectType.QUERY_SYNC : ProjectType.ASPECT_SYNC);
+        useQuerySync ? ProjectType.QUERY_SYNC : ProjectType.ASPECT_SYNC);
   }
 }

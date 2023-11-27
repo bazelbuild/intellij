@@ -34,6 +34,7 @@ import com.google.idea.blaze.qsync.project.ProjectProto.CcCompilerSettings;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcLanguage;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcSourceFile;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcWorkspace;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -54,7 +55,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /** Updates the IJ project model based a {@link CcWorkspace} proto message. */
-public class CcProjectModelUpdateOperation {
+public class CcProjectModelUpdateOperation implements Disposable {
 
   private static final String CLIENT_KEY = "ASwB";
   private static final int CLIENT_VERSION = 1;
@@ -66,7 +67,7 @@ public class CcProjectModelUpdateOperation {
   private final OCWorkspace.ModifiableModel modifiableOcWorkspace;
   private final Map<String, CidrCompilerSwitches> compilerSwitches = Maps.newHashMap();
   private final Map<String, OCResolveConfiguration.ModifiableModel> resolveConfigs =
-      Maps.newHashMap();
+      Maps.newLinkedHashMap();
   private final File compilerWorkingDir;
 
   CcProjectModelUpdateOperation(
@@ -177,25 +178,39 @@ public class CcProjectModelUpdateOperation {
     EmptyProgressIndicator indicator = new EmptyProgressIndicator();
     CompilerInfoCache cache = new CompilerInfoCache();
     var session = cache.<String>createSession(indicator);
-    var toolEnvironment = new CidrToolEnvironment();
-    session.setExpectedJobsCount(resolveConfigs.size());
-    for (Map.Entry<String, OCResolveConfiguration.ModifiableModel> e : resolveConfigs.entrySet()) {
-      session.schedule(
-          e.getKey(),
-          e.getValue(),
-          toolEnvironment,
-          pathResolver.resolve(ProjectPath.WORKSPACE_ROOT).toString());
-    }
+    boolean sessionClosed = false;
+    try {
+      var toolEnvironment = new CidrToolEnvironment();
+      session.setExpectedJobsCount(resolveConfigs.size());
+      for (Map.Entry<String, OCResolveConfiguration.ModifiableModel> e :
+          resolveConfigs.entrySet()) {
+        session.schedule(
+            e.getKey(),
+            e.getValue(),
+            toolEnvironment,
+            pathResolver.resolve(ProjectPath.WORKSPACE_ROOT).toString());
+      }
 
-    // Compute all configurations. Block until complete.
-    var messages = new MultiMap<String, Message>();
-    session.waitForAll(messages);
-    ImmutableList<Message> frozenMessages =
-        messages.freezeValues().values().stream()
-            .flatMap(Collection::stream)
-            .collect(ImmutableList.toImmutableList());
-    frozenMessages.forEach(
-        m -> context.output(PrintOutput.output(m.getType().name() + ": " + m.getText())));
-    session.dispose();
+      // Compute all configurations. Block until complete.
+      var messages = new MultiMap<String, Message>();
+      session.waitForAll(messages);
+      sessionClosed = true;
+
+      ImmutableList<Message> frozenMessages =
+          messages.freezeValues().values().stream()
+              .flatMap(Collection::stream)
+              .collect(ImmutableList.toImmutableList());
+      frozenMessages.forEach(
+          m -> context.output(PrintOutput.output(m.getType().name() + ": " + m.getText())));
+    } finally {
+      if (!sessionClosed) {
+        session.dispose();
+      }
+    }
+  }
+
+  @Override
+  public void dispose() {
+    OCWorkspaceModifiableModelDisposer.dispose(modifiableOcWorkspace);
   }
 }

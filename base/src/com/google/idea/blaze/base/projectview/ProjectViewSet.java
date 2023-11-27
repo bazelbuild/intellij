@@ -32,6 +32,8 @@ import javax.annotation.Nullable;
 
 /** A collection of project views and their file names. */
 public final class ProjectViewSet implements Serializable {
+
+  public static final ProjectViewSet EMPTY = builder().build();
   private static final long serialVersionUID = 2L;
 
   private final ImmutableList<ProjectViewFile> projectViewFiles;

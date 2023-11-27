@@ -21,6 +21,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.LayeredIcon;
 import icons.BlazeIcons;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
@@ -28,9 +31,17 @@ import javax.swing.Icon;
 public final class FastBuildRunExecutor extends DefaultRunExecutor {
 
   public static final String ID = "BlazeFastRun";
+  @Override
+  @Nls(capitalization = Nls.Capitalization.Title)
+  public @NotNull String getStartActionText(@NotNull String configurationName) {
+    if(configurationName.isEmpty()){
+      return getStartActionText();
+    }
+    return String.format("%s: '%s'", getStartActionText(), shortenNameIfNeeded(configurationName));
+  }
 
   @Override
-  public String getStartActionText() {
+  public @NotNull String getStartActionText() {
     return "Fast Run";
   }
 

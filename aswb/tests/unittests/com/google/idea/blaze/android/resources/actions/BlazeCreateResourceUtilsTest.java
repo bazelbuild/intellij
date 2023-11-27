@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.BlazeTestCase;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -37,14 +38,26 @@ public class BlazeCreateResourceUtilsTest extends BlazeTestCase {
   //                           foo.xml
   //             layout/
   //         A.java
-  private MockVirtualFile xmlFile = file("foo.xml");
-  private MockVirtualFile outOfPlaceSubdir = dir("misc");
-  private MockVirtualFile valuesDir = dir("values-fr-rCA", xmlFile, outOfPlaceSubdir);
-  private MockVirtualFile layoutDir = dir("layout");
-  private MockVirtualFile resDir = dir("res", valuesDir, layoutDir);
-  private MockVirtualFile javaFile = file("A.java");
-  private MockVirtualFile srcDir = dir("src", resDir, javaFile);
-  private MockVirtualFile baseDir = dir("foo", srcDir);
+  private MockVirtualFile xmlFile;
+  private MockVirtualFile outOfPlaceSubdir;
+  private MockVirtualFile valuesDir;
+  private MockVirtualFile layoutDir;
+  private MockVirtualFile resDir;
+  private MockVirtualFile javaFile;
+  private MockVirtualFile srcDir;
+  private MockVirtualFile baseDir;
+
+  @Before
+  public void setUp() throws Exception {
+    xmlFile = file("foo.xml");
+    outOfPlaceSubdir = dir("misc");
+    valuesDir = dir("values-fr-rCA", xmlFile, outOfPlaceSubdir);
+    layoutDir = dir("layout");
+    resDir = dir("res", valuesDir, layoutDir);
+    javaFile = file("A.java");
+    srcDir = dir("src", resDir, javaFile);
+    baseDir = dir("foo", srcDir);
+  }
 
   @Test
   public void getDirectoryFromContextResDirectory() {

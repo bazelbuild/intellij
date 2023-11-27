@@ -15,28 +15,36 @@
  */
 package com.google.idea.blaze.qsync;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
-import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import java.nio.file.Path;
 
 /** Updates project protos with a content entry for generated sources */
 public class GeneratedSourceProjectUpdater {
 
   private final Project project;
-  private final Path genSrcCacheDirectory;
-  private final ImmutableList<Path> genSrcFolders;
+  private final ImmutableSet<ProjectPath> genSrcRoots;
+  private final ImmutableSet<ProjectPath> genSrcJars;
+  private final ProjectPath.Resolver resolver;
+
+  private final SrcJarInnerPathFinder srcJarInnerPathFinder;
 
   public GeneratedSourceProjectUpdater(
-      Project project, Path genSrcCacheDirectory, ImmutableList<Path> genSrcFolders) {
+      Project project,
+      ImmutableSet<ProjectPath> genSrcFileFolders,
+      ImmutableSet<ProjectPath> genSrcJars,
+      ProjectPath.Resolver resolver) {
     this.project = project;
-    this.genSrcCacheDirectory = genSrcCacheDirectory;
-    this.genSrcFolders = genSrcFolders;
+    this.genSrcRoots = genSrcFileFolders;
+    this.genSrcJars = genSrcJars;
+    this.resolver = resolver;
+    srcJarInnerPathFinder = new SrcJarInnerPathFinder(new PackageStatementParser());
   }
 
   public Project addGenSrcContentEntry() {
-    if (genSrcFolders.isEmpty()) {
+    if (genSrcJars.isEmpty() && genSrcRoots.isEmpty()) {
       return project;
     }
 
@@ -47,22 +55,32 @@ public class GeneratedSourceProjectUpdater {
             .findFirst()
             .orElseThrow();
 
-    ProjectProto.ContentEntry.Builder genSourcesContentEntry =
-        ProjectProto.ContentEntry.newBuilder()
-            .setRoot(
-                ProjectProto.ProjectPath.newBuilder()
-                    .setBase(Base.PROJECT)
-                    .setPath(genSrcCacheDirectory.toString()));
-
-    for (Path path : genSrcFolders) {
+    for (ProjectPath path : genSrcRoots) {
+      ProjectProto.ProjectPath pathProto = path.toProto();
+      ProjectProto.ContentEntry.Builder genSourcesContentEntry =
+          ProjectProto.ContentEntry.newBuilder().setRoot(pathProto);
       genSourcesContentEntry.addSources(
           ProjectProto.SourceFolder.newBuilder()
-              .setPath(genSrcCacheDirectory.resolve(path.getFileName()).toString())
-              .setIsTest(false)
+              .setProjectPath(pathProto)
               .setIsGenerated(true)
               .setPackagePrefix(""));
+      workspaceModule.addContentEntries(genSourcesContentEntry);
     }
-    workspaceModule.addContentEntries(genSourcesContentEntry);
+
+    for (ProjectPath path : genSrcJars) {
+      ProjectProto.ContentEntry.Builder genSrcJarContentEntry =
+          ProjectProto.ContentEntry.newBuilder().setRoot(path.toProto());
+      for (Path innerPath :
+          srcJarInnerPathFinder.findInnerJarPaths(resolver.resolve(path).toFile())) {
+        genSrcJarContentEntry.addSources(
+            ProjectProto.SourceFolder.newBuilder()
+                .setProjectPath(path.withInnerJarPath(innerPath).toProto())
+                .setIsGenerated(true)
+                .setPackagePrefix(""));
+      }
+      workspaceModule.addContentEntries(genSrcJarContentEntry);
+    }
+
     return protoBuilder.build();
   }
 }

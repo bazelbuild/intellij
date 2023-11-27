@@ -18,12 +18,13 @@ package com.google.idea.blaze.base.qsync;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.PopupPosititioner;
-import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurable;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurableProvider;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.intellij.icons.AllIcons.Actions;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -145,6 +146,8 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
                 HelpTooltip.dispose(this);
                 new HelpTooltip()
                     .setTitle("Build dependencies")
+                    .setShortcut(
+                        ActionManager.getInstance().getKeyboardShortcut("Blaze.BuildDependencies"))
                     .setDescription(
                         "Builds the external dependencies needed for this file and "
                             + " enables analysis")
@@ -154,7 +157,8 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
                           @Override
                           public void run() {
                             ShowSettingsUtil.getInstance()
-                                .showSettingsDialog(project, QuerySyncConfigurable.class);
+                                .showSettingsDialog(
+                                    project, QuerySyncConfigurableProvider.getConfigurableClass());
                           }
                         })
                     .installOn(this);

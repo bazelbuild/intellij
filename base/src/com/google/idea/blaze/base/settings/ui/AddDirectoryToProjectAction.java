@@ -77,6 +77,11 @@ public final class AddDirectoryToProjectAction extends BlazeProjectAction {
           + "resolve correctly.";
 
   @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.HIDDEN;
+  }
+
+  @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     runAction(project, null);
   }

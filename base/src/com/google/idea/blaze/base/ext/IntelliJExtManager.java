@@ -64,6 +64,9 @@ public class IntelliJExtManager {
    */
   private static final String EXPERIMENT_SERVICE_PROPERTY = "use.intellij.ext.experiments";
 
+  private static final BoolExperiment BUILD_CLEANER =
+      new BoolExperiment("use.intellij.ext.buildcleaner", false);
+
   private static final BoolExperiment CHATBOT =
       new BoolExperiment("use.intellij.ext.chatbot", false);
 
@@ -138,5 +141,9 @@ public class IntelliJExtManager {
 
   public boolean isChatBotEnabled() {
     return isEnabled() && CHATBOT.getValue();
+  }
+
+  public boolean isBuildCleanerEnabled() {
+    return isEnabled() && BUILD_CLEANER.getValue();
   }
 }

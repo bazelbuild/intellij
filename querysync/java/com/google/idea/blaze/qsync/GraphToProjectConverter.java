@@ -47,6 +47,7 @@ import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
+import com.google.idea.blaze.qsync.project.ProjectTarget.SourceType;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -367,7 +368,8 @@ public class GraphToProjectConverter {
     Map<Path, Map<Path, String>> javaSourceRoots =
         calculateJavaRootSources(graph.getJavaSourceFiles(), graph.packages());
     ImmutableMultimap<Path, Path> rootToNonJavaSource =
-        nonJavaSourceFolders(graph.getSourceFilesByRuleKind(not(RuleKinds::isJava)));
+        nonJavaSourceFolders(
+            graph.getSourceFilesByRuleKindAndType(not(RuleKinds::isJava), SourceType.all()));
     ImmutableSet<Path> dirs = computeAndroidResourceDirectories(graph.getAllSourceFiles());
     ImmutableSet<String> pkgs =
         computeAndroidSourcePackages(graph.getAndroidSourceFiles(), javaSourceRoots);
@@ -414,7 +416,10 @@ public class GraphToProjectConverter {
         Path path = dir.resolve(entry.getKey());
         contentEntry.addSources(
             ProjectProto.SourceFolder.newBuilder()
-                .setPath(path.toString())
+                .setProjectPath(
+                    ProjectProto.ProjectPath.newBuilder()
+                        .setBase(Base.WORKSPACE)
+                        .setPath(path.toString()))
                 .setPackagePrefix(entry.getValue())
                 .setIsTest(testSourceGlobMatcher.matches(path))
                 .build());
@@ -426,7 +431,10 @@ public class GraphToProjectConverter {
           // source folders only.
           contentEntry.addSources(
               ProjectProto.SourceFolder.newBuilder()
-                  .setPath(path.toString())
+                  .setProjectPath(
+                      ProjectProto.ProjectPath.newBuilder()
+                          .setBase(Base.WORKSPACE)
+                          .setPath(path.toString()))
                   .setPackagePrefix("")
                   .setIsTest(testSourceGlobMatcher.matches(path))
                   .build());

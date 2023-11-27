@@ -22,8 +22,9 @@ import com.google.idea.blaze.qsync.BlazeProjectListener;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 
 /**
@@ -44,14 +45,17 @@ public class CcProjectModelUpdater implements BlazeProjectListener {
 
   private final ProjectPath.Resolver pathResolver;
   private final OCWorkspace readonlyOcWorkspace;
+  private final Project project;
 
   public static CcProjectModelUpdater create(Project project, ProjectPath.Resolver pathResolver) {
-    return new CcProjectModelUpdater(pathResolver, OCWorkspace.getInstance(project));
+    return new CcProjectModelUpdater(pathResolver, OCWorkspace.getInstance(project), project);
   }
 
-  public CcProjectModelUpdater(ProjectPath.Resolver pathResolver, OCWorkspace ocWorkspace) {
+  public CcProjectModelUpdater(
+      ProjectPath.Resolver pathResolver, OCWorkspace ocWorkspace, Project project) {
     this.pathResolver = pathResolver;
     this.readonlyOcWorkspace = ocWorkspace;
+    this.project = project;
   }
 
   @Override
@@ -68,9 +72,17 @@ public class CcProjectModelUpdater implements BlazeProjectListener {
     //   get out of sync.
     CcProjectModelUpdateOperation updateOp =
         new CcProjectModelUpdateOperation(context, readonlyOcWorkspace, pathResolver);
-    updateOp.visitWorkspace(spec.getCcWorkspace());
-    updateOp.preCommit();
-
-    ApplicationManager.getApplication().invokeLaterOnWriteThread(updateOp::commit);
+    try {
+      updateOp.visitWorkspace(spec.getCcWorkspace());
+      updateOp.preCommit();
+      WriteAction.runAndWait(
+          () -> {
+            if (!project.isDisposed()) {
+              updateOp.commit();
+            }
+          });
+    } finally {
+      Disposer.dispose(updateOp);
+    }
   }
 }

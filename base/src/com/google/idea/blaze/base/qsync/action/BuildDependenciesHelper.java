@@ -15,13 +15,17 @@
  */
 package com.google.idea.blaze.base.qsync.action;
 
+import static java.util.stream.Collectors.joining;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.google.idea.blaze.base.qsync.TargetsToBuild;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.common.Label;
@@ -157,33 +161,99 @@ public class BuildDependenciesHelper {
     return syncManager.getLoadedProject().orElseThrow().getWorkingSet(BlazeContext.create());
   }
 
-  public void enableAnalysis(AnActionEvent e, PopupPosititioner positioner) {
+  public ImmutableSet<Label> getAffectedTargetsForPaths(ImmutableSet<Path> paths) {
+
+    TargetDisambiguator disambiguator = TargetDisambiguator.createForPaths(paths, this);
+    ImmutableSet<TargetsToBuild> ambiguousTargets = disambiguator.calculateUnresolvableTargets();
+    if (!ambiguousTargets.isEmpty()) {
+      QuerySyncManager.getInstance(project)
+          .notifyWarning(
+              "Ambiguous target sets found",
+              "Ambiguous target sets for some files; not building them: "
+                  + ambiguousTargets.stream()
+                      .map(TargetsToBuild::sourceFilePath)
+                      .flatMap(Optional::stream)
+                      .map(Path::toString)
+                      .collect(joining(", ")));
+    }
+
+    return disambiguator.unambiguousTargets;
+  }
+
+  public void enableAnalysis(AnActionEvent e, PopupPosititioner popupPosititioner) {
+    ImmutableSet<Label> additionalTargets;
+    if (QuerySyncSettings.getInstance().buildWorkingSet()) {
+      try {
+        additionalTargets = getAffectedTargetsForPaths(getWorkingSet());
+      } catch (BuildException be) {
+        syncManager.notifyWarning(
+            "Could not obtain working set",
+            String.format("Error trying to obtain working set. Not including it in build: %s", be));
+        additionalTargets = ImmutableSet.of();
+      }
+    } else {
+      additionalTargets = ImmutableSet.of();
+    }
+    enableAnalysis(e, popupPosititioner, additionalTargets);
+  }
+
+  public void enableAnalysis(
+      AnActionEvent e, PopupPosititioner positioner, ImmutableSet<Label> additionalTargetsToBuild) {
     VirtualFile vfile = getVirtualFile(e);
     TargetsToBuild toBuild = getTargetsToEnableAnalysisFor(vfile);
+    QuerySyncActionStatsScope querySyncActionStats =
+        QuerySyncActionStatsScope.createForFile(actionClass, e, vfile);
+
+    if (toBuild.overlapsWith(additionalTargetsToBuild)
+        || (toBuild.isEmpty() && !additionalTargetsToBuild.isEmpty())) {
+      enableAnalysis(additionalTargetsToBuild, querySyncActionStats);
+      return;
+    }
+
     if (toBuild.isEmpty()) {
       return;
     }
-    QuerySyncActionStatsScope querySyncActionStats =
-        QuerySyncActionStatsScope.createForFile(actionClass, e, vfile);
+
     if (!toBuild.isAmbiguous()) {
-      enableAnalysis(toBuild.targets(), querySyncActionStats);
+      enableAnalysis(
+          ImmutableSet.<Label>builder()
+              .addAll(toBuild.targets())
+              .addAll(additionalTargetsToBuild)
+              .build(),
+          querySyncActionStats);
       return;
     }
     chooseTargetToBuildFor(
         vfile.getName(),
         toBuild,
         positioner,
-        label -> enableAnalysis(ImmutableSet.of(label), querySyncActionStats));
+        label ->
+            enableAnalysis(
+                ImmutableSet.<Label>builder().add(label).addAll(additionalTargetsToBuild).build(),
+                querySyncActionStats));
   }
 
   void enableAnalysis(ImmutableSet<Label> targets, QuerySyncActionStatsScope querySyncActionStats) {
     switch (depsBuildType) {
       case SELF:
-        syncManager.enableAnalysis(targets, querySyncActionStats);
+        syncManager.enableAnalysis(targets, querySyncActionStats, TaskOrigin.USER_ACTION);
         break;
       case REVERSE_DEPS:
-        syncManager.enableAnalysisForReverseDeps(targets, querySyncActionStats);
+        syncManager.enableAnalysisForReverseDeps(
+            targets, querySyncActionStats, TaskOrigin.USER_ACTION);
     }
+  }
+
+  public void chooseTargetToBuildFor(
+      Path workspaceRelativePath,
+      TargetsToBuild toBuild,
+      PopupPosititioner positioner,
+      Consumer<Label> chosenConsumer) {
+    chooseTargetToBuildFor(
+        WorkspaceRoot.fromProject(project).path().resolve(workspaceRelativePath).toString(),
+        toBuild,
+        positioner,
+        chosenConsumer);
   }
 
   public void chooseTargetToBuildFor(

@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -32,7 +31,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.Scope;
-import com.google.idea.blaze.base.scope.ScopedOperation;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
@@ -45,18 +43,24 @@ import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
@@ -81,7 +85,7 @@ import javax.annotation.Nullable;
  *       from {@link PostQuerySyncData}.
  * </ul>
  */
-public class QuerySyncManager {
+public class QuerySyncManager implements Disposable {
   private final Logger logger = Logger.getInstance(getClass());
 
   private final Project project;
@@ -92,6 +96,24 @@ public class QuerySyncManager {
   private final ProjectLoader loader;
   private volatile QuerySyncProject loadedProject;
 
+  private static final BoolExperiment showWindowOnAutomaticSyncErrors =
+      new BoolExperiment("querysync.autosync.show.console.on.error", true);
+
+  /** An enum represent the origin of a task performed by the {@link QuerySyncManager} */
+  public enum TaskOrigin {
+    /** Tasks run when opening a project */
+    STARTUP,
+    /** User-initiated tasks */
+    USER_ACTION,
+    /** Tasks run automatically */
+    AUTOMATIC,
+    UNKNOWN
+  }
+
+  interface ThrowingScopedOperation {
+    void execute(BlazeContext context) throws BuildException;
+  }
+
   public static QuerySyncManager getInstance(Project project) {
     return project.getService(QuerySyncManager.class);
   }
@@ -99,6 +121,8 @@ public class QuerySyncManager {
   public QuerySyncManager(Project project) {
     this.project = project;
     this.loader = createProjectLoader(executor, project);
+    VirtualFileManager.getInstance()
+        .addAsyncFileListener(new QuerySyncAsyncFileListener(project, this), this);
   }
 
   @NonInjectable
@@ -120,19 +144,26 @@ public class QuerySyncManager {
   }
 
   @CanIgnoreReturnValue
-  public ListenableFuture<Boolean> reloadProject(QuerySyncActionStatsScope querySyncActionStats) {
-    return run("Loading project", "Re-loading project", querySyncActionStats, this::loadProject);
+  public ListenableFuture<Boolean> reloadProject(
+      QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
+    return run(
+        "Loading project",
+        "Re-loading project",
+        querySyncActionStats,
+        this::loadProject,
+        taskOrigin);
   }
 
-  public void loadProject(BlazeContext context) {
+  public void loadProject(BlazeContext context) throws BuildException {
     try {
       QuerySyncProject newProject = loader.loadProject(context);
       if (!context.hasErrors()) {
-        loadedProject = Preconditions.checkNotNull(newProject);
-        loadedProject.sync(context, loadedProject.readSnapshotFromDisk(context));
+        Optional<PostQuerySyncData> projectData = newProject.readSnapshotFromDisk(context);
+        loadedProject = newProject;
+        loadedProject.sync(context, projectData);
       }
-    } catch (Exception e) {
-      context.handleException("Failed to load project", e);
+    } catch (IOException e) {
+      throw new BuildException("Failed to load project", e);
     }
   }
 
@@ -176,50 +207,55 @@ public class QuerySyncManager {
         "Loading project",
         "Initializing project structure",
         querySyncActionStats,
-        this::loadProject);
+        this::loadProject,
+        TaskOrigin.STARTUP);
   }
 
   @CanIgnoreReturnValue
-  public ListenableFuture<Boolean> fullSync(QuerySyncActionStatsScope querySyncActionStats) {
-    if (!isProjectLoaded() || projectDefinitionHasChanged()) {
-      return run(
-          "Updating project structure",
-          "Re-importing project",
-          querySyncActionStats,
-          this::loadProject);
-
-    } else {
-      return run(
-          "Updating project structure",
-          "Re-importing project",
-          querySyncActionStats,
-          loadedProject::fullSync);
-    }
+  public ListenableFuture<Boolean> fullSync(
+      QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
+    return run(
+        "Updating project structure",
+        "Re-importing project",
+        querySyncActionStats,
+        context -> {
+          if (!isProjectLoaded()) {
+            loadProject(context);
+          } else if (projectDefinitionHasChanged(context)) {
+            context.output(PrintOutput.log("Project definition has changed, reloading."));
+            loadProject(context);
+          } else {
+            loadedProject.fullSync(context);
+          }
+        },
+        taskOrigin);
   }
 
   @CanIgnoreReturnValue
-  public ListenableFuture<Boolean> deltaSync(QuerySyncActionStatsScope querySyncActionStats) {
+  public ListenableFuture<Boolean> deltaSync(
+      QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
     assertProjectLoaded();
-    if (projectDefinitionHasChanged()) {
-      return run(
-          "Updating project structure",
-          "Re-importing project",
-          querySyncActionStats,
-          this::loadProject);
-    } else {
-      return run(
-          "Updating project structure",
-          "Refreshing project",
-          querySyncActionStats,
-          loadedProject::deltaSync);
-    }
+    return run(
+        "Updating project structure",
+        "Refreshing project",
+        querySyncActionStats,
+        context -> {
+          if (projectDefinitionHasChanged(context)) {
+            context.output(PrintOutput.log("Project definition has changed, reloading."));
+            loadProject(context);
+          } else {
+            loadedProject.deltaSync(context);
+          }
+        },
+        taskOrigin);
   }
 
   private ListenableFuture<Boolean> run(
       String title,
       String subTitle,
       QuerySyncActionStatsScope querySyncActionStatsScope,
-      ScopedOperation operation) {
+      ThrowingScopedOperation operation,
+      TaskOrigin taskOrigin) {
     SettableFuture<Boolean> result = SettableFuture.create();
     BlazeSyncStatus syncStatus = BlazeSyncStatus.getInstance(project);
     syncStatus.syncStarted();
@@ -244,7 +280,7 @@ public class QuerySyncManager {
         MoreExecutors.directExecutor());
     try {
       ListenableFuture<Boolean> innerResultFuture =
-          createAndSubmitRunTask(title, subTitle, querySyncActionStatsScope, operation);
+          createAndSubmitRunTask(title, subTitle, querySyncActionStatsScope, operation, taskOrigin);
       result.setFuture(innerResultFuture);
     } catch (Throwable t) {
       result.setException(t);
@@ -257,7 +293,9 @@ public class QuerySyncManager {
       String title,
       String subTitle,
       QuerySyncActionStatsScope querySyncActionStatsScope,
-      ScopedOperation operation) {
+      ThrowingScopedOperation operation,
+      TaskOrigin taskOrigin) {
+    querySyncActionStatsScope.getBuilder().setTaskOrigin(taskOrigin);
     return ProgressiveTaskWithProgressIndicator.builder(project, title)
         .submitTaskWithResult(
             indicator ->
@@ -268,7 +306,12 @@ public class QuerySyncManager {
                           new ToolWindowScope.Builder(project, task)
                               .setProgressIndicator(indicator)
                               .showSummaryOutput()
-                              .setPopupBehavior(FocusBehavior.ALWAYS)
+                              .setPopupBehavior(
+                                  taskOrigin == TaskOrigin.AUTOMATIC
+                                      ? showWindowOnAutomaticSyncErrors.getValue()
+                                          ? FocusBehavior.ON_ERROR
+                                          : FocusBehavior.NEVER
+                                      : FocusBehavior.ALWAYS)
                               .setIssueParsers(
                                   BlazeIssueParser.defaultIssueParsers(
                                       project,
@@ -281,7 +324,11 @@ public class QuerySyncManager {
                           .push(querySyncActionStatsScope)
                           .push(new ProblemsViewScope(project, FocusBehavior.ALWAYS))
                           .push(new IdeaLogScope());
-                      operation.execute(context);
+                      try {
+                        operation.execute(context);
+                      } catch (Exception e) {
+                        context.handleException(title + " failed", e);
+                      }
                       return !context.hasErrors();
                     }));
   }
@@ -316,25 +363,27 @@ public class QuerySyncManager {
 
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> enableAnalysis(
-      Set<Label> targets, QuerySyncActionStatsScope querySyncActionStats) {
+      Set<Label> targets, QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
     assertProjectLoaded();
     return run(
         "Building dependencies",
         "Building...",
         querySyncActionStats,
-        context -> loadedProject.enableAnalysis(context, targets));
+        context -> loadedProject.enableAnalysis(context, targets),
+        taskOrigin);
   }
 
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> enableAnalysisForReverseDeps(
-      Set<Label> targets, QuerySyncActionStatsScope querySyncActionStats) {
+      Set<Label> targets, QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
     assertProjectLoaded();
     return run(
         "Building dependencies for affected targets",
         "Building...",
         querySyncActionStats,
         context ->
-            loadedProject.enableAnalysis(context, loadedProject.getTargetsDependingOn(targets)));
+            loadedProject.enableAnalysis(context, loadedProject.getTargetsDependingOn(targets)),
+        taskOrigin);
   }
 
   public boolean canEnableAnalysisFor(Path workspaceRelativePath) {
@@ -346,13 +395,14 @@ public class QuerySyncManager {
 
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> generateRenderJar(
-      PsiFile psiFile, QuerySyncActionStatsScope querySyncActionStats) {
+      PsiFile psiFile, QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
     assertProjectLoaded();
     return run(
         "Building Render jar for Compose preview",
         "Building...",
         querySyncActionStats,
-        context -> loadedProject.enableRenderJar(context, psiFile));
+        context -> loadedProject.enableRenderJar(context, psiFile),
+        taskOrigin);
   }
 
   public boolean isReadyForAnalysis(PsiFile psiFile) {
@@ -368,10 +418,10 @@ public class QuerySyncManager {
    *
    * @return true if the {@link ProjectDefinition} has changed.
    */
-  private boolean projectDefinitionHasChanged() {
+  private boolean projectDefinitionHasChanged(BlazeContext context) throws BuildException {
     // Ensure edits to the project view and any imports have been saved
     SaveUtil.saveAllFiles();
-    return !loadedProject.isDefinitionCurrent();
+    return !loadedProject.isDefinitionCurrent(context);
   }
 
   /** Displays error notification popup balloon in IDE. */
@@ -388,4 +438,7 @@ public class QuerySyncManager {
     Notifications.Bus.notify(
         new Notification("QuerySyncBuild", title, content, notificationType), project);
   }
+
+  @Override
+  public void dispose() {}
 }

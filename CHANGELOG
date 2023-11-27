@@ -1,3 +1,16 @@
+v2023.11.21
+===========
+* feat: Add support for Starlark float literals #5678
+* feat: Add visibility reference contributor #5650
+* fix: Work around NPE for toolwindow #5665
+* fix: Expect double-@-prefixed labels in Bazel output
+* fix: Do not throw "Non-blaze project is provided" exception in various places #5704, #5706, #5658
+* fix: Do not complete ignored directories #5573
+* fix: Fix NPE when accessing xcodeProperties #5714
+* fix: Pass -include compilation flags down to OC language model #5645
+* fix: Rename 'fast' run configurations to 'Fast Run' and 'Fast Debug' … #5743
+* fix: Fast Test with Bzlmod enabled
+
 v2023.11.07
 ===========
 * New feature:

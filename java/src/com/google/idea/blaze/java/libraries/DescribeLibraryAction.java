@@ -35,6 +35,11 @@ import com.intellij.openapi.ui.Messages;
 class DescribeLibraryAction extends BlazeProjectAction {
 
   @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.DISABLED;
+  }
+
+  @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();

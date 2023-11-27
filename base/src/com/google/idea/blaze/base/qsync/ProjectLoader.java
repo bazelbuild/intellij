@@ -34,7 +34,6 @@ import com.google.idea.blaze.base.qsync.cache.ArtifactTrackerImpl;
 import com.google.idea.blaze.base.qsync.cc.CcProjectProtoTransform;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
@@ -44,7 +43,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
-import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder.ProjectProtoTransform;
@@ -55,7 +54,6 @@ import com.google.idea.blaze.qsync.VcsStateDiffer;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.intellij.openapi.project.Project;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -78,19 +76,10 @@ public class ProjectLoader {
   }
 
   @Nullable
-  public QuerySyncProject loadProject(BlazeContext context) throws IOException {
+  public QuerySyncProject loadProject(BlazeContext context) throws BuildException {
     BlazeImportSettings importSettings =
         Preconditions.checkNotNull(
             BlazeImportSettingsManager.getInstance(project).getImportSettings());
-    if (importSettings.getProjectType() != ProjectType.QUERY_SYNC) {
-      context.output(
-          PrintOutput.error(
-              "The project uses a legacy project structure not compatible with this version of"
-                  + " Android Studio. Please reimport into a newly created project. Learn more at"
-                  + " go/querysync"));
-      context.setHasError();
-      return null;
-    }
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
     // TODO we may need to get the WorkspacePathResolver from the VcsHandler, as the old sync
@@ -102,7 +91,7 @@ public class ProjectLoader {
 
     ProjectViewManager projectViewManager = ProjectViewManager.getInstance(project);
     ProjectViewSet projectViewSet =
-        checkNotNull(projectViewManager.reloadProjectView(context, workspacePathResolver));
+        projectViewManager.reloadProjectView(context, workspacePathResolver);
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
             .add(projectViewSet)
@@ -166,7 +155,6 @@ public class ProjectLoader {
             createWorkspaceRelativePackageReader(),
             workspaceRoot.path(),
             handledRules,
-            QuerySync.CC_SUPPORT_ENABLED::getValue,
             ProjectProtoTransform.compose(
                 artifactTracker::updateProjectProto, new CcProjectProtoTransform(artifactTracker)));
     QueryRunner queryRunner = createQueryRunner(buildSystem);

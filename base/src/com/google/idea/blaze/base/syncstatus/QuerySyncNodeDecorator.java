@@ -27,6 +27,8 @@ import com.intellij.ide.projectView.ProjectViewNodeDecorator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import java.util.Set;
@@ -42,6 +44,13 @@ public class QuerySyncNodeDecorator implements ProjectViewNodeDecorator {
     }
 
     VirtualFile vf = node.getVirtualFile();
+
+    // Tree nodes may be KtClassOrObjectTreeNodes, for which Virtual Files can be determined via the
+    // associated PsiElement
+    if (vf == null && node.getValue() instanceof PsiElement) {
+      vf = PsiUtilCore.getVirtualFile((PsiElement) node.getValue());
+    }
+
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     if (vf == null || !workspaceRoot.isInWorkspace(vf)) {
       return;
@@ -51,7 +60,7 @@ public class QuerySyncNodeDecorator implements ProjectViewNodeDecorator {
       return;
     }
     Set<Label> targets = deps.getPendingTargets(workspaceRoot.relativize(vf));
-    if (targets != null && !targets.isEmpty()) {
+    if (!targets.isEmpty()) {
       String text = data.getPresentableText();
       data.clearText();
       data.addText(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);

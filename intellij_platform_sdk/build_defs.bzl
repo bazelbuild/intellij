@@ -17,8 +17,6 @@ INDIRECT_IJ_PRODUCTS = {
     "android-studio-beta-mac": "android-studio-2023.1-mac",
     "android-studio-canary": "android-studio-2023.2",
     "android-studio-canary-mac": "android-studio-2023.2-mac",
-    "android-studio-dev": "android-studio-dev",
-    "android-studio-dev-mac": "android-studio-dev-mac",
     "clion-latest": "clion-2022.3",
     "clion-latest-mac": "clion-2022.3-mac",
     "clion-beta": "clion-2022.3",
@@ -39,11 +37,11 @@ INDIRECT_IJ_PRODUCTS = {
     "clion-oss-latest-stable": "clion-2023.2",
     "clion-oss-under-dev": "clion-2023.3",
     # Indirect ij_product mapping for Cloud Code Plugin OSS
-    "intellij-cc-oldest-stable": "intellij-2022.1",
-    "intellij-cc-latest-stable": "intellij-2022.2",
+    "intellij-cc-oldest-stable": "intellij-2022.3",
+    "intellij-cc-latest-stable": "intellij-2022.3",
     "intellij-cc-under-dev": "intellij-2022.3",
-    "intellij-ue-cc-oldest-stable": "intellij-ue-2022.1",
-    "intellij-ue-cc-latest-stable": "intellij-ue-2022.2",
+    "intellij-ue-cc-oldest-stable": "intellij-ue-2022.3",
+    "intellij-ue-cc-latest-stable": "intellij-ue-2022.3",
     "intellij-ue-cc-under-dev": "intellij-ue-2022.3",
 }
 
@@ -160,25 +158,20 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij-ue",
         directory = "intellij_ue_2023_3",
     ),
-    "android-studio-2022.2": struct(
-        ide = "android-studio",
-        directory = "android_studio_2022_2",
-    ),
     "android-studio-2022.3": struct(
         ide = "android-studio",
-        directory = "android_studio_2022_3",
+        archive = "android_studio_with_blaze_2022_3",
+        oss_workspace = "android_studio_2022_3",
     ),
     "android-studio-2023.1": struct(
         ide = "android-studio",
-        directory = "android_studio_2023_1",
+        archive = "android_studio_with_blaze_2023_1",
+        oss_workspace = "android_studio_2023_1",
     ),
     "android-studio-2023.2": struct(
         ide = "android-studio",
-        directory = "android_studio_2023_2",
-    ),
-    "android-studio-dev": struct(
-        ide = "android-studio",
-        directory = "android_studio_dev",
+        archive = "android_studio_with_blaze_2023_2",
+        oss_workspace = "android_studio_2023_2",
     ),
     "clion-2021.3": struct(
         ide = "clion",
@@ -239,24 +232,6 @@ DIRECT_IJ_PRODUCTS = {
 
 }
 
-def plugin_api_dir_name():
-    """Returns the current IJ version subdirectory.
-
-    Returns:
-        The directory within //intellij_platform_sdk that is
-        used to load the plugin API from, according to the current
-        configuration.
-    """
-    select_params = {
-        ("//intellij_platform_sdk:%s" % product): DIRECT_IJ_PRODUCTS[value].directory
-        for (product, value) in INDIRECT_IJ_PRODUCTS.items()
-        if value in DIRECT_IJ_PRODUCTS
-    }
-
-    # Use ij-latest as the default, consistent with select_from_plugin_api_directory
-    select_params["//conditions:default"] = DIRECT_IJ_PRODUCTS[INDIRECT_IJ_PRODUCTS["intellij-latest"]].directory
-    return select(select_params)
-
 def select_for_plugin_api(params):
     """Selects for a plugin_api.
 
@@ -278,7 +253,7 @@ def select_for_plugin_api(params):
       )
     """
     for indirect_ij_product in INDIRECT_IJ_PRODUCTS:
-        if indirect_ij_product in params and indirect_ij_product != "android-studio-dev":
+        if indirect_ij_product in params:
             error_message = "".join([
                 "Do not select on indirect ij_product %s. " % indirect_ij_product,
                 "Instead, select on an exact ij_product.",
@@ -364,7 +339,11 @@ def select_for_ide(intellij = None, intellij_ue = None, android_studio = None, c
     return select_for_plugin_api(params)
 
 def _plugin_api_directory(value):
-    return "@" + value.directory + "//"
+    if hasattr(value, "oss_workspace"):
+        directory = value.oss_workspace
+    else:
+        directory = value.directory
+    return "@" + directory + "//"
 
 def select_from_plugin_api_directory(intellij, android_studio, clion, intellij_ue = None):
     """Internal convenience method to generate select statement from the IDE's plugin_api directories.
@@ -562,7 +541,6 @@ def java_version_flags():
         "intellij-ue-2022.2": java11,
         "intellij-ue-2022.2-mac": java11,
         "android-studio-2022.2": java11,
-        "android-studio-dev": java11,
         "clion-2021.3": java11,
         "clion-2021.3-mac": java11,
         "clion-2022.1": java11,

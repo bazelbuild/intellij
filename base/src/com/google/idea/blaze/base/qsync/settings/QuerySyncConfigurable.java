@@ -15,17 +15,11 @@
  */
 package com.google.idea.blaze.base.qsync.settings;
 
-import com.google.common.base.Suppliers;
 import com.google.idea.blaze.base.qsync.QuerySync;
-import com.google.idea.common.experiments.ExperimentService;
-import com.google.idea.common.experiments.ExperimentValue;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.options.BoundSearchableConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.ui.DialogPanel;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.dsl.builder.BuilderKt;
 import com.intellij.ui.dsl.builder.ButtonKt;
@@ -35,35 +29,17 @@ import com.intellij.ui.dsl.builder.MutableProperty;
 import com.intellij.ui.dsl.builder.Row;
 import com.intellij.ui.dsl.builder.RowsRange;
 import com.intellij.ui.dsl.builder.UtilsKt;
-import java.util.function.Supplier;
 import javax.swing.AbstractButton;
-import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import kotlin.Unit;
 
 /** A configuration page for the settings dialog for query sync. */
-public class QuerySyncConfigurable extends BoundSearchableConfigurable
-    implements Configurable.Beta {
+class QuerySyncConfigurable extends BoundSearchableConfigurable implements Configurable {
 
-  // If enabled query Sync via a legacy way (set up experimental value).
-  // Only read the initial value, as the sync mode should not change over a single run of the IDE.
-  private static final Supplier<Boolean> QUERY_SYNC_ENABLED_LEGACY =
-      Suppliers.memoize(
-          () ->
-              getFirstExperimentValueWithoutId(
-                  "use.query.sync", QuerySyncSettingsExperimentLoader.ID, false));
+  private static final BoolExperiment LEGACY_SYNC_BEFORE_BUILD =
+      new BoolExperiment("query.sync.before.build", false);
 
-  // If enabled sync before build for Query Sync via a legacy way (set up experimental value)
-  private static final Supplier<Boolean> SYNC_BEFORE_BUILD_ENABLED_LEGACY =
-      Suppliers.memoize(
-          () ->
-              getFirstExperimentValueWithoutId(
-                  "query.sync.before.build", QuerySyncSettingsExperimentLoader.ID, false));
   private final QuerySyncSettings settings = QuerySyncSettings.getInstance();
-
-  // Makes sure we have checked query sync enable option before any changes. Otherwise, it may
-  // memorize the changed value.
-  private final boolean useQuerySync = QuerySync.isEnabled();
 
   // Provides access to enableQuerySyncCheckBoxCell for other rows
   private Cell<JBCheckBox> enableQuerySyncCheckBoxCell = null;
@@ -72,85 +48,55 @@ public class QuerySyncConfigurable extends BoundSearchableConfigurable
     super(/* displayName= */ "Query Sync", /* helpTopic= */ "", /* _id= */ "query.sync");
   }
 
-  private void popupRestartDialogue() {
-    int result =
-        Messages.showYesNoDialog(
-            "Restart "
-                + ApplicationNamesInfo.getInstance().getFullProductName()
-                + " for the changes to take effect",
-            "Restart Required",
-            ApplicationManager.getApplication().isRestartCapable() ? "Restart" : "Shutdown",
-            "Not Now",
-            Messages.getQuestionIcon());
-    if (result == Messages.YES) {
-      ApplicationManagerEx.getApplicationEx().restart(true);
-    }
-  }
-
-  @Override
-  public void apply() {
-    super.apply();
-    if (useQuerySync != settings.useQuerySync()) {
-      popupRestartDialogue();
-    }
-  }
-
-  private static boolean getFirstExperimentValueWithoutId(
-      String key, String id, boolean defaultValue) {
-    for (ExperimentValue experimentValue : ExperimentService.getInstance().getOverrides(key)) {
-      if (!experimentValue.id().equals(id)) {
-        return experimentValue.value().equals("1");
-      }
-    }
-    return defaultValue;
-  }
-
   @Override
   public DialogPanel createPanel() {
     return BuilderKt.panel(
         p -> {
-          boolean enabledByExperimentFile = QUERY_SYNC_ENABLED_LEGACY.get();
+          boolean enabledByExperimentFile =
+              QuerySync.useByDefault() ? false : QuerySync.isLegacyExperimentEnabled();
+          boolean syncBeforeBuildExperiment = LEGACY_SYNC_BEFORE_BUILD.getValue();
           // Enable query sync checkbox
-          Cell<JEditorPane> unusedEnableQuerySyncRow =
+          Row unusedEnableQuerySyncRow =
               p.row(
-                      /* label= */ ((JLabel) null),
-                      /* init= */ r -> {
-                        enableQuerySyncCheckBoxCell =
-                            r.checkBox("Enable Query Sync for new projects")
-                                .enabled(!enabledByExperimentFile)
-                                .bind(
-                                    /* componentGet= */ AbstractButton::isSelected,
-                                    /* componentSet= */ (jbCheckBox, selected) -> {
-                                      jbCheckBox.setSelected(selected);
-                                      return Unit.INSTANCE;
-                                    },
-                                    /* prop= */ new MutableProperty<Boolean>() {
-                                      @Override
-                                      public Boolean get() {
-                                        return settings.useQuerySync() || enabledByExperimentFile;
-                                      }
+                  /* label= */ ((JLabel) null),
+                  /* init= */ r -> {
+                    enableQuerySyncCheckBoxCell =
+                        r.checkBox("Enable Query Sync for new projects")
+                            .enabled(!enabledByExperimentFile)
+                            .bind(
+                                /* componentGet= */ AbstractButton::isSelected,
+                                /* componentSet= */ (jbCheckBox, selected) -> {
+                                  jbCheckBox.setSelected(selected);
+                                  return Unit.INSTANCE;
+                                },
+                                /* prop= */ new MutableProperty<Boolean>() {
+                                  @Override
+                                  public Boolean get() {
+                                    if (QuerySync.useByDefault()) {
+                                      return settings.useQuerySync();
+                                    } else {
+                                      return settings.useQuerySyncBeta() || enabledByExperimentFile;
+                                    }
+                                  }
 
-                                      @Override
-                                      public void set(Boolean selected) {
-                                        settings.enableUseQuerySync(selected);
-                                      }
-                                    })
-                                .comment(
-                                    enabledByExperimentFile
-                                        ? "query sync is forcefully enabled by the old flag from"
-                                            + " the .intellij-experiments file. "
-                                        : "",
-                                    UtilsKt.DEFAULT_COMMENT_WIDTH,
-                                    HyperlinkEventAction.HTML_HYPERLINK_INSTANCE);
-                        return Unit.INSTANCE;
-                      })
-                  // TODO (b/303698519): remove the restart requirement after removing query sync
-                  // experiment checks and only use settings.useQuerySync() to decide if query sync
-                  // is enabled.
-                  .comment(
-                      enabledByExperimentFile ? "" : "Requires restart",
-                      UtilsKt.DEFAULT_COMMENT_WIDTH,
-                      HyperlinkEventAction.HTML_HYPERLINK_INSTANCE);
+                                  @Override
+                                  public void set(Boolean selected) {
+                                    if (QuerySync.useByDefault()) {
+                                      settings.enableUseQuerySync(selected);
+                                    } else {
+                                      settings.enableUseQuerySyncBeta(selected);
+                                    }
+                                  }
+                                })
+                            .comment(
+                                enabledByExperimentFile
+                                    ? "query sync is forcefully enabled by the old flag from"
+                                        + " the .intellij-experiments file. "
+                                    : "",
+                                UtilsKt.DEFAULT_COMMENT_WIDTH,
+                                HyperlinkEventAction.HTML_HYPERLINK_INSTANCE);
+                    return Unit.INSTANCE;
+                  });
 
           // Other sub options
           RowsRange unusedRowRange =
@@ -199,7 +145,7 @@ public class QuerySyncConfigurable extends BoundSearchableConfigurable
                                             @Override
                                             public Boolean get() {
                                               return settings.syncBeforeBuild()
-                                                  || SYNC_BEFORE_BUILD_ENABLED_LEGACY.get();
+                                                  || syncBeforeBuildExperiment;
                                             }
 
                                             @Override
@@ -207,7 +153,7 @@ public class QuerySyncConfigurable extends BoundSearchableConfigurable
                                               settings.enableSyncBeforeBuild(selected);
                                             }
                                           });
-                              if (!SYNC_BEFORE_BUILD_ENABLED_LEGACY.get()) {
+                              if (!syncBeforeBuildExperiment) {
                                 syncBeforeBuildCheckBox =
                                     syncBeforeBuildCheckBox.enabledIf(
                                         ButtonKt.getSelected(enableQuerySyncCheckBoxCell));
@@ -223,6 +169,63 @@ public class QuerySyncConfigurable extends BoundSearchableConfigurable
                               }
                               return Unit.INSTANCE;
                             });
+                    Row unusedBuildWorkingSetRow =
+                        ip.row(
+                            /* label= */ ((JLabel) null),
+                            /* init= */ r -> {
+                              Cell<JBCheckBox> buildWorkingSetCheckBox =
+                                  r.checkBox("Include working set when building dependencies")
+                                      .bind(
+                                          AbstractButton::isSelected,
+                                          (jbCheckBox, selected) -> {
+                                            jbCheckBox.setSelected(selected);
+                                            return Unit.INSTANCE;
+                                          },
+                                          new MutableProperty<>() {
+                                            @Override
+                                            public Boolean get() {
+                                              return settings.buildWorkingSet();
+                                            }
+
+                                            @Override
+                                            public void set(Boolean selected) {
+                                              settings.enableBuildWorkingSet(selected);
+                                            }
+                                          });
+                              buildWorkingSetCheckBox =
+                                  buildWorkingSetCheckBox.enabledIf(
+                                      ButtonKt.getSelected(enableQuerySyncCheckBoxCell));
+                              return Unit.INSTANCE;
+                            });
+                    Row unusedSyncOnFileChangeRow =
+                        ip.row(
+                            /* label= */ ((JLabel) null),
+                            /* init= */ r -> {
+                              Cell<JBCheckBox> syncOnFileChangeCheckBox =
+                                  r.checkBox("Automatically sync project on file changes")
+                                      .bind(
+                                          AbstractButton::isSelected,
+                                          (jbCheckBox, selected) -> {
+                                            jbCheckBox.setSelected(selected);
+                                            return Unit.INSTANCE;
+                                          },
+                                          new MutableProperty<>() {
+                                            @Override
+                                            public Boolean get() {
+                                              return settings.syncOnFileChanges();
+                                            }
+
+                                            @Override
+                                            public void set(Boolean selected) {
+                                              settings.enableSyncOnFileChanges(selected);
+                                            }
+                                          });
+                              syncOnFileChangeCheckBox =
+                                  syncOnFileChangeCheckBox.enabledIf(
+                                      ButtonKt.getSelected(enableQuerySyncCheckBoxCell));
+                              return Unit.INSTANCE;
+                            });
+
                     return Unit.INSTANCE;
                   });
           return Unit.INSTANCE;

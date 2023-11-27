@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.qsync.CandidatePackageFinder;
 import com.google.idea.blaze.base.qsync.CandidatePackageFinder.CandidatePackage;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.google.idea.blaze.base.qsync.QuerySyncProject;
 import com.google.idea.blaze.exception.BuildException;
 import com.intellij.notification.NotificationGroupManager;
@@ -105,6 +106,9 @@ public class AddToProjectAction extends BlazeProjectAction {
     private static Optional<Path> getWorkspaceFile(Path workspaceRoot, AnActionEvent event) {
       VirtualFile virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE);
       if (virtualFile == null) {
+        return Optional.empty();
+      }
+      if (!virtualFile.isInLocalFileSystem()) {
         return Optional.empty();
       }
       Path file = virtualFile.toNioPath();
@@ -203,7 +207,7 @@ public class AddToProjectAction extends BlazeProjectAction {
       edit.apply();
       notify(NotificationType.INFORMATION, "Added %s to project view; starting sync", chosen.path);
       QuerySyncManager.getInstance(project)
-          .fullSync(QuerySyncActionStatsScope.create(getClass(), event));
+          .fullSync(QuerySyncActionStatsScope.create(getClass(), event), TaskOrigin.USER_ACTION);
     }
   }
 

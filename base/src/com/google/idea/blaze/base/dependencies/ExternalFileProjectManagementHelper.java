@@ -109,7 +109,7 @@ public class ExternalFileProjectManagementHelper
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(VirtualFile vf, FileEditor fileEditor) {
-    if(Blaze.getProjectType(project) == BlazeImportSettings.ProjectType.UNKNOWN) {
+    if (Blaze.getProjectType(project).equals(BlazeImportSettings.ProjectType.UNKNOWN)) {
       return null;
     }
 

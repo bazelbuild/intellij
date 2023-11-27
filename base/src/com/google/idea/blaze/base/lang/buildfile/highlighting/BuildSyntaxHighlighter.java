@@ -75,6 +75,7 @@ public class BuildSyntaxHighlighter extends SyntaxHighlighterBase {
   static {
     addAttribute(TokenKind.COMMENT, BUILD_LINE_COMMENT);
     addAttribute(TokenKind.INT, BUILD_NUMBER);
+    addAttribute(TokenKind.FLOAT, BUILD_NUMBER);
     addAttribute(TokenKind.STRING, BUILD_STRING);
 
     addAttribute(TokenKind.LBRACE, BUILD_BRACES);

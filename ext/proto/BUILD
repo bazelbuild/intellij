@@ -4,6 +4,7 @@ load("@io_bazel_rules_go//proto:def.bzl", "go_grpc_library", "go_proto_library")
 proto_library(
     name = "intellijext_proto",
     srcs = [
+        "build_cleaner.proto",
         "build_service.proto",
         "chatbotmodel.proto",
         "experiments.proto",
