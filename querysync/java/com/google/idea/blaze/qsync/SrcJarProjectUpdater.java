@@ -44,6 +44,8 @@ public class SrcJarProjectUpdater {
     this.project = project;
     this.srcJars = srcJars;
     this.resolver = resolver;
+    // Require empty package prefixes for srcjar inner paths, since the ultimate consumer of these
+    // paths does not support setting a package prefix (see `Library.ModifiableModel.addRoot`).
     srcJarInnerPathFinder =
         new SrcJarInnerPathFinder(new PackageStatementParser(), EMPTY_PACKAGE_PREFIXES_ONLY);
   }
