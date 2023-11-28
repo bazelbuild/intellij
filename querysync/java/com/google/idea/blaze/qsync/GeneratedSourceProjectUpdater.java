@@ -15,11 +15,13 @@
  */
 package com.google.idea.blaze.qsync;
 
+import static com.google.idea.blaze.qsync.SrcJarInnerPathFinder.AllowPackagePrefixes.ALLOW_NON_EMPTY_PACKAGE_PREFIXES;
+
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.qsync.SrcJarInnerPathFinder.JarPath;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
-import java.nio.file.Path;
 
 /** Updates project protos with a content entry for generated sources */
 public class GeneratedSourceProjectUpdater {
@@ -40,7 +42,8 @@ public class GeneratedSourceProjectUpdater {
     this.genSrcRoots = genSrcFileFolders;
     this.genSrcJars = genSrcJars;
     this.resolver = resolver;
-    srcJarInnerPathFinder = new SrcJarInnerPathFinder(new PackageStatementParser());
+    srcJarInnerPathFinder =
+        new SrcJarInnerPathFinder(new PackageStatementParser(), ALLOW_NON_EMPTY_PACKAGE_PREFIXES);
   }
 
   public Project addGenSrcContentEntry() {
@@ -70,13 +73,13 @@ public class GeneratedSourceProjectUpdater {
     for (ProjectPath path : genSrcJars) {
       ProjectProto.ContentEntry.Builder genSrcJarContentEntry =
           ProjectProto.ContentEntry.newBuilder().setRoot(path.toProto());
-      for (Path innerPath :
+      for (JarPath innerPath :
           srcJarInnerPathFinder.findInnerJarPaths(resolver.resolve(path).toFile())) {
         genSrcJarContentEntry.addSources(
             ProjectProto.SourceFolder.newBuilder()
-                .setProjectPath(path.withInnerJarPath(innerPath).toProto())
+                .setProjectPath(path.withInnerJarPath(innerPath.path).toProto())
                 .setIsGenerated(true)
-                .setPackagePrefix(""));
+                .setPackagePrefix(innerPath.packagePrefix));
       }
       workspaceModule.addContentEntries(genSrcJarContentEntry);
     }
