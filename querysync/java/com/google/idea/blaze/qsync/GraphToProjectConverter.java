@@ -425,7 +425,8 @@ public class GraphToProjectConverter {
                 .build());
       }
       for (Path nonJavaDirPath : rootToNonJavaSource.get(dir)) {
-        if (javaSourceRoots.get(dir).keySet().stream().noneMatch(nonJavaDirPath::startsWith)) {
+        if (javaSourceRoots.get(dir).keySet().stream()
+            .noneMatch(p -> p.toString().isEmpty() || nonJavaDirPath.startsWith(p))) {
           Path path = dir.resolve(nonJavaDirPath);
           // TODO(b/305743519): make java source properties like package prefix specific to java
           // source folders only.

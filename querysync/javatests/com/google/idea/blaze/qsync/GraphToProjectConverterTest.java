@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectProto;
@@ -695,6 +696,39 @@ public class GraphToProjectConverterTest {
                     ProjectPath.newBuilder()
                         .setBase(Base.WORKSPACE)
                         .setPath(TestData.ROOT.resolve("nestedproto/java").toString()))
+                .build());
+  }
+
+  @Test
+  public void testNonJavaSourceFolders_whenSubfolderOfJavaRootAtContentEntry_notCreated()
+      throws Exception {
+
+    ImmutableMap<Path, String> sourcePackages =
+        ImmutableMap.of(
+            TestData.ROOT.resolve("protodep/TestClassProtoDep.java"),
+            "com.google.idea.blaze.qsync.testdata.protodep");
+
+    GraphToProjectConverter converter =
+        GraphToProjectConverters.builder()
+            .setPackageReader(sourcePackages::get)
+            .setProjectIncludes(ImmutableSet.of(TestData.ROOT))
+            .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
+            .build();
+    BuildGraphData buildGraphData =
+        BuildGraphs.forTestProject(TestData.JAVA_LIBRARY_PROTO_DEP_QUERY);
+
+    ProjectProto.Project projectProto = converter.createProject(buildGraphData);
+    ProjectProto.Module workspaceModule = Iterables.getOnlyElement(projectProto.getModulesList());
+    ProjectProto.ContentEntry contentEntry =
+        Iterables.getOnlyElement(workspaceModule.getContentEntriesList());
+    assertThat(contentEntry.getSourcesList())
+        .containsExactly(
+            ProjectProto.SourceFolder.newBuilder()
+                .setProjectPath(
+                    ProjectPath.newBuilder()
+                        .setBase(Base.WORKSPACE)
+                        .setPath(TestData.ROOT.toString()))
+                .setPackagePrefix("com.google.idea.blaze.qsync.testdata")
                 .build());
   }
 
