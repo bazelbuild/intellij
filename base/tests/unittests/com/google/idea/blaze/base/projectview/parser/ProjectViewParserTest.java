@@ -210,7 +210,7 @@ public class ProjectViewParserTest extends BlazeTestCase {
                     "  //java/com/google:one",
                     "  //java/com/google:two",
                     "import some/file.blazeproject",
-                    "try-import some/file.blazeproject.optional"));
+                    "try_import some/file.blazeproject.optional"));
   }
 
   @Test
