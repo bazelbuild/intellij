@@ -9,10 +9,11 @@ import com.google.idea.blaze.base.projectview.section.SectionParser;
 
 import javax.annotation.Nullable;
 
+/** "try_import" section. */
 public class TryImportSection extends ImportSection {
 
     public static final SectionKey<WorkspacePath, ScalarSection<WorkspacePath>> KEY =
-            SectionKey.of("try-import");
+            SectionKey.of("try_import");
 
     public static final SectionParser PARSER = new TryImportSectionParser();
 
