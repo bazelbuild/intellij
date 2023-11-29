@@ -34,15 +34,25 @@ public class ImportSection {
       SectionKey.of("import");
   public static final SectionParser PARSER = new ImportSectionParser();
 
-  private static class ImportSectionParser extends ScalarSectionParser<WorkspacePath> {
+  protected static class ImportSectionParser extends ScalarSectionParser<WorkspacePath> {
     public ImportSectionParser() {
-      super(KEY, ' ');
+      this(KEY, ' ');
+    }
+
+    protected ImportSectionParser(SectionKey<WorkspacePath, ScalarSection<WorkspacePath>> key, char divider) {
+      super(key, divider);
     }
 
     @Nullable
     @Override
     protected WorkspacePath parseItem(
         ProjectViewParser parser, ParseContext parseContext, String text) {
+      boolean projectViewImportsMandatory = !Registry.is("bazel.projectview.optional.imports");
+      return parseItem(parser, parseContext, text, projectViewImportsMandatory);
+    }
+
+    @Nullable
+    protected static WorkspacePath parseItem(ProjectViewParser parser, ParseContext parseContext, String text, boolean projectViewImportsMandatory) {
       String error = WorkspacePath.validate(text);
       if (error != null) {
         parseContext.addError(error);
@@ -53,7 +63,6 @@ public class ImportSection {
       if (parser.isRecursive()) {
         File projectViewFile = parseContext.getWorkspacePathResolver().resolveToFile(workspacePath);
         if (projectViewFile != null) {
-          boolean projectViewImportsMandatory = !Registry.is("bazel.projectview.optional.imports");
           if (projectViewImportsMandatory || projectViewFile.exists()) {
             parser.parseProjectView(projectViewFile);
           } else {

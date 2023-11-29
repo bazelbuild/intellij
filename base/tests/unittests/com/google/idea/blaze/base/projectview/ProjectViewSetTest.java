@@ -52,6 +52,7 @@ import com.google.idea.blaze.base.projectview.section.sections.TestFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
+import com.google.idea.blaze.base.projectview.section.sections.TryImportSection;
 import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.common.experiments.ExperimentService;
@@ -85,6 +86,7 @@ public class ProjectViewSetTest extends BlazeTestCase {
                         ListSection.builder(TargetSection.KEY)
                             .add(TargetExpression.fromStringSafe("//test:all")))
                     .add(ScalarSection.builder(ImportSection.KEY).set(new WorkspacePath("test")))
+                    .add(ScalarSection.builder(TryImportSection.KEY).set(new WorkspacePath("test-optional")))
                     .add(ListSection.builder(TestSourceSection.KEY).add(new Glob("javatests/*")))
                     .add(ListSection.builder(ExcludedSourceSection.KEY).add(new Glob("*.java")))
                     .add(ListSection.builder(BuildFlagsSection.KEY).add("--android_sdk=abcd"))

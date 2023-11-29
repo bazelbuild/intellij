@@ -38,6 +38,7 @@ import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
+import com.google.idea.blaze.base.projectview.section.sections.TryImportSection;
 import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
@@ -193,6 +194,9 @@ public class ProjectViewParserTest extends BlazeTestCase {
             .add(
                 ScalarSection.builder(ImportSection.KEY)
                     .set(new WorkspacePath("some/file.blazeproject")))
+            .add(
+                ScalarSection.builder(TryImportSection.KEY)
+                    .set(new WorkspacePath("some/file.blazeproject.optional")))
             .build();
     String text = ProjectViewParser.projectViewToString(projectView);
     assertThat(text)
@@ -205,7 +209,8 @@ public class ProjectViewParserTest extends BlazeTestCase {
                     "targets:",
                     "  //java/com/google:one",
                     "  //java/com/google:two",
-                    "import some/file.blazeproject"));
+                    "import some/file.blazeproject",
+                    "try-import some/file.blazeproject.optional"));
   }
 
   @Test
