@@ -332,6 +332,14 @@ public class ProjectViewParserTest extends BlazeTestCase {
   }
 
   @Test
+  public void testTryImportMissingFileResultsInWarning() {
+      projectViewStorageManager.add(".blazeproject", "try_import parent.blazeproject");
+      projectViewParser.parseProjectView(new File(".blazeproject"));
+      errorCollector.assertIssues("Could not load project view file: '/parent.blazeproject'");
+      errorCollector.assertHasNoErrors();
+  }
+
+  @Test
   public void testMissingSectionResultsInIssue() {
     projectViewStorageManager.add(".blazeproject", "nosuchsection:", "  java/com/google");
     projectViewParser.parseProjectView(new File(".blazeproject"));
