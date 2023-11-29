@@ -151,3 +151,15 @@ java_test(
         "@truth//jar",
     ],
 )
+
+java_test(
+    name = "PackageStatementParserTest",
+    size = "small",
+    srcs = ["PackageStatementParserTest.java"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync",
+        "@com_google_guava_guava//jar",
+        "@junit//jar",
+        "@truth//jar",
+    ],
+)

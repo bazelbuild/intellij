@@ -30,6 +30,8 @@ import java.util.regex.Pattern;
 public class PackageStatementParser implements PackageReader {
 
   private static final Pattern PACKAGE_PATTERN = Pattern.compile("^\\s*package\\s+([\\w\\.]+)");
+  private static final Pattern SINGLE_LINE_PACKAGE_PATTERN =
+      Pattern.compile("\\bpackage\\s+([^;]+);");
 
   @Override
   public String readPackage(Path path) throws IOException {
@@ -40,9 +42,22 @@ public class PackageStatementParser implements PackageReader {
 
   public String readPackage(InputStream in) throws IOException {
     BufferedReader javaReader = new BufferedReader(new InputStreamReader(in, UTF_8));
+    String firstLine = null;
     String javaLine;
+    int linesRead = 0;
     while ((javaLine = javaReader.readLine()) != null) {
+      if (firstLine == null) {
+        firstLine = javaLine;
+      }
+      linesRead++;
       Matcher packageMatch = PACKAGE_PATTERN.matcher(javaLine);
+      if (packageMatch.find()) {
+        return packageMatch.group(1);
+      }
+    }
+    // A special case for generated sources files with no newlines in them:
+    if (linesRead == 1) {
+      Matcher packageMatch = SINGLE_LINE_PACKAGE_PATTERN.matcher(firstLine);
       if (packageMatch.find()) {
         return packageMatch.group(1);
       }
