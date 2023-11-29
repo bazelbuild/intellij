@@ -29,6 +29,7 @@ test_suite(
         "//querysync/javatests/com/google/idea/blaze/qsync:AffectedPackagesTest",
         "//querysync/javatests/com/google/idea/blaze/qsync:GeneratedSourceProjectUpdaterTest",
         "//querysync/javatests/com/google/idea/blaze/qsync:GraphToProjectConverterTest",
+        "//querysync/javatests/com/google/idea/blaze/qsync:PackageStatementParserTest",
         "//querysync/javatests/com/google/idea/blaze/qsync:PartialProjectRefreshTest",
         "//querysync/javatests/com/google/idea/blaze/qsync:ProjectRefresherTest",
         "//querysync/javatests/com/google/idea/blaze/qsync:QuerySyncTestUtilsTest",
