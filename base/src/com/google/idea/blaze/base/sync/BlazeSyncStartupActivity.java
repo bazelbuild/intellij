@@ -27,7 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 
 /** Syncs the project upon startup. */
-public class BlazeSyncStartupActivity implements StartupActivity {
+public class BlazeSyncStartupActivity implements StartupActivity.DumbAware {
 
   public static final String SYNC_REASON = "BlazeSyncStartupActivity";
 
