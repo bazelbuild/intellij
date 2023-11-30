@@ -17,7 +17,7 @@ package com.google.idea.blaze.qsync;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
-import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
+import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getPostQuerySyncData;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -536,7 +536,7 @@ public class GraphToProjectConverterTest {
 
     BuildGraphData buildGraphData =
         new BlazeQueryParser(
-                getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY),
+                getPostQuerySyncData(TestData.JAVA_LIBRARY_NO_DEPS_QUERY),
                 NOOP_CONTEXT,
                 ImmutableSet.of())
             .parse();
@@ -750,7 +750,7 @@ public class GraphToProjectConverterTest {
 
     BuildGraphData buildGraphData =
         new BlazeQueryParser(
-                getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY),
+                getPostQuerySyncData(TestData.JAVA_LIBRARY_NO_DEPS_QUERY),
                 NOOP_CONTEXT,
                 ImmutableSet.of())
             .parse();

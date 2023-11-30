@@ -63,6 +63,9 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class BuildGraphData {
 
+  /** Query data from which this build graph was constructed. */
+  public abstract PostQuerySyncData queryData();
+
   /** A map from target to file on disk for all source files */
   public abstract ImmutableMap<Label, Location> locations();
 
@@ -166,17 +169,22 @@ public abstract class BuildGraphData {
     return getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(this));
   }
 
-  public static Builder builder() {
-    return new AutoValue_BuildGraphData.Builder();
+  public static Builder builder(PostQuerySyncData queryData) {
+    return new AutoValue_BuildGraphData.Builder().queryData(queryData);
   }
 
   @VisibleForTesting
   public static final BuildGraphData EMPTY =
-      builder().projectDeps(ImmutableSet.of()).packages(PackageSet.EMPTY).build();
+      builder(PostQuerySyncData.EMPTY)
+          .projectDeps(ImmutableSet.of())
+          .packages(PackageSet.EMPTY)
+          .build();
 
   /** Builder for {@link BuildGraphData}. */
   @AutoValue.Builder
   public abstract static class Builder {
+
+    public abstract Builder queryData(PostQuerySyncData queryData);
 
     public abstract ImmutableMap.Builder<Label, Location> locationsBuilder();
 

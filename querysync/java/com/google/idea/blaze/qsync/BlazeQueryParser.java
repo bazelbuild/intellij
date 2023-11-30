@@ -29,6 +29,7 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.RuleKinds;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.BuildGraphData.Location;
+import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.project.ProjectTarget.SourceType;
 import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
@@ -70,7 +71,7 @@ public class BlazeQueryParser {
 
   private final QuerySummary query;
 
-  private final BuildGraphData.Builder graphBuilder = BuildGraphData.builder();
+  private final BuildGraphData.Builder graphBuilder;
   private final PackageSet.Builder packages = new PackageSet.Builder();
 
   private final Set<Label> projectDeps = Sets.newHashSet();
@@ -80,10 +81,11 @@ public class BlazeQueryParser {
   private final Set<Label> javaDeps = new HashSet<>();
 
   public BlazeQueryParser(
-      QuerySummary query, Context<?> context, ImmutableSet<String> handledRuleKinds) {
+      PostQuerySyncData syncData, Context<?> context, ImmutableSet<String> handledRuleKinds) {
     this.context = context;
     this.alwaysBuildRuleKinds = Sets.difference(ALWAYS_BUILD_RULE_KINDS, handledRuleKinds);
-    this.query = query;
+    this.graphBuilder = BuildGraphData.builder(syncData);
+    this.query = syncData.querySummary();
   }
 
   public BuildGraphData parse() {

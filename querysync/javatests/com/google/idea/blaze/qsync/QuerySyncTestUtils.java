@@ -22,6 +22,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.vcs.VcsState;
+import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.io.IOException;
@@ -54,6 +55,12 @@ public class QuerySyncTestUtils {
 
   public static QuerySummary getQuerySummary(TestData genQueryName) throws IOException {
     return QuerySummary.create(genQueryName.getQueryOutputPath().toFile());
+  }
+
+  public static PostQuerySyncData getPostQuerySyncData(TestData genQueryName) throws IOException {
+    return PostQuerySyncData.EMPTY.toBuilder()
+        .setQuerySummary(getQuerySummary(genQueryName))
+        .build();
   }
 
   private static final ImmutableSet<String> JAVA_ROOT_DIRS = ImmutableSet.of("java", "javatests");

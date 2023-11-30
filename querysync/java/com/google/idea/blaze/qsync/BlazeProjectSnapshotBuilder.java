@@ -24,7 +24,6 @@ import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
-import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
 
 /**
@@ -86,8 +85,8 @@ public class BlazeProjectSnapshotBuilder {
             context,
             postQuerySyncData.projectDefinition(),
             executor);
-    QuerySummary querySummary = postQuerySyncData.querySummary();
-    BuildGraphData graph = new BlazeQueryParser(querySummary, context, handledRuleKinds).parse();
+    BuildGraphData graph =
+        new BlazeQueryParser(postQuerySyncData, context, handledRuleKinds).parse();
     Project project =
         projectProtoTransform.apply(graphToProjectConverter.createProject(graph), graph, context);
     return BlazeProjectSnapshot.builder()

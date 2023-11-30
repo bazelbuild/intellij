@@ -60,8 +60,7 @@ public class TestDataSyncRunner {
             .setQuerySummary(querySummary)
             .setVcsState(Optional.empty())
             .build();
-    BuildGraphData buildGraphData =
-        new BlazeQueryParser(querySummary, context, ImmutableSet.of()).parse();
+    BuildGraphData buildGraphData = new BlazeQueryParser(pqsd, context, ImmutableSet.of()).parse();
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             packageReader,
@@ -72,7 +71,7 @@ public class TestDataSyncRunner {
     Project project = converter.createProject(buildGraphData);
     return BlazeProjectSnapshot.builder()
         .queryData(pqsd)
-        .graph(new BlazeQueryParser(querySummary, context, ImmutableSet.of()).parse())
+        .graph(new BlazeQueryParser(pqsd, context, ImmutableSet.of()).parse())
         .project(project)
         .build();
   }

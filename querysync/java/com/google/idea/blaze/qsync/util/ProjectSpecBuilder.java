@@ -85,8 +85,7 @@ public class ProjectSpecBuilder {
             .readFrom(new GZIPInputStream(new FileInputStream(snapshotFile)), context)
             .orElseThrow()
             .getSyncData();
-    BuildGraphData buildGraph =
-        new BlazeQueryParser(snapshot.querySummary(), context, ImmutableSet.of()).parse();
+    BuildGraphData buildGraph = new BlazeQueryParser(snapshot, context, ImmutableSet.of()).parse();
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             packageReader, workspaceRoot, context, snapshot.projectDefinition(), executor);
