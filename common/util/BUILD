@@ -2,6 +2,7 @@ load(
     "//:build-visibility.bzl",
     "COMMON_PLUGINS_VISIBILITY",
 )
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_channel")
 
 package(default_visibility = COMMON_PLUGINS_VISIBILITY)
 
@@ -80,42 +81,11 @@ genrule(
 
 genrule(
     name = "channel_java",
-    srcs = select(
-        {
-            "//intellij_platform_sdk:intellij-latest": [":stable"],
-            "//intellij_platform_sdk:intellij-latest-mac": [":stable"],
-            "//intellij_platform_sdk:intellij-beta": [":beta"],
-            "//intellij_platform_sdk:intellij-under-dev": [":canary"],
-            "//intellij_platform_sdk:intellij-oss-latest-stable": [":stable"],
-            "//intellij_platform_sdk:intellij-oss-oldest-stable": [":stable"],
-            "//intellij_platform_sdk:intellij-oss-under-dev": [":canary"],
-            "//intellij_platform_sdk:intellij-ue-latest": [":stable"],
-            "//intellij_platform_sdk:intellij-ue-latest-mac": [":stable"],
-            "//intellij_platform_sdk:intellij-ue-beta": [":beta"],
-            "//intellij_platform_sdk:intellij-ue-oss-latest-stable": [":stable"],
-            "//intellij_platform_sdk:intellij-ue-oss-oldest-stable": [":stable"],
-            "//intellij_platform_sdk:intellij-ue-oss-under-dev": [":canary"],
-            "//intellij_platform_sdk:intellij-ue-cc-latest-stable": [":stable"],
-            "//intellij_platform_sdk:intellij-ue-cc-oldest-stable": [":stable"],
-            "//intellij_platform_sdk:intellij-ue-cc-under-dev": [":canary"],
-            "//intellij_platform_sdk:clion-latest": [":stable"],
-            "//intellij_platform_sdk:clion-latest-mac": [":stable"],
-            "//intellij_platform_sdk:clion-beta": [":beta"],
-            "//intellij_platform_sdk:clion-under-dev": [":canary"],
-            "//intellij_platform_sdk:clion-oss-latest-stable": [":stable"],
-            "//intellij_platform_sdk:clion-oss-oldest-stable": [":stable"],
-            "//intellij_platform_sdk:clion-oss-under-dev": [":canary"],
-            "//intellij_platform_sdk:android-studio-latest": [":stable"],
-            "//intellij_platform_sdk:android-studio-beta": [":beta"],
-            "//intellij_platform_sdk:android-studio-canary": [":canary"],
-            "//intellij_platform_sdk:android-studio-latest-mac": [":stable"],
-            "//intellij_platform_sdk:android-studio-beta-mac": [":beta"],
-            "//intellij_platform_sdk:android-studio-canary-mac": [":canary"],
-            "//intellij_platform_sdk:android-studio-oss-oldest-stable": [":stable"],
-            "//intellij_platform_sdk:android-studio-oss-latest-stable": [":stable"],
-            "//intellij_platform_sdk:android-studio-oss-under-dev": [":canary"],
-        },
-    ),
+    srcs = select_for_channel({
+        "stable": [":stable"],
+        "beta": [":beta"],
+        "canary": [":canary"],
+    }),
     outs = ["com/google/idea/common/util/channel/Channel.java"],
     cmd = "\n".join([
         "CHANNEL=$$(cat $<)",
