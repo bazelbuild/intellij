@@ -402,8 +402,7 @@ public class GraphToProjectConverter {
 
     ListMultimap<Path, Path> excludesByRootDirectory =
         projectDefinition.getExcludesByRootDirectory();
-    TestSourceGlobMatcher testSourceGlobMatcher =
-        new TestSourceGlobMatcher(projectDefinition.testSources());
+    TestSourceGlobMatcher testSourceGlobMatcher = TestSourceGlobMatcher.create(projectDefinition);
     for (Path dir : projectDefinition.projectIncludes()) {
       ProjectProto.ContentEntry.Builder contentEntry =
           ProjectProto.ContentEntry.newBuilder()
