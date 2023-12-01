@@ -31,8 +31,11 @@ import java.util.Optional;
  */
 public class FlagResolver {
 
+  private static final int MISSING_DIR_WARNING_LIMIT = 3;
+
   private final ProjectPath.Resolver pathResolver;
   private final boolean filterMissingPaths;
+  private int missingFlagDirs = 0;
 
   public FlagResolver(ProjectPath.Resolver pathResolver) {
     this.pathResolver = pathResolver;
@@ -44,13 +47,16 @@ public class FlagResolver {
     this.filterMissingPaths = filterMissingPaths;
   }
 
-  public Optional<String> resolve(CcCompilerFlag flag) {
+  private Optional<String> resolve(CcCompilerFlag flag) {
     if (flag.hasPath()) {
       Path resolved = pathResolver.resolve(ProjectPath.create(flag.getPath()));
       if (!Files.isDirectory(resolved)) {
         // TODO(mathewi) it's unclear if this is necessary, and if so, if this is the right layer to
         //   do it (maybe better in CcWorkspaceBuilder?)
-        System.err.println("Warning: " + flag.getFlag() + " path not found:" + resolved);
+        if (missingFlagDirs < MISSING_DIR_WARNING_LIMIT) {
+          System.err.println("Warning: " + flag.getFlag() + " path not found:" + resolved);
+        }
+        missingFlagDirs++;
         if (filterMissingPaths) {
           return Optional.empty();
         }
@@ -64,9 +70,15 @@ public class FlagResolver {
   }
 
   public ImmutableList<String> resolveAll(CcCompilerFlagSet flagSet) {
-    return flagSet.getFlagsList().stream()
-        .map(this::resolve)
-        .flatMap(Optional::stream)
-        .collect(toImmutableList());
+    ImmutableList<String> resolved =
+        flagSet.getFlagsList().stream()
+            .map(this::resolve)
+            .flatMap(Optional::stream)
+            .collect(toImmutableList());
+    if (missingFlagDirs >= MISSING_DIR_WARNING_LIMIT) {
+      System.err.println("WARNING: " + missingFlagDirs + " flag paths were not found");
+      missingFlagDirs = 0;
+    }
+    return resolved;
   }
 }
