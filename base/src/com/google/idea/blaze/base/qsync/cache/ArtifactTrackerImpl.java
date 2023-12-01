@@ -72,7 +72,9 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.GeneratedSourceProjectUpdater;
+import com.google.idea.blaze.qsync.GeneratedSourceProjectUpdater.GeneratedSourceJar;
 import com.google.idea.blaze.qsync.SrcJarProjectUpdater;
+import com.google.idea.blaze.qsync.TestSourceGlobMatcher;
 import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -81,7 +83,7 @@ import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.protobuf.ExtensionRegistry;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
 import java.io.IOException;
@@ -609,18 +611,18 @@ public class ArtifactTrackerImpl
       ImmutableSet.of("jar", "zip", "srcjar");
 
   private static boolean hasJarOrZipExtension(Path p) {
-    return JAR_ZIP_EXTENSIONS.contains(FileUtil.getExtension(p.toString()));
+    return JAR_ZIP_EXTENSIONS.contains(FileUtilRt.getExtension(p.toString()));
   }
 
   @Override
   public ProjectProto.Project updateProjectProto(
       ProjectProto.Project projectProto, BuildGraphData graph, Context<?> context)
       throws BuildException {
-    return updateProjectProtoForJavaDeps(projectProto);
+    return updateProjectProtoForJavaDeps(projectProto, graph);
   }
 
-  private ProjectProto.Project updateProjectProtoForJavaDeps(ProjectProto.Project projectProto)
-      throws BuildException {
+  private ProjectProto.Project updateProjectProtoForJavaDeps(
+      ProjectProto.Project projectProto, BuildGraphData graph) throws BuildException {
 
     Set<ProjectPath> generatedJavaSrcRoots = Sets.newHashSet();
 
@@ -641,26 +643,37 @@ public class ArtifactTrackerImpl
       }
     }
 
-    ImmutableSet<ProjectPath> generatedProjectSrcJars;
-    Path srcJarDir =
-        generatedSrcFileCacheDirectory.resolve(JavaSourcesArchiveCacheLayout.ROOT_DIRECTORY_NAME);
-    try (Stream<Path> pathStream =
-        srcJarDir.toFile().exists() ? Files.walk(srcJarDir) : Stream.empty()) {
-      generatedProjectSrcJars =
-          pathStream
-              .filter(Files::isRegularFile)
-              .map(ideProjectBasePath::relativize)
-              .map(ProjectPath::projectRelative)
-              .collect(toImmutableSet());
-    } catch (IOException e) {
-      throw new BuildException(e);
+    TestSourceGlobMatcher testSourceMatcher = TestSourceGlobMatcher.create(projectDefinition);
+    ImmutableSet.Builder<GeneratedSourceJar> generatedProjectSrcJars = ImmutableSet.builder();
+    for (ArtifactInfo ai : javaArtifacts.values()) {
+      if (!projectDefinition.isIncluded(ai.label())) {
+        continue;
+      }
+      for (Path blazeOutRelativePath : ai.genSrcs()) {
+        // TODO(mathewi) depending on `JAVA_ARCHIVE_EXTENSIONS` here exposes a design problem, we
+        //  shouldn't have to depend on such implementation details. Figure out a better design
+        //  for the dance between this class and the cache.
+        if (!JavaSourcesArchiveCacheLayout.JAVA_ARCHIVE_EXTENSIONS.contains(
+            FileUtilRt.getExtension(blazeOutRelativePath.toString()))) {
+          continue;
+        }
+        Optional<Path> artifactPath = generatedSrcFileCache.getCacheFile(blazeOutRelativePath);
+        if (artifactPath.isEmpty()) {
+          logger.warn("No cached artifact found for source jar " + blazeOutRelativePath);
+          continue;
+        }
+        generatedProjectSrcJars.add(
+            GeneratedSourceJar.create(
+                ProjectPath.projectRelative(artifactPath.get()),
+                testSourceMatcher.matches(ai.label().getPackage())));
+      }
     }
 
     GeneratedSourceProjectUpdater updater =
         new GeneratedSourceProjectUpdater(
             projectProto,
             ImmutableSet.copyOf(generatedJavaSrcRoots),
-            generatedProjectSrcJars,
+            generatedProjectSrcJars.build(),
             projectPathResolver);
 
     projectProto = updater.addGenSrcContentEntry();

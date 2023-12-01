@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth8.assertThat;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.createSrcJar;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.qsync.GeneratedSourceProjectUpdater.GeneratedSourceJar;
 import com.google.idea.blaze.qsync.QuerySyncTestUtils.PathPackage;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectPath.Resolver;
@@ -105,7 +106,7 @@ public class GeneratedSourceProjectUpdaterTest {
         new GeneratedSourceProjectUpdater(
             project,
             ImmutableSet.of(),
-            ImmutableSet.of(srcJarPath),
+            ImmutableSet.of(GeneratedSourceJar.create(srcJarPath, false)),
             Resolver.create(workspaceRoot, projectRoot));
 
     ProjectProto.Project newProject = updater.addGenSrcContentEntry();
@@ -120,6 +121,29 @@ public class GeneratedSourceProjectUpdaterTest {
     ProjectProto.SourceFolder sourceFolder = contentEntry.getSources(0);
     assertThat(sourceFolder.getProjectPath()).isEqualTo(srcJarPath.toProto());
     assertThat(sourceFolder.getIsGenerated()).isTrue();
+    assertThat(sourceFolder.getIsTest()).isFalse();
+  }
+
+  @Test
+  public void addGenSrcContentEntry_withGenSrcJar_addsContentEntry_testSources() throws Exception {
+    ProjectProto.Project project =
+        ProjectProtos.forTestProject(TestData.JAVA_LIBRARY_NO_DEPS_QUERY);
+
+    ProjectPath srcJarPath = ProjectPath.projectRelative("generated/srcjars/sources.srcjar");
+    createSrcJar(
+        projectRoot.resolve(srcJarPath.relativePath()),
+        PathPackage.of("com/package/Class.java", "com.package"));
+
+    GeneratedSourceProjectUpdater updater =
+        new GeneratedSourceProjectUpdater(
+            project,
+            ImmutableSet.of(),
+            ImmutableSet.of(GeneratedSourceJar.create(srcJarPath, true)),
+            Resolver.create(workspaceRoot, projectRoot));
+
+    ProjectProto.Project newProject = updater.addGenSrcContentEntry();
+
+    assertThat(newProject.getModules(0).getContentEntries(1).getSources(0).getIsTest()).isTrue();
   }
 
   @Test
@@ -137,7 +161,7 @@ public class GeneratedSourceProjectUpdaterTest {
         new GeneratedSourceProjectUpdater(
             project,
             ImmutableSet.of(),
-            ImmutableSet.of(srcJarPath),
+            ImmutableSet.of(GeneratedSourceJar.create(srcJarPath, false)),
             Resolver.create(workspaceRoot, projectRoot));
 
     ProjectProto.Project newProject = updater.addGenSrcContentEntry();

@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
 /** Places java source archives in a dedicated subdirectory. */
 public class JavaSourcesArchiveCacheLayout implements CacheLayout {
 
-  private static final ImmutableSet<String> JAVA_ARCHIVE_EXTENSIONS =
+  public static final ImmutableSet<String> JAVA_ARCHIVE_EXTENSIONS =
       ImmutableSet.of("jar", "srcjar");
 
   /** Cache subdirectory in which all source jars are placed. */

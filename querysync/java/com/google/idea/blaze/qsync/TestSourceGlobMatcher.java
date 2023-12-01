@@ -17,7 +17,9 @@ package com.google.idea.blaze.qsync;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import java.io.File;
 import java.nio.file.Path;
 
@@ -29,6 +31,11 @@ public class TestSourceGlobMatcher {
 
   private final ImmutableSet<String> testSourceGlobs;
 
+  public static TestSourceGlobMatcher create(ProjectDefinition projectDefinition) {
+    return new TestSourceGlobMatcher(projectDefinition.testSources());
+  }
+
+  @VisibleForTesting
   public TestSourceGlobMatcher(ImmutableSet<String> testSources) {
     this.testSourceGlobs =
         testSources.stream().map(TestSourceGlobMatcher::modifyPattern).collect(toImmutableSet());
