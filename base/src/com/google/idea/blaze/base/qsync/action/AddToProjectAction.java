@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync.action;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
@@ -167,12 +168,17 @@ public class AddToProjectAction extends BlazeProjectAction {
                                       workspacePathToAdd, progressIndicator::checkCanceled);
                             }
                           });
-                  ListPopup popup =
-                      JBPopupFactory.getInstance()
-                          .createListPopup(
-                              SelectPackagePopupStep.create(
-                                  candidatePackages, Performer.this::doAddToProjectView));
-                  popup.showInBestPositionFor(event.getDataContext());
+
+                  if (candidatePackages.size() == 1) {
+                    doAddToProjectView(Iterables.getOnlyElement(candidatePackages));
+                  } else {
+                    ListPopup popup =
+                        JBPopupFactory.getInstance()
+                            .createListPopup(
+                                SelectPackagePopupStep.create(
+                                    candidatePackages, Performer.this::doAddToProjectView));
+                    popup.showInBestPositionFor(event.getDataContext());
+                  }
                 } catch (BuildException e) {
                   notify(
                       NotificationType.ERROR,
