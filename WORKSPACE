@@ -242,9 +242,9 @@ java_import(
 )
 """
 
-DEVKIT_233_SHA = "cb5e9f5cde7e977bcf9c525682c90f2fe7e45f8a44c5bd73f506fa5b714bff24"
+DEVKIT_233_SHA = "a2583a354c602221896c26673ccba259aff7c6cfadb0b3a6f1c8d892ae3d6536"
 
-DEVKIT_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/233.11799.68/DevKit-233.11799.68.zip"
+DEVKIT_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/233.11799.172/DevKit-233.11799.172.zip"
 
 http_archive(
     name = "devkit_2023_3",
@@ -515,9 +515,9 @@ http_archive(
     url = SCALA_PLUGIN_232_URL,
 )
 
-SCALA_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.3.13/org.intellij.scala-2023.3.13.zip"
+SCALA_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.3.15/org.intellij.scala-2023.3.15.zip"
 
-SCALA_PLUGIN_233_SHA = "77175dd633ac4c57afc0b3f8f9b368c3ce32c5ed1d7f83b7212222fbb9acd177"
+SCALA_PLUGIN_233_SHA = "f8fca53cc5de077127e7020e434601eddb23b05362fbb3ab0c144ef58fdfee6e"
 
 http_archive(
     name = "scala_2023_3",
