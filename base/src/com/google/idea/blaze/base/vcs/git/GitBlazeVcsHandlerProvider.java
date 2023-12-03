@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -165,9 +166,16 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
     ByteArrayOutputStream stderr = new ByteArrayOutputStream();
 
-    String[] args = new String[] {"git", "rev-parse", "\"@{u}\""};
+    String[] args = new String[] {"git", "rev-parse", "@{u}"};
     int retVal =
         ExternalTask.builder(workspaceRoot).args(args).stdout(stdout).stderr(stderr).build().run();
+
+    if(retVal != 0 && SystemInfo.isWindows){
+      args = new String[] {"git", "rev-parse", "\"@{u}\""};
+
+      retVal = ExternalTask.builder(workspaceRoot).args(args).stdout(stdout).stderr(stderr).build().run();
+    }
+
     if (retVal != 0) {
       throw new VcsException(
           "Could not obtain upstream sha: `"
