@@ -17,8 +17,8 @@ package com.google.idea.blaze.base.wizard2;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -27,16 +27,12 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.io.FileUtil;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.CopyOption;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Stream;
-import javax.annotation.Nullable;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** Wrapper around a {@link BlazeNewProjectBuilder} to fit into IntelliJ's import framework. */
 @VisibleForTesting
@@ -82,6 +78,11 @@ public class BlazeProjectImportBuilder extends ProjectBuilder {
         }
       }
     }
-    return super.createProject(name, path);
+
+    AtomicReference<Project> newProjectRef = new AtomicReference<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      newProjectRef.set(super.createProject(name, path));
+    });
+    return newProjectRef.get();
   }
 }
