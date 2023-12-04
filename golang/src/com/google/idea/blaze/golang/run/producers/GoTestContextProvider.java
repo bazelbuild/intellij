@@ -19,6 +19,7 @@ import com.goide.execution.testing.GoTestFinder;
 import com.goide.execution.testing.GoTestRunConfigurationProducerBase;
 import com.goide.psi.GoFile;
 import com.goide.psi.GoFunctionOrMethodDeclaration;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.run.ExecutorType;
@@ -47,17 +48,42 @@ class GoTestContextProvider implements TestContextProvider {
    * When a user clicks in the ">" button, we get pointed to the "Run" part of "t.Run".
    * We need to walk the tree up to see the function call that has the actual argument.
    *
+   * This function doesn't worry about turning this filter into a regex which can be passed to --test_filter.
+   * @see #regexifyTestFilter for converting this to a --test_filter value.
+   *
    * @param element: Element the user has clicked on.
    * @param enclosingFunction: Go function encompassing this test.
    * @return String representation of the proper test filter.
    */
-  private String calculateTestFilter(PsiElement element, GoFunctionOrMethodDeclaration enclosingFunction) {
+  private static String calculateRawTestFilterForElement(PsiElement element, GoFunctionOrMethodDeclaration enclosingFunction) {
     if (element.getParent().isEquivalentTo(enclosingFunction)) {
       return enclosingFunction.getName();
     } else {
       return GoTestRunConfigurationProducerBase.findSubTestInContext(element, enclosingFunction);
     }
   }
+
+  @VisibleForTesting
+  static String regexifyTestFilter(String testFilter) {
+    return "^" + escapeRegexChars(testFilter) + "$";
+  }
+
+  private static String escapeRegexChars(String name) {
+    StringBuilder output = new StringBuilder();
+    for (char c : name.toCharArray()) {
+      if (isRegexCharNeedingEscaping(c)) {
+        output.append("\\");
+      }
+      output.append(c);
+    }
+    return output.toString();
+  }
+
+  private static boolean isRegexCharNeedingEscaping(char c) {
+    // Taken from https://cs.opensource.google/go/go/+/refs/tags/go1.21.4:src/regexp/regexp.go;l=720
+    return c == '\\' || c == '.' || c == '+' || c == '*' || c == '?' || c == '(' || c == ')' || c == '|' || c == '[' || c == ']' || c == '{' || c == '}' || c == '^' || c == '$';
+  }
+
 
   public static final String GO_TEST_WRAP_TESTV = "GO_TEST_WRAP_TESTV=1";
   @Nullable
@@ -84,11 +110,11 @@ class GoTestContextProvider implements TestContextProvider {
           .setDescription(file.getName())
           .build();
     }
-    String testFilter = calculateTestFilter(element, function);
+    String testFilterRegex = regexifyTestFilter(calculateRawTestFilterForElement(element, function));
     return TestContext.builder(/* sourceElement= */ function, ExecutorType.DEBUG_SUPPORTED_TYPES)
         .addTestEnv(GO_TEST_WRAP_TESTV)
         .setTarget(target)
-        .setTestFilter("^" + testFilter + "$")
+        .setTestFilter(testFilterRegex)
         .setDescription(String.format("%s#%s", file.getName(), function.getName()))
         .build();
   }
