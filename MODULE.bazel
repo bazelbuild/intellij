@@ -85,8 +85,6 @@ maven.install(
     name = "maven",
     artifacts = [
         "junit:junit:4.13.2",
-        "com.google.truth:truth:0.42",
-        "com.google.truth.extensions:truth-java8-extension:0.42",
         "org.mockito:mockito-core:3.3.0",
         # objenesis is a dependency of mockito https://mvnrepository.com/artifact/org.mockito/mockito-core/3.3.0
         # Before 2023.2 it was delivered with IntelliJ bundle in lib/app.jar, but this no longer happens so we need
@@ -122,6 +120,7 @@ maven.install(
         "com.google.guava:guava:32.0.1-jre",  # changed to jre
         "com.google.re2j:re2j:1.7",
         "com.google.truth:truth:1.1.5",
+        "com.google.truth.extensions:truth-java8-extension:1.1.5",
         "com.squareup.okhttp:okhttp:2.7.5",
         "com.squareup.okio:okio:2.10.0",
         "io.netty:netty-buffer:4.1.97.Final",
