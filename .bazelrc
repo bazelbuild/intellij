@@ -8,8 +8,3 @@ query --deleted_packages=//aspect/testing/tests/src/com/google/idea/blaze/aspect
 # TODO: migrate all dependencies from WORKSPACE to MODULE.bazel
 # https://github.com/bazelbuild/intellij/issues/5432
 common --enable_bzlmod
-
-build --incompatible_strict_action_env
-startup --host_jvm_args=-DBAZEL_TRACK_SOURCE_DIRECTORIES=1
-build --noexperimental_check_output_files
-build --noexperimental_check_external_repository_files
