@@ -147,6 +147,10 @@ public abstract class ProjectDefinition {
     return getIncludingContentRoot(workspacePath).isPresent();
   }
 
+  public boolean isExcluded(Path workspacePath) {
+    return projectExcludes().stream().anyMatch(workspacePath::startsWith);
+  }
+
   /**
    * Returns the content root containing a workspace-relative path
    *
@@ -163,7 +167,7 @@ public abstract class ProjectDefinition {
       return contentRoot;
     }
 
-    if (projectExcludes().stream().anyMatch(workspacePath::startsWith)) {
+    if (isExcluded(workspacePath)) {
       // Path is excluded
       return Optional.empty();
     }

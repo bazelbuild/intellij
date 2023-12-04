@@ -427,6 +427,20 @@ public class QuerySyncProject {
     return projectDefinition.isIncluded(workspaceRelative);
   }
 
+  /**
+   * Returns true if {@code absolutePath} is specified in a project exclude.
+   *
+   * <p>A path not added or excluded the project definition will return false for both {@code
+   * containsPath} and {@code explicitlyExcludesPath}
+   */
+  public boolean explicitlyExcludesPath(Path absolutePath) {
+    if (!workspaceRoot.isInWorkspace(absolutePath.toFile())) {
+      return false;
+    }
+    Path workspaceRelative = workspaceRoot.path().relativize(absolutePath);
+    return projectDefinition.isExcluded(workspaceRelative);
+  }
+
   /** Returns all external dependencies of a given label */
   public ImmutableSet<Label> externalDependenciesFor(Label label) {
     return snapshotHolder
