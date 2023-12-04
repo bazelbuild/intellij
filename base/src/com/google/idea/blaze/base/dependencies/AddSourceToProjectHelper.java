@@ -267,8 +267,7 @@ class AddSourceToProjectHelper {
   }
 
   private static Collection<TargetKey> fromTargetInfo(Collection<TargetInfo> targetInfos) {
-    return targetInfos
-        .stream()
+    return targetInfos.stream()
         .map(t -> TargetKey.forPlainTarget(t.label))
         .collect(toImmutableList());
   }
@@ -334,10 +333,7 @@ class AddSourceToProjectHelper {
   @Nullable
   static LocationContext getContext(Project project, VirtualFile file) {
     if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
-      // TODO(b/260643753) understand usages of this, and implement using BlazeProject instead
-      // Note the return type LocationContext includes BlazeProjectData to callers will need to
-      // change too.
-      return null;
+      throw new UnsupportedOperationException("AddSourceToProjectHelper#getContext");
     }
     BlazeProjectData syncData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (syncData == null) {
