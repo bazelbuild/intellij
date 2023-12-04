@@ -22,7 +22,7 @@ java_library(
     deps = [
         ":guava",
         "//proto:proto_deps",
-        "@jsr305_annotations//jar",
+        "@com_google_code_findbugs_jsr305//jar",
         "//third_party/bazel/src/main/protobuf:worker_protocol_java_proto",
     ],
 )
@@ -64,7 +64,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:truth",
         "//proto:proto_deps",
-        "@junit//jar",
+        "@junit_junit//jar",
     ],
 )
 
@@ -83,7 +83,7 @@ java_test(
     test_class = "com.google.idea.blaze.aspect.PackageParserTest",
     deps = [
         ":test_lib",
-        "@error_prone_annotations//jar",
+        "@com_google_errorprone_error_prone_annotations//jar",
     ],
 )
 

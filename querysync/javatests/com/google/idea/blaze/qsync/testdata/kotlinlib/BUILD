@@ -1,4 +1,4 @@
-load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
     name = "kotlinlib",

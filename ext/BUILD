@@ -26,6 +26,7 @@ java_library(
         "@io_grpc_grpc_java//netty",
         "@io_netty_netty_common//jar",
         "@io_netty_netty_transport//jar",
+        "@io_netty_netty_transport_classes_epoll//jar",
         "@io_netty_netty_transport_native_unix_common//jar",
     ] + select({
         "@platforms//os:macos": ["@io_netty_netty_transport_classes_kqueue//jar"],
@@ -67,8 +68,8 @@ java_test(
         ":intellijext",
         "//ext/proto:intellijext_java_proto",
         "@io_grpc_grpc_java//core",
-        "@junit//jar",
-        "@truth//jar",
+        "@junit_junit//jar",
+        "@com_google_truth_truth//jar",
     ],
 )
 
