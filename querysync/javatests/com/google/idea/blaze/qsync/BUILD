@@ -21,9 +21,9 @@ java_library(
         "//shared",
         "//shared:vcs",
         "//third_party/auto_value",
+        "@com_google_flogger_flogger//jar",
+        "@com_google_flogger_flogger_system_backend//jar",
         "@com_google_guava_guava//jar",
-        "@flogger//jar",
-        "@flogger_system_backend//jar",
     ],
 )
 
@@ -32,8 +32,8 @@ java_test(
     srcs = ["QuerySyncTestUtilsTest.java"],
     deps = [
         ":TestUtils",
-        "@junit_junit//jar",
         "@com_google_truth_truth//jar",
+        "@junit_junit//jar",
     ],
 )
 
@@ -50,8 +50,8 @@ java_test(
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata:build_graphs",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
         "@com_google_truth_truth//jar",
+        "@junit_junit//jar",
     ],
 )
 
@@ -66,8 +66,8 @@ java_test(
         "//querysync/javatests/com/google/idea/blaze/qsync/query:QuerySummaryTestUtil",
         "//shared:vcs",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
         "@com_google_truth_truth//jar",
+        "@junit_junit//jar",
     ],
 )
 
@@ -84,8 +84,8 @@ java_test(
         "//querysync/javatests/com/google/idea/blaze/qsync/query:QuerySummaryTestUtil",
         "//shared:vcs",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
         "@com_google_truth_truth//jar",
+        "@junit_junit//jar",
     ],
 )
 
@@ -101,8 +101,8 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//shared",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
         "@com_google_truth_truth//jar",
+        "@junit_junit//jar",
     ],
 )
 
@@ -118,8 +118,8 @@ java_test(
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata:project_protos",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
         "@com_google_truth_truth//jar",
+        "@junit_junit//jar",
     ],
 )
 
@@ -135,8 +135,8 @@ java_test(
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata:project_protos",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
         "@com_google_truth_truth//jar",
+        "@junit_junit//jar",
     ],
 )
 
@@ -147,7 +147,7 @@ java_test(
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
         "@com_google_truth_truth//jar",
+        "@junit_junit//jar",
     ],
 )

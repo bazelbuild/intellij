@@ -166,6 +166,8 @@ use_repo(
     "com_google_code_findbugs_jsr305",
     "com_google_code_gson_gson",
     "com_google_errorprone_error_prone_annotations",
+    "com_google_flogger_flogger",
+    "com_google_flogger_flogger_system_backend",
     "com_google_guava_guava",
     "com_google_guava_failureaccess",
     "com_google_j2objc_j2objc_annotations",
