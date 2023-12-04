@@ -1,3 +1,7 @@
+v2023.12.05
+===========
+
+
 v2023.11.21
 ===========
 * feat: Add support for Starlark float literals #5678
