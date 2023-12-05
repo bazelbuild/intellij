@@ -7,3 +7,6 @@ query --deleted_packages=//aspect/testing/tests/src/com/google/idea/blaze/aspect
 
 # TODO: migrate all dependencies from WORKSPACE to MODULE.bazel
 common --noenable_bzlmod
+
+build --experimental_google_legacy_api
+test --experimental_google_legacy_api

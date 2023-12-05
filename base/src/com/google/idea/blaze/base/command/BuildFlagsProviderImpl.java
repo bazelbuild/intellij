@@ -32,5 +32,6 @@ public class BuildFlagsProviderImpl implements BuildFlagsProvider {
     flags.add("--curses=no");
     flags.add("--color=yes");
     flags.add("--progress_in_terminal_title=no");
+    flags.add("--experimental_google_legacy_api");
   }
 }
