@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.qsync.CandidatePackageFinder.CandidatePackage;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.google.idea.blaze.base.qsync.QuerySyncProject;
+import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.PopupPosititioner;
 import com.google.idea.blaze.exception.BuildException;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -51,9 +52,14 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.list.ListPopupImpl;
+import java.awt.Point;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Consumer;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 /** Query sync specific action to add a new directory to the project view. */
@@ -76,12 +82,12 @@ public class AddToProjectAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    new Performer(project, e).perform();
+    Performer.create(project, e).perform();
   }
 
   @Override
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
-    Performer performer = new Performer(project, e);
+    Performer performer = Performer.create(project, e);
     Presentation presentation = e.getPresentation();
     if (!performer.canPerform()) {
       presentation.setEnabledAndVisible(false);
@@ -90,22 +96,69 @@ public class AddToProjectAction extends BlazeProjectAction {
     presentation.setEnabled(true);
   }
 
-  static class Performer {
+  /** Class that handles identifying the package to add and requesting a project update. */
+  public static class Performer {
     private final Project project;
-    private final AnActionEvent event;
     private final QuerySyncManager qsManager;
     private final Path workspacePathToAdd;
+    @Nullable private final AnActionEvent event;
 
-    Performer(Project project, AnActionEvent event) {
+    private final PopupPosititioner popupPosititioner;
+
+    public Performer(
+        Project project,
+        Path workspacePathToAdd,
+        @Nullable AnActionEvent event,
+        PopupPosititioner popupPosititioner) {
       this.project = project;
+      this.workspacePathToAdd = workspacePathToAdd;
       this.event = event;
+      this.popupPosititioner = popupPosititioner;
       qsManager = QuerySyncManager.getInstance(project);
-      workspacePathToAdd =
-          getWorkspaceFile(WorkspaceRoot.fromProject(project).path(), event).orElse(null);
+    }
+
+    public static Performer create(Project project, AnActionEvent event) {
+      return new Performer(
+          project,
+          getWorkspaceFile(WorkspaceRoot.fromProject(project).path(), event).orElse(null),
+          event,
+          popup -> popup.showInBestPositionFor(event.getDataContext()));
+    }
+
+    /**
+     * Places the package selection popup under the editor notification, on the right side of the
+     * window.
+     *
+     * <p>For the positioning logic, see {@link
+     * com.intellij.openapi.roots.ui.configuration.SdkPopupImpl#showUnderneathToTheRightOf}
+     */
+    public static Performer create(
+        Project project, VirtualFile virtualFile, EditorNotificationPanel panel) {
+      return new Performer(
+          project,
+          getWorkspaceFile(WorkspaceRoot.fromProject(project).path(), virtualFile).orElse(null),
+          null,
+          popup -> {
+            if (popup instanceof ListPopupImpl) {
+              int width = (int) ((ListPopupImpl) popup).getList().getPreferredSize().getWidth();
+              popup.show(
+                  new RelativePoint(panel, new Point(panel.getWidth() - width, panel.getHeight())));
+            } else {
+              popup.showUnderneathOf(panel);
+            }
+          });
     }
 
     private static Optional<Path> getWorkspaceFile(Path workspaceRoot, AnActionEvent event) {
+      if (event == null) {
+        return Optional.empty();
+      }
       VirtualFile virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE);
+      return getWorkspaceFile(workspaceRoot, virtualFile);
+    }
+
+    private static Optional<Path> getWorkspaceFile(
+        Path workspaceRoot, @Nullable VirtualFile virtualFile) {
       if (virtualFile == null) {
         return Optional.empty();
       }
@@ -141,7 +194,7 @@ public class AddToProjectAction extends BlazeProjectAction {
       return true;
     }
 
-    void perform() {
+    public void perform() {
       if (!canPerform()) {
         // This shouldn't happen, but could rarely if there's a race between updateForBlazeProject
         // and actionPerformedInBlazeProject which may be possible. Fail gracefully.
@@ -177,7 +230,7 @@ public class AddToProjectAction extends BlazeProjectAction {
                             .createListPopup(
                                 SelectPackagePopupStep.create(
                                     candidatePackages, Performer.this::doAddToProjectView));
-                    popup.showInBestPositionFor(event.getDataContext());
+                    popupPosititioner.showInCorrectPosition(popup);
                   }
                 } catch (BuildException e) {
                   notify(
