@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.qsync.QuerySyncProject;
+import com.google.idea.blaze.base.qsync.action.AddToProjectAction;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -53,7 +54,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
-import com.intellij.ui.HyperlinkLabel;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -217,10 +217,10 @@ public class ExternalFileProjectManagementHelper
 
     return createPanel(
         virtualFile,
-        p -> {
-          HyperlinkLabel unused =
-              p.createActionLabel("Add file to project", "Blaze.AddToQuerySyncProjectView");
-        });
+        p ->
+            p.createActionLabel(
+                "Add file to project",
+                () -> AddToProjectAction.Performer.create(project, virtualFile, p).perform()));
   }
 
   private EditorNotificationPanel createPanel(
