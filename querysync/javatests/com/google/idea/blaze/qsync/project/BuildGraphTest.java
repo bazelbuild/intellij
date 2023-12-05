@@ -288,4 +288,11 @@ public class BuildGraphTest {
             Label.of("//" + TestData.ROOT.resolve("transitiveinternaldep:transitiveinternaldep")));
   }
 
+  @Test
+  public void testTags() throws Exception {
+    BuildGraphData graph = BuildGraphs.forTestProject(TestData.TAGS_QUERY);
+    ProjectTarget testTarget = graph.targetMap().get(TestData.TAGS_QUERY.getAssumedOnlyLabel());
+    assertThat(testTarget.tags()).containsExactly("mytag");
+  }
+
 }

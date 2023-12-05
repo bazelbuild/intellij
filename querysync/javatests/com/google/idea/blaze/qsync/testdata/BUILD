@@ -171,6 +171,13 @@ genquery(
     ],
 )
 
+genquery(
+    name = "tags_query",
+    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/tags:*",
+    opts = ["--output=streamed_proto"],
+    scope = scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/tags"),
+)
+
 java_library(
     name = "testdata",
     srcs = ["TestData.java"],
@@ -193,6 +200,7 @@ java_library(
         ":java_library_transitive_internal_dep_query",
         ":nested_proto_query",
         ":proto_only_query",
+        ":tags_query",
     ],
     deps = [
         "//shared",

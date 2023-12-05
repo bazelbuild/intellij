@@ -131,6 +131,7 @@ public class BlazeQueryParser {
       if (alwaysBuildRuleKinds.contains(ruleClass)) {
         projectTargetsToBuild.add(ruleEntry.getKey());
       }
+      targetBuilder.tags(ruleEntry.getValue().getTagsList());
       ProjectTarget target = targetBuilder.build();
 
       for (Label thisSource : target.sourceLabels().values()) {
