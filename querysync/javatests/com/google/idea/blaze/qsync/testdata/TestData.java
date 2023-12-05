@@ -45,7 +45,8 @@ public enum TestData {
   CC_EXTERNAL_DEP_QUERY("cc_externaldep"),
   CC_MULTISRC_QUERY("cc_multisrc"),
   PROTO_ONLY_QUERY("protoonly"),
-  NESTED_PROTO_QUERY("nestedproto");
+  NESTED_PROTO_QUERY("nestedproto"),
+  TAGS_QUERY("tags");
 
   public final ImmutableList<Path> srcPaths;
 
