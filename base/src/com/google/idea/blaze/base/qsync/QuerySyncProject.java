@@ -441,6 +441,19 @@ public class QuerySyncProject {
     return projectDefinition.isExcluded(workspaceRelative);
   }
 
+  /** Given a path to a source file, returns true if the source file has been synced. */
+  public boolean recognizesFile(Path absolutePath) {
+    if (!workspaceRoot.isInWorkspace(absolutePath.toFile())) {
+      return false;
+    }
+    Path workspaceRelative = workspaceRoot.path().relativize(absolutePath);
+    return snapshotHolder
+        .getCurrent()
+        .map(BlazeProjectSnapshot::graph)
+        .map(g -> g.containsSourceFile(workspaceRelative))
+        .orElse(false);
+  }
+
   /** Returns all external dependencies of a given label */
   public ImmutableSet<Label> externalDependenciesFor(Label label) {
     return snapshotHolder
