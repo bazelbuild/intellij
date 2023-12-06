@@ -58,7 +58,7 @@ public class BuiltInFunctionAttributeCompletionContributorTest
     editorTest.setCaretPosition(editor, 0, "sh_binary(".length());
 
     String[] completionItems = editorTest.getCompletionItemsAsStrings();
-    assertThat(completionItems).asList().containsAllOf("name", "deps", "srcs", "data");
+    assertThat(completionItems).asList().containsAtLeast("name", "deps", "srcs", "data");
   }
 
   @Test
@@ -129,7 +129,7 @@ public class BuiltInFunctionAttributeCompletionContributorTest
     editorTest.setCaretPosition(editor, 0, "sh_binary(name = 'bin', ".length());
 
     String[] completionItems = editorTest.getCompletionItemsAsStrings();
-    assertThat(completionItems).asList().containsAllOf("deps", "srcs", "data");
+    assertThat(completionItems).asList().containsAtLeast("deps", "srcs", "data");
     assertThat(completionItems).asList().doesNotContain("name");
   }
 
@@ -166,7 +166,7 @@ public class BuiltInFunctionAttributeCompletionContributorTest
     editorTest.setCaretPosition(editor, 0, "native.sh_binary(".length());
 
     String[] completionItems = editorTest.getCompletionItemsAsStrings();
-    assertThat(completionItems).asList().containsAllOf("name", "deps", "srcs", "data");
+    assertThat(completionItems).asList().containsAtLeast("name", "deps", "srcs", "data");
   }
 
   private void setRuleAndAttributes(String ruleName, String... attributes) {

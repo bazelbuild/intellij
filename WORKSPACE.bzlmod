@@ -1,6 +1,6 @@
 workspace(name = "intellij_with_bazel")
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository", "git_repository")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:jvm.bzl", "jvm_maven_import_external")
 
@@ -566,12 +566,7 @@ http_archive(
     url = "https://dl.google.com/dl/android/studio/ide-zips/2022.3.1.19/android-studio-2022.3.1.19-linux.tar.gz",
 )
 
-http_archive(
-    name = "build_bazel_rules_android",
-    sha256 = "cd06d15dd8bb59926e4d65f9003bfc20f9da4b2519985c27e190cddc8b7a7806",
-    strip_prefix = "rules_android-0.1.1",
-    urls = ["https://github.com/bazelbuild/rules_android/archive/v0.1.1.zip"],
-)
+android_sdk_repository(name = "androidsdk")
 
 _JARJAR_BUILD_FILE = """
 java_binary(
@@ -619,6 +614,7 @@ git_repository(
 )
 
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+
 protobuf_deps()
 
 # LICENSE: The Apache Software License, Version 2.0
@@ -656,7 +652,7 @@ http_archive(
     sha256 = "987ce98f02eefbaf930d6e38ab16aa05737234d7afbab2d5c4ea7adbe50c28ed",
     strip_prefix = "abseil-cpp-20230802.1",
     urls = [
-         "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.1.tar.gz",
+        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.1.tar.gz",
     ],
 )
 
