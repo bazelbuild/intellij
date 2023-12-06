@@ -24,6 +24,7 @@ java_library(
         "@com_google_flogger_flogger//jar",
         "@com_google_flogger_flogger_system_backend//jar",
         "@com_google_guava_guava//jar",
+        "@com_google_truth_truth//jar",
     ],
 )
 

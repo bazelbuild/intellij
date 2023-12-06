@@ -2054,6 +2054,63 @@
         }
       }
     },
+    "@rules_bazel_integration_test~0.20.0//:extensions.bzl%bazel_binaries": {
+      "general": {
+        "bzlTransitiveDigest": "2YpQtmxm7IW8Ldz4jpGThmEDybtrPhL/NCQeG1JSpPI=",
+        "accumulatedFileDigests": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "build_bazel_bazel_4_0_0": {
+            "bzlFile": "@@rules_bazel_integration_test~0.20.0//bazel_integration_test/private:bazel_binaries.bzl",
+            "ruleClassName": "bazel_binary",
+            "attributes": {
+              "name": "rules_bazel_integration_test~0.20.0~bazel_binaries~build_bazel_bazel_4_0_0",
+              "version": "4.0.0",
+              "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
+            }
+          },
+          "build_bazel_bazel_6_0_0": {
+            "bzlFile": "@@rules_bazel_integration_test~0.20.0//bazel_integration_test/private:bazel_binaries.bzl",
+            "ruleClassName": "bazel_binary",
+            "attributes": {
+              "name": "rules_bazel_integration_test~0.20.0~bazel_binaries~build_bazel_bazel_6_0_0",
+              "version": "6.0.0",
+              "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
+            }
+          },
+          "bazel_binaries_bazelisk": {
+            "bzlFile": "@@rules_bazel_integration_test~0.20.0//bazel_integration_test/private:bazel_binaries.bzl",
+            "ruleClassName": "bazelisk_binary",
+            "attributes": {
+              "name": "rules_bazel_integration_test~0.20.0~bazel_binaries~bazel_binaries_bazelisk",
+              "version": "1.18.0"
+            }
+          },
+          "bazel_binaries": {
+            "bzlFile": "@@rules_bazel_integration_test~0.20.0//bazel_integration_test/bzlmod:bazel_binaries.bzl",
+            "ruleClassName": "_bazel_binaries_helper",
+            "attributes": {
+              "name": "rules_bazel_integration_test~0.20.0~bazel_binaries~bazel_binaries",
+              "version_to_repo": {
+                "6.0.0": "build_bazel_bazel_6_0_0",
+                "4.0.0": "build_bazel_bazel_4_0_0"
+              },
+              "current_version": "6.0.0"
+            }
+          }
+        },
+        "moduleExtensionMetadata": {
+          "explicitRootModuleDirectDeps": [],
+          "explicitRootModuleDirectDevDeps": [
+            "bazel_binaries_bazelisk",
+            "build_bazel_bazel_6_0_0",
+            "build_bazel_bazel_4_0_0",
+            "bazel_binaries"
+          ],
+          "useAllRepos": "NO"
+        }
+      }
+    },
     "@rules_go~0.41.0//go:extensions.bzl%go_sdk": {
       "general": {
         "bzlTransitiveDigest": "HvN4mtHrbOMKKDhbCq8jbtFNrqNr9pyMl/v1QR8leqo=",
