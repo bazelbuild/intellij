@@ -23,6 +23,7 @@ import static java.util.Comparator.comparingInt;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
@@ -70,6 +71,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /** Converts a {@link BuildGraphData} instance into a project proto. */
@@ -81,18 +83,21 @@ public class GraphToProjectConverter {
 
   private final ProjectDefinition projectDefinition;
   private final ListeningExecutorService executor;
+  private final Supplier<Boolean> useNewResDirLogic;
 
   public GraphToProjectConverter(
       PackageReader packageReader,
       Path workspaceRoot,
       Context<?> context,
       ProjectDefinition projectDefinition,
-      ListeningExecutorService executor) {
+      ListeningExecutorService executor,
+      Supplier<Boolean> useNewResDirLogic) {
     this.packageReader = packageReader;
     this.fileExistenceCheck = p -> Files.isRegularFile(workspaceRoot.resolve(p));
     this.context = context;
     this.projectDefinition = projectDefinition;
     this.executor = executor;
+    this.useNewResDirLogic = useNewResDirLogic;
   }
 
   @VisibleForTesting
@@ -107,6 +112,7 @@ public class GraphToProjectConverter {
     this.context = context;
     this.projectDefinition = projectDefinition;
     this.executor = executor;
+    this.useNewResDirLogic = Suppliers.ofInstance(true);
   }
 
   /**
@@ -487,11 +493,29 @@ public class GraphToProjectConverter {
     ImmutableMultimap<Path, Path> rootToNonJavaSource =
         nonJavaSourceFolders(
             graph.getSourceFilesByRuleKindAndType(not(RuleKinds::isJava), SourceType.all()));
-    ImmutableSet<Path> dirs = computeAndroidResourceDirectories(graph.getAllSourceFiles());
+    ImmutableSet<Path> androidResDirs;
+    if (useNewResDirLogic.get()) {
+      // Note: according to:
+      //  https://developer.android.com/guide/topics/resources/providing-resources
+      // "Never save resource files directly inside the res/ directory. It causes a compiler error."
+      // This implies that we can safely take the grandparent of each resource file to find the
+      // top level res dir:
+      List<Path> resList = graph.getAndroidResourceFiles();
+      androidResDirs =
+          resList.stream()
+              .map(Path::getParent)
+              .distinct()
+              .map(Path::getParent)
+              .distinct()
+              .collect(toImmutableSet());
+    } else {
+      // TODO(mathewi) Remove this and the corresponding experiment once the locig has been proven.
+      androidResDirs = computeAndroidResourceDirectories(graph.getAllSourceFiles());
+    }
     ImmutableSet<String> pkgs =
         computeAndroidSourcePackages(graph.getAndroidSourceFiles(), javaSourceRoots);
 
-    context.output(PrintOutput.log("%-10d Android resource directories", dirs.size()));
+    context.output(PrintOutput.log("%-10d Android resource directories", androidResDirs.size()));
     context.output(PrintOutput.log("%-10d Android resource packages", pkgs.size()));
 
     ProjectProto.Library depsLib =
@@ -513,7 +537,7 @@ public class GraphToProjectConverter {
             .setType(ProjectProto.ModuleType.MODULE_TYPE_DEFAULT)
             .addLibraryName(depsLib.getName())
             .addAllAndroidResourceDirectories(
-                dirs.stream().map(Path::toString).collect(toImmutableList()))
+                androidResDirs.stream().map(Path::toString).collect(toImmutableList()))
             .addAllAndroidSourcePackages(pkgs)
             .addAllAndroidCustomPackages(graph.getAllCustomPackages());
 
