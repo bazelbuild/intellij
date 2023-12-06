@@ -1,3 +1,8 @@
+v2023.12.05
+===========
+* Escape regex-relevant characters in test filter #5745
+* Mitigate StartupActivity warnings #5760
+
 v2023.11.21
 ===========
 * feat: Add support for Starlark float literals #5678
