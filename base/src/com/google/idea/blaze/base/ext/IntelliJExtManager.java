@@ -58,6 +58,9 @@ public class IntelliJExtManager {
 
   private static final BoolExperiment KYTHE = new BoolExperiment("use.intellij.ext.kythe", false);
 
+  private static final BoolExperiment DEPSEREVR =
+      new BoolExperiment("use.intellij.ext.depserver", false);
+
   /**
    * System property controlling the experiments service. If set to 1, forces intellij-ext binary to
    * be available (regardless of ENABLED value)
@@ -126,6 +129,10 @@ public class IntelliJExtManager {
 
   public boolean isBuildServiceEnabled() {
     return isEnabled() && BUILD_SERVICE.getValue();
+  }
+
+  public boolean isDepserverEnabled() {
+    return isEnabled() && DEPSEREVR.getValue();
   }
 
   public boolean isKytheEnabled() {
