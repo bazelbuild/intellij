@@ -32,7 +32,6 @@ import com.google.idea.blaze.base.qsync.CandidatePackageFinder.CandidatePackage;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.google.idea.blaze.base.qsync.QuerySyncProject;
-import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.PopupPosititioner;
 import com.google.idea.blaze.exception.BuildException;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -103,17 +102,17 @@ public class AddToProjectAction extends BlazeProjectAction {
     private final Path workspacePathToAdd;
     @Nullable private final AnActionEvent event;
 
-    private final PopupPosititioner popupPosititioner;
+    private final PopupPositioner popupPositioner;
 
     public Performer(
         Project project,
         Path workspacePathToAdd,
         @Nullable AnActionEvent event,
-        PopupPosititioner popupPosititioner) {
+        PopupPositioner popupPositioner) {
       this.project = project;
       this.workspacePathToAdd = workspacePathToAdd;
       this.event = event;
-      this.popupPosititioner = popupPosititioner;
+      this.popupPositioner = popupPositioner;
       qsManager = QuerySyncManager.getInstance(project);
     }
 
@@ -230,7 +229,7 @@ public class AddToProjectAction extends BlazeProjectAction {
                             .createListPopup(
                                 SelectPackagePopupStep.create(
                                     candidatePackages, Performer.this::doAddToProjectView));
-                    popupPosititioner.showInCorrectPosition(popup);
+                    popupPositioner.showInCorrectPosition(popup);
                   }
                 } catch (BuildException e) {
                   notify(
