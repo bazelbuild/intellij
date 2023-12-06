@@ -29,6 +29,9 @@ public class QuerySync {
   private static final FeatureRolloutExperiment ENABLED =
       new FeatureRolloutExperiment("query.sync");
 
+  public static final BoolExperiment USE_NEW_RES_DIR_LOGIC =
+      new BoolExperiment("query.sync.new.resdir.logic", true);
+
   /**
    * Previously, query sync was enabled by an experiment. Some users still have that experiment set
    * and we don't want to inadvertently disable query sync for them.
