@@ -28,7 +28,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.Glob;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
-import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
@@ -335,9 +334,6 @@ public class QuerySyncProject {
   public void enableAnalysis(BlazeContext context, Set<Label> projectTargets)
       throws BuildException {
     try {
-      if (QuerySyncSettings.getInstance().syncBeforeBuild()) {
-        syncWithCurrentSnapshot(context);
-      }
       context.output(
           PrintOutput.output(
               "Building dependencies for:\n  " + Joiner.on("\n  ").join(projectTargets)));
