@@ -47,8 +47,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.ArtifactTrackerState;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.CachedArtifacts;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData.JavaArtifacts;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData.JavaTargetArtifacts;
 import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcCompilationInfo;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStats;
@@ -76,6 +74,9 @@ import com.google.idea.blaze.qsync.GeneratedSourceProjectUpdater.GeneratedSource
 import com.google.idea.blaze.qsync.SrcJarProjectUpdater;
 import com.google.idea.blaze.qsync.TestSourceGlobMatcher;
 import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
+import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
+import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
+import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaTargetArtifacts;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
@@ -159,7 +160,7 @@ public class ArtifactTrackerImpl
 
   // Information about java dependency artifacts derived when the dependencies were built.
   // Note that artifacts that do not produce files are also stored here.
-  private final Map<Label, ArtifactInfo> javaArtifacts = new HashMap<>();
+  private final Map<Label, JavaArtifactInfo> javaArtifacts = new HashMap<>();
   private CcDependenciesInfo ccDepencenciesInfo = CcDependenciesInfo.EMPTY;
   // Information about the origin of files in the cache. For each file in the cache, stores the
   // artifact key that the file was derived from.
@@ -259,7 +260,7 @@ public class ArtifactTrackerImpl
 
   private void saveState() throws IOException {
     JavaArtifacts.Builder builder = JavaArtifacts.newBuilder();
-    javaArtifacts.values().stream().map(ArtifactInfo::toProto).forEach(builder::addArtifacts);
+    javaArtifacts.values().stream().map(JavaArtifactInfo::toProto).forEach(builder::addArtifacts);
     CcCompilationInfo ccCompilationInfo = ccDepencenciesInfo.toProto();
     CachedArtifacts.Builder cachedArtifactsBuilder = CachedArtifacts.newBuilder();
     for (Map.Entry<Path, Path> entry : cachePathToArtifactKeyMap.entrySet()) {
@@ -294,11 +295,11 @@ public class ArtifactTrackerImpl
               .collect(toImmutableMap(e -> Path.of(e.getKey()), e -> Path.of(e.getValue()))));
       javaArtifacts.putAll(
           saved.getArtifactInfo().getArtifactsList().stream()
-              .map(ArtifactInfo::create)
-              .collect(toImmutableMap(ArtifactInfo::label, Function.identity())));
+              .map(JavaArtifactInfo::create)
+              .collect(toImmutableMap(JavaArtifactInfo::label, Function.identity())));
       for (JavaTargetArtifacts targetArtifact : saved.getArtifactInfo().getArtifactsList()) {
-        ArtifactInfo artifactInfo = ArtifactInfo.create(targetArtifact);
-        javaArtifacts.put(artifactInfo.label(), artifactInfo);
+        JavaArtifactInfo javaArtifactInfo = JavaArtifactInfo.create(targetArtifact);
+        javaArtifacts.put(javaArtifactInfo.label(), javaArtifactInfo);
       }
       ccDepencenciesInfo = CcDependenciesInfo.create(saved.getCcCompilationInfo());
     } catch (IOException e) {
@@ -315,15 +316,15 @@ public class ArtifactTrackerImpl
     Path artifactPath = cachePathToArtifactKeyMap.get(cachedArtifact);
     return javaArtifacts.values().stream()
         .filter(d -> d.containsPath(artifactPath))
-        .map(ArtifactInfo::sources)
+        .map(JavaArtifactInfo::sources)
         .flatMap(Set::stream)
         .collect(toImmutableSet());
   }
 
   @Override
   public Optional<ImmutableSet<Path>> getCachedFiles(Label target) {
-    ArtifactInfo artifactInfo = javaArtifacts.get(target);
-    if (artifactInfo == null) {
+    JavaArtifactInfo javaArtifactInfo = javaArtifacts.get(target);
+    if (javaArtifactInfo == null) {
       return Optional.empty();
     }
 
@@ -331,7 +332,7 @@ public class ArtifactTrackerImpl
         Multimaps.invertFrom(
             Multimaps.forMap(cachePathToArtifactKeyMap), ArrayListMultimap.create());
     return Optional.of(
-        artifactInfo
+        javaArtifactInfo
             .artifactStream()
             .map(artifactToCachedMap::get)
             .flatMap(Collection::stream)
@@ -595,14 +596,14 @@ public class ArtifactTrackerImpl
    */
   private void updateMaps(Set<Label> targets, JavaArtifacts newArtifacts) {
     for (JavaTargetArtifacts targetArtifacts : newArtifacts.getArtifactsList()) {
-      ArtifactInfo artifactInfo = ArtifactInfo.create(targetArtifacts);
-      javaArtifacts.put(artifactInfo.label(), artifactInfo);
+      JavaArtifactInfo javaArtifactInfo = JavaArtifactInfo.create(targetArtifacts);
+      javaArtifacts.put(javaArtifactInfo.label(), javaArtifactInfo);
     }
     for (Label label : targets) {
       if (!javaArtifacts.containsKey(label)) {
         logger.warn(
             "Target " + label + " was not built. If the target is an alias, this is expected");
-        javaArtifacts.put(label, ArtifactInfo.empty(label));
+        javaArtifacts.put(label, JavaArtifactInfo.empty(label));
       }
     }
   }
@@ -645,7 +646,7 @@ public class ArtifactTrackerImpl
 
     TestSourceGlobMatcher testSourceMatcher = TestSourceGlobMatcher.create(projectDefinition);
     ImmutableSet.Builder<GeneratedSourceJar> generatedProjectSrcJars = ImmutableSet.builder();
-    for (ArtifactInfo ai : javaArtifacts.values()) {
+    for (JavaArtifactInfo ai : javaArtifacts.values()) {
       if (!projectDefinition.isIncluded(ai.label())) {
         continue;
       }
@@ -680,7 +681,7 @@ public class ArtifactTrackerImpl
 
     ImmutableSet<ProjectPath> workspaceSrcJars =
         javaArtifacts.values().stream()
-            .map(ArtifactInfo::srcJars)
+            .map(JavaArtifactInfo::srcJars)
             .flatMap(Set::stream)
             .map(ProjectPath::workspaceRelative)
             .collect(ImmutableSet.toImmutableSet());
@@ -688,7 +689,7 @@ public class ArtifactTrackerImpl
     ImmutableSet<ProjectPath> generatedExternalSrcJars =
         javaArtifacts.values().stream()
             .filter(not(ai -> projectDefinition.isIncluded(ai.label())))
-            .map(ArtifactInfo::genSrcs)
+            .map(JavaArtifactInfo::genSrcs)
             .flatMap(List::stream)
             .filter(ArtifactTrackerImpl::hasJarOrZipExtension)
             .map(generatedExternalSrcFileCache::getCacheFile)

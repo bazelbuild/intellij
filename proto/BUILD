@@ -87,6 +87,7 @@ proto_library(
     deps = [
         ":cc_compilation_info_proto",
         ":project_data_proto",
+        "//querysync/java/com/google/idea/blaze/qsync/java:java_target_info",
         "//third_party/bazel/src/main/protobuf:build_proto",
     ],
 )
