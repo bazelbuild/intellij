@@ -22,12 +22,6 @@ import "querysync/java/com/google/idea/blaze/qsync/java/java_target_info.proto";
 // option java_api_version = 2;
 option java_package = "com.google.devtools.intellij.qsync";
 
-// The jar artifacts built for a given app inspector target.
-message AppInspectorArtifacts {
-  string target = 1;
-  repeated string jars = 2;
-}
-
 message CachedArtifacts {
   map<string, string> cache_path_to_artifact_path = 1;
 }
