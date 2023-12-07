@@ -619,11 +619,11 @@ public class ArtifactTrackerImpl
   public ProjectProto.Project updateProjectProto(
       ProjectProto.Project projectProto, BuildGraphData graph, Context<?> context)
       throws BuildException {
-    return updateProjectProtoForJavaDeps(projectProto, graph);
+    return updateProjectProtoForJavaDeps(projectProto);
   }
 
-  private ProjectProto.Project updateProjectProtoForJavaDeps(
-      ProjectProto.Project projectProto, BuildGraphData graph) throws BuildException {
+  private ProjectProto.Project updateProjectProtoForJavaDeps(ProjectProto.Project projectProto)
+      throws BuildException {
 
     Set<ProjectPath> generatedJavaSrcRoots = Sets.newHashSet();
 
