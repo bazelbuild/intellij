@@ -789,4 +789,9 @@ public class ArtifactTrackerImpl
       throw new UncheckedIOException(e);
     }
   }
+
+  @Override
+  public Iterable<Path> getBugreportFiles() {
+    return ImmutableList.of(persistentFile);
+  }
 }

@@ -85,4 +85,6 @@ public interface ArtifactTracker {
 
   /** Returns the count of .jar files. */
   Integer getJarsCount();
+
+  public Iterable<Path> getBugreportFiles();
 }
