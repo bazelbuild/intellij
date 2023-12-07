@@ -201,7 +201,7 @@ public class CcProjectModelUpdateOperation implements Disposable {
               .flatMap(Collection::stream)
               .collect(ImmutableList.toImmutableList());
       frozenMessages.forEach(
-          m -> context.output(PrintOutput.output(m.getType().name() + ": " + m.getText())));
+          m -> context.output(PrintOutput.log(m.getType().name() + ": " + m.getText())));
     } finally {
       if (!sessionClosed) {
         session.dispose();
