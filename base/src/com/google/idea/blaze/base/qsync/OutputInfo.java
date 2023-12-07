@@ -19,10 +19,10 @@ import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcCompilationInfo;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
+import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcCompilationInfo;
 
 /** A data class that collecting and converting output group artifacts. */
 @AutoValue

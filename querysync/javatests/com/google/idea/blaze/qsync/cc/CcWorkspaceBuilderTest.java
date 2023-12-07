@@ -21,11 +21,11 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
 
 import com.google.common.collect.ImmutableList;
-import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcCompilationInfo;
-import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcTargetInfo;
-import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcToolchainInfo;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.QuerySyncTestUtils;
+import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcCompilationInfo;
+import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcTargetInfo;
+import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcToolchainInfo;
 import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
