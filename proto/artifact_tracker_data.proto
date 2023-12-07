@@ -16,7 +16,7 @@ syntax = "proto3";
 
 package blaze;
 
-import "proto/cc_compilation_info.proto";
+import "querysync/java/com/google/idea/blaze/qsync/cc/cc_compilation_info.proto";
 import "querysync/java/com/google/idea/blaze/qsync/java/java_target_info.proto";
 
 // option java_api_version = 2;
@@ -38,5 +38,5 @@ message ArtifactTrackerState {
   bazel.intellij.JavaArtifacts artifact_info = 1;
   CachedArtifacts cached_artifacts = 2;
   int32 version = 3;
-  CcCompilationInfo cc_compilation_info = 4;
+  bazel.intellij.CcCompilationInfo cc_compilation_info = 4;
 }
