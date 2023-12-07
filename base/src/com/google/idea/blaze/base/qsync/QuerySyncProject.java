@@ -464,4 +464,11 @@ public class QuerySyncProject {
     projectData = projectData.withSnapshot(newSnapshot);
     writeToDisk(newSnapshot);
   }
+
+  public Iterable<Path> getBugreportFiles() {
+    return ImmutableList.<Path>builder()
+        .add(snapshotFilePath)
+        .addAll(artifactTracker.getBugreportFiles())
+        .build();
+  }
 }
