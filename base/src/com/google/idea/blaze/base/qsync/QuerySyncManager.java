@@ -35,6 +35,7 @@ import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
@@ -296,6 +297,7 @@ public class QuerySyncManager implements Disposable {
       ThrowingScopedOperation operation,
       TaskOrigin taskOrigin) {
     querySyncActionStatsScope.getBuilder().setTaskOrigin(taskOrigin);
+    BlazeUserSettings userSettings = BlazeUserSettings.getInstance();
     return ProgressiveTaskWithProgressIndicator.builder(project, title)
         .submitTaskWithResult(
             indicator ->
@@ -311,7 +313,7 @@ public class QuerySyncManager implements Disposable {
                                       ? showWindowOnAutomaticSyncErrors.getValue()
                                           ? FocusBehavior.ON_ERROR
                                           : FocusBehavior.NEVER
-                                      : FocusBehavior.ALWAYS)
+                                      : userSettings.getShowBlazeConsoleOnSync())
                               .setIssueParsers(
                                   BlazeIssueParser.defaultIssueParsers(
                                       project,
@@ -322,7 +324,9 @@ public class QuerySyncManager implements Disposable {
                           .push(new ProgressIndicatorScope(indicator))
                           .push(scope)
                           .push(querySyncActionStatsScope)
-                          .push(new ProblemsViewScope(project, FocusBehavior.ALWAYS))
+                          .push(
+                              new ProblemsViewScope(
+                                  project, userSettings.getShowProblemsViewOnSync()))
                           .push(new IdeaLogScope());
                       try {
                         operation.execute(context);
