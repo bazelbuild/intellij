@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.sync.data;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -36,11 +35,15 @@ public class DelegatingBlazeProjectDataManager implements BlazeProjectDataManage
         Suppliers.memoize(
             () -> {
               ProjectType projectType = Blaze.getProjectType(project);
-              Preconditions.checkState(
-                  projectType != ProjectType.UNKNOWN, "Non-blaze project is provided");
-              return projectType == ProjectType.QUERY_SYNC
-                  ? new QuerySyncProjectDataManager(project)
-                  : new AspectSyncProjectDataManager(project);
+              switch (projectType) {
+                case UNKNOWN:
+                  return new EmptyBlazeProjectDataManager();
+                case QUERY_SYNC:
+                  return new QuerySyncProjectDataManager(project);
+                case ASPECT_SYNC:
+                  return new AspectSyncProjectDataManager(project);
+              }
+              throw new AssertionError(projectType);
             });
   }
 
