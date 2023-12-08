@@ -95,7 +95,8 @@ public class ProjectSpecBuilder {
             context,
             snapshot.projectDefinition(),
             executor,
-            Suppliers.ofInstance(true));
+            Suppliers.ofInstance(true),
+            Suppliers.ofInstance(false));
     System.out.println(TextFormat.printer().printToString(converter.createProject(buildGraph)));
     return context.hasError() ? 1 : 0;
   }

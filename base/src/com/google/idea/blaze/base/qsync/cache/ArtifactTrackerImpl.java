@@ -56,6 +56,7 @@ import com.google.idea.blaze.base.qsync.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.ArtifactTrackerUpdateResult;
 import com.google.idea.blaze.base.qsync.OutputGroup;
 import com.google.idea.blaze.base.qsync.OutputInfo;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.RenderJarArtifactTracker;
 import com.google.idea.blaze.base.qsync.RenderJarInfo;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher.ArtifactDestination;
@@ -70,6 +71,7 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.TestSourceGlobMatcher;
 import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
+import com.google.idea.blaze.qsync.java.AndroidResPackagesProjectUpdater;
 import com.google.idea.blaze.qsync.java.GeneratedSourceProjectUpdater;
 import com.google.idea.blaze.qsync.java.GeneratedSourceProjectUpdater.GeneratedSourceJar;
 import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
@@ -708,6 +710,12 @@ public class ArtifactTrackerImpl
       projectProto = srcJarUpdater.addSrcJars();
     } else {
       logger.info("srcjar attachment disabled.");
+    }
+
+    if (QuerySync.EXTRACT_RES_PACKAGES_AT_BUILD_TIME.getValue()) {
+      AndroidResPackagesProjectUpdater resPackagesUpdater =
+          new AndroidResPackagesProjectUpdater(projectProto, javaArtifacts.values());
+      projectProto = resPackagesUpdater.addAndroidResPackages();
     }
 
     return projectProto;

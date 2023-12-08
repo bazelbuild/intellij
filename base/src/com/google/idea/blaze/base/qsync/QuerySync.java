@@ -32,6 +32,9 @@ public class QuerySync {
   public static final BoolExperiment USE_NEW_RES_DIR_LOGIC =
       new BoolExperiment("query.sync.new.resdir.logic", true);
 
+  public static final BoolExperiment EXTRACT_RES_PACKAGES_AT_BUILD_TIME =
+      new BoolExperiment("query.sync.respackages.at.build.time", true);
+
   /**
    * Previously, query sync was enabled by an experiment. Some users still have that experiment set
    * and we don't want to inadvertently disable query sync for them.

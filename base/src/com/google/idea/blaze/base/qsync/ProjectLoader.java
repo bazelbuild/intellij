@@ -157,7 +157,8 @@ public class ProjectLoader {
             handledRules,
             ProjectProtoTransform.compose(
                 artifactTracker::updateProjectProto, new CcProjectProtoTransform(artifactTracker)),
-            QuerySync.USE_NEW_RES_DIR_LOGIC::getValue);
+            QuerySync.USE_NEW_RES_DIR_LOGIC::getValue,
+            () -> !QuerySync.EXTRACT_RES_PACKAGES_AT_BUILD_TIME.getValue());
     QueryRunner queryRunner = createQueryRunner(buildSystem);
     ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner, vcsHandler);
     QuerySyncSourceToTargetMap sourceToTargetMap =
