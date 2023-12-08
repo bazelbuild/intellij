@@ -85,6 +85,7 @@ public class GraphToProjectConverter {
   private final ProjectDefinition projectDefinition;
   private final ListeningExecutorService executor;
   private final Supplier<Boolean> useNewResDirLogic;
+  private final Supplier<Boolean> guessAndroidResPackages;
 
   public GraphToProjectConverter(
       PackageReader packageReader,
@@ -92,13 +93,15 @@ public class GraphToProjectConverter {
       Context<?> context,
       ProjectDefinition projectDefinition,
       ListeningExecutorService executor,
-      Supplier<Boolean> useNewResDirLogic) {
+      Supplier<Boolean> useNewResDirLogic,
+      Supplier<Boolean> guessAndroidResPackages) {
     this.packageReader = packageReader;
     this.fileExistenceCheck = p -> Files.isRegularFile(workspaceRoot.resolve(p));
     this.context = context;
     this.projectDefinition = projectDefinition;
     this.executor = executor;
     this.useNewResDirLogic = useNewResDirLogic;
+    this.guessAndroidResPackages = guessAndroidResPackages;
   }
 
   @VisibleForTesting
@@ -114,6 +117,7 @@ public class GraphToProjectConverter {
     this.projectDefinition = projectDefinition;
     this.executor = executor;
     this.useNewResDirLogic = Suppliers.ofInstance(true);
+    this.guessAndroidResPackages = Suppliers.ofInstance(false);
   }
 
   /**
@@ -513,11 +517,18 @@ public class GraphToProjectConverter {
       // TODO(mathewi) Remove this and the corresponding experiment once the locig has been proven.
       androidResDirs = computeAndroidResourceDirectories(graph.getAllSourceFiles());
     }
-    ImmutableSet<String> pkgs =
-        computeAndroidSourcePackages(graph.getAndroidSourceFiles(), javaSourceRoots);
+    ImmutableSet<String> androidResPackages;
+    if (guessAndroidResPackages.get()) {
+      androidResPackages =
+          computeAndroidSourcePackages(graph.getAndroidSourceFiles(), javaSourceRoots);
+    } else {
+      androidResPackages = ImmutableSet.of();
+    }
 
     context.output(PrintOutput.log("%-10d Android resource directories", androidResDirs.size()));
-    context.output(PrintOutput.log("%-10d Android resource packages", pkgs.size()));
+    if (guessAndroidResPackages.get()) {
+      context.output(PrintOutput.log("%-10d Android resource packages", androidResPackages.size()));
+    }
 
     ProjectProto.Library depsLib =
         ProjectProto.Library.newBuilder()
@@ -539,7 +550,7 @@ public class GraphToProjectConverter {
             .addLibraryName(depsLib.getName())
             .addAllAndroidResourceDirectories(
                 androidResDirs.stream().map(Path::toString).collect(toImmutableList()))
-            .addAllAndroidSourcePackages(pkgs)
+            .addAllAndroidSourcePackages(androidResPackages)
             .addAllAndroidCustomPackages(graph.getAllCustomPackages());
 
     ListMultimap<Path, Path> excludesByRootDirectory =
