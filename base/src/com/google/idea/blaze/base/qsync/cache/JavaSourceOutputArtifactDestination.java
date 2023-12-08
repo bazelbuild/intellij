@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.qsync.cache;
 
 import com.google.auto.value.AutoValue;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
-import com.google.idea.blaze.qsync.PackageStatementParser;
+import com.google.idea.blaze.qsync.java.PackageStatementParser;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
