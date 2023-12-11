@@ -56,6 +56,7 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.filters.TextConsoleBuilderImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
@@ -281,7 +282,7 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
       throws ExecutionException {
     return new ScopedBlazeProcessHandler(
         project,
-        command,
+        new GeneralCommandLine(command),
         workspaceRoot,
         new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
           @Override

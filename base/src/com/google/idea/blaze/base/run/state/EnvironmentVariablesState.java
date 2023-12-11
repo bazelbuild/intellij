@@ -61,7 +61,7 @@ public class EnvironmentVariablesState implements RunConfigurationState {
     private final EnvironmentVariablesComponent component = new EnvironmentVariablesComponent();
 
     private Editor() {
-      component.setText("&Environment variables (only set when debugging)");
+      component.setText("&Environment variables");
     }
 
     @Override
