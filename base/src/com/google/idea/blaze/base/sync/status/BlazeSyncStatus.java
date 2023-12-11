@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.status;
 
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.intellij.openapi.project.Project;
@@ -31,7 +32,6 @@ public interface BlazeSyncStatus {
 
   SyncStatus getStatus();
 
-
   static BlazeSyncStatus getInstance(Project project) {
     return project.getService(BlazeSyncStatus.class);
   }
@@ -40,6 +40,11 @@ public interface BlazeSyncStatus {
 
   void syncEnded(SyncMode syncMode, SyncResult syncResult);
 
+  /**
+   * @deprecated For query sync, use {@link QuerySyncManager#syncInProgress()} or {@link
+   *     QuerySyncManager#buildInProgress()}
+   */
+  @Deprecated
   boolean syncInProgress();
 
   void setDirty();

@@ -37,9 +37,6 @@ import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
-import com.google.idea.blaze.base.sync.SyncMode;
-import com.google.idea.blaze.base.sync.SyncResult;
-import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.util.SaveUtil;
@@ -87,6 +84,13 @@ import javax.annotation.Nullable;
  * </ul>
  */
 public class QuerySyncManager implements Disposable {
+
+  /** Type of an operation performed by the sync manager */
+  public enum Operation {
+    SYNC,
+    BUILD
+  }
+
   private final Logger logger = Logger.getInstance(getClass());
 
   private final Project project;
@@ -96,6 +100,8 @@ public class QuerySyncManager implements Disposable {
 
   private final ProjectLoader loader;
   private volatile QuerySyncProject loadedProject;
+
+  private final QuerySyncStatus syncStatus;
 
   private static final BoolExperiment showWindowOnAutomaticSyncErrors =
       new BoolExperiment("querysync.autosync.show.console.on.error", true);
@@ -120,16 +126,16 @@ public class QuerySyncManager implements Disposable {
   }
 
   public QuerySyncManager(Project project) {
-    this.project = project;
-    this.loader = createProjectLoader(executor, project);
-    VirtualFileManager.getInstance()
-        .addAsyncFileListener(new QuerySyncAsyncFileListener(project, this), this);
+    this(project, null);
   }
 
   @NonInjectable
-  public QuerySyncManager(Project project, ProjectLoader loader) {
+  public QuerySyncManager(Project project, @Nullable ProjectLoader loader) {
     this.project = project;
-    this.loader = loader;
+    this.loader = loader != null ? loader : createProjectLoader(executor, project);
+    this.syncStatus = new QuerySyncStatus(project);
+    VirtualFileManager.getInstance()
+        .addAsyncFileListener(new QuerySyncAsyncFileListener(project, this), this);
   }
 
   /**
@@ -147,7 +153,7 @@ public class QuerySyncManager implements Disposable {
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> reloadProject(
       QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
-    return run(
+    return runSync(
         "Loading project",
         "Re-loading project",
         querySyncActionStats,
@@ -204,7 +210,7 @@ public class QuerySyncManager implements Disposable {
 
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> onStartup(QuerySyncActionStatsScope querySyncActionStats) {
-    return run(
+    return runSync(
         "Loading project",
         "Initializing project structure",
         querySyncActionStats,
@@ -215,7 +221,7 @@ public class QuerySyncManager implements Disposable {
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> fullSync(
       QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
-    return run(
+    return runSync(
         "Updating project structure",
         "Re-importing project",
         querySyncActionStats,
@@ -236,7 +242,7 @@ public class QuerySyncManager implements Disposable {
   public ListenableFuture<Boolean> deltaSync(
       QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
     assertProjectLoaded();
-    return run(
+    return runSync(
         "Updating project structure",
         "Refreshing project",
         querySyncActionStats,
@@ -251,30 +257,52 @@ public class QuerySyncManager implements Disposable {
         taskOrigin);
   }
 
-  private ListenableFuture<Boolean> run(
+  private ListenableFuture<Boolean> runSync(
       String title,
       String subTitle,
       QuerySyncActionStatsScope querySyncActionStatsScope,
       ThrowingScopedOperation operation,
       TaskOrigin taskOrigin) {
+    return run(title, subTitle, querySyncActionStatsScope, operation, taskOrigin, Operation.SYNC);
+  }
+
+  private ListenableFuture<Boolean> runBuild(
+      String title,
+      String subTitle,
+      QuerySyncActionStatsScope querySyncActionStatsScope,
+      ThrowingScopedOperation operation,
+      TaskOrigin taskOrigin) {
+    return run(title, subTitle, querySyncActionStatsScope, operation, taskOrigin, Operation.BUILD);
+  }
+
+  private ListenableFuture<Boolean> run(
+      String title,
+      String subTitle,
+      QuerySyncActionStatsScope querySyncActionStatsScope,
+      ThrowingScopedOperation operation,
+      TaskOrigin taskOrigin,
+      Operation operationType) {
     SettableFuture<Boolean> result = SettableFuture.create();
-    BlazeSyncStatus syncStatus = BlazeSyncStatus.getInstance(project);
-    syncStatus.syncStarted();
+    syncStatus.operationStarted(operationType);
     Futures.addCallback(
         result,
         new FutureCallback<Boolean>() {
           @Override
           public void onSuccess(Boolean success) {
-            syncStatus.syncEnded(SyncMode.FULL, success ? SyncResult.SUCCESS : SyncResult.FAILURE);
+            if (success) {
+              syncStatus.operationEnded();
+            } else {
+              syncStatus.operationFailed();
+            }
           }
 
           @Override
           public void onFailure(Throwable throwable) {
             if (result.isCancelled()) {
-              syncStatus.syncEnded(SyncMode.FULL, SyncResult.CANCELLED);
+              syncStatus.operationCancelled();
             } else {
+              syncStatus.operationFailed();
               logger.error("Sync failed", throwable);
-              syncStatus.syncEnded(SyncMode.FULL, SyncResult.FAILURE);
             }
           }
         },
@@ -369,7 +397,7 @@ public class QuerySyncManager implements Disposable {
   public ListenableFuture<Boolean> enableAnalysis(
       Set<Label> targets, QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
     assertProjectLoaded();
-    return run(
+    return runBuild(
         "Building dependencies",
         "Building...",
         querySyncActionStats,
@@ -381,7 +409,7 @@ public class QuerySyncManager implements Disposable {
   public ListenableFuture<Boolean> enableAnalysisForReverseDeps(
       Set<Label> targets, QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
     assertProjectLoaded();
-    return run(
+    return runBuild(
         "Building dependencies for affected targets",
         "Building...",
         querySyncActionStats,
@@ -397,11 +425,19 @@ public class QuerySyncManager implements Disposable {
     return loadedProject.canEnableAnalysisFor(workspaceRelativePath);
   }
 
+  public boolean syncInProgress() {
+    return syncStatus.syncInProgress();
+  }
+
+  public boolean buildInProgress() {
+    return syncStatus.buildInProgress();
+  }
+
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> generateRenderJar(
       PsiFile psiFile, QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
     assertProjectLoaded();
-    return run(
+    return runBuild(
         "Building Render jar for Compose preview",
         "Building...",
         querySyncActionStats,
