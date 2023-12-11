@@ -71,6 +71,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.jetbrains.annotations.Nullable;
@@ -185,8 +186,8 @@ public class UnpackedAarsTest extends BlazeTestCase {
     }
 
     @Override
-    public String getRelativePath() {
-      return file.getPath();
+    public Path getPath() {
+      return file.toPath();
     }
 
     @Nullable

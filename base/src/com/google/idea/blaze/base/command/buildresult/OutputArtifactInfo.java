@@ -15,8 +15,26 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
+import com.google.common.base.Joiner;
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
+import java.nio.file.Path;
+
 /** A descriptor of an output artifact that contains data needed to identify the artifact. */
 public interface OutputArtifactInfo {
   /** The blaze-out-relative path. */
-  String getRelativePath();
+  default String getRelativePath() {
+    Path full = getPath();
+    if (full.getName(0).toString().endsWith("-out")) {
+      return full.subpath(1, full.getNameCount()).toString();
+    } else {
+      return full.toString();
+    }
+  }
+
+  /** The path to this artifact as extracted from the build event stream. */
+  Path getPath();
+
+  static Path pathFromBesFile(BuildEventStreamProtos.File file) {
+    return Path.of(Joiner.on('/').join(file.getPathPrefixList())).resolve(file.getName());
+  }
 }

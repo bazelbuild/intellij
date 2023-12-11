@@ -22,6 +22,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import org.jetbrains.annotations.Nullable;
 
 /** Use local file to fake {@link RemoteOutputArtifact} that used by tests. */
@@ -48,8 +49,8 @@ public class FakeRemoteOutputArtifact implements RemoteOutputArtifact {
   }
 
   @Override
-  public String getRelativePath() {
-    return file.getPath();
+  public Path getPath() {
+    return file.toPath();
   }
 
   @Nullable

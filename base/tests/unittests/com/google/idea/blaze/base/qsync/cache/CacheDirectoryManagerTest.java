@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import javax.annotation.Nullable;
 import org.junit.Rule;
 import org.junit.Test;
@@ -111,8 +112,8 @@ public class CacheDirectoryManagerTest {
       }
 
       @Override
-      public String getRelativePath() {
-        return "somewhere/" + fileName;
+      public Path getPath() {
+        return Path.of("somewhere/" + fileName);
       }
 
       @Nullable

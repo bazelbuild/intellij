@@ -24,6 +24,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import javax.annotation.Nullable;
 
 /** A blaze output artifact which exists on the local file system. */
@@ -31,13 +32,14 @@ public class LocalFileOutputArtifactWithoutDigest
     implements OutputArtifactWithoutDigest, LocalFileArtifact {
 
   private final File file;
-  private final String blazeOutRelativePath;
+  // The path to the artifact starting with e.g. `blaze-out`
+  private final Path blazeOutPath;
   private final String configurationMnemonic;
 
   public LocalFileOutputArtifactWithoutDigest(
-      File file, String blazeOutRelativePath, String configurationMnemonic) {
+      File file, Path blazeOutPath, String configurationMnemonic) {
     this.file = file;
-    this.blazeOutRelativePath = blazeOutRelativePath;
+    this.blazeOutPath = blazeOutPath;
     this.configurationMnemonic = configurationMnemonic;
   }
 
@@ -58,8 +60,8 @@ public class LocalFileOutputArtifactWithoutDigest
   }
 
   @Override
-  public String getRelativePath() {
-    return blazeOutRelativePath;
+  public Path getPath() {
+    return blazeOutPath;
   }
 
   @Override
@@ -91,6 +93,6 @@ public class LocalFileOutputArtifactWithoutDigest
 
   @Override
   public String toString() {
-    return blazeOutRelativePath;
+    return blazeOutPath.toString();
   }
 }
