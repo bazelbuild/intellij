@@ -18,6 +18,7 @@ package com.google.idea.common.experiments;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.common.util.MorePlatformUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -46,6 +48,7 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
   private final Alarm alarm =
       new Alarm(ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private final List<ExperimentLoader> services;
+  private final Supplier<String> channelSupplier;
   private final AtomicInteger experimentScopeCounter = new AtomicInteger(0);
 
   private volatile Map<String, String> experiments = ImmutableMap.of();
@@ -53,12 +56,18 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
   private final Map<String, Experiment> queriedExperiments = new ConcurrentHashMap<>();
 
   ExperimentServiceImpl() {
-    this(ExperimentLoader.EP_NAME.getExtensions());
+    this(MorePlatformUtils::getIdeChannel, ExperimentLoader.EP_NAME.getExtensions());
   }
 
   @VisibleForTesting
   ExperimentServiceImpl(ExperimentLoader... loaders) {
+    this(MorePlatformUtils::getIdeChannel, loaders);
+  }
+
+  @VisibleForTesting
+  ExperimentServiceImpl(Supplier<String> channelSupplier, ExperimentLoader... loaders) {
     services = ImmutableList.copyOf(loaders);
+    this.channelSupplier = channelSupplier;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       refreshExperiments();
     }
@@ -76,9 +85,17 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
     scheduleRefresh(REFRESH_FREQUENCY);
   }
 
+  @Nullable
   private String getExperiment(Experiment experiment) {
     queriedExperiments.putIfAbsent(experiment.getKey(), experiment);
-    return experiments.get(experiment.getKey());
+    if (experiments.containsKey(experiment.getKey())) {
+      return experiments.get(experiment.getKey());
+    }
+    String channelKey = channelSupplier.get() + "." + experiment.getKey();
+    if (experiments.containsKey(channelKey)) {
+      return experiments.get(channelKey);
+    }
+    return null;
   }
 
   @Override

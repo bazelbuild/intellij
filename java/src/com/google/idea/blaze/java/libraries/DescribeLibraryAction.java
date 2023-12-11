@@ -36,7 +36,7 @@ class DescribeLibraryAction extends BlazeProjectAction {
 
   @Override
   protected QuerySyncStatus querySyncSupport() {
-    return QuerySyncStatus.DISABLED;
+    return QuerySyncStatus.HIDDEN;
   }
 
   @Override

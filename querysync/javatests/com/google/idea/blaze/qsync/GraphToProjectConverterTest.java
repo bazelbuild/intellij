@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectProto;
@@ -33,8 +34,6 @@ import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.testdata.BuildGraphs;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -133,7 +132,7 @@ public class GraphToProjectConverterTest {
             Path.of("javatests/com/one"), "prefix.com",
             Path.of("javatests/com/two"), "other.prefix");
 
-    Map<Path, Map<Path, String>> split = converter.splitByRoot(prefixes);
+    ImmutableMap<Path, ImmutableMap<Path, String>> split = converter.splitByRoot(prefixes);
 
     assertThat(split.keySet()).containsExactlyElementsIn(roots);
     assertThat(split.get(Path.of("java")))
@@ -149,28 +148,40 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testMergeCompatibleSourceRoots() {
-    Map<Path, Map<Path, String>> roots = new HashMap<>();
-    Map<Path, String> java = new HashMap<>();
-    java.put(Path.of("a/b/c/d"), "com.google.d");
-    java.put(Path.of("a/b/c/e"), "com.google.e");
-    roots.put(Path.of("java"), java);
+    ImmutableMap<Path, ImmutableMap<Path, String>> roots =
+        ImmutableMap.of(
+            Path.of("java"),
+            ImmutableMap.of(
+                Path.of("com/google/d"), "com.google.d",
+                Path.of("com/google/e"), "com.google.e",
+                Path.of("com/google/e/z"), "z",
+                Path.of("com/google/e/z/y"), "com.y"),
+            Path.of("javatests"),
+            ImmutableMap.of(
+                Path.of("com/google/d"), "com.google.d",
+                Path.of("com/google/e"), "com.google.e",
+                Path.of("com/google/e/some/nested/root/com/google/x"), "com.google.x",
+                Path.of("com/google/e/some/nested/root/com/google/x/y"), "com.google.x.y",
+                Path.of("incompatible/a"), "com.a",
+                Path.of("incompatible/a/b"), "com.odd",
+                Path.of("incompatible/a/b/c/d"), "com.a.b.c.d"));
+    roots = GraphToProjectConverter.mergeCompatibleSourceRoots(roots);
 
-    Map<Path, String> javatests = new HashMap<>();
-    javatests.put(Path.of("compatible/a/b/c/d"), "com.google.d");
-    javatests.put(Path.of("compatible/a/b/c/d/e"), "com.google.d.e");
-    javatests.put(Path.of("incompatible/a"), "com.odd");
-    javatests.put(Path.of("incompatible/a/b/c"), "com.google.a.b.c");
-    roots.put(Path.of("javatests"), javatests);
-
-    GraphToProjectConverter.mergeCompatibleSourceRoots(roots);
-
-    assertThat(roots.keySet()).containsExactly(Path.of("java"), Path.of("javatests"));
-    assertThat(roots.get(Path.of("java"))).containsExactly(Path.of("a/b/c"), "com.google");
-    assertThat(roots.get(Path.of("javatests")))
-        .containsExactly(
-            Path.of("compatible/a/b/c"), "com.google",
-            Path.of("incompatible/a"), "com.odd",
-            Path.of("incompatible/a/b"), "com.google.a.b");
+    assertThat(roots)
+        .isEqualTo(
+            ImmutableMap.of(
+                Path.of("java"),
+                ImmutableMap.of(
+                    Path.of(""), "",
+                    Path.of("com/google/e/z"), "z",
+                    Path.of("com/google/e/z/y"), "com.y"),
+                Path.of("javatests"),
+                ImmutableMap.of(
+                    Path.of(""), "",
+                    Path.of("com/google/e/some/nested/root"), "",
+                    Path.of("incompatible"), "com",
+                    Path.of("incompatible/a/b"), "com.odd",
+                    Path.of("incompatible/a/b/c"), "com.a.b.c")));
   }
 
   @Test
@@ -186,7 +197,7 @@ public class GraphToProjectConverterTest {
             .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
             .build();
 
-    Map<Path, Map<Path, String>> rootSources =
+    ImmutableMap<Path, ImmutableMap<Path, String>> rootSources =
         converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
@@ -205,7 +216,7 @@ public class GraphToProjectConverterTest {
             .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
             .build();
 
-    Map<Path, Map<Path, String>> rootSources =
+    ImmutableMap<Path, ImmutableMap<Path, String>> rootSources =
         converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
@@ -226,7 +237,7 @@ public class GraphToProjectConverterTest {
             .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
             .build();
 
-    Map<Path, Map<Path, String>> rootSources =
+    ImmutableMap<Path, ImmutableMap<Path, String>> rootSources =
         converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
@@ -247,7 +258,7 @@ public class GraphToProjectConverterTest {
             .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
             .build();
 
-    Map<Path, Map<Path, String>> rootSources =
+    ImmutableMap<Path, ImmutableMap<Path, String>> rootSources =
         converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet())
         .containsExactly(Path.of("java/com/app"), Path.of("java/com/lib"));
@@ -271,7 +282,7 @@ public class GraphToProjectConverterTest {
             .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
             .build();
 
-    Map<Path, Map<Path, String>> rootSources =
+    ImmutableMap<Path, ImmutableMap<Path, String>> rootSources =
         converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test")))
@@ -296,7 +307,7 @@ public class GraphToProjectConverterTest {
             .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
             .build();
 
-    Map<Path, Map<Path, String>> rootSources =
+    ImmutableMap<Path, ImmutableMap<Path, String>> rootSources =
         converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
@@ -317,7 +328,7 @@ public class GraphToProjectConverterTest {
             .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
             .build();
 
-    Map<Path, Map<Path, String>> rootSources =
+    ImmutableMap<Path, ImmutableMap<Path, String>> rootSources =
         converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
@@ -338,7 +349,7 @@ public class GraphToProjectConverterTest {
             .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
             .build();
 
-    Map<Path, Map<Path, String>> rootSources =
+    ImmutableMap<Path, ImmutableMap<Path, String>> rootSources =
         converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test")))
@@ -364,7 +375,7 @@ public class GraphToProjectConverterTest {
             .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
             .build();
 
-    Map<Path, Map<Path, String>> rootSources =
+    ImmutableMap<Path, ImmutableMap<Path, String>> rootSources =
         converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("third_party"));
     assertThat(rootSources.get(Path.of("third_party")))
@@ -389,7 +400,7 @@ public class GraphToProjectConverterTest {
             .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
             .build();
 
-    Map<Path, Map<Path, String>> rootSources =
+    ImmutableMap<Path, ImmutableMap<Path, String>> rootSources =
         converter.calculateJavaRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test")))
@@ -447,7 +458,7 @@ public class GraphToProjectConverterTest {
     ImmutableList<Path> androidSourceFiles =
         ImmutableList.of(
             Path.of("java/com/example/foo/Foo.java"), Path.of("java/com/example/bar/Bar.java"));
-    Map<Path, Map<Path, String>> rootToPrefix =
+    ImmutableMap<Path, ImmutableMap<Path, String>> rootToPrefix =
         ImmutableMap.of(Path.of("java/com/example"), ImmutableMap.of(Path.of(""), "com.example"));
 
     ImmutableSet<String> androidResourcePackages =
@@ -466,7 +477,7 @@ public class GraphToProjectConverterTest {
         ImmutableList.of(
             Path.of("some_project/java/com/example/foo/Foo.java"),
             Path.of("some_project/java/com/example/bar/Bar.java"));
-    Map<Path, Map<Path, String>> rootToPrefix =
+    ImmutableMap<Path, ImmutableMap<Path, String>> rootToPrefix =
         ImmutableMap.of(Path.of("some_project"), ImmutableMap.of(Path.of("java"), ""));
 
     ImmutableSet<String> androidResourcePackages =
@@ -482,7 +493,7 @@ public class GraphToProjectConverterTest {
         ImmutableList.of(
             Path.of("some_project/java/com/example/foo/Foo.java"),
             Path.of("java/com/example/bar/Bar.java"));
-    Map<Path, Map<Path, String>> rootToPrefix =
+    ImmutableMap<Path, ImmutableMap<Path, String>> rootToPrefix =
         ImmutableMap.of(
             Path.of("some_project"),
             ImmutableMap.of(Path.of("java"), ""),
@@ -502,7 +513,7 @@ public class GraphToProjectConverterTest {
         ImmutableList.of(
             Path.of("project/MainActivity.java"),
             Path.of("project/modules/test/com/example/bar/Bar.java"));
-    ImmutableMap<Path, Map<Path, String>> rootToPrefix =
+    ImmutableMap<Path, ImmutableMap<Path, String>> rootToPrefix =
         ImmutableMap.of(
             Path.of("project"),
             ImmutableMap.of(Path.of(""), "com.root.project", Path.of("modules", "test"), ""));
@@ -695,6 +706,39 @@ public class GraphToProjectConverterTest {
                     ProjectPath.newBuilder()
                         .setBase(Base.WORKSPACE)
                         .setPath(TestData.ROOT.resolve("nestedproto/java").toString()))
+                .build());
+  }
+
+  @Test
+  public void testNonJavaSourceFolders_whenSubfolderOfJavaRootAtContentEntry_notCreated()
+      throws Exception {
+
+    ImmutableMap<Path, String> sourcePackages =
+        ImmutableMap.of(
+            TestData.ROOT.resolve("protodep/TestClassProtoDep.java"),
+            "com.google.idea.blaze.qsync.testdata.protodep");
+
+    GraphToProjectConverter converter =
+        GraphToProjectConverters.builder()
+            .setPackageReader(sourcePackages::get)
+            .setProjectIncludes(ImmutableSet.of(TestData.ROOT))
+            .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
+            .build();
+    BuildGraphData buildGraphData =
+        BuildGraphs.forTestProject(TestData.JAVA_LIBRARY_PROTO_DEP_QUERY);
+
+    ProjectProto.Project projectProto = converter.createProject(buildGraphData);
+    ProjectProto.Module workspaceModule = Iterables.getOnlyElement(projectProto.getModulesList());
+    ProjectProto.ContentEntry contentEntry =
+        Iterables.getOnlyElement(workspaceModule.getContentEntriesList());
+    assertThat(contentEntry.getSourcesList())
+        .containsExactly(
+            ProjectProto.SourceFolder.newBuilder()
+                .setProjectPath(
+                    ProjectPath.newBuilder()
+                        .setBase(Base.WORKSPACE)
+                        .setPath(TestData.ROOT.toString()))
+                .setPackagePrefix("com.google.idea.blaze.qsync.testdata")
                 .build());
   }
 

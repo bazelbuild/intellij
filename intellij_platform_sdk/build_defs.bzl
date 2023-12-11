@@ -24,17 +24,17 @@ INDIRECT_IJ_PRODUCTS = {
     # Indirect ij_product mapping for Bazel Plugin OSS
     # The old names for -oss-oldest-stable and -oss-latest-stable were
     # -oss-stable and -oss-beta respectively.
-    "intellij-oss-oldest-stable": "intellij-2023.1",
-    "intellij-oss-latest-stable": "intellij-2023.2",
+    "intellij-oss-oldest-stable": "intellij-2023.2",
+    "intellij-oss-latest-stable": "intellij-2023.3",
     "intellij-oss-under-dev": "intellij-2023.3",
-    "intellij-ue-oss-oldest-stable": "intellij-ue-2023.1",
-    "intellij-ue-oss-latest-stable": "intellij-ue-2023.2",
+    "intellij-ue-oss-oldest-stable": "intellij-ue-2023.2",
+    "intellij-ue-oss-latest-stable": "intellij-ue-2023.3",
     "intellij-ue-oss-under-dev": "intellij-ue-2023.3",
     "android-studio-oss-oldest-stable": "android-studio-2022.3",
     "android-studio-oss-latest-stable": "android-studio-2023.1",
     "android-studio-oss-under-dev": "android-studio-2023.1",
-    "clion-oss-oldest-stable": "clion-2023.1",
-    "clion-oss-latest-stable": "clion-2023.2",
+    "clion-oss-oldest-stable": "clion-2023.2",
+    "clion-oss-latest-stable": "clion-2023.3",
     "clion-oss-under-dev": "clion-2023.3",
     # Indirect ij_product mapping for Cloud Code Plugin OSS
     "intellij-cc-oldest-stable": "intellij-2022.3",
@@ -44,6 +44,64 @@ INDIRECT_IJ_PRODUCTS = {
     "intellij-ue-cc-latest-stable": "intellij-ue-2022.3",
     "intellij-ue-cc-under-dev": "intellij-ue-2022.3",
 }
+
+(CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_CANARY) = ("stable", "beta", "canary")
+
+INDIRECT_PRODUCT_CHANNELS = {
+    # Channel mapping for internal Blaze Plugin
+    "intellij-latest": CHANNEL_STABLE,
+    "intellij-latest-mac": CHANNEL_STABLE,
+    "intellij-beta": CHANNEL_BETA,
+    "intellij-under-dev": CHANNEL_CANARY,
+    "intellij-ue-latest": CHANNEL_STABLE,
+    "intellij-ue-latest-mac": CHANNEL_STABLE,
+    "intellij-ue-beta": CHANNEL_BETA,
+    "intellij-ue-under-dev": CHANNEL_CANARY,
+    "android-studio-latest": CHANNEL_STABLE,
+    "android-studio-latest-mac": CHANNEL_STABLE,
+    "android-studio-beta": CHANNEL_BETA,
+    "android-studio-beta-mac": CHANNEL_BETA,
+    "android-studio-canary": CHANNEL_CANARY,
+    "android-studio-canary-mac": CHANNEL_CANARY,
+    "clion-latest": CHANNEL_STABLE,
+    "clion-latest-mac": CHANNEL_STABLE,
+    "clion-beta": CHANNEL_BETA,
+    "clion-under-dev": CHANNEL_CANARY,
+    # Channel mapping for Bazel Plugin OSS
+    "intellij-oss-oldest-stable": CHANNEL_STABLE,
+    "intellij-oss-latest-stable": CHANNEL_STABLE,
+    "intellij-oss-under-dev": CHANNEL_CANARY,
+    "intellij-ue-oss-oldest-stable": CHANNEL_STABLE,
+    "intellij-ue-oss-latest-stable": CHANNEL_STABLE,
+    "intellij-ue-oss-under-dev": CHANNEL_CANARY,
+    "android-studio-oss-oldest-stable": CHANNEL_STABLE,
+    "android-studio-oss-latest-stable": CHANNEL_STABLE,
+    "android-studio-oss-under-dev": CHANNEL_CANARY,
+    "clion-oss-oldest-stable": CHANNEL_STABLE,
+    "clion-oss-latest-stable": CHANNEL_STABLE,
+    "clion-oss-under-dev": CHANNEL_CANARY,
+    # Channel mapping for Cloud Code Plugin OSS
+    "intellij-cc-oldest-stable": CHANNEL_STABLE,
+    "intellij-cc-latest-stable": CHANNEL_STABLE,
+    "intellij-cc-under-dev": CHANNEL_CANARY,
+    "intellij-ue-cc-oldest-stable": CHANNEL_STABLE,
+    "intellij-ue-cc-latest-stable": CHANNEL_STABLE,
+    "intellij-ue-cc-under-dev": CHANNEL_CANARY,
+}
+
+def _check_channel_map():
+    if INDIRECT_PRODUCT_CHANNELS.keys() != INDIRECT_IJ_PRODUCTS.keys():
+        fail("Key mismatch between INDIRECT_PRODUCT_CHANNELS and INDIRECT_IJ_PRODUCTS: missing: %s extra: %s" % (
+            [k for k in INDIRECT_IJ_PRODUCTS.keys() if k not in INDIRECT_PRODUCT_CHANNELS.keys()],
+            [k for k in INDIRECT_PRODUCT_CHANNELS.keys() if k not in INDIRECT_IJ_PRODUCTS.keys()],
+        ))
+    unexpected = [
+        (k, v)
+        for k, v in INDIRECT_PRODUCT_CHANNELS.items()
+        if v not in [CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_CANARY]
+    ]
+    if unexpected:
+        fail("Unexpected values in INDIRECT_PRODUCT_CHANNELS: %s" % unexpected)
 
 DIRECT_IJ_PRODUCTS = {
     "intellij-2021.3": struct(
@@ -549,3 +607,33 @@ def java_version_flags():
         "clion-2022.2-mac": java11,
         "default": java17,
     })
+
+def select_for_channel(channel_map):
+    """Returns a select based on the IDE channel (stable, beta, canary).
+
+    Args:
+      channel_map: a dict with keys "stable", "beta" and "canary".
+
+    Returns:
+      A select that will select values from channel_map based on the build config.
+    """
+    _check_channel_map()
+    if channel_map.keys() != [CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_CANARY]:
+        fail("channel_map must contain exactly %s, %s and %s" % (CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_CANARY))
+    select_map = {
+        ("//intellij_platform_sdk:%s" % indirect_product): channel_map[channel]
+        for indirect_product, channel in INDIRECT_PRODUCT_CHANNELS.items()
+    }
+
+    # We reverse INDIRECT_IJ_PRODUCTS.items() here to that the inverse map contains
+    # the first occurrence of any value that is duplicated, not the last:
+    inverse_ij_products = {v: k for k, v in reversed(INDIRECT_IJ_PRODUCTS.items())}
+
+    # Add directly specified IDE versions which some builds use:
+    select_map.update(
+        {
+            ("//intellij_platform_sdk:%s" % direct_product): channel_map[INDIRECT_PRODUCT_CHANNELS[indirect_product]]
+            for direct_product, indirect_product in inverse_ij_products.items()
+        },
+    )
+    return select(select_map)

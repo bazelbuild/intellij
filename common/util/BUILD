@@ -2,6 +2,7 @@ load(
     "//:build-visibility.bzl",
     "COMMON_PLUGINS_VISIBILITY",
 )
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_channel")
 
 package(default_visibility = COMMON_PLUGINS_VISIBILITY)
 
@@ -18,7 +19,10 @@ java_library(
 
 java_library(
     name = "platform",
-    srcs = ["src/com/google/idea/common/util/MorePlatformUtils.java"],
+    srcs = [
+        "src/com/google/idea/common/util/MorePlatformUtils.java",
+        ":channel_java",
+    ],
     deps = [
         "//intellij_platform_sdk:plugin_api",
     ],
@@ -55,4 +59,42 @@ java_test(
         "//intellij_platform_sdk:truth",
         "@junit_junit//jar",
     ],
+)
+
+genrule(
+    name = "stable",
+    outs = ["stable.txt"],
+    cmd = "echo stable > $@",
+)
+
+genrule(
+    name = "beta",
+    outs = ["beta.txt"],
+    cmd = "echo beta > $@",
+)
+
+genrule(
+    name = "canary",
+    outs = ["canary.txt"],
+    cmd = "echo canary > $@",
+)
+
+genrule(
+    name = "channel_java",
+    srcs = select_for_channel({
+        "stable": [":stable"],
+        "beta": [":beta"],
+        "canary": [":canary"],
+    }),
+    outs = ["com/google/idea/common/util/channel/Channel.java"],
+    cmd = "\n".join([
+        "CHANNEL=$$(cat $<)",
+        "cat << EOM > $@",
+        "package com.google.idea.common.util.channel;",
+        "",
+        "public class Channel {",
+        "  public static final String CHANNEL = \"$$CHANNEL\";",
+        "}",
+        "EOM",
+    ]),
 )

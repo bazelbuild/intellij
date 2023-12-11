@@ -17,6 +17,7 @@ package com.google.idea.blaze.qsync;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.google.idea.blaze.qsync.SrcJarInnerPathFinder.AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -43,7 +44,10 @@ public class SrcJarProjectUpdater {
     this.project = project;
     this.srcJars = srcJars;
     this.resolver = resolver;
-    srcJarInnerPathFinder = new SrcJarInnerPathFinder(new PackageStatementParser());
+    // Require empty package prefixes for srcjar inner paths, since the ultimate consumer of these
+    // paths does not support setting a package prefix (see `Library.ModifiableModel.addRoot`).
+    srcJarInnerPathFinder =
+        new SrcJarInnerPathFinder(new PackageStatementParser(), EMPTY_PACKAGE_PREFIXES_ONLY);
   }
 
   private int findDepsLib(List<Library> libs) {
@@ -102,6 +106,7 @@ public class SrcJarProjectUpdater {
     for (ProjectPath srcJar : srcJars) {
       Path jarFile = resolver.resolve(srcJar);
       srcJarInnerPathFinder.findInnerJarPaths(jarFile.toFile()).stream()
+          .map(p -> p.path)
           .map(srcJar::withInnerJarPath)
           .forEach(newSrcJars::add);
     }

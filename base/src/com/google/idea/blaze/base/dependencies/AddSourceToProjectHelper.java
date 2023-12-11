@@ -50,10 +50,9 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -70,10 +69,6 @@ import javax.annotation.Nullable;
 import javax.swing.event.HyperlinkEvent;
 
 class AddSourceToProjectHelper {
-
-  private static final NotificationGroup NOTIFICATION_GROUP =
-      new NotificationGroup(
-          "Add source to project", NotificationDisplayType.BALLOON, /* logByDefault= */ true);
 
   static boolean autoDeriveTargets(Project project) {
     return ProjectViewManager.getInstance(project)
@@ -189,13 +184,13 @@ class AddSourceToProjectHelper {
   }
 
   private static void notifyFailed(Project project, String message) {
-    Notification notification =
-        NOTIFICATION_GROUP.createNotification(
+    Notifications.Bus.notify(
+        new Notification(
+            "AddToProject",
             "Failed to add source file to project",
             message,
-            NotificationType.WARNING,
-            /* listener= */ null);
-    notification.notify(project);
+            NotificationType.WARNING),
+        project);
   }
 
   private static void notifySuccess(
@@ -214,19 +209,22 @@ class AddSourceToProjectHelper {
       targets.forEach(t -> builder.append("  ").append(t).append("\n"));
     }
     builder.append("<a href='open'>Open project view file</a>");
-    Notification notification =
-        NOTIFICATION_GROUP.createNotification(
-            "Updated project view file",
-            builder.toString(),
-            NotificationType.INFORMATION,
-            new NotificationListener.Adapter() {
-              @Override
-              protected void hyperlinkActivated(Notification notification, HyperlinkEvent e) {
-                notification.expire();
-                OpenProjectViewAction.openLocalProjectViewFile(project);
-              }
-            });
-    notification.notify(project);
+
+    Notifications.Bus.notify(
+        new Notification(
+                "AddToProject",
+                "Updated project view file",
+                builder.toString(),
+                NotificationType.INFORMATION)
+            .setListener(
+                new NotificationListener.Adapter() {
+                  @Override
+                  protected void hyperlinkActivated(Notification notification, HyperlinkEvent e) {
+                    notification.expire();
+                    OpenProjectViewAction.openLocalProjectViewFile(project);
+                  }
+                }),
+        project);
   }
 
   /**
@@ -269,8 +267,7 @@ class AddSourceToProjectHelper {
   }
 
   private static Collection<TargetKey> fromTargetInfo(Collection<TargetInfo> targetInfos) {
-    return targetInfos
-        .stream()
+    return targetInfos.stream()
         .map(t -> TargetKey.forPlainTarget(t.label))
         .collect(toImmutableList());
   }
@@ -336,10 +333,7 @@ class AddSourceToProjectHelper {
   @Nullable
   static LocationContext getContext(Project project, VirtualFile file) {
     if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
-      // TODO(b/260643753) understand usages of this, and implement using BlazeProject instead
-      // Note the return type LocationContext includes BlazeProjectData to callers will need to
-      // change too.
-      return null;
+      throw new UnsupportedOperationException("AddSourceToProjectHelper#getContext");
     }
     BlazeProjectData syncData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (syncData == null) {

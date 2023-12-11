@@ -15,18 +15,36 @@
  */
 package com.google.idea.blaze.qsync;
 
+import static com.google.idea.blaze.qsync.SrcJarInnerPathFinder.AllowPackagePrefixes.ALLOW_NON_EMPTY_PACKAGE_PREFIXES;
+
+import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.qsync.SrcJarInnerPathFinder.JarPath;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
-import java.nio.file.Path;
 
 /** Updates project protos with a content entry for generated sources */
 public class GeneratedSourceProjectUpdater {
 
+  /**
+   * Information about a generated source jar, comprising its path and whether or not it's test only
+   * source.
+   */
+  @AutoValue
+  public abstract static class GeneratedSourceJar {
+    public abstract ProjectPath path();
+
+    public abstract boolean isTestSource();
+
+    public static GeneratedSourceJar create(ProjectPath path, boolean isTestSource) {
+      return new AutoValue_GeneratedSourceProjectUpdater_GeneratedSourceJar(path, isTestSource);
+    }
+  }
+
   private final Project project;
   private final ImmutableSet<ProjectPath> genSrcRoots;
-  private final ImmutableSet<ProjectPath> genSrcJars;
+  private final ImmutableSet<GeneratedSourceJar> genSrcJars;
   private final ProjectPath.Resolver resolver;
 
   private final SrcJarInnerPathFinder srcJarInnerPathFinder;
@@ -34,13 +52,14 @@ public class GeneratedSourceProjectUpdater {
   public GeneratedSourceProjectUpdater(
       Project project,
       ImmutableSet<ProjectPath> genSrcFileFolders,
-      ImmutableSet<ProjectPath> genSrcJars,
+      ImmutableSet<GeneratedSourceJar> genSrcJars,
       ProjectPath.Resolver resolver) {
     this.project = project;
     this.genSrcRoots = genSrcFileFolders;
     this.genSrcJars = genSrcJars;
     this.resolver = resolver;
-    srcJarInnerPathFinder = new SrcJarInnerPathFinder(new PackageStatementParser());
+    srcJarInnerPathFinder =
+        new SrcJarInnerPathFinder(new PackageStatementParser(), ALLOW_NON_EMPTY_PACKAGE_PREFIXES);
   }
 
   public Project addGenSrcContentEntry() {
@@ -67,16 +86,17 @@ public class GeneratedSourceProjectUpdater {
       workspaceModule.addContentEntries(genSourcesContentEntry);
     }
 
-    for (ProjectPath path : genSrcJars) {
+    for (GeneratedSourceJar jar : genSrcJars) {
       ProjectProto.ContentEntry.Builder genSrcJarContentEntry =
-          ProjectProto.ContentEntry.newBuilder().setRoot(path.toProto());
-      for (Path innerPath :
-          srcJarInnerPathFinder.findInnerJarPaths(resolver.resolve(path).toFile())) {
+          ProjectProto.ContentEntry.newBuilder().setRoot(jar.path().toProto());
+      for (JarPath innerPath :
+          srcJarInnerPathFinder.findInnerJarPaths(resolver.resolve(jar.path()).toFile())) {
         genSrcJarContentEntry.addSources(
             ProjectProto.SourceFolder.newBuilder()
-                .setProjectPath(path.withInnerJarPath(innerPath).toProto())
+                .setProjectPath(jar.path().withInnerJarPath(innerPath.path).toProto())
                 .setIsGenerated(true)
-                .setPackagePrefix(""));
+                .setIsTest(jar.isTestSource())
+                .setPackagePrefix(innerPath.packagePrefix));
       }
       workspaceModule.addContentEntries(genSrcJarContentEntry);
     }

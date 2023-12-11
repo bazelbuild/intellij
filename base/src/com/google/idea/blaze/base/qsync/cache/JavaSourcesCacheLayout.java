@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+import static com.intellij.openapi.util.io.FileUtilRt.getExtension;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
@@ -40,20 +42,12 @@ public class JavaSourcesCacheLayout implements CacheLayout {
     this.dotCacheDirectory = cacheDirectory.resolveSibling("." + cacheDirectory.getFileName());
   }
 
-  private static String getExtension(Path p) {
-    String name = p.getFileName().toString();
-    if (name.contains(".")) {
-      return name.substring(name.indexOf('.') + 1);
-    }
-    return "";
-  }
-
   @Nullable
   @Override
   public OutputArtifactDestinationAndLayout getOutputArtifactDestinationAndLayout(
       OutputArtifactInfo outputArtifact) {
     Path artifactPath = Path.of(outputArtifact.getRelativePath());
-    if (!JAVA_EXTENSIONS.contains(getExtension(artifactPath))) {
+    if (!JAVA_EXTENSIONS.contains(getExtension(artifactPath.toString()))) {
       return null;
     }
     String key = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact);
