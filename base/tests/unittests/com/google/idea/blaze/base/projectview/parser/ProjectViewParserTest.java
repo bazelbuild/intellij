@@ -38,6 +38,7 @@ import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
+import com.google.idea.blaze.base.projectview.section.sections.TryImportSection;
 import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
@@ -51,6 +52,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import javax.annotation.Nullable;
+
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -190,6 +194,9 @@ public class ProjectViewParserTest extends BlazeTestCase {
             .add(
                 ScalarSection.builder(ImportSection.KEY)
                     .set(new WorkspacePath("some/file.blazeproject")))
+            .add(
+                ScalarSection.builder(TryImportSection.KEY)
+                    .set(new WorkspacePath("some/file.blazeproject.optional")))
             .build();
     String text = ProjectViewParser.projectViewToString(projectView);
     assertThat(text)
@@ -202,7 +209,8 @@ public class ProjectViewParserTest extends BlazeTestCase {
                     "targets:",
                     "  //java/com/google:one",
                     "  //java/com/google:two",
-                    "import some/file.blazeproject"));
+                    "import some/file.blazeproject",
+                    "try_import some/file.blazeproject.optional"));
   }
 
   @Test
@@ -303,9 +311,32 @@ public class ProjectViewParserTest extends BlazeTestCase {
 
   @Test
   public void testImportMissingFileResultsInIssue() {
+    Registry.get("bazel.projectview.optional.imports").setValue(false);
     projectViewStorageManager.add(".blazeproject", "import parent.blazeproject");
     projectViewParser.parseProjectView(new File(".blazeproject"));
     errorCollector.assertIssues("Could not load project view file: '/parent.blazeproject'");
+  }
+
+  @Test
+  public void testImportMissingFileResultsInWarning() {
+    RegistryValue importsTreatmentRegistryValue = Registry.get("bazel.projectview.optional.imports");
+    try {
+      importsTreatmentRegistryValue.setValue(true);
+      projectViewStorageManager.add(".blazeproject", "import parent.blazeproject");
+      projectViewParser.parseProjectView(new File(".blazeproject"));
+      errorCollector.assertIssues("Could not load project view file: '/parent.blazeproject'");
+      errorCollector.assertHasNoErrors();
+    } finally {
+      importsTreatmentRegistryValue.setValue(false);
+    }
+  }
+
+  @Test
+  public void testTryImportMissingFileResultsInWarning() {
+      projectViewStorageManager.add(".blazeproject", "try_import parent.blazeproject");
+      projectViewParser.parseProjectView(new File(".blazeproject"));
+      errorCollector.assertIssues("Could not load project view file: '/parent.blazeproject'");
+      errorCollector.assertHasNoErrors();
   }
 
   @Test
