@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.base.sync.status;
 
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.intellij.openapi.project.Project;
@@ -25,6 +28,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class BlazeSyncStatusImpl implements BlazeSyncStatus {
 
+  private final Project project;
+
   public static BlazeSyncStatusImpl getImpl(Project project) {
     return (BlazeSyncStatusImpl) BlazeSyncStatus.getInstance(project);
   }
@@ -34,6 +39,7 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
 
   public BlazeSyncStatusImpl(Project project) {
     this.stateManager = BlazeSyncStatusStateManager.getInstance(project);
+    this.project = project;
   }
 
   @Override
@@ -46,6 +52,9 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
 
   @Override
   public boolean syncInProgress() {
+    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
+      return QuerySyncManager.getInstance(project).syncInProgress();
+    }
     return syncInProgress.get();
   }
 
