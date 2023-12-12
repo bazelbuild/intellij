@@ -84,10 +84,10 @@ public class DefaultCacheLayout implements CacheLayout {
     String key = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact);
     final Path finalDestination = cacheDirectory.resolve(key);
     if (shouldExtractFile(Path.of(outputArtifact.getRelativePath()))) {
-      return new ZippedOutputArtifactDestination(
+      return ZippedOutputArtifactDestination.create(
           key, finalDestination, cacheDotDirectory.resolve(PACKED_FILES_DIR).resolve(key));
     } else {
-      return new PreparedOutputArtifactDestination(key, finalDestination);
+      return PreparedOutputArtifactDestination.create(key, finalDestination);
     }
   }
 
