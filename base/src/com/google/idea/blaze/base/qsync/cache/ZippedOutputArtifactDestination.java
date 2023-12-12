@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+import com.google.auto.value.AutoValue;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.IOException;
@@ -22,27 +23,17 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /** A record that describes the location of an output artifact in cache directories. */
-public class ZippedOutputArtifactDestination implements OutputArtifactDestinationAndLayout {
+@AutoValue
+public abstract class ZippedOutputArtifactDestination
+    implements OutputArtifactDestinationAndLayout {
 
-  private final String key;
-
-  /**
-   * The location where in the cache directory the representation of the artifact for the IDE should
-   * be placed.
-   */
-  public final Path finalDestination;
-
-  private final Path copyDestination;
-
-  public ZippedOutputArtifactDestination(String key, Path finalDestination, Path copyDestination) {
-    this.key = key;
-    this.finalDestination = finalDestination;
-    this.copyDestination = copyDestination;
+  public static ZippedOutputArtifactDestination create(
+      String key, Path finalDestination, Path copyDestination) {
+    return new AutoValue_ZippedOutputArtifactDestination(key, finalDestination, copyDestination);
   }
 
   private static void extract(Path source, Path destination) {
@@ -69,9 +60,13 @@ public class ZippedOutputArtifactDestination implements OutputArtifactDestinatio
   }
 
   @Override
-  public String getKey() {
-    return key;
-  }
+  public abstract String getKey();
+
+  /**
+   * The location where in the cache directory the representation of the artifact for the IDE should
+   * be placed.
+   */
+  protected abstract Path getFinalDestination();
 
   /**
    * The location where in the cache directory the artifact file itself should be placed.
@@ -79,35 +74,15 @@ public class ZippedOutputArtifactDestination implements OutputArtifactDestinatio
    * <p>The final and copy destinations are the same if the artifact file needs not to be extracted.
    */
   @Override
-  public Path getCopyDestination() {
-    return copyDestination;
-  }
+  public abstract Path getCopyDestination();
 
   @Override
   public Path prepareFinalLayout() {
+    Path finalDestination = getFinalDestination();
     if (Files.exists(finalDestination)) {
       FileUtil.delete(finalDestination.toFile());
     }
-    extract(copyDestination, finalDestination);
+    extract(getCopyDestination(), finalDestination);
     return finalDestination;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof ZippedOutputArtifactDestination)) {
-      return false;
-    }
-    ZippedOutputArtifactDestination that = (ZippedOutputArtifactDestination) o;
-    return key.equals(that.key)
-        && finalDestination.equals(that.finalDestination)
-        && copyDestination.equals(that.copyDestination);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(key, finalDestination, copyDestination);
   }
 }
