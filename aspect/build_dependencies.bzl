@@ -258,25 +258,25 @@ def _collect_own_java_artifacts(
             own_ide_aar_files.append(rule.attr.aar.files.to_list()[0])
 
     else:
-        if hasattr(target, "android"):
-            resource_package = target.android.java_package
+        if AndroidIdeInfo in target:
+            resource_package = target[AndroidIdeInfo].java_package
 
-        if generate_aidl_classes and AndroidIdeInfo in target:
-            add_base_idl_jar = False
-            idl_jar = target[AndroidIdeInfo].idl_class_jar
-            if idl_jar != None:
-                own_jar_files.append(idl_jar)
-                add_base_idl_jar = True
+            if generate_aidl_classes:
+                add_base_idl_jar = False
+                idl_jar = target[AndroidIdeInfo].idl_class_jar
+                if idl_jar != None:
+                    own_jar_files.append(idl_jar)
+                    add_base_idl_jar = True
 
-            generated_java_files = target[AndroidIdeInfo].idl_generated_java_files
-            if generated_java_files:
-                own_gensrc_files += generated_java_files
-                add_base_idl_jar = True
+                generated_java_files = target[AndroidIdeInfo].idl_generated_java_files
+                if generated_java_files:
+                    own_gensrc_files += generated_java_files
+                    add_base_idl_jar = True
 
-            # An AIDL base jar needed for resolving base classes for aidl generated stubs.
-            if add_base_idl_jar and hasattr(rule.attr, "_android_sdk"):
-                android_sdk_info = getattr(rule.attr, "_android_sdk")[AndroidSdkInfo]
-                own_jar_depsets.append(android_sdk_info.aidl_lib.files)
+                # An AIDL base jar needed for resolving base classes for aidl generated stubs.
+                if add_base_idl_jar and hasattr(rule.attr, "_android_sdk"):
+                    android_sdk_info = getattr(rule.attr, "_android_sdk")[AndroidSdkInfo]
+                    own_jar_depsets.append(android_sdk_info.aidl_lib.files)
 
         # Add generated java_outputs (e.g. from annotation processing)
         generated_class_jars = []
