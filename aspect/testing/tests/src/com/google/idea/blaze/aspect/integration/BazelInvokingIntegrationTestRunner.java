@@ -69,7 +69,7 @@ public class BazelInvokingIntegrationTestRunner {
     args.add(System.getenv("BIT_BAZEL_BINARY"));
     args.add("build");
     args.add("//:foo");
-    args.add("--define=ij_product=intellij-latest");
+    args.add("--experimental_google_legacy_api");
     args.addAll(aspectFlags);
     args.add(
         getOutputGroupsFlag(
