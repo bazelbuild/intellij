@@ -848,14 +848,10 @@ scalatest_repositories()
 scalatest_toolchain()
 
 # LICENSE: The Apache Software License, Version 2.0
-rules_kotlin_version = "1.7.0-RC-1"
-
-rules_kotlin_sha = "68b910730026921814d3a504ccbe9adaac9938983d940e626523e6e4ecfb0355"
-
 http_archive(
     name = "io_bazel_rules_kotlin",
-    sha256 = rules_kotlin_sha,
-    urls = ["https://github.com/bazelbuild/rules_kotlin/releases/download/v%s/rules_kotlin_release.tgz" % rules_kotlin_version],
+    sha256 = "5766f1e599acf551aa56f49dab9ab9108269b03c557496c54acaf41f98e2b8d6",
+    url = "https://github.com/bazelbuild/rules_kotlin/releases/download/v1.9.0/rules_kotlin-v1.9.0.tar.gz",
 )
 
 load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories")
