@@ -97,7 +97,7 @@ public class LocalFileOutputArtifactWithoutDigest
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("file", file.getPath())
-        .add("blazeOutRelativePat", blazeOutRelativePath)
+        .add("blazeOutRelativePath", blazeOutRelativePath)
         .add("configurationMnemonic", configurationMnemonic)
         .toString();
   }
