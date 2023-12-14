@@ -1085,7 +1085,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
         for export in direct_exports:
             export_deps.extend(export.intellij_info.export_deps)
 
-        if ctx.rule.kind == "android_library":
+        if ctx.rule.kind == "android_library" or ctx.rule.kind == "kt_android_library":
             # Empty android libraries export all their dependencies.
             if not hasattr(rule_attrs, "srcs") or not ctx.rule.attr.srcs:
                 export_deps.extend(compiletime_deps)
