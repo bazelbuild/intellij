@@ -85,6 +85,11 @@ public final class IntelliJExtService {
     }
   }
 
+  /** Registers a customized {@link IntellijExtClient} for test cases. */
+  public void registerForTest(IntelliJExtClient client) {
+    this.client = client;
+  }
+
   /**
    * A lazy connection to the server. If there is no client the server is started, and a client
    * connected to it. Every time this is called a ping is issued to the server to ensure it's
