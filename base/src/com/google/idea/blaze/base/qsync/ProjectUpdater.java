@@ -116,7 +116,7 @@ public class ProjectUpdater implements BlazeProjectListener {
     updateProjectModel(graph.project(), context);
   }
 
-  private void updateProjectModel(ProjectProto.Project spec, Context context) {
+  private void updateProjectModel(ProjectProto.Project spec, Context<?> context) {
     File imlDirectory = new File(BlazeDataStorage.getProjectDataDir(importSettings), "modules");
     Transactions.submitWriteActionTransactionAndWait(
         () -> {
