@@ -57,7 +57,7 @@ public abstract class JavaArtifactInfo {
 
   public abstract ImmutableSet<Path> srcJars();
 
-  public abstract String androidResourcesPackage();
+  public abstract Path androidManifestFile();
 
   public static JavaArtifactInfo create(JavaTargetArtifacts proto) {
     // Note, the proto contains a list of sources, we take the parent as we want directories instead
@@ -68,7 +68,7 @@ public abstract class JavaArtifactInfo {
         proto.getGenSrcsList().stream().map(Path::of).collect(toImmutableList()),
         proto.getSrcsList().stream().map(Path::of).collect(toImmutableSet()),
         proto.getSrcjarsList().stream().map(Path::of).collect(toImmutableSet()),
-        proto.getAndroidResourcesPackage());
+        Path.of(proto.getAndroidManifestFile()));
   }
 
   public JavaTargetArtifacts toProto() {
@@ -79,7 +79,7 @@ public abstract class JavaArtifactInfo {
         .addAllGenSrcs(genSrcs().stream().map(Path::toString).collect(toImmutableList()))
         .addAllSrcs(sources().stream().map(Path::toString).collect(toImmutableList()))
         .addAllSrcjars(srcJars().stream().map(Path::toString).collect(toImmutableList()))
-        .setAndroidResourcesPackage(androidResourcesPackage())
+        .setAndroidManifestFile(androidManifestFile().toString())
         .build();
   }
 
@@ -101,6 +101,6 @@ public abstract class JavaArtifactInfo {
         ImmutableList.of(),
         ImmutableSet.of(),
         ImmutableSet.of(),
-        "");
+        Path.of(""));
   }
 }
