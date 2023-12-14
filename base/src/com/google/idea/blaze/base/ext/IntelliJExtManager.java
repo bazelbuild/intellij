@@ -53,6 +53,9 @@ public class IntelliJExtManager {
 
   private static final BoolExperiment LINTER = new BoolExperiment("use.intellij.ext.linter", false);
 
+  private static final BoolExperiment CODESEARCH =
+      new BoolExperiment("use.intellij.ext.codesearch", false);
+
   private static final BoolExperiment BUILD_SERVICE =
       new BoolExperiment("use.intellij.ext.buildservice", false);
 
@@ -135,6 +138,10 @@ public class IntelliJExtManager {
 
   public boolean isLinterEnabled() {
     return isEnabled() && LINTER.getValue();
+  }
+
+  public boolean isCodeSearchEnabled() {
+    return isEnabled() && CODESEARCH.getValue();
   }
 
   public boolean isBuildServiceEnabled() {

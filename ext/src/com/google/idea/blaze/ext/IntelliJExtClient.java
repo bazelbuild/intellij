@@ -19,6 +19,7 @@ import com.google.idea.blaze.ext.BuildCleanerServiceGrpc.BuildCleanerServiceFutu
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
 import com.google.idea.blaze.ext.ChatBotModelGrpc.ChatBotModelBlockingStub;
+import com.google.idea.blaze.ext.CodeSearchGrpc.CodeSearchFutureStub;
 import com.google.idea.blaze.ext.DepServerGrpc.DepServerFutureStub;
 import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlockingStub;
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
@@ -110,5 +111,9 @@ public class IntelliJExtClient {
 
   public DepServerFutureStub getDependencyService() {
     return DepServerGrpc.newFutureStub(channel);
+  }
+
+  public CodeSearchFutureStub getCodeSearchService() {
+    return CodeSearchGrpc.newFutureStub(channel);
   }
 }

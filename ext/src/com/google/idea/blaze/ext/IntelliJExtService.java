@@ -20,6 +20,7 @@ import com.google.idea.blaze.ext.BuildCleanerServiceGrpc.BuildCleanerServiceFutu
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
 import com.google.idea.blaze.ext.ChatBotModelGrpc.ChatBotModelBlockingStub;
+import com.google.idea.blaze.ext.CodeSearchGrpc.CodeSearchFutureStub;
 import com.google.idea.blaze.ext.DepServerGrpc.DepServerFutureStub;
 import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlockingStub;
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
@@ -181,6 +182,11 @@ public final class IntelliJExtService {
   public LinterFutureStub getLinterService() throws IOException {
     IntelliJExtBlockingStub unused = connect();
     return client.getLinterService();
+  }
+
+  public CodeSearchFutureStub getCodeSearchService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getCodeSearchService();
   }
 
   public BuildCleanerServiceFutureStub getBuildCleanerService() {
