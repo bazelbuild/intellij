@@ -24,22 +24,10 @@ import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinatio
 import com.intellij.openapi.util.io.FileUtilRt;
 import java.nio.file.Path;
 import java.util.Collection;
+import javax.annotation.Nullable;
 
-/**
- * A cache layout implementation building its cache directory in a way that can be consumed by the
- * IDE.
- *
- * <p>The implementation supports the following use cases:
- *
- * <ol>
- *   <li>.jar libraries
- *   <li>.aar libraries
- *   <li>.srcjar bundles
- * </ol>
- *
- * <p>See {@link #getOutputArtifactDestinationAndLayout} for the details of the layout.
- */
-public class DefaultCacheLayout implements CacheLayout {
+/** A cache layout that unzips zip files. */
+public class UnzippingCacheLayout implements CacheLayout {
 
   @VisibleForTesting public static final String PACKED_FILES_DIR = ".zips";
 
@@ -47,14 +35,10 @@ public class DefaultCacheLayout implements CacheLayout {
   private final ImmutableSet<String> zipFileExtensions;
   private final Path cacheDirectory;
 
-  public DefaultCacheLayout(Path cacheDirectory, ImmutableSet<String> zipFileExtensions) {
+  public UnzippingCacheLayout(Path cacheDirectory, ImmutableSet<String> zipFileExtensions) {
     this.cacheDirectory = cacheDirectory;
     this.cacheDotDirectory = cacheDirectory.resolveSibling("." + cacheDirectory.getFileName());
     this.zipFileExtensions = zipFileExtensions;
-  }
-
-  public DefaultCacheLayout(Path cacheDirectory) {
-    this(cacheDirectory, ImmutableSet.of());
   }
 
   /**
@@ -79,16 +63,15 @@ public class DefaultCacheLayout implements CacheLayout {
    * </pre>
    */
   @Override
+  @Nullable
   public OutputArtifactDestinationAndLayout getOutputArtifactDestinationAndLayout(
       OutputArtifactInfo outputArtifact) {
-    String key = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact);
-    final Path finalDestination = cacheDirectory.resolve(key);
-    if (shouldExtractFile(Path.of(outputArtifact.getRelativePath()))) {
-      return ZippedOutputArtifactDestination.create(
-          key, finalDestination, cacheDotDirectory.resolve(PACKED_FILES_DIR).resolve(key));
-    } else {
-      return PreparedOutputArtifactDestination.create(key, finalDestination);
+    if (!shouldExtractFile(Path.of(outputArtifact.getRelativePath()))) {
+      return null;
     }
+    String key = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact);
+    return ZippedOutputArtifactDestination.create(
+        key, cacheDirectory.resolve(key), cacheDotDirectory.resolve(PACKED_FILES_DIR).resolve(key));
   }
 
   private boolean shouldExtractFile(Path sourcePath) {
