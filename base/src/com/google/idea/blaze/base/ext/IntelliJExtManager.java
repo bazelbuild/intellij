@@ -46,10 +46,10 @@ public class IntelliJExtManager {
    * Controls whether the intellij-ext binary is used at all. Ignored if EXPERIMENT_SERVICE_PROPERTY
    * is set.
    */
-  private static final BoolExperiment ENABLED = new BoolExperiment("use.intellij.ext", false);
+  private static final BoolExperiment ENABLED = new BoolExperiment("use.intellij.ext", true);
 
   private static final BoolExperiment ISSUETRACKER =
-      new BoolExperiment("use.intellij.ext.issuetracker", false);
+      new BoolExperiment("use.intellij.ext.issuetracker", true);
 
   private static final BoolExperiment LINTER = new BoolExperiment("use.intellij.ext.linter", false);
 
