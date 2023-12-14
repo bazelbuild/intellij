@@ -40,7 +40,7 @@ public class BlazeProject {
     }
   }
 
-  public void setCurrent(Context context, BlazeProjectSnapshot newInstance) throws IOException {
+  public void setCurrent(Context<?> context, BlazeProjectSnapshot newInstance) throws IOException {
     ImmutableList<BlazeProjectListener> listeners;
     synchronized (lock) {
       if (currentInstance == newInstance) {

@@ -82,7 +82,7 @@ public class BlazeSyncManager {
     return project.getService(BlazeSyncManager.class);
   }
 
-  public static void printAndLogError(String errorMessage, Context context) {
+  public static void printAndLogError(String errorMessage, Context<?> context) {
     context.output(PrintOutput.error(errorMessage));
     logger.error(errorMessage);
   }
