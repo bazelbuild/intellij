@@ -360,6 +360,7 @@
     <notificationGroup displayType="STICKY_BALLOON" id="QuerySyncPromo" />
     <notificationGroup displayType="BALLOON" id="QuerySyncBuild" />
     <registryKey defaultValue="false" description="Disable auto import of bazel projects" key="bazel.auto.import.disabled"/>
+    <registryKey defaultValue="false" description="Allow to have optional imports in project view" key="bazel.projectview.optional.imports"/>
     <registryKey
       key="bazel.sync.resolve.virtual.includes"
       description="Apply heuristics to detect correct location of headers which are accessed from _virtual_includes during build"

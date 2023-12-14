@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsSc
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
+import com.google.idea.blaze.base.projectview.section.sections.TryImportSection;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.qsync.BlazeProjectListener;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
@@ -55,7 +56,7 @@ public class ProjectStatsLogger implements BlazeProjectListener {
                   .getProjectInfoStatsBuilder()
                   .setLanguagesActive(instance.queryData().projectDefinition().languageClasses())
                   .setBlazeProjectFiles(
-                      projectViewSet.listScalarItems(ImportSection.KEY).stream()
+                      projectViewSet.listScalarItems(ImportSection.KEY, TryImportSection.KEY).stream()
                           .map(WorkspacePath::asPath)
                           .collect(toImmutableSet()));
               scope

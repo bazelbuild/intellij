@@ -28,6 +28,7 @@ public class Sections {
       Lists.newArrayList(
           TextBlockSection.PARSER,
           ImportSection.PARSER,
+          TryImportSection.PARSER,
           DirectorySection.PARSER,
           AutomaticallyDeriveTargetsSection.PARSER,
           SyncManualTargetsSection.PARSER,
