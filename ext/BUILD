@@ -21,12 +21,10 @@ java_library(
     deps = [
         "//ext/proto:intellijext_java_grpc",
         "//ext/proto:intellijext_java_proto",
+        "//intellij_platform_sdk:plugin_api",
         "@com_google_guava_guava//jar",
         "@io_grpc_grpc_java//core",
         "@io_grpc_grpc_java//netty",
-        "@io_netty_netty_common//jar",
-        "@io_netty_netty_transport//jar",
-        "@io_netty_netty_transport_native_unix_common//jar",
     ] + select({
         "@platforms//os:macos": ["@io_netty_netty_transport_classes_kqueue//jar"],
         "//conditions:default": ["@io_netty_netty_transport_native_epoll//jar"],
