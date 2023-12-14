@@ -91,6 +91,16 @@ public class IntelliJExtManager {
     this.binaryPath = path;
   }
 
+  private IntelliJExtManager(String path) {
+    this.binaryPath = path;
+    service = new IntelliJExtService(Paths.get(path));
+  }
+
+  /** Set up {@link IntelliJExtService} for test cases to avoid non-existence binary error. */
+  public static IntelliJExtManager createForTest() {
+    return new IntelliJExtManager("dummy");
+  }
+
   public synchronized IntelliJExtService getService() {
     if (service == null) {
       Path path = getBinaryPath();
