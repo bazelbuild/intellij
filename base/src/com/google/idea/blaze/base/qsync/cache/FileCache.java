@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
+import com.google.idea.blaze.qsync.artifacts.BuildArtifactProvider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,7 +33,7 @@ import java.util.function.Function;
 
 /** Local cache of the .jar, .aars and other artifacts referenced by the project. */
 @SuppressWarnings("InvalidBlockTag")
-public class FileCache {
+public class FileCache implements BuildArtifactProvider {
 
   /**
    * An interface that defines the layout of an IDE artifact cache directory.
@@ -118,6 +119,11 @@ public class FileCache {
             .getOutputArtifactDestinationAndLayout(artifactPath::toString)
             .getCopyDestination();
     return Optional.ofNullable(Files.exists(path) ? path : null);
+  }
+
+  @Override
+  public Optional<Path> getCachedArtifact(Path buildOutputPathRelativePath) {
+    return getCacheFile(buildOutputPathRelativePath);
   }
 
   /**

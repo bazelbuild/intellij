@@ -13,25 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.qsync;
+package com.google.idea.blaze.qsync.artifacts;
 
-/** Represents an output group produced by the {@code build_dependencies.bzl} aspect. */
-public enum OutputGroup {
-  JARS("qsync_jars"),
-  AARS("qsync_aars"),
-  GENSRCS("qsync_gensrcs"),
-  ANDROID_MANIFESTS("qsync_android_manifests"),
-  ARTIFACT_INFO_FILE("artifact_info_file"),
-  CC_HEADERS("cc_headers"),
-  CC_INFO_FILE("cc_info_file");
+import java.nio.file.Path;
+import java.util.Optional;
 
-  private final String name;
+/**
+ * An interface to provide absolute paths for build artifacts specified as paths relative the the
+ * build output path.
+ *
+ * <p>The build output path is that reported by a {@code bazel info} invocation with key {@code
+ * output_path}.
+ */
+public interface BuildArtifactProvider {
 
-  OutputGroup(String name) {
-    this.name = name;
-  }
-
-  public String outputGroupName() {
-    return name;
-  }
+  Optional<Path> getCachedArtifact(Path buildOutputPathRelativePath);
 }

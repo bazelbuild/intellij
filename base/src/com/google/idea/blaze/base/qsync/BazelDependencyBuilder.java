@@ -121,6 +121,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
               OutputGroup.JARS,
               OutputGroup.AARS,
               OutputGroup.GENSRCS,
+              OutputGroup.ANDROID_MANIFESTS,
               OutputGroup.ARTIFACT_INFO_FILE)
           .putAll(QuerySyncLanguage.CC, OutputGroup.CC_HEADERS, OutputGroup.CC_INFO_FILE)
           .build();

@@ -186,6 +186,8 @@ public class ArtifactTrackerImpl
   private final FileCache generatedHeadersCache;
   private final Path appInspectorCacheDirectory;
   private final FileCache appInspectorCache;
+  private final Path androidManifestCacheDirectory;
+  private final FileCache androidManifestCache;
   private final Path persistentFile;
   private final Path ideProjectBasePath;
 
@@ -228,6 +230,10 @@ public class ArtifactTrackerImpl
     appInspectorCache =
         fileCacheCreator.createFileCache(
             new DefaultCacheLayout(appInspectorCacheDirectory, ImmutableSet.of("aar")));
+    androidManifestCacheDirectory = projectDirectory.resolve("androidmanifests");
+    androidManifestCache =
+        fileCacheCreator.createFileCache(
+            new ArtifactPathCacheLayout(androidManifestCacheDirectory));
     cacheDirectoryManager =
         new CacheDirectoryManager(
             projectDirectory.resolve(DIGESTS_DIRECTORY_NAME),
@@ -556,6 +562,9 @@ public class ArtifactTrackerImpl
         .putAll(
             generatedHeadersCache.prepareDestinationPathsAndDirectories(
                 outputInfo.get(OutputGroup.CC_HEADERS)))
+        .putAll(
+            androidManifestCache.prepareDestinationPathsAndDirectories(
+                outputInfo.get(OutputGroup.ANDROID_MANIFESTS)))
         .buildOrThrow();
   }
 
@@ -714,7 +723,8 @@ public class ArtifactTrackerImpl
 
     if (QuerySync.EXTRACT_RES_PACKAGES_AT_BUILD_TIME.getValue()) {
       AndroidResPackagesProjectUpdater resPackagesUpdater =
-          new AndroidResPackagesProjectUpdater(projectProto, javaArtifacts.values());
+          new AndroidResPackagesProjectUpdater(
+              projectProto, javaArtifacts.values(), androidManifestCache, projectPathResolver);
       projectProto = resPackagesUpdater.addAndroidResPackages();
     }
 
