@@ -693,7 +693,7 @@ FOLLOW_JAVA_ATTRIBUTES_BY_RULE_KIND = [
     ("_aspect_proto_toolchain_for_javalite", []),
     ("_aspect_java_proto_toolchain", []),
     ("runtime", ["proto_lang_toolchain", "java_rpc_toolchain"]),
-    ("_toolchain", ["_java_grpc_library", "_java_lite_grpc_library", "kt_jvm_library_helper", "android_library"]),
+    ("_toolchain", ["_java_grpc_library", "_java_lite_grpc_library", "kt_jvm_library_helper", "android_library", "kt_android_library"]),
     ("kotlin_libs", ["kt_jvm_toolchain"]),
 ]
 
