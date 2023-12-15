@@ -225,6 +225,10 @@ public class QuerySyncProject {
     try (BlazeContext context = BlazeContext.create(parentContext)) {
       context.push(new SyncQueryStatsScope());
       try {
+        for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
+          syncListener.beforeQuerySync(project, context);
+        }
+
         SaveUtil.saveAllFiles();
         PostQuerySyncData postQuerySyncData =
             lastQuery.isEmpty()
