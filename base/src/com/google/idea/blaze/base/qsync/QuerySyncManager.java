@@ -55,7 +55,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -97,6 +96,8 @@ public class QuerySyncManager implements Disposable {
 
   private final QuerySyncStatus syncStatus;
 
+  private final UntrackedFileManager untrackedFileManager;
+
   private static final BoolExperiment showWindowOnAutomaticSyncErrors =
       new BoolExperiment("querysync.autosync.show.console.on.error", true);
 
@@ -129,8 +130,7 @@ public class QuerySyncManager implements Disposable {
     this.project = project;
     this.loader = loader != null ? loader : createProjectLoader(executor, project);
     this.syncStatus = new QuerySyncStatus(project);
-    VirtualFileManager.getInstance()
-        .addAsyncFileListener(new QuerySyncAsyncFileListener(project, this), this);
+    this.untrackedFileManager = UntrackedFileManager.createWithListeners(project, this);
   }
 
   /**
@@ -403,6 +403,12 @@ public class QuerySyncManager implements Disposable {
 
   public boolean syncInProgress() {
     return syncStatus.syncInProgress();
+  }
+
+  /** Returns true if {@code absolutePath} represents a file with changes that require syncing. */
+  public boolean isOutOfSync(Path absolutePath) {
+    return untrackedFileManager.hasUntrackedFile(absolutePath)
+        || untrackedFileManager.hasModifiedBuildFile(absolutePath);
   }
 
   @CanIgnoreReturnValue

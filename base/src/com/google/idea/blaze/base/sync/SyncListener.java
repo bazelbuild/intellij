@@ -69,6 +69,9 @@ public interface SyncListener {
       SyncResult syncResult,
       ImmutableSet<Integer> buildIds) {}
 
+  /** Called before sync. Only used in new query-sync * */
+  default void beforeQuerySync(Project project, BlazeContext context) {}
+
   /** Called after sync. Only used in new query-sync * */
   default void afterQuerySync(Project project, BlazeContext context) {}
 }
