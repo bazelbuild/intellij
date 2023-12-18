@@ -72,9 +72,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2023_2. This is required to build IJwB and run integration tests.
-IC_233_SHA = "f22ae025e7e91ef3c6b5b5cc0012b16d500280c9571bb6254022b6929b32c4e6"
+IC_233_SHA = "bdbbc56e6ade43ca4b05649948a9be42160bcbc46db5db62b2fe5ff301597da3"
 
-IC_233_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/233.11799.67-EAP-SNAPSHOT/ideaIC-233.11799.67-EAP-SNAPSHOT.zip"
+IC_233_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2023.3.1/ideaIC-2023.3.1.zip"
 
 http_archive(
     name = "intellij_ce_2023_3",
@@ -148,9 +148,9 @@ http_archive(
     url = IU_232_URL,
 )
 
-IU_233_SHA = "08f44ab91efd2beb05de85e0e709276262828add893ff07204e2c58c2fbc6991"
+IU_233_SHA = "6bab1b80cf1905f80c98df8c22ca37fc75cdae9aa66389e1359abc19c173af47"
 
-IU_233_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/233.11799.67-EAP-SNAPSHOT/ideaIU-233.11799.67-EAP-SNAPSHOT.zip"
+IU_233_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2023.3.1/ideaIU-2023.3.1.zip"
 
 http_archive(
     name = "intellij_ue_2023_3",
@@ -223,9 +223,9 @@ http_archive(
     url = CLION_232_URL,
 )
 
-CLION_233_SHA = "f6bc6d55af7971a494d272260f192f85bf5cef15e1073b93450ad5fb56154b1b"
+CLION_233_SHA = "95ec388c2bfe74e7144dc7701d3fd25341d71d23fe54d87f16aa95c85ed8524a"
 
-CLION_233_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/233.11799.37-EAP-SNAPSHOT/clion-233.11799.37-EAP-SNAPSHOT.zip"
+CLION_233_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2023.3.1/clion-2023.3.1.zip"
 
 http_archive(
     name = "clion_2023_3",
@@ -242,9 +242,9 @@ java_import(
 )
 """
 
-DEVKIT_233_SHA = "a2583a354c602221896c26673ccba259aff7c6cfadb0b3a6f1c8d892ae3d6536"
+DEVKIT_233_SHA = "c048e8a354e225ea650ac9180602a4ceebc08ced47340446d84fa11b8bc05faa"
 
-DEVKIT_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/233.11799.172/DevKit-233.11799.172.zip"
+DEVKIT_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/233.13135.65/DevKit-233.13135.65.zip"
 
 http_archive(
     name = "devkit_2023_3",
@@ -335,9 +335,9 @@ http_archive(
     url = PYTHON_PLUGIN_232_URL,
 )
 
-PYTHON_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/233.11799.67/PythonCore-233.11799.67.zip"
+PYTHON_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/233.13135.65/PythonCore-233.13135.65.zip"
 
-PYTHON_PLUGIN_233_SHA = "cd5f6e7800b11f894e0c1d5b9aea251a043a026a522f9fc1f543da1687f77fb2"
+PYTHON_PLUGIN_233_SHA = "48ef31f29e40ab3824027299b6bd7a0267aaad8175ebb1a5f10841122f5e9513"
 
 http_archive(
     name = "python_2023_3",
@@ -436,9 +436,9 @@ http_archive(
     url = GO_PLUGIN_232_URL,
 )
 
-GO_PLUGIN_233_SHA = "a11a2fb6b92f56cb07accb6b87cf25faa9bcc055176c01161a6d77cff8201645"
+GO_PLUGIN_233_SHA = "cbd9b1355c225a32d9a99ef0a563aada68e1ee6ced0b27614fd6e1714a859e8c"
 
-GO_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/233.11799.67/org.jetbrains.plugins.go-233.11799.67.zip"
+GO_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/233.13135.65/org.jetbrains.plugins.go-233.13135.65.zip"
 
 http_archive(
     name = "go_2023_3",
@@ -515,9 +515,9 @@ http_archive(
     url = SCALA_PLUGIN_232_URL,
 )
 
-SCALA_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.3.15/org.intellij.scala-2023.3.15.zip"
+SCALA_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.3.17/org.intellij.scala-2023.3.17.zip"
 
-SCALA_PLUGIN_233_SHA = "f8fca53cc5de077127e7020e434601eddb23b05362fbb3ab0c144ef58fdfee6e"
+SCALA_PLUGIN_233_SHA = "019e9b6dc4f6f477a5f0d7dedc80dc1b5724bc1ba653069c353beee5275a7aca"
 
 http_archive(
     name = "scala_2023_3",
