@@ -206,19 +206,21 @@ public class ArtifactTrackerImpl
     aarCacheDirectory = projectDirectory.resolve(AAR_DIRECTORY);
     aarCache =
         fileCacheCreator.createFileCache(
-            new DelegatingCacheLayout(
-                new KeyBasedCacheLayout(aarCacheDirectory),
-                new UnzippingCacheLayout(aarCacheDirectory, ImmutableSet.of("aar"))));
+            DelegatingCacheLayout.builder()
+                .addLayout(new UnzippingCacheLayout(aarCacheDirectory, ImmutableSet.of("aar")))
+                .setFallback(new KeyBasedCacheLayout(aarCacheDirectory))
+                .build());
     renderJarCacheDirectory = projectDirectory.resolve(RENDER_JARS_DIRECTORY);
     renderJarCache =
         fileCacheCreator.createFileCache(new KeyBasedCacheLayout(renderJarCacheDirectory));
     generatedSrcFileCacheDirectory = projectDirectory.resolve(GEN_SRC_DIRECTORY);
     generatedSrcFileCache =
         fileCacheCreator.createFileCache(
-            new DelegatingCacheLayout(
-                new KeyBasedCacheLayout(generatedSrcFileCacheDirectory),
-                new JavaSourcesCacheLayout(generatedSrcFileCacheDirectory),
-                new JavaSourcesArchiveCacheLayout(generatedSrcFileCacheDirectory)));
+            DelegatingCacheLayout.builder()
+                .addLayout(new JavaSourcesCacheLayout(generatedSrcFileCacheDirectory))
+                .addLayout(new JavaSourcesArchiveCacheLayout(generatedSrcFileCacheDirectory))
+                .setFallback(new KeyBasedCacheLayout(generatedSrcFileCacheDirectory))
+                .build());
     generatedExternalSrcFileCacheDirectory = projectDirectory.resolve(DEPENDENCIES_SOURCES);
     generatedExternalSrcFileCache =
         fileCacheCreator.createFileCache(
@@ -229,9 +231,11 @@ public class ArtifactTrackerImpl
     appInspectorCacheDirectory = projectDirectory.resolve(APP_INSPECTOR_DIRECTORY);
     appInspectorCache =
         fileCacheCreator.createFileCache(
-            new DelegatingCacheLayout(
-                new KeyBasedCacheLayout(appInspectorCacheDirectory),
-                new UnzippingCacheLayout(appInspectorCacheDirectory, ImmutableSet.of("aar"))));
+            DelegatingCacheLayout.builder()
+                .addLayout(
+                    new UnzippingCacheLayout(appInspectorCacheDirectory, ImmutableSet.of("aar")))
+                .setFallback(new KeyBasedCacheLayout(appInspectorCacheDirectory))
+                .build());
     cacheDirectoryManager =
         new CacheDirectoryManager(
             projectDirectory.resolve(DIGESTS_DIRECTORY_NAME),

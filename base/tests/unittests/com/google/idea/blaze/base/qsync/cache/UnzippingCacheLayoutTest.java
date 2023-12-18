@@ -34,9 +34,11 @@ public class UnzippingCacheLayoutTest {
   @Test
   public void zipped_artifacts() {
     CacheLayout cacheLayout =
-        new DelegatingCacheLayout(
-            new KeyBasedCacheLayout(cacheDirectories.cacheDirectory()),
-            new UnzippingCacheLayout(cacheDirectories.cacheDirectory(), ImmutableSet.of("zip")));
+        DelegatingCacheLayout.builder()
+            .addLayout(
+                new UnzippingCacheLayout(cacheDirectories.cacheDirectory(), ImmutableSet.of("zip")))
+            .setFallback(new KeyBasedCacheLayout(cacheDirectories.cacheDirectory()))
+            .build();
 
     // Zipped artifact
     OutputArtifactInfo outputArtifact = TestOutputArtifactInfo.create("archive.zip");
