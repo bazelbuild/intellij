@@ -49,9 +49,8 @@ public class JavaSourcesArchiveCacheLayout implements CacheLayout {
     if (!JAVA_ARCHIVE_EXTENSIONS.contains(getExtension(artifactPath.toString()))) {
       return null;
     }
-    String key = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact);
     return PreparedOutputArtifactDestination.create(
-        key, cacheDirectory.resolve(ROOT_DIRECTORY_NAME).resolve(artifactPath));
+        cacheDirectory.resolve(ROOT_DIRECTORY_NAME).resolve(artifactPath));
   }
 
   @Override

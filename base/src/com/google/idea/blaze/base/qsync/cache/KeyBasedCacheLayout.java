@@ -38,7 +38,7 @@ public class KeyBasedCacheLayout implements CacheLayout {
       OutputArtifactInfo outputArtifact) {
     String key = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact);
     final Path finalDestination = cacheDirectory.resolve(key);
-    return PreparedOutputArtifactDestination.create(key, finalDestination);
+    return PreparedOutputArtifactDestination.create(finalDestination);
   }
 
   @Override

@@ -25,12 +25,9 @@ import java.nio.file.Path;
 public abstract class PreparedOutputArtifactDestination
     implements OutputArtifactDestinationAndLayout {
 
-  public static PreparedOutputArtifactDestination create(String key, Path finalDestination) {
-    return new AutoValue_PreparedOutputArtifactDestination(key, finalDestination);
+  public static PreparedOutputArtifactDestination create(Path finalDestination) {
+    return new AutoValue_PreparedOutputArtifactDestination(finalDestination);
   }
-
-  @Override
-  public abstract String getKey();
 
   /**
    * The location where in the cache directory the representation of the artifact for the IDE should
