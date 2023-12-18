@@ -48,25 +48,29 @@ public abstract class JavaSourceOutputArtifactDestination
   }
 
   @Override
-  public Path prepareFinalLayout() {
-    Path finalDest;
+  public Path determineFinalDestination() {
     try {
       String pkg = packageStatementParser.readPackage(getCopyDestination());
-      finalDest =
-          getDestinationJavaSourceDir()
-              .resolve(Path.of(pkg.replace('.', '/')))
-              .resolve(getOriginalFilename());
+      return getDestinationJavaSourceDir()
+          .resolve(Path.of(pkg.replace('.', '/')))
+          .resolve(getOriginalFilename());
     } catch (IOException e) {
       throw new UncheckedIOException(
           "Failed to determine the final destination for " + getCopyDestination(), e);
     }
+  }
+
+  @Override
+  public void createFinalDestination(Path finalDest) {
+    Path copyDestination = getCopyDestination();
     try {
       Files.createDirectories(finalDest.getParent());
-      Files.copy(getCopyDestination(), finalDest, StandardCopyOption.REPLACE_EXISTING);
-      return finalDest;
+      Files.copy(copyDestination, finalDest, StandardCopyOption.REPLACE_EXISTING);
     } catch (IOException e) {
       throw new UncheckedIOException(
-          "Failed to copy " + getCopyDestination() + " to its final destination " + finalDest, e);
+          "Failed to copy " + copyDestination + " to its final destination " + finalDest, e);
     }
   }
+
+
 }

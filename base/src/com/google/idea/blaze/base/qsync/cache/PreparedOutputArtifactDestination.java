@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync.cache;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Preconditions;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import java.nio.file.Path;
 
@@ -48,7 +49,13 @@ public abstract class PreparedOutputArtifactDestination
   }
 
   @Override
-  public Path prepareFinalLayout() {
+  public Path determineFinalDestination() {
     return getFinalDestination();
+  }
+
+  @Override
+  public void createFinalDestination(Path finalDestination) {
+    // We don't move the artifact from it's original location so nothing needs doing:
+    Preconditions.checkState(getCopyDestination().equals(finalDestination));
   }
 }
