@@ -71,7 +71,7 @@ public class UnzippingCacheLayout implements CacheLayout {
     }
     String key = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact);
     return ZippedOutputArtifactDestination.create(
-        key, cacheDirectory.resolve(key), cacheDotDirectory.resolve(PACKED_FILES_DIR).resolve(key));
+        cacheDirectory.resolve(key), cacheDotDirectory.resolve(PACKED_FILES_DIR).resolve(key));
   }
 
   private boolean shouldExtractFile(Path sourcePath) {

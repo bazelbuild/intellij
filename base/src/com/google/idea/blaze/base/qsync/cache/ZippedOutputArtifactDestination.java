@@ -32,8 +32,8 @@ public abstract class ZippedOutputArtifactDestination
     implements OutputArtifactDestinationAndLayout {
 
   public static ZippedOutputArtifactDestination create(
-      String key, Path finalDestination, Path copyDestination) {
-    return new AutoValue_ZippedOutputArtifactDestination(key, finalDestination, copyDestination);
+      Path finalDestination, Path copyDestination) {
+    return new AutoValue_ZippedOutputArtifactDestination(finalDestination, copyDestination);
   }
 
   private static void extract(Path source, Path destination) {
@@ -58,9 +58,6 @@ public abstract class ZippedOutputArtifactDestination
       throw new UncheckedIOException("Failed to extract " + source + " to " + destination, e);
     }
   }
-
-  @Override
-  public abstract String getKey();
 
   /**
    * The location where in the cache directory the representation of the artifact for the IDE should

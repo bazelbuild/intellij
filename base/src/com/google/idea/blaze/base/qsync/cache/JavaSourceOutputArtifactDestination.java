@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+
 import com.google.auto.value.AutoValue;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import com.google.idea.blaze.qsync.java.PackageStatementParser;
@@ -31,8 +32,7 @@ public abstract class JavaSourceOutputArtifactDestination
 
   private final PackageStatementParser packageStatementParser = new PackageStatementParser();
 
-  @Override
-  public abstract String getKey();
+  public abstract Path getBuildOutPath();
 
   @Override
   public abstract Path getCopyDestination();
@@ -42,9 +42,12 @@ public abstract class JavaSourceOutputArtifactDestination
   abstract Path getDestinationJavaSourceDir();
 
   public static JavaSourceOutputArtifactDestination create(
-      String key, String originalFileName, Path copyDestination, Path destinationJavaSourceDir) {
+      Path buildOutPath,
+      String originalFileName,
+      Path copyDestination,
+      Path destinationJavaSourceDir) {
     return new AutoValue_JavaSourceOutputArtifactDestination(
-        key, copyDestination, originalFileName, destinationJavaSourceDir);
+        buildOutPath, copyDestination, originalFileName, destinationJavaSourceDir);
   }
 
   @Override

@@ -67,16 +67,6 @@ public class FileCache {
 
   /** A descriptor of the artifact's intended fetch location in a specific cache layout. */
   public interface OutputArtifactDestination {
-
-    /**
-     * A value used by the cache system to refer to this output artifact.
-     *
-     * <p>The value is used as a file name (a prefix) and thus must only contain allowed symbols.
-     *
-     * <p>Note, it does not represent a specific version of the artifact.
-     */
-    String getKey();
-
     /**
      * The location where a fetched copy of this artifact should be placed by an {@link
      * ArtifactFetcher}.
