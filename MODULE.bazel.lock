@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "7af359e4e16206b2bc5857a201e0d04eef70b2ae0e4bf71f2c8f92cfd605fa04",
+  "moduleFileHash": "462c64a4fe7d91839a4d3d6a6002a5757f13cf52477d049b1c5cb7a5743398a1",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -241,12 +241,7 @@
                 ],
                 "fail_if_repin_required": true,
                 "generate_compat_repositories": true,
-                "lock_file": "//:maven_install.json",
-                "repositories": [
-                  "https://maven.google.com",
-                  "https://repo.maven.apache.org/maven2",
-                  "https://repository.mulesoft.org/nexus/content/repositories/public"
-                ]
+                "lock_file": "//:maven_install.json"
               },
               "devDependency": false,
               "location": {
@@ -3382,7 +3377,7 @@
       "general": {
         "bzlTransitiveDigest": "JwtNGVzA2lDTvrlduz8Acq/SAW6BPVQzf5WEgXQFBmQ=",
         "accumulatedFileDigests": {
-          "@@//:maven_install.json": "312a5add69d42cf9a1c86bda719568b9c322863eacd35b8b0c255d588d1724f0",
+          "@@//:maven_install.json": "5ef0f33889c6bc1e40c0b89c68b35865e5bd2ad87aec6c9e3010cc8fc565fd10",
           "@@rules_jvm_external~5.3//:rules_jvm_external_deps_install.json": "741ab2ef3843a43eaacb45d1448835c9deb99c95162279f513096eface8acd44"
         },
         "envVariables": {},
@@ -3403,9 +3398,6 @@
               "name": "rules_jvm_external~5.3~maven~commons_logging_commons_logging_jar_sources_1_2",
               "sha256": "44347acfe5860461728e9cb33251e97345be36f8a0dfd5c5130c172559455f41",
               "urls": [
-                "https://maven.google.com/commons-logging/commons-logging/1.2/commons-logging-1.2-sources.jar",
-                "https://repo.maven.apache.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/commons-logging/commons-logging/1.2/commons-logging-1.2-sources.jar",
                 "https://repo1.maven.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2-sources.jar"
               ],
               "downloaded_file_path": "commons-logging/commons-logging/1.2/commons-logging-1.2-sources.jar"
@@ -3418,9 +3410,6 @@
               "name": "rules_jvm_external~5.3~maven~com_squareup_okhttp_okhttp_2_7_5",
               "sha256": "88ac9fd1bb51f82bcc664cc1eb9c225c90dc4389d660231b4cc737bebfe7d0aa",
               "urls": [
-                "https://maven.google.com/com/squareup/okhttp/okhttp/2.7.5/okhttp-2.7.5.jar",
-                "https://repo.maven.apache.org/maven2/com/squareup/okhttp/okhttp/2.7.5/okhttp-2.7.5.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/squareup/okhttp/okhttp/2.7.5/okhttp-2.7.5.jar",
                 "https://repo1.maven.org/maven2/com/squareup/okhttp/okhttp/2.7.5/okhttp-2.7.5.jar"
               ],
               "downloaded_file_path": "com/squareup/okhttp/okhttp/2.7.5/okhttp-2.7.5.jar"
@@ -3446,9 +3435,6 @@
               "name": "rules_jvm_external~5.3~maven~org_jetbrains_kotlinx_kotlinx_coroutines_test_jvm_1_6_2",
               "sha256": "6eb5c29f60fcacde882b1d393bf9a2fe9535bece1c707396fdbd755559dc043d",
               "urls": [
-                "https://maven.google.com/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.6.2/kotlinx-coroutines-test-jvm-1.6.2.jar",
-                "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.6.2/kotlinx-coroutines-test-jvm-1.6.2.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.6.2/kotlinx-coroutines-test-jvm-1.6.2.jar",
                 "https://repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.6.2/kotlinx-coroutines-test-jvm-1.6.2.jar"
               ],
               "downloaded_file_path": "org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.6.2/kotlinx-coroutines-test-jvm-1.6.2.jar"
@@ -3461,9 +3447,6 @@
               "name": "rules_jvm_external~5.3~maven~org_jetbrains_kotlin_kotlin_stdlib_jdk7_1_6_21",
               "sha256": "f1b0634dbb94172038463020bb2dd45ca26849f8ce29d625acb0f1569d11dbee",
               "urls": [
-                "https://maven.google.com/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21.jar",
-                "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21.jar",
                 "https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21.jar"
               ],
               "downloaded_file_path": "org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21.jar"
@@ -3538,9 +3521,6 @@
               "name": "rules_jvm_external~5.3~maven~io_opencensus_opencensus_api_jar_sources_0_31_0",
               "sha256": "ddc1b7313586feb06b796d229cbe5910813bfe431ef0a00328fed7629c16ddf3",
               "urls": [
-                "https://maven.google.com/io/opencensus/opencensus-api/0.31.0/opencensus-api-0.31.0-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/opencensus/opencensus-api/0.31.0/opencensus-api-0.31.0-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/opencensus/opencensus-api/0.31.0/opencensus-api-0.31.0-sources.jar",
                 "https://repo1.maven.org/maven2/io/opencensus/opencensus-api/0.31.0/opencensus-api-0.31.0-sources.jar"
               ],
               "downloaded_file_path": "io/opencensus/opencensus-api/0.31.0/opencensus-api-0.31.0-sources.jar"
@@ -3601,9 +3581,6 @@
               "name": "rules_jvm_external~5.3~maven~org_checkerframework_checker_compat_qual_jar_sources_2_5_3",
               "sha256": "68011773fd60cfc7772508134086787210ba2a1443e3f9c3f5d4233a226c3346",
               "urls": [
-                "https://maven.google.com/org/checkerframework/checker-compat-qual/2.5.3/checker-compat-qual-2.5.3-sources.jar",
-                "https://repo.maven.apache.org/maven2/org/checkerframework/checker-compat-qual/2.5.3/checker-compat-qual-2.5.3-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/checkerframework/checker-compat-qual/2.5.3/checker-compat-qual-2.5.3-sources.jar",
                 "https://repo1.maven.org/maven2/org/checkerframework/checker-compat-qual/2.5.3/checker-compat-qual-2.5.3-sources.jar"
               ],
               "downloaded_file_path": "org/checkerframework/checker-compat-qual/2.5.3/checker-compat-qual-2.5.3-sources.jar"
@@ -3616,9 +3593,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_tcnative_classes_2_0_61_Final",
               "sha256": "9b970eccd844bfae175a5cbbf7bf94891894add06d6ccbe1abf2250cd64080f6",
               "urls": [
-                "https://maven.google.com/io/netty/netty-tcnative-classes/2.0.61.Final/netty-tcnative-classes-2.0.61.Final.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-tcnative-classes/2.0.61.Final/netty-tcnative-classes-2.0.61.Final.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-tcnative-classes/2.0.61.Final/netty-tcnative-classes-2.0.61.Final.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-tcnative-classes/2.0.61.Final/netty-tcnative-classes-2.0.61.Final.jar"
               ],
               "downloaded_file_path": "io/netty/netty-tcnative-classes/2.0.61.Final/netty-tcnative-classes-2.0.61.Final.jar"
@@ -3631,9 +3605,6 @@
               "name": "rules_jvm_external~5.3~maven~io_opencensus_opencensus_contrib_grpc_metrics_jar_sources_0_31_0",
               "sha256": "c45a239e4c4fa4ad564018c0ba0a94d669dbc9b1ed561fc0464b79ebb3c0d6e3",
               "urls": [
-                "https://maven.google.com/io/opencensus/opencensus-contrib-grpc-metrics/0.31.0/opencensus-contrib-grpc-metrics-0.31.0-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/opencensus/opencensus-contrib-grpc-metrics/0.31.0/opencensus-contrib-grpc-metrics-0.31.0-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/opencensus/opencensus-contrib-grpc-metrics/0.31.0/opencensus-contrib-grpc-metrics-0.31.0-sources.jar",
                 "https://repo1.maven.org/maven2/io/opencensus/opencensus-contrib-grpc-metrics/0.31.0/opencensus-contrib-grpc-metrics-0.31.0-sources.jar"
               ],
               "downloaded_file_path": "io/opencensus/opencensus-contrib-grpc-metrics/0.31.0/opencensus-contrib-grpc-metrics-0.31.0-sources.jar"
@@ -3646,9 +3617,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_code_gson_gson_2_10_1",
               "sha256": "4241c14a7727c34feea6507ec801318a3d4a90f070e4525681079fb94ee4c593",
               "urls": [
-                "https://maven.google.com/com/google/code/gson/gson/2.10.1/gson-2.10.1.jar",
-                "https://repo.maven.apache.org/maven2/com/google/code/gson/gson/2.10.1/gson-2.10.1.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/code/gson/gson/2.10.1/gson-2.10.1.jar",
                 "https://repo1.maven.org/maven2/com/google/code/gson/gson/2.10.1/gson-2.10.1.jar"
               ],
               "downloaded_file_path": "com/google/code/gson/gson/2.10.1/gson-2.10.1.jar"
@@ -3661,9 +3629,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_handler_jar_sources_4_1_97_Final",
               "sha256": "905739df92b7fe6468504e1e91b964654381eb3d162766f39552d06a0cbf4cd3",
               "urls": [
-                "https://maven.google.com/io/netty/netty-handler/4.1.97.Final/netty-handler-4.1.97.Final-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-handler/4.1.97.Final/netty-handler-4.1.97.Final-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-handler/4.1.97.Final/netty-handler-4.1.97.Final-sources.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-handler/4.1.97.Final/netty-handler-4.1.97.Final-sources.jar"
               ],
               "downloaded_file_path": "io/netty/netty-handler/4.1.97.Final/netty-handler-4.1.97.Final-sources.jar"
@@ -3676,9 +3641,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_truth_extensions_truth_java8_extension_jar_sources_1_1_5",
               "sha256": "3138303d858bb8956b7c0f5ad2233b5396fc10bcd0af58e2721458ed46b2076f",
               "urls": [
-                "https://maven.google.com/com/google/truth/extensions/truth-java8-extension/1.1.5/truth-java8-extension-1.1.5-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/truth/extensions/truth-java8-extension/1.1.5/truth-java8-extension-1.1.5-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/truth/extensions/truth-java8-extension/1.1.5/truth-java8-extension-1.1.5-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/truth/extensions/truth-java8-extension/1.1.5/truth-java8-extension-1.1.5-sources.jar"
               ],
               "downloaded_file_path": "com/google/truth/extensions/truth-java8-extension/1.1.5/truth-java8-extension-1.1.5-sources.jar"
@@ -3704,9 +3666,6 @@
               "name": "rules_jvm_external~5.3~maven~org_apache_httpcomponents_httpcore_4_4_15",
               "sha256": "3cbaed088c499a10f96dde58f39dc0e7985171abd88138ca1655a872011bb142",
               "urls": [
-                "https://maven.google.com/org/apache/httpcomponents/httpcore/4.4.15/httpcore-4.4.15.jar",
-                "https://repo.maven.apache.org/maven2/org/apache/httpcomponents/httpcore/4.4.15/httpcore-4.4.15.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/apache/httpcomponents/httpcore/4.4.15/httpcore-4.4.15.jar",
                 "https://repo1.maven.org/maven2/org/apache/httpcomponents/httpcore/4.4.15/httpcore-4.4.15.jar"
               ],
               "downloaded_file_path": "org/apache/httpcomponents/httpcore/4.4.15/httpcore-4.4.15.jar"
@@ -3732,9 +3691,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_transport_jar_sources_4_1_97_Final",
               "sha256": "2ee8b4402c42f9bbbb3b4a14cce1f80d0b48f2115c718ea464f3050f58c70b2e",
               "urls": [
-                "https://maven.google.com/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar"
               ],
               "downloaded_file_path": "io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar"
@@ -3747,9 +3703,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_codec_jar_sources_4_1_97_Final",
               "sha256": "3f512c1a7ffa112ce3f8a8fec9545017063ae06583e80e841bdee76477f891f4",
               "urls": [
-                "https://maven.google.com/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar"
               ],
               "downloaded_file_path": "io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar"
@@ -3762,9 +3715,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_auto_value_auto_value_jar_sources_1_10_2",
               "sha256": "a6863414b233e03398c7e0e1cf21d98a0447d8226e21435911b896633b69b60b",
               "urls": [
-                "https://maven.google.com/com/google/auto/value/auto-value/1.10.2/auto-value-1.10.2-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/auto/value/auto-value/1.10.2/auto-value-1.10.2-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/auto/value/auto-value/1.10.2/auto-value-1.10.2-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/auto/value/auto-value/1.10.2/auto-value-1.10.2-sources.jar"
               ],
               "downloaded_file_path": "com/google/auto/value/auto-value/1.10.2/auto-value-1.10.2-sources.jar"
@@ -3777,9 +3727,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_transport_native_epoll_4_1_97_Final",
               "sha256": "418a0d0d66d2d52a63a0e2cd5377f8c3186db47c09e3b8af39a43fec39c077fe",
               "urls": [
-                "https://maven.google.com/io/netty/netty-transport-native-epoll/4.1.97.Final/netty-transport-native-epoll-4.1.97.Final.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-transport-native-epoll/4.1.97.Final/netty-transport-native-epoll-4.1.97.Final.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-transport-native-epoll/4.1.97.Final/netty-transport-native-epoll-4.1.97.Final.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-transport-native-epoll/4.1.97.Final/netty-transport-native-epoll-4.1.97.Final.jar"
               ],
               "downloaded_file_path": "io/netty/netty-transport-native-epoll/4.1.97.Final/netty-transport-native-epoll-4.1.97.Final.jar"
@@ -3842,9 +3789,6 @@
             "attributes": {
               "name": "rules_jvm_external~5.3~maven~unpinned_maven",
               "repositories": [
-                "{ \"repo_url\": \"https://maven.google.com\" }",
-                "{ \"repo_url\": \"https://repo.maven.apache.org/maven2\" }",
-                "{ \"repo_url\": \"https://repository.mulesoft.org/nexus/content/repositories/public\" }",
                 "{ \"repo_url\": \"https://repo1.maven.org/maven2\" }"
               ],
               "artifacts": [
@@ -3979,9 +3923,6 @@
               "name": "rules_jvm_external~5.3~maven~org_checkerframework_checker_compat_qual_2_5_3",
               "sha256": "d76b9afea61c7c082908023f0cbc1427fab9abd2df915c8b8a3e7a509bccbc6d",
               "urls": [
-                "https://maven.google.com/org/checkerframework/checker-compat-qual/2.5.3/checker-compat-qual-2.5.3.jar",
-                "https://repo.maven.apache.org/maven2/org/checkerframework/checker-compat-qual/2.5.3/checker-compat-qual-2.5.3.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/checkerframework/checker-compat-qual/2.5.3/checker-compat-qual-2.5.3.jar",
                 "https://repo1.maven.org/maven2/org/checkerframework/checker-compat-qual/2.5.3/checker-compat-qual-2.5.3.jar"
               ],
               "downloaded_file_path": "org/checkerframework/checker-compat-qual/2.5.3/checker-compat-qual-2.5.3.jar"
@@ -4007,9 +3948,6 @@
               "name": "rules_jvm_external~5.3~maven~com_squareup_okio_okio_jar_sources_2_10_0",
               "sha256": "4f255d11829d7e1949be042efa70f933650a7d929e68d594c1608f97884a0535",
               "urls": [
-                "https://maven.google.com/com/squareup/okio/okio/2.10.0/okio-2.10.0-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/squareup/okio/okio/2.10.0/okio-2.10.0-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/squareup/okio/okio/2.10.0/okio-2.10.0-sources.jar",
                 "https://repo1.maven.org/maven2/com/squareup/okio/okio/2.10.0/okio-2.10.0-sources.jar"
               ],
               "downloaded_file_path": "com/squareup/okio/okio/2.10.0/okio-2.10.0-sources.jar"
@@ -4022,9 +3960,6 @@
               "name": "rules_jvm_external~5.3~maven~org_ow2_asm_asm_9_5",
               "sha256": "b62e84b5980729751b0458c534cf1366f727542bb8d158621335682a460f0353",
               "urls": [
-                "https://maven.google.com/org/ow2/asm/asm/9.5/asm-9.5.jar",
-                "https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.5/asm-9.5.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/ow2/asm/asm/9.5/asm-9.5.jar",
                 "https://repo1.maven.org/maven2/org/ow2/asm/asm/9.5/asm-9.5.jar"
               ],
               "downloaded_file_path": "org/ow2/asm/asm/9.5/asm-9.5.jar"
@@ -4037,9 +3972,6 @@
               "name": "rules_jvm_external~5.3~maven~net_bytebuddy_byte_buddy_1_12_7",
               "sha256": "d2e46555699e70361b5471a7e142f9c67855bba6907a285177ebd8ad973775d8",
               "urls": [
-                "https://maven.google.com/net/bytebuddy/byte-buddy/1.12.7/byte-buddy-1.12.7.jar",
-                "https://repo.maven.apache.org/maven2/net/bytebuddy/byte-buddy/1.12.7/byte-buddy-1.12.7.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/net/bytebuddy/byte-buddy/1.12.7/byte-buddy-1.12.7.jar",
                 "https://repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.12.7/byte-buddy-1.12.7.jar"
               ],
               "downloaded_file_path": "net/bytebuddy/byte-buddy/1.12.7/byte-buddy-1.12.7.jar"
@@ -4074,9 +4006,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_resolver_jar_sources_4_1_97_Final",
               "sha256": "dd687a7b2016d38d92d988172b787c713d786e5b8c37896796b156e6798cbd95",
               "urls": [
-                "https://maven.google.com/io/netty/netty-resolver/4.1.97.Final/netty-resolver-4.1.97.Final-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-resolver/4.1.97.Final/netty-resolver-4.1.97.Final-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-resolver/4.1.97.Final/netty-resolver-4.1.97.Final-sources.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-resolver/4.1.97.Final/netty-resolver-4.1.97.Final-sources.jar"
               ],
               "downloaded_file_path": "io/netty/netty-resolver/4.1.97.Final/netty-resolver-4.1.97.Final-sources.jar"
@@ -4089,9 +4018,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_errorprone_error_prone_annotations_2_20_0",
               "sha256": "a136d3dce67168d88751115fa223bec80eae6cc062aa2f8173e8344a98235ec4",
               "urls": [
-                "https://maven.google.com/com/google/errorprone/error_prone_annotations/2.20.0/error_prone_annotations-2.20.0.jar",
-                "https://repo.maven.apache.org/maven2/com/google/errorprone/error_prone_annotations/2.20.0/error_prone_annotations-2.20.0.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/errorprone/error_prone_annotations/2.20.0/error_prone_annotations-2.20.0.jar",
                 "https://repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations/2.20.0/error_prone_annotations-2.20.0.jar"
               ],
               "downloaded_file_path": "com/google/errorprone/error_prone_annotations/2.20.0/error_prone_annotations-2.20.0.jar"
@@ -4104,9 +4030,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_guava_listenablefuture_9999_0_empty_to_avoid_conflict_with_guava",
               "sha256": "b372a037d4230aa57fbeffdef30fd6123f9c0c2db85d0aced00c91b974f33f99",
               "urls": [
-                "https://maven.google.com/com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar",
-                "https://repo.maven.apache.org/maven2/com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar",
                 "https://repo1.maven.org/maven2/com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar"
               ],
               "downloaded_file_path": "com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar"
@@ -4132,9 +4055,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_auth_google_auth_library_credentials_jar_sources_1_4_0",
               "sha256": "2ebd10e88fa862919728bf7604b5b25aa51c19732c6a1d7fa1e9d68688c2ecee",
               "urls": [
-                "https://maven.google.com/com/google/auth/google-auth-library-credentials/1.4.0/google-auth-library-credentials-1.4.0-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/auth/google-auth-library-credentials/1.4.0/google-auth-library-credentials-1.4.0-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/auth/google-auth-library-credentials/1.4.0/google-auth-library-credentials-1.4.0-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/auth/google-auth-library-credentials/1.4.0/google-auth-library-credentials-1.4.0-sources.jar"
               ],
               "downloaded_file_path": "com/google/auth/google-auth-library-credentials/1.4.0/google-auth-library-credentials-1.4.0-sources.jar"
@@ -4147,9 +4067,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_transport_native_unix_common_4_1_97_Final",
               "sha256": "412fe140257c2dda5a5e15bee911298bd61928d03ee6be4db588e82c196c5dc6",
               "urls": [
-                "https://maven.google.com/io/netty/netty-transport-native-unix-common/4.1.97.Final/netty-transport-native-unix-common-4.1.97.Final.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-transport-native-unix-common/4.1.97.Final/netty-transport-native-unix-common-4.1.97.Final.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-transport-native-unix-common/4.1.97.Final/netty-transport-native-unix-common-4.1.97.Final.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/4.1.97.Final/netty-transport-native-unix-common-4.1.97.Final.jar"
               ],
               "downloaded_file_path": "io/netty/netty-transport-native-unix-common/4.1.97.Final/netty-transport-native-unix-common-4.1.97.Final.jar"
@@ -4184,9 +4101,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_tcnative_boringssl_static_jar_linux_x86_64_2_0_61_Final",
               "sha256": "4ff9d14f1ec6ccee35b78f53a6f3d9c7c54535aa2a76138311c2f619c5e150e1",
               "urls": [
-                "https://maven.google.com/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-linux-x86_64.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-linux-x86_64.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-linux-x86_64.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-linux-x86_64.jar"
               ],
               "downloaded_file_path": "io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-linux-x86_64.jar"
@@ -4199,9 +4113,6 @@
               "name": "rules_jvm_external~5.3~maven~io_grpc_grpc_context_jar_sources_1_27_2",
               "sha256": "d43383c880c21b084c2549ec3602de03c9de19d38a451a4e779dc80a438f6569",
               "urls": [
-                "https://maven.google.com/io/grpc/grpc-context/1.27.2/grpc-context-1.27.2-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/grpc/grpc-context/1.27.2/grpc-context-1.27.2-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/grpc/grpc-context/1.27.2/grpc-context-1.27.2-sources.jar",
                 "https://repo1.maven.org/maven2/io/grpc/grpc-context/1.27.2/grpc-context-1.27.2-sources.jar"
               ],
               "downloaded_file_path": "io/grpc/grpc-context/1.27.2/grpc-context-1.27.2-sources.jar"
@@ -4214,9 +4125,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_handler_proxy_jar_sources_4_1_97_Final",
               "sha256": "19e0dac14e5028af4c7068a0a2872f50ad06588a5140a065648f1ab3c31cf5bc",
               "urls": [
-                "https://maven.google.com/io/netty/netty-handler-proxy/4.1.97.Final/netty-handler-proxy-4.1.97.Final-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-handler-proxy/4.1.97.Final/netty-handler-proxy-4.1.97.Final-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-handler-proxy/4.1.97.Final/netty-handler-proxy-4.1.97.Final-sources.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-handler-proxy/4.1.97.Final/netty-handler-proxy-4.1.97.Final-sources.jar"
               ],
               "downloaded_file_path": "io/netty/netty-handler-proxy/4.1.97.Final/netty-handler-proxy-4.1.97.Final-sources.jar"
@@ -4229,9 +4137,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_transport_classes_kqueue_jar_sources_4_1_97_Final",
               "sha256": "1db14659fab815b08ed06a60553bebabd402687d35b204f1af5add7396a549f4",
               "urls": [
-                "https://maven.google.com/io/netty/netty-transport-classes-kqueue/4.1.97.Final/netty-transport-classes-kqueue-4.1.97.Final-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-transport-classes-kqueue/4.1.97.Final/netty-transport-classes-kqueue-4.1.97.Final-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-transport-classes-kqueue/4.1.97.Final/netty-transport-classes-kqueue-4.1.97.Final-sources.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-transport-classes-kqueue/4.1.97.Final/netty-transport-classes-kqueue-4.1.97.Final-sources.jar"
               ],
               "downloaded_file_path": "io/netty/netty-transport-classes-kqueue/4.1.97.Final/netty-transport-classes-kqueue-4.1.97.Final-sources.jar"
@@ -4296,9 +4201,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_handler_4_1_97_Final",
               "sha256": "bd4771d19149cbc9c7464ed2d58035d79cdfed7adb59d38718b0d8e7a3dcc2de",
               "urls": [
-                "https://maven.google.com/io/netty/netty-handler/4.1.97.Final/netty-handler-4.1.97.Final.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-handler/4.1.97.Final/netty-handler-4.1.97.Final.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-handler/4.1.97.Final/netty-handler-4.1.97.Final.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-handler/4.1.97.Final/netty-handler-4.1.97.Final.jar"
               ],
               "downloaded_file_path": "io/netty/netty-handler/4.1.97.Final/netty-handler-4.1.97.Final.jar"
@@ -4311,9 +4213,6 @@
               "name": "rules_jvm_external~5.3~maven~org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm_1_6_2",
               "sha256": "09aac136027678db2d3c2696696202719af9213ba17ae076f4c4421008885bcb",
               "urls": [
-                "https://maven.google.com/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.2/kotlinx-coroutines-core-jvm-1.6.2.jar",
-                "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.2/kotlinx-coroutines-core-jvm-1.6.2.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.2/kotlinx-coroutines-core-jvm-1.6.2.jar",
                 "https://repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.2/kotlinx-coroutines-core-jvm-1.6.2.jar"
               ],
               "downloaded_file_path": "org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.2/kotlinx-coroutines-core-jvm-1.6.2.jar"
@@ -4335,9 +4234,6 @@
               "name": "rules_jvm_external~5.3~maven~org_jetbrains_kotlin_kotlin_stdlib_common_1_6_21",
               "sha256": "183bec59cd9f3a14957b190e8c879cf1194bd1f106b0a7b6e1cbb8790d242363",
               "urls": [
-                "https://maven.google.com/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21.jar",
-                "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21.jar",
                 "https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21.jar"
               ],
               "downloaded_file_path": "org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21.jar"
@@ -4350,9 +4246,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_codec_socks_jar_sources_4_1_97_Final",
               "sha256": "2b48738f837dfc66833b811f6a4eab7fc3a75abd47fee3e7572de7653e5172de",
               "urls": [
-                "https://maven.google.com/io/netty/netty-codec-socks/4.1.97.Final/netty-codec-socks-4.1.97.Final-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-codec-socks/4.1.97.Final/netty-codec-socks-4.1.97.Final-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-codec-socks/4.1.97.Final/netty-codec-socks-4.1.97.Final-sources.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-codec-socks/4.1.97.Final/netty-codec-socks-4.1.97.Final-sources.jar"
               ],
               "downloaded_file_path": "io/netty/netty-codec-socks/4.1.97.Final/netty-codec-socks-4.1.97.Final-sources.jar"
@@ -4417,9 +4310,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_re2j_re2j_1_7",
               "sha256": "4f657af51ab8bb0909bcc3eb40862d26125af8cbcf92aaaba595fed77f947bc0",
               "urls": [
-                "https://maven.google.com/com/google/re2j/re2j/1.7/re2j-1.7.jar",
-                "https://repo.maven.apache.org/maven2/com/google/re2j/re2j/1.7/re2j-1.7.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/re2j/re2j/1.7/re2j-1.7.jar",
                 "https://repo1.maven.org/maven2/com/google/re2j/re2j/1.7/re2j-1.7.jar"
               ],
               "downloaded_file_path": "com/google/re2j/re2j/1.7/re2j-1.7.jar"
@@ -4432,9 +4322,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_codec_4_1_97_Final",
               "sha256": "bcc96737a0f912fcf031cf8c45ebda352a90a40437db0832caad3d5a63618b38",
               "urls": [
-                "https://maven.google.com/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final.jar"
               ],
               "downloaded_file_path": "io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final.jar"
@@ -4447,9 +4334,6 @@
               "name": "rules_jvm_external~5.3~maven~org_jetbrains_kotlin_kotlin_stdlib_jdk8_jar_sources_1_6_21",
               "sha256": "09d7e6d71cfc18ad841f557bd1ea67b42928712a5746ce6c28c0123e1d2310d6",
               "urls": [
-                "https://maven.google.com/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21-sources.jar",
-                "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21-sources.jar",
                 "https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21-sources.jar"
               ],
               "downloaded_file_path": "org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21-sources.jar"
@@ -4462,9 +4346,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_code_gson_gson_jar_sources_2_10_1",
               "sha256": "eee1cc5c1f4267ee194cc245777e68084738ef390acd763354ce0ff6bfb7bcc1",
               "urls": [
-                "https://maven.google.com/com/google/code/gson/gson/2.10.1/gson-2.10.1-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/code/gson/gson/2.10.1/gson-2.10.1-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/code/gson/gson/2.10.1/gson-2.10.1-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/code/gson/gson/2.10.1/gson-2.10.1-sources.jar"
               ],
               "downloaded_file_path": "com/google/code/gson/gson/2.10.1/gson-2.10.1-sources.jar"
@@ -4477,9 +4358,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_common_jar_sources_4_1_97_Final",
               "sha256": "54e96a125cb58b3ac067fa59b4a97fb6f1aadbac3f3092e6cc7fa88684de9964",
               "urls": [
-                "https://maven.google.com/io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final-sources.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final-sources.jar"
               ],
               "downloaded_file_path": "io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final-sources.jar"
@@ -4492,9 +4370,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_auto_value_auto_value_annotations_1_10_2",
               "sha256": "3f3b7edfaf7fbbd88642f7bd5b09487b8dcf2b9e5f3a19f1eb7b3e53f20f14ba",
               "urls": [
-                "https://maven.google.com/com/google/auto/value/auto-value-annotations/1.10.2/auto-value-annotations-1.10.2.jar",
-                "https://repo.maven.apache.org/maven2/com/google/auto/value/auto-value-annotations/1.10.2/auto-value-annotations-1.10.2.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/auto/value/auto-value-annotations/1.10.2/auto-value-annotations-1.10.2.jar",
                 "https://repo1.maven.org/maven2/com/google/auto/value/auto-value-annotations/1.10.2/auto-value-annotations-1.10.2.jar"
               ],
               "downloaded_file_path": "com/google/auto/value/auto-value-annotations/1.10.2/auto-value-annotations-1.10.2.jar"
@@ -4638,9 +4513,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_tcnative_boringssl_static_jar_linux_aarch_64_2_0_61_Final",
               "sha256": "3614395218ae379cec22ccaa089c4f27b9329a660e0d53c93e7cb12b7a2cee46",
               "urls": [
-                "https://maven.google.com/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-linux-aarch_64.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-linux-aarch_64.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-linux-aarch_64.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-linux-aarch_64.jar"
               ],
               "downloaded_file_path": "io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-linux-aarch_64.jar"
@@ -4653,9 +4525,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_buffer_4_1_97_Final",
               "sha256": "a4393f5b395486cc74d0325c9b41311abb9513ba0fd7ef8cf46e9345c3bffbea",
               "urls": [
-                "https://maven.google.com/io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final.jar"
               ],
               "downloaded_file_path": "io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final.jar"
@@ -4681,9 +4550,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_buffer_jar_sources_4_1_97_Final",
               "sha256": "0b691a25682115d65da9e565589e39ee272227a972ecf0de936b475d42a4be48",
               "urls": [
-                "https://maven.google.com/io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final-sources.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final-sources.jar"
               ],
               "downloaded_file_path": "io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final-sources.jar"
@@ -4722,9 +4588,6 @@
               "name": "rules_jvm_external~5.3~maven~org_jetbrains_kotlinx_kotlinx_coroutines_test_jvm_jar_sources_1_6_2",
               "sha256": "ce6704c6bc2c5bff7f8b973abddfdecdfed496044312b5903fbfff68c5e7a867",
               "urls": [
-                "https://maven.google.com/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.6.2/kotlinx-coroutines-test-jvm-1.6.2-sources.jar",
-                "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.6.2/kotlinx-coroutines-test-jvm-1.6.2-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.6.2/kotlinx-coroutines-test-jvm-1.6.2-sources.jar",
                 "https://repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.6.2/kotlinx-coroutines-test-jvm-1.6.2-sources.jar"
               ],
               "downloaded_file_path": "org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.6.2/kotlinx-coroutines-test-jvm-1.6.2-sources.jar"
@@ -4737,9 +4600,6 @@
               "name": "rules_jvm_external~5.3~maven~junit_junit_4_13_2",
               "sha256": "8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3",
               "urls": [
-                "https://maven.google.com/junit/junit/4.13.2/junit-4.13.2.jar",
-                "https://repo.maven.apache.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/junit/junit/4.13.2/junit-4.13.2.jar",
                 "https://repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar"
               ],
               "downloaded_file_path": "junit/junit/4.13.2/junit-4.13.2.jar"
@@ -4752,9 +4612,6 @@
               "name": "rules_jvm_external~5.3~maven~org_hamcrest_hamcrest_core_jar_sources_1_3",
               "sha256": "e223d2d8fbafd66057a8848cc94222d63c3cedd652cc48eddc0ab5c39c0f84df",
               "urls": [
-                "https://maven.google.com/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3-sources.jar",
-                "https://repo.maven.apache.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3-sources.jar",
                 "https://repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3-sources.jar"
               ],
               "downloaded_file_path": "org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3-sources.jar"
@@ -4767,9 +4624,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_truth_extensions_truth_java8_extension_1_1_5",
               "sha256": "9e3c437ef76c0028d1c87d9f81d599301459333cfb3b50e5bf815ed712745140",
               "urls": [
-                "https://maven.google.com/com/google/truth/extensions/truth-java8-extension/1.1.5/truth-java8-extension-1.1.5.jar",
-                "https://repo.maven.apache.org/maven2/com/google/truth/extensions/truth-java8-extension/1.1.5/truth-java8-extension-1.1.5.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/truth/extensions/truth-java8-extension/1.1.5/truth-java8-extension-1.1.5.jar",
                 "https://repo1.maven.org/maven2/com/google/truth/extensions/truth-java8-extension/1.1.5/truth-java8-extension-1.1.5.jar"
               ],
               "downloaded_file_path": "com/google/truth/extensions/truth-java8-extension/1.1.5/truth-java8-extension-1.1.5.jar"
@@ -4782,9 +4636,6 @@
               "name": "rules_jvm_external~5.3~maven~com_squareup_okio_okio_2_10_0",
               "sha256": "a27f091d34aa452e37227e2cfa85809f29012a8ef2501a9b5a125a978e4fcbc1",
               "urls": [
-                "https://maven.google.com/com/squareup/okio/okio/2.10.0/okio-2.10.0.jar",
-                "https://repo.maven.apache.org/maven2/com/squareup/okio/okio/2.10.0/okio-2.10.0.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/squareup/okio/okio/2.10.0/okio-2.10.0.jar",
                 "https://repo1.maven.org/maven2/com/squareup/okio/okio/2.10.0/okio-2.10.0.jar"
               ],
               "downloaded_file_path": "com/squareup/okio/okio/2.10.0/okio-2.10.0.jar"
@@ -4797,9 +4648,6 @@
               "name": "rules_jvm_external~5.3~maven~io_grpc_grpc_context_1_27_2",
               "sha256": "bcbf9055dff453fd6508bd7cca2a0aa2d5f059a9c94beed1f5fda1dc015607b8",
               "urls": [
-                "https://maven.google.com/io/grpc/grpc-context/1.27.2/grpc-context-1.27.2.jar",
-                "https://repo.maven.apache.org/maven2/io/grpc/grpc-context/1.27.2/grpc-context-1.27.2.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/grpc/grpc-context/1.27.2/grpc-context-1.27.2.jar",
                 "https://repo1.maven.org/maven2/io/grpc/grpc-context/1.27.2/grpc-context-1.27.2.jar"
               ],
               "downloaded_file_path": "io/grpc/grpc-context/1.27.2/grpc-context-1.27.2.jar"
@@ -4812,9 +4660,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_transport_native_epoll_jar_sources_4_1_97_Final",
               "sha256": "a6e3591efc09729a68574bec1493bfc0d08019b6ed4a566b6cb4e8e45ab1e937",
               "urls": [
-                "https://maven.google.com/io/netty/netty-transport-native-epoll/4.1.97.Final/netty-transport-native-epoll-4.1.97.Final-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-transport-native-epoll/4.1.97.Final/netty-transport-native-epoll-4.1.97.Final-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-transport-native-epoll/4.1.97.Final/netty-transport-native-epoll-4.1.97.Final-sources.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-transport-native-epoll/4.1.97.Final/netty-transport-native-epoll-4.1.97.Final-sources.jar"
               ],
               "downloaded_file_path": "io/netty/netty-transport-native-epoll/4.1.97.Final/netty-transport-native-epoll-4.1.97.Final-sources.jar"
@@ -4827,9 +4672,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_http_client_google_http_client_gson_1_41_0",
               "sha256": "18766d1bbeb6d363763ef725bc82ed3c8c45f88eadbf149965e6e8c8d9b70d9f",
               "urls": [
-                "https://maven.google.com/com/google/http-client/google-http-client-gson/1.41.0/google-http-client-gson-1.41.0.jar",
-                "https://repo.maven.apache.org/maven2/com/google/http-client/google-http-client-gson/1.41.0/google-http-client-gson-1.41.0.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/http-client/google-http-client-gson/1.41.0/google-http-client-gson-1.41.0.jar",
                 "https://repo1.maven.org/maven2/com/google/http-client/google-http-client-gson/1.41.0/google-http-client-gson-1.41.0.jar"
               ],
               "downloaded_file_path": "com/google/http-client/google-http-client-gson/1.41.0/google-http-client-gson-1.41.0.jar"
@@ -4842,9 +4684,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_http_client_google_http_client_gson_jar_sources_1_41_0",
               "sha256": "d57cf3a5ba02a65e03d1b35e0164502f09dfca08a7547f682b63bff3951aeae6",
               "urls": [
-                "https://maven.google.com/com/google/http-client/google-http-client-gson/1.41.0/google-http-client-gson-1.41.0-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/http-client/google-http-client-gson/1.41.0/google-http-client-gson-1.41.0-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/http-client/google-http-client-gson/1.41.0/google-http-client-gson-1.41.0-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/http-client/google-http-client-gson/1.41.0/google-http-client-gson-1.41.0-sources.jar"
               ],
               "downloaded_file_path": "com/google/http-client/google-http-client-gson/1.41.0/google-http-client-gson-1.41.0-sources.jar"
@@ -4870,9 +4709,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_flogger_flogger_jar_sources_0_7_4",
               "sha256": "b981c9fa749046c51daae47b75aa981d4244c86e54d287ab87f37390d080db01",
               "urls": [
-                "https://maven.google.com/com/google/flogger/flogger/0.7.4/flogger-0.7.4-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/flogger/flogger/0.7.4/flogger-0.7.4-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/flogger/flogger/0.7.4/flogger-0.7.4-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/flogger/flogger/0.7.4/flogger-0.7.4-sources.jar"
               ],
               "downloaded_file_path": "com/google/flogger/flogger/0.7.4/flogger-0.7.4-sources.jar"
@@ -4885,9 +4721,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_codec_socks_4_1_97_Final",
               "sha256": "24081cae8a9685ff3fcde141f5050f28589c22e2ae6c447854e044df6d308028",
               "urls": [
-                "https://maven.google.com/io/netty/netty-codec-socks/4.1.97.Final/netty-codec-socks-4.1.97.Final.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-codec-socks/4.1.97.Final/netty-codec-socks-4.1.97.Final.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-codec-socks/4.1.97.Final/netty-codec-socks-4.1.97.Final.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-codec-socks/4.1.97.Final/netty-codec-socks-4.1.97.Final.jar"
               ],
               "downloaded_file_path": "io/netty/netty-codec-socks/4.1.97.Final/netty-codec-socks-4.1.97.Final.jar"
@@ -4900,9 +4733,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_guava_guava_testlib_31_1_jre",
               "sha256": "aadc71b10d5c3ac474dd16be84cfb18d257e584d1e0a59f8cab64ef4376226ce",
               "urls": [
-                "https://maven.google.com/com/google/guava/guava-testlib/31.1-jre/guava-testlib-31.1-jre.jar",
-                "https://repo.maven.apache.org/maven2/com/google/guava/guava-testlib/31.1-jre/guava-testlib-31.1-jre.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/guava/guava-testlib/31.1-jre/guava-testlib-31.1-jre.jar",
                 "https://repo1.maven.org/maven2/com/google/guava/guava-testlib/31.1-jre/guava-testlib-31.1-jre.jar"
               ],
               "downloaded_file_path": "com/google/guava/guava-testlib/31.1-jre/guava-testlib-31.1-jre.jar"
@@ -4928,9 +4758,6 @@
               "name": "rules_jvm_external~5.3~maven~org_hamcrest_hamcrest_core_1_3",
               "sha256": "66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9",
               "urls": [
-                "https://maven.google.com/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar",
-                "https://repo.maven.apache.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar",
                 "https://repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar"
               ],
               "downloaded_file_path": "org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar"
@@ -5067,9 +4894,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_auto_value_auto_value_1_10_2",
               "sha256": "276ba82816fab66ff057e94a599c4bbdd3ab70700602b540ea17ecfe82a2986a",
               "urls": [
-                "https://maven.google.com/com/google/auto/value/auto-value/1.10.2/auto-value-1.10.2.jar",
-                "https://repo.maven.apache.org/maven2/com/google/auto/value/auto-value/1.10.2/auto-value-1.10.2.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/auto/value/auto-value/1.10.2/auto-value-1.10.2.jar",
                 "https://repo1.maven.org/maven2/com/google/auto/value/auto-value/1.10.2/auto-value-1.10.2.jar"
               ],
               "downloaded_file_path": "com/google/auto/value/auto-value/1.10.2/auto-value-1.10.2.jar"
@@ -5082,9 +4906,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_http_client_google_http_client_jar_sources_1_41_0",
               "sha256": "e01bf612119655934574002ad15c0e80b174949d118ab2378d291d065cab3ebd",
               "urls": [
-                "https://maven.google.com/com/google/http-client/google-http-client/1.41.0/google-http-client-1.41.0-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/http-client/google-http-client/1.41.0/google-http-client-1.41.0-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/http-client/google-http-client/1.41.0/google-http-client-1.41.0-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/http-client/google-http-client/1.41.0/google-http-client-1.41.0-sources.jar"
               ],
               "downloaded_file_path": "com/google/http-client/google-http-client/1.41.0/google-http-client-1.41.0-sources.jar"
@@ -5097,9 +4918,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_guava_guava_32_0_1_jre",
               "sha256": "bd7fa227591fb8509677d0d1122cf95158f3b8a9f45653f58281d879f6dc48c5",
               "urls": [
-                "https://maven.google.com/com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre.jar",
-                "https://repo.maven.apache.org/maven2/com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre.jar",
                 "https://repo1.maven.org/maven2/com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre.jar"
               ],
               "downloaded_file_path": "com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre.jar"
@@ -5112,9 +4930,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_truth_truth_1_1_5",
               "sha256": "7f6d50d6f43a102942ef2c5a05f37a84f77788bb448cf33cceebf86d34e575c0",
               "urls": [
-                "https://maven.google.com/com/google/truth/truth/1.1.5/truth-1.1.5.jar",
-                "https://repo.maven.apache.org/maven2/com/google/truth/truth/1.1.5/truth-1.1.5.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/truth/truth/1.1.5/truth-1.1.5.jar",
                 "https://repo1.maven.org/maven2/com/google/truth/truth/1.1.5/truth-1.1.5.jar"
               ],
               "downloaded_file_path": "com/google/truth/truth/1.1.5/truth-1.1.5.jar"
@@ -5140,9 +4955,6 @@
               "name": "rules_jvm_external~5.3~maven~net_bytebuddy_byte_buddy_jar_sources_1_12_7",
               "sha256": "94a6f5d7d8491ca7541f2da90bac4f084e04264112e936334493b2c2f094455d",
               "urls": [
-                "https://maven.google.com/net/bytebuddy/byte-buddy/1.12.7/byte-buddy-1.12.7-sources.jar",
-                "https://repo.maven.apache.org/maven2/net/bytebuddy/byte-buddy/1.12.7/byte-buddy-1.12.7-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/net/bytebuddy/byte-buddy/1.12.7/byte-buddy-1.12.7-sources.jar",
                 "https://repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.12.7/byte-buddy-1.12.7-sources.jar"
               ],
               "downloaded_file_path": "net/bytebuddy/byte-buddy/1.12.7/byte-buddy-1.12.7-sources.jar"
@@ -5155,9 +4967,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_transport_4_1_97_Final",
               "sha256": "197fd2d6c6b4afe677d9e95bf2e36b49a0bcabdfce0583683fb73f29a3f5a407",
               "urls": [
-                "https://maven.google.com/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final.jar"
               ],
               "downloaded_file_path": "io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final.jar"
@@ -5170,9 +4979,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_j2objc_j2objc_annotations_2_8",
               "sha256": "f02a95fa1a5e95edb3ed859fd0fb7df709d121a35290eff8b74dce2ab7f4d6ed",
               "urls": [
-                "https://maven.google.com/com/google/j2objc/j2objc-annotations/2.8/j2objc-annotations-2.8.jar",
-                "https://repo.maven.apache.org/maven2/com/google/j2objc/j2objc-annotations/2.8/j2objc-annotations-2.8.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/j2objc/j2objc-annotations/2.8/j2objc-annotations-2.8.jar",
                 "https://repo1.maven.org/maven2/com/google/j2objc/j2objc-annotations/2.8/j2objc-annotations-2.8.jar"
               ],
               "downloaded_file_path": "com/google/j2objc/j2objc-annotations/2.8/j2objc-annotations-2.8.jar"
@@ -5185,9 +4991,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_codec_http2_4_1_97_Final",
               "sha256": "51fabf675563b59dc51dde22d29dbc5a20f836469cf48b8d53a07d3db0d775ad",
               "urls": [
-                "https://maven.google.com/io/netty/netty-codec-http2/4.1.97.Final/netty-codec-http2-4.1.97.Final.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-codec-http2/4.1.97.Final/netty-codec-http2-4.1.97.Final.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-codec-http2/4.1.97.Final/netty-codec-http2-4.1.97.Final.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-codec-http2/4.1.97.Final/netty-codec-http2-4.1.97.Final.jar"
               ],
               "downloaded_file_path": "io/netty/netty-codec-http2/4.1.97.Final/netty-codec-http2-4.1.97.Final.jar"
@@ -5200,9 +5003,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_protobuf_protobuf_java_jar_sources_3_23_2",
               "sha256": "f258013889c5582275b5e7c2bc3be45bc2daca2063dfc35bacd91529045d6d05",
               "urls": [
-                "https://maven.google.com/com/google/protobuf/protobuf-java/3.23.2/protobuf-java-3.23.2-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/protobuf/protobuf-java/3.23.2/protobuf-java-3.23.2-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/protobuf/protobuf-java/3.23.2/protobuf-java-3.23.2-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/protobuf/protobuf-java/3.23.2/protobuf-java-3.23.2-sources.jar"
               ],
               "downloaded_file_path": "com/google/protobuf/protobuf-java/3.23.2/protobuf-java-3.23.2-sources.jar"
@@ -5215,9 +5015,6 @@
               "name": "rules_jvm_external~5.3~maven~net_java_dev_jna_jna_jar_sources_5_13_0",
               "sha256": "a4c45843e8f60df141c4f37602365a421bb278ca1ef30ba0a043d6a871dd29f4",
               "urls": [
-                "https://maven.google.com/net/java/dev/jna/jna/5.13.0/jna-5.13.0-sources.jar",
-                "https://repo.maven.apache.org/maven2/net/java/dev/jna/jna/5.13.0/jna-5.13.0-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/net/java/dev/jna/jna/5.13.0/jna-5.13.0-sources.jar",
                 "https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.13.0/jna-5.13.0-sources.jar"
               ],
               "downloaded_file_path": "net/java/dev/jna/jna/5.13.0/jna-5.13.0-sources.jar"
@@ -5256,9 +5053,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_flogger_flogger_0_7_4",
               "sha256": "77aac11b3c26e1e184dcfe79c55ac6e27967a6dfe1c04146125176940bc64a55",
               "urls": [
-                "https://maven.google.com/com/google/flogger/flogger/0.7.4/flogger-0.7.4.jar",
-                "https://repo.maven.apache.org/maven2/com/google/flogger/flogger/0.7.4/flogger-0.7.4.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/flogger/flogger/0.7.4/flogger-0.7.4.jar",
                 "https://repo1.maven.org/maven2/com/google/flogger/flogger/0.7.4/flogger-0.7.4.jar"
               ],
               "downloaded_file_path": "com/google/flogger/flogger/0.7.4/flogger-0.7.4.jar"
@@ -5271,9 +5065,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_code_findbugs_jsr305_3_0_2",
               "sha256": "766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7",
               "urls": [
-                "https://maven.google.com/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar",
-                "https://repo.maven.apache.org/maven2/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar",
                 "https://repo1.maven.org/maven2/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar"
               ],
               "downloaded_file_path": "com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar"
@@ -5334,9 +5125,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_http_client_google_http_client_1_41_0",
               "sha256": "4a42d2c383373bf61c798f1882745989b9836bb032a8a4019890ecb6cd903ef3",
               "urls": [
-                "https://maven.google.com/com/google/http-client/google-http-client/1.41.0/google-http-client-1.41.0.jar",
-                "https://repo.maven.apache.org/maven2/com/google/http-client/google-http-client/1.41.0/google-http-client-1.41.0.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/http-client/google-http-client/1.41.0/google-http-client-1.41.0.jar",
                 "https://repo1.maven.org/maven2/com/google/http-client/google-http-client/1.41.0/google-http-client-1.41.0.jar"
               ],
               "downloaded_file_path": "com/google/http-client/google-http-client/1.41.0/google-http-client-1.41.0.jar"
@@ -5349,9 +5137,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_re2j_re2j_jar_sources_1_7",
               "sha256": "ddc3b47bb1e556ac4c0d02c9d8ff18f3260198b76b720567a70eed0a03d3fed6",
               "urls": [
-                "https://maven.google.com/com/google/re2j/re2j/1.7/re2j-1.7-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/re2j/re2j/1.7/re2j-1.7-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/re2j/re2j/1.7/re2j-1.7-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/re2j/re2j/1.7/re2j-1.7-sources.jar"
               ],
               "downloaded_file_path": "com/google/re2j/re2j/1.7/re2j-1.7-sources.jar"
@@ -5377,9 +5162,6 @@
               "name": "rules_jvm_external~5.3~maven~org_jetbrains_kotlin_kotlin_stdlib_jar_sources_1_6_21",
               "sha256": "07a8017092bfac0679358f200be35d49b9dc0a6bb42c70076dbbff57ed3d3814",
               "urls": [
-                "https://maven.google.com/org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21-sources.jar",
-                "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21-sources.jar",
                 "https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21-sources.jar"
               ],
               "downloaded_file_path": "org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21-sources.jar"
@@ -5405,9 +5187,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_auto_value_auto_value_annotations_jar_sources_1_10_2",
               "sha256": "851f68287b05e16b1eaee48a8ee0ddcb00b63c5a4087e77085101f8c45943448",
               "urls": [
-                "https://maven.google.com/com/google/auto/value/auto-value-annotations/1.10.2/auto-value-annotations-1.10.2-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/auto/value/auto-value-annotations/1.10.2/auto-value-annotations-1.10.2-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/auto/value/auto-value-annotations/1.10.2/auto-value-annotations-1.10.2-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/auto/value/auto-value-annotations/1.10.2/auto-value-annotations-1.10.2-sources.jar"
               ],
               "downloaded_file_path": "com/google/auto/value/auto-value-annotations/1.10.2/auto-value-annotations-1.10.2-sources.jar"
@@ -5420,9 +5199,6 @@
               "name": "rules_jvm_external~5.3~maven~commons_codec_commons_codec_jar_sources_1_11",
               "sha256": "901cb5d1f7c2877017c95d3c5efd5a497738d0162ef72cdf58e9cb13f50b2e9c",
               "urls": [
-                "https://maven.google.com/commons-codec/commons-codec/1.11/commons-codec-1.11-sources.jar",
-                "https://repo.maven.apache.org/maven2/commons-codec/commons-codec/1.11/commons-codec-1.11-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/commons-codec/commons-codec/1.11/commons-codec-1.11-sources.jar",
                 "https://repo1.maven.org/maven2/commons-codec/commons-codec/1.11/commons-codec-1.11-sources.jar"
               ],
               "downloaded_file_path": "commons-codec/commons-codec/1.11/commons-codec-1.11-sources.jar"
@@ -5435,9 +5211,6 @@
               "name": "rules_jvm_external~5.3~maven~org_jetbrains_annotations_jar_sources_13_0",
               "sha256": "42a5e144b8e81d50d6913d1007b695e62e614705268d8cf9f13dbdc478c2c68e",
               "urls": [
-                "https://maven.google.com/org/jetbrains/annotations/13.0/annotations-13.0-sources.jar",
-                "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/jetbrains/annotations/13.0/annotations-13.0-sources.jar",
                 "https://repo1.maven.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0-sources.jar"
               ],
               "downloaded_file_path": "org/jetbrains/annotations/13.0/annotations-13.0-sources.jar"
@@ -5450,9 +5223,6 @@
               "name": "rules_jvm_external~5.3~maven~io_opencensus_opencensus_api_0_31_0",
               "sha256": "702ba55d78f39d55195dcf041fdfaab7a7490a9ac45013542487ed9e4d3a4d23",
               "urls": [
-                "https://maven.google.com/io/opencensus/opencensus-api/0.31.0/opencensus-api-0.31.0.jar",
-                "https://repo.maven.apache.org/maven2/io/opencensus/opencensus-api/0.31.0/opencensus-api-0.31.0.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/opencensus/opencensus-api/0.31.0/opencensus-api-0.31.0.jar",
                 "https://repo1.maven.org/maven2/io/opencensus/opencensus-api/0.31.0/opencensus-api-0.31.0.jar"
               ],
               "downloaded_file_path": "io/opencensus/opencensus-api/0.31.0/opencensus-api-0.31.0.jar"
@@ -5465,9 +5235,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_guava_failureaccess_1_0_1",
               "sha256": "a171ee4c734dd2da837e4b16be9df4661afab72a41adaf31eb84dfdaf936ca26",
               "urls": [
-                "https://maven.google.com/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar",
-                "https://repo.maven.apache.org/maven2/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar",
                 "https://repo1.maven.org/maven2/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar"
               ],
               "downloaded_file_path": "com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar"
@@ -5480,9 +5247,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_tcnative_boringssl_static_jar_osx_aarch_64_2_0_61_Final",
               "sha256": "58e0302c9fde3db984c3ff7ee7ec7159dc0320bdb91533cc290e12e40911cd1a",
               "urls": [
-                "https://maven.google.com/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-osx-aarch_64.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-osx-aarch_64.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-osx-aarch_64.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-osx-aarch_64.jar"
               ],
               "downloaded_file_path": "io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-osx-aarch_64.jar"
@@ -5508,9 +5272,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_transport_classes_epoll_jar_sources_4_1_97_Final",
               "sha256": "96e2dbe0d3d8d4dae3ddc23443c174388373c1f6dd76401e23a26bd952bf4d08",
               "urls": [
-                "https://maven.google.com/io/netty/netty-transport-classes-epoll/4.1.97.Final/netty-transport-classes-epoll-4.1.97.Final-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-transport-classes-epoll/4.1.97.Final/netty-transport-classes-epoll-4.1.97.Final-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-transport-classes-epoll/4.1.97.Final/netty-transport-classes-epoll-4.1.97.Final-sources.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-transport-classes-epoll/4.1.97.Final/netty-transport-classes-epoll-4.1.97.Final-sources.jar"
               ],
               "downloaded_file_path": "io/netty/netty-transport-classes-epoll/4.1.97.Final/netty-transport-classes-epoll-4.1.97.Final-sources.jar"
@@ -5523,9 +5284,6 @@
               "name": "rules_jvm_external~5.3~maven~io_perfmark_perfmark_api_0_26_0",
               "sha256": "b7d23e93a34537ce332708269a0d1404788a5b5e1949e82f5535fce51b3ea95b",
               "urls": [
-                "https://maven.google.com/io/perfmark/perfmark-api/0.26.0/perfmark-api-0.26.0.jar",
-                "https://repo.maven.apache.org/maven2/io/perfmark/perfmark-api/0.26.0/perfmark-api-0.26.0.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/perfmark/perfmark-api/0.26.0/perfmark-api-0.26.0.jar",
                 "https://repo1.maven.org/maven2/io/perfmark/perfmark-api/0.26.0/perfmark-api-0.26.0.jar"
               ],
               "downloaded_file_path": "io/perfmark/perfmark-api/0.26.0/perfmark-api-0.26.0.jar"
@@ -5538,9 +5296,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_codec_http_4_1_97_Final",
               "sha256": "7d6cad9cbd015e41f69787ce6a34beeba032b381e32e88207908431dc812778a",
               "urls": [
-                "https://maven.google.com/io/netty/netty-codec-http/4.1.97.Final/netty-codec-http-4.1.97.Final.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-codec-http/4.1.97.Final/netty-codec-http-4.1.97.Final.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-codec-http/4.1.97.Final/netty-codec-http-4.1.97.Final.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-codec-http/4.1.97.Final/netty-codec-http-4.1.97.Final.jar"
               ],
               "downloaded_file_path": "io/netty/netty-codec-http/4.1.97.Final/netty-codec-http-4.1.97.Final.jar"
@@ -5566,9 +5321,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_codec_http2_jar_sources_4_1_97_Final",
               "sha256": "7d8c2ec86545a19ccca24009809027f1745bc8339c8a97bcdc5833abd58e2ab3",
               "urls": [
-                "https://maven.google.com/io/netty/netty-codec-http2/4.1.97.Final/netty-codec-http2-4.1.97.Final-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-codec-http2/4.1.97.Final/netty-codec-http2-4.1.97.Final-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-codec-http2/4.1.97.Final/netty-codec-http2-4.1.97.Final-sources.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-codec-http2/4.1.97.Final/netty-codec-http2-4.1.97.Final-sources.jar"
               ],
               "downloaded_file_path": "io/netty/netty-codec-http2/4.1.97.Final/netty-codec-http2-4.1.97.Final-sources.jar"
@@ -5603,9 +5355,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_resolver_4_1_97_Final",
               "sha256": "38a018c6d9fb2cb11b72881354782b45080bbd20b9a0ad6cde28b80d431ed0b1",
               "urls": [
-                "https://maven.google.com/io/netty/netty-resolver/4.1.97.Final/netty-resolver-4.1.97.Final.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-resolver/4.1.97.Final/netty-resolver-4.1.97.Final.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-resolver/4.1.97.Final/netty-resolver-4.1.97.Final.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-resolver/4.1.97.Final/netty-resolver-4.1.97.Final.jar"
               ],
               "downloaded_file_path": "io/netty/netty-resolver/4.1.97.Final/netty-resolver-4.1.97.Final.jar"
@@ -5645,9 +5394,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_tcnative_boringssl_static_2_0_61_Final",
               "sha256": "b6f974972c44cd6f9cecabc255290286faac40b6393c66c3c3c0db7f421cc28e",
               "urls": [
-                "https://maven.google.com/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final.jar"
               ],
               "downloaded_file_path": "io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final.jar"
@@ -5673,9 +5419,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_auth_google_auth_library_oauth2_http_1_4_0",
               "sha256": "bbf99bba3394c699c48b2e67257dfa96b84c6ee54c348bd426c94207b84254ba",
               "urls": [
-                "https://maven.google.com/com/google/auth/google-auth-library-oauth2-http/1.4.0/google-auth-library-oauth2-http-1.4.0.jar",
-                "https://repo.maven.apache.org/maven2/com/google/auth/google-auth-library-oauth2-http/1.4.0/google-auth-library-oauth2-http-1.4.0.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/auth/google-auth-library-oauth2-http/1.4.0/google-auth-library-oauth2-http-1.4.0.jar",
                 "https://repo1.maven.org/maven2/com/google/auth/google-auth-library-oauth2-http/1.4.0/google-auth-library-oauth2-http-1.4.0.jar"
               ],
               "downloaded_file_path": "com/google/auth/google-auth-library-oauth2-http/1.4.0/google-auth-library-oauth2-http-1.4.0.jar"
@@ -5688,9 +5431,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_tcnative_boringssl_static_jar_windows_x86_64_2_0_61_Final",
               "sha256": "17cd2fa3c63b7ed23edea01c945e55cb7baed1faa0f553732c3f5f56da90b3e0",
               "urls": [
-                "https://maven.google.com/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-windows-x86_64.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-windows-x86_64.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-windows-x86_64.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-windows-x86_64.jar"
               ],
               "downloaded_file_path": "io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-windows-x86_64.jar"
@@ -5703,9 +5443,6 @@
               "name": "rules_jvm_external~5.3~maven~org_objenesis_objenesis_3_3",
               "sha256": "02dfd0b0439a5591e35b708ed2f5474eb0948f53abf74637e959b8e4ef69bfeb",
               "urls": [
-                "https://maven.google.com/org/objenesis/objenesis/3.3/objenesis-3.3.jar",
-                "https://repo.maven.apache.org/maven2/org/objenesis/objenesis/3.3/objenesis-3.3.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/objenesis/objenesis/3.3/objenesis-3.3.jar",
                 "https://repo1.maven.org/maven2/org/objenesis/objenesis/3.3/objenesis-3.3.jar"
               ],
               "downloaded_file_path": "org/objenesis/objenesis/3.3/objenesis-3.3.jar"
@@ -5718,9 +5455,6 @@
               "name": "rules_jvm_external~5.3~maven~org_jetbrains_kotlin_kotlin_stdlib_common_jar_sources_1_6_21",
               "sha256": "17553b0086581b61038a569b40a8cb3eb54ece42460d230f3723ae84cc7d131f",
               "urls": [
-                "https://maven.google.com/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21-sources.jar",
-                "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21-sources.jar",
                 "https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21-sources.jar"
               ],
               "downloaded_file_path": "org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21-sources.jar"
@@ -5773,9 +5507,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_j2objc_j2objc_annotations_jar_sources_2_8",
               "sha256": "7413eed41f111453a08837f5ac680edded7faed466cbd35745e402e13f4cc3f5",
               "urls": [
-                "https://maven.google.com/com/google/j2objc/j2objc-annotations/2.8/j2objc-annotations-2.8-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/j2objc/j2objc-annotations/2.8/j2objc-annotations-2.8-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/j2objc/j2objc-annotations/2.8/j2objc-annotations-2.8-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/j2objc/j2objc-annotations/2.8/j2objc-annotations-2.8-sources.jar"
               ],
               "downloaded_file_path": "com/google/j2objc/j2objc-annotations/2.8/j2objc-annotations-2.8-sources.jar"
@@ -5797,9 +5528,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_guava_guava_jar_sources_32_0_1_jre",
               "sha256": "9105dfc522fb440b39ff8da07cc56aacf65a9f765044c7803a9f32e36e05a22b",
               "urls": [
-                "https://maven.google.com/com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre-sources.jar"
               ],
               "downloaded_file_path": "com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre-sources.jar"
@@ -5812,9 +5540,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_transport_native_unix_common_jar_sources_4_1_97_Final",
               "sha256": "de1ea25a58fadbfa64061769281797cc9b133a48d0a039015d5b3d8f16cbfddc",
               "urls": [
-                "https://maven.google.com/io/netty/netty-transport-native-unix-common/4.1.97.Final/netty-transport-native-unix-common-4.1.97.Final-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-transport-native-unix-common/4.1.97.Final/netty-transport-native-unix-common-4.1.97.Final-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-transport-native-unix-common/4.1.97.Final/netty-transport-native-unix-common-4.1.97.Final-sources.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-transport-native-unix-common/4.1.97.Final/netty-transport-native-unix-common-4.1.97.Final-sources.jar"
               ],
               "downloaded_file_path": "io/netty/netty-transport-native-unix-common/4.1.97.Final/netty-transport-native-unix-common-4.1.97.Final-sources.jar"
@@ -5827,9 +5552,6 @@
               "name": "rules_jvm_external~5.3~maven~org_codehaus_mojo_animal_sniffer_annotations_1_23",
               "sha256": "9ffe526bf43a6348e9d8b33b9cd6f580a7f5eed0cf055913007eda263de974d0",
               "urls": [
-                "https://maven.google.com/org/codehaus/mojo/animal-sniffer-annotations/1.23/animal-sniffer-annotations-1.23.jar",
-                "https://repo.maven.apache.org/maven2/org/codehaus/mojo/animal-sniffer-annotations/1.23/animal-sniffer-annotations-1.23.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/codehaus/mojo/animal-sniffer-annotations/1.23/animal-sniffer-annotations-1.23.jar",
                 "https://repo1.maven.org/maven2/org/codehaus/mojo/animal-sniffer-annotations/1.23/animal-sniffer-annotations-1.23.jar"
               ],
               "downloaded_file_path": "org/codehaus/mojo/animal-sniffer-annotations/1.23/animal-sniffer-annotations-1.23.jar"
@@ -5842,9 +5564,6 @@
               "name": "rules_jvm_external~5.3~maven~io_opencensus_opencensus_contrib_http_util_0_28_0",
               "sha256": "49c3db2a29f1fdb2f73928cbea969bd1d40fab7cc5bb6273022babd96f7a789b",
               "urls": [
-                "https://maven.google.com/io/opencensus/opencensus-contrib-http-util/0.28.0/opencensus-contrib-http-util-0.28.0.jar",
-                "https://repo.maven.apache.org/maven2/io/opencensus/opencensus-contrib-http-util/0.28.0/opencensus-contrib-http-util-0.28.0.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/opencensus/opencensus-contrib-http-util/0.28.0/opencensus-contrib-http-util-0.28.0.jar",
                 "https://repo1.maven.org/maven2/io/opencensus/opencensus-contrib-http-util/0.28.0/opencensus-contrib-http-util-0.28.0.jar"
               ],
               "downloaded_file_path": "io/opencensus/opencensus-contrib-http-util/0.28.0/opencensus-contrib-http-util-0.28.0.jar"
@@ -5914,9 +5633,6 @@
               "name": "rules_jvm_external~5.3~maven~org_jetbrains_kotlin_kotlin_stdlib_jdk8_1_6_21",
               "sha256": "dab45489b47736d59fce44b80676f1947a9b6bcab10fd60e878a83bd82a6954c",
               "urls": [
-                "https://maven.google.com/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21.jar",
-                "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21.jar",
                 "https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21.jar"
               ],
               "downloaded_file_path": "org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21.jar"
@@ -5929,9 +5645,6 @@
               "name": "rules_jvm_external~5.3~maven~org_apache_httpcomponents_httpclient_jar_sources_4_5_13",
               "sha256": "b1e9194fd83ce135831e28346731d9644cb2a08dea37ada2aa56ceb8f1b0c566",
               "urls": [
-                "https://maven.google.com/org/apache/httpcomponents/httpclient/4.5.13/httpclient-4.5.13-sources.jar",
-                "https://repo.maven.apache.org/maven2/org/apache/httpcomponents/httpclient/4.5.13/httpclient-4.5.13-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/apache/httpcomponents/httpclient/4.5.13/httpclient-4.5.13-sources.jar",
                 "https://repo1.maven.org/maven2/org/apache/httpcomponents/httpclient/4.5.13/httpclient-4.5.13-sources.jar"
               ],
               "downloaded_file_path": "org/apache/httpcomponents/httpclient/4.5.13/httpclient-4.5.13-sources.jar"
@@ -5957,9 +5670,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_truth_truth_jar_sources_1_1_5",
               "sha256": "f1a94449ed48392525626f4e5edeff5c6e66af21c4c009ebb49b5109ac5db6b2",
               "urls": [
-                "https://maven.google.com/com/google/truth/truth/1.1.5/truth-1.1.5-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/truth/truth/1.1.5/truth-1.1.5-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/truth/truth/1.1.5/truth-1.1.5-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/truth/truth/1.1.5/truth-1.1.5-sources.jar"
               ],
               "downloaded_file_path": "com/google/truth/truth/1.1.5/truth-1.1.5-sources.jar"
@@ -5972,9 +5682,6 @@
               "name": "rules_jvm_external~5.3~maven~org_checkerframework_checker_qual_3_35_0",
               "sha256": "21060faa086dfdec830a40f9460677a75ebbdcffe7cdc012ad1069e9cc30a959",
               "urls": [
-                "https://maven.google.com/org/checkerframework/checker-qual/3.35.0/checker-qual-3.35.0.jar",
-                "https://repo.maven.apache.org/maven2/org/checkerframework/checker-qual/3.35.0/checker-qual-3.35.0.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/checkerframework/checker-qual/3.35.0/checker-qual-3.35.0.jar",
                 "https://repo1.maven.org/maven2/org/checkerframework/checker-qual/3.35.0/checker-qual-3.35.0.jar"
               ],
               "downloaded_file_path": "org/checkerframework/checker-qual/3.35.0/checker-qual-3.35.0.jar"
@@ -5987,9 +5694,6 @@
               "name": "rules_jvm_external~5.3~maven~org_objenesis_objenesis_jar_sources_3_3",
               "sha256": "d06164f8ca002c8ef193cef2d682822014dd330505616af93a3fb64226fc131d",
               "urls": [
-                "https://maven.google.com/org/objenesis/objenesis/3.3/objenesis-3.3-sources.jar",
-                "https://repo.maven.apache.org/maven2/org/objenesis/objenesis/3.3/objenesis-3.3-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/objenesis/objenesis/3.3/objenesis-3.3-sources.jar",
                 "https://repo1.maven.org/maven2/org/objenesis/objenesis/3.3/objenesis-3.3-sources.jar"
               ],
               "downloaded_file_path": "org/objenesis/objenesis/3.3/objenesis-3.3-sources.jar"
@@ -6002,9 +5706,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_auth_google_auth_library_oauth2_http_jar_sources_1_4_0",
               "sha256": "7af3571aad62df42a56051c212c00a334c8cbd886b5bb06da1abc82417e3f5b7",
               "urls": [
-                "https://maven.google.com/com/google/auth/google-auth-library-oauth2-http/1.4.0/google-auth-library-oauth2-http-1.4.0-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/auth/google-auth-library-oauth2-http/1.4.0/google-auth-library-oauth2-http-1.4.0-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/auth/google-auth-library-oauth2-http/1.4.0/google-auth-library-oauth2-http-1.4.0-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/auth/google-auth-library-oauth2-http/1.4.0/google-auth-library-oauth2-http-1.4.0-sources.jar"
               ],
               "downloaded_file_path": "com/google/auth/google-auth-library-oauth2-http/1.4.0/google-auth-library-oauth2-http-1.4.0-sources.jar"
@@ -6061,9 +5762,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_auth_google_auth_library_credentials_1_4_0",
               "sha256": "6ad4416d9360a1df3a660c43493e9605416ddd4de953ffbb14dd582a591b09a1",
               "urls": [
-                "https://maven.google.com/com/google/auth/google-auth-library-credentials/1.4.0/google-auth-library-credentials-1.4.0.jar",
-                "https://repo.maven.apache.org/maven2/com/google/auth/google-auth-library-credentials/1.4.0/google-auth-library-credentials-1.4.0.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/auth/google-auth-library-credentials/1.4.0/google-auth-library-credentials-1.4.0.jar",
                 "https://repo1.maven.org/maven2/com/google/auth/google-auth-library-credentials/1.4.0/google-auth-library-credentials-1.4.0.jar"
               ],
               "downloaded_file_path": "com/google/auth/google-auth-library-credentials/1.4.0/google-auth-library-credentials-1.4.0.jar"
@@ -6098,9 +5796,6 @@
               "name": "rules_jvm_external~5.3~maven~org_jetbrains_kotlin_kotlin_stdlib_jdk7_jar_sources_1_6_21",
               "sha256": "9f5230a4301dcfe7047dd08f9b38811f76cfed60e6a10957bec7982c288f6c0e",
               "urls": [
-                "https://maven.google.com/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21-sources.jar",
-                "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21-sources.jar",
                 "https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21-sources.jar"
               ],
               "downloaded_file_path": "org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21-sources.jar"
@@ -6113,9 +5808,6 @@
               "name": "rules_jvm_external~5.3~maven~net_bytebuddy_byte_buddy_agent_jar_sources_1_12_7",
               "sha256": "a6d5b1157061231f61c833f1cc76c71287947c75b4064404a47f01f6e970c544",
               "urls": [
-                "https://maven.google.com/net/bytebuddy/byte-buddy-agent/1.12.7/byte-buddy-agent-1.12.7-sources.jar",
-                "https://repo.maven.apache.org/maven2/net/bytebuddy/byte-buddy-agent/1.12.7/byte-buddy-agent-1.12.7-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/net/bytebuddy/byte-buddy-agent/1.12.7/byte-buddy-agent-1.12.7-sources.jar",
                 "https://repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.12.7/byte-buddy-agent-1.12.7-sources.jar"
               ],
               "downloaded_file_path": "net/bytebuddy/byte-buddy-agent/1.12.7/byte-buddy-agent-1.12.7-sources.jar"
@@ -6128,9 +5820,6 @@
               "name": "rules_jvm_external~5.3~maven~org_mockito_mockito_core_4_3_1",
               "sha256": "148de2c6928365db29443ca12d35c930d9f481172b934fdd801d1cb1409ea83a",
               "urls": [
-                "https://maven.google.com/org/mockito/mockito-core/4.3.1/mockito-core-4.3.1.jar",
-                "https://repo.maven.apache.org/maven2/org/mockito/mockito-core/4.3.1/mockito-core-4.3.1.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/mockito/mockito-core/4.3.1/mockito-core-4.3.1.jar",
                 "https://repo1.maven.org/maven2/org/mockito/mockito-core/4.3.1/mockito-core-4.3.1.jar"
               ],
               "downloaded_file_path": "org/mockito/mockito-core/4.3.1/mockito-core-4.3.1.jar"
@@ -6152,9 +5841,6 @@
               "name": "rules_jvm_external~5.3~maven~org_apache_httpcomponents_httpcore_jar_sources_4_4_15",
               "sha256": "1510fc72cf2858244bdeb0d7f5d266fe584ecbd2ffe0d91b10a6d80641cd1985",
               "urls": [
-                "https://maven.google.com/org/apache/httpcomponents/httpcore/4.4.15/httpcore-4.4.15-sources.jar",
-                "https://repo.maven.apache.org/maven2/org/apache/httpcomponents/httpcore/4.4.15/httpcore-4.4.15-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/apache/httpcomponents/httpcore/4.4.15/httpcore-4.4.15-sources.jar",
                 "https://repo1.maven.org/maven2/org/apache/httpcomponents/httpcore/4.4.15/httpcore-4.4.15-sources.jar"
               ],
               "downloaded_file_path": "org/apache/httpcomponents/httpcore/4.4.15/httpcore-4.4.15-sources.jar"
@@ -6202,9 +5888,6 @@
               "name": "rules_jvm_external~5.3~maven~org_ow2_asm_asm_jar_sources_9_5",
               "sha256": "11214bbba797e0615402b8d57fd4be83c93a65244c5a88778015520d61078376",
               "urls": [
-                "https://maven.google.com/org/ow2/asm/asm/9.5/asm-9.5-sources.jar",
-                "https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.5/asm-9.5-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/ow2/asm/asm/9.5/asm-9.5-sources.jar",
                 "https://repo1.maven.org/maven2/org/ow2/asm/asm/9.5/asm-9.5-sources.jar"
               ],
               "downloaded_file_path": "org/ow2/asm/asm/9.5/asm-9.5-sources.jar"
@@ -6226,9 +5909,6 @@
               "name": "rules_jvm_external~5.3~maven~com_squareup_okhttp_okhttp_jar_sources_2_7_5",
               "sha256": "edfafce3b9abb0fc31b5c72cc5f533516a08f7b86754138f36595a6837746ddf",
               "urls": [
-                "https://maven.google.com/com/squareup/okhttp/okhttp/2.7.5/okhttp-2.7.5-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/squareup/okhttp/okhttp/2.7.5/okhttp-2.7.5-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/squareup/okhttp/okhttp/2.7.5/okhttp-2.7.5-sources.jar",
                 "https://repo1.maven.org/maven2/com/squareup/okhttp/okhttp/2.7.5/okhttp-2.7.5-sources.jar"
               ],
               "downloaded_file_path": "com/squareup/okhttp/okhttp/2.7.5/okhttp-2.7.5-sources.jar"
@@ -6241,9 +5921,6 @@
               "name": "rules_jvm_external~5.3~maven~net_bytebuddy_byte_buddy_agent_1_12_7",
               "sha256": "73d84bb6e8e8980e674d796a29063f510ceb527c6f8c912a08a13e236be05c71",
               "urls": [
-                "https://maven.google.com/net/bytebuddy/byte-buddy-agent/1.12.7/byte-buddy-agent-1.12.7.jar",
-                "https://repo.maven.apache.org/maven2/net/bytebuddy/byte-buddy-agent/1.12.7/byte-buddy-agent-1.12.7.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/net/bytebuddy/byte-buddy-agent/1.12.7/byte-buddy-agent-1.12.7.jar",
                 "https://repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.12.7/byte-buddy-agent-1.12.7.jar"
               ],
               "downloaded_file_path": "net/bytebuddy/byte-buddy-agent/1.12.7/byte-buddy-agent-1.12.7.jar"
@@ -6269,9 +5946,6 @@
               "name": "rules_jvm_external~5.3~maven~org_apache_httpcomponents_httpclient_4_5_13",
               "sha256": "6fe9026a566c6a5001608cf3fc32196641f6c1e5e1986d1037ccdbd5f31ef743",
               "urls": [
-                "https://maven.google.com/org/apache/httpcomponents/httpclient/4.5.13/httpclient-4.5.13.jar",
-                "https://repo.maven.apache.org/maven2/org/apache/httpcomponents/httpclient/4.5.13/httpclient-4.5.13.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/apache/httpcomponents/httpclient/4.5.13/httpclient-4.5.13.jar",
                 "https://repo1.maven.org/maven2/org/apache/httpcomponents/httpclient/4.5.13/httpclient-4.5.13.jar"
               ],
               "downloaded_file_path": "org/apache/httpcomponents/httpclient/4.5.13/httpclient-4.5.13.jar"
@@ -6328,9 +6002,6 @@
               "name": "rules_jvm_external~5.3~maven~com_googlecode_java_diff_utils_diffutils_jar_sources_1_2_1",
               "sha256": "a0044fd2f8dfcf8d2d5c1cb7319f9bd22c60534199f5fac597c3760e642b7ae4",
               "urls": [
-                "https://maven.google.com/com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1-sources.jar",
                 "https://repo1.maven.org/maven2/com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1-sources.jar"
               ],
               "downloaded_file_path": "com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1-sources.jar"
@@ -6365,9 +6036,6 @@
               "name": "rules_jvm_external~5.3~maven~org_checkerframework_checker_qual_jar_sources_3_35_0",
               "sha256": "3657defebe084f6b854af29a9b21193d96d5795ea5caf1fa60c7915c4000f4c1",
               "urls": [
-                "https://maven.google.com/org/checkerframework/checker-qual/3.35.0/checker-qual-3.35.0-sources.jar",
-                "https://repo.maven.apache.org/maven2/org/checkerframework/checker-qual/3.35.0/checker-qual-3.35.0-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/checkerframework/checker-qual/3.35.0/checker-qual-3.35.0-sources.jar",
                 "https://repo1.maven.org/maven2/org/checkerframework/checker-qual/3.35.0/checker-qual-3.35.0-sources.jar"
               ],
               "downloaded_file_path": "org/checkerframework/checker-qual/3.35.0/checker-qual-3.35.0-sources.jar"
@@ -6402,9 +6070,6 @@
               "name": "rules_jvm_external~5.3~maven~io_opencensus_opencensus_contrib_grpc_metrics_0_31_0",
               "sha256": "b28fc72490edd49c4c40a3c216b709200833fb361f7f602f1c7c9a527f7b7f63",
               "urls": [
-                "https://maven.google.com/io/opencensus/opencensus-contrib-grpc-metrics/0.31.0/opencensus-contrib-grpc-metrics-0.31.0.jar",
-                "https://repo.maven.apache.org/maven2/io/opencensus/opencensus-contrib-grpc-metrics/0.31.0/opencensus-contrib-grpc-metrics-0.31.0.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/opencensus/opencensus-contrib-grpc-metrics/0.31.0/opencensus-contrib-grpc-metrics-0.31.0.jar",
                 "https://repo1.maven.org/maven2/io/opencensus/opencensus-contrib-grpc-metrics/0.31.0/opencensus-contrib-grpc-metrics-0.31.0.jar"
               ],
               "downloaded_file_path": "io/opencensus/opencensus-contrib-grpc-metrics/0.31.0/opencensus-contrib-grpc-metrics-0.31.0.jar"
@@ -6452,9 +6117,6 @@
               "name": "rules_jvm_external~5.3~maven~net_java_dev_jna_jna_5_13_0",
               "sha256": "66d4f819a062a51a1d5627bffc23fac55d1677f0e0a1feba144aabdd670a64bb",
               "urls": [
-                "https://maven.google.com/net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar",
-                "https://repo.maven.apache.org/maven2/net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar",
                 "https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar"
               ],
               "downloaded_file_path": "net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar"
@@ -6467,9 +6129,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_transport_classes_epoll_4_1_97_Final",
               "sha256": "ee65fa17fe65f18fd22269f92bddad85bfb3a263cf65eba01e116a2f30b86ff5",
               "urls": [
-                "https://maven.google.com/io/netty/netty-transport-classes-epoll/4.1.97.Final/netty-transport-classes-epoll-4.1.97.Final.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-transport-classes-epoll/4.1.97.Final/netty-transport-classes-epoll-4.1.97.Final.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-transport-classes-epoll/4.1.97.Final/netty-transport-classes-epoll-4.1.97.Final.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-transport-classes-epoll/4.1.97.Final/netty-transport-classes-epoll-4.1.97.Final.jar"
               ],
               "downloaded_file_path": "io/netty/netty-transport-classes-epoll/4.1.97.Final/netty-transport-classes-epoll-4.1.97.Final.jar"
@@ -6517,9 +6176,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_tcnative_boringssl_static_jar_osx_x86_64_2_0_61_Final",
               "sha256": "fcfea887f4f0802d363c699b444d504b7109a7cb198ae6845eeff63745e5b0ba",
               "urls": [
-                "https://maven.google.com/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-osx-x86_64.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-osx-x86_64.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-osx-x86_64.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-osx-x86_64.jar"
               ],
               "downloaded_file_path": "io/netty/netty-tcnative-boringssl-static/2.0.61.Final/netty-tcnative-boringssl-static-2.0.61.Final-osx-x86_64.jar"
@@ -6554,9 +6210,6 @@
               "name": "rules_jvm_external~5.3~maven~org_jetbrains_annotations_13_0",
               "sha256": "ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478",
               "urls": [
-                "https://maven.google.com/org/jetbrains/annotations/13.0/annotations-13.0.jar",
-                "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/jetbrains/annotations/13.0/annotations-13.0.jar",
                 "https://repo1.maven.org/maven2/org/jetbrains/annotations/13.0/annotations-13.0.jar"
               ],
               "downloaded_file_path": "org/jetbrains/annotations/13.0/annotations-13.0.jar"
@@ -6582,9 +6235,6 @@
               "name": "rules_jvm_external~5.3~maven~commons_logging_commons_logging_1_2",
               "sha256": "daddea1ea0be0f56978ab3006b8ac92834afeefbd9b7e4e6316fca57df0fa636",
               "urls": [
-                "https://maven.google.com/commons-logging/commons-logging/1.2/commons-logging-1.2.jar",
-                "https://repo.maven.apache.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/commons-logging/commons-logging/1.2/commons-logging-1.2.jar",
                 "https://repo1.maven.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2.jar"
               ],
               "downloaded_file_path": "commons-logging/commons-logging/1.2/commons-logging-1.2.jar"
@@ -6597,9 +6247,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_api_grpc_proto_google_common_protos_jar_sources_2_22_0",
               "sha256": "035fe5a69ff9244a3580bf37bb18128cde77c9f0091677de76995353dd631551",
               "urls": [
-                "https://maven.google.com/com/google/api/grpc/proto-google-common-protos/2.22.0/proto-google-common-protos-2.22.0-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/api/grpc/proto-google-common-protos/2.22.0/proto-google-common-protos-2.22.0-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/api/grpc/proto-google-common-protos/2.22.0/proto-google-common-protos-2.22.0-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/api/grpc/proto-google-common-protos/2.22.0/proto-google-common-protos-2.22.0-sources.jar"
               ],
               "downloaded_file_path": "com/google/api/grpc/proto-google-common-protos/2.22.0/proto-google-common-protos-2.22.0-sources.jar"
@@ -6686,9 +6333,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_handler_proxy_4_1_97_Final",
               "sha256": "c789f30d0905a09b2a17c4cf397e1b57b0d63db714624eb0dec2282b9619e206",
               "urls": [
-                "https://maven.google.com/io/netty/netty-handler-proxy/4.1.97.Final/netty-handler-proxy-4.1.97.Final.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-handler-proxy/4.1.97.Final/netty-handler-proxy-4.1.97.Final.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-handler-proxy/4.1.97.Final/netty-handler-proxy-4.1.97.Final.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-handler-proxy/4.1.97.Final/netty-handler-proxy-4.1.97.Final.jar"
               ],
               "downloaded_file_path": "io/netty/netty-handler-proxy/4.1.97.Final/netty-handler-proxy-4.1.97.Final.jar"
@@ -6710,9 +6354,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_protobuf_protobuf_java_3_23_2",
               "sha256": "18a057f5e0f828daa92b71c19df91f6bcc2aad067ca2cdd6b5698055ca7bcece",
               "urls": [
-                "https://maven.google.com/com/google/protobuf/protobuf-java/3.23.2/protobuf-java-3.23.2.jar",
-                "https://repo.maven.apache.org/maven2/com/google/protobuf/protobuf-java/3.23.2/protobuf-java-3.23.2.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/protobuf/protobuf-java/3.23.2/protobuf-java-3.23.2.jar",
                 "https://repo1.maven.org/maven2/com/google/protobuf/protobuf-java/3.23.2/protobuf-java-3.23.2.jar"
               ],
               "downloaded_file_path": "com/google/protobuf/protobuf-java/3.23.2/protobuf-java-3.23.2.jar"
@@ -6725,9 +6366,6 @@
               "name": "rules_jvm_external~5.3~maven~junit_junit_jar_sources_4_13_2",
               "sha256": "34181df6482d40ea4c046b063cb53c7ffae94bdf1b1d62695bdf3adf9dea7e3a",
               "urls": [
-                "https://maven.google.com/junit/junit/4.13.2/junit-4.13.2-sources.jar",
-                "https://repo.maven.apache.org/maven2/junit/junit/4.13.2/junit-4.13.2-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/junit/junit/4.13.2/junit-4.13.2-sources.jar",
                 "https://repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2-sources.jar"
               ],
               "downloaded_file_path": "junit/junit/4.13.2/junit-4.13.2-sources.jar"
@@ -6753,9 +6391,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_codec_http_jar_sources_4_1_97_Final",
               "sha256": "fd45d71121285bed020b3cc2515288d252b9c07cbc4934a63615d7d8c8855289",
               "urls": [
-                "https://maven.google.com/io/netty/netty-codec-http/4.1.97.Final/netty-codec-http-4.1.97.Final-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-codec-http/4.1.97.Final/netty-codec-http-4.1.97.Final-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-codec-http/4.1.97.Final/netty-codec-http-4.1.97.Final-sources.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-codec-http/4.1.97.Final/netty-codec-http-4.1.97.Final-sources.jar"
               ],
               "downloaded_file_path": "io/netty/netty-codec-http/4.1.97.Final/netty-codec-http-4.1.97.Final-sources.jar"
@@ -6790,9 +6425,6 @@
               "name": "rules_jvm_external~5.3~maven~io_opencensus_opencensus_contrib_http_util_jar_sources_0_28_0",
               "sha256": "57991d9ef81499585431a5f9fdbff8b1acabd7826428a514f45d24100887eeaf",
               "urls": [
-                "https://maven.google.com/io/opencensus/opencensus-contrib-http-util/0.28.0/opencensus-contrib-http-util-0.28.0-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/opencensus/opencensus-contrib-http-util/0.28.0/opencensus-contrib-http-util-0.28.0-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/opencensus/opencensus-contrib-http-util/0.28.0/opencensus-contrib-http-util-0.28.0-sources.jar",
                 "https://repo1.maven.org/maven2/io/opencensus/opencensus-contrib-http-util/0.28.0/opencensus-contrib-http-util-0.28.0-sources.jar"
               ],
               "downloaded_file_path": "io/opencensus/opencensus-contrib-http-util/0.28.0/opencensus-contrib-http-util-0.28.0-sources.jar"
@@ -6805,9 +6437,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_flogger_flogger_system_backend_jar_sources_0_7_4",
               "sha256": "9fb7fc65b567b52ae150096bdddff5e8939e1a10e23e885c0bb8aba5e0fb2b7c",
               "urls": [
-                "https://maven.google.com/com/google/flogger/flogger-system-backend/0.7.4/flogger-system-backend-0.7.4-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/flogger/flogger-system-backend/0.7.4/flogger-system-backend-0.7.4-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/flogger/flogger-system-backend/0.7.4/flogger-system-backend-0.7.4-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/flogger/flogger-system-backend/0.7.4/flogger-system-backend-0.7.4-sources.jar"
               ],
               "downloaded_file_path": "com/google/flogger/flogger-system-backend/0.7.4/flogger-system-backend-0.7.4-sources.jar"
@@ -6819,9 +6448,6 @@
             "attributes": {
               "name": "rules_jvm_external~5.3~maven~maven",
               "repositories": [
-                "{ \"repo_url\": \"https://maven.google.com\" }",
-                "{ \"repo_url\": \"https://repo.maven.apache.org/maven2\" }",
-                "{ \"repo_url\": \"https://repository.mulesoft.org/nexus/content/repositories/public\" }",
                 "{ \"repo_url\": \"https://repo1.maven.org/maven2\" }"
               ],
               "artifacts": [
@@ -6910,9 +6536,6 @@
               "name": "rules_jvm_external~5.3~maven~org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm_jar_sources_1_6_2",
               "sha256": "167354213966bfc344e2be77f13c7d70431e8b25b33b634013884963122ddf48",
               "urls": [
-                "https://maven.google.com/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.2/kotlinx-coroutines-core-jvm-1.6.2-sources.jar",
-                "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.2/kotlinx-coroutines-core-jvm-1.6.2-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.2/kotlinx-coroutines-core-jvm-1.6.2-sources.jar",
                 "https://repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.2/kotlinx-coroutines-core-jvm-1.6.2-sources.jar"
               ],
               "downloaded_file_path": "org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.2/kotlinx-coroutines-core-jvm-1.6.2-sources.jar"
@@ -6977,9 +6600,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_errorprone_error_prone_annotations_jar_sources_2_20_0",
               "sha256": "0226ed4d0b5fbf36366c337445d609f76ed730e7c6f72e10dcd6d3235833863e",
               "urls": [
-                "https://maven.google.com/com/google/errorprone/error_prone_annotations/2.20.0/error_prone_annotations-2.20.0-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/errorprone/error_prone_annotations/2.20.0/error_prone_annotations-2.20.0-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/errorprone/error_prone_annotations/2.20.0/error_prone_annotations-2.20.0-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations/2.20.0/error_prone_annotations-2.20.0-sources.jar"
               ],
               "downloaded_file_path": "com/google/errorprone/error_prone_annotations/2.20.0/error_prone_annotations-2.20.0-sources.jar"
@@ -6992,9 +6612,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_tcnative_classes_jar_sources_2_0_61_Final",
               "sha256": "b542370be6ad4d723e0156fc41ffc0db9efa308330e71aec18cdeb0dfc3a44d0",
               "urls": [
-                "https://maven.google.com/io/netty/netty-tcnative-classes/2.0.61.Final/netty-tcnative-classes-2.0.61.Final-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-tcnative-classes/2.0.61.Final/netty-tcnative-classes-2.0.61.Final-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-tcnative-classes/2.0.61.Final/netty-tcnative-classes-2.0.61.Final-sources.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-tcnative-classes/2.0.61.Final/netty-tcnative-classes-2.0.61.Final-sources.jar"
               ],
               "downloaded_file_path": "io/netty/netty-tcnative-classes/2.0.61.Final/netty-tcnative-classes-2.0.61.Final-sources.jar"
@@ -7007,9 +6624,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_transport_classes_kqueue_4_1_97_Final",
               "sha256": "964ef63eb24a5c979f0af473da13f9574497e11bd41543a66d10609d34013b9f",
               "urls": [
-                "https://maven.google.com/io/netty/netty-transport-classes-kqueue/4.1.97.Final/netty-transport-classes-kqueue-4.1.97.Final.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-transport-classes-kqueue/4.1.97.Final/netty-transport-classes-kqueue-4.1.97.Final.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-transport-classes-kqueue/4.1.97.Final/netty-transport-classes-kqueue-4.1.97.Final.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-transport-classes-kqueue/4.1.97.Final/netty-transport-classes-kqueue-4.1.97.Final.jar"
               ],
               "downloaded_file_path": "io/netty/netty-transport-classes-kqueue/4.1.97.Final/netty-transport-classes-kqueue-4.1.97.Final.jar"
@@ -7022,9 +6636,6 @@
               "name": "rules_jvm_external~5.3~maven~org_codehaus_mojo_animal_sniffer_annotations_jar_sources_1_23",
               "sha256": "4878fcc6808dbc88085a4622db670e703867754bc4bc40312c52bf3a3510d019",
               "urls": [
-                "https://maven.google.com/org/codehaus/mojo/animal-sniffer-annotations/1.23/animal-sniffer-annotations-1.23-sources.jar",
-                "https://repo.maven.apache.org/maven2/org/codehaus/mojo/animal-sniffer-annotations/1.23/animal-sniffer-annotations-1.23-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/codehaus/mojo/animal-sniffer-annotations/1.23/animal-sniffer-annotations-1.23-sources.jar",
                 "https://repo1.maven.org/maven2/org/codehaus/mojo/animal-sniffer-annotations/1.23/animal-sniffer-annotations-1.23-sources.jar"
               ],
               "downloaded_file_path": "org/codehaus/mojo/animal-sniffer-annotations/1.23/animal-sniffer-annotations-1.23-sources.jar"
@@ -7072,9 +6683,6 @@
               "name": "rules_jvm_external~5.3~maven~org_apache_tomcat_annotations_api_6_0_53",
               "sha256": "253829d3c12b7381d1044fc22c6436cff025fe0d459e4a329413e560a7d0dd13",
               "urls": [
-                "https://maven.google.com/org/apache/tomcat/annotations-api/6.0.53/annotations-api-6.0.53.jar",
-                "https://repo.maven.apache.org/maven2/org/apache/tomcat/annotations-api/6.0.53/annotations-api-6.0.53.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/apache/tomcat/annotations-api/6.0.53/annotations-api-6.0.53.jar",
                 "https://repo1.maven.org/maven2/org/apache/tomcat/annotations-api/6.0.53/annotations-api-6.0.53.jar"
               ],
               "downloaded_file_path": "org/apache/tomcat/annotations-api/6.0.53/annotations-api-6.0.53.jar"
@@ -7087,9 +6695,6 @@
               "name": "rules_jvm_external~5.3~maven~org_jetbrains_kotlin_kotlin_stdlib_1_6_21",
               "sha256": "739c526672bb337573b28f63afa8306eb088b0c3a0967f56d6c89f4a3012a492",
               "urls": [
-                "https://maven.google.com/org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21.jar",
-                "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21.jar",
                 "https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21.jar"
               ],
               "downloaded_file_path": "org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21.jar"
@@ -7102,9 +6707,6 @@
               "name": "rules_jvm_external~5.3~maven~io_perfmark_perfmark_api_jar_sources_0_26_0",
               "sha256": "7379e0fef0c32d69f3ebae8f271f426fc808613f1cfbc29e680757f348ba8aa4",
               "urls": [
-                "https://maven.google.com/io/perfmark/perfmark-api/0.26.0/perfmark-api-0.26.0-sources.jar",
-                "https://repo.maven.apache.org/maven2/io/perfmark/perfmark-api/0.26.0/perfmark-api-0.26.0-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/perfmark/perfmark-api/0.26.0/perfmark-api-0.26.0-sources.jar",
                 "https://repo1.maven.org/maven2/io/perfmark/perfmark-api/0.26.0/perfmark-api-0.26.0-sources.jar"
               ],
               "downloaded_file_path": "io/perfmark/perfmark-api/0.26.0/perfmark-api-0.26.0-sources.jar"
@@ -7139,9 +6741,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_guava_guava_testlib_jar_sources_31_1_jre",
               "sha256": "7149659f8966197dcd91a42183349f862d3973f8e65efe6d03e678464fa13bfd",
               "urls": [
-                "https://maven.google.com/com/google/guava/guava-testlib/31.1-jre/guava-testlib-31.1-jre-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/guava/guava-testlib/31.1-jre/guava-testlib-31.1-jre-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/guava/guava-testlib/31.1-jre/guava-testlib-31.1-jre-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/guava/guava-testlib/31.1-jre/guava-testlib-31.1-jre-sources.jar"
               ],
               "downloaded_file_path": "com/google/guava/guava-testlib/31.1-jre/guava-testlib-31.1-jre-sources.jar"
@@ -7172,9 +6771,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_flogger_flogger_system_backend_0_7_4",
               "sha256": "fd66f2615a9d8fe1b2274f1b5005a5555a0cd63cdfdab2ca9500e6eb81dc5f63",
               "urls": [
-                "https://maven.google.com/com/google/flogger/flogger-system-backend/0.7.4/flogger-system-backend-0.7.4.jar",
-                "https://repo.maven.apache.org/maven2/com/google/flogger/flogger-system-backend/0.7.4/flogger-system-backend-0.7.4.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/flogger/flogger-system-backend/0.7.4/flogger-system-backend-0.7.4.jar",
                 "https://repo1.maven.org/maven2/com/google/flogger/flogger-system-backend/0.7.4/flogger-system-backend-0.7.4.jar"
               ],
               "downloaded_file_path": "com/google/flogger/flogger-system-backend/0.7.4/flogger-system-backend-0.7.4.jar"
@@ -7213,9 +6809,6 @@
               "name": "rules_jvm_external~5.3~maven~org_mockito_mockito_core_jar_sources_4_3_1",
               "sha256": "7d530f39577843b16f6dba2c49846f07101f3ce734ac8caef4ba932f6527f1f6",
               "urls": [
-                "https://maven.google.com/org/mockito/mockito-core/4.3.1/mockito-core-4.3.1-sources.jar",
-                "https://repo.maven.apache.org/maven2/org/mockito/mockito-core/4.3.1/mockito-core-4.3.1-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/org/mockito/mockito-core/4.3.1/mockito-core-4.3.1-sources.jar",
                 "https://repo1.maven.org/maven2/org/mockito/mockito-core/4.3.1/mockito-core-4.3.1-sources.jar"
               ],
               "downloaded_file_path": "org/mockito/mockito-core/4.3.1/mockito-core-4.3.1-sources.jar"
@@ -7241,9 +6834,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_android_annotations_jar_sources_4_1_1_4",
               "sha256": "e9b667aa958df78ea1ad115f7bbac18a5869c3128b1d5043feb360b0cfce9d40",
               "urls": [
-                "https://maven.google.com/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4-sources.jar"
               ],
               "downloaded_file_path": "com/google/android/annotations/4.1.1.4/annotations-4.1.1.4-sources.jar"
@@ -7256,9 +6846,6 @@
               "name": "rules_jvm_external~5.3~maven~commons_codec_commons_codec_1_11",
               "sha256": "e599d5318e97aa48f42136a2927e6dfa4e8881dff0e6c8e3109ddbbff51d7b7d",
               "urls": [
-                "https://maven.google.com/commons-codec/commons-codec/1.11/commons-codec-1.11.jar",
-                "https://repo.maven.apache.org/maven2/commons-codec/commons-codec/1.11/commons-codec-1.11.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/commons-codec/commons-codec/1.11/commons-codec-1.11.jar",
                 "https://repo1.maven.org/maven2/commons-codec/commons-codec/1.11/commons-codec-1.11.jar"
               ],
               "downloaded_file_path": "commons-codec/commons-codec/1.11/commons-codec-1.11.jar"
@@ -7280,9 +6867,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_android_annotations_4_1_1_4",
               "sha256": "ba734e1e84c09d615af6a09d33034b4f0442f8772dec120efb376d86a565ae15",
               "urls": [
-                "https://maven.google.com/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4.jar",
-                "https://repo.maven.apache.org/maven2/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4.jar",
                 "https://repo1.maven.org/maven2/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4.jar"
               ],
               "downloaded_file_path": "com/google/android/annotations/4.1.1.4/annotations-4.1.1.4.jar"
@@ -7308,9 +6892,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_guava_failureaccess_jar_sources_1_0_1",
               "sha256": "092346eebbb1657b51aa7485a246bf602bb464cc0b0e2e1c7e7201fadce1e98f",
               "urls": [
-                "https://maven.google.com/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1-sources.jar"
               ],
               "downloaded_file_path": "com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1-sources.jar"
@@ -7354,9 +6935,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_code_findbugs_jsr305_jar_sources_3_0_2",
               "sha256": "1c9e85e272d0708c6a591dc74828c71603053b48cc75ae83cce56912a2aa063b",
               "urls": [
-                "https://maven.google.com/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2-sources.jar",
-                "https://repo.maven.apache.org/maven2/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2-sources.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2-sources.jar",
                 "https://repo1.maven.org/maven2/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2-sources.jar"
               ],
               "downloaded_file_path": "com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2-sources.jar"
@@ -7369,9 +6947,6 @@
               "name": "rules_jvm_external~5.3~maven~io_netty_netty_common_4_1_97_Final",
               "sha256": "a8aca0c8e9347acc75c885ecc749195d9775369aa520b9276f2d1128210a6c17",
               "urls": [
-                "https://maven.google.com/io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final.jar",
-                "https://repo.maven.apache.org/maven2/io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final.jar",
                 "https://repo1.maven.org/maven2/io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final.jar"
               ],
               "downloaded_file_path": "io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final.jar"
@@ -7397,9 +6972,6 @@
               "name": "rules_jvm_external~5.3~maven~com_google_api_grpc_proto_google_common_protos_2_22_0",
               "sha256": "002eebc53d27e4fb2e8cf823ea1f3565b90c4b0b4380ff508bf61bd42f2be0d3",
               "urls": [
-                "https://maven.google.com/com/google/api/grpc/proto-google-common-protos/2.22.0/proto-google-common-protos-2.22.0.jar",
-                "https://repo.maven.apache.org/maven2/com/google/api/grpc/proto-google-common-protos/2.22.0/proto-google-common-protos-2.22.0.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/google/api/grpc/proto-google-common-protos/2.22.0/proto-google-common-protos-2.22.0.jar",
                 "https://repo1.maven.org/maven2/com/google/api/grpc/proto-google-common-protos/2.22.0/proto-google-common-protos-2.22.0.jar"
               ],
               "downloaded_file_path": "com/google/api/grpc/proto-google-common-protos/2.22.0/proto-google-common-protos-2.22.0.jar"
@@ -7425,9 +6997,6 @@
               "name": "rules_jvm_external~5.3~maven~com_googlecode_java_diff_utils_diffutils_1_2_1",
               "sha256": "c98697c3b8dd745353cd0a83b109c1c999fec43b4a5cedb2f579452d8da2c171",
               "urls": [
-                "https://maven.google.com/com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1.jar",
-                "https://repo.maven.apache.org/maven2/com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1.jar",
-                "https://repository.mulesoft.org/nexus/content/repositories/public/com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1.jar",
                 "https://repo1.maven.org/maven2/com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1.jar"
               ],
               "downloaded_file_path": "com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1.jar"

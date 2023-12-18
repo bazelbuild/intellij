@@ -111,35 +111,24 @@ public class QuerySyncTestUtils {
     }
   }
 
+  private static String cleanLabel(String label) {
+    return label.replaceAll(".*~", "").replaceAll("@@", "");
+  }
+
   /**
-   * A correspondence that compares the repository-mapped form of labels.
-   * For example, `@@rules_jvm_external~5.3~maven~com_google_guava_guava//jar:jar` should be
-   * equal to `@@com_google_guava_guava//jar:jar`
+   * A correspondence that compares the repository-mapped form of labels. For example,
+   * `@@rules_jvm_external~5.3~maven~com_google_guava_guava//jar:jar` should be equal to
+   * `@@com_google_guava_guava//jar:jar`
    */
   public static final Correspondence<Label, Label> REPOSITORY_MAPPED_LABEL_CORRESPONDENCE =
-          Correspondence.from(
-                  (actual, expected) -> {
-                    if (actual == null) {
-                      return expected == null;
-                    }
-                    if (expected == null) {
-                      return false;
-                    }
-                    String actualString = actual.toString();
-                    String expectedString = expected.toString();
-                    // Strip the @@
-                    int actualDoubleAtIndex = actualString.indexOf("@@");
-                    int expectedDoubleAtIndex = expectedString.indexOf("@@");
-                    if (actualDoubleAtIndex != -1) {
-                      actualString = actualString.substring(actualDoubleAtIndex + 2);
-                    }
-                    if (expectedDoubleAtIndex != -1) {
-                      expectedString = expectedString.substring(expectedDoubleAtIndex + 2);
-                    }
-                    // Strip the "canonical prefix" (<some>~<path>~) from each label.
-                    actualString = actualString.substring(actualString.lastIndexOf("~") + 1);
-                    expectedString = expectedString.substring(expectedString.lastIndexOf("~") + 1);
-                    return actualString.equals(expectedString);
-                  },
-                  "is repository-mapped equal to");
+      Correspondence.from(
+          (actual, expected) -> {
+            if (actual == null || expected == null) {
+              return actual == expected;
+            }
+            String actualString = cleanLabel(actual.toString());
+            String expectedString = cleanLabel(expected.toString());
+            return actualString.equals(expectedString);
+          },
+          "is repository-mapped equal to");
 }

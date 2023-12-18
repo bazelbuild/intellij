@@ -149,11 +149,6 @@ maven.install(
     fail_if_repin_required = True,
     generate_compat_repositories = True,
     lock_file = "//:maven_install.json",
-    repositories = [
-        "https://maven.google.com",
-        "https://repo.maven.apache.org/maven2",
-        "https://repository.mulesoft.org/nexus/content/repositories/public",
-    ],
 )
 
 use_repo(
