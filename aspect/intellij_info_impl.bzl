@@ -1,5 +1,6 @@
 """Implementation of IntelliJ-specific information collecting aspect."""
 
+load("@io_bazel_rules_scala//scala:scala.bzl", "ScalaInfo")
 load(
     ":artifacts.bzl",
     "artifact_location",
@@ -553,8 +554,8 @@ def get_java_provider(target):
     # Check for scala and kt providers before JavaInfo. e.g. scala targets have
     # JavaInfo, but their data lives in the "scala" provider and not JavaInfo.
     # See https://github.com/bazelbuild/intellij/pull/1202
-    if hasattr(target, "scala"):
-        return target.scala
+    if ScalaInfo in target:
+        return target[ScalaInfo]
     if hasattr(target, "kt") and hasattr(target.kt, "outputs"):
         return target.kt
     if JavaInfo in target:
