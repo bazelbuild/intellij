@@ -77,12 +77,15 @@ public abstract class ZippedOutputArtifactDestination
   public abstract Path getCopyDestination();
 
   @Override
-  public Path prepareFinalLayout() {
-    Path finalDestination = getFinalDestination();
+  public Path determineFinalDestination() {
+    return getFinalDestination();
+  }
+
+  @Override
+  public void createFinalDestination(Path finalDestination) {
     if (Files.exists(finalDestination)) {
       FileUtil.delete(finalDestination.toFile());
     }
     extract(getCopyDestination(), finalDestination);
-    return finalDestination;
   }
 }

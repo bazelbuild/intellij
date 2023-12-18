@@ -410,7 +410,9 @@ public class ArtifactTrackerImpl
       Map<OutputArtifactDestinationAndLayout, Path> destinationToArtifact) {
     ImmutableMap.Builder<Path, Path> result = ImmutableMap.builder();
     for (OutputArtifactDestinationAndLayout destination : destinationToArtifact.keySet()) {
-      result.put(destination.prepareFinalLayout(), destinationToArtifact.get(destination));
+      Path dest = destination.determineFinalDestination();
+      destination.createFinalDestination(dest);
+      result.put(dest, destinationToArtifact.get(destination));
     }
     return result.build();
   }
@@ -447,12 +449,14 @@ public class ArtifactTrackerImpl
     }
     try (BlazeContext context = BlazeContext.create(outerContext)) {
       ImmutableMap<Path, Path> unused = cache(context, artifactMap);
-      ImmutableSet<Path> paths =
-          artifactMap.values().stream()
-              .map(OutputArtifactDestinationAndLayout::prepareFinalLayout)
-              .collect(toImmutableSet());
+      ImmutableSet.Builder<Path> paths = ImmutableSet.builder();
+      for (OutputArtifactDestinationAndLayout layout : artifactMap.values()) {
+        Path finalDest = layout.determineFinalDestination();
+        layout.createFinalDestination(finalDest);
+        paths.add(finalDest);
+      }
       saveState();
-      return paths;
+      return paths.build();
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
     }
