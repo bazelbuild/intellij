@@ -23,6 +23,7 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -186,7 +187,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
       buildDepsStatsBuilder.ifPresent(
           stats -> stats.setBuildFlags(builder.build().toArgumentList()));
       BlazeBuildOutputs outputs =
-          invoker.getCommandRunner().run(project, builder, buildResultHelper, context);
+          invoker.getCommandRunner().run(project, builder, buildResultHelper, context, ImmutableMap.of());
       buildDepsStatsBuilder.ifPresent(
           stats -> {
             stats.setBuildIds(outputs.getBuildIds());

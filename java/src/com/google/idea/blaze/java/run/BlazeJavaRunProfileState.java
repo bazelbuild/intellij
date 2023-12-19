@@ -70,6 +70,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -258,6 +259,10 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
             .addBlazeFlags(blazeFlags)
             .addBlazeFlags(handlerState.getBlazeFlagsState().getFlagsForExternalProcesses());
 
+    if (blazeCommand.equals(BlazeCommandName.TEST)) {
+      command.addBlazeFlags(handlerState.getUserEnvVarsState().asBlazeTestEnvFlags());
+    }
+
     if (executorType == ExecutorType.DEBUG) {
       Kind kind = configuration.getTargetKind();
       boolean isBinary = kind != null && kind.getRuleType() == RuleType.BINARY;
@@ -280,9 +285,12 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
   private ProcessHandler getScopedProcessHandler(
       Project project, ImmutableList<String> command, WorkspaceRoot workspaceRoot)
       throws ExecutionException {
+    GeneralCommandLine commandLine = new GeneralCommandLine(command);
+    Map<String, String> envVars = getState(getConfiguration()).getUserEnvVarsState().getData().getEnvs();
+    commandLine.withEnvironment(envVars);
     return new ScopedBlazeProcessHandler(
         project,
-        new GeneralCommandLine(command),
+        commandLine,
         workspaceRoot,
         new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
           @Override

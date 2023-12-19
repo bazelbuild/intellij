@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.qsync;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
@@ -76,7 +77,7 @@ public class BazelRenderJarBuilder implements RenderJarBuilder {
               .addBlazeFlags("--output_groups=intellij-render-resolve-android");
 
       BlazeBuildOutputs outputs =
-          invoker.getCommandRunner().run(project, builder, buildResultHelper, context);
+          invoker.getCommandRunner().run(project, builder, buildResultHelper, context, ImmutableMap.of());
       BazelExitCodeException.throwIfFailed(builder, outputs.buildResult);
 
       return createRenderJarInfo(outputs);

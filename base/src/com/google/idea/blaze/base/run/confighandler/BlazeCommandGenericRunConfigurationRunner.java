@@ -81,6 +81,7 @@ import com.intellij.openapi.project.Project;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -192,9 +193,12 @@ public final class BlazeCommandGenericRunConfigurationRunner
     private ProcessHandler getScopedProcessHandler(
         Project project, BlazeCommand blazeCommand, WorkspaceRoot workspaceRoot)
         throws ExecutionException {
+      GeneralCommandLine commandLine = new GeneralCommandLine(blazeCommand.toList());
+      @NotNull Map<String, String> envVars = handlerState.getUserEnvVarsState().getData().getEnvs();
+      commandLine.withEnvironment(envVars);
       return new ScopedBlazeProcessHandler(
           project,
-          new GeneralCommandLine(blazeCommand.toList()),
+          commandLine,
           workspaceRoot,
           new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
             @Override
@@ -239,13 +243,14 @@ public final class BlazeCommandGenericRunConfigurationRunner
           });
       addConsoleFilters(consoleFilters.toArray(new Filter[0]));
 
+      @NotNull Map<String, String> envVars = handlerState.getUserEnvVarsState().getData().getEnvs();
       ListenableFuture<BlazeBuildOutputs> blazeBuildOutputsListenableFuture =
           BlazeExecutor.getInstance()
               .submit(
                   () ->
                       invoker
                           .getCommandRunner()
-                          .run(project, blazeCommandBuilder, buildResultHelper, context));
+                          .run(project, blazeCommandBuilder, buildResultHelper, context, envVars));
       Futures.addCallback(
           blazeBuildOutputsListenableFuture,
           new FutureCallback<BlazeBuildOutputs>() {
@@ -311,18 +316,27 @@ public final class BlazeCommandGenericRunConfigurationRunner
         context.addOutputSink(PrintOutput.class, new WritingOutputSink(consoleView));
       }
       addConsoleFilters(consoleFilters.toArray(new Filter[0]));
-      return !invoker.getCommandRunner().canUseCli()
-          ? getCommandRunnerProcessHandler(
+      @NotNull Map<String, String> envVars = handlerState.getUserEnvVarsState().getData().getEnvs();
+
+      if (invoker.getCommandRunner().canUseCli()) {
+        // BlazeCommandRunner is already supposed to handle the cases where we pass env vars to tests
+        // as part of the interface contract, so we only have to set them here.
+        for (Map.Entry<String, String> env: envVars.entrySet()) {
+          blazeCommandBuilder.addBlazeFlags(BlazeFlags.TEST_ENV, String.format("%s=%s", env.getKey(), env.getValue()));
+        }
+
+        return getScopedProcessHandler(project, blazeCommandBuilder.build(), workspaceRoot);
+      }
+      return getCommandRunnerProcessHandlerForTests(
               project,
               invoker,
               buildResultHelper,
               blazeCommandBuilder,
               testResultFinderStrategy,
-              context)
-          : getScopedProcessHandler(project, blazeCommandBuilder.build(), workspaceRoot);
+              context);
     }
 
-    private ProcessHandler getCommandRunnerProcessHandler(
+    private ProcessHandler getCommandRunnerProcessHandlerForTests(
         Project project,
         BuildInvoker invoker,
         BuildResultHelper buildResultHelper,
@@ -330,13 +344,14 @@ public final class BlazeCommandGenericRunConfigurationRunner
         BlazeTestResultFinderStrategy testResultFinderStrategy,
         BlazeContext context) {
       ProcessHandler processHandler = getGenericProcessHandler();
+      @NotNull Map<String, String> envVars = handlerState.getUserEnvVarsState().getData().getEnvs();
       ListenableFuture<BlazeTestResults> blazeTestResultsFuture =
           BlazeExecutor.getInstance()
               .submit(
                   () ->
                       invoker
                           .getCommandRunner()
-                          .runTest(project, blazeCommandBuilder, buildResultHelper, context));
+                          .runTest(project, blazeCommandBuilder, buildResultHelper, context, envVars));
       Futures.addCallback(
           blazeTestResultsFuture,
           new FutureCallback<BlazeTestResults>() {

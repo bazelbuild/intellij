@@ -141,7 +141,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
       return ImmutableList.<String>builder()
           .addAll(state.getExeFlagsState().getFlagsForExternalProcesses())
           .addAll(state.getTestArgs())
-          .addAll(executable.args)
+          .addAll(state.getUserEnvVarsState().asBlazeTestEnvFlags())
           .build();
     }
 

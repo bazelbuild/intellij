@@ -15,7 +15,9 @@
  */
 package com.google.idea.blaze.base.run.state;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.base.command.BlazeFlags;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.openapi.project.Project;
@@ -23,6 +25,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import javax.swing.JComponent;
 import org.jdom.Element;
+import java.util.Map;
 
 /** State for user-defined environment variables. */
 public class EnvironmentVariablesState implements RunConfigurationState {
@@ -32,8 +35,18 @@ public class EnvironmentVariablesState implements RunConfigurationState {
   private EnvironmentVariablesData data =
       EnvironmentVariablesData.create(ImmutableMap.of(), /* passParentEnvs= */ true);
 
+  public EnvironmentVariablesState() {}
+
   public EnvironmentVariablesData getData() {
     return data;
+  }
+
+  public ImmutableList<String> asBlazeTestEnvFlags() {
+    ImmutableList.Builder<String> flags = ImmutableList.builder();
+    for (Map.Entry<String, String> env: data.getEnvs().entrySet()) {
+      flags.add(BlazeFlags.TEST_ENV, String.format("%s=%s", env.getKey(), env.getValue()));
+    }
+    return flags.build();
   }
 
   @Override
