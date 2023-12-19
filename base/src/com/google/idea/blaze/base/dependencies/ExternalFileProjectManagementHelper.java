@@ -208,7 +208,15 @@ public class ExternalFileProjectManagementHelper
       return null;
     }
 
-    Path path = virtualFile.toNioPath();
+    Path path;
+    try {
+      path = virtualFile.toNioPath();
+
+      // Thrown when the file does not have a nio path (such as a file within a source archive)
+    } catch (UnsupportedOperationException e) {
+      return null;
+    }
+
     // Project views do not support overriding a directory exclude, and the excluded directory may
     // be imported from another file and so cannot be removed from the top-level file.
     if (querySyncProject.containsPath(path) || querySyncProject.explicitlyExcludesPath(path)) {
