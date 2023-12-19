@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
-import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.PopupPosititioner;
+import com.google.idea.blaze.base.qsync.action.PopupPositioner;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurableProvider;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -91,7 +91,7 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       buildDepsHelper.enableAnalysis(
-          e, PopupPosititioner.showUnderneathClickedComponentOrCentered(e));
+          e, PopupPositioner.showUnderneathClickedComponentOrCentered(e));
     }
 
     @Override

@@ -42,7 +42,8 @@ public class FileCache {
    * implementing {@link OutputArtifactDestinationAndLayout} that describe the location of where the
    * artifact fetcher should place a fetched artifact and which know how to process artifacts in
    * these locations to build the final cache layout; at the second stage invocations of {@link
-   * OutputArtifactDestinationAndLayout#prepareFinalLayout()} build the final cache layout.
+   * OutputArtifactDestinationAndLayout#determineFinalDestination()} and {@link
+   * OutputArtifactDestinationAndLayout#createFinalDestination(Path)} build the final cache layout.
    */
   public interface CacheLayout {
 
@@ -66,16 +67,6 @@ public class FileCache {
 
   /** A descriptor of the artifact's intended fetch location in a specific cache layout. */
   public interface OutputArtifactDestination {
-
-    /**
-     * A value used by the cache system to refer to this output artifact.
-     *
-     * <p>The value is used as a file name (a prefix) and thus must only contain allowed symbols.
-     *
-     * <p>Note, it does not represent a specific version of the artifact.
-     */
-    String getKey();
-
     /**
      * The location where a fetched copy of this artifact should be placed by an {@link
      * ArtifactFetcher}.
@@ -89,17 +80,28 @@ public class FileCache {
    * <p>Instances describe two conceptually different locations in the cache: (1) the location where
    * an artifact should be placed by an {@link ArtifactFetcher} and (2) a location where the
    * artifact was placed by the cache itself. The latter is returned by {@link
-   * OutputArtifactDestinationAndLayout#prepareFinalLayout()}.
+   * OutputArtifactDestinationAndLayout#determineFinalDestination()}.
    */
   public interface OutputArtifactDestinationAndLayout extends OutputArtifactDestination {
+
     /**
-     * Prepares a file located at {@link #getCopyDestination()} for use by the IDE and returns the
-     * location of the resulting file/directory.
+     * Determines the final destination of this artifact. This method may read the file located ay
+     * {@link #getCopyDestination()} in order to do this. The final destination may be a file or a
+     * directory.
+     *
+     * <p>This method must <b>not</b> create the file returned by it, that is done subsequently by
+     * {@link #createFinalDestination}.
+     */
+    Path determineFinalDestination();
+
+    /**
+     * Creates the final destination Prepares a file located at {@code copyDestination} for use by
+     * the IDE and returns the location of the resulting file/directory.
      *
      * <p>Note, that this might be an no-op and in this case the method should simply return {@link
-     * #getCopyDestination()}.
+     * OutputArtifactDestinationAndLayout#getCopyDestination()}.
      */
-    Path prepareFinalLayout();
+    void createFinalDestination(Path finalDestination);
   }
 
   private final CacheLayout cacheLayout;

@@ -30,7 +30,8 @@ abstract class AndroidLocalTestEnvironmentModifier implements FastBuildTestEnvir
       FastBuildInfo fastBuildInfo,
       BlazeInfo blazeInfo)
       throws ExecutionException {
-    if (!kind.equals(RuleTypes.ANDROID_LOCAL_TEST.getKind())) {
+    if (!kind.equals(RuleTypes.ANDROID_LOCAL_TEST.getKind())
+        && !kind.equals(RuleTypes.KT_ANDROID_LOCAL_TEST.getKind())) {
       return;
     }
 

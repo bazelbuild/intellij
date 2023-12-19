@@ -15,9 +15,10 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+
 import com.google.auto.value.AutoValue;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
-import com.google.idea.blaze.qsync.PackageStatementParser;
+import com.google.idea.blaze.qsync.java.PackageStatementParser;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -31,8 +32,7 @@ public abstract class JavaSourceOutputArtifactDestination
 
   private final PackageStatementParser packageStatementParser = new PackageStatementParser();
 
-  @Override
-  public abstract String getKey();
+  public abstract Path getBuildOutPath();
 
   @Override
   public abstract Path getCopyDestination();
@@ -42,31 +42,38 @@ public abstract class JavaSourceOutputArtifactDestination
   abstract Path getDestinationJavaSourceDir();
 
   public static JavaSourceOutputArtifactDestination create(
-      String key, String originalFileName, Path copyDestination, Path destinationJavaSourceDir) {
+      Path buildOutPath,
+      String originalFileName,
+      Path copyDestination,
+      Path destinationJavaSourceDir) {
     return new AutoValue_JavaSourceOutputArtifactDestination(
-        key, copyDestination, originalFileName, destinationJavaSourceDir);
+        buildOutPath, copyDestination, originalFileName, destinationJavaSourceDir);
   }
 
   @Override
-  public Path prepareFinalLayout() {
-    Path finalDest;
+  public Path determineFinalDestination() {
     try {
       String pkg = packageStatementParser.readPackage(getCopyDestination());
-      finalDest =
-          getDestinationJavaSourceDir()
-              .resolve(Path.of(pkg.replace('.', '/')))
-              .resolve(getOriginalFilename());
+      return getDestinationJavaSourceDir()
+          .resolve(Path.of(pkg.replace('.', '/')))
+          .resolve(getOriginalFilename());
     } catch (IOException e) {
       throw new UncheckedIOException(
           "Failed to determine the final destination for " + getCopyDestination(), e);
     }
+  }
+
+  @Override
+  public void createFinalDestination(Path finalDest) {
+    Path copyDestination = getCopyDestination();
     try {
       Files.createDirectories(finalDest.getParent());
-      Files.copy(getCopyDestination(), finalDest, StandardCopyOption.REPLACE_EXISTING);
-      return finalDest;
+      Files.copy(copyDestination, finalDest, StandardCopyOption.REPLACE_EXISTING);
     } catch (IOException e) {
       throw new UncheckedIOException(
-          "Failed to copy " + getCopyDestination() + " to its final destination " + finalDest, e);
+          "Failed to copy " + copyDestination + " to its final destination " + finalDest, e);
     }
   }
+
+
 }

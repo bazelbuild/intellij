@@ -102,6 +102,7 @@ def _encode_target_info_proto(target_to_artifacts):
                 gen_srcs = target_info["gen_srcs"],
                 srcs = target_info["srcs"],
                 srcjars = target_info["srcjars"],
+                android_resources_package = target_info["android_resources_package"],
             ),
         )
     return proto.encode_text(struct(artifacts = contents))
@@ -233,6 +234,7 @@ def _collect_own_java_artifacts(
     own_gensrc_files = []
     own_src_files = []
     own_srcjar_files = []
+    resource_package = None
 
     if must_build_main_artifacts:
         # For rules that we do not follow dependencies of (either because they don't
@@ -256,22 +258,25 @@ def _collect_own_java_artifacts(
             own_ide_aar_files.append(rule.attr.aar.files.to_list()[0])
 
     else:
-        if generate_aidl_classes and AndroidIdeInfo in target:
-            add_base_idl_jar = False
-            idl_jar = target[AndroidIdeInfo].idl_class_jar
-            if idl_jar != None:
-                own_jar_files.append(idl_jar)
-                add_base_idl_jar = True
+        if AndroidIdeInfo in target:
+            resource_package = target[AndroidIdeInfo].java_package
 
-            generated_java_files = target[AndroidIdeInfo].idl_generated_java_files
-            if generated_java_files:
-                own_gensrc_files += generated_java_files
-                add_base_idl_jar = True
+            if generate_aidl_classes:
+                add_base_idl_jar = False
+                idl_jar = target[AndroidIdeInfo].idl_class_jar
+                if idl_jar != None:
+                    own_jar_files.append(idl_jar)
+                    add_base_idl_jar = True
 
-            # An AIDL base jar needed for resolving base classes for aidl generated stubs.
-            if add_base_idl_jar and hasattr(rule.attr, "_android_sdk"):
-                android_sdk_info = getattr(rule.attr, "_android_sdk")[AndroidSdkInfo]
-                own_jar_depsets.append(android_sdk_info.aidl_lib.files)
+                generated_java_files = target[AndroidIdeInfo].idl_generated_java_files
+                if generated_java_files:
+                    own_gensrc_files += generated_java_files
+                    add_base_idl_jar = True
+
+                # An AIDL base jar needed for resolving base classes for aidl generated stubs.
+                if add_base_idl_jar and hasattr(rule.attr, "_android_sdk"):
+                    android_sdk_info = getattr(rule.attr, "_android_sdk")[AndroidSdkInfo]
+                    own_jar_depsets.append(android_sdk_info.aidl_lib.files)
 
         # Add generated java_outputs (e.g. from annotation processing)
         generated_class_jars = []
@@ -326,6 +331,7 @@ def _collect_own_java_artifacts(
         gensrcs = own_gensrc_files,
         srcs = own_src_files,
         srcjars = own_srcjar_files,
+        android_resources_package = resource_package,
     )
 
 def _collect_own_and_dependency_java_artifacts(
@@ -345,7 +351,13 @@ def _collect_own_and_dependency_java_artifacts(
     )
 
     has_own_artifacts = (
-        len(own_files.jars) + len(own_files.jar_depsets) + len(own_files.ide_aars) + len(own_files.gensrcs) + len(own_files.srcs) + len(own_files.srcjars)
+        len(own_files.jars) +
+        len(own_files.jar_depsets) +
+        len(own_files.ide_aars) +
+        len(own_files.gensrcs) +
+        len(own_files.srcs) +
+        len(own_files.srcjars) +
+        (1 if own_files.android_resources_package else 0)
     ) > 0
 
     target_to_artifacts = {}
@@ -361,6 +373,7 @@ def _collect_own_and_dependency_java_artifacts(
             "gen_srcs": [_output_relative_path(file.path) for file in gen_srcs],
             "srcs": own_files.srcs,
             "srcjars": own_files.srcjars,
+            "android_resources_package": own_files.android_resources_package,
         }
 
     own_and_transitive_jar_depsets = list(own_files.jar_depsets)  # Copy to prevent changes to own_jar_depsets.
@@ -680,7 +693,7 @@ FOLLOW_JAVA_ATTRIBUTES_BY_RULE_KIND = [
     ("_aspect_proto_toolchain_for_javalite", []),
     ("_aspect_java_proto_toolchain", []),
     ("runtime", ["proto_lang_toolchain", "java_rpc_toolchain"]),
-    ("_toolchain", ["_java_grpc_library", "_java_lite_grpc_library", "kt_jvm_library_helper", "android_library"]),
+    ("_toolchain", ["_java_grpc_library", "_java_lite_grpc_library", "kt_jvm_library_helper", "android_library", "kt_android_library"]),
     ("kotlin_libs", ["kt_jvm_toolchain"]),
 ]
 

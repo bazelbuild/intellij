@@ -52,7 +52,7 @@ public class JavaSourcesCacheLayout implements CacheLayout {
     }
     String key = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact);
     return JavaSourceOutputArtifactDestination.create(
-        key,
+        artifactPath,
         artifactPath.getFileName().toString(),
         dotCacheDirectory.resolve(".gensrc").resolve(key),
         cacheDirectory.resolve(ROOT_DIRECTORY_NAME));

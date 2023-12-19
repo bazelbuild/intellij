@@ -30,10 +30,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -83,6 +83,13 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
   }
 
   private boolean requiresSync(VFileEvent event) {
+    if (event instanceof VFileCreateEvent || event instanceof VFileMoveEvent) {
+      return true;
+    } else if (event instanceof VFilePropertyChangeEvent
+        && ((VFilePropertyChangeEvent) event).getPropertyName().equals("name")) {
+      return true;
+    }
+
     VirtualFile vf = event.getFile();
     if (vf == null) {
       return false;
@@ -90,17 +97,6 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
 
     if (vf.getFileType() instanceof BuildFileType) {
       return true;
-    }
-
-    if (event instanceof VFileCreateEvent || event instanceof VFileMoveEvent) {
-      return true;
-    }
-
-    if (event instanceof VFileContentChangeEvent) {
-      // TODO: Check if file is not already part of graph
-      if (((VFileContentChangeEvent) event).getOldLength() == 0) {
-        return true;
-      }
     }
 
     return false;

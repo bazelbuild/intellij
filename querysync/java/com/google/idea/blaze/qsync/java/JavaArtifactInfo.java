@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.qsync.cache;
+package com.google.idea.blaze.qsync.java;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
@@ -22,14 +22,14 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData.JavaTargetArtifacts;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaTargetArtifacts;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
 /** Information about a project dependency that is calculated when the dependency is built. */
 @AutoValue
-public abstract class ArtifactInfo {
+public abstract class JavaArtifactInfo {
 
   /** Build label for the dependency. */
   public abstract Label label();
@@ -57,15 +57,18 @@ public abstract class ArtifactInfo {
 
   public abstract ImmutableSet<Path> srcJars();
 
-  public static ArtifactInfo create(JavaTargetArtifacts proto) {
+  public abstract String androidResourcesPackage();
+
+  public static JavaArtifactInfo create(JavaTargetArtifacts proto) {
     // Note, the proto contains a list of sources, we take the parent as we want directories instead
-    return new AutoValue_ArtifactInfo(
+    return new AutoValue_JavaArtifactInfo(
         Label.of(proto.getTarget()),
         proto.getJarsList().stream().map(Path::of).collect(toImmutableList()),
         proto.getIdeAarsList().stream().map(Path::of).collect(toImmutableList()),
         proto.getGenSrcsList().stream().map(Path::of).collect(toImmutableList()),
         proto.getSrcsList().stream().map(Path::of).collect(toImmutableSet()),
-        proto.getSrcjarsList().stream().map(Path::of).collect(toImmutableSet()));
+        proto.getSrcjarsList().stream().map(Path::of).collect(toImmutableSet()),
+        proto.getAndroidResourcesPackage());
   }
 
   public JavaTargetArtifacts toProto() {
@@ -76,6 +79,7 @@ public abstract class ArtifactInfo {
         .addAllGenSrcs(genSrcs().stream().map(Path::toString).collect(toImmutableList()))
         .addAllSrcs(sources().stream().map(Path::toString).collect(toImmutableList()))
         .addAllSrcjars(srcJars().stream().map(Path::toString).collect(toImmutableList()))
+        .setAndroidResourcesPackage(androidResourcesPackage())
         .build();
   }
 
@@ -89,13 +93,14 @@ public abstract class ArtifactInfo {
     return Streams.concat(jars().stream(), ideAars().stream(), genSrcs().stream());
   }
 
-  public static ArtifactInfo empty(Label target) {
-    return new AutoValue_ArtifactInfo(
+  public static JavaArtifactInfo empty(Label target) {
+    return new AutoValue_JavaArtifactInfo(
         target,
         ImmutableList.of(),
         ImmutableList.of(),
         ImmutableList.of(),
         ImmutableSet.of(),
-        ImmutableSet.of());
+        ImmutableSet.of(),
+        "");
   }
 }

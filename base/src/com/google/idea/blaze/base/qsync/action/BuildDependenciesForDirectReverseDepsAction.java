@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.qsync.action;
 
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
-import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.PopupPosititioner;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
@@ -49,7 +48,7 @@ public class BuildDependenciesForDirectReverseDepsAction extends BlazeProjectAct
     if (relativePath.isEmpty()) {
       return;
     }
-    helper.enableAnalysis(e, PopupPosititioner.showAtMousePointerOrCentered(e));
+    helper.enableAnalysis(e, PopupPositioner.showAtMousePointerOrCentered(e));
   }
 
   private BuildDependenciesHelper createHelper(Project project) {

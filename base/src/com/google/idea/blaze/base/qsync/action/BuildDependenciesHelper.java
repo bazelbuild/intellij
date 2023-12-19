@@ -33,14 +33,11 @@ import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.awt.RelativePoint;
-import java.awt.event.MouseEvent;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Optional;
@@ -58,46 +55,6 @@ public class BuildDependenciesHelper {
     SELF,
     /** Build dependencies of the reverse dependencies of the specified target(s) */
     REVERSE_DEPS
-  }
-
-  /** Encapsulates a relative position to show the target selection popup at. */
-  public interface PopupPosititioner {
-    void showInCorrectPosition(JBPopup popup);
-
-    /**
-     * Shows the popup at the location of the mount event, or centered it the screen if the event is
-     * not a mouse event (e.g. keyboard shortcut).
-     *
-     * <p>This is used e.g. when selecting "build dependencies" from a context menu.
-     */
-    static PopupPosititioner showAtMousePointerOrCentered(AnActionEvent e) {
-      return popup -> {
-        if (e.getInputEvent() instanceof MouseEvent) {
-          popup.show(
-              RelativePoint.fromScreen(((MouseEvent) e.getInputEvent()).getLocationOnScreen()));
-        } else {
-          popup.showCenteredInCurrentWindow(e.getProject());
-        }
-      };
-    }
-
-    /**
-     * Shows the popup underneath the clicked UI component, or centered in tge screen if the event
-     * is not a mouse event.
-     *
-     * <p>This is used to show the popup underneath the inspection widget action.
-     */
-    static PopupPosititioner showUnderneathClickedComponentOrCentered(AnActionEvent event) {
-      return popup -> {
-        if (event.getInputEvent() instanceof MouseEvent
-            && event.getInputEvent().getComponent() != null) {
-          // if the user clicked the action button, show underneath that
-          popup.showUnderneathOf(event.getInputEvent().getComponent());
-        } else {
-          popup.showCenteredInCurrentWindow(event.getProject());
-        }
-      };
-    }
   }
 
   private final Project project;
@@ -180,7 +137,7 @@ public class BuildDependenciesHelper {
     return disambiguator.unambiguousTargets;
   }
 
-  public void enableAnalysis(AnActionEvent e, PopupPosititioner popupPosititioner) {
+  public void enableAnalysis(AnActionEvent e, PopupPositioner popupPositioner) {
     ImmutableSet<Label> additionalTargets;
     if (QuerySyncSettings.getInstance().buildWorkingSet()) {
       try {
@@ -194,11 +151,11 @@ public class BuildDependenciesHelper {
     } else {
       additionalTargets = ImmutableSet.of();
     }
-    enableAnalysis(e, popupPosititioner, additionalTargets);
+    enableAnalysis(e, popupPositioner, additionalTargets);
   }
 
   public void enableAnalysis(
-      AnActionEvent e, PopupPosititioner positioner, ImmutableSet<Label> additionalTargetsToBuild) {
+      AnActionEvent e, PopupPositioner positioner, ImmutableSet<Label> additionalTargetsToBuild) {
     VirtualFile vfile = getVirtualFile(e);
     determineTargetsAndRun(
         vfile,
@@ -215,13 +172,13 @@ public class BuildDependenciesHelper {
   }
 
   public void determineTargetsAndRun(
-      VirtualFile vf, PopupPosititioner positioner, Consumer<ImmutableSet<Label>> consumer) {
+      VirtualFile vf, PopupPositioner positioner, Consumer<ImmutableSet<Label>> consumer) {
     determineTargetsAndRun(vf, positioner, consumer, ImmutableSet.of());
   }
 
   public void determineTargetsAndRun(
       VirtualFile vf,
-      PopupPosititioner positioner,
+      PopupPositioner positioner,
       Consumer<ImmutableSet<Label>> consumer,
       ImmutableSet<Label> additionalTargetsToBuild) {
     TargetsToBuild toBuild = getTargetsToEnableAnalysisFor(vf);
@@ -269,7 +226,7 @@ public class BuildDependenciesHelper {
   public void chooseTargetToBuildFor(
       Path workspaceRelativePath,
       TargetsToBuild toBuild,
-      PopupPosititioner positioner,
+      PopupPositioner positioner,
       Consumer<Label> chosenConsumer) {
     chooseTargetToBuildFor(
         WorkspaceRoot.fromProject(project).path().resolve(workspaceRelativePath).toString(),
@@ -281,7 +238,7 @@ public class BuildDependenciesHelper {
   public void chooseTargetToBuildFor(
       String fileName,
       TargetsToBuild toBuild,
-      PopupPosititioner positioner,
+      PopupPositioner positioner,
       Consumer<Label> chosenConsumer) {
     JBPopupFactory factory = JBPopupFactory.getInstance();
     ListPopup popup =

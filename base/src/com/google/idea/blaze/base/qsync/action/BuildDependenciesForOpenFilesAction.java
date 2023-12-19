@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.qsync.TargetsToBuild;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
-import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.PopupPosititioner;
 import com.google.idea.blaze.common.Label;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -82,7 +81,7 @@ public class BuildDependenciesForOpenFilesAction extends BlazeProjectAction {
       helper.chooseTargetToBuildFor(
           ambiguousOne.sourceFilePath().orElseThrow(),
           ambiguousOne,
-          PopupPosititioner.showAtMousePointerOrCentered(event),
+          PopupPositioner.showAtMousePointerOrCentered(event),
           chosen ->
               helper.enableAnalysis(
                   ImmutableSet.<Label>builder()

@@ -22,6 +22,7 @@ import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.qsync.java.PackageReader;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import java.nio.file.Path;

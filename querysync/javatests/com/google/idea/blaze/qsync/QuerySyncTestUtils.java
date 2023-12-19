@@ -24,6 +24,7 @@ import com.google.common.truth.Correspondence;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.vcs.VcsState;
+import com.google.idea.blaze.qsync.java.PackageReader;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.io.IOException;
@@ -80,12 +81,12 @@ public class QuerySyncTestUtils {
   }
 
   @AutoValue
-  abstract static class PathPackage {
+  public abstract static class PathPackage {
     abstract Path path();
 
     abstract String pkg();
 
-    static PathPackage of(String path, String pkg) {
+    public static PathPackage of(String path, String pkg) {
       return new AutoValue_QuerySyncTestUtils_PathPackage(Path.of(path), pkg);
     }
   }

@@ -19,7 +19,7 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.idea.blaze.qsync.SrcJarProjectUpdater;
+import com.google.idea.blaze.qsync.java.SrcJarProjectUpdater;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectPath.Root;
 import com.google.idea.blaze.qsync.project.ProjectProto;

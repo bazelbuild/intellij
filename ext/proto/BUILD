@@ -8,6 +8,7 @@ proto_library(
         "build_service.proto",
         "chatbotmodel.proto",
         "codesearch.proto",
+        "depserver.proto",
         "experiments.proto",
         "intellijext.proto",
         "issuetracker.proto",

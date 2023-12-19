@@ -101,7 +101,8 @@ public abstract class QuerySummary {
               "_java_grpc_library",
               "_java_lite_grpc_library",
               "kt_jvm_library_helper",
-              "android_library"));
+              "android_library",
+              "kt_android_library"));
 
   // Runtime dependency attributes
   private static final ImmutableSet<String> RUNTIME_DEP_ATTRIBUTES =
