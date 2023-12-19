@@ -7,7 +7,6 @@ v2023.12.19
 * fix: Update glob validation to support allow_empty parameter #5855
 * fix: Don't throw "Non-blaze project is provided error" on source attachment #5864
 
-
 v2023.12.05
 ===========
 * Escape regex-relevant characters in test filter #5745
