@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "462c64a4fe7d91839a4d3d6a6002a5757f13cf52477d049b1c5cb7a5743398a1",
+  "moduleFileHash": "d431237280ec0a9bb08eef1b34704a9813b402fd7b728b87a062ebce9c2e6d3e",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -168,6 +168,7 @@
             "io_netty_netty_tcnative_boringssl_static": "io_netty_netty_tcnative_boringssl_static",
             "io_netty_netty_tcnative_classes": "io_netty_netty_tcnative_classes",
             "io_netty_netty_transport_classes_epoll": "io_netty_netty_transport_classes_epoll",
+            "io_netty_netty_transport_classes_kqueue": "io_netty_netty_transport_classes_kqueue",
             "io_netty_netty_transport_native_epoll": "io_netty_netty_transport_native_epoll",
             "io_netty_netty_transport_native_unix_common": "io_netty_netty_transport_native_unix_common",
             "io_netty_netty_transport": "io_netty_netty_transport",

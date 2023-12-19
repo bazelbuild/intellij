@@ -187,6 +187,7 @@ use_repo(
     "io_netty_netty_tcnative_boringssl_static",
     "io_netty_netty_tcnative_classes",
     "io_netty_netty_transport_classes_epoll",
+    "io_netty_netty_transport_classes_kqueue",
     "io_netty_netty_transport_native_epoll",
     "io_netty_netty_transport_native_unix_common",
     "io_netty_netty_transport",
