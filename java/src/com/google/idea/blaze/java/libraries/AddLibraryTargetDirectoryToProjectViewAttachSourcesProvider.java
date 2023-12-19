@@ -42,7 +42,7 @@ public class AddLibraryTargetDirectoryToProjectViewAttachSourcesProvider
   public Collection<AttachSourcesAction> getAdapterActions(
       List<? extends LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
     Project project = psiFile.getProject();
-    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
+    if (!Blaze.getProjectType(project).equals(ProjectType.ASPECT_SYNC)) {
       return ImmutableList.of();
     }
     
