@@ -43,7 +43,7 @@ import static com.google.common.truth.Truth.assertThat;
 @RunWith(JUnit4.class)
 public class RunGazelleOnSyncTest extends BlazeSyncIntegrationTestCase {
     private final String GAZELLE_RUN_COMMAND =
-            "bazel run --tool_tag=.* --curses=no --color=yes --progress_in_terminal_title=no -- //:gazelle";
+            "bazel run --tool_tag=.* --curses=no --color=yes --progress_in_terminal_title=no --experimental_google_legacy_api -- //:gazelle";
 
     private MockGazelleRunner mockGazelleRunner;
 
