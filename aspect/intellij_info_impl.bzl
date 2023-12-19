@@ -553,8 +553,8 @@ def get_java_provider(target):
     # Check for scala and kt providers before JavaInfo. e.g. scala targets have
     # JavaInfo, but their data lives in the "scala" provider and not JavaInfo.
     # See https://github.com/bazelbuild/intellij/pull/1202
-    if hasattr(target, "scala"):
-        return target.scala
+    # if hasattr(target, "scala"):
+    #     return target.scala
     if hasattr(target, "kt") and hasattr(target.kt, "outputs"):
         return target.kt
     if JavaInfo in target:
