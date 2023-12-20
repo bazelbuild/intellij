@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.qsync.cache;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.google.common.collect.MoreCollectors.onlyElement;
 import static com.google.common.util.concurrent.Uninterruptibles.getUninterruptibly;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.AAR_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.APP_INSPECTOR_DIRECTORY;
@@ -38,6 +39,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Multimaps;
@@ -355,8 +357,9 @@ public class ArtifactTrackerImpl
    * @return A map of {@link OutputArtifactDestination}'s from the original request to the original
    *     artifact key that it was derived from.
    */
-  private <T extends OutputArtifactDestination> ListenableFuture<Map<T, Path>> fetchArtifacts(
-      BlazeContext context, ImmutableMap<OutputArtifact, T> artifactToDestinationMap) {
+  private <T extends OutputArtifactDestination>
+      ListenableFuture<ImmutableMap<T, Path>> fetchArtifacts(
+          BlazeContext context, ImmutableMap<OutputArtifact, T> artifactToDestinationMap) {
     final ImmutableMap<OutputArtifact, ArtifactDestination> artifactToDestinationPathMap =
         runMeasureAndLog(
             () ->
@@ -411,13 +414,34 @@ public class ArtifactTrackerImpl
    * @return A map of final destination path to the key of the artifact that it was derived from.
    */
   private ImmutableMap<Path, Path> prepareFinalLayouts(
-      Map<OutputArtifactDestinationAndLayout, Path> destinationToArtifact) {
-    ImmutableMap.Builder<Path, Path> result = ImmutableMap.builder();
+      Map<OutputArtifactDestinationAndLayout, Path> destinationToArtifact, BlazeContext context)
+      throws BuildException {
+    ArrayListMultimap<Path, OutputArtifactDestinationAndLayout> finalDestMap =
+        ArrayListMultimap.create();
     for (OutputArtifactDestinationAndLayout destination : destinationToArtifact.keySet()) {
-      Path dest = destination.determineFinalDestination();
-      destination.createFinalDestination(dest);
-      result.put(dest, destinationToArtifact.get(destination));
+      finalDestMap.put(destination.determineFinalDestination(), destination);
     }
+    ImmutableMap.Builder<Path, Path> result = ImmutableMap.builder();
+    for (Path finalDest : finalDestMap.keySet()) {
+      List<OutputArtifactDestinationAndLayout> artifacts = finalDestMap.get(finalDest);
+      OutputArtifactDestinationAndLayout selectedArtifact;
+      if (artifacts.size() == 1) {
+        selectedArtifact = Iterables.getOnlyElement(artifacts);
+      } else {
+        // If multiple artifacts map to the same cache path, we expect that they all come from
+        // the same cache layout (since each cache layout should have its own cache dir) and
+        // therefore the same resolution strategy.
+        selectedArtifact =
+            artifacts.stream()
+                .map(OutputArtifactDestinationAndLayout::getConflictStrategy)
+                .distinct()
+                .collect(onlyElement())
+                .resolveConflicts(finalDest, artifacts, context);
+      }
+      selectedArtifact.createFinalDestination(finalDest);
+      result.put(finalDest, destinationToArtifact.get(selectedArtifact));
+    }
+
     return result.build();
   }
 
@@ -503,17 +527,14 @@ public class ArtifactTrackerImpl
   private ImmutableMap<Path, Path> cache(
       BlazeContext context,
       ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap)
-      throws ExecutionException {
+      throws BuildException, ExecutionException {
     Stopwatch stopwatch = Stopwatch.createStarted();
     DownloadTrackingScope downloads = new DownloadTrackingScope();
     context.push(downloads);
     Optional<BuildDepsStats.Builder> builder = BuildDepsStatsScope.fromContext(context);
+    ListenableFuture<ImmutableMap<OutputArtifactDestinationAndLayout, Path>>
+        cachePathToArtifactKeyMapFuture = fetchArtifacts(context, artifactMap);
 
-    ListenableFuture<ImmutableMap<Path, Path>> cachePathToArtifactKeyMapFuture =
-        Futures.transform(
-            fetchArtifacts(context, artifactMap),
-            this::prepareFinalLayouts,
-            ArtifactFetcher.EXECUTOR);
     if (downloads.getFileCount() > 0) {
       context.output(
           PrintOutput.log(
@@ -525,7 +546,13 @@ public class ArtifactTrackerImpl
           });
     }
 
-    ImmutableMap<Path, Path> updated = getUninterruptibly(cachePathToArtifactKeyMapFuture);
+    // NOTE: The cache conflict detection inside `prepareFinalLayouts` doesn't work as we'd want it,
+    // as we only pass the updated artifacts in here. Than means that conflict cache entries
+    // produced by subsequent builds will not be detected. Instead, we should consider the entire
+    // cache contents when detecting conflicts, and then subsequently update just those that are
+    // new/changed.
+    ImmutableMap<Path, Path> updated =
+        prepareFinalLayouts(getUninterruptibly(cachePathToArtifactKeyMapFuture), context);
     builder.ifPresent(stats -> stats.setUpdatedFilesCount(updated.size()));
     ImmutableSet<Path> updatedFiles = updated.keySet();
     ImmutableSet<String> removedKeys = ImmutableSet.of();
