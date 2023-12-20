@@ -5,27 +5,27 @@ bazel_dep(
 
 bazel_dep(
     name = "rules_go",
-    version = "0.39.1",
+    version = "0.44.0",
 )
 
 bazel_dep(
     name = "rules_java",
-    version = "6.5.1",
+    version = "7.3.1",
 )
 
 bazel_dep(
     name = "rules_python",
-    version = "0.27.0",
+    version = "0.27.1",
 )
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 
 python.toolchain(
     configure_coverage_tool = True,
-    python_version = "3.11",
+    python_version = "3.12",
 )
 
-use_repo(python, "python_3_11", "python_versions")
+use_repo(python, "python_3_12", "python_versions")
 
 bazel_dep(
     name = "rules_proto",
@@ -91,39 +91,32 @@ maven.install(
     name = "maven",
     artifacts = [
         "junit:junit:4.13.2",
-        "org.mockito:mockito-core:3.3.0",
-        # objenesis is a dependency of mockito https://mvnrepository.com/artifact/org.mockito/mockito-core/3.3.0
-        # Before 2023.2 it was delivered with IntelliJ bundle in lib/app.jar, but this no longer happens so we need
-        # to download it from Maven Central.
+        "org.mockito:mockito-core:5.8.0",
         "org.objenesis:objenesis:3.3",
-        "net.bytebuddy:byte-buddy:1.10.5",
-        "net.bytebuddy:byte-buddy-agent:1.10.5",
-        "com.google.flogger:flogger:0.7.4",
-        "com.google.flogger:flogger-system-backend:0.7.4",
-        "com.googlecode.java-diff-utils:diffutils:1.2.1",
-        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2",
-        "org.jetbrains.kotlinx:kotlinx-coroutines-test-jvm:1.6.2",
+        "net.bytebuddy:byte-buddy:1.14.0",
+        "net.bytebuddy:byte-buddy-agent:1.14.10",
+        "com.google.flogger:flogger:0.8",
+        "com.google.flogger:flogger-system-backend:0.8",
+        "com.googlecode.java-diff-utils:diffutils:1.3.0",
         # Usually, we'd get this from the JetBrains SDK, but the bundled one not aware of Bazel platforms,
         # so it fails on certain setups.
-        "net.java.dev.jna:jna:5.13.0",
+        "net.java.dev.jna:jna:5.14.0",
 
         # From IO_GRPC_GRPC_JAVA_ARTIFACTS
         "com.google.android:annotations:4.1.1.4",
-        "com.google.api.grpc:proto-google-common-protos:2.22.0",
-        "com.google.auth:google-auth-library-credentials:1.4.0",
-        "com.google.auth:google-auth-library-oauth2-http:1.4.0",
+        "com.google.api.grpc:proto-google-common-protos:2.29.0",
+        "com.google.auth:google-auth-library-credentials:1.20.0",
+        "com.google.auth:google-auth-library-oauth2-http:1.20.0",
         "com.google.auto.value:auto-value-annotations:1.10.2",
-        "com.google.auto.value:auto-value:1.10.2",
+        "com.google.auto.value:auto-value:1.10.4",
         "com.google.code.findbugs:jsr305:3.0.2",
         "com.google.code.gson:gson:2.10.1",
         "com.google.errorprone:error_prone_annotations:2.20.0",
-        "com.google.guava:failureaccess:1.0.1",
-        "com.google.guava:guava:32.0.1-jre",  # changed to jre
+        "com.google.guava:failureaccess:1.0.2",
+        "com.google.guava:guava:33.0.0-jre",  # changed to jre
         "com.google.re2j:re2j:1.7",
         "com.google.truth:truth:1.1.5",
         "com.google.truth.extensions:truth-java8-extension:1.1.5",
-        "com.squareup.okhttp:okhttp:2.7.5",
-        "com.squareup.okio:okio:2.10.0",
         "io.netty:netty-buffer:4.1.97.Final",
         "io.netty:netty-codec-http2:4.1.97.Final",
         "io.netty:netty-codec-http:4.1.97.Final",
@@ -173,8 +166,6 @@ use_repo(
     "com_google_truth_truth",
     "com_google_truth_extensions_truth_java8_extension",
     "com_googlecode_java_diff_utils_diffutils",
-    "com_squareup_okhttp_okhttp",
-    "com_squareup_okio_okio",
     "io_netty_netty_buffer",
     "io_netty_netty_codec_http2",
     "io_netty_netty_codec_http",

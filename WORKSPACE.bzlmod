@@ -618,14 +618,11 @@ load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 protobuf_deps()
 
 # LICENSE: The Apache Software License, Version 2.0
-rules_scala_version = "a42f009ded929070d5c412284c50ba08f0f9e8b8"
-
 http_archive(
     name = "io_bazel_rules_scala",
-    sha256 = "0074836b631caaf552fd7013d49f18fa5f0a27c86bb1b88bd3fa9371fa36b2c9",
-    strip_prefix = "rules_scala-%s" % rules_scala_version,
-    type = "zip",
-    url = "https://github.com/bazelbuild/rules_scala/archive/%s.zip" % rules_scala_version,
+    sha256 = "9a23058a36183a556a9ba7229b4f204d3e68c8c6eb7b28260521016b38ef4e00",
+    strip_prefix = "rules_scala-6.4.0",
+    url = "https://github.com/bazelbuild/rules_scala/releases/download/v6.4.0/rules_scala-v6.4.0.tar.gz",
 )
 
 load("@io_bazel_rules_scala//:scala_config.bzl", "scala_config")
@@ -659,9 +656,9 @@ http_archive(
 # gRPC Java
 http_archive(
     name = "io_grpc_grpc_java",
-    sha256 = "3bcf6be49fc7ab8187577a5211421258cb8e6d179f46023cc82e42e3a6188e51",
-    strip_prefix = "grpc-java-1.59.0",
-    url = "https://github.com/grpc/grpc-java/archive/refs/tags/v1.59.0.tar.gz",
+    integrity = "sha256-Asmn+UANTinH5VZnhRCDqfaVk1CBeHB5qDTaMSEpv5c=",
+    strip_prefix = "grpc-java-1.60.0",
+    url = "https://github.com/grpc/grpc-java/archive/refs/tags/v1.60.0.tar.gz",
 )
 
 # io_grpc_grpc_java dependencies
