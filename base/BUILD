@@ -542,10 +542,11 @@ intellij_integration_test_suite(
         ":integration_test_utils",
         ":unit_test_utils",
         "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:plugin_api_for_tests",  # unuseddeps: keep
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
         "@com_google_guava_guava//jar",
+        "@error_prone_annotations//jar",
         "@junit//jar",
     ],
 )
