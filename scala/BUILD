@@ -81,7 +81,7 @@ intellij_unit_test_suite(
         "//java",
         "//third_party/scala:scala_for_tests",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+        "@junit_junit//jar",
     ],
 )
 
@@ -102,6 +102,6 @@ intellij_integration_test_suite(
         "//java",
         "//third_party/scala:scala_for_tests",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+        "@junit_junit//jar",
     ],
 )

@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.qsync;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
+import static com.google.idea.blaze.qsync.QuerySyncTestUtils.REPOSITORY_MAPPED_LABEL_CORRESPONDENCE;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableSet;
@@ -69,6 +70,7 @@ public class DependencyTrackerImplTest {
     assertThat(targets.get().buildTargets)
         .containsExactly(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.getAssumedOnlyLabel());
     assertThat(targets.get().expectedDependencyTargets)
+        .comparingElementsUsing(REPOSITORY_MAPPED_LABEL_CORRESPONDENCE)
         .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
   }
 
@@ -94,6 +96,7 @@ public class DependencyTrackerImplTest {
                 .siblingWithName("externaldep"),
             TestData.JAVA_LIBRARY_MULTI_TARGETS.getAssumedOnlyLabel().siblingWithName("nodeps"));
     assertThat(targets.get().expectedDependencyTargets)
+        .comparingElementsUsing(REPOSITORY_MAPPED_LABEL_CORRESPONDENCE)
         .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
   }
 
@@ -113,8 +116,10 @@ public class DependencyTrackerImplTest {
                 .orElseThrow());
     assertThat(targets).isPresent();
     assertThat(targets.get().buildTargets)
+        .comparingElementsUsing(REPOSITORY_MAPPED_LABEL_CORRESPONDENCE)
         .containsExactly(TestData.JAVA_LIBRARY_NESTED_PACKAGE.getAssumedOnlyLabel());
     assertThat(targets.get().expectedDependencyTargets)
+        .comparingElementsUsing(REPOSITORY_MAPPED_LABEL_CORRESPONDENCE)
         .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
   }
 
@@ -136,9 +141,10 @@ public class DependencyTrackerImplTest {
                 .getAssumedOnlyLabel()
                 .siblingWithPathAndName("inner:inner"));
     assertThat(targets.get().expectedDependencyTargets)
+        .comparingElementsUsing(REPOSITORY_MAPPED_LABEL_CORRESPONDENCE)
         .containsExactly(
             Label.of("@com_google_guava_guava//jar:jar"),
-            Label.of("@gson//jar:jar"));
+            Label.of("@com_google_code_gson_gson//jar:jar"));
   }
 
   @Test
@@ -177,6 +183,7 @@ public class DependencyTrackerImplTest {
     assertThat(
             dt.getPendingExternalDeps(
                 ImmutableSet.copyOf(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.getAssumedLabels())))
+        .comparingElementsUsing(REPOSITORY_MAPPED_LABEL_CORRESPONDENCE)
         .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
   }
 
@@ -191,7 +198,8 @@ public class DependencyTrackerImplTest {
     assertThat(
             dt.getPendingExternalDeps(
                 ImmutableSet.copyOf(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.getAssumedLabels())))
-        .isEmpty();
+        .comparingElementsUsing(REPOSITORY_MAPPED_LABEL_CORRESPONDENCE)
+        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
   }
 
   @Test

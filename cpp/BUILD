@@ -41,7 +41,7 @@ java_library(
         "//sdkcompat",
         "//shared",
         "//third_party/auto_value",
-        "@error_prone_annotations//jar",
+        "@com_google_errorprone_error_prone_annotations//jar",
     ],
 )
 
@@ -72,7 +72,7 @@ java_library(
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
-        "@junit//jar",
+        "@junit_junit//jar",
     ],
 )
 
@@ -127,7 +127,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+        "@junit_junit//jar",
     ] + select_for_ide(
         clion = [":clion_sysprop_rule"],
         default = [],
@@ -170,7 +170,7 @@ java_library(
         "//sdkcompat",
         "//testing:lib",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+        "@junit_junit//jar",
     ],
 )
 
@@ -199,6 +199,6 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//sdkcompat",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+        "@junit_junit//jar",
     ],
 )

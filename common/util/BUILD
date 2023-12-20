@@ -57,7 +57,7 @@ java_test(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//intellij_platform_sdk:truth",
-        "@junit//jar",
+        "@junit_junit//jar",
     ],
 )
 

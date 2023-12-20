@@ -45,7 +45,7 @@ public class DependenciesTest extends BazelIntellijAspectTest {
     assertThat(dependenciesForTarget(target)).contains(dep(":single_dep"));
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("foo.java-manifest"),
             testRelative(intellijInfoFileName("foo")),
             testRelative("single_dep.java-manifest"),
@@ -53,7 +53,7 @@ public class DependenciesTest extends BazelIntellijAspectTest {
             testRelative("transitive_dep.java-manifest"),
             testRelative(intellijInfoFileName("transitive_dep")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("libfoo.jar"),
             testRelative("libfoo-hjar.jar"),
             testRelative("libfoo-src.jar"),
@@ -64,7 +64,7 @@ public class DependenciesTest extends BazelIntellijAspectTest {
             testRelative("libtransitive_dep-hjar.jar"),
             testRelative("libtransitive_dep-src.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("libfoo.jar"),
             testRelative("libsingle_dep.jar"),
             testRelative("libtransitive_dep.jar"));
@@ -77,7 +77,7 @@ public class DependenciesTest extends BazelIntellijAspectTest {
     IntellijAspectTestFixture testFixture = loadTestFixture(":diamond_dep_fixture");
     TargetIdeInfo target = findTarget(testFixture, ":diamond_dep");
     assertThat(dependenciesForTarget(target))
-        .containsAllOf(dep(":single_dep"), dep(":single_dep_sibling"));
+        .containsAtLeast(dep(":single_dep"), dep(":single_dep_sibling"));
   }
 
   @Test
@@ -91,10 +91,10 @@ public class DependenciesTest extends BazelIntellijAspectTest {
     assertThat(dependenciesForTarget(fooExporter)).contains(dep(":foo"));
 
     assertThat(dependenciesForTarget(exportConsumer))
-        .containsAllOf(dep(":foo_exporter"), dep(":foo"));
+        .containsAtLeast(dep(":foo_exporter"), dep(":foo"));
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("foo.java-manifest"),
             testRelative(intellijInfoFileName("foo")),
             testRelative("foo_exporter.java-manifest"),
@@ -102,7 +102,7 @@ public class DependenciesTest extends BazelIntellijAspectTest {
             testRelative("export_consumer.java-manifest"),
             testRelative(intellijInfoFileName("export_consumer")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("libfoo.jar"),
             testRelative("libfoo-hjar.jar"),
             testRelative("libfoo-src.jar"),
@@ -113,7 +113,7 @@ public class DependenciesTest extends BazelIntellijAspectTest {
             testRelative("libexport_consumer-hjar.jar"),
             testRelative("libexport_consumer-src.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("libfoo.jar"),
             testRelative("libfoo_exporter.jar"),
             testRelative("libexport_consumer.jar"));
@@ -125,7 +125,7 @@ public class DependenciesTest extends BazelIntellijAspectTest {
     TargetIdeInfo transitiveExportConsumer = findTarget(testFixture, ":transitive_export_consumer");
 
     assertThat(dependenciesForTarget(transitiveExportConsumer))
-        .containsAllOf(dep(":foo"), dep(":foo_exporter"), dep(":foo_exporter_exporter"));
+        .containsAtLeast(dep(":foo"), dep(":foo_exporter"), dep(":foo_exporter_exporter"));
   }
 
   @Test

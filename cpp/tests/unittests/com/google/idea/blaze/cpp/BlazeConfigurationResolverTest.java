@@ -844,7 +844,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     assertThatResolving(projectView,targetMap).producesConfigurationsFor("//test:target and 1 other target(s)");
     assertThat(resolverResult.getAllConfigurations().get(0).getTargets().stream()
         .map(targetKey -> targetKey.getLabel().toString())
-        .collect(Collectors.toList())).containsAllOf("//test:target",
+        .collect(Collectors.toList())).containsAtLeast("//test:target",
         "@external_dependency//foo:bar");
   }
 

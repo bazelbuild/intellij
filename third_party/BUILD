@@ -14,8 +14,8 @@ java_library(
 java_library(
     name = "truth",
     exports = [
-        "@diffutils//jar",
-        "@truth//jar",
-        "@truth8//jar",
+        "@com_googlecode_java_diff_utils_diffutils//jar",
+        "@com_google_truth_truth//jar",
+        "@com_google_truth_extensions_truth_java8_extension//jar",
     ],
 )
