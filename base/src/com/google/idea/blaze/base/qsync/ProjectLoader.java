@@ -54,6 +54,8 @@ import com.google.idea.blaze.qsync.java.ParallelPackageReader;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -68,11 +70,13 @@ import org.jetbrains.annotations.Nullable;
 public class ProjectLoader {
 
   private final ListeningExecutorService executor;
+  private final SimpleModificationTracker projectModificationTracker;
   protected final Project project;
 
   public ProjectLoader(ListeningExecutorService executor, Project project) {
     this.executor = executor;
     this.project = project;
+    this.projectModificationTracker = new SimpleModificationTracker();
   }
 
   @Nullable
@@ -127,6 +131,7 @@ public class ProjectLoader {
         ProjectPath.Resolver.create(workspaceRoot.path(), ideProjectBasePath);
 
     BlazeProject graph = new BlazeProject();
+    graph.addListener((c, i) -> projectModificationTracker.incModificationCount());
     ArtifactFetcher<OutputArtifact> artifactFetcher = createArtifactFetcher();
     ArtifactTrackerImpl artifactTracker =
         new ArtifactTrackerImpl(
@@ -244,5 +249,9 @@ public class ProjectLoader {
       defaultRules.addAll(ep.handledRuleKinds(project));
     }
     return defaultRules.build();
+  }
+
+  ModificationTracker getProjectModificationTracker() {
+    return projectModificationTracker;
   }
 }
