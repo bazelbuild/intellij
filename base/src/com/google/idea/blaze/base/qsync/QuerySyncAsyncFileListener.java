@@ -36,37 +36,36 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /** {@link AsyncFileListener} for monitoring project changes requiring a re-sync */
 public class QuerySyncAsyncFileListener implements AsyncFileListener {
 
   private final SyncRequester syncRequester;
-  private final Function<Path, Boolean> includedPathChecker;
-  private final Supplier<Boolean> autoSyncOnFileChanges;
+  private final Project project;
 
   @VisibleForTesting
-  public QuerySyncAsyncFileListener(
-      SyncRequester syncRequester,
-      Function<Path, Boolean> includedPathChecker,
-      Supplier<Boolean> autoSyncOnFileChanges) {
+  public QuerySyncAsyncFileListener(Project project, SyncRequester syncRequester) {
+    this.project = project;
     this.syncRequester = syncRequester;
-    this.includedPathChecker = includedPathChecker;
-    this.autoSyncOnFileChanges = autoSyncOnFileChanges;
+  }
+
+  /** Returns true if {@code absolutePath} is in a directory included by the project. */
+  public boolean isPathIncludedInProject(Path absolutePath) {
+    return QuerySyncManager.getInstance(project)
+        .getLoadedProject()
+        .map(p -> p.containsPath(absolutePath))
+        .orElse(false);
+  }
+
+  /** Returns true if the listener should request a project sync on significant changes */
+  public boolean syncOnFileChanges() {
+    return QuerySyncSettings.getInstance().syncOnFileChanges();
   }
 
   private static QuerySyncAsyncFileListener create(Project project, Disposable parentDisposable) {
     SyncRequester syncRequester = QueueingSyncRequester.create(project, parentDisposable);
-    return new QuerySyncAsyncFileListener(
-        syncRequester,
-        path ->
-            QuerySyncManager.getInstance(project)
-                .getLoadedProject()
-                .map(p -> p.containsPath(path))
-                .orElse(false),
-        () -> QuerySyncSettings.getInstance().syncOnFileChanges());
+    return new QuerySyncAsyncFileListener(project, syncRequester);
   }
 
   public static void createAndListen(Project project, Disposable parentDisposable) {
@@ -77,7 +76,7 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
   @Override
   @Nullable
   public ChangeApplier prepareChange(List<? extends VFileEvent> events) {
-    if (!autoSyncOnFileChanges.get()) {
+    if (!syncOnFileChanges()) {
       return null;
     }
 
@@ -93,7 +92,7 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
   }
 
   private boolean requiresSync(VFileEvent event) {
-    if (!includedPathChecker.apply(Path.of(event.getPath()))) {
+    if (!isPathIncludedInProject(Path.of(event.getPath()))) {
       return false;
     }
     if (event instanceof VFileCreateEvent || event instanceof VFileMoveEvent) {
