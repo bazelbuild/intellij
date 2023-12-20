@@ -15,9 +15,11 @@
  */
 package com.google.idea.blaze.java.qsync;
 
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
@@ -37,12 +39,16 @@ public class QuerySyncNavigationPolicy implements ClsCustomNavigationPolicy {
   @Override
   @Nullable
   public PsiElement getNavigationElement(ClsFileImpl clsFile) {
-    if (!Blaze.getProjectType(clsFile.getProject()).equals(ProjectType.QUERY_SYNC)
-        || !ENABLED.getValue()) {
+    Project project = clsFile.getProject();
+    if (!Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC) || !ENABLED.getValue()) {
       return null;
     }
     return CachedValuesManager.getCachedValue(
         clsFile,
-        () -> Result.create(new ClassFileJavaSourceFinder(clsFile).findSourceFile(), clsFile));
+        () ->
+            Result.create(
+                new ClassFileJavaSourceFinder(clsFile).findSourceFile(),
+                clsFile,
+                QuerySyncManager.getInstance(project).getProjectModificationTracker()));
   }
 }
