@@ -34,6 +34,6 @@ java_test(
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing/rules:intellij_aspect_test_fixture_java_proto",
         "//intellij_platform_sdk:test_libs",
-        "@junit_junit//jar",
+        "@junit//jar",
     ],
 )

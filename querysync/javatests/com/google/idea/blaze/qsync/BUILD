@@ -25,7 +25,7 @@ java_library(
         "@com_google_flogger_flogger//jar",
         "@com_google_flogger_flogger_system_backend//jar",
         "@com_google_guava_guava//jar",
-        "@com_google_truth_truth//jar",
+        "@truth//jar",
     ],
 )
 
@@ -34,8 +34,8 @@ java_test(
     srcs = ["QuerySyncTestUtilsTest.java"],
     deps = [
         ":TestUtils",
-        "@com_google_truth_truth//jar",
-        "@junit_junit//jar",
+        "@truth//jar",
+        "@junit//jar",
     ],
 )
 
@@ -52,8 +52,8 @@ java_test(
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata:build_graphs",
         "@com_google_guava_guava//jar",
-        "@com_google_truth_truth//jar",
-        "@junit_junit//jar",
+        "@truth//jar",
+        "@junit//jar",
     ],
 )
 
@@ -68,8 +68,8 @@ java_test(
         "//querysync/javatests/com/google/idea/blaze/qsync/query:QuerySummaryTestUtil",
         "//shared:vcs",
         "@com_google_guava_guava//jar",
-        "@com_google_truth_truth//jar",
-        "@junit_junit//jar",
+        "@truth//jar",
+        "@junit//jar",
     ],
 )
 
@@ -86,8 +86,8 @@ java_test(
         "//querysync/javatests/com/google/idea/blaze/qsync/query:QuerySummaryTestUtil",
         "//shared:vcs",
         "@com_google_guava_guava//jar",
-        "@com_google_truth_truth//jar",
-        "@junit_junit//jar",
+        "@truth//jar",
+        "@junit//jar",
     ],
 )
 
@@ -103,8 +103,8 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//shared",
         "@com_google_guava_guava//jar",
-        "@com_google_truth_truth//jar",
-        "@junit_junit//jar",
+        "@truth//jar",
+        "@junit//jar",
     ],
 )
 
@@ -115,7 +115,7 @@ java_test(
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync",
         "@com_google_guava_guava//jar",
-        "@com_google_truth_truth//jar",
-        "@junit_junit//jar",
+        "@truth//jar",
+        "@junit//jar",
     ],
 )

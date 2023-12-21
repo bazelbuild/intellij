@@ -4,7 +4,7 @@ java_test(
     srcs = ["LabelTest.java"],
     deps = [
         "//shared/java/com/google/idea/blaze/common",
-        "@junit_junit//jar",
-        "@com_google_truth_truth//jar",
+        "@junit//jar",
+        "@truth//jar",
     ],
 )

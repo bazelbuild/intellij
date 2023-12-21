@@ -44,7 +44,7 @@ java_library(
         "//shared:exception",
         "//shared:vcs",
         "//third_party/auto_value",
-        "@com_google_errorprone_error_prone_annotations//jar",
+        "@error_prone_annotations//jar",
     ],
 )
 
@@ -458,7 +458,7 @@ java_library(
         "//third_party/auto_value",
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_java_proto",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
+        "@junit//jar",
     ],
 )
 
@@ -472,6 +472,7 @@ java_library(
         "//base/tests/utils/testdata/java/com/test2",
         "//base/tests/utils/testdata/java/com/test2:test2_srcs",
     ],
+    javacopts = java_version_flags(),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":base",
@@ -485,9 +486,8 @@ java_library(
         "//testing:lib",
         "@bazel_tools//tools/java/runfiles",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
+        "@junit//jar",
     ],
-    javacopts = java_version_flags()
 )
 
 stamped_plugin_xml(
@@ -527,7 +527,7 @@ intellij_unit_test_suite(
         "//testing:lib",
         "//third_party/auto_value",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
+        "@junit//jar",
     ],
 )
 
@@ -548,6 +548,6 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
+        "@junit//jar",
     ],
 )

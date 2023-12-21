@@ -14,7 +14,7 @@ java_library(
         "//shared",
         "//third_party/auto_value",
         "@com_google_guava_guava//jar",
-        "@com_google_errorprone_error_prone_annotations//jar",
+        "@error_prone_annotations//jar",
     ],
 )
 

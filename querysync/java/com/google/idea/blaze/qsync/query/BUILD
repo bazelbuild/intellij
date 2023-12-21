@@ -23,6 +23,6 @@ java_library(
         "//third_party/auto_value",
         "//third_party/bazel/src/main/protobuf:build_java_proto",
         "@com_google_guava_guava//jar",
-        "@com_google_errorprone_error_prone_annotations//jar",
+        "@error_prone_annotations//jar",
     ],
 )

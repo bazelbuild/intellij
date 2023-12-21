@@ -23,8 +23,8 @@ java_library(
         "//ext/proto:intellijext_java_proto",
         "//intellij_platform_sdk:plugin_api",
         "@com_google_guava_guava//jar",
-        "@io_grpc_grpc_java//core",
-        "@io_grpc_grpc_java//netty",
+        "@io_grpc_grpc_core//jar",
+        "@io_grpc_grpc_netty//jar",
     ] + select({
         "@platforms//os:macos": ["@io_netty_netty_transport_classes_kqueue//jar"],
         "//conditions:default": [
@@ -67,9 +67,9 @@ java_test(
     deps = [
         ":intellijext",
         "//ext/proto:intellijext_java_proto",
-        "@com_google_truth_truth//jar",
         "@io_grpc_grpc_java//core",
-        "@junit_junit//jar",
+        "@junit//jar",
+        "@truth//jar",
     ],
 )
 
