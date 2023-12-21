@@ -718,8 +718,8 @@ java_library(
     visibility = [":test_libs_visibility"],
     exports = [
         "//third_party:truth",
-        "@bytebuddy-agent//jar",
         "@bytebuddy//jar",
+        "@bytebuddy_agent//jar",
         "@mockito//jar",
         "@objenesis//jar",
     ],

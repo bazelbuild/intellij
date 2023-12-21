@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "68f0fee17769fe3262461fd0d5344fb4c917bc79735f088c2253cda6d9453a6a",
+  "moduleFileHash": "4cd7210b65b9ee53b8c31d670c30b3b140fcfeca881aa550ff2467caf0384bd7",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -145,7 +145,6 @@
             "com_google_guava_guava": "com_google_guava_guava",
             "com_google_j2objc_j2objc_annotations": "com_google_j2objc_j2objc_annotations",
             "com_google_re2j_re2j": "com_google_re2j_re2j",
-            "com_googlecode_java_diff_utils_diffutils": "com_googlecode_java_diff_utils_diffutils",
             "io_grpc_grpc_api": "io_grpc_grpc_api",
             "io_grpc_grpc_core": "io_grpc_grpc_core",
             "io_grpc_grpc_netty": "io_grpc_grpc_netty",
@@ -172,14 +171,15 @@
             "io_opencensus_opencensus_contrib_grpc_metrics": "io_opencensus_opencensus_contrib_grpc_metrics",
             "io_perfmark_perfmark_api": "io_perfmark_perfmark_api",
             "maven": "maven",
-            "net_bytebuddy_byte_buddy": "net_bytebuddy_byte_buddy",
-            "net_bytebuddy_byte_buddy_agent": "net_bytebuddy_byte_buddy_agent",
             "net_java_dev_jna_jna": "net_java_dev_jna_jna",
             "org_apache_tomcat_annotations_api": "org_apache_tomcat_annotations_api",
             "org_codehaus_mojo_animal_sniffer_annotations": "org_codehaus_mojo_animal_sniffer_annotations",
             "unpinned_maven": "unpinned_maven",
             "auto_value": "com_google_auto_value_auto_value",
             "auto_value_annotations": "com_google_auto_value_auto_value_annotations",
+            "bytebuddy": "net_bytebuddy_byte_buddy",
+            "bytebuddy_agent": "net_bytebuddy_byte_buddy_agent",
+            "diffutils": "com_googlecode_java_diff_utils_diffutils",
             "error_prone_annotations": "com_google_errorprone_error_prone_annotations",
             "jsr305_annotations": "com_google_code_findbugs_jsr305",
             "junit": "junit_junit",
