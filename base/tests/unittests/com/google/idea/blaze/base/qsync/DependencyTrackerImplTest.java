@@ -198,8 +198,7 @@ public class DependencyTrackerImplTest {
     assertThat(
             dt.getPendingExternalDeps(
                 ImmutableSet.copyOf(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.getAssumedLabels())))
-        .comparingElementsUsing(REPOSITORY_MAPPED_LABEL_CORRESPONDENCE)
-        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
+        .isEmpty();
   }
 
   @Test

@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "b917a257173d0798da8c795850585a91c25f3206e4cb84bb85bca588f2f7836d",
+  "moduleFileHash": "6c5da364ebc9d875599d4dc506386cfb43089501799b562eaa27fbb037d5a93d",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -20,7 +20,7 @@
       "name": "",
       "version": "",
       "key": "<root>",
-      "repoName": "",
+      "repoName": "intellij_with_bazel",
       "executionPlatformsToRegister": [],
       "toolchainsToRegister": [],
       "extensionUsages": [
@@ -30,7 +30,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 18,
+            "line": 23,
             "column": 23
           },
           "imports": {
@@ -48,7 +48,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 19,
+                "line": 24,
                 "column": 17
               }
             }
@@ -62,7 +62,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 51,
+            "line": 56,
             "column": 42
           },
           "imports": {
@@ -80,7 +80,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 60,
+            "line": 65,
             "column": 31
           },
           "imports": {
@@ -104,7 +104,7 @@
               "devDependency": true,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 65,
+                "line": 70,
                 "column": 24
               }
             },
@@ -116,7 +116,7 @@
               "devDependency": true,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 66,
+                "line": 71,
                 "column": 24
               }
             }
@@ -130,7 +130,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 85,
+            "line": 90,
             "column": 22
           },
           "imports": {
@@ -180,9 +180,9 @@
             "bytebuddy_agent": "net_bytebuddy_byte_buddy_agent",
             "diffutils": "com_googlecode_java_diff_utils_diffutils",
             "error_prone_annotations": "com_google_errorprone_error_prone_annotations",
+            "gson": "com_google_code_gson_gson",
             "jsr305_annotations": "com_google_code_findbugs_jsr305",
             "junit": "junit_junit",
-            "gson": "com_google_code_gson_gson",
             "mockito": "org_mockito_mockito_core",
             "objenesis": "org_objenesis_objenesis",
             "truth": "com_google_truth_truth",
@@ -257,7 +257,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 86,
+                "line": 91,
                 "column": 14
               }
             }
@@ -266,12 +266,12 @@
           "hasNonDevUseExtension": true
         },
         {
-          "extensionBzlFile": "@//:non_module_deps.bzl",
+          "extensionBzlFile": "@intellij_with_bazel//:non_module_deps.bzl",
           "extensionName": "non_module_deps",
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 209,
+            "line": 214,
             "column": 32
           },
           "imports": {
@@ -288,7 +288,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 210,
+                "line": 215,
                 "column": 41
               }
             }
