@@ -160,7 +160,7 @@ java_library(
         "//querysync",
         "//shared",
         "//third_party/auto_value",
-        "@com_google_code_gson_gson//jar",
+        "@gson//jar",
     ],
 )
 
@@ -254,8 +254,8 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//proto:proto_deps",
-        "@com_google_code_gson_gson//jar",
         "@com_google_guava_guava//jar",
+        "@gson//jar",
         "@junit//jar",
     ],
 )
