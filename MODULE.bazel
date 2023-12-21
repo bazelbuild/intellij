@@ -155,7 +155,6 @@ use_repo(
     "com_google_api_grpc_proto_google_common_protos",
     "com_google_auth_google_auth_library_credentials",
     "com_google_auth_google_auth_library_oauth2_http",
-    "com_google_code_gson_gson",
     "com_google_flogger_flogger",
     "com_google_flogger_flogger_system_backend",
     "com_google_guava_failureaccess",
@@ -195,9 +194,10 @@ use_repo(
     auto_value = "com_google_auto_value_auto_value",
     auto_value_annotations = "com_google_auto_value_auto_value_annotations",
     bytebuddy = "net_bytebuddy_byte_buddy",
-    bytebuddy_agent = "net_bytebuddy_byte_buddy_agent", # Can it be `bytebuddy-agent`? (not a legal identifier)
+    bytebuddy_agent = "net_bytebuddy_byte_buddy_agent",  # Can it be `bytebuddy-agent`? (not a legal identifier)
     diffutils = "com_googlecode_java_diff_utils_diffutils",
     error_prone_annotations = "com_google_errorprone_error_prone_annotations",
+    gson = "com_google_code_gson_gson",
     jsr305_annotations = "com_google_code_findbugs_jsr305",
     junit = "junit_junit",
     mockito = "org_mockito_mockito_core",

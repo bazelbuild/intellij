@@ -144,7 +144,7 @@ public class DependencyTrackerImplTest {
         .comparingElementsUsing(REPOSITORY_MAPPED_LABEL_CORRESPONDENCE)
         .containsExactly(
             Label.of("@com_google_guava_guava//jar:jar"),
-            Label.of("@gson//jar:jar"));
+            Label.of("@com_google_code_gson_gson//jar:jar"));
   }
 
   @Test

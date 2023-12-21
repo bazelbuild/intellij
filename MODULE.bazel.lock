@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "4cd7210b65b9ee53b8c31d670c30b3b140fcfeca881aa550ff2467caf0384bd7",
+  "moduleFileHash": "b917a257173d0798da8c795850585a91c25f3206e4cb84bb85bca588f2f7836d",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -138,7 +138,6 @@
             "com_google_api_grpc_proto_google_common_protos": "com_google_api_grpc_proto_google_common_protos",
             "com_google_auth_google_auth_library_credentials": "com_google_auth_google_auth_library_credentials",
             "com_google_auth_google_auth_library_oauth2_http": "com_google_auth_google_auth_library_oauth2_http",
-            "com_google_code_gson_gson": "com_google_code_gson_gson",
             "com_google_flogger_flogger": "com_google_flogger_flogger",
             "com_google_flogger_flogger_system_backend": "com_google_flogger_flogger_system_backend",
             "com_google_guava_failureaccess": "com_google_guava_failureaccess",
@@ -183,6 +182,7 @@
             "error_prone_annotations": "com_google_errorprone_error_prone_annotations",
             "jsr305_annotations": "com_google_code_findbugs_jsr305",
             "junit": "junit_junit",
+            "gson": "com_google_code_gson_gson",
             "mockito": "org_mockito_mockito_core",
             "objenesis": "org_objenesis_objenesis",
             "truth": "com_google_truth_truth",
