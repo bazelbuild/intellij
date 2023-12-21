@@ -58,7 +58,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
     editorTest.setCaretPosition(editor, 0, 0);
 
     String[] completionItems = editorTest.getCompletionItemsAsStrings();
-    assertThat(completionItems).asList().containsAtLeast("rule_one", "rule_two");
+    assertThat(completionItems).asList().containsAllOf("rule_one", "rule_two");
     assertFileContents(file, "");
   }
 

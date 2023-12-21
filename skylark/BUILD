@@ -72,6 +72,6 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//testing:lib",
-        "@junit_junit//jar",
+        "@junit//jar",
     ],
 )

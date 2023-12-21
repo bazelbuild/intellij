@@ -87,7 +87,7 @@ public class ArgumentCompletionContributorTest extends BuildFileIntegrationTestC
               String[] completionItems = editorTest.getCompletionItemsAsStrings();
               assertThat(completionItems)
                   .asList()
-                  .containsAtLeast("name", "deps", "srcs", "function");
+                  .containsAllOf("name", "deps", "srcs", "function");
             });
   }
 

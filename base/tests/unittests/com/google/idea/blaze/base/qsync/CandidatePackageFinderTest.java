@@ -83,7 +83,7 @@ public class CandidatePackageFinderTest {
         cpf.getCandidatePackages(Path.of("package/path/BUILD"), () -> {});
 
     ImmutableList<String> args = commandCaptor.getValue().build().toArgumentList();
-    expect.that(args).containsAtLeast("--output", "package", "//package/path/...").inOrder();
+    expect.that(args).containsAllOf("--output", "package", "//package/path/...").inOrder();
   }
 
   @Test
@@ -101,7 +101,7 @@ public class CandidatePackageFinderTest {
         cpf.getCandidatePackages(Path.of("package/path/BUILD"), () -> {});
 
     ImmutableList<String> args = commandCaptor.getValue().build().toArgumentList();
-    expect.that(args).containsAtLeast("--output", "package", "//package/path/...").inOrder();
+    expect.that(args).containsAllOf("--output", "package", "//package/path/...").inOrder();
   }
 
   @Test

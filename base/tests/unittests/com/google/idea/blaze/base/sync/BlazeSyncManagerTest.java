@@ -73,7 +73,7 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
 
     doNothing().when(manager).requestProjectSync(any());
     projectServices.register(BlazeSyncManager.class, manager);
-    assertThat(BlazeSyncManager.getInstance(project)).isSameInstanceAs(manager);
+    assertThat(BlazeSyncManager.getInstance(project)).isSameAs(manager);
   }
 
   @Override

@@ -123,9 +123,9 @@ java_library(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//testing:lib",
-        "@com_google_errorprone_error_prone_annotations//jar",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
+        "@error_prone_annotations//jar",
+        "@junit//jar",
     ],
 )
 
@@ -160,7 +160,7 @@ java_library(
         "//querysync",
         "//shared",
         "//third_party/auto_value",
-        "@com_google_code_gson_gson//jar",
+        "@gson//jar",
     ],
 )
 
@@ -192,7 +192,7 @@ intellij_unit_test_suite(
         "//shared",
         "//testing:lib",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
+        "@junit//jar",
     ],
 )
 
@@ -254,9 +254,9 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//proto:proto_deps",
-        "@com_google_code_gson_gson//jar",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
+        "@gson//jar",
+        "@junit//jar",
     ],
 )
 
@@ -278,7 +278,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
-        "@junit_junit//jar",
+        "@junit//jar",
     ],
 )
 

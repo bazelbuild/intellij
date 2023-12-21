@@ -29,7 +29,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
         "//third_party/javascript",
-        "@com_google_code_gson_gson//jar",
+        "@gson//jar",
     ],
 )
 
@@ -82,7 +82,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
+        "@junit//jar",
     ],
 )
 
@@ -102,6 +102,6 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//third_party/javascript:javascript_for_tests",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
+        "@junit//jar",
     ],
 )

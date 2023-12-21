@@ -20,9 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.truth.Correspondence;
 import com.google.idea.blaze.common.Context;
-import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.qsync.java.PackageReader;
 import com.google.idea.blaze.qsync.query.QuerySummary;
@@ -111,25 +109,4 @@ public class QuerySyncTestUtils {
       }
     }
   }
-
-  private static String cleanLabel(String label) {
-    return label.replaceAll(".*~", "").replaceAll("@@", "");
-  }
-
-  /**
-   * A correspondence that compares the repository-mapped form of labels. For example,
-   * `@@rules_jvm_external~5.3~maven~com_google_guava_guava//jar:jar` should be equal to
-   * `@@com_google_guava_guava//jar:jar`
-   */
-  public static final Correspondence<Label, Label> REPOSITORY_MAPPED_LABEL_CORRESPONDENCE =
-      Correspondence.from(
-          (actual, expected) -> {
-            if (actual == null || expected == null) {
-              return actual == expected;
-            }
-            String actualString = cleanLabel(actual.toString());
-            String expectedString = cleanLabel(expected.toString());
-            return actualString.equals(expectedString);
-          },
-          "is repository-mapped equal to");
 }
