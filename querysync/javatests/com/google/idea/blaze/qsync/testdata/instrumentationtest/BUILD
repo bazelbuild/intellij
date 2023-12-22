@@ -1,5 +1,5 @@
 load(
-    "@rules_android//android:rules.bzl",
+    "@build_bazel_rules_android//android:rules.bzl",
     "android_binary",
     "android_instrumentation_test",
     "android_library",

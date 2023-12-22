@@ -23,8 +23,8 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//shared",
-        "@junit_junit//jar",
-        "@com_google_truth_truth//jar",
+        "@junit//jar",
+        "@truth//jar",
     ],
 )
 
@@ -34,7 +34,7 @@ java_test(
     srcs = ["QuerySpecTest.java"],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/query",
-        "@junit_junit//jar",
-        "@com_google_truth_truth//jar",
+        "@junit//jar",
+        "@truth//jar",
     ],
 )

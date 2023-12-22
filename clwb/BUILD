@@ -30,8 +30,8 @@ licenses(["notice"])
 
 intellij_plugin_library(
     name = "plugin_library",
-    optional_plugin_xmls = ["optional_clwb_oclang"],
     plugin_xmls = ["src/META-INF/clwb.xml"],
+    optional_plugin_xmls = ["optional_clwb_oclang"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":clwb_lib"],
 )
@@ -137,7 +137,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "@junit_junit//jar",
+        "@junit//jar",
     ],
 )
 

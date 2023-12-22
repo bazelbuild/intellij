@@ -54,8 +54,7 @@ public enum TestData {
     this.srcPaths = stream(paths).map(Path::of).collect(toImmutableList());
   }
 
-  // TODO: Probably there's a better way to do this.
-  private static final String WORKSPACE_NAME = "_main";
+  private static final String WORKSPACE_NAME = "intellij_with_bazel";
 
   public static final Path ROOT =
       Path.of(

@@ -86,7 +86,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//third_party/python:python_for_tests",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
+        "@junit//jar",
     ],
 )
 
@@ -106,7 +106,7 @@ intellij_unit_test_suite(
         "//proto:proto_deps",
         "//third_party/python:python_for_tests",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
+        "@junit//jar",
     ],
 )
 
@@ -124,6 +124,6 @@ java_library(
         "//intellij_platform_sdk:test_libs",
         "//third_party/python:python_for_tests",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
+        "@junit//jar",
     ],
 )

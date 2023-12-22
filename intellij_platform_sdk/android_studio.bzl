@@ -247,7 +247,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
         ],
         deps = [
             # guava v20+ requires this at compile-time when using annotation processors.
-            "@com_google_errorprone_error_prone_annotations//jar",
+            "@error_prone_annotations//jar",
         ],
         **kwargs
     )

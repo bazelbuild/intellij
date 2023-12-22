@@ -47,7 +47,7 @@ public class TargetExpressionTest extends BlazeTestCase {
   @Test
   public void globExpressionShouldYieldGeneralTargetExpression() {
     TargetExpression target = TargetExpression.fromStringSafe("//package/...");
-    assertThat(target.getClass()).isSameInstanceAs(TargetExpression.class);
+    assertThat(target.getClass()).isSameAs(TargetExpression.class);
   }
 
   @Test

@@ -1,4 +1,4 @@
-load("@io_grpc_grpc_java//:java_grpc_library.bzl", "java_grpc_library")
+load("//third_party/java/grpc:build_defs.bzl", "java_grpc_library")
 
 proto_library(
     name = "test_service_proto",

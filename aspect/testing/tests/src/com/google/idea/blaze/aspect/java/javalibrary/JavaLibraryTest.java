@@ -37,13 +37,13 @@ public class JavaLibraryTest extends BazelIntellijAspectTest {
 
     // transitive exports should be rolled up into direct deps
     assertThat(target.getDepsList())
-        .containsAtLeast(
+        .containsAllOf(
             dep(":exports_direct"), dep(":direct"), dep(":exports_indirect"), dep(":indirect"));
     assertThat(target.getDepsList()).doesNotContain(dep(":distant"));
 
     // intellij-info groups
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
-        .containsAtLeast(
+        .containsAllOf(
             testRelative("foo_exports.java-manifest"),
             testRelative(intellijInfoFileName("foo_exports")),
             testRelative(intellijInfoFileName("exports_direct")),
@@ -61,7 +61,7 @@ public class JavaLibraryTest extends BazelIntellijAspectTest {
             testRelative(intellijInfoFileName("foo_exports")));
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-direct-deps"))
-        .containsAtLeast(
+        .containsAllOf(
             testRelative("foo_exports.java-manifest"),
             testRelative(intellijInfoFileName("foo_exports")),
             testRelative(intellijInfoFileName("exports_direct")),
@@ -100,7 +100,7 @@ public class JavaLibraryTest extends BazelIntellijAspectTest {
 
     // intellij-info groups
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
-        .containsAtLeast(
+        .containsAllOf(
             testRelative("foo.java-manifest"), testRelative(intellijInfoFileName("foo")),
             testRelative("direct.java-manifest"), testRelative(intellijInfoFileName("direct")),
             testRelative("indirect.java-manifest"), testRelative(intellijInfoFileName("indirect")),
@@ -111,7 +111,7 @@ public class JavaLibraryTest extends BazelIntellijAspectTest {
             testRelative("foo.java-manifest"), testRelative(intellijInfoFileName("foo")));
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-direct-deps"))
-        .containsAtLeast(
+        .containsAllOf(
             testRelative("foo.java-manifest"), testRelative(intellijInfoFileName("foo")),
             testRelative("direct.java-manifest"), testRelative(intellijInfoFileName("direct")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-direct-deps"))

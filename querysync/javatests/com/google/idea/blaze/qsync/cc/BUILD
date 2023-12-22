@@ -12,7 +12,7 @@ java_test(
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata:build_graphs",
         "//shared",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
-        "@com_google_truth_truth//jar",
+        "@junit//jar",
+        "@truth//jar",
     ],
 )

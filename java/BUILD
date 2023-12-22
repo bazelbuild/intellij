@@ -151,7 +151,7 @@ intellij_unit_test_suite(
         "//shared",
         "//testing:lib",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
+        "@junit//jar",
     ],
 )
 
@@ -206,7 +206,7 @@ intellij_integration_test_suite(
         "//proto:proto_deps",
         "//shared",
         "@com_google_guava_guava//jar",
-        "@junit_junit//jar",
-        "@com_google_truth_truth//jar",
+        "@junit//jar",
+        "@truth//jar",
     ],
 )

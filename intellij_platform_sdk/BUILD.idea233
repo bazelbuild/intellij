@@ -17,7 +17,7 @@ java_import(
     ),
     tags = ["intellij-provided-by-sdk"],
     exports = [":jars_without_mockito_extensions"],
-    deps = ["@com_google_errorprone_error_prone_annotations//jar"],
+    deps = ["@error_prone_annotations//jar"],
 )
 
 no_mockito_extensions(
