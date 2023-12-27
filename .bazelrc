@@ -10,3 +10,5 @@ common --noenable_bzlmod
 
 build --experimental_google_legacy_api
 test --experimental_google_legacy_api
+
+common --incompatible_disable_target_provider_fields
