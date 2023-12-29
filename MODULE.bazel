@@ -50,8 +50,8 @@ bazel_dep(
 )
 bazel_dep(
     name = "rules_android",
-    repo_name = "build_bazel_rules_android",
     version = "0.1.1",
+    repo_name = "build_bazel_rules_android",
 )
 
 remote_android_extensions = use_extension("@bazel_tools//tools/android:android_extensions.bzl", "remote_android_tools_extensions")
@@ -129,9 +129,9 @@ maven.install(
         "io.grpc:grpc-util",
         "io.grpc:grpc-core",
     ],
-#     fail_if_repin_required = True,
+    fail_if_repin_required = True,
     generate_compat_repositories = True,
-#     lock_file = "//:maven_install.json",
+    lock_file = "//:maven_install.json",
 )
 use_repo(
     maven,
@@ -150,17 +150,17 @@ use_repo(
     "io_netty_netty_transport_native_unix_common",
     "maven",
     "org_apache_tomcat_annotations_api",
-#     "unpinned_maven",
-    jna = "net_java_dev_jna_jna",
-    flogger = "com_google_flogger_flogger",
-    flogger_system_backend = "com_google_flogger_flogger_system_backend",
+    "unpinned_maven",
     auto_value = "com_google_auto_value_auto_value",
     auto_value_annotations = "com_google_auto_value_auto_value_annotations",
     bytebuddy = "net_bytebuddy_byte_buddy",
     bytebuddy_agent = "net_bytebuddy_byte_buddy_agent",  # Can it be `bytebuddy-agent`? (not a legal identifier)
     diffutils = "com_googlecode_java_diff_utils_diffutils",
     error_prone_annotations = "com_google_errorprone_error_prone_annotations",
+    flogger = "com_google_flogger_flogger",
+    flogger_system_backend = "com_google_flogger_flogger_system_backend",
     gson = "com_google_code_gson_gson",
+    jna = "net_java_dev_jna_jna",
     jsr305_annotations = "com_google_code_findbugs_jsr305",
     junit = "junit_junit",
     mockito = "org_mockito_mockito_core",
