@@ -57,12 +57,12 @@ import org.junit.runners.JUnit4;
 public class KotlinTestContextProviderTest extends BlazeRunConfigurationProducerTestCase {
 
   private static final Correspondence<RunConfiguration, Boolean> IS_BLAZE_RUN_CONFIGURATION =
-      transforming(BlazeCommandRunConfiguration.class::isInstance, "is a Blaze run configuration");
+      Correspondence.transforming(BlazeCommandRunConfiguration.class::isInstance, "is a Blaze run configuration");
   private static final Correspondence<BlazeCommandRunConfiguration, TestBlazeCall> HAS_BLAZE_CALL =
-      transforming(TestBlazeCall::fromRunConfig, "has a Blaze invocation using");
+      Correspondence.transforming(TestBlazeCall::fromRunConfig, "has a Blaze invocation using");
   private static final Correspondence<BlazeCommandRunConfiguration, TargetExpression>
       HAS_ONLY_TARGET =
-          transforming(BlazeCommandRunConfiguration::getSingleTarget, "has the only target");
+          Correspondence.transforming(BlazeCommandRunConfiguration::getSingleTarget, "has the only target");
 
   @Before
   public final void setup() {
@@ -325,23 +325,6 @@ public class KotlinTestContextProviderTest extends BlazeRunConfigurationProducer
     return configurationsFromContext.stream()
         .map(ConfigurationFromContext::getConfiguration)
         .collect(toImmutableList());
-  }
-
-  // Replace with Correspondence.transforming() when the truth version bundled with the IntelliJ API
-  // is high enough.
-  private static <A, E> Correspondence<A, E> transforming(
-      Function<A, E> transform, String description) {
-    return new Correspondence<A, E>() {
-      @Override
-      public boolean compare(@Nullable A actual, @Nullable E expected) {
-        return Objects.equals(transform.apply(actual), expected);
-      }
-
-      @Override
-      public String toString() {
-        return description;
-      }
-    };
   }
 
   @AutoValue

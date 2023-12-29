@@ -50,6 +50,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "rules_android",
+    repo_name = "build_bazel_rules_android",
     version = "0.1.1",
 )
 
@@ -128,14 +129,12 @@ maven.install(
         "io.grpc:grpc-util",
         "io.grpc:grpc-core",
     ],
-    fail_if_repin_required = True,
+#     fail_if_repin_required = True,
     generate_compat_repositories = True,
-    lock_file = "//:maven_install.json",
+#     lock_file = "//:maven_install.json",
 )
 use_repo(
     maven,
-    "com_google_flogger_flogger",
-    "com_google_flogger_flogger_system_backend",
     "com_google_guava_guava",
     "io_grpc_grpc_api",
     "io_grpc_grpc_core",
@@ -150,9 +149,11 @@ use_repo(
     "io_netty_netty_transport_native_epoll",
     "io_netty_netty_transport_native_unix_common",
     "maven",
-    "net_java_dev_jna_jna",
     "org_apache_tomcat_annotations_api",
-    "unpinned_maven",
+#     "unpinned_maven",
+    jna = "net_java_dev_jna_jna",
+    flogger = "com_google_flogger_flogger",
+    flogger_system_backend = "com_google_flogger_flogger_system_backend",
     auto_value = "com_google_auto_value_auto_value",
     auto_value_annotations = "com_google_auto_value_auto_value_annotations",
     bytebuddy = "net_bytebuddy_byte_buddy",
