@@ -1,6 +1,5 @@
-load("@bazel_binaries//:defs.bzl", "bazel_binaries")
 load(
-    "@rules_bazel_integration_test//bazel_integration_test:defs.bzl",
+    "@contrib_rules_bazel_integration_test//bazel_integration_test:defs.bzl",
     "bazel_integration_tests",
 )
 
@@ -20,7 +19,10 @@ java_binary(
 
 bazel_integration_tests(
     name = "bazel_invocation_integration_tests",
-    bazel_versions = bazel_binaries.versions.all,
+    bazel_versions = [
+        "4.0.0",
+        "6.0.0",
+    ],
     # set tags = [] because otherwise bazel_integration_tests sets
     # tags = ["manual"] and the target is not be detected via test //pkg/...
     tags = [],

@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Runs a blaze query to derive a set of targets from the project's {@link ImportRoots}. */
@@ -64,7 +65,7 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
         directories.rootDirectories().stream()
             .map(w -> TargetExpression.allFromPackageRecursive(w).toString())
             .collect(joining(" + ")));
-    for (WorkspacePath excluded : directories.excludeDirectories()) {
+    for (WorkspacePath excluded : directories.excludePathsForBazelQuery()) {
       targets.append(" - " + TargetExpression.allFromPackageRecursive(excluded).toString());
     }
 

@@ -32,6 +32,8 @@ import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.BazelIgnoreParser;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -314,5 +316,21 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
             .build();
 
     assertThat(importRoots.containsWorkspacePath(new WorkspacePath("root1/a/b/c"))).isFalse();
+  }
+
+  @Test
+  public void testPathsFromBazelIgnoreNotPartOfExcludesForQuery() throws Exception {
+    workspace.createFile(new WorkspacePath(".bazelignore"), "root0/a");
+
+    ImportRoots importRoots =
+        ImportRoots.builder(workspaceRoot, BuildSystemName.Bazel)
+            .add(DirectoryEntry.include(new WorkspacePath("root0")))
+            .exclude(new WorkspacePath("root0/a"))
+            .exclude(new WorkspacePath("root0/b"))
+            .build();
+
+    Set<WorkspacePath> excludePathsForQuery = importRoots.excludePathsForBazelQuery();
+    assertThat(excludePathsForQuery.contains(new WorkspacePath("root0/a"))).isFalse();
+    assertThat(excludePathsForQuery.contains(new WorkspacePath("root0/b"))).isTrue();
   }
 }

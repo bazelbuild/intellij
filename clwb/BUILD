@@ -30,8 +30,8 @@ licenses(["notice"])
 
 intellij_plugin_library(
     name = "plugin_library",
-    optional_plugin_xmls = ["optional_clwb_oclang"],
     plugin_xmls = ["src/META-INF/clwb.xml"],
+    optional_plugin_xmls = ["optional_clwb_oclang"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":clwb_lib"],
 )

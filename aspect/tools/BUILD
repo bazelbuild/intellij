@@ -22,8 +22,8 @@ java_library(
     deps = [
         ":guava",
         "//proto:proto_deps",
-        "//third_party/bazel/src/main/protobuf:worker_protocol_java_proto",
         "@jsr305_annotations//jar",
+        "//third_party/bazel/src/main/protobuf:worker_protocol_java_proto",
     ],
 )
 
