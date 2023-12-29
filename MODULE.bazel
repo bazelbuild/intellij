@@ -82,6 +82,8 @@ bazel_dep(
     name = "rules_jvm_external",
     version = "5.3",
 )
+
+# Required until 5.4 is released
 archive_override(
     module_name = "rules_jvm_external",
     strip_prefix = "rules_jvm_external-1dd7329412843a45d3694b0774ddcad540e79d1c",
@@ -126,6 +128,7 @@ maven.install(
         "org.apache.tomcat:annotations-api:6.0.53",
     ],
     exclusions = [
+        # Required because of https://github.com/bazelbuild/rules_jvm_external/issues/966
         "io.grpc:grpc-util",
         "io.grpc:grpc-core",
     ],
