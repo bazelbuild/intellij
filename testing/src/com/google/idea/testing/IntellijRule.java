@@ -74,8 +74,18 @@ public final class IntellijRule extends ExternalResource {
     ServiceHelper.registerExtensionPoint(name, type, testDisposable);
   }
 
+  public <T> void registerProjectExtensionPoint(
+      Project project, ExtensionPointName<T> name, Class<T> type) {
+    ServiceHelper.registerProjectExtensionPoint(project, name, type, testDisposable);
+  }
+
   public <T> void registerExtension(ExtensionPointName<T> name, T instance) {
     ServiceHelper.registerExtension(name, instance, testDisposable);
+  }
+
+  public <T> void registerProjectExtension(
+      Project project, ExtensionPointName<T> name, T instance) {
+    ServiceHelper.registerProjectExtension(project, name, instance, testDisposable);
   }
 
   private static <T> void registerComponentInstance(

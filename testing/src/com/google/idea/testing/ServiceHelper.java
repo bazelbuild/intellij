@@ -41,15 +41,28 @@ public class ServiceHelper {
       ExtensionPointName<T> name, Class<T> clazz, Disposable parentDisposable) {
     ExtensionsArea area = Extensions.getRootArea();
     String epName = name.getName();
-    area.registerExtensionPoint(epName, clazz.getName(), ExtensionPoint.Kind.INTERFACE);
+    area.registerExtensionPoint(epName, clazz.getName(), ExtensionPoint.Kind.INTERFACE, false);
+    Disposer.register(parentDisposable, () -> area.unregisterExtensionPoint(epName));
+  }
+
+  public static <T> void registerProjectExtensionPoint(
+      Project project, ExtensionPointName<T> name, Class<T> clazz, Disposable parentDisposable) {
+    ExtensionsArea area = project.getExtensionArea();
+    String epName = name.getName();
+    area.registerExtensionPoint(epName, clazz.getName(), ExtensionPoint.Kind.INTERFACE, false);
     Disposer.register(parentDisposable, () -> area.unregisterExtensionPoint(epName));
   }
 
   public static <T> void registerExtension(
       ExtensionPointName<T> name, T instance, Disposable parentDisposable) {
     ExtensionPoint<T> ep = Extensions.getRootArea().getExtensionPoint(name);
-    ep.registerExtension(instance);
-    Disposer.register(parentDisposable, () -> ep.unregisterExtension(instance));
+    ep.registerExtension(instance, parentDisposable);
+  }
+
+  public static <T> void registerProjectExtension(
+      Project project, ExtensionPointName<T> name, T instance, Disposable parentDisposable) {
+    ExtensionPoint<T> ep = project.getExtensionArea().getExtensionPoint(name);
+    ep.registerExtension(instance, parentDisposable);
   }
 
   public static <T> void registerExtensionFirst(
