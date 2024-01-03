@@ -40,14 +40,14 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /** BUILD-file utility methods used by actions. */
-final class BuildFileUtils {
+public final class BuildFileUtils {
   private BuildFileUtils() {}
 
   static final BoolExperiment enableMacroPrefixMatching =
       new BoolExperiment("buildfile.macro.prefix.matching.enabled", true);
 
   @Nullable
-  static BlazePackage getBuildFile(Project project, @Nullable VirtualFile vf) {
+  public static BlazePackage getBuildFile(Project project, @Nullable VirtualFile vf) {
     if (vf == null) {
       return null;
     }

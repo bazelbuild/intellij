@@ -87,6 +87,15 @@ public interface BlazeVcsHandlerProvider {
         BlazeContext context, WorkspacePath path, ListeningExecutorService executor);
 
     /**
+     * Returns true if the file at {@code path} exists in the specified revision. Throws an
+     * exception if the handler cannot determine this information.
+     */
+    default boolean fileExistsUpstream(String upstreamVersion, WorkspacePath path)
+        throws VcsException {
+      throw new VcsException("Unsupported");
+    }
+
+    /**
      * Returns the upstream/base version that the client is based on.
      *
      * <p>The upstream version is an opaque string that should only be tested for equality. All

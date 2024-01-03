@@ -191,7 +191,8 @@ public class ProjectLoader {
             workspaceLanguageSettings,
             sourceToTargetMap,
             projectViewManager,
-            buildSystem);
+            buildSystem,
+            vcsHandler);
     BlazeProjectListenerProvider.registerListenersFor(querySyncProject);
 
     return querySyncProject;
