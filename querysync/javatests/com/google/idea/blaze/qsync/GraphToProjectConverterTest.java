@@ -411,8 +411,8 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateAndroidResourceDirectories_single_directory() {
-    ImmutableList<Path> sourceFiles =
-        ImmutableList.of(
+    ImmutableSet<Path> sourceFiles =
+        ImmutableSet.of(
             Path.of("java/com/test/AndroidManifest.xml"),
             Path.of("java/com/test/res/values/strings.xml"));
 
@@ -423,8 +423,8 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateAndroidResourceDirectories_multiple_directories() {
-    ImmutableList<Path> sourceFiles =
-        ImmutableList.of(
+    ImmutableSet<Path> sourceFiles =
+        ImmutableSet.of(
             Path.of("java/com/test/AndroidManifest.xml"),
             Path.of("java/com/test/res/values/strings.xml"),
             Path.of("java/com/test2/AndroidManifest.xml"),
@@ -439,8 +439,8 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateAndroidResourceDirectories_manifest_without_res_directory() {
-    ImmutableList<Path> sourceFiles =
-        ImmutableList.of(
+    ImmutableSet<Path> sourceFiles =
+        ImmutableSet.of(
             Path.of("java/com/nores/AndroidManifest.xml"), Path.of("java/com/nores/Foo.java"));
 
     ImmutableSet<Path> androidResourceDirectories =

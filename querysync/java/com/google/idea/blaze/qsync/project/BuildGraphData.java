@@ -343,10 +343,8 @@ public abstract class BuildGraphData {
     return paths;
   }
 
-  public List<Path> getAllSourceFiles() {
-    List<Path> files = new ArrayList<>();
-    files.addAll(fileToTarget().keySet());
-    return files;
+  public ImmutableSet<Path> getAllSourceFiles() {
+    return fileToTarget().keySet();
   }
 
   /**
