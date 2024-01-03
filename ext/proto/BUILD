@@ -10,6 +10,7 @@ proto_library(
         "codesearch.proto",
         "depserver.proto",
         "experiments.proto",
+        "fileapi.proto",
         "intellijext.proto",
         "issuetracker.proto",
         "kythe.proto",
