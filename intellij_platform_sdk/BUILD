@@ -371,6 +371,13 @@ config_setting(
 )
 
 config_setting(
+    name = "android-studio-intellij-ext",
+    values = {
+        "define": "intellij-ext=true",
+    },
+)
+
+config_setting(
     name = "android-studio-canary-mac",
     values = {
         "cpu": "darwin_x86_64",
