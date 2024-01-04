@@ -1,3 +1,8 @@
+v2024.01.02
+===========
+* fix: Fix bazel sync errors when using non-default convenience symlinks #5910
+* fix: Fix warnings when syncing a workspace containing a bazelignore file #5873
+
 v2023.12.19
 ===========
 * feat: Allow to have non-existent import entries in projectview file #5689
