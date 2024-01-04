@@ -1,7 +1,7 @@
 v2024.01.02
 ===========
-Fix bazel sync errors when using non-default convenience symlinks #5910
-Fix warnings when syncing a workspace containing a bazelignore file #5873
+* fix: Fix bazel sync errors when using non-default convenience symlinks #5910
+* fix: Fix warnings when syncing a workspace containing a bazelignore file #5873
 
 
 v2023.12.19
