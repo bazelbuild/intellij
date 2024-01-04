@@ -289,7 +289,9 @@ public class DependencyTrackerImpl implements DependencyTracker {
       throws NoDependenciesBuiltException {
     if (outputInfo.isEmpty()) {
       throw new NoDependenciesBuiltException(
-          "Build produced no usable outputs. Please fix any build errors and retry.");
+          "Build produced no usable outputs. Please fix any build errors and retry. If you"
+              + " observe 'no such target' errors, your project may be out of sync. Please sync"
+              + " the project and retry.");
     }
 
     if (!outputInfo.getTargetsWithErrors().isEmpty()) {
