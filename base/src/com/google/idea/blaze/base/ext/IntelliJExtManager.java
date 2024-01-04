@@ -77,6 +77,8 @@ public class IntelliJExtManager {
   private static final BoolExperiment CHATBOT =
       new BoolExperiment("use.intellij.ext.chatbot", false);
 
+  private static final BoolExperiment PIPER = new BoolExperiment("use.intellij.ext.piper", false);
+
   public static IntelliJExtManager getInstance() {
     return ApplicationManager.getApplication().getService(IntelliJExtManager.class);
   }
@@ -185,5 +187,9 @@ public class IntelliJExtManager {
 
   public boolean isBuildCleanerEnabled() {
     return isEnabled() && BUILD_CLEANER.getValue();
+  }
+
+  public boolean isPiperEnabled() {
+    return isEnabled() && PIPER.getValue();
   }
 }
