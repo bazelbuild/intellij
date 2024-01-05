@@ -19,55 +19,88 @@ _valid = [
 ]
 
 # A temporary list of external targets that plugins are depending on. DO NOT ADD TO THIS
-_allowed = [
+ALLOWED_EXTERNAL_DEPENDENCIES = [
 ]
 
 # A list of targets currently with not allowed dependencies
-_existing_violations = [
+EXISTING_EXTERNAL_VIOLATIONS = [
 ]
+
+RestrictedInfo = provider(
+    doc = "The dependencies, per target, outside the project",
+    fields = {
+        "dependencies": "A map from target to external dependencies",
+    },
+)
 
 def _in_set(target, set):
     pkg = target.label.package
     for p in set:
         if pkg == p or pkg.startswith(p + "/"):
-            return True
+            return p
         if str(target.label) == p:
-            return True
+            return p
 
-    return False
+    return None
 
 def _in_project(target):
     return _in_set(target, _project)
 
 def _get_deps(ctx):
-    if not hasattr(ctx.rule.attr, "deps"):
-        return []
-    return ctx.rule.attr.deps
+    deps = []
+    if hasattr(ctx.rule.attr, "deps"):
+        deps.extend(ctx.rule.attr.deps)
+    if hasattr(ctx.rule.attr, "exports"):
+        deps.extend(ctx.rule.attr.exports)
+    return deps
 
 def _restricted_deps_aspect_impl(target, ctx):
     if not _in_project(target):
         return []
 
+    dependencies = {}
     outside_project = []
     for d in _get_deps(ctx):
-        if not _in_project(d):
+        if not _in_project(d) and not _in_set(d, _valid):
             outside_project.append(d)
+        if RestrictedInfo in d:
+            dependencies.update(d[RestrictedInfo].dependencies)
 
-    invalid = [dep for dep in outside_project if not _in_set(dep, _valid + _allowed)]
-    if invalid:
-        tgts = ", ".join([str(t.label) for t in invalid])
-        error = "Invalid dependencies for target " + str(target.label) + " [" + tgts + "]\n"
-        error += "For more information see restrictions.bzl"
-        fail(error)
+    if outside_project:
+        dependencies[target] = outside_project
 
-    allowed = [dep for dep in outside_project if _in_set(dep, _allowed)]
-    if allowed and not _in_set(target, _existing_violations):
-        tgts = ", ".join([str(t.label) for t in allowed])
-        error = "Target not allowed to have external dependencies: " + str(target.label) + " [" + tgts + "]\n"
-        error += "For more information see restrictions.bzl"
-        fail(error)
+    return [RestrictedInfo(dependencies = dependencies)]
 
-    return []
+def validate_restrictions(dependencies, allowed_external, existing_violations):
+    violations = sorted([str(d.label) for d in dependencies.keys()])
+    if violations != sorted(existing_violations):
+        new_violations = [t for t in violations if t not in existing_violations]
+        no_longer_violations = [t for t in existing_violations if t not in violations]
+        if new_violations:
+            fail("These targets now depend on external targets: " + ", ".join(new_violations))
+        if no_longer_violations:
+            fail("The following targets no longer depend on external targets, please remove from restrictions.bzl: " + ", ".join(no_longer_violations))
+
+    for target, outside_project in dependencies.items():
+        invalid = [dep for dep in outside_project if not _in_set(dep, allowed_external)]
+        if invalid:
+            tgts = ", ".join([str(t.label) for t in invalid])
+            error = "Invalid dependencies for target " + str(target.label) + " [" + tgts + "]\n"
+            error += "For more information see restrictions.bzl"
+            fail(error)
+
+    # Check allowed_external does not contain unnecessary targets
+    current_allowed_external = {}
+    for target, outside_project in dependencies.items():
+        for out in outside_project:
+            item = _in_set(out, allowed_external)
+            if item:
+                current_allowed_external[item] = item
+    if sorted(current_allowed_external.keys()) != sorted(allowed_external):
+        no_longer_needed = [e for e in allowed_external if e not in current_allowed_external]
+        if no_longer_needed:
+            tgts = ", ".join([str(t) for t in no_longer_needed])
+            fail("The following external dependencies are no longer needed: " + tgts)
 
 restricted_deps_aspect = aspect(
     implementation = _restricted_deps_aspect_impl,
