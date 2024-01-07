@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.ext;
 import com.google.idea.blaze.ext.IntelliJExtService;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import java.nio.file.Files;
@@ -96,7 +97,7 @@ public class IntelliJExtManager {
 
   private IntelliJExtManager(String path) {
     this.binaryPath = path;
-    service = new IntelliJExtService(Paths.get(path));
+    service = new IntelliJExtService(Paths.get(path), PathManager.getLogDir());
   }
 
   /** Set up {@link IntelliJExtService} for test cases to avoid non-existence binary error. */
@@ -110,7 +111,7 @@ public class IntelliJExtManager {
       if (path == null) {
         throw new IllegalStateException("No intellij-ext binary found");
       }
-      service = new IntelliJExtService(path);
+      service = new IntelliJExtService(path, PathManager.getLogDir());
     }
     return service;
   }

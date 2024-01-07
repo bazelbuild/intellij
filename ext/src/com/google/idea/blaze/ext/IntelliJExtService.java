@@ -66,6 +66,12 @@ public final class IntelliJExtService {
     this.status = ServiceStatus.INITIALIZING;
   }
 
+  public IntelliJExtService(Path binary, Path logDir) {
+    this(binary);
+    this.serverArgs.add("--log_dir");
+    this.serverArgs.add(logDir.toString());
+  }
+
   private synchronized void start() throws IOException {
     status = ServiceStatus.INITIALIZING;
     if (server != null) {
