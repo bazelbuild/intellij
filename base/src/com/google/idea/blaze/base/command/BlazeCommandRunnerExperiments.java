@@ -25,6 +25,8 @@ import com.intellij.openapi.util.SystemInfo;
 public class BlazeCommandRunnerExperiments {
   public static final BoolExperiment USE_SINGLEJAR_FOR_DEBUGGING =
       new BoolExperiment("debug.localtests.singlejar.enable", true);
+  public static final BoolExperiment ENABLE_DBIP_ONCORP =
+      new BoolExperiment("dbip.cloudtop.pilot.enable", false);
   public static final BoolExperiment ANDROID_JNI_LIBRARY_FORCE_ANDROID =
       new BoolExperiment("debug.localtests.android.jni.library", SystemInfo.isMac);
 
