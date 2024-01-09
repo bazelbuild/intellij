@@ -97,7 +97,7 @@ public class IntelliJExtManager {
 
   private IntelliJExtManager(String path) {
     this.binaryPath = path;
-    service = new IntelliJExtService(Paths.get(path), PathManager.getLogDir());
+    service = new IntelliJExtService(Paths.get(path), getLogDir());
   }
 
   /** Set up {@link IntelliJExtService} for test cases to avoid non-existence binary error. */
@@ -111,9 +111,24 @@ public class IntelliJExtManager {
       if (path == null) {
         throw new IllegalStateException("No intellij-ext binary found");
       }
-      service = new IntelliJExtService(path, PathManager.getLogDir());
+      service = new IntelliJExtService(path, getLogDir());
     }
     return service;
+  }
+
+  @Nullable
+  private Path getLogDir() {
+    Path logDir = null;
+    try {
+      logDir = PathManager.getLogDir();
+    } catch (RuntimeException re) {
+      // logDir remains null
+    }
+    if (logDir == null || !Files.exists(logDir)) {
+      logger.warn(String.format("log directory %s does not exist; using default log dir", logDir));
+      return null;
+    }
+    return logDir;
   }
 
   @Nullable
