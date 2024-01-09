@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A service that maintains the connection to an external extension service. The external service is
@@ -60,16 +61,18 @@ public final class IntelliJExtService {
     FAILED,
   }
 
-  public IntelliJExtService(Path binary) {
+  public IntelliJExtService(Path binary, @Nullable Path logDir) {
     this.binary = binary;
     this.serverArgs = new ArrayList<>();
     this.status = ServiceStatus.INITIALIZING;
+    if (logDir != null) {
+      this.serverArgs.add("--log_dir");
+      this.serverArgs.add(logDir.toString());
+    }
   }
 
-  public IntelliJExtService(Path binary, Path logDir) {
-    this(binary);
-    this.serverArgs.add("--log_dir");
-    this.serverArgs.add(logDir.toString());
+  public IntelliJExtService(Path binary) {
+    this(binary, null);
   }
 
   private synchronized void start() throws IOException {
