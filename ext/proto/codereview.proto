@@ -19,29 +19,10 @@ package com.google.idea.blaze.ext;
 
 option java_package = "com.google.idea.blaze.ext";
 option java_multiple_files = true;
-option java_outer_classname = "FindingsProto";
+option java_outer_classname = "CodeReviewProto";
 
 
-message ListFindingsRequest {
-  int64 cl_number = 1;
-}
-
-message ListFindingsResponse {
-  Finding finding = 2;
-
-  // Note: nested message to avoid name confclits with other services.
-  message Finding {
-    bytes id = 1;
-    uint64 timestamp_micros = 2;
-    Location location = 3;
-    bool is_actionable = 4;
-    string category = 5;
-    optional string subcategory = 6;
-    string message = 7;
-    optional string message_html_sanitzed = 8;
-    optional string url = 9;
-  }
-
+message CodeReview {
   message Location {
     optional string depo_path = 1;
     optional int32 revision = 2;
@@ -54,6 +35,27 @@ message ListFindingsResponse {
     int32 start_column = 2;  // zero value indicates a linewide range
     int32 end_line = 3;
     int32 end_column = 4;
+  }
+}
+
+message ListFindingsRequest {
+  int64 cl_number = 1;
+}
+
+message ListFindingsResponse {
+  Finding finding = 2;
+
+  // Note: nested message to avoid name confclits with other services.
+  message Finding {
+    bytes id = 1;
+    uint64 timestamp_micros = 2;
+    CodeReview.Location location = 3;
+    bool is_actionable = 4;
+    string category = 5;
+    optional string subcategory = 6;
+    string message = 7;
+    optional string message_html_sanitzed = 8;
+    optional string url = 9;
   }
 }
 
