@@ -115,7 +115,7 @@ public final class IntelliJExtService {
     try {
       return client.getStubSafe();
     } catch (RuntimeException e) {
-      logger.log(Level.SEVERE, "Error running the intellij-ext server, restarting", e);
+      logger.log(Level.INFO, "Pinging intellij-ext server failed, restarting");
       start();
       return client.getStubSafe();
     }
