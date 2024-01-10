@@ -57,6 +57,9 @@ public class IntelliJExtManager {
   private static final BoolExperiment CODESEARCH =
       new BoolExperiment("use.intellij.ext.codesearch", false);
 
+  private static final BoolExperiment FILEAPI =
+      new BoolExperiment("use.intellij.ext.fileapi", false);
+
   private static final BoolExperiment BUILD_SERVICE =
       new BoolExperiment("use.intellij.ext.buildservice", false);
 
@@ -158,6 +161,10 @@ public class IntelliJExtManager {
 
   public boolean isCodeSearchEnabled() {
     return isEnabled() && CODESEARCH.getValue();
+  }
+
+  public boolean isFileApiEnabled() {
+    return isEnabled() && FILEAPI.getValue();
   }
 
   public boolean isBuildServiceEnabled() {
