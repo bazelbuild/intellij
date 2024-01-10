@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -77,6 +78,7 @@ public abstract class BuildGraphData {
 
   public abstract TargetTree allTargets();
 
+  /** Mapping of in-project targets to {@link ProjectTarget}s */
   public abstract ImmutableMap<Label, ProjectTarget> targetMap();
 
   /**
@@ -237,15 +239,24 @@ public abstract class BuildGraphData {
 
   private ImmutableSet<Label> calculateTransitiveExternalDependencies(Label target) {
     ImmutableSet.Builder<Label> builder = ImmutableSet.builder();
-    // There are no cycles in blaze, so we can recursively call down
-    if (!targetMap().containsKey(target)) {
-      builder.add(target);
-    } else {
-      if (projectDeps().contains(target)) {
-        builder.add(target);
-      }
-      for (Label dep : targetMap().get(target).deps()) {
-        builder.addAll(getTransitiveExternalDependencies(dep));
+
+    // Targets with cyclic dependencies will not build, but the query does not check for cycles
+    Set<Label> visited = Sets.newHashSet();
+    Deque<Label> toVisit = Queues.newArrayDeque();
+    toVisit.add(target);
+
+    while (!toVisit.isEmpty()) {
+      Label nextLabel = toVisit.poll();
+      if (visited.add(nextLabel)) {
+        // targetMap only contains in-project target labels.
+        if (!targetMap().containsKey(nextLabel)) {
+          builder.add(nextLabel);
+        } else {
+          if (projectDeps().contains(nextLabel)) {
+            builder.add(nextLabel);
+          }
+          toVisit.addAll(targetMap().get(nextLabel).deps());
+        }
       }
     }
     return Sets.intersection(builder.build(), projectDeps()).immutableCopy();
