@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "ffaf5fb8d32b7c0b6f632e025921938ead326f345386ef689f85ce8e000fddb0",
+  "moduleFileHash": "8e031d7f95ff82014c960bcd1cf29b8db3baa8335f3e327cc73c6338016f0330",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -30,7 +30,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 23,
+            "line": 24,
             "column": 23
           },
           "imports": {
@@ -48,7 +48,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 24,
+                "line": 25,
                 "column": 17
               }
             }
@@ -62,7 +62,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 57,
+            "line": 58,
             "column": 42
           },
           "imports": {
@@ -80,7 +80,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 66,
+            "line": 67,
             "column": 31
           },
           "imports": {
@@ -104,7 +104,7 @@
               "devDependency": true,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 71,
+                "line": 72,
                 "column": 24
               }
             },
@@ -116,7 +116,7 @@
               "devDependency": true,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 72,
+                "line": 73,
                 "column": 24
               }
             }
@@ -130,7 +130,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 93,
+            "line": 94,
             "column": 22
           },
           "imports": {
@@ -216,7 +216,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 94,
+                "line": 95,
                 "column": 14
               }
             }
@@ -230,7 +230,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 175,
+            "line": 176,
             "column": 32
           },
           "imports": {
@@ -247,7 +247,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 176,
+                "line": 177,
                 "column": 41
               }
             }
@@ -258,7 +258,7 @@
       ],
       "deps": {
         "platforms": "platforms@0.0.8",
-        "rules_go": "rules_go@0.44.0",
+        "io_bazel_rules_go": "rules_go@0.44.0",
         "rules_java": "rules_java@7.3.1",
         "rules_python": "rules_python@0.27.1",
         "rules_proto": "rules_proto@5.3.0-21.7",
@@ -1931,6 +1931,26 @@
         }
       }
     },
+    "@@bazel_tools//tools/test:extensions.bzl%remote_coverage_tools_extension": {
+      "general": {
+        "bzlTransitiveDigest": "cizrA62cv8WUgb0cCmx5B6PRijtr/I4TAWxg/4caNGU=",
+        "accumulatedFileDigests": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "remote_coverage_tools": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_archive",
+            "attributes": {
+              "name": "bazel_tools~remote_coverage_tools_extension~remote_coverage_tools",
+              "sha256": "7006375f6756819b7013ca875eab70a541cf7d89142d9c511ed78ea4fefa38af",
+              "urls": [
+                "https://mirror.bazel.build/bazel_coverage_output_generator/releases/coverage_output_generator-v2.6.zip"
+              ]
+            }
+          }
+        }
+      }
+    },
     "@@buildifier_prebuilt~6.0.0.1//:defs.bzl%buildifier_prebuilt_deps_extension": {
       "general": {
         "bzlTransitiveDigest": "rw0w83IFOd+utieoxefELpxmQT7CxmI9Bd1pKxwbgZE=",
@@ -2049,6 +2069,63 @@
               "sha256": "9ffa62ea1f55f420c36eeef1427f71a34a5d24332cb861753b2b59c66d6343e2"
             }
           }
+        }
+      }
+    },
+    "@@rules_bazel_integration_test~0.20.0//:extensions.bzl%bazel_binaries": {
+      "general": {
+        "bzlTransitiveDigest": "2YpQtmxm7IW8Ldz4jpGThmEDybtrPhL/NCQeG1JSpPI=",
+        "accumulatedFileDigests": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "build_bazel_bazel_4_0_0": {
+            "bzlFile": "@@rules_bazel_integration_test~0.20.0//bazel_integration_test/private:bazel_binaries.bzl",
+            "ruleClassName": "bazel_binary",
+            "attributes": {
+              "name": "rules_bazel_integration_test~0.20.0~bazel_binaries~build_bazel_bazel_4_0_0",
+              "version": "4.0.0",
+              "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
+            }
+          },
+          "build_bazel_bazel_6_0_0": {
+            "bzlFile": "@@rules_bazel_integration_test~0.20.0//bazel_integration_test/private:bazel_binaries.bzl",
+            "ruleClassName": "bazel_binary",
+            "attributes": {
+              "name": "rules_bazel_integration_test~0.20.0~bazel_binaries~build_bazel_bazel_6_0_0",
+              "version": "6.0.0",
+              "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
+            }
+          },
+          "bazel_binaries_bazelisk": {
+            "bzlFile": "@@rules_bazel_integration_test~0.20.0//bazel_integration_test/private:bazel_binaries.bzl",
+            "ruleClassName": "bazelisk_binary",
+            "attributes": {
+              "name": "rules_bazel_integration_test~0.20.0~bazel_binaries~bazel_binaries_bazelisk",
+              "version": "1.18.0"
+            }
+          },
+          "bazel_binaries": {
+            "bzlFile": "@@rules_bazel_integration_test~0.20.0//bazel_integration_test/bzlmod:bazel_binaries.bzl",
+            "ruleClassName": "_bazel_binaries_helper",
+            "attributes": {
+              "name": "rules_bazel_integration_test~0.20.0~bazel_binaries~bazel_binaries",
+              "version_to_repo": {
+                "6.0.0": "build_bazel_bazel_6_0_0",
+                "4.0.0": "build_bazel_bazel_4_0_0"
+              },
+              "current_version": "6.0.0"
+            }
+          }
+        },
+        "moduleExtensionMetadata": {
+          "explicitRootModuleDirectDeps": [],
+          "explicitRootModuleDirectDevDeps": [
+            "bazel_binaries_bazelisk",
+            "build_bazel_bazel_6_0_0",
+            "build_bazel_bazel_4_0_0",
+            "bazel_binaries"
+          ],
+          "useAllRepos": "NO"
         }
       }
     },

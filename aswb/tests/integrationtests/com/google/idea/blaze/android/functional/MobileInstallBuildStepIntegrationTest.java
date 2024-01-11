@@ -146,8 +146,8 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     assertThat(buildStep.getDeployInfo()).isNotNull();
     assertThat(buildStep.getDeployInfo()).isEqualTo(mockDeployInfo);
     assertThat(externalTaskInterceptor.getContext()).isEqualTo(context);
-    assertThat(externalTaskInterceptor.getCommand()).containsAllIn(blazeFlags);
-    assertThat(externalTaskInterceptor.getCommand()).containsAllIn(execFlags);
+    assertThat(externalTaskInterceptor.getCommand()).containsAtLeastElementsIn(blazeFlags);
+    assertThat(externalTaskInterceptor.getCommand()).containsAtLeastElementsIn(execFlags);
     assertThat(externalTaskInterceptor.getCommand()).contains("--device");
     assertThat(externalTaskInterceptor.getCommand()).contains("serial-number:tcp:12345");
     assertThat(externalTaskInterceptor.getCommand()).contains(buildTarget.toString());
