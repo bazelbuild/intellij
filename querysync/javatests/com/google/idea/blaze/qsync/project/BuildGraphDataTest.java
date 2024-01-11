@@ -31,7 +31,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class BuildGraphTest {
+public class BuildGraphDataTest {
 
   private static final Path TEST_ROOT =
       Path.of("querysync/javatests/com/google/idea/blaze/qsync");

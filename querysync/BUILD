@@ -39,7 +39,7 @@ test_suite(
         "//querysync/javatests/com/google/idea/blaze/qsync/java:GeneratedSourceProjectUpdaterTest",
         "//querysync/javatests/com/google/idea/blaze/qsync/java:PackageStatementParserTest",
         "//querysync/javatests/com/google/idea/blaze/qsync/java:SrcJarProjectUpdaterTest",
-        "//querysync/javatests/com/google/idea/blaze/qsync/project:BuildGraphTest",
+        "//querysync/javatests/com/google/idea/blaze/qsync/project:BuildGraphDataTest",
         "//querysync/javatests/com/google/idea/blaze/qsync/project:ProjectDefinitionTest",
         "//querysync/javatests/com/google/idea/blaze/qsync/project:SnapshotSerializationTest",
         "//querysync/javatests/com/google/idea/blaze/qsync/project:TargetTreeTest",
