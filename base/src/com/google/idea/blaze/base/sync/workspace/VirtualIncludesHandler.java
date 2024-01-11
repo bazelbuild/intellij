@@ -93,19 +93,23 @@ class VirtualIncludesHandler {
 
         String stripPrefix = info.getcIdeInfo().getStripIncludePrefix();
         if (!stripPrefix.isEmpty()) {
-            String extrenalWorkspaceName = key.getLabel().externalWorkspaceName();
-            WorkspacePath workspacePath = key.getLabel().blazePackage();
+            if (stripPrefix.endsWith("/")) {
+                stripPrefix = stripPrefix.substring(0, stripPrefix.length() - 1);
+            }
+            String externalWorkspaceName = key.getLabel().externalWorkspaceName();
+            WorkspacePath stripPrefixWorkspacePath = stripPrefix.startsWith("//") ?
+              new WorkspacePath(stripPrefix.substring(2)) :
+              new WorkspacePath(key.getLabel().blazePackage(), stripPrefix);
             if (key.getLabel().externalWorkspaceName() != null) {
                 ExecutionRootPath external = new ExecutionRootPath(
                     ExecutionRootPathResolver.externalPath.toPath()
-                        .resolve(extrenalWorkspaceName)
-                        .resolve(workspacePath.toString())
-                        .resolve(stripPrefix).toString());
+                        .resolve(externalWorkspaceName)
+                        .resolve(stripPrefixWorkspacePath.toString()).toString());
 
                 return ImmutableList.of(external.getFileRootedAt(externalWorkspacePath));
             } else {
                 return workspacePathResolver.resolveToIncludeDirectories(
-                    new WorkspacePath(workspacePath, stripPrefix));
+                    stripPrefixWorkspacePath);
             }
         } else {
             return ImmutableList.of();
