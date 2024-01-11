@@ -54,8 +54,8 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -129,8 +129,7 @@ public class QuerySyncManager implements Disposable {
     this.project = project;
     this.loader = loader != null ? loader : createProjectLoader(executor, project);
     this.syncStatus = new QuerySyncStatus(project);
-    VirtualFileManager.getInstance()
-        .addAsyncFileListener(new QuerySyncAsyncFileListener(project, this), this);
+    QuerySyncAsyncFileListener.createAndListen(project, this);
   }
 
   /**
@@ -143,6 +142,10 @@ public class QuerySyncManager implements Disposable {
 
   protected ProjectLoader createProjectLoader(ListeningExecutorService executor, Project project) {
     return new ProjectLoader(executor, project);
+  }
+
+  public ModificationTracker getProjectModificationTracker() {
+    return loader.getProjectModificationTracker();
   }
 
   @CanIgnoreReturnValue

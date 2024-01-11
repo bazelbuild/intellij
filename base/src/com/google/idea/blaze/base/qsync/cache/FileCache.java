@@ -18,10 +18,13 @@ package com.google.idea.blaze.base.qsync.cache;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.exception.BuildException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -102,6 +105,50 @@ public class FileCache {
      * OutputArtifactDestinationAndLayout#getCopyDestination()}.
      */
     void createFinalDestination(Path finalDestination);
+
+    /**
+     * Returns the conflict resolution strategy for this artifact.
+     *
+     * <p>Note: all artifacts with the same strategy must return the same <em>instance</em> of the
+     * resolution strategy here.
+     */
+    default ConflictResolutionStrategy getConflictStrategy() {
+      return DisallowConflictsStrategy.INSTANCE;
+    }
+  }
+
+  /**
+   * A strategy for resolving artifact cache conflicts. A conflict occurs when two distinct
+   * artifacts are mapped to the same final cache path.
+   *
+   * <p>Implementations of this should be singletons to allow conflict resolution to work.
+   */
+  public interface ConflictResolutionStrategy {
+    OutputArtifactDestinationAndLayout resolveConflicts(
+        Path finalDest,
+        Collection<OutputArtifactDestinationAndLayout> conflicting,
+        BlazeContext context)
+        throws BuildException;
+  }
+
+  /** A conflict resolution strategy which disallows conflicts by throwing an exception. */
+  public static class DisallowConflictsStrategy implements ConflictResolutionStrategy {
+
+    private DisallowConflictsStrategy() {}
+
+    public static final DisallowConflictsStrategy INSTANCE = new DisallowConflictsStrategy();
+
+    @Override
+    public OutputArtifactDestinationAndLayout resolveConflicts(
+        Path finalDest,
+        Collection<OutputArtifactDestinationAndLayout> conflicting,
+        BlazeContext context)
+        throws BuildException {
+      throw new BuildException(
+          String.format(
+              "Cache key conflict: %d artifacts map to %s: %s",
+              conflicting.size(), finalDest, Joiner.on(", ").join(conflicting)));
+    }
   }
 
   private final CacheLayout cacheLayout;

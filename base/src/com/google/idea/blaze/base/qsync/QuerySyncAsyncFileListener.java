@@ -15,9 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
-
-import com.google.common.collect.ImmutableList;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
@@ -30,6 +28,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
@@ -41,25 +40,47 @@ import javax.annotation.Nullable;
 
 /** {@link AsyncFileListener} for monitoring project changes requiring a re-sync */
 public class QuerySyncAsyncFileListener implements AsyncFileListener {
-  private final Project project;
 
   private final SyncRequester syncRequester;
+  private final Project project;
 
-  public QuerySyncAsyncFileListener(Project project, Disposable parentDisposable) {
+  @VisibleForTesting
+  public QuerySyncAsyncFileListener(Project project, SyncRequester syncRequester) {
     this.project = project;
-    this.syncRequester = new SyncRequester(project, parentDisposable);
+    this.syncRequester = syncRequester;
+  }
+
+  /** Returns true if {@code absolutePath} is in a directory included by the project. */
+  public boolean isPathIncludedInProject(Path absolutePath) {
+    return QuerySyncManager.getInstance(project)
+        .getLoadedProject()
+        .map(p -> p.containsPath(absolutePath))
+        .orElse(false);
+  }
+
+  /** Returns true if the listener should request a project sync on significant changes */
+  public boolean syncOnFileChanges() {
+    return QuerySyncSettings.getInstance().syncOnFileChanges();
+  }
+
+  private static QuerySyncAsyncFileListener create(Project project, Disposable parentDisposable) {
+    SyncRequester syncRequester = QueueingSyncRequester.create(project, parentDisposable);
+    return new QuerySyncAsyncFileListener(project, syncRequester);
+  }
+
+  public static void createAndListen(Project project, Disposable parentDisposable) {
+    VirtualFileManager.getInstance()
+        .addAsyncFileListener(create(project, parentDisposable), parentDisposable);
   }
 
   @Override
   @Nullable
   public ChangeApplier prepareChange(List<? extends VFileEvent> events) {
-    if (!QuerySyncSettings.getInstance().syncOnFileChanges()) {
+    if (!syncOnFileChanges()) {
       return null;
     }
 
-    ImmutableList<? extends VFileEvent> projectEvents = filterForProject(events);
-
-    if (projectEvents.stream().anyMatch(this::requiresSync)) {
+    if (events.stream().anyMatch(this::requiresSync)) {
       return new ChangeApplier() {
         @Override
         public void afterVfsChange() {
@@ -70,19 +91,10 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
     return null;
   }
 
-  private ImmutableList<? extends VFileEvent> filterForProject(
-      List<? extends VFileEvent> rawEvents) {
-    QuerySyncProject querySyncProject =
-        QuerySyncManager.getInstance(project).getLoadedProject().orElse(null);
-    if (querySyncProject == null) {
-      return ImmutableList.of();
-    }
-    return rawEvents.stream()
-        .filter(event -> querySyncProject.containsPath(Path.of(event.getPath())))
-        .collect(toImmutableList());
-  }
-
   private boolean requiresSync(VFileEvent event) {
+    if (!isPathIncludedInProject(Path.of(event.getPath()))) {
+      return false;
+    }
     if (event instanceof VFileCreateEvent || event instanceof VFileMoveEvent) {
       return true;
     } else if (event instanceof VFilePropertyChangeEvent
@@ -102,35 +114,46 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
     return false;
   }
 
+  /** Interface for requesting project syncs. */
+  public interface SyncRequester {
+    void requestSync();
+  }
+
   /**
-   * Utility for requesting partial syncs, with a listener to retry requests if a sync is already in
-   * progress.
+   * {link @SyncRequester} that can listen to sync events and request a sync later if changes are
+   * added during a sync.
    */
-  private static class SyncRequester {
+  private static class QueueingSyncRequester implements SyncRequester {
     private final Project project;
 
     private final AtomicBoolean changePending = new AtomicBoolean(false);
 
-    public SyncRequester(Project project, Disposable parentDisposable) {
+    public QueueingSyncRequester(Project project) {
       this.project = project;
+    }
+
+    static QueueingSyncRequester create(Project project, Disposable parentDisposable) {
+      QueueingSyncRequester requester = new QueueingSyncRequester(project);
       ApplicationManager.getApplication()
           .getExtensionArea()
           .getExtensionPoint(SyncListener.EP_NAME)
           .registerExtension(
               new SyncListener() {
                 @Override
-                public void afterQuerySync(Project project1, BlazeContext context) {
-                  if (SyncRequester.this.project != project1) {
+                public void afterQuerySync(Project project, BlazeContext context) {
+                  if (!requester.project.equals(project)) {
                     return;
                   }
-                  if (changePending.get()) {
-                    requestSyncInternal();
+                  if (requester.changePending.get()) {
+                    requester.requestSyncInternal();
                   }
                 }
               },
               parentDisposable);
+      return requester;
     }
 
+    @Override
     public void requestSync() {
       if (changePending.compareAndSet(false, true)) {
         if (!BlazeSyncStatus.getInstance(project).syncInProgress()) {

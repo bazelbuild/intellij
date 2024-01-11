@@ -224,8 +224,12 @@
     <fileTypeFactory implementation="com.google.idea.blaze.base.plugin.BlazeFileTypeFactory" />
     <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.BuildTasksProblemsView"/>
 
-    <applicationConfigurable instance="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsCompositeConfigurable"
-                         id ="blaze.view" displayName="Bazel Settings"/>
+    <applicationConfigurable
+        instance="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsCompositeConfigurable"
+        key="user.settings.display.name"
+        bundle="resources.messages.pluginBundle"
+        id ="blaze.view" />
+
     <search.optionContributor implementation="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsCompositeConfigurable$BlazeUserSettingsSearchableOptionContributor"/>
 
     <projectService serviceImplementation="com.google.idea.blaze.base.build.BlazeBuildService"/>

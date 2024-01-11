@@ -15,15 +15,21 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+import static java.util.stream.Collectors.joining;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.Iterables;
+import com.google.idea.blaze.base.qsync.cache.FileCache.ConflictResolutionStrategy;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.java.PackageStatementParser;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Collection;
 
 /** Write generated java/kt sources to a directory matching their package name. */
 @AutoValue
@@ -75,5 +81,32 @@ public abstract class JavaSourceOutputArtifactDestination
     }
   }
 
+  @Override
+  public ConflictResolutionStrategy getConflictStrategy() {
+    return SelectSingleJavaSourceStrategy.INSTANCE;
+  }
 
+  private static class SelectSingleJavaSourceStrategy implements ConflictResolutionStrategy {
+
+    static final SelectSingleJavaSourceStrategy INSTANCE = new SelectSingleJavaSourceStrategy();
+
+    private SelectSingleJavaSourceStrategy() {}
+
+    @Override
+    public OutputArtifactDestinationAndLayout resolveConflicts(
+        Path finalDest,
+        Collection<OutputArtifactDestinationAndLayout> conflicting,
+        BlazeContext context) {
+      context.output(
+          PrintOutput.error(
+              "WARNING: your build produced conflicting generated java sources:\n  %s",
+              conflicting.stream()
+                  .map(JavaSourceOutputArtifactDestination.class::cast)
+                  .map(JavaSourceOutputArtifactDestination::getBuildOutPath)
+                  .map(Path::toString)
+                  .collect(joining("\n  "))));
+      context.setHasWarnings();
+      return Iterables.getFirst(conflicting, null);
+    }
+  }
 }
