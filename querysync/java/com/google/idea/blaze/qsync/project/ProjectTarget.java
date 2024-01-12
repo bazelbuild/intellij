@@ -75,6 +75,8 @@ public abstract class ProjectTarget implements BuildTarget {
 
   public abstract ImmutableList<String> tags();
 
+  public abstract Optional<String> mainClass();
+
   public static Builder builder() {
     return new AutoValue_ProjectTarget.Builder();
   }
@@ -103,6 +105,8 @@ public abstract class ProjectTarget implements BuildTarget {
     public abstract ImmutableSet.Builder<QuerySyncLanguage> languagesBuilder();
 
     public abstract Builder tags(Iterable<String> tags);
+
+    public abstract Builder mainClass(String mainClass);
 
     public abstract ProjectTarget build();
   }
