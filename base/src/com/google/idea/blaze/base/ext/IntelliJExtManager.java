@@ -54,6 +54,9 @@ public class IntelliJExtManager {
 
   private static final BoolExperiment LINTER = new BoolExperiment("use.intellij.ext.linter", false);
 
+  private static final BoolExperiment FINDINGS_SERVICE =
+      new BoolExperiment("use.intellij.ext.findingsservice", false);
+
   private static final BoolExperiment CODESEARCH =
       new BoolExperiment("use.intellij.ext.codesearch", false);
 
@@ -157,6 +160,10 @@ public class IntelliJExtManager {
 
   public boolean isLinterEnabled() {
     return isEnabled() && LINTER.getValue();
+  }
+
+  public boolean isFindingsServiceEnabled() {
+    return isEnabled() && FINDINGS_SERVICE.getValue();
   }
 
   public boolean isCodeSearchEnabled() {
