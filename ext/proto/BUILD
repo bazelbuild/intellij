@@ -11,6 +11,7 @@ proto_library(
         "depserver.proto",
         "experiments.proto",
         "fileapi.proto",
+        "findings.proto",
         "intellijext.proto",
         "issuetracker.proto",
         "kythe.proto",

@@ -23,6 +23,7 @@ import com.google.idea.blaze.ext.CodeSearchGrpc.CodeSearchFutureStub;
 import com.google.idea.blaze.ext.DepServerGrpc.DepServerFutureStub;
 import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlockingStub;
 import com.google.idea.blaze.ext.FileApiGrpc.FileApiFutureStub;
+import com.google.idea.blaze.ext.FindingsServiceGrpc.FindingsServiceBlockingStub;
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
 import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
 import com.google.idea.blaze.ext.KytheGrpc.KytheFutureStub;
@@ -108,6 +109,10 @@ public class IntelliJExtClient {
 
   public FileApiFutureStub getFileApiService() {
     return FileApiGrpc.newFutureStub(channel);
+  }
+
+  public FindingsServiceBlockingStub getFindingsService() {
+    return FindingsServiceGrpc.newBlockingStub(channel);
   }
 
   public BuildCleanerServiceFutureStub getBuildCleanerService() {

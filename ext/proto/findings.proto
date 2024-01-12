@@ -1,0 +1,63 @@
+/*
+ * Copyright 2024 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+
+package com.google.idea.blaze.ext;
+
+option java_package = "com.google.idea.blaze.ext";
+option java_multiple_files = true;
+option java_outer_classname = "FindingsProto";
+
+
+message ListFindingsRequest {
+  int64 cl_number = 1;
+}
+
+message ListFindingsResponse {
+  Finding finding = 2;
+
+  // Note: nested message to avoid name confclits with other services.
+  message Finding {
+    bytes id = 1;
+    uint64 timestamp_micros = 2;
+    Location location = 3;
+    bool is_actionable = 4;
+    string category = 5;
+    optional string subcategory = 6;
+    string message = 7;
+    optional string message_html_sanitzed = 8;
+    optional string url = 9;
+  }
+
+  message Location {
+    optional string depo_path = 1;
+    optional int32 revision = 2;
+    optional uint64 snapshot = 3;
+    optional Range range = 4;
+  }
+
+  message Range {
+    int32 start_line = 1;
+    int32 start_column = 2;  // zero value indicates a linewide range
+    int32 end_line = 3;
+    int32 end_column = 4;
+  }
+}
+
+service FindingsService {
+  // Runs lint checks and returns findings.
+  rpc ListFindings(ListFindingsRequest) returns (stream ListFindingsResponse) {}
+}

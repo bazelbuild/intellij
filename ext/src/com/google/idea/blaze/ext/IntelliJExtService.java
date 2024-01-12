@@ -24,6 +24,7 @@ import com.google.idea.blaze.ext.CodeSearchGrpc.CodeSearchFutureStub;
 import com.google.idea.blaze.ext.DepServerGrpc.DepServerFutureStub;
 import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlockingStub;
 import com.google.idea.blaze.ext.FileApiGrpc.FileApiFutureStub;
+import com.google.idea.blaze.ext.FindingsServiceGrpc.FindingsServiceBlockingStub;
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
 import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
 import com.google.idea.blaze.ext.KytheGrpc.KytheFutureStub;
@@ -192,6 +193,11 @@ public final class IntelliJExtService {
   public LinterFutureStub getLinterService() throws IOException {
     IntelliJExtBlockingStub unused = connect();
     return client.getLinterService();
+  }
+
+  public FindingsServiceBlockingStub getFindingsService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getFindingsService();
   }
 
   public CodeSearchFutureStub getCodeSearchService() throws IOException {
