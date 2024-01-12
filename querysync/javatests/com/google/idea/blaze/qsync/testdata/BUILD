@@ -178,6 +178,13 @@ genquery(
     scope = scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/tags"),
 )
 
+genquery(
+    name = "empty_query",
+    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/empty:*",
+    opts = ["--output=streamed_proto"],
+    scope = ["//querysync/javatests/com/google/idea/blaze/qsync/testdata/empty:BUILD"],
+)
+
 java_library(
     name = "testdata",
     srcs = ["TestData.java"],
@@ -188,6 +195,7 @@ java_library(
         ":cc_external_dep_query",
         ":cc_library_query",
         ":cc_multisrc_query",
+        ":empty_query",
         ":filegroup_query",
         ":java_exported_dep_query",
         ":java_library_external_dep_query",

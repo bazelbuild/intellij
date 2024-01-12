@@ -149,4 +149,14 @@ public class QuerySummaryTest {
             TestData.ROOT.resolve("buildincludes/includes.bzl"),
             TestData.ROOT.resolve("buildincludes/BUILD"));
   }
+
+  @Test
+  public void getPackages_withEmptyPackage_containsEmptyPackage() throws IOException {
+    QuerySummary qs = QuerySummary.create(TestData.EMPTY_QUERY.getQueryOutputPath().toFile());
+    assertThat(qs.getRulesMap()).isEmpty();
+    assertThat(qs.getSourceFilesMap().keySet())
+        .containsExactly(Label.of(TestData.ROOT_PACKAGE + "/empty:BUILD"));
+    assertThat(qs.getPackages().size()).isEqualTo(1);
+    assertThat(qs.getPackages().asPathSet()).containsExactly(TestData.ROOT.resolve("empty"));
+  }
 }
