@@ -264,7 +264,7 @@ public abstract class QuerySummary {
   public PackageSet getPackages() {
     return new PackageSet(
         Stream.concat(
-                getRulesMap().keySet().stream().map(Label::getPackage),
+                getSourceFilesMap().keySet().stream().map(Label::getPackage).distinct(),
                 getPackagesWithErrors().stream())
             .collect(toImmutableSet()));
   }

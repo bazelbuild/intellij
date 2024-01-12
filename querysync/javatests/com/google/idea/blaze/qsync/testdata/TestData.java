@@ -46,7 +46,8 @@ public enum TestData {
   CC_MULTISRC_QUERY("cc_multisrc"),
   PROTO_ONLY_QUERY("protoonly"),
   NESTED_PROTO_QUERY("nestedproto"),
-  TAGS_QUERY("tags");
+  TAGS_QUERY("tags"),
+  EMPTY_QUERY("empty");
 
   public final ImmutableList<Path> srcPaths;
 
