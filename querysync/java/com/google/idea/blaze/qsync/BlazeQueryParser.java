@@ -119,6 +119,9 @@ public class BlazeQueryParser {
       if (!ruleEntry.getValue().getCustomPackage().isEmpty()) {
         targetBuilder.customPackage(ruleEntry.getValue().getCustomPackage());
       }
+      if (!ruleEntry.getValue().getMainClass().isEmpty()) {
+        targetBuilder.mainClass(ruleEntry.getValue().getMainClass());
+      }
 
       if (RuleKinds.isJava(ruleClass)) {
         visitJavaRule(ruleEntry.getKey(), ruleEntry.getValue(), targetBuilder);

@@ -161,6 +161,12 @@ public abstract class BuildGraphData {
         .collect(toImmutableSet());
   }
 
+  public ImmutableSet<ProjectTarget> targetsForKind(String kind) {
+    return targetMap().values().stream()
+        .filter(t -> t.kind().equals(kind))
+        .collect(toImmutableSet());
+  }
+
   @Override
   public final String toString() {
     // The default autovalue toString() implementation can result in a very large string which
