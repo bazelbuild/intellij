@@ -15,24 +15,12 @@
  */
 package com.google.idea.blaze.base.settings;
 
+import com.google.idea.blaze.common.ProjectType;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
 /** Project settings that are set at import time. */
 public final class BlazeImportSettings {
-
-  /** Type of the project based on the IDE configuration when it was created. */
-  public enum ProjectType {
-    ASPECT_SYNC,
-    QUERY_SYNC,
-    /**
-     * UNKNOWN is used when BlazeImportSettings is not available for current project. In most of the
-     * cases, it means the project is not a blaze project, and it does not have BlazeImportSettings.
-     * But rarely, it could because that project is not available, BlazeImportSettings is not
-     * loaded/ fails to load.
-     */
-    UNKNOWN
-  }
 
   private String workspaceRoot = "";
 

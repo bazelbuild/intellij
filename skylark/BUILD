@@ -2,12 +2,12 @@
 # Description: A Skylark debugging client for IntelliJ.
 #
 
-load("//build_defs:build_defs.bzl", "intellij_plugin_library")
 load(
     "//:build-visibility.bzl",
     "PLUGIN_PACKAGES_VISIBILITY",
     "SKYLARK_PACKAGES_VISIBILITY",
 )
+load("//build_defs:build_defs.bzl", "intellij_plugin_library")
 
 licenses(["notice"])
 
@@ -21,6 +21,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//shared",
     ],
 )
 

@@ -24,9 +24,9 @@ import com.google.idea.blaze.base.filecache.RemoteOutputsCache.LoggedRemoteOutpu
 import com.google.idea.blaze.base.logging.LoggedDirectoryProvider;
 import com.google.idea.blaze.base.logging.LoggedDirectoryProvider.LoggedDirectory;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.blaze.common.ProjectType;
 import com.google.idea.testing.IntellijRule;
 import java.util.Optional;
 import org.junit.Before;

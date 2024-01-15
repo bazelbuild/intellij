@@ -40,6 +40,7 @@ import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
+import com.google.idea.blaze.common.ProjectType;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -115,7 +116,7 @@ public class ExternalFileProjectManagementHelper
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(VirtualFile vf, FileEditor fileEditor) {
-    if (Blaze.getProjectType(project).equals(BlazeImportSettings.ProjectType.UNKNOWN)) {
+    if (Blaze.getProjectType(project).equals(ProjectType.UNKNOWN)) {
       return null;
     }
 
