@@ -123,9 +123,9 @@ java_library(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//testing:lib",
+        "@com_google_errorprone_error_prone_annotations//jar",
         "@com_google_guava_guava//jar",
-        "@error_prone_annotations//jar",
-        "@junit//jar",
+        "@junit_junit//jar",
     ],
 )
 
@@ -160,7 +160,7 @@ java_library(
         "//querysync",
         "//shared",
         "//third_party/auto_value",
-        "@gson//jar",
+        "@com_google_code_gson_gson//jar",
     ],
 )
 
@@ -192,7 +192,7 @@ intellij_unit_test_suite(
         "//shared",
         "//testing:lib",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+        "@junit_junit//jar",
     ],
 )
 
@@ -254,9 +254,9 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//proto:proto_deps",
+        "@com_google_code_gson_gson//jar",
         "@com_google_guava_guava//jar",
-        "@gson//jar",
-        "@junit//jar",
+        "@junit_junit//jar",
     ],
 )
 
@@ -278,7 +278,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
-        "@junit//jar",
+        "@junit_junit//jar",
     ],
 )
 
@@ -314,6 +314,7 @@ repackaged_files(
     prefix = "aswb/aspect",
     strip_prefix = "/aspect",
     visibility = ASWB_PACKAGES_VISIBILITY,
+    java_copts = ["-source", "8", "-target", "8"],
 )
 
 repackaged_files(
@@ -321,6 +322,7 @@ repackaged_files(
     srcs = ["//java:fast_build_javac"],
     prefix = "aswb/lib",
     visibility = ASWB_PACKAGES_VISIBILITY,
+    java_copts = ["-source", "8", "-target", "8"],
 )
 
 intellij_plugin_debug_target(

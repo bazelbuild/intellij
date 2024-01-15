@@ -192,6 +192,15 @@ def api_version_txt(name, check_eap, application_info_json = None, **kwargs):
         **kwargs
     )
 
+def _transition_impl(settings, attr):
+    return {"//command_line_option:javacopt" : attr.java_copts}
+
+_java_copts_transition = transition(
+    implementation = _transition_impl,
+    inputs = [],
+    outputs = ["//command_line_option:javacopt"]
+)
+
 repackaged_files_data = provider()
 
 def _repackaged_files_impl(ctx):
@@ -217,14 +226,15 @@ def _repackaged_files_impl(ctx):
 _repackaged_files = rule(
     implementation = _repackaged_files_impl,
     attrs = {
-        "srcs": attr.label_list(mandatory = True, allow_files = True),
+        "srcs": attr.label_list(mandatory = True, allow_files = True, cfg = _java_copts_transition),
         "prefix": attr.string(mandatory = True),
         "strip_prefix": attr.string(mandatory = True),
         "executable": attr.bool(mandatory = False),
+        "java_copts": attr.string_list(default = []),
     },
 )
 
-def repackaged_files(name, srcs, prefix, strip_prefix = ".", executable = False, **kwargs):
+def repackaged_files(name, srcs, prefix, strip_prefix = ".", executable = False, java_copts = [], **kwargs):
     """Assembles files together so that they can be packaged as an IntelliJ plugin.
 
     A cut-down version of the internal 'pkgfilegroup' rule.
@@ -237,9 +247,10 @@ def repackaged_files(name, srcs, prefix, strip_prefix = ".", executable = False,
       strip_prefix: Which part of the input file path should be stripped prior to applying 'prefix'.
           If ".", all subdirectories are stripped. If the empty string, the full package-relative path
           is used. Default is "."
+      java_copts: Java compilation options for building the targets to package.
       **kwargs: Any further arguments to be passed to the target
     """
-    _repackaged_files(name = name, srcs = srcs, prefix = prefix, strip_prefix = strip_prefix, executable = executable, **kwargs)
+    _repackaged_files(name = name, srcs = srcs, prefix = prefix, strip_prefix = strip_prefix, executable = executable, java_copts = java_copts, **kwargs)
 
 def _strip_external_workspace_prefix(short_path):
     """If this target is sitting in an external workspace, return the workspace-relative path."""
