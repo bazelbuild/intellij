@@ -829,30 +829,17 @@ def collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output
     return handled
 
 def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
-    """Populates ide_info proto and intellij_resolve_android output group
-
-    Updates ide_info proto with android_ide_info, and intellij_resolve_android with android
-    resolve files. It returns false on android_library and android_binary targets, as this preserves
-    consistent functionality with the previous condition of the presence of the .android legacy
-    provider.
-    """
-    if ctx.rule.kind not in ["android_library", "android_binary"]:
+    """Updates ide_info proto with android_ide_info, and intellij_resolve_android with android resolve files. Returns false if target doesn't contain android attribute."""
+    if not hasattr(target, "android"):
         return False
 
     android_semantics = semantics.android if hasattr(semantics, "android") else None
     extra_ide_info = android_semantics.extra_ide_info(target, ctx) if android_semantics else {}
 
-    android = target[AndroidIdeInfo]
-
-    output_jar = struct(
-        class_jar = android.idl_class_jar,
-        ijar = None,
-        source_jar = android.idl_source_jar,
-    ) if android.idl_class_jar else None
-
+    android = target.android
     resources = []
     res_folders = []
-    resolve_files = jars_from_output(output_jar)
+    resolve_files = jars_from_output(android.idl.output)
     if hasattr(ctx.rule.attr, "resource_files"):
         for artifact_path_fragments, res_files in get_res_artifacts(ctx.rule.attr.resource_files).items():
             # Generate unique ArtifactLocation for resource directories.
@@ -902,14 +889,14 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
 
     android_info = struct_omit_none(
         java_package = android.java_package,
-        idl_import_root = android.idl_import_root if hasattr(android, "idl_import_root") else None,
+        idl_import_root = android.idl.import_root if hasattr(android.idl, "import_root") else None,
         manifest = artifact_location(android.manifest),
         manifest_values = [struct_omit_none(key = key, value = value) for key, value in ctx.rule.attr.manifest_values.items()] if hasattr(ctx.rule.attr, "manifest_values") else None,
-        apk = artifact_location(android.signed_apk),
+        apk = artifact_location(android.apk),
         dependency_apk = [artifact_location(apk) for apk in android.apks_under_test],
-        has_idl_sources = android.idl_class_jar != None,
-        idl_jar = library_artifact(output_jar),
-        generate_resource_class = android.defines_android_resources,
+        has_idl_sources = android.idl.output != None,
+        idl_jar = library_artifact(android.idl.output),
+        generate_resource_class = android.defines_resources,
         resources = resources,
         res_folders = res_folders,
         resource_jar = library_artifact(android.resource_jar),
