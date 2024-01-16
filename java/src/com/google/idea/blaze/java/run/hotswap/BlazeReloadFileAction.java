@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -89,6 +90,7 @@ public class BlazeReloadFileAction extends AnAction {
                     File tempOutputDir;
                     try {
                         tempOutputDir = Files.createTempDirectory("IjBazelHotswap").toFile();
+                        LOGGER.debug("Temp dir for HotSwap artifacts is " + tempOutputDir.getPath());
                         tempOutputDir.deleteOnExit();
                     } catch (IOException e) {
                         LOGGER.error("Failed creating temp directory for hotswap", e);
@@ -98,9 +100,22 @@ public class BlazeReloadFileAction extends AnAction {
                     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Preparing to hotswap", true) {
                         @Override
                         public void run(@NotNull ProgressIndicator progressIndicator) {
+                            // We want to be aware of entries like darwin_arm64-fastbuild/bin/some-api/lib-api.jar and not interested in darwin_arm64-fastbuild/external-api-0.0.654.jar
+                            // TODO: It is a good idea to skip non-output artifacts.
+                            List<String> artifactsForLogging = outputs.artifacts.keySet().stream().filter(artifact -> artifact.indexOf("/") != artifact.lastIndexOf("/")).collect(Collectors.toList());
+                            // With Gateway in some cases actions got lost, so we want to log this action for every invocation
+                            if (LOGGER.isDebugEnabled()) {
+                                LOGGER.debug(String.format("Searching for classes to HotSwap for class %s with package %s among outputs %s", vf.getPath(), jarDirectory, artifactsForLogging));
+                            } else {
+                                LOGGER.info(String.format("Searching for classes to HotSwap for class %s with package %s", vf.getPath(), jarDirectory));
+                            }
+
                             findAndCopyOutputFile(vf, tempOutputDir, jarDirectory, outputs);
                             if (tempOutputDir.listFiles().length > 0) {
+                                LOGGER.info(String.format("Invoking HotSwap for entries %s with package %s", Arrays.toString(tempOutputDir.listFiles()), jarDirectory));
                                 hotswapFile(project, jarDirectory, tempOutputDir);
+                            } else {
+                                LOGGER.warn(String.format("There was nothing found for HotSwap for package %s in outputs %s", jarDirectory, artifactsForLogging));
                             }
                         }
                     });
@@ -170,17 +185,25 @@ public class BlazeReloadFileAction extends AnAction {
                         ZipEntry entry;
                         while ((entry = jis.getNextEntry()) != null) {
                             if (entry.isDirectory() && entry.getName().equals(jarDirectory)) {
-                                while ((entry = jis.getNextEntry()) != null && !entry.isDirectory()) {
-                                    String entryFileName = entry.getName().substring(entry.getName().lastIndexOf(Paths.DELIM) + 1);
-                                    String entryFileNameWithoutExtention = entryFileName.contains(".") ? entryFileName.substring(0, entryFileName.lastIndexOf('.')) : entryFileName;
-                                    if (entryFileNameWithoutExtention.startsWith(filenameWithoutExtension) &&
-                                            (entryFileNameWithoutExtention.length() == filenameWithoutExtension.length() ||
-                                                    INNER_CLASS_PATTERN.matcher(entryFileNameWithoutExtention.substring(filenameWithoutExtension.length())).matches())) {
-                                        File out = new File(tempClassDir, entryFileName);
-                                        Files.copy(jis, out.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
+                                LOGGER.info(String.format("Found entries for target package %s in %s", jarDirectory, entry.getName()));
+                                int scannedEntries = 0;
+                                int foundEntries = 0;
+                                while ((entry = jis.getNextEntry()) != null && entry.getName().startsWith(jarDirectory)) {
+                                    scannedEntries++;
+                                    if (!entry.isDirectory()) {
+                                        String entryFileName = entry.getName().substring(entry.getName().lastIndexOf(Paths.DELIM) + 1);
+                                        String entryFileNameWithoutExtension = entryFileName.contains(".") ? entryFileName.substring(0, entryFileName.lastIndexOf('.')) : entryFileName;
+                                        if (entryFileNameWithoutExtension.startsWith(filenameWithoutExtension) &&
+                                                (entryFileNameWithoutExtension.length() == filenameWithoutExtension.length() ||
+                                                        INNER_CLASS_PATTERN.matcher(entryFileNameWithoutExtension.substring(filenameWithoutExtension.length())).matches())) {
+                                            LOGGER.debug(String.format("Adding %s to HotSwap list", entryFileName));
+                                            File out = new File(tempClassDir, entryFileName);
+                                            Files.copy(jis, out.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                                            foundEntries++;
+                                        }
                                     }
                                 }
+                                LOGGER.info(String.format("Scanned %d entries for %s and found %d for HotSwap", scannedEntries, jarDirectory, foundEntries));
                                 break;
                             }
                         }
