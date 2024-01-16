@@ -1,11 +1,11 @@
 load(
-    "//:build-visibility.bzl",
-    "PLUGIN_PACKAGES_VISIBILITY",
-)
-load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin_library",
     "optional_plugin_xml",
+)
+load(
+    "//:build-visibility.bzl",
+    "PLUGIN_PACKAGES_VISIBILITY",
 )
 
 licenses(["notice"])

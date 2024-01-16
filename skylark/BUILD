@@ -12,6 +12,7 @@ load(
     "stamped_plugin_xml",
 )
 
+load("//build_defs:build_defs.bzl", "intellij_plugin_library")
 load(
     "//:build-visibility.bzl",
     "PLUGIN_PACKAGES_VISIBILITY",

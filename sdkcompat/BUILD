@@ -1,11 +1,11 @@
 # Description: Indirections for SDK changes to the underlying platform library.
 
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 load(
     "//:build-visibility.bzl",
     "SDK_COMPAT_VISIBILITY",
     "create_sdkcompat_visibility_package",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 
 licenses(["notice"])
 

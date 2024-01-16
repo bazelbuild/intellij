@@ -3,13 +3,13 @@
 # Common test utilities for IntelliJ plugins.
 
 load(
-    "//:build-visibility.bzl",
-    "INTELLIJ_PLUGINS_VISIBILITY",
-)
-load(
     "//intellij_platform_sdk:build_defs.bzl",
     "select_for_ide",
     "select_for_plugin_api",
+)
+load(
+    "//:build-visibility.bzl",
+    "INTELLIJ_PLUGINS_VISIBILITY",
 )
 
 package(default_visibility = INTELLIJ_PLUGINS_VISIBILITY)

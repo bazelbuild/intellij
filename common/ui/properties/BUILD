@@ -1,10 +1,10 @@
 load(
-    "//:build-visibility.bzl",
-    "COMMON_PLUGINS_VISIBILITY",
-)
-load(
     "//testing:test_defs.bzl",
     "intellij_unit_test_suite",
+)
+load(
+    "//:build-visibility.bzl",
+    "COMMON_PLUGINS_VISIBILITY",
 )
 
 licenses(["notice"])
