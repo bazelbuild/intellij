@@ -1,9 +1,9 @@
-load("//build_defs:build_defs.bzl", "intellij_plugin_library")
-load("//testing:test_defs.bzl", "intellij_unit_test_suite")
 load(
     "//:build-visibility.bzl",
     "PLUGIN_PACKAGES_VISIBILITY",
 )
+load("//build_defs:build_defs.bzl", "intellij_plugin_library")
+load("//testing:test_defs.bzl", "intellij_unit_test_suite")
 
 licenses(["notice"])
 
