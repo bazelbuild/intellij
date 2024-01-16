@@ -1,5 +1,6 @@
 package com.google.idea.blaze.java.run.hotswap;
 
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
@@ -36,12 +37,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
 import java.util.jar.JarInputStream;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -102,10 +100,12 @@ public class BlazeReloadFileAction extends AnAction {
                         public void run(@NotNull ProgressIndicator progressIndicator) {
                             // We want to be aware of entries like darwin_arm64-fastbuild/bin/some-api/lib-api.jar and not interested in darwin_arm64-fastbuild/external-api-0.0.654.jar
                             // TODO: It is a good idea to skip non-output artifacts.
-                            List<String> artifactsForLogging = outputs.artifacts.keySet().stream().filter(artifact -> artifact.indexOf("/") != artifact.lastIndexOf("/")).collect(Collectors.toList());
+                            Supplier<List<String>> artifactsForLogging = Suppliers.memoize(() -> outputs.artifacts.keySet().stream()
+                                    .filter(artifact -> artifact.indexOf("/") != artifact.lastIndexOf("/"))
+                                    .collect(Collectors.toList()));
                             // With Gateway in some cases actions got lost, so we want to log this action for every invocation
                             if (LOGGER.isDebugEnabled()) {
-                                LOGGER.debug(String.format("Searching for classes to HotSwap for class %s with package %s among outputs %s", vf.getPath(), jarDirectory, artifactsForLogging));
+                                LOGGER.debug(String.format("Searching for classes to HotSwap for class %s with package %s among outputs %s", vf.getPath(), jarDirectory, artifactsForLogging.get()));
                             } else {
                                 LOGGER.info(String.format("Searching for classes to HotSwap for class %s with package %s", vf.getPath(), jarDirectory));
                             }
@@ -115,7 +115,7 @@ public class BlazeReloadFileAction extends AnAction {
                                 LOGGER.info(String.format("Invoking HotSwap for entries %s with package %s", Arrays.toString(tempOutputDir.listFiles()), jarDirectory));
                                 hotswapFile(project, jarDirectory, tempOutputDir);
                             } else {
-                                LOGGER.warn(String.format("There was nothing found for HotSwap for package %s in outputs %s", jarDirectory, artifactsForLogging));
+                                LOGGER.warn(String.format("There was nothing found for HotSwap for package %s in outputs %s", jarDirectory, artifactsForLogging.get()));
                             }
                         }
                     });
