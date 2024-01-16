@@ -37,7 +37,6 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
 import com.google.idea.blaze.base.projectview.section.sections.Sections;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
-import com.google.idea.blaze.base.projectview.section.sections.TryImportSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.OutputSink.Propagation;
 import com.google.idea.blaze.base.scope.Scope;
@@ -599,9 +598,6 @@ public final class BlazeEditProjectViewControl {
           ProjectView.builder()
               .add(
                   ScalarSection.builder(ImportSection.KEY)
-                      .set(selectProjectViewOption.getSharedProjectView()))
-              .add(
-                  ScalarSection.builder(TryImportSection.KEY)
                       .set(selectProjectViewOption.getSharedProjectView()))
               .build();
       projectViewSet =
