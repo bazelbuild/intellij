@@ -47,13 +47,15 @@ import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder.ProjectProtoTransform;
-import com.google.idea.blaze.qsync.PackageStatementParser;
-import com.google.idea.blaze.qsync.ParallelPackageReader;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.VcsStateDiffer;
+import com.google.idea.blaze.qsync.java.PackageStatementParser;
+import com.google.idea.blaze.qsync.java.ParallelPackageReader;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -68,11 +70,13 @@ import org.jetbrains.annotations.Nullable;
 public class ProjectLoader {
 
   private final ListeningExecutorService executor;
+  private final SimpleModificationTracker projectModificationTracker;
   protected final Project project;
 
   public ProjectLoader(ListeningExecutorService executor, Project project) {
     this.executor = executor;
     this.project = project;
+    this.projectModificationTracker = new SimpleModificationTracker();
   }
 
   @Nullable
@@ -127,6 +131,7 @@ public class ProjectLoader {
         ProjectPath.Resolver.create(workspaceRoot.path(), ideProjectBasePath);
 
     BlazeProject graph = new BlazeProject();
+    graph.addListener((c, i) -> projectModificationTracker.incModificationCount());
     ArtifactFetcher<OutputArtifact> artifactFetcher = createArtifactFetcher();
     ArtifactTrackerImpl artifactTracker =
         new ArtifactTrackerImpl(
@@ -156,7 +161,9 @@ public class ProjectLoader {
             workspaceRoot.path(),
             handledRules,
             ProjectProtoTransform.compose(
-                artifactTracker::updateProjectProto, new CcProjectProtoTransform(artifactTracker)));
+                artifactTracker::updateProjectProto, new CcProjectProtoTransform(artifactTracker)),
+            QuerySync.USE_NEW_RES_DIR_LOGIC::getValue,
+            () -> !QuerySync.EXTRACT_RES_PACKAGES_AT_BUILD_TIME.getValue());
     QueryRunner queryRunner = createQueryRunner(buildSystem);
     ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner, vcsHandler);
     QuerySyncSourceToTargetMap sourceToTargetMap =
@@ -242,5 +249,9 @@ public class ProjectLoader {
       defaultRules.addAll(ep.handledRuleKinds(project));
     }
     return defaultRules.build();
+  }
+
+  ModificationTracker getProjectModificationTracker() {
+    return projectModificationTracker;
   }
 }

@@ -19,6 +19,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.java.PackageReader;
+import com.google.idea.blaze.qsync.java.WorkspaceResolvingPackageReader;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
@@ -26,6 +28,7 @@ import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
+import java.util.function.Supplier;
 
 /**
  * Project refresher creates an appropriate {@link RefreshOperation} based on the project and
@@ -38,18 +41,24 @@ public class BlazeProjectSnapshotBuilder {
   private final Path workspaceRoot;
   private final ImmutableSet<String> handledRuleKinds;
   private final ProjectProtoTransform projectProtoTransform;
+  private final Supplier<Boolean> useNewResDirLogic;
+  private final Supplier<Boolean> guessAndroidResPackages;
 
   public BlazeProjectSnapshotBuilder(
       ListeningExecutorService executor,
       PackageReader workspaceRelativePackageReader,
       Path workspaceRoot,
       ImmutableSet<String> handledRuleKinds,
-      ProjectProtoTransform projectProtoTransform) {
+      ProjectProtoTransform projectProtoTransform,
+      Supplier<Boolean> useNewResDirLogic,
+      Supplier<Boolean> guessAndroidResPackages) {
     this.executor = executor;
     this.workspaceRelativePackageReader = workspaceRelativePackageReader;
     this.workspaceRoot = workspaceRoot;
     this.handledRuleKinds = handledRuleKinds;
     this.projectProtoTransform = projectProtoTransform;
+    this.useNewResDirLogic = useNewResDirLogic;
+    this.guessAndroidResPackages = guessAndroidResPackages;
   }
 
   /** {@code Function<ProjectProto.Project, ProjectProto.Project>} that can throw exceptions. */
@@ -85,7 +94,9 @@ public class BlazeProjectSnapshotBuilder {
             effectiveWorkspaceRoot,
             context,
             postQuerySyncData.projectDefinition(),
-            executor);
+            executor,
+            useNewResDirLogic,
+            guessAndroidResPackages);
     QuerySummary querySummary = postQuerySyncData.querySummary();
     BuildGraphData graph = new BlazeQueryParser(querySummary, context, handledRuleKinds).parse();
     Project project =

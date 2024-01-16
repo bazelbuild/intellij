@@ -27,7 +27,7 @@ kt_jvm_test(
     test_class = "test.lib.GreetingTest",
     deps = [
         ":greeting_lib",
-        "@diffutils//jar",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
         "@truth//jar",
     ],

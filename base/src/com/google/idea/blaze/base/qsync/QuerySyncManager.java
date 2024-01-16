@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -35,10 +36,8 @@ import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
-import com.google.idea.blaze.base.sync.SyncMode;
-import com.google.idea.blaze.base.sync.SyncResult;
-import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.util.SaveUtil;
@@ -55,8 +54,8 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -96,6 +95,8 @@ public class QuerySyncManager implements Disposable {
   private final ProjectLoader loader;
   private volatile QuerySyncProject loadedProject;
 
+  private final QuerySyncStatus syncStatus;
+
   private static final BoolExperiment showWindowOnAutomaticSyncErrors =
       new BoolExperiment("querysync.autosync.show.console.on.error", true);
 
@@ -119,16 +120,16 @@ public class QuerySyncManager implements Disposable {
   }
 
   public QuerySyncManager(Project project) {
-    this.project = project;
-    this.loader = createProjectLoader(executor, project);
-    VirtualFileManager.getInstance()
-        .addAsyncFileListener(new QuerySyncAsyncFileListener(project, this), this);
+    this(project, null);
   }
 
+  @VisibleForTesting
   @NonInjectable
-  public QuerySyncManager(Project project, ProjectLoader loader) {
+  public QuerySyncManager(Project project, @Nullable ProjectLoader loader) {
     this.project = project;
-    this.loader = loader;
+    this.loader = loader != null ? loader : createProjectLoader(executor, project);
+    this.syncStatus = new QuerySyncStatus(project);
+    QuerySyncAsyncFileListener.createAndListen(project, this);
   }
 
   /**
@@ -141,6 +142,10 @@ public class QuerySyncManager implements Disposable {
 
   protected ProjectLoader createProjectLoader(ListeningExecutorService executor, Project project) {
     return new ProjectLoader(executor, project);
+  }
+
+  public ModificationTracker getProjectModificationTracker() {
+    return loader.getProjectModificationTracker();
   }
 
   @CanIgnoreReturnValue
@@ -257,23 +262,26 @@ public class QuerySyncManager implements Disposable {
       ThrowingScopedOperation operation,
       TaskOrigin taskOrigin) {
     SettableFuture<Boolean> result = SettableFuture.create();
-    BlazeSyncStatus syncStatus = BlazeSyncStatus.getInstance(project);
     syncStatus.syncStarted();
     Futures.addCallback(
         result,
         new FutureCallback<Boolean>() {
           @Override
           public void onSuccess(Boolean success) {
-            syncStatus.syncEnded(SyncMode.FULL, success ? SyncResult.SUCCESS : SyncResult.FAILURE);
+            if (success) {
+              syncStatus.syncEnded();
+            } else {
+              syncStatus.syncFailed();
+            }
           }
 
           @Override
           public void onFailure(Throwable throwable) {
             if (result.isCancelled()) {
-              syncStatus.syncEnded(SyncMode.FULL, SyncResult.CANCELLED);
+              syncStatus.syncCancelled();
             } else {
+              syncStatus.syncFailed();
               logger.error("Sync failed", throwable);
-              syncStatus.syncEnded(SyncMode.FULL, SyncResult.FAILURE);
             }
           }
         },
@@ -296,6 +304,7 @@ public class QuerySyncManager implements Disposable {
       ThrowingScopedOperation operation,
       TaskOrigin taskOrigin) {
     querySyncActionStatsScope.getBuilder().setTaskOrigin(taskOrigin);
+    BlazeUserSettings userSettings = BlazeUserSettings.getInstance();
     return ProgressiveTaskWithProgressIndicator.builder(project, title)
         .submitTaskWithResult(
             indicator ->
@@ -311,7 +320,7 @@ public class QuerySyncManager implements Disposable {
                                       ? showWindowOnAutomaticSyncErrors.getValue()
                                           ? FocusBehavior.ON_ERROR
                                           : FocusBehavior.NEVER
-                                      : FocusBehavior.ALWAYS)
+                                      : userSettings.getShowBlazeConsoleOnSync())
                               .setIssueParsers(
                                   BlazeIssueParser.defaultIssueParsers(
                                       project,
@@ -322,7 +331,9 @@ public class QuerySyncManager implements Disposable {
                           .push(new ProgressIndicatorScope(indicator))
                           .push(scope)
                           .push(querySyncActionStatsScope)
-                          .push(new ProblemsViewScope(project, FocusBehavior.ALWAYS))
+                          .push(
+                              new ProblemsViewScope(
+                                  project, userSettings.getShowProblemsViewOnSync()))
                           .push(new IdeaLogScope());
                       try {
                         operation.execute(context);
@@ -391,6 +402,10 @@ public class QuerySyncManager implements Disposable {
       return false;
     }
     return loadedProject.canEnableAnalysisFor(workspaceRelativePath);
+  }
+
+  public boolean syncInProgress() {
+    return syncStatus.syncInProgress();
   }
 
   @CanIgnoreReturnValue

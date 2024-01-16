@@ -19,6 +19,8 @@ import com.google.idea.blaze.ext.BuildCleanerServiceGrpc.BuildCleanerServiceFutu
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
 import com.google.idea.blaze.ext.ChatBotModelGrpc.ChatBotModelBlockingStub;
+import com.google.idea.blaze.ext.CodeSearchGrpc.CodeSearchFutureStub;
+import com.google.idea.blaze.ext.DepServerGrpc.DepServerFutureStub;
 import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlockingStub;
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
 import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
@@ -39,21 +41,31 @@ public class IntelliJExtClient {
   private final ManagedChannel channel;
 
   public IntelliJExtClient(Path socket) {
-    DomainSocketAddress address = new DomainSocketAddress(socket.toFile());
-    EventLoopGroup group =
-        IntelliJExts.createGroup(new DefaultThreadFactory(EventLoopGroup.class, true));
-    channel =
-        NettyChannelBuilder.forAddress(address)
-            .eventLoopGroup(group)
+    this(
+        NettyChannelBuilder.forAddress(new DomainSocketAddress(socket.toFile()))
+            .eventLoopGroup(
+                IntelliJExts.createGroup(new DefaultThreadFactory(EventLoopGroup.class, true)))
             .channelType(IntelliJExts.getClientChannelType())
             .withOption(ChannelOption.SO_KEEPALIVE, false)
             .usePlaintext()
-            .build();
+            .build());
+  }
+
+  public IntelliJExtClient(ManagedChannel channel) {
+    this.channel = channel;
     stub = IntelliJExtGrpc.newBlockingStub(channel);
   }
 
   public static IntelliJExtClient create(Path socket) {
     return new IntelliJExtClient(socket);
+  }
+
+  /**
+   * Provides a way to register test channel for intellij ext test cases. It's used to avoid
+   * connecting to the real intellij ext server but use the mock one that unit test created.
+   */
+  public static IntelliJExtClient createForTest(ManagedChannel channel) {
+    return new IntelliJExtClient(channel);
   }
 
   /**
@@ -95,5 +107,13 @@ public class IntelliJExtClient {
 
   public BuildCleanerServiceFutureStub getBuildCleanerService() {
     return BuildCleanerServiceGrpc.newFutureStub(channel);
+  }
+
+  public DepServerFutureStub getDependencyService() {
+    return DepServerGrpc.newFutureStub(channel);
+  }
+
+  public CodeSearchFutureStub getCodeSearchService() {
+    return CodeSearchGrpc.newFutureStub(channel);
   }
 }

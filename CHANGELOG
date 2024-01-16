@@ -1,3 +1,17 @@
+v2024.01.02
+===========
+* fix: Fix bazel sync errors when using non-default convenience symlinks #5910
+* fix: Fix warnings when syncing a workspace containing a bazelignore file #5873
+
+v2023.12.19
+===========
+* feat: Allow to have non-existent import entries in projectview file #5689
+* feat: Pass environment variables from BlazeCidrLauncher down to bazel #5771
+* feat: Enable debugging the gazelle binary #5816
+* fix: Fix buildifier formatting for MODULE.bazel and WORKSPACE #5829
+* fix: Update glob validation to support allow_empty parameter #5855
+* fix: Don't throw "Non-blaze project is provided error" on source attachment #5864
+
 v2023.12.05
 ===========
 * Escape regex-relevant characters in test filter #5745

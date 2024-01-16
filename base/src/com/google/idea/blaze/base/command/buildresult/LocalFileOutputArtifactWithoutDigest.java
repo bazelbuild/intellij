@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
@@ -81,16 +83,22 @@ public class LocalFileOutputArtifactWithoutDigest
     if (!(obj instanceof LocalFileOutputArtifactWithoutDigest)) {
       return false;
     }
-    return file.getPath().equals(((LocalFileOutputArtifactWithoutDigest) obj).file.getPath());
+    LocalFileOutputArtifactWithoutDigest that = (LocalFileOutputArtifactWithoutDigest) obj;
+    return Objects.equal(this.file.getPath(), that.file.getPath())
+        && Objects.equal(this.blazeOutRelativePath, that.blazeOutRelativePath);
   }
 
   @Override
   public int hashCode() {
-    return file.getPath().hashCode();
+    return Objects.hashCode(file.getPath(), blazeOutRelativePath);
   }
 
   @Override
   public String toString() {
-    return blazeOutRelativePath;
+    return MoreObjects.toStringHelper(this)
+        .add("file", file.getPath())
+        .add("blazeOutRelativePath", blazeOutRelativePath)
+        .add("configurationMnemonic", configurationMnemonic)
+        .toString();
   }
 }

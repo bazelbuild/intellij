@@ -20,6 +20,8 @@ import com.google.idea.blaze.ext.BuildCleanerServiceGrpc.BuildCleanerServiceFutu
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
 import com.google.idea.blaze.ext.ChatBotModelGrpc.ChatBotModelBlockingStub;
+import com.google.idea.blaze.ext.CodeSearchGrpc.CodeSearchFutureStub;
+import com.google.idea.blaze.ext.DepServerGrpc.DepServerFutureStub;
 import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlockingStub;
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
 import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
@@ -82,6 +84,11 @@ public final class IntelliJExtService {
       status = ServiceStatus.FAILED;
       throw e;
     }
+  }
+
+  /** Registers a customized {@link IntellijExtClient} for test cases. */
+  public void registerForTest(IntelliJExtClient client) {
+    this.client = client;
   }
 
   /**
@@ -177,6 +184,11 @@ public final class IntelliJExtService {
     return client.getLinterService();
   }
 
+  public CodeSearchFutureStub getCodeSearchService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getCodeSearchService();
+  }
+
   public BuildCleanerServiceFutureStub getBuildCleanerService() {
     try {
       IntelliJExtBlockingStub unused = connect();
@@ -184,5 +196,10 @@ public final class IntelliJExtService {
       throw new UncheckedIOException(e);
     }
     return client.getBuildCleanerService();
+  }
+
+  public DepServerFutureStub getDependencyService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getDependencyService();
   }
 }

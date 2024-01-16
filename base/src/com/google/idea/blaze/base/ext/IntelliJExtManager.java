@@ -53,10 +53,16 @@ public class IntelliJExtManager {
 
   private static final BoolExperiment LINTER = new BoolExperiment("use.intellij.ext.linter", false);
 
+  private static final BoolExperiment CODESEARCH =
+      new BoolExperiment("use.intellij.ext.codesearch", false);
+
   private static final BoolExperiment BUILD_SERVICE =
       new BoolExperiment("use.intellij.ext.buildservice", false);
 
   private static final BoolExperiment KYTHE = new BoolExperiment("use.intellij.ext.kythe", false);
+
+  private static final BoolExperiment DEPSEREVR =
+      new BoolExperiment("use.intellij.ext.depserver", false);
 
   /**
    * System property controlling the experiments service. If set to 1, forces intellij-ext binary to
@@ -86,6 +92,16 @@ public class IntelliJExtManager {
       }
     }
     this.binaryPath = path;
+  }
+
+  private IntelliJExtManager(String path) {
+    this.binaryPath = path;
+    service = new IntelliJExtService(Paths.get(path));
+  }
+
+  /** Set up {@link IntelliJExtService} for test cases to avoid non-existence binary error. */
+  public static IntelliJExtManager createForTest() {
+    return new IntelliJExtManager("dummy");
   }
 
   public synchronized IntelliJExtService getService() {
@@ -124,8 +140,16 @@ public class IntelliJExtManager {
     return isEnabled() && LINTER.getValue();
   }
 
+  public boolean isCodeSearchEnabled() {
+    return isEnabled() && CODESEARCH.getValue();
+  }
+
   public boolean isBuildServiceEnabled() {
     return isEnabled() && BUILD_SERVICE.getValue();
+  }
+
+  public boolean isDepserverEnabled() {
+    return isEnabled() && DEPSEREVR.getValue();
   }
 
   public boolean isKytheEnabled() {

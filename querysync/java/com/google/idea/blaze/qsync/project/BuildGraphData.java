@@ -357,6 +357,10 @@ public abstract class BuildGraphData {
     return getSourceFilesByRuleKindAndType(RuleKinds::isAndroid, SourceType.REGULAR);
   }
 
+  public List<Path> getAndroidResourceFiles() {
+    return getSourceFilesByRuleKindAndType(RuleKinds::isAndroid, SourceType.ANDROID_RESOURCES);
+  }
+
   /** Returns a list of custom_package fields that used by current project. */
   public ImmutableSet<String> getAllCustomPackages() {
     return targetMap().values().stream()

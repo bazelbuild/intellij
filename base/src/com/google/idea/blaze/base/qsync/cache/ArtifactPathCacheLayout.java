@@ -37,8 +37,7 @@ public class ArtifactPathCacheLayout implements CacheLayout {
   @Override
   public OutputArtifactDestinationAndLayout getOutputArtifactDestinationAndLayout(
       OutputArtifactInfo outputArtifact) {
-    return new PreparedOutputArtifactDestination(
-        CacheDirectoryManager.cacheKeyForArtifact(outputArtifact),
+    return PreparedOutputArtifactDestination.create(
         cacheDirectory.resolve(outputArtifact.getRelativePath()));
   }
 

@@ -98,7 +98,8 @@ public abstract class ProjectDefinition {
    *
    * <p>Emits warnings via context if any issues are found with the path.
    */
-  private static boolean isValidPathForQuery(Context context, Path candidate) throws IOException {
+  private static boolean isValidPathForQuery(Context<?> context, Path candidate)
+      throws IOException {
     if (Files.exists(candidate.resolve("BUILD"))) {
       return true;
     }

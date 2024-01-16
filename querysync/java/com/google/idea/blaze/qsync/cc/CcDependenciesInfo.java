@@ -18,11 +18,11 @@ package com.google.idea.blaze.qsync.cc;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcCompilationInfo;
-import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcTargetInfo;
-import com.google.devtools.intellij.qsync.CcCompilationInfoOuterClass.CcToolchainInfo;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcCompilationInfo;
+import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcTargetInfo;
+import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcToolchainInfo;
 import java.util.Map;
 
 /**

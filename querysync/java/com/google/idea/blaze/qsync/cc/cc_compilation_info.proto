@@ -14,10 +14,10 @@
 
 syntax = "proto3";
 
-package blaze;
+package bazel.intellij;
 
 // option java_api_version = 2;
-option java_package = "com.google.devtools.intellij.qsync";
+option java_package = "com.google.idea.blaze.qsync.java.cc";
 
 message CcToolchainInfo {
   string compiler = 1;
