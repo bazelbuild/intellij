@@ -52,6 +52,8 @@ def _get_deps(ctx):
         deps.extend(ctx.rule.attr.deps)
     if hasattr(ctx.rule.attr, "exports"):
         deps.extend(ctx.rule.attr.exports)
+    if hasattr(ctx.rule.attr, "runtime_deps"):
+        deps.extend(ctx.rule.attr.runtime_deps)
     return deps
 
 def _restricted_deps_aspect_impl(target, ctx):
