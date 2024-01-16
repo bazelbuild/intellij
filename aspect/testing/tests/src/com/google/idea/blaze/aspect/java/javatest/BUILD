@@ -1,13 +1,13 @@
-load(
-    "//aspect/testing/rules:fast_build_aspect_test_fixture.bzl",
-    "fast_build_aspect_test_fixture",
-)
+licenses(["notice"])
+
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
 )
-
-licenses(["notice"])
+load(
+    "//aspect/testing/rules:fast_build_aspect_test_fixture.bzl",
+    "fast_build_aspect_test_fixture",
+)
 
 java_test(
     name = "FooTest",

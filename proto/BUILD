@@ -1,10 +1,3 @@
-load(
-    "//:build-visibility.bzl",
-    "ASPECT_PROTO_VISIBILITY",
-    "PLUGIN_PACKAGES_VISIBILITY",
-    "create_proto_visibility_group",
-)
-
 #
 # Description:
 # Proto dependencies from bazel.
@@ -12,6 +5,12 @@ load(
 load(
     "//intellij_platform_sdk:build_defs.bzl",
     "combine_visibilities",
+)
+load(
+    "//:build-visibility.bzl",
+    "ASPECT_PROTO_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+    "create_proto_visibility_group",
 )
 
 licenses(["notice"])
