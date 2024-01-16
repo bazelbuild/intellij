@@ -2,6 +2,11 @@
 # Description: Builds clwb
 #
 
+load(
+    "//:build-visibility.bzl",
+    "CLWB_PACKAGES_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
 load("//:version.bzl", "VERSION")
 load(
     "//build_defs:build_defs.bzl",
@@ -18,11 +23,6 @@ load(
 load(
     "//testing:test_defs.bzl",
     "intellij_unit_test_suite",
-)
-load(
-    "//:build-visibility.bzl",
-    "CLWB_PACKAGES_VISIBILITY",
-    "PLUGIN_PACKAGES_VISIBILITY",
 )
 
 licenses(["notice"])

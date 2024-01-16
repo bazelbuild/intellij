@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.idea.blaze.base.qsync.QuerySyncManager.OperationType;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
 import com.google.idea.blaze.base.qsync.action.PopupPositioner;
@@ -49,6 +50,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.HierarchyBoundsListener;
 import java.awt.event.HierarchyEvent;
+import java.util.Optional;
 import javax.swing.JComponent;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -108,6 +110,17 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
       VirtualFile vf = psiFile != null ? psiFile.getVirtualFile() : null;
       if (vf == null) {
         presentation.setEnabled(false);
+        return;
+      }
+
+      Optional<OperationType> currentOperation =
+          QuerySyncManager.getInstance(project).currentOperation();
+      if (currentOperation.isPresent()) {
+        presentation.setEnabled(false);
+        presentation.setText(
+            currentOperation.get() == OperationType.SYNC
+                ? "Syncing project..."
+                : "Building dependencies...");
         return;
       }
       TargetsToBuild toBuild = buildDepsHelper.getTargetsToEnableAnalysisFor(vf);
