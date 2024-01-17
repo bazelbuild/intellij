@@ -70,6 +70,10 @@ public class EnvironmentVariablesState implements RunConfigurationState {
     return new Editor();
   }
 
+  public void setEnvVars(Map<String, String> vars) {
+    data = data.with(vars);
+  }
+
   private static class Editor implements RunConfigurationStateEditor {
     private final EnvironmentVariablesComponent component = new EnvironmentVariablesComponent();
 
