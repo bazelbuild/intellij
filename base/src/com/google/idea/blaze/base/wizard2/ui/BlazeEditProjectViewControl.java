@@ -600,9 +600,6 @@ public final class BlazeEditProjectViewControl {
               .add(
                   ScalarSection.builder(ImportSection.KEY)
                       .set(selectProjectViewOption.getSharedProjectView()))
-              .add(
-                  ScalarSection.builder(TryImportSection.KEY)
-                      .set(selectProjectViewOption.getSharedProjectView()))
               .build();
       projectViewSet =
           ProjectViewSet.builder()
