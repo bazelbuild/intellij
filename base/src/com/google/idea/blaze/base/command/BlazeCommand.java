@@ -102,7 +102,6 @@ public final class BlazeCommand {
     private final ImmutableList.Builder<TargetExpression> targets = ImmutableList.builder();
     private final ImmutableList.Builder<String> blazeCmdlineFlags = ImmutableList.builder();
     private final ImmutableList.Builder<String> exeFlags = ImmutableList.builder();
-    private final ImmutableMap.Builder<String, String> envVars = ImmutableMap.builder();
 
     public Builder(String binaryPath, BlazeCommandName name) {
       this.binaryPath = binaryPath;

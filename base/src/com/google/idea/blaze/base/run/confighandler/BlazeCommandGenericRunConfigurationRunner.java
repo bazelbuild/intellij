@@ -62,6 +62,7 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunProfileState;
@@ -194,8 +195,12 @@ public final class BlazeCommandGenericRunConfigurationRunner
         Project project, BlazeCommand blazeCommand, WorkspaceRoot workspaceRoot)
         throws ExecutionException {
       GeneralCommandLine commandLine = new GeneralCommandLine(blazeCommand.toList());
-      @NotNull Map<String, String> envVars = handlerState.getUserEnvVarsState().getData().getEnvs();
-      commandLine.withEnvironment(envVars);
+      EnvironmentVariablesData envVarState = handlerState.getUserEnvVarsState().getData();
+      commandLine.withEnvironment(envVarState.getEnvs());
+      commandLine.withParentEnvironmentType(
+              envVarState.isPassParentEnvs()
+                      ? GeneralCommandLine.ParentEnvironmentType.SYSTEM
+                      : GeneralCommandLine.ParentEnvironmentType.NONE);
       return new ScopedBlazeProcessHandler(
           project,
           commandLine,

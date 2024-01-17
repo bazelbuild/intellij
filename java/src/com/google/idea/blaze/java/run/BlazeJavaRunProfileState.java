@@ -56,6 +56,7 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.filters.TextConsoleBuilderImpl;
 import com.intellij.execution.process.ProcessHandler;
@@ -286,8 +287,12 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
       Project project, ImmutableList<String> command, WorkspaceRoot workspaceRoot)
       throws ExecutionException {
     GeneralCommandLine commandLine = new GeneralCommandLine(command);
-    Map<String, String> envVars = getState(getConfiguration()).getUserEnvVarsState().getData().getEnvs();
-    commandLine.withEnvironment(envVars);
+    EnvironmentVariablesData envVarState = getState(getConfiguration()).getUserEnvVarsState().getData();
+    commandLine.withEnvironment(envVarState.getEnvs());
+    commandLine.withParentEnvironmentType(
+            envVarState.isPassParentEnvs()
+                    ? GeneralCommandLine.ParentEnvironmentType.SYSTEM
+                    : GeneralCommandLine.ParentEnvironmentType.NONE);
     return new ScopedBlazeProcessHandler(
         project,
         commandLine,
