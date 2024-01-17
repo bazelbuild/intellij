@@ -21,6 +21,11 @@ func TestFlagMacros(t *testing.T) {
 			validation: func(expanded string) bool { return expanded != "$WorkspaceRoot" },
 			error:      "$WorkspaceRoot$ macro didn't get expanded",
 		},
+		{
+			envVar:     "ENV_VAR_IN_PLAIN_RUN_CONFIG",
+			validation: func(expanded string) bool { return expanded == "it works" },
+			error:      "Expected value to be 'it works'",
+		},
 	}
 	for _, testCase := range testCases {
 		expanded := os.Getenv(testCase.envVar)
