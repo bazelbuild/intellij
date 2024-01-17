@@ -14,7 +14,7 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide", "select_for_plugin_api")
 
 licenses(["notice"])
 
@@ -26,12 +26,17 @@ java_library(
         "src/com/google/idea/blaze/cpp/qsync/*.java",
         "src/com/google/idea/blaze/cpp/syncstatus/*.java",
         "src/com/google/idea/blaze/cpp/navigation/*.java",
-    ]),
+    ]) + select_for_plugin_api({
+        "android-studio-2022.3": glob(["sdkcompat/v223/**/*.java"]),
+        "android-studio-2023.1": glob(["sdkcompat/v231/**/*.java"]),
+        "android-studio-2023.2": glob(["sdkcompat/v232/**/*.java"]),
+        "clion-2022.3": glob(["sdkcompat/v223/**/*.java"]),
+        "intellij-ue-2022.3": glob(["sdkcompat/v223/**/*.java"]),
+    }),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         "//base",
         "//common/experiments",
-        "//cpp/sdkcompat",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",

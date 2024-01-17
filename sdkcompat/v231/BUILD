@@ -7,6 +7,7 @@ licenses(["notice"])
 java_library(
     name = "v231",
     srcs = glob([
+        "com/google/idea/sdkcompat/codeinsight/**",
         "com/google/idea/sdkcompat/editor/**",
         "com/google/idea/sdkcompat/general/**",
         "com/google/idea/sdkcompat/fig/**",

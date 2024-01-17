@@ -7,6 +7,7 @@ licenses(["notice"])
 java_library(
     name = "v223",
     srcs = ["com/google/idea/sdkcompat/refactoring/rename/DelegatingRenamePsiElementProcessorBase.java"] + glob([
+        "com/google/idea/sdkcompat/codeinsight/**",
         "com/google/idea/sdkcompat/editor/**",
         "com/google/idea/sdkcompat/general/**",
         "com/google/idea/sdkcompat/fig/**",
@@ -16,6 +17,7 @@ java_library(
         "com/google/idea/sdkcompat/python/**",
         "com/google/idea/sdkcompat/ui/icons/**",
         "com/google/idea/sdkcompat/vcs/**",
+        "com/google/idea/sdkcompat/codeinsight/**",
     ]) + select_for_ide(
         android_studio = glob([
             "com/google/idea/sdkcompat/cpp/**",

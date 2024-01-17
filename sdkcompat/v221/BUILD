@@ -8,6 +8,7 @@ java_library(
     name = "v221",
     srcs = glob([
         "com/google/idea/sdkcompat/cpp/**",
+        "com/google/idea/sdkcompat/codeinsight/**",
         "com/google/idea/sdkcompat/editor/**",
         "com/google/idea/sdkcompat/fig/**",
         "com/google/idea/sdkcompat/general/**",

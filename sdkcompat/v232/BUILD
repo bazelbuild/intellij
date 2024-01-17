@@ -8,6 +8,7 @@ java_library(
     name = "v232",
     srcs = ["com/google/idea/sdkcompat/refactoring/rename/DelegatingRenamePsiElementProcessorBase.java"] + glob([
         "com/google/idea/sdkcompat/editor/**",
+        "com/google/idea/sdkcompat/codeinsight/**",
         "com/google/idea/sdkcompat/general/**",
         "com/google/idea/sdkcompat/fig/**",
         "com/google/idea/sdkcompat/logging/**",
