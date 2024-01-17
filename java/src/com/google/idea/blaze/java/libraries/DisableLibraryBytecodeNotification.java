@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import org.jetbrains.annotations.NotNull;
 
+
 /**
  * Attempt to disable 'library source doesn't match bytecode' butter bar warnings, which are
  * expected for blaze projects, since we're attaching header jars to the project to improve
@@ -38,6 +39,7 @@ final class DisableLibraryBytecodeNotification implements StartupActivity {
     if (!enabled.getValue() || !Blaze.isBlazeProject(project)) {
       return;
     }
+
     EditorNotificationCompat.getEp(project)
         .unregisterExtension(LibrarySourceNotificationProvider.class);
   }

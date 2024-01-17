@@ -14,7 +14,7 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide", "select_for_plugin_api")
 
 licenses(["notice"])
 
