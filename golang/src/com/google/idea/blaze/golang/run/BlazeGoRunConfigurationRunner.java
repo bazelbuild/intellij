@@ -47,6 +47,7 @@ import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationRunner.BlazeCommandRunProfileState;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.google.idea.blaze.base.run.state.EnvironmentVariablesState;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
@@ -60,6 +61,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
@@ -141,7 +143,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
       return ImmutableList.<String>builder()
           .addAll(state.getExeFlagsState().getFlagsForExternalProcesses())
           .addAll(state.getTestArgs())
-          .addAll(state.getUserEnvVarsState().asBlazeTestEnvFlags())
+          .addAll(executable.args)
           .build();
     }
 
@@ -171,6 +173,11 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
       // GoBuildingRunningState$ProcessHandler#processTerminated
       nativeConfig.setOutputDirectory(executable.binary.getParent());
       nativeConfig.setParams(ParametersListUtil.join(getParameters(executable)));
+
+      EnvironmentVariablesData envVarsState = state.getUserEnvVarsState().getData();
+      nativeConfig.setCustomEnvironment(envVarsState.getEnvs());
+      nativeConfig.setPassParentEnvironment(envVarsState.isPassParentEnvs());
+
       nativeConfig.setWorkingDirectory(executable.workingDir.getPath());
 
       Map<String, String> customEnvironment = new HashMap<>(nativeConfig.getCustomEnvironment());
