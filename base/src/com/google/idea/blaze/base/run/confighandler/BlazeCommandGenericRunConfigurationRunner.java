@@ -324,8 +324,9 @@ public final class BlazeCommandGenericRunConfigurationRunner
       @NotNull Map<String, String> envVars = handlerState.getUserEnvVarsState().getData().getEnvs();
 
       if (invoker.getCommandRunner().canUseCli()) {
-        // BlazeCommandRunner is already supposed to handle the cases where we pass env vars to tests
-        // as part of the interface contract, so we only have to set them here.
+        // If we can use the CLI, that means we will run through Bazel (as opposed to a raw process handler)
+        // When running `bazel test`, bazel will not forward the environment to the tests themselves -- we need to use
+        // the --test_env flag for that. Therefore, we convert all the env vars to --test_env flags here.
         for (Map.Entry<String, String> env: envVars.entrySet()) {
           blazeCommandBuilder.addBlazeFlags(BlazeFlags.TEST_ENV, String.format("%s=%s", env.getKey(), env.getValue()));
         }
