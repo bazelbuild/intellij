@@ -4,6 +4,8 @@ java_library(
     name = "devkit_internal",
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
+        "intellij-2023.3": ["@devkit_2023_3//:devkit"],
+        "intellij-ue-2023.3": ["@devkit_2023_3//:devkit"],
         "intellij-2024.1": ["@devkit_2024_1//:devkit"],
         "intellij-ue-2024.1": ["@devkit_2024_1//:devkit"],
         "default": [],

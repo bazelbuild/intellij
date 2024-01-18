@@ -83,10 +83,10 @@ http_archive(
     url = IC_233_URL,
 )
 
-# The plugin api for intellij_ce_2023_2. This is required to build IJwB and run integration tests.
-IC_241_SHA = "bdbbc56e6ade43ca4b05649948a9be42160bcbc46db5db62b2fe5ff301597da3"
+# The plugin api for intellij_ce_2024_1. This is required to build IJwB and run integration tests.
+IC_241_SHA = "b1deacab7964751e135b462b65c1348e98640f0a6094363643e2eacf874b5812"
 
-IC_241_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/241.8102-EAP-CANDIDATE-SNAPSHOT/ideaIC-241.8102-EAP-CANDIDATE-SNAPSHOT.zip"
+IC_241_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/241.8102.112-EAP-SNAPSHOT/ideaIC-241.8102.112-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ce_2024_1",
@@ -171,9 +171,9 @@ http_archive(
     url = IU_233_URL,
 )
 
-IU_241_SHA = "8fb4c030c542c03d3ba0c8e020a547d72d86188495752ebdcd16d5c22bbbcacf"
+IU_241_SHA = "a89ca40374d7495e1b31df14f14fd0479b4948800b6a3cb082bc392fddf04ae3"
 
-IU_241_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/241.8102-EAP-CANDIDATE-SNAPSHOT/ideaIU-241.8102-EAP-CANDIDATE-SNAPSHOT.zip"
+IU_241_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/241.8102.112-EAP-SNAPSHOT/ideaIU-241.8102.112-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ue_2024_1",
@@ -257,6 +257,17 @@ http_archive(
     url = CLION_233_URL,
 )
 
+CLION_241_SHA = "099e05aa25233814f45fc14a0d3831d23dd23f6ec215c39b51ba364c5051446d"
+
+CLION_241_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/241.8102.118-EAP-SNAPSHOT/clion-241.8102.118-EAP-SNAPSHOT.zip"
+
+http_archive(
+    name = "clion_2024_1",
+    build_file = "@//intellij_platform_sdk:BUILD.clion241",
+    sha256 = CLION_241_SHA,
+    url = CLION_241_URL,
+)
+
 DEVKIT_BUILD_FILE = """
 java_import(
     name = "devkit",
@@ -265,9 +276,20 @@ java_import(
 )
 """
 
-DEVKIT_241_SHA = "8293516dd76980ecbf9c12947bbbee60eadb1a4da990dd26b2f0aa333f5f382a"
+DEVKIT_233_SHA = "c048e8a354e225ea650ac9180602a4ceebc08ced47340446d84fa11b8bc05faa"
 
-DEVKIT_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/241.8102.112/DevKit-241.8102.112.zip"
+DEVKIT_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/233.13135.65/DevKit-233.13135.65.zip"
+
+http_archive(
+    name = "devkit_2023_3",
+    build_file_content = DEVKIT_BUILD_FILE,
+    sha256 = DEVKIT_233_SHA,
+    url = DEVKIT_233_URL,
+)
+
+DEVKIT_241_SHA = "afd94744e647117eae959a41c7410269259ab5d0411a64148759b046093b0139"
+
+DEVKIT_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/241.8102.119/DevKit-241.8102.119.zip"
 
 http_archive(
     name = "devkit_2024_1",
@@ -369,17 +391,6 @@ http_archive(
     url = PYTHON_PLUGIN_233_URL,
 )
 
-PYTHON_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/241.8102.112/PythonCore-241.8102.112.zip"
-
-PYTHON_PLUGIN_241_SHA = "cc20c45dec7defe17346b5da06cf508c19b5f2517fc5187cde4a2ebb97bc2712"
-
-http_archive(
-    name = "python_2024_1",
-    build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = PYTHON_PLUGIN_241_SHA,
-    url = PYTHON_PLUGIN_241_URL,
-)
-
 http_archive(
     name = "python_2023_1",
     build_file_content = _PYTHON_CE_BUILD_FILE,
@@ -392,6 +403,17 @@ http_archive(
     build_file_content = _PYTHON_CE_BUILD_FILE,
     sha256 = "e744349f353568c18a9e11ec5e3a205f62bbdc1b65c9abc96783c479fe2aa51b",
     url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/232.9921.47/PythonCore-232.9921.47.zip",
+)
+
+PYTHON_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/241.8102.112/PythonCore-241.8102.112.zip"
+
+PYTHON_PLUGIN_241_SHA = "cc20c45dec7defe17346b5da06cf508c19b5f2517fc5187cde4a2ebb97bc2712"
+
+http_archive(
+    name = "python_2024_1",
+    build_file_content = _PYTHON_CE_BUILD_FILE,
+    sha256 = PYTHON_PLUGIN_241_SHA,
+    url = PYTHON_PLUGIN_241_URL,
 )
 
 _GO_BUILD_FILE = """
@@ -481,7 +503,7 @@ http_archive(
     url = GO_PLUGIN_233_URL,
 )
 
-GO_PLUGIN_241_SHA = "cbd9b1355c225a32d9a99ef0a563aada68e1ee6ced0b27614fd6e1714a859e8c"
+GO_PLUGIN_241_SHA = "fd759b4947622f931ebefdd6a20d9dc611196ba44203827fd8e80f3cfd707bff"
 
 GO_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/241.8102.112/org.jetbrains.plugins.go-241.8102.112.zip"
 
@@ -489,18 +511,7 @@ http_archive(
     name = "go_2024_1",
     build_file_content = _GO_BUILD_FILE_223,
     sha256 = GO_PLUGIN_241_SHA,
-    url = GO_PLUGIN_233_URL,
-)
-
-GO_PLUGIN_241_SHA = "cbd9b1355c225a32d9a99ef0a563aada68e1ee6ced0b27614fd6e1714a859e8c"
-
-GO_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/241.8102.112/org.jetbrains.plugins.go-241.8102.112.zip"
-
-http_archive(
-    name = "go_2024_1",
-    build_file_content = _GO_BUILD_FILE_223,
-    sha256 = GO_PLUGIN_241_SHA,
-    url = GO_PLUGIN_233_URL,
+    url = GO_PLUGIN_241_URL,
 )
 
 _SCALA_BUILD_FILE = """
@@ -972,7 +983,7 @@ http_archive(
     sha256 = "987ce98f02eefbaf930d6e38ab16aa05737234d7afbab2d5c4ea7adbe50c28ed",
     strip_prefix = "abseil-cpp-20230802.1",
     urls = [
-        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.1.tar.gz",
+         "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.1.tar.gz",
     ],
 )
 
