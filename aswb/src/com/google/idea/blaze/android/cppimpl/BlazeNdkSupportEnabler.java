@@ -19,22 +19,30 @@ import static com.jetbrains.cidr.lang.OCLanguage.LANGUAGE_SUPPORT_DISABLED;
 
 import com.android.tools.ndk.NdkHelper;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.qsync.BlazeProjectListenerProvider;
+import com.google.idea.blaze.base.qsync.QuerySyncProject;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
+import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.qsync.BlazeProjectListener;
+import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceEventImpl;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceModificationTrackersImpl;
+import java.util.Set;
 
-final class BlazeNdkSupportEnabler implements SyncListener {
+final class BlazeNdkSupportEnabler implements SyncListener, BlazeProjectListenerProvider {
 
   @Override
   public void onSyncComplete(
@@ -49,6 +57,22 @@ final class BlazeNdkSupportEnabler implements SyncListener {
     boolean enabled =
         blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C);
     enableCSupportInIde(project, enabled);
+  }
+
+  @Override
+  public BlazeProjectListener createListener(QuerySyncProject project) {
+    return new BlazeProjectListener() {
+      @Override
+      public void onNewProjectSnapshot(Context<?> context, BlazeProjectSnapshot instance) {
+
+        Set<QuerySyncLanguage> allLanguages =
+            Sets.union(
+                instance.queryData().projectDefinition().languageClasses(),
+                QuerySyncLanguage.fromProtoList(instance.project().getActiveLanguagesList()));
+
+        enableCSupportInIde(project.getIdeProject(), allLanguages.contains(QuerySyncLanguage.CC));
+      }
+    };
   }
 
   /**

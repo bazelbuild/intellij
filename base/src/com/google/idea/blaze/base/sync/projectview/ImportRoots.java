@@ -21,6 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -55,10 +56,20 @@ public final class ImportRoots {
   @Nullable
   public static ImportRoots forProjectSafe(Project project) {
     WorkspaceRoot root = WorkspaceRoot.fromProjectSafe(project);
-    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    if (root == null || projectViewSet == null) {
+    if (root == null) {
       return null;
     }
+
+    ProjectViewManager manager = ProjectViewManager.getInstance(project);
+    if (manager == null) {
+      return null;
+    }
+
+    ProjectViewSet projectViewSet = manager.getProjectViewSet();
+    if (projectViewSet == null) {
+      return null;
+    }
+
     return ImportRoots.builder(root, Blaze.getBuildSystemName(project)).add(projectViewSet).build();
   }
 
@@ -67,6 +78,8 @@ public final class ImportRoots {
     private final ImmutableCollection.Builder<WorkspacePath> rootDirectoriesBuilder =
         ImmutableList.builder();
     private final ImmutableSet.Builder<WorkspacePath> excludeDirectoriesBuilder =
+        ImmutableSet.builder();
+    private final ImmutableSet.Builder<WorkspacePath> bazelIgnorePathsBuilder =
         ImmutableSet.builder();
     private final ImmutableList.Builder<TargetExpression> projectTargets = ImmutableList.builder();
     private boolean deriveTargetsFromDirectories = false;
@@ -94,10 +107,22 @@ public final class ImportRoots {
     @VisibleForTesting
     public Builder add(DirectoryEntry entry) {
       if (entry.included) {
-        rootDirectoriesBuilder.add(entry.directory);
+        include(entry.directory);
       } else {
-        excludeDirectoriesBuilder.add(entry.directory);
+        exclude(entry.directory);
       }
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public Builder include(WorkspacePath directory) {
+      rootDirectoriesBuilder.add(directory);
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public Builder exclude(WorkspacePath entry) {
+      excludeDirectoriesBuilder.add(entry);
       return this;
     }
 
@@ -118,8 +143,11 @@ public final class ImportRoots {
       ImmutableSet<WorkspacePath> minimalRootDirectories =
           WorkspacePathUtil.calculateMinimalWorkspacePaths(rootDirectories, minimalExcludes);
 
+      //Paths in .bazelignore are already excluded by Bazel, excluding them explicitly in "bazel query" produces a warning
+      ImmutableSet<WorkspacePath> excludePathsForBazelQuery = Sets.difference(minimalExcludes, bazelIgnorePathsBuilder.build()).immutableCopy();
+
       ProjectDirectoriesHelper directories =
-          new ProjectDirectoriesHelper(minimalRootDirectories, minimalExcludes);
+          new ProjectDirectoriesHelper(minimalRootDirectories, minimalExcludes, excludePathsForBazelQuery);
 
       TargetExpressionList targets =
           deriveTargetsFromDirectories
@@ -134,16 +162,18 @@ public final class ImportRoots {
       for (String dir :
           BuildSystemProvider.getBuildSystemProvider(buildSystemName)
               .buildArtifactDirectories(workspaceRoot)) {
-        excludeDirectoriesBuilder.add(new WorkspacePath(dir));
+        exclude(new WorkspacePath(dir));
       }
     }
 
     private void excludeProjectDataSubDirectory() {
-      excludeDirectoriesBuilder.add(new WorkspacePath(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY));
+      exclude(new WorkspacePath(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY));
     }
 
     private void excludeBazelIgnoredPaths() {
-      excludeDirectoriesBuilder.addAll(new BazelIgnoreParser(workspaceRoot).getIgnoredPaths());
+      ImmutableList<WorkspacePath> bazelIgnoredPaths = new BazelIgnoreParser(workspaceRoot).getIgnoredPaths();
+      excludeDirectoriesBuilder.addAll(bazelIgnoredPaths);
+      bazelIgnorePathsBuilder.addAll(bazelIgnoredPaths);
     }
 
     private static boolean hasWorkspaceRoot(ImmutableCollection<WorkspacePath> rootDirectories) {
@@ -183,6 +213,10 @@ public final class ImportRoots {
     return projectDirectories.excludeDirectories;
   }
 
+  public Set<WorkspacePath> excludePathsForBazelQuery() {
+    return projectDirectories.excludePathsForBazelQuery;
+  }
+
   public ImmutableSet<Path> excludePaths() {
     return projectDirectories.excludeDirectories.stream()
         .map(WorkspacePath::asPath)
@@ -217,12 +251,14 @@ public final class ImportRoots {
   static class ProjectDirectoriesHelper {
     private final ImmutableSet<WorkspacePath> rootDirectories;
     private final ImmutableSet<WorkspacePath> excludeDirectories;
+    private final ImmutableSet<WorkspacePath> excludePathsForBazelQuery;
 
     @VisibleForTesting
     ProjectDirectoriesHelper(
-        Collection<WorkspacePath> rootDirectories, Collection<WorkspacePath> excludeDirectories) {
+        Collection<WorkspacePath> rootDirectories, Collection<WorkspacePath> excludeDirectories, Collection<WorkspacePath> excludePathsForBazelQuery) {
       this.rootDirectories = ImmutableSet.copyOf(rootDirectories);
       this.excludeDirectories = ImmutableSet.copyOf(excludeDirectories);
+      this.excludePathsForBazelQuery = ImmutableSet.copyOf(excludePathsForBazelQuery);
     }
 
     boolean containsWorkspacePath(WorkspacePath workspacePath) {

@@ -91,8 +91,13 @@ final class TasksTreeConsoleView extends AbstractView<JPanel> {
 
   private void treeSelectionChanged(
       ObservableValue<? extends Task> property, Task oldTask, Task newTask) {
+    ConsoleView consoleView = model.getConsolesOfTasks().get(newTask);
+    JComponent content = noSelectionPanel;
+    if (consoleView != null) {
+      content = consoleView.getContent();
+    }
     setConsoleComponent(
-        newTask == null ? noSelectionPanel : model.getConsolesOfTasks().get(newTask).getContent());
+        newTask == null ? noSelectionPanel : content);
   }
 
   private void setConsoleComponent(JComponent component) {

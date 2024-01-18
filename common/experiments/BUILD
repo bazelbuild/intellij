@@ -1,13 +1,13 @@
-load("//build_defs:build_defs.bzl", "intellij_plugin_library")
-load(
-    "//testing:test_defs.bzl",
-    "intellij_unit_test_suite",
-)
 load(
     "//:build-visibility.bzl",
     "COMMON_PLUGINS_VISIBILITY",
     "G3PLUGINS_VISIBILITY",
     "SERVICES_EXPERIMENT_SUBPACKAGES",
+)
+load("//build_defs:build_defs.bzl", "intellij_plugin_library")
+load(
+    "//testing:test_defs.bzl",
+    "intellij_unit_test_suite",
 )
 
 licenses(["notice"])
@@ -18,6 +18,7 @@ java_library(
     resources = [":experiment_properties"],
     visibility = COMMON_PLUGINS_VISIBILITY,
     deps = [
+        "//common/util:platform",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//third_party/auto_value",

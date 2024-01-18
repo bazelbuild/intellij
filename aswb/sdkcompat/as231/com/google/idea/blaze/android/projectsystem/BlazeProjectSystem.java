@@ -38,7 +38,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
 import com.google.idea.blaze.android.sync.model.idea.BlazeClassJarProvider;
-import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.intellij.facet.ProjectFacetManager;
@@ -47,7 +46,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.search.GlobalSearchScope;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
@@ -78,6 +76,10 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
             new AndroidResourceClassPsiElementFinder(getLightResourceClassService()));
   }
 
+  public Project getProject() {
+    return project;
+  }
+
   @Override
   public boolean allowsFileCreation() {
     return true;
@@ -96,12 +98,7 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
         new LogWrapper(BlazeProjectSystem.class));
   }
 
-  // @Override #api42
-  public void buildProject() {
-    BlazeBuildService.getInstance(project).buildProject();
-  }
-
-  // @Override #api42
+  @Override
   public ProjectSystemBuildManager getBuildManager() {
     return buildManager;
   }
@@ -172,7 +169,7 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
     };
   }
 
-  // @Override #api212
+  @Override
   public ClassJarProvider getClassJarProvider() {
     return new BlazeClassJarProvider(project);
   }
@@ -245,11 +242,5 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
       return false;
     }
     return nameFromFacet.equals(packageName);
-  }
-
-  @NotNull
-  // @Override #api223
-  public List<File> desugarLibraryConfigFiles(@NotNull Project project) {
-    return ImmutableList.of();
   }
 }

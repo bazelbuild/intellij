@@ -41,6 +41,8 @@ public class GlobErrorAnnotator extends BuildAnnotator {
         checkListContents("exclude", arg.getValue());
       } else if ("exclude_directories".equals(name)) {
         checkExcludeDirsNode(arg);
+      } else if ("allow_empty".equals(name)) {
+        checkAllowEmptyNode(arg);
       } else {
         markError(arg, "Unrecognized glob argument");
       }
@@ -54,6 +56,13 @@ public class GlobErrorAnnotator extends BuildAnnotator {
     Expression value = arg.getValue();
     if (value == null || !(value.getText().equals("0") || value.getText().equals("1"))) {
       markError(arg, "exclude_directories parameter to glob must be 0 or 1");
+    }
+  }
+
+  private void checkAllowEmptyNode(Argument arg) {
+    Expression value = arg.getValue();
+    if (value == null || !(value.getText().equals("True") || value.getText().equals("False"))) {
+      markError(arg, "allow_empty parameter to glob must be True or False");
     }
   }
 

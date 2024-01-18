@@ -39,7 +39,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Runs a blaze query to derive a set of targets from the project's {@link ImportRoots}. */
@@ -64,8 +66,12 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
         directories.rootDirectories().stream()
             .map(w -> TargetExpression.allFromPackageRecursive(w).toString())
             .collect(joining(" + ")));
-    for (WorkspacePath excluded : directories.excludeDirectories()) {
-      targets.append(" - " + TargetExpression.allFromPackageRecursive(excluded).toString());
+    for (WorkspacePath excluded : directories.excludePathsForBazelQuery()) {
+      // Bazel produces errors for paths that don't exist (e.g. bazel-out in a project that overrides the default symlinks),
+      // so only include paths that actually exist.
+      if (Files.exists(excluded.asPath())) {
+        targets.append(" - " + TargetExpression.allFromPackageRecursive(excluded).toString());
+      }
     }
 
     if (allowManualTargetsSync) {

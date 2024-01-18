@@ -43,7 +43,7 @@ import javax.annotation.Nullable;
  */
 class ExternalFormatterCodeStyleManager extends DelegatingCodeStyleManager {
 
-  static class Installer implements StartupActivity {
+  static class Installer implements StartupActivity.DumbAware {
     @Override
     public void runActivity(Project project) {
       FormatterInstaller.replaceFormatter(project, ExternalFormatterCodeStyleManager::new);

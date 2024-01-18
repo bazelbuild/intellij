@@ -189,6 +189,15 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
         .isEqualTo(desugaringFilePaths);
   }
 
+  @Test
+  public void testBlazeTargetNameToKotlinModuleName() {
+    assertThat(
+            BlazeModuleSystem.create(module)
+                .blazeTargetNameToKotlinModuleName(
+                    "//third_party/java_src/android_app/compose_samples/Rally:lib"))
+        .isEqualTo("third_party_java_src_android_app_compose_samples_Rally_lib");
+  }
+
   private void mockBlazeImportSettings(Container projectServices) {
     BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
     importSettingsManager.setImportSettings(

@@ -111,11 +111,12 @@ public class ProjectUpdater implements BlazeProjectListener {
   }
 
   @Override
-  public void graphCreated(Context<?> context, BlazeProjectSnapshot graph) throws IOException {
+  public void onNewProjectSnapshot(Context<?> context, BlazeProjectSnapshot graph)
+      throws IOException {
     updateProjectModel(graph.project(), context);
   }
 
-  private void updateProjectModel(ProjectProto.Project spec, Context context) {
+  private void updateProjectModel(ProjectProto.Project spec, Context<?> context) {
     File imlDirectory = new File(BlazeDataStorage.getProjectDataDir(importSettings), "modules");
     Transactions.submitWriteActionTransactionAndWait(
         () -> {
@@ -163,11 +164,9 @@ public class ProjectUpdater implements BlazeProjectListener {
 
               ContentEntry contentEntry =
                   roots.addContentEntry(
-                      UrlUtil.pathToIdeaDirectoryUrl(projectPathResolver.resolve(projectPath)));
+                      UrlUtil.pathToUrl(projectPathResolver.resolve(projectPath).toString()));
               for (ProjectProto.SourceFolder sfSpec : ceSpec.getSourcesList()) {
-                Path sourceFolderPath =
-                    projectPathResolver.resolve(
-                        ProjectPath.create(projectPath.rootType(), Path.of(sfSpec.getPath())));
+                ProjectPath sourceFolderProjectPath = ProjectPath.create(sfSpec.getProjectPath());
 
                 JavaSourceRootProperties properties =
                     JpsJavaExtensionService.getInstance()
@@ -175,9 +174,11 @@ public class ProjectUpdater implements BlazeProjectListener {
                             sfSpec.getPackagePrefix(), sfSpec.getIsGenerated());
                 JavaSourceRootType rootType =
                     sfSpec.getIsTest() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
-                SourceFolder unused =
-                    contentEntry.addSourceFolder(
-                        UrlUtil.pathToIdeaDirectoryUrl(sourceFolderPath), rootType, properties);
+                String url =
+                    UrlUtil.pathToUrl(
+                        projectPathResolver.resolve(sourceFolderProjectPath).toString(),
+                        sourceFolderProjectPath.innerJarPath());
+                SourceFolder unused = contentEntry.addSourceFolder(url, rootType, properties);
               }
               for (String exclude : ceSpec.getExcludesList()) {
                 contentEntry.addExcludeFolder(

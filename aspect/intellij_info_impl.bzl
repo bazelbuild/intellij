@@ -220,13 +220,11 @@ def is_valid_aspect_target(target):
     """Returns whether the target has had the aspect run on it."""
     return hasattr(target, "intellij_info")
 
-def get_aspect_ids(ctx, target):
+def get_aspect_ids(ctx):
     """Returns the all aspect ids, filtering out self."""
     aspect_ids = None
     if hasattr(ctx, "aspect_ids"):
         aspect_ids = ctx.aspect_ids
-    elif hasattr(target, "aspect_ids"):
-        aspect_ids = target.aspect_ids
     else:
         return None
     return [aspect_id for aspect_id in aspect_ids if "intellij_info_aspect" not in aspect_id]
@@ -566,11 +564,9 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
 def get_java_provider(target):
     """Find a provider exposing java compilation/outputs data."""
 
-    # Check for scala and kt providers before JavaInfo. e.g. scala targets have
-    # JavaInfo, but their data lives in the "scala" provider and not JavaInfo.
+    # Check for kt providers before JavaInfo. e.g. kt targets have
+    # JavaInfo, but their data lives in the "kt" provider and not JavaInfo.
     # See https://github.com/bazelbuild/intellij/pull/1202
-    if hasattr(target, "scala"):
-        return target.scala
     if hasattr(target, "kt") and hasattr(target.kt, "outputs"):
         return target.kt
     if JavaInfo in target:
@@ -1074,7 +1070,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
         for export in direct_exports:
             export_deps.extend(export.intellij_info.export_deps)
 
-        if ctx.rule.kind == "android_library":
+        if ctx.rule.kind == "android_library" or ctx.rule.kind == "kt_android_library":
             # Empty android libraries export all their dependencies.
             if not hasattr(rule_attrs, "srcs") or not ctx.rule.attr.srcs:
                 export_deps.extend(compiletime_deps)
@@ -1132,7 +1128,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     # bazel allows target names differing only by case, so append a hash to support
     # case-insensitive file systems
     file_name = file_name + "-" + str(hash(file_name))
-    aspect_ids = get_aspect_ids(ctx, target)
+    aspect_ids = get_aspect_ids(ctx)
     if aspect_ids:
         aspect_hash = hash(".".join(aspect_ids))
         file_name = file_name + "-" + str(aspect_hash)

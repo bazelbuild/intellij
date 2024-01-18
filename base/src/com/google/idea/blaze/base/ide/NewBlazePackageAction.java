@@ -38,8 +38,10 @@ import com.intellij.util.PlatformIcons;
 import javax.annotation.Nullable;
 
 class NewBlazePackageAction extends BlazeProjectAction implements DumbAware {
-  NewBlazePackageAction() {
-    super();
+
+  @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.SUPPORTED;
   }
 
   @Override

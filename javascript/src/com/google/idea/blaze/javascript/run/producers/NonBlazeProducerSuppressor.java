@@ -34,7 +34,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import java.util.stream.Collectors;
 
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
-public class NonBlazeProducerSuppressor implements StartupActivity {
+public class NonBlazeProducerSuppressor implements StartupActivity.DumbAware {
 
   /**
    * Returns a list of run configuration producers to suppress for Blaze projects.

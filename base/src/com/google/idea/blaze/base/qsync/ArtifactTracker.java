@@ -15,16 +15,14 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectProto;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -37,12 +35,8 @@ public interface ArtifactTracker {
   void clear() throws IOException;
 
   /** Fetches, caches and sets up new artifacts. */
-  UpdateResult update(Set<Label> targets, OutputInfo outputInfo, BlazeContext context)
-      throws BuildException;
-
-  /** Fetches, caches and sets up new render jar artifacts. */
-  UpdateResult update(Set<Label> targets, RenderJarInfo renderJarInfo, BlazeContext context)
-      throws BuildException;
+  ArtifactTrackerUpdateResult update(
+      Set<Label> targets, OutputInfo outputInfo, BlazeContext context) throws BuildException;
 
   /**
    * Makes the project snapshot reflect the current state of tracked artifacts.
@@ -83,22 +77,14 @@ public interface ArtifactTracker {
    */
   Path getExternalAarDirectory();
 
-  /** A data class representing the result of updating artifacts. */
-  @AutoValue
-  abstract class UpdateResult {
-    public abstract ImmutableSet<Path> updatedFiles();
-
-    public abstract ImmutableSet<String> removedKeys();
-
-    public static UpdateResult create(
-        ImmutableSet<Path> updatedFiles, ImmutableSet<String> removedKeys) {
-      return new AutoValue_ArtifactTracker_UpdateResult(updatedFiles, removedKeys);
-    }
-  }
-
-  /** Returns the list of render jars */
-  ImmutableList<File> getRenderJars();
+  /**
+   * Returns the CC target info from the cache. This is the compilation info created by the aspect
+   * when dependencies are build for a CC targets.
+   */
+  CcDependenciesInfo getCcDependenciesInfo();
 
   /** Returns the count of .jar files. */
   Integer getJarsCount();
+
+  public Iterable<Path> getBugreportFiles();
 }

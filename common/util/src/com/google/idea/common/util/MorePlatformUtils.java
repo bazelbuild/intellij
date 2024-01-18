@@ -15,6 +15,7 @@
  */
 package com.google.idea.common.util;
 
+import com.google.idea.common.util.channel.Channel;
 import com.intellij.util.PlatformUtils;
 
 /** Additional helpers for {@link PlatformUtils}. */
@@ -40,5 +41,13 @@ public final class MorePlatformUtils {
 
   public static boolean isAndroidStudio() {
     return "AndroidStudio".equals(PlatformUtils.getPlatformPrefix());
+  }
+
+  /**
+   * Returns the channel that the IDE was built from, either {@code stable}, {@code beta} or {@code
+   * canary}.
+   */
+  public static String getIdeChannel() {
+    return Channel.CHANNEL;
   }
 }

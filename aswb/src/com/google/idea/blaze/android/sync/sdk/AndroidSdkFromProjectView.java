@@ -46,7 +46,7 @@ public final class AndroidSdkFromProjectView {
 
   @Nullable
   public static AndroidSdkPlatform getAndroidSdkPlatform(
-      Context context, ProjectViewSet projectViewSet) {
+      Context<?> context, ProjectViewSet projectViewSet) {
     List<Sdk> sdks = BlazeSdkProvider.getInstance().getAllAndroidSdks();
     if (sdks.isEmpty()) {
       String msg = "No Android SDK configured. Please use the SDK manager to configure.";

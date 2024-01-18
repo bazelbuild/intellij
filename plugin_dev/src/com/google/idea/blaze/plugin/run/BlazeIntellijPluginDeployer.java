@@ -89,7 +89,7 @@ class BlazeIntellijPluginDeployer {
     deployInfoArtifacts.clear();
     deployInfoArtifacts.addAll(
         buildArtifacts.stream()
-            .filter(a -> a.toString().endsWith(".intellij-plugin-debug-target-deploy-info"))
+            .filter(a -> a.getRelativePath().endsWith(".intellij-plugin-debug-target-deploy-info"))
             .collect(toImmutableList()));
   }
 

@@ -6,15 +6,15 @@
 #   listed here may depend on these libraries.
 
 load(
-    ":build_defs.bzl",
-    "select_for_plugin_api",
-    "select_from_plugin_api_directory",
-)
-load(
     "//:build-visibility.bzl",
     "ASPECT_TOOLS_PACKAGE",
     "INTELLIJ_PLUGINS_VISIBILITY",
     "create_test_libs_visibility_package",
+)
+load(
+    ":build_defs.bzl",
+    "select_for_plugin_api",
+    "select_from_plugin_api_directory",
 )
 
 package(default_visibility = INTELLIJ_PLUGINS_VISIBILITY)
@@ -371,25 +371,17 @@ config_setting(
 )
 
 config_setting(
+    name = "android-studio-intellij-ext",
+    values = {
+        "define": "intellij-ext=true",
+    },
+)
+
+config_setting(
     name = "android-studio-canary-mac",
     values = {
         "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-canary",
-    },
-)
-
-config_setting(
-    name = "android-studio-dev",
-    values = {
-        "define": "ij_product=android-studio-dev",
-    },
-)
-
-config_setting(
-    name = "android-studio-dev-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=android-studio-dev",
     },
 )
 
@@ -714,7 +706,6 @@ java_library(
     testonly = 1,
     data = select_from_plugin_api_directory(
         android_studio = [
-            ":layoutlib_data",
             ":kotlinc_version",
         ],
         clion = [],
@@ -790,7 +781,6 @@ java_library(
         "android-studio-2022.3": ["@jsr305_annotations//jar"],
         "android-studio-2023.1": ["@jsr305_annotations//jar"],
         "android-studio-2023.2": ["@jsr305_annotations//jar"],
-        "android-studio-dev": ["@jsr305_annotations//jar"],
         # We default to intellij-latest when no plugin api is selected.
         "default": [":bundled_jsr305"],
     }),

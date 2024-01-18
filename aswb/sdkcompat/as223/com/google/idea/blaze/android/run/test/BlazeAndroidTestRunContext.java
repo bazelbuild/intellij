@@ -119,7 +119,7 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
   }
 
   @Override
-  public ApplicationIdProvider getApplicationIdProvider() throws ExecutionException {
+  public ApplicationIdProvider getApplicationIdProvider() {
     return applicationIdProvider;
   }
 

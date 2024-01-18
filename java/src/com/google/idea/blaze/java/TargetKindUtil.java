@@ -28,11 +28,14 @@ public final class TargetKindUtil {
   }
 
   public static boolean isAndroidLocalTest(Kind targetKind) {
-    return targetKind != null && targetKind.equals(RuleTypes.ANDROID_LOCAL_TEST.getKind());
+    return targetKind != null
+        && (targetKind.equals(RuleTypes.ANDROID_LOCAL_TEST.getKind())
+            || targetKind.equals(RuleTypes.KT_ANDROID_LOCAL_TEST.getKind()));
   }
 
   public static boolean isJavaTest(Kind targetKind) {
-    return targetKind != null && targetKind.equals(JavaBlazeRules.RuleTypes.JAVA_TEST.getKind());
+    return targetKind != null && (targetKind.equals(JavaBlazeRules.RuleTypes.JAVA_TEST.getKind()) ||
+            targetKind.equals(JavaBlazeRules.RuleTypes.JAVA_TEST_SUITE.getKind()));
   }
 
   private TargetKindUtil() {}

@@ -2,7 +2,7 @@ name: Feature Request
 description: Suggest a new feature
 labels: ["type: feature request", "awaiting-maintainer"]
 assignees:
-  - pavank1992
+  - rakshitasingh05
   - sgowroji
   - iancha1992
 body:

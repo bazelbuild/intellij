@@ -19,10 +19,12 @@ import com.android.ddmlib.IDevice;
 import com.android.tools.idea.execution.common.debug.AndroidDebugger;
 import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.execution.common.debug.DebugSessionStarter;
+import com.android.tools.idea.projectsystem.ApplicationProjectContext;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
 import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
 import com.android.tools.idea.run.blaze.BlazeLaunchTask;
+import com.google.idea.blaze.android.run.BazelApplicationProjectContext;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationLaunchTaskProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
@@ -55,6 +57,11 @@ public class BlazeAndroidBinaryMobileInstallRunContext
       ApkBuildStep buildStep,
       String launchId) {
     super(project, facet, runConfiguration, env, configState, buildStep, launchId);
+  }
+
+  @Override
+  public ApplicationProjectContext getApplicationProjectContext() {
+    return new BazelApplicationProjectContext(project, getApplicationIdProvider());
   }
 
   @SuppressWarnings("unchecked") // upstream API
@@ -103,7 +110,7 @@ public class BlazeAndroidBinaryMobileInstallRunContext
           (scope, continuation) ->
               DebugSessionStarter.INSTANCE.attachDebuggerToStartedProcess(
                   device,
-                  packageName,
+                  new BazelApplicationProjectContext(project, packageName),
                   env,
                   androidDebugger,
                   androidDebuggerState,

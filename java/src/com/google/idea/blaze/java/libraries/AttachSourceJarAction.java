@@ -30,6 +30,11 @@ import com.intellij.openapi.project.Project;
 class AttachSourceJarAction extends BlazeProjectAction {
 
   @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.HIDDEN;
+  }
+
+  @Override
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     BlazeProjectData projectData =

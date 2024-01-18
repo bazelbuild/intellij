@@ -93,7 +93,13 @@ public class BuildFileFormatter {
   }
 
   private static String fileTypeArg(BlazeFileType fileType) {
-    return fileType == BlazeFileType.SkylarkExtension ? "--type=bzl" : "--type=build";
+    return "--type="
+        + switch (fileType) {
+          case SkylarkExtension -> "bzl";
+          case BuildPackage -> "build";
+          case Workspace -> "workspace";
+          case MODULE -> "module";
+        };
   }
 
   private static Iterable<String> pathArg(@Nullable BuildFile buildFile) {

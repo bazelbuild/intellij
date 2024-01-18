@@ -38,7 +38,10 @@ public abstract class BlazeProjectAction extends AnAction {
     /**
      * The action may support querysync in future, but does not yet. It is visible in the UI, but
      * disabled.
+     *
+     * @deprecated All existing users should migrate to another of the enum values instead.
      */
+    @Deprecated
     DISABLED,
     /** The action supports querysync and is available in the UI. */
     SUPPORTED,
@@ -115,10 +118,10 @@ public abstract class BlazeProjectAction extends AnAction {
     actionPerformedInBlazeProject(project, anActionEvent);
   }
 
-  protected QuerySyncStatus querySyncSupport() {
+  protected abstract QuerySyncStatus querySyncSupport(); /* {
     // Default to disabled, meaning that the action has not yet been updated for querysync.
     return QuerySyncStatus.DISABLED;
-  }
+  }*/
 
   protected void updateForBlazeProject(Project project, AnActionEvent e) {}
 

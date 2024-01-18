@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.qsync;
 import com.google.common.base.Preconditions;
 import com.google.idea.blaze.base.bazel.BazelExitCode;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
-import com.google.idea.blaze.base.qsync.ArtifactTracker.UpdateResult;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
@@ -39,15 +38,15 @@ public class RenderJarTrackerImpl implements RenderJarTracker {
 
   private final BlazeProject blazeProject;
   private final RenderJarBuilder renderJarBuilder;
-  private final ArtifactTracker artifactTracker;
+  private final RenderJarArtifactTracker renderJarArtifactTracker;
 
   public RenderJarTrackerImpl(
       BlazeProject blazeProject,
       RenderJarBuilder renderJarBuilder,
-      ArtifactTracker artifactTracker) {
+      RenderJarArtifactTracker renderJarArtifactTracker) {
     this.blazeProject = blazeProject;
     this.renderJarBuilder = renderJarBuilder;
-    this.artifactTracker = artifactTracker;
+    this.renderJarArtifactTracker = renderJarArtifactTracker;
   }
 
   /** Builds the render jars of the given files and adds then to the cache */
@@ -95,7 +94,8 @@ public class RenderJarTrackerImpl implements RenderJarTracker {
       context.output(PrintOutput.error("There were build errors when generating render jar."));
     }
 
-    UpdateResult updateResult = artifactTracker.update(targets, renderJarInfo, context);
+    ArtifactTrackerUpdateResult updateResult =
+        renderJarArtifactTracker.update(targets, renderJarInfo, context);
     if (updateResult.updatedFiles().isEmpty()) {
       context.output(
           PrintOutput.log(

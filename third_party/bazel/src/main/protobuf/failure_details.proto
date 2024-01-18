@@ -502,6 +502,7 @@ message Filesystem {
     SERVER_FILE_WRITE_FAILURE = 5 [(metadata) = { exit_code: 36 }];
     DEFAULT_DIGEST_HASH_FUNCTION_INVALID_VALUE = 6
         [(metadata) = { exit_code: 2 }];
+    FILESYSTEM_JNI_NOT_AVAILABLE = 8 [(metadata) = { exit_code: 36 }];
 
     reserved 7; // For internal use
   }
@@ -528,6 +529,7 @@ message ExecutionOptions {
         [(metadata) = { exit_code: 2 }];
     STRATEGY_NOT_FOUND = 9 [(metadata) = { exit_code: 2 }];
     DYNAMIC_STRATEGY_NOT_SANDBOXED = 10 [(metadata) = { exit_code: 2 }];
+    MULTIPLE_EXECUTION_LOG_FORMATS = 11 [(metadata) = { exit_code: 2 }];
 
     reserved 1, 2; // For internal use
   }

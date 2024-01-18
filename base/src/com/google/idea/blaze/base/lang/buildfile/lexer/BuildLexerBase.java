@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Stack;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /**
@@ -559,8 +560,32 @@ public class BuildLexerBase {
     addToken(kind, oldPos, pos, (kind == TokenKind.IDENTIFIER) ? id : null);
   }
 
+  private String scanDecimal() {
+    int oldPos = pos;
+    while (pos < buffer.length) {
+      char c = buffer[pos];
+      switch (c) {
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+          pos++;
+          break;
+        default:
+          return bufferSlice(oldPos, pos);
+      }
+    }
+    return bufferSlice(oldPos, pos);
+  }
+
   private String scanInteger() {
-    int oldPos = pos - 1;
+    int oldPos = pos;
     while (pos < buffer.length) {
       char c = buffer[pos];
       switch (c) {
@@ -600,17 +625,21 @@ public class BuildLexerBase {
   }
 
   /**
-   * Scans an addInteger literal.
+   * Scans an integer or float literal.
    *
-   * <p>ON ENTRY: 'pos' is 1 + the index of the first char in the literal. ON EXIT: 'pos' is 1 + the
+   * <p>ON ENTRY: 'pos' is the index of the first char in the literal. ON EXIT: 'pos' is 1 + the
    * index of the last char in the literal.
    */
-  private void addInteger() {
-    int oldPos = pos - 1;
+  private void addNumber() {
+    // https://github.com/bazelbuild/starlark/blob/master/spec.md#lexical-elements
+
+    int oldPos = pos;
     String literal = scanInteger();
 
-    final String substring;
-    final int radix;
+    String substring;
+    int radix;
+    boolean isFloat = false;
+    boolean hasErrors = false;
     if (literal.startsWith("0x") || literal.startsWith("0X")) {
       radix = 16;
       substring = literal.substring(2);
@@ -626,14 +655,50 @@ public class BuildLexerBase {
       substring = literal;
     }
 
-    int value = 0;
-    try {
-      value = Integer.parseInt(substring, radix);
-    } catch (NumberFormatException e) {
-      error("invalid base-" + radix + " integer constant: " + literal);
+    if (radix == 10 && lookaheadIs(0, '.')) {
+      pos++;
+      isFloat = true;
+      scanDecimal();
+      literal = bufferSlice(oldPos, pos);
+      substring = literal;
+    }
+    if (radix == 10 && (lookaheadIs(0, 'e') || lookaheadIs(0, 'E'))) {
+      pos++;
+      isFloat = true;
+      if (lookaheadIs(0, '+') || lookaheadIs(0, '-')) {
+        pos++;
+      }
+      String exp = scanDecimal();
+      if (exp.isEmpty()) {
+        hasErrors = true;
+      }
+      literal = bufferSlice(oldPos, pos);
+      substring = literal;
     }
 
-    addToken(TokenKind.INT, oldPos, pos, value);
+    if (isFloat) {
+      double value = 0;
+      try {
+        value = Double.parseDouble(substring);
+      } catch (NumberFormatException e) {
+        hasErrors = true;
+      }
+      if (hasErrors) {
+        error("invalid float constant: " + literal, oldPos, pos);
+      }
+      addToken(TokenKind.FLOAT, oldPos, pos, value);
+    } else {
+      int value = 0;
+      try {
+        value = Integer.parseInt(substring, radix);
+      } catch (NumberFormatException e) {
+        hasErrors = true;
+      }
+      if (hasErrors) {
+        error("invalid base-" + radix + " integer constant: " + literal);
+      }
+      addToken(TokenKind.INT, oldPos, pos, value);
+    }
   }
 
   /**
@@ -663,6 +728,10 @@ public class BuildLexerBase {
   /** Test if the character at pos+p is c. */
   private boolean lookaheadIs(int p, char c) {
     return pos + p < buffer.length && buffer[pos + p] == c;
+  }
+
+  private boolean lookaheadMatches(int p, Predicate<Character> pred) {
+    return pos + p < buffer.length && pred.test(buffer[pos + p]);
   }
 
   /** Performs tokenization of the character buffer of file contents provided to the constructor. */
@@ -741,9 +810,6 @@ public class BuildLexerBase {
         case ';':
           addToken(TokenKind.SEMI, pos - 1, pos);
           break;
-        case '.':
-          addToken(TokenKind.DOT, pos - 1, pos);
-          break;
         case '*':
           addToken(TokenKind.STAR, pos - 1, pos);
           break;
@@ -791,8 +857,12 @@ public class BuildLexerBase {
             break;
           }
 
-          if (Character.isDigit(c)) {
-            addInteger();
+          // Distinguish dot vs. start of a float.
+          if (c == '.' && !lookaheadMatches(0, Character::isDigit)) {
+            addToken(TokenKind.DOT, pos - 1, pos);
+          } else if (Character.isDigit(c) || c == '.') {
+            pos--;
+            addNumber();
           } else if (Character.isJavaIdentifierStart(c) && c != '$') {
             addIdentifierOrKeyword();
           } else {

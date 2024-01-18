@@ -18,11 +18,13 @@ package com.google.idea.blaze.qsync.project;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.collect.ImmutableSetMultimap.toImmutableSetMultimap;
+import static java.util.Arrays.stream;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -35,12 +37,15 @@ import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.RuleKinds;
+import com.google.idea.blaze.qsync.project.ProjectTarget.SourceType;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import java.nio.file.Path;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -62,9 +67,6 @@ public abstract class BuildGraphData {
   /** A map from target to file on disk for all source files */
   public abstract ImmutableMap<Label, Location> locations();
 
-  /** A set of all the targets that show up in java rules 'src' attributes */
-  public abstract ImmutableSet<Label> javaSources();
-
   /** A set of all the BUILD files */
   public abstract PackageSet packages();
 
@@ -76,8 +78,7 @@ public abstract class BuildGraphData {
 
   public abstract TargetTree allTargets();
 
-  abstract ImmutableSet<Label> androidTargets();
-
+  /** Mapping of in-project targets to {@link ProjectTarget}s */
   public abstract ImmutableMap<Label, ProjectTarget> targetMap();
 
   /**
@@ -96,6 +97,26 @@ public abstract class BuildGraphData {
       }
     }
     return map.build();
+  }
+
+  /**
+   * Calculates the set of direct reverse dependencies for a set of targets (including the targets
+   * themselves).
+   */
+  public ImmutableSet<Label> getSameLanguageTargetsDependingOn(Set<Label> targets) {
+    ImmutableMultimap<Label, Label> rdeps = reverseDeps();
+    ImmutableSet.Builder<Label> directRdeps = ImmutableSet.builder();
+    directRdeps.addAll(targets);
+    for (Label target : targets) {
+      ImmutableSet<QuerySyncLanguage> targetLanguages = targetMap().get(target).languages();
+      // filter the rdeps based on the languages, removing those that don't have a common
+      // language. This ensures we don't follow reverse deps of (e.g.) a java target depending on
+      // a cc target.
+      rdeps.get(target).stream()
+          .filter(d -> !Collections.disjoint(targetMap().get(d).languages(), targetLanguages))
+          .forEach(directRdeps::add);
+    }
+    return directRdeps.build();
   }
 
   /**
@@ -129,6 +150,23 @@ public abstract class BuildGraphData {
         .collect(toImmutableList());
   }
 
+  public ImmutableSet<Path> getTargetSources(Label target, SourceType... types) {
+    return Optional.ofNullable(targetMap().get(target)).stream()
+        .map(ProjectTarget::sourceLabels)
+        .flatMap(m -> stream(types).map(m::get))
+        .flatMap(Set::stream)
+        .map(locations()::get)
+        .filter(Objects::nonNull) // filter out generated sources
+        .map(l -> l.file)
+        .collect(toImmutableSet());
+  }
+
+  public ImmutableSet<ProjectTarget> targetsForKind(String kind) {
+    return targetMap().values().stream()
+        .filter(t -> t.kind().equals(kind))
+        .collect(toImmutableSet());
+  }
+
   @Override
   public final String toString() {
     // The default autovalue toString() implementation can result in a very large string which
@@ -150,8 +188,6 @@ public abstract class BuildGraphData {
 
     public abstract ImmutableMap.Builder<Label, Location> locationsBuilder();
 
-    public abstract ImmutableSet.Builder<Label> javaSourcesBuilder();
-
     public abstract ImmutableMap.Builder<Path, Label> fileToTargetBuilder();
 
     public abstract ImmutableMap.Builder<Label, ProjectTarget> targetMapBuilder();
@@ -159,8 +195,6 @@ public abstract class BuildGraphData {
     public abstract Builder projectDeps(Set<Label> value);
 
     public abstract TargetTree.Builder allTargetsBuilder();
-
-    public abstract ImmutableSet.Builder<Label> androidTargetsBuilder();
 
     public abstract Builder packages(PackageSet value);
 
@@ -211,15 +245,24 @@ public abstract class BuildGraphData {
 
   private ImmutableSet<Label> calculateTransitiveExternalDependencies(Label target) {
     ImmutableSet.Builder<Label> builder = ImmutableSet.builder();
-    // There are no cycles in blaze, so we can recursively call down
-    if (!targetMap().containsKey(target)) {
-      builder.add(target);
-    } else {
-      if (projectDeps().contains(target)) {
-        builder.add(target);
-      }
-      for (Label dep : targetMap().get(target).deps()) {
-        builder.addAll(getTransitiveExternalDependencies(dep));
+
+    // Targets with cyclic dependencies will not build, but the query does not check for cycles
+    Set<Label> visited = Sets.newHashSet();
+    Deque<Label> toVisit = Queues.newArrayDeque();
+    toVisit.add(target);
+
+    while (!toVisit.isEmpty()) {
+      Label nextLabel = toVisit.poll();
+      if (visited.add(nextLabel)) {
+        // targetMap only contains in-project target labels.
+        if (!targetMap().containsKey(nextLabel)) {
+          builder.add(nextLabel);
+        } else {
+          if (projectDeps().contains(nextLabel)) {
+            builder.add(nextLabel);
+          }
+          toVisit.addAll(targetMap().get(nextLabel).deps());
+        }
       }
     }
     return Sets.intersection(builder.build(), projectDeps()).immutableCopy();
@@ -228,7 +271,8 @@ public abstract class BuildGraphData {
   @Memoized
   public ImmutableSetMultimap<Label, Label> sourceOwners() {
     return targetMap().values().stream()
-        .flatMap(t -> t.sourceLabels().stream().map(src -> new SimpleEntry<>(src, t.label())))
+        .flatMap(
+            t -> t.sourceLabels().values().stream().map(src -> new SimpleEntry<>(src, t.label())))
         .collect(toImmutableSetMultimap(e -> e.getKey(), e -> e.getValue()));
   }
 
@@ -264,6 +308,12 @@ public abstract class BuildGraphData {
         .collect(toImmutableSet());
   }
 
+  /** A set of all the targets that show up in java rules 'src' attributes */
+  @Memoized
+  public ImmutableSet<Label> javaSources() {
+    return sourcesByRuleKindAndType(RuleKinds::isJava, SourceType.REGULAR);
+  }
+
   /** Returns a list of all the java source files of the project, relative to the workspace root. */
   public List<Path> getJavaSourceFiles() {
     return pathListFromLabels(javaSources());
@@ -274,13 +324,27 @@ public abstract class BuildGraphData {
    */
   @Memoized
   public List<Path> getProtoSourceFiles() {
-    return pathListFromLabels(protoSources());
+    return getSourceFilesByRuleKindAndType(RuleKinds::isProtoSource, SourceType.REGULAR);
   }
 
-  private ImmutableSet<Label> protoSources() {
+  /** Returns a list of all the cc source files of the project, relative to the workspace root. */
+  @Memoized
+  public List<Path> getCcSourceFiles() {
+    return getSourceFilesByRuleKindAndType(RuleKinds::isCc, SourceType.REGULAR);
+  }
+
+  public List<Path> getSourceFilesByRuleKindAndType(
+      Predicate<String> ruleKindPredicate, SourceType... sourceTypes) {
+    return pathListFromLabels(sourcesByRuleKindAndType(ruleKindPredicate, sourceTypes));
+  }
+
+  private ImmutableSet<Label> sourcesByRuleKindAndType(
+      Predicate<String> ruleKindPredicate, SourceType... sourceTypes) {
     return targetMap().values().stream()
-        .filter(t -> RuleKinds.PROTO_SOURCE_RULE_KINDS.contains(t.kind()))
-        .flatMap(t -> t.sourceLabels().stream())
+        .filter(t -> ruleKindPredicate.test(t.kind()))
+        .map(ProjectTarget::sourceLabels)
+        .flatMap(srcs -> stream(sourceTypes).map(srcs::get))
+        .flatMap(Set::stream)
         .collect(toImmutableSet());
   }
 
@@ -296,27 +360,20 @@ public abstract class BuildGraphData {
     return paths;
   }
 
-  public List<Path> getAllSourceFiles() {
-    List<Path> files = new ArrayList<>();
-    files.addAll(fileToTarget().keySet());
-    return files;
+  public ImmutableSet<Path> getAllSourceFiles() {
+    return fileToTarget().keySet();
   }
 
-  /** Returns a list of source files owned by an Android target, relative to the workspace root. */
+  /**
+   * Returns a list of regular (java/kt) source files owned by an Android target, relative to the
+   * workspace root.
+   */
   public List<Path> getAndroidSourceFiles() {
-    List<Path> files = new ArrayList<>();
-    for (Label source : javaSources()) {
-      for (Label owningTarget : sourceOwners().get(source)) {
-        if (androidTargets().contains(owningTarget)) {
-          Location location = locations().get(source);
-          if (location == null) {
-            continue;
-          }
-          files.add(location.file);
-        }
-      }
-    }
-    return files;
+    return getSourceFilesByRuleKindAndType(RuleKinds::isAndroid, SourceType.REGULAR);
+  }
+
+  public List<Path> getAndroidResourceFiles() {
+    return getSourceFilesByRuleKindAndType(RuleKinds::isAndroid, SourceType.ANDROID_RESOURCES);
   }
 
   /** Returns a list of custom_package fields that used by current project. */
@@ -324,6 +381,15 @@ public abstract class BuildGraphData {
     return targetMap().values().stream()
         .map(ProjectTarget::customPackage)
         .flatMap(Optional::stream)
+        .collect(toImmutableSet());
+  }
+
+  public ImmutableSet<DependencyTrackingBehavior> getDependencyTrackingBehaviors(Label target) {
+    if (!targetMap().containsKey(target)) {
+      return ImmutableSet.of();
+    }
+    return targetMap().get(target).languages().stream()
+        .map(l -> l.dependencyTrackingBehavior)
         .collect(toImmutableSet());
   }
 }

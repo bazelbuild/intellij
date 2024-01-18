@@ -1,3 +1,51 @@
+v2024.01.16
+===========
+* Internal cleanup
+
+v2024.01.02
+===========
+* fix: Fix bazel sync errors when using non-default convenience symlinks #5910
+* fix: Fix warnings when syncing a workspace containing a bazelignore file #5873
+
+v2023.12.19
+===========
+* feat: Allow to have non-existent import entries in projectview file #5689
+* feat: Pass environment variables from BlazeCidrLauncher down to bazel #5771
+* feat: Enable debugging the gazelle binary #5816
+* fix: Fix buildifier formatting for MODULE.bazel and WORKSPACE #5829
+* fix: Update glob validation to support allow_empty parameter #5855
+* fix: Don't throw "Non-blaze project is provided error" on source attachment #5864
+
+v2023.12.05
+===========
+* Escape regex-relevant characters in test filter #5745
+* Mitigate StartupActivity warnings #5760
+
+v2023.11.21
+===========
+* feat: Add support for Starlark float literals #5678
+* feat: Add visibility reference contributor #5650
+* fix: Work around NPE for toolwindow #5665
+* fix: Expect double-@-prefixed labels in Bazel output
+* fix: Do not throw "Non-blaze project is provided" exception in various places #5704, #5706, #5658
+* fix: Do not complete ignored directories #5573
+* fix: Fix NPE when accessing xcodeProperties #5714
+* fix: Pass -include compilation flags down to OC language model #5645
+* fix: Rename 'fast' run configurations to 'Fast Run' and 'Fast Debug' … #5743
+* fix: Fast Test with Bzlmod enabled
+
+v2023.11.07
+===========
+* New feature:
+* feat: Support gutter icons in java_test_suite #5579
+* Fixes:
+* Fix go debugging #5585
+* fix: Allow multiple providers to contribute attribute specific references #5507
+* Fix "slow operations exception" in welcome screen #5598
+* Fix missing "Bazel" item in main menu. #5610
+* Fix "Non-blaze project is provided" error #5596
+
+
 v2023.10.24
 ===========
 * Bump to newest EAPs #5522

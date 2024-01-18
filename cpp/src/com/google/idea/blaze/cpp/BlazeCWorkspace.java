@@ -45,6 +45,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,6 +71,7 @@ import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -204,8 +206,11 @@ public final class BlazeCWorkspace implements ProjectComponent {
             UnfilteredCompilerOptions.builder()
                 .registerSingleOrSplitOption("-I")
                 .build(targetIdeInfo.getcIdeInfo().getLocalCopts());
-        ImmutableList<String> plainLocalCopts =
-            filterIncompatibleFlags(coptsExtractor.getUninterpretedOptions());
+        List<String> plainLocalCopts = coptsExtractor.getUninterpretedOptions();
+        if (Registry.is("bazel.cpp.sync.workspace.filter.out.incompatible.flags")) {
+          plainLocalCopts = filterIncompatibleFlags(plainLocalCopts);
+        }
+
         ImmutableList<ExecutionRootPath> localIncludes =
             coptsExtractor.getExtractedOptionValues("-I").stream()
                 .map(ExecutionRootPath::new)

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.run.testmap;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static java.util.function.Predicate.not;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -62,6 +63,7 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
               .map(file -> projectData.getWorkspacePathResolver().getWorkspacePath(file))
               .filter(Objects::nonNull)
               .flatMap(path -> projectData.getReverseDeps(path.asPath()).stream())
+              .filter(not(target -> target.tags().contains("no-ide")))
               .filter(
                   buildTarget -> {
                     if (ruleType.isEmpty()) {

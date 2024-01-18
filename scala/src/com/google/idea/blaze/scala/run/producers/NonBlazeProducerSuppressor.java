@@ -26,7 +26,7 @@ import org.jetbrains.plugins.scala.testingSupport.test.scalatest.ScalaTestConfig
 import org.jetbrains.plugins.scala.testingSupport.test.specs2.Specs2ConfigurationProducer;
 
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
-public class NonBlazeProducerSuppressor implements StartupActivity {
+public class NonBlazeProducerSuppressor implements StartupActivity.DumbAware {
 
   private static final ImmutableList<Class<? extends RunConfigurationProducer<?>>>
       // ImmutableList.of(...) is broken: https://youtrack.jetbrains.com/issue/SCL-14531

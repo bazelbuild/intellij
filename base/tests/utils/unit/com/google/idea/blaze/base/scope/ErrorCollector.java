@@ -55,6 +55,10 @@ public class ErrorCollector implements OutputSink<IssueOutput> {
     assertThat(issues.stream().anyMatch(i -> i.getCategory() == Category.ERROR)).isTrue();
   }
 
+  public void assertHasNoErrors() {
+    assertThat(issues.stream().anyMatch(i -> i.getCategory() == Category.ERROR)).isFalse();
+  }
+
   public void assertIssues(String... requiredMessages) {
     List<String> messages = Lists.newArrayList();
     for (IssueOutput issue : issues) {

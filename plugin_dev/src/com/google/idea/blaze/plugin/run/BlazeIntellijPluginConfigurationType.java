@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.run.BlazeRunConfigurationFactory;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.plugin.IntellijPluginRule;
@@ -130,6 +131,10 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
     }
 
     private static Label findExamplePluginTarget(Project project) {
+      if (Blaze.getProjectType(project).equals(ProjectType.UNKNOWN)) {
+        return null;
+      }
+
       BlazeProjectData projectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
       if (projectData == null) {

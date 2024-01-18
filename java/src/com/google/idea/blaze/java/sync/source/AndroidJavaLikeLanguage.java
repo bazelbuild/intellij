@@ -30,14 +30,16 @@ class AndroidJavaLikeLanguage implements JavaLikeLanguage {
   public ImmutableSet<Kind> getDebuggableKinds() {
     return ImmutableSet.of(
         AndroidBlazeRules.RuleTypes.ANDROID_ROBOLECTRIC_TEST.getKind(),
-        AndroidBlazeRules.RuleTypes.ANDROID_LOCAL_TEST.getKind());
+        AndroidBlazeRules.RuleTypes.ANDROID_LOCAL_TEST.getKind(),
+        AndroidBlazeRules.RuleTypes.KT_ANDROID_LOCAL_TEST.getKind());
   }
 
   @Override
   public ImmutableSet<Kind> getHandledTestKinds() {
     return ImmutableSet.of(
         AndroidBlazeRules.RuleTypes.ANDROID_ROBOLECTRIC_TEST.getKind(),
-        AndroidBlazeRules.RuleTypes.ANDROID_LOCAL_TEST.getKind());
+        AndroidBlazeRules.RuleTypes.ANDROID_LOCAL_TEST.getKind(),
+        AndroidBlazeRules.RuleTypes.KT_ANDROID_LOCAL_TEST.getKind());
   }
 
   @Override

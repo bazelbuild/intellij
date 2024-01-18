@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.errorprone.annotations.MustBeClosed;
+import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.CommandLineBlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
@@ -67,6 +68,12 @@ class BazelBuildSystem implements BuildSystem {
   @Override
   public BuildInvoker getBuildInvoker(
       Project project, BlazeContext context, ExecutorType executorType, Kind targetKind) {
+    return getBuildInvoker(project, context);
+  }
+
+  @Override
+  public BuildInvoker getBuildInvoker(
+      Project project, BlazeContext context, BlazeCommandName command) {
     return getBuildInvoker(project, context);
   }
 

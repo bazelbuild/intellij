@@ -22,7 +22,9 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
@@ -39,6 +41,11 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import java.util.List;
 
 class DetachAllSourceJarsAction extends BlazeProjectAction {
+
+  @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.HIDDEN;
+  }
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
@@ -98,7 +105,8 @@ class DetachAllSourceJarsAction extends BlazeProjectAction {
         BlazeProjectData blazeProjectData,
         SyncMode syncMode,
         SyncResult syncResult) {
-      if (syncMode == SyncMode.FULL) {
+      if (Blaze.getProjectType(project).equals(ProjectType.ASPECT_SYNC)
+          && syncMode == SyncMode.FULL) {
         detachAll(project);
       }
     }

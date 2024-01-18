@@ -101,7 +101,17 @@ public class LabelTest {
   }
 
   @Test
+  public void testGetWorkspace_doubleAt() {
+    assertThat(new Label("@@myws//package:rule").getWorkspaceName()).isEqualTo("myws");
+  }
+
+  @Test
   public void testNew_badWorkspace() {
     assertThrows(IllegalArgumentException.class, () -> new Label("@work:space//package/path"));
+  }
+
+  @Test
+  public void doubleAtNormalization() {
+    assertThat(new Label("@abc//:def")).isEqualTo(new Label("@@abc//:def"));
   }
 }

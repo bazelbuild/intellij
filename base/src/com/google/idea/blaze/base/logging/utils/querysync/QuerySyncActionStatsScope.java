@@ -22,11 +22,13 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStats.Result;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.common.TimeSource;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vfs.VirtualFile;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -39,34 +41,60 @@ public class QuerySyncActionStatsScope implements BlazeScope {
   private final DependenciesInfoStats.Builder dependenciesInfoStatsBuilder;
   private final TimeSource timeSource;
 
-  public QuerySyncActionStatsScope(Class<?> actionClass, @Nullable AnActionEvent event) {
-    this(actionClass, event, ImmutableSet.of());
+  public static QuerySyncActionStatsScope create(
+      Class<?> actionClass, @Nullable AnActionEvent event) {
+    return createForPaths(actionClass, event, ImmutableSet.of(), () -> Instant.now());
   }
 
-  public QuerySyncActionStatsScope(
-      Class<?> actionClass, @Nullable AnActionEvent event, VirtualFile virtualFile) {
-    this(actionClass, event, ImmutableSet.of(virtualFile));
+  public static QuerySyncActionStatsScope createForFile(
+      Class<?> actionClass, @Nullable AnActionEvent event, VirtualFile requestFile) {
+    return createForFiles(actionClass, event, ImmutableSet.of(requestFile));
   }
 
-  public QuerySyncActionStatsScope(
+  public static QuerySyncActionStatsScope createForFiles(
       Class<?> actionClass,
       @Nullable AnActionEvent event,
       ImmutableCollection<VirtualFile> requestFiles) {
-    this(actionClass, event, requestFiles, () -> Instant.now());
+    return createForFiles(actionClass, event, requestFiles, () -> Instant.now());
+  }
+
+  public static QuerySyncActionStatsScope createForFiles(
+      Class<?> actionClass,
+      @Nullable AnActionEvent event,
+      ImmutableCollection<VirtualFile> requestFiles,
+      TimeSource timeSource) {
+    return createForPaths(
+        actionClass,
+        event,
+        requestFiles.stream().map(VirtualFile::toNioPath).collect(toImmutableSet()),
+        timeSource);
+  }
+
+  public static QuerySyncActionStatsScope createForPaths(
+      Class<?> actionClass, @Nullable AnActionEvent event, ImmutableCollection<Path> requestFiles) {
+    return createForPaths(actionClass, event, requestFiles, () -> Instant.now());
+  }
+
+  public static QuerySyncActionStatsScope createForPaths(
+      Class<?> actionClass,
+      @Nullable AnActionEvent event,
+      ImmutableCollection<Path> requestFiles,
+      TimeSource timeSource) {
+    return new QuerySyncActionStatsScope(actionClass, event, requestFiles, timeSource);
   }
 
   @VisibleForTesting
   public QuerySyncActionStatsScope(
       Class<?> actionClass,
       @Nullable AnActionEvent event,
-      ImmutableCollection<VirtualFile> requestFiles,
+      ImmutableCollection<Path> requestFiles,
       TimeSource timeSource) {
     builder =
         QuerySyncActionStats.builder()
             .handleActionClass(actionClass)
             .handleActionEvent(event)
-            .setRequestedFiles(
-                requestFiles.stream().map(VirtualFile::toNioPath).collect(toImmutableSet()));
+            .setRequestedFiles(ImmutableSet.copyOf(requestFiles))
+            .setBuildWorkingSetEnabled(QuerySyncSettings.getInstance().buildWorkingSet());
     this.timeSource = timeSource;
     projectInfoStatsBuilder = ProjectInfoStats.builder();
     dependenciesInfoStatsBuilder = DependenciesInfoStats.builder();

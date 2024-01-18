@@ -19,7 +19,9 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Arrays.stream;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.devtools.build.runfiles.Runfiles;
+import com.google.idea.blaze.common.Label;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Locale;
@@ -36,10 +38,16 @@ public enum TestData {
   JAVA_LIBRARY_NO_DEPS_QUERY("nodeps"),
   JAVA_LIBRARY_PROTO_DEP_QUERY("protodep"),
   JAVA_LIBRARY_TRANSITIVE_DEP_QUERY("transitivedep", "externaldep"),
+  JAVA_LIBRARY_TRANSITIVE_INTERNAL_DEP_QUERY("transitiveinternaldep", "internaldep", "nodeps"),
   BUILDINCLUDES_QUERY("buildincludes"),
   FILEGROUP_QUERY("filegroup"),
   CC_LIBRARY_QUERY("cc"),
-  PROTO_ONLY_QUERY("protoonly");
+  CC_EXTERNAL_DEP_QUERY("cc_externaldep"),
+  CC_MULTISRC_QUERY("cc_multisrc"),
+  PROTO_ONLY_QUERY("protoonly"),
+  NESTED_PROTO_QUERY("nestedproto"),
+  TAGS_QUERY("tags"),
+  EMPTY_QUERY("empty");
 
   public final ImmutableList<Path> srcPaths;
 
@@ -62,5 +70,23 @@ public enum TestData {
 
   public ImmutableList<Path> getRelativeSourcePaths() {
     return srcPaths.stream().map(ROOT::resolve).collect(toImmutableList());
+  }
+
+  public Path getOnlySourcePath() {
+    return Iterables.getOnlyElement(getRelativeSourcePaths());
+  }
+
+  /**
+   * Gets labels included in this project, making the assumption that each package has a single
+   * target who's name matches the directory name.
+   */
+  public ImmutableList<Label> getAssumedLabels() {
+    return srcPaths.stream()
+        .map(p -> Label.fromPackageAndName(ROOT.resolve(p), p.toString()))
+        .collect(toImmutableList());
+  }
+
+  public Label getAssumedOnlyLabel() {
+    return Iterables.getOnlyElement(getAssumedLabels());
   }
 }

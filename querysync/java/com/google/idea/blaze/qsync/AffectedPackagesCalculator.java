@@ -42,7 +42,7 @@ import java.util.Set;
  */
 @AutoValue
 public abstract class AffectedPackagesCalculator {
-  abstract Context context();
+  abstract Context<?> context();
 
   abstract ImmutableList<Path> projectIncludes();
 
@@ -251,7 +251,7 @@ public abstract class AffectedPackagesCalculator {
   @AutoValue.Builder
   abstract static class Builder {
 
-    public abstract Builder context(Context value);
+    public abstract Builder context(Context<?> value);
 
     public abstract Builder projectIncludes(ImmutableSet<Path> value);
 

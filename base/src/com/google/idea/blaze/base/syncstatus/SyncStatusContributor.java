@@ -16,7 +16,8 @@
 package com.google.idea.blaze.base.syncstatus;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager;
 import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -45,7 +46,7 @@ public interface SyncStatusContributor {
    */
   @Nullable
   static SyncStatus getSyncStatus(Project project, VirtualFile vf) {
-    if (QuerySync.isEnabled()) {
+    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
       // TODO(b/260643753) update this for querysync
       return null;
     }

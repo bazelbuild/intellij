@@ -71,6 +71,7 @@ public interface BuildElementTypes {
   BuildElementType DOT_EXPRESSION = new BuildElementType("dot_expr", DotExpression.class);
   BuildElementType STRING_LITERAL = new BuildElementType("string", StringLiteral.class);
   BuildElementType INTEGER_LITERAL = new BuildElementType("int", IntegerLiteral.class);
+  BuildElementType FLOAT_LITERAL = new BuildElementType("float", FloatLiteral.class);
   BuildElementType LIST_LITERAL = new BuildElementType("list", ListLiteral.class);
   BuildElementType GLOB_EXPRESSION = new BuildElementType("glob", GlobExpression.class);
   BuildElementType REFERENCE_EXPRESSION =
@@ -92,6 +93,7 @@ public interface BuildElementTypes {
           DOT_EXPRESSION,
           STRING_LITERAL,
           INTEGER_LITERAL,
+          FLOAT_LITERAL,
           LIST_LITERAL,
           PARENTHESIZED_EXPRESSION,
           TUPLE_EXPRESSION,

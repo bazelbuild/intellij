@@ -27,7 +27,7 @@ import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.query.QuerySummaryTestUtil;
@@ -77,7 +77,7 @@ public class ProjectRefresherTest {
   }
 
   @Test
-  public void testStartPartialRefresh_vcsSnapshotUnchanged_existingProjectSnapshot()
+  public void testStartPartialRefresh_vcsSnapshotUnchanged_existingProjectSnapshotWithVcsState()
       throws Exception {
     VcsState vcsState =
         new VcsState(
@@ -100,7 +100,8 @@ public class ProjectRefresherTest {
                 project.projectDefinition());
     assertThat(update).isInstanceOf(NoopProjectRefresh.class);
     assertThat(update.createPostQuerySyncData(QuerySummary.EMPTY))
-        .isSameInstanceAs(existingProject.queryData());
+        .isEqualTo(
+            existingProject.queryData().toBuilder().setVcsState(Optional.of(vcsState)).build());
   }
 
   @Test
@@ -180,7 +181,7 @@ public class ProjectRefresherTest {
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("package")),
                     ImmutableSet.of(),
-                    ImmutableSet.of(LanguageClass.JAVA),
+                    ImmutableSet.of(QuerySyncLanguage.JAVA),
                     ImmutableSet.of()))
             .build();
 
@@ -215,7 +216,7 @@ public class ProjectRefresherTest {
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("package")),
                     ImmutableSet.of(),
-                    ImmutableSet.of(LanguageClass.JAVA),
+                    ImmutableSet.of(QuerySyncLanguage.JAVA),
                     ImmutableSet.of()))
             .build();
 
@@ -246,7 +247,7 @@ public class ProjectRefresherTest {
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("package")),
                     ImmutableSet.of(),
-                    ImmutableSet.of(LanguageClass.JAVA),
+                    ImmutableSet.of(QuerySyncLanguage.JAVA),
                     ImmutableSet.of()))
             .build();
 
@@ -279,7 +280,7 @@ public class ProjectRefresherTest {
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("package")),
                     ImmutableSet.of(),
-                    ImmutableSet.of(LanguageClass.JAVA),
+                    ImmutableSet.of(QuerySyncLanguage.JAVA),
                     ImmutableSet.of()))
             .build();
 
@@ -312,7 +313,7 @@ public class ProjectRefresherTest {
                 ProjectDefinition.create(
                     ImmutableSet.of(Path.of("package")),
                     ImmutableSet.of(),
-                    ImmutableSet.of(LanguageClass.JAVA),
+                    ImmutableSet.of(QuerySyncLanguage.JAVA),
                     ImmutableSet.of()))
             .build();
 

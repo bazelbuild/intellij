@@ -63,7 +63,8 @@ public class HighlightingLexerTest extends AbstractLexerTest {
     assertEquals("", names(tokens("")));
     assertEquals("COMMENT", names(tokens("# foo")));
     assertEquals("INT WHITESPACE INT WHITESPACE INT WHITESPACE INT", names(tokens("1 2 3 4")));
-    assertEquals("INT DOT INT", names(tokens("1.234")));
+    assertEquals("FLOAT", names(tokens("1.234")));
+    assertEquals("DOT IDENTIFIER", names(tokens(".a")));
     assertEquals(
         "IDENTIFIER LPAREN IDENTIFIER COMMA WHITESPACE IDENTIFIER RPAREN",
         names(tokens("foo(bar, wiz)")));
@@ -71,21 +72,22 @@ public class HighlightingLexerTest extends AbstractLexerTest {
 
   @Test
   public void testIntegersAndDot() throws Exception {
-    assertEquals("INT(1) DOT INT(2345)", values(tokens("1.2345")));
+    assertEquals("FLOAT(1.2345)", values(tokens("1.2345")));
 
-    assertEquals("INT(1) DOT INT(2) DOT INT(345)", values(tokens("1.2.345")));
+    assertEquals("FLOAT(1.2) FLOAT(0.345)", values(tokens("1.2.345")));
 
-    assertEquals("INT(1) DOT INT(0)", values(tokens("1.23E10")));
-    assertEquals("invalid base-10 integer constant: 23E10", lastError);
+    assertEquals("FLOAT(1.23E10)", values(tokens("1.23E10")));
 
-    assertEquals("INT(1) DOT INT(0) MINUS INT(10)", values(tokens("1.23E-10")));
-    assertEquals("invalid base-10 integer constant: 23E", lastError);
+    assertEquals("FLOAT(0.0)", values(tokens("1.23E")));
+    assertEquals("invalid float constant: 1.23E", lastError);
 
+    assertEquals("FLOAT(1.23E-10)", values(tokens("1.23E-10")));
     assertEquals("DOT WHITESPACE INT(123)", values(tokens(". 123")));
-    assertEquals("DOT INT(123)", values(tokens(".123")));
+    assertEquals("FLOAT(0.123)", values(tokens(".123")));
     assertEquals("DOT IDENTIFIER(abc)", values(tokens(".abc")));
 
-    assertEquals("IDENTIFIER(foo) DOT INT(123)", values(tokens("foo.123")));
+    assertEquals("IDENTIFIER(foo) FLOAT(0.123)", values(tokens("foo.123")));
+    assertEquals("IDENTIFIER(foo456) FLOAT(0.123)", values(tokens("foo456.123")));
     assertEquals(
         "IDENTIFIER(foo) DOT IDENTIFIER(bcd)", values(tokens("foo.bcd"))); // 'b' are hex chars
     assertEquals("IDENTIFIER(foo) DOT IDENTIFIER(xyz)", values(tokens("foo.xyz")));

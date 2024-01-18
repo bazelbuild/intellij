@@ -27,7 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 
 /** Syncs the project upon startup. */
-public class BlazeSyncStartupActivity implements StartupActivity {
+public class BlazeSyncStartupActivity implements StartupActivity.DumbAware {
 
   public static final String SYNC_REASON = "BlazeSyncStartupActivity";
 
@@ -41,7 +41,7 @@ public class BlazeSyncStartupActivity implements StartupActivity {
     if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
       // When query sync is not enabled hasProjectData triggers the load
       QuerySyncManager.getInstance(project)
-          .onStartup(new QuerySyncActionStatsScope(getClass(), null));
+          .onStartup(QuerySyncActionStatsScope.create(getClass(), null));
       return;
     }
     if (hasProjectData(project, importSettings)) {

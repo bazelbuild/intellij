@@ -63,6 +63,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.CommandLineState;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilderImpl;
@@ -193,7 +194,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
         throws ExecutionException {
       return new ScopedBlazeProcessHandler(
           project,
-          blazeCommand,
+          new GeneralCommandLine(blazeCommand.toList()),
           workspaceRoot,
           new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
             @Override

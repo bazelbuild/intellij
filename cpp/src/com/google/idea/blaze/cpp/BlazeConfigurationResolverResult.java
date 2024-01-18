@@ -105,7 +105,7 @@ final class BlazeConfigurationResolverResult {
         ImmutableMap.of();
     ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings = ImmutableMap.of();
     ImmutableSet<File> validHeaderRoots = ImmutableSet.of();
-    Optional<XcodeCompilerSettings> xcodeSettings;
+    Optional<XcodeCompilerSettings> xcodeSettings = Optional.empty();
     private ImmutableMap<String, String> setTargetToVersionMap;
 
     public Builder() {}

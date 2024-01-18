@@ -21,6 +21,11 @@ import java.io.IOException;
 
 /** A listener interface for new project snapshots. */
 public interface BlazeProjectListener {
-  /** A new snapshot has been created, replacing any existing instance. */
-  void graphCreated(Context<?> context, BlazeProjectSnapshot instance) throws IOException;
+  /**
+   * A new snapshot has been created, replacing any existing instance.
+   *
+   * <p>This will be called on a background thread (from the {@link
+   * com.google.idea.blaze.base.async.executor.BlazeExecutor} pool.
+   */
+  void onNewProjectSnapshot(Context<?> context, BlazeProjectSnapshot instance) throws IOException;
 }

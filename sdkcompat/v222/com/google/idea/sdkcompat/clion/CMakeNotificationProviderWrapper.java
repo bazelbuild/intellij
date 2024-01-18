@@ -1,4 +1,4 @@
-package com.google.idea.sdkcompat.cpp;
+package com.google.idea.sdkcompat.clion;
 
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;

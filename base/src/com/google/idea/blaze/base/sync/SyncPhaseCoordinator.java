@@ -42,6 +42,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
+import com.google.idea.blaze.base.projectview.section.sections.TryImportSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -722,7 +723,7 @@ final class SyncPhaseCoordinator {
           .setWorkspaceType(projectState.getLanguageSettings().getWorkspaceType())
           .setLanguagesActive(projectState.getLanguageSettings().getActiveLanguages())
           .setBlazeProjectFiles(
-              projectState.getProjectViewSet().listScalarItems(ImportSection.KEY));
+              projectState.getProjectViewSet().listScalarItems(ImportSection.KEY, TryImportSection.KEY));
     }
     if (buildResult != null) {
       buildResult

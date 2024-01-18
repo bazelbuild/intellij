@@ -21,7 +21,9 @@ import static java.util.function.Predicate.not;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Label;
+import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
@@ -45,11 +47,17 @@ public abstract class TargetsToBuild {
   }
 
   public static final TargetsToBuild NONE =
-      new AutoValue_TargetsToBuild(Type.TARGET_GROUP, ImmutableSet.of());
+      new AutoValue_TargetsToBuild(Type.TARGET_GROUP, ImmutableSet.of(), Optional.empty());
 
   public abstract Type type();
 
   public abstract ImmutableSet<Label> targets();
+
+  /**
+   * Workspace-relative path of the source file the targets are build for. Only defined for
+   * instances of type SOURCE_FILE.
+   */
+  public abstract Optional<Path> sourceFilePath();
 
   public boolean isEmpty() {
     return targets().isEmpty();
@@ -69,12 +77,19 @@ public abstract class TargetsToBuild {
     return isAmbiguous() ? Optional.empty() : Optional.of(targets());
   }
 
-  static TargetsToBuild targetGroup(Collection<Label> targets) {
-    return new AutoValue_TargetsToBuild(Type.TARGET_GROUP, ImmutableSet.copyOf(targets));
+  /** Returns true if {@code labels} overlaps with any of the targets to build */
+  public boolean overlapsWith(ImmutableSet<Label> labels) {
+    return !Collections.disjoint(targets(), labels);
   }
 
-  static TargetsToBuild forSourceFile(Collection<Label> targets) {
-    return new AutoValue_TargetsToBuild(Type.SOURCE_FILE, ImmutableSet.copyOf(targets));
+  static TargetsToBuild targetGroup(Collection<Label> targets) {
+    return new AutoValue_TargetsToBuild(
+        Type.TARGET_GROUP, ImmutableSet.copyOf(targets), Optional.empty());
+  }
+
+  static TargetsToBuild forSourceFile(Collection<Label> targets, Path workspaceRelativePath) {
+    return new AutoValue_TargetsToBuild(
+        Type.SOURCE_FILE, ImmutableSet.copyOf(targets), Optional.of(workspaceRelativePath));
   }
 
   public static ImmutableSet<Label> getAllUnambiguous(Collection<TargetsToBuild> targetsSet) {

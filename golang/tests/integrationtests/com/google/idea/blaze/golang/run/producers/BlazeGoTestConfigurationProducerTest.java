@@ -155,12 +155,14 @@ public class BlazeGoTestConfigurationProducerTest extends BlazeRunConfigurationP
         "func TestFoo(t *testing.T) {",
         "   t.R<caret>un(\"with_nested\", func(t *testing.T) {",
         "     t.R<caret>un(\"subtest\", func(t *testing.T) {})",
+        "     t.R<caret>un(\"subtest (great)\", func(t *testing.T) {})",
         "   })",
         "}"
     );
 
     assertElementGeneratesTestFilter(getElementAtCaret(0, goFile), "^TestFoo/with_nested$");
     assertElementGeneratesTestFilter(getElementAtCaret(1, goFile), "^TestFoo/with_nested/subtest$");
+    assertElementGeneratesTestFilter(getElementAtCaret(2, goFile), "^TestFoo/with_nested/subtest_\\(great\\)$");
   }
   @Test
   public void testCodeBetweenTests() throws Throwable {

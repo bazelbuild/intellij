@@ -16,8 +16,15 @@
 package com.google.idea.blaze.ext;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.idea.blaze.ext.BuildCleanerServiceGrpc.BuildCleanerServiceFutureStub;
+import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
+import com.google.idea.blaze.ext.ChatBotModelGrpc.ChatBotModelBlockingStub;
+import com.google.idea.blaze.ext.CodeSearchGrpc.CodeSearchFutureStub;
+import com.google.idea.blaze.ext.DepServerGrpc.DepServerFutureStub;
 import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlockingStub;
+import com.google.idea.blaze.ext.FileApiGrpc.FileApiFutureStub;
+import com.google.idea.blaze.ext.FindingsServiceGrpc.FindingsServiceBlockingStub;
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
 import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
 import com.google.idea.blaze.ext.KytheGrpc.KytheFutureStub;
@@ -31,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A service that maintains the connection to an external extension service. The external service is
@@ -55,10 +63,18 @@ public final class IntelliJExtService {
     FAILED,
   }
 
-  public IntelliJExtService(Path binary) {
+  public IntelliJExtService(Path binary, @Nullable Path logDir) {
     this.binary = binary;
     this.serverArgs = new ArrayList<>();
     this.status = ServiceStatus.INITIALIZING;
+    if (logDir != null) {
+      this.serverArgs.add("--log_dir");
+      this.serverArgs.add(logDir.toString());
+    }
+  }
+
+  public IntelliJExtService(Path binary) {
+    this(binary, null);
   }
 
   private synchronized void start() throws IOException {
@@ -81,6 +97,11 @@ public final class IntelliJExtService {
     }
   }
 
+  /** Registers a customized {@link IntellijExtClient} for test cases. */
+  public void registerForTest(IntelliJExtClient client) {
+    this.client = client;
+  }
+
   /**
    * A lazy connection to the server. If there is no client the server is started, and a client
    * connected to it. Every time this is called a ping is issued to the server to ensure it's
@@ -99,7 +120,7 @@ public final class IntelliJExtService {
     try {
       return client.getStubSafe();
     } catch (RuntimeException e) {
-      logger.log(Level.SEVERE, "Error running the intellij-ext server, restarting", e);
+      logger.log(Level.INFO, "Pinging intellij-ext server failed, restarting");
       start();
       return client.getStubSafe();
     }
@@ -145,6 +166,11 @@ public final class IntelliJExtService {
     return client.getBuildService();
   }
 
+  public BuildServiceBlockingStub getBuildServiceBlocking() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getBuildServiceBlocking();
+  }
+
   public KytheFutureStub getKytheService() {
     try {
       IntelliJExtBlockingStub unused = connect();
@@ -159,8 +185,42 @@ public final class IntelliJExtService {
     return client.getExperimentsService();
   }
 
+  public ChatBotModelBlockingStub getChatBotModelService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getChatBotModelService();
+  }
+
   public LinterFutureStub getLinterService() throws IOException {
     IntelliJExtBlockingStub unused = connect();
     return client.getLinterService();
+  }
+
+  public FindingsServiceBlockingStub getFindingsService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getFindingsService();
+  }
+
+  public CodeSearchFutureStub getCodeSearchService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getCodeSearchService();
+  }
+
+  public FileApiFutureStub getFileApiService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getFileApiService();
+  }
+
+  public BuildCleanerServiceFutureStub getBuildCleanerService() {
+    try {
+      IntelliJExtBlockingStub unused = connect();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    return client.getBuildCleanerService();
+  }
+
+  public DepServerFutureStub getDependencyService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getDependencyService();
   }
 }

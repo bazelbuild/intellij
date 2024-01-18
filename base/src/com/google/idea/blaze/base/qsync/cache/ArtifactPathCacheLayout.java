@@ -15,10 +15,12 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import java.nio.file.Path;
+import java.util.Collection;
 
 /**
  * Places artifacts in the cache using the same path and filename that they appear at in the build
@@ -35,8 +37,12 @@ public class ArtifactPathCacheLayout implements CacheLayout {
   @Override
   public OutputArtifactDestinationAndLayout getOutputArtifactDestinationAndLayout(
       OutputArtifactInfo outputArtifact) {
-    return new PreparedOutputArtifactDestination(
-        CacheDirectoryManager.cacheKeyForArtifact(outputArtifact),
+    return PreparedOutputArtifactDestination.create(
         cacheDirectory.resolve(outputArtifact.getRelativePath()));
+  }
+
+  @Override
+  public Collection<Path> getCachePaths() {
+    return ImmutableList.of(cacheDirectory);
   }
 }

@@ -17,24 +17,27 @@ package com.google.idea.blaze.base.qsync.cache;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
+import static one.util.streamex.MoreCollectors.onlyOne;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
-import com.google.idea.blaze.base.qsync.ArtifactTracker.UpdateResult;
+import com.google.idea.blaze.base.qsync.AppInspectorInfo;
+import com.google.idea.blaze.base.qsync.ArtifactTrackerUpdateResult;
 import com.google.idea.blaze.base.qsync.GroupedOutputArtifacts;
 import com.google.idea.blaze.base.qsync.OutputGroup;
 import com.google.idea.blaze.base.qsync.OutputInfo;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
+import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaTargetArtifacts;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath.Resolver;
 import java.io.BufferedInputStream;
@@ -113,7 +116,7 @@ public class ArtifactTrackerImplTest {
             ProjectDefinition.EMPTY);
     artifactTracker.initialize();
 
-    final UpdateResult unused =
+    final ArtifactTrackerUpdateResult unused =
         artifactTracker.update(
             ImmutableSet.of(Label.of("//test:test")),
             OutputInfo.builder()
@@ -129,7 +132,7 @@ public class ArtifactTrackerImplTest {
 
     testArtifactFetcher.shouldFail = true;
     try {
-      final UpdateResult unused2 =
+      final ArtifactTrackerUpdateResult unused2 =
           artifactTracker.update(
               ImmutableSet.of(Label.of("//test:test2")),
               OutputInfo.builder()
@@ -221,7 +224,7 @@ public class ArtifactTrackerImplTest {
             ProjectDefinition.EMPTY);
     artifactTracker.initialize();
 
-    final UpdateResult unused =
+    final ArtifactTrackerUpdateResult unused =
         artifactTracker.update(
             ImmutableSet.of(Label.of("//test:test"), Label.of("//test:anothertest")),
             OutputInfo.builder()
@@ -239,15 +242,15 @@ public class ArtifactTrackerImplTest {
                                 .build())
                         .build())
                 .setArtifactInfo(
-                    BuildArtifacts.newBuilder()
+                    JavaArtifacts.newBuilder()
                         .addArtifacts(
-                            TargetArtifacts.newBuilder()
+                            JavaTargetArtifacts.newBuilder()
                                 .setTarget("//test:test")
                                 .addJars("out/test.jar")
                                 .addSrcs("test/Test.java")
                                 .build())
                         .addArtifacts(
-                            TargetArtifacts.newBuilder()
+                            JavaTargetArtifacts.newBuilder()
                                 .setTarget("//test:anothertest")
                                 .addJars("out/anothertest.jar")
                                 .addSrcs("test/AnotherTest.java")
@@ -276,7 +279,7 @@ public class ArtifactTrackerImplTest {
             ProjectDefinition.EMPTY);
     artifactTracker.initialize();
 
-    final UpdateResult unused =
+    final ArtifactTrackerUpdateResult unused =
         artifactTracker.update(
             ImmutableSet.of(Label.of("//test:test"), Label.of("//test:anothertest")),
             OutputInfo.builder()
@@ -290,9 +293,9 @@ public class ArtifactTrackerImplTest {
                                 .build())
                         .build())
                 .setArtifactInfo(
-                    BuildArtifacts.newBuilder()
+                    JavaArtifacts.newBuilder()
                         .addArtifacts(
-                            TargetArtifacts.newBuilder()
+                            JavaTargetArtifacts.newBuilder()
                                 .setTarget("//test:test")
                                 .addJars("out/test.jar")
                                 .addSrcs("test/Test.java")
@@ -346,6 +349,58 @@ public class ArtifactTrackerImplTest {
                 .map(artifactTracker.generatedHeadersDirectory::relativize))
         .containsExactly(
             Path.of("build-out/path/to/header.h"), Path.of("build-out/path/to/another/header.h"));
+  }
+
+  @Test
+  public void update_appInspectorArtifacts() throws Throwable {
+    TestArtifactFetcher testArtifactFetcher = new TestArtifactFetcher();
+    Path root = temporaryFolder.getRoot().toPath();
+    ArtifactTrackerImpl artifactTracker =
+        new ArtifactTrackerImpl(
+            root,
+            root.resolve("ide_project"),
+            testArtifactFetcher,
+            Resolver.EMPTY_FOR_TESTING,
+            ProjectDefinition.EMPTY);
+    artifactTracker.initialize();
+
+    ImmutableSet<Path> update =
+        artifactTracker.update(
+            ImmutableSet.of(Label.of("//app/inspector:inspector")),
+            AppInspectorInfo.create(
+                ImmutableList.of(artifactWithNameAndDigest("inspector.jar", "digest")), 0),
+            BlazeContext.create());
+    assertThat(update).hasSize(1);
+    assertThat(update.stream().collect(onlyOne()).orElseThrow().toString())
+        .startsWith(root.resolve("app_inspectors").toString());
+  }
+
+  @Test
+  public void update_appInspectorArtifacts_notChanged() throws Throwable {
+    TestArtifactFetcher testArtifactFetcher = new TestArtifactFetcher();
+    Path root = temporaryFolder.getRoot().toPath();
+    ArtifactTrackerImpl artifactTracker =
+        new ArtifactTrackerImpl(
+            root,
+            root.resolve("ide_project"),
+            testArtifactFetcher,
+            Resolver.EMPTY_FOR_TESTING,
+            ProjectDefinition.EMPTY);
+    artifactTracker.initialize();
+
+    ImmutableSet<Path> unused =
+        artifactTracker.update(
+            ImmutableSet.of(Label.of("//app/inspector:inspector")),
+            AppInspectorInfo.create(
+                ImmutableList.of(artifactWithNameAndDigest("inspector.jar", "digest")), 0),
+            BlazeContext.create());
+    ImmutableSet<Path> update =
+        artifactTracker.update(
+            ImmutableSet.of(Label.of("//app/inspector:inspector")),
+            AppInspectorInfo.create(
+                ImmutableList.of(artifactWithNameAndDigest("inspector.jar", "digest")), 0),
+            BlazeContext.create());
+    assertThat(update).hasSize(1);
   }
 
   private static class TestArtifactFetcher implements ArtifactFetcher<OutputArtifact> {

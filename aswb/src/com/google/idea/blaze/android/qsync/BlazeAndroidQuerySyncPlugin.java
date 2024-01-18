@@ -39,6 +39,7 @@ import com.google.idea.blaze.base.qsync.BlazeQuerySyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
@@ -56,6 +57,7 @@ import org.jetbrains.android.facet.AndroidFacetProperties;
 
 /** ASwB sync plugin. */
 public class BlazeAndroidQuerySyncPlugin implements BlazeQuerySyncPlugin {
+
   @Override
   public void updateProjectSettingsForQuerySync(
       Project project, Context<?> context, ProjectViewSet projectViewSet) {
@@ -96,6 +98,17 @@ public class BlazeAndroidQuerySyncPlugin implements BlazeQuerySyncPlugin {
 
     // Add all source resource directories to this AndroidFacet
     AndroidFacet workspaceFacet = AndroidFacet.getInstance(workspaceModule);
+    if (workspaceFacet == null) {
+      context.output(
+          PrintOutput.error(
+              "workspace_type is android, but no android facet present; not configuring android"
+                  + " resources"));
+      context.output(
+          PrintOutput.output(
+              "Consider adding \"workspace_type: java\" or similar to your .blazeproject file, or"
+                  + " add the android facet in project settings if this is an android project."));
+      return;
+    }
     ImmutableSet<File> androidResourceDirectoryFiles =
         androidResourceDirectories.stream()
             .map(dir -> new File(workspaceRoot.directory(), dir).getAbsoluteFile())

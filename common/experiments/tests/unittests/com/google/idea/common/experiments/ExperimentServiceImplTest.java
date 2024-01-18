@@ -69,6 +69,19 @@ public class ExperimentServiceImplTest {
     ExperimentService experimentService =
         new ExperimentServiceImpl(new MapExperimentLoader("id", STRING_EXPERIMENT.getKey(), "hi"));
     assertThat(experimentService.getExperimentString(STRING_EXPERIMENT, null)).isEqualTo("hi");
+    assertThat(experimentService.getAllQueriedExperiments())
+        .containsExactly(STRING_EXPERIMENT.getKey(), STRING_EXPERIMENT);
+  }
+
+  @Test
+  public void testChannelProperty() {
+    ExperimentService experimentService =
+        new ExperimentServiceImpl(
+            () -> "beta",
+            new MapExperimentLoader("id", "beta." + STRING_EXPERIMENT.getKey(), "hi"));
+    assertThat(experimentService.getExperimentString(STRING_EXPERIMENT, null)).isEqualTo("hi");
+    assertThat(experimentService.getAllQueriedExperiments())
+        .containsExactly(STRING_EXPERIMENT.getKey(), STRING_EXPERIMENT);
   }
 
   @Test

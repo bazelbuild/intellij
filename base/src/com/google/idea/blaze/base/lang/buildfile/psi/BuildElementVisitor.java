@@ -104,6 +104,10 @@ public class BuildElementVisitor extends PsiElementVisitor {
     visitElement(node);
   }
 
+  public void visitFloatLiteral(FloatLiteral node) {
+    visitElement(node);
+  }
+
   public void visitListLiteral(ListLiteral node) {
     visitElement(node);
   }

@@ -57,6 +57,10 @@ public abstract class BuildLookupElement extends LookupElement {
   @Nullable
   public abstract Icon getIcon();
 
+  public String getLabel() {
+    return baseName;
+  }
+
   protected String getItemText() {
     return baseName;
   }

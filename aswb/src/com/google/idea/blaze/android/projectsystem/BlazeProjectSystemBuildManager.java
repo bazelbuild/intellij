@@ -102,7 +102,7 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
    * Class to publish BlazeBuildListener callbacks to {@link
    * BlazeProjectSystemBuildManager#PROJECT_SYSTEM_BUILD_TOPIC}
    */
-  final class BuildCallbackPublisher implements BlazeBuildListener {
+  static final class BuildCallbackPublisher implements BlazeBuildListener {
     @Override
     public void buildStarting(Project project) {
       BlazeBuildCounter.getInstance(project).onBuildStarted();

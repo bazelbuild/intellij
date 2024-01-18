@@ -27,6 +27,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,12 +62,16 @@ public class BlazeModuleDependencies implements ModuleDependencies {
   @Override
   public List<String> getResourcePackageNames(boolean includeExternalLibraries) {
     // TODO(b/304821496): Add an integration test to test it similar to BuildDependenciesTest
+    // TODO(b/307604153): Update AndroidExternalLibraryManager to read package name from multiple
+    // locations
     return ImmutableList.<String>builder()
         .addAll(
             BlazeModuleSystem.getInstance(module)
                 .getAndroidLibraryDependencies(DependencyScopeType.MAIN)
                 .stream()
                 .map(ExternalAndroidLibrary::getPackageName)
+                .filter(Objects::nonNull)
+                .filter(Predicate.not(String::isEmpty))
                 .collect(toImmutableList()))
         .addAll(
             BlazeLightResourceClassService.getInstance(module.getProject())

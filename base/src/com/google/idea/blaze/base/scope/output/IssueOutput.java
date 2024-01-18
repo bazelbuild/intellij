@@ -109,7 +109,7 @@ public class IssueOutput implements Output {
           file, line, column, navigatable, consoleHyperlinkRange, category, message);
     }
 
-    public void submit(Context context) {
+    public void submit(Context<?> context) {
       context.output(build());
       if (category == Category.ERROR) {
         context.setHasError();

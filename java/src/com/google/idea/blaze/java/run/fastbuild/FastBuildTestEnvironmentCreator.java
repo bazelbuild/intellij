@@ -66,7 +66,11 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
   abstract String getTestRunner();
 
   abstract File getJavaBinFromLauncher(
-      Project project, Label label, @Nullable Label javaLauncher, boolean swigdeps);
+      Project project,
+      Label label,
+      @Nullable Label javaLauncher,
+      boolean swigdeps,
+      String runfilesDir);
 
   GeneralCommandLine createCommandLine(
       Project project,
@@ -95,7 +99,11 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
 
     commandBuilder.setJavaBinary(
         getJavaBinFromLauncher(
-            project, target, getLauncher(fastBuildInfo).orElse(null), getSwigdeps(fastBuildInfo)));
+            project,
+            target,
+            getLauncher(fastBuildInfo).orElse(null),
+            getSwigdeps(fastBuildInfo),
+            runfilesDir.toString()));
 
     fastBuildInfo.classpath().forEach(commandBuilder::addClasspathElement);
 

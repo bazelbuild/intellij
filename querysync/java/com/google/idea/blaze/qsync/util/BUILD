@@ -10,6 +10,7 @@ java_binary(
     deps = [
         ":cli_context",
         "//querysync/java/com/google/idea/blaze/qsync",
+        "//querysync/java/com/google/idea/blaze/qsync/java",
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//shared",
         "@com_google_guava_guava//jar",
@@ -33,5 +34,19 @@ java_library(
     srcs = ["CliContext.java"],
     deps = [
         "//shared",
+    ],
+)
+
+java_binary(
+    name = "get_jar_roots",
+    srcs = ["GetJarRoots.java"],
+    main_class = "com.google.idea.blaze.qsync.util.GetJarRoots",
+    visibility = ["//querysync:__pkg__"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync",
+        "//querysync/java/com/google/idea/blaze/qsync/java",
+        "//querysync/java/com/google/idea/blaze/qsync/project",
+        "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
+        "@com_google_guava_guava//jar",
     ],
 )

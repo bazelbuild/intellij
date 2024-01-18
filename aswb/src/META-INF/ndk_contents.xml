@@ -20,6 +20,10 @@
     <SyncListener implementation="com.google.idea.blaze.android.cppimpl.BlazeNdkSupportEnabler"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.google.idea.blaze.qsync">
+    <BlazeProjectListenerProvider implementation="com.google.idea.blaze.android.cppimpl.BlazeNdkSupportEnabler" />
+  </extensions>
+
   <extensions defaultExtensionNs="cidr.debugger">
     <languageSupport language="" implementationClass="com.google.idea.blaze.android.cppimpl.debug.BlazeAndroidNativeDebuggerLanguageSupport"/>
   </extensions>

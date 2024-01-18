@@ -176,7 +176,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                     configuration,
                     ImmutableList.of(),
                     ExecutorType.DEBUG,
-                    /*kotlinxCoroutinesJavaAgent=*/ null)
+                    /* kotlinxCoroutinesJavaAgent= */ null)
                 .build()
                 .toList())
         .isEqualTo(
@@ -185,11 +185,37 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                 "command",
                 BlazeFlags.getToolTagFlag(),
                 "--java_debug",
-                "--test_arg=--wrapper_script_flag=--debug=5005",
+                "--test_arg=--wrapper_script_flag=--debug=127.0.0.1:5005",
                 "--",
                 "//label:rule"));
   }
 
+  @Test
+  public void debugFlagShouldBeIncludedForJavaTestSuite() {
+      configuration.setTargetInfo(
+              TargetInfo.builder(Label.create("//label:java_test_suite_rule"), "java_test_suite").build());
+      BlazeCommandRunConfigurationCommonState handlerState =
+              (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
+      handlerState.getCommandState().setCommand(BlazeCommandName.fromString("test"));
+      assertThat(
+          BlazeJavaRunProfileState.getBlazeCommandBuilder(
+              project,
+              configuration,
+              ImmutableList.of(),
+              ExecutorType.DEBUG,
+              /*kotlinxCoroutinesJavaAgent=*/ null)
+              .build()
+              .toList())
+          .isEqualTo(
+              ImmutableList.of(
+              "/usr/bin/blaze",
+              "test",
+              BlazeFlags.getToolTagFlag(),
+              "--java_debug",
+              "--test_arg=--wrapper_script_flag=--debug=127.0.0.1:5005",
+              "--",
+              "//label:java_test_suite_rule"));
+  }
   @Test
   public void debugFlagShouldBeIncludedForJavaBinary() {
     configuration.setTargetInfo(
@@ -203,7 +229,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                     configuration,
                     ImmutableList.of(),
                     ExecutorType.DEBUG,
-                    /*kotlinxCoroutinesJavaAgent=*/ null)
+                    /* kotlinxCoroutinesJavaAgent= */ null)
                 .build()
                 .toList())
         .isEqualTo(
@@ -213,7 +239,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                 BlazeFlags.getToolTagFlag(),
                 "--",
                 "//label:java_binary_rule",
-                "--wrapper_script_flag=--debug=5005"));
+                "--wrapper_script_flag=--debug=127.0.0.1:5005"));
   }
 
   @Test
@@ -282,11 +308,10 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
       return ProjectViewSet.builder().build();
     }
 
-    @Nullable
     @Override
     public ProjectViewSet reloadProjectView(
         BlazeContext context, WorkspacePathResolver workspacePathResolver) {
-      return ProjectViewSet.builder().build();
+      return ProjectViewSet.EMPTY;
     }
   }
 

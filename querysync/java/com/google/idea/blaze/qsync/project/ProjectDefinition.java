@@ -44,13 +44,6 @@ public abstract class ProjectDefinition {
           /* languageClasses= */ ImmutableSet.of(),
           /* testSources= */ ImmutableSet.of());
 
-  /** A language class that the query sync supports/needs to care about. */
-  public enum LanguageClass {
-    JAVA,
-    KOTLIN,
-    CC
-  }
-
   /**
    * Project includes, also know as root directories. Taken from the users {@code .blazeproject}
    * file. Paths are relative to the workspace root.
@@ -64,7 +57,7 @@ public abstract class ProjectDefinition {
    */
   public abstract ImmutableSet<Path> projectExcludes();
 
-  public abstract ImmutableSet<LanguageClass> languageClasses();
+  public abstract ImmutableSet<QuerySyncLanguage> languageClasses();
 
   /**
    * Test sources. Taken from the user's {@code .blazeproject} file. Paths are relative to the
@@ -75,7 +68,7 @@ public abstract class ProjectDefinition {
   public static ProjectDefinition create(
       ImmutableSet<Path> includes,
       ImmutableSet<Path> excludes,
-      ImmutableSet<LanguageClass> languageClasses,
+      ImmutableSet<QuerySyncLanguage> languageClasses,
       ImmutableSet<String> testSources) {
     return new AutoValue_ProjectDefinition(includes, excludes, languageClasses, testSources);
   }
@@ -105,7 +98,8 @@ public abstract class ProjectDefinition {
    *
    * <p>Emits warnings via context if any issues are found with the path.
    */
-  private static boolean isValidPathForQuery(Context context, Path candidate) throws IOException {
+  private static boolean isValidPathForQuery(Context<?> context, Path candidate)
+      throws IOException {
     if (Files.exists(candidate.resolve("BUILD"))) {
       return true;
     }
@@ -154,6 +148,10 @@ public abstract class ProjectDefinition {
     return getIncludingContentRoot(workspacePath).isPresent();
   }
 
+  public boolean isExcluded(Path workspacePath) {
+    return projectExcludes().stream().anyMatch(workspacePath::startsWith);
+  }
+
   /**
    * Returns the content root containing a workspace-relative path
    *
@@ -170,7 +168,7 @@ public abstract class ProjectDefinition {
       return contentRoot;
     }
 
-    if (projectExcludes().stream().anyMatch(workspacePath::startsWith)) {
+    if (isExcluded(workspacePath)) {
       // Path is excluded
       return Optional.empty();
     }

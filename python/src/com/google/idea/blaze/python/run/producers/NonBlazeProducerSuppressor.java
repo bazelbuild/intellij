@@ -24,7 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
-public class NonBlazeProducerSuppressor implements StartupActivity {
+public class NonBlazeProducerSuppressor implements StartupActivity.DumbAware {
 
   // PyTestsConfigurationProducer has internal visibility. We need to reference it to suppress it.
   @SuppressWarnings("KotlinInternal")

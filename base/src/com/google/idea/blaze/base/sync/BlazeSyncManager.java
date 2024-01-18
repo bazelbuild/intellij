@@ -41,7 +41,6 @@ import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
@@ -83,23 +82,9 @@ public class BlazeSyncManager {
     return project.getService(BlazeSyncManager.class);
   }
 
-  public static void printAndLogError(String errorMessage, Context context) {
+  public static void printAndLogError(String errorMessage, Context<?> context) {
     context.output(PrintOutput.error(errorMessage));
     logger.error(errorMessage);
-  }
-
-  private boolean checkProjectType(BlazeContext context) {
-    BlazeImportSettings settings =
-        BlazeImportSettingsManager.getInstance(project).getImportSettings();
-    if (settings.getProjectType() != ProjectType.ASPECT_SYNC) {
-      context.output(
-          PrintOutput.error(
-              "The project uses a new project structure not compatible with this version of Android"
-                  + " Studio. Learn more at go/querysync"));
-      context.setHasError();
-      return false;
-    }
-    return true;
   }
 
   /** Requests a project sync with Blaze. */
@@ -138,11 +123,6 @@ public class BlazeSyncManager {
                                                 project,
                                                 BlazeUserSettings.getInstance()
                                                     .getShowProblemsViewOnSync()));
-                                    // we do this here rather than earlier so we can show a
-                                    // user-visible message if there's a problem.
-                                    if (!checkProjectType(context)) {
-                                      return;
-                                    }
                                     if (!runInitialDirectoryOnlySync(syncParams)) {
                                       executeTask(project, syncParams, context);
                                       return;

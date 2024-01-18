@@ -54,6 +54,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.project.Project;
 import java.util.Collections;
 import java.util.List;
@@ -243,9 +244,13 @@ final class ProjectStateSyncTask {
               ? vcsWorkspacePathResolver
               : new WorkspacePathResolverImpl(workspaceRoot);
 
-      ProjectViewSet projectViewSet =
-          ProjectViewManager.getInstance(project).reloadProjectView(context, workspacePathResolver);
-      if (projectViewSet == null) {
+      ProjectViewSet projectViewSet;
+      try {
+        projectViewSet =
+            ProjectViewManager.getInstance(project)
+                .reloadProjectView(context, workspacePathResolver);
+      } catch (BuildException e) {
+        context.handleException("Failed to load project view", e);
         return null;
       }
 

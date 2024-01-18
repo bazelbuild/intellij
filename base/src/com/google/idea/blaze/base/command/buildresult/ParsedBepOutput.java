@@ -38,7 +38,6 @@ import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.Out
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -411,7 +410,6 @@ public final class ParsedBepOutput {
   /** Returns a copy of a {@link NamedSetOfFiles} with interned string references. */
   private static NamedSetOfFiles internNamedSet(
       NamedSetOfFiles namedSet, Interner<String> interner) {
-    final boolean isQuerySyncEnabled = QuerySync.isEnabled();
     return namedSet.toBuilder()
         .clearFiles()
         .addAllFiles(
@@ -427,11 +425,6 @@ public final class ParsedBepOutput {
                                   file.getPathPrefixList().stream()
                                       .map(interner::intern)
                                       .collect(Collectors.toUnmodifiableList()));
-                      if (!isQuerySyncEnabled) {
-                        // The digest is not used when parsing output artifacts in the non-query
-                        // sync mode.
-                        builder.setDigest("");
-                      }
                       return builder.build();
                     })
                 .collect(Collectors.toUnmodifiableList()))

@@ -39,12 +39,34 @@ final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmen
 
   @Override
   File getJavaBinFromLauncher(
-      Project project, Label label, @Nullable Label javaLauncher, boolean swigdeps) {
+      Project project,
+      Label label,
+      @Nullable Label javaLauncher,
+      boolean swigdeps,
+      String runfilesPath) {
     if (javaLauncher == null) {
-      return STANDARD_JAVA_BINARY;
+      return getStandardJavaBinary(runfilesPath);
     } else {
       return new File(getTestBinary(label) + "_nativedeps");
     }
+  }
+
+  /**
+   * Look for the directory containing Bazel local jdk and return the java binary.
+   *
+   * <p>Bazel adds the Java launcher to the runfiles path when building a Java test target. If
+   * `bzlmod` is enabled, the directory name is formatted as
+   * 'rules_java~{RULES_JAVA_VERSION}~toolchains~local_jdk' otherwise it is `local_jdk`.
+   */
+  private static File getStandardJavaBinary(String runfilesPath) {
+    for (File file :
+        new File(runfilesPath)
+            .listFiles(fn -> fn.getName().matches("rules_java~.*~toolchains~local_jdk"))) {
+      if (file.isDirectory()) {
+        return file.toPath().resolve("bin/java").toFile();
+      }
+    }
+    return STANDARD_JAVA_BINARY;
   }
 
   @Override

@@ -52,6 +52,24 @@ public class ProjectViewLabelReferenceTest extends ProjectViewIntegrationTestCas
   }
 
   @Test
+  public void testFileReferenceTryImport() {
+    PsiFile referencedFile =
+        workspace.createPsiFile(
+            new WorkspacePath("ijwb.bazelproject"),
+            "directories:",
+            "  java/com/google/foo",
+            "targets:",
+            "  //java/com/google/foo/...");
+    PsiFile file =
+        workspace.createPsiFile(new WorkspacePath(".bazelproject"), "try_import ijwb.bazelproject");
+
+    ProjectViewPsiSectionItem importItem =
+        PsiUtils.findFirstChildOfClassRecursive(file, ProjectViewPsiSectionItem.class);
+    assertThat(importItem).isNotNull();
+    assertThat(importItem.getReference().resolve()).isEqualTo(referencedFile);
+  }
+
+  @Test
   public void testDirectoryReference() {
     PsiDirectory directory = workspace.createPsiDirectory(new WorkspacePath("foo/bar"));
     PsiFile projectView =

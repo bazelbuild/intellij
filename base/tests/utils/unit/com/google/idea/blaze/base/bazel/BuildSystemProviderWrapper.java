@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
+import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
@@ -271,6 +272,12 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
 
     @Override
     public BuildInvoker getBuildInvoker(Project project, BlazeContext context) {
+      return new BuildInvokerWrapper(inner.getBuildInvoker(project, context));
+    }
+
+    @Override
+    public BuildInvoker getBuildInvoker(
+        Project project, BlazeContext context, BlazeCommandName command) {
       return new BuildInvokerWrapper(inner.getBuildInvoker(project, context));
     }
 

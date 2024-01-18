@@ -46,12 +46,17 @@ public class WorkspaceRoot implements ProtoWrapper<String> {
   /**
    * Tries to load the import settings for the given project and get the workspace root directory.
    * <br>
-   * Unlike {@link #fromProject}, it will silently return null if this is not a blaze project.
+   * Unlike {@link #fromProject}, it will silently return null if this is not a blaze project of if
+   * the project is not properly initialized (eg. in tests).
    */
   @Nullable
   public static WorkspaceRoot fromProjectSafe(Project project) {
-    BlazeImportSettings importSettings =
-        BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    BlazeImportSettingsManager manager = BlazeImportSettingsManager.getInstance(project);
+    if (manager == null) {
+      return null;
+    }
+
+    BlazeImportSettings importSettings = manager.getImportSettings();
     return importSettings != null ? fromImportSettings(importSettings) : null;
   }
 

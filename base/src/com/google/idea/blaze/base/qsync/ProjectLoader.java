@@ -31,9 +31,9 @@ import com.google.idea.blaze.base.projectview.section.Glob;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTrackerImpl;
+import com.google.idea.blaze.base.qsync.cc.CcProjectProtoTransform;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
@@ -43,17 +43,19 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
-import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
-import com.google.idea.blaze.qsync.PackageStatementParser;
-import com.google.idea.blaze.qsync.ParallelPackageReader;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.VcsStateDiffer;
+import com.google.idea.blaze.qsync.java.PackageStatementParser;
+import com.google.idea.blaze.qsync.java.ParallelPackageReader;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.intellij.openapi.project.Project;
-import java.io.IOException;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -68,27 +70,20 @@ import org.jetbrains.annotations.Nullable;
 public class ProjectLoader {
 
   private final ListeningExecutorService executor;
+  private final SimpleModificationTracker projectModificationTracker;
   protected final Project project;
 
   public ProjectLoader(ListeningExecutorService executor, Project project) {
     this.executor = executor;
     this.project = project;
+    this.projectModificationTracker = new SimpleModificationTracker();
   }
 
   @Nullable
-  public QuerySyncProject loadProject(BlazeContext context) throws IOException {
+  public QuerySyncProject loadProject(BlazeContext context) throws BuildException {
     BlazeImportSettings importSettings =
         Preconditions.checkNotNull(
             BlazeImportSettingsManager.getInstance(project).getImportSettings());
-    if (importSettings.getProjectType() != ProjectType.QUERY_SYNC) {
-      context.output(
-          PrintOutput.error(
-              "The project uses a legacy project structure not compatible with this version of"
-                  + " Android Studio. Please reimport into a newly created project. Learn more at"
-                  + " go/querysync"));
-      context.setHasError();
-      return null;
-    }
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
     // TODO we may need to get the WorkspacePathResolver from the VcsHandler, as the old sync
@@ -100,7 +95,7 @@ public class ProjectLoader {
 
     ProjectViewManager projectViewManager = ProjectViewManager.getInstance(project);
     ProjectViewSet projectViewSet =
-        checkNotNull(projectViewManager.reloadProjectView(context, workspacePathResolver));
+        projectViewManager.reloadProjectView(context, workspacePathResolver);
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
             .add(projectViewSet)
@@ -120,7 +115,7 @@ public class ProjectLoader {
         ProjectDefinition.create(
             importRoots.rootPaths(),
             importRoots.excludePaths(),
-            LanguageClasses.translateFrom(workspaceLanguageSettings.getActiveLanguages()),
+            LanguageClasses.toQuerySync(workspaceLanguageSettings.getActiveLanguages()),
             testSourceGlobs);
 
     Path snapshotFilePath = getSnapshotFilePath(importSettings);
@@ -129,12 +124,14 @@ public class ProjectLoader {
     DependencyBuilder dependencyBuilder =
         createDependencyBuilder(workspaceRoot, latestProjectDef, buildSystem, handledRules);
     RenderJarBuilder renderJarBuilder = createRenderJarBuilder(buildSystem);
+    AppInspectorBuilder appInspectorBuilder = createAppInspectorBuilder(buildSystem);
 
     Path ideProjectBasePath = Paths.get(checkNotNull(project.getBasePath()));
     ProjectPath.Resolver projectPathResolver =
         ProjectPath.Resolver.create(workspaceRoot.path(), ideProjectBasePath);
 
     BlazeProject graph = new BlazeProject();
+    graph.addListener((c, i) -> projectModificationTracker.incModificationCount());
     ArtifactFetcher<OutputArtifact> artifactFetcher = createArtifactFetcher();
     ArtifactTrackerImpl artifactTracker =
         new ArtifactTrackerImpl(
@@ -148,6 +145,8 @@ public class ProjectLoader {
         new DependencyTrackerImpl(project, graph, dependencyBuilder, artifactTracker);
     RenderJarTracker renderJarTracker =
         new RenderJarTrackerImpl(graph, renderJarBuilder, artifactTracker);
+    AppInspectorTracker appInspectorTracker =
+        new AppInspectorTrackerImpl(appInspectorBuilder, artifactTracker);
     Optional<BlazeVcsHandler> vcsHandler =
         Optional.ofNullable(BlazeVcsHandlerProvider.vcsHandlerForProject(project));
     ProjectRefresher projectRefresher =
@@ -161,8 +160,10 @@ public class ProjectLoader {
             createWorkspaceRelativePackageReader(),
             workspaceRoot.path(),
             handledRules,
-            QuerySync.CC_SUPPORT_ENABLED::getValue,
-            artifactTracker::updateProjectProto);
+            ProjectProtoTransform.compose(
+                artifactTracker::updateProjectProto, new CcProjectProtoTransform(artifactTracker)),
+            QuerySync.USE_NEW_RES_DIR_LOGIC::getValue,
+            () -> !QuerySync.EXTRACT_RES_PACKAGES_AT_BUILD_TIME.getValue());
     QueryRunner queryRunner = createQueryRunner(buildSystem);
     ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner, vcsHandler);
     QuerySyncSourceToTargetMap sourceToTargetMap =
@@ -176,8 +177,11 @@ public class ProjectLoader {
             importSettings,
             workspaceRoot,
             artifactTracker,
+            artifactTracker,
+            artifactTracker,
             dependencyTracker,
             renderJarTracker,
+            appInspectorTracker,
             projectQuerier,
             blazeProjectSnapshotBuilder,
             latestProjectDef,
@@ -221,6 +225,10 @@ public class ProjectLoader {
     return new BazelRenderJarBuilder(project, buildSystem);
   }
 
+  protected AppInspectorBuilder createAppInspectorBuilder(BuildSystem buildSystem) {
+    return new BazelAppInspectorBuilder(project, buildSystem);
+  }
+
   private Path getSnapshotFilePath(BlazeImportSettings importSettings) {
     return BlazeDataStorage.getProjectDataDir(importSettings).toPath().resolve("qsyncdata.gz");
   }
@@ -241,5 +249,9 @@ public class ProjectLoader {
       defaultRules.addAll(ep.handledRuleKinds(project));
     }
     return defaultRules.build();
+  }
+
+  ModificationTracker getProjectModificationTracker() {
+    return projectModificationTracker;
   }
 }
