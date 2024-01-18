@@ -26,7 +26,7 @@ INDIRECT_IJ_PRODUCTS = {
     # -oss-stable and -oss-beta respectively.
     "intellij-oss-oldest-stable": "intellij-2023.2",
     "intellij-oss-latest-stable": "intellij-2023.3",
-    "intellij-oss-under-dev": "intellij-2023.3",
+    "intellij-oss-under-dev": "intellij-2024.1",
     "intellij-ue-oss-oldest-stable": "intellij-ue-2023.2",
     "intellij-ue-oss-latest-stable": "intellij-ue-2023.3",
     "intellij-ue-oss-under-dev": "intellij-ue-2023.3",
@@ -104,6 +104,23 @@ def _check_channel_map():
         fail("Unexpected values in INDIRECT_PRODUCT_CHANNELS: %s" % unexpected)
 
 DIRECT_IJ_PRODUCTS = {
+    "clion-2024.1": struct(
+        ide = "clion",
+        directory = "clion_2024_1",
+    ),
+    "intellij-ue-2024.1": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2024_1",
+    ),
+    "intellij-2024.1": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2024_1",
+    ),
+    "intellij-2024.1-mac": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2024_1",
+    ),
+
     "intellij-2021.3": struct(
         ide = "intellij",
         directory = "intellij_ce_2021_3",
@@ -287,7 +304,6 @@ DIRECT_IJ_PRODUCTS = {
         ide = "clion",
         directory = "clion_2023_3",
     ),
-
 }
 
 def select_for_plugin_api(params):
