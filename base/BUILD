@@ -458,6 +458,7 @@ java_library(
         "//third_party/auto_value",
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_java_proto",
         "@com_google_guava_guava//jar",
+        "@error_prone_annotations",
         "@junit//jar",
     ],
 )
