@@ -815,6 +815,7 @@ java_library(
         "intellij-ue-2022.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2023.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2023.2": ["@jsr305_annotations//jar"],
+        "intellij-ue-2023.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2024.1": ["@jsr305_annotations//jar"],
         "android-studio-2022.2": ["@jsr305_annotations//jar"],
         "android-studio-2022.3": ["@jsr305_annotations//jar"],
