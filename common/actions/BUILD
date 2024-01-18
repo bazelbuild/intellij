@@ -13,6 +13,6 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
-        "@error_prone_annotations//jar",
+        "@error_prone_annotations",
     ],
 )
