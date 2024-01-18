@@ -369,10 +369,25 @@ config_setting(
 )
 
 config_setting(
+    name = "android-studio-2023.3",
+    values = {
+        "define": "ij_product=android-studio-2023.3",
+    },
+)
+
+config_setting(
     name = "android-studio-2023.2-mac",
     values = {
         "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-2023.2",
+    },
+)
+
+config_setting(
+    name = "android-studio-2023.3-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=android-studio-2023.3",
     },
 )
 
@@ -642,6 +657,7 @@ java_library(
         "android-studio-2022.3": ["@jsr305_annotations//jar"],
         "android-studio-2023.1": ["@jsr305_annotations//jar"],
         "android-studio-2023.2": ["@jsr305_annotations//jar"],
+        "android-studio-2023.3": ["@jsr305_annotations//jar"],
         # We default to intellij-latest when no plugin api is selected.
         "default": [":bundled_jsr305"],
     }),

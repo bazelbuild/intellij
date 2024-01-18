@@ -1,11 +1,11 @@
 # Description: Indirections for SDK changes to the underlying platform library.
 
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 load(
     "//:build-visibility.bzl",
     "SDK_COMPAT_VISIBILITY",
     "create_sdkcompat_visibility_package",
 )
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 
 licenses(["notice"])
 
@@ -19,6 +19,7 @@ java_library(
         "android-studio-2022.3": ["//sdkcompat/v223"],
         "android-studio-2023.1": ["//sdkcompat/v231"],
         "android-studio-2023.2": ["//sdkcompat/v232"],
+        "android-studio-2023.3": ["//sdkcompat/v233"],
         "intellij-2021.3": ["//sdkcompat/v213"],
         "intellij-ue-2021.3": ["//sdkcompat/v213"],
         "intellij-2022.1": ["//sdkcompat/v221"],

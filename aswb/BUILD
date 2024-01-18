@@ -143,6 +143,9 @@ java_library(
         "android-studio-2023.2": glob(["sdkcompat/as232/**/*.java"] + [
             "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
         ]),
+        "android-studio-2023.3": glob(["sdkcompat/as233/**/*.java"] + [
+            "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
+        ]),
     }),
     resources = glob(["resources/**/*"]),
     visibility = combine_visibilities(

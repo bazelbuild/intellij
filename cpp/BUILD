@@ -30,6 +30,7 @@ java_library(
         "android-studio-2022.3": glob(["sdkcompat/v223/**/*.java"]),
         "android-studio-2023.1": glob(["sdkcompat/v231/**/*.java"]),
         "android-studio-2023.2": glob(["sdkcompat/v232/**/*.java"]),
+        "android-studio-2023.3": glob(["sdkcompat/v233/**/*.java"]),
         "clion-2022.3": glob(["sdkcompat/v223/**/*.java"]),
         "intellij-ue-2022.3": glob(["sdkcompat/v223/**/*.java"]),
     }),
