@@ -83,6 +83,18 @@ http_archive(
     url = IC_233_URL,
 )
 
+# The plugin api for intellij_ce_2024_1. This is required to build IJwB and run integration tests.
+IC_241_SHA = "b1deacab7964751e135b462b65c1348e98640f0a6094363643e2eacf874b5812"
+
+IC_241_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/241.8102.112-EAP-SNAPSHOT/ideaIC-241.8102.112-EAP-SNAPSHOT.zip"
+
+http_archive(
+    name = "intellij_ce_2024_1",
+    build_file = "@//intellij_platform_sdk:BUILD.idea241",
+    sha256 = IC_241_SHA,
+    url = IC_241_URL,
+)
+
 # The plugin api for IntelliJ UE 2021.2. This is required to run UE-specific
 # integration tests.
 http_archive(
@@ -157,6 +169,17 @@ http_archive(
     build_file = "@//intellij_platform_sdk:BUILD.ue233",
     sha256 = IU_233_SHA,
     url = IU_233_URL,
+)
+
+IU_241_SHA = "a89ca40374d7495e1b31df14f14fd0479b4948800b6a3cb082bc392fddf04ae3"
+
+IU_241_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/241.8102.112-EAP-SNAPSHOT/ideaIU-241.8102.112-EAP-SNAPSHOT.zip"
+
+http_archive(
+    name = "intellij_ue_2024_1",
+    build_file = "@//intellij_platform_sdk:BUILD.ue241",
+    sha256 = IU_241_SHA,
+    url = IU_241_URL,
 )
 
 # The plugin api for clion_2021_2. This is required to build CLwB, and run integration tests.
@@ -234,6 +257,17 @@ http_archive(
     url = CLION_233_URL,
 )
 
+CLION_241_SHA = "099e05aa25233814f45fc14a0d3831d23dd23f6ec215c39b51ba364c5051446d"
+
+CLION_241_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/241.8102.118-EAP-SNAPSHOT/clion-241.8102.118-EAP-SNAPSHOT.zip"
+
+http_archive(
+    name = "clion_2024_1",
+    build_file = "@//intellij_platform_sdk:BUILD.clion241",
+    sha256 = CLION_241_SHA,
+    url = CLION_241_URL,
+)
+
 DEVKIT_BUILD_FILE = """
 java_import(
     name = "devkit",
@@ -251,6 +285,17 @@ http_archive(
     build_file_content = DEVKIT_BUILD_FILE,
     sha256 = DEVKIT_233_SHA,
     url = DEVKIT_233_URL,
+)
+
+DEVKIT_241_SHA = "afd94744e647117eae959a41c7410269259ab5d0411a64148759b046093b0139"
+
+DEVKIT_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/241.8102.119/DevKit-241.8102.119.zip"
+
+http_archive(
+    name = "devkit_2024_1",
+    build_file_content = DEVKIT_BUILD_FILE,
+    sha256 = DEVKIT_241_SHA,
+    url = DEVKIT_241_URL,
 )
 
 _PYTHON_CE_BUILD_FILE = """
@@ -360,6 +405,17 @@ http_archive(
     url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/232.9921.47/PythonCore-232.9921.47.zip",
 )
 
+PYTHON_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/241.8102.112/PythonCore-241.8102.112.zip"
+
+PYTHON_PLUGIN_241_SHA = "cc20c45dec7defe17346b5da06cf508c19b5f2517fc5187cde4a2ebb97bc2712"
+
+http_archive(
+    name = "python_2024_1",
+    build_file_content = _PYTHON_CE_BUILD_FILE,
+    sha256 = PYTHON_PLUGIN_241_SHA,
+    url = PYTHON_PLUGIN_241_URL,
+)
+
 _GO_BUILD_FILE = """
 java_import(
     name = "go",
@@ -447,6 +503,17 @@ http_archive(
     url = GO_PLUGIN_233_URL,
 )
 
+GO_PLUGIN_241_SHA = "fd759b4947622f931ebefdd6a20d9dc611196ba44203827fd8e80f3cfd707bff"
+
+GO_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/241.8102.112/org.jetbrains.plugins.go-241.8102.112.zip"
+
+http_archive(
+    name = "go_2024_1",
+    build_file_content = _GO_BUILD_FILE_223,
+    sha256 = GO_PLUGIN_241_SHA,
+    url = GO_PLUGIN_241_URL,
+)
+
 _SCALA_BUILD_FILE = """
 java_import(
     name = "scala",
@@ -524,6 +591,17 @@ http_archive(
     build_file_content = _SCALA_BUILD_FILE,
     sha256 = SCALA_PLUGIN_233_SHA,
     url = SCALA_PLUGIN_233_URL,
+)
+
+SCALA_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.1.1/org.intellij.scala-2024.1.1.zip"
+
+SCALA_PLUGIN_241_SHA = "412f3be2ec29a9603eb8b6015d0aecff26cb477c80da312e2c66729b9ec68469"
+
+http_archive(
+    name = "scala_2024_1",
+    build_file_content = _SCALA_BUILD_FILE,
+    sha256 = SCALA_PLUGIN_241_SHA,
+    url = SCALA_PLUGIN_241_URL,
 )
 
 # The plugin api for android_studio_2022_2 android_studio. This is required to build ASwB and run integration tests
