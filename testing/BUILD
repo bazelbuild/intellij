@@ -148,10 +148,12 @@ java_library(
         "intellij-2024.1": glob([
             "testcompat/v241/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v241/com/google/idea/testing/**/*.java",
+            "testcompat/v241/com/google/idea/java/**/*.java",
         ]),
         "intellij-ue-2024.1": glob([
             "testcompat/v241/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v241/com/google/idea/testing/**/*.java",
+            "testcompat/v241/com/google/idea/java/**/*.java",
         ]),
         "default": [],
     }),
