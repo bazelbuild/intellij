@@ -573,7 +573,7 @@ http_archive(
 
 SCALA_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.3.17/org.intellij.scala-2023.3.17.zip"
 
-SCALA_PLUGIN_233_SHA = "412f3be2ec29a9603eb8b6015d0aecff26cb477c80da312e2c66729b9ec68469"
+SCALA_PLUGIN_233_SHA = "019e9b6dc4f6f477a5f0d7dedc80dc1b5724bc1ba653069c353beee5275a7aca"
 
 http_archive(
     name = "scala_2023_3",
