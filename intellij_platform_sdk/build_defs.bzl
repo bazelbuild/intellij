@@ -120,6 +120,7 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij",
         directory = "intellij_ce_2024_1",
     ),
+
     "intellij-2021.3": struct(
         ide = "intellij",
         directory = "intellij_ce_2021_3",
