@@ -155,29 +155,14 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
             @Override
             protected void updateToolTipText() {
               Project project = editor.getProject();
-              if (project != null) {
-                HelpTooltip.dispose(this);
-                new HelpTooltip()
-                    .setTitle("Build dependencies")
-                    .setShortcut(
-                        ActionManager.getInstance().getKeyboardShortcut("Blaze.BuildDependencies"))
-                    .setDescription(
-                        "Builds the external dependencies needed for this file and "
-                            + " enables analysis")
-                    .setLink(
-                        "Settings...",
-                        new Runnable() {
-                          @Override
-                          public void run() {
-                            ShowSettingsUtil.getInstance()
-                                .showSettingsDialog(
-                                    project, QuerySyncConfigurableProvider.getConfigurableClass());
-                          }
-                        })
-                    .installOn(this);
+              if (project == null) {
+                return;
               }
+              HelpTooltip.dispose(this);
+              createPrimaryTooltip(project).installOn(this);
             }
           };
+
       button.setHorizontalTextPosition(SwingConstants.LEFT);
       button.setFont(
           new FontUIResource(
@@ -190,6 +175,40 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
       createGotItTooltip(button);
 
       return button;
+    }
+
+    private HelpTooltip createPrimaryTooltip(Project project) {
+      if (fileInEditorHasNoTargetsToBuild(project)) {
+        return new HelpTooltip()
+            .setTitle("Build dependencies")
+            .setDescription(
+                "This file is not owned by a project target with external dependencies.");
+      } else {
+        return new HelpTooltip()
+            .setTitle("Build dependencies")
+            .setShortcut(ActionManager.getInstance().getKeyboardShortcut("Blaze.BuildDependencies"))
+            .setDescription(
+                "Builds the external dependencies needed for this file and " + " enables analysis")
+            .setLink(
+                "Settings...",
+                () ->
+                    ShowSettingsUtil.getInstance()
+                        .showSettingsDialog(
+                            project, QuerySyncConfigurableProvider.getConfigurableClass()));
+      }
+    }
+
+    private boolean fileInEditorHasNoTargetsToBuild(Project project) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      VirtualFile vf = psiFile != null ? psiFile.getVirtualFile() : null;
+      QuerySyncManager querySyncManager = QuerySyncManager.getInstance(project);
+      if (vf != null
+          && querySyncManager.isProjectLoaded()
+          && !querySyncManager.operationInProgress()) {
+        TargetsToBuild toBuild = buildDepsHelper.getTargetsToEnableAnalysisFor(vf);
+        return toBuild.isEmpty();
+      }
+      return false;
     }
 
     private void createGotItTooltip(ActionButtonWithText button) {
