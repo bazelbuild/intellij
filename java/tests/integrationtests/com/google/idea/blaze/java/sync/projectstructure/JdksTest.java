@@ -35,8 +35,8 @@ import java.util.Comparator;
 import java.util.Optional;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.idea.sdkcompat.BaseSdkTestCompat.getNonJavaMockSdk;
-import static com.google.idea.sdkcompat.BaseSdkTestCompat.getUniqueMockJdk;
+import static com.google.idea.java.JavaSdkCompat.getNonJavaMockSdk;
+import static com.google.idea.java.JavaSdkCompat.getUniqueMockJdk;
 import static java.util.Arrays.stream;
 
 /** Integration tests for {@link Jdks}. */
