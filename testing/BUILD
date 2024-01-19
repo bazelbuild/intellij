@@ -100,34 +100,42 @@ java_library(
         "intellij-2022.3": glob([
             "testcompat/v223/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v223/com/google/idea/testing/**/*.java",
+            "testcompat/v223/com/google/idea/java/**/*.java",
         ]),
         "intellij-ue-2022.3": glob([
             "testcompat/v223/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v223/com/google/idea/testing/**/*.java",
+            "testcompat/v223/com/google/idea/java/**/*.java",
         ]),
         "intellij-2023.1": glob([
             "testcompat/v231/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v231/com/google/idea/testing/**/*.java",
+            "testcompat/v231/com/google/idea/java/**/*.java",
         ]),
         "intellij-ue-2023.1": glob([
             "testcompat/v231/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v231/com/google/idea/testing/**/*.java",
+            "testcompat/v231/com/google/idea/java/**/*.java",
         ]),
         "intellij-2023.2": glob([
             "testcompat/v232/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v232/com/google/idea/testing/**/*.java",
+            "testcompat/v232/com/google/idea/java/**/*.java",
         ]),
         "intellij-ue-2023.2": glob([
             "testcompat/v232/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v232/com/google/idea/testing/**/*.java",
+            "testcompat/v232/com/google/idea/java/**/*.java",
         ]),
         "intellij-2023.3": glob([
             "testcompat/v233/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v233/com/google/idea/testing/**/*.java",
+            "testcompat/v233/com/google/idea/java/**/*.java",
         ]),
         "intellij-ue-2023.3": glob([
             "testcompat/v233/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v233/com/google/idea/testing/**/*.java",
+            "testcompat/v233/com/google/idea/java/**/*.java",
         ]),
         "default": [],
     }),
