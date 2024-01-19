@@ -15,9 +15,6 @@
  */
 package com.google.idea.blaze.java.sync.projectstructure;
 
-import static com.google.common.truth.Truth.assertThat;
-import static java.util.Arrays.stream;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.java.sync.sdk.BlazeJdkProvider;
@@ -25,19 +22,21 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.MockSdk;
-import com.intellij.openapi.projectRoots.impl.UnknownSdkType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.util.containers.MultiMap;
-import java.io.File;
-import java.util.Comparator;
-import java.util.Optional;
-
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.io.File;
+import java.util.Comparator;
+import java.util.Optional;
+
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.sdkcompat.BaseSdkTestCompat.getNonJavaMockSdk;
+import static com.google.idea.sdkcompat.BaseSdkTestCompat.getUniqueMockJdk;
+import static java.util.Arrays.stream;
 
 /** Integration tests for {@link Jdks}. */
 @RunWith(JUnit4.class)
@@ -300,19 +299,4 @@ public class JdksTest extends BlazeIntegrationTestCase {
                 .orElse(null));
   }
 
-  private static Sdk getUniqueMockJdk(LanguageLevel languageLevel) {
-    MockSdk jdk = (MockSdk) IdeaTestUtil.getMockJdk(languageLevel.toJavaVersion());
-    jdk.setName(jdk.getName() + "." + jdk.hashCode());
-    jdk.setHomePath(jdk.getHomePath() + "." + jdk.hashCode());
-    return jdk;
-  }
-
-  private static Sdk getNonJavaMockSdk() {
-    return new MockSdk(
-        /* name= */ "",
-        /* homePath= */ "",
-        /* versionString= */ "",
-        /* roots= */ MultiMap.empty(),
-        UnknownSdkType.getInstance(""));
-  }
 }
