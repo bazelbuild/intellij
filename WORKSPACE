@@ -287,9 +287,9 @@ http_archive(
     url = DEVKIT_233_URL,
 )
 
-DEVKIT_241_SHA = "8293516dd76980ecbf9c12947bbbee60eadb1a4da990dd26b2f0aa333f5f382a"
+DEVKIT_241_SHA = "afd94744e647117eae959a41c7410269259ab5d0411a64148759b046093b0139"
 
-DEVKIT_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/241.8102.112/DevKit-241.8102.112.zip"
+DEVKIT_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/241.8102.119/DevKit-241.8102.119.zip"
 
 http_archive(
     name = "devkit_2024_1",
@@ -983,7 +983,7 @@ http_archive(
     sha256 = "987ce98f02eefbaf930d6e38ab16aa05737234d7afbab2d5c4ea7adbe50c28ed",
     strip_prefix = "abseil-cpp-20230802.1",
     urls = [
-        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.1.tar.gz",
+         "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.1.tar.gz",
     ],
 )
 

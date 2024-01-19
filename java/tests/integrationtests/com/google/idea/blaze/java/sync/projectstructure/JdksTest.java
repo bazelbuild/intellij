@@ -18,6 +18,7 @@ package com.google.idea.blaze.java.sync.projectstructure;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.java.sync.sdk.BlazeJdkProvider;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -115,8 +116,12 @@ public class JdksTest extends BlazeIntegrationTestCase {
     assertThat(chosenSdk).isEqualTo(jdk8);
   }
 
+  /** #api233 remove test */
   @Test
   public void testChooseDifferentSdkIfCurrentNotJdk() {
+    if (ApplicationInfo.getInstance().getBuild().getBaselineVersion() >= 241) {
+      return;
+    }
     Sdk currentSdk = getNonJavaMockSdk();
 
     setJdkTable(
