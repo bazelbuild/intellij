@@ -983,7 +983,7 @@ http_archive(
     sha256 = "987ce98f02eefbaf930d6e38ab16aa05737234d7afbab2d5c4ea7adbe50c28ed",
     strip_prefix = "abseil-cpp-20230802.1",
     urls = [
-         "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.1.tar.gz",
+        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.1.tar.gz",
     ],
 )
 
