@@ -136,8 +136,8 @@ def get_res_artifacts(resources):
 def build_file_artifact_location(ctx):
     """Creates an ArtifactLocation proto representing a location of a given BUILD file."""
     return to_artifact_location(
-        ctx.build_file_path,
-        ctx.build_file_path,
+        ctx.label.package + "/BUILD",
+        ctx.label.package + "/BUILD",
         True,
         is_external_artifact(ctx.label),
     )
