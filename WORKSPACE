@@ -276,20 +276,20 @@ java_import(
 )
 """
 
+DEVKIT_233_SHA = "c048e8a354e225ea650ac9180602a4ceebc08ced47340446d84fa11b8bc05faa"
+
+DEVKIT_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/233.13135.65/DevKit-233.13135.65.zip"
+
+http_archive(
+    name = "devkit_2023_3",
+    build_file_content = DEVKIT_BUILD_FILE,
+    sha256 = DEVKIT_233_SHA,
+    url = DEVKIT_233_URL,
+)
+
 DEVKIT_241_SHA = "8293516dd76980ecbf9c12947bbbee60eadb1a4da990dd26b2f0aa333f5f382a"
 
 DEVKIT_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/241.8102.112/DevKit-241.8102.112.zip"
-
-http_archive(
-    name = "devkit_2024_1",
-    build_file_content = DEVKIT_BUILD_FILE,
-    sha256 = DEVKIT_241_SHA,
-    url = DEVKIT_241_URL,
-)
-
-DEVKIT_241_SHA = "afd94744e647117eae959a41c7410269259ab5d0411a64148759b046093b0139"
-
-DEVKIT_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/241.8102.119/DevKit-241.8102.119.zip"
 
 http_archive(
     name = "devkit_2024_1",
