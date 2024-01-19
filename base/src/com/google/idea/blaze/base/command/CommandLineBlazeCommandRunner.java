@@ -96,7 +96,8 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
     try {
       return buildResultHelper.getTestResults(Optional.empty());
     } catch (GetArtifactsException e) {
-      IssueOutput.error("Failed to get build outputs: " + e.getMessage()).submit(context);
+      context.output(PrintOutput.log("Failed to get build outputs: " + e.getMessage()));
+      context.setHasError();
       return BlazeTestResults.NO_RESULTS;
     }
   }
