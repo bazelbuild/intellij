@@ -17,9 +17,13 @@ package com.google.idea.sdkcompat;
 
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.serviceContainer.ComponentManagerImpl;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -57,5 +61,21 @@ public final class BaseSdkTestCompat {
   /** #api222 */
   public static void replaceIdeEventQueueSafely() {
       UITestUtil.replaceIdeEventQueueSafely();
+  }
+
+
+  /** #api233  to inline */
+  public static Sdk getUniqueMockJdk(LanguageLevel languageLevel) {
+    var jdk = IdeaTestUtil.getMockJdk(languageLevel.toJavaVersion());
+    var modificator = jdk.getSdkModificator();
+    modificator.setHomePath(jdk.getHomePath() + "." + jdk.hashCode());
+    modificator.setName(jdk.getName() + "." + jdk.hashCode());
+    ApplicationManager.getApplication().runWriteAction(modificator::commitChanges);
+    return jdk;
+  }
+
+  /** #api233 to remove */
+  public static Sdk getNonJavaMockSdk() {
+    throw new RuntimeException("Not supported in 2024.1 or newer");
   }
 }
