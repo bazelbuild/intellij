@@ -26,16 +26,16 @@ INDIRECT_IJ_PRODUCTS = {
     # -oss-stable and -oss-beta respectively.
     "intellij-oss-oldest-stable": "intellij-2023.2",
     "intellij-oss-latest-stable": "intellij-2023.3",
-    "intellij-oss-under-dev": "intellij-2023.3",
+    "intellij-oss-under-dev": "intellij-2024.1",
     "intellij-ue-oss-oldest-stable": "intellij-ue-2023.2",
     "intellij-ue-oss-latest-stable": "intellij-ue-2023.3",
-    "intellij-ue-oss-under-dev": "intellij-ue-2023.3",
+    "intellij-ue-oss-under-dev": "intellij-ue-2024.1",
     "android-studio-oss-oldest-stable": "android-studio-2022.3",
     "android-studio-oss-latest-stable": "android-studio-2023.1",
     "android-studio-oss-under-dev": "android-studio-2023.1",
     "clion-oss-oldest-stable": "clion-2023.2",
     "clion-oss-latest-stable": "clion-2023.3",
-    "clion-oss-under-dev": "clion-2023.3",
+    "clion-oss-under-dev": "clion-2024.1",
     # Indirect ij_product mapping for Cloud Code Plugin OSS
     "intellij-cc-oldest-stable": "intellij-2022.3",
     "intellij-cc-latest-stable": "intellij-2022.3",
@@ -160,6 +160,14 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij",
         directory = "intellij_ce_2023_3",
     ),
+    "intellij-2024.1": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2024_1",
+    ),
+    "intellij-2024.1-mac": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2024_1",
+    ),
     "intellij-ue-2021.3": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2021_3",
@@ -215,6 +223,14 @@ DIRECT_IJ_PRODUCTS = {
     "intellij-ue-2023.3-mac": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2023_3",
+    ),
+    "intellij-ue-2024.1": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2024_1",
+    ),
+    "intellij-ue-2024.1-mac": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2024_1",
     ),
     "android-studio-2022.3": struct(
         ide = "android-studio",
@@ -286,6 +302,14 @@ DIRECT_IJ_PRODUCTS = {
     "clion-2023.3-mac": struct(
         ide = "clion",
         directory = "clion_2023_3",
+    ),
+    "clion-2024.1": struct(
+        ide = "clion",
+        directory = "clion_2024_1",
+    ),
+    "clion-2024.1-mac": struct(
+        ide = "clion",
+        directory = "clion_2024_1",
     ),
 
 }

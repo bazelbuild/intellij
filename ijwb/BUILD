@@ -68,6 +68,7 @@ java_library(
         "//java",
         "//proto:proto_deps",
         "//sdkcompat",
+        "@error_prone_annotations//jar",
     ],
 )
 

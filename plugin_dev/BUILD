@@ -30,6 +30,7 @@ java_library(
         "//proto:proto_deps",
         "//shared",
         "//third_party/devkit",
+        "@error_prone_annotations//jar",
     ],
 )
 
