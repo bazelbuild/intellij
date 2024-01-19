@@ -655,7 +655,7 @@ config_setting(
 config_setting(
     name = "clion-2023.3-mac",
     values = {
-        "cpu": "darwin_x86_64",  #todo how about m1?
+        "cpu": "darwin_x86_64", #todo how about m1?
         "define": "ij_product=clion-2023.3",
     },
 )

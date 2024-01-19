@@ -42,7 +42,7 @@ java_library(
     deps = [
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
-	"@error_prone_annotations//jar",
+	    "@error_prone_annotations//jar",
     ],
 )
 
