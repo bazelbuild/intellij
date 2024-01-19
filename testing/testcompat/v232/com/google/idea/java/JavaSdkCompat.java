@@ -13,57 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.sdkcompat;
+package com.google.idea.java;
 
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.Annotator;
-import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.MockSdk;
 import com.intellij.openapi.projectRoots.impl.UnknownSdkType;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiElement;
-import com.intellij.serviceContainer.ComponentManagerImpl;
-import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.testFramework.UITestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.ui.CoreIconManager;
-import com.intellij.ui.IconManager;
 import com.intellij.util.containers.MultiMap;
-
-import java.util.List;
 
 /**
  * Provides SDK compatibility shims for base plugin API classes, available to all IDEs during
  * test-time.
  */
-public final class BaseSdkTestCompat {
-  private BaseSdkTestCompat() {}
-
-  /** #api212: inline into test cases */
-  public static List<Annotation> testAnnotator(Annotator annotator, PsiElement... elements) {
-    return CodeInsightTestUtil.testAnnotator(annotator, elements);
-  }
-
-  /** #api212: inline into ServiceHelper */
-  public static void unregisterComponent(ComponentManager componentManager, Class<?> key) {
-    ((ComponentManagerImpl) componentManager).unregisterComponent(key);
-  }
-
-  /** #api213: inline into tests */
-  public static TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(
-      IdeaTestFixtureFactory factory, String projectName) {
-    return factory.createLightFixtureBuilder(projectName);
-  }
-
-  /** #api222 */
-  public static void replaceIdeEventQueueSafely() {
-      UITestUtil.replaceIdeEventQueueSafely();
-  }
-
+public final class JavaSdkCompat {
+  private JavaSdkCompat() {}
   /** #api233 to inline */
   public static Sdk getUniqueMockJdk(LanguageLevel languageLevel) {
     MockSdk jdk = (MockSdk) IdeaTestUtil.getMockJdk(languageLevel.toJavaVersion());
