@@ -18,10 +18,6 @@ package com.google.idea.sdkcompat;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.MockSdk;
-import com.intellij.openapi.projectRoots.impl.UnknownSdkType;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
@@ -30,10 +26,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.UITestUtil;
 import com.intellij.ui.IconManager;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.ui.icons.CoreIconManager;
-import com.intellij.util.containers.MultiMap;
-
 
 import javax.swing.*;
 import java.util.List;
@@ -64,32 +57,5 @@ public final class BaseSdkTestCompat {
   /** #api222 */
   public static void replaceIdeEventQueueSafely() {
       UITestUtil.replaceIdeEventQueueSafely();
-  }
-
-
-  /** #api233 to inline */
-  public static Sdk getUniqueMockJdk2(LanguageLevel languageLevel) {
-    MockSdk jdk = (MockSdk) IdeaTestUtil.getMockJdk(languageLevel.toJavaVersion());
-    jdk.setName(jdk.getName() + "." + jdk.hashCode());
-    jdk.setHomePath(jdk.getHomePath() + "." + jdk.hashCode());
-    return jdk;
-  }
-
-  /** #api233 to inline */
-  public static Sdk getUniqueMockJdk(LanguageLevel languageLevel) {
-    MockSdk jdk = (MockSdk) IdeaTestUtil.getMockJdk(languageLevel.toJavaVersion());
-    jdk.setName(jdk.getName() + "." + jdk.hashCode());
-    jdk.setHomePath(jdk.getHomePath() + "." + jdk.hashCode());
-    return jdk;
-  }
-
-  /** #api233 to remove */
-  public static Sdk getNonJavaMockSdk() {
-    return new MockSdk(
-            /* name= */ "",
-            /* homePath= */ "",
-            /* versionString= */ "",
-            /* roots= */ MultiMap.empty(),
-            UnknownSdkType.getInstance(""));
   }
 }

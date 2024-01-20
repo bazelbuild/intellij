@@ -25,6 +25,8 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.UITestUtil;
+import com.intellij.ui.CoreIconManager;
+import com.intellij.ui.IconManager;
 
 import java.util.List;
 
@@ -40,9 +42,9 @@ public final class BaseSdkTestCompat {
     return CodeInsightTestUtil.testAnnotator(annotator, elements);
   }
 
-  /** #api223: inline into ServiceHelper */
-  public static void unregisterComponent(ComponentManager componentManager, Class<?> componentKey) {
-    ((ComponentManagerImpl) componentManager).unregisterComponent(componentKey);
+  /** #api212: inline into ServiceHelper */
+  public static void unregisterComponent(ComponentManager componentManager, Class<?> key) {
+    ((ComponentManagerImpl) componentManager).unregisterComponent(key);
   }
 
   /** #api213: inline into tests */
@@ -55,5 +57,4 @@ public final class BaseSdkTestCompat {
   public static void replaceIdeEventQueueSafely() {
       UITestUtil.replaceIdeEventQueueSafely();
   }
-
 }
