@@ -256,9 +256,6 @@ public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
     public void makeRootsChange(@NotNull Runnable runnable, boolean b, boolean b1) {}
 
     @Override
-    public void markRootsForRefresh() {}
-
-    @Override
     public void mergeRootsChangesDuring(@NotNull Runnable runnable) {}
 
     @Override

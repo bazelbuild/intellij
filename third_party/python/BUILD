@@ -24,7 +24,7 @@ java_library(
         "android-studio-2022.3": ["@python_2022_3//:python"],
         "android-studio-2023.1": ["@python_2023_1//:python"],
         "android-studio-2023.2": ["@python_2023_2//:python"],
-        "android-studio-2023.3": ["@python_2023_2//:python"],
+        "android-studio-2023.3": ["@python_2023_3//:python"],
     }),
 )
 
@@ -47,7 +47,7 @@ filegroup(
         "android-studio-2022.3": ["@python_2022_3//:python_helpers"],
         "android-studio-2023.1": ["@python_2023_1//:python_helpers"],
         "android-studio-2023.2": ["@python_2023_2//:python_helpers"],
-        "android-studio-2023.3": ["@python_2023_2//:python_helpers"],
+        "android-studio-2023.3": ["@python_2023_3//:python_helpers"],
     }),
     visibility = ["//visibility:private"],
 )

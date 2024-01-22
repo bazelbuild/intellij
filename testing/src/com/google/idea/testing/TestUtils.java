@@ -110,14 +110,18 @@ public final class TestUtils {
 
   private static class MyMockApplication extends MockApplication {
     private final ExecutorService executor = MoreExecutors.newDirectExecutorService();
+    private final boolean forceInvokeLater;
 
-    MyMockApplication(Disposable parentDisposable) {
+    MyMockApplication(Disposable parentDisposable, boolean forceInvokeLater) {
       super(parentDisposable);
+      this.forceInvokeLater = forceInvokeLater;
     }
 
     @Override
     public void invokeLater(Runnable runnable, ModalityState state) {
-      runnable.run();
+      if (forceInvokeLater) {
+        runnable.run();
+      }
     }
 
     @Override
@@ -132,7 +136,12 @@ public final class TestUtils {
   }
 
   public static MockApplication createMockApplication(Disposable parentDisposable) {
-    final MyMockApplication instance = new MyMockApplication(parentDisposable);
+    return createMockApplication(parentDisposable, false);
+  }
+
+  public static MockApplication createMockApplication(
+      Disposable parentDisposable, boolean forceInvokeLater) {
+    final MyMockApplication instance = new MyMockApplication(parentDisposable, forceInvokeLater);
     ApplicationManager.setApplication(instance, FileTypeManager::getInstance, parentDisposable);
     instance.registerService(EncodingManager.class, EncodingManagerImpl.class);
     return instance;

@@ -36,11 +36,20 @@ public final class IntellijRule extends ExternalResource {
   private MockProject project;
   private MockApplication application;
   private Disposable testDisposable;
+  private final boolean forceInvokeLater;
+
+  public IntellijRule(boolean forceInvokeLater) {
+    this.forceInvokeLater = forceInvokeLater;
+  }
+
+  public IntellijRule() {
+    this(false);
+  }
 
   @Override
   protected void before() {
     testDisposable = Disposer.newDisposable();
-    application = TestUtils.createMockApplication(testDisposable);
+    application = TestUtils.createMockApplication(testDisposable, forceInvokeLater);
     Assert.assertSame(application, ApplicationManager.getApplication());
     project = TestUtils.mockProject(application.getPicoContainer(), testDisposable);
   }

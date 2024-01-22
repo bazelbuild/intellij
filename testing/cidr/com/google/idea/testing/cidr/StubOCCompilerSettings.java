@@ -15,6 +15,7 @@
  */
 package com.google.idea.testing.cidr;
 
+import com.google.idea.cidr.CidrCompat;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,7 +47,7 @@ class StubOCCompilerSettings implements OCCompilerSettings {
   @Override
   @Nullable
   public OCCompilerKind getCompilerKind() {
-    return OCCompilerKind.CLANG;
+    return CidrCompat.getCompilerKind();
   }
 
   @Override
