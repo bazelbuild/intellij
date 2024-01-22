@@ -57,7 +57,7 @@ java_library(
         "//sdkcompat",
         "//shared",
         "//third_party/auto_value",
-        "@error_prone_annotations//jar"
+        "@error_prone_annotations//jar",
     ],
 )
 

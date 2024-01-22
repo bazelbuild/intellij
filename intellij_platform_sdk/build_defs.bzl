@@ -104,23 +104,6 @@ def _check_channel_map():
         fail("Unexpected values in INDIRECT_PRODUCT_CHANNELS: %s" % unexpected)
 
 DIRECT_IJ_PRODUCTS = {
-    "clion-2024.1": struct(
-        ide = "clion",
-        directory = "clion_2024_1",
-    ),
-    "intellij-ue-2024.1": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2024_1",
-    ),
-    "intellij-2024.1": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2024_1",
-    ),
-    "intellij-2024.1-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2024_1",
-    ),
-
     "intellij-2021.3": struct(
         ide = "intellij",
         directory = "intellij_ce_2021_3",
@@ -177,6 +160,14 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij",
         directory = "intellij_ce_2023_3",
     ),
+    "intellij-2024.1": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2024_1",
+    ),
+    "intellij-2024.1-mac": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2024_1",
+    ),
     "intellij-ue-2021.3": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2021_3",
@@ -232,6 +223,14 @@ DIRECT_IJ_PRODUCTS = {
     "intellij-ue-2023.3-mac": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2023_3",
+    ),
+    "intellij-ue-2024.1": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2024_1",
+    ),
+    "intellij-ue-2024.1-mac": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2024_1",
     ),
     "android-studio-2022.3": struct(
         ide = "android-studio",
@@ -303,6 +302,14 @@ DIRECT_IJ_PRODUCTS = {
     "clion-2023.3-mac": struct(
         ide = "clion",
         directory = "clion_2023_3",
+    ),
+    "clion-2024.1": struct(
+        ide = "clion",
+        directory = "clion_2024_1",
+    ),
+    "clion-2024.1-mac": struct(
+        ide = "clion",
+        directory = "clion_2024_1",
     ),
 }
 
