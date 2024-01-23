@@ -37,6 +37,7 @@ java_library(
         "//proto:proto_deps",
         "//sdkcompat",
         "//shared",
+        "@error_prone_annotations//jar",
     ],
 )
 
