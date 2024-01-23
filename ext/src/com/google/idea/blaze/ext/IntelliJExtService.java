@@ -29,6 +29,8 @@ import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
 import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
 import com.google.idea.blaze.ext.KytheGrpc.KytheFutureStub;
 import com.google.idea.blaze.ext.LinterGrpc.LinterFutureStub;
+import com.google.idea.blaze.ext.PiperServiceGrpc.PiperServiceBlockingStub;
+import com.google.idea.blaze.ext.PiperServiceGrpc.PiperServiceFutureStub;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
@@ -222,5 +224,19 @@ public final class IntelliJExtService {
   public DepServerFutureStub getDependencyService() throws IOException {
     IntelliJExtBlockingStub unused = connect();
     return client.getDependencyService();
+  }
+
+  public PiperServiceFutureStub getPiperService() {
+    try {
+      IntelliJExtBlockingStub unused = connect();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    return client.getPiperService();
+  }
+
+  public PiperServiceBlockingStub getPiperServiceBlocking() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getPiperServiceBlocking();
   }
 }
