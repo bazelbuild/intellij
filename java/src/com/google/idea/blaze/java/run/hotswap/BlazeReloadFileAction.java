@@ -5,10 +5,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapFile;
 import com.intellij.debugger.impl.HotSwapManager;
@@ -16,6 +18,8 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.HotSwapProgressImpl;
 import com.intellij.debugger.ui.HotSwapUIImpl;
 import com.intellij.debugger.ui.RunHotswapDialog;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.history.core.Paths;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -23,12 +27,14 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -123,6 +129,8 @@ public class BlazeReloadFileAction extends AnAction {
                     LOGGER.debug("Run hotswap after compile set to 'never'");
                 }
 
+            } catch (ProcessCanceledException e) {
+                throw e;
             } catch (Exception e) {
                 LOGGER.error("Exception occurred during building file to hotswap", e);
             }
@@ -220,8 +228,23 @@ public class BlazeReloadFileAction extends AnAction {
         if (e.getPresentation().isEnabled()) {
             DebuggerSession session =
                     DebuggerManagerEx.getInstanceEx(e.getProject()).getContext().getDebuggerSession();
+
             VirtualFile vf = e.getData(CommonDataKeys.VIRTUAL_FILE);
             if (session != null && vf != null) {
+                JavaDebugProcess process = session.getProcess().getXdebugProcess();
+                if (process != null) {
+                    ExecutionEnvironment env = ((XDebugSessionImpl) process.getSession()).getExecutionEnvironment();
+                    if (env != null) {
+                        RunProfile runProfile = env.getRunProfile();
+                        //This action is not meant to replace the BlazeHotswapAction so we disable it for such cases
+                        if (runProfile instanceof BlazeCommandRunConfiguration) {
+                            e.getPresentation().setEnabled(false);
+                            return;
+                        }
+                    }
+                }
+
+
                 VirtualFile sourceRoot = ProjectFileIndex.getInstance(e.getProject()).getSourceRootForFile(vf);
                 e.getPresentation().setEnabled(sourceRoot != null);
             } else {
