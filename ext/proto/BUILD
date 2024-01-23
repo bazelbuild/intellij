@@ -16,6 +16,7 @@ proto_library(
         "issuetracker.proto",
         "kythe.proto",
         "linter.proto",
+        "piper.proto",
     ],
 )
 
