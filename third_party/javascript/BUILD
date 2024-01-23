@@ -41,7 +41,7 @@ java_library(
         "intellij-ue-2023.1": ["@intellij_ue_2023_1//:css"],
         "intellij-ue-2023.2": ["@intellij_ue_2023_2//:css"],
         "intellij-ue-2023.3": ["@intellij_ue_2023_3//:css"],
-        "intellij-ue-2024.1": ["@intellij_ue_2023_3//:css"],
+        "intellij-ue-2024.1": ["@intellij_ue_2024_1//:css"],
         "clion-2021.3": ["@clion_2021_3//:css"],
         "clion-2022.1": ["@clion_2022_1//:css"],
         "clion-2022.2": ["@clion_2022_2//:css"],
