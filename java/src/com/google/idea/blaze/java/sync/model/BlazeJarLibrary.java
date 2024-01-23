@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.sync.libraries.LibraryModifier;
 import com.google.idea.blaze.java.libraries.AttachedSourceJarManager;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.JavaVfsSourceRootDetectionUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -158,26 +159,20 @@ public final class BlazeJarLibrary extends BlazeLibrary {
       if (!Registry.is("bazel.sync.detect.source.roots")) {
         return jarFilesAsSourceRoots;
       } else {
-        try {
-          return ProgressiveTaskWithProgressIndicator.builder(project, "Locating source roots in source path entry")
-                  .setModality(ProgressiveTaskWithProgressIndicator.Modality.MODAL)
-                  .submitTaskWithResult(indicator -> {
-                    List<String> sourceFilesUrls = new LinkedList<>();
-                    for (File sourceFile : sourceFiles) {
-                      VirtualFile jarFile = VirtualFileManager.getInstance().findFileByUrl(LibraryModifier.pathToUrl(sourceFile));
-                      List<VirtualFile> candidates = Collections.emptyList();
-                      if (jarFile != null && jarFile.exists()) {
-                        candidates = JavaVfsSourceRootDetectionUtil.suggestRoots(jarFile, indicator);
-                      }
-                      if (!candidates.isEmpty()) {
-                        candidates.forEach(sourceVirtualFile -> sourceFilesUrls.add(sourceVirtualFile.getUrl()));
-                      }
-                    }
-                    return ImmutableList.copyOf(sourceFilesUrls);
-                  }).get();
-        } catch (InterruptedException | ExecutionException e) {
-          return jarFilesAsSourceRoots;
-        }
+        return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+          List<String> sourceFilesUrls = new LinkedList<>();
+          for (File sourceFile : sourceFiles) {
+            VirtualFile jarFile = VirtualFileManager.getInstance().findFileByUrl(LibraryModifier.pathToUrl(sourceFile));
+            List<VirtualFile> candidates = Collections.emptyList();
+            if (jarFile != null && jarFile.exists()) {
+              candidates = JavaVfsSourceRootDetectionUtil.suggestRoots(jarFile, ProgressManager.getInstance().getProgressIndicator());
+            }
+            if (!candidates.isEmpty()) {
+              candidates.forEach(sourceVirtualFile -> sourceFilesUrls.add(sourceVirtualFile.getUrl()));
+            }
+          }
+          return ImmutableList.copyOf(sourceFilesUrls);
+        }, "Locating source roots in source path entry", false, project);
       }
     }
 
