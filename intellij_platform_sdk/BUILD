@@ -800,6 +800,7 @@ java_library(
         "clion-2022.1": ["@jsr305_annotations//jar"],
         "clion-2022.2": ["@jsr305_annotations//jar"],
         "clion-2022.3": ["@jsr305_annotations//jar"],
+        "clion-2024.1": [],
         "intellij-2021.3": ["@jsr305_annotations//jar"],
         "intellij-2022.1": ["@jsr305_annotations//jar"],
         "intellij-2022.2": ["@jsr305_annotations//jar"],
