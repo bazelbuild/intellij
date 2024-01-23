@@ -1,0 +1,19 @@
+# Description:
+#
+# Plugin source jars for Android Studio (version encoded in directory name)
+
+load("@//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
+load("@//intellij_platform_sdk:android_studio.bzl", "android_studio")
+
+package(default_visibility = ["//visibility:public"])
+
+licenses(["restricted"])
+
+exports_files(["LICENSE"])
+
+android_studio(
+    name = "android_studio",
+    major = "2023",
+    minor = "3",
+    revision = "1.3"
+)
