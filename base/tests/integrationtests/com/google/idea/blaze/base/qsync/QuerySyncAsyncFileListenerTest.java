@@ -22,12 +22,12 @@ import static org.mockito.Mockito.verify;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.qsync.QuerySyncAsyncFileListener.SyncRequester;
+import com.google.idea.testing.java.CompatLightJavaCodeInsightFixtureTestCase4;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4;
 import java.nio.file.Path;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,7 +38,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 @RunWith(JUnit4.class)
-public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureTestCase4 {
+public class QuerySyncAsyncFileListenerTest extends CompatLightJavaCodeInsightFixtureTestCase4 {
   @Rule public final MockitoRule mockito = MockitoJUnit.rule();
 
   @Mock private SyncRequester mockSyncRequester;

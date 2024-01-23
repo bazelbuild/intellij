@@ -76,6 +76,9 @@ java_library(
         "android-studio-2023.2": [
             "tests/utils/sdkcompat/as232/com/android/ide/common/repository/GoogleMavenArtifactIdCompat.java",
         ],
+        "android-studio-2023.3": [
+            "tests/utils/sdkcompat/as233/com/android/ide/common/repository/GoogleMavenArtifactIdCompat.java",
+        ],
     }),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
@@ -108,6 +111,12 @@ java_library(
             "tests/utils/sdkcompat/as232/com/android/tools/idea/sdk/IdeSdksCompat.java",
             "tests/utils/sdkcompat/as232/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
             "tests/utils/sdkcompat/as232/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
+        ],
+        "android-studio-2023.3": [
+            "sdkcompat/as233/com/android/tools/rendering/RenderResultCompat.java",
+            "tests/utils/sdkcompat/as233/com/android/tools/idea/sdk/IdeSdksCompat.java",
+            "tests/utils/sdkcompat/as233/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
+            "tests/utils/sdkcompat/as233/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
         ],
     }),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
@@ -178,6 +187,7 @@ intellij_unit_test_suite(
         "android-studio-2022.3": glob(["tests/unittests/sdkcompat/as223/**/*.java"]),
         "android-studio-2023.1": glob(["tests/unittests/sdkcompat/as231/**/*.java"]),
         "android-studio-2023.2": glob(["tests/unittests/sdkcompat/as232/**/*.java"]),
+        "android-studio-2023.3": glob(["tests/unittests/sdkcompat/as232/**/*.java"]),
     }),
     test_package_root = "com.google.idea.blaze.android",
     deps = [

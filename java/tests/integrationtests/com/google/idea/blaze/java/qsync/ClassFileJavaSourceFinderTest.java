@@ -27,11 +27,11 @@ import com.google.idea.blaze.base.TestData;
 import com.google.idea.blaze.base.qsync.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.testing.EdtRule;
+import com.google.idea.testing.java.CompatLightJavaCodeInsightFixtureTestCase4;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4;
 import java.nio.file.Path;
 import org.junit.Before;
 import org.junit.Rule;
@@ -43,7 +43,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 @RunWith(JUnit4.class)
-public class ClassFileJavaSourceFinderTest extends LightJavaCodeInsightFixtureTestCase4 {
+public class ClassFileJavaSourceFinderTest extends CompatLightJavaCodeInsightFixtureTestCase4 {
 
   @Rule public final EdtRule edtRule = new EdtRule();
   @Rule public final Expect expect = Expect.create();

@@ -63,6 +63,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -139,7 +141,27 @@ public class BlazeRenderErrorContributor implements RenderErrorContributor {
           @Override
           public void handleRefreshRenderUrl() {
             if (designSurface != null) {
-              RenderUtils.clearCache(designSurface.getConfigurations());
+              // TODO(b/321801969): Remove and replace with direct call when in repo.
+              // Use reflection to getConfigurations() from designSurface. Can't call directly
+              // because it returns an incompatible version of ImmutableCollection.
+              // RenderUtils.clearCache(designSurface.getConfigurations()); would fail at runtime.
+              try {
+                Method getConfigurationsMethod =
+                    EditorDesignSurface.class.getMethod("getConfigurations", null);
+                Object configurations = getConfigurationsMethod.invoke(designSurface);
+                Method clearCacheMethod =
+                    RenderUtils.class.getMethod(
+                        "clearCache", getConfigurationsMethod.getReturnType());
+                clearCacheMethod.invoke(null, configurations);
+              } catch (NoSuchMethodException ex) {
+                throw new RuntimeException(
+                    "Error using reflection to get getConfigurations() instance method: " + ex);
+              } catch (IllegalAccessException ex) {
+                throw new RuntimeException(
+                    "Error accessing getConfigurations() instance method" + ex);
+              } catch (InvocationTargetException ex) {
+                throw new RuntimeException("Error invoking target getConfigurations(): " + ex);
+              }
               var unused = designSurface.forceUserRequestedRefresh();
             }
           }

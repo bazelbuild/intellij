@@ -3,13 +3,13 @@
 # Common test utilities for IntelliJ plugins.
 
 load(
+    "//:build-visibility.bzl",
+    "INTELLIJ_PLUGINS_VISIBILITY",
+)
+load(
     "//intellij_platform_sdk:build_defs.bzl",
     "select_for_ide",
     "select_for_plugin_api",
-)
-load(
-    "//:build-visibility.bzl",
-    "INTELLIJ_PLUGINS_VISIBILITY",
 )
 
 package(default_visibility = INTELLIJ_PLUGINS_VISIBILITY)
@@ -28,20 +28,29 @@ java_library(
                default = [],
            ) + select_for_plugin_api({
         "android-studio-2022.2": glob([
+            "testcompat/v222/com/google/idea/cidr/**/*.java",
             "testcompat/v222/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v222/com/google/idea/testing/**/*.java",
         ]),
         "android-studio-2022.3": glob([
+            "testcompat/v223/com/google/idea/cidr/**/*.java",
             "testcompat/v223/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v223/com/google/idea/testing/**/*.java",
         ]),
         "android-studio-2023.1": glob([
+            "testcompat/v231/com/google/idea/cidr/**/*.java",
             "testcompat/v231/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v231/com/google/idea/testing/**/*.java",
         ]),
         "android-studio-2023.2": glob([
+            "testcompat/v232/com/google/idea/cidr/**/*.java",
             "testcompat/v232/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v232/com/google/idea/testing/**/*.java",
+        ]),
+        "android-studio-2023.3": glob([
+            "testcompat/v233/com/google/idea/cidr/**/*.java",
+            "testcompat/v233/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/v233/com/google/idea/testing/**/*.java",
         ]),
         "clion-2021.3": glob([
             "testcompat/v213/com/google/idea/sdkcompat/**/*.java",

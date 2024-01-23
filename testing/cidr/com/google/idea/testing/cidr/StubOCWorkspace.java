@@ -87,7 +87,7 @@ public class StubOCWorkspace implements OCWorkspace {
     throw new UnsupportedOperationException();
   }
 
-  @Override
+  // @Override removed in #api233
   public ModifiableModel getModifiableModel(boolean clear) {
     throw new UnsupportedOperationException();
   }

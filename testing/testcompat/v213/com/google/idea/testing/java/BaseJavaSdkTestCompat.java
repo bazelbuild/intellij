@@ -15,9 +15,18 @@
  */
 package com.google.idea.testing.java;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.util.lang.JavaVersion;
 
 /**
  * Provides SDK compatibility shims for base plugin API classes, available to IDEs working with Java
@@ -30,5 +39,16 @@ public class BaseJavaSdkTestCompat {
   public static TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(
       JavaTestFixtureFactory factory, String projectName) {
     return factory.createLightFixtureBuilder();
+  }
+
+  public static TestFixtureBuilder<IdeaProjectTestFixture> createIdeaFixtureBuilder(
+      IdeaTestFixtureFactory factory, String name) {
+    return factory.createLightFixtureBuilder(LightJavaCodeInsightFixtureTestCase.JAVA_8, name);
+  }
+
+  public static void setUpMockJava(JavaVersion version, Disposable disposable) {
+    Sdk jdk = IdeaTestUtil.getMockJdk(version);
+    EdtTestUtil.runInEdtAndWait(
+        () -> WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(jdk, disposable)));
   }
 }

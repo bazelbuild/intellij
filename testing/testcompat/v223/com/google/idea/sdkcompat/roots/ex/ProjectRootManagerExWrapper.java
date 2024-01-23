@@ -33,4 +33,7 @@ public abstract class ProjectRootManagerExWrapper extends ProjectRootManagerEx {
       public void close() throws Exception {}
     };
   }
+
+  @Override
+  public void markRootsForRefresh() {}
 }

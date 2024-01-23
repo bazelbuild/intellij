@@ -258,7 +258,11 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
         my_glob(files, "plugins/cidr-base-plugin/lib", ".jar") +  # com.intellij.cidr.base: CIDR Base
         my_glob(files, "plugins/cidr-debugger-plugin/lib", ".jar")  # com.jetbrains.cidr.execution.debugger: CIDR Debugger
     )
-    if _version_equals_or_newer(major, minor, revision, "2023.2"):
+
+    if _version_equals_or_newer(major, minor, revision, "2023.3"):
+        cidr_plugins_jars += my_glob(files, "plugins/c-clangd-plugin/lib", ".jar")  # required for NDK debugging
+        cidr_plugins_jars += my_glob(files, "plugins/rml-dfa-ide/lib", ".jar")  # required for NDK debugging
+    elif _version_equals_or_newer(major, minor, revision, "2023.2"):
         cidr_plugins_jars += my_glob(files, "plugins/c-clangd-plugin/lib", ".jar")  # required for NDK debugging
     else:
         cidr_plugins_jars += my_glob(files, "plugins/c-clangd/lib", ".jar")  # required for NDK debugging
