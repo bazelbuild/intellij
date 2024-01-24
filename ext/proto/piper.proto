@@ -25,16 +25,22 @@ service PiperService {
   // Get workspaces
   rpc GetWorkspaces(GetWorkspacesRequest)
       returns (stream GetWorkspacesResponse) {}
+
   // Creates or updates a Piper workspace.
   rpc UpdateWorkspace(UpdateWorkspaceRequest)
       returns (UpdateWorkspaceResponse) {}
+
   // Retrieves a list of changes
-  rpc GetChanges(GetChangesRequest) returns (stream GetChangesResponse) {}
+  rpc GetChanges(GetChangesRequest)
+      returns (stream.com.google.idea.blaze.ext.GetChangesResponse) {}
+
   // Resolves conflicts in a Piper workspace after sync or integrate.
   rpc ResolveConflicts(ResolveConflictsRequest)
       returns (stream ResolveConflictsResponse) {}
+
   // Read the content of a depot or workspace file.
   rpc ReadFiles(ReadFilesRequest) returns (stream ReadFilesResponse) {}
+
   // Update the state and type of files that are open in a Piper workspace.
   rpc UpdateFileStates(UpdateFileStatesRequest)
       returns (stream UpdateFileStatesResponse) {}
@@ -115,7 +121,7 @@ message GetChangesRequest {
 
 message GetChangesResponse {
   PiperStatus piper_status = 1;
-  repeated Change change = 2;
+  Change change = 2;
 }
 
 message Change {
@@ -190,7 +196,7 @@ message ResolveConflictsRequest {
 
 message ConflictPath {
   string path = 1;
-  string conflict_ids = 2;
+  repeated string conflict_ids = 2;
 }
 
 message ResolveConflictsResponse {
