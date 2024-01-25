@@ -31,7 +31,6 @@ import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.SharedStringPoolScope;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
@@ -76,7 +75,8 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       return BlazeBuildOutputs.fromParsedBepOutput(
           buildResult, buildResultHelper.getBuildOutput(stringInterner));
     } catch (GetArtifactsException e) {
-      IssueOutput.error("Failed to get build outputs: " + e.getMessage()).submit(context);
+      context.output(PrintOutput.log("Failed to get build outputs: " + e.getMessage()));
+      context.setHasError();
       return BlazeBuildOutputs.noOutputs(buildResult);
     }
   }
