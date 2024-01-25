@@ -269,7 +269,6 @@ message FileState {
 
 message UpdateFileStatesResponse {
   PiperStatus piper_status = 1;
-  repeated FileState file_states = 2;
   SourceFile source_file = 3;
   optional SourceFile.FileOperation operation_prior_to_revert = 4;
   optional RevertOperation updated_revert_operation = 5;
