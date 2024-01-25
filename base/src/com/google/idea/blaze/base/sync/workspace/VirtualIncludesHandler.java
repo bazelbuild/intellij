@@ -40,6 +40,8 @@ class VirtualIncludesHandler {
     private static final int EXTERNAL_WORKSPACE_NAME_IDX = 4;
     private static final int WORKSPACE_PATH_START_FOR_EXTERNAL_WORKSPACE = 5;
     private static final int WORKSPACE_PATH_START_FOR_LOCAL_WORKSPACE = 3;
+    private static final String ABSOLUTE_LABEL_PREFIX = "//";
+    private static final int ABSOLUTE_LABEL_PREFIX_LENGTH = ABSOLUTE_LABEL_PREFIX.length();
 
     private static List<Path> splitExecutionPath(ExecutionRootPath executionRootPath) {
         return Lists.newArrayList(executionRootPath.getAbsoluteOrRelativeFile().toPath().iterator());
@@ -97,8 +99,8 @@ class VirtualIncludesHandler {
                 stripPrefix = stripPrefix.substring(0, stripPrefix.length() - 1);
             }
             String externalWorkspaceName = key.getLabel().externalWorkspaceName();
-            WorkspacePath stripPrefixWorkspacePath = stripPrefix.startsWith("//") ?
-              new WorkspacePath(stripPrefix.substring(2)) :
+            WorkspacePath stripPrefixWorkspacePath = stripPrefix.startsWith(ABSOLUTE_LABEL_PREFIX) ?
+              new WorkspacePath(stripPrefix.substring(ABSOLUTE_LABEL_PREFIX_LENGTH)) :
               new WorkspacePath(key.getLabel().blazePackage(), stripPrefix);
             if (key.getLabel().externalWorkspaceName() != null) {
                 ExecutionRootPath external = new ExecutionRootPath(
