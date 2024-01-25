@@ -19,6 +19,7 @@ package com.google.idea.blaze.java.run.producers;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.java.run.JUnitTestHeuristic;
 import com.google.idea.blaze.java.run.producers.JUnitParameterizedClassHeuristic.ParameterizedTestInfo;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.Location;
@@ -33,6 +34,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -42,7 +44,8 @@ public final class BlazeJUnitTestFilterFlags {
   /** A version of JUnit to generate test filter flags for. */
   public enum JUnitVersion {
     JUNIT_3,
-    JUNIT_4
+    JUNIT_4,
+    JUNIT_5
   }
 
   /**
@@ -61,8 +64,8 @@ public final class BlazeJUnitTestFilterFlags {
   @Nullable
   public static String testFilterForClassAndMethods(
       PsiClass psiClass, Collection<PsiMethod> methods) {
-    JUnitVersion version =
-        JUnitUtil.isJUnit4TestClass(psiClass) ? JUnitVersion.JUNIT_4 : JUnitVersion.JUNIT_3;
+    Optional<JUnitVersion> maybeVersion = JUnitTestHeuristic.jUnitVersion(psiClass);
+    JUnitVersion version = maybeVersion.orElse(null);
     ParameterizedTestInfo parameterizedTestInfo =
         JUnitParameterizedClassHeuristic.getParameterizedTestInfo(psiClass);
     return testFilterForClassAndMethods(
@@ -117,9 +120,11 @@ public final class BlazeJUnitTestFilterFlags {
     }
     // Note: this could be incorrect if there are no JUnit4 classes in this sample, but some in the
     // java_test target they're run from.
-    JUnitVersion version =
-        hasJUnit4Test(methodsPerClass.keySet()) ? JUnitVersion.JUNIT_4 : JUnitVersion.JUNIT_3;
-    return testFilterForClassesAndMethods(methodsPerClass, version);
+    Optional<JUnitVersion> version = JUnitTestHeuristic.jUnitVersion(methodsPerClass.keySet());
+    if (version.isEmpty()) {
+      return testFilterForClassesAndMethods(methodsPerClass, JUnitVersion.JUNIT_3);
+    }
+    return testFilterForClassesAndMethods(methodsPerClass, version.get());
   }
 
   @Nullable
@@ -141,7 +146,7 @@ public final class BlazeJUnitTestFilterFlags {
       classFilters.add(filter);
     }
     classFilters.sort(String::compareTo);
-    return version == JUnitVersion.JUNIT_4
+    return version == JUnitVersion.JUNIT_4 || version == JUnitVersion.JUNIT_5
         ? String.join("|", classFilters)
         : String.join(",", classFilters);
   }
@@ -166,14 +171,6 @@ public final class BlazeJUnitTestFilterFlags {
     return methodName;
   }
 
-  private static boolean hasJUnit4Test(Collection<PsiClass> classes) {
-    for (PsiClass psiClass : classes) {
-      if (JUnitUtil.isJUnit4TestClass(psiClass)) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   /**
    * Builds the JUnit test filter corresponding to the given class and methods.<br>
@@ -208,13 +205,13 @@ public final class BlazeJUnitTestFilterFlags {
     }
     String methodNamePattern = concatenateMethodNames(methodFilters, jUnitVersion);
     if (Strings.isNullOrEmpty(methodNamePattern)) {
-      if (jUnitVersion == JUnitVersion.JUNIT_4) {
+      if (jUnitVersion == JUnitVersion.JUNIT_4 || jUnitVersion == JUnitVersion.JUNIT_5) {
         output.append('#');
       }
       return output.toString();
     }
     output.append('#').append(methodNamePattern);
-    // JUnit 4 test filters are regexes, and must be terminated to avoid matching
+    // JUnit 4 and 5 test filters are regexes, and must be terminated to avoid matching
     // unintended classes/methods. JUnit 3 test filters do not need or support this syntax.
     if (jUnitVersion == JUnitVersion.JUNIT_3) {
       return output.toString();
@@ -232,9 +229,13 @@ public final class BlazeJUnitTestFilterFlags {
     if (methodNames.size() == 1) {
       return methodNames.get(0);
     }
-    return jUnitVersion == JUnitVersion.JUNIT_4
-        ? String.format("(%s)", String.join("|", methodNames))
-        : String.join(",", methodNames);
+    switch (jUnitVersion) {
+      case JUNIT_3: return String.join(",", methodNames);
+      case JUNIT_4:
+      case JUNIT_5:
+        return String.format("(%s)", String.join("|", methodNames));
+    }
+    return null;
   }
 
   private BlazeJUnitTestFilterFlags() {}

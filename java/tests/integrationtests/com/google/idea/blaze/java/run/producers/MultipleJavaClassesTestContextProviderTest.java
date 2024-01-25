@@ -25,10 +25,11 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducerTestCase;
 import com.google.idea.blaze.base.run.producers.TestContextRunConfigurationProducer;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceFileFinder;
+import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags.JUnitVersion;
+import com.google.idea.blaze.java.utils.BlazeJUnitRunConfigurationProducerTestCase;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,17 +41,23 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+
+import java.util.Arrays;
 import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
 
-/** Integration tests for {@link MultipleJavaClassesTestContextProvider}. */
-@RunWith(JUnit4.class)
+/** Integration tests for {@link MultipleJavaClassesTestContextProvider}.
+ *  Parameters are provided by the base class.
+ */
+@RunWith(Parameterized.class)
 public class MultipleJavaClassesTestContextProviderTest
-    extends BlazeRunConfigurationProducerTestCase {
+    extends BlazeJUnitRunConfigurationProducerTestCase {
+
+  private WorkspacePath pkgRootPath = new WorkspacePath("java");
 
   @Before
   public final void addSourceFolder() {
@@ -61,7 +68,7 @@ public class MultipleJavaClassesTestContextProviderTest
                   ModuleRootManager.getInstance(testFixture.getModule()).getModifiableModel();
               ContentEntry contentEntry = model.getContentEntries()[0];
               // create a source root so that the package prefixes are correct.
-              VirtualFile pkgRoot = workspace.createDirectory(new WorkspacePath("java"));
+              VirtualFile pkgRoot = workspace.createDirectory(pkgRootPath);
               contentEntry.addSourceFolder(pkgRoot, true, "");
               model.commit();
             });
@@ -71,63 +78,37 @@ public class MultipleJavaClassesTestContextProviderTest
     registerProjectService(BlazeProjectDataManager.class, mockProjectDataManager);
     registerProjectService(
         WorkspaceFileFinder.Provider.class, () -> file -> file.getPath().contains("test"));
-
-    // required for IntelliJ to recognize annotations, JUnit version, etc.
-    // Adding into java source root so resolve scopes of all files in tests is the same.
-    workspace.createPsiFile(
-        new WorkspacePath("java/org/junit/runner/RunWith.java"),
-        "package org.junit.runner;"
-            + "public @interface RunWith {"
-            + "    Class<? extends Runner> value();"
-            + "}");
-    workspace.createPsiFile(
-        new WorkspacePath("java/org/junit/Test.java"),
-        "package org.junit;",
-        "public @interface Test {}");
-    workspace.createPsiFile(
-        new WorkspacePath("java/org/junit/runners/JUnit4.java"),
-        "package org.junit.runners;",
-        "public class JUnit4 {}");
   }
 
   @After
   public final void removeSourceFolder() {
+    VirtualFile pkgRoot = workspace.createDirectory(pkgRootPath);
     ApplicationManager.getApplication()
         .runWriteAction(
             () -> {
               final ModifiableRootModel model =
                   ModuleRootManager.getInstance(testFixture.getModule()).getModifiableModel();
               ContentEntry contentEntry = model.getContentEntries()[0];
-              contentEntry.clearSourceFolders();
+              // There is a global content entry, `//src`, which is necessary to infer targets from test classes.
+              // This is set outside of these test (somewhere in the superclass) once per run, not once per test.
+              // If we just use contentEntry.clearSourceDirs() here, it won't be re-created, and tests that assume
+              // it exists will fail.
+              // Therefore, we only delete the content entries that this test has created.
+              Arrays.stream(contentEntry.getSourceFolders()).forEach((folder) -> {
+                if (folder.getFile().equals(pkgRoot)) {
+                  contentEntry.removeSourceFolder(folder);
+                }
+              });
               model.commit();
             });
   }
 
   @Test
   public void testProducedFromDirectory() throws Throwable {
-    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
-    builder.setTargetMap(
-        TargetMapBuilder.builder()
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setKind("java_test")
-                    .setLabel("//java/com/google/test:TestClass")
-                    .addSource(sourceRoot("java/com/google/test/TestClass.java"))
-                    .build())
-            .build());
-    registerProjectService(
-        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
-
+    setUpRepositoryAndTarget();
     PsiDirectory directory =
         workspace.createPsiDirectory(new WorkspacePath("java/com/google/test"));
-    createAndIndexFile(
-        new WorkspacePath("java/com/google/test/TestClass.java"),
-        "package com.google.test;",
-        "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-        "public class TestClass {",
-        "  @org.junit.Test",
-        "  public void testMethod() {}",
-        "}");
+    createAndIndexGenericJUnitTestFile();
 
     ConfigurationContext context = createContextFromPsi(directory);
     List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
@@ -163,14 +144,31 @@ public class MultipleJavaClassesTestContextProviderTest
 
     PsiDirectory directory =
         workspace.createPsiDirectory(new WorkspacePath("java/com/google/test"));
-    createAndIndexFile(
-        new WorkspacePath("java/com/google/test/sub/TestClass.java"),
-        "package com.google.test.sub;",
-        "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-        "public class TestClass {",
-        "  @org.junit.Test",
-        "  public void testMethod() {}",
-        "}");
+    if (jUnitVersionUnderTest == JUnitVersion.JUNIT_5) {
+      createAndIndexFile(
+          new WorkspacePath("java/com/google/test/sub/TestClass.java"),
+          "package com.google.test.sub;",
+          // We need to use the `Testable` annotation so that the tests can see the class.
+          // This is only necessary for testing because we don't have JUnit's class discovery mechanism.
+          // Ref: https://junit.org/junit5/docs/5.0.0/api/org/junit/platform/commons/annotation/Testable.html"
+          "@org.junit.platform.commons.annotation.Testable",
+          "public class TestClass {",
+          "  @org.junit.jupiter.api.Test",
+          "  public void testMethod() {}",
+          "}");
+    } else if (jUnitVersionUnderTest == JUnitVersion.JUNIT_4) {
+      createAndIndexFile(
+          new WorkspacePath("java/com/google/test/sub/TestClass.java"),
+          "package com.google.test.sub;",
+          "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
+          "public class TestClass {",
+          "  @org.junit.Test",
+          "  public void testMethod() {}",
+          "}");
+
+    } else {
+      throw new RuntimeException("Unsupported JUnit Version under test: " + jUnitVersionUnderTest.toString());
+    }
 
     ConfigurationContext context = createContextFromPsi(directory);
     List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
@@ -205,14 +203,7 @@ public class MultipleJavaClassesTestContextProviderTest
         BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
 
     PsiDirectory directory = workspace.createPsiDirectory(new WorkspacePath("java"));
-    createAndIndexFile(
-        new WorkspacePath("java/com/google/other/TestClass.java"),
-        "package com.google.other;",
-        "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-        "public class TestClass {",
-        "  @org.junit.Test",
-        "  public void testMethod() {}",
-        "}");
+    createAndIndexGenericJUnitTestFile();
 
     ConfigurationContext context = createContextFromPsi(directory);
     ConfigurationFromContext fromContext =
@@ -275,24 +266,8 @@ public class MultipleJavaClassesTestContextProviderTest
         BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
 
     workspace.createPsiDirectory(new WorkspacePath("java/com/google/test"));
-    PsiFile testClass1 =
-        createAndIndexFile(
-            new WorkspacePath("java/com/google/test/TestClass1.java"),
-            "package com.google.test;",
-            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-            "public class TestClass1 {",
-            "  @org.junit.Test",
-            "  public void testMethod() {}",
-            "}");
-    PsiFile testClass2 =
-        createAndIndexFile(
-            new WorkspacePath("java/com/google/test/TestClass2.java"),
-            "package com.google.test;",
-            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-            "public class TestClass2 {",
-            "  @org.junit.Test",
-            "  public void testMethod() {}",
-            "}");
+    PsiFile testClass1 = createAndIndexGenericJUnitTestFile("TestClass1");
+    PsiFile testClass2 = createAndIndexGenericJUnitTestFile("TestClass2");
 
     // WHEN generating a BlazeCommandRunConfiguration
     ConfigurationContext context =
@@ -338,24 +313,10 @@ public class MultipleJavaClassesTestContextProviderTest
     workspace.createPsiDirectory(new WorkspacePath("java/com/google/test"));
     PsiJavaFile testClass1 =
         (PsiJavaFile)
-            createAndIndexFile(
-                new WorkspacePath("java/com/google/test/TestClass1.java"),
-                "package com.google.test;",
-                "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-                "public class TestClass1 {",
-                "  @org.junit.Test",
-                "  public void testMethod() {}",
-                "}");
+            createAndIndexGenericJUnitTestFile("TestClass1");
     PsiJavaFile testClass2 =
         (PsiJavaFile)
-            createAndIndexFile(
-                new WorkspacePath("java/com/google/test/TestClass2.java"),
-                "package com.google.test;",
-                "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-                "public class TestClass2 {",
-                "  @org.junit.Test",
-                "  public void testMethod() {}",
-                "}");
+            createAndIndexGenericJUnitTestFile("TestClass2");
 
     ConfigurationContext context =
         createContextFromMultipleElements(

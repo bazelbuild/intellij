@@ -22,6 +22,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags.JUnitVersion;
+import com.google.idea.blaze.java.utils.JUnitTestUtils;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
@@ -32,50 +34,41 @@ import com.intellij.psi.PsiMethod;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runner.Runner;
 import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
+import org.junit.runners.Parameterized.UseParametersRunnerFactory;
+import org.junit.runners.model.InitializationError;
+import org.junit.runners.parameterized.BlockJUnit4ClassRunnerWithParameters;
+import org.junit.runners.parameterized.ParametersRunnerFactory;
+import org.junit.runners.parameterized.TestWithParameters;
 
 /**
  * Integration tests for {@link BlazeJUnitTestFilterFlags}. The functionality that relies on
  * PsiElements, so can't go in the unit tests.
+ * We use JUnit4 parameters to test both JUnit4 and JUnit5 functionality in the same suite.
  */
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class BlazeJUnitTestFilterFlagsIntegrationTest extends BlazeIntegrationTestCase {
 
+  @Parameter
+  public JUnitVersion jUnitVersionUnderTest;
+
+  @Parameters(name = "{0}")
+  public static JUnitVersion[] params() {
+    return JUnitTestUtils.JUNIT_VERSIONS_UNDER_TEST;
+  }
+
   @Before
-  public final void doSetup() {
-    // required for IntelliJ to recognize annotations, JUnit version, etc.
-    workspace.createPsiFile(
-        new WorkspacePath("org/junit/runner/RunWith.java"),
-        "package org.junit.runner;"
-            + "public @interface RunWith {"
-            + "    Class<? extends Runner> value();"
-            + "}");
-    workspace.createPsiFile(
-        new WorkspacePath("org/junit/Test.java"),
-        "package org.junit;",
-        "public @interface Test {}");
-    workspace.createPsiFile(
-        new WorkspacePath("org/junit/runners/JUnit4.java"),
-        "package org.junit.runners;",
-        "public class JUnit4 {}");
+  public final void setup() {
+    JUnitTestUtils.setupForJUnitTests(workspace, fileSystem);
   }
 
   @Test
   public void testParameterizedMethods() {
-    PsiFile javaFile =
-        workspace.createPsiFile(
-            new WorkspacePath("java/com/google/lib/JavaClass.java"),
-            "package com.google.lib;",
-            "import org.junit.Test;",
-            "import org.junit.runner.RunWith;",
-            "import org.junit.runners.JUnit4;",
-            "@RunWith(JUnit4.class)",
-            "public class JavaClass {",
-            "  @Test",
-            "  public void testMethod1() {}",
-            "  @Test",
-            "  public void testMethod2() {}",
-            "}");
+    PsiFile javaFile = JUnitTestUtils.createGenericJUnitFile(workspace, jUnitVersionUnderTest);
     PsiClass javaClass = ((PsiClassOwner) javaFile).getClasses()[0];
 
     PsiMethod method1 = javaClass.findMethodsByName("testMethod1", false)[0];
@@ -89,37 +82,37 @@ public class BlazeJUnitTestFilterFlagsIntegrationTest extends BlazeIntegrationTe
     assertThat(
             BlazeJUnitTestFilterFlags.testFilterForClassesAndMethods(
                 ImmutableMap.of(javaClass, ImmutableList.of(location1, location2))))
-        .isEqualTo("com.google.lib.JavaClass#(testMethod1\\[param\\]|testMethod2\\[3\\])$");
+        .isEqualTo("com.google.test.TestClass#(testMethod1\\[param\\]|testMethod2\\[3\\])$");
   }
 
   @Test
   public void testMultipleClassesWithParameterizedMethods() {
-    PsiFile javaFile1 =
-        workspace.createPsiFile(
-            new WorkspacePath("java/com/google/lib/JavaClass1.java"),
-            "package com.google.lib;",
-            "import org.junit.Test;",
-            "import org.junit.runner.RunWith;",
-            "import org.junit.runners.JUnit4;",
-            "@RunWith(JUnit4.class)",
-            "public class JavaClass1 {",
-            "  @Test",
-            "  public void testMethod1() {}",
-            "  @Test",
-            "  public void testMethod2() {}",
-            "}");
-    PsiFile javaFile2 =
-        workspace.createPsiFile(
-            new WorkspacePath("java/com/google/lib/JavaClass2.java"),
-            "package com.google.lib;",
-            "import org.junit.Test;",
-            "import org.junit.runner.RunWith;",
-            "import org.junit.runners.JUnit4;",
-            "@RunWith(JUnit4.class)",
-            "public class JavaClass2 {",
-            "  @Test",
-            "  public void testMethod() {}",
-            "}");
+    PsiFile javaFile1 = JUnitTestUtils.createGenericJUnitFile(workspace, jUnitVersionUnderTest);
+    PsiFile javaFile2 = null;
+    if (jUnitVersionUnderTest == JUnitVersion.JUNIT_5) {
+      javaFile2 = workspace.createPsiFile(
+          new WorkspacePath("java/com/google/lib/JavaClass2.java"),
+          "package com.google.test;",
+          "import org.junit.jupiter.api.Test;",
+          "public class OtherTestClass {",
+          "  @Test",
+          "  public void testMethod() {}",
+          "}");
+    } else if (jUnitVersionUnderTest == JUnitVersion.JUNIT_4) {
+      javaFile2 = workspace.createPsiFile(
+          new WorkspacePath("java/com/google/lib/JavaClass2.java"),
+          "package com.google.test;",
+          "import org.junit.Test;",
+          "import org.junit.runner.RunWith;",
+          "import org.junit.runners.JUnit4;",
+          "@RunWith(JUnit4.class)",
+          "public class OtherTestClass {",
+          "  @Test",
+          "  public void testMethod() {}",
+          "}");
+    } else {
+      throw new RuntimeException("Unsupported JUnit Version under test: " + jUnitVersionUnderTest.toString());
+    }
     PsiClass javaClass1 = ((PsiClassOwner) javaFile1).getClasses()[0];
 
     PsiMethod class1Method1 = javaClass1.findMethodsByName("testMethod1", false)[0];
@@ -143,7 +136,8 @@ public class BlazeJUnitTestFilterFlagsIntegrationTest extends BlazeIntegrationTe
         .isEqualTo(
             Joiner.on('|')
                 .join(
-                    "com.google.lib.JavaClass1#(testMethod1\\[param\\]|testMethod2\\[3\\])$",
-                    "com.google.lib.JavaClass2#testMethod$"));
+                    "com.google.test.OtherTestClass#testMethod$",
+                    "com.google.test.TestClass#(testMethod1\\[param\\]|testMethod2\\[3\\])$"
+                ));
   }
 }

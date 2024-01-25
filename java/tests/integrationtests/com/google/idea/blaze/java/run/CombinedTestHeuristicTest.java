@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.java.utils.JUnitTestUtils;
 import com.intellij.psi.PsiFile;
 import java.io.File;
 import java.util.Collection;
@@ -48,21 +49,7 @@ public class CombinedTestHeuristicTest extends BlazeIntegrationTestCase {
     registerProjectService(
         BlazeProjectDataManager.class, new MockBlazeProjectDataManager(blazeProjectData));
 
-    // required for IntelliJ to recognize annotations, JUnit version, etc.
-    workspace.createPsiFile(
-        new WorkspacePath("org/junit/runner/RunWith.java"),
-        "package org.junit.runner;"
-            + "public @interface RunWith {"
-            + "    Class<? extends Runner> value();"
-            + "}");
-    workspace.createPsiFile(
-        new WorkspacePath("org/junit/Test.java"),
-        "package org.junit;",
-        "public @interface Test {}");
-    workspace.createPsiFile(
-        new WorkspacePath("org/junit/runners/JUnit4.java"),
-        "package org.junit.runners;",
-        "public class JUnit4 {}");
+    JUnitTestUtils.setupForJUnitTests(workspace, fileSystem);
   }
 
   @Test

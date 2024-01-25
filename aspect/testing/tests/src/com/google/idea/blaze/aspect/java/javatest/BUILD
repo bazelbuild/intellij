@@ -67,11 +67,26 @@ fast_build_aspect_test_fixture(
 )
 
 java_test(
+    name = "FooTestWithCustomMainClass",
+    srcs = ["FooTest.java"],
+    main_class = "com.google.idea.blaze.aspect.java.javatest.fake.TestRunner",
+    tags = ["manual"],  # This test is not meant to be ran on its own. The main class represents a custom test runner.
+    test_class = "com.google.idea.blaze.aspect.java.javatest.FooTest",
+    deps = ["@junit//jar"],
+)
+
+fast_build_aspect_test_fixture(
+    name = "footest_with_custom_main_class_fast_build_fixture",
+    deps = [":FooTestWithCustomMainClass"],
+)
+
+java_test(
     name = "JavaTestFastBuildAspectTest",
     srcs = ["JavaTestFastBuildAspectTest.java"],
     data = [
         ":footest_no_launcher_fast_build_fixture",
         ":footest_with_custom_launcher_fast_build_fixture",
+        ":footest_with_custom_main_class_fast_build_fixture",
     ],
     deps = [
         "//aspect/testing:guava",

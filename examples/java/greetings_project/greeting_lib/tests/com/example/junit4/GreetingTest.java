@@ -1,6 +1,7 @@
-package com.example;
+package com.example.junit4;
 
 import org.junit.Test;
+import com.example.Greeting;
 
 import java.util.Arrays;
 import java.util.Collections;
