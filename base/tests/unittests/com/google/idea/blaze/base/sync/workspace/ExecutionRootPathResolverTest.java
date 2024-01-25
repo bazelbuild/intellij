@@ -53,9 +53,10 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
   private static final List<WorkspacePath> WORKSPACE_PATHS = createWorkspacePaths();
 
   private static final TargetName SIMPLE_TARGET = TargetName.create("simple_target");
+  private static final TargetName SIMPLE_TARGET_TRAILING_SLASH = TargetName.create("simple_target_trailing_slash");
   private static final TargetName ADVANCED_TARGET = TargetName.create("advanced_target");
   private static final TargetName TARGET_WITH_INCLUDE_PREFIX = TargetName.create("include_prefix");
-  private static final List<TargetName> TARGET_NAMES = List.of(SIMPLE_TARGET, ADVANCED_TARGET);
+  private static final List<TargetName> TARGET_NAMES = List.of(SIMPLE_TARGET, SIMPLE_TARGET_TRAILING_SLASH, ADVANCED_TARGET);
   private static final String INCLUDE_PREFIX = "generated-include-prefix";
 
   private static final TargetName TARGET_WITH_ABSOLUTE_STRIP_PREFIX = TargetName.create("absolute_strip_prefix");
@@ -80,6 +81,8 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
 
     if (targetName.equals(SIMPLE_TARGET)) {
       return simpleStripPrefix;
+    } else if (targetName.equals(SIMPLE_TARGET_TRAILING_SLASH)) {
+      return simpleStripPrefix + "/";
     } else if (targetName.equals(ADVANCED_TARGET)) {
       return advancedStripPrefix;
     } else if (targetName.equals(TARGET_WITH_INCLUDE_PREFIX)) {
@@ -204,9 +207,13 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
           ImmutableList<File> files =
               pathResolver.resolveToIncludeDirectories(generatedPath);
 
+          String stripPrefix = getStripPrefix(targetName);
+          if (stripPrefix.endsWith("/")) {
+            stripPrefix = stripPrefix.substring(0, stripPrefix.length() - 1);
+          }
           String expectedPath = Path.of(workspaceNameString,
               workspacePath.toString(),
-              getStripPrefix(targetName)).toString();
+              stripPrefix).toString();
 
           if (workspaceName != null) {
             // check external workspace
