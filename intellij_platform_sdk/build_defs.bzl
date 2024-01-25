@@ -181,6 +181,11 @@ DIRECT_IJ_PRODUCTS = {
         archive = "android_studio_with_blaze_2023_2",
         oss_workspace = "android_studio_2023_2",
     ),
+    "android-studio-2023.3": struct(
+        ide = "android-studio",
+        archive = "android_studio_with_blaze_2023_3",
+        oss_workspace = "android_studio_2023_3",
+    ),
     "clion-2021.3": struct(
         ide = "clion",
         directory = "clion_2021_3",
