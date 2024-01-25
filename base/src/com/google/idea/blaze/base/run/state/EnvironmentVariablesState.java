@@ -25,6 +25,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import javax.swing.JComponent;
 import org.jdom.Element;
+import org.jetbrains.annotations.VisibleForTesting;
+
 import java.util.Map;
 
 /** State for user-defined environment variables. */
@@ -70,6 +72,7 @@ public class EnvironmentVariablesState implements RunConfigurationState {
     return new Editor();
   }
 
+  @VisibleForTesting
   public void setEnvVars(Map<String, String> vars) {
     data = data.with(vars);
   }

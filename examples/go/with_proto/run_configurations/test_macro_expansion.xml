@@ -1,4 +1,4 @@
-<configuration name="Bazel test go:go_test" type="BlazeCommandRunConfigurationType"
+<configuration name="Test Macro Expansion" type="BlazeCommandRunConfigurationType"
                factoryName="Bazel Command" nameIsGenerated="true">
     <blaze-settings handler-id="BlazeGoRunConfigurationHandlerProvider" blaze-command="test"
                     kind="go_test">

@@ -138,6 +138,7 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
     state.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
     state.getExeFlagsState().setRawFlags(ImmutableList.of("--exeFlag1"));
     state.getBlazeBinaryState().setBlazeBinary("/usr/bin/blaze");
+    state.getUserEnvVarsState().setEnvVars(ImmutableMap.of("HELLO", "world"));
 
     editor.resetFrom(configuration);
     BlazeCommandRunConfiguration readConfiguration =

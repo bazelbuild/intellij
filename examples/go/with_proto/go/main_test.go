@@ -34,3 +34,23 @@ func TestFlagMacros(t *testing.T) {
 		}
 	}
 }
+
+func TestEnvVars(t *testing.T) {
+	testCases := []struct {
+		envVar     string
+		validation func(string) bool
+		error      string
+	}{
+		{
+			envVar:     "ENV_VAR_IN_PLAIN_RUN_CONFIG",
+			validation: func(expanded string) bool { return expanded == "it works" },
+			error:      "Expected value to be 'it works'",
+		},
+	}
+	for _, testCase := range testCases {
+		expanded := os.Getenv(testCase.envVar)
+		if !testCase.validation(expanded) {
+			t.Errorf("Failure validating expansion for env var %s: Got, %s, error is: %s", testCase.envVar, expanded, testCase.error)
+		}
+	}
+}
