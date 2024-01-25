@@ -64,19 +64,25 @@ public class BlazeJUnitTestFilterFlagsTest extends BlazeTestCase {
   }
 
   @Test
-  public void testParameterizedIgnoredForSingleClass() {
+  public void testParameterizedIgnoredForSingleClassJUnit4() {
     assertThat(
             BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(
-                "com.google.idea.ClassName", JUnitVersion.JUNIT_4, ImmutableList.of(), null))
-        .isEqualTo("com.google.idea.ClassName#");
+                    "com.google.idea.ClassName",
+                    JUnitVersion.JUNIT_4,
+                    ImmutableList.of(),
+                    ParameterizedTestInfo.create("ignored", "-ignored")))
+            .isEqualTo("com.google.idea.ClassName#");
   }
 
   @Test
   public void testParameterizedIgnoredForSingleClassJUnit5() {
     assertThat(
-        BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(
-            "com.google.idea.ClassName", JUnitVersion.JUNIT_5, ImmutableList.of(), null))
-        .isEqualTo("com.google.idea.ClassName#");
+            BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(
+                    "com.google.idea.ClassName",
+                    JUnitVersion.JUNIT_5,
+                    ImmutableList.of(),
+                    ParameterizedTestInfo.create("ignored", "-ignored")))
+            .isEqualTo("com.google.idea.ClassName#");
   }
 
   @Test

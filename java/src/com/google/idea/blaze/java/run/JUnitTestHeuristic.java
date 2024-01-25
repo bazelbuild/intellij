@@ -50,7 +50,8 @@ public class JUnitTestHeuristic implements TestTargetHeuristic {
     } else if (JUnitUtil.isJUnit3TestClass(psiClass)) {
       return Optional.of(JUnitVersion.JUNIT_3);
     } else {
-      return Optional.empty();
+      // Fall back to Junit3
+      return Optional.of(JUnitVersion.JUNIT_3);
     }
   }
 
@@ -82,7 +83,7 @@ public class JUnitTestHeuristic implements TestTargetHeuristic {
       File sourceFile,
       @Nullable TestSize testSize) {
     Optional<JUnitVersion> sourceVersion = junitVersion(sourcePsiFile);
-    if (sourceVersion == null || sourceVersion.isEmpty()) {
+    if (sourceVersion.isEmpty()) {
       return false;
     }
     String targetName = target.label.targetName().toString().toLowerCase();
@@ -97,15 +98,13 @@ public class JUnitTestHeuristic implements TestTargetHeuristic {
     return false;
   }
 
-  @Nullable
   private Optional<JUnitVersion> junitVersion(@Nullable PsiFile psiFile) {
     if (!(psiFile instanceof PsiClassOwner)) {
-      return null;
+      return Optional.empty();
     }
     return ReadAction.compute(() -> junitVersion((PsiClassOwner) psiFile));
   }
 
-  @Nullable
   private Optional<JUnitVersion> junitVersion(PsiClassOwner classOwner) {
     for (PsiClass psiClass : classOwner.getClasses()) {
       Optional<JUnitVersion> version = jUnitVersion(psiClass);

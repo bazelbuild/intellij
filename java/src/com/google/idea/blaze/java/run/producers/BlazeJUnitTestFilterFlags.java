@@ -122,7 +122,7 @@ public final class BlazeJUnitTestFilterFlags {
     // java_test target they're run from.
     Optional<JUnitVersion> version = JUnitTestHeuristic.jUnitVersion(methodsPerClass.keySet());
     if (version.isEmpty()) {
-      return null;
+      return testFilterForClassesAndMethods(methodsPerClass, JUnitVersion.JUNIT_3);
     }
     return testFilterForClassesAndMethods(methodsPerClass, version.get());
   }

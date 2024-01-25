@@ -41,6 +41,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+
 import java.util.Arrays;
 import java.util.List;
 import org.junit.After;
@@ -88,6 +89,11 @@ public class MultipleJavaClassesTestContextProviderTest
               final ModifiableRootModel model =
                   ModuleRootManager.getInstance(testFixture.getModule()).getModifiableModel();
               ContentEntry contentEntry = model.getContentEntries()[0];
+              // There is a global content entry, `//src`, which is necessary to infer targets from test classes.
+              // This is set outside of these test (somewhere in the superclass) once per run, not once per test.
+              // If we just use contentEntry.clearSourceDirs() here, it won't be re-created, and tests that assume
+              // it exists will fail.
+              // Therefore, we only delete the content entries that this test has created.
               Arrays.stream(contentEntry.getSourceFolders()).forEach((folder) -> {
                 if (folder.getFile().equals(pkgRoot)) {
                   contentEntry.removeSourceFolder(folder);
