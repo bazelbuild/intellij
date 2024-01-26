@@ -73,6 +73,7 @@ def _restricted_deps_aspect_impl(target, ctx):
 
     return [RestrictedInfo(dependencies = dependencies)]
 
+# buildifier: disable=function-docstring
 def validate_restrictions(dependencies, allowed_external, existing_violations):
     violations = sorted([str(d.label) for d in dependencies.keys()])
     if violations != sorted(existing_violations):
