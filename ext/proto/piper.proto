@@ -24,7 +24,7 @@ option java_package = "com.google.idea.blaze.ext";
 service PiperService {
   // Get workspaces
   rpc GetWorkspaces(GetWorkspacesRequest)
-      returns (stream.com.google.idea.blaze.ext.GetWorkspacesResponse) {}
+      returns (stream GetWorkspacesResponse) {}
 
   // Creates or updates a Piper workspace.
   rpc UpdateWorkspace(UpdateWorkspaceRequest)
@@ -36,15 +36,14 @@ service PiperService {
 
   // Resolves conflicts in a Piper workspace after sync or integrate.
   rpc ResolveConflicts(ResolveConflictsRequest)
-      returns (stream.com.google.idea.blaze.ext.ResolveConflictsResponse) {}
+      returns (stream ResolveConflictsResponse) {}
 
   // Read the content of a depot or workspace file.
-  rpc ReadFiles(ReadFilesRequest)
-      returns (stream.com.google.idea.blaze.ext.ReadFilesResponse) {}
+  rpc ReadFiles(ReadFilesRequest) returns (stream ReadFilesResponse) {}
 
   // Update the state and type of files that are open in a Piper workspace.
   rpc UpdateFileStates(UpdateFileStatesRequest)
-      returns (stream.com.google.idea.blaze.ext.UpdateFileStatesResponse) {}
+      returns (stream UpdateFileStatesResponse) {}
 }
 
 message GetWorkspacesRequest {
