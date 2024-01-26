@@ -11,7 +11,7 @@ public final class ChangesListViewCreator {
   }
 
   public static void update(ChangesListView changesListView, DefaultTreeModel treeModel) {
-    // TODO(b/320558793)
+    changesListView.setModel(treeModel);
   }
 
   private ChangesListViewCreator() {}
