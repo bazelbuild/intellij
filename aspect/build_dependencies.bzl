@@ -165,6 +165,7 @@ def _collect_dependencies_impl(target, ctx):
         ctx.attr.exclude,
         ctx.attr.always_build_rules,
         ctx.attr.generate_aidl_classes,
+        ctx.attr.use_generated_srcjars,
         test_mode = False,
     )
 
@@ -176,6 +177,7 @@ def _collect_all_dependencies_for_tests_impl(target, ctx):
         exclude = None,
         always_build_rules = ALWAYS_BUILD_RULES,
         generate_aidl_classes = None,
+        use_generated_srcjars = False,
         test_mode = True,
     )
 
@@ -217,6 +219,7 @@ def _collect_own_java_artifacts(
         dependency_infos,
         always_build_rules,
         generate_aidl_classes,
+        use_generated_srcjars,
         target_is_within_project_scope):
     rule = ctx.rule
 
@@ -283,7 +286,7 @@ def _collect_own_java_artifacts(
         if JavaInfo in target:
             for java_output in target[JavaInfo].java_outputs:
                 # Prefer source jars if they exist:
-                if java_output.generated_source_jar:
+                if use_generated_srcjars and java_output.generated_source_jar:
                     own_gensrc_files.append(java_output.generated_source_jar)
                 elif java_output.generated_class_jar:
                     generated_class_jars.append(java_output.generated_class_jar)
@@ -340,6 +343,7 @@ def _collect_own_and_dependency_java_artifacts(
         dependency_infos,
         always_build_rules,
         generate_aidl_classes,
+        use_generated_srcjars,
         target_is_within_project_scope):
     own_files = _collect_own_java_artifacts(
         target,
@@ -347,6 +351,7 @@ def _collect_own_and_dependency_java_artifacts(
         dependency_infos,
         always_build_rules,
         generate_aidl_classes,
+        use_generated_srcjars,
         target_is_within_project_scope,
     )
 
@@ -443,6 +448,7 @@ def _collect_dependencies_core_impl(
         exclude,
         always_build_rules,
         generate_aidl_classes,
+        use_generated_srcjars,
         test_mode):
     dep_infos = _collect_java_dependencies_core_impl(
         target,
@@ -451,6 +457,7 @@ def _collect_dependencies_core_impl(
         exclude,
         always_build_rules,
         generate_aidl_classes,
+        use_generated_srcjars,
         test_mode,
     )
     if CcInfo in target:
@@ -466,6 +473,7 @@ def _collect_java_dependencies_core_impl(
         exclude,
         always_build_rules,
         generate_aidl_classes,
+        use_generated_srcjars,
         test_mode):
     target_is_within_project_scope = _target_within_project_scope(str(target.label), include, exclude) and not test_mode
     dependency_infos = _get_followed_java_dependency_infos(ctx.rule)
@@ -476,6 +484,7 @@ def _collect_java_dependencies_core_impl(
         dependency_infos,
         always_build_rules,
         generate_aidl_classes,
+        use_generated_srcjars,
         target_is_within_project_scope,
     )
 
@@ -487,6 +496,7 @@ def _collect_java_dependencies_core_impl(
             dependency_infos,
             always_build_rules,
             generate_aidl_classes,
+            use_generated_srcjars,
             target_is_within_project_scope = True,
         )
         test_mode_own_files = struct(
@@ -720,6 +730,10 @@ collect_dependencies = aspect(
         ),
         "generate_aidl_classes": attr.bool(
             doc = "If True, generates classes for aidl files included as source for the project targets",
+            default = False,
+        ),
+        "use_generated_srcjars": attr.bool(
+            doc = "If True, collects generated source jars for a target instead of compiled jar",
             default = False,
         ),
         "_build_zip": attr.label(
