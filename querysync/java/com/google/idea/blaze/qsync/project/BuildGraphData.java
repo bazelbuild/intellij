@@ -364,6 +364,10 @@ public abstract class BuildGraphData {
     return fileToTarget().keySet();
   }
 
+  public boolean containsSourceFile(Path path) {
+    return fileToTarget().containsKey(path);
+  }
+
   /**
    * Returns a list of regular (java/kt) source files owned by an Android target, relative to the
    * workspace root.
