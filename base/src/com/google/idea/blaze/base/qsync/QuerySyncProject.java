@@ -39,9 +39,12 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.VcsException;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.vcs.VcsState;
+import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
@@ -62,9 +65,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -99,6 +104,8 @@ public class QuerySyncProject {
 
   private final ProjectViewManager projectViewManager;
   private final BuildSystem buildSystem;
+  private final Optional<BlazeVcsHandler> vcsHandler;
+  private final AtomicReference<Instant> lastSyncTime = new AtomicReference<>(null);
 
   private volatile QuerySyncProjectData projectData;
 
@@ -123,7 +130,8 @@ public class QuerySyncProject {
       WorkspaceLanguageSettings workspaceLanguageSettings,
       QuerySyncSourceToTargetMap sourceToTargetMap,
       ProjectViewManager projectViewManager,
-      BuildSystem buildSystem) {
+      BuildSystem buildSystem,
+      Optional<BlazeVcsHandler> vcsHandler) {
     this.project = project;
     this.snapshotFilePath = snapshotFilePath;
     this.snapshotHolder = snapshotHolder;
@@ -145,6 +153,7 @@ public class QuerySyncProject {
     this.sourceToTargetMap = sourceToTargetMap;
     this.projectViewManager = projectViewManager;
     this.buildSystem = buildSystem;
+    this.vcsHandler = vcsHandler;
     projectData = new QuerySyncProjectData(workspacePathResolver, workspaceLanguageSettings);
   }
 
@@ -222,6 +231,7 @@ public class QuerySyncProject {
 
   public void sync(BlazeContext parentContext, Optional<PostQuerySyncData> lastQuery)
       throws BuildException {
+    lastSyncTime.set(Instant.now());
     try (BlazeContext context = BlazeContext.create(parentContext)) {
       context.push(new SyncQueryStatsScope());
       try {
@@ -435,6 +445,63 @@ public class QuerySyncProject {
     }
     Path workspaceRelative = workspaceRoot.path().relativize(absolutePath);
     return projectDefinition.isExcluded(workspaceRelative);
+  }
+
+  /** Returns true if the file is in the project and has been added since the last sync */
+  public boolean projectFileAddedSinceSync(Path absolutePath) {
+    if (!workspaceRoot.isInWorkspace(absolutePath.toFile())) {
+      return false;
+    }
+
+    if (!containsPath(absolutePath)) {
+      return false;
+    }
+
+    // Check known source files.
+    Path workspaceRelative = workspaceRoot.path().relativize(absolutePath);
+    if (snapshotHolder
+        .getCurrent()
+        .map(s -> s.graph().getAllSourceFiles().contains(workspaceRelative))
+        .orElse(false)) {
+      return false;
+    }
+
+    VcsState vcsState =
+        snapshotHolder.getCurrent().flatMap(s -> s.queryData().vcsState()).orElse(null);
+    if (vcsState == null) {
+      return false;
+    }
+
+    // Check files added to the current working set (includes non-source files)
+    if (vcsState.workingSet.stream()
+        .anyMatch(
+            change ->
+                change.operation == Operation.ADD
+                    && change.workspaceRelativePath.equals(workspaceRelative))) {
+      return false;
+    }
+
+    if (vcsHandler.isEmpty()) {
+      return false;
+    }
+
+    // Check if the file exists in the upstream revision the working set is based on.
+    return vcsHandler
+        .map(
+            handler -> {
+              try {
+                return !handler.fileExistsUpstream(
+                    vcsState.upstreamRevision,
+                    WorkspacePath.createIfValid(workspaceRelative.toString()));
+              } catch (VcsException e) {
+                return false;
+              }
+            })
+        .orElse(false);
+  }
+
+  public Optional<Instant> getLastSyncTime() {
+    return Optional.ofNullable(lastSyncTime.get());
   }
 
   /** Returns all external dependencies of a given label */
