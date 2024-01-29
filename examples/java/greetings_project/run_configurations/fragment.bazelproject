@@ -1,0 +1,8 @@
+import_run_configurations:
+  # Tests that validate that environment variable passing works.
+  # This configuration should only be executed on both 'run' (the green arrow) mode.
+  run_configurations/Bazel_test_EnvVarsTest_testEnvVars.xml
+  run_configurations/Bazel_test_EnvVarsTest.xml
+  run_configurations/Bazel_test_greeting_lib_env_vars_test.xml
+
+

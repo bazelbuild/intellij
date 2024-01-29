@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.run.state;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.BlazeCommandName;
@@ -59,6 +60,7 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
     state.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
     state.getExeFlagsState().setRawFlags(ImmutableList.of("--exeFlag1"));
     state.getBlazeBinaryState().setBlazeBinary("/usr/bin/blaze");
+    state.getUserEnvVarsState().setEnvVars(ImmutableMap.of("HELLO", "world"));
 
     Element element = new Element("test");
     state.writeExternal(element);
@@ -72,6 +74,7 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
         .inOrder();
     assertThat(readState.getExeFlagsState().getRawFlags()).containsExactly("--exeFlag1");
     assertThat(readState.getBlazeBinaryState().getBlazeBinary()).isEqualTo("/usr/bin/blaze");
+    assertThat(readState.getUserEnvVarsState().getData().getEnvs()).isEqualTo(ImmutableMap.of("HELLO", "world"));
   }
 
   @Test
@@ -90,6 +93,8 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
         .isEqualTo(state.getExeFlagsState().getRawFlags());
     assertThat(readState.getBlazeBinaryState().getBlazeBinary())
         .isEqualTo(state.getBlazeBinaryState().getBlazeBinary());
+    assertThat(readState.getUserEnvVarsState().getData().getEnvs())
+            .isEqualTo(state.getUserEnvVarsState().getData().getEnvs());
   }
 
   @Test
@@ -155,6 +160,8 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
         .isEqualTo(state.getExeFlagsState().getRawFlags());
     assertThat(readState.getBlazeBinaryState().getBlazeBinary())
         .isEqualTo(state.getBlazeBinaryState().getBlazeBinary());
+    assertThat(readState.getUserEnvVarsState().getData().getEnvs())
+            .isEqualTo(state.getUserEnvVarsState().getData().getEnvs());
   }
 
   @Test
@@ -174,5 +181,7 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
         .isEqualTo(state.getExeFlagsState().getRawFlags());
     assertThat(readState.getBlazeBinaryState().getBlazeBinary())
         .isEqualTo(state.getBlazeBinaryState().getBlazeBinary());
+    assertThat(readState.getUserEnvVarsState().getData().getEnvs())
+            .isEqualTo(state.getUserEnvVarsState().getData().getEnvs());
   }
 }

@@ -32,7 +32,7 @@ public interface SourceFileFinder {
       throw new IllegalStateException("More than 1 extension for " + EP_NAME.getName() + " is not supported");
     }
 
-    SourceFileFinder finder = EP_NAME.getPoint().extensions().findFirst().orElse(null);
+    SourceFileFinder finder = EP_NAME.getPoint().getExtensionList().stream().findFirst().orElse(null);
     if (finder != null) {
         return finder.getSourceFileForHeaderFile(project, headerFile);
     }

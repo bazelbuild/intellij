@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.project.Project;
 import java.io.InputStream;
+import java.util.Map;
 
 /**
  * A fake for {@link BlazeCommandRunner} that doesn't execute the build, but returns results from
@@ -58,10 +59,11 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
 
   @Override
   public BlazeBuildOutputs run(
-      Project project,
-      BlazeCommand.Builder blazeCommandBuilder,
-      BuildResultHelper buildResultHelper,
-      BlazeContext context)
+          Project project,
+          BlazeCommand.Builder blazeCommandBuilder,
+          BuildResultHelper buildResultHelper,
+          BlazeContext context,
+          Map<String, String> envVars)
       throws BuildException {
     command = blazeCommandBuilder.build();
     try {
@@ -76,10 +78,11 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
 
   @Override
   public BlazeTestResults runTest(
-      Project project,
-      BlazeCommand.Builder blazeCommandBuilder,
-      BuildResultHelper buildResultHelper,
-      BlazeContext context) {
+          Project project,
+          BlazeCommand.Builder blazeCommandBuilder,
+          BuildResultHelper buildResultHelper,
+          BlazeContext context,
+          Map<String, String> envVars) {
     return BlazeTestResults.NO_RESULTS;
   }
 

@@ -49,6 +49,9 @@ import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.util.ArrayList;
+
+import kotlin.sequences.Sequence;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -123,7 +126,7 @@ public class KotlinSyncAugmenterTest extends BlazeTestCase {
             .build();
     ArrayList<BlazeJarLibrary> genJars = new ArrayList<>();
 
-    for (BlazeJavaSyncAugmenter augmenter : augmenters) {
+    for (BlazeJavaSyncAugmenter augmenter : toIterable(augmenters)) { // #api233 - in 2024.1 ExtensionPointImpl implements Sequenec instead of Iterable
       augmenter.addJarsForSourceTarget(
           workspaceLanguageSettings, projectViewSet, target, new ArrayList<>(), genJars);
     }
@@ -166,7 +169,8 @@ public class KotlinSyncAugmenterTest extends BlazeTestCase {
             .build();
     ArrayList<BlazeJarLibrary> genJars = new ArrayList<>();
 
-    for (BlazeJavaSyncAugmenter augmenter : augmenters) {
+    for (BlazeJavaSyncAugmenter augmenter : toIterable(augmenters)) { // #api233 - in 2024.1 ExtensionPointImpl implements Sequence instead of Iterable
+
       augmenter.addJarsForSourceTarget(
           workspaceLanguageSettings, projectViewSet, target, new ArrayList<>(), genJars);
     }
@@ -183,5 +187,13 @@ public class KotlinSyncAugmenterTest extends BlazeTestCase {
 
   private static ArtifactLocation source(String relativePath) {
     return ArtifactLocation.builder().setRelativePath(relativePath).setIsSource(true).build();
+  }
+
+  private static <T> Iterable<T> toIterable(Iterable<T> iterable) {
+    return iterable;
+  }
+
+  private static <T> Iterable<T> toIterable(Sequence<T> sequence) {
+    return SequencesKt.asIterable(sequence);
   }
 }

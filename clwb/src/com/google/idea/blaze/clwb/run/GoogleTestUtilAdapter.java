@@ -32,7 +32,7 @@ public interface GoogleTestUtilAdapter {
       throw new IllegalStateException("More than 1 extension for " + EP_NAME.getName() + " is not supported");
     }
 
-    GoogleTestUtilAdapter adapter = EP_NAME.getPoint().extensions().findFirst().orElse(null);
+    GoogleTestUtilAdapter adapter = EP_NAME.getPoint().getExtensionList().stream().findFirst().orElse(null);
     if (adapter != null) {
       return adapter.findGoogleTestSymbol(project, testScopeElement -> true);
     }
