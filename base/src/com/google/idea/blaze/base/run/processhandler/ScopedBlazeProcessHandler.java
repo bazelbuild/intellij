@@ -69,7 +69,6 @@ public final class ScopedBlazeProcessHandler extends KillableColoredProcessHandl
    *     context.
    * @throws ExecutionException
    */
-
   public ScopedBlazeProcessHandler(
       Project project,
       GeneralCommandLine command,

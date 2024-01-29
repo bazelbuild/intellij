@@ -760,7 +760,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       aspectStrategy.addAspectAndOutputGroups(
           builder, outputGroups, activeLanguages, onlyDirectDeps);
 
-      return invoker.getCommandRunner().run(project, builder, buildResultHelper, context);
+      return invoker.getCommandRunner().run(project, builder, buildResultHelper, context, ImmutableMap.of());
     }
   }
 }

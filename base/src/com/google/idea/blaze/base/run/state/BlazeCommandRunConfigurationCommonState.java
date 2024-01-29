@@ -39,18 +39,20 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
   protected final BlazeCommandState command;
   protected final RunConfigurationFlagsState blazeFlags;
   protected final RunConfigurationFlagsState exeFlags;
+  protected final EnvironmentVariablesState envVars;
   protected final BlazeBinaryState blazeBinary;
 
   public BlazeCommandRunConfigurationCommonState(BuildSystemName buildSystemName) {
     command = new BlazeCommandState();
     blazeFlags = new RunConfigurationFlagsState(USER_BLAZE_FLAG_TAG, buildSystemName + " flags:");
     exeFlags = new RunConfigurationFlagsState(USER_EXE_FLAG_TAG, "Executable flags:");
+    envVars = new EnvironmentVariablesState();
     blazeBinary = new BlazeBinaryState();
   }
 
   @Override
   protected ImmutableList<RunConfigurationState> initializeStates() {
-    return ImmutableList.of(command, blazeFlags, exeFlags, blazeBinary);
+    return ImmutableList.of(command, blazeFlags, exeFlags, envVars, blazeBinary);
   }
 
   /** @return The list of blaze flags that the user specified manually. */
@@ -61,6 +63,11 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
   /** @return The list of executable flags the user specified manually. */
   public RunConfigurationFlagsState getExeFlagsState() {
     return exeFlags;
+  }
+
+  /** @return The environment variables the user specified manually. */
+  public EnvironmentVariablesState getUserEnvVarsState() {
+    return envVars;
   }
 
   public BlazeBinaryState getBlazeBinaryState() {
