@@ -1,6 +1,7 @@
 v2024.01.30
 ===========
-
+* feat: Allow environment variables in run configurations #5885
+* Support JetBrains IDEs 2024.1 #5960
 
 v2024.01.16
 ===========
