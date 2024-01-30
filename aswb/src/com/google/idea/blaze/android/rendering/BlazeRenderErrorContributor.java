@@ -18,14 +18,12 @@ package com.google.idea.blaze.android.rendering;
 import static com.android.SdkConstants.ANDROID_MANIFEST_XML;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
-import com.android.tools.idea.rendering.RenderErrorContributor;
-import com.android.tools.idea.rendering.RenderUtils;
+import com.android.tools.idea.rendering.RenderErrorContributorCompat;
 import com.android.tools.idea.rendering.errors.ui.RenderErrorModel;
 import com.android.tools.idea.ui.designer.EditorDesignSurface;
-import com.android.tools.rendering.HtmlLinkManager;
 import com.android.tools.rendering.HtmlLinkManagerCompat;
-import com.android.tools.rendering.RenderLogger;
-import com.android.tools.rendering.RenderResult;
+import com.android.tools.rendering.RenderLoggerCompat;
+import com.android.tools.rendering.RenderResultCompat;
 import com.android.utils.HtmlBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
@@ -50,6 +48,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -63,116 +62,26 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.function.Function;
-import javax.swing.JEditorPane;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.HTMLFrameHyperlinkEvent;
+import org.jetbrains.annotations.Nullable;
 
 /** Contribute blaze specific render errors. */
-public class BlazeRenderErrorContributor implements RenderErrorContributor {
-  private final EditorDesignSurface designSurface;
-  private final RenderLogger logger;
+public class BlazeRenderErrorContributor extends RenderErrorContributorCompat {
+  private final RenderLoggerCompat logger;
   private final Module module;
-  private final PsiFile sourceFile;
   private final Project project;
-  private final HtmlLinkManager linkManager;
-  private final HyperlinkListener linkHandler;
-  private final Set<RenderErrorModel.Issue> issues = new LinkedHashSet<>();
 
-  public BlazeRenderErrorContributor(EditorDesignSurface surface, RenderResult result) {
-    designSurface = surface;
-    logger = result.getLogger();
+  public BlazeRenderErrorContributor(
+      EditorDesignSurface surface, RenderResultCompat result, @Nullable DataContext dataContext) {
+    super(surface, result, dataContext);
+    logger = new RenderLoggerCompat(result);
     module = result.getModule();
-    sourceFile = result.getSourceFile();
     project = module.getProject();
-    linkManager = logger.getLinkManager();
-    linkHandler =
-        e -> {
-          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            JEditorPane pane = (JEditorPane) e.getSource();
-            if (e instanceof HTMLFrameHyperlinkEvent) {
-              HTMLFrameHyperlinkEvent evt = (HTMLFrameHyperlinkEvent) e;
-              HTMLDocument doc = (HTMLDocument) pane.getDocument();
-              doc.processHTMLFrameHyperlinkEvent(evt);
-              return;
-            }
-
-            performClick(e.getDescription());
-          }
-        };
-  }
-
-  private HtmlLinkManager getLinkManager() {
-    return linkManager;
-  }
-
-  private Collection<RenderErrorModel.Issue> getIssues() {
-    return Collections.unmodifiableCollection(issues);
-  }
-
-  private RenderErrorModel.Issue.Builder addIssue() {
-    return new RenderErrorModel.Issue.Builder() {
-      @Override
-      public RenderErrorModel.Issue build() {
-        RenderErrorModel.Issue built = super.build();
-        issues.add(built);
-        return built;
-      }
-    }.setLinkHandler(linkHandler);
-  }
-
-  private void performClick(String url) {
-    linkManager.handleUrl(
-        url,
-        module,
-        sourceFile,
-        true,
-        new HtmlLinkManager.RefreshableSurface() {
-          @Override
-          public void handleRefreshRenderUrl() {
-            if (designSurface != null) {
-              // TODO(b/321801969): Remove and replace with direct call when in repo.
-              // Use reflection to getConfigurations() from designSurface. Can't call directly
-              // because it returns an incompatible version of ImmutableCollection.
-              // RenderUtils.clearCache(designSurface.getConfigurations()); would fail at runtime.
-              try {
-                Method getConfigurationsMethod =
-                    EditorDesignSurface.class.getMethod("getConfigurations", null);
-                Object configurations = getConfigurationsMethod.invoke(designSurface);
-                Method clearCacheMethod =
-                    RenderUtils.class.getMethod(
-                        "clearCache", getConfigurationsMethod.getReturnType());
-                clearCacheMethod.invoke(null, configurations);
-              } catch (NoSuchMethodException ex) {
-                throw new RuntimeException(
-                    "Error using reflection to get getConfigurations() instance method: " + ex);
-              } catch (IllegalAccessException ex) {
-                throw new RuntimeException(
-                    "Error accessing getConfigurations() instance method" + ex);
-              } catch (InvocationTargetException ex) {
-                throw new RuntimeException("Error invoking target getConfigurations(): " + ex);
-              }
-              var unused = designSurface.forceUserRequestedRefresh();
-            }
-          }
-
-          @Override
-          public void requestRender() {
-            if (designSurface != null) {
-              var unused = designSurface.forceUserRequestedRefresh();
-            }
-          }
-        });
   }
 
   @Override

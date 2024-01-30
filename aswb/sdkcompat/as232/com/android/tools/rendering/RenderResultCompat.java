@@ -78,7 +78,7 @@ public final class RenderResultCompat {
     @Override
     public RenderErrorContributor getContributor(
         @Nullable EditorDesignSurface surface, RenderResult result) {
-      return new BlazeRenderErrorContributor(surface, result);
+      return new BlazeRenderErrorContributor(surface, new RenderResultCompat(result), null);
     }
   }
 }
