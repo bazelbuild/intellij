@@ -20,10 +20,9 @@ import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.devices.Abi;
 import com.android.tools.idea.run.AndroidDevice;
 import com.android.tools.idea.run.LaunchCompatibility;
-import com.intellij.util.Function;
 import java.util.EnumSet;
 import java.util.Set;
-import org.jetbrains.android.facet.AndroidFacet;
+import java.util.function.Supplier;
 import org.jetbrains.annotations.Nullable;
 
 /** Compat class for {@link AndroidDevice} for changed canRun signature. #api211 */
@@ -33,8 +32,7 @@ public abstract class AndroidDeviceCompat implements AndroidDevice {
   public LaunchCompatibility canRun(
       com.android.sdklib.AndroidVersion androidVersion,
       IAndroidTarget iAndroidTarget,
-      AndroidFacet facet,
-      Function<AndroidFacet, EnumSet<HardwareFeature>> getRequiredHardwareFeatures,
+      Supplier<EnumSet<HardwareFeature>> getRequiredHardwareFeatures,
       @Nullable Set<Abi> set) {
     return null;
   }

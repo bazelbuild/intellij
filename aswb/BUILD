@@ -103,18 +103,21 @@ java_library(
         "android-studio-2023.1": [
             "sdkcompat/as231/com/android/tools/rendering/RenderResultCompat.java",
             "tests/utils/sdkcompat/as231/com/android/tools/idea/sdk/IdeSdksCompat.java",
+            "tests/utils/sdkcompat/as231/com/google/idea/blaze/android/MobileInstallBuildStepTestCase.java",
             "tests/utils/sdkcompat/as231/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
             "tests/utils/sdkcompat/as231/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
         ],
         "android-studio-2023.2": [
             "sdkcompat/as232/com/android/tools/rendering/RenderResultCompat.java",
             "tests/utils/sdkcompat/as232/com/android/tools/idea/sdk/IdeSdksCompat.java",
+            "tests/utils/sdkcompat/as232/com/google/idea/blaze/android/MobileInstallBuildStepTestCase.java",
             "tests/utils/sdkcompat/as232/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
             "tests/utils/sdkcompat/as232/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
         ],
         "android-studio-2023.3": [
             "sdkcompat/as233/com/android/tools/rendering/RenderResultCompat.java",
             "tests/utils/sdkcompat/as233/com/android/tools/idea/sdk/IdeSdksCompat.java",
+            "tests/utils/sdkcompat/as233/com/google/idea/blaze/android/MobileInstallBuildStepTestCase.java",
             "tests/utils/sdkcompat/as233/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
             "tests/utils/sdkcompat/as233/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
         ],
@@ -122,7 +125,6 @@ java_library(
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
         ":aswb_lib",
-        ":unit_test_utils",
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",

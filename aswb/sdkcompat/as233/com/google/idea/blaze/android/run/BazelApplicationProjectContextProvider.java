@@ -35,7 +35,7 @@ public class BazelApplicationProjectContextProvider
 
   @Nullable
   @Override
-  public ApplicationProjectContext getApplicationProjectContextProvider(Client client) {
+  public ApplicationProjectContext getApplicationProjectContext(Client client) {
     ClientData clientData = client.getClientData();
     if (clientData == null) {
       return null;

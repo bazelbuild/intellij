@@ -281,6 +281,11 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
     return AndroidPlatforms.getInstance(module).getTarget().getBootClasspath();
   }
 
+  @Override
+  public boolean isAndroidProject() {
+    return ProjectFacetManager.getInstance(project).hasFacets(AndroidFacet.ID);
+  }
+
   private static boolean hasPackageName(AndroidFacet facet, String packageName) {
     String nameFromFacet = PackageNameUtils.getPackageName(facet.getModule());
     if (nameFromFacet == null) {

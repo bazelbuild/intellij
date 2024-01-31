@@ -20,12 +20,13 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import com.android.ide.common.repository.GoogleMavenArtifactId;
 import com.android.projectmodel.ExternalAndroidLibrary;
 import com.android.tools.idea.projectsystem.DependencyScopeType;
+import com.android.tools.idea.rendering.PsiClassViewClass;
 import com.android.tools.module.ModuleDependencies;
+import com.android.tools.module.ViewClass;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -44,13 +45,6 @@ public class BlazeModuleDependencies implements ModuleDependencies {
   @Override
   public boolean dependsOn(@NotNull GoogleMavenArtifactId googleMavenArtifactId) {
     return false;
-  }
-
-  @Nullable
-  @Override
-  public PsiClass findPsiClassInModuleAndDependencies(@NotNull String fqcn) {
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(module.getProject());
-    return facade.findClass(fqcn, module.getModuleWithDependenciesAndLibrariesScope(false));
   }
 
   /**
@@ -77,5 +71,13 @@ public class BlazeModuleDependencies implements ModuleDependencies {
             BlazeLightResourceClassService.getInstance(module.getProject())
                 .getWorkspaceResourcePackages())
         .build();
+  }
+
+  @Nullable
+  @Override
+  public ViewClass findViewClass(@NotNull String fqcn) {
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(module.getProject());
+    return new PsiClassViewClass(
+        facade.findClass(fqcn, module.getModuleWithDependenciesAndLibrariesScope(false)));
   }
 }
