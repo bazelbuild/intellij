@@ -16,11 +16,11 @@
 package com.google.idea.blaze.qsync.project;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth8.assertThat;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.truth.Truth8;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.testdata.BuildGraphs;
