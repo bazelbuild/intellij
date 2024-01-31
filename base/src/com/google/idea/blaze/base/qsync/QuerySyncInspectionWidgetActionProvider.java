@@ -188,7 +188,7 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
             .setTitle("Build dependencies")
             .setShortcut(ActionManager.getInstance().getKeyboardShortcut("Blaze.BuildDependencies"))
             .setDescription(
-                "Builds the external dependencies needed for this file and " + " enables analysis")
+                "Builds the external dependencies needed for this file and enables analysis")
             .setLink(
                 "Settings...",
                 () ->
