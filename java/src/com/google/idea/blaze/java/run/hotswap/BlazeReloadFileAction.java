@@ -8,6 +8,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.JavaDebugProcess;
@@ -244,9 +245,9 @@ public class BlazeReloadFileAction extends AnAction {
                     }
                 }
 
-
+                ProjectTargetManager.SyncStatus status = ProjectTargetManager.getInstance(e.getProject()).getSyncStatus(vf.toNioPath().toFile());
                 VirtualFile sourceRoot = ProjectFileIndex.getInstance(e.getProject()).getSourceRootForFile(vf);
-                e.getPresentation().setEnabled(sourceRoot != null);
+                e.getPresentation().setEnabled(sourceRoot != null && status == ProjectTargetManager.SyncStatus.SYNCED);
             } else {
                 e.getPresentation().setEnabled(false);
             }

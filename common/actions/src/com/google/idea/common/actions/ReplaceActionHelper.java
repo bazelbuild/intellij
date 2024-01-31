@@ -16,11 +16,14 @@
 package com.google.idea.common.actions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.function.Predicate;
 
 /** Helper class to conditionally replace/hide existing actions. */
@@ -141,6 +144,11 @@ public class ReplaceActionHelper {
       } else {
         originalAction.actionPerformed(e);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return originalAction.getActionUpdateThread();
     }
 
     private static void applyPresentation(
