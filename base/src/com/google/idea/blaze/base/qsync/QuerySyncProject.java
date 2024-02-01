@@ -437,6 +437,43 @@ public class QuerySyncProject {
     return projectDefinition.isExcluded(workspaceRelative);
   }
 
+  /**
+   * Returns true if the file is in the project and has been added to the workspace since the last
+   * IDE sync operation (Sync Project with BUILD files), return false otherwise, or an empty {@link
+   * Optional} if this information cannot be determined.
+   *
+   * <p>Newly added files are determined by the following conditions:
+   * <li>They are in a project source root
+   * <li>They don't exist as a known source file for a target.
+   * <li>They don't exist at the vcs snapshot at the most recent sync
+   */
+  public Optional<Boolean> projectFileAddedSinceSync(Path absolutePath) {
+    if (!workspaceRoot.isInWorkspace(absolutePath.toFile())) {
+      return Optional.of(false);
+    }
+
+    if (!containsPath(absolutePath)) {
+      return Optional.of(false);
+    }
+
+    // Check known source files.
+    Path workspaceRelative = workspaceRoot.path().relativize(absolutePath);
+    if (snapshotHolder
+        .getCurrent()
+        .map(s -> s.graph().getAllSourceFiles().contains(workspaceRelative))
+        .orElse(false)) {
+      return Optional.of(false);
+    }
+
+    Optional<Path> snapshotPath =
+        snapshotHolder
+            .getCurrent()
+            .flatMap(s -> s.queryData().vcsState())
+            .flatMap(s -> s.workspaceSnapshotPath);
+
+    return snapshotPath.map(path -> !path.resolve(workspaceRelative).toFile().exists());
+  }
+
   /** Returns all external dependencies of a given label */
   public ImmutableSet<Label> externalDependenciesFor(Label label) {
     return snapshotHolder
