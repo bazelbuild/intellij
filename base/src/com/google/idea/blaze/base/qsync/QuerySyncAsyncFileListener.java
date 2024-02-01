@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
+import com.intellij.ui.EditorNotifications;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -41,8 +42,8 @@ import javax.annotation.Nullable;
 /** {@link AsyncFileListener} for monitoring project changes requiring a re-sync */
 public class QuerySyncAsyncFileListener implements AsyncFileListener {
 
-  private final SyncRequester syncRequester;
   private final Project project;
+  private final SyncRequester syncRequester;
 
   @VisibleForTesting
   public QuerySyncAsyncFileListener(Project project, SyncRequester syncRequester) {
@@ -76,15 +77,15 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
   @Override
   @Nullable
   public ChangeApplier prepareChange(List<? extends VFileEvent> events) {
-    if (!syncOnFileChanges()) {
-      return null;
-    }
 
     if (events.stream().anyMatch(this::requiresSync)) {
       return new ChangeApplier() {
         @Override
         public void afterVfsChange() {
-          syncRequester.requestSync();
+          if (syncOnFileChanges()) {
+            syncRequester.requestSync();
+          }
+          EditorNotifications.getInstance(project).updateAllNotifications();
         }
       };
     }

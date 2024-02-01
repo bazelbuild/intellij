@@ -244,6 +244,7 @@
     <iw.actionProvider implementation="com.google.idea.blaze.base.qsync.ComposePreviewQuerySyncInspectionWidgetActionProvider"/>
     <daemon.highlightInfoFilter implementation="com.google.idea.blaze.base.qsync.QuerySyncHighlightingFilter"/>
     <trafficLightRendererContributor implementation="com.google.idea.blaze.base.qsync.QuerySyncTrafficLightRendererContributor"/>
+    <editorNotificationProvider implementation="com.google.idea.blaze.base.qsync.UnsyncedFileEditorNotificationProvider" />
 
     <projectService serviceImplementation="com.google.idea.blaze.base.command.info.BlazeInfoProvider"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.sync.SyncPhaseCoordinator"/>

@@ -444,6 +444,13 @@ public class QuerySyncManager implements Disposable {
     return syncStatus.currentOperation();
   }
 
+  public Optional<Boolean> isProjectFileAddedSinceSync(Path absolutePath) {
+    if (loadedProject == null) {
+      return Optional.empty();
+    }
+    return loadedProject.projectFileAddedSinceSync(absolutePath);
+  }
+
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> generateRenderJar(
       PsiFile psiFile, QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
