@@ -71,9 +71,11 @@ import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Message;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Session;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -170,43 +172,95 @@ public final class BlazeCWorkspace implements ProjectComponent {
             });
   }
 
-  private List<String> collectIncludes(String rootPath, TargetKey targetKey, BlazeProjectData blazeProjectData) {
+  private Path trimStart(Path value, @Nullable Path prefix) {
+    if (prefix == null || !value.startsWith(prefix)) {
+        return value;
+    }
+
+    return value.subpath(prefix.getNameCount(), value.getNameCount());
+  }
+
+  private @Nullable Path pathOf(@Nullable String value) {
+    if (value == null || value.isEmpty()) {
+        return null;
+    }
+
+    try {
+      return Path.of(value);
+    } catch (InvalidPathException e) {
+      return null;
+    }
+  }
+
+  private List<String> collectIncludes(Path root, TargetKey targetKey, BlazeProjectData blazeProjectData) {
     TargetIdeInfo targetIdeInfo = blazeProjectData.getTargetMap().get(targetKey);
     if (targetIdeInfo == null || targetIdeInfo.getcIdeInfo() == null) {
       return Collections.emptyList();
     }
 
-    ArrayList<String> includes = new ArrayList<>();
     CIdeInfo cIdeInfo = targetIdeInfo.getcIdeInfo();
-    String includePrefix = cIdeInfo.getIncludePrefix();
-    String stripPrefix = cIdeInfo.getStripIncludePrefix();
-    for (ArtifactLocation header : cIdeInfo.getHeaders()) {
-      String realPath = rootPath + "/" + header.getExecutionRootRelativePath();
-      String libPath = targetKey.getLabel().blazePackage().asPath().toString();
-      String pathUsedInSourceCode = header.getRelativePath();
-      if (pathUsedInSourceCode != null) {
-        if (libPath != null && !libPath.isEmpty() && pathUsedInSourceCode.startsWith(libPath)) {
-          pathUsedInSourceCode = pathUsedInSourceCode.substring(libPath.length() + 1);
-        }
-        if (stripPrefix != null && !stripPrefix.isEmpty() && pathUsedInSourceCode.startsWith(stripPrefix)) {
-          pathUsedInSourceCode = pathUsedInSourceCode.substring(stripPrefix.length() +
-                  (stripPrefix.endsWith("/") ? 0 : 1));
-          System.out.println("updated path = " + pathUsedInSourceCode);
-        }
-        if (includePrefix != null && !includePrefix.isEmpty()) {
-          pathUsedInSourceCode = includePrefix + "/" + pathUsedInSourceCode;
-          System.out.println("updated path 2 = " + pathUsedInSourceCode);
-        }
+    Path includePrefix = pathOf(cIdeInfo.getIncludePrefix());
+    Path stripPrefix = pathOf(cIdeInfo.getStripIncludePrefix());
 
-        includes.add("-ibazel" + pathUsedInSourceCode + "=" + realPath);
+    Path packagePath = targetKey.getLabel().blazePackage().asPath();
+
+    ArrayList<String> includes = new ArrayList<>();
+    for (ArtifactLocation header : cIdeInfo.getHeaders()) {
+      Path realPath = root.resolve(header.getExecutionRootRelativePath());
+
+      Path codePath = pathOf(header.getRelativePath());
+      if (codePath == null) {
+          continue;
       }
+
+      // if absolut strip prefix is a repository-relative path
+      if (stripPrefix != null && stripPrefix.isAbsolute()) {
+        codePath = trimStart(codePath, stripPrefix.subpath(0, stripPrefix.getNameCount()));
+      }
+
+      codePath = trimStart(codePath, packagePath);
+
+      // if not absolut strip prefix is a package-relative path
+      if (stripPrefix != null && !stripPrefix.isAbsolute()) {
+        codePath = trimStart(codePath, stripPrefix);
+      }
+
+      if (includePrefix != null) {
+        codePath = includePrefix.resolve(codePath);
+      }
+
+      includes.add("-ibazel" + codePath + "=" + realPath);
     }
 
     for (Dependency dep : targetIdeInfo.getDependencies()) {
-      includes.addAll(collectIncludes(rootPath, dep.getTargetKey(), blazeProjectData));
+      includes.addAll(collectIncludes(root, dep.getTargetKey(), blazeProjectData));
     }
 
     return includes;
+  }
+
+  private List<String> collectIncludesWithProgress(
+      Path root,
+      TargetKey targetKey,
+      BlazeProjectData blazeProjectData,
+      ProgressIndicator indicator) {
+    if (Registry.is("bazel.cpp.sync.workspace.collect.includes.disabled")) {
+      return Collections.emptyList();
+    }
+
+    indicator.pushState();
+    indicator.setIndeterminate(true);
+    indicator.setText2("Collecting includes..");
+
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    List<String> result = collectIncludes(root, targetKey, blazeProjectData);
+
+    long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+    logger.info(String.format("Collecting includes took %dms", elapsed));
+
+    indicator.popState();
+
+    return result;
   }
 
   private OCWorkspaceImpl.ModifiableModel calculateConfigurations(
@@ -301,8 +355,8 @@ public final class BlazeCWorkspace implements ProjectComponent {
                 .map(file -> "-I" + file.getAbsolutePath())
                 .collect(toImmutableList());
 
-        String rootPath = workspaceRoot.directory().getAbsolutePath();
-        ImmutableList<String> includes = ImmutableList.copyOf(collectIncludes(rootPath, targetKey, blazeProjectData));
+        Path rootPath = workspaceRoot.directory().toPath();
+        List<String> includes = collectIncludesWithProgress(rootPath, targetKey, blazeProjectData, indicator);
 
         for (VirtualFile vf : resolveConfiguration.getSources(targetKey)) {
           OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(vf);

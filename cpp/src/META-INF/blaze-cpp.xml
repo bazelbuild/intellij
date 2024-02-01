@@ -59,6 +59,7 @@
     <registryKey defaultValue="false" description="Disable absolute path trimming in debug clang builds" key="bazel.trim.absolute.path.disabled"/>
     <registryKey defaultValue="true" description="Allow external targets from source directories be imported in" key="bazel.cpp.sync.external.targets.from.directories"/>
     <registryKey defaultValue="false" description="Filter out some incompatible compiler flags (-include)" key="bazel.cpp.sync.workspace.filter.out.incompatible.flags"/>
+    <registryKey defaultValue="false" description="Disable collection of includes during sync" key="bazel.cpp.sync.workspace.collect.includes.disabled"/>
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerVersionChecker"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerWrapperProvider"
