@@ -96,6 +96,7 @@ public class QuerySyncManager implements Disposable {
   private volatile QuerySyncProject loadedProject;
 
   private final QuerySyncStatus syncStatus;
+  private final QuerySyncAsyncFileListener fileListener;
 
   private static final BoolExperiment showWindowOnAutomaticSyncErrors =
       new BoolExperiment("querysync.autosync.show.console.on.error", true);
@@ -135,7 +136,7 @@ public class QuerySyncManager implements Disposable {
     this.project = project;
     this.loader = loader != null ? loader : createProjectLoader(executor, project);
     this.syncStatus = new QuerySyncStatus(project);
-    QuerySyncAsyncFileListener.createAndListen(project, this);
+    this.fileListener = QuerySyncAsyncFileListener.createAndListen(project, this);
   }
 
   /**
@@ -210,6 +211,10 @@ public class QuerySyncManager implements Disposable {
   public SourceToTargetMap getSourceToTargetMap() {
     assertProjectLoaded();
     return loadedProject.getSourceToTargetMap();
+  }
+
+  public QuerySyncAsyncFileListener getFileListener() {
+    return fileListener;
   }
 
   @CanIgnoreReturnValue
