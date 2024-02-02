@@ -16,8 +16,8 @@
 package com.google.idea.java;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.UnknownSdkType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -41,6 +41,6 @@ public final class JavaSdkCompat {
 
   /** #api233 to inline */
   public static Sdk getNonJavaMockSdk() {
-    return new ProjectJdkImpl("", UnknownSdkType.getInstance(""), "", "");
+    return ProjectJdkTable.getInstance().createSdk("", UnknownSdkType.getInstance(""));
   }
 }
