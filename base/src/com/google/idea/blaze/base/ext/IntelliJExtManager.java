@@ -57,6 +57,9 @@ public class IntelliJExtManager {
   private static final BoolExperiment FINDINGS_SERVICE =
       new BoolExperiment("use.intellij.ext.findingsservice", false);
 
+  private static final BoolExperiment CRITIQUE_SERVICE =
+      new BoolExperiment("use.intellij.ext.critiqueservice", false);
+
   private static final BoolExperiment CODESEARCH =
       new BoolExperiment("use.intellij.ext.codesearch", false);
 
@@ -82,6 +85,8 @@ public class IntelliJExtManager {
 
   private static final BoolExperiment CHATBOT =
       new BoolExperiment("use.intellij.ext.chatbot", false);
+
+  private static final BoolExperiment PIPER = new BoolExperiment("use.intellij.ext.piper", false);
 
   public static IntelliJExtManager getInstance() {
     return ApplicationManager.getApplication().getService(IntelliJExtManager.class);
@@ -166,6 +171,10 @@ public class IntelliJExtManager {
     return isEnabled() && FINDINGS_SERVICE.getValue();
   }
 
+  public boolean isCritiqueServiceEnabled() {
+    return isEnabled() && CRITIQUE_SERVICE.getValue();
+  }
+
   public boolean isCodeSearchEnabled() {
     return isEnabled() && CODESEARCH.getValue();
   }
@@ -199,5 +208,9 @@ public class IntelliJExtManager {
 
   public boolean isBuildCleanerEnabled() {
     return isEnabled() && BUILD_CLEANER.getValue();
+  }
+
+  public boolean isPiperEnabled() {
+    return isEnabled() && PIPER.getValue();
   }
 }

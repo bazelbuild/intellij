@@ -59,7 +59,114 @@ message ListFindingsResponse {
   }
 }
 
+message PublishCommentsRequest {
+  int64 cl_number = 1;
+}
+message PublishCommentsResponse {}
+message UpdateCommentRequest {
+  int64 cl_number = 1;
+  string comment_id = 2;
+  string message = 3;
+  bool resolved = 4;
+}
+message UpdateCommentResponse {}
+message DeleteCommentRequest {
+  int64 cl_number = 1;
+  string comment_id = 2;
+}
+message DeleteCommentResponse {}
+
+enum ReplyAction {
+  REPLY_ACTION_UNKNOWN = 0;
+  REPLY_ACTION_NEW = 1;
+  REPLY_ACTION_RESOLVE = 2;
+  REPLY_ACTION_REOPEN = 3;
+  REPLY_ACTION_STICKY_LGTM = 4;
+}
+
+message PostReplyRequest {
+  int64 cl_number = 1;
+  string comment_id = 2;
+  string message = 3;
+  ReplyAction action = 4;
+}
+
+message PostReplyResponse {
+  string reply_id = 1;
+}
+
+message UpdateReplyRequest {
+  int64 cl_number = 1;
+  string comment_id = 2;
+  string reply_id = 3;
+  string message = 4;
+  ReplyAction action = 5;
+}
+
+message UpdateReplyResponse {}
+
+message DeleteReplyRequest {
+  int64 cl_number = 1;
+  string comment_id = 2;
+  string reply_id = 3;
+}
+
+message DeleteReplyResponse {}
+
 service FindingsService {
   // Runs lint checks and returns findings.
   rpc ListFindings(ListFindingsRequest) returns (stream ListFindingsResponse) {}
+}
+
+message GetCommentsRequest {
+  int64 cl_number = 1;
+}
+
+message GetCommentsResponse {
+  repeated Comment comments = 1;
+
+  message Comment {
+    string id = 1;
+    int64 timestamp_seconds = 2;
+    bool published = 3;
+    CodeReview.Location location = 4;
+    optional string context_text = 5;
+    string author = 6;
+    string message = 7;
+    bool is_active = 8;
+    repeated Approval approvals = 9;
+    repeated Reply replies = 10;
+  }
+
+  message Approval {
+    string type = 1;
+    bool approve = 2;
+    string display_name = 3;
+  }
+
+  message Reply {
+    string id = 1;
+    string author = 2;
+    bool published = 3;
+    int64 timestamp_seconds = 4;
+    string message = 5;
+  }
+}
+
+service CritiqueService {
+  // Fetches Critique comments on the given CL and returns them.
+  rpc GetComments(GetCommentsRequest) returns (GetCommentsResponse) {}
+  // Publishes any pending comments.
+  rpc PublishComments(PublishCommentsRequest)
+      returns (PublishCommentsResponse) {}
+  // Updates the comment.
+  rpc UpdateComment(UpdateCommentRequest) returns (UpdateCommentResponse) {}
+  // Deletes the comment.
+  rpc DeleteComment(DeleteCommentRequest) returns (DeleteCommentResponse) {}
+  // Adds a reply to the given comment.
+  rpc PostReply(PostReplyRequest) returns (PostReplyResponse) {}
+  // Updates the given reply.
+  rpc UpdateReply(UpdateReplyRequest) returns (UpdateReplyResponse) {}
+  // Delete the reply.
+  rpc DeleteReply(DeleteReplyRequest) returns (DeleteReplyResponse) {}
 }

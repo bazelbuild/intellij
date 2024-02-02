@@ -20,6 +20,7 @@ import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
 import com.google.idea.blaze.ext.ChatBotModelGrpc.ChatBotModelBlockingStub;
 import com.google.idea.blaze.ext.CodeSearchGrpc.CodeSearchFutureStub;
+import com.google.idea.blaze.ext.CritiqueServiceGrpc.CritiqueServiceBlockingStub;
 import com.google.idea.blaze.ext.DepServerGrpc.DepServerFutureStub;
 import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlockingStub;
 import com.google.idea.blaze.ext.FileApiGrpc.FileApiFutureStub;
@@ -28,6 +29,8 @@ import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
 import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
 import com.google.idea.blaze.ext.KytheGrpc.KytheFutureStub;
 import com.google.idea.blaze.ext.LinterGrpc.LinterFutureStub;
+import com.google.idea.blaze.ext.PiperServiceGrpc.PiperServiceBlockingStub;
+import com.google.idea.blaze.ext.PiperServiceGrpc.PiperServiceFutureStub;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.NettyChannelBuilder;
 import io.netty.channel.ChannelOption;
@@ -115,6 +118,10 @@ public class IntelliJExtClient {
     return FindingsServiceGrpc.newBlockingStub(channel);
   }
 
+  public CritiqueServiceBlockingStub getCritiqueService() {
+    return CritiqueServiceGrpc.newBlockingStub(channel);
+  }
+
   public BuildCleanerServiceFutureStub getBuildCleanerService() {
     return BuildCleanerServiceGrpc.newFutureStub(channel);
   }
@@ -125,5 +132,13 @@ public class IntelliJExtClient {
 
   public CodeSearchFutureStub getCodeSearchService() {
     return CodeSearchGrpc.newFutureStub(channel);
+  }
+
+  public PiperServiceFutureStub getPiperService() {
+    return PiperServiceGrpc.newFutureStub(channel);
+  }
+
+  public PiperServiceBlockingStub getPiperServiceBlocking() {
+    return PiperServiceGrpc.newBlockingStub(channel);
   }
 }

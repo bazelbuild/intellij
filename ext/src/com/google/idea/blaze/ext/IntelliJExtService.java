@@ -21,6 +21,7 @@ import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
 import com.google.idea.blaze.ext.ChatBotModelGrpc.ChatBotModelBlockingStub;
 import com.google.idea.blaze.ext.CodeSearchGrpc.CodeSearchFutureStub;
+import com.google.idea.blaze.ext.CritiqueServiceGrpc.CritiqueServiceBlockingStub;
 import com.google.idea.blaze.ext.DepServerGrpc.DepServerFutureStub;
 import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlockingStub;
 import com.google.idea.blaze.ext.FileApiGrpc.FileApiFutureStub;
@@ -29,6 +30,8 @@ import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
 import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
 import com.google.idea.blaze.ext.KytheGrpc.KytheFutureStub;
 import com.google.idea.blaze.ext.LinterGrpc.LinterFutureStub;
+import com.google.idea.blaze.ext.PiperServiceGrpc.PiperServiceBlockingStub;
+import com.google.idea.blaze.ext.PiperServiceGrpc.PiperServiceFutureStub;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
@@ -200,6 +203,11 @@ public final class IntelliJExtService {
     return client.getFindingsService();
   }
 
+  public CritiqueServiceBlockingStub getCritiqueService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getCritiqueService();
+  }
+
   public CodeSearchFutureStub getCodeSearchService() throws IOException {
     IntelliJExtBlockingStub unused = connect();
     return client.getCodeSearchService();
@@ -222,5 +230,19 @@ public final class IntelliJExtService {
   public DepServerFutureStub getDependencyService() throws IOException {
     IntelliJExtBlockingStub unused = connect();
     return client.getDependencyService();
+  }
+
+  public PiperServiceFutureStub getPiperService() {
+    try {
+      IntelliJExtBlockingStub unused = connect();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    return client.getPiperService();
+  }
+
+  public PiperServiceBlockingStub getPiperServiceBlocking() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getPiperServiceBlocking();
   }
 }

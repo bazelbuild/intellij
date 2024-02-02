@@ -52,6 +52,8 @@ def _get_deps(ctx):
         deps.extend(ctx.rule.attr.deps)
     if hasattr(ctx.rule.attr, "exports"):
         deps.extend(ctx.rule.attr.exports)
+    if hasattr(ctx.rule.attr, "runtime_deps"):
+        deps.extend(ctx.rule.attr.runtime_deps)
     return deps
 
 def _restricted_deps_aspect_impl(target, ctx):
@@ -71,6 +73,7 @@ def _restricted_deps_aspect_impl(target, ctx):
 
     return [RestrictedInfo(dependencies = dependencies)]
 
+# buildifier: disable=function-docstring
 def validate_restrictions(dependencies, allowed_external, existing_violations):
     violations = sorted([str(d.label) for d in dependencies.keys()])
     if violations != sorted(existing_violations):

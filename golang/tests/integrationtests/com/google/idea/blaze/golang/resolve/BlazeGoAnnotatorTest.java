@@ -137,7 +137,7 @@ public class BlazeGoAnnotatorTest extends BlazeIntegrationTestCase {
     assertThat(reference).isNotNull();
     PsiElement element = reference.getElement();
     AnnotationHolderImpl holder =
-        new AnnotationHolderImpl(new AnnotationSession(element.getContainingFile()));
+        new AnnotationHolderImpl(new AnnotationSession(element.getContainingFile()), false);
     new GoAnnotator().annotate(element, holder);
     assertThat(holder).isEmpty();
   }
