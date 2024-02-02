@@ -76,21 +76,24 @@ def _restricted_deps_aspect_impl(target, ctx):
 # buildifier: disable=function-docstring
 def validate_restrictions(dependencies, allowed_external, existing_violations):
     violations = sorted([str(d.label) for d in dependencies.keys()])
+    error = ""
     if violations != sorted(existing_violations):
         new_violations = [t for t in violations if t not in existing_violations]
         no_longer_violations = [t for t in existing_violations if t not in violations]
         if new_violations:
-            fail("These targets now depend on external targets: " + ", ".join(new_violations))
+            error += "These targets now depend on external targets:\n    " + "\n    ".join(new_violations) + "\n"
+
         if no_longer_violations:
-            fail("The following targets no longer depend on external targets, please remove from restrictions.bzl: " + ", ".join(no_longer_violations))
+            error += "The following targets no longer depend on external targets, please remove from restrictions.bzl: " + ", ".join(no_longer_violations)
 
     for target, outside_project in dependencies.items():
         invalid = [dep for dep in outside_project if not _in_set(dep, allowed_external)]
         if invalid:
-            tgts = ", ".join([str(t.label) for t in invalid])
-            error = "Invalid dependencies for target " + str(target.label) + " [" + tgts + "]\n"
-            error += "For more information see restrictions.bzl"
-            fail(error)
+            tgts = [str(t.label) for t in invalid]
+            error += "Invalid dependencies for target " + str(target.label) + "\n    " + "\n    ".join(tgts) + "\n"
+    if error != "":
+        error += "For more information see restrictions.bzl"
+        fail(error)
 
     # Check allowed_external does not contain unnecessary targets
     current_allowed_external = {}
@@ -102,8 +105,8 @@ def validate_restrictions(dependencies, allowed_external, existing_violations):
     if sorted(current_allowed_external.keys()) != sorted(allowed_external):
         no_longer_needed = [e for e in allowed_external if e not in current_allowed_external]
         if no_longer_needed:
-            tgts = ", ".join([str(t) for t in no_longer_needed])
-            fail("The following external dependencies are no longer needed: " + tgts)
+            tgts = [str(t) for t in no_longer_needed]
+            fail("The following external dependencies are no longer needed: " + "\n    " + "\n    ".join(tgts) + "\n")
 
 restricted_deps_aspect = aspect(
     implementation = _restricted_deps_aspect_impl,
