@@ -15,7 +15,10 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
@@ -36,6 +39,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.ui.EditorNotifications;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
@@ -44,6 +48,8 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
 
   private final Project project;
   private final SyncRequester syncRequester;
+
+  private final AtomicBoolean hasDirtyBuildFiles = new AtomicBoolean(false);
 
   @VisibleForTesting
   public QuerySyncAsyncFileListener(Project project, SyncRequester syncRequester) {
@@ -69,23 +75,54 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
     return new QuerySyncAsyncFileListener(project, syncRequester);
   }
 
-  public static void createAndListen(Project project, Disposable parentDisposable) {
-    VirtualFileManager.getInstance()
-        .addAsyncFileListener(create(project, parentDisposable), parentDisposable);
+  public static QuerySyncAsyncFileListener createAndListen(
+      Project project, Disposable parentDisposable) {
+    QuerySyncAsyncFileListener fileListener = create(project, parentDisposable);
+    VirtualFileManager.getInstance().addAsyncFileListener(fileListener, parentDisposable);
+    return fileListener;
+  }
+
+  public boolean hasModifiedBuildFiles() {
+    return hasDirtyBuildFiles.get();
+  }
+
+  public void clearState() {
+    hasDirtyBuildFiles.set(false);
   }
 
   @Override
   @Nullable
   public ChangeApplier prepareChange(List<? extends VFileEvent> events) {
 
-    if (events.stream().anyMatch(this::requiresSync)) {
+    ImmutableList<? extends VFileEvent> eventsRequiringSync =
+        events.stream().filter(this::requiresSync).collect(toImmutableList());
+
+    if (!eventsRequiringSync.isEmpty()) {
+      boolean buildFileModified =
+          eventsRequiringSync.stream()
+              .anyMatch(
+                  e ->
+                      Optional.ofNullable(e.getFile())
+                          .map(vf -> vf.getFileType() == BuildFileType.INSTANCE)
+                          .orElse(false));
+
       return new ChangeApplier() {
         @Override
         public void afterVfsChange() {
-          if (syncOnFileChanges()) {
-            syncRequester.requestSync();
-          }
-          EditorNotifications.getInstance(project).updateAllNotifications();
+          ApplicationManager.getApplication()
+              .invokeLater(
+                  () -> {
+                    if (UnsyncedFileEditorNotificationProvider.NOTIFY_ON_BUILD_FILE_CHANGES
+                            .getValue()
+                        && buildFileModified) {
+                      hasDirtyBuildFiles.set(true);
+                    }
+
+                    if (syncOnFileChanges()) {
+                      syncRequester.requestSync();
+                    }
+                    EditorNotifications.getInstance(project).updateAllNotifications();
+                  });
         }
       };
     }
@@ -169,6 +206,19 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
               QuerySyncActionStatsScope.create(QuerySyncAsyncFileListener.class, null),
               TaskOrigin.AUTOMATIC);
       changePending.set(false);
+    }
+  }
+
+  /**
+   * {@link com.google.idea.blaze.base.sync.SyncListener} for clearing file listener state on syncs
+   */
+  public static class QuerySyncListener implements SyncListener {
+
+    @Override
+    public void onQuerySyncStart(Project project, BlazeContext context) {
+      QuerySyncAsyncFileListener fileListener =
+          QuerySyncManager.getInstance(project).getFileListener();
+      fileListener.clearState();
     }
   }
 }

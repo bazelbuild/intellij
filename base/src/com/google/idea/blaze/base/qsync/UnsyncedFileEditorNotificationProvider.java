@@ -40,6 +40,13 @@ public class UnsyncedFileEditorNotificationProvider implements EditorNotificatio
   private static final BoolExperiment ENABLED =
       new BoolExperiment("qsync.new.file.editor.notification", true);
 
+  /**
+   * If true, shows an editor notification for any file in a package whose BUILD file has been
+   * modified since the last sync.
+   */
+  public static final BoolExperiment NOTIFY_ON_BUILD_FILE_CHANGES =
+      new BoolExperiment("qsync.package.change.editor.notification", true);
+
   @Override
   @Nullable
   public Function<? super FileEditor, ? extends JComponent> collectNotificationData(
@@ -54,17 +61,26 @@ public class UnsyncedFileEditorNotificationProvider implements EditorNotificatio
     if (QuerySyncManager.getInstance(project).operationInProgress()) {
       return null;
     }
+
+    if (NOTIFY_ON_BUILD_FILE_CHANGES.getValue()
+        && QuerySyncManager.getInstance(project).getFileListener().hasModifiedBuildFiles()) {
+      return editor ->
+          getEditorNotificationPanel(
+              project,
+              "BUILD files for this project have changed. The project may be out of sync.");
+    }
+
     Path path = virtualFile.toNioPath();
     if (!QuerySyncManager.getInstance(project).isProjectFileAddedSinceSync(path).orElse(false)) {
       return null;
     }
 
-    return editor -> getEditorNotificationPanel(project);
+    return editor -> getEditorNotificationPanel(project, "This file is not synced");
   }
 
-  private static EditorNotificationPanel getEditorNotificationPanel(Project project) {
+  private static EditorNotificationPanel getEditorNotificationPanel(Project project, String title) {
     EditorNotificationPanel panel = new EditorNotificationPanel();
-    panel.setText("This file is not synced");
+    panel.setText(title);
     panel
         .createActionLabel("Sync now", IncrementalSyncProjectAction.ID)
         .addHyperlinkListener(
