@@ -18,6 +18,7 @@ proto_library(
         "linter.proto",
         "piper.proto",
     ],
+    # END-EXTERNAL
 )
 
 java_proto_library(
@@ -33,6 +34,7 @@ java_grpc_library(
     deps = [":intellijext_java_proto"],
 )
 
+# BEGIN-EXTERNAL
 go_proto_library(
     name = "intellijext_go_proto",
     visibility = ["//visibility:public"],
@@ -44,3 +46,4 @@ go_grpc_library(
     visibility = ["//visibility:public"],
     deps = [":intellijext_go_proto"],
 )
+# END-EXTERNAL

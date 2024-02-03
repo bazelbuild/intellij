@@ -173,14 +173,24 @@ java_binary(
     name = "guava_lib",
     testonly = True,
     main_class = "None",
-    runtime_deps = ["//intellij_platform_sdk:guava"],
+    runtime_deps = [
+        # BEGIN-EXTERNAL
+        "//intellij_platform_sdk:guava",
+        # END-EXTERNAL
+        # REPO-ONLY:        "@maven//:com.google.guava.guava"
+    ],
 )
 
 java_binary(
     name = "truth_lib",
     testonly = 1,
     main_class = "None",
-    runtime_deps = ["//intellij_platform_sdk:truth"],
+    runtime_deps = [
+        # BEGIN-EXTERNAL
+        "//intellij_platform_sdk:truth",
+        # END-EXTERNAL
+        # REPO-ONLY:        "//tools/adt/idea/.idea/libraries:truth"
+    ],
 )
 
 intellij_integration_test_suite(
