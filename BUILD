@@ -20,6 +20,7 @@ filegroup(
     visibility = BAZEL_PLUGIN_SUBPACKAGES,
 )
 
+# BEGIN-EXTERNAL
 # IJwB tests, run with an IntelliJ plugin SDK
 test_suite(
     name = "ijwb_common_tests",
@@ -64,6 +65,19 @@ test_suite(
     ],
 )
 
+# CLwB tests, run with a CLion plugin SDK
+test_suite(
+    name = "clwb_tests",
+    tests = [
+        "//base:unit_tests",
+        "//clwb:unit_tests",
+        "//cpp:unit_tests",
+        "//dart:unit_tests",
+        "//python:unit_tests",
+    ],
+)
+# END-EXTERNAL
+
 # ASwB tests, run with an Android Studio plugin SDK
 test_suite(
     name = "aswb_tests",
@@ -84,18 +98,6 @@ test_suite(
     name = "aswb_python_tests",
     tests = [
         "//python:integration_tests",
-        "//python:unit_tests",
-    ],
-)
-
-# CLwB tests, run with a CLion plugin SDK
-test_suite(
-    name = "clwb_tests",
-    tests = [
-        "//base:unit_tests",
-        "//clwb:unit_tests",
-        "//cpp:unit_tests",
-        "//dart:unit_tests",
         "//python:unit_tests",
     ],
 )

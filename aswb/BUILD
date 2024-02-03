@@ -311,7 +311,9 @@ intellij_plugin(
         "//java:plugin_library",
         "//kotlin:plugin_library",
         "//plugin_dev:plugin_library",
+        # BEGIN-EXTERNAL
         "//python:plugin_library",
+        # END-EXTERNAL
         "//skylark:plugin_library",
         "//terminal:plugin_library",
     ],

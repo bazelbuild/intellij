@@ -38,6 +38,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+// REPO-ONLY: import org.junit.Ignore;
+
 @RunWith(JUnit4.class)
 public class DependencyTrackerImplTest {
 
@@ -68,8 +70,9 @@ public class DependencyTrackerImplTest {
     assertThat(targets).isPresent();
     assertThat(targets.get().buildTargets)
         .containsExactly(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.getAssumedOnlyLabel());
-    assertThat(targets.get().expectedDependencyTargets)
-        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
+    String expected = "@com_google_guava_guava//jar:jar";
+    // REPO-ONLY:     expected = "@@maven//:com.google.guava.guava";
+    assertThat(targets.get().expectedDependencyTargets).containsExactly(Label.of(expected));
   }
 
   @Test
@@ -93,11 +96,13 @@ public class DependencyTrackerImplTest {
                 .getAssumedOnlyLabel()
                 .siblingWithName("externaldep"),
             TestData.JAVA_LIBRARY_MULTI_TARGETS.getAssumedOnlyLabel().siblingWithName("nodeps"));
-    assertThat(targets.get().expectedDependencyTargets)
-        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
+    String expected = "@com_google_guava_guava//jar:jar";
+    // REPO-ONLY:     expected = "@@maven//:com.google.guava.guava";
+    assertThat(targets.get().expectedDependencyTargets).containsExactly(Label.of(expected));
   }
 
   @Test
+  // REPO-ONLY:   @Ignore // (b/323621757)
   public void computeRequestedTargets_buildFile_nested() throws Exception {
     BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_NESTED_PACKAGE);
     Optional<RequestedTargets> targets =
@@ -119,6 +124,7 @@ public class DependencyTrackerImplTest {
   }
 
   @Test
+  // REPO-ONLY:   @Ignore // (b/323621757)
   public void computeRequestedTargets_directory() throws Exception {
     BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_NESTED_PACKAGE);
     Optional<RequestedTargets> targets =
@@ -142,6 +148,7 @@ public class DependencyTrackerImplTest {
   }
 
   @Test
+  // REPO-ONLY:   @Ignore // (b/323621757)
   public void computeRequestedTargets_cc_srcFile() throws Exception {
     BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.CC_EXTERNAL_DEP_QUERY);
     Optional<RequestedTargets> targets =
@@ -174,10 +181,12 @@ public class DependencyTrackerImplTest {
     DependencyTrackerImpl dt =
         new DependencyTrackerImpl(null, blazeProject, dependencyBuilder, artifactTracker);
     when(artifactTracker.getLiveCachedTargets()).thenReturn(ImmutableSet.of());
+    String expected = "@com_google_guava_guava//jar:jar";
+    // REPO-ONLY:     expected = "@@maven//:com.google.guava.guava";
     assertThat(
             dt.getPendingExternalDeps(
                 ImmutableSet.copyOf(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.getAssumedLabels())))
-        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
+        .containsExactly(Label.of(expected));
   }
 
   @Test
@@ -186,8 +195,9 @@ public class DependencyTrackerImplTest {
     blazeProject.setCurrent(context, snapshot);
     DependencyTrackerImpl dt =
         new DependencyTrackerImpl(null, blazeProject, dependencyBuilder, artifactTracker);
-    when(artifactTracker.getLiveCachedTargets())
-        .thenReturn(ImmutableSet.of(Label.of("@com_google_guava_guava//jar:jar")));
+    String guava = "@com_google_guava_guava//jar:jar";
+    // REPO-ONLY:     guava = "@@maven//:com.google.guava.guava";
+    when(artifactTracker.getLiveCachedTargets()).thenReturn(ImmutableSet.of(Label.of(guava)));
     assertThat(
             dt.getPendingExternalDeps(
                 ImmutableSet.copyOf(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.getAssumedLabels())))
@@ -222,6 +232,7 @@ public class DependencyTrackerImplTest {
   }
 
   @Test
+  // REPO-ONLY:   @Ignore // (b/323621757)
   public void getPendingExternalDeps_ccTarget_externalDepsIgnored() throws Exception {
     BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.CC_EXTERNAL_DEP_QUERY);
     blazeProject.setCurrent(context, snapshot);

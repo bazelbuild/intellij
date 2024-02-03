@@ -62,10 +62,8 @@ public class FlagResolver {
         }
       }
       return Optional.of(flag.getFlag() + resolved);
-    } else if (flag.hasPlainValue()) {
-      return Optional.of(flag.getFlag() + flag.getPlainValue());
     } else {
-      throw new IllegalArgumentException("Invalid flag " + flag);
+      return Optional.of(flag.getFlag() + flag.getPlainValue());
     }
   }
 
