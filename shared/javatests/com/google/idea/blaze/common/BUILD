@@ -1,3 +1,14 @@
+package(
+    default_visibility = [":visibility"],
+)
+
+package_group(
+    name = "visibility",
+    packages = [
+        "//shared",
+    ],
+)
+
 java_test(
     name = "LabelTest",
     size = "small",
