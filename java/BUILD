@@ -1,5 +1,6 @@
 load(
     "//:build-visibility.bzl",
+    "DEFAULT_TEST_VISIBILITY",
     "FAST_BUILD_JAVAC_VISIBILITY",
     "PLUGIN_PACKAGES_VISIBILITY",
 )
@@ -15,8 +16,6 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
-
-licenses(["notice"])
 
 _FAST_BUILD_JAVAC_SRCS = ["src/com/google/idea/blaze/java/fastbuild/FastBuildJavac.java"]
 
@@ -136,6 +135,7 @@ intellij_unit_test_suite(
         "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
     ],
     test_package_root = "com.google.idea.blaze.java",
+    visibility = DEFAULT_TEST_VISIBILITY,
     deps = [
         ":java",
         "//base",
@@ -199,6 +199,7 @@ intellij_integration_test_suite(
     ),
     required_plugins = "com.google.idea.blaze.java",
     test_package_root = "com.google.idea.blaze.java",
+    visibility = DEFAULT_TEST_VISIBILITY,
     runtime_deps = [
         ":java_integration_test_plugin",
     ],

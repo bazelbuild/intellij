@@ -6,6 +6,7 @@ load("@bazel_tools//tools/jdk:default_java_toolchain.bzl", "default_java_toolcha
 load(
     "//:build-visibility.bzl",
     "BAZEL_PLUGIN_SUBPACKAGES",
+    "DEFAULT_TEST_VISIBILITY",
     "create_plugin_packages_group",
 )
 
@@ -92,6 +93,7 @@ test_suite(
         "//java:integration_tests",
         "//java:unit_tests",
     ],
+    visibility = DEFAULT_TEST_VISIBILITY,
 )
 
 test_suite(
@@ -100,6 +102,7 @@ test_suite(
         "//python:integration_tests",
         "//python:unit_tests",
     ],
+    visibility = DEFAULT_TEST_VISIBILITY,
 )
 
 default_java_toolchain(

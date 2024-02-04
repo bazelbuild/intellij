@@ -1,3 +1,7 @@
+load("//:build-visibility.bzl", "DEFAULT_TEST_VISIBILITY")
+
+package(default_visibility = DEFAULT_TEST_VISIBILITY)
+
 java_test(
     name = "GeneratedSourceProjectUpdaterTest",
     size = "small",

@@ -7,6 +7,7 @@ load(
     "ASWB_PACKAGES_VISIBILITY",
     "ASWB_PLUGIN_PACKAGES_VISIBILITY",
     "ASWB_SUBPACKAGES_VISIBILITY",
+    "DEFAULT_TEST_VISIBILITY",
     "TEST_ASWB_SUBPACKAGES_VISIBILITY",
 )
 load("//:version.bzl", "VERSION")
@@ -33,8 +34,6 @@ load(
     "combine_visibilities",
     "select_for_plugin_api",
 )
-
-licenses(["notice"])
 
 optional_plugin_xml(
     name = "optional_ndk_xml",
@@ -80,7 +79,7 @@ java_library(
             "tests/utils/sdkcompat/as233/com/android/ide/common/repository/GoogleMavenArtifactIdCompat.java",
         ],
     }),
-    visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
+    visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY + DEFAULT_TEST_VISIBILITY,
     deps = [
         ":aswb_lib",
         "//base",
@@ -192,6 +191,7 @@ intellij_unit_test_suite(
         "android-studio-2023.3": glob(["tests/unittests/sdkcompat/as232/**/*.java"]),
     }),
     test_package_root = "com.google.idea.blaze.android",
+    visibility = DEFAULT_TEST_VISIBILITY,
     deps = [
         ":aswb_lib",
         ":unit_test_utils",
@@ -217,6 +217,7 @@ test_suite(
         #b/139825934 ":NdkDependenciesTest",
         ":normal_integration_tests",
     ],
+    visibility = DEFAULT_TEST_VISIBILITY,
 )
 
 intellij_integration_test_suite(
