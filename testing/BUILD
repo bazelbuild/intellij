@@ -104,6 +104,7 @@ java_library(
         ]),
         "default": [],
     }),
+    exports = ["//testing/src/com/google/idea/testing/runfiles"],
     deps = [
         "//common/experiments",
         "//common/experiments:unit_test_utils",
@@ -112,4 +113,10 @@ java_library(
         "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
+)
+
+java_library(
+    name = "runfiles",
+    testonly = 1,
+    exports = ["//testing/src/com/google/idea/testing/runfiles"],
 )
