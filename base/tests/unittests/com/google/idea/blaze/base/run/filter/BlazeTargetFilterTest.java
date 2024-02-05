@@ -48,8 +48,8 @@ public class BlazeTargetFilterTest {
 
   @Test
   public void testUnusualCharsInTarget() {
-    String line = "Something //Package-._$():T0+,=~#target_@name something else";
-    assertThat(findMatch(line)).isEqualTo("//Package-._$():T0+,=~#target_@name");
+    String line = "Something //Package-._$()@:T0!%^_\"#$&()*-+,;<=>?[]{|}~/.target_@name something else";
+    assertThat(findMatch(line)).isEqualTo("//Package-._$()@:T0!%^_\"#$&()*-+,;<=>?[]{|}~/.target_@name");
   }
 
   @Test
