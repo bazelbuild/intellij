@@ -87,6 +87,8 @@ import javax.annotation.Nullable;
 public class QuerySyncManager implements Disposable {
   private final Logger logger = Logger.getInstance(getClass());
 
+  public static final String NOTIFICATION_GROUP = "QuerySyncBuild";
+
   private final Project project;
   protected final ListeningExecutorService executor =
       MoreExecutors.listeningDecorator(
@@ -499,7 +501,7 @@ public class QuerySyncManager implements Disposable {
 
   private void notifyInternal(String title, String content, NotificationType notificationType) {
     Notifications.Bus.notify(
-        new Notification("QuerySyncBuild", title, content, notificationType), project);
+        new Notification(NOTIFICATION_GROUP, title, content, notificationType), project);
   }
 
   @Override
