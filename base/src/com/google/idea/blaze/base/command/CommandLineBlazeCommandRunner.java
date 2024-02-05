@@ -152,7 +152,9 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
                         line = rootReplacement.apply(line);
                         // errors are expected, so limit logging to info level
                         Logger.getInstance(this.getClass()).info(line.stripTrailing());
-                        context.output(PrintOutput.output(line.stripTrailing()));
+                        if (!blazeCommandBuilder.isSuppressErrors()) {
+                          context.output(PrintOutput.output(line.stripTrailing()));
+                        }
                         return true;
                       }))
               .ignoreExitCode(true)

@@ -96,6 +96,7 @@ public final class BlazeCommand {
     private final String binaryPath;
     private final BlazeCommandName name;
     private boolean invokeParallel;
+    private boolean suppressErrors;
     private Path effectiveWorkspaceRoot;
     private final ImmutableList.Builder<String> blazeStartupFlags = ImmutableList.builder();
     private final ImmutableList.Builder<TargetExpression> targets = ImmutableList.builder();
@@ -142,6 +143,16 @@ public final class BlazeCommand {
     @CanIgnoreReturnValue
     public Builder setInvokeParallel(boolean invokeParallel) {
       this.invokeParallel = invokeParallel;
+      return this;
+    }
+
+    public boolean isSuppressErrors() {
+      return suppressErrors;
+    }
+
+    @CanIgnoreReturnValue
+    public Builder setSuppressErrors(boolean suppressErrors) {
+      this.suppressErrors = suppressErrors;
       return this;
     }
 
