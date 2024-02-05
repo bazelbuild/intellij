@@ -15,12 +15,19 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurableProvider;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.actions.IncrementalSyncProjectAction;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
@@ -96,10 +103,36 @@ public class UnsyncedFileEditorNotificationProvider implements EditorNotificatio
         "Enable automatic syncing",
         () -> {
           QuerySyncSettings.getInstance().enableSyncOnFileChanges(true);
+          showAutoSyncNotification(project);
           IncrementalSyncProjectAction.doIncrementalSync(
               UnsyncedFileEditorNotificationProvider.class, project, null);
           EditorNotifications.getInstance(project).updateAllNotifications();
         });
     return panel;
+  }
+
+  private static void showAutoSyncNotification(Project project) {
+    Notification notification =
+        new Notification(
+                QuerySyncManager.NOTIFICATION_GROUP,
+                "Automatic syncing enabled",
+                "To turn it off again, open query sync settings.",
+                NotificationType.INFORMATION)
+            .addAction(new ShowSettingsAction("Open settings..."));
+    Notifications.Bus.notify(notification, project);
+  }
+
+  private static class ShowSettingsAction extends AnAction {
+
+    public ShowSettingsAction(String text) {
+      super(text, null, null);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent anActionEvent) {
+      ShowSettingsUtil.getInstance()
+          .showSettingsDialog(
+              anActionEvent.getProject(), QuerySyncConfigurableProvider.getConfigurableClass());
+    }
   }
 }
