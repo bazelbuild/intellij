@@ -27,6 +27,9 @@ final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmen
   // Bazel adds the Java launcher to the runfiles path when building a Java test target.
   private static final File STANDARD_JAVA_BINARY = new File("../local_jdk/bin/java");
 
+  // TODO: b/295221112 - remove LAUNCHER_ALIAS once label_flag is used
+  private static final String LAUNCHER_ALIAS = "@@bazel_tools//tools/jdk:launcher_flag_alias";
+
   @Override
   String getTestClassProperty() {
     return "bazel.test_suite";
@@ -44,11 +47,18 @@ final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmen
       @Nullable Label javaLauncher,
       boolean swigdeps,
       String runfilesPath) {
-    if (javaLauncher == null) {
+    if (javaLauncher == null || isDefaultLauncher(javaLauncher)) {
       return getStandardJavaBinary(runfilesPath);
     } else {
       return new File(getTestBinary(label) + "_nativedeps");
     }
+  }
+
+  private static boolean isDefaultLauncher(Label label) {
+    // Use com.google.idea.blaze.common.Label to handle both cases of `@` and `@@` correctly
+    com.google.idea.blaze.common.Label canonicalLabel =
+        new com.google.idea.blaze.common.Label(label.toString());
+    return canonicalLabel.toString().equals(LAUNCHER_ALIAS);
   }
 
   /**
