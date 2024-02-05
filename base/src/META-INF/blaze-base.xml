@@ -146,7 +146,7 @@
         text="Add to project"
         icon="AllIcons.General.Add" />
 
-    <group id="Blaze.MainMenuActionGroup" class="com.google.idea.blaze.base.actions.BlazeMenuGroup">
+    <group id="Blaze.MainMenuActionGroup" class="com.google.idea.blaze.base.actions.BlazeMenuGroup" popup="true">
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="HelpMenu"/>
       <group id ="Blaze.SyncMenuGroup" text="_Sync" popup="true">
         <reference id="Blaze.IncrementalSyncProject"/>
