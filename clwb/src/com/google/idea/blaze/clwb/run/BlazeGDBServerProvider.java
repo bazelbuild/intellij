@@ -24,6 +24,7 @@ import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.cpp.toolchains.CPPDebugger;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
@@ -60,7 +61,7 @@ public class BlazeGDBServerProvider {
   // is enabled (cc.remote.debugging)
   private static final ImmutableList<String> EXTRA_FLAGS_FOR_DEBUG_RUN =
       ImmutableList.of(
-          "--compilation_mode=dbg", "--strip=never", "--dynamic_mode=off", "--fission=yes");
+          "--compilation_mode=dbg", "--strip=never", "--dynamic_mode=off");
 
   // These flags are used when debugging cc_test targets when remote debugging
   // is enabled (cc.remote.debugging)
@@ -69,11 +70,20 @@ public class BlazeGDBServerProvider {
           "--compilation_mode=dbg",
           "--strip=never",
           "--dynamic_mode=off",
-          "--fission=yes",
           "--test_timeout=3600",
           BlazeFlags.NO_CACHE_TEST_RESULTS,
           BlazeFlags.EXCLUSIVE_TEST_EXECUTION,
           BlazeFlags.DISABLE_TEST_SHARDING);
+
+  // Allows the fission flag to be disabled as workaround for
+  // https://github.com/bazelbuild/intellij/issues/5604
+  static ImmutableList<String> fissionFlag() {
+    if(Registry.is("bazel.clwb.debug.fission.disabled")) {
+      return ImmutableList.of();
+    } else {
+      return ImmutableList.of("--fission=yes");
+    }
+  }
 
   static boolean shouldUseGdbserver() {
     // Only provide support for Linux for now:
@@ -118,10 +128,12 @@ public class BlazeGDBServerProvider {
     }
     if (BlazeCommandName.RUN.equals(commandName)) {
       builder.addAll(EXTRA_FLAGS_FOR_DEBUG_RUN);
+      builder.addAll(fissionFlag());
       return builder.build();
     }
     if (BlazeCommandName.TEST.equals(commandName)) {
       builder.addAll(EXTRA_FLAGS_FOR_DEBUG_TEST);
+      builder.addAll(fissionFlag());
       return builder.build();
     }
     return ImmutableList.of();
