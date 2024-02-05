@@ -67,6 +67,8 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
         .addFileToProject(
             INCLUDED_DIRECTORY.resolve("java/com/example/Class1.java").toString(),
             "package com.example;public class Class1{}");
+    ApplicationManager.getApplication()
+        .invokeAndWait(PlatformTestUtil::dispatchAllEventsInIdeEventQueue);
     verify(mockSyncRequester, atLeastOnce()).requestSync();
   }
 
@@ -83,6 +85,8 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
         .addFileToProject(
             INCLUDED_DIRECTORY.resolve("java/com/example/Class1.java").toString(),
             "package com.example;public class Class1{}");
+    ApplicationManager.getApplication()
+        .invokeAndWait(PlatformTestUtil::dispatchAllEventsInIdeEventQueue);
     verify(mockSyncRequester, never()).requestSync();
   }
 
@@ -99,6 +103,8 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
     getFixture()
         .addFileToProject(
             "some/other/path/Class1.java", "package some.other.path;public class Class1{}");
+    ApplicationManager.getApplication()
+        .invokeAndWait(PlatformTestUtil::dispatchAllEventsInIdeEventQueue);
     verify(mockSyncRequester, never()).requestSync();
   }
 
