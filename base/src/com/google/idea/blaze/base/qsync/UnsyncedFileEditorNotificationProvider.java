@@ -70,7 +70,14 @@ public class UnsyncedFileEditorNotificationProvider implements EditorNotificatio
               "BUILD files for this project have changed. The project may be out of sync.");
     }
 
-    Path path = virtualFile.toNioPath();
+    Path path;
+    try {
+      path = virtualFile.toNioPath();
+    } catch (UnsupportedOperationException e) {
+      // Thrown for decompiled library code.
+      return null;
+    }
+
     if (!QuerySyncManager.getInstance(project).isProjectFileAddedSinceSync(path).orElse(false)) {
       return null;
     }
