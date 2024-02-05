@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.fastbuild;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.settings.BuildSystemName;
@@ -29,22 +30,37 @@ final class BazelFastBuildDeployJarStrategy extends FastBuildDeployJarStrategy {
   }
 
   @Override
-  public ImmutableList<? extends TargetExpression> getBuildTargets(Label label) {
-    return ImmutableList.of(createDeployJarLabel(label), label);
+  public ImmutableList<? extends TargetExpression> getBuildTargets(
+      Label label, BlazeVersionData versionData) {
+    if (versionData.bazelIsAtLeastVersion(7, 0, 1)) {
+      return ImmutableList.of(label);
+    }
+    return ImmutableList.of(createDeployJarLabel(label, versionData), label);
   }
 
   @Override
-  public ImmutableList<String> getBuildFlags() {
+  public ImmutableList<String> getBuildFlags(BlazeVersionData versionData) {
+    if (versionData.bazelIsAtLeastVersion(7, 0, 1)) {
+      return ImmutableList.of(
+          "--experimental_java_test_auto_create_deploy_jar",
+          "--output_groups=+_hidden_top_level_INTERNAL_");
+    }
     return ImmutableList.of();
   }
 
   @Override
-  public Label createDeployJarLabel(Label label) {
+  public Label createDeployJarLabel(Label label, BlazeVersionData versionData) {
+    if (versionData.bazelIsAtLeastVersion(7, 0, 1)) {
+      return Label.create(label + "_auto_deploy.jar");
+    }
     return Label.create(label + "_deploy.jar");
   }
 
   @Override
-  public Label deployJarOwnerLabel(Label label) {
-    return createDeployJarLabel(label);
+  public Label deployJarOwnerLabel(Label label, BlazeVersionData versionData) {
+    if (versionData.bazelIsAtLeastVersion(7, 0, 1)) {
+      return label;
+    }
+    return createDeployJarLabel(label, versionData);
   }
 }
