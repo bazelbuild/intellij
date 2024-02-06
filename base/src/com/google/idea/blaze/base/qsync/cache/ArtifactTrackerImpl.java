@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.collect.MoreCollectors.onlyElement;
@@ -124,39 +123,6 @@ public class ArtifactTrackerImpl
 
   private static final BoolExperiment ATTACH_DEP_SRCJARS =
       new BoolExperiment("querysync.attach.dep.srcjars", true);
-
-  /**
-   * Adds source folders for extracted generated source archives.
-   *
-   * <p>Previously, source jars were extracted and placed in dedicated subdirectories of the
-   * generated sources director.
-   *
-   * <p>E.g.:
-   *
-   * <pre>
-   *   generated/
-   *     classes.srcjar/
-   *       com/
-   *         example/
-   *           Class.java
-   *     more_classes.srcjar/
-   *       com/
-   *         ...
-   * </pre>
-   *
-   * <p>Now, sources jars are all placed in the java_srcjars directory without extraction E.g.:
-   *
-   * <pre>
-   *   generated/
-   *     java_srcjars/
-   *       classes.srcjar
-   *       more_classes.srcjar
-   * </pre>
-   *
-   * <p>This experiment can be removed when projects have updated to the new model (b/311661541)
-   */
-  private static final BoolExperiment LEGACY_EXTRACTED_SRCJAR_FOLDERS =
-      new BoolExperiment("querysync.legacy.srcjar.folders", true);
 
   public static final String DIGESTS_DIRECTORY_NAME = ".digests";
   public static final int STORAGE_VERSION = 3;
@@ -677,14 +643,6 @@ public class ArtifactTrackerImpl
       generatedJavaSrcRoots.add(javaSrcRoot);
     }
 
-    if (LEGACY_EXTRACTED_SRCJAR_FOLDERS.getValue()) {
-      int previousSize = generatedJavaSrcRoots.size();
-      generatedJavaSrcRoots.addAll(getGenSrcSubfolders());
-      if (generatedJavaSrcRoots.size() > previousSize) {
-        logger.info("Adding source folder for extracted srcjar");
-      }
-    }
-
     TestSourceGlobMatcher testSourceMatcher = TestSourceGlobMatcher.create(projectDefinition);
     ImmutableSet.Builder<GeneratedSourceJar> generatedProjectSrcJars = ImmutableSet.builder();
     for (JavaArtifactInfo ai : javaArtifacts.values()) {
@@ -758,27 +716,6 @@ public class ArtifactTrackerImpl
     }
 
     return projectProto;
-  }
-
-  /**
-   * Returns all subfolders in the generated source directory, except "java_srcjars". Only used for
-   * legacy layouts {@link ArtifactTrackerImpl#LEGACY_EXTRACTED_SRCJAR_FOLDERS}.
-   */
-  private ImmutableList<ProjectPath> getGenSrcSubfolders() throws BuildException {
-    try (Stream<Path> pathStream = Files.list(generatedSrcFileCacheDirectory)) {
-      return pathStream
-          .filter(
-              p ->
-                  p.toFile().isDirectory()
-                      && !p.getFileName()
-                          .toString()
-                          .equals(JavaSourcesArchiveCacheLayout.ROOT_DIRECTORY_NAME))
-          .map(ideProjectBasePath::relativize)
-          .map(ProjectPath::projectRelative)
-          .collect(toImmutableList());
-    } catch (IOException e) {
-      throw new BuildException(e);
-    }
   }
 
   @Override
