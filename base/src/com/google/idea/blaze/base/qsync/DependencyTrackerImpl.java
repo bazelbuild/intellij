@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.qsync;
 
 import static java.util.stream.Collectors.joining;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
@@ -40,7 +39,6 @@ import com.google.idea.blaze.qsync.project.DependencyTrackingBehavior;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
-import com.google.idea.blaze.qsync.project.TargetTree;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -67,6 +65,21 @@ import java.util.concurrent.ExecutionException;
  * is in turn determined by the source code language of the target.
  */
 public class DependencyTrackerImpl implements DependencyTracker {
+
+  /**
+   * A data structure that describes what targets were requested to be built and what targets
+   * (including transitive ones) are expected to be built as a result.
+   */
+  static class RequestedTargets {
+    public final ImmutableSet<Label> buildTargets;
+    public final ImmutableSet<Label> expectedDependencyTargets;
+
+    RequestedTargets(
+        ImmutableSet<Label> targetsToRequestBuild, ImmutableSet<Label> expectedToBeBuiltTargets) {
+      this.buildTargets = targetsToRequestBuild;
+      this.expectedDependencyTargets = expectedToBeBuiltTargets;
+    }
+  }
 
   private final Project project;
 
@@ -210,54 +223,6 @@ public class DependencyTrackerImpl implements DependencyTracker {
         .map(ProjectTarget::languages)
         .reduce((a, b) -> Sets.union(a, b).immutableCopy())
         .orElse(ImmutableSet.of());
-  }
-
-  /**
-   * Returns the list of project targets related to the given workspace paths.
-   *
-   * @param context Context
-   * @param workspaceRelativePath Workspace relative path to find targets for. This may be a source
-   *     file, directory or BUILD file.
-   * @return Corresponding project targets. For a source file, this is the targets that build that
-   *     file. For a BUILD file, it's the set or targets defined in that file. For a directory, it's
-   *     the set of all targets defined in all build packages within the directory (recursively).
-   */
-  @Override
-  public TargetsToBuild getProjectTargets(BlazeContext context, Path workspaceRelativePath) {
-    return blazeProject
-        .getCurrent()
-        .map(snapshot -> getProjectTargets(context, snapshot, workspaceRelativePath))
-        .orElse(TargetsToBuild.NONE);
-  }
-
-  @VisibleForTesting
-  public static TargetsToBuild getProjectTargets(
-      BlazeContext context, BlazeProjectSnapshot snapshot, Path workspaceRelativePath) {
-    if (workspaceRelativePath.endsWith("BUILD")) {
-      Path packagePath = workspaceRelativePath.getParent();
-      return TargetsToBuild.targetGroup(snapshot.graph().allTargets().get(packagePath));
-    } else {
-      TargetTree targets = snapshot.graph().allTargets().getSubpackages(workspaceRelativePath);
-      if (!targets.isEmpty()) {
-        // this will only be non-empty for directories
-        return TargetsToBuild.targetGroup(targets.toLabelSet());
-      }
-    }
-    // Not a build file or a directory containing packages.
-    if (snapshot.graph().getAllSourceFiles().contains(workspaceRelativePath)) {
-      ImmutableSet<Label> targetOwner = snapshot.getTargetOwners(workspaceRelativePath);
-      if (!targetOwner.isEmpty()) {
-        return TargetsToBuild.forSourceFile(targetOwner, workspaceRelativePath);
-      }
-    } else {
-      context.output(
-          PrintOutput.error("Can't find any supported targets for %s", workspaceRelativePath));
-      context.output(
-          PrintOutput.error(
-              "If this is a newly added supported rule, please re-sync your project."));
-      context.setHasWarnings();
-    }
-    return TargetsToBuild.NONE;
   }
 
   public static Optional<RequestedTargets> computeRequestedTargets(
