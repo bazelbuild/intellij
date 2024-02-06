@@ -1,0 +1,17 @@
+---
+
+policy:
+  - template: [bug_report.yml, feature_request.yml]
+    section:
+      - id: [subteam]
+        label:
+          - name: product: IntelliJ
+            keys: ['Intellij']
+          - name: product: GoLand
+            keys: ['Goland']
+          - name: product: CLion
+            keys: ['Clion']
+          - name: product: PyCharm
+            keys: ['Pycharm']
+          - name: product: Android Studio
+            keys: ['Android Studio ']

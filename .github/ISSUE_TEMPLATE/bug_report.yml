@@ -17,6 +17,18 @@ body:
     attributes:
       label: >
         Description of the bug:
+  - type: dropdown
+    id: subteam
+    attributes:
+      label: Which category does this issue belong to?
+      description: Help us triage this issue faster and more accurately to the relevant team(s).
+      multiple: true
+      options:
+        - Intellij
+        - Goland
+        - Clion
+        - Pycharm
+        - Android Studio      
   - type: textarea
     id: repro
     attributes:
