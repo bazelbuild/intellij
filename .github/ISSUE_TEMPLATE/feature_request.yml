@@ -25,10 +25,10 @@ body:
       multiple: true
       options:
         - Intellij
-        - Goland
-        - Clion
-        - Pycharm
-        - Android Studio  
+        - GoLand
+        - CLion
+        - PyCharm
+        - Android Studio
   - type: textarea
     id: problem
     attributes:
