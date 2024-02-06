@@ -37,8 +37,7 @@ import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.DependencyTrackingBehavior;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.google.idea.blaze.qsync.project.ProjectTarget;
-import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
+import com.google.idea.blaze.qsync.project.RequestedTargets;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -65,21 +64,6 @@ import java.util.concurrent.ExecutionException;
  * is in turn determined by the source code language of the target.
  */
 public class DependencyTrackerImpl implements DependencyTracker {
-
-  /**
-   * A data structure that describes what targets were requested to be built and what targets
-   * (including transitive ones) are expected to be built as a result.
-   */
-  static class RequestedTargets {
-    public final ImmutableSet<Label> buildTargets;
-    public final ImmutableSet<Label> expectedDependencyTargets;
-
-    RequestedTargets(
-        ImmutableSet<Label> targetsToRequestBuild, ImmutableSet<Label> expectedToBeBuiltTargets) {
-      this.buildTargets = targetsToRequestBuild;
-      this.expectedDependencyTargets = expectedToBeBuiltTargets;
-    }
-  }
 
   private final Project project;
 
@@ -113,29 +97,9 @@ public class DependencyTrackerImpl implements DependencyTracker {
       return ImmutableSet.of();
     }
 
-    ImmutableList.Builder<ImmutableSet<Label>> targetSets = ImmutableList.builder();
-    for (Label projectTarget : projectTargets) {
-      ImmutableSet<DependencyTrackingBehavior> depTracking =
-          currentSnapshot.graph().getDependencyTrackingBehaviors(projectTarget);
-
-      ImmutableSet.Builder<Label> deps = ImmutableSet.builder();
-      for (DependencyTrackingBehavior behavior : depTracking) {
-        switch (behavior) {
-          case EXTERNAL_DEPENDENCIES:
-            deps.addAll(currentSnapshot.graph().getTransitiveExternalDependencies(projectTarget));
-            break;
-          case SELF:
-            // For C/C++, we don't need to build external deps, but we do need to extract
-            // compilation information for the target itself.
-            deps.add(projectTarget);
-            break;
-        }
-      }
-      targetSets.add(deps.build());
-    }
-
     Set<Label> cachedTargets = artifactTracker.getLiveCachedTargets();
-    return targetSets.build().stream()
+    return projectTargets.stream()
+        .map(projectTarget -> currentSnapshot.graph().getExternalDepsToBuildFor(projectTarget))
         .map(targets -> Sets.difference(targets, cachedTargets))
         .min(Comparator.comparingInt(SetView::size))
         .map(SetView::immutableCopy)
@@ -176,7 +140,7 @@ public class DependencyTrackerImpl implements DependencyTracker {
     BlazeProjectSnapshot snapshot = getCurrentSnapshot();
 
     Optional<RequestedTargets> maybeRequestedTargets =
-        computeRequestedTargets(snapshot, projectTargets);
+        snapshot.graph().computeRequestedTargets(projectTargets);
     if (maybeRequestedTargets.isEmpty()) {
       return false;
     }
@@ -208,45 +172,12 @@ public class DependencyTrackerImpl implements DependencyTracker {
         builder.build(
             context,
             requestedTargets.buildTargets,
-            getTargetLanguages(snapshot, requestedTargets.buildTargets));
+            snapshot.graph().getTargetLanguages(requestedTargets.buildTargets));
     reportErrorsAndWarnings(context, snapshot, outputInfo);
 
     ImmutableSet<Path> updatedFiles =
         updateCaches(context, requestedTargets.expectedDependencyTargets, outputInfo);
     refreshFiles(context, updatedFiles);
-  }
-
-  private static ImmutableSet<QuerySyncLanguage> getTargetLanguages(
-      BlazeProjectSnapshot snapshot, ImmutableSet<Label> targets) {
-    return targets.stream()
-        .map(snapshot.graph().targetMap()::get)
-        .map(ProjectTarget::languages)
-        .reduce((a, b) -> Sets.union(a, b).immutableCopy())
-        .orElse(ImmutableSet.of());
-  }
-
-  public static Optional<RequestedTargets> computeRequestedTargets(
-      BlazeProjectSnapshot snapshot, Set<Label> projectTargets) {
-    ImmutableSet<Label> externalDeps =
-        projectTargets.stream()
-            .filter(
-                t ->
-                    snapshot.graph().getDependencyTrackingBehaviors(t).stream()
-                        .anyMatch(DependencyTrackerImpl::shouldIncludeExternalDependencies))
-            .flatMap(t -> snapshot.graph().getTransitiveExternalDependencies(t).stream())
-            .collect(ImmutableSet.toImmutableSet());
-
-    return Optional.of(new RequestedTargets(ImmutableSet.copyOf(projectTargets), externalDeps));
-  }
-
-  private static boolean shouldIncludeExternalDependencies(DependencyTrackingBehavior behavior) {
-    switch (behavior) {
-      case EXTERNAL_DEPENDENCIES:
-        return true;
-      case SELF:
-        return false;
-    }
-    throw new UnsupportedOperationException(behavior.name());
   }
 
   private void reportErrorsAndWarnings(

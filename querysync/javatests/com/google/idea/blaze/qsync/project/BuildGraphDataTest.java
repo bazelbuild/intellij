@@ -20,12 +20,12 @@ import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.truth.Truth8;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.testdata.BuildGraphs;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.nio.file.Path;
+import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -295,4 +295,136 @@ public class BuildGraphDataTest {
     assertThat(testTarget.tags()).containsExactly("mytag");
   }
 
+
+  @Test
+  public void computeRequestedTargets_srcFile() throws Exception {
+    BuildGraphData graph =
+        new BlazeQueryParser(
+                getQuerySummary(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY),
+                NOOP_CONTEXT,
+                ImmutableSet.of())
+            .parse();
+    Optional<RequestedTargets> targets =
+        graph.computeRequestedTargets(
+            graph
+                .getProjectTargets(
+                    NOOP_CONTEXT,
+                    TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY
+                        .getOnlySourcePath()
+                        .resolve(Path.of("TestClassExternalDep.java")))
+                .getUnambiguousTargets()
+                .orElseThrow());
+    assertThat(targets).isPresent();
+    assertThat(targets.get().buildTargets)
+        .containsExactly(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.getAssumedOnlyLabel());
+    String expected = "@com_google_guava_guava//jar:jar";
+    // REPO-ONLY:     expected = "@@maven//:com.google.guava.guava";
+    assertThat(targets.get().expectedDependencyTargets).containsExactly(Label.of(expected));
+  }
+
+  @Test
+  public void computeRequestedTargets_buildFile_multiTarget() throws Exception {
+    BuildGraphData graph =
+        new BlazeQueryParser(
+                getQuerySummary(TestData.JAVA_LIBRARY_MULTI_TARGETS),
+                NOOP_CONTEXT,
+                ImmutableSet.of())
+            .parse();
+    Optional<RequestedTargets> targets =
+        graph.computeRequestedTargets(
+            graph
+                .getProjectTargets(
+                    NOOP_CONTEXT,
+                    TestData.JAVA_LIBRARY_MULTI_TARGETS
+                        .getOnlySourcePath()
+                        .resolve(Path.of("BUILD")))
+                .getUnambiguousTargets()
+                .orElseThrow());
+    assertThat(targets).isPresent();
+    assertThat(targets.get().buildTargets)
+        .containsExactly(
+            TestData.JAVA_LIBRARY_MULTI_TARGETS
+                .getAssumedOnlyLabel()
+                .siblingWithName("externaldep"),
+            TestData.JAVA_LIBRARY_MULTI_TARGETS.getAssumedOnlyLabel().siblingWithName("nodeps"));
+    String expected = "@com_google_guava_guava//jar:jar";
+    // REPO-ONLY:     expected = "@@maven//:com.google.guava.guava";
+    assertThat(targets.get().expectedDependencyTargets).containsExactly(Label.of(expected));
+  }
+
+  @Test
+  // REPO-ONLY:   @Ignore // (b/323621757)
+  public void computeRequestedTargets_buildFile_nested() throws Exception {
+    BuildGraphData graph =
+        new BlazeQueryParser(
+                getQuerySummary(TestData.JAVA_LIBRARY_NESTED_PACKAGE),
+                NOOP_CONTEXT,
+                ImmutableSet.of())
+            .parse();
+    Optional<RequestedTargets> targets =
+        graph.computeRequestedTargets(
+            graph
+                .getProjectTargets(
+                    NOOP_CONTEXT,
+                    TestData.JAVA_LIBRARY_NESTED_PACKAGE
+                        .getOnlySourcePath()
+                        .resolve(Path.of("BUILD")))
+                .getUnambiguousTargets()
+                .orElseThrow());
+    assertThat(targets).isPresent();
+    assertThat(targets.get().buildTargets)
+        .containsExactly(TestData.JAVA_LIBRARY_NESTED_PACKAGE.getAssumedOnlyLabel());
+    assertThat(targets.get().expectedDependencyTargets)
+        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
+  }
+
+  @Test
+  // REPO-ONLY:   @Ignore // (b/323621757)
+  public void computeRequestedTargets_directory() throws Exception {
+    BuildGraphData graph =
+        new BlazeQueryParser(
+                getQuerySummary(TestData.JAVA_LIBRARY_NESTED_PACKAGE),
+                NOOP_CONTEXT,
+                ImmutableSet.of())
+            .parse();
+    Optional<RequestedTargets> targets =
+        graph.computeRequestedTargets(
+            graph
+                .getProjectTargets(
+                    NOOP_CONTEXT, TestData.JAVA_LIBRARY_NESTED_PACKAGE.getOnlySourcePath())
+                .getUnambiguousTargets()
+                .orElseThrow());
+    assertThat(targets).isPresent();
+    assertThat(targets.get().buildTargets)
+        .containsExactly(
+            TestData.JAVA_LIBRARY_NESTED_PACKAGE.getAssumedOnlyLabel(),
+            TestData.JAVA_LIBRARY_NESTED_PACKAGE
+                .getAssumedOnlyLabel()
+                .siblingWithPathAndName("inner:inner"));
+    assertThat(targets.get().expectedDependencyTargets)
+        .containsExactly(
+            Label.of("@com_google_guava_guava//jar:jar"),
+            Label.of("@gson//jar:jar"));
+  }
+
+  @Test
+  // REPO-ONLY:   @Ignore // (b/323621757)
+  public void computeRequestedTargets_cc_srcFile() throws Exception {
+    BuildGraphData graph =
+        new BlazeQueryParser(
+                getQuerySummary(TestData.CC_EXTERNAL_DEP_QUERY), NOOP_CONTEXT, ImmutableSet.of())
+            .parse();
+    Optional<RequestedTargets> targets =
+        graph.computeRequestedTargets(
+            graph
+                .getProjectTargets(
+                    NOOP_CONTEXT,
+                    TestData.CC_EXTERNAL_DEP_QUERY.getOnlySourcePath().resolve("TestClass.cc"))
+                .getUnambiguousTargets()
+                .orElseThrow());
+    assertThat(targets).isPresent();
+    assertThat(targets.get().buildTargets)
+        .containsExactly(TestData.CC_EXTERNAL_DEP_QUERY.getAssumedOnlyLabel());
+    assertThat(targets.get().expectedDependencyTargets).isEmpty();
+  }
 }

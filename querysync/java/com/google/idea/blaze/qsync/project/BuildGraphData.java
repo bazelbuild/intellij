@@ -432,4 +432,66 @@ public abstract class BuildGraphData {
     }
     return TargetsToBuild.NONE;
   }
+
+  /**
+   * Returns the set of targets that would need to be built in order to enable analysis for a
+   * project target.
+   *
+   * @param projectTarget A project target.
+   * @return The set of targets that need to be built. For a {@link
+   *     DependencyTrackingBehavior#EXTERNAL_DEPENDENCIES} target this will be the set of external
+   *     dependenceis; for a {@link DependencyTrackingBehavior#SELF} target this will be the target
+   *     itself.
+   */
+  public ImmutableSet<Label> getExternalDepsToBuildFor(Label projectTarget) {
+    ImmutableSet<DependencyTrackingBehavior> depTracking =
+        getDependencyTrackingBehaviors(projectTarget);
+
+    ImmutableSet.Builder<Label> deps = ImmutableSet.builder();
+    for (DependencyTrackingBehavior behavior : depTracking) {
+      switch (behavior) {
+        case EXTERNAL_DEPENDENCIES:
+          deps.addAll(getTransitiveExternalDependencies(projectTarget));
+          break;
+        case SELF:
+          // For C/C++, we don't need to build external deps, but we do need to extract
+          // compilation information for the target itself.
+          deps.add(projectTarget);
+          break;
+      }
+    }
+    return deps.build();
+  }
+
+  /**
+   * Returns the set of {@link ProjectTarget#languages() target languages} for a set of project
+   * targets.
+   */
+  public ImmutableSet<QuerySyncLanguage> getTargetLanguages(ImmutableSet<Label> targets) {
+    return targets.stream()
+        .map(targetMap()::get)
+        .map(ProjectTarget::languages)
+        .reduce((a, b) -> Sets.union(a, b).immutableCopy())
+        .orElse(ImmutableSet.of());
+  }
+
+  /**
+   * Calculates the {@link RequestedTargets} for a project target.
+   *
+   * @return Requested targets. The {@link RequestedTargets#buildTargets} will match the parameter
+   *     given; the {@link RequestedTargets#expectedDependencyTargets} will be determined by the
+   *     {@link #getDependencyTrackingBehaviors(Label)} of the targets given.
+   */
+  public Optional<RequestedTargets> computeRequestedTargets(Set<Label> projectTargets) {
+    ImmutableSet<Label> externalDeps =
+        projectTargets.stream()
+            .filter(
+                t ->
+                    getDependencyTrackingBehaviors(t).stream()
+                        .anyMatch(b -> b.shouldIncludeExternalDependencies))
+            .flatMap(t -> getTransitiveExternalDependencies(t).stream())
+            .collect(toImmutableSet());
+
+    return Optional.of(new RequestedTargets(ImmutableSet.copyOf(projectTargets), externalDeps));
+  }
 }
