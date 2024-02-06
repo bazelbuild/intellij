@@ -5,13 +5,13 @@ policy:
     section:
       - id: [subteam]
         label:
-          - name: product: IntelliJ
+          - name: 'product: IntelliJ'
             keys: ['Intellij']
-          - name: product: GoLand
+          - name: 'product: GoLand'
             keys: ['GoLand']
-          - name: product: CLion
+          - name: 'product: CLion'
             keys: ['CLion']
-          - name: product: PyCharm
+          - name: 'product: PyCharm'
             keys: ['PyCharm']
-          - name: product: Android Studio
+          - name: 'product: Android Studio'
             keys: ['Android Studio']
