@@ -28,7 +28,7 @@ body:
         - GoLand
         - CLion
         - PyCharm
-        - Android Studio      
+        - Android Studio
   - type: textarea
     id: repro
     attributes:
