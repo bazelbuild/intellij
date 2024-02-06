@@ -8,10 +8,10 @@ policy:
           - name: product: IntelliJ
             keys: ['Intellij']
           - name: product: GoLand
-            keys: ['Goland']
+            keys: ['GoLand']
           - name: product: CLion
-            keys: ['Clion']
+            keys: ['CLion']
           - name: product: PyCharm
-            keys: ['Pycharm']
+            keys: ['PyCharm']
           - name: product: Android Studio
-            keys: ['Android Studio ']
+            keys: ['Android Studio']
