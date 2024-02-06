@@ -46,6 +46,9 @@ public class CliContext implements Context<CliContext> {
     hasError = true;
   }
 
+  @Override
+  public void setHasWarnings() {}
+
   public boolean hasError() {
     return hasError;
   }

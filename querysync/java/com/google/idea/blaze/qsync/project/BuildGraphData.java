@@ -35,7 +35,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
+import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.RuleKinds;
 import com.google.idea.blaze.qsync.project.ProjectTarget.SourceType;
 import com.google.idea.blaze.qsync.query.PackageSet;
@@ -391,5 +393,43 @@ public abstract class BuildGraphData {
     return targetMap().get(target).languages().stream()
         .map(l -> l.dependencyTrackingBehavior)
         .collect(toImmutableSet());
+  }
+
+  /**
+   * Returns the list of project targets related to the given workspace file.
+   *
+   * @param context Context
+   * @param workspaceRelativePath Workspace relative file path to find targets for. This may be a
+   *     source file, directory or BUILD file.
+   * @return Corresponding project targets. For a source file, this is the targets that build that
+   *     file. For a BUILD file, it's the set or targets defined in that file. For a directory, it's
+   *     the set of all targets defined in all build packages within the directory (recursively).
+   */
+  public TargetsToBuild getProjectTargets(Context<?> context, Path workspaceRelativePath) {
+    if (workspaceRelativePath.endsWith("BUILD")) {
+      Path packagePath = workspaceRelativePath.getParent();
+      return TargetsToBuild.targetGroup(allTargets().get(packagePath));
+    } else {
+      TargetTree targets = allTargets().getSubpackages(workspaceRelativePath);
+      if (!targets.isEmpty()) {
+        // this will only be non-empty for directories
+        return TargetsToBuild.targetGroup(targets.toLabelSet());
+      }
+    }
+    // Now a build file or a directory containing packages.
+    if (getAllSourceFiles().contains(workspaceRelativePath)) {
+      ImmutableSet<Label> targetOwner = getTargetOwners(workspaceRelativePath);
+      if (!targetOwner.isEmpty()) {
+        return TargetsToBuild.forSourceFile(targetOwner, workspaceRelativePath);
+      }
+    } else {
+      context.output(
+          PrintOutput.error("Can't find any supported targets for %s", workspaceRelativePath));
+      context.output(
+          PrintOutput.error(
+              "If this is a newly added supported rule, please re-sync your project."));
+      context.setHasWarnings();
+    }
+    return TargetsToBuild.NONE;
   }
 }

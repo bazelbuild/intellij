@@ -20,7 +20,7 @@ import static com.google.common.truth.Truth8.assertThat;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.qsync.DependencyTracker.RequestedTargets;
+import com.google.idea.blaze.base.qsync.DependencyTrackerImpl.RequestedTargets;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.BlazeProject;
@@ -59,9 +59,10 @@ public class DependencyTrackerImplTest {
     Optional<RequestedTargets> targets =
         DependencyTrackerImpl.computeRequestedTargets(
             snapshot,
-            DependencyTrackerImpl.getProjectTargets(
+            snapshot
+                .graph()
+                .getProjectTargets(
                     context,
-                    snapshot,
                     TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY
                         .getOnlySourcePath()
                         .resolve(Path.of("TestClassExternalDep.java")))
@@ -81,9 +82,10 @@ public class DependencyTrackerImplTest {
     Optional<RequestedTargets> targets =
         DependencyTrackerImpl.computeRequestedTargets(
             snapshot,
-            DependencyTrackerImpl.getProjectTargets(
+            snapshot
+                .graph()
+                .getProjectTargets(
                     context,
-                    snapshot,
                     TestData.JAVA_LIBRARY_MULTI_TARGETS
                         .getOnlySourcePath()
                         .resolve(Path.of("BUILD")))
@@ -108,9 +110,10 @@ public class DependencyTrackerImplTest {
     Optional<RequestedTargets> targets =
         DependencyTrackerImpl.computeRequestedTargets(
             snapshot,
-            DependencyTrackerImpl.getProjectTargets(
+            snapshot
+                .graph()
+                .getProjectTargets(
                     context,
-                    snapshot,
                     TestData.JAVA_LIBRARY_NESTED_PACKAGE
                         .getOnlySourcePath()
                         .resolve(Path.of("BUILD")))
@@ -130,8 +133,10 @@ public class DependencyTrackerImplTest {
     Optional<RequestedTargets> targets =
         DependencyTrackerImpl.computeRequestedTargets(
             snapshot,
-            DependencyTrackerImpl.getProjectTargets(
-                    context, snapshot, TestData.JAVA_LIBRARY_NESTED_PACKAGE.getOnlySourcePath())
+            snapshot
+                .graph()
+                .getProjectTargets(
+                    context, TestData.JAVA_LIBRARY_NESTED_PACKAGE.getOnlySourcePath())
                 .getUnambiguousTargets()
                 .orElseThrow());
     assertThat(targets).isPresent();
@@ -154,9 +159,10 @@ public class DependencyTrackerImplTest {
     Optional<RequestedTargets> targets =
         DependencyTrackerImpl.computeRequestedTargets(
             snapshot,
-            DependencyTrackerImpl.getProjectTargets(
+            snapshot
+                .graph()
+                .getProjectTargets(
                     context,
-                    snapshot,
                     TestData.CC_EXTERNAL_DEP_QUERY.getOnlySourcePath().resolve("TestClass.cc"))
                 .getUnambiguousTargets()
                 .orElseThrow());

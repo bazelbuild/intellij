@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurableProvider;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
+import com.google.idea.blaze.qsync.project.TargetsToBuild;
 import com.intellij.icons.AllIcons.Actions;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.actionSystem.ActionManager;

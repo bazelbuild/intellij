@@ -51,6 +51,7 @@ import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.SnapshotDeserializer;
 import com.google.idea.blaze.qsync.project.SnapshotSerializer;
+import com.google.idea.blaze.qsync.project.TargetsToBuild;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -273,7 +274,10 @@ public class QuerySyncProject {
    *     the set of all targets defined in all build packages within the directory (recursively).
    */
   public TargetsToBuild getProjectTargets(BlazeContext context, Path workspaceRelativePath) {
-    return dependencyTracker.getProjectTargets(context, workspaceRelativePath);
+    return snapshotHolder
+        .getCurrent()
+        .map(snapshot -> snapshot.graph().getProjectTargets(context, workspaceRelativePath))
+        .orElse(TargetsToBuild.NONE);
   }
 
   /** Returns the set of targets with direct dependencies on {@code targets}. */

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.qsync;
+package com.google.idea.blaze.qsync.project;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.util.function.Predicate.not;
@@ -82,12 +82,13 @@ public abstract class TargetsToBuild {
     return !Collections.disjoint(targets(), labels);
   }
 
-  static TargetsToBuild targetGroup(Collection<Label> targets) {
+  public static TargetsToBuild targetGroup(Collection<Label> targets) {
     return new AutoValue_TargetsToBuild(
         Type.TARGET_GROUP, ImmutableSet.copyOf(targets), Optional.empty());
   }
 
-  static TargetsToBuild forSourceFile(Collection<Label> targets, Path workspaceRelativePath) {
+  public static TargetsToBuild forSourceFile(
+      Collection<Label> targets, Path workspaceRelativePath) {
     return new AutoValue_TargetsToBuild(
         Type.SOURCE_FILE, ImmutableSet.copyOf(targets), Optional.of(workspaceRelativePath));
   }
