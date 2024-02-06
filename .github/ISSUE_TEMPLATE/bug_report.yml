@@ -25,9 +25,9 @@ body:
       multiple: true
       options:
         - Intellij
-        - Goland
-        - Clion
-        - Pycharm
+        - GoLand
+        - CLion
+        - PyCharm
         - Android Studio      
   - type: textarea
     id: repro
