@@ -121,8 +121,11 @@ public class ProjectLoader {
     Path snapshotFilePath = getSnapshotFilePath(importSettings);
 
     ImmutableSet<String> handledRules = getHandledRuleKinds();
+    Optional<BlazeVcsHandler> vcsHandler =
+        Optional.ofNullable(BlazeVcsHandlerProvider.vcsHandlerForProject(project));
     DependencyBuilder dependencyBuilder =
-        createDependencyBuilder(workspaceRoot, latestProjectDef, buildSystem, handledRules);
+        createDependencyBuilder(
+            workspaceRoot, latestProjectDef, buildSystem, vcsHandler, handledRules);
     RenderJarBuilder renderJarBuilder = createRenderJarBuilder(buildSystem);
     AppInspectorBuilder appInspectorBuilder = createAppInspectorBuilder(buildSystem);
 
@@ -147,8 +150,6 @@ public class ProjectLoader {
         new RenderJarTrackerImpl(graph, renderJarBuilder, artifactTracker);
     AppInspectorTracker appInspectorTracker =
         new AppInspectorTrackerImpl(appInspectorBuilder, artifactTracker);
-    Optional<BlazeVcsHandler> vcsHandler =
-        Optional.ofNullable(BlazeVcsHandlerProvider.vcsHandlerForProject(project));
     ProjectRefresher projectRefresher =
         new ProjectRefresher(
             vcsHandler.map(BlazeVcsHandler::getVcsStateDiffer).orElse(VcsStateDiffer.NONE),
@@ -216,9 +217,10 @@ public class ProjectLoader {
       WorkspaceRoot workspaceRoot,
       ProjectDefinition projectDefinition,
       BuildSystem buildSystem,
+      Optional<BlazeVcsHandler> vcsHandler,
       ImmutableSet<String> handledRuleKinds) {
     return new BazelDependencyBuilder(
-        project, buildSystem, projectDefinition, workspaceRoot, handledRuleKinds);
+        project, buildSystem, projectDefinition, workspaceRoot, vcsHandler, handledRuleKinds);
   }
 
   protected RenderJarBuilder createRenderJarBuilder(BuildSystem buildSystem) {
