@@ -94,6 +94,11 @@ public class MockBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
     }
 
     @Override
+    public Optional<VcsState> vcsStateForSourceUri(String sourceUri) {
+      return Optional.empty();
+    }
+
+    @Override
     public Optional<ImmutableSet<Path>> diffVcsState(VcsState current, VcsState previous) {
       return Optional.empty();
     }
