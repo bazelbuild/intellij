@@ -10,6 +10,7 @@ proto_library(
         "codereview.proto",
         "codesearch.proto",
         "depserver.proto",
+        "ecatcher.proto",
         "experiments.proto",
         "fileapi.proto",
         "intellijext.proto",
