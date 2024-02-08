@@ -45,6 +45,7 @@ import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
+import com.google.idea.blaze.qsync.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -100,6 +101,7 @@ public class QuerySyncProject {
 
   private final ProjectViewManager projectViewManager;
   private final BuildSystem buildSystem;
+  private final ProjectProtoTransform.Registry projectProtoTransforms;
 
   private volatile QuerySyncProjectData projectData;
 
@@ -124,7 +126,8 @@ public class QuerySyncProject {
       WorkspaceLanguageSettings workspaceLanguageSettings,
       QuerySyncSourceToTargetMap sourceToTargetMap,
       ProjectViewManager projectViewManager,
-      BuildSystem buildSystem) {
+      BuildSystem buildSystem,
+      ProjectProtoTransform.Registry projectProtoTransforms) {
     this.project = project;
     this.snapshotFilePath = snapshotFilePath;
     this.snapshotHolder = snapshotHolder;
@@ -146,6 +149,7 @@ public class QuerySyncProject {
     this.sourceToTargetMap = sourceToTargetMap;
     this.projectViewManager = projectViewManager;
     this.buildSystem = buildSystem;
+    this.projectProtoTransforms = projectProtoTransforms;
     projectData = new QuerySyncProjectData(workspacePathResolver, workspaceLanguageSettings);
   }
 
@@ -236,7 +240,8 @@ public class QuerySyncProject {
                 ? projectQuerier.fullQuery(projectDefinition, context)
                 : projectQuerier.update(projectDefinition, lastQuery.get(), context);
         BlazeProjectSnapshot newSnapshot =
-            blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(context, postQuerySyncData);
+            blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(
+                context, postQuerySyncData, projectProtoTransforms.getComposedTransform());
         onNewSnapshot(context, newSnapshot);
 
         // TODO: Revisit SyncListeners once we switch fully to qsync
@@ -313,7 +318,9 @@ public class QuerySyncProject {
       if (getDependencyTracker().buildDependenciesForTargets(context, projectTargets)) {
         BlazeProjectSnapshot newSnapshot =
             blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(
-                context, snapshotHolder.getCurrent().orElseThrow().queryData());
+                context,
+                snapshotHolder.getCurrent().orElseThrow().queryData(),
+                projectProtoTransforms.getComposedTransform());
         onNewSnapshot(context, newSnapshot);
       }
     }
