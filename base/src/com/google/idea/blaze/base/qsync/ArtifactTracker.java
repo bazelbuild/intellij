@@ -17,12 +17,9 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
-import com.google.idea.blaze.qsync.project.BuildGraphData;
-import com.google.idea.blaze.qsync.project.ProjectProto;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -37,16 +34,6 @@ public interface ArtifactTracker {
   /** Fetches, caches and sets up new artifacts. */
   ArtifactTrackerUpdateResult update(
       Set<Label> targets, OutputInfo outputInfo, BlazeContext context) throws BuildException;
-
-  /**
-   * Makes the project snapshot reflect the current state of tracked artifacts.
-   *
-   * <p>When additional artifacts are brought into the IDE they may require additional configuration
-   * to be applied to the IDE project.
-   */
-  ProjectProto.Project updateProjectProto(
-      ProjectProto.Project projectProto, BuildGraphData graph, Context<?> context)
-      throws BuildException;
 
   /**
    * Returns a list of local cache files that build by target provided. Returns Optional.empty() if

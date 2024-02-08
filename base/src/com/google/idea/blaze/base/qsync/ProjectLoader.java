@@ -31,7 +31,6 @@ import com.google.idea.blaze.base.projectview.section.Glob;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTrackerImpl;
-import com.google.idea.blaze.base.qsync.cc.CcProjectProtoTransform;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -46,7 +45,8 @@ import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder.ProjectProtoTransform;
+import com.google.idea.blaze.qsync.ProjectProtoTransform;
+import com.google.idea.blaze.qsync.ProjectProtoTransform.Registry;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.VcsStateDiffer;
 import com.google.idea.blaze.qsync.java.PackageStatementParser;
@@ -133,6 +133,7 @@ public class ProjectLoader {
     ProjectPath.Resolver projectPathResolver =
         ProjectPath.Resolver.create(workspaceRoot.path(), ideProjectBasePath);
 
+    ProjectProtoTransform.Registry projectTransformRegistry = new Registry();
     BlazeProject graph = new BlazeProject();
     graph.addListener((c, i) -> projectModificationTracker.incModificationCount());
     ArtifactFetcher<OutputArtifact> artifactFetcher = createArtifactFetcher();
@@ -142,7 +143,8 @@ public class ProjectLoader {
             ideProjectBasePath,
             artifactFetcher,
             projectPathResolver,
-            latestProjectDef);
+            latestProjectDef,
+            projectTransformRegistry);
     artifactTracker.initialize();
     DependencyTracker dependencyTracker =
         new DependencyTrackerImpl(project, graph, dependencyBuilder, artifactTracker);
@@ -161,8 +163,6 @@ public class ProjectLoader {
             createWorkspaceRelativePackageReader(),
             workspaceRoot.path(),
             handledRules,
-            ProjectProtoTransform.compose(
-                artifactTracker::updateProjectProto, new CcProjectProtoTransform(artifactTracker)),
             QuerySync.USE_NEW_RES_DIR_LOGIC::getValue,
             () -> !QuerySync.EXTRACT_RES_PACKAGES_AT_BUILD_TIME.getValue());
     QueryRunner queryRunner = createQueryRunner(buildSystem);
@@ -192,7 +192,8 @@ public class ProjectLoader {
             workspaceLanguageSettings,
             sourceToTargetMap,
             projectViewManager,
-            buildSystem);
+            buildSystem,
+            projectTransformRegistry);
     BlazeProjectListenerProvider.registerListenersFor(querySyncProject);
 
     return querySyncProject;

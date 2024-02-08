@@ -64,12 +64,14 @@ import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher.ArtifactDestinatio
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestination;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
+import com.google.idea.blaze.base.qsync.cc.CcProjectProtoTransform;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.DownloadTrackingScope;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.TestSourceGlobMatcher;
 import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
 import com.google.idea.blaze.qsync.java.AndroidResPackagesProjectUpdater;
@@ -162,7 +164,8 @@ public class ArtifactTrackerImpl
       Path ideProjectBasePath,
       ArtifactFetcher<OutputArtifact> artifactFetcher,
       ProjectPath.Resolver projectPathResolver,
-      ProjectDefinition projectDefinition) {
+      ProjectDefinition projectDefinition,
+      ProjectProtoTransform.Registry transformRegistry) {
     this.ideProjectBasePath = ideProjectBasePath;
     this.artifactFetcher = artifactFetcher;
     this.projectPathResolver = projectPathResolver;
@@ -209,6 +212,8 @@ public class ArtifactTrackerImpl
             projectDirectory.resolve(DIGESTS_DIRECTORY_NAME),
             fileCacheCreator.getCacheDirectories());
     persistentFile = projectDirectory.resolve("artifact_tracker_state");
+    transformRegistry.add(this::updateProjectProto);
+    transformRegistry.add(new CcProjectProtoTransform(this));
   }
 
   private static class FileCacheCreator {
@@ -622,7 +627,12 @@ public class ArtifactTrackerImpl
     return JAR_ZIP_EXTENSIONS.contains(FileUtilRt.getExtension(p.toString()));
   }
 
-  @Override
+  /**
+   * Makes the project snapshot reflect the current state of tracked artifacts.
+   *
+   * <p>When additional artifacts are brought into the IDE they may require additional configuration
+   * to be applied to the IDE project.
+   */
   public ProjectProto.Project updateProjectProto(
       ProjectProto.Project projectProto, BuildGraphData graph, Context<?> context)
       throws BuildException {
