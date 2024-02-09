@@ -135,6 +135,62 @@ def intellij_unit_test_suite(
         **kwargs
     )
 
+def _filter_one_version_conflicts(ctx, deps):
+    runfiles = ctx.runfiles().merge_all([x[DefaultInfo].data_runfiles for x in deps])
+    java_info = java_common.merge([x[JavaInfo] for x in deps])
+    plugins = []
+    for processor_class in java_info.plugins.processor_classes.to_list():
+        plugins.append(JavaPluginInfo(
+            processor_class = processor_class,
+            runtime_deps = [
+                JavaInfo(output_jar = j, compile_jar = j)
+                for j in java_info.plugins.processor_jars.to_list()
+            ],
+        ))
+    output = []
+
+    kotlin_plugin = []
+    for jar in java_info.transitive_runtime_jars.to_list():
+        if jar.short_path.find("kotlin-plugin.jar") != -1:
+            kotlin_plugin.append(jar)
+            continue
+        output.append(JavaInfo(
+            output_jar = jar,
+            compile_jar = jar,
+            exported_plugins = plugins,
+        ))
+
+    if kotlin_plugin:
+        if len(kotlin_plugin) > 1:
+            kotlin_plugin = [
+                x
+                for x in kotlin_plugin
+                if x.short_path.find("repackaged_api_for_tests") == -1
+            ]
+        if len(kotlin_plugin) > 1:
+            fail(kotlin_plugin)
+        output.append(JavaInfo(
+            output_jar = kotlin_plugin[0],
+            compile_jar = kotlin_plugin[0],
+        ))
+    return output, runfiles
+
+def _remove_one_version_conflicts(ctx):
+    deps, deps_runfiles = _filter_one_version_conflicts(ctx, ctx.attr.deps)
+    runtime_deps, runtime_deps_runfiles = _filter_one_version_conflicts(ctx, ctx.attr.runtime_deps)
+    return [
+        java_common.merge(runtime_deps + deps),
+        DefaultInfo(runfiles = deps_runfiles.merge(runtime_deps_runfiles)),
+    ]
+
+remove_one_version_conflicts = rule(
+    implementation = _remove_one_version_conflicts,
+    attrs = {
+        "deps": attr.label_list(providers = [JavaInfo]),
+        "runtime_deps": attr.label_list(providers = [JavaInfo]),
+    },
+)
+
 def intellij_integration_test_suite(
         name,
         srcs,
@@ -227,6 +283,13 @@ def intellij_integration_test_suite(
     args.append("--main_advice_classpath=./%s/%s_protoeditor_resource_fix" % (native.package_name(), name))
     data.append(name + "_protoeditor_resource_fix")
 
+    remove_one_version_conflicts(
+        name = name + "_filtered_deps",
+        deps = deps,
+        runtime_deps = runtime_deps,
+        testonly = 1,
+    )
+
     native.java_test(
         name = name,
         size = size,
@@ -236,8 +299,7 @@ def intellij_integration_test_suite(
         args = args,
         jvm_flags = jvm_flags,
         test_class = suite_class,
-        runtime_deps = runtime_deps,
-        deps = deps,
+        deps = [name + "_filtered_deps"],
         **kwargs
     )
 
