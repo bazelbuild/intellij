@@ -1,0 +1,49 @@
+syntax = "proto2";
+
+package com.google.idea.blaze.ext.perforce;
+
+import "ext/proto/perforce/base.proto";
+import "ext/proto/perforce/source_file.proto";
+import "ext/proto/perforce/status.proto";
+
+option java_package = "com.google.idea.blaze.ext.p4";
+
+message Conflict {
+  optional string conflict_id = 2;
+  optional SourceFile yours_file = 3;
+  optional SourceFile theirs_file = 4;
+  optional SourceFile base_file = 5;
+  optional bool theirs_exists = 7 [default = true];
+}
+
+
+message ResolveConflictsRequest {
+  optional RequestBase base = 1;
+
+  message ConflictPath {
+    optional string path = 1;
+    repeated string conflict_ids = 2;
+  }
+  repeated ConflictPath conflict_paths = 2;
+
+  enum ResolveMode {
+    DO_NOT_RESOLVE = 0;
+    ACCEPT_YOURS = 1;
+    ACCEPT_THEIRS = 2;
+    MERGE_DEFAULT = 3;
+    MERGE_SAFE = 4;
+    MERGE_FORCED = 5;
+    ACCEPT_WORKSPACE_FILE = 6;
+    ACCEPT_EDITED_WORKSPACE_FILE = 7;
+  }
+  optional ResolveMode resolve_mode = 3 [default = MERGE_DEFAULT];
+  optional bool mark_all_diffs = 4;
+  optional bool force_text_mode = 5;
+  optional bool allow_reresolves = 6;
+}
+
+message ResolveConflictsResponse {
+  optional Status status = 1002;
+  optional Conflict skipped_conflict = 2;
+  optional int32 path_index = 3;
+}
