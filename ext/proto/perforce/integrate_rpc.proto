@@ -1,0 +1,31 @@
+syntax = "proto2";
+
+package com.google.idea.blaze.ext.perforce;
+
+import "ext/proto/perforce/base.proto";
+import "ext/proto/perforce/source_file.proto";
+import "ext/proto/perforce/status.proto";
+
+option java_package = "com.google.idea.blaze.ext.p4";
+
+message IntegrateFilesRequest {
+  optional RequestBase base = 1;
+  message Argument {
+    optional PathExpression source = 1;
+    optional string destination = 2;
+    repeated ViewSetEntry destination_view_set_entries = 3;
+  }
+
+  optional string branch = 2;
+  repeated Argument arguments = 3;
+  optional bool update_workspace_files = 22 [default = true];
+  optional bool allow_unrelated = 7 [default = false];
+  optional ChangeId change_id = 8;
+  optional bool auto_resolve_deletes = 15 [default = true];
+  optional bool auto_resolve = 19 [default = true];
+  optional bool turn_add_into_branch_and_edit = 20 [default = false];
+}
+
+message IntegrateFilesResponse {
+  optional string destination_file = 3;
+}
