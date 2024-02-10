@@ -35,6 +35,17 @@ java_grpc_library(
     deps = [":intellijext_java_proto"],
 )
 
+proto_library(
+    name = "perforce_api_proto",
+    srcs = glob(["perforce/*.proto"]),
+)
+
+java_proto_library(
+    name = "perforce_api_java_proto",
+    visibility = ["//visibility:public"],
+    deps = [":perforce_api_proto"],
+)
+
 # BEGIN-EXTERNAL
 go_proto_library(
     name = "intellijext_go_proto",
