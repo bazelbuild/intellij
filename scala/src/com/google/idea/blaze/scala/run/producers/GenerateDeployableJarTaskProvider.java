@@ -255,7 +255,7 @@ class GenerateDeployableJarTaskProvider
                         .addBlazeFlags(buildResultHelper.getBuildFlags())
                         .build();
                 int exitCode =
-                    ExternalTask.builder(workspaceRoot)
+                    ExternalTask.builder(workspaceRoot, project)
                         .addBlazeCommand(command)
                         .context(context)
                         .stderr(

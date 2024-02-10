@@ -18,15 +18,15 @@ package com.google.idea.blaze.base.buildmodifier;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.base.Strings;
-import com.google.common.io.CharStreams;
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.formatter.FormatUtils.FileContentsProvider;
 import com.google.idea.blaze.base.formatter.FormatUtils.Replacements;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.ByteArrayOutputStream;
 import java.util.Collection;
 import javax.annotation.Nullable;
 
@@ -52,7 +52,10 @@ public class BuildFileFormatter {
    */
   @Nullable
   static Replacements getReplacements(
-      BlazeFileType fileType, FileContentsProvider fileContents, Collection<TextRange> ranges) {
+      Project project,
+      BlazeFileType fileType,
+      FileContentsProvider fileContents,
+      Collection<TextRange> ranges) {
     String buildifierBinaryPath = getBuildifierBinaryPath();
     if (buildifierBinaryPath == null) {
       return null;
@@ -62,21 +65,15 @@ public class BuildFileFormatter {
       return null;
     }
     Replacements output = new Replacements();
-    try {
       for (TextRange range : ranges) {
         String input = range.substring(text);
-        String result = formatText(buildifierBinaryPath, fileType, input);
+      String result = formatText(buildifierBinaryPath, fileType, input, project);
         if (result == null) {
           return null;
         }
         output.addReplacement(range, input, result);
       }
-      return output;
-
-    } catch (IOException e) {
-      logger.warn(e);
-    }
-    return null;
+    return output;
   }
 
   /**
@@ -85,21 +82,16 @@ public class BuildFileFormatter {
    */
   @Nullable
   private static String formatText(
-      String buildifierBinaryPath, BlazeFileType fileType, String inputText) throws IOException {
-    Process process = new ProcessBuilder(buildifierBinaryPath, fileTypeArg(fileType)).start();
-    process.getOutputStream().write(inputText.getBytes(UTF_8));
-    process.getOutputStream().close();
-
-    BufferedReader reader =
-        new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8));
-    String formattedText = CharStreams.toString(reader);
-    try {
-      process.waitFor();
-    } catch (InterruptedException e) {
-      process.destroy();
-      Thread.currentThread().interrupt();
-    }
-    return process.exitValue() != 0 ? null : formattedText;
+      String buildifierBinaryPath, BlazeFileType fileType, String inputText, Project project) {
+    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+    var exitValue =
+        ExternalTask.builder(ImmutableList.of(buildifierBinaryPath, fileTypeArg(fileType)), project)
+            .input(inputText.getBytes(UTF_8))
+            .stdout(stdout)
+            .build()
+            .run();
+    String formattedText = stdout.toString(UTF_8);
+    return exitValue != 0 ? null : formattedText;
   }
 
   private static String fileTypeArg(BlazeFileType fileType) {

@@ -58,7 +58,8 @@ public class MockBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
   }
 
   @Override
-  public boolean handlesProject(BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot) {
+  public boolean handlesProject(
+      BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot, Project project) {
     return true;
   }
 

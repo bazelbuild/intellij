@@ -47,24 +47,38 @@ import javax.annotation.Nullable;
  */
 public final class FileGitHubIssueAction extends BlazeProjectAction {
 
+  static class IsCorpMachine {
+    /**
+     * A rough heuristic to detect if the machine is a Google-corp machine by executing 'glogin
+     * -version'. This is wrapped in a LazyValue because it's called from the action update function
+     * that runs twice a second, so it cannot be an expensive computation.
+     */
+    private final NotNullLazyValue<Boolean> value;
+
+    public IsCorpMachine(Project project) {
+      this.value =
+          NotNullLazyValue.createValue(
+              () -> {
+                String which = SystemInfo.isWindows ? "where" : "which";
+                int retVal = ExternalTask.builder(project).args(which, "glogin").build().run();
+                if (retVal == 0) {
+                  retVal = ExternalTask.builder(project).args("glogin", "-version").build().run();
+                }
+                return retVal == 0;
+              });
+    }
+
+    public Boolean getValue() {
+      return value.get();
+    }
+  }
+
   private static final Logger logger = Logger.getInstance(FileGitHubIssueAction.class);
 
   private static final String BASE_URL = "https://github.com/bazelbuild/intellij/issues/new";
 
   private static final BoolExperiment enabled =
       new BoolExperiment("github.issue.filing.enabled", true);
-
-  /**
-   * A rough heuristic to detect if the machine is a Google-corp machine by executing 'glogin
-   * -version'. This is wrapped in a LazyValue because it's called from the action update function
-   * that runs twice a second, so it cannot be an expensive computation.
-   */
-  private static final NotNullLazyValue<Boolean> isCorpMachine =
-      NotNullLazyValue.createValue(
-          () -> {
-            int retVal = ExternalTask.builder().args("glogin", "-version").build().run();
-            return retVal == 0;
-          });
 
   @Override
   protected QuerySyncStatus querySyncSupport() {
@@ -76,7 +90,7 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
     // Hide and disable this action for Google-internal usage.
     if (!enabled.getValue()
         || Blaze.defaultBuildSystem() == BuildSystemName.Blaze
-        || isCorpMachine.getValue()) {
+        || project.getService(IsCorpMachine.class).getValue()) {
       e.getPresentation().setEnabledAndVisible(false);
     }
   }

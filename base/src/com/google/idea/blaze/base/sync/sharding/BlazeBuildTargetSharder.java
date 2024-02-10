@@ -91,14 +91,15 @@ public class BlazeBuildTargetSharder {
   }
 
   /** Number of individual targets per blaze build shard. */
-  private static int getTargetShardSize(ProjectViewSet projectViewSet) {
+  private static int getTargetShardSize(ProjectViewSet projectViewSet, Project project) {
     int defaultLimit =
         shardingRequested(projectViewSet)
             ? defaultTargetShardSize.getValue()
             : maxTargetShardSize.getValue();
     int userSpecified =
         projectViewSet.getScalarValue(TargetShardSizeSection.KEY).orElse(defaultLimit);
-    return min(userSpecified, TargetShardSizeLimit.getMaxTargetsPerShard().orElse(userSpecified));
+    return min(
+        userSpecified, TargetShardSizeLimit.getMaxTargetsPerShard(project).orElse(userSpecified));
   }
 
   private enum ShardingApproach {
@@ -129,7 +130,7 @@ public class BlazeBuildTargetSharder {
     ShardingApproach approach = getShardingApproach(parallelStrategy, viewSet);
     switch (approach) {
       case SHARD_WITHOUT_EXPANDING:
-        int suggestedSize = getTargetShardSize(viewSet);
+        int suggestedSize = getTargetShardSize(viewSet, project);
         return new ShardedTargetsResult(
             new ShardedTargetList(
                 shardTargetsRetainingOrdering(targets, suggestedSize),
@@ -147,7 +148,9 @@ public class BlazeBuildTargetSharder {
 
         return new ShardedTargetsResult(
             shardSingleTargets(
-                expandedTargets.singleTargets, parallelStrategy, getTargetShardSize(viewSet)),
+                expandedTargets.singleTargets,
+                parallelStrategy,
+                getTargetShardSize(viewSet, project)),
             expandedTargets.buildResult);
       default:
         throw new IllegalStateException("Unhandled sharding approach: " + approach);

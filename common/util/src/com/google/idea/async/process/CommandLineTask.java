@@ -48,6 +48,7 @@ public interface CommandLineTask {
     @VisibleForTesting @Nullable public OutputStream stderr;
     private boolean redirectErrorStream = false;
     private Duration timeout;
+    @Nullable private byte[] input;
 
     private Builder(File workingDirectory) {
       this.workingDirectory = workingDirectory;
@@ -113,6 +114,12 @@ public interface CommandLineTask {
       return this;
     }
 
+    @CanIgnoreReturnValue
+    public Builder stdin(byte[] input) {
+      this.input = input;
+      return this;
+    }
+
     public CommandLineTask build() {
       return new Runner(
           command.build(),
@@ -121,7 +128,8 @@ public interface CommandLineTask {
           redirectErrorStream,
           stdout,
           stderr,
-          workingDirectory);
+          workingDirectory,
+          input);
     }
   }
 
@@ -153,6 +161,7 @@ public interface CommandLineTask {
     private final OutputStream stdout;
     private final OutputStream stderr;
     private final File workingDirectory;
+    @Nullable private final byte[] input;
 
     public Runner(
         ImmutableList<String> command,
@@ -161,7 +170,8 @@ public interface CommandLineTask {
         boolean redirectErrorStream,
         OutputStream stdout,
         OutputStream stderr,
-        File workingDirectory) {
+        File workingDirectory,
+        @Nullable byte[] input) {
       this.command = command;
       this.environmentVariables = environmentVariables;
       this.timeout = timeout;
@@ -169,6 +179,7 @@ public interface CommandLineTask {
       this.stdout = stdout != null ? stdout : ByteStreams.nullOutputStream();
       this.stderr = stderr != null ? stderr : ByteStreams.nullOutputStream();
       this.workingDirectory = workingDirectory;
+      this.input = input;
     }
 
     private static void closeQuietly(OutputStream stream) {
@@ -206,8 +217,9 @@ public interface CommandLineTask {
           Thread shutdownHook = new Thread(process::destroy);
           try {
             Runtime.getRuntime().addShutdownHook(shutdownHook);
-            // These tasks are non-interactive, so close the stream connected to the process's
-            // input.
+            if (input != null) {
+              process.getOutputStream().write(input);
+            }
             process.getOutputStream().close();
             Thread stdoutThread = ProcessUtil.forwardAsync(process.getInputStream(), stdout);
             Thread stderrThread = null;

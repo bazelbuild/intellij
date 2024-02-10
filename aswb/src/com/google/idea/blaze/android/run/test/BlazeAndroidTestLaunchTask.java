@@ -200,7 +200,7 @@ public class BlazeAndroidTestLaunchTask implements BlazeLaunchTask {
                         ExecutionUtils.println(console, command + "\n");
 
                         retVal =
-                            ExternalTask.builder(WorkspaceRoot.fromProject(project))
+                            ExternalTask.builder(WorkspaceRoot.fromProject(project), project)
                                 .addBlazeCommand(command)
                                 .context(context)
                                 .stdout(LineProcessingOutputStream.of(stdoutLineProcessor))
