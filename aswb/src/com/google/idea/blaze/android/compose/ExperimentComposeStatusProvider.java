@@ -24,7 +24,7 @@ import com.intellij.openapi.project.Project;
  */
 public class ExperimentComposeStatusProvider implements ComposeStatusProvider {
   private static final BoolExperiment composeEnabled =
-      new BoolExperiment("aswb.force.enable.compose", false);
+      new BoolExperiment("aswb.force.enable.compose", true);
 
   @Override
   public boolean composeEnabled(Project project) {
