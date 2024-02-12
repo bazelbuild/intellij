@@ -46,6 +46,7 @@ message IntellijLogEntry {
   oneof payload {
     Action action = 15;
     Event event = 16;
+    CompletionItem completion_item = 17;
   }
 }
 
@@ -107,4 +108,11 @@ message Event {
   optional int64 duration_millis = 3;
   map<string, string> key_value = 4;
   repeated Event subevent = 5;
+}
+
+message CompletionItem {
+  optional string language = 1;
+  optional bool auto_accepted = 2;
+  optional int32 selection_index = 5;
+  optional int32 completion_length = 7;
 }
