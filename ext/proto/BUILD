@@ -17,6 +17,7 @@ proto_library(
         "issuetracker.proto",
         "kythe.proto",
         "linter.proto",
+        "logentry.proto",
         "piper.proto",
     ],
     # END-EXTERNAL
