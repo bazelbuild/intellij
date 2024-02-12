@@ -26,10 +26,14 @@ ALLOWED_EXTERNAL_DEPENDENCIES = [
 EXISTING_EXTERNAL_VIOLATIONS = [
 ]
 
+EXISTING_UNCHECKED = [
+]
+
 RestrictedInfo = provider(
     doc = "The dependencies, per target, outside the project",
     fields = {
         "dependencies": "A map from target to external dependencies",
+        "unchecked": "A list of targets that are still unchecked for guava internal APIs",
     },
 )
 
@@ -60,18 +64,41 @@ def _restricted_deps_aspect_impl(target, ctx):
     if not _in_project(target):
         return []
 
+    unchecked = []
+    if ctx.rule.kind == "java_library":
+        if ctx.rule.attr.plugins:
+            labels = [t.label for t in ctx.rule.attr.plugins]
+            if (Label("//java/com/google/devtools/build/buildjar/plugin/annotations:google_internal_checker") not in labels):
+                unchecked.append(target)
+        else:
+            unchecked.append(target)
+
     dependencies = {}
+    nested_unchecked = []
     outside_project = []
     for d in _get_deps(ctx):
         if not _in_project(d) and not _in_set(d, _valid):
             outside_project.append(d)
         if RestrictedInfo in d:
             dependencies.update(d[RestrictedInfo].dependencies)
+            nested_unchecked.append(d[RestrictedInfo].unchecked)
 
     if outside_project:
         dependencies[target] = outside_project
 
-    return [RestrictedInfo(dependencies = dependencies)]
+    return [RestrictedInfo(dependencies = dependencies, unchecked = depset(direct = unchecked, transitive = nested_unchecked))]
+
+# buildifier: disable=function-docstring
+def validate_unchecked_internal(unchecked, existing_unchecked):
+    not_allowed_to_be_unchecked = [t for t in unchecked if t not in existing_unchecked]
+    checked_still_in_list = [t for t in existing_unchecked if t not in unchecked]
+    error = ""
+    if not_allowed_to_be_unchecked:
+        error += "The following targets do not have either google_internal_checker or beta_checker on:\n    " + "\n    ".join(not_allowed_to_be_unchecked) + "\n"
+    if checked_still_in_list:
+        error += "The following targets are checked but still in the EXISTING_UNCHECKED list:\n    " + "\n    ".join(checked_still_in_list) + "\n"
+    if error:
+        fail(error)
 
 # buildifier: disable=function-docstring
 def validate_restrictions(dependencies, allowed_external, existing_violations):
