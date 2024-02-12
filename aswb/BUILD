@@ -25,6 +25,12 @@ load(
     "intellij_plugin_debug_target",
 )
 load(
+    "//build_defs:restrictions.bzl",
+    "ALLOWED_EXTERNAL_TEST_DEPENDENCIES",
+    "EXISTING_EXTERNAL_TEST_VIOLATIONS",
+    "validate_test_dependencies_test",
+)
+load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
@@ -365,4 +371,33 @@ genrule(
     name = "create_empty_annotations_folder",
     outs = ["tools/adt/idea/android/annotations/empty_file"],
     cmd = "echo \"No contents\" > $@",
+)
+
+validate_test_dependencies_test(
+    name = "validate_test_dependencies_test",
+    allowed_external_dependencies = ALLOWED_EXTERNAL_TEST_DEPENDENCIES,
+    existing_external_violations = EXISTING_EXTERNAL_TEST_VIOLATIONS,
+    deps = [
+        "//java/com/google/devtools/intellij/blaze/plugin/aswb:aswb_build_test",
+        "//java/com/google/devtools/intellij/blaze/plugin/querysync:cli_tools_build_test",
+        "//java/com/google/devtools/intellij/g3plugins:g3plugins_build_test",
+        "//javatests/com/google/devtools/intellij/blaze/plugin:aswb_python_tests",
+        "//javatests/com/google/devtools/intellij/blaze/plugin:aswb_tests",
+        "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:blaze_integration_tests",
+        "//javatests/com/google/devtools/intellij/g3plugins:android_studio_tests",
+        "//javatests/com/google/devtools/intellij/g3plugins:common_ext_tests",
+        "//javatests/com/google/devtools/intellij/g3plugins:intellij_tests",
+        "//javatests/com/google/devtools/intellij/protobuf/light:protobuf_tests",
+        "//:aswb_python_tests",
+        "//:aswb_tests",
+        "//aswb:aswb_bazel_build_test",
+        "//ext:ext_tests",
+        "//querysync:cli_tools_build_test",
+        "//querysync:querysync_tests",
+        "//shared:tests",
+        "//common/experiments:unit_tests",
+        "//common/ui/properties:unit_tests",
+        "//common/util:CommandLineTaskTest",
+        #        "//third_party/java_src/intellijperforceplugin/testSource/com/google/devtools/intellij/piper/integration:integration_tests",
+    ],
 )
