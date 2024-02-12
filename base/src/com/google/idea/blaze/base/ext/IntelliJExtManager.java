@@ -100,7 +100,13 @@ public class IntelliJExtManager {
       // If the VM option is set, override the path
       path = System.getProperty(INTELLIJ_EXT_BINARY);
       if (path == null) {
-        path = SystemInfo.isMac ? "/usr/local/bin/intellij-ext" : "/opt/intellij-ext/intellij-ext";
+        // TODO(b/324650449): Once this is submitted, first release intellij-ext
+        // then release ASwB, so that the ASwB upgrade installs the new version
+        // of intellij-ext in the expected location below
+        path =
+            SystemInfo.isMac
+                ? "/Library/Application Support/ASwB/intellij-ext"
+                : "/opt/intellij-ext/intellij-ext";
       }
     }
     this.binaryPath = path;
