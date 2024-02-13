@@ -51,10 +51,7 @@ import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
-import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.Dependency;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.*;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeLibrary;
@@ -115,7 +112,9 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
   public static final BoolExperiment returnSimpleDirectResourceDependents =
       new BoolExperiment("aswb.return.simple.direct.resource.dependents", true);
 
-  protected static final Logger logger = Logger.getInstance(BazelModuleSystem.class);
+  protected static final Logger logger = Logger.getInstance(BlazeModuleSystem.class);
+  private static final String MAVEN_COORDINATES = "maven_coordinates=";
+
   protected Module module;
   protected final Project project;
   private final ProjectPath.Resolver pathResolver;
@@ -320,6 +319,84 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
       throws DependencyManagementException {
     TargetKey target = getResolvedTarget(gradleCoordinate);
     return target != null ? gradleCoordinate : null;
+  }
+
+  /**
+   * Returns first cached aar that build by the label provided. This is used by qsync. Returns null
+   * if failed to find such aar locally.
+   *
+   * @param label the label that aar build from
+   * @param buildDeps whether run blaze build to build aar before get it.
+   */
+  private Optional<Path> getCachedAarForLabel(Label label, boolean buildDeps) {
+    DependencyTracker dependencyTracker =
+        QuerySyncManager.getInstance(project).getDependencyTracker();
+    if (dependencyTracker == null) {
+      return Optional.empty();
+    }
+
+    if (buildDeps) {
+      BlazeContext tmpContext = BlazeContext.create();
+      try {
+        boolean unused =
+            dependencyTracker.buildDependenciesForTargets(tmpContext, singleTarget(label));
+      } catch (Exception e) {
+        tmpContext.handleException("Failed to build dependencies", e);
+      }
+    }
+
+    Optional<ImmutableSet<Path>> paths = dependencyTracker.getCachedArtifacts(label);
+    if (paths.isEmpty()) {
+      return Optional.empty();
+    }
+    return paths.get().stream().filter(path -> path.toString().endsWith(DOT_AAR)).findFirst();
+  }
+
+  /**
+   * Returns the absolute path of the dependency, if it exists.
+   *
+   * @param coordinate external coordinates for the dependency.
+   * @return the absolute path of the dependency including workspace root and path.
+   */
+  // @Override removed in 232
+  @Nullable
+  public Path getDependencyPath(GradleCoordinate coordinate) {
+    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
+      Label label = getResolvedLabel(coordinate);
+      if (label == null) {
+        return null;
+      }
+      Optional<Path> result = getCachedAarForLabel(label, false);
+      if (result.isPresent()) {
+        return result.get();
+      }
+      // Failed to get cache aar without building the target. It means the target may not be built
+      // correctly (either not build or its artifact not cached correctly), we need to
+      // re-build it again as the target cannot not be build except here. This is required for
+      // compose layout inspector.
+      return getCachedAarForLabel(label, true).orElse(null);
+    }
+    TargetKey target = getResolvedTarget(coordinate);
+    if (target == null) {
+      return null;
+    }
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    Path defaultPath =
+        WorkspaceRoot.fromProject(project).fileForPath(target.getLabel().blazePackage()).toPath();
+    if (projectData == null) {
+      return defaultPath;
+    }
+
+    AndroidAarIdeInfo aarIdeInfo = projectData.getTargetMap().get(target).getAndroidAarIdeInfo();
+    // Returns its local aar directory path (if exists) instead of google3 one for imported aars.
+    if (aarIdeInfo == null) {
+      return defaultPath;
+    }
+    File aarDir =
+        UnpackedAars.getInstance(module.getProject())
+            .getAarDir(projectData.getArtifactLocationDecoder(), aarIdeInfo.getAar());
+    return aarDir == null || !aarDir.exists() ? defaultPath : aarDir.toPath();
   }
 
   private Stream<TargetKey> locateArtifactsFor(GradleCoordinate coordinate) {
@@ -558,6 +635,17 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
       }
     }
     return libraries.build();
+  }
+
+  @Nullable
+  private static GradleCoordinate getGradleCoordinateFromTarget(TargetIdeInfo targetIdeInfo) {
+    for (String tag : targetIdeInfo.getTags()) {
+      if (tag.startsWith(MAVEN_COORDINATES)) {
+        String coordinate = tag.substring(MAVEN_COORDINATES.length());
+        return GradleCoordinate.parseCoordinateString(coordinate);
+      }
+    }
+    return null;
   }
 
   @Nullable
