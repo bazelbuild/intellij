@@ -45,7 +45,6 @@ load(
     "restricted_deps_aspect",
     "validate_restrictions",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 
 _OptionalPluginXmlInfo = provider(fields = ["optional_plugin_xmls"])
 
@@ -318,10 +317,11 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
         deploy_jar = deploy_jar,
         jar_name = jar_name or (name + ".jar"),
         deps = deps,
-        restrict_deps = select_for_ide(
-            android_studio = restrict_deps,
-            default = False,
-        ),
+        restrict_deps =
+            select({
+                "//intellij_platform_sdk:android-studio-intellij-ext": restrict_deps,
+                "//conditions:default": False,
+            }),
         restricted_deps = deps if restrict_deps else [],
         plugin_xml = plugin_xml,
         allowed_external_dependencies = ALLOWED_EXTERNAL_DEPENDENCIES,
