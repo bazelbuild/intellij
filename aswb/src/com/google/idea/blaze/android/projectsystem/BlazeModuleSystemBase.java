@@ -54,11 +54,7 @@ import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.android.sync.qsync.AndroidExternalLibraryManager;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
-import com.google.idea.blaze.base.ideinfo.AndroidAarIdeInfo;
-import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.Dependency;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.*;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeLibrary;
@@ -127,6 +123,8 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
       new BoolExperiment("aswb.return.simple.direct.resource.dependents", true);
 
   protected static final Logger logger = Logger.getInstance(BlazeModuleSystem.class);
+  private static final String MAVEN_COORDINATES = "maven_coordinates=";
+
   protected Module module;
   protected final Project project;
   private final ProjectPath.Resolver pathResolver;
@@ -360,8 +358,14 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
   public GradleCoordinate getResolvedDependency(
       GradleCoordinate gradleCoordinate, DependencyScopeType dependencyScopeType)
       throws DependencyManagementException {
-    TargetKey target = getResolvedTarget(gradleCoordinate);
-    return target != null ? gradleCoordinate : null;
+    //TODO: handle other dependencyScopeType
+    BlazeProjectData projectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    TargetIdeInfo target = Optional.ofNullable(projectData)
+        .map(BlazeProjectData::getTargetMap)
+        .map(targetMap -> targetMap.get(getResolvedTarget(gradleCoordinate)))
+        .orElse(null);
+
+    return target != null ? getGradleCoordinateFromTarget(target) : null;
   }
 
   /**
@@ -678,6 +682,17 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
       }
     }
     return libraries.build();
+  }
+
+  @Nullable
+  private static GradleCoordinate getGradleCoordinateFromTarget(TargetIdeInfo targetIdeInfo) {
+    for (String tag : targetIdeInfo.getTags()) {
+      if (tag.startsWith(MAVEN_COORDINATES)) {
+        String coordinate = tag.substring(MAVEN_COORDINATES.length());
+        return GradleCoordinate.parseCoordinateString(coordinate);
+      }
+    }
+    return null;
   }
 
   @Nullable
