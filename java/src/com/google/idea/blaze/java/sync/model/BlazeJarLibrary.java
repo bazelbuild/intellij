@@ -31,7 +31,6 @@ import com.google.idea.blaze.base.sync.libraries.LibraryModifier;
 import com.google.idea.blaze.java.libraries.AttachedSourceJarManager;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.JavaVfsSourceRootDetectionUtil;
 import com.intellij.openapi.util.registry.Registry;
