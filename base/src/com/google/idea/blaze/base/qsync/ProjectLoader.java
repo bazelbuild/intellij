@@ -146,8 +146,9 @@ public class ProjectLoader {
             latestProjectDef,
             projectTransformRegistry);
     artifactTracker.initialize();
+    FileRefresher fileRefresher = new FileRefresher(project);
     DependencyTracker dependencyTracker =
-        new DependencyTrackerImpl(project, graph, dependencyBuilder, artifactTracker);
+        new DependencyTrackerImpl(graph, dependencyBuilder, artifactTracker, fileRefresher);
     RenderJarTracker renderJarTracker =
         new RenderJarTrackerImpl(graph, renderJarBuilder, artifactTracker);
     AppInspectorTracker appInspectorTracker =
