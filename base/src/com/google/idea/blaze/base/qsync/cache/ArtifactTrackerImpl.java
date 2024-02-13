@@ -213,7 +213,7 @@ public class ArtifactTrackerImpl
             fileCacheCreator.getCacheDirectories());
     persistentFile = projectDirectory.resolve("artifact_tracker_state");
     transformRegistry.add(this::updateProjectProto);
-    transformRegistry.add(new CcProjectProtoTransform(this));
+    transformRegistry.add(new CcProjectProtoTransform(this::getCcDependenciesInfo));
   }
 
   private static class FileCacheCreator {
@@ -738,7 +738,10 @@ public class ArtifactTrackerImpl
     return aarCacheDirectory;
   }
 
-  @Override
+  /**
+   * Returns the CC target info from the cache. This is the compilation info created by the aspect
+   * when dependencies are build for a CC targets.
+   */
   public CcDependenciesInfo getCcDependenciesInfo() {
     return ccDepencenciesInfo;
   }

@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -63,12 +62,6 @@ public interface ArtifactTracker {
    * manifests) in the layout expected by the IDE.
    */
   Path getExternalAarDirectory();
-
-  /**
-   * Returns the CC target info from the cache. This is the compilation info created by the aspect
-   * when dependencies are build for a CC targets.
-   */
-  CcDependenciesInfo getCcDependenciesInfo();
 
   /** Returns the count of .jar files. */
   Integer getJarsCount();
