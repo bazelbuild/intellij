@@ -49,6 +49,7 @@ message IntellijLogEntry {
     CompletionItem completion_item = 17;
     IntellijConfiguration configuration = 18;
     ProjectInfo project_info = 19;
+    EditingEvent editing_event = 20;
   }
 }
 
@@ -132,4 +133,10 @@ message IntellijConfiguration {
   repeated UserSetting application_setting = 2;
   map<string, string> experiments = 3;
   repeated string jvm_argument = 4;
+}
+
+message EditingEvent {
+  optional int64 number_of_characters = 1;
+  optional string project_hash = 2;
+  optional string language = 3;
 }
