@@ -47,6 +47,8 @@ message IntellijLogEntry {
     Action action = 15;
     Event event = 16;
     CompletionItem completion_item = 17;
+    IntellijConfiguration configuration = 18;
+    ProjectInfo project_info = 19;
   }
 }
 
@@ -115,4 +117,19 @@ message CompletionItem {
   optional bool auto_accepted = 2;
   optional int32 selection_index = 5;
   optional int32 completion_length = 7;
+}
+
+message IntellijConfiguration {
+  message Plugin {
+    optional string id = 1;
+    optional string name = 2;
+    optional string version = 3;
+    optional bool enabled = 4;
+    optional bool bundled = 5;
+  }
+
+  repeated Plugin plugins = 1;
+  repeated UserSetting application_setting = 2;
+  map<string, string> experiments = 3;
+  repeated string jvm_argument = 4;
 }
