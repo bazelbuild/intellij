@@ -30,7 +30,7 @@ INDIRECT_IJ_PRODUCTS = {
     "intellij-ue-oss-under-dev": "intellij-ue-2022.3",
     "android-studio-oss-oldest-stable": "android-studio-2023.1",
     "android-studio-oss-latest-stable": "android-studio-2023.2",
-    "android-studio-oss-under-dev": "android-studio-2023.2",
+    "android-studio-oss-under-dev": "android-studio-2023.3",
     "clion-oss-oldest-stable": "clion-2022.3",
     "clion-oss-latest-stable": "clion-2022.3",
     "clion-oss-under-dev": "clion-2022.3",
