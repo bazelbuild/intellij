@@ -59,8 +59,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       BuildResultHelper buildResultHelper,
       BlazeContext context) {
 
-    BuildResult buildResult =
-        issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), context);
+    BuildResult buildResult = issueBuild(blazeCommandBuilder, context, project);
     BuildDepsStatsScope.fromContext(context)
         .ifPresent(stats -> stats.setBazelExitCode(buildResult.exitCode));
     if (buildResult.status == Status.FATAL_ERROR) {
@@ -87,8 +86,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
       BlazeContext context) {
-    BuildResult buildResult =
-        issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), context);
+    BuildResult buildResult = issueBuild(blazeCommandBuilder, context, project);
     if (buildResult.status == Status.FATAL_ERROR) {
       return BlazeTestResults.NO_RESULTS;
     }
@@ -121,7 +119,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
           WorkspaceRootReplacement.create(workspaceRoot.path(), command);
 
       int retVal =
-          ExternalTask.builder(workspaceRoot)
+          ExternalTask.builder(workspaceRoot, project)
               .addBlazeCommand(command)
               .context(context)
               .stdout(out)
@@ -164,7 +162,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       OutputStream stderr =
           closer.register(LineProcessingOutputStream.of(new PrintOutputLineProcessor(context)));
       int exitCode =
-          ExternalTask.builder(WorkspaceRoot.fromProject(project))
+          ExternalTask.builder(WorkspaceRoot.fromProject(project), project)
               .addBlazeCommand(blazeCommandBuilder.build())
               .context(context)
               .stdout(out)
@@ -181,10 +179,10 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
   }
 
   private BuildResult issueBuild(
-      BlazeCommand.Builder blazeCommandBuilder, WorkspaceRoot workspaceRoot, BlazeContext context) {
+      BlazeCommand.Builder blazeCommandBuilder, BlazeContext context, Project project) {
     blazeCommandBuilder.addBlazeFlags(getExtraBuildFlags(blazeCommandBuilder));
     int retVal =
-        ExternalTask.builder(workspaceRoot)
+        ExternalTask.builder(WorkspaceRoot.fromProject(project), project)
             .addBlazeCommand(blazeCommandBuilder.build())
             .context(context)
             .stderr(

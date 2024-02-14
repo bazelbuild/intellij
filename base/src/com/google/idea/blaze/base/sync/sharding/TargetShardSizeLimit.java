@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync.sharding;
 
 import com.google.common.collect.Streams;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import java.util.OptionalInt;
 
 /** An extension point for limiting the number of targets per blaze build shard. */
@@ -37,9 +38,8 @@ public interface TargetShardSizeLimit {
    * <p>This is simply the smallest applicable shard size limit, or {@link OptionalInt#empty()} if
    * there are no limits.
    */
-  static OptionalInt getMaxTargetsPerShard() {
-    return EP_NAME
-        .extensions()
+  static OptionalInt getMaxTargetsPerShard(Project project) {
+    return EP_NAME.getExtensionList(project).stream()
         .map(TargetShardSizeLimit::getShardSizeLimit)
         .flatMapToInt(Streams::stream)
         .min();

@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
@@ -44,9 +45,10 @@ public class GitWorkingSetProvider {
    */
   @Nullable
   public static WorkingSet calculateWorkingSet(
-      WorkspaceRoot workspaceRoot, String upstreamSha, BlazeContext context) {
+      WorkspaceRoot workspaceRoot, String upstreamSha, BlazeContext context, Project project) {
 
-    String gitRoot = getConsoleOutput(workspaceRoot, "git", "rev-parse", "--show-toplevel");
+    String gitRoot =
+        getConsoleOutput(project, workspaceRoot, "git", "rev-parse", "--show-toplevel");
     if (gitRoot == null) {
       return null;
     }
@@ -55,7 +57,7 @@ public class GitWorkingSetProvider {
 
     // Do a git diff to find all modified files we know about
     int retVal =
-        ExternalTask.builder(workspaceRoot)
+        ExternalTask.builder(workspaceRoot, project)
             .args("git", "diff", "--name-status", "--no-renames", upstreamSha)
             .context(context)
             .stdout(LineProcessingOutputStream.of(processor))
@@ -69,7 +71,8 @@ public class GitWorkingSetProvider {
 
     // Finally list all untracked files, as they're not caught by the git diff step above
     String untrackedFilesOutput =
-        getConsoleOutput(workspaceRoot, "git", "ls-files", "--others", "--exclude-standard");
+        getConsoleOutput(
+            project, workspaceRoot, "git", "ls-files", "--others", "--exclude-standard");
     if (untrackedFilesOutput == null) {
       return null;
     }
@@ -91,14 +94,17 @@ public class GitWorkingSetProvider {
         ImmutableList.copyOf(processor.deletedFiles));
   }
 
-  /** @return the console output, in string form, or null if there was a non-zero exit code. */
+  /**
+   * @return the console output, in string form, or null if there was a non-zero exit code.
+   */
   @Nullable
-  private static String getConsoleOutput(WorkspaceRoot workspaceRoot, String... commands) {
+  private static String getConsoleOutput(
+      Project project, WorkspaceRoot workspaceRoot, String... commands) {
     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
     ByteArrayOutputStream stderr = new ByteArrayOutputStream();
 
     int retVal =
-        ExternalTask.builder(workspaceRoot)
+        ExternalTask.builder(workspaceRoot, project)
             .args(commands)
             .stdout(stdout)
             .stderr(stderr)

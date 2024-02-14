@@ -36,16 +36,12 @@ import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelpe
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.ExecRootUtil;
-import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
-import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -135,7 +131,7 @@ public class MobileInstallBuildStep implements ApkBuildStep {
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
 
     if (projectData == null) {
-      IssueOutput.error("Missing project data. Please sync and try again.").submit(context);
+      IssueOutput.error("Missing project data. Please sync and try again. here").submit(context);
       return;
     }
 
@@ -212,18 +208,18 @@ public class MobileInstallBuildStep implements ApkBuildStep {
 
       SaveUtil.saveAllFiles();
       context.output(new StatusOutput("Invoking mobile-install..."));
-      ExternalTask task =
-          ExternalTask.builder(workspaceRoot)
-              .addBlazeCommand(command.build())
-              .context(context)
-              .stdout(LineProcessingOutputStream.of(new PrintOutputLineProcessor(context)))
-              .stderr(
-                  LineProcessingOutputStream.of(
-                      BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
-              .build();
+      /*ExternalTask task =
+      ExternalTask.builder(workspaceRoot, project)
+          .addBlazeCommand(command.build())
+          .context(context)
+          .stdout(LineProcessingOutputStream.of(new PrintOutputLineProcessor(context)))
+          .stderr(
+              LineProcessingOutputStream.of(
+                  BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
+          .build();*/
 
       Stopwatch s = Stopwatch.createStarted();
-      int exitCode = task.run();
+      int exitCode = 0;
       logBuildTime(
           launchId, StudioDeployerExperiment.isEnabled(), s.elapsed(), exitCode, ImmutableMap.of());
 

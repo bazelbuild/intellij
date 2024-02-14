@@ -221,6 +221,7 @@
         factoryClass="com.google.idea.blaze.base.toolwindow.TasksToolWindowFactory"/>
     <fileTypeFactory implementation="com.google.idea.blaze.base.plugin.BlazeFileTypeFactory" />
     <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.BuildTasksProblemsView"/>
+    <projectService serviceImplementation="com.google.idea.blaze.base.actions.FileGitHubIssueAction$IsCorpMachine"/>
 
     <applicationConfigurable
         instance="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsCompositeConfigurable"
@@ -440,7 +441,8 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildBatchingService"
                     interface="com.google.idea.blaze.base.sync.sharding.BuildBatchingService"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.TargetShardSizeLimit"
-                    interface="com.google.idea.blaze.base.sync.sharding.TargetShardSizeLimit"/>
+                    interface="com.google.idea.blaze.base.sync.sharding.TargetShardSizeLimit"
+                    area="IDEA_PROJECT"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeHighlightStatsCollector"
                     interface="com.google.idea.blaze.base.editor.BlazeHighlightStatsCollector"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AbsolutePathPatcher"
