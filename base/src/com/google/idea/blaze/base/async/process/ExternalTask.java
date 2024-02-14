@@ -53,21 +53,21 @@ public interface ExternalTask {
 
   /** A builder for an external task */
   class Builder {
-    @VisibleForTesting public final ImmutableList.Builder<String> command = ImmutableList.builder();
-    File workingDirectory;
-    final Map<String, String> environmentVariables = Maps.newHashMap();
-    @VisibleForTesting @Nullable public BlazeContext context;
-    @VisibleForTesting @Nullable public OutputStream stdout;
-    @VisibleForTesting @Nullable public OutputStream stderr;
-    @Nullable BlazeCommand blazeCommand;
-    boolean redirectErrorStream = false;
-    boolean ignoreExitCode = false;
+    public final ImmutableList.Builder<String> command = ImmutableList.builder();
+    public File workingDirectory;
+    public final Map<String, String> environmentVariables = Maps.newHashMap();
+    @Nullable public BlazeContext context;
+    @Nullable public OutputStream stdout;
+    @Nullable public OutputStream stderr;
+    @Nullable public BlazeCommand blazeCommand;
+    public boolean redirectErrorStream = false;
+    public boolean ignoreExitCode = false;
 
     private Builder(WorkspaceRoot workspaceRoot) {
       this(workspaceRoot.directory());
     }
 
-    private Builder(File workingDirectory) {
+    protected Builder(File workingDirectory) {
       this.workingDirectory = workingDirectory;
     }
 
@@ -176,7 +176,7 @@ public interface ExternalTask {
     private final OutputStream stderr;
     private final boolean ignoreExitCode;
 
-    ExternalTaskImpl(
+    protected ExternalTaskImpl(
         @Nullable BlazeContext context,
         File workingDirectory,
         List<String> command,
