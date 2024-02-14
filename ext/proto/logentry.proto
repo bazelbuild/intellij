@@ -50,6 +50,7 @@ message IntellijLogEntry {
     IntellijConfiguration configuration = 18;
     ProjectInfo project_info = 19;
     EditingEvent editing_event = 20;
+    IdeArtifactStats ide_artifact_stats = 21;
   }
 }
 
@@ -139,4 +140,25 @@ message EditingEvent {
   optional int64 number_of_characters = 1;
   optional string project_hash = 2;
   optional string language = 3;
+}
+
+message IdeArtifactStats {
+  repeated DirectoryStats directory_stats = 1;
+
+  message DirectoryStats {
+    optional string originating_ide_part = 1;
+    optional string purpose = 2;
+    optional string directory_name = 3;
+    optional string path = 4;
+    optional int64 size = 5;
+    optional int64 max_file_size = 6;
+    optional int64 avg_file_size = 7;
+    optional int64 file_count = 8;
+    repeated FileStats largest_files = 9;
+
+    message FileStats {
+      optional string relative_path = 1;
+      optional int64 size = 2;
+    }
+  }
 }
