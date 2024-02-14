@@ -51,6 +51,7 @@ message IntellijLogEntry {
     ProjectInfo project_info = 19;
     EditingEvent editing_event = 20;
     IdeArtifactStats ide_artifact_stats = 21;
+    EditedFile edited_file = 22;
   }
 }
 
@@ -161,4 +162,10 @@ message IdeArtifactStats {
       optional int64 size = 2;
     }
   }
+}
+
+message EditedFile {
+  optional string language = 1;
+  optional string extension = 2;
+  optional bool is_from_save = 3;
 }
