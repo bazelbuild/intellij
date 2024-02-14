@@ -1,3 +1,10 @@
+v2024.02.13
+===========
+* fix: deadlock when more than one project is open and bazel.sync.detec… #5978
+* Changes to BlazeTargetFilter regex to match more target names #6021
+* Fix _virtual_includes handling for absolute strip_include_prefix paths #5969
+
+
 v2024.01.30
 ===========
 * feat: Allow environment variables in run configurations #5885
