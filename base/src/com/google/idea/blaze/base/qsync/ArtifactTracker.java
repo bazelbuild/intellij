@@ -31,8 +31,8 @@ public interface ArtifactTracker {
   void clear() throws IOException;
 
   /** Fetches, caches and sets up new artifacts. */
-  ArtifactTrackerUpdateResult update(
-      Set<Label> targets, OutputInfo outputInfo, BlazeContext context) throws BuildException;
+  void update(Set<Label> targets, OutputInfo outputInfo, BlazeContext context)
+      throws BuildException;
 
   /**
    * Returns a list of local cache files that build by target provided. Returns Optional.empty() if
