@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException.IssueKind;
+import com.intellij.openapi.project.Project;
 import java.io.File;
 
 /** {@link CompilerVersionChecker} for tests. */
@@ -29,7 +30,7 @@ public class MockCompilerVersionChecker implements CompilerVersionChecker {
   }
 
   @Override
-  public String checkCompilerVersion(File executionRoot, File cppExecutable)
+  public String checkCompilerVersion(File executionRoot, File cppExecutable, Project project)
       throws VersionCheckException {
     if (injectFault) {
       throw new VersionCheckException(IssueKind.GENERIC_FAILURE, "injected fault");

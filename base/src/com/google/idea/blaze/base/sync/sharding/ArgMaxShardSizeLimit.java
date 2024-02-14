@@ -19,6 +19,7 @@ import com.google.common.base.Suppliers;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import java.io.ByteArrayOutputStream;
 import java.util.OptionalInt;
 import java.util.function.Supplier;
@@ -33,8 +34,13 @@ final class ArgMaxShardSizeLimit implements TargetShardSizeLimit {
   private static final BoolExperiment enabled =
       new BoolExperiment("blaze.shard.use.arg.max.heuristic", true);
 
-  private final Supplier<Integer> systemArgMax =
-      Suppliers.memoize(ArgMaxShardSizeLimit::queryArgMax);
+  private final Supplier<Integer> systemArgMax = Suppliers.memoize(this::queryArgMax);
+
+  private final Project project;
+
+  ArgMaxShardSizeLimit(Project project) {
+    this.project = project;
+  }
 
   @Override
   public OptionalInt getShardSizeLimit() {
@@ -53,11 +59,11 @@ final class ArgMaxShardSizeLimit implements TargetShardSizeLimit {
 
   /** Synchronously runs 'getconf ARG_MAX', returning null if unsuccessful. */
   @Nullable
-  private static Integer queryArgMax() {
+  private Integer queryArgMax() {
     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
     ByteArrayOutputStream stderr = new ByteArrayOutputStream();
     int retVal =
-        ExternalTask.builder()
+        ExternalTask.builder(project)
             .args("getconf", "ARG_MAX")
             .stdout(stdout)
             .stderr(stderr)

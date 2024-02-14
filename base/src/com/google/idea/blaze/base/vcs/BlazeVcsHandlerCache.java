@@ -40,7 +40,7 @@ class BlazeVcsHandlerCache {
     BuildSystemName buildSystemName = Blaze.getBuildSystemName(project);
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     for (BlazeVcsHandlerProvider candidate : BlazeVcsHandlerProvider.EP_NAME.getExtensions()) {
-      if (candidate.handlesProject(buildSystemName, workspaceRoot)) {
+      if (candidate.handlesProject(buildSystemName, workspaceRoot, project)) {
         return candidate;
       }
     }

@@ -17,6 +17,7 @@ package com.google.idea.blaze.cpp;
 
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException.IssueKind;
+import com.intellij.openapi.project.Project;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 
@@ -24,7 +25,7 @@ import java.io.File;
 public class CompilerVersionCheckerImpl implements CompilerVersionChecker {
 
   @Override
-  public String checkCompilerVersion(File executionRoot, File cppExecutable)
+  public String checkCompilerVersion(File executionRoot, File cppExecutable, Project project)
       throws VersionCheckException {
     if (!executionRoot.exists()) {
       throw new VersionCheckException(IssueKind.MISSING_EXEC_ROOT, "");
@@ -35,7 +36,7 @@ public class CompilerVersionCheckerImpl implements CompilerVersionChecker {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     ByteArrayOutputStream errStream = new ByteArrayOutputStream();
     int result =
-        ExternalTask.builder(executionRoot)
+        ExternalTask.builder(executionRoot, project)
             .args(cppExecutable.toString())
             // NOTE: this won't work with MSVC if we ever support that (check CToolchainIdeInfo?)
             .args("--version")
