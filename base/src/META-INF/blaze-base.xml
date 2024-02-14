@@ -327,8 +327,6 @@
     <stepsBeforeRunProvider implementation="com.google.idea.blaze.base.run.BlazeBeforeRunTaskProvider"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.help.BlazeHelpHandler"
                         serviceImplementation="com.google.idea.blaze.base.help.BlazeHelpHandlerImpl"/>
-    <applicationService serviceInterface="com.google.idea.blaze.base.async.process.ExternalTaskProvider"
-                        serviceImplementation="com.google.idea.blaze.base.async.process.ExternalTaskProvider$Impl"/>
 
     <additionalTextAttributes scheme="Default" file="resources/colorSchemes/BuildDefault.xml"/>
     <typedHandler implementation="com.google.idea.blaze.base.lang.buildfile.completion.BuildCompletionAutoPopupHandler"/>
@@ -451,6 +449,8 @@
       interface="com.google.idea.blaze.base.qsync.HandledRulesProvider" />
     <extensionPoint qualifiedName="com.google.idea.blaze.qsync.BlazeProjectListenerProvider"
       interface="com.google.idea.blaze.base.qsync.BlazeProjectListenerProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.ExternalTaskProvider"
+      interface="com.google.idea.blaze.base.async.process.ExternalTaskProvider"/>
   </extensionPoints>
 
   <application-components>
@@ -616,6 +616,7 @@
     <ExperimentLoader implementation="com.google.idea.common.experiments.SystemPropertyExperimentLoader" order="first" id="SystemPropertyExperimentLoader"/>
     <ExperimentLoader implementation="com.google.idea.common.experiments.UserOverridesExperimentLoader" order="after SystemPropertyExperimentLoader" id="UserOverridesExperimentLoader"/>
     <ExperimentLoader implementation="com.google.idea.common.experiments.DefaultValuesExperimentLoader" order="last" id="DefaultValuesExperimentLoader"/>
+    <ExternalTaskProvider implementation="com.google.idea.blaze.base.async.process.ExternalTaskProvider$Impl" />
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze.qsync">
