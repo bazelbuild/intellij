@@ -47,7 +47,7 @@ public class IntelliJExtManager {
    * Controls whether the intellij-ext binary is used at all. Ignored if EXPERIMENT_SERVICE_PROPERTY
    * is set.
    */
-  private static final BoolExperiment ENABLED = new BoolExperiment("use.intellij.ext", false);
+  private static final BoolExperiment ENABLED = new BoolExperiment("use.intellij.ext", true);
 
   private static final BoolExperiment ISSUETRACKER =
       new BoolExperiment("use.intellij.ext.issuetracker", false);
@@ -65,6 +65,9 @@ public class IntelliJExtManager {
 
   private static final BoolExperiment FILEAPI =
       new BoolExperiment("use.intellij.ext.fileapi", false);
+
+  private static final BoolExperiment ECATCHER =
+      new BoolExperiment("use.intellij.ext.ecatcher", false);
 
   private static final BoolExperiment BUILD_SERVICE =
       new BoolExperiment("use.intellij.ext.buildservice", false);
@@ -187,6 +190,10 @@ public class IntelliJExtManager {
 
   public boolean isFileApiEnabled() {
     return isEnabled() && FILEAPI.getValue();
+  }
+
+  public boolean isECatcherEnabled() {
+    return isEnabled() && ECATCHER.getValue();
   }
 
   public boolean isBuildServiceEnabled() {
