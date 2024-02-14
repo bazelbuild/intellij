@@ -106,12 +106,13 @@ def validate_unchecked_internal(unchecked, existing_unchecked):
 # buildifier: disable=function-docstring
 def validate_restrictions(dependencies, allowed_external, existing_violations):
     violations = sorted([str(d.label) for d in dependencies.keys()])
+    violation_details = {str(d.label): [str(t.label) for t in dependencies[d]] for d in dependencies.keys()}
     error = ""
     if violations != sorted(existing_violations):
         new_violations = [t for t in violations if t not in existing_violations]
         no_longer_violations = [t for t in existing_violations if t not in violations]
         if new_violations:
-            error += "These targets now depend on external targets:\n    " + "\n    ".join(new_violations) + "\n"
+            error += "These targets now depend on external targets:\n    " + "\n    ".join([d + " ==> " + str(violation_details[d]) for d in new_violations]) + "\n"
 
         if no_longer_violations:
             error += "The following targets no longer depend on external targets, please remove from restrictions.bzl:\n    " + "\n    ".join(no_longer_violations) + "\n"
