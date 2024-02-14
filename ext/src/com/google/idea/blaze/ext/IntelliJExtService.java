@@ -23,6 +23,7 @@ import com.google.idea.blaze.ext.ChatBotModelGrpc.ChatBotModelBlockingStub;
 import com.google.idea.blaze.ext.CodeSearchGrpc.CodeSearchFutureStub;
 import com.google.idea.blaze.ext.CritiqueServiceGrpc.CritiqueServiceBlockingStub;
 import com.google.idea.blaze.ext.DepServerGrpc.DepServerFutureStub;
+import com.google.idea.blaze.ext.ECatcherServiceGrpc.ECatcherServiceFutureStub;
 import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlockingStub;
 import com.google.idea.blaze.ext.FileApiGrpc.FileApiFutureStub;
 import com.google.idea.blaze.ext.FindingsServiceGrpc.FindingsServiceBlockingStub;
@@ -211,6 +212,11 @@ public final class IntelliJExtService {
   public CodeSearchFutureStub getCodeSearchService() throws IOException {
     IntelliJExtBlockingStub unused = connect();
     return client.getCodeSearchService();
+  }
+
+  public ECatcherServiceFutureStub getECatcherService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getECatcherService();
   }
 
   public FileApiFutureStub getFileApiService() throws IOException {
