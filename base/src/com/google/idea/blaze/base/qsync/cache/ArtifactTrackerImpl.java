@@ -54,7 +54,7 @@ import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.qsync.AppInspectorArtifactTracker;
 import com.google.idea.blaze.base.qsync.AppInspectorInfo;
 import com.google.idea.blaze.base.qsync.ArtifactTracker;
-import com.google.idea.blaze.base.qsync.ArtifactTrackerUpdateResult;
+import com.google.idea.blaze.base.qsync.FileRefresher;
 import com.google.idea.blaze.base.qsync.OutputGroup;
 import com.google.idea.blaze.base.qsync.OutputInfo;
 import com.google.idea.blaze.base.qsync.QuerySync;
@@ -141,6 +141,8 @@ public class ArtifactTrackerImpl
   private final ArtifactFetcher<OutputArtifact> artifactFetcher;
   private final ProjectPath.Resolver projectPathResolver;
   private final ProjectDefinition projectDefinition;
+  private final FileRefresher fileRefresher;
+
   @VisibleForTesting public final CacheDirectoryManager cacheDirectoryManager;
   private final Path jarCacheDirectory;
   private final FileCache jarCache;
@@ -165,11 +167,13 @@ public class ArtifactTrackerImpl
       ArtifactFetcher<OutputArtifact> artifactFetcher,
       ProjectPath.Resolver projectPathResolver,
       ProjectDefinition projectDefinition,
-      ProjectProtoTransform.Registry transformRegistry) {
+      ProjectProtoTransform.Registry transformRegistry,
+      FileRefresher fileRefresher) {
     this.ideProjectBasePath = ideProjectBasePath;
     this.artifactFetcher = artifactFetcher;
     this.projectPathResolver = projectPathResolver;
     this.projectDefinition = projectDefinition;
+    this.fileRefresher = fileRefresher;
 
     FileCacheCreator fileCacheCreator = new FileCacheCreator();
     jarCacheDirectory = projectDirectory.resolve(LIBRARY_DIRECTORY);
@@ -418,7 +422,7 @@ public class ArtifactTrackerImpl
 
   /** Fetches, caches and sets up new render jar artifacts. */
   @Override
-  public ArtifactTrackerUpdateResult update(
+  public ImmutableSet<Path> update(
       Set<Label> targets, RenderJarInfo renderJarInfo, BlazeContext outerContext)
       throws BuildException {
     ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap;
@@ -430,7 +434,7 @@ public class ArtifactTrackerImpl
     try (BlazeContext context = BlazeContext.create(outerContext)) {
       ImmutableMap<Path, Path> updated = cache(context, artifactMap);
       saveState();
-      return ArtifactTrackerUpdateResult.create(updated.keySet(), ImmutableSet.of());
+      return updated.keySet();
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
     }
@@ -463,8 +467,8 @@ public class ArtifactTrackerImpl
 
   /** Fetches, caches and sets up new artifacts. */
   @Override
-  public ArtifactTrackerUpdateResult update(
-      Set<Label> targets, OutputInfo outputInfo, BlazeContext outerContext) throws BuildException {
+  public void update(Set<Label> targets, OutputInfo outputInfo, BlazeContext outerContext)
+      throws BuildException {
     ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap;
     try {
       artifactMap = outputInfoToArtifactMap(outputInfo);
@@ -483,7 +487,9 @@ public class ArtifactTrackerImpl
       ccDepencenciesInfo = ccDepsBuilder.build();
 
       saveState();
-      return ArtifactTrackerUpdateResult.create(updated.keySet(), ImmutableSet.of());
+
+      fileRefresher.refreshFiles(context, updated.keySet());
+
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
     }

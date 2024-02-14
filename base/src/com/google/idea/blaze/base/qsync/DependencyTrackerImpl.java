@@ -54,17 +54,12 @@ public class DependencyTrackerImpl implements DependencyTracker {
   private final BlazeProject blazeProject;
   private final DependencyBuilder builder;
   private final ArtifactTracker artifactTracker;
-  private final FileRefresher fileRefresher;
 
   public DependencyTrackerImpl(
-      BlazeProject blazeProject,
-      DependencyBuilder builder,
-      ArtifactTracker artifactTracker,
-      FileRefresher fileRefresher) {
+      BlazeProject blazeProject, DependencyBuilder builder, ArtifactTracker artifactTracker) {
     this.blazeProject = blazeProject;
     this.builder = builder;
     this.artifactTracker = artifactTracker;
-    this.fileRefresher = fileRefresher;
   }
 
   /**
@@ -158,9 +153,7 @@ public class DependencyTrackerImpl implements DependencyTracker {
             snapshot.graph().getTargetLanguages(requestedTargets.buildTargets));
     reportErrorsAndWarnings(context, snapshot, outputInfo);
 
-    ImmutableSet<Path> updatedFiles =
-        updateCaches(context, requestedTargets.expectedDependencyTargets, outputInfo);
-    fileRefresher.refreshFiles(context, updatedFiles);
+    artifactTracker.update(requestedTargets.expectedDependencyTargets, outputInfo, context);
   }
 
   private void reportErrorsAndWarnings(
@@ -224,11 +217,6 @@ public class DependencyTrackerImpl implements DependencyTracker {
   @Override
   public Optional<ImmutableSet<Path>> getCachedArtifacts(Label target) {
     return artifactTracker.getCachedFiles(target);
-  }
-
-  private ImmutableSet<Path> updateCaches(
-      BlazeContext context, Set<Label> targets, OutputInfo outputInfo) throws BuildException {
-    return artifactTracker.update(targets, outputInfo, context).updatedFiles();
   }
 
 }

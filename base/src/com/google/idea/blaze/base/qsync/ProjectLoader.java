@@ -137,6 +137,7 @@ public class ProjectLoader {
     BlazeProject graph = new BlazeProject();
     graph.addListener((c, i) -> projectModificationTracker.incModificationCount());
     ArtifactFetcher<OutputArtifact> artifactFetcher = createArtifactFetcher();
+    FileRefresher fileRefresher = new FileRefresher(project);
     ArtifactTrackerImpl artifactTracker =
         new ArtifactTrackerImpl(
             BlazeDataStorage.getProjectDataDir(importSettings).toPath(),
@@ -144,11 +145,11 @@ public class ProjectLoader {
             artifactFetcher,
             projectPathResolver,
             latestProjectDef,
-            projectTransformRegistry);
+            projectTransformRegistry,
+            fileRefresher);
     artifactTracker.initialize();
-    FileRefresher fileRefresher = new FileRefresher(project);
     DependencyTracker dependencyTracker =
-        new DependencyTrackerImpl(graph, dependencyBuilder, artifactTracker, fileRefresher);
+        new DependencyTrackerImpl(graph, dependencyBuilder, artifactTracker);
     RenderJarTracker renderJarTracker =
         new RenderJarTrackerImpl(graph, renderJarBuilder, artifactTracker);
     AppInspectorTracker appInspectorTracker =
