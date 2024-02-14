@@ -15,9 +15,6 @@
  */
 package com.google.idea.blaze.android.projectsystem;
 
-import static java.util.stream.Collectors.joining;
-
-import com.android.tools.idea.projectsystem.ClassContent;
 import com.android.tools.idea.projectsystem.ClassFileFinder;
 import com.android.tools.idea.projectsystem.ClassFileFinderUtil;
 import com.android.tools.idea.rendering.classloading.loaders.JarManager;
@@ -28,6 +25,7 @@ import com.google.idea.blaze.android.libraries.RenderJarCache;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.android.targetmaps.TargetToBinaryMap;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -38,20 +36,27 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.android.uipreview.ClassModificationTimestamp;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import static java.util.stream.Collectors.joining;
 
 /**
  * A {@link ClassFileFinder} that uses deploy JAR like artifacts (called render jar henceforth) for
@@ -82,6 +87,10 @@ public class RenderJarClassFileFinder implements ClassFileFinder {
   @VisibleForTesting
   static final BoolExperiment resolveResourceClasses =
       new BoolExperiment("aswb.resolve.resources.render.jar", false);
+
+  @VisibleForTesting
+  static final BoolExperiment lookupInBinaryDeps =
+      new BoolExperiment("aswb.lookup.binary.deps.render.jar", true);
 
   private static final Logger log = Logger.getInstance(RenderJarClassFileFinder.class);
 
@@ -201,12 +210,39 @@ public class RenderJarClassFileFinder implements ClassFileFinder {
     // The binaries can depend on any subset of these resource targets. Generally, we only
     // expect one, or a small number of binaries here.
     for (TargetKey binaryTarget : binaryTargets) {
-      ClassContent classContent = getClassFromRenderResolveJar(projectData, fqcn, binaryTarget);
-      if (classContent != null) {
-        return classContent;
+      VirtualFile classFile = getClassFromRenderResolveJar(projectData, fqcn, binaryTarget);
+      if (classFile != null) {
+        return classFile;
+      }
+
+      // Another attempt with the target dependencies
+      if (lookupInBinaryDeps.getValue()) {
+        VirtualFileCacheEntry entry = VirtualFileCache.getInstance(project).getEntry(fqcn);
+        //TODO: Use the class modification timestamp to verify the file is still valid for use
+        if (entry != null && entry.getFile().isValid()) {
+          return entry.getFile();
+        }
+        classFile = getClassFromTransitiveDeps(projectData, fqcn, binaryTarget);
+        if (classFile != null) {
+          VirtualFileCacheEntry newEntry = new VirtualFileCacheEntry(classFile, ClassModificationTimestamp.fromVirtualFile(classFile));
+          VirtualFileCache.getInstance(project).putEntry(fqcn, newEntry);
+          return classFile;
+        }
       }
     }
     log.warn(String.format("Could not find class `%1$s` (module: `%2$s`)", fqcn, module.getName()));
+    return null;
+  }
+
+  @Nullable
+  private VirtualFile getClassFromTransitiveDeps(BlazeProjectData projectData, String fqcn, TargetKey binaryTarget) {
+    for (TargetKey dependencyTargetKey :
+        TransitiveDependencyMap.getInstance(project).getTransitiveDependencies(binaryTarget)) {
+      VirtualFile classFile = getClassFromClassJar(projectData, fqcn, dependencyTargetKey);
+      if (classFile != null) {
+        return classFile;
+      }
+    }
     return null;
   }
 
@@ -271,29 +307,57 @@ public class RenderJarClassFileFinder implements ClassFileFinder {
       return null;
     }
 
-    return findClassInJar(renderResolveJarFile, fqcn);
-  }
-
-  private ClassContent findClassInJar(File renderResolveJarFile, String fqcn) {
-    String relativePath = ClassFileFinderUtil.getPathFromFqcn(fqcn);
-    final byte[] bytes;
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      try {
-        Path targetPath = renderResolveJarFile.toPath().resolve("!" + relativePath);
-        bytes = Files.isRegularFile(targetPath) ? Files.readAllBytes(targetPath) : new byte[0];
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    } else {
-      bytes =
-          jarManager.loadFileFromJar(
-              renderResolveJarFile.toPath(), ClassFileFinderUtil.getPathFromFqcn(fqcn));
-    }
-    if (bytes == null) {
+    VirtualFile renderResolveJarVF =
+        VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(renderResolveJarFile);
+    if (renderResolveJarVF == null) {
       return null;
     }
 
-    return ClassContent.fromJarEntryContent(renderResolveJarFile, bytes);
+    return findClassInJar(renderResolveJarVF, fqcn);
+  }
+
+  @Nullable
+  private VirtualFile getClassFromClassJar(
+      BlazeProjectData projectData, String fqcn, TargetKey binaryTarget) {
+    ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
+    TargetIdeInfo ideInfo = projectData.getTargetMap().get(binaryTarget);
+    if (ideInfo == null
+        || ideInfo.getJavaIdeInfo() == null
+        || ideInfo.getJavaIdeInfo().getJars().isEmpty()
+        || decoder == null) {
+      return null;
+    }
+
+    File classJar = OutputArtifactResolver.resolve(project, decoder, ideInfo.getJavaIdeInfo().getJars().get(0).getClassJar());
+    if (classJar == null) {
+      return null;
+    }
+
+    VirtualFile virtualFile =
+        VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(classJar);
+    if (virtualFile == null) {
+      return null;
+    }
+
+    return findClassInJar(virtualFile, fqcn);
+  }
+
+  @Nullable
+  private static VirtualFile findClassInJar(final VirtualFile classJar, String fqcn) {
+    VirtualFile jarRoot = getJarRootForLocalFile(classJar);
+    if (jarRoot == null) {
+      return null;
+    }
+    return ClassFileFinderUtil.findClassFileInOutputRoot(jarRoot, fqcn);
+  }
+
+  /** Test aware method to redirect JARs to {@link VirtualFileSystemProvider} for tests */
+  private static VirtualFile getJarRootForLocalFile(VirtualFile file) {
+    return ApplicationManager.getApplication().isUnitTestMode()
+        ? VirtualFileSystemProvider.getInstance()
+            .getSystem()
+            .findFileByPath(file.getPath() + JarFileSystem.JAR_SEPARATOR)
+        : JarFileSystem.getInstance().getJarRootForLocalFile(file);
   }
 
   public static boolean isEnabled() {
