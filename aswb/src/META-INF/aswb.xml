@@ -93,6 +93,7 @@
     <BlazeHighlightStatsCollector implementation="com.google.idea.blaze.android.editor.UnresolvedResourceStatsCollector"/>
     <SyncListener implementation="com.google.idea.blaze.android.editor.ProjectUnresolvedResourceStatsCollector$CollectorSyncListener"/>
     <SyncListener implementation="com.google.idea.blaze.android.targetmaps.TargetToBinaryMapImpl$Adapter"/>
+    <SyncListener implementation="com.google.idea.blaze.android.projectsystem.ClassContentCache$Listener"/>
     <OutputGroupsProvider implementation="com.google.idea.blaze.android.sync.aspects.strategy.RenderResolveOutputGroupProvider"/>
     <ComposeStatusProvider implementation="com.google.idea.blaze.android.compose.ExperimentComposeStatusProvider"/>
     <BlazeBuildListener implementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemBuildManager$BuildCallbackPublisher"/>
