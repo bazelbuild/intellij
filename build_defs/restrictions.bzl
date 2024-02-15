@@ -114,7 +114,7 @@ def validate_restrictions(dependencies, allowed_external, existing_violations):
             error += "These targets now depend on external targets:\n    " + "\n    ".join(new_violations) + "\n"
 
         if no_longer_violations:
-            error += "The following targets no longer depend on external targets, please remove from restrictions.bzl: " + ", ".join(no_longer_violations)
+            error += "The following targets no longer depend on external targets, please remove from restrictions.bzl:\n    " + "\n    ".join(no_longer_violations) + "\n"
 
     for target, outside_project in dependencies.items():
         invalid = [dep for dep in outside_project if not _in_set(dep, allowed_external)]
