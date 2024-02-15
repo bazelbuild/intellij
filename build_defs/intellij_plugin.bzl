@@ -228,10 +228,15 @@ def _intellij_plugin_jar_impl(ctx):
     if ctx.attr.restrict_deps:
         dependencies = {}
         unchecked_transitive = []
+        roots = []
         for k in ctx.attr.restricted_deps:
             if RestrictedInfo in k:
                 dependencies.update(k[RestrictedInfo].dependencies)
                 unchecked_transitive.append(k[RestrictedInfo].unchecked)
+                roots.append(k[RestrictedInfo].roots)
+
+        # Uncomment the next line to see all buildable roots:
+        # fail("".join(["     " + str(t) + "\n" for t in depset(transitive=roots).to_list()]))
         validate_restrictions(dependencies, ctx.attr.allowed_external_dependencies, ctx.attr.existing_external_violations)
         unchecked = [str(t.label) for t in depset(direct = [], transitive = unchecked_transitive).to_list()]
         validate_unchecked_internal(unchecked, ctx.attr.existing_unchecked)
