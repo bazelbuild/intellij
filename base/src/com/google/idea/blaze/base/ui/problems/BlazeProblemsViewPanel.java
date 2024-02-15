@@ -28,6 +28,7 @@ import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -51,6 +52,7 @@ import java.awt.Component;
 import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
+import org.jetbrains.annotations.NotNull;
 
 /** A custom error tree view panel for Blaze invocation errors. */
 class BlazeProblemsViewPanel extends NewErrorTreeViewPanelAdapter {
@@ -174,6 +176,11 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanelAdapter {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public boolean isSelected(AnActionEvent event) {
       return configuration.getAutoscrollToConsole();
     }
@@ -208,6 +215,11 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanelAdapter {
     ShowWarningsAction() {
       super(IdeBundle.message("action.show.warnings"), null, AllIcons.General.ShowWarning);
       configuration = ErrorTreeViewConfiguration.getInstance(getProject());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

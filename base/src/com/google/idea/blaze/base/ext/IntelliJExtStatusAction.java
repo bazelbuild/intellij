@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.ext;
 
 import com.google.idea.blaze.ext.IntelliJExtService;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,11 @@ public class IntelliJExtStatusAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     IntelliJExtService service = IntelliJExtManager.getInstance().getService();
     new StatusDialog(e.getProject(), service).show();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

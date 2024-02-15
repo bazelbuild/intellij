@@ -41,6 +41,7 @@ import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -63,6 +64,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
 import javax.swing.LayoutFocusTraversalPolicy;
+import org.jetbrains.annotations.NotNull;
 
 /** ConsoleView handles how the output of a single task is displayed in the tool-window. */
 final class ConsoleView implements Disposable {
@@ -263,6 +265,11 @@ final class ConsoleView implements Disposable {
         handler.run();
         stopHandler = null;
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
