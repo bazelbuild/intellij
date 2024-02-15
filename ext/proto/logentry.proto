@@ -52,6 +52,25 @@ message IntellijLogEntry {
     EditingEvent editing_event = 20;
     IdeArtifactStats ide_artifact_stats = 21;
     EditedFile edited_file = 22;
+    FreezeInfo freeze_info = 23;
+    LogMessage log_message = 24;
+  }
+}
+
+message LogMessage {
+  optional string logger_name = 1;
+  optional LogLevel level = 2;
+  optional string message = 3;
+  optional Exception exception = 4;
+
+  enum LogLevel {
+    UNKNOWN_LEVEL = 0;
+    TRACE_LEVEL = 1;
+    DEBUG_LEVEL = 2;
+    INFO_LEVEL = 3;
+    WARN_LEVEL = 4;
+    ERROR_LEVEL = 5;
+    FATAL_LEVEL = 6;
   }
 }
 
@@ -168,4 +187,79 @@ message EditedFile {
   optional string language = 1;
   optional string extension = 2;
   optional bool is_from_save = 3;
+}
+
+// Contains useful information to be logged when the IDE faces freezes
+message FreezeInfo {
+  // This is used to group related thread dumps together, since they'll be in
+  // different log messages, but have the same start_time.
+  optional int64 start_time_millis = 1;
+  repeated ThreadInfo thread_info = 2;
+  // Indicates if IDE-wide freeze: not just UI thread blocked, but sampling
+  // thread too.
+  optional bool ide_wide_freeze = 3;
+  // User was developing IntelliJ plugins
+  optional bool user_was_a_dev = 4;
+  // The time since the previous log entry for this freeze event. Used to
+  // iteratively combine log entries.
+  optional int64 logging_interval_millis = 5;
+  // File I/O trace samples since the previous log entry for this freeze event.
+  // Should be combined to get the full trace.
+  optional FileTrace file_trace = 6;
+  // Approximate uptime of the IDE when freeze occurred.
+  optional int64 uptime_millis = 7;
+}
+
+message ThreadInfo {
+  optional string name = 1;
+  optional uint64 id = 2;
+  optional string state = 3;
+  optional string lock_name = 4;
+  optional uint64 lock_owner_id = 5;
+  repeated StackFrame stack_trace = 6;
+}
+
+message Exception {
+  optional string class_name = 1;
+  optional string message = 2;
+  repeated StackFrame stack_trace = 3;
+  optional Exception cause = 4;
+  repeated Exception suppressed = 5;
+}
+
+// these fields come directly from java.lang.StackTraceElement.
+message StackFrame {
+  optional string class_name = 1;
+  optional string method_name = 2;
+  optional string filename = 3;
+  optional int32 line_number = 4;
+}
+
+message FileTrace {
+  repeated AggregatedPathSamples samples = 1;
+}
+
+message AggregatedPathSamples {
+  repeated StackFrame stack_trace = 1;
+  // The timestamp of the first file access in the series.
+  optional int64 first_sample_ms = 2;
+  // Path string -> PathSample.
+  // The path is relative or absolute depending on PathKind.
+  map<string, PathSample> path_samples = 4;
+}
+
+message PathSample {
+  optional PathKind path_kind = 1;
+  // The first time this file path is accessed with a given stack.
+  optional int64 first_sample_ms = 2;
+  // Number of times this file path was accessed with a given stack.
+  optional int32 count = 3;
+  // Total duration of accesses.
+  optional int64 total_duration_millis = 4;
+
+  enum PathKind {
+    UNKNOWN = 0;
+    IN_PROJECT = 1;
+    IN_WORKSPACE = 2;
+  }
 }
