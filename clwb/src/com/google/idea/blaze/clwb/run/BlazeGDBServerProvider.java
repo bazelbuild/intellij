@@ -77,7 +77,7 @@ public class BlazeGDBServerProvider {
 
   // Allows the fission flag to be disabled as workaround for
   // https://github.com/bazelbuild/intellij/issues/5604
-  static ImmutableList<String> fissionFlag() {
+  static ImmutableList<String> getOptionalFissionArguments() {
     if(Registry.is("bazel.clwb.debug.fission.disabled")) {
       return ImmutableList.of();
     } else {
@@ -128,12 +128,12 @@ public class BlazeGDBServerProvider {
     }
     if (BlazeCommandName.RUN.equals(commandName)) {
       builder.addAll(EXTRA_FLAGS_FOR_DEBUG_RUN);
-      builder.addAll(fissionFlag());
+      builder.addAll(getOptionalFissionArguments());
       return builder.build();
     }
     if (BlazeCommandName.TEST.equals(commandName)) {
       builder.addAll(EXTRA_FLAGS_FOR_DEBUG_TEST);
-      builder.addAll(fissionFlag());
+      builder.addAll(getOptionalFissionArguments());
       return builder.build();
     }
     return ImmutableList.of();
