@@ -19,7 +19,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.hash.Hashing;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
+import com.google.idea.blaze.common.artifact.OutputArtifactInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.PathUtil;

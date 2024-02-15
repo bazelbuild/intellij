@@ -31,6 +31,14 @@ java_library(
     ],
 )
 
+java_library(
+    name = "artifact",
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
+    exports = [
+        "//shared/java/com/google/idea/blaze/common/artifact",
+    ],
+)
+
 test_suite(
     name = "tests",
     tests = [

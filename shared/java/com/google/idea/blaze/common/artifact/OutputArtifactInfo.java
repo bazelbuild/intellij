@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.command.buildresult;
+package com.google.idea.blaze.common.artifact;
 
 /** A descriptor of an output artifact that contains data needed to identify the artifact. */
 public interface OutputArtifactInfo {

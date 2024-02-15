@@ -32,7 +32,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.Keep;
 import com.google.idea.blaze.base.async.FutureUtil;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -181,7 +180,7 @@ public final class RemoteOutputsCache {
         }
       }
       ImmutableList<RemoteOutputArtifact> artifactsToDownload =
-          BlazeArtifact.getRemoteArtifacts(updatedOutputs.values());
+          RemoteOutputArtifact.getRemoteArtifacts(updatedOutputs.values());
       ListenableFuture<?> downloadArtifactsFuture =
           RemoteArtifactPrefetcher.getInstance()
               .downloadArtifacts(

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.command.buildresult;
+package com.google.idea.blaze.common.artifact;
 
 /** A variant of {@link OutputArtifactWithoutDigest} that includes the digest of its content. */
 public interface OutputArtifact extends OutputArtifactWithoutDigest {

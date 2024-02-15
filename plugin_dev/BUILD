@@ -29,6 +29,7 @@ java_library(
         "//java",
         "//proto:proto_deps",
         "//shared",
+        "//shared:artifact",
         "//third_party/devkit",
     ],
 )

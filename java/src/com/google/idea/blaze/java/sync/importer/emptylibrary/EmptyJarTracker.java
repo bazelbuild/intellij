@@ -19,10 +19,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactStateProtoConverter;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.SyncState;
+import com.google.idea.blaze.common.artifact.ArtifactState;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import java.util.HashMap;
 import java.util.Map;
@@ -68,7 +68,7 @@ public class EmptyJarTracker implements ProtoWrapper<ProjectData.EmptyJarTracker
         .map(
             e ->
                 ProjectData.EmptyJarTracker.Entry.newBuilder()
-                    .setArtifact(e.getKey().serializeToProto())
+                    .setArtifact(ArtifactStateProtoConverter.toProto(e.getKey()))
                     .setIsEmpty(e.getValue()))
         .forEach(trackerBuilder::addEntries);
     return trackerBuilder.build();

@@ -55,6 +55,7 @@ java_library(
         "//querysync",
         "//sdkcompat",
         "//shared",
+        "//shared:artifact",
         "//third_party/auto_value",
         "@error_prone_annotations//jar",
     ],
