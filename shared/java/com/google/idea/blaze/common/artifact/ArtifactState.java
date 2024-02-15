@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.filecache;
+package com.google.idea.blaze.common.artifact;
 
-import com.google.devtools.intellij.model.ProjectData.LocalFile;
-import com.google.devtools.intellij.model.ProjectData.LocalFileOrOutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import java.io.File;
 
 /** Used to diff blaze {@link BlazeArtifact}s from different builds. */
@@ -58,61 +55,5 @@ public interface ArtifactState {
    */
   boolean isMoreRecent(ArtifactState output);
 
-  LocalFileOrOutputArtifact serializeToProto();
 
-  /** Serialization state related to local files. */
-  class LocalFileState implements ArtifactState {
-    private final String blazeOutPath;
-    private final long timestamp;
-
-    public LocalFileState(LocalFile localFile) {
-      this.blazeOutPath =
-          !localFile.getRelativePath().isEmpty()
-              ? localFile.getRelativePath()
-              : migrateOldKeyFormat(localFile.getPath());
-      this.timestamp = localFile.getTimestamp();
-    }
-
-    public LocalFileState(String blazeOutPath, long timestamp) {
-      this.blazeOutPath = blazeOutPath;
-      this.timestamp = timestamp;
-    }
-
-    @Override
-    public String getKey() {
-      return blazeOutPath;
-    }
-
-    @Override
-    public boolean isMoreRecent(ArtifactState output) {
-      return !(output instanceof LocalFileState) || timestamp < ((LocalFileState) output).timestamp;
-    }
-
-    @Override
-    public LocalFileOrOutputArtifact serializeToProto() {
-      return LocalFileOrOutputArtifact.newBuilder()
-          .setLocalFile(LocalFile.newBuilder().setPath(blazeOutPath).setTimestamp(timestamp))
-          .build();
-    }
-
-    @Override
-    public int hashCode() {
-      return blazeOutPath.hashCode();
-    }
-
-    /**
-     * Returns true for {@link LocalFileState} with the same key, as described in {@link #getKey()}
-     * See {@link ArtifactState#getKey()} for caveats abouts versioning.
-     */
-    @Override
-    public boolean equals(Object obj) {
-      if (obj == this) {
-        return true;
-      }
-      if (!(obj instanceof LocalFileState)) {
-        return false;
-      }
-      return blazeOutPath.equals(((LocalFileState) obj).blazeOutPath);
-    }
-  }
 }

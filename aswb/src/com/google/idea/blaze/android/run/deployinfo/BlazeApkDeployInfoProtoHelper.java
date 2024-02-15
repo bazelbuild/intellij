@@ -21,12 +21,12 @@ import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoO
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.Artifact;
 import com.google.idea.blaze.android.manifest.ManifestParser.ParsedManifest;
 import com.google.idea.blaze.android.manifest.ParsedManifestService;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -64,7 +64,7 @@ public class BlazeApkDeployInfoProtoHelper {
         log.warn("All local artifacts for " + target + ":");
         List<OutputArtifact> allBuildArtifacts =
             buildResultHelper.getBuildArtifactsForTarget(target, path -> true);
-        List<File> allLocalFiles = BlazeArtifact.getLocalFiles(allBuildArtifacts);
+        List<File> allLocalFiles = LocalFileArtifact.getLocalFiles(allBuildArtifacts);
         for (File file : allLocalFiles) {
           String path = file.getPath();
           log.warn(path);

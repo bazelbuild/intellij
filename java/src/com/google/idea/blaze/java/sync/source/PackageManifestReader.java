@@ -30,10 +30,8 @@ import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.JavaSourcePackage;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PackageManifest;
 import com.google.idea.blaze.base.async.FutureUtil;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
+import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
-import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
 import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -47,6 +45,9 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.NetworkTrafficTrackingScope.NetworkTrafficUsedOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.common.artifact.ArtifactState;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
+import com.google.idea.blaze.common.artifact.OutputArtifactWithoutDigest;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -108,7 +109,7 @@ public class PackageManifestReader {
     // Find all not cached {@link RemoteOutputArtifact} and download them before parsing manifest
     // file
     ImmutableList<RemoteOutputArtifact> toDownload =
-        BlazeArtifact.getRemoteArtifacts(diff.getUpdatedOutputs()).stream()
+        RemoteOutputArtifact.getRemoteArtifacts(diff.getUpdatedOutputs()).stream()
             .filter(a -> findArtifactInCache(project, a) == null)
             .collect(toImmutableList());
 
@@ -116,7 +117,7 @@ public class PackageManifestReader {
         RemoteArtifactPrefetcher.getInstance().downloadArtifacts(project.getName(), toDownload);
     ListenableFuture<PrefetchStats> fetchLocalFilesFuture =
         PrefetchService.getInstance()
-            .prefetchFiles(BlazeArtifact.getLocalFiles(diff.getUpdatedOutputs()), true, false);
+            .prefetchFiles(LocalFileArtifact.getLocalFiles(diff.getUpdatedOutputs()), true, false);
 
     if (!FutureUtil.waitForFuture(
             context, Futures.allAsList(fetchRemoteArtifactFuture, fetchLocalFilesFuture))

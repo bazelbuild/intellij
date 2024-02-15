@@ -18,7 +18,7 @@ package com.google.idea.blaze.android.libraries;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
 import javax.annotation.Nullable;
 
 /*  Provides BlazeArtifacts to unpack an Aar. */

@@ -23,11 +23,11 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.model.ProjectData;
-import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactStateProtoConverter;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.SyncData;
+import com.google.idea.blaze.common.artifact.ArtifactState;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -118,7 +118,7 @@ final class JdepsState implements SyncData<ProjectData.JdepsState> {
                         s ->
                             ProjectData.TargetToJdepsMap.Entry.newBuilder()
                                 .setKey(s.getTargetKey().toProto())
-                                .setFile(s.getFile().serializeToProto())
+                                .setFile(ArtifactStateProtoConverter.toProto(s.getFile()))
                                 .addAllValue(s.getJdeps())
                                 .build())
                     .collect(toImmutableList()));

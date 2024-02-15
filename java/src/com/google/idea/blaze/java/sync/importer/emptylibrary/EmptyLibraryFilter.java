@@ -16,7 +16,7 @@
 
 package com.google.idea.blaze.java.sync.importer.emptylibrary;
 
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
 import com.google.idea.common.experiments.IntExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.IOException;

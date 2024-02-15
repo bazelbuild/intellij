@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.sync;
 
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
-import com.google.idea.blaze.base.filecache.ArtifactState;
+import com.google.idea.blaze.common.artifact.ArtifactState;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.BufferedInputStream;
 import java.io.File;

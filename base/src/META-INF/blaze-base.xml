@@ -446,7 +446,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.AbsolutePathPatcher"
                     interface="com.google.idea.blaze.base.io.AbsolutePathPatcher"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.qsync.ArtifactFetcher"
-                    interface="com.google.idea.blaze.base.qsync.cache.ArtifactFetcher"/>
+                    interface="com.google.idea.blaze.common.artifact.ArtifactFetcher"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.base.qsync.HandledRulesProvider"
       interface="com.google.idea.blaze.base.qsync.HandledRulesProvider" />
     <extensionPoint qualifiedName="com.google.idea.blaze.qsync.BlazeProjectListenerProvider"

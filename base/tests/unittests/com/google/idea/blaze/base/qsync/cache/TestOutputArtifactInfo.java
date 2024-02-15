@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.qsync.cache;
 
 import com.google.auto.value.AutoValue;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
+import com.google.idea.blaze.common.artifact.OutputArtifactInfo;
 
 @AutoValue
 public abstract class TestOutputArtifactInfo implements OutputArtifactInfo {
