@@ -35,6 +35,7 @@ EXISTING_UNCHECKED = [
 RestrictedInfo = provider(
     doc = "The dependencies, per target, outside the project",
     fields = {
+        "roots": "A depset of roots of all target trees that don't have external dependencies",
         "dependencies": "A map from target to external dependencies",
         "unchecked": "A list of targets that are still unchecked for guava internal APIs",
     },
@@ -76,6 +77,7 @@ def _restricted_deps_aspect_impl(target, ctx):
         else:
             unchecked.append(target)
 
+    nested_roots = []
     dependencies = {}
     nested_unchecked = []
     outside_project = []
@@ -85,11 +87,23 @@ def _restricted_deps_aspect_impl(target, ctx):
         if RestrictedInfo in d:
             dependencies.update(d[RestrictedInfo].dependencies)
             nested_unchecked.append(d[RestrictedInfo].unchecked)
+            nested_roots.append(d[RestrictedInfo].roots)
 
     if outside_project:
         dependencies[target] = outside_project
 
-    return [RestrictedInfo(dependencies = dependencies, unchecked = depset(direct = unchecked, transitive = nested_unchecked))]
+    if dependencies:
+        # This target cannot be a root as either itself or its dependencies depend on out of project targets
+        roots = depset(direct = [], transitive = nested_roots)
+    else:
+        # No external dependencies on the entire subtree, we are a root
+        roots = depset(direct = [target])
+
+    return [RestrictedInfo(
+        dependencies = dependencies,
+        unchecked = depset(direct = unchecked, transitive = nested_unchecked),
+        roots = roots,
+    )]
 
 # buildifier: disable=function-docstring
 def validate_unchecked_internal(unchecked, existing_unchecked):
