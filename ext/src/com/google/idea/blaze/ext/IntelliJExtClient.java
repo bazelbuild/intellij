@@ -52,6 +52,7 @@ public class IntelliJExtClient {
             .eventLoopGroup(
                 IntelliJExts.createGroup(new DefaultThreadFactory(EventLoopGroup.class, true)))
             .channelType(IntelliJExts.getClientChannelType())
+            .maxInboundMessageSize(1024 * 1024 * 1024) // To avoid RESOURCE_EXHAUSED errors
             .withOption(ChannelOption.SO_KEEPALIVE, false)
             .usePlaintext()
             .build());
