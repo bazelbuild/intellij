@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.projectview.section.sections.UseExclusionPatternsSection;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
@@ -68,8 +69,14 @@ public class ContentEntryEditor {
           modifiableRootModel.addContentEntry(UrlUtil.pathToUrl(rootFile.getPath()));
 
       for (WorkspacePath exclude : excludesByRootDirectory.get(rootDirectory)) {
-        File excludeFolder = workspaceRoot.fileForPath(exclude);
-        contentEntry.addExcludeFolder(UrlUtil.fileToIdeaUrl(excludeFolder));
+        if (projectViewSet.getScalarValue(UseExclusionPatternsSection.KEY).orElse(true)
+                && !exclude.asPath().isAbsolute()
+                && exclude.asPath().getNameCount() == 1) {
+          contentEntry.addExcludePattern(exclude.relativePath());
+        } else {
+          File excludeFolder = workspaceRoot.fileForPath(exclude);
+          contentEntry.addExcludeFolder(UrlUtil.fileToIdeaUrl(excludeFolder));
+        }
       }
 
       File directory = new File(workspaceRoot.toString());
