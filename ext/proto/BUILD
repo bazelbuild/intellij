@@ -9,6 +9,7 @@ proto_library(
         "chatbotmodel.proto",
         "codereview.proto",
         "codesearch.proto",
+        "comments2code.proto",
         "depserver.proto",
         "ecatcher.proto",
         "experiments.proto",
