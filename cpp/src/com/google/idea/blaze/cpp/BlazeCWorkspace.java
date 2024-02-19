@@ -183,8 +183,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
             workspaceRoot,
             blazeProjectData.getBlazeInfo().getExecutionRoot(),
             blazeProjectData.getBlazeInfo().getOutputBase(),
-            blazeProjectData.getWorkspacePathResolver(),
-            blazeProjectData.getTargetMap());
+            blazeProjectData.getWorkspacePathResolver());
 
     int progress = 0;
 
