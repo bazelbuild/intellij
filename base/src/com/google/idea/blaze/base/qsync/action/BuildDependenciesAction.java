@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.qsync.action;
 
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
-import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.common.Context;
 import com.intellij.icons.AllIcons.Actions;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  * Action to build dependencies and enable analysis.
  *
  * <p>It can operate on a source file, BUILD file or package. See {@link
- * com.google.idea.blaze.base.qsync.DependencyTracker#getProjectTargets(BlazeContext, Path)} for a
+ * com.google.idea.blaze.qsync.project.BuildGraphData#getProjectTargets(Context, Path)} for a
  * description of what targets dependencies aren built for in each case.
  */
 public class BuildDependenciesAction extends BlazeProjectAction {

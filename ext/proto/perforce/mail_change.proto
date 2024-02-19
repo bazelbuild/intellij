@@ -1,0 +1,25 @@
+syntax = "proto2";
+
+package com.google.idea.blaze.ext.perforce;
+
+import "ext/proto/perforce/base.proto";
+import "ext/proto/perforce/presubmit.proto";
+import "ext/proto/perforce/status.proto";
+
+option java_package = "com.google.idea.blaze.ext.p4";
+
+message MailChangeRequest {
+  optional RequestBase base = 1;
+  optional ChangeId change_id = 2;
+  optional PresubmitOptions presubmit_options = 3;
+  optional string note_to_reviewer = 4;
+  repeated string reviewers_to_add = 5;
+  optional bool enable_auto_submit = 8 [default = false];
+  optional PresubmitOptions.AutoSyncMode auto_sync_mode = 12
+      [default = NO_AUTO_SYNC];
+  optional bool enable_auto_delete_on_auto_submit = 13 [default = false];
+}
+
+message MailChangeResponse {
+  optional Status status = 1002;
+}

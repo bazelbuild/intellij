@@ -1,0 +1,37 @@
+syntax = "proto2";
+
+package com.google.idea.blaze.ext.perforce;
+
+import "ext/proto/perforce/base.proto";
+import "ext/proto/perforce/source_file.proto";
+
+option java_package = "com.google.idea.blaze.ext.p4";
+option java_outer_classname = "ChangeProto";
+
+message ChangeDescription {
+  optional string text = 1;
+  message Tag {
+    optional string key = 1;
+    optional string value = 2;
+  }
+  repeated Tag tags = 2;
+}
+
+message Change {
+  enum Status {
+    STATUS_DEFAULT = 0;
+    STATUS_PENDING = 1;
+    STATUS_SUBMITTED = 2;
+  }
+
+  optional ChangeId change_id = 1;
+
+  optional string user_name = 2;
+
+  optional ChangeDescription description = 3;
+  optional Status status = 4;
+
+  optional ChangeId original_change_id = 5;
+  optional int64 create_time_micros = 6;
+  repeated SourceFile source_files = 7;
+}

@@ -1,11 +1,10 @@
-load("//build_defs:build_defs.bzl", "intellij_plugin_library")
-load("//testing:test_defs.bzl", "intellij_unit_test_suite")
 load(
     "//:build-visibility.bzl",
+    "DEFAULT_TEST_VISIBILITY",
     "PLUGIN_PACKAGES_VISIBILITY",
 )
-
-licenses(["notice"])
+load("//build_defs:build_defs.bzl", "intellij_plugin_library")
+load("//testing:test_defs.bzl", "intellij_unit_test_suite")
 
 java_library(
     name = "dart",
@@ -30,6 +29,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze.dart",
+    visibility = DEFAULT_TEST_VISIBILITY,
     deps = [
         ":dart",
         "//base",

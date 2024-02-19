@@ -1,0 +1,95 @@
+/*
+ * Copyright 2024 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+
+package com.google.idea.blaze.ext;
+
+option java_package = "com.google.idea.blaze.ext";
+option java_multiple_files = true;
+option java_outer_classname = "EcatcherProto";
+
+
+message ECatcherLoadRequest {
+  repeated ExceptionReport load = 1;
+}
+
+message ExceptionReport {
+  repeated string reports = 1;
+  repeated SubReports subreports = 2;
+  optional BuildData build_data = 3;
+  optional ClientServer client_server = 4;
+  optional ConstantRuntimeData constant_runtime_data = 5;
+}
+
+message SubReports {
+  repeated string reports = 1;
+}
+
+message BuildData {
+  int64 sec = 1;
+  int64 changelist = 2;
+  string depot_path = 3;
+  string label = 4;
+  optional string target = 5;
+}
+
+message ClientServer {
+  EventIdMessage request_id = 1;
+  optional string parameters = 2;
+  optional string user = 3;
+}
+
+message EventIdMessage {
+  int64 time_usec = 1;
+  fixed32 server_ip = 2;
+  fixed32 process_id = 3;
+}
+
+message ConstantRuntimeData {
+  optional fixed64 global_pid = 1;
+  optional string host = 2;
+  optional string user = 3;
+}
+
+message ECatcherLoadReply {
+  optional ECatcherServerStats stats = 1;
+}
+
+// The server's performance stats
+message ECatcherServerStats {
+  int32 uptime_seconds = 1;
+  int32 report_count = 2;
+  int32 server_megabytes = 3;
+  int32 oldest_report_age = 4;
+  int32 subreport_mask = 5;
+  optional string server_name = 6;
+  optional int32 match_count = 7;
+  optional int64 match_count_extrapolated = 8;
+  optional int32 base_match_count = 9;
+  optional int64 base_match_count_extrapolated = 10;
+  optional int32 matching_report_lines = 11;
+  repeated Timing timing = 12;
+}
+
+message Timing {
+  string name = 1;
+  int32 time_in_ms = 2;
+}
+
+service ECatcherService {
+  // send report to ecatcher
+  rpc SendReport(ECatcherLoadRequest) returns (ECatcherLoadReply) {}
+}

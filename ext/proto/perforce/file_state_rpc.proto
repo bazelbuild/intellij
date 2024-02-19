@@ -1,0 +1,30 @@
+syntax = "proto2";
+
+package com.google.idea.blaze.ext.perforce;
+
+import "ext/proto/perforce/base.proto";
+import "ext/proto/perforce/source_file.proto";
+import "ext/proto/perforce/status.proto";
+
+option java_package = "com.google.idea.blaze.ext.p4";
+
+message MoveFilesRequest {
+  optional RequestBase base = 1;
+
+  message Argument {
+    optional string source = 1;
+    optional string destination = 2;
+  }
+  repeated Argument arguments = 2;
+
+  optional ChangeId change_id = 4;
+
+  optional bool ignore_destination_open_state = 5 [default = false];
+}
+
+message MoveFilesResponse {
+  optional Status status = 1002;
+  optional int32 path_index = 1;
+  optional SourceFile destination_source_file = 2;
+  optional SourceFile source_source_file = 3;
+}

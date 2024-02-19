@@ -9,7 +9,6 @@ java_library(
     srcs = glob([
         "com/google/idea/sdkcompat/editor/**",
         "com/google/idea/sdkcompat/general/**",
-        "com/google/idea/sdkcompat/logging/**",
         "com/google/idea/sdkcompat/platform/**",
         "com/google/idea/sdkcompat/python/**",
         "com/google/idea/sdkcompat/ui/icons/**",

@@ -1,3 +1,9 @@
+load("//:build-visibility.bzl", "DEFAULT_TEST_VISIBILITY")
+
+package(
+    default_visibility = DEFAULT_TEST_VISIBILITY,
+)
+
 java_binary(
     name = "client",
     main_class = "com.google.idea.blaze.ext.IntelliJExtClientCli",

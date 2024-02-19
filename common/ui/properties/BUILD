@@ -1,10 +1,11 @@
 load(
-    "//testing:test_defs.bzl",
-    "intellij_unit_test_suite",
-)
-load(
     "//:build-visibility.bzl",
     "COMMON_PLUGINS_VISIBILITY",
+    "DEFAULT_TEST_VISIBILITY",
+)
+load(
+    "//testing:test_defs.bzl",
+    "intellij_unit_test_suite",
 )
 
 licenses(["notice"])
@@ -23,6 +24,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.common.ui.properties",
+    visibility = DEFAULT_TEST_VISIBILITY,
     deps = [
         ":properties",
         "//intellij_platform_sdk:test_libs",

@@ -16,10 +16,10 @@
 package com.google.idea.blaze.qsync.java;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth8.assertThat;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.createSrcJar;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.truth.Truth8;
 import com.google.idea.blaze.qsync.QuerySyncTestUtils.PathPackage;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectPath.Resolver;
@@ -140,7 +140,7 @@ public class SrcJarProjectUpdaterTest {
     ProjectProto.Project newProject = updater.addSrcJars();
     assertThat(newProject).isNotSameInstanceAs(project);
 
-    assertThat(
+    Truth8.assertThat(
             newProject.getLibrary(0).getSourcesList().stream()
                 .map(LibrarySource::getSrcjar)
                 .map(ProjectProto.ProjectPath::getPath))
@@ -180,7 +180,7 @@ public class SrcJarProjectUpdaterTest {
     ProjectProto.Project newProject = updater.addSrcJars();
     assertThat(newProject).isNotSameInstanceAs(project);
 
-    assertThat(
+    Truth8.assertThat(
             newProject.getLibrary(0).getSourcesList().stream()
                 .map(LibrarySource::getSrcjar)
                 .map(ProjectProto.ProjectPath::getPath))
@@ -207,7 +207,7 @@ public class SrcJarProjectUpdaterTest {
     ProjectProto.Project newProject = updater.addSrcJars();
     assertThat(newProject).isNotSameInstanceAs(project);
 
-    assertThat(
+    Truth8.assertThat(
             newProject.getLibrary(0).getSourcesList().stream()
                 .map(LibrarySource::getSrcjar)
                 .map(ProjectPath::create)
@@ -235,7 +235,7 @@ public class SrcJarProjectUpdaterTest {
 
     ProjectProto.Project newProject = updater.addSrcJars();
 
-    assertThat(
+    Truth8.assertThat(
             newProject.getLibrary(0).getSourcesList().stream()
                 .map(LibrarySource::getSrcjar)
                 .map(ProjectPath::create)
@@ -262,7 +262,7 @@ public class SrcJarProjectUpdaterTest {
 
     ProjectProto.Project newProject = updater.addSrcJars();
 
-    assertThat(
+    Truth8.assertThat(
             newProject.getLibrary(0).getSourcesList().stream()
                 .map(LibrarySource::getSrcjar)
                 .map(ProjectPath::create)
@@ -287,7 +287,7 @@ public class SrcJarProjectUpdaterTest {
 
     ProjectProto.Project newProject = updater.addSrcJars();
 
-    assertThat(
+    Truth8.assertThat(
             newProject.getLibrary(0).getSourcesList().stream()
                 .map(LibrarySource::getSrcjar)
                 .map(ProjectPath::create)
@@ -316,7 +316,7 @@ public class SrcJarProjectUpdaterTest {
 
     ProjectProto.Project newProject = updater.addSrcJars();
 
-    assertThat(
+    Truth8.assertThat(
             newProject.getLibrary(0).getSourcesList().stream()
                 .map(LibrarySource::getSrcjar)
                 .map(ProjectPath::create)
@@ -345,7 +345,7 @@ public class SrcJarProjectUpdaterTest {
 
     ProjectProto.Project newProject = updater.addSrcJars();
 
-    assertThat(
+    Truth8.assertThat(
             newProject.getLibrary(0).getSourcesList().stream()
                 .map(LibrarySource::getSrcjar)
                 .map(ProjectPath::create)
@@ -390,7 +390,7 @@ public class SrcJarProjectUpdaterTest {
 
     ProjectProto.Project newProject = updater.addSrcJars();
 
-    assertThat(
+    Truth8.assertThat(
             newProject.getLibrary(0).getSourcesList().stream()
                 .map(LibrarySource::getSrcjar)
                 .map(ProjectProto.ProjectPath::getInnerPath))

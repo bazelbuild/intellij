@@ -1,0 +1,14 @@
+syntax = "proto2";
+
+package com.google.idea.blaze.ext.perforce;
+
+import "ext/proto/perforce/base.proto";
+
+option java_package = "com.google.idea.blaze.ext.p4";
+option java_outer_classname = "SourceFileProto";
+
+message SourceFile {
+  optional int64 mod_time_micros = 9;
+  optional ChangeId change_id = 11;
+}
+

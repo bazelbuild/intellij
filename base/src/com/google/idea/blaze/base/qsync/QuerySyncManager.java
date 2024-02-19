@@ -47,6 +47,7 @@ import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.blaze.qsync.project.TargetsToBuild;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -87,6 +88,8 @@ import javax.annotation.Nullable;
 public class QuerySyncManager implements Disposable {
   private final Logger logger = Logger.getInstance(getClass());
 
+  public static final String NOTIFICATION_GROUP = "QuerySyncBuild";
+
   private final Project project;
   protected final ListeningExecutorService executor =
       MoreExecutors.listeningDecorator(
@@ -96,6 +99,7 @@ public class QuerySyncManager implements Disposable {
   private volatile QuerySyncProject loadedProject;
 
   private final QuerySyncStatus syncStatus;
+  private final QuerySyncAsyncFileListener fileListener;
 
   private static final BoolExperiment showWindowOnAutomaticSyncErrors =
       new BoolExperiment("querysync.autosync.show.console.on.error", true);
@@ -135,7 +139,7 @@ public class QuerySyncManager implements Disposable {
     this.project = project;
     this.loader = loader != null ? loader : createProjectLoader(executor, project);
     this.syncStatus = new QuerySyncStatus(project);
-    QuerySyncAsyncFileListener.createAndListen(project, this);
+    this.fileListener = QuerySyncAsyncFileListener.createAndListen(project, this);
   }
 
   /**
@@ -210,6 +214,10 @@ public class QuerySyncManager implements Disposable {
   public SourceToTargetMap getSourceToTargetMap() {
     assertProjectLoaded();
     return loadedProject.getSourceToTargetMap();
+  }
+
+  public QuerySyncAsyncFileListener getFileListener() {
+    return fileListener;
   }
 
   @CanIgnoreReturnValue
@@ -444,6 +452,13 @@ public class QuerySyncManager implements Disposable {
     return syncStatus.currentOperation();
   }
 
+  public Optional<Boolean> isProjectFileAddedSinceSync(Path absolutePath) {
+    if (loadedProject == null) {
+      return Optional.empty();
+    }
+    return loadedProject.projectFileAddedSinceSync(absolutePath);
+  }
+
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> generateRenderJar(
       PsiFile psiFile, QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
@@ -487,7 +502,7 @@ public class QuerySyncManager implements Disposable {
 
   private void notifyInternal(String title, String content, NotificationType notificationType) {
     Notifications.Bus.notify(
-        new Notification("QuerySyncBuild", title, content, notificationType), project);
+        new Notification(NOTIFICATION_GROUP, title, content, notificationType), project);
   }
 
   @Override

@@ -1,5 +1,6 @@
 load(
     "//:build-visibility.bzl",
+    "DEFAULT_TEST_VISIBILITY",
     "G3PLUGINS_VISIBILITY",
     "INTELLIJ_PLUGINS_VISIBILITY",
     "PLUGIN_PACKAGES_VISIBILITY",
@@ -16,8 +17,6 @@ load(
     "intellij_unit_test_suite",
 )
 load("//intellij_platform_sdk:build_defs.bzl", "java_version_flags")
-
-licenses(["notice"])
 
 java_library(
     name = "base",
@@ -511,6 +510,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze.base",
+    visibility = DEFAULT_TEST_VISIBILITY,
     deps = [
         ":base",
         ":unit_test_utils",
@@ -537,6 +537,7 @@ intellij_integration_test_suite(
     srcs = glob(["tests/integrationtests/**/*.java"]),
     required_plugins = "com.google.idea.blaze.base",
     test_package_root = "com.google.idea.blaze.base",
+    visibility = DEFAULT_TEST_VISIBILITY,
     runtime_deps = [
         ":base_integration_test_plugin",
     ],

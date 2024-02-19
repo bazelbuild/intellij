@@ -1,0 +1,157 @@
+syntax = "proto2";
+
+package com.google.idea.blaze.ext.perforce;
+
+option java_package = "com.google.idea.blaze.ext.p4";
+
+message ClientName {
+  optional string name = 1;
+}
+
+message ChangeId {
+  // The change number; zero for the default change.
+  optional int64 change_number = 1 [default = -1];
+  optional WorkspaceId workspace_id = 2;
+  optional int32 revision_number = 3 [default = -1];
+}
+
+// A unique identifier for a pending change.
+message PendingChangeId {
+  optional int64 change_number = 1;
+}
+
+// A unique identifier for a submitted change.
+message SubmittedChangeId {
+  optional int64 change_number = 1;
+}
+
+// A unique identifier for a pending change at a specific metadata revision.
+message PendingChangeMetadataRevision {
+  optional int64 change_number = 1;
+  optional int32 metadata_revision = 2;
+}
+
+// A unique identifier for a pending change at a specific snapshot.
+message PendingChangeSnapshotId {
+  optional string snapshot_id = 2;
+}
+
+message OverlayBranchId {
+  optional string branch_prefix = 1;
+  optional string branch_suffix = 2;
+}
+
+message SourceFileId {
+  optional string depot_path = 1;
+  optional string workspace_path = 2;
+  optional string filesystem_path = 3;
+  optional int32 revision_number = 4;
+  optional uint64 citc_snapshot_number = 5;
+}
+
+message UserId {
+  // Required.
+  optional string user_name = 1;
+  optional int32 revision_number = 2 [default = -1];
+}
+
+message WorkspaceId {
+  optional string workspace_name = 1;
+  optional int32 revision_number = 2 [default = -1];
+}
+
+message CitcSnapshotId {
+  optional string workspace_id = 1;
+  optional uint64 snapshot_number = 2;
+}
+
+message RequestBase {
+  optional string user = 2;
+  optional WorkspaceId workspace_id = 3;
+  optional string current_directory = 10;
+  optional string application_tag = 4;
+  optional bool return_suppressed_errors = 9 [default = false];
+  optional bool return_error_on_rpc_level = 11 [default = false];
+}
+
+message DeletionInProgressTag {
+  optional bool in_progress = 1 [default = true];
+  optional int64 timestamp_micros = 2;
+  optional string application_tag = 3;
+}
+
+enum FileIntegration {
+  INTEGRATE_BRANCH = 1;
+  INTEGRATE_COPY = 2;
+  INTEGRATE_MERGE = 3;
+  INTEGRATE_IGNORED = 4;
+  INTEGRATE_DELETE = 5;
+  INTEGRATE_EDIT = 6;
+  INTEGRATE_ADD = 7;
+  INTEGRATE_ROLLBACK = 8;
+}
+
+enum RevertOperation {
+  REVERT_NONE = 0;
+  REVERT_STANDARD = 1;
+  REVERT_ABANDON = 2;
+  REVERT_CLEAR = 3;
+  REVERT_DELETE = 4;
+}
+
+message RevisionedViewSet {
+  repeated ViewSetEntry view_set_entries = 1;
+  repeated RevisionPoint revision_points = 2;
+}
+
+message ViewSetEntry {
+  optional string path = 1;
+  optional bool escaped = 2 [default = true];
+  optional bool inclusion = 3 [default = true];
+}
+
+message PathExpression {
+  optional string base_path = 1;
+  optional bool escaped = 2 [default = true];
+  repeated RevisionPoint revision_points = 3;
+}
+
+message RevisionRange {
+  optional int32 begin = 1;
+  optional int32 end = 2;
+}
+
+message RevisionPoint {
+  enum Operation {
+    LESS_OR_EQUAL = 1;
+    LESS = 2;
+    EQUAL = 3;
+    GREATER_OR_EQUAL = 4;
+    GREATER = 5;
+  }
+  optional Operation operation = 1;
+  optional int32 revision_number = 2;
+  optional ChangeId change_id = 3;
+  optional int64 time_micros = 4;
+  optional string workspace_or_label_name = 5;
+
+  enum Keyword {
+    KEYWORD_ADD = 1;
+    KEYWORD_BRANCH = 2;
+    KEYWORD_DELETE = 3;
+    KEYWORD_EDIT = 4;
+    KEYWORD_HAVE = 5;
+    KEYWORD_HEAD = 6;
+    KEYWORD_INTEGRATE = 7;
+    KEYWORD_HAVE_ONLY = 8;
+    KEYWORD_BASELINE = 9;
+  }
+  optional Keyword keyword = 6;
+}
+
+enum Permission {
+  PERMISSION_LIST = 1;
+  PERMISSION_READ = 2;
+  PERMISSION_WRITE = 3;
+}
+

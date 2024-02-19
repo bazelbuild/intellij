@@ -277,6 +277,7 @@ public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
     this.hasErrors = true;
   }
 
+  @Override
   public void setHasWarnings() {
     hasWarnings = true;
   }

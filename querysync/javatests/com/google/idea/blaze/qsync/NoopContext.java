@@ -36,4 +36,7 @@ class NoopContext implements Context<NoopContext> {
 
   @Override
   public void setHasError() {}
+
+  @Override
+  public void setHasWarnings() {}
 }

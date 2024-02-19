@@ -123,6 +123,8 @@ public interface BlazeVcsHandlerProvider {
                   executor));
     }
 
+    Optional<VcsState> vcsStateForSourceUri(String sourceUri) throws BuildException;
+
     /**
      * Diffs two VCS states from different points in time.
      *

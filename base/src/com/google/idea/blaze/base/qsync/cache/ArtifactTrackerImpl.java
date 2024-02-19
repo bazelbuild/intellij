@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.collect.MoreCollectors.onlyElement;
@@ -65,12 +64,14 @@ import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher.ArtifactDestinatio
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestination;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
+import com.google.idea.blaze.base.qsync.cc.CcProjectProtoTransform;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.DownloadTrackingScope;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.TestSourceGlobMatcher;
 import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
 import com.google.idea.blaze.qsync.java.AndroidResPackagesProjectUpdater;
@@ -125,39 +126,6 @@ public class ArtifactTrackerImpl
   private static final BoolExperiment ATTACH_DEP_SRCJARS =
       new BoolExperiment("querysync.attach.dep.srcjars", true);
 
-  /**
-   * Adds source folders for extracted generated source archives.
-   *
-   * <p>Previously, source jars were extracted and placed in dedicated subdirectories of the
-   * generated sources director.
-   *
-   * <p>E.g.:
-   *
-   * <pre>
-   *   generated/
-   *     classes.srcjar/
-   *       com/
-   *         example/
-   *           Class.java
-   *     more_classes.srcjar/
-   *       com/
-   *         ...
-   * </pre>
-   *
-   * <p>Now, sources jars are all placed in the java_srcjars directory without extraction E.g.:
-   *
-   * <pre>
-   *   generated/
-   *     java_srcjars/
-   *       classes.srcjar
-   *       more_classes.srcjar
-   * </pre>
-   *
-   * <p>This experiment can be removed when projects have updated to the new model (b/311661541)
-   */
-  private static final BoolExperiment LEGACY_EXTRACTED_SRCJAR_FOLDERS =
-      new BoolExperiment("querysync.legacy.srcjar.folders", true);
-
   public static final String DIGESTS_DIRECTORY_NAME = ".digests";
   public static final int STORAGE_VERSION = 3;
   private static final Logger logger = Logger.getInstance(ArtifactTrackerImpl.class);
@@ -196,7 +164,8 @@ public class ArtifactTrackerImpl
       Path ideProjectBasePath,
       ArtifactFetcher<OutputArtifact> artifactFetcher,
       ProjectPath.Resolver projectPathResolver,
-      ProjectDefinition projectDefinition) {
+      ProjectDefinition projectDefinition,
+      ProjectProtoTransform.Registry transformRegistry) {
     this.ideProjectBasePath = ideProjectBasePath;
     this.artifactFetcher = artifactFetcher;
     this.projectPathResolver = projectPathResolver;
@@ -243,6 +212,8 @@ public class ArtifactTrackerImpl
             projectDirectory.resolve(DIGESTS_DIRECTORY_NAME),
             fileCacheCreator.getCacheDirectories());
     persistentFile = projectDirectory.resolve("artifact_tracker_state");
+    transformRegistry.add(this::updateProjectProto);
+    transformRegistry.add(new CcProjectProtoTransform(this));
   }
 
   private static class FileCacheCreator {
@@ -656,7 +627,12 @@ public class ArtifactTrackerImpl
     return JAR_ZIP_EXTENSIONS.contains(FileUtilRt.getExtension(p.toString()));
   }
 
-  @Override
+  /**
+   * Makes the project snapshot reflect the current state of tracked artifacts.
+   *
+   * <p>When additional artifacts are brought into the IDE they may require additional configuration
+   * to be applied to the IDE project.
+   */
   public ProjectProto.Project updateProjectProto(
       ProjectProto.Project projectProto, BuildGraphData graph, Context<?> context)
       throws BuildException {
@@ -675,14 +651,6 @@ public class ArtifactTrackerImpl
                     JavaSourcesCacheLayout.ROOT_DIRECTORY_NAME)));
     if (projectPathResolver.resolve(javaSrcRoot).toFile().exists()) {
       generatedJavaSrcRoots.add(javaSrcRoot);
-    }
-
-    if (LEGACY_EXTRACTED_SRCJAR_FOLDERS.getValue()) {
-      int previousSize = generatedJavaSrcRoots.size();
-      generatedJavaSrcRoots.addAll(getGenSrcSubfolders());
-      if (generatedJavaSrcRoots.size() > previousSize) {
-        logger.info("Adding source folder for extracted srcjar");
-      }
     }
 
     TestSourceGlobMatcher testSourceMatcher = TestSourceGlobMatcher.create(projectDefinition);
@@ -758,27 +726,6 @@ public class ArtifactTrackerImpl
     }
 
     return projectProto;
-  }
-
-  /**
-   * Returns all subfolders in the generated source directory, except "java_srcjars". Only used for
-   * legacy layouts {@link ArtifactTrackerImpl#LEGACY_EXTRACTED_SRCJAR_FOLDERS}.
-   */
-  private ImmutableList<ProjectPath> getGenSrcSubfolders() throws BuildException {
-    try (Stream<Path> pathStream = Files.list(generatedSrcFileCacheDirectory)) {
-      return pathStream
-          .filter(
-              p ->
-                  p.toFile().isDirectory()
-                      && !p.getFileName()
-                          .toString()
-                          .equals(JavaSourcesArchiveCacheLayout.ROOT_DIRECTORY_NAME))
-          .map(ideProjectBasePath::relativize)
-          .map(ProjectPath::projectRelative)
-          .collect(toImmutableList());
-    } catch (IOException e) {
-      throw new BuildException(e);
-    }
   }
 
   @Override

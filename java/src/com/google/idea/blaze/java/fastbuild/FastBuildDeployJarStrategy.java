@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.fastbuild;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.settings.BuildSystemName;
@@ -30,11 +31,12 @@ abstract class FastBuildDeployJarStrategy implements BuildSystemExtensionPoint {
     return BuildSystemExtensionPoint.getInstance(EP_NAME, buildSystemName);
   }
 
-  public abstract ImmutableList<? extends TargetExpression> getBuildTargets(Label label);
+  public abstract ImmutableList<? extends TargetExpression> getBuildTargets(
+      Label label, BlazeVersionData versionData);
 
-  public abstract ImmutableList<String> getBuildFlags();
+  public abstract ImmutableList<String> getBuildFlags(BlazeVersionData versionData);
 
-  public abstract Label createDeployJarLabel(Label label);
+  public abstract Label createDeployJarLabel(Label label, BlazeVersionData versionData);
 
-  public abstract Label deployJarOwnerLabel(Label label);
+  public abstract Label deployJarOwnerLabel(Label label, BlazeVersionData versionData);
 }

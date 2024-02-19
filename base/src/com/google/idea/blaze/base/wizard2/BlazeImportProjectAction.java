@@ -35,7 +35,6 @@ class BlazeImportProjectAction extends AnAction {
           protected ProjectImportWizardStep[] getSteps(WizardContext context) {
             return new ProjectImportWizardStep[] {
               new BlazeSelectWorkspaceImportWizardStep(context),
-              new BlazeSelectBuildSystemBinaryStep(context),
               new BlazeSelectProjectViewImportWizardStep(context),
               new BlazeEditProjectViewImportWizardStep(context)
             };
