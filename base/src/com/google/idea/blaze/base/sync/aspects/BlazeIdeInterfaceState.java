@@ -56,8 +56,7 @@ public final class BlazeIdeInterfaceState
 
   public static BlazeIdeInterfaceState fromProto(ProjectData.BlazeIdeInterfaceState proto) {
     ImmutableMap<String, TargetKey> targets =
-        ProtoWrapper.map(
-            proto.getFileToTargetMap(), ArtifactState::migrateOldKeyFormat, TargetKey::fromProto);
+        ProtoWrapper.map(proto.getFileToTargetMap(), Functions.identity(), TargetKey::fromProto);
     ImmutableMap.Builder<String, ArtifactState> artifacts = ImmutableMap.builder();
     for (LocalFileOrOutputArtifact output : proto.getIdeInfoFilesList()) {
       ArtifactState state = ArtifactStateProtoConverter.fromProto(output);

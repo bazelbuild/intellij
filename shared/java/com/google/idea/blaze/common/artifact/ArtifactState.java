@@ -15,33 +15,8 @@
  */
 package com.google.idea.blaze.common.artifact;
 
-import java.io.File;
-
 /** Used to diff blaze {@link BlazeArtifact}s from different builds. */
 public interface ArtifactState {
-
-  /**
-   * Migrates from a possibly-old {@link ArtifactState} key format to the latest format, which is
-   * consistent for local and remote output artifacts.
-   */
-  static String migrateOldKeyFormat(String key) {
-    // TODO(brendandouglas): remove this temporary migration code in November 2019
-    if (!key.startsWith(File.separator)) {
-      return key;
-    }
-    // try to parse the blaze-out-relative path
-    String pathComponent = String.format("%1$sblaze-out%1$s", File.separator);
-    int ix = key.indexOf(pathComponent);
-    if (ix == -1) {
-      pathComponent = String.format("%1$sbazel-out%1$s", File.separator);
-      ix = key.indexOf(pathComponent);
-    }
-    if (ix == -1) {
-      // fall back to returning the original key
-      return key;
-    }
-    return key.substring(ix + pathComponent.length());
-  }
 
   /**
    * A key uniquely identifying an artifact between builds. Different versions of an artifact
