@@ -96,15 +96,6 @@ test_suite(
     visibility = DEFAULT_TEST_VISIBILITY,
 )
 
-test_suite(
-    name = "aswb_python_tests",
-    tests = [
-        "//python:integration_tests",
-        "//python:unit_tests",
-    ],
-    visibility = DEFAULT_TEST_VISIBILITY,
-)
-
 default_java_toolchain(
     name = "custom_java_17_toolchain",
     configuration = dict(),
