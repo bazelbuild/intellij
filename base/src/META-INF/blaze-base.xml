@@ -399,7 +399,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileTypeFactory implementation="com.google.idea.blaze.base.lang.buildfile.language.BuildFileTypeFactory"/>
+    <fileType language="BUILD" name="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.language.BuildFileType" fieldName="INSTANCE" fileNames="BUILD.bazel;BUILD;WORKSPACE.bazel;WORKSPACE;MODULE.bazel" extensions="bzl;sky;star"/>
     <annotator language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.HighlightingAnnotator"/>
     <!--<annotator language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.LoadErrorAnnotator"/>-->
     <annotator language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.GlobErrorAnnotator"/>

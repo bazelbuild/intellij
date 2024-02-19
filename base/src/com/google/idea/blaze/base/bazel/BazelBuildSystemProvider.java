@@ -71,9 +71,4 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   public ImmutableList<String> possibleWorkspaceFileNames() {
     return ImmutableList.of("WORKSPACE", "WORKSPACE.bazel");
   }
-
-  @Override
-  public ImmutableList<String> possibleModuleFileNames() {
-    return ImmutableList.of("MODULE.bazel");
-  }
 }
