@@ -47,8 +47,6 @@ ASPECT_TEST_RULES_VISIBILITY_TO_ALL = [
 
 SERVICES_EXPERIMENT_SUBPACKAGES = None
 
-ASPECT_TOOLS_PACKAGE = ["//aspect/tools:__pkg__"]
-
 def create_plugin_packages_group(name = None):
     # This group is not needed externally
     pass
