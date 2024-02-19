@@ -154,7 +154,7 @@ public class ExecutionRootPathResolver {
    * workspace is a link to workspace root then follows it and returns a path to workspace root
    */
   @NotNull
-  private ImmutableList<File> resolveToExternalWorkspaceWithSymbolicLinkResolution(
+  public ImmutableList<File> resolveToExternalWorkspaceWithSymbolicLinkResolution(
       ExecutionRootPath path) {
     File fileInExecutionRoot = path.getFileRootedAt(outputBase);
 

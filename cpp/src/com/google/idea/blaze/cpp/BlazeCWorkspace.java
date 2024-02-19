@@ -22,9 +22,6 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.errorprone.annotations.Keep;
-import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.CIdeInfo;
-import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -37,6 +34,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
+import com.google.idea.blaze.base.sync.workspace.VirtualIncludesHandler;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -71,18 +69,14 @@ import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Message;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Session;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -170,97 +164,6 @@ public final class BlazeCWorkspace implements ProjectComponent {
                 incModificationTrackers();
               }
             });
-  }
-
-  private Path trimStart(Path value, @Nullable Path prefix) {
-    if (prefix == null || !value.startsWith(prefix)) {
-        return value;
-    }
-
-    return value.subpath(prefix.getNameCount(), value.getNameCount());
-  }
-
-  private @Nullable Path pathOf(@Nullable String value) {
-    if (value == null || value.isEmpty()) {
-        return null;
-    }
-
-    try {
-      return Path.of(value);
-    } catch (InvalidPathException e) {
-      return null;
-    }
-  }
-
-  private List<String> collectIncludes(Path root, TargetKey targetKey, BlazeProjectData blazeProjectData) {
-    TargetIdeInfo targetIdeInfo = blazeProjectData.getTargetMap().get(targetKey);
-    if (targetIdeInfo == null || targetIdeInfo.getcIdeInfo() == null) {
-      return Collections.emptyList();
-    }
-
-    CIdeInfo cIdeInfo = targetIdeInfo.getcIdeInfo();
-    Path includePrefix = pathOf(cIdeInfo.getIncludePrefix());
-    Path stripPrefix = pathOf(cIdeInfo.getStripIncludePrefix());
-
-    Path packagePath = targetKey.getLabel().blazePackage().asPath();
-
-    ArrayList<String> includes = new ArrayList<>();
-    for (ArtifactLocation header : cIdeInfo.getHeaders()) {
-      Path realPath = root.resolve(header.getExecutionRootRelativePath());
-
-      Path codePath = pathOf(header.getRelativePath());
-      if (codePath == null) {
-          continue;
-      }
-
-      // if absolut strip prefix is a repository-relative path
-      if (stripPrefix != null && stripPrefix.isAbsolute()) {
-        codePath = trimStart(codePath, stripPrefix.subpath(0, stripPrefix.getNameCount()));
-      }
-
-      codePath = trimStart(codePath, packagePath);
-
-      // if not absolut strip prefix is a package-relative path
-      if (stripPrefix != null && !stripPrefix.isAbsolute()) {
-        codePath = trimStart(codePath, stripPrefix);
-      }
-
-      if (includePrefix != null) {
-        codePath = includePrefix.resolve(codePath);
-      }
-
-      includes.add("-ibazel" + codePath + "=" + realPath);
-    }
-
-    for (Dependency dep : targetIdeInfo.getDependencies()) {
-      includes.addAll(collectIncludes(root, dep.getTargetKey(), blazeProjectData));
-    }
-
-    return includes;
-  }
-
-  private List<String> collectIncludesWithProgress(
-      Path root,
-      TargetKey targetKey,
-      BlazeProjectData blazeProjectData,
-      ProgressIndicator indicator) {
-    if (Registry.is("bazel.cpp.sync.workspace.collect.includes.disabled")) {
-      return Collections.emptyList();
-    }
-
-    indicator.pushState();
-    indicator.setIndeterminate(true);
-    indicator.setText2("Collecting includes..");
-
-    Stopwatch stopwatch = Stopwatch.createStarted();
-    List<String> result = collectIncludes(root, targetKey, blazeProjectData);
-
-    long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-    logger.info(String.format("Collecting includes took %dms", elapsed));
-
-    indicator.popState();
-
-    return result;
   }
 
   private OCWorkspaceImpl.ModifiableModel calculateConfigurations(
@@ -356,7 +259,8 @@ public final class BlazeCWorkspace implements ProjectComponent {
                 .collect(toImmutableList());
 
         Path rootPath = workspaceRoot.directory().toPath();
-        List<String> includes = collectIncludesWithProgress(rootPath, targetKey, blazeProjectData, indicator);
+        ImmutableList<String> includePrefixHints = VirtualIncludesHandler.collectIncludeHints(rootPath,
+            targetKey, blazeProjectData, executionRootPathResolver, indicator);
 
         for (VirtualFile vf : resolveConfiguration.getSources(targetKey)) {
           OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(vf);
@@ -373,7 +277,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
           fileSpecificSwitchBuilder.addAllRaw(iOptionIncludeDirectories);
           fileSpecificSwitchBuilder.addAllRaw(isystemOptionIncludeDirectories);
           fileSpecificSwitchBuilder.addAllRaw(plainLocalCopts);
-          fileSpecificSwitchBuilder.addAllRaw(includes);
+          fileSpecificSwitchBuilder.addAllRaw(includePrefixHints);
 
           PerFileCompilerOpts perFileCompilerOpts =
               new PerFileCompilerOpts(kind, fileSpecificSwitchBuilder.build());
