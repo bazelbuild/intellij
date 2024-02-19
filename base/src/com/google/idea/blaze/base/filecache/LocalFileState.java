@@ -26,9 +26,7 @@ public class LocalFileState implements ArtifactState, SerializableArtifactState 
 
   public LocalFileState(LocalFile localFile) {
     this.blazeOutPath =
-        !localFile.getRelativePath().isEmpty()
-            ? localFile.getRelativePath()
-            : ArtifactState.migrateOldKeyFormat(localFile.getPath());
+        !localFile.getRelativePath().isEmpty() ? localFile.getRelativePath() : localFile.getPath();
     this.timestamp = localFile.getTimestamp();
   }
 
@@ -44,14 +42,13 @@ public class LocalFileState implements ArtifactState, SerializableArtifactState 
 
   @Override
   public boolean isMoreRecent(ArtifactState output) {
-    return !(output instanceof com.google.idea.blaze.base.filecache.LocalFileState)
-        || timestamp < ((com.google.idea.blaze.base.filecache.LocalFileState) output).timestamp;
+    return !(output instanceof LocalFileState) || timestamp < ((LocalFileState) output).timestamp;
   }
 
   @Override
   public LocalFileOrOutputArtifact serializeToProto() {
     return LocalFileOrOutputArtifact.newBuilder()
-        .setLocalFile(LocalFile.newBuilder().setPath(blazeOutPath).setTimestamp(timestamp))
+        .setLocalFile(LocalFile.newBuilder().setRelativePath(blazeOutPath).setTimestamp(timestamp))
         .build();
   }
 
