@@ -135,10 +135,12 @@ private fun bump(downloadUrl: String, workspace: Path?, workspaceShaVarName: Str
 private fun shaOfUrl(icUrl: String): String {
     val icStream = BufferedInputStream(URL(icUrl).openStream())
     val digest = MessageDigest.getInstance("SHA-256")
-    icStream.iterator().withIndex().forEachRemaining {
-        digest.update(it.value)
-        if (it.index % 10000000 == 0) {
-            println("${it.index / 1024 / 1024} mb of ${URL(icUrl).file.split("/").last()} processed")
+    var index = 0L // iterator's withIndex uses int instead of long
+    icStream.iterator().forEachRemaining {
+        index += 1
+        digest.update(it)
+        if (index % 10000000 == 0L) {
+            println("${index / 1024 / 1024} mb of ${URL(icUrl).file.split("/").last()} processed")
         }
     }
     val sha256sum = digest.digest(icStream.readAllBytes())
