@@ -58,9 +58,8 @@ public class LocalFileState implements ArtifactState, SerializableArtifactState 
   }
 
   /**
-   * Returns true for {@link com.google.idea.blaze.base.filecache.LocalFileState} with the same key,
-   * as described in {@link #getKey()} See {@link ArtifactState#getKey()} for caveats abouts
-   * versioning.
+   * Returns true for {@link LocalFileState} with the same key, as described in {@link #getKey()}
+   * See {@link ArtifactState#getKey()} for caveats abouts versioning.
    */
   @Override
   public boolean equals(Object obj) {
