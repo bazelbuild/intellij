@@ -2,7 +2,7 @@
 
 # Visibility labels lists
 PLUGIN_PACKAGES_VISIBILITY = ["//visibility:public"]
-G3PLUGINS_VISIBILITY = None  # this is similar to not having visibility attribute
+G3PLUGINS_VISIBILITY = ["//visibility:public"]
 INTELLIJ_PLUGINS_VISIBILITY = ["//visibility:public"]
 DEFAULT_TEST_VISIBILITY = ["//visibility:public"]
 
