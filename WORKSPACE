@@ -750,8 +750,8 @@ jvm_maven_import_external(
 
 jvm_maven_import_external(
     name = "com_google_guava_guava",
-    artifact = "com.google.guava:guava:31.1-jre",
-    artifact_sha256 = "a42edc9cab792e39fe39bb94f3fca655ed157ff87a8af78e1d6ba5b07c4a00ab",
+    artifact = "com.google.guava:guava:33.0.0-jre",
+    artifact_sha256 = "f4d85c3e4d411694337cb873abea09b242b664bb013320be6105327c45991537",
     server_urls = [
         "https://repo1.maven.org/maven2",
     ],

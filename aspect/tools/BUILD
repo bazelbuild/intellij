@@ -7,20 +7,12 @@ package(default_visibility = ["//aspect:__pkg__"])
 
 licenses(["notice"])
 
-# To prevent versioning conflicts when developing internally, we always use the same
-# guava version bundled with the IntelliJ plugin API.
-java_library(
-    name = "guava",
-    visibility = ["//visibility:private"],
-    exports = ["//intellij_platform_sdk:guava_for_external_binaries"],
-)
-
 java_library(
     name = "lib",
     srcs = glob(["src/**/*.java"]),
     javacopts = ["-source 8 -target 8"],
     deps = [
-        ":guava",
+        "@com_google_guava_guava//jar",
         "//proto:proto_deps",
         "@jsr305_annotations//jar",
         "//third_party/bazel/src/main/protobuf:worker_protocol_java_proto",
