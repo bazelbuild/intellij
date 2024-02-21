@@ -58,7 +58,9 @@ public class ProjectStatsLogger implements BlazeProjectListener {
                   .setBlazeProjectFiles(
                       projectViewSet.listScalarItems(ImportSection.KEY, TryImportSection.KEY).stream()
                           .map(WorkspacePath::asPath)
-                          .collect(toImmutableSet()));
+                          .collect(toImmutableSet()))
+                  .setProjectTargetCount(instance.graph().allTargets().size())
+                  .setExternalDependencyCount(instance.graph().projectDeps().size());
               scope
                   .getDependenciesInfoStatsBuilder()
                   .setTargetMapSize(instance.graph().targetMap().size())
