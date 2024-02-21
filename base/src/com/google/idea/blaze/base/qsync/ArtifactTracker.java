@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.build.OutputInfo;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;

@@ -18,49 +18,37 @@ package com.google.idea.blaze.base.qsync;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
+import com.google.idea.blaze.qsync.build.OutputGroup;
 import java.io.File;
 import java.util.Set;
 
-/** Output artifacts from the build per {@link OutputGroup}. */
+/** Helper class for managing output artifacts grouped by {@link OutputGroup}. */
 public class GroupedOutputArtifacts {
 
-  public static final GroupedOutputArtifacts EMPTY =
-      new GroupedOutputArtifacts(ImmutableListMultimap.of());
+  public static final ImmutableListMultimap<OutputGroup, OutputArtifact> EMPTY =
+      ImmutableListMultimap.of();
 
-  private final ImmutableListMultimap<OutputGroup, OutputArtifact> outputArtifacts;
+  private GroupedOutputArtifacts() {}
 
-  private GroupedOutputArtifacts(ImmutableListMultimap<OutputGroup, OutputArtifact> map) {
-    this.outputArtifacts = map;
+  @VisibleForTesting
+  public static ImmutableListMultimap.Builder<OutputGroup, OutputArtifact> builder() {
+    return new ImmutableListMultimap.Builder<>();
   }
 
-  public GroupedOutputArtifacts(BlazeBuildOutputs buildOutputs, Set<OutputGroup> outputGroups) {
-    ImmutableListMultimap.Builder<OutputGroup, OutputArtifact> builder =
-        ImmutableListMultimap.builder();
+  public static ImmutableListMultimap<OutputGroup, OutputArtifact> create(
+      BlazeBuildOutputs buildOutputs, Set<OutputGroup> outputGroups) {
+    ImmutableListMultimap.Builder<OutputGroup, OutputArtifact> builder = builder();
     for (OutputGroup group : outputGroups) {
       ImmutableList<OutputArtifact> artifacts =
           translateOutputArtifacts(
               buildOutputs.getOutputGroupArtifacts(group.outputGroupName()::equals));
       builder.putAll(group, artifacts);
     }
-    outputArtifacts = builder.build();
-  }
-
-  @VisibleForTesting
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  public ImmutableList<OutputArtifact> get(OutputGroup group) {
-    return outputArtifacts.get(group);
-  }
-
-  public boolean isEmpty() {
-    return outputArtifacts.isEmpty();
+    return builder.build();
   }
 
   private static ImmutableList<OutputArtifact> translateOutputArtifacts(
@@ -82,38 +70,5 @@ public class GroupedOutputArtifacts {
     File srcfsArtifact = new File(hashId.replaceFirst("/google_src", "/google/src"));
     return new LocalFileOutputArtifact(
         srcfsArtifact, it.getRelativePath(), it.getConfigurationMnemonic(), it.getDigest());
-  }
-
-  /**
-   * Builder class for {@link GroupedOutputArtifacts}. Just wraps a multimap builder to make test
-   * code a bit less verbose.
-   */
-  public static class Builder {
-    private final ImmutableListMultimap.Builder<OutputGroup, OutputArtifact> mapBuilder =
-        new ImmutableListMultimap.Builder<>();
-
-    Builder() {}
-
-    @CanIgnoreReturnValue
-    public Builder putAll(OutputGroup group, Iterable<OutputArtifact> artifacts) {
-      mapBuilder.putAll(group, artifacts);
-      return this;
-    }
-
-    @CanIgnoreReturnValue
-    public Builder putAll(OutputGroup group, OutputArtifact... artifacts) {
-      mapBuilder.putAll(group, artifacts);
-      return this;
-    }
-
-    @CanIgnoreReturnValue
-    public Builder put(OutputGroup group, OutputArtifact artifact) {
-      mapBuilder.put(group, artifact);
-      return this;
-    }
-
-    public GroupedOutputArtifacts build() {
-      return new GroupedOutputArtifacts(mapBuilder.build());
-    }
   }
 }
