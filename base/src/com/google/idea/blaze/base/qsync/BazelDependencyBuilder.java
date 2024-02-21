@@ -23,6 +23,7 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -55,6 +56,8 @@ import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
+import com.google.idea.blaze.qsync.build.OutputGroup;
+import com.google.idea.blaze.qsync.build.OutputInfo;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
 import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcCompilationInfo;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -238,8 +241,8 @@ public class BazelDependencyBuilder implements DependencyBuilder {
   private OutputInfo createOutputInfo(
       BlazeBuildOutputs blazeBuildOutputs, Set<OutputGroup> outputGroups, BlazeContext context)
       throws BuildException {
-    GroupedOutputArtifacts allArtifacts =
-        new GroupedOutputArtifacts(blazeBuildOutputs, outputGroups);
+    ImmutableListMultimap<OutputGroup, OutputArtifact> allArtifacts =
+        GroupedOutputArtifacts.create(blazeBuildOutputs, outputGroups);
 
     ImmutableList<OutputArtifact> artifactInfoFiles =
         allArtifacts.get(OutputGroup.ARTIFACT_INFO_FILE);

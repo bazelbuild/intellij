@@ -31,6 +31,7 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
+import com.google.idea.blaze.qsync.build.OutputInfo;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.DependencyTrackingBehavior;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -218,5 +219,4 @@ public class DependencyTrackerImpl implements DependencyTracker {
   public Optional<ImmutableSet<Path>> getCachedArtifacts(Label target) {
     return artifactTracker.getCachedFiles(target);
   }
-
 }
