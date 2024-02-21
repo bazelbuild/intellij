@@ -53,8 +53,8 @@ message ListFindingsResponse {
     bool is_actionable = 4;
     string category = 5;
     optional string subcategory = 6;
-    string message = 7;
-    optional string message_html_sanitzed = 8;
+    string message_plaintext = 7;
+    optional string message_html_sanitized = 8;
     optional string url = 9;
   }
 }
@@ -63,13 +63,17 @@ message PublishCommentsRequest {
   int64 cl_number = 1;
 }
 message PublishCommentsResponse {}
+
 message UpdateCommentRequest {
   int64 cl_number = 1;
   string comment_id = 2;
   string message = 3;
   bool resolved = 4;
 }
-message UpdateCommentResponse {}
+message UpdateCommentResponse {
+  UpdatedPost comment = 1;
+}
+
 message DeleteCommentRequest {
   int64 cl_number = 1;
   string comment_id = 2;
@@ -93,6 +97,7 @@ message PostReplyRequest {
 
 message PostReplyResponse {
   string reply_id = 1;
+  UpdatedPost reply = 2;
 }
 
 message UpdateReplyRequest {
@@ -103,7 +108,9 @@ message UpdateReplyRequest {
   ReplyAction action = 5;
 }
 
-message UpdateReplyResponse {}
+message UpdateReplyResponse {
+  UpdatedPost reply = 1;
+}
 
 message DeleteReplyRequest {
   int64 cl_number = 1;
@@ -112,6 +119,14 @@ message DeleteReplyRequest {
 }
 
 message DeleteReplyResponse {}
+
+// A partial result of post or update action that includes the id of a post and
+// processed messages.
+message UpdatedPost {
+  string id = 1;
+  string message_plaintext = 2;
+  string message_html_sanitized = 3;
+}
 
 service FindingsService {
   // Runs lint checks and returns findings.
@@ -132,10 +147,11 @@ message GetCommentsResponse {
     CodeReview.Location location = 4;
     optional string context_text = 5;
     string author = 6;
-    string message = 7;
+    string message_plaintext = 7;
     bool is_active = 8;
     repeated Approval approvals = 9;
     repeated Reply replies = 10;
+    string message_html_sanitized = 11;
   }
 
   message Approval {
@@ -149,7 +165,8 @@ message GetCommentsResponse {
     string author = 2;
     bool published = 3;
     int64 timestamp_seconds = 4;
-    string message = 5;
+    string message_plaintext = 5;
+    string message_html_sanitized = 6;
   }
 }
 
