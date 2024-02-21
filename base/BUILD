@@ -442,6 +442,26 @@ java_library(
 )
 
 java_library(
+    name = "qsync-extensions",
+    srcs = ["src/com/google/idea/blaze/base/qsync/HandledRulesProvider.java"],
+    neverlink = 1,
+    visibility = ["//java/com/google/devtools/intellij/protobuf:__subpackages__"],
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+java_library(
+    name = "qsync-extensions-for-tests",
+    testonly = 1,
+    srcs = ["src/com/google/idea/blaze/base/qsync/HandledRulesProvider.java"],
+    visibility = ["//javatests/com/google/devtools/intellij/protobuf:__subpackages__"],
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+java_library(
     name = "unit_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/unit/**/*.java"]),
