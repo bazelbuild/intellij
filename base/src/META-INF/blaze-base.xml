@@ -140,6 +140,9 @@
       <keyboard-shortcut first-keystroke="ctrl alt shift D" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta alt shift D" keymap="macOS System Shortcuts" replace-all="true"/>
     </action>
+    <action id="Blaze.BuildDependenciesForProject"
+      class="com.google.idea.blaze.base.qsync.action.BuildDependenciesForProjectAction"
+      text="Enable Analysis For Whole Project" />
     <action id="Blaze.IntelliJExt.Status" class="com.google.idea.blaze.base.ext.IntelliJExtStatusAction" text="Status" >
     </action>
     <action id="Blaze.AddToQuerySyncProjectView"
