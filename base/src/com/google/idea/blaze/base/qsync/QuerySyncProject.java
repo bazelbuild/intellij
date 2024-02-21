@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.idea.blaze.base.qsync.DependencyTracker.DependencyBuildRequest.multiTarget;
+import static com.google.idea.blaze.base.qsync.DependencyTracker.DependencyBuildRequest.wholeProject;
+
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -311,11 +314,11 @@ public class QuerySyncProject {
     return vcsState.modifiedFiles();
   }
 
-  public void build(BlazeContext parentContext, Set<Label> projectTargets)
+  public void build(BlazeContext parentContext, DependencyTracker.DependencyBuildRequest request)
       throws IOException, BuildException {
     try (BlazeContext context = BlazeContext.create(parentContext)) {
       context.push(new BuildDepsStatsScope());
-      if (getDependencyTracker().buildDependenciesForTargets(context, projectTargets)) {
+      if (getDependencyTracker().buildDependenciesForTargets(context, request)) {
         BlazeProjectSnapshot newSnapshot =
             blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(
                 context,
@@ -352,7 +355,16 @@ public class QuerySyncProject {
       context.output(
           PrintOutput.output(
               "Building dependencies for:\n  " + Joiner.on("\n  ").join(projectTargets)));
-      build(context, projectTargets);
+      build(context, multiTarget(projectTargets));
+    } catch (IOException e) {
+      throw new BuildException("Failed to build dependencies", e);
+    }
+  }
+
+  public void enableAnalysis(BlazeContext context) throws BuildException {
+    try {
+      context.output(PrintOutput.output("Building dependencies for project"));
+      build(context, wholeProject());
     } catch (IOException e) {
       throw new BuildException("Failed to build dependencies", e);
     }

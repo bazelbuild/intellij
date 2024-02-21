@@ -437,6 +437,18 @@ public class QuerySyncManager implements Disposable {
         taskOrigin);
   }
 
+  @CanIgnoreReturnValue
+  public ListenableFuture<Boolean> enableAnalysisForWholeProject(
+      QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
+    assertProjectLoaded();
+    return runBuild(
+        "Enabling analysis for all project targets",
+        "Building dependencies",
+        querySyncActionStats,
+        loadedProject::enableAnalysis,
+        taskOrigin);
+  }
+
   public boolean canEnableAnalysisFor(Path workspaceRelativePath) {
     if (loadedProject == null) {
       return false;

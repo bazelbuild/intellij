@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.projectsystem;
 import static com.android.SdkConstants.DOT_AAR;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.google.idea.blaze.base.qsync.DependencyTracker.DependencyBuildRequest.singleTarget;
 import static java.util.Arrays.stream;
 
 import com.android.ide.common.repository.GradleCoordinate;
@@ -363,7 +364,8 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
     if (buildDeps) {
       BlazeContext tmpContext = BlazeContext.create();
       try {
-        dependencyTracker.buildDependenciesForTarget(tmpContext, label);
+        boolean unused =
+            dependencyTracker.buildDependenciesForTargets(tmpContext, singleTarget(label));
       } catch (Exception e) {
         tmpContext.handleException("Failed to build dependencies", e);
       }

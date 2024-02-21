@@ -112,14 +112,13 @@ public class DependencyTrackerImpl implements DependencyTracker {
    * shared library directory so that they are picked up by the IDE.
    */
   @Override
-  public boolean buildDependenciesForTargets(BlazeContext context, Set<Label> projectTargets)
+  public boolean buildDependenciesForTargets(BlazeContext context, DependencyBuildRequest request)
       throws IOException, BuildException {
     BuildDepsStatsScope.fromContext(context)
-        .ifPresent(stats -> stats.setRequestedTargets(projectTargets));
+        .ifPresent(stats -> stats.setRequestedTargets(request.targets));
     BlazeProjectSnapshot snapshot = getCurrentSnapshot();
 
-    Optional<RequestedTargets> maybeRequestedTargets =
-        snapshot.graph().computeRequestedTargets(projectTargets);
+    Optional<RequestedTargets> maybeRequestedTargets = getRequestedTargets(snapshot, request);
     if (maybeRequestedTargets.isEmpty()) {
       return false;
     }
@@ -128,18 +127,19 @@ public class DependencyTrackerImpl implements DependencyTracker {
     return true;
   }
 
-  /**
-   * Builds the dependencies of the given target, putting the resultant libraries in the shared
-   * library directory so that they are picked up by the IDE.
-   */
-  @Override
-  public void buildDependenciesForTarget(BlazeContext context, Label target)
-      throws IOException, BuildException {
-    BlazeProjectSnapshot snapshot = getCurrentSnapshot();
-
-    RequestedTargets requestedTargets =
-        new RequestedTargets(ImmutableSet.of(target), ImmutableSet.of(target));
-    buildDependencies(context, snapshot, requestedTargets);
+  private Optional<RequestedTargets> getRequestedTargets(
+      BlazeProjectSnapshot snapshot, DependencyBuildRequest request) {
+    switch (request.requestType) {
+      case MULTIPLE_TARGETS:
+        return snapshot.graph().computeRequestedTargets(request.targets);
+      case SINGLE_TARGET:
+        return Optional.of(new RequestedTargets(request.targets, request.targets));
+      case WHOLE_PROJECT:
+        return Optional.of(
+            new RequestedTargets(
+                snapshot.graph().allTargets().toLabelSet(), snapshot.graph().projectDeps()));
+    }
+    throw new IllegalArgumentException("Invalid request type: " + request.requestType);
   }
 
   private void buildDependencies(
