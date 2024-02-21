@@ -54,7 +54,10 @@ public class QuerySync {
   private QuerySync() {}
 
   public static boolean useByDefault() {
-    return ENABLED.isEnabled();
+    // We disable query sync by default until the feature is stable the feature.
+    // Note that users can still enable the feature via their settings menu (Cmd+, -> Bazel -> Query Sync)
+    //    return ENABLED.isEnabled();
+    return false;
   }
 
   public static boolean isLegacyExperimentEnabled() {
