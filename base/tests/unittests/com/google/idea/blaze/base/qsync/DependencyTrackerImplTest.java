@@ -81,7 +81,9 @@ public class DependencyTrackerImplTest {
     DependencyTrackerImpl dt =
         new DependencyTrackerImpl(null, blazeProject, dependencyBuilder, artifactTracker);
     when(artifactTracker.getLiveCachedTargets())
-        .thenReturn(ImmutableSet.of(Label.of("@@rules_jvm_external~override~maven~com_google_guava_guava//jar:jar")));
+            // This version of rules_jvm_external here has to exactly match the version in MODULE.bazel
+            // Otherwise, this test will fail
+        .thenReturn(ImmutableSet.of(Label.of("@@rules_jvm_external~6.0~maven~com_google_guava_guava//jar:jar")));
     assertThat(
             dt.getPendingExternalDeps(
                 ImmutableSet.copyOf(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.getAssumedLabels())))
