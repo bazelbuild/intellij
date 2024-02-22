@@ -524,10 +524,14 @@ public class QuerySyncProject {
   }
 
   private void onNewSnapshot(BlazeContext context, BlazeProjectSnapshot newSnapshot)
-      throws IOException {
+      throws BuildException {
     snapshotHolder.setCurrent(context, newSnapshot);
     projectData = projectData.withSnapshot(newSnapshot);
-    writeToDisk(newSnapshot);
+    try {
+      writeToDisk(newSnapshot);
+    } catch (IOException e) {
+      throw new BuildException("Failed to write snapshot to disk", e);
+    }
   }
 
   public Iterable<Path> getBugreportFiles() {
