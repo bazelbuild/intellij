@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
 import com.google.idea.blaze.base.projectview.section.sections.TryImportSection;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.qsync.BlazeProjectListener;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import java.util.Optional;
 
@@ -39,10 +40,10 @@ public class ProjectStatsLogger implements BlazeProjectListener {
     }
   }
 
-  private ArtifactTracker artifactTracker;
+  private ArtifactTracker<?> artifactTracker;
   private ProjectViewSet projectViewSet;
 
-  public ProjectStatsLogger(ArtifactTracker artifactTracker, ProjectViewSet projectViewSet) {
+  public ProjectStatsLogger(ArtifactTracker<?> artifactTracker, ProjectViewSet projectViewSet) {
     this.artifactTracker = artifactTracker;
     this.projectViewSet = projectViewSet;
   }
