@@ -87,7 +87,6 @@ import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.google.protobuf.ExtensionRegistry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -125,9 +124,6 @@ public class ArtifactTrackerImpl
     implements ArtifactTracker<BlazeContext>,
         RenderJarArtifactTracker,
         AppInspectorArtifactTracker {
-
-  private static final BoolExperiment ATTACH_DEP_SRCJARS =
-      new BoolExperiment("querysync.attach.dep.srcjars", true);
 
   public static final String DIGESTS_DIRECTORY_NAME = ".digests";
   public static final int STORAGE_VERSION = 3;
@@ -717,7 +713,7 @@ public class ArtifactTrackerImpl
             .map(ProjectPath::projectRelative)
             .collect(ImmutableSet.toImmutableSet());
 
-    if (ATTACH_DEP_SRCJARS.getValue()) {
+    if (QuerySync.ATTACH_DEP_SRCJARS.getValue()) {
       SrcJarProjectUpdater srcJarUpdater =
           new SrcJarProjectUpdater(
               projectProto,
