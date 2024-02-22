@@ -33,9 +33,10 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BazelPluginProcessorJarTest extends BazelIntellijAspectTest {
   // blaze and bazel have different annotation processor paths & names.
+  // Warning: rules_jvm_external version used here has to be in sync with the version in MODULE.bazel
   private static final String JAR_STR =
-      jarString("external/rules_jvm_external~override~maven~maven/com/google/auto/value/auto-value/1.10.4/processed_auto-value-1.10.4.jar", /*iJar=*/ null, /*sourceJar=*/ null);
-  private static final String OUTPUT_GROUP_FILES = "../rules_jvm_external~override~maven~maven/com/google/auto/value/auto-value/1.10.4/processed_auto-value-1.10.4.jar";
+      jarString("external/rules_jvm_external~6.0~maven~maven/com/google/auto/value/auto-value/1.10.4/processed_auto-value-1.10.4.jar", /*iJar=*/ null, /*sourceJar=*/ null);
+  private static final String OUTPUT_GROUP_FILES = "../rules_jvm_external~6.0~maven~maven/com/google/auto/value/auto-value/1.10.4/processed_auto-value-1.10.4.jar";
 
   @Test
   public void ruleWithNoPlugins() throws Exception {

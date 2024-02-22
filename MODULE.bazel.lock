@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "3f407aff404c813dd506ce9f4288e6774fdf0f879dcd2df655b501f02f520b0f",
+  "moduleFileHash": "9c6bd9cbca162850dfe25bc161f3d8a13a1767d9c9e68a37077a6091d2ef1556",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -86,14 +86,14 @@
           "imports": {
             "bazel_binaries": "bazel_binaries",
             "bazel_binaries_bazelisk": "bazel_binaries_bazelisk",
-            "build_bazel_bazel_4_x": "build_bazel_bazel_4_x",
-            "build_bazel_bazel_6_x": "build_bazel_bazel_6_x"
+            "build_bazel_bazel_6_x": "build_bazel_bazel_6_x",
+            "build_bazel_bazel_7_x": "build_bazel_bazel_7_x"
           },
           "devImports": [
             "bazel_binaries",
             "bazel_binaries_bazelisk",
-            "build_bazel_bazel_4_x",
-            "build_bazel_bazel_6_x"
+            "build_bazel_bazel_6_x",
+            "build_bazel_bazel_7_x"
           ],
           "tags": [
             {
@@ -111,7 +111,7 @@
             {
               "tagName": "download",
               "attributeValues": {
-                "version": "4.x"
+                "version": "7.x"
               },
               "devDependency": true,
               "location": {
@@ -2136,7 +2136,7 @@
     },
     "@@bazel_tools//tools/test:extensions.bzl%remote_coverage_tools_extension": {
       "general": {
-        "bzlTransitiveDigest": "cizrA62cv8WUgb0cCmx5B6PRijtr/I4TAWxg/4caNGU=",
+        "bzlTransitiveDigest": "y48q5zUu2oMiYv7yUyi7rFB0wt14eqiF/RQcWT6vP7I=",
         "accumulatedFileDigests": {},
         "envVariables": {},
         "generatedRepoSpecs": {
@@ -2284,6 +2284,75 @@
             "buildifier_prebuilt~6.0.0.1",
             "bazel_tools",
             "bazel_tools"
+          ]
+        ]
+      }
+    },
+    "@@rules_bazel_integration_test~0.23.0//:extensions.bzl%bazel_binaries": {
+      "general": {
+        "bzlTransitiveDigest": "2YpQtmxm7IW8Ldz4jpGThmEDybtrPhL/NCQeG1JSpPI=",
+        "accumulatedFileDigests": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "bazel_binaries_bazelisk": {
+            "bzlFile": "@@rules_bazel_integration_test~0.23.0//bazel_integration_test/private:bazel_binaries.bzl",
+            "ruleClassName": "bazelisk_binary",
+            "attributes": {
+              "name": "rules_bazel_integration_test~0.23.0~bazel_binaries~bazel_binaries_bazelisk",
+              "version": "1.18.0"
+            }
+          },
+          "build_bazel_bazel_6_x": {
+            "bzlFile": "@@rules_bazel_integration_test~0.23.0//bazel_integration_test/private:bazel_binaries.bzl",
+            "ruleClassName": "bazel_binary",
+            "attributes": {
+              "name": "rules_bazel_integration_test~0.23.0~bazel_binaries~build_bazel_bazel_6_x",
+              "version": "6.x",
+              "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
+            }
+          },
+          "build_bazel_bazel_7_x": {
+            "bzlFile": "@@rules_bazel_integration_test~0.23.0//bazel_integration_test/private:bazel_binaries.bzl",
+            "ruleClassName": "bazel_binary",
+            "attributes": {
+              "name": "rules_bazel_integration_test~0.23.0~bazel_binaries~build_bazel_bazel_7_x",
+              "version": "7.x",
+              "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
+            }
+          },
+          "bazel_binaries": {
+            "bzlFile": "@@rules_bazel_integration_test~0.23.0//bazel_integration_test/bzlmod:bazel_binaries.bzl",
+            "ruleClassName": "_bazel_binaries_helper",
+            "attributes": {
+              "name": "rules_bazel_integration_test~0.23.0~bazel_binaries~bazel_binaries",
+              "version_to_repo": {
+                "6.x": "build_bazel_bazel_6_x",
+                "7.x": "build_bazel_bazel_7_x"
+              },
+              "current_version": "6.x"
+            }
+          }
+        },
+        "moduleExtensionMetadata": {
+          "explicitRootModuleDirectDeps": [],
+          "explicitRootModuleDirectDevDeps": [
+            "bazel_binaries_bazelisk",
+            "build_bazel_bazel_6_x",
+            "build_bazel_bazel_7_x",
+            "bazel_binaries"
+          ],
+          "useAllRepos": "NO"
+        },
+        "recordedRepoMappingEntries": [
+          [
+            "rules_bazel_integration_test~0.23.0",
+            "bazel_skylib",
+            "bazel_skylib~1.5.0"
+          ],
+          [
+            "rules_bazel_integration_test~0.23.0",
+            "cgrindel_bazel_starlib",
+            "cgrindel_bazel_starlib~0.18.0"
           ]
         ]
       }
