@@ -121,7 +121,7 @@ public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceO
     if (!isWorkspaceRoot(workspaceRootFile)) {
       throw new ConfigurationException(
           "Invalid workspace root: choose a bazel workspace directory "
-              + "(containing a WORKSPACE file)");
+              + "(containing a WORKSPACE or MODULE.bazel file)");
     }
     WorkspaceRoot root = new WorkspaceRoot(workspaceRootFile);
     return WorkspaceTypeData.builder()
