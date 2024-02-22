@@ -22,4 +22,6 @@ message MailChangeRequest {
 
 message MailChangeResponse {
   optional Status status = 1002;
+  optional PresubmitMessage presubmit_message = 2;
+  optional bool mail_sent = 4;
 }
