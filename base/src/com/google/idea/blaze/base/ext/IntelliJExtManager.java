@@ -49,6 +49,7 @@ public class IntelliJExtManager {
    */
   private static final BoolExperiment ENABLED = new BoolExperiment("use.intellij.ext", false);
 
+  private static final BoolExperiment RETRY = new BoolExperiment("use.intellij.ext.retry", false);
   private static final BoolExperiment ISSUETRACKER =
       new BoolExperiment("use.intellij.ext.issuetracker", false);
 
@@ -166,6 +167,10 @@ public class IntelliJExtManager {
 
   public boolean isEnabled() {
     return getBinaryPath() != null;
+  }
+
+  public boolean isRetryEnabled() {
+    return isEnabled() && RETRY.getValue();
   }
 
   public boolean isIssueTrackerEnabled() {
