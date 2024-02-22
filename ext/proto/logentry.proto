@@ -55,6 +55,11 @@ message IntellijLogEntry {
     FreezeInfo freeze_info = 23;
     LogMessage log_message = 24;
     IndexingDiagnostic indexing_diagnostic = 25;
+    QuerySyncAction query_sync_action = 26;
+    Command command = 27;
+    SyncStats sync_stats = 28;
+    HighlightStats highlight_stats = 29;
+    RpcCall rpc_call = 30;
   }
 }
 
@@ -293,4 +298,301 @@ message IndexingDiagnostic {
     optional JarType jar_type = 5;
     optional string target = 7;
   }
+}
+
+// Handling query sync or build stats
+message QuerySyncAction {
+  // Time the action was triggered.
+  // This is the milliseconds since January 1, 1970 00:00:00 UTC.
+  optional int64 start_time_micros = 1;
+  optional int64 total_clock_time_ms = 2;
+  // The name of action that triggered the query sync
+  optional string trigger_action_name = 3;
+  // How the action is triggered e.g. short-cut, go to action etc.
+  optional string trigger_method = 4;
+  // The files that user request with
+  repeated string requested_files = 5;
+  optional Result result = 6;
+  repeated QuerySyncOperation operations = 7;
+  repeated string languages_active = 8;
+  repeated string blaze_project_files = 9;
+  optional DependenciesInfo dependencies_info = 10;
+  optional TaskOrigin task_origin = 11;
+  // Number of supported targets in the project
+  optional int32 project_target_count = 12;
+  // Number of external dependencies.
+  optional int32 external_dependency_count = 13;
+  enum Result {
+    UNKNOWN = 0;
+    SUCCESS = 1;
+    FAILURE = 2;
+    SUCCESS_WITH_WARNING = 3;
+    CANCELLED = 4;
+  }
+
+  enum TaskOrigin {
+    UNKNOWN_ORIGIN = 0;
+    STARTUP = 1;
+    USER_ACTION = 2;
+    AUTOMATIC = 3;
+  }
+
+  message QuerySyncOperation {
+    optional int64 total_clock_time_ms = 3;
+    oneof operation {
+      SyncQueryStats sync_query_stats = 4;
+      BuildDepsStats build_deps_stats = 5;
+    }
+  }
+
+  message DependenciesInfo {
+    optional int32 target_map_size = 1;
+    // Number of libraries jars in jar cache
+    optional int32 jar_count = 2;
+    // Number of library entries of workspace module
+    optional int32 library_count = 3;
+  }
+
+  message SyncQueryStats {
+    optional int32 bazel_exit_code = 1;
+    optional SyncMode sync_mode = 2;
+    optional BlazeBinaryType blaze_binary_type = 3;
+    repeated string query_flags = 4;
+    // Bytes of query result
+    optional int64 query_result_size_bytes = 5;
+  }
+
+  enum SyncMode {
+    UNKNOWN_MODE = 0;
+    FULL = 1;
+    DELTA = 2;
+  }
+
+  message BuildDepsStats {
+    optional int32 bazel_exit_code = 1;
+    // The targets that include requested_files
+    repeated string requested_target = 2;
+    // The targets to build
+    repeated string build_targets = 3;
+    // Number of files to download for this build
+    optional int32 updated_files_count = 4;
+    optional BlazeBinaryType blaze_binary_type = 5;
+    repeated string build_flags = 6;
+    repeated string build_ids = 7;
+    // Bytes of files to download for this build
+    repeated int64 artifact_bytes_consumed = 8 [packed = true];
+    optional int64 bep_bytes_consumed = 9;
+  }
+}
+
+enum BlazeBinaryType {
+  BLAZE_BINARY_TYPE_UNSPECIFIED = 0;
+  BLAZE = 1;
+  BAZEL = 2;
+  RABBIT = 3;
+  CUSTOM_BLAZE_BINARY = 4;
+  RABBIT_API = 5;
+}
+
+message Command {
+  // Namespace specific to the context which invoked this command.
+  optional string command_namespace = 1;
+  // The path or name of the executable invoked by this command.
+  optional string executable = 2;
+  // The name of the subcommand, if applicable.
+  // For example, "revert" in "hg revert -r tip".
+  optional string subcommand_name = 3;
+  // All arguments passed to the executable, including subcommand_name.
+  repeated string arguments = 4;
+  // The absolute path of the working directory the command was invoked from.
+  optional string working_directory = 5;
+  // Additional data about this command's execution.
+  map<string, string> key_value = 6;
+  optional int32 exit_code = 7;
+}
+
+// A newer version of BlazeSyncStats, handling multiple builds per sync.
+message SyncStats {
+  // stats for a single build phase
+  message BuildPhaseStats {
+    repeated string targets = 1;
+    repeated string sync_flags = 3;
+    optional bool sync_sharded = 4;
+    optional BuildInfo build_result = 5;
+    optional int64 total_clock_time_ms = 6;
+    optional bool targets_derived_from_directories = 7;
+    optional int64 shard_count = 8;
+    optional bool parallel_builds = 9;
+    repeated string build_ids = 10;
+    optional ShardStats shard_stats = 11;
+    optional int64 bep_bytes_consumed = 12;
+  }
+
+  message ShardStats {
+    optional ShardingApproach sharding_approach = 1;
+    optional int32 suggested_target_size_per_shard = 2;
+    // The size may not be evenly on every shard, so record them as a list
+    repeated int32 actual_target_size_per_shard = 3 [packed = true];
+
+    enum ShardingApproach {
+      NONE = 0;
+      PARTITION_WITHOUT_EXPANDING = 1;
+      BUILD_TARGET_BATCHING_SERVICE = 2;
+      LEXICOGRAPHIC_TARGET_SHARDER = 3;
+      ERROR = 4;
+    }
+  }
+
+  message BuildInfo {
+    optional int64 exit_code = 1;
+    optional BuildResult status = 2;
+
+    enum BuildResult {
+      UNKNOWN = 0;
+      SUCCESS = 1;
+      BUILD_ERROR = 2;
+      FATAL_ERROR = 3;
+    }
+  }
+
+  message TimedEvent {
+    optional string name = 1;
+    optional int64 duration_ms = 2;
+    optional string type = 3;
+    optional bool is_leaf = 4;
+  }
+
+  message NetworkBytesUsed {
+    optional string reason = 1;
+    optional int64 bytes = 2;
+  }
+
+  enum SyncMode {
+    UNKNOWN_MODE = 0;
+    STARTUP = 1;
+    FULL = 2;
+    INCREMENTAL = 3;
+    PARTIAL = 4;
+    NO_BUILD = 5;
+  }
+
+  // List of sync results.
+  enum SyncResult {
+    UNKNOWN_RESULT = 0;
+    SUCCESS = 1;
+    PARTIAL_SUCCESS = 2;
+    FAILURE = 3;
+    CANCELLED = 4;
+  }
+
+  optional SyncMode sync_mode = 1;
+  optional string sync_title = 2;
+  optional BlazeBinaryType sync_binary_type = 3;
+  optional SyncResult sync_result = 4;
+
+  // Timing information covering the entire sync.
+  repeated TimedEvent timed_events = 5;
+  optional int64 total_clock_time_ms = 6;
+  optional int64 blaze_exec_time_ms = 7;
+  // Time sync command was initiated.
+  // This is the milliseconds since January 1, 1970 00:00:00 UTC.
+  optional int64 start_time_in_epoch_time_ms = 8;
+
+  optional string workspace_type = 9;
+  repeated string languages_active = 10;
+
+  repeated BuildPhaseStats build_phase_stats = 11;
+
+  optional int64 target_map_size = 12;
+  // Number of libraries generated by sync
+  optional int32 library_count = 13;
+  // A description of what triggered the sync
+  optional string sync_origin = 14;
+  // Workspace-relative paths of imported .blazeproject files
+  repeated string blaze_project_files = 15;
+  // Downloads performed as a part of the sync.
+  repeated NetworkBytesUsed network_bytes_used = 16;
+}
+
+message HighlightStats {
+  message HighlightInfo {
+    // HighlightInfo Severity, maps IntelliJ's HighlightSeverity
+    enum Severity {
+      UNKNOWN_SEVERITY = 0;
+      INFORMATION = 1;
+      GENERIC_SERVER_ERROR_OR_WARNING = 2;
+      WEAK_WARNING = 3;
+      WARNING = 4;
+      ERROR = 5;
+    }
+
+    // Type of HighlightInfo
+    // Used to track the type of Highlight information logged.
+    enum Type {
+      UNKNOWN_TYPE = 0;
+      WRONG_REF = 1;
+      UNUSED_SYMBOL = 2;
+      DEPRECATED = 3;
+      MARKED_FOR_REMOVAL = 4;
+    }
+
+    // Text of the highlighted symbol
+    optional string text = 1;
+    optional Severity severity = 2;
+    optional Type type = 3;
+    // Start offset of the highlighted symbol in containing file
+    optional int32 start_offset = 4;
+    // End offset of the highlighted symbol in containing file
+    optional int32 end_offset = 5;
+  }
+
+  message FileHighlights {
+    // Sync State of the File
+    enum FileStatus {
+      UNKNOWN = 0;
+      UNSYNCED = 1;
+      STALE = 2;
+      SYNCED = 3;
+      RESYNCING = 4;
+      IN_PROGRESS = 5;
+    }
+
+    optional string file_name = 1;
+    // file type: JAVA, XML, etc.
+    optional string file_type = 2;
+    optional string file_path = 3;
+    // Tracks whether the file is in project view
+    optional bool is_project_source = 4;
+    // Sync state of the file at time of logging
+    optional FileStatus sync_status = 5;
+    // Highlight information corresponding to one file
+    repeated HighlightInfo highlight_info = 6;
+  }
+
+  // Group that this HighlightStat belongs to
+  // This is used a first level filter to group HighlightStats by the type of
+  // highlight information logged.
+  enum HighlightStatGroup {
+    UNKNOWN = 0;
+    ANDROID_RESOURCE_MISSING_REF = 1;
+  }
+
+  // Group that this HighlightStat belongs to
+  optional HighlightStatGroup group = 1;
+  // Last sync mode of the project at the time of stats collection
+  optional SyncStats.SyncMode last_sync_mode = 2;
+  // Result of the last sync at the time of stats collection
+  optional SyncStats.SyncResult last_sync_result = 3;
+  // Highlight information collected for files
+  repeated FileHighlights file_highlights = 4;
+}
+
+// Stubby RPC call to an external service.
+message RpcCall {
+  optional string service_name = 1;
+  optional string method_called = 2;
+  optional string server_address = 3;
+  optional int64 server_elapsed_time_ms = 4;
+  optional uint32 canonical_code = 5;
+  optional string error_message = 6;
 }
