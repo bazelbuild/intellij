@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "9c6bd9cbca162850dfe25bc161f3d8a13a1767d9c9e68a37077a6091d2ef1556",
+  "moduleFileHash": "4f51d0b8c174a1a5a694a61add894cb831341b4a7b4752dabaac61a89b91c7e1",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -86,20 +86,22 @@
           "imports": {
             "bazel_binaries": "bazel_binaries",
             "bazel_binaries_bazelisk": "bazel_binaries_bazelisk",
-            "build_bazel_bazel_6_x": "build_bazel_bazel_6_x",
-            "build_bazel_bazel_7_x": "build_bazel_bazel_7_x"
+            "build_bazel_bazel_4_2_4": "build_bazel_bazel_4_2_4",
+            "build_bazel_bazel_6_5_0": "build_bazel_bazel_6_5_0",
+            "build_bazel_bazel_7_0_2": "build_bazel_bazel_7_0_2"
           },
           "devImports": [
             "bazel_binaries",
             "bazel_binaries_bazelisk",
-            "build_bazel_bazel_6_x",
-            "build_bazel_bazel_7_x"
+            "build_bazel_bazel_4_2_4",
+            "build_bazel_bazel_6_5_0",
+            "build_bazel_bazel_7_0_2"
           ],
           "tags": [
             {
               "tagName": "download",
               "attributeValues": {
-                "version": "6.x"
+                "version": "4.2.4"
               },
               "devDependency": true,
               "location": {
@@ -111,12 +113,24 @@
             {
               "tagName": "download",
               "attributeValues": {
-                "version": "7.x"
+                "version": "6.5.0"
               },
               "devDependency": true,
               "location": {
                 "file": "@@//:MODULE.bazel",
                 "line": 73,
+                "column": 24
+              }
+            },
+            {
+              "tagName": "download",
+              "attributeValues": {
+                "version": "7.0.2"
+              },
+              "devDependency": true,
+              "location": {
+                "file": "@@//:MODULE.bazel",
+                "line": 74,
                 "column": 24
               }
             }
@@ -130,7 +144,7 @@
           "usingModule": "<root>",
           "location": {
             "file": "@@//:MODULE.bazel",
-            "line": 84,
+            "line": 86,
             "column": 22
           },
           "imports": {
@@ -222,7 +236,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 85,
+                "line": 87,
                 "column": 14
               }
             }
@@ -2294,6 +2308,33 @@
         "accumulatedFileDigests": {},
         "envVariables": {},
         "generatedRepoSpecs": {
+          "build_bazel_bazel_7_0_2": {
+            "bzlFile": "@@rules_bazel_integration_test~0.23.0//bazel_integration_test/private:bazel_binaries.bzl",
+            "ruleClassName": "bazel_binary",
+            "attributes": {
+              "name": "rules_bazel_integration_test~0.23.0~bazel_binaries~build_bazel_bazel_7_0_2",
+              "version": "7.0.2",
+              "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
+            }
+          },
+          "build_bazel_bazel_6_5_0": {
+            "bzlFile": "@@rules_bazel_integration_test~0.23.0//bazel_integration_test/private:bazel_binaries.bzl",
+            "ruleClassName": "bazel_binary",
+            "attributes": {
+              "name": "rules_bazel_integration_test~0.23.0~bazel_binaries~build_bazel_bazel_6_5_0",
+              "version": "6.5.0",
+              "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
+            }
+          },
+          "build_bazel_bazel_4_2_4": {
+            "bzlFile": "@@rules_bazel_integration_test~0.23.0//bazel_integration_test/private:bazel_binaries.bzl",
+            "ruleClassName": "bazel_binary",
+            "attributes": {
+              "name": "rules_bazel_integration_test~0.23.0~bazel_binaries~build_bazel_bazel_4_2_4",
+              "version": "4.2.4",
+              "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
+            }
+          },
           "bazel_binaries_bazelisk": {
             "bzlFile": "@@rules_bazel_integration_test~0.23.0//bazel_integration_test/private:bazel_binaries.bzl",
             "ruleClassName": "bazelisk_binary",
@@ -2302,34 +2343,17 @@
               "version": "1.18.0"
             }
           },
-          "build_bazel_bazel_6_x": {
-            "bzlFile": "@@rules_bazel_integration_test~0.23.0//bazel_integration_test/private:bazel_binaries.bzl",
-            "ruleClassName": "bazel_binary",
-            "attributes": {
-              "name": "rules_bazel_integration_test~0.23.0~bazel_binaries~build_bazel_bazel_6_x",
-              "version": "6.x",
-              "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
-            }
-          },
-          "build_bazel_bazel_7_x": {
-            "bzlFile": "@@rules_bazel_integration_test~0.23.0//bazel_integration_test/private:bazel_binaries.bzl",
-            "ruleClassName": "bazel_binary",
-            "attributes": {
-              "name": "rules_bazel_integration_test~0.23.0~bazel_binaries~build_bazel_bazel_7_x",
-              "version": "7.x",
-              "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
-            }
-          },
           "bazel_binaries": {
             "bzlFile": "@@rules_bazel_integration_test~0.23.0//bazel_integration_test/bzlmod:bazel_binaries.bzl",
             "ruleClassName": "_bazel_binaries_helper",
             "attributes": {
               "name": "rules_bazel_integration_test~0.23.0~bazel_binaries~bazel_binaries",
               "version_to_repo": {
-                "6.x": "build_bazel_bazel_6_x",
-                "7.x": "build_bazel_bazel_7_x"
+                "4.2.4": "build_bazel_bazel_4_2_4",
+                "6.5.0": "build_bazel_bazel_6_5_0",
+                "7.0.2": "build_bazel_bazel_7_0_2"
               },
-              "current_version": "6.x"
+              "current_version": "4.2.4"
             }
           }
         },
@@ -2337,8 +2361,9 @@
           "explicitRootModuleDirectDeps": [],
           "explicitRootModuleDirectDevDeps": [
             "bazel_binaries_bazelisk",
-            "build_bazel_bazel_6_x",
-            "build_bazel_bazel_7_x",
+            "build_bazel_bazel_4_2_4",
+            "build_bazel_bazel_6_5_0",
+            "build_bazel_bazel_7_0_2",
             "bazel_binaries"
           ],
           "useAllRepos": "NO"
