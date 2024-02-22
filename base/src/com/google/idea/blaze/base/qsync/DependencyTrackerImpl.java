@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.qsync;
 
 import static java.util.stream.Collectors.joining;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
@@ -38,9 +37,7 @@ import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.DependencyTrackingBehavior;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.google.idea.blaze.qsync.project.ProjectTarget;
-import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
-import com.google.idea.blaze.qsync.project.TargetTree;
+import com.google.idea.blaze.qsync.project.RequestedTargets;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -100,29 +97,9 @@ public class DependencyTrackerImpl implements DependencyTracker {
       return ImmutableSet.of();
     }
 
-    ImmutableList.Builder<ImmutableSet<Label>> targetSets = ImmutableList.builder();
-    for (Label projectTarget : projectTargets) {
-      ImmutableSet<DependencyTrackingBehavior> depTracking =
-          currentSnapshot.graph().getDependencyTrackingBehaviors(projectTarget);
-
-      ImmutableSet.Builder<Label> deps = ImmutableSet.builder();
-      for (DependencyTrackingBehavior behavior : depTracking) {
-        switch (behavior) {
-          case EXTERNAL_DEPENDENCIES:
-            deps.addAll(currentSnapshot.graph().getTransitiveExternalDependencies(projectTarget));
-            break;
-          case SELF:
-            // For C/C++, we don't need to build external deps, but we do need to extract
-            // compilation information for the target itself.
-            deps.add(projectTarget);
-            break;
-        }
-      }
-      targetSets.add(deps.build());
-    }
-
     Set<Label> cachedTargets = artifactTracker.getLiveCachedTargets();
-    return targetSets.build().stream()
+    return projectTargets.stream()
+        .map(projectTarget -> currentSnapshot.graph().getExternalDepsToBuildFor(projectTarget))
         .map(targets -> Sets.difference(targets, cachedTargets))
         .min(Comparator.comparingInt(SetView::size))
         .map(SetView::immutableCopy)
@@ -163,7 +140,7 @@ public class DependencyTrackerImpl implements DependencyTracker {
     BlazeProjectSnapshot snapshot = getCurrentSnapshot();
 
     Optional<RequestedTargets> maybeRequestedTargets =
-        computeRequestedTargets(snapshot, projectTargets);
+        snapshot.graph().computeRequestedTargets(projectTargets);
     if (maybeRequestedTargets.isEmpty()) {
       return false;
     }
@@ -195,7 +172,7 @@ public class DependencyTrackerImpl implements DependencyTracker {
         builder.build(
             context,
             requestedTargets.buildTargets,
-            getTargetLanguages(snapshot, requestedTargets.buildTargets));
+            snapshot.graph().getTargetLanguages(requestedTargets.buildTargets));
     reportErrorsAndWarnings(context, snapshot, outputInfo);
 
     ImmutableSet<Path> updatedFiles =
@@ -203,93 +180,14 @@ public class DependencyTrackerImpl implements DependencyTracker {
     refreshFiles(context, updatedFiles);
   }
 
-  private static ImmutableSet<QuerySyncLanguage> getTargetLanguages(
-      BlazeProjectSnapshot snapshot, ImmutableSet<Label> targets) {
-    return targets.stream()
-        .map(snapshot.graph().targetMap()::get)
-        .map(ProjectTarget::languages)
-        .reduce((a, b) -> Sets.union(a, b).immutableCopy())
-        .orElse(ImmutableSet.of());
-  }
-
-  /**
-   * Returns the list of project targets related to the given workspace paths.
-   *
-   * @param context Context
-   * @param workspaceRelativePath Workspace relative path to find targets for. This may be a source
-   *     file, directory or BUILD file.
-   * @return Corresponding project targets. For a source file, this is the targets that build that
-   *     file. For a BUILD file, it's the set or targets defined in that file. For a directory, it's
-   *     the set of all targets defined in all build packages within the directory (recursively).
-   */
-  @Override
-  public TargetsToBuild getProjectTargets(BlazeContext context, Path workspaceRelativePath) {
-    return blazeProject
-        .getCurrent()
-        .map(snapshot -> getProjectTargets(context, snapshot, workspaceRelativePath))
-        .orElse(TargetsToBuild.NONE);
-  }
-
-  @VisibleForTesting
-  public static TargetsToBuild getProjectTargets(
-      BlazeContext context, BlazeProjectSnapshot snapshot, Path workspaceRelativePath) {
-    if (workspaceRelativePath.endsWith("BUILD")) {
-      Path packagePath = workspaceRelativePath.getParent();
-      return TargetsToBuild.targetGroup(snapshot.graph().allTargets().get(packagePath));
-    } else {
-      TargetTree targets = snapshot.graph().allTargets().getSubpackages(workspaceRelativePath);
-      if (!targets.isEmpty()) {
-        // this will only be non-empty for directories
-        return TargetsToBuild.targetGroup(targets.toLabelSet());
-      }
-    }
-    // Not a build file or a directory containing packages.
-    if (snapshot.graph().getAllSourceFiles().contains(workspaceRelativePath)) {
-      ImmutableSet<Label> targetOwner = snapshot.getTargetOwners(workspaceRelativePath);
-      if (!targetOwner.isEmpty()) {
-        return TargetsToBuild.forSourceFile(targetOwner, workspaceRelativePath);
-      }
-    } else {
-      context.output(
-          PrintOutput.error("Can't find any supported targets for %s", workspaceRelativePath));
-      context.output(
-          PrintOutput.error(
-              "If this is a newly added supported rule, please re-sync your project."));
-      context.setHasWarnings();
-    }
-    return TargetsToBuild.NONE;
-  }
-
-  public static Optional<RequestedTargets> computeRequestedTargets(
-      BlazeProjectSnapshot snapshot, Set<Label> projectTargets) {
-    ImmutableSet<Label> externalDeps =
-        projectTargets.stream()
-            .filter(
-                t ->
-                    snapshot.graph().getDependencyTrackingBehaviors(t).stream()
-                        .anyMatch(DependencyTrackerImpl::shouldIncludeExternalDependencies))
-            .flatMap(t -> snapshot.graph().getTransitiveExternalDependencies(t).stream())
-            .collect(ImmutableSet.toImmutableSet());
-
-    return Optional.of(new RequestedTargets(ImmutableSet.copyOf(projectTargets), externalDeps));
-  }
-
-  private static boolean shouldIncludeExternalDependencies(DependencyTrackingBehavior behavior) {
-    switch (behavior) {
-      case EXTERNAL_DEPENDENCIES:
-        return true;
-      case SELF:
-        return false;
-    }
-    throw new UnsupportedOperationException(behavior.name());
-  }
-
   private void reportErrorsAndWarnings(
       BlazeContext context, BlazeProjectSnapshot snapshot, OutputInfo outputInfo)
       throws NoDependenciesBuiltException {
     if (outputInfo.isEmpty()) {
       throw new NoDependenciesBuiltException(
-          "Build produced no usable outputs. Please fix any build errors and retry.");
+          "Build produced no usable outputs. Please fix any build errors and retry. If you"
+              + " observe 'no such target' errors, your project may be out of sync. Please sync"
+              + " the project and retry.");
     }
 
     if (!outputInfo.getTargetsWithErrors().isEmpty()) {

@@ -24,7 +24,6 @@ import com.google.idea.blaze.qsync.java.WorkspaceResolvingPackageReader;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
-import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
@@ -40,7 +39,6 @@ public class BlazeProjectSnapshotBuilder {
   private final PackageReader workspaceRelativePackageReader;
   private final Path workspaceRoot;
   private final ImmutableSet<String> handledRuleKinds;
-  private final ProjectProtoTransform projectProtoTransform;
   private final Supplier<Boolean> useNewResDirLogic;
   private final Supplier<Boolean> guessAndroidResPackages;
 
@@ -49,32 +47,14 @@ public class BlazeProjectSnapshotBuilder {
       PackageReader workspaceRelativePackageReader,
       Path workspaceRoot,
       ImmutableSet<String> handledRuleKinds,
-      ProjectProtoTransform projectProtoTransform,
       Supplier<Boolean> useNewResDirLogic,
       Supplier<Boolean> guessAndroidResPackages) {
     this.executor = executor;
     this.workspaceRelativePackageReader = workspaceRelativePackageReader;
     this.workspaceRoot = workspaceRoot;
     this.handledRuleKinds = handledRuleKinds;
-    this.projectProtoTransform = projectProtoTransform;
     this.useNewResDirLogic = useNewResDirLogic;
     this.guessAndroidResPackages = guessAndroidResPackages;
-  }
-
-  /** {@code Function<ProjectProto.Project, ProjectProto.Project>} that can throw exceptions. */
-  @FunctionalInterface
-  public interface ProjectProtoTransform {
-    ProjectProto.Project apply(ProjectProto.Project proto, BuildGraphData graph, Context<?> context)
-        throws BuildException;
-
-    public static ProjectProtoTransform compose(ProjectProtoTransform... transforms) {
-      return (proto, graph, context) -> {
-        for (ProjectProtoTransform transform : transforms) {
-          proto = transform.apply(proto, graph, context);
-        }
-        return proto;
-      };
-    }
   }
 
   /**
@@ -83,7 +63,10 @@ public class BlazeProjectSnapshotBuilder {
    * applies transformations required to account for any currently synced(i.e. built) dependencies.
    */
   public BlazeProjectSnapshot createBlazeProjectSnapshot(
-      Context<?> context, PostQuerySyncData postQuerySyncData) throws BuildException {
+      Context<?> context,
+      PostQuerySyncData postQuerySyncData,
+      ProjectProtoTransform projectProtoTransform)
+      throws BuildException {
     Path effectiveWorkspaceRoot =
         postQuerySyncData.vcsState().flatMap(s -> s.workspaceSnapshotPath).orElse(workspaceRoot);
     WorkspaceResolvingPackageReader packageReader =

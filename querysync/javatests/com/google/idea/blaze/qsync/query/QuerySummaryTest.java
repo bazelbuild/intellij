@@ -16,9 +16,9 @@
 package com.google.idea.blaze.qsync.query;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth8.assertThat;
 import static com.google.idea.blaze.qsync.query.QuerySummaryTestUtil.createProtoForPackages;
 
+import com.google.common.truth.Truth8;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.query.Query.SourceFile;
 import com.google.idea.blaze.qsync.testdata.TestData;
@@ -113,7 +113,7 @@ public class QuerySummaryTest {
   @Test
   public void testGetParentPackage_noparent() {
     QuerySummary summary = QuerySummary.create(createProtoForPackages("//my/build/package:rule"));
-    assertThat(summary.getParentPackage(Path.of("my/build/package"))).isEmpty();
+    Truth8.assertThat(summary.getParentPackage(Path.of("my/build/package"))).isEmpty();
   }
 
   @Test
@@ -122,7 +122,7 @@ public class QuerySummaryTest {
         QuerySummary.create(
             createProtoForPackages(
                 "//my/build/package:rule", "//my/build/package/subpackage:rule"));
-    assertThat(summary.getParentPackage(Path.of("my/build/package/subpackage")))
+    Truth8.assertThat(summary.getParentPackage(Path.of("my/build/package/subpackage")))
         .hasValue(Path.of("my/build/package"));
   }
 
@@ -131,7 +131,7 @@ public class QuerySummaryTest {
     QuerySummary summary =
         QuerySummary.create(
             createProtoForPackages("//my/build/package:rule", "//my/build/package/sub1/sub2:rule"));
-    assertThat(summary.getParentPackage(Path.of("my/build/package/sub1/sub2")))
+    Truth8.assertThat(summary.getParentPackage(Path.of("my/build/package/sub1/sub2")))
         .hasValue(Path.of("my/build/package"));
   }
 
@@ -148,5 +148,15 @@ public class QuerySummaryTest {
         .containsExactly(
             TestData.ROOT.resolve("buildincludes/includes.bzl"),
             TestData.ROOT.resolve("buildincludes/BUILD"));
+  }
+
+  @Test
+  public void getPackages_withEmptyPackage_containsEmptyPackage() throws IOException {
+    QuerySummary qs = QuerySummary.create(TestData.EMPTY_QUERY.getQueryOutputPath().toFile());
+    assertThat(qs.getRulesMap()).isEmpty();
+    assertThat(qs.getSourceFilesMap().keySet())
+        .containsExactly(Label.of(TestData.ROOT_PACKAGE + "/empty:BUILD"));
+    assertThat(qs.getPackages().size()).isEqualTo(1);
+    assertThat(qs.getPackages().asPathSet()).containsExactly(TestData.ROOT.resolve("empty"));
   }
 }

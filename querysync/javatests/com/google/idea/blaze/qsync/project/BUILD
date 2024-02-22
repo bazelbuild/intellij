@@ -1,6 +1,10 @@
+load("//:build-visibility.bzl", "DEFAULT_TEST_VISIBILITY")
+
+package(default_visibility = DEFAULT_TEST_VISIBILITY)
+
 java_test(
-    name = "BuildGraphTest",
-    srcs = ["BuildGraphTest.java"],
+    name = "BuildGraphDataTest",
+    srcs = ["BuildGraphDataTest.java"],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync",
         "//querysync/java/com/google/idea/blaze/qsync/project",

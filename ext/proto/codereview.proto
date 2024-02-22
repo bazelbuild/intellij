@@ -1,0 +1,172 @@
+/*
+ * Copyright 2024 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+
+package com.google.idea.blaze.ext;
+
+option java_package = "com.google.idea.blaze.ext";
+option java_multiple_files = true;
+option java_outer_classname = "CodeReviewProto";
+
+
+message CodeReview {
+  message Location {
+    optional string depo_path = 1;
+    optional int32 revision = 2;
+    optional uint64 snapshot = 3;
+    optional Range range = 4;
+  }
+
+  message Range {
+    int32 start_line = 1;
+    int32 start_column = 2;  // zero value indicates a linewide range
+    int32 end_line = 3;
+    int32 end_column = 4;
+  }
+}
+
+message ListFindingsRequest {
+  int64 cl_number = 1;
+}
+
+message ListFindingsResponse {
+  Finding finding = 2;
+
+  // Note: nested message to avoid name confclits with other services.
+  message Finding {
+    bytes id = 1;
+    uint64 timestamp_micros = 2;
+    CodeReview.Location location = 3;
+    bool is_actionable = 4;
+    string category = 5;
+    optional string subcategory = 6;
+    string message = 7;
+    optional string message_html_sanitzed = 8;
+    optional string url = 9;
+  }
+}
+
+message PublishCommentsRequest {
+  int64 cl_number = 1;
+}
+message PublishCommentsResponse {}
+message UpdateCommentRequest {
+  int64 cl_number = 1;
+  string comment_id = 2;
+  string message = 3;
+  bool resolved = 4;
+}
+message UpdateCommentResponse {}
+message DeleteCommentRequest {
+  int64 cl_number = 1;
+  string comment_id = 2;
+}
+message DeleteCommentResponse {}
+
+enum ReplyAction {
+  REPLY_ACTION_UNKNOWN = 0;
+  REPLY_ACTION_NEW = 1;
+  REPLY_ACTION_RESOLVE = 2;
+  REPLY_ACTION_REOPEN = 3;
+  REPLY_ACTION_STICKY_LGTM = 4;
+}
+
+message PostReplyRequest {
+  int64 cl_number = 1;
+  string comment_id = 2;
+  string message = 3;
+  ReplyAction action = 4;
+}
+
+message PostReplyResponse {
+  string reply_id = 1;
+}
+
+message UpdateReplyRequest {
+  int64 cl_number = 1;
+  string comment_id = 2;
+  string reply_id = 3;
+  string message = 4;
+  ReplyAction action = 5;
+}
+
+message UpdateReplyResponse {}
+
+message DeleteReplyRequest {
+  int64 cl_number = 1;
+  string comment_id = 2;
+  string reply_id = 3;
+}
+
+message DeleteReplyResponse {}
+
+service FindingsService {
+  // Runs lint checks and returns findings.
+  rpc ListFindings(ListFindingsRequest) returns (stream ListFindingsResponse) {}
+}
+
+message GetCommentsRequest {
+  int64 cl_number = 1;
+}
+
+message GetCommentsResponse {
+  repeated Comment comments = 1;
+
+  message Comment {
+    string id = 1;
+    int64 timestamp_seconds = 2;
+    bool published = 3;
+    CodeReview.Location location = 4;
+    optional string context_text = 5;
+    string author = 6;
+    string message = 7;
+    bool is_active = 8;
+    repeated Approval approvals = 9;
+    repeated Reply replies = 10;
+  }
+
+  message Approval {
+    string type = 1;
+    bool approve = 2;
+    string display_name = 3;
+  }
+
+  message Reply {
+    string id = 1;
+    string author = 2;
+    bool published = 3;
+    int64 timestamp_seconds = 4;
+    string message = 5;
+  }
+}
+
+service CritiqueService {
+  // Fetches Critique comments on the given CL and returns them.
+  rpc GetComments(GetCommentsRequest) returns (GetCommentsResponse) {}
+  // Publishes any pending comments.
+  rpc PublishComments(PublishCommentsRequest)
+      returns (PublishCommentsResponse) {}
+  // Updates the comment.
+  rpc UpdateComment(UpdateCommentRequest) returns (UpdateCommentResponse) {}
+  // Deletes the comment.
+  rpc DeleteComment(DeleteCommentRequest) returns (DeleteCommentResponse) {}
+  // Adds a reply to the given comment.
+  rpc PostReply(PostReplyRequest) returns (PostReplyResponse) {}
+  // Updates the given reply.
+  rpc UpdateReply(UpdateReplyRequest) returns (UpdateReplyResponse) {}
+  // Delete the reply.
+  rpc DeleteReply(DeleteReplyRequest) returns (DeleteReplyResponse) {}
+}

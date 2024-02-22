@@ -269,14 +269,20 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
       Label label,
       FastBuildParameters buildParameters,
       BuildResultHelper resultHelper) {
+    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+    BlazeInfo blazeInfo = getBlazeInfo(context, buildParameters);
+
+    BlazeVersionData blazeVersionData =
+        BlazeVersionData.build(
+            Blaze.getBuildSystemProvider(project).getBuildSystem(), workspaceRoot, blazeInfo);
+
     FastBuildDeployJarStrategy deployJarStrategy =
         FastBuildDeployJarStrategy.getInstance(Blaze.getBuildSystemName(project));
-    Label deployJarLabel = deployJarStrategy.createDeployJarLabel(label);
+    Label deployJarLabel = deployJarStrategy.createDeployJarLabel(label, blazeVersionData);
     context.output(
         new StatusOutput(
             "Building base deploy jar for fast builds: " + deployJarLabel.targetName()));
 
-    BlazeInfo blazeInfo = getBlazeInfo(context, buildParameters);
     FastBuildAspectStrategy aspectStrategy =
         FastBuildAspectStrategy.getInstance(Blaze.getBuildSystemName(project));
 
@@ -284,18 +290,13 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
 
     BlazeCommand.Builder command =
         BlazeCommand.builder(buildParameters.blazeBinary(), BlazeCommandName.BUILD)
-            .addTargets(deployJarStrategy.getBuildTargets(label))
-            .addBlazeFlags(deployJarStrategy.getBuildFlags())
+            .addTargets(deployJarStrategy.getBuildTargets(label, blazeVersionData))
+            .addBlazeFlags(deployJarStrategy.getBuildFlags(blazeVersionData))
             .addBlazeFlags(buildParameters.buildFlags())
             .addBlazeFlags(resultHelper.getBuildFlags());
 
-    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-
     aspectStrategy.addAspectAndOutputGroups(
-        command,
-        BlazeVersionData.build(
-            Blaze.getBuildSystemProvider(project).getBuildSystem(), workspaceRoot, blazeInfo),
-        /* additionalOutputGroups...= */ "default");
+        command, blazeVersionData, /* additionalOutputGroups...= */ "default");
 
     int exitCode =
         ExternalTask.builder(workspaceRoot)
@@ -318,7 +319,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
       ImmutableList<File> deployJarArtifacts =
           BlazeArtifact.getLocalFiles(
               resultHelper.getBuildArtifactsForTarget(
-                  deployJarStrategy.deployJarOwnerLabel(label), jarPredicate));
+                  deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData), jarPredicate));
       checkState(deployJarArtifacts.size() == 1);
       File deployJar = deployJarArtifacts.get(0);
 

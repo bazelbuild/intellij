@@ -16,10 +16,10 @@
 package com.google.idea.blaze.qsync.java;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth8.assertThat;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.createSrcJar;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.truth.Truth8;
 import com.google.idea.blaze.qsync.QuerySyncTestUtils.PathPackage;
 import com.google.idea.blaze.qsync.java.GeneratedSourceProjectUpdater.GeneratedSourceJar;
 import com.google.idea.blaze.qsync.project.ProjectPath;
@@ -172,7 +172,7 @@ public class GeneratedSourceProjectUpdaterTest {
     assertThat(contentEntry.getRoot().getPath()).isEqualTo(srcJarPath.relativePath().toString());
     assertThat(contentEntry.getRoot().getInnerPath()).isEmpty();
 
-    assertThat(
+    Truth8.assertThat(
             contentEntry.getSourcesList().stream()
                 .map(SourceFolder::getProjectPath)
                 .map(ProjectPath::create)

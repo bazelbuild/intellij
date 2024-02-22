@@ -1,0 +1,285 @@
+/* Copyright 2023 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+
+package com.google.idea.blaze.ext;
+
+option java_multiple_files = true;
+option java_outer_classname = 'PiperServiceProto';
+option java_package = "com.google.idea.blaze.ext";
+
+
+service PiperService {
+  // Get workspaces
+  rpc GetWorkspaces(GetWorkspacesRequest)
+      returns (stream.com.google.idea.blaze.ext.GetWorkspacesResponse) {}
+
+  // Creates or updates a Piper workspace.
+  rpc UpdateWorkspace(UpdateWorkspaceRequest)
+      returns (UpdateWorkspaceResponse) {}
+
+  // Retrieves a list of changes
+  rpc GetChanges(GetChangesRequest)
+      returns (stream.com.google.idea.blaze.ext.GetChangesResponse) {}
+
+  // Resolves conflicts in a Piper workspace after sync or integrate.
+  rpc ResolveConflicts(ResolveConflictsRequest)
+      returns (stream.com.google.idea.blaze.ext.ResolveConflictsResponse) {}
+
+  // Read the content of a depot or workspace file.
+  rpc ReadFiles(ReadFilesRequest)
+      returns (stream.com.google.idea.blaze.ext.ReadFilesResponse) {}
+
+  // Update the state and type of files that are open in a Piper workspace.
+  rpc UpdateFileStates(UpdateFileStatesRequest)
+      returns (stream.com.google.idea.blaze.ext.UpdateFileStatesResponse) {}
+}
+
+message GetWorkspacesRequest {
+  optional RequestBase request_base = 1;
+  repeated WorkspaceId workspace_ids = 2;
+  optional bool return_default_workspace_if_missing = 3;
+}
+
+message GetWorkspacesResponse {
+  PiperStatus piper_status = 1;
+  Workspace workspace = 2;
+}
+
+message PiperStatus {
+  int32 error_code = 1;
+  string error_message = 2;
+  int32 canonical_code = 3;
+}
+
+message RequestBase {
+  optional WorkspaceId workspace_id = 1;
+  optional string current_directory = 2;
+}
+
+message WorkspaceId {
+  optional string workspace_name = 1;
+  optional int32 revision_number = 2;
+}
+
+message UpdateWorkspaceRequest {
+  optional RequestBase request_base = 1;
+  Workspace workspace = 2;
+  optional string new_citc_alias = 3;
+}
+
+message UpdateWorkspaceResponse {
+  PiperStatus piper_status = 1;
+  WorkspaceId workspace_id = 2;
+}
+
+message Workspace {
+  optional bool all_files_writable = 1;
+  optional WorkspaceId workspace_id = 2;
+  optional OverlayBranchId overlay_branch_id = 3;
+  repeated ViewMapping view_mappings = 4;
+  repeated string root_directories = 5;
+  optional ChangeId sync_change_id = 6;
+  optional bool multichange = 7;
+  optional string citc_alias = 8;
+}
+
+message OverlayBranchId {
+  optional string branch_prefix = 1;
+  optional string branch_suffix = 2;
+}
+
+message ViewMapping {
+  optional bool exclude = 1;
+  string depot_path = 2;
+  string workspace_path = 3;
+}
+
+message ChangeId {
+  optional int64 change_number = 1;
+  optional WorkspaceId workspace_id = 2;
+  optional int32 revision_number = 3;
+}
+
+message GetChangesRequest {
+  optional RequestBase request_base = 1;
+  repeated ChangeId change_ids = 2;
+  optional bool include_resolved_info = 3;
+  optional bool follow_submitted_changes = 4;
+}
+
+message GetChangesResponse {
+  PiperStatus piper_status = 1;
+  Change change = 2;
+}
+
+message Change {
+  enum ChangeStatus {
+    // This is the client's default change (no change number).
+    STATUS_DEFAULT = 0;
+    // A numbered pending change.
+    STATUS_PENDING = 1;
+    // A submitted change.
+    STATUS_SUBMITTED = 2;
+  }
+  ChangeId change_id = 1;
+  ChangeDescription description = 2;
+  ChangeStatus change_status = 3;
+  string user_name = 4;
+  int64 create_time_micros = 5;
+  repeated SourceFile source_files = 6;
+}
+
+message ChangeDescription {
+  string text = 1;
+  message Tag {
+    optional string key = 1;
+    optional string value = 2;
+  }
+  repeated Tag tags = 2;
+}
+
+message SourceFile {
+  enum FileOperation {
+    OPERATION_NONE = 0;
+    OPERATION_INTEGRATE_BRANCH = 1;
+    OPERATION_ADD = 2;
+    OPERATION_INTEGRATE_BRANCH_EDIT = 3;
+    OPERATION_INTEGRATE_ADD = 4;
+    OPERATION_DELETE = 5;
+    OPERATION_INTEGRATE_DELETE = 6;
+    OPERATION_EDIT = 7;
+    OPERATION_INTEGRATE_EDIT = 8;
+    OPERATION_INTEGRATE = 9;
+    OPERATION_UNRESOLVED_INTEGRATE_DELETE = 10;
+  }
+  optional int64 size = 1;
+  optional SourceFileId source_file_id = 2;
+  optional FileOperation operation = 3;
+  optional ChangeId change_id = 4;
+  optional int32 baseline_revision_number = 5;
+}
+
+message SourceFileId {
+  optional string depot_path = 1;
+  optional string workspace_path = 2;
+  optional string filesystem_path = 3;
+  int32 revision_number = 4;
+}
+
+message ResolveConflictsRequest {
+  enum ResolveMode {
+    DO_NOT_RESOLVE = 0;
+    ACCEPT_YOURS = 1;
+    ACCEPT_THEIRS = 2;
+    MERGE_DEFAULT = 3;
+    MERGE_SAFE = 4;
+    MERGE_FORCED = 5;
+    ACCEPT_WORKSPACE_FILE = 6;
+    ACCEPT_EDITED_WORKSPACE_FILE = 7;
+  }
+  RequestBase request_base = 1;
+  ResolveMode resolve_mode = 2;
+  repeated ConflictPath conflict_paths = 3;
+}
+
+message ConflictPath {
+  string path = 1;
+  repeated string conflict_ids = 2;
+}
+
+message ResolveConflictsResponse {
+  PiperStatus piper_status = 1;
+  optional Conflict resolve_skipped_conflict = 2;
+}
+
+message Conflict {
+  SourceFile yours_file = 1;
+  optional SourceFile theirs_file = 2;
+  optional SourceFile base_file = 3;
+}
+
+message ReadFilesRequest {
+  enum ReadMode {
+    NONE = 0;
+    DEPOT = 1;
+    WORKSPACE = 2;
+  }
+  optional RequestBase request_base = 1;
+  optional ReadMode read_mode = 2;
+  repeated SourceFileId source_file_ids = 3;
+  repeated PathExpression path_expressions = 4;
+}
+
+message ReadFilesResponse {
+  PiperStatus piper_status = 1;
+  bytes content = 2;
+}
+
+message PathExpression {
+  string base_path = 1;
+  optional bool escaped = 2;
+  repeated RevisionPoint revision_points = 3;
+}
+
+message RevisionPoint {
+  enum Operation {
+    UNKNOWN = 0;
+    LESS_OR_EQUAL = 1;
+    LESS = 2;
+    EQUAL = 3;
+    GREATER_OR_EQUAL = 4;
+    GREATER = 5;
+  }
+  Operation operation = 1;
+  ChangeId change_id = 2;
+}
+
+message UpdateFileStatesRequest {
+  optional RequestBase request_base = 1;
+  repeated FileState file_states = 2;
+  optional string ignore_path_regexp = 3;
+  optional ChangeId change_id = 4;
+  optional bool dry_run = 5;
+  optional bool reconcile_unmodified_files = 6;
+}
+
+message FileState {
+  enum Mode {
+    NONE = 0;
+    SET_STATE = 1;
+    IMPLICIT_STATE_FROM_WORKSPACE = 2;
+  }
+  optional PathExpression path_expression = 1;
+  optional Mode mode = 2;
+  optional SourceFile.FileOperation file_operation = 3;
+}
+
+message UpdateFileStatesResponse {
+  PiperStatus piper_status = 1;
+  SourceFile source_file = 3;
+  optional SourceFile.FileOperation operation_prior_to_revert = 4;
+  optional RevertOperation updated_revert_operation = 5;
+}
+
+// The revert operation indicates whether the file was reverted and what
+// happened to the file in the file system.
+enum RevertOperation {
+  REVERT_NONE = 0;
+  REVERT_STANDARD = 1;
+  REVERT_ABANDON = 2;
+  REVERT_CLEAR = 3;
+  REVERT_DELETE = 4;
+}

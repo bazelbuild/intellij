@@ -1,3 +1,19 @@
+v2024.02.13
+===========
+* fix: deadlock when more than one project is open and bazel.sync.detec… #5978
+* Changes to BlazeTargetFilter regex to match more target names #6021
+* Fix _virtual_includes handling for absolute strip_include_prefix paths #5969
+
+
+v2024.01.30
+===========
+* feat: Allow environment variables in run configurations #5885
+* Support JetBrains IDEs 2024.1 #5960
+
+v2024.01.16
+===========
+* Internal cleanup
+
 v2024.01.02
 ===========
 * fix: Fix bazel sync errors when using non-default convenience symlinks #5910

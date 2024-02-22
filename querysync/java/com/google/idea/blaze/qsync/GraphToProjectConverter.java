@@ -616,7 +616,8 @@ public class GraphToProjectConverter {
    * /res/ somewhere in the path. To be replaced by a more robust implementation.
    */
   @VisibleForTesting
-  public static ImmutableSet<Path> computeAndroidResourceDirectories(List<Path> sourceFiles) {
+  public static ImmutableSet<Path> computeAndroidResourceDirectories(
+      ImmutableSet<Path> sourceFiles) {
     Set<Path> directories = new HashSet<>();
     for (Path sourceFile : sourceFiles) {
 

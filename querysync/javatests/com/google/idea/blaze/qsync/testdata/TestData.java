@@ -46,7 +46,8 @@ public enum TestData {
   CC_MULTISRC_QUERY("cc_multisrc"),
   PROTO_ONLY_QUERY("protoonly"),
   NESTED_PROTO_QUERY("nestedproto"),
-  TAGS_QUERY("tags");
+  TAGS_QUERY("tags"),
+  EMPTY_QUERY("empty");
 
   public final ImmutableList<Path> srcPaths;
 
@@ -59,6 +60,7 @@ public enum TestData {
 
   public static final Path ROOT =
       Path.of(
+          // REPO-ONLY: "tools/vendor/google3/aswb/" +
           "querysync/javatests/com/google/idea/blaze/qsync/testdata");
 
   public static final String ROOT_PACKAGE = "//" + ROOT;

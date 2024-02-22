@@ -33,7 +33,6 @@ import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput;
 import com.google.idea.blaze.base.scope.scopes.SharedStringPoolScope;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
@@ -52,6 +51,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -60,13 +60,14 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
 
   @Override
   public BlazeBuildOutputs run(
-      Project project,
-      BlazeCommand.Builder blazeCommandBuilder,
-      BuildResultHelper buildResultHelper,
-      BlazeContext context) {
+          Project project,
+          BlazeCommand.Builder blazeCommandBuilder,
+          BuildResultHelper buildResultHelper,
+          BlazeContext context,
+          Map<String, String> envVars) {
 
     BuildResult buildResult =
-        issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), context);
+        issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), envVars, context);
     BuildDepsStatsScope.fromContext(context)
         .ifPresent(stats -> stats.setBazelExitCode(buildResult.exitCode));
     if (buildResult.status == Status.FATAL_ERROR) {
@@ -90,7 +91,8 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, "BEP outputs have been processed."));
       return blazeBuildOutputs;
     } catch (GetArtifactsException e) {
-      IssueOutput.error("Failed to get build outputs: " + e.getMessage()).submit(context);
+      context.output(PrintOutput.log("Failed to get build outputs: " + e.getMessage()));
+      context.setHasError();
       return BlazeBuildOutputs.noOutputs(buildResult);
     }
   }
@@ -100,9 +102,14 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
-      BlazeContext context) {
+      BlazeContext context,
+      Map<String, String> envVars) {
+    // For tests, we have to pass the environment variables as `--test_env`, otherwise they don't get forwarded
+    for (Map.Entry<String, String> env: envVars.entrySet()) {
+      blazeCommandBuilder.addBlazeFlags(BlazeFlags.TEST_ENV, String.format("%s=%s", env.getKey(), env.getValue()));
+    }
     BuildResult buildResult =
-        issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), context);
+        issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), envVars, context);
     if (buildResult.status == Status.FATAL_ERROR) {
       return BlazeTestResults.NO_RESULTS;
     }
@@ -110,7 +117,8 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
     try {
       return buildResultHelper.getTestResults(Optional.empty());
     } catch (GetArtifactsException e) {
-      IssueOutput.error("Failed to get build outputs: " + e.getMessage()).submit(context);
+      context.output(PrintOutput.log("Failed to get build outputs: " + e.getMessage()));
+      context.setHasError();
       return BlazeTestResults.NO_RESULTS;
     }
   }
@@ -194,11 +202,12 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
   }
 
   private BuildResult issueBuild(
-      BlazeCommand.Builder blazeCommandBuilder, WorkspaceRoot workspaceRoot, BlazeContext context) {
+      BlazeCommand.Builder blazeCommandBuilder, WorkspaceRoot workspaceRoot, Map<String, String> envVars, BlazeContext context) {
     blazeCommandBuilder.addBlazeFlags(getExtraBuildFlags(blazeCommandBuilder));
     int retVal =
         ExternalTask.builder(workspaceRoot)
             .addBlazeCommand(blazeCommandBuilder.build())
+            .environmentVars(envVars)
             .context(context)
             .stderr(
                 LineProcessingOutputStream.of(

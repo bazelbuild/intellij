@@ -1,7 +1,10 @@
+import run_configurations/fragment.bazelproject
+
 directories:
   # Add the directories you want added as source here
   hi
   greeting_lib
+  run_configurations
 
 # Automatically includes all relevant targets under the 'directories' above
 derive_targets_from_directories: true

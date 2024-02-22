@@ -1,4 +1,10 @@
 load(
+    "//:build-visibility.bzl",
+    "DEFAULT_TEST_VISIBILITY",
+    "FAST_BUILD_JAVAC_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
+load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
     "intellij_plugin_library",
@@ -10,13 +16,6 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
-load(
-    "//:build-visibility.bzl",
-    "FAST_BUILD_JAVAC_VISIBILITY",
-    "PLUGIN_PACKAGES_VISIBILITY",
-)
-
-licenses(["notice"])
 
 _FAST_BUILD_JAVAC_SRCS = ["src/com/google/idea/blaze/java/fastbuild/FastBuildJavac.java"]
 
@@ -53,9 +52,11 @@ java_library(
         "//intellij_platform_sdk:junit",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//querysync",
         "//sdkcompat",
         "//shared",
         "//third_party/auto_value",
+        "@error_prone_annotations//jar",
     ],
 )
 
@@ -136,6 +137,7 @@ intellij_unit_test_suite(
         "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
     ],
     test_package_root = "com.google.idea.blaze.java",
+    visibility = DEFAULT_TEST_VISIBILITY,
     deps = [
         ":java",
         "//base",
@@ -171,14 +173,24 @@ java_binary(
     name = "guava_lib",
     testonly = True,
     main_class = "None",
-    runtime_deps = ["//intellij_platform_sdk:guava"],
+    runtime_deps = [
+        # BEGIN-EXTERNAL
+        "//intellij_platform_sdk:guava",
+        # END-EXTERNAL
+        # REPO-ONLY:        "@maven//:com.google.guava.guava"
+    ],
 )
 
 java_binary(
     name = "truth_lib",
     testonly = 1,
     main_class = "None",
-    runtime_deps = ["//intellij_platform_sdk:truth"],
+    runtime_deps = [
+        # BEGIN-EXTERNAL
+        "//intellij_platform_sdk:truth",
+        # END-EXTERNAL
+        # REPO-ONLY:        "//tools/adt/idea/.idea/libraries:truth"
+    ],
 )
 
 intellij_integration_test_suite(
@@ -190,6 +202,7 @@ intellij_integration_test_suite(
     ),
     required_plugins = "com.google.idea.blaze.java",
     test_package_root = "com.google.idea.blaze.java",
+    visibility = DEFAULT_TEST_VISIBILITY,
     runtime_deps = [
         ":java_integration_test_plugin",
     ],

@@ -23,6 +23,7 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -49,8 +50,10 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
@@ -83,6 +86,9 @@ public class BazelDependencyBuilder implements DependencyBuilder {
   public static final BoolExperiment fetchArtifactInfoInParallel =
       new BoolExperiment("qsync.parallel.artifact.info.fetch", true);
 
+  public static final BoolExperiment buildGeneratedSrcJars =
+      new BoolExperiment("qsync.build.generated.src.jars", false);
+
   /**
    * Logs message if the number of artifact info files fetched is greater than
    * FILE_NUMBER_LOG_THRESHOLD
@@ -99,6 +105,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
   protected final BuildSystem buildSystem;
   protected final ProjectDefinition projectDefinition;
   protected final WorkspaceRoot workspaceRoot;
+  protected final Optional<BlazeVcsHandler> vcsHandler;
   protected final ImmutableSet<String> handledRuleKinds;
 
   public BazelDependencyBuilder(
@@ -106,11 +113,13 @@ public class BazelDependencyBuilder implements DependencyBuilder {
       BuildSystem buildSystem,
       ProjectDefinition projectDefinition,
       WorkspaceRoot workspaceRoot,
+      Optional<BlazeVcsHandler> vcsHandler,
       ImmutableSet<String> handledRuleKinds) {
     this.project = project;
     this.buildSystem = buildSystem;
     this.projectDefinition = projectDefinition;
     this.workspaceRoot = workspaceRoot;
+    this.vcsHandler = vcsHandler;
     this.handledRuleKinds = handledRuleKinds;
   }
 
@@ -178,6 +187,10 @@ public class BazelDependencyBuilder implements DependencyBuilder {
               .addBlazeFlags(
                   String.format("--aspects_parameters=always_build_rules=%s", alwaysBuildParam))
               .addBlazeFlags("--aspects_parameters=generate_aidl_classes=True")
+              .addBlazeFlags(
+                  String.format(
+                      "--aspects_parameters=use_generated_srcjars=%s",
+                      buildGeneratedSrcJars.getValue() ? "True" : "False"))
               .addBlazeFlags("--noexperimental_run_validations")
               .addBlazeFlags("--keep_going");
       outputGroups.stream()
@@ -186,7 +199,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
       buildDepsStatsBuilder.ifPresent(
           stats -> stats.setBuildFlags(builder.build().toArgumentList()));
       BlazeBuildOutputs outputs =
-          invoker.getCommandRunner().run(project, builder, buildResultHelper, context);
+          invoker.getCommandRunner().run(project, builder, buildResultHelper, context, ImmutableMap.of());
       buildDepsStatsBuilder.ifPresent(
           stats -> {
             stats.setBuildIds(outputs.getBuildIds());
@@ -278,6 +291,10 @@ public class BazelDependencyBuilder implements DependencyBuilder {
       context.output(
           PrintOutput.log(String.format("Fetched artifact info files in %d ms", elapsed)));
     }
+    Optional<VcsState> vcsState = Optional.empty();
+    if (blazeBuildOutputs.sourceUri.isPresent() && vcsHandler.isPresent()) {
+      vcsState = vcsHandler.get().vcsStateForSourceUri(blazeBuildOutputs.sourceUri.get());
+    }
 
     return OutputInfo.create(
         allArtifacts,
@@ -287,7 +304,8 @@ public class BazelDependencyBuilder implements DependencyBuilder {
             .map(Object::toString)
             .map(Label::of)
             .collect(toImmutableSet()),
-        blazeBuildOutputs.buildResult.exitCode);
+        blazeBuildOutputs.buildResult.exitCode,
+        vcsState);
   }
 
   @FunctionalInterface

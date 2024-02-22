@@ -33,16 +33,23 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import icons.BlazeIcons;
+import javax.annotation.Nullable;
 import javax.swing.Icon;
 
 /** Syncs the project with BUILD files. */
 public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
 
+  public static final String ID = "Blaze.IncrementalSyncProject";
+
   @Override
   protected void runSync(Project project, AnActionEvent e) {
+    doIncrementalSync(getClass(), project, e);
+  }
+
+  public static void doIncrementalSync(Class<?> klass, Project project, @Nullable AnActionEvent e) {
     if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
       QuerySyncManager qsm = QuerySyncManager.getInstance(project);
-      QuerySyncActionStatsScope scope = QuerySyncActionStatsScope.create(getClass(), e);
+      QuerySyncActionStatsScope scope = QuerySyncActionStatsScope.create(klass, e);
       if (!qsm.isProjectLoaded()) {
         qsm.onStartup(scope);
       } else {

@@ -1,5 +1,6 @@
 load(
     "//:build-visibility.bzl",
+    "DEFAULT_TEST_VISIBILITY",
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 
@@ -36,4 +37,5 @@ test_suite(
         "//shared/javatests/com/google/idea/blaze/common:LabelTest",
         "//shared/javatests/com/google/idea/blaze/common/vcs:VcsStateTest",
     ],
+    visibility = DEFAULT_TEST_VISIBILITY,
 )

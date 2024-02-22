@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.ext;
 import com.google.idea.blaze.ext.IntelliJExtService;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import java.nio.file.Files;
@@ -53,8 +54,17 @@ public class IntelliJExtManager {
 
   private static final BoolExperiment LINTER = new BoolExperiment("use.intellij.ext.linter", false);
 
+  private static final BoolExperiment FINDINGS_SERVICE =
+      new BoolExperiment("use.intellij.ext.findingsservice", false);
+
+  private static final BoolExperiment CRITIQUE_SERVICE =
+      new BoolExperiment("use.intellij.ext.critiqueservice", false);
+
   private static final BoolExperiment CODESEARCH =
       new BoolExperiment("use.intellij.ext.codesearch", false);
+
+  private static final BoolExperiment FILEAPI =
+      new BoolExperiment("use.intellij.ext.fileapi", false);
 
   private static final BoolExperiment BUILD_SERVICE =
       new BoolExperiment("use.intellij.ext.buildservice", false);
@@ -76,6 +86,8 @@ public class IntelliJExtManager {
   private static final BoolExperiment CHATBOT =
       new BoolExperiment("use.intellij.ext.chatbot", false);
 
+  private static final BoolExperiment PIPER = new BoolExperiment("use.intellij.ext.piper", false);
+
   public static IntelliJExtManager getInstance() {
     return ApplicationManager.getApplication().getService(IntelliJExtManager.class);
   }
@@ -96,7 +108,7 @@ public class IntelliJExtManager {
 
   private IntelliJExtManager(String path) {
     this.binaryPath = path;
-    service = new IntelliJExtService(Paths.get(path));
+    service = new IntelliJExtService(Paths.get(path), getLogDir());
   }
 
   /** Set up {@link IntelliJExtService} for test cases to avoid non-existence binary error. */
@@ -110,9 +122,24 @@ public class IntelliJExtManager {
       if (path == null) {
         throw new IllegalStateException("No intellij-ext binary found");
       }
-      service = new IntelliJExtService(path);
+      service = new IntelliJExtService(path, getLogDir());
     }
     return service;
+  }
+
+  @Nullable
+  private Path getLogDir() {
+    Path logDir = null;
+    try {
+      logDir = PathManager.getLogDir();
+    } catch (RuntimeException re) {
+      // logDir remains null
+    }
+    if (logDir == null || !Files.exists(logDir)) {
+      logger.warn(String.format("log directory %s does not exist; using default log dir", logDir));
+      return null;
+    }
+    return logDir;
   }
 
   @Nullable
@@ -140,8 +167,20 @@ public class IntelliJExtManager {
     return isEnabled() && LINTER.getValue();
   }
 
+  public boolean isFindingsServiceEnabled() {
+    return isEnabled() && FINDINGS_SERVICE.getValue();
+  }
+
+  public boolean isCritiqueServiceEnabled() {
+    return isEnabled() && CRITIQUE_SERVICE.getValue();
+  }
+
   public boolean isCodeSearchEnabled() {
     return isEnabled() && CODESEARCH.getValue();
+  }
+
+  public boolean isFileApiEnabled() {
+    return isEnabled() && FILEAPI.getValue();
   }
 
   public boolean isBuildServiceEnabled() {
@@ -169,5 +208,9 @@ public class IntelliJExtManager {
 
   public boolean isBuildCleanerEnabled() {
     return isEnabled() && BUILD_CLEANER.getValue();
+  }
+
+  public boolean isPiperEnabled() {
+    return isEnabled() && PIPER.getValue();
   }
 }

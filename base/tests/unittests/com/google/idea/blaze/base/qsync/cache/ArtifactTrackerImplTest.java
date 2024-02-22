@@ -36,6 +36,7 @@ import com.google.idea.blaze.base.qsync.OutputInfo;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaTargetArtifacts;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -67,7 +68,8 @@ public class ArtifactTrackerImplTest {
             temporaryFolder.getRoot().toPath().resolve("ide_project"),
             testArtifactFetcher,
             Resolver.EMPTY_FOR_TESTING,
-            ProjectDefinition.EMPTY);
+            ProjectDefinition.EMPTY,
+            new ProjectProtoTransform.Registry());
 
     artifactTracker.initialize();
 
@@ -113,7 +115,8 @@ public class ArtifactTrackerImplTest {
             temporaryFolder.getRoot().toPath().resolve("ide_project"),
             testArtifactFetcher,
             Resolver.EMPTY_FOR_TESTING,
-            ProjectDefinition.EMPTY);
+            ProjectDefinition.EMPTY,
+            new ProjectProtoTransform.Registry());
     artifactTracker.initialize();
 
     final ArtifactTrackerUpdateResult unused =
@@ -168,7 +171,8 @@ public class ArtifactTrackerImplTest {
             temporaryFolder.getRoot().toPath().resolve("ide_project"),
             testArtifactFetcher,
             Resolver.EMPTY_FOR_TESTING,
-            ProjectDefinition.EMPTY);
+            ProjectDefinition.EMPTY,
+            new ProjectProtoTransform.Registry());
     artifactTracker.initialize();
 
     assertThat(
@@ -221,7 +225,8 @@ public class ArtifactTrackerImplTest {
             temporaryFolder.getRoot().toPath().resolve("ide_project"),
             testArtifactFetcher,
             Resolver.EMPTY_FOR_TESTING,
-            ProjectDefinition.EMPTY);
+            ProjectDefinition.EMPTY,
+            new ProjectProtoTransform.Registry());
     artifactTracker.initialize();
 
     final ArtifactTrackerUpdateResult unused =
@@ -276,7 +281,8 @@ public class ArtifactTrackerImplTest {
             temporaryFolder.getRoot().toPath().resolve("ide_project"),
             testArtifactFetcher,
             Resolver.EMPTY_FOR_TESTING,
-            ProjectDefinition.EMPTY);
+            ProjectDefinition.EMPTY,
+            new ProjectProtoTransform.Registry());
     artifactTracker.initialize();
 
     final ArtifactTrackerUpdateResult unused =
@@ -317,7 +323,8 @@ public class ArtifactTrackerImplTest {
             temporaryFolder.getRoot().toPath().resolve("ide_project"),
             testArtifactFetcher,
             Resolver.EMPTY_FOR_TESTING,
-            ProjectDefinition.EMPTY);
+            ProjectDefinition.EMPTY,
+            new ProjectProtoTransform.Registry());
     artifactTracker.initialize();
 
     assertThat(
@@ -361,7 +368,8 @@ public class ArtifactTrackerImplTest {
             root.resolve("ide_project"),
             testArtifactFetcher,
             Resolver.EMPTY_FOR_TESTING,
-            ProjectDefinition.EMPTY);
+            ProjectDefinition.EMPTY,
+            new ProjectProtoTransform.Registry());
     artifactTracker.initialize();
 
     ImmutableSet<Path> update =
@@ -385,7 +393,8 @@ public class ArtifactTrackerImplTest {
             root.resolve("ide_project"),
             testArtifactFetcher,
             Resolver.EMPTY_FOR_TESTING,
-            ProjectDefinition.EMPTY);
+            ProjectDefinition.EMPTY,
+            new ProjectProtoTransform.Registry());
     artifactTracker.initialize();
 
     ImmutableSet<Path> unused =

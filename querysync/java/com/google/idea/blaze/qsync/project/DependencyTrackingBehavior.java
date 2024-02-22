@@ -21,7 +21,13 @@ package com.google.idea.blaze.qsync.project;
  */
 public enum DependencyTrackingBehavior {
   /** We track all dependencies outside of the project for this target. */
-  EXTERNAL_DEPENDENCIES,
+  EXTERNAL_DEPENDENCIES(true),
   /** We only track the target itself for this target. */
-  SELF;
+  SELF(false);
+
+  DependencyTrackingBehavior(boolean shouldIncludeExternalDependencies) {
+    this.shouldIncludeExternalDependencies = shouldIncludeExternalDependencies;
+  }
+
+  public final boolean shouldIncludeExternalDependencies;
 }

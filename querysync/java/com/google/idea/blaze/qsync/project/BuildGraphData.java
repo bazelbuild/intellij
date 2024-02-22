@@ -35,7 +35,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
+import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.RuleKinds;
 import com.google.idea.blaze.qsync.project.ProjectTarget.SourceType;
 import com.google.idea.blaze.qsync.query.PackageSet;
@@ -45,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -77,6 +80,7 @@ public abstract class BuildGraphData {
 
   public abstract TargetTree allTargets();
 
+  /** Mapping of in-project targets to {@link ProjectTarget}s */
   public abstract ImmutableMap<Label, ProjectTarget> targetMap();
 
   /**
@@ -159,6 +163,12 @@ public abstract class BuildGraphData {
         .collect(toImmutableSet());
   }
 
+  public ImmutableSet<ProjectTarget> targetsForKind(String kind) {
+    return targetMap().values().stream()
+        .filter(t -> t.kind().equals(kind))
+        .collect(toImmutableSet());
+  }
+
   @Override
   public final String toString() {
     // The default autovalue toString() implementation can result in a very large string which
@@ -237,15 +247,24 @@ public abstract class BuildGraphData {
 
   private ImmutableSet<Label> calculateTransitiveExternalDependencies(Label target) {
     ImmutableSet.Builder<Label> builder = ImmutableSet.builder();
-    // There are no cycles in blaze, so we can recursively call down
-    if (!targetMap().containsKey(target)) {
-      builder.add(target);
-    } else {
-      if (projectDeps().contains(target)) {
-        builder.add(target);
-      }
-      for (Label dep : targetMap().get(target).deps()) {
-        builder.addAll(getTransitiveExternalDependencies(dep));
+
+    // Targets with cyclic dependencies will not build, but the query does not check for cycles
+    Set<Label> visited = Sets.newHashSet();
+    Deque<Label> toVisit = Queues.newArrayDeque();
+    toVisit.add(target);
+
+    while (!toVisit.isEmpty()) {
+      Label nextLabel = toVisit.poll();
+      if (visited.add(nextLabel)) {
+        // targetMap only contains in-project target labels.
+        if (!targetMap().containsKey(nextLabel)) {
+          builder.add(nextLabel);
+        } else {
+          if (projectDeps().contains(nextLabel)) {
+            builder.add(nextLabel);
+          }
+          toVisit.addAll(targetMap().get(nextLabel).deps());
+        }
       }
     }
     return Sets.intersection(builder.build(), projectDeps()).immutableCopy();
@@ -343,10 +362,8 @@ public abstract class BuildGraphData {
     return paths;
   }
 
-  public List<Path> getAllSourceFiles() {
-    List<Path> files = new ArrayList<>();
-    files.addAll(fileToTarget().keySet());
-    return files;
+  public ImmutableSet<Path> getAllSourceFiles() {
+    return fileToTarget().keySet();
   }
 
   /**
@@ -376,5 +393,105 @@ public abstract class BuildGraphData {
     return targetMap().get(target).languages().stream()
         .map(l -> l.dependencyTrackingBehavior)
         .collect(toImmutableSet());
+  }
+
+  /**
+   * Returns the list of project targets related to the given workspace file.
+   *
+   * @param context Context
+   * @param workspaceRelativePath Workspace relative file path to find targets for. This may be a
+   *     source file, directory or BUILD file.
+   * @return Corresponding project targets. For a source file, this is the targets that build that
+   *     file. For a BUILD file, it's the set or targets defined in that file. For a directory, it's
+   *     the set of all targets defined in all build packages within the directory (recursively).
+   */
+  public TargetsToBuild getProjectTargets(Context<?> context, Path workspaceRelativePath) {
+    if (workspaceRelativePath.endsWith("BUILD")) {
+      Path packagePath = workspaceRelativePath.getParent();
+      return TargetsToBuild.targetGroup(allTargets().get(packagePath));
+    } else {
+      TargetTree targets = allTargets().getSubpackages(workspaceRelativePath);
+      if (!targets.isEmpty()) {
+        // this will only be non-empty for directories
+        return TargetsToBuild.targetGroup(targets.toLabelSet());
+      }
+    }
+    // Now a build file or a directory containing packages.
+    if (getAllSourceFiles().contains(workspaceRelativePath)) {
+      ImmutableSet<Label> targetOwner = getTargetOwners(workspaceRelativePath);
+      if (!targetOwner.isEmpty()) {
+        return TargetsToBuild.forSourceFile(targetOwner, workspaceRelativePath);
+      }
+    } else {
+      context.output(
+          PrintOutput.error("Can't find any supported targets for %s", workspaceRelativePath));
+      context.output(
+          PrintOutput.error(
+              "If this is a newly added supported rule, please re-sync your project."));
+      context.setHasWarnings();
+    }
+    return TargetsToBuild.NONE;
+  }
+
+  /**
+   * Returns the set of targets that would need to be built in order to enable analysis for a
+   * project target.
+   *
+   * @param projectTarget A project target.
+   * @return The set of targets that need to be built. For a {@link
+   *     DependencyTrackingBehavior#EXTERNAL_DEPENDENCIES} target this will be the set of external
+   *     dependenceis; for a {@link DependencyTrackingBehavior#SELF} target this will be the target
+   *     itself.
+   */
+  public ImmutableSet<Label> getExternalDepsToBuildFor(Label projectTarget) {
+    ImmutableSet<DependencyTrackingBehavior> depTracking =
+        getDependencyTrackingBehaviors(projectTarget);
+
+    ImmutableSet.Builder<Label> deps = ImmutableSet.builder();
+    for (DependencyTrackingBehavior behavior : depTracking) {
+      switch (behavior) {
+        case EXTERNAL_DEPENDENCIES:
+          deps.addAll(getTransitiveExternalDependencies(projectTarget));
+          break;
+        case SELF:
+          // For C/C++, we don't need to build external deps, but we do need to extract
+          // compilation information for the target itself.
+          deps.add(projectTarget);
+          break;
+      }
+    }
+    return deps.build();
+  }
+
+  /**
+   * Returns the set of {@link ProjectTarget#languages() target languages} for a set of project
+   * targets.
+   */
+  public ImmutableSet<QuerySyncLanguage> getTargetLanguages(ImmutableSet<Label> targets) {
+    return targets.stream()
+        .map(targetMap()::get)
+        .map(ProjectTarget::languages)
+        .reduce((a, b) -> Sets.union(a, b).immutableCopy())
+        .orElse(ImmutableSet.of());
+  }
+
+  /**
+   * Calculates the {@link RequestedTargets} for a project target.
+   *
+   * @return Requested targets. The {@link RequestedTargets#buildTargets} will match the parameter
+   *     given; the {@link RequestedTargets#expectedDependencyTargets} will be determined by the
+   *     {@link #getDependencyTrackingBehaviors(Label)} of the targets given.
+   */
+  public Optional<RequestedTargets> computeRequestedTargets(Set<Label> projectTargets) {
+    ImmutableSet<Label> externalDeps =
+        projectTargets.stream()
+            .filter(
+                t ->
+                    getDependencyTrackingBehaviors(t).stream()
+                        .anyMatch(b -> b.shouldIncludeExternalDependencies))
+            .flatMap(t -> getTransitiveExternalDependencies(t).stream())
+            .collect(toImmutableSet());
+
+    return Optional.of(new RequestedTargets(ImmutableSet.copyOf(projectTargets), externalDeps));
   }
 }

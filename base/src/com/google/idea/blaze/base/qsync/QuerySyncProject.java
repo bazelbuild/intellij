@@ -45,12 +45,14 @@ import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
+import com.google.idea.blaze.qsync.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.SnapshotDeserializer;
 import com.google.idea.blaze.qsync.project.SnapshotSerializer;
+import com.google.idea.blaze.qsync.project.TargetsToBuild;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -99,6 +101,7 @@ public class QuerySyncProject {
 
   private final ProjectViewManager projectViewManager;
   private final BuildSystem buildSystem;
+  private final ProjectProtoTransform.Registry projectProtoTransforms;
 
   private volatile QuerySyncProjectData projectData;
 
@@ -123,7 +126,8 @@ public class QuerySyncProject {
       WorkspaceLanguageSettings workspaceLanguageSettings,
       QuerySyncSourceToTargetMap sourceToTargetMap,
       ProjectViewManager projectViewManager,
-      BuildSystem buildSystem) {
+      BuildSystem buildSystem,
+      ProjectProtoTransform.Registry projectProtoTransforms) {
     this.project = project;
     this.snapshotFilePath = snapshotFilePath;
     this.snapshotHolder = snapshotHolder;
@@ -145,6 +149,7 @@ public class QuerySyncProject {
     this.sourceToTargetMap = sourceToTargetMap;
     this.projectViewManager = projectViewManager;
     this.buildSystem = buildSystem;
+    this.projectProtoTransforms = projectProtoTransforms;
     projectData = new QuerySyncProjectData(workspacePathResolver, workspaceLanguageSettings);
   }
 
@@ -225,13 +230,18 @@ public class QuerySyncProject {
     try (BlazeContext context = BlazeContext.create(parentContext)) {
       context.push(new SyncQueryStatsScope());
       try {
+        for (SyncListener syncListener : SyncListener.EP_NAME.getExtensionList()) {
+          syncListener.onQuerySyncStart(project, context);
+        }
+
         SaveUtil.saveAllFiles();
         PostQuerySyncData postQuerySyncData =
             lastQuery.isEmpty()
                 ? projectQuerier.fullQuery(projectDefinition, context)
                 : projectQuerier.update(projectDefinition, lastQuery.get(), context);
         BlazeProjectSnapshot newSnapshot =
-            blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(context, postQuerySyncData);
+            blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(
+                context, postQuerySyncData, projectProtoTransforms.getComposedTransform());
         onNewSnapshot(context, newSnapshot);
 
         // TODO: Revisit SyncListeners once we switch fully to qsync
@@ -269,7 +279,10 @@ public class QuerySyncProject {
    *     the set of all targets defined in all build packages within the directory (recursively).
    */
   public TargetsToBuild getProjectTargets(BlazeContext context, Path workspaceRelativePath) {
-    return dependencyTracker.getProjectTargets(context, workspaceRelativePath);
+    return snapshotHolder
+        .getCurrent()
+        .map(snapshot -> snapshot.graph().getProjectTargets(context, workspaceRelativePath))
+        .orElse(TargetsToBuild.NONE);
   }
 
   /** Returns the set of targets with direct dependencies on {@code targets}. */
@@ -305,7 +318,9 @@ public class QuerySyncProject {
       if (getDependencyTracker().buildDependenciesForTargets(context, projectTargets)) {
         BlazeProjectSnapshot newSnapshot =
             blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(
-                context, snapshotHolder.getCurrent().orElseThrow().queryData());
+                context,
+                snapshotHolder.getCurrent().orElseThrow().queryData(),
+                projectProtoTransforms.getComposedTransform());
         onNewSnapshot(context, newSnapshot);
       }
     }
@@ -435,6 +450,43 @@ public class QuerySyncProject {
     }
     Path workspaceRelative = workspaceRoot.path().relativize(absolutePath);
     return projectDefinition.isExcluded(workspaceRelative);
+  }
+
+  /**
+   * Returns true if the file is in the project and has been added to the workspace since the last
+   * IDE sync operation (Sync Project with BUILD files), return false otherwise, or an empty {@link
+   * Optional} if this information cannot be determined.
+   *
+   * <p>Newly added files are determined by the following conditions:
+   * <li>They are in a project source root
+   * <li>They don't exist as a known source file for a target.
+   * <li>They don't exist at the vcs snapshot at the most recent sync
+   */
+  public Optional<Boolean> projectFileAddedSinceSync(Path absolutePath) {
+    if (!workspaceRoot.isInWorkspace(absolutePath.toFile())) {
+      return Optional.of(false);
+    }
+
+    if (!containsPath(absolutePath)) {
+      return Optional.of(false);
+    }
+
+    // Check known source files.
+    Path workspaceRelative = workspaceRoot.path().relativize(absolutePath);
+    if (snapshotHolder
+        .getCurrent()
+        .map(s -> s.graph().getAllSourceFiles().contains(workspaceRelative))
+        .orElse(false)) {
+      return Optional.of(false);
+    }
+
+    Optional<Path> snapshotPath =
+        snapshotHolder
+            .getCurrent()
+            .flatMap(s -> s.queryData().vcsState())
+            .flatMap(s -> s.workspaceSnapshotPath);
+
+    return snapshotPath.map(path -> !path.resolve(workspaceRelative).toFile().exists());
   }
 
   /** Returns all external dependencies of a given label */

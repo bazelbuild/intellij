@@ -178,6 +178,13 @@ genquery(
     scope = scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/tags"),
 )
 
+genquery(
+    name = "empty_query",
+    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/empty:*",
+    opts = ["--output=streamed_proto"],
+    scope = ["//querysync/javatests/com/google/idea/blaze/qsync/testdata/empty:BUILD"],
+)
+
 java_library(
     name = "testdata",
     srcs = ["TestData.java"],
@@ -185,22 +192,26 @@ java_library(
         ":android_aidl_source_query",
         ":android_lib_query",
         ":buildincludes_query",
-        ":cc_external_dep_query",
-        ":cc_library_query",
-        ":cc_multisrc_query",
         ":filegroup_query",
         ":java_exported_dep_query",
         ":java_library_external_dep_query",
         ":java_library_internal_dep_query",
         ":java_library_multi_targets",
-        ":java_library_nested_package",
         ":java_library_no_deps_query",
-        ":java_library_proto_dep_query",
         ":java_library_transitive_dep_query",
         ":java_library_transitive_internal_dep_query",
-        ":nested_proto_query",
-        ":proto_only_query",
+        ":cc_library_query",
+        ":cc_multisrc_query",
         ":tags_query",
+        ":empty_query",
+        # BEGIN-EXTERNAL
+        # These ones don't work in repo
+        ":java_library_nested_package",
+        ":java_library_proto_dep_query",
+        ":cc_external_dep_query",
+        ":proto_only_query",
+        ":nested_proto_query",
+        # END-EXTERNAL
     ],
     deps = [
         "//shared",

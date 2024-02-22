@@ -59,35 +59,9 @@ public interface DependencyTracker {
       throws IOException, BuildException;
 
   /**
-   * Returns the list of project targets related to the given workspace paths.
-   *
-   * @param context Context
-   * @param workspaceRelativePath Workspace relative path to find targets for. This may be a source
-   *     file, directory or BUILD file.
-   * @return Corresponding project targets. For a source file, this is the targets that build that
-   *     file. For a BUILD file, it's the set or targets defined in that file. For a directory, it's
-   *     the set of all targets defined in all build packages within the directory (recursively).
-   */
-  TargetsToBuild getProjectTargets(BlazeContext context, Path workspaceRelativePath);
-
-  /**
    * Returns a list of local cache files that build by target provided. Returns Optional.empty() if
    * the target has not yet been built.
    */
   Optional<ImmutableSet<Path>> getCachedArtifacts(Label target);
 
-  /**
-   * A data structure that describes what targets were requested to be built and what targets
-   * (including transitive ones) are expected to be built as a result.
-   */
-  class RequestedTargets {
-    public final ImmutableSet<Label> buildTargets;
-    public final ImmutableSet<Label> expectedDependencyTargets;
-
-    RequestedTargets(
-        ImmutableSet<Label> targetsToRequestBuild, ImmutableSet<Label> expectedToBeBuiltTargets) {
-      this.buildTargets = targetsToRequestBuild;
-      this.expectedDependencyTargets = expectedToBeBuiltTargets;
-    }
-  }
 }

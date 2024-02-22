@@ -16,9 +16,9 @@
 package com.google.idea.blaze.ext;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth8.assertThat;
 import static org.junit.Assert.assertThrows;
 
+import com.google.common.truth.Truth8;
 import com.google.idea.blaze.ext.IntelliJExtService.ServiceStatus;
 import io.grpc.StatusRuntimeException;
 import java.nio.file.Paths;
@@ -55,7 +55,7 @@ public class IntelliJExtServiceTest {
     assertThat(service.getVersion()).isEqualTo(TEST_VERSION);
     String pid = service.getStatus().get("pid");
     Optional<ProcessHandle> process = ProcessHandle.of(Integer.parseInt(pid));
-    assertThat(process).isPresent();
+    Truth8.assertThat(process).isPresent();
     process.get().destroyForcibly();
     // Server should restart nicely.
     assertThat(service.getVersion()).isEqualTo(TEST_VERSION);

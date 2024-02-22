@@ -87,11 +87,11 @@ def _fast_build_info_impl(target, ctx):
                 for t in annotation_processing.processor_classpath.to_list()
             ]
         info["java_info"] = struct_omit_none(**java_info)
-    if AndroidIdeInfo in target:
+    if hasattr(target, "android"):
         write_output = True
         android_info = struct_omit_none(
-            aar = artifact_location(target[AndroidIdeInfo].aar),
-            merged_manifest = artifact_location(target[AndroidIdeInfo].generated_manifest),
+            aar = artifact_location(target.android.aar),
+            merged_manifest = artifact_location(target.android.merged_manifest),
         )
         info["android_info"] = android_info
 

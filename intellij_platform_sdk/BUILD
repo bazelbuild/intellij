@@ -7,7 +7,6 @@
 
 load(
     "//:build-visibility.bzl",
-    "ASPECT_TOOLS_PACKAGE",
     "INTELLIJ_PLUGINS_VISIBILITY",
     "create_test_libs_visibility_package",
 )
@@ -221,6 +220,19 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-2024.1",
+    values = {"define": "ij_product=intellij-2024.1"},
+)
+
+config_setting(
+    name = "intellij-2024.1-mac",
+    values = {
+        "define": "ij_product=intellij-2024.1",
+        "cpu": "darwin_x86_64",
+    },
+)
+
+config_setting(
     name = "intellij-2023.3-mac",
     values = {
         "cpu": "darwin_x86_64",
@@ -325,6 +337,18 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "intellij-ue-2024.1",
+    values = {"define": "ij_product=intellij-ue-2024.1"},
+)
+
+config_setting(
+    name = "intellij-ue-2024.1-mac",
+    values = {
+        "define": "ij_product=intellij-ue-2024.1",
+        "cpu": "darwin_x86_64",
+    },
+)
 
 config_setting(
     name = "intellij-ue-2023.1-mac",
@@ -367,6 +391,13 @@ config_setting(
     name = "android-studio-canary",
     values = {
         "define": "ij_product=android-studio-canary",
+    },
+)
+
+config_setting(
+    name = "android-studio-intellij-ext",
+    values = {
+        "define": "intellij-ext=true",
     },
 )
 
@@ -607,13 +638,25 @@ config_setting(
 )
 
 config_setting(
+    name = "clion-2024.1",
+    values = {"define": "ij_product=clion-2024.1"},
+)
+
+config_setting(
+    name = "clion-2024.1-mac",
+    values = {
+        "define": "ij_product=clion-2024.1",
+        "cpu": "darwin_x86_64",
+    },
+)
+
+config_setting(
     name = "clion-2023.3-mac",
     values = {
         "cpu": "darwin_x86_64", #todo how about m1?
         "define": "ij_product=clion-2023.3",
     },
 )
-
 
 config_setting(
     name = "intellij-cc-oldest-stable",
@@ -737,16 +780,6 @@ java_library(
     ),
 )
 
-java_library(
-    name = "guava_for_external_binaries",
-    visibility = ASPECT_TOOLS_PACKAGE,
-    exports = select_from_plugin_api_directory(
-        android_studio = [":guava"],
-        clion = [":guava"],
-        intellij = [":guava"],
-    ),
-)
-
 # Some versions of the IDE include jsr305.jar, but others don't. So we need to include the JSR 305
 # classes (@Nullable, etc.) in the plugin jars for IDEs that don't already have it on the classpath.
 java_library(
@@ -756,6 +789,7 @@ java_library(
         "clion-2022.1": ["@jsr305_annotations//jar"],
         "clion-2022.2": ["@jsr305_annotations//jar"],
         "clion-2022.3": ["@jsr305_annotations//jar"],
+        "clion-2024.1": [],
         "intellij-2021.3": ["@jsr305_annotations//jar"],
         "intellij-2022.1": ["@jsr305_annotations//jar"],
         "intellij-2022.2": ["@jsr305_annotations//jar"],
@@ -763,6 +797,7 @@ java_library(
         "intellij-2023.1": ["@jsr305_annotations//jar"],
         "intellij-2023.2": ["@jsr305_annotations//jar"],
         "intellij-2023.3": ["@jsr305_annotations//jar"],
+        "intellij-2024.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2021.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.2": ["@jsr305_annotations//jar"],
@@ -770,6 +805,7 @@ java_library(
         "intellij-ue-2023.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2023.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2023.3": ["@jsr305_annotations//jar"],
+        "intellij-ue-2024.1": ["@jsr305_annotations//jar"],
         "android-studio-2022.2": ["@jsr305_annotations//jar"],
         "android-studio-2022.3": ["@jsr305_annotations//jar"],
         "android-studio-2023.1": ["@jsr305_annotations//jar"],

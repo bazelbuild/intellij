@@ -7,14 +7,20 @@ proto_library(
         "build_cleaner.proto",
         "build_service.proto",
         "chatbotmodel.proto",
+        "codereview.proto",
         "codesearch.proto",
         "depserver.proto",
+        "ecatcher.proto",
         "experiments.proto",
+        "fileapi.proto",
         "intellijext.proto",
         "issuetracker.proto",
         "kythe.proto",
         "linter.proto",
+        "logentry.proto",
+        "piper.proto",
     ],
+    # END-EXTERNAL
 )
 
 java_proto_library(
@@ -30,6 +36,18 @@ java_grpc_library(
     deps = [":intellijext_java_proto"],
 )
 
+proto_library(
+    name = "perforce_api_proto",
+    srcs = glob(["perforce/*.proto"]),
+)
+
+java_proto_library(
+    name = "perforce_api_java_proto",
+    visibility = ["//visibility:public"],
+    deps = [":perforce_api_proto"],
+)
+
+# BEGIN-EXTERNAL
 go_proto_library(
     name = "intellijext_go_proto",
     visibility = ["//visibility:public"],
@@ -41,3 +59,4 @@ go_grpc_library(
     visibility = ["//visibility:public"],
     deps = [":intellijext_go_proto"],
 )
+# END-EXTERNAL

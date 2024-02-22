@@ -1,0 +1,110 @@
+/*
+ * Copyright 2024 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+
+package com.google.idea.blaze.ext;
+
+option java_package = "com.google.idea.blaze.ext";
+
+message IntellijLogEntry {
+  optional int64 end_time_millis = 1;
+  optional int64 duration_millis = 2;
+  optional string product_id = 3;
+  optional string product_version = 4;
+  optional string product_build_number = 5;
+  optional string plugin_id = 6;
+  optional string plugin_version = 7;
+  optional string username = 8;
+  optional string hostname = 9;
+  optional uint64 process_id = 10;
+  optional string originating_jar = 11;
+  optional string g3plugins_version = 12;
+
+  enum Platform {
+    UNKNOWN = 0;
+    MAC = 1;
+    LINUX = 3;
+    CHROMEOS = 4;
+  }
+  optional Platform platform = 13;
+
+  optional EnvironmentInfo environment_info = 14;
+
+  oneof payload {
+    Action action = 15;
+    Event event = 16;
+  }
+}
+
+message EnvironmentInfo {
+  optional bool chrome_remote_desktop = 1;
+  enum MachineType {
+    UNKNOWN = 0;
+    DESKTOP = 1;
+    LAPTOP = 2;
+    SERVER = 3;
+  }
+  optional MachineType machine_type = 2;
+  optional bool proxy = 3;
+}
+
+message UserSetting {
+  optional string namespace = 1;
+  map<string, string> settings = 2;
+}
+
+message ProjectInfo {
+  optional bool is_blaze_plugin_project = 1;
+  repeated string configured_vcses = 2;
+  optional bool has_google3_content_root = 3;
+  optional string project_hash = 4;
+  repeated UserSetting setting = 5;
+  optional ProjectType project_type = 6;
+
+  enum ProjectType {
+    UNKNOWN = 0;
+    LEGACY_SYNC = 1;
+    QUERY_SYNC = 2;
+  }
+}
+
+message Action {
+  optional string action_class = 1;
+  optional string action_id = 2;
+  optional ProjectInfo project_info = 3;
+  optional bool is_from_context_menu = 4;
+  optional bool is_from_action_toolbar = 5;
+  optional string place = 6;
+  optional string tool_window_id = 7;
+  optional string project_hash = 8;
+  optional string action_text = 9;
+  optional string language = 10;
+  optional uint32 selected_items = 11;
+  optional uint32 selected_files = 12;
+  optional uint32 selected_changes = 13;
+  optional uint32 selected_changelists = 14;
+  optional string file_extension = 15;
+  optional uint32 target_changelists = 16;
+}
+
+message Event {
+  optional string namespace = 6;
+  optional string event_type = 1;
+  optional int64 end_time_millis = 2;
+  optional int64 duration_millis = 3;
+  map<string, string> key_value = 4;
+  repeated Event subevent = 5;
+}

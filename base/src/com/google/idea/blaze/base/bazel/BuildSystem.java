@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.errorprone.annotations.MustBeClosed;
+import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
@@ -101,6 +102,15 @@ public interface BuildSystem {
         String.format(
             "The getBuildInvoker method specific to executor type and target kind is not"
                 + " implemented in %s",
+            this.getClass().getSimpleName()));
+  }
+
+  /** Get a Blaze invoker specific to the blaze command. */
+  default BuildInvoker getBuildInvoker(
+      Project project, BlazeContext context, BlazeCommandName command) {
+    throw new UnsupportedOperationException(
+        String.format(
+            "The getBuildInvoker method specific to a blaze command is not implemented in %s",
             this.getClass().getSimpleName()));
   }
 

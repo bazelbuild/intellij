@@ -37,4 +37,5 @@ message Rule {
   repeated string hdrs = 12;
   repeated string copts = 13;
   repeated string tags = 14;
+  string main_class = 15;
 }

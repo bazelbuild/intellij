@@ -5,7 +5,3 @@ build --deleted_packages=//aspect/testing/tests/src/com/google/idea/blaze/aspect
 query --deleted_packages=//aspect/testing/tests/src/com/google/idea/blaze/aspect/integration/testdata
 
 common --enable_bzlmod
-
-build --experimental_google_legacy_api
-test --experimental_google_legacy_api
-
