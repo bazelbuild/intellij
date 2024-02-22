@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.base.qsync.action;
 
-import com.google.idea.blaze.base.qsync.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -30,7 +30,7 @@ public final class CleanDependencies extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    ArtifactTracker artifactTracker =
+    ArtifactTracker<?> artifactTracker =
         QuerySyncManager.getInstance(e.getProject()).getArtifactTracker();
     try {
       artifactTracker.clear();

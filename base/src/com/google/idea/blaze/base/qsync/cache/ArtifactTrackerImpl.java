@@ -52,7 +52,6 @@ import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStats;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.qsync.AppInspectorArtifactTracker;
 import com.google.idea.blaze.base.qsync.AppInspectorInfo;
-import com.google.idea.blaze.base.qsync.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.FileRefresher;
 import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.RenderJarArtifactTracker;
@@ -75,6 +74,7 @@ import com.google.idea.blaze.qsync.TestSourceGlobMatcher;
 import com.google.idea.blaze.qsync.build.OutputGroup;
 import com.google.idea.blaze.qsync.build.OutputInfo;
 import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.java.AndroidResPackagesProjectUpdater;
 import com.google.idea.blaze.qsync.java.GeneratedSourceProjectUpdater;
 import com.google.idea.blaze.qsync.java.GeneratedSourceProjectUpdater.GeneratedSourceJar;
@@ -122,7 +122,9 @@ import java.util.zip.GZIPOutputStream;
  * <p>This class maps all the targets that have been built to their artifacts.
  */
 public class ArtifactTrackerImpl
-    implements ArtifactTracker, RenderJarArtifactTracker, AppInspectorArtifactTracker {
+    implements ArtifactTracker<BlazeContext>,
+        RenderJarArtifactTracker,
+        AppInspectorArtifactTracker {
 
   private static final BoolExperiment ATTACH_DEP_SRCJARS =
       new BoolExperiment("querysync.attach.dep.srcjars", true);

@@ -44,6 +44,7 @@ import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -196,7 +197,7 @@ public class QuerySyncManager implements Disposable {
     }
   }
 
-  public ArtifactTracker getArtifactTracker() {
+  public ArtifactTracker<?> getArtifactTracker() {
     assertProjectLoaded();
     return loadedProject.getArtifactTracker();
   }

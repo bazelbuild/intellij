@@ -49,6 +49,7 @@ import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
 import com.google.idea.blaze.qsync.ProjectProtoTransform;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -86,7 +87,7 @@ public class QuerySyncProject {
   private final BlazeProject snapshotHolder;
   private final BlazeImportSettings importSettings;
   private final WorkspaceRoot workspaceRoot;
-  private final ArtifactTracker artifactTracker;
+  private final ArtifactTracker<?> artifactTracker;
   private final RenderJarArtifactTracker renderJarArtifactTracker;
   private final AppInspectorArtifactTracker appInspectorArtifactTracker;
   private final DependencyTracker dependencyTracker;
@@ -114,7 +115,7 @@ public class QuerySyncProject {
       BlazeProject snapshotHolder,
       BlazeImportSettings importSettings,
       WorkspaceRoot workspaceRoot,
-      ArtifactTracker artifactTracker,
+      ArtifactTracker<?> artifactTracker,
       RenderJarArtifactTracker renderJarArtifactTracker,
       AppInspectorArtifactTracker appInspectorArtifactTracker,
       DependencyTracker dependencyTracker,

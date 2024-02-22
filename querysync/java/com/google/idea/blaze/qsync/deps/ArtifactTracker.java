@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.qsync;
+package com.google.idea.blaze.qsync.deps;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.build.OutputInfo;
@@ -26,14 +26,13 @@ import java.util.Optional;
 import java.util.Set;
 
 /** A local cache of project dependencies. */
-public interface ArtifactTracker {
+public interface ArtifactTracker<ContextT extends Context<?>> {
 
   /** Drops all artifacts and clears caches. */
   void clear() throws IOException;
 
   /** Fetches, caches and sets up new artifacts. */
-  void update(Set<Label> targets, OutputInfo outputInfo, BlazeContext context)
-      throws BuildException;
+  void update(Set<Label> targets, OutputInfo outputInfo, ContextT context) throws BuildException;
 
   /**
    * Returns a list of local cache files that build by target provided. Returns Optional.empty() if

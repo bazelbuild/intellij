@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
-import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.PrintOutput.OutputType;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -50,7 +50,7 @@ public class FileRefresher {
     this.project = project;
   }
 
-  public void refreshFiles(BlazeContext context, ImmutableSet<Path> updatedFiles) {
+  public void refreshFiles(Context<?> context, ImmutableSet<Path> updatedFiles) {
     ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
     //noinspection UnstableApiUsage
     applicationEx.assertIsNonDispatchThread();
@@ -113,7 +113,7 @@ public class FileRefresher {
   }
 
   private static ImmutableList<VirtualFile> getFileParentsAsVirtualFilesMarkedDirty(
-      BlazeContext context, ImmutableSet<Path> updatedFiles) {
+      Context<?> context, ImmutableSet<Path> updatedFiles) {
     final ImmutableList.Builder<VirtualFile> virtualFiles = ImmutableList.builder();
     ImmutableList<Path> paths =
         updatedFiles.stream()
@@ -151,8 +151,7 @@ public class FileRefresher {
    * {@code updatedFiles} to make sure that later refreshing of the virtual file system rescans
    * existing files.
    */
-  private static void markExistingFilesDirty(
-      BlazeContext context, ImmutableSet<Path> updatedFiles) {
+  private static void markExistingFilesDirty(Context<?> context, ImmutableSet<Path> updatedFiles) {
     int markedAsDirty = 0;
     for (final Path path : updatedFiles) {
       VirtualFile virtualFile = getFileByIoFileIfInVfs(path);

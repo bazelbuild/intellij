@@ -32,6 +32,7 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.build.OutputInfo;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.DependencyTrackingBehavior;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -54,10 +55,12 @@ public class DependencyTrackerImpl implements DependencyTracker {
 
   private final BlazeProject blazeProject;
   private final DependencyBuilder builder;
-  private final ArtifactTracker artifactTracker;
+  private final ArtifactTracker<BlazeContext> artifactTracker;
 
   public DependencyTrackerImpl(
-      BlazeProject blazeProject, DependencyBuilder builder, ArtifactTracker artifactTracker) {
+      BlazeProject blazeProject,
+      DependencyBuilder builder,
+      ArtifactTracker<BlazeContext> artifactTracker) {
     this.blazeProject = blazeProject;
     this.builder = builder;
     this.artifactTracker = artifactTracker;
