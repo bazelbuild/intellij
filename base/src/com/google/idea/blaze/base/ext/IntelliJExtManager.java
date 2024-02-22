@@ -91,6 +91,9 @@ public class IntelliJExtManager {
 
   private static final BoolExperiment PIPER = new BoolExperiment("use.intellij.ext.piper", false);
 
+  private static final BoolExperiment LOGGING =
+      new BoolExperiment("use.intellij.ext.logging", false);
+
   public static IntelliJExtManager getInstance() {
     return ApplicationManager.getApplication().getService(IntelliJExtManager.class);
   }
@@ -225,5 +228,9 @@ public class IntelliJExtManager {
 
   public boolean isPiperEnabled() {
     return isEnabled() && PIPER.getValue();
+  }
+
+  public boolean isLoggingEnabled() {
+    return isEnabled() && LOGGING.getValue();
   }
 }
