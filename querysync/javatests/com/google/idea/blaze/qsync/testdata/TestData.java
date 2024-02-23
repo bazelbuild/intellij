@@ -58,11 +58,11 @@ public enum TestData {
   // BEGIN-EXTERNAL
   private static final String WORKSPACE_NAME = "intellij_with_bazel";
   // END-EXTERNAL
-  // REPO-ONLY:   private static final String WORKSPACE_NAME = "__main__";
+
 
   public static final Path ROOT =
       Path.of(
-          // REPO-ONLY: "tools/vendor/google3/aswb/" +
+
           "querysync/javatests/com/google/idea/blaze/qsync/testdata");
 
   public static final String ROOT_PACKAGE = "//" + ROOT;

@@ -59,6 +59,7 @@ message IntellijLogEntry {
     Command command = 27;
     SyncStats sync_stats = 28;
     HighlightStats highlight_stats = 29;
+    RpcCall rpc_call = 30;
   }
 }
 
@@ -584,4 +585,14 @@ message HighlightStats {
   optional SyncStats.SyncResult last_sync_result = 3;
   // Highlight information collected for files
   repeated FileHighlights file_highlights = 4;
+}
+
+// RPC call to an external service.
+message RpcCall {
+  optional string service_name = 1;
+  optional string method_called = 2;
+  optional string server_address = 3;
+  optional int64 server_elapsed_time_ms = 4;
+  optional uint32 canonical_code = 5;
+  optional string error_message = 6;
 }
