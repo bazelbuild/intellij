@@ -1,5 +1,5 @@
 java_library(
-    name = "build",
+    name = "build_output",
     srcs = glob(["*.java"]),
     visibility = [
         "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",

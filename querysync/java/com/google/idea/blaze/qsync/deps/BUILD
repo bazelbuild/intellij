@@ -6,7 +6,7 @@ java_library(
         "//querysync:__subpackages__",
     ],
     deps = [
-        "//querysync/java/com/google/idea/blaze/qsync/build",
+        "//querysync/java/com/google/idea/blaze/qsync/build_output",
         "//shared",
         "@com_google_guava_guava//jar",
     ],
