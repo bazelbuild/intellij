@@ -758,6 +758,15 @@ jvm_maven_import_external(
 )
 
 jvm_maven_import_external(
+    name = "com_google_guava_failureaccess",
+    artifact = "com.google.guava:failureaccess:1.0.2",
+    artifact_sha256 = "8a8f81cf9b359e3f6dfa691a1e776985c061ef2f223c9b2c80753e1b458e8064",
+    server_urls = [
+        "https://repo1.maven.org/maven2",
+    ],
+)
+
+jvm_maven_import_external(
     name = "gson",
     artifact = "com.google.code.gson:gson:2.9.1",
     artifact_sha256 = "378534e339e6e6d50b1736fb3abb76f1c15d1be3f4c13cec6d536412e23da603",

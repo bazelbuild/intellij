@@ -12,10 +12,11 @@ java_library(
     srcs = glob(["src/**/*.java"]),
     javacopts = ["-source 8 -target 8"],
     deps = [
-        "@com_google_guava_guava//jar",
         "//proto:proto_deps",
-        "@jsr305_annotations//jar",
         "//third_party/bazel/src/main/protobuf:worker_protocol_java_proto",
+        "@com_google_guava_failureaccess//jar",
+        "@com_google_guava_guava//jar",
+        "@jsr305_annotations//jar",
     ],
 )
 
