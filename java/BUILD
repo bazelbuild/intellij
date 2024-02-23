@@ -175,7 +175,6 @@ java_binary(
         # BEGIN-EXTERNAL
         "//intellij_platform_sdk:guava",
         # END-EXTERNAL
-        # REPO-ONLY:        "@maven//:com.google.guava.guava"
     ],
 )
 
@@ -187,7 +186,6 @@ java_binary(
         # BEGIN-EXTERNAL
         "//intellij_platform_sdk:truth",
         # END-EXTERNAL
-        # REPO-ONLY:        "//tools/adt/idea/.idea/libraries:truth"
     ],
 )
 
