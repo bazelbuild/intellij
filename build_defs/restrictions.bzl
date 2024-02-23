@@ -201,7 +201,17 @@ def validate_restrictions(dependencies, allowed_external, existing_violations):
         new_violations = [t for t in violations if t not in existing_violations]
         no_longer_violations = [t for t in existing_violations if t not in violations]
         if new_violations:
-            error += "These targets now depend on external targets:\n    " + "\n    ".join(new_violations) + "\n"
+            error += (
+                "These targets now depend on external targets:\n    " +
+                "\n    ".join(
+                    [
+                        str(t.label) + " =>\n        " +
+                        "\n        ".join([str(vt.label) for vt in v])
+                        for (t, v) in dependencies.items()
+                        if str(t.label) in new_violations
+                    ],
+                ) + "\n"
+            )
 
         if no_longer_violations:
             error += "The following targets no longer depend on external targets, please remove from restrictions.bzl:\n    " + "\n    ".join(no_longer_violations) + "\n"
