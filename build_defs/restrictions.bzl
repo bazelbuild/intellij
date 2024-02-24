@@ -25,13 +25,8 @@ _not_project_for_tests = [
 _valid = [
 ]
 
-# A temporary list of external targets that plugins are depending on. DO NOT ADD TO THIS
-ALLOWED_EXTERNAL_DEPENDENCIES = [
-]
-
-# A list of targets currently with not allowed dependencies
-EXISTING_EXTERNAL_VIOLATIONS = [
-]
+EXTERNAL_DEPENDENCIES = {
+}
 
 # List of targets that use internal only Guava APIs that need to be cleaned up.
 # Targets in this list are java_library's that do not have the line:
@@ -163,9 +158,9 @@ def _restricted_deps_aspect_impl(target, ctx):
     )]
 
 # buildifier: disable=function-docstring
-def validate_unchecked_internal(unchecked, existing_unchecked):
-    not_allowed_to_be_unchecked = [t for t in unchecked if t not in existing_unchecked]
-    checked_still_in_list = [t for t in existing_unchecked if t not in unchecked]
+def validate_unchecked_internal(unchecked):
+    not_allowed_to_be_unchecked = [t for t in unchecked if t not in EXISTING_UNCHECKED]
+    checked_still_in_list = [t for t in EXISTING_UNCHECKED if t not in unchecked]
     error = ""
     if not_allowed_to_be_unchecked:
         error += "The following targets do not have either google_internal_checker or beta_checker on:\n    " + "\n    ".join(not_allowed_to_be_unchecked) + "\n"
@@ -193,8 +188,24 @@ def _restricted_test_deps_aspect_impl(target, ctx):
         RestrictedInfo(dependencies = dependencies),
     ]
 
+def validate_restrictions(dependencies):
+    external_dependencies = {str(k.label): [str(vt.label) for vt in v] for (k, v) in dependencies.items()}
+    if external_dependencies != EXTERNAL_DEPENDENCIES:
+        error = (
+            "\nEXTERNAL_DEPENDENCIES = {\n    " +
+            "\n    ".join(
+                [
+                    "\"" + str(t.label) + "\": [\n        " +
+                    "        ".join(["\"" + str(vt.label) + "\",\n" for vt in v]) +
+                    "    ],"
+                    for (t, v) in dependencies.items()
+                ],
+            ) + "\n}\n"
+        )
+        fail(error)
+
 # buildifier: disable=function-docstring
-def validate_restrictions(dependencies, allowed_external, existing_violations):
+def _validate_test_restrictions(dependencies, allowed_external, existing_violations):
     violations = sorted([str(d.label) for d in dependencies.keys()])
     error = ""
     if violations != sorted(existing_violations):
@@ -255,7 +266,7 @@ def _validate_test_dependencies(ctx):
             fail("Undeclared test location: " + str(k))
         if RestrictedInfo in k:
             dependencies.update(k[RestrictedInfo].dependencies)
-    validate_restrictions(dependencies, ctx.attr.allowed_external_dependencies, ctx.attr.existing_external_violations)
+    _validate_test_restrictions(dependencies, ctx.attr.allowed_external_dependencies, ctx.attr.existing_external_violations)
     fake_file = ctx.actions.declare_file("fake_file.txt")
     ctx.actions.write(
         fake_file,
