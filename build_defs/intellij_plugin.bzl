@@ -39,9 +39,6 @@ intellij_plugin(
 
 load(
     "//build_defs:restrictions.bzl",
-    "ALLOWED_EXTERNAL_DEPENDENCIES",
-    "EXISTING_EXTERNAL_VIOLATIONS",
-    "EXISTING_UNCHECKED",
     "RestrictedInfo",
     "restricted_deps_aspect",
     "validate_restrictions",
@@ -237,9 +234,9 @@ def _intellij_plugin_jar_impl(ctx):
 
         # Uncomment the next line to see all buildable roots:
         # fail("".join(["     " + str(t) + "\n" for t in depset(transitive=roots).to_list()]))
-        validate_restrictions(dependencies, ctx.attr.allowed_external_dependencies, ctx.attr.existing_external_violations)
+        validate_restrictions(dependencies)
         unchecked = [str(t.label) for t in depset(direct = [], transitive = unchecked_transitive).to_list()]
-        validate_unchecked_internal(unchecked, ctx.attr.existing_unchecked)
+        validate_unchecked_internal(unchecked)
 
     return DefaultInfo(
         files = files,
@@ -253,9 +250,6 @@ _intellij_plugin_jar = rule(
         "optional_plugin_xmls": attr.label_list(providers = [_OptionalPluginXmlInfo]),
         "jar_name": attr.string(mandatory = True),
         "deps": attr.label_list(providers = [[_IntellijPluginLibraryInfo]]),
-        "allowed_external_dependencies": attr.string_list(),
-        "existing_external_violations": attr.string_list(),
-        "existing_unchecked": attr.string_list(),
         "restrict_deps": attr.bool(),
         "restricted_deps": attr.label_list(aspects = [restricted_deps_aspect]),
         "plugin_icons": attr.label_list(allow_files = True),
@@ -336,9 +330,6 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
             }),
         restricted_deps = deps if restrict_deps else [],
         plugin_xml = plugin_xml,
-        allowed_external_dependencies = ALLOWED_EXTERNAL_DEPENDENCIES,
-        existing_external_violations = EXISTING_EXTERNAL_VIOLATIONS,
-        existing_unchecked = EXISTING_UNCHECKED,
         optional_plugin_xmls = optional_plugin_xmls,
         plugin_icons = plugin_icons,
     )
