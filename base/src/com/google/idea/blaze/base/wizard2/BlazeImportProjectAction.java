@@ -54,7 +54,7 @@ class BlazeImportProjectAction extends AnAction {
         .setText(String.format("Import %s Project...", Blaze.defaultBuildSystemName()));
   }
 
-  private static void createFromWizard(
+  static void createFromWizard(
       BlazeProjectCreator blazeProjectCreator, WizardContext wizardContext) {
     try {
       blazeProjectCreator.doCreate(
