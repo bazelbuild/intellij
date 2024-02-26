@@ -8,11 +8,6 @@ bazel_dep(
     version = "0.0.8",
 )
 bazel_dep(
-    name = "rules_go",
-    version = "0.46.0",
-    repo_name = "io_bazel_rules_go",
-)
-bazel_dep(
     name = "rules_java",
     version = "7.4.0",
 )
