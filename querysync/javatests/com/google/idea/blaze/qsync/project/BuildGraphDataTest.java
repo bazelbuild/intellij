@@ -30,6 +30,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+
+
+
 @RunWith(JUnit4.class)
 public class BuildGraphDataTest {
 
@@ -318,7 +321,7 @@ public class BuildGraphDataTest {
     assertThat(targets.get().buildTargets)
         .containsExactly(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.getAssumedOnlyLabel());
     String expected = "@com_google_guava_guava//jar:jar";
-    // REPO-ONLY:     expected = "@@maven//:com.google.guava.guava";
+
     assertThat(targets.get().expectedDependencyTargets).containsExactly(Label.of(expected));
   }
 
@@ -348,12 +351,12 @@ public class BuildGraphDataTest {
                 .siblingWithName("externaldep"),
             TestData.JAVA_LIBRARY_MULTI_TARGETS.getAssumedOnlyLabel().siblingWithName("nodeps"));
     String expected = "@com_google_guava_guava//jar:jar";
-    // REPO-ONLY:     expected = "@@maven//:com.google.guava.guava";
+
     assertThat(targets.get().expectedDependencyTargets).containsExactly(Label.of(expected));
   }
 
   @Test
-  // REPO-ONLY:   @Ignore // (b/323621757)
+
   public void computeRequestedTargets_buildFile_nested() throws Exception {
     BuildGraphData graph =
         new BlazeQueryParser(
@@ -379,7 +382,7 @@ public class BuildGraphDataTest {
   }
 
   @Test
-  // REPO-ONLY:   @Ignore // (b/323621757)
+
   public void computeRequestedTargets_directory() throws Exception {
     BuildGraphData graph =
         new BlazeQueryParser(
@@ -408,7 +411,7 @@ public class BuildGraphDataTest {
   }
 
   @Test
-  // REPO-ONLY:   @Ignore // (b/323621757)
+
   public void computeRequestedTargets_cc_srcFile() throws Exception {
     BuildGraphData graph =
         new BlazeQueryParser(

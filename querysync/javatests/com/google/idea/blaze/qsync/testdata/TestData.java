@@ -60,7 +60,6 @@ public enum TestData {
 
   public static final Path ROOT =
       Path.of(
-          // REPO-ONLY: "tools/vendor/google3/aswb/" +
           "querysync/javatests/com/google/idea/blaze/qsync/testdata");
 
   public static final String ROOT_PACKAGE = "//" + ROOT;

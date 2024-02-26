@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.qsync;
+package com.google.idea.blaze.qsync.deps;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
 
 /** A local cache of project dependencies. */
-public interface ArtifactTracker {
+public interface ArtifactTracker<ContextT extends Context<?>> {
 
   /** Drops all artifacts and clears caches. */
   void clear() throws IOException;
 
   /** Fetches, caches and sets up new artifacts. */
-  ArtifactTrackerUpdateResult update(
-      Set<Label> targets, OutputInfo outputInfo, BlazeContext context) throws BuildException;
+  void update(Set<Label> targets, OutputInfo outputInfo, ContextT context) throws BuildException;
 
   /**
    * Returns a list of local cache files that build by target provided. Returns Optional.empty() if
@@ -63,12 +61,6 @@ public interface ArtifactTracker {
    * manifests) in the layout expected by the IDE.
    */
   Path getExternalAarDirectory();
-
-  /**
-   * Returns the CC target info from the cache. This is the compilation info created by the aspect
-   * when dependencies are build for a CC targets.
-   */
-  CcDependenciesInfo getCcDependenciesInfo();
 
   /** Returns the count of .jar files. */
   Integer getJarsCount();

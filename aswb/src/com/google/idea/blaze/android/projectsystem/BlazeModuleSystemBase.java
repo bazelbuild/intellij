@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.projectsystem;
 import static com.android.SdkConstants.DOT_AAR;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.google.idea.blaze.base.qsync.DependencyTracker.DependencyBuildRequest.singleTarget;
 import static java.util.Arrays.stream;
 
 import com.android.ide.common.repository.GradleCoordinate;
@@ -63,7 +64,6 @@ import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
-import com.google.idea.blaze.base.qsync.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.DependencyTracker;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -77,6 +77,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -364,7 +365,8 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
     if (buildDeps) {
       BlazeContext tmpContext = BlazeContext.create();
       try {
-        dependencyTracker.buildDependenciesForTarget(tmpContext, label);
+        boolean unused =
+            dependencyTracker.buildDependenciesForTargets(tmpContext, singleTarget(label));
       } catch (Exception e) {
         tmpContext.handleException("Failed to build dependencies", e);
       }

@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.command.buildresult;
+package com.google.idea.blaze.common.artifact;
 
-import com.google.idea.blaze.base.filecache.ArtifactState;
-import javax.annotation.Nullable;
+import com.google.errorprone.annotations.MustBeClosed;
+import java.io.BufferedInputStream;
+import java.io.IOException;
 
-/** A blaze output artifact, generated during some build action. */
-public interface OutputArtifactWithoutDigest extends BlazeArtifact, OutputArtifactInfo {
+/** A build artifact, either a source or output (generated) artifact. */
+public interface BlazeArtifact {
 
-  /** The path component related to the build configuration. */
-  String getConfigurationMnemonic();
+  /** Returns the length of the underlying file in bytes, or 0 if this can't be determined. */
+  long getLength();
 
-  /**
-   * Returns the {@link ArtifactState} for this output, used for serialization/diffing purposes. Can
-   * require file system operations.
-   */
-  @Nullable
-  ArtifactState toArtifactState();
+  /** A buffered input stream providing the contents of this artifact. */
+  @MustBeClosed
+  BufferedInputStream getInputStream() throws IOException;
+
 }

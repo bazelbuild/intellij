@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.qsync;
+package com.google.idea.blaze.qsync.deps;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.common.collect.Multimap;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
 import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcCompilationInfo;
@@ -33,7 +36,7 @@ public abstract class OutputInfo {
   @VisibleForTesting
   public static final OutputInfo EMPTY =
       create(
-          GroupedOutputArtifacts.EMPTY,
+          ArrayListMultimap.create(),
           ImmutableSet.of(),
           ImmutableSet.of(),
           ImmutableSet.of(),
@@ -45,7 +48,7 @@ public abstract class OutputInfo {
 
   public abstract ImmutableSet<CcCompilationInfo> getCcCompilationInfo();
 
-  public abstract GroupedOutputArtifacts getOutputGroups();
+  public abstract ImmutableListMultimap<OutputGroup, OutputArtifact> getOutputGroups();
 
   public abstract ImmutableSet<Label> getTargetsWithErrors();
 
@@ -86,7 +89,7 @@ public abstract class OutputInfo {
   }
 
   public static OutputInfo create(
-      GroupedOutputArtifacts allArtifacts,
+      Multimap<OutputGroup, OutputArtifact> allArtifacts,
       ImmutableSet<JavaArtifacts> artifacts,
       ImmutableSet<CcCompilationInfo> ccInfo,
       ImmutableSet<Label> targetsWithErrors,
@@ -95,7 +98,7 @@ public abstract class OutputInfo {
     return new AutoValue_OutputInfo.Builder()
         .setArtifactInfo(artifacts)
         .setCcCompilationInfo(ccInfo)
-        .setOutputGroups(allArtifacts)
+        .setOutputGroups(ImmutableListMultimap.copyOf(allArtifacts))
         .setTargetsWithErrors(targetsWithErrors)
         .setExitCode(exitCode)
         .setVcsState(vcsState)
@@ -113,7 +116,8 @@ public abstract class OutputInfo {
 
     public abstract Builder setCcCompilationInfo(ImmutableSet<CcCompilationInfo> value);
 
-    public abstract Builder setOutputGroups(GroupedOutputArtifacts artifcts);
+    public abstract Builder setOutputGroups(
+        ImmutableListMultimap<OutputGroup, OutputArtifact> artifacts);
 
     public abstract Builder setTargetsWithErrors(ImmutableSet<Label> value);
 

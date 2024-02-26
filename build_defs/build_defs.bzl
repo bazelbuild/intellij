@@ -234,7 +234,7 @@ _repackaged_files = rule(
     },
 )
 
-def repackaged_files(name, srcs, prefix, strip_prefix = ".", executable = False, java_copts = [], **kwargs):
+def repackaged_files(name, srcs = [], prefix = None, strip_prefix = ".", executable = False, java_copts = [], **kwargs):
     """Assembles files together so that they can be packaged as an IntelliJ plugin.
 
     A cut-down version of the internal 'pkgfilegroup' rule.

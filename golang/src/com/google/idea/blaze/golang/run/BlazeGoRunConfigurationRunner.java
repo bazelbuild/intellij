@@ -31,10 +31,10 @@ import com.google.common.io.MoreFiles;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -358,7 +358,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
         List<File> candidateFiles;
         try {
           candidateFiles =
-              BlazeArtifact.getLocalFiles(
+              LocalFileArtifact.getLocalFiles(
                       buildResultHelper.getBuildArtifactsForTarget(label, file -> true))
                   .stream()
                   .filter(File::canExecute)

@@ -49,6 +49,7 @@ public class IntelliJExtManager {
    */
   private static final BoolExperiment ENABLED = new BoolExperiment("use.intellij.ext", false);
 
+  private static final BoolExperiment RETRY = new BoolExperiment("use.intellij.ext.retry", false);
   private static final BoolExperiment ISSUETRACKER =
       new BoolExperiment("use.intellij.ext.issuetracker", false);
 
@@ -65,6 +66,9 @@ public class IntelliJExtManager {
 
   private static final BoolExperiment FILEAPI =
       new BoolExperiment("use.intellij.ext.fileapi", false);
+
+  private static final BoolExperiment ECATCHER =
+      new BoolExperiment("use.intellij.ext.ecatcher", false);
 
   private static final BoolExperiment BUILD_SERVICE =
       new BoolExperiment("use.intellij.ext.buildservice", false);
@@ -100,7 +104,13 @@ public class IntelliJExtManager {
       // If the VM option is set, override the path
       path = System.getProperty(INTELLIJ_EXT_BINARY);
       if (path == null) {
-        path = SystemInfo.isMac ? "/usr/local/bin/intellij-ext" : "/opt/intellij-ext/intellij-ext";
+        // TODO(b/324650449): Once this is submitted, first release intellij-ext
+        // then release ASwB, so that the ASwB upgrade installs the new version
+        // of intellij-ext in the expected location below
+        path =
+            SystemInfo.isMac
+                ? "/Library/Application Support/ASwB/intellij-ext"
+                : "/opt/intellij-ext/intellij-ext";
       }
     }
     this.binaryPath = path;
@@ -159,6 +169,10 @@ public class IntelliJExtManager {
     return getBinaryPath() != null;
   }
 
+  public boolean isRetryEnabled() {
+    return isEnabled() && RETRY.getValue();
+  }
+
   public boolean isIssueTrackerEnabled() {
     return isEnabled() && ISSUETRACKER.getValue();
   }
@@ -181,6 +195,10 @@ public class IntelliJExtManager {
 
   public boolean isFileApiEnabled() {
     return isEnabled() && FILEAPI.getValue();
+  }
+
+  public boolean isECatcherEnabled() {
+    return isEnabled() && ECATCHER.getValue();
   }
 
   public boolean isBuildServiceEnabled() {

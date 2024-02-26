@@ -17,6 +17,7 @@ package com.google.idea.blaze.qsync.project;
 
 import static com.google.common.truth.Truth.assertThat;
 
+
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.Path;
 import org.junit.Test;

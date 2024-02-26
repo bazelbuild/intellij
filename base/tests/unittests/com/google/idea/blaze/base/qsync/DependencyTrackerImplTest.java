@@ -25,6 +25,7 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.QuerySyncTestUtils;
 import com.google.idea.blaze.qsync.TestDataSyncRunner;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import org.junit.Rule;
@@ -35,7 +36,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-// REPO-ONLY: import org.junit.Ignore;
+
 
 @RunWith(JUnit4.class)
 public class DependencyTrackerImplTest {
@@ -53,7 +54,7 @@ public class DependencyTrackerImplTest {
   @Test
   public void getPendingExternalDeps_noSnapshot() {
     DependencyTrackerImpl dt =
-        new DependencyTrackerImpl(null, blazeProject, dependencyBuilder, artifactTracker);
+        new DependencyTrackerImpl(blazeProject, dependencyBuilder, artifactTracker);
     assertThat(dt.getPendingExternalDeps(ImmutableSet.of(Label.of("//some/package:target"))))
         .isEmpty();
   }
@@ -63,10 +64,10 @@ public class DependencyTrackerImplTest {
     BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
     blazeProject.setCurrent(context, snapshot);
     DependencyTrackerImpl dt =
-        new DependencyTrackerImpl(null, blazeProject, dependencyBuilder, artifactTracker);
+        new DependencyTrackerImpl(blazeProject, dependencyBuilder, artifactTracker);
     when(artifactTracker.getLiveCachedTargets()).thenReturn(ImmutableSet.of());
     String expected = "@com_google_guava_guava//jar:jar";
-    // REPO-ONLY:     expected = "@@maven//:com.google.guava.guava";
+
     assertThat(
             dt.getPendingExternalDeps(
                 ImmutableSet.copyOf(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.getAssumedLabels())))
@@ -79,11 +80,11 @@ public class DependencyTrackerImplTest {
     BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
     blazeProject.setCurrent(context, snapshot);
     DependencyTrackerImpl dt =
-        new DependencyTrackerImpl(null, blazeProject, dependencyBuilder, artifactTracker);
-    when(artifactTracker.getLiveCachedTargets())
-            // This version of rules_jvm_external here has to exactly match the version in MODULE.bazel
-            // Otherwise, this test will fail
-        .thenReturn(ImmutableSet.of(Label.of("@@rules_jvm_external~6.0~maven~com_google_guava_guava//jar:jar")));
+        new DependencyTrackerImpl(blazeProject, dependencyBuilder, artifactTracker);
+    // This version of rules_jvm_external here has to exactly match the version in MODULE.bazel
+    // Otherwise, this test will fail
+    String guava = "@@rules_jvm_external~6.0~maven~com_google_guava_guava//jar:jar";
+    when(artifactTracker.getLiveCachedTargets()).thenReturn(ImmutableSet.of(Label.of(guava)));
     assertThat(
             dt.getPendingExternalDeps(
                 ImmutableSet.copyOf(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.getAssumedLabels())))
@@ -95,7 +96,7 @@ public class DependencyTrackerImplTest {
     BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.CC_LIBRARY_QUERY);
     blazeProject.setCurrent(context, snapshot);
     DependencyTrackerImpl dt =
-        new DependencyTrackerImpl(null, blazeProject, dependencyBuilder, artifactTracker);
+        new DependencyTrackerImpl(blazeProject, dependencyBuilder, artifactTracker);
     when(artifactTracker.getLiveCachedTargets()).thenReturn(ImmutableSet.of());
     assertThat(
             dt.getPendingExternalDeps(
@@ -108,7 +109,7 @@ public class DependencyTrackerImplTest {
     BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.CC_LIBRARY_QUERY);
     blazeProject.setCurrent(context, snapshot);
     DependencyTrackerImpl dt =
-        new DependencyTrackerImpl(null, blazeProject, dependencyBuilder, artifactTracker);
+        new DependencyTrackerImpl(blazeProject, dependencyBuilder, artifactTracker);
     when(artifactTracker.getLiveCachedTargets())
         .thenReturn(ImmutableSet.copyOf(TestData.CC_LIBRARY_QUERY.getAssumedLabels()));
     assertThat(
@@ -118,12 +119,12 @@ public class DependencyTrackerImplTest {
   }
 
   @Test
-  // REPO-ONLY:   @Ignore // (b/323621757)
+
   public void getPendingExternalDeps_ccTarget_externalDepsIgnored() throws Exception {
     BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.CC_EXTERNAL_DEP_QUERY);
     blazeProject.setCurrent(context, snapshot);
     DependencyTrackerImpl dt =
-        new DependencyTrackerImpl(null, blazeProject, dependencyBuilder, artifactTracker);
+        new DependencyTrackerImpl(blazeProject, dependencyBuilder, artifactTracker);
     when(artifactTracker.getLiveCachedTargets()).thenReturn(ImmutableSet.of());
     assertThat(
             dt.getPendingExternalDeps(

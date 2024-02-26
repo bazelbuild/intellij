@@ -55,6 +55,7 @@ java_library(
         "//querysync",
         "//sdkcompat",
         "//shared",
+        "//shared:artifact",
         "//third_party/auto_value",
         "@error_prone_annotations//jar",
     ],
@@ -177,7 +178,6 @@ java_binary(
         # BEGIN-EXTERNAL
         "//intellij_platform_sdk:guava",
         # END-EXTERNAL
-        # REPO-ONLY:        "@maven//:com.google.guava.guava"
     ],
 )
 
@@ -189,7 +189,6 @@ java_binary(
         # BEGIN-EXTERNAL
         "//intellij_platform_sdk:truth",
         # END-EXTERNAL
-        # REPO-ONLY:        "//tools/adt/idea/.idea/libraries:truth"
     ],
 )
 

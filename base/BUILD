@@ -40,6 +40,7 @@ java_library(
         "//querysync",
         "//sdkcompat",
         "//shared",
+        "//shared:artifact",
         "//shared:exception",
         "//shared:vcs",
         "//third_party/auto_value",
@@ -358,10 +359,7 @@ java_library(
     testonly = 1,
     srcs = [
         "src/com/google/idea/blaze/base/async/FutureUtil.java",
-        "src/com/google/idea/blaze/base/command/buildresult/BlazeArtifact.java",
-        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifact.java",
         "src/com/google/idea/blaze/base/command/buildresult/OutputArtifactParser.java",
-        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifactWithoutDigest.java",
         "src/com/google/idea/blaze/base/command/buildresult/RemoteOutputArtifact.java",
         "src/com/google/idea/blaze/base/ideinfo/ProtoWrapper.java",
         "src/com/google/idea/blaze/base/prefetch/DefaultPrefetcher.java",
@@ -374,6 +372,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//shared:artifact",
     ],
 )
 
@@ -406,6 +405,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//shared:artifact",
     ],
 )
 
@@ -414,9 +414,7 @@ java_library(
     srcs = [
         "src/com/google/idea/blaze/base/command/buildresult/LocalFileOutputArtifact.java",
         "src/com/google/idea/blaze/base/command/buildresult/LocalFileOutputArtifactWithoutDigest.java",
-        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifact.java",
-        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifactWithoutDigest.java",
-        "src/com/google/idea/blaze/base/qsync/cache/ArtifactFetcher.java",
+        "src/com/google/idea/blaze/base/qsync/cache/ArtifactFetchers.java",
         "src/com/google/idea/blaze/base/qsync/cache/FileApiArtifactFetcher.java",
         "src/com/google/idea/blaze/base/settings/BuildBinaryType.java",
     ],
@@ -427,6 +425,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//shared",
+        "//shared:artifact",
     ],
 )
 
@@ -443,6 +442,26 @@ java_library(
 )
 
 java_library(
+    name = "qsync-extensions",
+    srcs = ["src/com/google/idea/blaze/base/qsync/HandledRulesProvider.java"],
+    neverlink = 1,
+    visibility = ["//java/com/google/devtools/intellij/protobuf:__subpackages__"],
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+java_library(
+    name = "qsync-extensions-for-tests",
+    testonly = 1,
+    srcs = ["src/com/google/idea/blaze/base/qsync/HandledRulesProvider.java"],
+    visibility = ["//javatests/com/google/devtools/intellij/protobuf:__subpackages__"],
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+java_library(
     name = "unit_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/unit/**/*.java"]),
@@ -452,6 +471,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "//shared:artifact",
         "//shared:exception",
         "//testing:lib",
         "//third_party/auto_value",
@@ -482,6 +502,7 @@ java_library(
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
         "//sdkcompat",
+        "//shared:artifact",
         "//shared:vcs",
         "//testing:lib",
         "@bazel_tools//tools/java/runfiles",
@@ -525,6 +546,7 @@ intellij_unit_test_suite(
         "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//shared",
+        "//shared:artifact",
         "//testing:lib",
         "//third_party/auto_value",
         "@com_google_guava_guava//jar",

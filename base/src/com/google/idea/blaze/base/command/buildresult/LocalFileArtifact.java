@@ -18,18 +18,13 @@ package com.google.idea.blaze.base.command.buildresult;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
-import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.io.FileOperationProvider;
-import java.io.BufferedInputStream;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 
-/** A blaze build artifact, either a source or output (generated) artifact. */
-public interface BlazeArtifact {
-
-  /** Returns the length of the underlying file in bytes, or 0 if this can't be determined. */
-  long getLength();
+/** A file artifact available on the local file system. */
+public interface LocalFileArtifact extends BlazeArtifact {
 
   /**
    * Filters out non-local artifacts.
@@ -44,25 +39,10 @@ public interface BlazeArtifact {
         .collect(toImmutableList());
   }
 
-  static ImmutableList<RemoteOutputArtifact> getRemoteArtifacts(
-      Collection<? extends BlazeArtifact> artifacts) {
-    return artifacts.stream()
-        .filter(a -> a instanceof RemoteOutputArtifact)
-        .map(a -> ((RemoteOutputArtifact) a))
-        .collect(toImmutableList());
-  }
+  File getFile();
 
-  /** A buffered input stream providing the contents of this artifact. */
-  @MustBeClosed
-  BufferedInputStream getInputStream() throws IOException;
-
-  /** A file artifact available on the local file system. */
-  interface LocalFileArtifact extends BlazeArtifact {
-    File getFile();
-
-    @Override
-    default long getLength() {
-      return FileOperationProvider.getInstance().getFileSize(getFile());
-    }
+  @Override
+  default long getLength() {
+    return FileOperationProvider.getInstance().getFileSize(getFile());
   }
 }

@@ -15,10 +15,11 @@
  */
 package com.google.idea.blaze.base.qsync.cc;
 
-import com.google.idea.blaze.base.qsync.ArtifactTracker;
+import com.google.common.base.Supplier;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.ProjectProtoTransform;
+import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
 import com.google.idea.blaze.qsync.cc.CcWorkspaceBuilder;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
@@ -29,16 +30,16 @@ import com.google.idea.blaze.qsync.project.ProjectProto.Project;
  */
 public class CcProjectProtoTransform implements ProjectProtoTransform {
 
-  private final ArtifactTracker artifactTracker;
+  private final Supplier<CcDependenciesInfo> ccDependenciesInfoSupplier;
 
-  public CcProjectProtoTransform(ArtifactTracker artifactTracker) {
-    this.artifactTracker = artifactTracker;
+  public CcProjectProtoTransform(Supplier<CcDependenciesInfo> ccDependenciesInfoSupplier) {
+    this.ccDependenciesInfoSupplier = ccDependenciesInfoSupplier;
   }
 
   @Override
   public Project apply(Project proto, BuildGraphData graph, Context<?> context)
       throws BuildException {
-    return new CcWorkspaceBuilder(artifactTracker.getCcDependenciesInfo(), graph, context)
+    return new CcWorkspaceBuilder(ccDependenciesInfoSupplier.get(), graph, context)
         .updateProjectProtoForCcDeps(proto);
   }
 }

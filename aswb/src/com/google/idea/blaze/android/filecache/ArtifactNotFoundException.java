@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.android.filecache;
 
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
+import com.google.idea.blaze.common.artifact.OutputArtifactWithoutDigest;
 import java.io.IOException;
 
 /** Signals that a particular artifact cannot be located. */

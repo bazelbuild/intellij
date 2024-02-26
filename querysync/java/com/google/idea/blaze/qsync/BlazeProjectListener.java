@@ -16,8 +16,8 @@
 package com.google.idea.blaze.qsync;
 
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
-import java.io.IOException;
 
 /** A listener interface for new project snapshots. */
 public interface BlazeProjectListener {
@@ -27,5 +27,6 @@ public interface BlazeProjectListener {
    * <p>This will be called on a background thread (from the {@link
    * com.google.idea.blaze.base.async.executor.BlazeExecutor} pool.
    */
-  void onNewProjectSnapshot(Context<?> context, BlazeProjectSnapshot instance) throws IOException;
+  void onNewProjectSnapshot(Context<?> context, BlazeProjectSnapshot instance)
+      throws BuildException;
 }

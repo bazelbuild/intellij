@@ -78,10 +78,3 @@ java_test(
         "@truth//jar",
     ],
 )
-
-test_suite(
-    name = "ext_tests",
-    tests = [
-        ":IntelliJExtServiceTest",
-    ],
-)

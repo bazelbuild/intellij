@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.idea.blaze.base.qsync.DependencyTracker.DependencyBuildRequest.multiTarget;
+import static com.google.idea.blaze.base.qsync.DependencyTracker.DependencyBuildRequest.wholeProject;
+
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -46,6 +49,7 @@ import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
 import com.google.idea.blaze.qsync.ProjectProtoTransform;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -83,7 +87,7 @@ public class QuerySyncProject {
   private final BlazeProject snapshotHolder;
   private final BlazeImportSettings importSettings;
   private final WorkspaceRoot workspaceRoot;
-  private final ArtifactTracker artifactTracker;
+  private final ArtifactTracker<?> artifactTracker;
   private final RenderJarArtifactTracker renderJarArtifactTracker;
   private final AppInspectorArtifactTracker appInspectorArtifactTracker;
   private final DependencyTracker dependencyTracker;
@@ -111,7 +115,7 @@ public class QuerySyncProject {
       BlazeProject snapshotHolder,
       BlazeImportSettings importSettings,
       WorkspaceRoot workspaceRoot,
-      ArtifactTracker artifactTracker,
+      ArtifactTracker<?> artifactTracker,
       RenderJarArtifactTracker renderJarArtifactTracker,
       AppInspectorArtifactTracker appInspectorArtifactTracker,
       DependencyTracker dependencyTracker,
@@ -311,11 +315,11 @@ public class QuerySyncProject {
     return vcsState.modifiedFiles();
   }
 
-  public void build(BlazeContext parentContext, Set<Label> projectTargets)
+  public void build(BlazeContext parentContext, DependencyTracker.DependencyBuildRequest request)
       throws IOException, BuildException {
     try (BlazeContext context = BlazeContext.create(parentContext)) {
       context.push(new BuildDepsStatsScope());
-      if (getDependencyTracker().buildDependenciesForTargets(context, projectTargets)) {
+      if (getDependencyTracker().buildDependenciesForTargets(context, request)) {
         BlazeProjectSnapshot newSnapshot =
             blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(
                 context,
@@ -352,7 +356,16 @@ public class QuerySyncProject {
       context.output(
           PrintOutput.output(
               "Building dependencies for:\n  " + Joiner.on("\n  ").join(projectTargets)));
-      build(context, projectTargets);
+      build(context, multiTarget(projectTargets));
+    } catch (IOException e) {
+      throw new BuildException("Failed to build dependencies", e);
+    }
+  }
+
+  public void enableAnalysis(BlazeContext context) throws BuildException {
+    try {
+      context.output(PrintOutput.output("Building dependencies for project"));
+      build(context, wholeProject());
     } catch (IOException e) {
       throw new BuildException("Failed to build dependencies", e);
     }
@@ -511,10 +524,14 @@ public class QuerySyncProject {
   }
 
   private void onNewSnapshot(BlazeContext context, BlazeProjectSnapshot newSnapshot)
-      throws IOException {
+      throws BuildException {
     snapshotHolder.setCurrent(context, newSnapshot);
     projectData = projectData.withSnapshot(newSnapshot);
-    writeToDisk(newSnapshot);
+    try {
+      writeToDisk(newSnapshot);
+    } catch (IOException e) {
+      throw new BuildException("Failed to write snapshot to disk", e);
+    }
   }
 
   public Iterable<Path> getBugreportFiles() {
