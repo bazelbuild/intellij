@@ -728,6 +728,7 @@ grpc_java_version = "1.61.1"
 
 http_archive(
     name = "io_grpc_grpc_java",
+    sha256 = "4264560a4d0ed6053c88e202ba161e87edd4eb7ac4ea88d070b9b822041a3f2d",
     strip_prefix = "grpc-java-{}".format(grpc_java_version),
     url = "https://github.com/grpc/grpc-java/archive/refs/tags/v{}.tar.gz".format(grpc_java_version),
     repo_mapping = {
