@@ -15,7 +15,6 @@ java_library(
     name = "querysync",
     exports = [
         "//querysync/java/com/google/idea/blaze/qsync",
-        "//querysync/java/com/google/idea/blaze/qsync/build",
         "//querysync/java/com/google/idea/blaze/qsync/cc",
         "//querysync/java/com/google/idea/blaze/qsync/cc:cc_compilation_info_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/deps",
