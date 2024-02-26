@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync.build;
+package com.google.idea.blaze.qsync.deps;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;

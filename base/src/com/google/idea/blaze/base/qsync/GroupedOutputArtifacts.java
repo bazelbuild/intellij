@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
-import com.google.idea.blaze.qsync.build.OutputGroup;
+import com.google.idea.blaze.qsync.deps.OutputGroup;
 import java.io.File;
 import java.util.Set;
 
