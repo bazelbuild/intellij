@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth8.assertThat;
 import static one.util.streamex.MoreCollectors.onlyOne;
 import static org.mockito.Mockito.mock;
 
-import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -34,8 +33,8 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.artifact.ArtifactFetcher;
-import com.google.idea.blaze.common.artifact.ArtifactState;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
+import com.google.idea.blaze.common.artifact.TestOutputArtifact;
 import com.google.idea.blaze.qsync.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.deps.OutputGroup;
 import com.google.idea.blaze.qsync.deps.OutputInfo;
@@ -43,12 +42,9 @@ import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaTargetArtifacts;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath.Resolver;
-import java.io.BufferedInputStream;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nullable;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
@@ -470,61 +466,6 @@ public class ArtifactTrackerImplTest {
         throw new TestException();
       }
       return Futures.immediateFuture(null);
-    }
-  }
-
-  @AutoValue
-  abstract static class TestOutputArtifact implements OutputArtifact {
-
-    public static final TestOutputArtifact EMPTY =
-        new AutoValue_ArtifactTrackerImplTest_TestOutputArtifact.Builder()
-            .setLength(0)
-            .setDigest("digest")
-            .setRelativePath("path/file")
-            .setConfigurationMnemonic("mnemonic")
-            .build();
-
-    public static Builder builder() {
-      return EMPTY.toBuilder();
-    }
-
-    @Override
-    public abstract long getLength();
-
-    @Override
-    public BufferedInputStream getInputStream() throws IOException {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public abstract String getDigest();
-
-    @Override
-    public abstract String getRelativePath();
-
-    @Override
-    public abstract String getConfigurationMnemonic();
-
-    @Nullable
-    @Override
-    public ArtifactState toArtifactState() {
-      throw new UnsupportedOperationException();
-    }
-
-    public abstract Builder toBuilder();
-
-    @AutoValue.Builder
-    abstract static class Builder {
-
-      public abstract Builder setLength(long value);
-
-      public abstract Builder setDigest(String value);
-
-      public abstract Builder setRelativePath(String value);
-
-      public abstract Builder setConfigurationMnemonic(String value);
-
-      public abstract TestOutputArtifact build();
     }
   }
 
