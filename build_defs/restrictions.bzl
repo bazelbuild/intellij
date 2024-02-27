@@ -62,6 +62,23 @@ EXTERNAL_DEPENDENCIES = {
     "//java/com/google/devtools/intellij/g3plugins/common/ui:link": [
         "//java/com/google/corp/common/util/linkifier:linkifier",
     ],
+    "//java/com/google/devtools/intellij/g3plugins/logging/converters:proto_converters": [
+        "//logs/proto/intellij:logentry_java_proto",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/logging/jarcompat/ide:anycompat": [
+        "//google/protobuf:any_java_proto",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/logging:logging": [
+        "//ops/logs/le3/importers/proto:binaryproto_java_proto",
+        "//ops/logs/le3/lib:fsspool_java",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/services/buildservice:buildservice": [
+        "//java/com/google/common/labs/concurrent:concurrent",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/services/grpc:grpc_exception_util": [
+        "//java/com/google/net/grpc:status_wrapper",
+        "//util/task:codes_java_proto",
+    ],
     "//third_party/java_src/intellijperforceplugin:intellijperforceplugin": [
         "//util/task:codes_java_proto",
     ],
