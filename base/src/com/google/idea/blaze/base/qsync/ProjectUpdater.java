@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.qsync.artifacts.ProjectArtifactStore;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
@@ -77,7 +78,8 @@ public class ProjectUpdater implements BlazeProjectListener {
           querySyncProject.getImportSettings(),
           querySyncProject.getProjectViewSet(),
           querySyncProject.getWorkspaceRoot(),
-          querySyncProject.getProjectPathResolver());
+          querySyncProject.getProjectPathResolver(),
+          querySyncProject.getArtifactStore());
     }
   }
 
@@ -86,18 +88,21 @@ public class ProjectUpdater implements BlazeProjectListener {
   private final ProjectViewSet projectViewSet;
   private final WorkspaceRoot workspaceRoot;
   private final ProjectPath.Resolver projectPathResolver;
+  private final ProjectArtifactStore artifactStore;
 
   public ProjectUpdater(
       Project project,
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
       WorkspaceRoot workspaceRoot,
-      ProjectPath.Resolver projectPathResolver) {
+      ProjectPath.Resolver projectPathResolver,
+      ProjectArtifactStore artifactStore) {
     this.project = project;
     this.importSettings = importSettings;
     this.projectViewSet = projectViewSet;
     this.workspaceRoot = workspaceRoot;
     this.projectPathResolver = projectPathResolver;
+    this.artifactStore = artifactStore;
   }
 
   public static ModuleType<?> mapModuleType(ProjectProto.ModuleType type) {
@@ -113,6 +118,7 @@ public class ProjectUpdater implements BlazeProjectListener {
   @Override
   public void onNewProjectSnapshot(Context<?> context, BlazeProjectSnapshot graph)
       throws BuildException {
+    artifactStore.update(context, graph);
     updateProjectModel(graph.project(), context);
   }
 
