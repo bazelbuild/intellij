@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.Glob;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
+import com.google.idea.blaze.base.qsync.artifacts.ProjectArtifactStore;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetchers;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTrackerImpl;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -42,6 +43,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.artifact.ArtifactFetcher;
+import com.google.idea.blaze.common.artifact.BuildArtifactCache;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
@@ -139,6 +141,9 @@ public class ProjectLoader {
     graph.addListener((c, i) -> projectModificationTracker.incModificationCount());
     ArtifactFetcher<OutputArtifact> artifactFetcher = createArtifactFetcher();
     FileRefresher fileRefresher = new FileRefresher(project);
+    BuildArtifactCache artifactCache =
+        BuildArtifactCache.create(
+            ideProjectBasePath.resolve("buildcache"), artifactFetcher, executor);
     ArtifactTrackerImpl artifactTracker =
         new ArtifactTrackerImpl(
             BlazeDataStorage.getProjectDataDir(importSettings).toPath(),
@@ -149,6 +154,9 @@ public class ProjectLoader {
             projectTransformRegistry,
             fileRefresher);
     artifactTracker.initialize();
+    ProjectArtifactStore artifactStore =
+        new ProjectArtifactStore(
+            ideProjectBasePath, workspaceRoot.path(), artifactCache, fileRefresher);
     DependencyTracker dependencyTracker =
         new DependencyTrackerImpl(graph, dependencyBuilder, artifactTracker);
     RenderJarTracker renderJarTracker =
@@ -181,6 +189,7 @@ public class ProjectLoader {
             importSettings,
             workspaceRoot,
             artifactTracker,
+            artifactStore,
             artifactTracker,
             artifactTracker,
             dependencyTracker,
