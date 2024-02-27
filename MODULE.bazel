@@ -64,14 +64,14 @@ bazel_binaries = use_extension(
     "bazel_binaries",
     dev_dependency = True,
 )
-bazel_binaries.download(version = "4.2.4")
+bazel_binaries.download(version = "5.4.1")
 bazel_binaries.download(version = "6.5.0")
 bazel_binaries.download(version = "7.0.2")
 use_repo(
     bazel_binaries,
     "bazel_binaries",
     "bazel_binaries_bazelisk",
-    "build_bazel_bazel_4_2_4",
+    "build_bazel_bazel_5_4_1",
     "build_bazel_bazel_6_5_0",
     "build_bazel_bazel_7_0_2",
 )

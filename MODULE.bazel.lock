@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "649bc811ce34c9f76fcbc5eed1ac1cd61500f834fc5e3feee774ff74672fc67a",
+  "moduleFileHash": "43e0737985bcc0fc909358d2d9127e6b0ade556e3b79eaf591f0738ffd2bb52d",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -86,14 +86,14 @@
           "imports": {
             "bazel_binaries": "bazel_binaries",
             "bazel_binaries_bazelisk": "bazel_binaries_bazelisk",
-            "build_bazel_bazel_4_2_4": "build_bazel_bazel_4_2_4",
+            "build_bazel_bazel_5_4_1": "build_bazel_bazel_5_4_1",
             "build_bazel_bazel_6_5_0": "build_bazel_bazel_6_5_0",
             "build_bazel_bazel_7_0_2": "build_bazel_bazel_7_0_2"
           },
           "devImports": [
             "bazel_binaries",
             "bazel_binaries_bazelisk",
-            "build_bazel_bazel_4_2_4",
+            "build_bazel_bazel_5_4_1",
             "build_bazel_bazel_6_5_0",
             "build_bazel_bazel_7_0_2"
           ],
@@ -101,7 +101,7 @@
             {
               "tagName": "download",
               "attributeValues": {
-                "version": "4.2.4"
+                "version": "5.4.1"
               },
               "devDependency": true,
               "location": {
@@ -2329,21 +2329,21 @@
               "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
             }
           },
+          "build_bazel_bazel_5_4_1": {
+            "bzlFile": "@@rules_bazel_integration_test~0.23.0//bazel_integration_test/private:bazel_binaries.bzl",
+            "ruleClassName": "bazel_binary",
+            "attributes": {
+              "name": "rules_bazel_integration_test~0.23.0~bazel_binaries~build_bazel_bazel_5_4_1",
+              "version": "5.4.1",
+              "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
+            }
+          },
           "build_bazel_bazel_6_5_0": {
             "bzlFile": "@@rules_bazel_integration_test~0.23.0//bazel_integration_test/private:bazel_binaries.bzl",
             "ruleClassName": "bazel_binary",
             "attributes": {
               "name": "rules_bazel_integration_test~0.23.0~bazel_binaries~build_bazel_bazel_6_5_0",
               "version": "6.5.0",
-              "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
-            }
-          },
-          "build_bazel_bazel_4_2_4": {
-            "bzlFile": "@@rules_bazel_integration_test~0.23.0//bazel_integration_test/private:bazel_binaries.bzl",
-            "ruleClassName": "bazel_binary",
-            "attributes": {
-              "name": "rules_bazel_integration_test~0.23.0~bazel_binaries~build_bazel_bazel_4_2_4",
-              "version": "4.2.4",
               "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
             }
           },
@@ -2361,11 +2361,11 @@
             "attributes": {
               "name": "rules_bazel_integration_test~0.23.0~bazel_binaries~bazel_binaries",
               "version_to_repo": {
-                "4.2.4": "build_bazel_bazel_4_2_4",
+                "5.4.1": "build_bazel_bazel_5_4_1",
                 "6.5.0": "build_bazel_bazel_6_5_0",
                 "7.0.2": "build_bazel_bazel_7_0_2"
               },
-              "current_version": "4.2.4"
+              "current_version": "5.4.1"
             }
           }
         },
@@ -2373,7 +2373,7 @@
           "explicitRootModuleDirectDeps": [],
           "explicitRootModuleDirectDevDeps": [
             "bazel_binaries_bazelisk",
-            "build_bazel_bazel_4_2_4",
+            "build_bazel_bazel_5_4_1",
             "build_bazel_bazel_6_5_0",
             "build_bazel_bazel_7_0_2",
             "bazel_binaries"

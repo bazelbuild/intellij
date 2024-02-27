@@ -20,7 +20,7 @@ java_binary(
 
 bazel_integration_tests(
     name = "bazel_invocation_integration_tests",
-    bazel_versions = bazel_binaries.versions.other,
+    bazel_versions = bazel_binaries.versions.all,
     # set tags = [] because otherwise bazel_integration_tests sets
     # tags = ["manual"] and the target is not be detected via test //pkg/...
     tags = [],
