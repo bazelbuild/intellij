@@ -29,6 +29,7 @@ java_library(
         "//shared/java/com/google/idea/blaze/common",
         "//shared/java/com/google/idea/blaze/common/artifact",
         "//third_party/auto_value",
+        "@com_google_guava_failureaccess//jar",
         "@com_google_guava_guava//jar",
         "@jsr305_annotations//jar",
     ],
