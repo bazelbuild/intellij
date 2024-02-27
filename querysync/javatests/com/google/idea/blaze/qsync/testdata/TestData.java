@@ -55,14 +55,11 @@ public enum TestData {
     this.srcPaths = stream(paths).map(Path::of).collect(toImmutableList());
   }
 
-  // BEGIN-EXTERNAL
-  private static final String WORKSPACE_NAME = "intellij_with_bazel";
-  // END-EXTERNAL
-
+  // TODO: Probably there's a better way to do this.
+  private static final String WORKSPACE_NAME = "_main";
 
   public static final Path ROOT =
       Path.of(
-
           "querysync/javatests/com/google/idea/blaze/qsync/testdata");
 
   public static final String ROOT_PACKAGE = "//" + ROOT;

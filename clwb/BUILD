@@ -30,8 +30,8 @@ licenses(["notice"])
 
 intellij_plugin_library(
     name = "plugin_library",
-    plugin_xmls = ["src/META-INF/clwb.xml"],
     optional_plugin_xmls = ["optional_clwb_oclang"],
+    plugin_xmls = ["src/META-INF/clwb.xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":clwb_lib"],
 )
@@ -99,6 +99,7 @@ repackaged_files(
     prefix = "clwb/aspect",
     strip_prefix = "/aspect",
     visibility = CLWB_PACKAGES_VISIBILITY,
+    java_copts = ["-source", "8", "-target", "8"],
 )
 
 repackaged_files(

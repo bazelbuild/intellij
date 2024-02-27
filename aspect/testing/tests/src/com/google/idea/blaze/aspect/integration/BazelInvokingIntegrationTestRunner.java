@@ -138,6 +138,10 @@ public class BazelInvokingIntegrationTestRunner {
       return null;
     }
     String bazelDir = new File(bazelBinaryPath).getParentFile().getName();
+    // Get the part after last ~ (becase of canonicalization with bzlmod)
+    if (bazelDir.contains("~")) {
+      bazelDir = bazelDir.substring(bazelDir.lastIndexOf("~") + 1);
+    }
     String[] parts = bazelDir.split("_|-");
     if (parts.length < 6) {
       return null;

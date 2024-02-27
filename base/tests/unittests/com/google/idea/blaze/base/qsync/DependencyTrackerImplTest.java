@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.qsync.QuerySyncTestUtils.REPOSITORY_MAPPED_LABEL_CORRESPONDENCE;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableSet;
@@ -70,6 +71,7 @@ public class DependencyTrackerImplTest {
     assertThat(
             dt.getPendingExternalDeps(
                 ImmutableSet.copyOf(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.getAssumedLabels())))
+        .comparingElementsUsing(REPOSITORY_MAPPED_LABEL_CORRESPONDENCE)
         .containsExactly(Label.of(expected));
   }
 
@@ -79,8 +81,9 @@ public class DependencyTrackerImplTest {
     blazeProject.setCurrent(context, snapshot);
     DependencyTrackerImpl dt =
         new DependencyTrackerImpl(blazeProject, dependencyBuilder, artifactTracker);
-    String guava = "@com_google_guava_guava//jar:jar";
-
+    // This version of rules_jvm_external here has to exactly match the version in MODULE.bazel
+    // Otherwise, this test will fail
+    String guava = "@@rules_jvm_external~6.0~maven~com_google_guava_guava//jar:jar";
     when(artifactTracker.getLiveCachedTargets()).thenReturn(ImmutableSet.of(Label.of(guava)));
     assertThat(
             dt.getPendingExternalDeps(

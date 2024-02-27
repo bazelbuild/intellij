@@ -492,6 +492,7 @@ java_library(
         "//base/tests/utils/testdata/java/com/test2",
         "//base/tests/utils/testdata/java/com/test2:test2_srcs",
     ],
+    javacopts = java_version_flags(),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":base",
@@ -508,7 +509,6 @@ java_library(
         "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
-    javacopts = java_version_flags()
 )
 
 stamped_plugin_xml(

@@ -321,6 +321,7 @@ repackaged_files(
     prefix = "aswb/aspect",
     strip_prefix = "/aspect",
     visibility = ASWB_PACKAGES_VISIBILITY,
+    java_copts = ["-source", "8", "-target", "8"],
 )
 
 repackaged_files(
@@ -328,6 +329,7 @@ repackaged_files(
     srcs = ["//java:fast_build_javac"],
     prefix = "aswb/lib",
     visibility = ASWB_PACKAGES_VISIBILITY,
+    java_copts = ["-source", "8", "-target", "8"],
 )
 
 intellij_plugin_debug_target(

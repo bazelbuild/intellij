@@ -53,7 +53,7 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
 
     assertThat(keywords)
         .asList()
-        .containsAllIn(
+        .containsAtLeastElementsIn(
             Sections.getUndeprecatedParsers()
                 .stream()
                 .filter(ProjectViewKeywordCompletionContributor::handledSectionType)
@@ -118,7 +118,7 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
 
     assertThat(types)
         .asList()
-        .containsAllIn(
+        .containsAtLeastElementsIn(
             Arrays.stream(WorkspaceType.values())
                 .map(WorkspaceType::getName)
                 .collect(Collectors.toList()));
