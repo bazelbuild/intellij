@@ -25,13 +25,76 @@ _not_project_for_tests = [
 _valid = [
 ]
 
-# A temporary list of external targets that plugins are depending on. DO NOT ADD TO THIS
-ALLOWED_EXTERNAL_DEPENDENCIES = [
-]
-
-# A list of targets currently with not allowed dependencies
-EXISTING_EXTERNAL_VIOLATIONS = [
-]
+EXTERNAL_DEPENDENCIES = {
+    "//java/com/google/devtools/intellij/g3plugins:_internal_repackaged_repackaged_rpc3": [
+        "//java/com/google/net/rpc3:rpc3",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/services/grpc:proxy_process_controller": [
+        "//devtools/ide/intellij/proto:citc_updates_java_grpc",
+        "//devtools/ide/intellij/proto:citc_updates_java_proto",
+        "//google/corp/devtools/intellij/services/v1:status_service_java_grpc",
+        "//google/corp/devtools/intellij/services/v1:status_service_java_proto",
+    ],
+    "//java/com/google/devtools/intellij/blaze/plugin/base:base": [
+        "//java/com/google/common/labs/text:text",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/common:rpc_util": [
+        "//util/task:codes_java_proto",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/piper:api_client": [
+        "//java/com/google/common/labs/concurrent:concurrent",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/citc/filewatcher:file_state": [
+        "//devtools/citc/proto:java_proto",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/citc/filewatcher:snapshot_differ": [
+        "//devtools/srcfs/client/proto:delta_java_proto",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/citc/filewatcher:vfs_changes_listener": [
+        "//devtools/citc/proto:java_proto",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/citc/filewatcher:regurgitator_notification_handler": [
+        "//devtools/citc/proto:citc_filesystem_manifest_java_proto",
+        "//devtools/citc/proto:java_proto",
+        "//devtools/ide/intellij/filewatcher:regurgitator_java_proto",
+        "//devtools/srcfs/client/proto:delta_java_proto",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/license:license": [
+        "//third_party/java/apache_httpclient:apache_httpclient",
+        "//third_party/java/apache_httpcore:apache_httpcore",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/citc/filewatcher:filewatcher": [
+        "//devtools/ide/intellij/filewatcher:regurgitator_java_proto",
+        "//devtools/ide/intellij/proto:citc_updates_java_grpc",
+        "//java/com/google/common/labs/concurrent:concurrent",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/common/ui:link": [
+        "//java/com/google/corp/common/util/linkifier:linkifier",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/logging/converters:proto_converters": [
+        "//logs/proto/intellij:logentry_java_proto",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/logging/jarcompat/ide:anycompat": [
+        "//google/protobuf:any_java_proto",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/logging:logging": [
+        "//ops/logs/le3/importers/proto:binaryproto_java_proto",
+        "//ops/logs/le3/lib:fsspool_java",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/services/buildservice:buildservice": [
+        "//java/com/google/common/labs/concurrent:concurrent",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/services/grpc:grpc_exception_util": [
+        "//java/com/google/net/grpc:status_wrapper",
+        "//util/task:codes_java_proto",
+    ],
+    "//java/com/google/devtools/intellij/g3plugins/piper:data_classes": [
+        "//java/com/google/common/labs/concurrent:concurrent",
+    ],
+    "//third_party/java_src/intellijperforceplugin:intellijperforceplugin": [
+        "//util/task:codes_java_proto",
+    ],
+}
 
 # List of targets that use internal only Guava APIs that need to be cleaned up.
 # Targets in this list are java_library's that do not have the line:
@@ -163,9 +226,9 @@ def _restricted_deps_aspect_impl(target, ctx):
     )]
 
 # buildifier: disable=function-docstring
-def validate_unchecked_internal(unchecked, existing_unchecked):
-    not_allowed_to_be_unchecked = [t for t in unchecked if t not in existing_unchecked]
-    checked_still_in_list = [t for t in existing_unchecked if t not in unchecked]
+def validate_unchecked_internal(unchecked):
+    not_allowed_to_be_unchecked = [t for t in unchecked if t not in EXISTING_UNCHECKED]
+    checked_still_in_list = [t for t in EXISTING_UNCHECKED if t not in unchecked]
     error = ""
     if not_allowed_to_be_unchecked:
         error += "The following targets do not have either google_internal_checker or beta_checker on:\n    " + "\n    ".join(not_allowed_to_be_unchecked) + "\n"
@@ -193,8 +256,24 @@ def _restricted_test_deps_aspect_impl(target, ctx):
         RestrictedInfo(dependencies = dependencies),
     ]
 
+def validate_restrictions(dependencies):
+    external_dependencies = {str(k.label): [str(vt.label) for vt in v] for (k, v) in dependencies.items()}
+    if external_dependencies != EXTERNAL_DEPENDENCIES:
+        error = (
+            "\nEXTERNAL_DEPENDENCIES = {\n    " +
+            "\n    ".join(
+                [
+                    "\"" + str(t.label) + "\": [\n        " +
+                    "        ".join(["\"" + str(vt.label) + "\",\n" for vt in v]) +
+                    "    ],"
+                    for (t, v) in dependencies.items()
+                ],
+            ) + "\n}\nEXTERNAL_DEPENCENCIES has changed, replace this variable in restrictions.bzl\n"
+        )
+        fail(error)
+
 # buildifier: disable=function-docstring
-def validate_restrictions(dependencies, allowed_external, existing_violations):
+def _validate_test_restrictions(dependencies, allowed_external, existing_violations):
     violations = sorted([str(d.label) for d in dependencies.keys()])
     error = ""
     if violations != sorted(existing_violations):
@@ -255,7 +334,7 @@ def _validate_test_dependencies(ctx):
             fail("Undeclared test location: " + str(k))
         if RestrictedInfo in k:
             dependencies.update(k[RestrictedInfo].dependencies)
-    validate_restrictions(dependencies, ctx.attr.allowed_external_dependencies, ctx.attr.existing_external_violations)
+    _validate_test_restrictions(dependencies, ctx.attr.allowed_external_dependencies, ctx.attr.existing_external_violations)
     fake_file = ctx.actions.declare_file("fake_file.txt")
     ctx.actions.write(
         fake_file,
