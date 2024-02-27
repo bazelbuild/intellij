@@ -1,7 +1,6 @@
 v2024.02.27
 ===========
-* perf: avoid scanning convenience symlink directories 
- during initial import #6094
+* perf: avoid scanning convenience symlink directories during initial import #6094
 * Added MODULE.bazel to valid workspace root files #6127
 * Use path to workspace root as pwd for buildifier #6158
 
