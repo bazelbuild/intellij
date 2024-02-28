@@ -68,16 +68,6 @@ EXTERNAL_DEPENDENCIES = {
     "//java/com/google/devtools/intellij/g3plugins/common/ui:link": [
         "//java/com/google/corp/common/util/linkifier:linkifier",
     ],
-    "//java/com/google/devtools/intellij/g3plugins/logging/converters:proto_converters": [
-        "//logs/proto/intellij:logentry_java_proto",
-    ],
-    "//java/com/google/devtools/intellij/g3plugins/logging/jarcompat/ide:anycompat": [
-        "//google/protobuf:any_java_proto",
-    ],
-    "//java/com/google/devtools/intellij/g3plugins/logging:logging": [
-        "//ops/logs/le3/importers/proto:binaryproto_java_proto",
-        "//ops/logs/le3/lib:fsspool_java",
-    ],
     "//third_party/java_src/intellijperforceplugin:intellijperforceplugin": [
         "//util/task:codes_java_proto",
     ],
