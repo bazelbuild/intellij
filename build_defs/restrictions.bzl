@@ -78,10 +78,6 @@ EXTERNAL_DEPENDENCIES = {
         "//ops/logs/le3/importers/proto:binaryproto_java_proto",
         "//ops/logs/le3/lib:fsspool_java",
     ],
-    "//java/com/google/devtools/intellij/g3plugins/services/grpc:internal_grpc_exception_util": [
-        "//java/com/google/net/grpc:status_wrapper",
-        "//util/task:codes_java_proto",
-    ],
     "//third_party/java_src/intellijperforceplugin:intellijperforceplugin": [
         "//util/task:codes_java_proto",
     ],
