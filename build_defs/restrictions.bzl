@@ -35,9 +35,6 @@ EXTERNAL_DEPENDENCIES = {
         "//google/corp/devtools/intellij/services/v1:status_service_java_grpc",
         "//google/corp/devtools/intellij/services/v1:status_service_java_proto",
     ],
-    "//java/com/google/devtools/intellij/g3plugins/common:rpc_util": [
-        "//util/task:codes_java_proto",
-    ],
     "//java/com/google/devtools/intellij/g3plugins/citc/filewatcher:file_state": [
         "//devtools/citc/proto:java_proto",
     ],
