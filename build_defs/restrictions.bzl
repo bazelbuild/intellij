@@ -41,9 +41,6 @@ EXTERNAL_DEPENDENCIES = {
     "//java/com/google/devtools/intellij/g3plugins/common:rpc_util": [
         "//util/task:codes_java_proto",
     ],
-    "//java/com/google/devtools/intellij/g3plugins/piper:api_client": [
-        "//java/com/google/common/labs/concurrent:concurrent",
-    ],
     "//java/com/google/devtools/intellij/g3plugins/citc/filewatcher:file_state": [
         "//devtools/citc/proto:java_proto",
     ],
@@ -81,15 +78,9 @@ EXTERNAL_DEPENDENCIES = {
         "//ops/logs/le3/importers/proto:binaryproto_java_proto",
         "//ops/logs/le3/lib:fsspool_java",
     ],
-    "//java/com/google/devtools/intellij/g3plugins/services/buildservice:buildservice": [
-        "//java/com/google/common/labs/concurrent:concurrent",
-    ],
     "//java/com/google/devtools/intellij/g3plugins/services/grpc:grpc_exception_util": [
         "//java/com/google/net/grpc:status_wrapper",
         "//util/task:codes_java_proto",
-    ],
-    "//java/com/google/devtools/intellij/g3plugins/piper:data_classes": [
-        "//java/com/google/common/labs/concurrent:concurrent",
     ],
     "//third_party/java_src/intellijperforceplugin:intellijperforceplugin": [
         "//util/task:codes_java_proto",
