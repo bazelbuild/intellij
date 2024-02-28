@@ -121,27 +121,27 @@
     </action>
     <action id="Blaze.BuildDependencies"
         class="com.google.idea.blaze.base.qsync.action.BuildDependenciesAction"
-        text="Build dependencies">
+        text="Enable Analysis">
       <keyboard-shortcut first-keystroke="ctrl shift D" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta shift D" keymap="macOS System Shortcuts" replace-all="true"/>
     </action>
     <action id="Blaze.BuildReverseDependencies"
         class="com.google.idea.blaze.base.qsync.action.BuildDependenciesForDirectReverseDepsAction"
-        text="Enable Analysis For Reverse Dependencies">
+        text="Enable Analysis for Reverse Dependencies">
     </action>
     <action id="Blaze.BuildDependenciesForWorkingSet"
         class="com.google.idea.blaze.base.qsync.action.BuildDependenciesForWorkingSetAction"
-        text="Enable Analysis For Working Set">
+        text="Enable Analysis for Working Set">
     </action>
     <action id="Blaze.BuildOpenFileDependencies"
         class="com.google.idea.blaze.base.qsync.action.BuildDependenciesForOpenFilesAction"
-        text="Build dependencies for open files">
+        text="Enable Analysis for All Open Files">
       <keyboard-shortcut first-keystroke="ctrl alt shift D" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta alt shift D" keymap="macOS System Shortcuts" replace-all="true"/>
     </action>
     <action id="Blaze.BuildDependenciesForProject"
       class="com.google.idea.blaze.base.qsync.action.BuildDependenciesForProjectAction"
-      text="Enable Analysis For Whole Project" />
+      text="Enable Analysis for Whole Project" />
     <action id="Blaze.IntelliJExt.Status" class="com.google.idea.blaze.base.ext.IntelliJExtStatusAction" text="Status" >
     </action>
     <action id="Blaze.AddToQuerySyncProjectView"
@@ -160,6 +160,13 @@
         <reference id="Blaze.CleanProjectTargets"/>
         <reference id="Blaze.ExpandSyncToWorkingSet"/>
         <reference id="Blaze.ShowPerformanceWarnings"/>
+      </group>
+      <group id="Blaze.EnableAnalysisGroup" text="Enable _Analysis" popup="true">
+        <reference id="Blaze.BuildDependencies" />
+        <reference id="Blaze.BuildReverseDependencies" />
+        <reference id="Blaze.BuildOpenFileDependencies" />
+        <reference id="Blaze.BuildDependenciesForWorkingSet"/>
+        <reference id="Blaze.BuildDependenciesForProject" />
       </group>
       <group id="Blaze.BuildMenuGroup" text="_Build" popup="true">
         <reference id="MakeBlazeProject"/>
@@ -195,6 +202,8 @@
       <add-to-group anchor="before" group-id="EditorPopupMenu" relative-to-action="$SearchWeb"/>
       <separator/>
       <reference ref="Blaze.BuildDependencies"/>
+      <reference ref="Blaze.BuildReverseDependencies" />
+
       <reference ref="Blaze.PartialSync"/>
       <reference ref="Blaze.AddSourceToProject"/>
       <reference ref="Blaze.AddToQuerySyncProjectView"/>
