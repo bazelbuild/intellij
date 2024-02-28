@@ -26,6 +26,8 @@ import java.util.function.Supplier;
 /** Holder class for basic information about querysync, e.g. is it enabled? */
 public class QuerySync {
 
+  public static final String BUILD_DEPENDENCIES_ACTION_NAME = "Enable analysis";
+
   private static final FeatureRolloutExperiment ENABLED =
       new FeatureRolloutExperiment("query.sync");
 
