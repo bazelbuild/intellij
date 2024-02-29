@@ -57,7 +57,7 @@ final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmen
   private static boolean isDefaultLauncher(Label label) {
     // Use com.google.idea.blaze.common.Label to handle both cases of `@` and `@@` correctly
     com.google.idea.blaze.common.Label canonicalLabel =
-        new com.google.idea.blaze.common.Label(label.toString());
+        com.google.idea.blaze.common.Label.of(label.toString());
     return canonicalLabel.toString().equals(LAUNCHER_ALIAS);
   }
 
