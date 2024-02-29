@@ -35,14 +35,14 @@ message UpdateFileStatesRequest {
 }
 
 message UpdateFileStatesResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
   optional SourceFile source_file = 2;
   optional bool updated_operation = 5 [default = false];
   optional bool updated_change = 6 [default = false];
   optional bool updated_file_type = 7 [default = false];
   optional RevertOperation updated_revert = 8 [default = REVERT_NONE];
   optional FileOperation operation_prior_to_revert = 9;
-  repeated Status other_messages = 4;
+  repeated PerforceStatus other_messages = 4;
 }
 
 message MoveFilesRequest {
@@ -60,7 +60,7 @@ message MoveFilesRequest {
 }
 
 message MoveFilesResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
   optional int32 path_index = 1;
   optional SourceFile destination_source_file = 2;
   optional SourceFile source_source_file = 3;

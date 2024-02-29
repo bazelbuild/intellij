@@ -23,6 +23,6 @@ message SubmitChangeRequest {
 }
 
 message SubmitChangeResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
   optional PresubmitMessage presubmit_message = 2;
 }
