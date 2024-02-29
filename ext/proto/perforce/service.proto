@@ -1,0 +1,38 @@
+syntax = "proto2";
+
+package com.google.idea.blaze.ext.perforce;
+
+import "ext/proto/perforce/change_rpc.proto";
+import "ext/proto/perforce/file_content_rpc.proto";
+import "ext/proto/perforce/file_state_rpc.proto";
+import "ext/proto/perforce/resolve_conflicts_rpc.proto";
+import "ext/proto/perforce/workspace_rpc.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = 'PiperServiceProto';
+option java_package = "com.google.idea.blaze.ext";
+
+
+service PiperService {
+  // Get workspaces
+  rpc GetWorkspaces(GetWorkspacesRequest)
+      returns (stream GetWorkspacesResponse) {}
+
+  // Creates or updates a Piper workspace.
+  rpc UpdateWorkspace(UpdateWorkspaceRequest)
+      returns (UpdateWorkspaceResponse) {}
+
+  // Retrieves a list of changes
+  rpc GetChanges(GetChangesRequest) returns (stream GetChangesResponse) {}
+
+  // Resolves conflicts in a Piper workspace after sync or integrate.
+  rpc ResolveConflicts(ResolveConflictsRequest)
+      returns (stream ResolveConflictsResponse) {}
+
+  // Read the content of a depot or workspace file.
+  rpc ReadFiles(ReadFilesRequest) returns (stream ReadFilesResponse) {}
+
+  // Update the state and type of files that are open in a Piper workspace.
+  rpc UpdateFileStates(UpdateFileStatesRequest)
+      returns (stream UpdateFileStatesResponse) {}
+}
