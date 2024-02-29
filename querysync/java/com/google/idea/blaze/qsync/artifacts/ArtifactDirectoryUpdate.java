@@ -147,7 +147,7 @@ public class ArtifactDirectoryUpdate {
     if (!updated.equals(existing)) {
       return true;
     }
-    if (updated.hasWorkspaceRelativePath()) {
+    if (!updated.getWorkspaceRelativePath().isEmpty()) {
       // the existing and updated are identical, but since it's a workspace file it may have
       // changed since we last used it.
       // TODO(mathewi) we could condider using a readonly snapshot path here in the case that the
@@ -202,7 +202,7 @@ public class ArtifactDirectoryUpdate {
       } catch (ExecutionException e) {
         throw new BuildException("Failed to fetch artifact " + artifact, e);
       }
-    } else if (artifact.hasWorkspaceRelativePath()) {
+    } else if (!artifact.getWorkspaceRelativePath().isEmpty()) {
       // TODO(mathewi) using the workspace root here means this could fail if the file is no longer
       //    present in the workspace. We should support using a readonly workspace snapshot if the
       //    VCS supports that, and probably also fail gracefully (emit a warning?) in this case.
