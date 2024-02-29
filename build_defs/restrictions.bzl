@@ -59,9 +59,6 @@ EXTERNAL_DEPENDENCIES = {
         "//devtools/ide/intellij/proto:citc_updates_java_grpc",
         "//java/com/google/common/labs/concurrent:concurrent",
     ],
-    "//java/com/google/devtools/intellij/g3plugins/common/ui:link": [
-        "//java/com/google/corp/common/util/linkifier:linkifier",
-    ],
     "//third_party/java_src/intellijperforceplugin:intellijperforceplugin": [
         "//util/task:codes_java_proto",
     ],
