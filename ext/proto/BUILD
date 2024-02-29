@@ -7,6 +7,7 @@ proto_library(
         "build_cleaner.proto",
         "build_service.proto",
         "chatbotmodel.proto",
+        "citc_operations.proto",
         "codereview.proto",
         "codesearch.proto",
         "comments2code.proto",
