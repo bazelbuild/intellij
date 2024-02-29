@@ -19,8 +19,7 @@ proto_library(
         "kythe.proto",
         "linter.proto",
         "logentry.proto",
-        "piper.proto",
-    ],
+    ] + glob(["perforce/*.proto"]),
     # END-EXTERNAL
 )
 
