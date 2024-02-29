@@ -50,10 +50,6 @@ EXTERNAL_DEPENDENCIES = {
         "//devtools/ide/intellij/filewatcher:regurgitator_java_proto",
         "//devtools/srcfs/client/proto:delta_java_proto",
     ],
-    "//java/com/google/devtools/intellij/g3plugins/license:license": [
-        "//third_party/java/apache_httpclient:apache_httpclient",
-        "//third_party/java/apache_httpcore:apache_httpcore",
-    ],
     "//java/com/google/devtools/intellij/g3plugins/citc/filewatcher:filewatcher": [
         "//devtools/ide/intellij/filewatcher:regurgitator_java_proto",
         "//devtools/ide/intellij/proto:citc_updates_java_grpc",
