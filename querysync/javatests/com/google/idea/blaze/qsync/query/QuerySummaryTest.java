@@ -49,8 +49,8 @@ public class QuerySummaryTest {
     assertThat(rule.getIdlSourcesCount()).isEqualTo(0);
     assertThat(qs.getSourceFilesMap().keySet())
         .containsExactly(
-            new Label(TestData.ROOT_PACKAGE + "/nodeps:TestClassNoDeps.java"),
-            new Label(TestData.ROOT_PACKAGE + "/nodeps:BUILD"));
+            Label.of(TestData.ROOT_PACKAGE + "/nodeps:TestClassNoDeps.java"),
+            Label.of(TestData.ROOT_PACKAGE + "/nodeps:BUILD"));
   }
 
   @Test
@@ -67,9 +67,9 @@ public class QuerySummaryTest {
     assertThat(rule.getDepsCount()).isEqualTo(0);
     assertThat(qs.getSourceFilesMap().keySet())
         .containsExactly(
-            new Label(TestData.ROOT_PACKAGE + "/cc:TestClass.cc"),
-            new Label(TestData.ROOT_PACKAGE + "/cc:TestClass.h"),
-            new Label(TestData.ROOT_PACKAGE + "/cc:BUILD"));
+            Label.of(TestData.ROOT_PACKAGE + "/cc:TestClass.cc"),
+            Label.of(TestData.ROOT_PACKAGE + "/cc:TestClass.h"),
+            Label.of(TestData.ROOT_PACKAGE + "/cc:BUILD"));
     assertThat(rule.getCoptsList()).containsExactly("-w");
   }
 
