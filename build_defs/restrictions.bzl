@@ -26,9 +26,6 @@ _valid = [
 ]
 
 EXTERNAL_DEPENDENCIES = {
-    "//java/com/google/devtools/intellij/g3plugins:_internal_repackaged_repackaged_rpc3": [
-        "//java/com/google/net/rpc3:rpc3",
-    ],
     "//java/com/google/devtools/intellij/g3plugins/services/grpc:proxy_process_controller": [
         "//devtools/ide/intellij/proto:citc_updates_java_grpc",
         "//devtools/ide/intellij/proto:citc_updates_java_proto",
