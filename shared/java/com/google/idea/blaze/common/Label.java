@@ -19,6 +19,8 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -36,10 +38,12 @@ import java.util.List;
  */
 public class Label {
 
+  private static final Interner<Label> interner = Interners.newWeakInterner();
+
   private final String label;
 
   public static Label of(String label) {
-    return new Label(label);
+    return interner.intern(new Label(label));
   }
 
   public static Label fromPackageAndName(Path packagePath, Path name) {
