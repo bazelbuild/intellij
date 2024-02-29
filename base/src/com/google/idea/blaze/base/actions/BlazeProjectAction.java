@@ -20,11 +20,13 @@ import static com.google.idea.blaze.base.actions.BlazeProjectAction.QuerySyncSta
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
+import org.jetbrains.annotations.NotNull;
 
 /** Base class action that hides for non-blaze projects. */
 public abstract class BlazeProjectAction extends AnAction {
@@ -62,6 +64,11 @@ public abstract class BlazeProjectAction extends AnAction {
   protected BlazeProjectAction(
       @Nullable String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
