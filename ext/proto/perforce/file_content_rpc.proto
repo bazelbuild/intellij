@@ -21,7 +21,7 @@ message ReadFilesRequest {
 }
 
 message ReadFilesResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
   optional bytes content = 3;
   optional bool modified = 4;
   optional int32 path_index = 5;

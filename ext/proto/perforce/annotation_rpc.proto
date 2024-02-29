@@ -18,7 +18,7 @@ message GetAnnotationsRequest {
 }
 
 message GetAnnotationsResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
 
   optional string depot_path = 2;
   optional int32 target_revision_index = 3;
