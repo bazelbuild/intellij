@@ -129,8 +129,9 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
                       "--copt=-O0",
                       "--copt=-g",
                       "--strip=never",
-                      "--dynamic_mode=off",
-                      "--fission=yes"), extraClangFlags.stream()).collect(Collectors.toList());
+                      "--dynamic_mode=off"),
+                      BlazeGDBServerProvider.getOptionalFissionArguments().stream(),
+                      extraClangFlags.stream()).collect(Collectors.toList());
         } else {
           extraDebugFlags =
               BlazeGDBServerProvider.getFlagsForDebugging(configuration.getHandler().getState());

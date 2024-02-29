@@ -33,6 +33,7 @@
     <postStartupActivity implementation="com.google.idea.blaze.clwb.run.producers.NonBlazeProducerSuppressor"/>
     <actionConfigurationCustomizer implementation="com.google.idea.blaze.plugin.ClwbHideMakeActions"/>
     <registryKey defaultValue="false" description="Disable the extra debug flags in debug C/C++ builds" key="bazel.clwb.debug.extraflags.disabled"/>
+    <registryKey defaultValue="false" description="Disable the fission flag in debug C/C++ builds" key="bazel.clwb.debug.fission.disabled"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
