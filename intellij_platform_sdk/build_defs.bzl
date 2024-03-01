@@ -45,7 +45,7 @@ INDIRECT_IJ_PRODUCTS = {
     "intellij-ue-cc-under-dev": "intellij-ue-2022.3",
 }
 
-(CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_CANARY) = ("stable", "beta", "canary")
+(CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_CANARY, CHANNEL_FREEFORM) = ("stable", "beta", "canary", "freeform")
 
 INDIRECT_PRODUCT_CHANNELS = {
     # Channel mapping for internal Blaze Plugin
@@ -635,14 +635,14 @@ def select_for_channel(channel_map):
     """Returns a select based on the IDE channel (stable, beta, canary).
 
     Args:
-      channel_map: a dict with keys "stable", "beta" and "canary".
+      channel_map: a dict with keys "stable", "beta" and "canary". The rest of targets will be considered "freeform"
 
     Returns:
       A select that will select values from channel_map based on the build config.
     """
     _check_channel_map()
-    if channel_map.keys() != [CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_CANARY]:
-        fail("channel_map must contain exactly %s, %s and %s" % (CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_CANARY))
+    if channel_map.keys() != [CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_CANARY, CHANNEL_FREEFORM]:
+        fail("channel_map must contain exactly %s, %s and %s" % (CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_CANARY, CHANNEL_FREEFORM))
     select_map = {
         ("//intellij_platform_sdk:%s" % indirect_product): channel_map[channel]
         for indirect_product, channel in INDIRECT_PRODUCT_CHANNELS.items()
@@ -657,6 +657,15 @@ def select_for_channel(channel_map):
         {
             ("//intellij_platform_sdk:%s" % direct_product): channel_map[INDIRECT_PRODUCT_CHANNELS[indirect_product]]
             for direct_product, indirect_product in inverse_ij_products.items()
+        },
+    )
+
+    # Some IDE versions are not in a channel, but users would still like to build and test them:
+    select_map.update(
+        {
+            ("//intellij_platform_sdk:%s" % direct_product): channel_map[CHANNEL_FREEFORM]
+            for direct_product in DIRECT_IJ_PRODUCTS.keys()
+            if direct_product not in inverse_ij_products
         },
     )
     return select(select_map)

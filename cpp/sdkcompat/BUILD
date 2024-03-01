@@ -13,7 +13,7 @@ java_library(
         "clion-2023.1": ["//cpp/sdkcompat/v231"],
         "clion-2023.2": ["//cpp/sdkcompat/v232"],
         "clion-2023.3": ["//cpp/sdkcompat/v233"],
-        "clion-2024.1": ["//cpp/sdkcompat/v241"],	
+        "clion-2024.1": ["//cpp/sdkcompat/v241"],
     }),
     visibility = ["//cpp:__pkg__"],
     deps = ["//intellij_platform_sdk:plugin_api"],
