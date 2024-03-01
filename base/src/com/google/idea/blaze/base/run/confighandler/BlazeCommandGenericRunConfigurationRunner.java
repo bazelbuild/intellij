@@ -199,7 +199,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
       commandLine.withEnvironment(envVarState.getEnvs());
       commandLine.withParentEnvironmentType(
               envVarState.isPassParentEnvs()
-                      ? GeneralCommandLine.ParentEnvironmentType.SYSTEM
+                      ? GeneralCommandLine.ParentEnvironmentType.CONSOLE
                       : GeneralCommandLine.ParentEnvironmentType.NONE);
       return new ScopedBlazeProcessHandler(
           project,

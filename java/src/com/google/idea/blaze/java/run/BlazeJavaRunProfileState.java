@@ -291,7 +291,7 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
     commandLine.withEnvironment(envVarState.getEnvs());
     commandLine.withParentEnvironmentType(
             envVarState.isPassParentEnvs()
-                    ? GeneralCommandLine.ParentEnvironmentType.SYSTEM
+                    ? GeneralCommandLine.ParentEnvironmentType.CONSOLE
                     : GeneralCommandLine.ParentEnvironmentType.NONE);
     return new ScopedBlazeProcessHandler(
         project,

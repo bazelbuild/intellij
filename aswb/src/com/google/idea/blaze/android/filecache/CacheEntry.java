@@ -17,8 +17,8 @@ package com.google.idea.blaze.android.filecache;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
+import com.google.idea.blaze.common.artifact.OutputArtifactWithoutDigest;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import java.util.Objects;

@@ -45,17 +45,10 @@ public interface DependencyTracker {
   Set<Label> getPendingTargets(Path workspaceRelativePath);
 
   /**
-   * Builds the external dependencies of the given targets, putting the resultant libraries in the
+   * Builds the external dependencies of the given target(s), putting the resultant libraries in the
    * shared library directory so that they are picked up by the IDE.
    */
-  boolean buildDependenciesForTargets(BlazeContext context, Set<Label> projectTargets)
-      throws IOException, BuildException;
-
-  /**
-   * Builds the dependencies of the given target, putting the resultant libraries in the shared
-   * library directory so that they are picked up by the IDE.
-   */
-  void buildDependenciesForTarget(BlazeContext context, Label target)
+  boolean buildDependenciesForTargets(BlazeContext context, DependencyBuildRequest request)
       throws IOException, BuildException;
 
   /**
@@ -64,4 +57,41 @@ public interface DependencyTracker {
    */
   Optional<ImmutableSet<Path>> getCachedArtifacts(Label target);
 
+  /** Request to {@link #buildDependenciesForTargets(BlazeContext, DependencyBuildRequest)}. */
+  class DependencyBuildRequest {
+    enum RequestType {
+      /** Build a single target and do not check if its dependencies were built. */
+      SINGLE_TARGET,
+      /**
+       * Build multiple targets and mark all dependencies as built even if they produce no
+       * artifacts.
+       */
+      MULTIPLE_TARGETS,
+      /**
+       * Build thw whole project and mark all dependencies as built even if they produce no
+       * artifacts.
+       */
+      WHOLE_PROJECT,
+    };
+
+    final RequestType requestType;
+    final ImmutableSet<Label> targets;
+
+    private DependencyBuildRequest(RequestType type, ImmutableSet<Label> targets) {
+      this.requestType = type;
+      this.targets = targets;
+    }
+
+    public static DependencyBuildRequest singleTarget(Label target) {
+      return new DependencyBuildRequest(RequestType.SINGLE_TARGET, ImmutableSet.of(target));
+    }
+
+    public static DependencyBuildRequest multiTarget(Set<Label> targets) {
+      return new DependencyBuildRequest(RequestType.MULTIPLE_TARGETS, ImmutableSet.copyOf(targets));
+    }
+
+    public static DependencyBuildRequest wholeProject() {
+      return new DependencyBuildRequest(RequestType.WHOLE_PROJECT, ImmutableSet.of());
+    }
+  }
 }

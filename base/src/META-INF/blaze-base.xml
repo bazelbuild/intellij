@@ -140,6 +140,9 @@
       <keyboard-shortcut first-keystroke="ctrl alt shift D" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta alt shift D" keymap="macOS System Shortcuts" replace-all="true"/>
     </action>
+    <action id="Blaze.BuildDependenciesForProject"
+      class="com.google.idea.blaze.base.qsync.action.BuildDependenciesForProjectAction"
+      text="Enable Analysis For Whole Project" />
     <action id="Blaze.IntelliJExt.Status" class="com.google.idea.blaze.base.ext.IntelliJExtStatusAction" text="Status" >
     </action>
     <action id="Blaze.AddToQuerySyncProjectView"
@@ -203,9 +206,16 @@
       <action internal="true" id="Blaze.QSync.CleanDependencies" class="com.google.idea.blaze.base.qsync.action.CleanDependencies" text="QSync - Clean Dependencies" />
       <action internal="true" id="Blaze.QSync.ReloadProject" class="com.google.idea.blaze.base.qsync.action.ReloadProject" text="QSync - Reload project" />
       <action internal="true" id="Blaze.QSync.ShowPromo" class="com.google.idea.blaze.base.qsync.action.ShowPromoAction" text="Show qsync promo" />
+      <action internal="true" id="Blaze.VFS.DumpVfsDirs" class="com.google.idea.blaze.base.actions.internal.AswbDumpVfs" text="ASwB - Dump VFS Dirs"/>
       <add-to-group group-id="Internal"/>
     </group>
   </actions>
+
+  <applicationListeners>
+    <listener
+        class="com.google.idea.blaze.base.actions.internal.AswbDumpVfs$BulkListener"
+        topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </applicationListeners>
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.google.idea.blaze.base.sync.BlazeSyncStartupActivity"/>
@@ -470,7 +480,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.AbsolutePathPatcher"
                     interface="com.google.idea.blaze.base.io.AbsolutePathPatcher"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.qsync.ArtifactFetcher"
-                    interface="com.google.idea.blaze.base.qsync.cache.ArtifactFetcher"/>
+                    interface="com.google.idea.blaze.common.artifact.ArtifactFetcher"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.base.qsync.HandledRulesProvider"
       interface="com.google.idea.blaze.base.qsync.HandledRulesProvider" />
     <extensionPoint qualifiedName="com.google.idea.blaze.qsync.BlazeProjectListenerProvider"

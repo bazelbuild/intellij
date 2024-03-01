@@ -23,6 +23,7 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -39,9 +40,7 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStats;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -53,9 +52,13 @@ import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
+import com.google.idea.blaze.qsync.deps.OutputGroup;
+import com.google.idea.blaze.qsync.deps.OutputInfo;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
 import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcCompilationInfo;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -239,8 +242,8 @@ public class BazelDependencyBuilder implements DependencyBuilder {
   private OutputInfo createOutputInfo(
       BlazeBuildOutputs blazeBuildOutputs, Set<OutputGroup> outputGroups, BlazeContext context)
       throws BuildException {
-    GroupedOutputArtifacts allArtifacts =
-        new GroupedOutputArtifacts(blazeBuildOutputs, outputGroups);
+    ImmutableListMultimap<OutputGroup, OutputArtifact> allArtifacts =
+        GroupedOutputArtifacts.create(blazeBuildOutputs, outputGroups);
 
     ImmutableList<OutputArtifact> artifactInfoFiles =
         allArtifacts.get(OutputGroup.ARTIFACT_INFO_FILE);

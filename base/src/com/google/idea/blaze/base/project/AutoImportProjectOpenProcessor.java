@@ -95,7 +95,8 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
   private boolean isBazelWorkspace(VirtualFile virtualFile) {
     return virtualFile.findChild("WORKSPACE") != null
-        || virtualFile.findChild("WORKSPACE.bazel") != null;
+        || virtualFile.findChild("WORKSPACE.bazel") != null
+        || virtualFile.findChild("MODULE.bazel") != null;
   }
 
   @Override

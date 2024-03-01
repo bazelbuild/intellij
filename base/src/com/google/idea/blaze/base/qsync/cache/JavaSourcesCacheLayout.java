@@ -19,9 +19,9 @@ import static com.intellij.openapi.util.io.FileUtilRt.getExtension;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
+import com.google.idea.blaze.common.artifact.OutputArtifactInfo;
 import java.nio.file.Path;
 import java.util.Collection;
 import javax.annotation.Nullable;

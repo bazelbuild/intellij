@@ -24,8 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.FutureUtil;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
+import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
@@ -34,6 +33,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.artifact.OutputArtifactWithoutDigest;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -206,7 +206,7 @@ public class LocalArtifactCache implements ArtifactCache {
           RemoteArtifactPrefetcher.getInstance()
               .downloadArtifacts(
                   project.getName(),
-                  BlazeArtifact.getRemoteArtifacts(updatedKeyToArtifact.values()));
+                  RemoteOutputArtifact.getRemoteArtifacts(updatedKeyToArtifact.values()));
       FutureUtil.waitForFuture(context, downloadArtifactsFuture)
           .timed("FetchCacheArtifacts", EventType.Prefetching)
           .withProgressMessage(String.format("Fetching Artifacts for %s...", cacheName))

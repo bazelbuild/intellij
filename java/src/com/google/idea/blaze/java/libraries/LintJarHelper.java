@@ -18,9 +18,9 @@ package com.google.idea.blaze.java.libraries;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 
 /** Utility class for collecting lint jars from {@link BlazeProjectData} */

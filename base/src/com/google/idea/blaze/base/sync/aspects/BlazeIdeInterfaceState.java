@@ -23,10 +23,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.devtools.intellij.model.ProjectData.LocalFileOrOutputArtifact;
-import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactStateProtoConverter;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.common.artifact.ArtifactState;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -56,8 +56,7 @@ public final class BlazeIdeInterfaceState
 
   public static BlazeIdeInterfaceState fromProto(ProjectData.BlazeIdeInterfaceState proto) {
     ImmutableMap<String, TargetKey> targets =
-        ProtoWrapper.map(
-            proto.getFileToTargetMap(), ArtifactState::migrateOldKeyFormat, TargetKey::fromProto);
+        ProtoWrapper.map(proto.getFileToTargetMap(), Functions.identity(), TargetKey::fromProto);
     ImmutableMap.Builder<String, ArtifactState> artifacts = ImmutableMap.builder();
     for (LocalFileOrOutputArtifact output : proto.getIdeInfoFilesList()) {
       ArtifactState state = ArtifactStateProtoConverter.fromProto(output);
@@ -76,7 +75,7 @@ public final class BlazeIdeInterfaceState
             .putAllFileToTarget(
                 ProtoWrapper.map(ideInfoFileToTargetKey, Functions.identity(), TargetKey::toProto));
     for (String key : ideInfoFileState.keySet()) {
-      proto.addIdeInfoFiles(ideInfoFileState.get(key).serializeToProto());
+      proto.addIdeInfoFiles(ArtifactStateProtoConverter.toProto(ideInfoFileState.get(key)));
     }
     return proto.build();
   }

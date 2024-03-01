@@ -35,6 +35,9 @@ public class QuerySync {
   public static final BoolExperiment EXTRACT_RES_PACKAGES_AT_BUILD_TIME =
       new BoolExperiment("query.sync.respackages.at.build.time", true);
 
+  public static final BoolExperiment ATTACH_DEP_SRCJARS =
+      new BoolExperiment("querysync.attach.dep.srcjars", true);
+
   /**
    * Previously, query sync was enabled by an experiment. Some users still have that experiment set
    * and we don't want to inadvertently disable query sync for them.

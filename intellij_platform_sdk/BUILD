@@ -7,7 +7,6 @@
 
 load(
     "//:build-visibility.bzl",
-    "ASPECT_TOOLS_PACKAGE",
     "INTELLIJ_PLUGINS_VISIBILITY",
     "create_test_libs_visibility_package",
 )
@@ -763,7 +762,7 @@ java_library(
     visibility = [":test_libs_visibility"],
     exports = [
         "//third_party:truth",
-        "@bytebuddy-agent//jar",
+        "@bytebuddy_agent//jar",
         "@bytebuddy//jar",
         "@mockito//jar",
         "@objenesis//jar"
@@ -774,16 +773,6 @@ java_library(
 java_library(
     name = "guava",
     testonly = True,
-    exports = select_from_plugin_api_directory(
-        android_studio = [":guava"],
-        clion = [":guava"],
-        intellij = [":guava"],
-    ),
-)
-
-java_library(
-    name = "guava_for_external_binaries",
-    visibility = ASPECT_TOOLS_PACKAGE,
     exports = select_from_plugin_api_directory(
         android_studio = [":guava"],
         clion = [":guava"],

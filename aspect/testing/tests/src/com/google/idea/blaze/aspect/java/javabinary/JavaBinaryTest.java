@@ -51,13 +51,13 @@ public class JavaBinaryTest extends BazelIntellijAspectTest {
     assertThat(binaryInfo.getJavaIdeInfo().getMainClass()).isEqualTo("com.google.MyMainClass");
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("foolib.java-manifest"),
             testRelative(intellijInfoFileName("foolib")),
             testRelative("foo.java-manifest"),
             testRelative(intellijInfoFileName("foo")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("libfoolib.jar"),
             testRelative("libfoolib-hjar.jar"),
             testRelative("libfoolib-src.jar"),

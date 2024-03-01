@@ -116,7 +116,7 @@ public class ArtifactLocationParserTest {
       ArtifactLocationParser.parse(input);
       fail();
     } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage(expectedError);
+      assertThat(e).hasMessageThat().isEqualTo(expectedError);
     }
   }
 }

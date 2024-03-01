@@ -54,7 +54,7 @@ public class BuildDependenciesHelper {
     /** Build dependencies of the specified target(s) */
     SELF,
     /** Build dependencies of the reverse dependencies of the specified target(s) */
-    REVERSE_DEPS
+    REVERSE_DEPS,
   }
 
   private final Project project;

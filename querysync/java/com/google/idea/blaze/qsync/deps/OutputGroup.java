@@ -13,10 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.command.buildresult;
+package com.google.idea.blaze.qsync.deps;
 
-/** A descriptor of an output artifact that contains data needed to identify the artifact. */
-public interface OutputArtifactInfo {
-  /** The blaze-out-relative path. */
-  String getRelativePath();
+/** Represents an output group produced by the {@code build_dependencies.bzl} aspect. */
+public enum OutputGroup {
+  JARS("qsync_jars"),
+  AARS("qsync_aars"),
+  GENSRCS("qsync_gensrcs"),
+  ARTIFACT_INFO_FILE("artifact_info_file"),
+  CC_HEADERS("cc_headers"),
+  CC_INFO_FILE("cc_info_file");
+
+  private final String name;
+
+  OutputGroup(String name) {
+    this.name = name;
+  }
+
+  public String outputGroupName() {
+    return name;
+  }
 }

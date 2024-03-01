@@ -47,6 +47,7 @@ import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -115,7 +116,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
         ParsedBepOutput.parseBepArtifacts(asInputStream(events))
             .getAllOutputArtifacts(path -> true);
 
-    assertThat(BlazeArtifact.getLocalFiles(parsedFilenames))
+    assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
         .containsExactlyElementsIn(filePaths.stream().map(File::new).toArray())
         .inOrder();
   }
@@ -138,7 +139,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
     ImmutableSet<OutputArtifact> parsedFilenames =
         ParsedBepOutput.parseBepArtifacts(asInputStream(events)).getAllOutputArtifacts(filter);
 
-    assertThat(BlazeArtifact.getLocalFiles(parsedFilenames))
+    assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
         .containsExactly(new File("/usr/local/lib/File.py"));
   }
 
@@ -179,7 +180,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
         ParsedBepOutput.parseBepArtifacts(asInputStream(events))
             .getAllOutputArtifacts(path -> true);
 
-    assertThat(BlazeArtifact.getLocalFiles(parsedFilenames))
+    assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
         .containsExactlyElementsIn(filePaths.stream().map(File::new).toArray())
         .inOrder();
   }
@@ -224,7 +225,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
         ParsedBepOutput.parseBepArtifacts(asInputStream(events))
             .getAllOutputArtifacts(path -> true);
 
-    assertThat(BlazeArtifact.getLocalFiles(parsedFilenames))
+    assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
         .containsExactlyElementsIn(allFiles)
         .inOrder();
   }
@@ -261,7 +262,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
         ParsedBepOutput.parseBepArtifacts(asInputStream(events))
             .getAllOutputArtifacts(path -> true);
 
-    assertThat(BlazeArtifact.getLocalFiles(parsedFilenames))
+    assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
         .containsExactlyElementsIn(allFiles)
         .inOrder();
   }
@@ -293,7 +294,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
         ParsedBepOutput.parseBepArtifacts(asInputStream(events))
             .getDirectArtifactsForTarget(Label.create("//some:target"), path -> true);
 
-    assertThat(BlazeArtifact.getLocalFiles(parsedFilenames))
+    assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
         .containsExactlyElementsIn(allFiles)
         .inOrder();
   }
@@ -333,7 +334,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
         ParsedBepOutput.parseBepArtifacts(asInputStream(events))
             .getDirectArtifactsForTarget(Label.create("//some:target"), path -> true);
 
-    assertThat(BlazeArtifact.getLocalFiles(parsedFilenames))
+    assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
         .containsExactlyElementsIn(allFiles)
         .inOrder();
   }
@@ -379,7 +380,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
         ParsedBepOutput.parseBepArtifacts(asInputStream(events))
             .getOutputGroupArtifacts("group-name", path -> true);
 
-    assertThat(BlazeArtifact.getLocalFiles(parsedFilenames))
+    assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
         .containsExactlyElementsIn(allFiles)
         .inOrder();
   }
@@ -420,7 +421,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
         ParsedBepOutput.parseBepArtifacts(asInputStream(events))
             .getOutputGroupArtifacts("group-1", path -> true);
 
-    assertThat(BlazeArtifact.getLocalFiles(parsedFilenames))
+    assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
         .containsExactlyElementsIn(allFiles)
         .inOrder();
   }
@@ -457,7 +458,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
     ImmutableList<OutputArtifact> outputs =
         outputData.values().stream().map(d -> d.artifact).collect(toImmutableList());
 
-    assertThat(BlazeArtifact.getLocalFiles(outputs)).containsExactlyElementsIn(allOutputs);
+    assertThat(LocalFileArtifact.getLocalFiles(outputs)).containsExactlyElementsIn(allOutputs);
   }
 
   @Test
@@ -645,7 +646,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
   }
 
   private static ImmutableList<File> getOutputXmlFiles(BlazeTestResult result) {
-    return BlazeArtifact.getLocalFiles(result.getOutputXmlFiles());
+    return LocalFileArtifact.getLocalFiles(result.getOutputXmlFiles());
   }
 
   private static InputStream asInputStream(BuildEvent.Builder... events) throws Exception {

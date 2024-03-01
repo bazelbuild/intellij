@@ -22,6 +22,7 @@ import com.google.idea.blaze.ext.ChatBotModelGrpc.ChatBotModelBlockingStub;
 import com.google.idea.blaze.ext.CodeSearchGrpc.CodeSearchFutureStub;
 import com.google.idea.blaze.ext.CritiqueServiceGrpc.CritiqueServiceBlockingStub;
 import com.google.idea.blaze.ext.DepServerGrpc.DepServerFutureStub;
+import com.google.idea.blaze.ext.ECatcherServiceGrpc.ECatcherServiceFutureStub;
 import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlockingStub;
 import com.google.idea.blaze.ext.FileApiGrpc.FileApiFutureStub;
 import com.google.idea.blaze.ext.FindingsServiceGrpc.FindingsServiceBlockingStub;
@@ -51,6 +52,7 @@ public class IntelliJExtClient {
             .eventLoopGroup(
                 IntelliJExts.createGroup(new DefaultThreadFactory(EventLoopGroup.class, true)))
             .channelType(IntelliJExts.getClientChannelType())
+            .maxInboundMessageSize(1024 * 1024 * 1024) // To avoid RESOURCE_EXHAUSED errors
             .withOption(ChannelOption.SO_KEEPALIVE, false)
             .usePlaintext()
             .build());
@@ -132,6 +134,10 @@ public class IntelliJExtClient {
 
   public CodeSearchFutureStub getCodeSearchService() {
     return CodeSearchGrpc.newFutureStub(channel);
+  }
+
+  public ECatcherServiceFutureStub getECatcherService() {
+    return ECatcherServiceGrpc.newFutureStub(channel);
   }
 
   public PiperServiceFutureStub getPiperService() {

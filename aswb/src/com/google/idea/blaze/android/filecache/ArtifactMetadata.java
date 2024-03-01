@@ -18,8 +18,9 @@ package com.google.idea.blaze.android.filecache;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.devtools.intellij.model.ProjectData.LocalFile;
 import com.google.devtools.intellij.model.ProjectData.LocalFileOrOutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
-import com.google.idea.blaze.base.filecache.ArtifactState;
+import com.google.idea.blaze.base.filecache.ArtifactStateProtoConverter;
+import com.google.idea.blaze.common.artifact.ArtifactState;
+import com.google.idea.blaze.common.artifact.OutputArtifactWithoutDigest;
 import java.util.Objects;
 
 /** Data class to (de)serialize metadata of an artifact in cache */
@@ -73,7 +74,8 @@ public final class ArtifactMetadata {
       throw new ArtifactNotFoundException(artifact);
     }
     // Serialize to proto to make grabbing the fields easier
-    LocalFileOrOutputArtifact serializedArtifact = artifactState.serializeToProto();
+    LocalFileOrOutputArtifact serializedArtifact =
+        ArtifactStateProtoConverter.toProto(artifactState);
     if (serializedArtifact.hasArtifact()) {
       ProjectData.OutputArtifact o = serializedArtifact.getArtifact();
       return new ArtifactMetadata(o.getRelativePath(), o.getId());

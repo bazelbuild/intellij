@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.errorprone.annotations.MustBeClosed;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.BufferedInputStream;
 import java.io.File;

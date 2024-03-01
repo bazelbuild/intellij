@@ -31,7 +31,7 @@ import org.junit.runners.JUnit4;
 public final class JavaTestFastBuildAspectTest {
 
   private static final String NO_LAUNCHER_TARGET = "";
-  private static final String LAUNCHER_ALIAS = "@bazel_tools//tools/jdk:launcher_flag_alias";
+  private static final String LAUNCHER_ALIAS = "@@bazel_tools//tools/jdk:launcher_flag_alias";
 
   @Rule
   public FastBuildAspectRule aspectLoader =

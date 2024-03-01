@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.command.buildresult;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;

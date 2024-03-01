@@ -27,11 +27,17 @@ public abstract class ProjectInfoStats {
       new AutoValue_ProjectInfoStats.Builder()
           .setBlazeProjectFiles(ImmutableSet.of())
           .setLanguagesActive(ImmutableSet.of())
+          .setProjectTargetCount(0)
+          .setExternalDependencyCount(0)
           .build();
 
   public abstract ImmutableSet<Path> blazeProjectFiles();
 
   public abstract ImmutableSet<QuerySyncLanguage> languagesActive();
+
+  public abstract int projectTargetCount();
+
+  public abstract int externalDependencyCount();
 
   public abstract Builder toBuilder();
 
@@ -46,6 +52,10 @@ public abstract class ProjectInfoStats {
     public abstract Builder setBlazeProjectFiles(ImmutableSet<Path> value);
 
     public abstract Builder setLanguagesActive(ImmutableSet<QuerySyncLanguage> value);
+
+    public abstract Builder setProjectTargetCount(int targetCount);
+
+    public abstract Builder setExternalDependencyCount(int depsCount);
 
     public abstract ProjectInfoStats build();
   }

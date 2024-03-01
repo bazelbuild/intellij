@@ -29,6 +29,7 @@ java_library(
         "@com_google_guava_guava//jar",
         "@flogger//jar",
         "@flogger_system_backend//jar",
+        "@truth//jar",
     ],
 )
 

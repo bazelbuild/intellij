@@ -18,8 +18,8 @@ package com.google.idea.blaze.base.io;
 import static org.junit.Assert.fail;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
+import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
 import com.intellij.util.containers.HashMap;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;

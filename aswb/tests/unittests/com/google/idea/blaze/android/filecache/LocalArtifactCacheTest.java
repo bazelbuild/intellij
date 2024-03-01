@@ -20,7 +20,6 @@ import static com.google.idea.blaze.android.filecache.LocalArtifactCache.CACHE_D
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifactWithoutDigest;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
@@ -32,6 +31,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
+import com.google.idea.blaze.common.artifact.OutputArtifactWithoutDigest;
 import com.google.idea.testing.IntellijRule;
 import java.io.File;
 import java.io.IOException;

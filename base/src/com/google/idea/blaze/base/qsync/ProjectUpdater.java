@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.util.UrlUtil;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProjectListener;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectPath;
@@ -55,7 +56,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.Library.ModifiableModel;
 import com.intellij.openapi.vfs.VfsUtil;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -112,7 +112,7 @@ public class ProjectUpdater implements BlazeProjectListener {
 
   @Override
   public void onNewProjectSnapshot(Context<?> context, BlazeProjectSnapshot graph)
-      throws IOException {
+      throws BuildException {
     updateProjectModel(graph.project(), context);
   }
 
