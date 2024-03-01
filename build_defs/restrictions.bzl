@@ -31,14 +31,8 @@ EXTERNAL_DEPENDENCIES = {
         "//devtools/citc/proto:citc_filesystem_manifest_java_proto",
         "//devtools/citc/proto:java_proto",
     ],
-    "//java/com/google/devtools/intellij/g3plugins/citc/filewatcher:file_state": [
-        "//devtools/citc/proto:java_proto",
-    ],
     "//java/com/google/devtools/intellij/g3plugins/citc/filewatcher:snapshot_differ": [
         "//devtools/srcfs/client/proto:delta_java_proto",
-    ],
-    "//java/com/google/devtools/intellij/g3plugins/citc/filewatcher:vfs_changes_listener": [
-        "//devtools/citc/proto:java_proto",
     ],
     "//java/com/google/devtools/intellij/g3plugins/citc/filewatcher:regurgitator_notification_handler": [
         "//devtools/citc/proto:citc_filesystem_manifest_java_proto",
