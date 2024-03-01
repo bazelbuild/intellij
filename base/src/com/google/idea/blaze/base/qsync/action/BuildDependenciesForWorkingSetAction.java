@@ -22,10 +22,10 @@ import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+
 import java.nio.file.Path;
 
 /**
@@ -35,11 +35,6 @@ import java.nio.file.Path;
 public class BuildDependenciesForWorkingSetAction extends BlazeProjectAction {
   private static final Logger logger =
       Logger.getInstance(BuildDependenciesForWorkingSetAction.class);
-
-  @Override
-  public ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
 
   @Override
   protected QuerySyncStatus querySyncSupport() {

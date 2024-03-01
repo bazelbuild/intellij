@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.java.libraries;
 
-import com.google.idea.blaze.base.actions.BlazeProjectAction;
+import com.google.idea.blaze.base.actions.BackgroundUpdatingBlazeProjectAction;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewEdit;
@@ -32,7 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 
-class ExcludeLibraryAction extends BlazeProjectAction {
+class ExcludeLibraryAction extends BackgroundUpdatingBlazeProjectAction {
 
   @Override
   protected QuerySyncStatus querySyncSupport() {

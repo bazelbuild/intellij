@@ -20,7 +20,7 @@ import static java.util.stream.Collectors.toList;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
-import com.google.idea.blaze.base.actions.BlazeProjectAction;
+import com.google.idea.blaze.base.actions.BackgroundUpdatingBlazeProjectAction;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
+class AddLibraryTargetDirectoryToProjectViewAction extends BackgroundUpdatingBlazeProjectAction {
 
   @Override
   protected QuerySyncStatus querySyncSupport() {

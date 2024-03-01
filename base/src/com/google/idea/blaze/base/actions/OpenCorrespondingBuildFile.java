@@ -28,7 +28,7 @@ import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import java.io.File;
 
-class OpenCorrespondingBuildFile extends BlazeProjectAction {
+class OpenCorrespondingBuildFile extends BackgroundUpdatingBlazeProjectAction {
 
   @Override
   protected QuerySyncStatus querySyncSupport() {

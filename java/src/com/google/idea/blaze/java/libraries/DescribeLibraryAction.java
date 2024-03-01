@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.java.libraries;
 
-import com.google.idea.blaze.base.actions.BlazeProjectAction;
+import com.google.idea.blaze.base.actions.BackgroundUpdatingBlazeProjectAction;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
@@ -32,7 +32,7 @@ import com.intellij.openapi.ui.Messages;
  *
  * <p>Currently just the artifact location of the jars.
  */
-class DescribeLibraryAction extends BlazeProjectAction {
+class DescribeLibraryAction extends BackgroundUpdatingBlazeProjectAction {
 
   @Override
   protected QuerySyncStatus querySyncSupport() {

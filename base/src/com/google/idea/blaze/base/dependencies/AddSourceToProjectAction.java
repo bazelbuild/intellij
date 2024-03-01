@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.dependencies;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.idea.blaze.base.actions.BlazeProjectAction;
+import com.google.idea.blaze.base.actions.BackgroundUpdatingBlazeProjectAction;
 import com.google.idea.blaze.base.dependencies.AddSourceToProjectHelper.LocationContext;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
  * For files not covered by project directories / targets, finds the relevant BUILD target and
  * updates the .blazeproject 'targets' and 'directories' as required.
  */
-class AddSourceToProjectAction extends BlazeProjectAction {
+class AddSourceToProjectAction extends BackgroundUpdatingBlazeProjectAction {
 
   @Override
   protected QuerySyncStatus querySyncSupport() {

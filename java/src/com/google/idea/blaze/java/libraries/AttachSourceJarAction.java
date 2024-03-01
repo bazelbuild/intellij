@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.java.libraries;
 
-import com.google.idea.blaze.base.actions.BlazeProjectAction;
+import com.google.idea.blaze.base.actions.BackgroundUpdatingBlazeProjectAction;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LibraryEditor;
@@ -27,7 +27,7 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.project.Project;
 
-class AttachSourceJarAction extends BlazeProjectAction {
+class AttachSourceJarAction extends BackgroundUpdatingBlazeProjectAction {
 
   @Override
   protected QuerySyncStatus querySyncSupport() {

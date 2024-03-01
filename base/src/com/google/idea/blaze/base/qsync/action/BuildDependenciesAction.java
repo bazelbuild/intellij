@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync.action;
 
-import com.google.idea.blaze.base.actions.BlazeProjectAction;
+import com.google.idea.blaze.base.actions.BackgroundUpdatingBlazeProjectAction;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
 import com.google.idea.blaze.common.Context;
 import com.intellij.icons.AllIcons.Actions;
@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
  * com.google.idea.blaze.qsync.project.BuildGraphData#getProjectTargets(Context, Path)} for a
  * description of what targets dependencies aren built for in each case.
  */
-public class BuildDependenciesAction extends BlazeProjectAction {
+public class BuildDependenciesAction extends BackgroundUpdatingBlazeProjectAction {
 
   private static final String NAME = "Build dependencies";
 

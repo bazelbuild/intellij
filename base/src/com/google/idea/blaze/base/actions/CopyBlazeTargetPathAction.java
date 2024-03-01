@@ -30,7 +30,7 @@ import java.io.File;
 import javax.annotation.Nullable;
 
 /** Copies a blaze target path into the clipboard */
-public class CopyBlazeTargetPathAction extends BlazeProjectAction {
+public class CopyBlazeTargetPathAction extends BackgroundUpdatingBlazeProjectAction {
 
   @Override
   protected QuerySyncStatus querySyncSupport() {

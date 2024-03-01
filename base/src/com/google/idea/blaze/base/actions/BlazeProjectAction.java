@@ -24,6 +24,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 import org.jetbrains.annotations.NotNull;
