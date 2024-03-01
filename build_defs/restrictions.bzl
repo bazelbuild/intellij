@@ -47,7 +47,6 @@ EXTERNAL_DEPENDENCIES = {
     "//java/com/google/devtools/intellij/g3plugins/citc/filewatcher:regurgitator_notification_handler": [
         "//devtools/citc/proto:citc_filesystem_manifest_java_proto",
         "//devtools/citc/proto:java_proto",
-        "//devtools/ide/intellij/filewatcher:regurgitator_java_proto",
         "//devtools/srcfs/client/proto:delta_java_proto",
     ],
     "//java/com/google/devtools/intellij/g3plugins/license:license": [
@@ -55,7 +54,6 @@ EXTERNAL_DEPENDENCIES = {
         "//third_party/java/apache_httpcore:apache_httpcore",
     ],
     "//java/com/google/devtools/intellij/g3plugins/citc/filewatcher:filewatcher": [
-        "//devtools/ide/intellij/filewatcher:regurgitator_java_proto",
         "//devtools/ide/intellij/proto:citc_updates_java_grpc",
         "//java/com/google/common/labs/concurrent:concurrent",
     ],
@@ -81,7 +79,6 @@ ALLOWED_EXTERNAL_TEST_DEPENDENCIES = [
     "//devtools/citc/proto:java_proto",
     "//devtools/deps/depserver/proto:dependency_service_java_proto",
     "//devtools/ide/intellij/filewatcher:regurgitator_client_mock_bin",
-    "//devtools/ide/intellij/filewatcher:regurgitator_java_proto",
     "//devtools/srcfs/client/proto:delta_java_proto",
     "//google/corp/devtools/intellij/services/v1:dependency_service_java_grpc",
     "//java/com/google/common/flags:flags",
