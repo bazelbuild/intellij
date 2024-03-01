@@ -40,6 +40,7 @@ java_grpc_library(
 proto_library(
     name = "perforce_api_proto",
     srcs = glob(["perforce/*.proto"]),
+    # END-EXTERNAL
 )
 
 java_proto_library(
