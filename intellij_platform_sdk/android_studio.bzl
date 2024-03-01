@@ -237,6 +237,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
         "lib/junit4.jar",  # Plugin code shouldn't need junit, and plugin tests may be driven by a different version.
         "lib/junit.jar",  # Exclude to avoid warnings: "Multiple versions of JUnit detected on classpath".
         "lib/testFramework.jar",
+        "lib/bouncy-castle.jar",
     ])  # b/183925215: mockito-extensions needs to be removed from these jars.
     native.java_import(
         name = "sdk_import",
