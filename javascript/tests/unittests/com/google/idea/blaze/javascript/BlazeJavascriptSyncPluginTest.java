@@ -106,6 +106,6 @@ public class BlazeJavascriptSyncPluginTest extends BlazeTestCase {
     WorkspaceLanguageSettings workspaceLanguageSettings =
         LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
     LanguageSupport.validateLanguageSettings(context, workspaceLanguageSettings);
-    errorCollector.assertIssues("Workspace type 'javascript' is not supported by this plugin");
+    errorCollector.assertIssues("Workspace type 'javascript' is not supported by this plugin.");
   }
 }
