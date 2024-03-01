@@ -57,9 +57,6 @@ EXTERNAL_DEPENDENCIES = {
         "//devtools/ide/intellij/proto:citc_updates_java_grpc",
         "//java/com/google/common/labs/concurrent:concurrent",
     ],
-    "//third_party/java_src/intellijperforceplugin:intellijperforceplugin": [
-        "//util/task:codes_java_proto",
-    ],
 }
 
 # List of targets that use internal only Guava APIs that need to be cleaned up.
