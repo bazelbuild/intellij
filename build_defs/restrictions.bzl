@@ -28,8 +28,6 @@ _valid = [
 EXTERNAL_DEPENDENCIES = {
     "//java/com/google/devtools/intellij/blaze/plugin/base:base": [
         "//devtools/blueprint:blueprint_file_java_proto",
-        "//devtools/citc/proto:citc_filesystem_manifest_java_proto",
-        "//devtools/citc/proto:java_proto",
     ],
 }
 
