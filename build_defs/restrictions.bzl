@@ -26,11 +26,6 @@ _valid = [
 ]
 
 EXTERNAL_DEPENDENCIES = {
-    "//java/com/google/devtools/intellij/blaze/plugin/base:base": [
-        "//devtools/blueprint:blueprint_file_java_proto",
-        "//devtools/citc/proto:citc_filesystem_manifest_java_proto",
-        "//devtools/citc/proto:java_proto",
-    ],
 }
 
 # List of targets that use internal only Guava APIs that need to be cleaned up.
@@ -193,15 +188,6 @@ def validate_restrictions(dependencies):
     external_dependencies = {str(k.label): [str(vt.label) for vt in v] for (k, v) in dependencies.items()}
     if external_dependencies != EXTERNAL_DEPENDENCIES:
         error = (
-            "\nEXTERNAL_DEPENDENCIES = {\n    " +
-            "\n    ".join(
-                [
-                    "\"" + str(t.label) + "\": [\n        " +
-                    "        ".join(["\"" + str(vt.label) + "\",\n" for vt in v]) +
-                    "    ],"
-                    for (t, v) in dependencies.items()
-                ],
-            ) + "\n}\nEXTERNAL_DEPENCENCIES has changed, replace this variable in restrictions.bzl\n"
         )
         fail(error)
 
