@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.idea.blaze.cpp;
+package com.google.idea.blaze.clwb;
 
 import com.google.idea.blaze.base.wizard2.BazelImportCurrentProjectAction;
 import com.intellij.openapi.fileEditor.FileEditor;

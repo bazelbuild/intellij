@@ -47,4 +47,7 @@
     </component>
   </project-components>
 
+  <extensions defaultExtensionNs="com.intellij.cmake">
+    <notificationActionProvider implementation="com.google.idea.blaze.clwb.BazelCMakeNotificationProvider"/>
+  </extensions>
 </idea-plugin>
