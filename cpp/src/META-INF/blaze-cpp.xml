@@ -68,8 +68,4 @@
   <extensions defaultExtensionNs="com.google.idea.blaze.qsync">
     <BlazeProjectListenerProvider implementation="com.google.idea.blaze.cpp.qsync.CcProjectModelUpdater$Provider" />
   </extensions>
-
-  <extensions defaultExtensionNs="com.intellij.cmake">
-    <notificationActionProvider implementation="com.google.idea.blaze.cpp.BazelCMakeNotificationProvider"/>
-  </extensions>
 </idea-plugin>
