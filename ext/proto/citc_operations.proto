@@ -82,8 +82,23 @@ message ReadCitcManifestRequest {
   // if not provided, read file states from the head.
   optional int64 snapshot_version = 2;
 }
+
 message ReadCitcManifestResponse {
   CitcManifest citc_manifest = 1;
+}
+
+message GetSnapshotDiffRequest {
+  CitcRoot citc_root = 1;
+  // Workspace relative paths to diff.
+  repeated string paths = 2;
+  optional string beging_workspace_id = 3;
+  int64 begin_snapshot = 4;
+  int64 end_snapshot = 5;
+  bool include_fig_annotations = 6;
+}
+message GetSnapshotDiffResponse {
+  repeated string files = 1;
+  repeated string recursive_directories = 2;
 }
 
 //  A locally running intellij-ext service that knows how to act on a local
@@ -103,4 +118,8 @@ service CitcOperationsService {
   // Reads the file states of the citc root.
   rpc ReadCitcManifest(ReadCitcManifestRequest)
       returns (ReadCitcManifestResponse) {}
+  // Retrieves the diff between a snapshot in the current workspace and another
+  // snapsot (possibly in a different workspace.)
+  rpc GetSnapshotDiff(GetSnapshotDiffRequest)
+      returns (GetSnapshotDiffResponse) {}
 }
