@@ -40,6 +40,14 @@ message CitcFileState {
   }
 }
 
+message CitcManifest {
+  // A map from a workspce relative path to the state of the file in the
+  // workspace.
+  map<string, CitcFileState> file_states = 1;
+  // An opaque hash value used to detect changes to the view config.
+  string view_config_hash = 2;
+}
+
 message ReadWorkspaceIdRequest {
   CitcRoot citc_root = 1;
 }
@@ -69,17 +77,17 @@ message ReadStaleSnapshotVersionResponse {
   int64 possibly_stale_snapshot_version = 1;
 }
 
-message ReadFileStatesRequest {
+message ReadCitcManifestRequest {
   CitcRoot citc_root = 1;
   // if not provided, read file states from the head.
   optional int64 snapshot_version = 2;
 }
-message ReadFileStatesResponse {
-  map<string, CitcFileState> file_states = 1;
+message ReadCitcManifestResponse {
+  CitcManifest citc_manifest = 1;
 }
 
-// A locally running intellij-ext service that knows how to act on a local
-// citc root.
+//  A locally running intellij-ext service that knows how to act on a local
+//  citc root.
 service CitcOperationsService {
   // Reads the workspace id of the citc root.
   rpc ReadWorkspaceId(ReadWorkspaceIdRequest)
@@ -93,5 +101,6 @@ service CitcOperationsService {
   rpc ReadStaleSnapshotVersion(ReadStaleSnapshotVersionRequest)
       returns (ReadStaleSnapshotVersionResponse) {}
   // Reads the file states of the citc root.
-  rpc ReadFileStates(ReadFileStatesRequest) returns (ReadFileStatesResponse) {}
+  rpc ReadCitcManifest(ReadCitcManifestRequest)
+      returns (ReadCitcManifestResponse) {}
 }
