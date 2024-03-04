@@ -35,7 +35,6 @@ java_library(
         "@platforms//os:macos": ["@io_netty_netty_transport_classes_kqueue//jar"],
         "//conditions:default": [
             "@io_netty_netty_transport_native_epoll//jar",
-            "@io_netty_netty_transport_classes_epoll//jar"
         ],
     }),
 )
