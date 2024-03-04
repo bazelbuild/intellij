@@ -33,7 +33,9 @@ java_library(
         "@io_grpc_grpc_java//netty",
     ] + select({
         "@platforms//os:macos": ["@io_netty_netty_transport_classes_kqueue//jar"],
-        "//conditions:default": ["@io_netty_netty_transport_native_epoll//jar"],
+        "//conditions:default": [
+            "@io_netty_netty_transport_native_epoll//jar",
+        ],
     }),
 )
 
