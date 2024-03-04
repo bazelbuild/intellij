@@ -20,7 +20,7 @@ import com.google.idea.blaze.ext.BuildCleanerServiceGrpc.BuildCleanerServiceFutu
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
 import com.google.idea.blaze.ext.ChatBotModelGrpc.ChatBotModelBlockingStub;
-import com.google.idea.blaze.ext.CitcOperationsServiceGrpc.CitcOperationsServiceFutureStub;
+import com.google.idea.blaze.ext.CitcOperationsServiceGrpc.CitcOperationsServiceBlockingStub;
 import com.google.idea.blaze.ext.CodeSearchGrpc.CodeSearchFutureStub;
 import com.google.idea.blaze.ext.CritiqueServiceGrpc.CritiqueServiceBlockingStub;
 import com.google.idea.blaze.ext.DepServerGrpc.DepServerFutureStub;
@@ -210,7 +210,7 @@ public final class IntelliJExtService {
     return client.getCritiqueService();
   }
 
-  public CitcOperationsServiceFutureStub getCitcOperationsService() throws IOException {
+  public CitcOperationsServiceBlockingStub getCitcOperationsService() throws IOException {
     IntelliJExtBlockingStub unused = connect();
     return client.getCitcOperationsService();
   }
