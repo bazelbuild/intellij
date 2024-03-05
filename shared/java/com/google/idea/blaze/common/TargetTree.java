@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync.project;
+package com.google.idea.blaze.common;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.google.idea.blaze.common.Label;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.HashMap;

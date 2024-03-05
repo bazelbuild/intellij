@@ -28,3 +28,14 @@ java_library(
         "@flogger//jar",
     ],
 )
+
+java_test(
+    name = "TargetTreeTest",
+    size = "small",
+    srcs = ["TargetTreeTest.java"],
+    deps = [
+        "//shared",
+        "@junit//jar",
+        "@truth//jar",
+    ],
+)
