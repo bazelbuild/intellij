@@ -54,6 +54,7 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
+import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches.Format;
 import com.jetbrains.cidr.lang.toolchains.CidrSwitchBuilder;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
@@ -326,18 +327,24 @@ public final class BlazeCWorkspace implements ProjectComponent {
             id, displayName, null, OCResolveConfiguration.DEFAULT_FILE_SEPARATORS);
     for (Map.Entry<OCLanguageKind, PerLanguageCompilerOpts> languageEntry :
         configLanguages.entrySet()) {
-      OCCompilerSettings.ModifiableModel langSettings =
-          config.getLanguageCompilerSettings(languageEntry.getKey());
       PerLanguageCompilerOpts configForLanguage = languageEntry.getValue();
-      langSettings.setCompiler(configForLanguage.kind, configForLanguage.compiler, directory);
-      langSettings.setCompilerSwitches(configForLanguage.switches);
+      if (CppSupportChecker.isSupportedCppConfiguration(
+          configForLanguage.switches.getList(Format.RAW), directory.toPath())) {
+        OCCompilerSettings.ModifiableModel langSettings =
+            config.getLanguageCompilerSettings(languageEntry.getKey());
+        langSettings.setCompiler(configForLanguage.kind, configForLanguage.compiler, directory);
+        langSettings.setCompilerSwitches(configForLanguage.switches);
+      }
     }
 
     for (Map.Entry<VirtualFile, PerFileCompilerOpts> fileEntry : configSourceFiles.entrySet()) {
       PerFileCompilerOpts compilerOpts = fileEntry.getValue();
-      OCCompilerSettings.ModifiableModel fileCompilerSettings =
-          config.addSource(fileEntry.getKey(), compilerOpts.kind);
-      fileCompilerSettings.setCompilerSwitches(compilerOpts.switches);
+      if (CppSupportChecker.isSupportedCppConfiguration(
+          compilerOpts.switches.getList(Format.RAW), directory.toPath())) {
+        OCCompilerSettings.ModifiableModel fileCompilerSettings =
+            config.addSource(fileEntry.getKey(), compilerOpts.kind);
+        fileCompilerSettings.setCompilerSwitches(compilerOpts.switches);
+      }
     }
   }
   /** Group compiler options for a specific file. */
