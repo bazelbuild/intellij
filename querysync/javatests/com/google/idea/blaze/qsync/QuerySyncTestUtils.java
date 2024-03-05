@@ -91,6 +91,20 @@ public class QuerySyncTestUtils {
     }
   }
 
+  public static class LabelIgnoringCanonicalFormat extends Label {
+    public LabelIgnoringCanonicalFormat(String label) {
+      super(label);
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (!(that instanceof Label)) {
+        return false;
+      }
+      return cleanLabel(this.toString()).equals(cleanLabel(that.toString()));
+    }
+  }
+
   /**
    * Creates a dummy source jar at the specified destination with a package structure defined by
    * {@code pathPackages}
