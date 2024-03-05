@@ -39,12 +39,21 @@ java_library(
     ],
 )
 
+java_library(
+    name = "proto",
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
+    exports = [
+        "//shared/java/com/google/idea/blaze/common/proto",
+    ],
+)
+
 test_suite(
     name = "tests",
     tests = [
         "//shared/javatests/com/google/idea/blaze/common:LabelTest",
         "//shared/javatests/com/google/idea/blaze/common:TargetTreeTest",
         "//shared/javatests/com/google/idea/blaze/common/artifact:BuildArtifactCacheTest",
+        "//shared/javatests/com/google/idea/blaze/common/proto:ProtoStringInternerTest",
         "//shared/javatests/com/google/idea/blaze/common/vcs:VcsStateTest",
     ],
     visibility = DEFAULT_TEST_VISIBILITY,
