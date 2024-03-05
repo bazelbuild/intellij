@@ -57,7 +57,18 @@ ALLOWED_EXTERNAL_TEST_DEPENDENCIES = [
     "//tools/build_defs/js/providers:providers",
     "//tools/build_defs/js/providers:utils",
     "//tools/jdk:singlejar",
-]
+] + select({
+    "//intellij_platform_sdk:android-studio-intellij-ext": [],
+    "//conditions:default": [
+        "//devtools/api:finding_java_proto",
+        "//devtools/api:textrange_java_proto",
+        "//devtools/linter/service:linter_java_proto",
+        "//google/corp/devtools/intellij/services/v1:lint_service_java_grpc",
+        "//java/com/google/net/rpc3:rpc3",
+        "//java/com/google/net/rpc3/testing:status_subject",
+        "//util/task:codes_java_proto",
+    ],
+})
 
 # A list of targets currently with not allowed dependencies
 EXISTING_EXTERNAL_TEST_VIOLATIONS = [
