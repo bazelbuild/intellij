@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync.project;
+package com.google.idea.blaze.common;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.idea.blaze.common.Label;
 import java.nio.file.Path;
 import org.junit.Test;
 import org.junit.runner.RunWith;
