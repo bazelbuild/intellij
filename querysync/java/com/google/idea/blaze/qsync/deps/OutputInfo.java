@@ -24,9 +24,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
-import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
 import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcCompilationInfo;
+import java.time.Instant;
 import java.util.Optional;
 
 /** A data class that collecting and converting output group artifacts. */
@@ -41,7 +41,7 @@ public abstract class OutputInfo {
           ImmutableSet.of(),
           ImmutableSet.of(),
           0,
-          Optional.empty());
+          DependencyBuildContext.create("empty", Instant.MIN, Optional.empty()));
 
   /** Returns the proto containing details of artifacts per target produced by the aspect. */
   public abstract ImmutableSet<JavaArtifacts> getArtifactInfo();
@@ -54,11 +54,7 @@ public abstract class OutputInfo {
 
   public abstract int getExitCode();
 
-  /**
-   * The state of the VCS from the build that produced this output. May be absent if the bazel
-   * instance of VCS state do not support this.
-   */
-  public abstract Optional<VcsState> getVcsState();
+  public abstract DependencyBuildContext getBuildContext();
 
   public ImmutableList<OutputArtifact> get(OutputGroup group) {
     return getOutputGroups().get(group);
@@ -94,14 +90,14 @@ public abstract class OutputInfo {
       ImmutableSet<CcCompilationInfo> ccInfo,
       ImmutableSet<Label> targetsWithErrors,
       int exitCode,
-      Optional<VcsState> vcsState) {
+      DependencyBuildContext buildContext) {
     return new AutoValue_OutputInfo.Builder()
         .setArtifactInfo(artifacts)
         .setCcCompilationInfo(ccInfo)
         .setOutputGroups(ImmutableListMultimap.copyOf(allArtifacts))
         .setTargetsWithErrors(targetsWithErrors)
         .setExitCode(exitCode)
-        .setVcsState(vcsState)
+        .setBuildContext(buildContext)
         .build();
   }
 
@@ -125,7 +121,7 @@ public abstract class OutputInfo {
 
     public abstract Builder setExitCode(int value);
 
-    public abstract Builder setVcsState(Optional<VcsState> value);
+    public abstract Builder setBuildContext(DependencyBuildContext buildContext);
 
     public abstract OutputInfo build();
   }
