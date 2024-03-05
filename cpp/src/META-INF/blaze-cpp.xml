@@ -26,6 +26,8 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.google.idea.blaze.cpp.BlazeCompilerFlagsProcessorProvider"
                     interface="com.google.idea.blaze.cpp.BlazeCompilerFlagsProcessor$Provider"/>
+    <extensionPoint interface="com.google.idea.blaze.cpp.CppSupportChecker"
+        qualifiedName="com.google.idea.blaze.cpp.CppSupportChecker" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
