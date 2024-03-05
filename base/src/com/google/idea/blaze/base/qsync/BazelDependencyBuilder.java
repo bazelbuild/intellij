@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.qsync;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
@@ -57,6 +58,7 @@ import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
+import com.google.idea.blaze.qsync.deps.DependencyBuildContext;
 import com.google.idea.blaze.qsync.deps.OutputGroup;
 import com.google.idea.blaze.qsync.deps.OutputInfo;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
@@ -77,6 +79,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -201,6 +204,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
           .forEach(builder::addBlazeFlags);
       buildDepsStatsBuilder.ifPresent(
           stats -> stats.setBuildFlags(builder.build().toArgumentList()));
+      Instant buildTime = Instant.now();
       BlazeBuildOutputs outputs =
           invoker.getCommandRunner().run(project, builder, buildResultHelper, context, ImmutableMap.of());
       buildDepsStatsBuilder.ifPresent(
@@ -215,7 +219,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
           ThrowOption.ALLOW_PARTIAL_SUCCESS,
           ThrowOption.ALLOW_BUILD_FAILURE);
 
-      return createOutputInfo(outputs, outputGroups, context);
+      return createOutputInfo(outputs, outputGroups, buildTime, context);
     }
   }
 
@@ -240,7 +244,10 @@ public class BazelDependencyBuilder implements DependencyBuilder {
   }
 
   private OutputInfo createOutputInfo(
-      BlazeBuildOutputs blazeBuildOutputs, Set<OutputGroup> outputGroups, BlazeContext context)
+      BlazeBuildOutputs blazeBuildOutputs,
+      Set<OutputGroup> outputGroups,
+      Instant buildTime,
+      BlazeContext context)
       throws BuildException {
     ImmutableListMultimap<OutputGroup, OutputArtifact> allArtifacts =
         GroupedOutputArtifacts.create(blazeBuildOutputs, outputGroups);
@@ -298,6 +305,10 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     if (blazeBuildOutputs.sourceUri.isPresent() && vcsHandler.isPresent()) {
       vcsState = vcsHandler.get().vcsStateForSourceUri(blazeBuildOutputs.sourceUri.get());
     }
+    DependencyBuildContext buildContext =
+        DependencyBuildContext.create(
+            // getOnlyElement should be safe since we never shard querysync builds:
+            getOnlyElement(blazeBuildOutputs.getBuildIds()), buildTime, vcsState);
 
     return OutputInfo.create(
         allArtifacts,
@@ -308,7 +319,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
             .map(Label::of)
             .collect(toImmutableSet()),
         blazeBuildOutputs.buildResult.exitCode,
-        vcsState);
+        buildContext);
   }
 
   @FunctionalInterface
