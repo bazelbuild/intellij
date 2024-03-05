@@ -52,6 +52,8 @@ import com.google.idea.blaze.qsync.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.ProjectProtoTransform.Registry;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.VcsStateDiffer;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
+import com.google.idea.blaze.qsync.deps.NewArtifactTracker;
 import com.google.idea.blaze.qsync.java.PackageStatementParser;
 import com.google.idea.blaze.qsync.java.ParallelPackageReader;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -144,25 +146,38 @@ public class ProjectLoader {
     BuildArtifactCache artifactCache =
         BuildArtifactCache.create(
             ideProjectBasePath.resolve("buildcache"), artifactFetcher, executor);
-    ArtifactTrackerImpl artifactTracker =
-        new ArtifactTrackerImpl(
-            BlazeDataStorage.getProjectDataDir(importSettings).toPath(),
-            ideProjectBasePath,
-            artifactFetcher,
-            projectPathResolver,
-            latestProjectDef,
-            projectTransformRegistry,
-            fileRefresher);
-    artifactTracker.initialize();
+
+    ArtifactTracker<BlazeContext> artifactTracker;
+    RenderJarArtifactTracker renderJarArtifactTracker;
+    AppInspectorArtifactTracker appInspectorArtifactTracker;
+    if (QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT) {
+      artifactTracker = new NewArtifactTracker<>();
+      renderJarArtifactTracker = new RenderJarArtifactTrackerImpl();
+      appInspectorArtifactTracker = new AppInspectorArtifactTrackerImpl();
+    } else {
+      ArtifactTrackerImpl impl =
+          new ArtifactTrackerImpl(
+              BlazeDataStorage.getProjectDataDir(importSettings).toPath(),
+              ideProjectBasePath,
+              artifactFetcher,
+              projectPathResolver,
+              latestProjectDef,
+              projectTransformRegistry,
+              fileRefresher);
+      impl.initialize();
+      artifactTracker = impl;
+      renderJarArtifactTracker = impl;
+      appInspectorArtifactTracker = impl;
+    }
+    RenderJarTracker renderJarTracker =
+        new RenderJarTrackerImpl(graph, renderJarBuilder, renderJarArtifactTracker);
+    AppInspectorTracker appInspectorTracker =
+        new AppInspectorTrackerImpl(appInspectorBuilder, appInspectorArtifactTracker);
     ProjectArtifactStore artifactStore =
         new ProjectArtifactStore(
             ideProjectBasePath, workspaceRoot.path(), artifactCache, fileRefresher);
     DependencyTracker dependencyTracker =
         new DependencyTrackerImpl(graph, dependencyBuilder, artifactTracker);
-    RenderJarTracker renderJarTracker =
-        new RenderJarTrackerImpl(graph, renderJarBuilder, artifactTracker);
-    AppInspectorTracker appInspectorTracker =
-        new AppInspectorTrackerImpl(appInspectorBuilder, artifactTracker);
     ProjectRefresher projectRefresher =
         new ProjectRefresher(
             vcsHandler.map(BlazeVcsHandler::getVcsStateDiffer).orElse(VcsStateDiffer.NONE),
@@ -191,8 +206,8 @@ public class ProjectLoader {
             workspaceRoot,
             artifactTracker,
             artifactStore,
-            artifactTracker,
-            artifactTracker,
+            renderJarArtifactTracker,
+            appInspectorArtifactTracker,
             dependencyTracker,
             renderJarTracker,
             appInspectorTracker,

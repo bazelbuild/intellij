@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,17 @@ import java.nio.file.Path;
 import java.util.Set;
 
 /** A local cache of built render jars. */
-public interface RenderJarArtifactTracker {
+public class RenderJarArtifactTrackerImpl implements RenderJarArtifactTracker {
+  // TODO(b/323346056) implement this!
 
-  /**
-   * Fetches, caches and sets up new render jar artifacts.
-   *
-   * @return The set of files that were updated.
-   */
-  ImmutableSet<Path> update(Set<Label> targets, RenderJarInfo renderJarInfo, BlazeContext context)
-      throws BuildException;
+  @Override
+  public ImmutableSet<Path> update(
+      Set<Label> targets, RenderJarInfo renderJarInfo, BlazeContext context) throws BuildException {
+    return ImmutableSet.of();
+  }
 
-  /** Returns the list of render jars */
-  ImmutableList<File> getRenderJars();
+  @Override
+  public ImmutableList<File> getRenderJars() {
+    return ImmutableList.of();
+  }
 }

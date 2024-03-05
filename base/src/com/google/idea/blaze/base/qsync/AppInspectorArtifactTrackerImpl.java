@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,21 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Set;
 
-/** A local cache of built render jars. */
-public interface RenderJarArtifactTracker {
+/** A local cache of built app inspector artifacts. */
+public class AppInspectorArtifactTrackerImpl implements AppInspectorArtifactTracker {
+  // TODO(b/323346056) implement this!
 
-  /**
-   * Fetches, caches and sets up new render jar artifacts.
-   *
-   * @return The set of files that were updated.
-   */
-  ImmutableSet<Path> update(Set<Label> targets, RenderJarInfo renderJarInfo, BlazeContext context)
-      throws BuildException;
-
-  /** Returns the list of render jars */
-  ImmutableList<File> getRenderJars();
+  @Override
+  public ImmutableSet<Path> update(
+      Set<Label> targets, AppInspectorInfo appInspectorInfo, BlazeContext context)
+      throws BuildException {
+    return ImmutableSet.of();
+  }
 }
