@@ -34,6 +34,7 @@ import com.google.common.collect.Sets;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Target;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.proto.ProtoStringInterner;
 import com.google.idea.blaze.qsync.query.Query.SourceFile;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -135,7 +136,8 @@ public abstract class QuerySummary {
     Map<String, Query.Rule> ruleMap = Maps.newHashMap();
     Set<String> packagesWithErrors = Sets.newHashSet();
     Build.Target target;
-    while ((target = Target.parseDelimitedFrom(protoInputStream)) != null) {
+    ProtoStringInterner interner = new ProtoStringInterner();
+    while ((target = interner.intern(Target.parseDelimitedFrom(protoInputStream))) != null) {
       switch (target.getType()) {
         case SOURCE_FILE:
           Query.SourceFile sourceFile =
@@ -335,7 +337,8 @@ public abstract class QuerySummary {
     }
 
     public QuerySummary build() {
-      return QuerySummary.create(builder.build());
+      ProtoStringInterner interner = new ProtoStringInterner();
+      return QuerySummary.create(interner.intern(builder.build()));
     }
   }
 }
