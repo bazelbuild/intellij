@@ -18,7 +18,7 @@ package com.google.idea.blaze.common.proto;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.Interner;
-import com.google.idea.blaze.common.StringInterner;
+import com.google.idea.blaze.common.Interners;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;
 import java.util.List;
@@ -27,8 +27,8 @@ import java.util.stream.IntStream;
 /**
  * Eliminates duplicate strings inside a proto message by interning them.
  *
- * <p>All fields in a proto message are examined and strings passed through {@link StringInterner}
- * to ensure that identical strings use the same instance in memory. This then allows duplicated
+ * <p>All fields in a proto message are examined and strings passed through {@link Interners} to
+ * ensure that identical strings use the same instance in memory. This then allows duplicated
  * strings to be garbage collected.
  */
 public class ProtoStringInterner {
@@ -37,7 +37,7 @@ public class ProtoStringInterner {
 
   @SuppressWarnings("unchecked") // casts of proto field values should be safe.
   public static <T extends Message> T intern(T message) {
-    Interner<String> stringInterner = StringInterner.INSTANCE;
+    Interner<String> stringInterner = Interners.STRING;
     if (message == null) {
       return null;
     }

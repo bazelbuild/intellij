@@ -42,6 +42,7 @@ java_library(
         "//shared",
         "//shared:artifact",
         "//shared:exception",
+        "//shared:proto",
         "//shared:vcs",
         "//third_party/auto_value",
         "@error_prone_annotations//jar",

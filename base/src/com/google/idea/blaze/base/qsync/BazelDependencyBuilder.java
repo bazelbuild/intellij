@@ -55,6 +55,7 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.artifact.BlazeArtifact;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
+import com.google.idea.blaze.common.proto.ProtoStringInterner;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
@@ -338,11 +339,13 @@ public class BazelDependencyBuilder implements DependencyBuilder {
   }
 
   private JavaArtifacts readArtifactInfoFile(BlazeArtifact file) throws BuildException {
-    return readArtifactInfoProtoFile(JavaArtifacts.newBuilder(), file).build();
+    return ProtoStringInterner.intern(
+        readArtifactInfoProtoFile(JavaArtifacts.newBuilder(), file).build());
   }
 
   private CcCompilationInfo readCcInfoFile(BlazeArtifact file) throws BuildException {
-    return readArtifactInfoProtoFile(CcCompilationInfo.newBuilder(), file).build();
+    return ProtoStringInterner.intern(
+        readArtifactInfoProtoFile(CcCompilationInfo.newBuilder(), file).build());
   }
 
   protected <B extends Message.Builder> B readArtifactInfoProtoFile(B builder, BlazeArtifact file)
