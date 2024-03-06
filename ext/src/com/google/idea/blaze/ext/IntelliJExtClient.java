@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.ext;
 
+import com.google.idea.blaze.ext.BlueprintServiceGrpc.BlueprintServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildCleanerServiceGrpc.BuildCleanerServiceFutureStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
@@ -151,5 +152,9 @@ public class IntelliJExtClient {
 
   public PiperServiceBlockingStub getPiperServiceBlocking() {
     return PiperServiceGrpc.newBlockingStub(channel);
+  }
+
+  public BlueprintServiceBlockingStub getBlueprintService() {
+    return BlueprintServiceGrpc.newBlockingStub(channel);
   }
 }
