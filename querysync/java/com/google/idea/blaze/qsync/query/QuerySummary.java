@@ -18,6 +18,7 @@ package com.google.idea.blaze.qsync.query;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.collect.Multimaps.flatteningToMultimap;
+import static com.google.idea.blaze.common.proto.ProtoStringInterner.intern;
 import static java.util.Objects.requireNonNull;
 
 import com.google.auto.value.AutoValue;
@@ -34,7 +35,6 @@ import com.google.common.collect.Sets;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Target;
 import com.google.idea.blaze.common.Label;
-import com.google.idea.blaze.common.proto.ProtoStringInterner;
 import com.google.idea.blaze.qsync.query.Query.SourceFile;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -136,8 +136,7 @@ public abstract class QuerySummary {
     Map<String, Query.Rule> ruleMap = Maps.newHashMap();
     Set<String> packagesWithErrors = Sets.newHashSet();
     Build.Target target;
-    ProtoStringInterner interner = new ProtoStringInterner();
-    while ((target = interner.intern(Target.parseDelimitedFrom(protoInputStream))) != null) {
+    while ((target = intern(Target.parseDelimitedFrom(protoInputStream))) != null) {
       switch (target.getType()) {
         case SOURCE_FILE:
           Query.SourceFile sourceFile =
@@ -337,8 +336,7 @@ public abstract class QuerySummary {
     }
 
     public QuerySummary build() {
-      ProtoStringInterner interner = new ProtoStringInterner();
-      return QuerySummary.create(interner.intern(builder.build()));
+      return QuerySummary.create(intern(builder.build()));
     }
   }
 }

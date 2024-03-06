@@ -47,32 +47,28 @@ public class ProtoStringInternerTest {
 
   @Test
   public void basic_string() throws ParseException {
-    ProtoStringInterner interner = new ProtoStringInterner();
-    MyMessage message1 = interner.intern(parse("string: 'value'"));
-    MyMessage message2 = interner.intern(parse("string: 'value'"));
+    MyMessage message1 = ProtoStringInterner.intern(parse("string: 'value'"));
+    MyMessage message2 = ProtoStringInterner.intern(parse("string: 'value'"));
     assertThat(message1.getString()).isSameInstanceAs(message2.getString());
   }
 
   @Test
   public void no_strings_message_not_copied() throws ParseException {
-    ProtoStringInterner interner = new ProtoStringInterner();
     MyMessage original = parse("integer: 42");
-    MyMessage interned = interner.intern(original);
+    MyMessage interned = ProtoStringInterner.intern(original);
     assertThat(interned).isSameInstanceAs(original);
   }
 
   @Test
   public void repeated_strings() throws ParseException {
-    ProtoStringInterner interner = new ProtoStringInterner();
     MyMessage original = parse("strings: 'one'", "strings: 'one'", "strings: 'two'");
-    MyMessage interned = interner.intern(original);
+    MyMessage interned = ProtoStringInterner.intern(original);
     assertThat(interned).isEqualTo(original);
     assertThat(interned.getStrings(0)).isSameInstanceAs(interned.getStrings(1));
   }
 
   @Test
   public void string_map_values() throws ParseException {
-    ProtoStringInterner interner = new ProtoStringInterner();
     MyMessage original =
         parse(
             "string_map {",
@@ -88,7 +84,7 @@ public class ProtoStringInternerTest {
             "  value: 'puppies'",
             "}");
 
-    MyMessage interned = interner.intern(original);
+    MyMessage interned = ProtoStringInterner.intern(original);
     assertThat(interned).isEqualTo(original);
     assertThat(interned.getStringMapMap().get("one"))
         .isSameInstanceAs(interned.getStringMapMap().get("two"));
@@ -96,11 +92,10 @@ public class ProtoStringInternerTest {
 
   @Test
   public void string_map_keys() throws ParseException {
-    ProtoStringInterner interner = new ProtoStringInterner();
     MyMessage original =
         parse("string: 'one'", "string_map {", "  key: 'one'", "  value: 'kittens'", "}");
 
-    MyMessage interned = interner.intern(original);
+    MyMessage interned = ProtoStringInterner.intern(original);
     assertThat(interned).isEqualTo(original);
     assertThat(interned.getString())
         .isSameInstanceAs(Iterables.getOnlyElement(interned.getStringMapMap().keySet()));
@@ -108,20 +103,18 @@ public class ProtoStringInternerTest {
 
   @Test
   public void nested_string() throws ParseException {
-    ProtoStringInterner interner = new ProtoStringInterner();
     MyMessage original = parse("string: 'hello'", "sub_message {", "  sub_string: 'hello'", "}");
 
-    MyMessage interned = interner.intern(original);
+    MyMessage interned = ProtoStringInterner.intern(original);
     assertThat(interned).isEqualTo(original);
     assertThat(interned.getString()).isSameInstanceAs(interned.getSubMessage().getSubString());
   }
 
   @Test
   public void nested_repeated_field_no_strings_not_copied() throws ParseException {
-    ProtoStringInterner interner = new ProtoStringInterner();
     MyMessage original =
         parse("sub_messages {", "  sub_int: 1", "}", "sub_messages {", "  sub_int: 2", "}");
-    MyMessage interned = interner.intern(original);
+    MyMessage interned = ProtoStringInterner.intern(original);
     assertThat(interned).isSameInstanceAs(original);
   }
 }
