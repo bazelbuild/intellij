@@ -16,12 +16,22 @@
 package com.google.idea.blaze.common;
 
 import com.google.common.collect.Interner;
-import com.google.common.collect.Interners;
+import java.nio.file.Path;
 
-/** Stores a static string interner instance to enable de-duplication of string in-memory. */
-public class StringInterner {
+/**
+ * Stores static interner instances to enable de-duplication of string and other objects in-memory.
+ */
+public class Interners {
 
-  private StringInterner() {}
+  private Interners() {}
 
-  public static final Interner<String> INSTANCE = Interners.newWeakInterner();
+  public static final Interner<String> STRING =
+      com.google.common.collect.Interners.newWeakInterner();
+
+  public static final Interner<Path> PATH = com.google.common.collect.Interners.newWeakInterner();
+
+  /** Returns an interned path from the given string. */
+  public static Path pathOf(String path) {
+    return PATH.intern(Path.of(path));
+  }
 }

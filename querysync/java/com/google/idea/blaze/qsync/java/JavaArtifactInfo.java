@@ -22,6 +22,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
+import com.google.idea.blaze.common.Interners;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaTargetArtifacts;
 import java.nio.file.Path;
@@ -63,11 +64,11 @@ public abstract class JavaArtifactInfo {
     // Note, the proto contains a list of sources, we take the parent as we want directories instead
     return new AutoValue_JavaArtifactInfo(
         Label.of(proto.getTarget()),
-        proto.getJarsList().stream().map(Path::of).collect(toImmutableList()),
-        proto.getIdeAarsList().stream().map(Path::of).collect(toImmutableList()),
-        proto.getGenSrcsList().stream().map(Path::of).collect(toImmutableList()),
-        proto.getSrcsList().stream().map(Path::of).collect(toImmutableSet()),
-        proto.getSrcjarsList().stream().map(Path::of).collect(toImmutableSet()),
+        proto.getJarsList().stream().map(Interners::pathOf).collect(toImmutableList()),
+        proto.getIdeAarsList().stream().map(Interners::pathOf).collect(toImmutableList()),
+        proto.getGenSrcsList().stream().map(Interners::pathOf).collect(toImmutableList()),
+        proto.getSrcsList().stream().map(Interners::pathOf).collect(toImmutableSet()),
+        proto.getSrcjarsList().stream().map(Interners::pathOf).collect(toImmutableSet()),
         proto.getAndroidResourcesPackage());
   }
 

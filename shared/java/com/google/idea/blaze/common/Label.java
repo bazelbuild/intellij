@@ -20,7 +20,6 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Interner;
-import com.google.common.collect.Interners;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -38,7 +37,8 @@ import java.util.List;
  */
 public class Label {
 
-  private static final Interner<Label> interner = Interners.newWeakInterner();
+  private static final Interner<Label> interner =
+      com.google.common.collect.Interners.newWeakInterner();
 
   private final String label;
 
@@ -72,7 +72,7 @@ public class Label {
       Preconditions.checkArgument(label.startsWith("//"), label);
       Preconditions.checkArgument(label.contains(":"), label);
     }
-    this.label = StringInterner.INSTANCE.intern(label);
+    this.label = Interners.STRING.intern(label);
   }
 
   public Path getPackage() {

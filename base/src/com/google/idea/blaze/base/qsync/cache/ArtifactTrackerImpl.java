@@ -68,6 +68,7 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.artifact.ArtifactFetcher;
 import com.google.idea.blaze.common.artifact.ArtifactFetcher.ArtifactDestination;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
+import com.google.idea.blaze.common.proto.ProtoStringInterner;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.TestSourceGlobMatcher;
@@ -272,7 +273,8 @@ public class ArtifactTrackerImpl
     cachePathToArtifactKeyMap.clear();
     try (InputStream stream = new GZIPInputStream(Files.newInputStream(persistentFile))) {
       ArtifactTrackerState saved =
-          ArtifactTrackerState.parseFrom(stream, ExtensionRegistry.getEmptyRegistry());
+          ProtoStringInterner.intern(
+              ArtifactTrackerState.parseFrom(stream, ExtensionRegistry.getEmptyRegistry()));
       if (saved.getVersion() != STORAGE_VERSION) {
         return;
       }
