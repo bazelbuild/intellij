@@ -27,24 +27,17 @@ import java.util.stream.IntStream;
 /**
  * Eliminates duplicate strings inside a proto message by interning them.
  *
- * <p>All fields in a proto message are examined and strings passed through a {@link Interner} to
- * ensure that identical strings use the same instance in memory. This then allows duplicated
+ * <p>All fields in a proto message are examined and strings passed through {@link StringInterner}
+ * to ensure that identical strings use the same instance in memory. This then allows duplicated
  * strings to be garbage collected.
  */
 public class ProtoStringInterner {
 
-  private final Interner<String> stringInterner;
-
-  public ProtoStringInterner(Interner<String> interner) {
-    this.stringInterner = interner;
-  }
-
-  public ProtoStringInterner() {
-    this(StringInterner.INSTANCE);
-  }
+  private ProtoStringInterner() {}
 
   @SuppressWarnings("unchecked") // casts of proto field values should be safe.
-  public <T extends Message> T intern(T message) {
+  public static <T extends Message> T intern(T message) {
+    Interner<String> stringInterner = StringInterner.INSTANCE;
     if (message == null) {
       return null;
     }
@@ -68,7 +61,7 @@ public class ProtoStringInterner {
           if (field.isRepeated()) {
             List<Message> originalList = (List<Message>) original;
             List<Message> internedList =
-                originalList.stream().map(this::intern).collect(toImmutableList());
+                originalList.stream().map(ProtoStringInterner::intern).collect(toImmutableList());
             if (!IntStream.range(0, internedList.size())
                 .allMatch(i -> internedList.get(i) == originalList.get(i))) {
               interned = internedList;
