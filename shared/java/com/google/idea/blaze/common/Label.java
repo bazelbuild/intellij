@@ -72,7 +72,7 @@ public class Label {
       Preconditions.checkArgument(label.startsWith("//"), label);
       Preconditions.checkArgument(label.contains(":"), label);
     }
-    this.label = label;
+    this.label = StringInterner.INSTANCE.intern(label);
   }
 
   public Path getPackage() {
