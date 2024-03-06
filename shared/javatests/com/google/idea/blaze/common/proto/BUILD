@@ -1,3 +1,9 @@
+load("//:build-visibility.bzl", "DEFAULT_TEST_VISIBILITY")
+
+package(
+    default_visibility = DEFAULT_TEST_VISIBILITY,
+)
+
 proto_library(
     name = "test_proto",
     srcs = ["test_message.proto"],
