@@ -16,6 +16,7 @@
 package com.google.idea.blaze.ext;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.idea.blaze.ext.BlueprintServiceGrpc.BlueprintServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildCleanerServiceGrpc.BuildCleanerServiceFutureStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
@@ -256,5 +257,10 @@ public final class IntelliJExtService {
   public PiperServiceBlockingStub getPiperServiceBlocking() throws IOException {
     IntelliJExtBlockingStub unused = connect();
     return client.getPiperServiceBlocking();
+  }
+
+  public BlueprintServiceBlockingStub getBlueprintService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getBlueprintService();
   }
 }
