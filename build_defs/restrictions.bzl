@@ -67,7 +67,6 @@ EXISTING_EXTERNAL_TEST_VIOLATIONS = [
     "//javatests/com/google/devtools/intellij/blaze/plugin/shell:blaze_integration_test_wrapper",
     "//javatests/com/google/devtools/intellij/g3plugins/integrity:integritycheck",
     "//javatests/com/google/devtools/intellij/g3plugins/services/depserver:unit_tests",
-    "//javatests/com/google/devtools/intellij/g3plugins/services/linter:unit_tests",
 ]
 
 RestrictedInfo = provider(
