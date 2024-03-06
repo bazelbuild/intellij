@@ -41,18 +41,14 @@ ALLOWED_EXTERNAL_TEST_DEPENDENCIES = [
     "//devtools/blaze/integration:mobile_install",
     "//devtools/blaze/integration:mock_tools",
     "//devtools/blaze/main:blaze",
-    "//devtools/deps/depserver/proto:dependency_service_java_proto",
-    "//google/corp/devtools/intellij/services/v1:dependency_service_java_grpc",
     "//java/com/google/common/flags:flags",
     "//java/com/google/common/hash:hash",
     "//java/com/google/experiments/framework/options:exempt_existing_client_java",
     "//java/com/google/testing/junit/junit4:api",
     "//java/com/google/testing/junit/runner:Runner_deploy.jar",
-    "//java/com/google/testing/testsize:annotations",
     "//javascript/typescript:providers",
     "//third_party/java/apache_bcel:apache_bcel",
     "//third_party/java/flogger:flogger",
-    "//third_party/java/truth/extensions:proto",
     "//tools/build_defs/js/providers:providers",
     "//tools/build_defs/js/providers:utils",
     "//tools/jdk:singlejar",
@@ -66,7 +62,6 @@ EXISTING_EXTERNAL_TEST_VIOLATIONS = [
     "//javatests/com/google/devtools/intellij/blaze/plugin/base:utils",
     "//javatests/com/google/devtools/intellij/blaze/plugin/shell:blaze_integration_test_wrapper",
     "//javatests/com/google/devtools/intellij/g3plugins/integrity:integritycheck",
-    "//javatests/com/google/devtools/intellij/g3plugins/services/depserver:unit_tests",
 ]
 
 RestrictedInfo = provider(
