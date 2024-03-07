@@ -107,7 +107,7 @@ public final class Label extends TargetExpression {
     }
     int slashesIndex = label.indexOf("//");
     logger.assertTrue(slashesIndex >= 0);
-    return label.substring(0, slashesIndex).replaceFirst("^@+", "");
+    return label.substring(1, slashesIndex);
   }
 
   /**
