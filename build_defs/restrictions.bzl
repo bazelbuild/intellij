@@ -36,31 +36,18 @@ EXISTING_UNCHECKED = [
 
 # A temporary list of external targets that plugins are depending on. DO NOT ADD TO THIS
 ALLOWED_EXTERNAL_TEST_DEPENDENCIES = [
-    "//dart/build_defs/dart_library:dartinfo",
-    "//devtools/blaze/integration:android_tools",
-    "//devtools/blaze/integration:mobile_install",
-    "//devtools/blaze/integration:mock_tools",
-    "//devtools/blaze/main:blaze",
     "//java/com/google/common/flags:flags",
     "//java/com/google/common/hash:hash",
-    "//java/com/google/experiments/framework/options:exempt_existing_client_java",
     "//java/com/google/testing/junit/junit4:api",
-    "//java/com/google/testing/junit/runner:Runner_deploy.jar",
-    "//javascript/typescript:providers",
     "//third_party/java/apache_bcel:apache_bcel",
     "//third_party/java/flogger:flogger",
-    "//tools/build_defs/js/providers:providers",
-    "//tools/build_defs/js/providers:utils",
     "//tools/jdk:singlejar",
 ]
 
 # A list of targets currently with not allowed dependencies
 EXISTING_EXTERNAL_TEST_VIOLATIONS = [
-    "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:blaze_integration_tests",
     "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:integration_tests",
     "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:unit_tests",
-    "//javatests/com/google/devtools/intellij/blaze/plugin/base:utils",
-    "//javatests/com/google/devtools/intellij/blaze/plugin/shell:blaze_integration_test_wrapper",
     "//javatests/com/google/devtools/intellij/g3plugins/integrity:integritycheck",
 ]
 
