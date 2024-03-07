@@ -151,7 +151,11 @@ public class ProjectLoader {
     RenderJarArtifactTracker renderJarArtifactTracker;
     AppInspectorArtifactTracker appInspectorArtifactTracker;
     if (QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT) {
-      artifactTracker = new NewArtifactTracker<>();
+      NewArtifactTracker<BlazeContext> tracker =
+          new NewArtifactTracker<>(
+              BlazeDataStorage.getProjectDataDir(importSettings).toPath(), artifactCache);
+
+      artifactTracker = tracker;
       renderJarArtifactTracker = new RenderJarArtifactTrackerImpl();
       appInspectorArtifactTracker = new AppInspectorArtifactTrackerImpl();
     } else {

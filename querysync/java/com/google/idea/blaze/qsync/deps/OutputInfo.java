@@ -41,7 +41,7 @@ public abstract class OutputInfo {
           ImmutableSet.of(),
           ImmutableSet.of(),
           0,
-          DependencyBuildContext.create("empty", Instant.MIN, Optional.empty()));
+          DependencyBuildContext.create("empty", Instant.EPOCH, Optional.empty()));
 
   /** Returns the proto containing details of artifacts per target produced by the aspect. */
   public abstract ImmutableSet<JavaArtifacts> getArtifactInfo();
