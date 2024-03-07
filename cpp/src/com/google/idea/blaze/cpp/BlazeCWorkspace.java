@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
+import com.google.idea.blaze.base.sync.workspace.VirtualIncludesHandler;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -70,8 +71,8 @@ import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -182,8 +183,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
             workspaceRoot,
             blazeProjectData.getBlazeInfo().getExecutionRoot(),
             blazeProjectData.getBlazeInfo().getOutputBase(),
-            blazeProjectData.getWorkspacePathResolver(),
-            blazeProjectData.getTargetMap());
+            blazeProjectData.getWorkspacePathResolver());
 
     int progress = 0;
 
@@ -218,7 +218,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
         // transitiveDefines are sourced from a target's (and transitive deps) "defines" attribute
         ImmutableList<String> transitiveDefineOptions =
-            targetIdeInfo.getcIdeInfo().getTransitiveDefines().stream()
+                targetIdeInfo.getcIdeInfo().getTransitiveDefines().stream()
                 .map(s -> "-D" + s)
                 .collect(toImmutableList());
 
@@ -257,6 +257,10 @@ public final class BlazeCWorkspace implements ProjectComponent {
                 .map(file -> "-I" + file.getAbsolutePath())
                 .collect(toImmutableList());
 
+        Path rootPath = workspaceRoot.directory().toPath();
+        ImmutableList<String> includePrefixHints = VirtualIncludesHandler.collectIncludeHints(rootPath,
+            targetKey, blazeProjectData, executionRootPathResolver, indicator);
+
         for (VirtualFile vf : resolveConfiguration.getSources(targetKey)) {
           OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(vf);
           if (kind == null) {
@@ -272,6 +276,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
           fileSpecificSwitchBuilder.addAllRaw(iOptionIncludeDirectories);
           fileSpecificSwitchBuilder.addAllRaw(isystemOptionIncludeDirectories);
           fileSpecificSwitchBuilder.addAllRaw(plainLocalCopts);
+          fileSpecificSwitchBuilder.addAllRaw(includePrefixHints);
 
           PerFileCompilerOpts perFileCompilerOpts =
               new PerFileCompilerOpts(kind, fileSpecificSwitchBuilder.build());

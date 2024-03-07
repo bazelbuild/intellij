@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import java.io.File;
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -48,20 +47,17 @@ public class ExecutionRootPathResolver {
   private final File executionRoot;
   private final File outputBase;
   private final WorkspacePathResolver workspacePathResolver;
-  private final TargetMap targetMap;
 
   public ExecutionRootPathResolver(
       BuildSystemProvider buildSystemProvider,
       WorkspaceRoot workspaceRoot,
       File executionRoot,
       File outputBase,
-      WorkspacePathResolver workspacePathResolver,
-      TargetMap targetMap) {
+      WorkspacePathResolver workspacePathResolver) {
     this.buildArtifactDirectories = buildArtifactDirectories(buildSystemProvider, workspaceRoot);
     this.executionRoot = executionRoot;
     this.outputBase = outputBase;
     this.workspacePathResolver = workspacePathResolver;
-    this.targetMap = targetMap;
   }
 
   @Nullable
@@ -76,8 +72,7 @@ public class ExecutionRootPathResolver {
         WorkspaceRoot.fromProject(project),
         projectData.getBlazeInfo().getExecutionRoot(),
         projectData.getBlazeInfo().getOutputBase(),
-        projectData.getWorkspacePathResolver(),
-        projectData.getTargetMap());
+        projectData.getWorkspacePathResolver());
   }
 
   private static ImmutableList<String> buildArtifactDirectories(
@@ -114,25 +109,7 @@ public class ExecutionRootPathResolver {
     }
     String firstPathComponent = getFirstPathComponent(path.getAbsoluteOrRelativeFile().getPath());
     if (buildArtifactDirectories.contains(firstPathComponent)) {
-      // Build artifacts accumulate under the execution root, independent of symlink settings
-
-      if(Registry.is("bazel.sync.resolve.virtual.includes") &&
-          VirtualIncludesHandler.containsVirtualInclude(path)) {
-        // Resolve virtual_include from execution root either to local or external workspace for correct code insight
-        ImmutableList<File> resolved = ImmutableList.of();
-        try {
-          resolved = VirtualIncludesHandler.resolveVirtualInclude(path, outputBase,
-              workspacePathResolver, targetMap);
-        } catch (Throwable throwable) {
-          LOG.error("Failed to resolve virtual includes for " + path, throwable);
-        }
-
-        return resolved.isEmpty()
-            ? ImmutableList.of(path.getFileRootedAt(executionRoot))
-            : resolved;
-      } else {
-        return ImmutableList.of(path.getFileRootedAt(executionRoot));
-      }
+      return ImmutableList.of(path.getFileRootedAt(executionRoot));
     }
     if (firstPathComponent.equals(externalPrefix)) { // In external workspace
       // External workspaces accumulate under the output base.
@@ -154,7 +131,7 @@ public class ExecutionRootPathResolver {
    * workspace is a link to workspace root then follows it and returns a path to workspace root
    */
   @NotNull
-  private ImmutableList<File> resolveToExternalWorkspaceWithSymbolicLinkResolution(
+  public ImmutableList<File> resolveToExternalWorkspaceWithSymbolicLinkResolution(
       ExecutionRootPath path) {
     File fileInExecutionRoot = path.getFileRootedAt(outputBase);
 
