@@ -111,4 +111,12 @@ public class LabelTest extends BlazeTestCase {
     assertThat(label.blazePackage()).isEqualTo(packagePath);
     assertThat(label.targetName()).isEqualTo(targetName);
   }
+
+  @Test
+  public void testCanonicalExternalWorkspace() {
+    Label label = Label.create("@@workspace//path:target");
+
+    assertThat(label.isExternal()).isTrue();
+    assertThat(label.externalWorkspaceName()).isEqualTo("workspace");
+  }
 }
