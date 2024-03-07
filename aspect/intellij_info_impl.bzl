@@ -515,7 +515,6 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
         cpp_variables = cc_common.create_compile_variables(
             feature_configuration = feature_configuration,
             cc_toolchain = cpp_toolchain,
-            add_legacy_cxx_options = True,
             user_compile_flags = copts + cxxopts,
         )
         c_options = cc_common.get_memory_inefficient_command_line(
