@@ -6,7 +6,7 @@ package ij.common.test;
 option java_package = "com.google.idea.blaze.common.proto";
 
 message MyMessage {
-  optional string string = 1;
+  string string = 1;
   repeated string strings = 2;
   map<string, string> string_map = 3;
   int32 integer = 4;
@@ -15,6 +15,6 @@ message MyMessage {
 }
 
 message SubMessage {
-  optional string sub_string = 1;
-  optional int32 sub_int = 2;
+  string sub_string = 1;
+  int32 sub_int = 2;
 }
