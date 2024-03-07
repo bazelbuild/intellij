@@ -15,31 +15,127 @@
  */
 package com.google.idea.blaze.qsync.deps;
 
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.errorprone.annotations.concurrent.GuardedBy;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.artifact.BuildArtifactCache;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
+import com.google.idea.blaze.common.proto.ProtoStringInterner;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.java.ArtifactTrackerProto;
+import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
+import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
+import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaTargetArtifacts;
+import com.google.protobuf.ExtensionRegistry;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
-/** Placeholder for the new artifact tracker logic. */
+/**
+ * The artifact tracker performs the following tasks:
+ *
+ * <ul>
+ *   <li>Keep track of which dependencies have been built, when they were build, and the set of
+ *       artifacts produced by each.
+ *   <li>Requests that all artifacts are cached by {@link BuildArtifactCache}.
+ *   <li>Provides details of build artifacts, allowing the project proto to be updated accordingly.
+ * </ul>
+ */
 public class NewArtifactTracker<C extends Context<C>> implements ArtifactTracker<C> {
 
-  public NewArtifactTracker() {
-    // TODO(b/323346056) Implement this.
+  private static final Logger logger = Logger.getLogger(NewArtifactTracker.class.getName());
+
+  private final BuildArtifactCache artifactCache;
+  private final Path stateFile;
+
+  // Lock for making updates to the mutable state
+  private final Object stateLock = new Object();
+
+  @GuardedBy("stateLock")
+  private final Map<Label, TargetBuildInfo> builtDeps = Maps.newHashMap();
+
+  public NewArtifactTracker(Path projectDirectory, BuildArtifactCache artifactCache) {
+    this.artifactCache = artifactCache;
+    this.stateFile = projectDirectory.resolve("artifact_state");
+    loadState();
+  }
+
+  public ImmutableCollection<TargetBuildInfo> getBuiltDeps() {
+    synchronized (stateLock) {
+      return ImmutableList.copyOf(builtDeps.values());
+    }
   }
 
   @Override
   public void clear() throws IOException {
-    // TODO(b/323346056) Implement this.
+    // TODO(b/323346056) the caller also expects the artifacts that the IDE consumes to be cleared
+    //   but we don't own those here.
+    synchronized (stateLock) {
+      builtDeps.clear();
+    }
+    saveState();
   }
 
   @Override
   public void update(Set<Label> targets, OutputInfo outputInfo, C context) throws BuildException {
-    // TODO(b/323346056) Implement this.
+    ListenableFuture<?> artifactsCached =
+        artifactCache.addAll(outputInfo.getOutputGroups().values(), context);
+
+    ImmutableMap<Path, String> digestMap =
+        outputInfo.getOutputGroups().values().stream()
+            .collect(toImmutableMap(a -> Path.of(a.getRelativePath()), OutputArtifact::getDigest));
+
+    synchronized (stateLock) {
+      for (JavaArtifacts javaArtifacts : outputInfo.getArtifactInfo()) {
+        for (JavaTargetArtifacts javaTarget : javaArtifacts.getArtifactsList()) {
+          JavaArtifactInfo artifactInfo = JavaArtifactInfo.create(javaTarget, digestMap::get);
+          TargetBuildInfo targetInfo =
+              TargetBuildInfo.forJavaTarget(artifactInfo, outputInfo.getBuildContext());
+          builtDeps.put(artifactInfo.label(), targetInfo);
+        }
+      }
+
+      for (Label label : targets) {
+        if (!builtDeps.containsKey(label)) {
+          logger.warning(
+              "Target " + label + " was not built. If the target is an alias, this is expected");
+          builtDeps.put(
+              label,
+              TargetBuildInfo.forJavaTarget(
+                  JavaArtifactInfo.empty(label), outputInfo.getBuildContext()));
+        }
+      }
+    }
+    try {
+      saveState();
+    } catch (IOException e) {
+      throw new BuildException("Failed to write artifact state", e);
+    }
+
+    try {
+      Object unused = Uninterruptibles.getUninterruptibly(artifactsCached);
+    } catch (ExecutionException e) {
+      throw new BuildException("Failed to cache build artifacts", e);
+    }
   }
 
   @Override
@@ -56,8 +152,9 @@ public class NewArtifactTracker<C extends Context<C>> implements ArtifactTracker
 
   @Override
   public Set<Label> getLiveCachedTargets() {
-    // TODO(b/323346056) Implement this.
-    return ImmutableSet.of();
+    synchronized (stateLock) {
+      return builtDeps.keySet();
+    }
   }
 
   @Override
@@ -68,11 +165,46 @@ public class NewArtifactTracker<C extends Context<C>> implements ArtifactTracker
 
   @Override
   public Integer getJarsCount() {
+    // TODO(b/323346056) figure out where this functionality should live now.
     return 0;
   }
 
   @Override
   public Iterable<Path> getBugreportFiles() {
     return ImmutableList.of();
+  }
+
+  private void saveState() throws IOException {
+    ArtifactTrackerStateSerializer serializer;
+    synchronized (stateLock) {
+      serializer = new ArtifactTrackerStateSerializer().visitDepsMap(builtDeps);
+    }
+    // TODO(b/328563748) write to a new file and then rename to avoid the risk of truncation.
+    try (OutputStream stream = new GZIPOutputStream(Files.newOutputStream(stateFile))) {
+      serializer.toProto().writeTo(stream);
+    }
+  }
+
+  private void loadState() {
+    if (!Files.exists(stateFile)) {
+      return;
+    }
+    ArtifactTrackerProto.ArtifactTrackerState state;
+    try (InputStream stream = new GZIPInputStream(Files.newInputStream(stateFile))) {
+      state =
+          ProtoStringInterner.intern(
+              ArtifactTrackerProto.ArtifactTrackerState.parseFrom(
+                  stream, ExtensionRegistry.getEmptyRegistry()));
+    } catch (IOException e) {
+      logger.log(Level.WARNING, "Failed to read artifact tracker state from " + stateFile, e);
+      return;
+    }
+
+    ArtifactTrackerStateDeserializer deserializer = new ArtifactTrackerStateDeserializer();
+    deserializer.visit(state);
+
+    synchronized (stateLock) {
+      builtDeps.putAll(deserializer.getBuiltDepsMap());
+    }
   }
 }

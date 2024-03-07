@@ -1,6 +1,7 @@
 package(
     default_visibility = [
         "//base:__subpackages__",
+        "//querysync:__subpackages__",
         "//shared:__subpackages__",
     ],
 )
