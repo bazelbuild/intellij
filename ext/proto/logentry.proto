@@ -60,6 +60,7 @@ message IntellijLogEntry {
     SyncStats sync_stats = 28;
     HighlightStats highlight_stats = 29;
     RpcCall rpc_call = 30;
+    Refactoring refactoring = 31;
   }
 }
 
@@ -595,4 +596,32 @@ message RpcCall {
   optional int64 server_elapsed_time_ms = 4;
   optional uint32 canonical_code = 5;
   optional string error_message = 6;
+}
+
+message Refactoring {
+  message TextRange {
+    optional uint32 start_offset = 1;
+    optional uint32 start_line = 2;
+    optional uint32 start_column = 3;
+    optional uint32 end_offset = 4;
+    optional uint32 end_line = 5;
+    optional uint32 end_column = 6;
+    optional string file_path = 7;
+  }
+
+  optional string refactoring_id = 1;
+  optional string workspace_id = 2;
+  optional uint64 snapshot_before = 3;
+  optional uint64 snapshot_after = 4;
+  // The selected text when the refactoring was executed.
+  // In case of a caret, the start and end values will be the same.
+  optional TextRange selection = 5;
+  // IntelliJ element ranges before the refactoring. Note that this does not
+  // include all changed ranges in the file and depends on the refactoring
+  // implementation.
+  repeated TextRange element_ranges_before = 6;
+  // IntelliJ element ranges after the refactoring. Note that this does not
+  // include all changed ranges in the file and depends on the refactoring
+  // implementation.
+  repeated TextRange element_ranges_after = 7;
 }
