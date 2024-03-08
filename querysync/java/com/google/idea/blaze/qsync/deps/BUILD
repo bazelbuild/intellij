@@ -19,6 +19,7 @@ java_library(
         "//third_party/auto_value",
         "@com_google_guava_guava//jar",
         "@com_google_protobuf//:protobuf_java",
+        "@error_prone_annotations//jar",
     ],
 )
 
