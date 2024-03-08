@@ -32,7 +32,7 @@ public class TargetExpression
   // still Serializable as part of ProjectViewSet
   public static final long serialVersionUID = 1L;
 
-  protected static final Pattern VALID_REPO_NAME = Pattern.compile("@[\\w\\-.]*");
+  protected static final Pattern VALID_REPO_NAME = Pattern.compile("@@?[\\w\\-.]*");
 
   private final String expression;
 
