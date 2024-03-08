@@ -29,8 +29,8 @@ import java.util.function.Function;
 /**
  * An artifact produced by a build.
  *
- * <p>This includes the digest of the artifact as indicated by bazel, it's output path and the
- * target that produced it.
+ * <p>This includes the digest of the artifact as indicated by bazel, its output path and the target
+ * that produced it.
  *
  * <p>Note, for the old {@link com.google.idea.blaze.base.qsync.cache.ArtifactTrackerImpl} codepaths
  * the digest will not be populated.
