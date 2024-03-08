@@ -4,6 +4,7 @@ package com.google.idea.blaze.ext.perforce;
 
 option java_package = "com.google.idea.blaze.ext.p4";
 option java_outer_classname = "PresubmitProto";
+option go_api_flag = "OPEN_TO_OPAQUE_HYBRID";  // See go/go-api-flag.
 
 message PresubmitOverallResult {
   optional Presubmit.Status.Code status = 1;

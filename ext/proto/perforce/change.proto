@@ -7,6 +7,7 @@ import "ext/proto/perforce/source_file.proto";
 
 option java_package = "com.google.idea.blaze.ext.p4";
 option java_outer_classname = "ChangeProto";
+option go_api_flag = "OPEN_TO_OPAQUE_HYBRID";  // See go/go-api-flag.
 
 message ChangeDescription {
   optional string text = 1;

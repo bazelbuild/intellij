@@ -6,6 +6,7 @@ import "ext/proto/perforce/base.proto";
 import "ext/proto/perforce/status.proto";
 import "ext/proto/perforce/workspace.proto";
 
+option go_api_flag = "OPEN_TO_OPAQUE_HYBRID";  // See go/go-api-flag.
 option java_package = "com.google.idea.blaze.ext.p4";
 
 message GetWorkspacesRequest {

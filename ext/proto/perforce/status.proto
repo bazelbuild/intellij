@@ -2,8 +2,11 @@ syntax = "proto2";
 
 package com.google.idea.blaze.ext.perforce;
 
+import "net/proto2/proto/descriptor.proto";
+
 option java_package = "com.google.idea.blaze.ext.p4";
 option java_multiple_files = true;
+option go_api_flag = "OPEN_TO_OPAQUE_HYBRID";  // See go/go-api-flag.
 
 message PerforceStatus {
   optional int32 code = 1;

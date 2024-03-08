@@ -22,6 +22,9 @@ proto_library(
         "linter.proto",
         "logentry.proto",
     ] + glob(["perforce/*.proto"]),
+    deps = [
+        "//net/proto2/proto:descriptor",
+    ],
     # END-EXTERNAL
 )
 
@@ -41,6 +44,9 @@ java_grpc_library(
 proto_library(
     name = "perforce_api_proto",
     srcs = glob(["perforce/*.proto"]),
+    deps = [
+        "//net/proto2/proto:descriptor",
+    ],
     # END-EXTERNAL
 )
 

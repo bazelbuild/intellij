@@ -6,6 +6,7 @@ import "ext/proto/perforce/base.proto";
 
 option java_package = "com.google.idea.blaze.ext.p4";
 option java_outer_classname = "SourceFileProto";
+option go_api_flag = "OPEN_TO_OPAQUE_HYBRID";  // See go/go-api-flag.
 
 message SourceFile {
   optional SourceFileId source_file_id = 1;

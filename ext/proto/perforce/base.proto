@@ -2,7 +2,10 @@ syntax = "proto2";
 
 package com.google.idea.blaze.ext.perforce;
 
+import "net/proto2/proto/descriptor.proto";
+
 option java_package = "com.google.idea.blaze.ext.p4";
+option go_api_flag = "OPEN_TO_OPAQUE_HYBRID";  // See go/go-api-flag.
 
 message ClientName {
   optional string name = 1;
@@ -154,4 +157,3 @@ enum Permission {
   PERMISSION_READ = 2;
   PERMISSION_WRITE = 3;
 }
-
