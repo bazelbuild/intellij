@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.qsync.deps;
 
+
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
