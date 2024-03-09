@@ -36,19 +36,10 @@ EXISTING_UNCHECKED = [
 
 # A temporary list of external targets that plugins are depending on. DO NOT ADD TO THIS
 ALLOWED_EXTERNAL_TEST_DEPENDENCIES = [
-    "//java/com/google/common/flags:flags",
-    "//java/com/google/common/hash:hash",
-    "//java/com/google/testing/junit/junit4:api",
-    "//third_party/java/apache_bcel:apache_bcel",
-    "//third_party/java/flogger:flogger",
-    "//tools/jdk:singlejar",
 ]
 
 # A list of targets currently with not allowed dependencies
 EXISTING_EXTERNAL_TEST_VIOLATIONS = [
-    "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:integration_tests",
-    "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:unit_tests",
-    "//javatests/com/google/devtools/intellij/g3plugins/integrity:integritycheck",
 ]
 
 RestrictedInfo = provider(
@@ -225,30 +216,20 @@ restricted_test_deps_aspect = aspect(
     attr_aspects = ["*"],
 )
 
-def _validate_test_dependencies(ctx):
+def _validate_test_dependencies_impl(ctx):
     dependencies = {}
     for k in ctx.attr.deps:
-        if not str(k.label).endswith("_tests") and not _in_tests(k):
-            fail("Undeclared test location: " + str(k))
         if RestrictedInfo in k:
             dependencies.update(k[RestrictedInfo].dependencies)
     _validate_test_restrictions(dependencies, ctx.attr.allowed_external_dependencies, ctx.attr.existing_external_violations)
-    fake_file = ctx.actions.declare_file("fake_file.txt")
-    ctx.actions.write(
-        fake_file,
-        """#!/bin/sh
+    return [DefaultInfo(files = depset())]
 
-        true
-        """,
-    )
-    return [DefaultInfo(executable = fake_file)]
-
-validate_test_dependencies_test = rule(
-    implementation = _validate_test_dependencies,
+_validate_test_dependencies = rule(
+    implementation = _validate_test_dependencies_impl,
     attrs = {
         "allowed_external_dependencies": attr.string_list(),
         "existing_external_violations": attr.string_list(),
         "deps": attr.label_list(aspects = [restricted_test_deps_aspect]),
+        "data": attr.label(),
     },
-    test = True,
 )
