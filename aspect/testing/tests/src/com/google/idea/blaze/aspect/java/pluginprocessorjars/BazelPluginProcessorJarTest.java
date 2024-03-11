@@ -32,11 +32,10 @@ import org.junit.runners.JUnit4;
  */
 @RunWith(JUnit4.class)
 public class BazelPluginProcessorJarTest extends BazelIntellijAspectTest {
-  // blaze and bazel have different annotation processor paths & names.
-  // Warning: rules_jvm_external version used here has to be in sync with the version in MODULE.bazel
+  // The external repository name in these paths is simplified, actual paths will be mapped to match them.
   private static final String JAR_STR =
-      jarString("external/rules_jvm_external~6.0~maven~maven/com/google/auto/value/auto-value/1.10.4/processed_auto-value-1.10.4.jar", /*iJar=*/ null, /*sourceJar=*/ null);
-  private static final String OUTPUT_GROUP_FILES = "../rules_jvm_external~6.0~maven~maven/com/google/auto/value/auto-value/1.10.4/processed_auto-value-1.10.4.jar";
+      jarString("external/maven/com/google/auto/value/auto-value/1.10.4/processed_auto-value-1.10.4.jar", /*iJar=*/ null, /*sourceJar=*/ null);
+  private static final String OUTPUT_GROUP_FILES = "../maven/com/google/auto/value/auto-value/1.10.4/processed_auto-value-1.10.4.jar";
 
   @Test
   public void ruleWithNoPlugins() throws Exception {
@@ -53,10 +52,14 @@ public class BazelPluginProcessorJarTest extends BazelIntellijAspectTest {
     assertThat(
             targetIdeInfo.getJavaIdeInfo().getPluginProcessorJarsList().stream()
                 .map(IntellijAspectTest::libraryArtifactToString)
+                .map(p -> simplifyPath(p))
                 .collect(toList()))
         .contains(JAR_STR);
 
-    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
+    assertThat(
+            getOutputGroupFiles(testFixture, "intellij-resolve-java").stream()
+                .map(p -> simplifyPath(p))
+                .collect(toList()))
         .contains(OUTPUT_GROUP_FILES);
   }
 
@@ -68,9 +71,23 @@ public class BazelPluginProcessorJarTest extends BazelIntellijAspectTest {
     assertThat(
             targetIdeInfo.getJavaIdeInfo().getPluginProcessorJarsList().stream()
                 .map(IntellijAspectTest::libraryArtifactToString)
+                .map(p -> simplifyPath(p))
                 .collect(toList()))
         .contains(JAR_STR);
-    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
+
+    assertThat(
+            getOutputGroupFiles(testFixture, "intellij-resolve-java").stream()
+                .map(p -> simplifyPath(p))
+                .collect(toList()))
         .contains(OUTPUT_GROUP_FILES);
+  }
+
+  /** Simplify external dependencies paths by simplifying the repository name part
+   * For example,
+   * `external/rules_jvm_external~5.3~maven~com_google_guava_guava/jar` will be 
+   * `external/com_google_guava_guava/jar`
+   */
+  private static String simplifyPath(String path) {
+    return path.replaceAll("/.*~", "/");
   }
 }
