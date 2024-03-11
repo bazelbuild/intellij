@@ -17,8 +17,9 @@ package com.google.idea.blaze.android.cppimpl;
 
 import com.android.tools.ndk.AndroidSysroot;
 import com.android.tools.ndk.configuration.NdkConfigurationValidatorKt;
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.cpp.CppSupportChecker;
+import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
+import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches.Format;
 import java.nio.file.Path;
 
 /**
@@ -29,9 +30,9 @@ public class NdkCppSupportChecker implements CppSupportChecker {
 
   @Override
   public boolean supportsCppConfiguration(
-      ImmutableList<String> compilerSwitches, Path workspaceRoot) {
+      CidrCompilerSwitches compilerSwitches, Path workspaceRoot) {
     return NdkConfigurationValidatorKt.isValidNdkConfiguration(
-        compilerSwitches,
+        compilerSwitches.getList(Format.RAW),
         workspaceRoot,
         AndroidSysroot::isValidAndroidSysroot,
         AndroidSysroot::isValidAndroidSysrootUsrInclude,

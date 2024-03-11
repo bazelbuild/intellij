@@ -54,7 +54,6 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
-import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches.Format;
 import com.jetbrains.cidr.lang.toolchains.CidrSwitchBuilder;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
@@ -329,7 +328,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         configLanguages.entrySet()) {
       PerLanguageCompilerOpts configForLanguage = languageEntry.getValue();
       if (CppSupportChecker.isSupportedCppConfiguration(
-          configForLanguage.switches.getList(Format.RAW), directory.toPath())) {
+          configForLanguage.switches, directory.toPath())) {
         OCCompilerSettings.ModifiableModel langSettings =
             config.getLanguageCompilerSettings(languageEntry.getKey());
         langSettings.setCompiler(configForLanguage.kind, configForLanguage.compiler, directory);
@@ -340,7 +339,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
     for (Map.Entry<VirtualFile, PerFileCompilerOpts> fileEntry : configSourceFiles.entrySet()) {
       PerFileCompilerOpts compilerOpts = fileEntry.getValue();
       if (CppSupportChecker.isSupportedCppConfiguration(
-          compilerOpts.switches.getList(Format.RAW), directory.toPath())) {
+          compilerOpts.switches, directory.toPath())) {
         OCCompilerSettings.ModifiableModel fileCompilerSettings =
             config.addSource(fileEntry.getKey(), compilerOpts.kind);
         fileCompilerSettings.setCompilerSwitches(compilerOpts.switches);

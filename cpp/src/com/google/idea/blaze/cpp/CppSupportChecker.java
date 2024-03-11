@@ -15,11 +15,10 @@
  */
 package com.google.idea.blaze.cpp;
 
-import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
 import java.nio.file.Path;
-import java.util.List;
 
 /** Checks whether or not the IDE supports a given CPP configuration. */
 public interface CppSupportChecker {
@@ -29,9 +28,10 @@ public interface CppSupportChecker {
 
   Logger logger = Logger.getInstance(CppSupportChecker.class);
 
-  static boolean isSupportedCppConfiguration(List<String> compilerSwitches, Path workspaceRoot) {
+  static boolean isSupportedCppConfiguration(
+      CidrCompilerSwitches compilerSwitches, Path workspaceRoot) {
     for (CppSupportChecker checker : EP_NAME.getExtensionList()) {
-      if (checker.supportsCppConfiguration(ImmutableList.copyOf(compilerSwitches), workspaceRoot)) {
+      if (checker.supportsCppConfiguration(compilerSwitches, workspaceRoot)) {
         logger.info("CPP support allowed by " + checker.getClass().getName());
         return true;
       }
@@ -39,5 +39,5 @@ public interface CppSupportChecker {
     return false;
   }
 
-  boolean supportsCppConfiguration(ImmutableList<String> compilerSwitches, Path workspaceRoot);
+  boolean supportsCppConfiguration(CidrCompilerSwitches switches, Path workspaceRoot);
 }
