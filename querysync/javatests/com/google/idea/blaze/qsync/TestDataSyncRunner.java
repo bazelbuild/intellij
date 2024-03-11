@@ -41,7 +41,6 @@ public class TestDataSyncRunner {
 
   private final Context<?> context;
   private final PackageReader packageReader;
-
   public TestDataSyncRunner(Context<?> context, PackageReader packageReader) {
     this.context = context;
     this.packageReader = packageReader;
@@ -69,7 +68,8 @@ public class TestDataSyncRunner {
             Predicates.alwaysTrue(),
             context,
             projectDefinition,
-            newDirectExecutorService());
+            newDirectExecutorService(),
+            false);
     Project project = converter.createProject(buildGraphData);
     return BlazeProjectSnapshot.builder()
         .queryData(pqsd)
