@@ -59,4 +59,9 @@ public class BlazeMenuGroup extends DefaultActionGroup {
   public boolean isDumbAware() {
     return true;
   }
+
+  @Override
+  public ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
 }

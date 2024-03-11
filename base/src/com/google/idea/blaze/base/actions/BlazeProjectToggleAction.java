@@ -56,4 +56,9 @@ public abstract class BlazeProjectToggleAction extends ToggleAction {
   }
 
   protected void updateForBlazeProject(Project project, AnActionEvent e) {}
+
+  @Override
+  public ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }
