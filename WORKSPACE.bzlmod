@@ -257,9 +257,9 @@ http_archive(
     url = CLION_233_URL,
 )
 
-CLION_241_SHA = "b485736db693d34eb9882a1f5a8b20432ef1b8616432635f35589bd5e0691bb2"
+CLION_241_SHA = "55c9130a6b6fda96a9e45766392ee7b2322d66c1d66e2ef89be38227fbbbcb96"
 
-CLION_241_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/241.13688.39-EAP-SNAPSHOT/clion-241.13688.39-EAP-SNAPSHOT.zip"
+CLION_241_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/241.14494.27-EAP-SNAPSHOT/clion-241.14494.27-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "clion_2024_1",
@@ -287,9 +287,9 @@ http_archive(
     url = DEVKIT_233_URL,
 )
 
-DEVKIT_241_SHA = "604c9b557d1a46696d2ccce87f681953abdabd2ca8fe474fb2def7378c4513a4"
+DEVKIT_241_SHA = "06b6a8a22d4f213a3738ebcbf61e34231d74500ba6395eaefea3a0f0dc334f82"
 
-DEVKIT_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/241.14494.17/DevKit-241.14494.17.zip"
+DEVKIT_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/241.14494.28/DevKit-241.14494.28.zip"
 
 http_archive(
     name = "devkit_2024_1",
