@@ -44,6 +44,7 @@ import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -271,6 +272,11 @@ final class ConsoleView implements Disposable {
     @Override
     public void update(AnActionEvent event) {
       event.getPresentation().setEnabled(stopHandler != null);
+    }
+
+    @Override
+    public ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

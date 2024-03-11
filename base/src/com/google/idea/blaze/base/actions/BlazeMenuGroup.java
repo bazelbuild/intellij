@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.actions;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
@@ -50,5 +51,10 @@ public class BlazeMenuGroup extends DefaultActionGroup {
   @Override
   public boolean isDumbAware() {
     return true;
+  }
+
+  @Override
+  public ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

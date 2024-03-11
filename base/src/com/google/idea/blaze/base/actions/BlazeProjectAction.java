@@ -20,6 +20,7 @@ import static com.google.idea.blaze.base.actions.BlazeProjectAction.QuerySyncSta
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -124,6 +125,11 @@ public abstract class BlazeProjectAction extends AnAction {
   }*/
 
   protected void updateForBlazeProject(Project project, AnActionEvent e) {}
+
+  @Override
+  public ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   protected abstract void actionPerformedInBlazeProject(Project project, AnActionEvent e);
 

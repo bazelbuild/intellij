@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -275,6 +276,11 @@ public class ExportRunConfigurationDialog extends DialogWrapper {
       tableModel.fireTableDataChanged();
       table.revalidate();
       table.repaint();
+    }
+
+    @Override
+    public ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

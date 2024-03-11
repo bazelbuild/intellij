@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.actions;
 
 import com.google.idea.blaze.base.settings.Blaze;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
@@ -49,4 +50,9 @@ public abstract class BlazeProjectToggleAction extends ToggleAction {
   }
 
   protected void updateForBlazeProject(Project project, AnActionEvent e) {}
+
+  @Override
+  public ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }

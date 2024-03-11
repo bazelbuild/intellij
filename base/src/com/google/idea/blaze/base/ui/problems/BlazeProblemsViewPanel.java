@@ -28,6 +28,7 @@ import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -182,6 +183,11 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
     public void setSelected(AnActionEvent event, boolean flag) {
       configuration.setAutoscrollToConsole(flag);
     }
+
+    @Override
+    public ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private static class OpenInConsoleAction extends BaseNavigateToSourceAction {
@@ -221,6 +227,11 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
         configuration.setHideWarnings(!showWarnings);
         reload();
       }
+    }
+
+    @Override
+    public ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

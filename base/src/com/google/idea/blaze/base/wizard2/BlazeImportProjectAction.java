@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -52,6 +53,11 @@ class BlazeImportProjectAction extends AnAction {
     super.update(e);
     e.getPresentation()
         .setText(String.format("Import %s Project...", Blaze.defaultBuildSystemName()));
+  }
+
+  @Override
+  public ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private static void createFromWizard(
