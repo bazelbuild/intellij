@@ -132,11 +132,6 @@ public abstract class BlazeProjectAction extends AnAction {
 
   protected void updateForBlazeProject(Project project, AnActionEvent e) {}
 
-  @Override
-  public ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
   protected abstract void actionPerformedInBlazeProject(Project project, AnActionEvent e);
 
   private boolean compatibleBuildSystem(Project project) {

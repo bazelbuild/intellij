@@ -19,7 +19,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.actions.ReplaceActionHelper;
 import com.intellij.debugger.actions.HotSwapAction;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
@@ -60,10 +59,5 @@ public class BlazeHotSwapAction extends AnAction {
         HotSwapUtils.enableHotSwapping.getValue()
             && BlazeHotSwapManager.findHotSwappableBlazeDebuggerSession(e.getProject()) != null;
     e.getPresentation().setEnabled(canHotSwap);
-  }
-
-  @Override
-  public ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
   }
 }

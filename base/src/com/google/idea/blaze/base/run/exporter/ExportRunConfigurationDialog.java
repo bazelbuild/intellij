@@ -283,10 +283,5 @@ public class ExportRunConfigurationDialog extends DialogWrapper {
       table.revalidate();
       table.repaint();
     }
-
-    @Override
-    public ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
   }
 }

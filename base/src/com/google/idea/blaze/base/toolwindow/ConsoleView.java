@@ -280,11 +280,6 @@ final class ConsoleView implements Disposable {
     public void update(AnActionEvent event) {
       event.getPresentation().setEnabled(stopHandler != null);
     }
-
-    @Override
-    public ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
   }
 
   /** A composite filter composed of a modifiable list of custom filters. */

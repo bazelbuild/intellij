@@ -189,11 +189,6 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanelAdapter {
     public void setSelected(AnActionEvent event, boolean flag) {
       configuration.setAutoscrollToConsole(flag);
     }
-
-    @Override
-    public ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
   }
 
   private static class OpenInConsoleAction extends BaseNavigateToSourceAction {
@@ -238,11 +233,6 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanelAdapter {
         configuration.setHideWarnings(!showWarnings);
         reload();
       }
-    }
-
-    @Override
-    public ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
     }
   }
 
