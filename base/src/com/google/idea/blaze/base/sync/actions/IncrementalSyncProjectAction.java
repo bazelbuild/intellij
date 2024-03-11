@@ -28,6 +28,7 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -116,5 +117,11 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
   @Override
   protected QuerySyncStatus querySyncSupport() {
     return QuerySyncStatus.SUPPORTED;
+  }
+
+  @Override
+  public ActionUpdateThread getActionUpdateThread() {
+    // Not clear what `showPopupNotification` does and why.
+    return ActionUpdateThread.EDT;
   }
 }
