@@ -58,7 +58,7 @@ public class Label {
     return labels.stream().map(Label::of).collect(toImmutableList());
   }
 
-  private Label(String label) {
+  protected Label(String label) {
     if (label.startsWith("@")) {
       int doubleSlash = label.indexOf("//");
       Preconditions.checkArgument(doubleSlash > 0, label);
