@@ -42,7 +42,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
-import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches.Format;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
@@ -114,8 +113,7 @@ public class CcProjectModelUpdateOperation implements Disposable {
     for (Map.Entry<String, CcCompilerSettings> e : map.entrySet()) {
       CidrCompilerSwitches switches =
           checkNotNull(compilerSwitches.get(e.getValue().getFlagSetId()));
-      if (!CppSupportChecker.isSupportedCppConfiguration(
-          switches.getList(Format.RAW), compilerWorkingDir.toPath())) {
+      if (!CppSupportChecker.isSupportedCppConfiguration(switches, compilerWorkingDir.toPath())) {
         return;
       }
       CLanguageKind lang =
@@ -135,7 +133,7 @@ public class CcProjectModelUpdateOperation implements Disposable {
     CidrCompilerSwitches switches =
         checkNotNull(compilerSwitches.get(source.getCompilerSettings().getFlagSetId()));
     if (!CppSupportChecker.isSupportedCppConfiguration(
-        switches.getList(Format.RAW), pathResolver.resolve(ProjectPath.WORKSPACE_ROOT))) {
+        switches, pathResolver.resolve(ProjectPath.WORKSPACE_ROOT))) {
       // Ignore the file if it's not supported by the current IDE.
       return;
     }

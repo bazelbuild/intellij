@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.clwb;
 
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.cpp.CppSupportChecker;
+import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
 import java.nio.file.Path;
 
 /** CLwB supports all CPP development. */
@@ -24,7 +24,7 @@ public class ClwbSupportsCpp implements CppSupportChecker {
 
   @Override
   public boolean supportsCppConfiguration(
-      ImmutableList<String> compilerSwitches, Path workspaceRoot) {
+      CidrCompilerSwitches compilerSwitches, Path workspaceRoot) {
     return true;
   }
 }
