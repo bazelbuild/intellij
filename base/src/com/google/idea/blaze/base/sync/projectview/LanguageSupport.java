@@ -72,8 +72,9 @@ public class LanguageSupport {
       StringBuilder messageBuilder = new StringBuilder();
       messageBuilder.append(
               String.format(
-                      "Workspace type '%s' is not supported by this plugin.",
-                      languageSettings.getWorkspaceType().getName())
+                      "Workspace type '%s' is not supported by this plugin. Supported types are %s.",
+                      languageSettings.getWorkspaceType().getName(), supportedTypes
+              )
       );
       // `//:plugin_dev` is a completely optional dependency that won't get enabled
       // unless you have DevKit installed.
