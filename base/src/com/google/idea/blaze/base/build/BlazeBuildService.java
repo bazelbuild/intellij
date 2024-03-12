@@ -66,6 +66,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
@@ -139,7 +140,7 @@ public class BlazeBuildService {
                     projectData.getWorkspacePathResolver(),
                     projectData.getWorkspaceLanguageSettings())
                 .getTargetsToSync();
-          } catch (SyncCanceledException e) {
+          } catch (SyncCanceledException | ExecutionException | InterruptedException e) {
             context.setCancelled();
             return null;
           } catch (SyncFailedException e) {
