@@ -840,6 +840,7 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
 
     resources = []
     res_folders = []
+    assets_folders = []
     resolve_files = jars_from_output(output_jar)
     if hasattr(ctx.rule.attr, "resource_files"):
         for artifact_path_fragments, res_files in get_res_artifacts(ctx.rule.attr.resource_files).items():
@@ -888,6 +889,7 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
     if render_resolve_jar:
         update_sync_output_groups(output_groups, "intellij-render-resolve-android", depset([render_resolve_jar]))
 
+    _collect_android_assets_folders(ctx, assets_folders)
     android_info = struct_omit_none(
         java_package = android.java_package,
         idl_import_root = getattr(android, "idl_import_root", None),
@@ -903,6 +905,7 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
         resource_jar = library_artifact(android.resource_jar),
         instruments = instruments,
         render_resolve_jar = artifact_location(render_resolve_jar) if render_resolve_jar else None,
+        assets_folders = assets_folders,
         **extra_ide_info
     )
 
@@ -1032,6 +1035,28 @@ def _is_analysis_test(target):
     aspect should skip them.
     """
     return AnalysisTestResultInfo in target
+
+def _collect_android_assets_folders(ctx, assets_folders):
+    # TODO: may need to support other attr, such as assets_dir and dealing with external targets
+    found_assets_folders = []
+    if hasattr(ctx.rule.attr, "assets"):
+        for asset in ctx.rule.attr.assets:
+            for file in asset.files.to_list():
+                dirname = file.dirname
+                if "assets/" not in dirname:
+                    continue
+                asset_parent_folder = dirname.split("assets")[0] + "assets"
+                if dirname not in found_assets_folders and file.is_source:
+                    found_assets_folders.append(dirname)
+                    assets_folders.append(
+                        struct_omit_none(
+                            is_external = False,
+                            is_new_external_version = True,
+                            is_source = file.is_source,
+                            relative_path = asset_parent_folder,
+                            root_execution_path_fragment = "",
+                        ),
+                    )
 
 ##### Main aspect function
 

@@ -94,6 +94,7 @@ message AndroidIdeInfo {
   // dependencies of a binary without the desugared APIs. This field is not set
   // for non-binary targets
   ArtifactLocation render_resolve_jar = 15;
+  repeated ArtifactLocation assets_folders = 16;
 }
 
 // Details about an Android res folder

@@ -170,6 +170,8 @@ message AndroidResourceModule {
   // targets that contribute resources to the AndroidResourceModule,
   // including target_key
   repeated TargetKey source_target_keys = 6;
+  repeated ArtifactLocation assets_folders = 7;
+  repeated ArtifactLocation transitive_assets_folders = 8;
 }
 
 message BlazeJarLibrary {
