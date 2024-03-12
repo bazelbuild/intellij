@@ -343,6 +343,9 @@ public class BlazeAndroidProjectStructureSyncer {
       List<File> resources =
           OutputArtifactResolver.resolveAll(
               project, artifactLocationDecoder, androidResourceModule.resources);
+      List<File> assets =
+          OutputArtifactResolver.resolveAll(
+              project, artifactLocationDecoder, androidResourceModule.transitiveAssetsFolders);
       updateModuleFacetInMemoryState(
           project,
           context,
@@ -351,8 +354,9 @@ public class BlazeAndroidProjectStructureSyncer {
           moduleDirectory,
           manifestFile,
           modulePackage,
-          resources
-      );
+          resources,
+          configAndroidJava8Libs,
+          assets);
       rClassBuilder.addRClass(modulePackage, module);
       sourcePackages.remove(modulePackage);
     }
@@ -438,8 +442,9 @@ public class BlazeAndroidProjectStructureSyncer {
         moduleDirectory,
         null,
         resourceJavaPackage,
-        ImmutableList.of()
-    );
+        ImmutableList.of(),
+        configAndroidJava8Libs,
+        ImmutableList.of());
   }
 
   private static void updateModuleFacetInMemoryState(
@@ -450,7 +455,9 @@ public class BlazeAndroidProjectStructureSyncer {
       File moduleDirectory,
       @Nullable File manifestFile,
       String resourceJavaPackage,
-      Collection<File> resources) {
+      Collection<File> resources,
+      boolean configAndroidJava8Libs,
+      Collection<File> assets) {
     String name = module.getName();
     File manifest = manifestFile != null ? manifestFile : new File("MissingManifest.xml");
     NamedIdeaSourceProvider sourceProvider =
@@ -458,6 +465,8 @@ public class BlazeAndroidProjectStructureSyncer {
             .withScopeType(ScopeType.MAIN)
             .withResDirectoryUrls(
                 ContainerUtil.map(resources, it -> VfsUtilCore.fileToUrl(it.getAbsoluteFile())))
+            .withAssetsDirectoryUrls(
+                ContainerUtil.map(assets, it -> VfsUtilCore.fileToUrl(it.getAbsoluteFile())))
             .build();
 
     ListenableFuture<String> applicationId =
