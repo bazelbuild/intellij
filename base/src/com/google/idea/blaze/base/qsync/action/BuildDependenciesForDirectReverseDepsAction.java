@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.qsync.action;
 
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
@@ -27,9 +28,23 @@ import java.util.Optional;
 /** Action to build dependencies and enable analysis for a file and it's reverse dependencies */
 public class BuildDependenciesForDirectReverseDepsAction extends BlazeProjectAction {
 
+  private static final String NAME = BuildDependenciesAction.NAME + " for Reverse Dependencies";
+
   @Override
   protected QuerySyncStatus querySyncSupport() {
     return QuerySyncStatus.REQUIRED;
+  }
+
+  @Override
+  protected void updateForBlazeProject(Project project, AnActionEvent e) {
+    if (e.getData(CommonDataKeys.VIRTUAL_FILE) == null) {
+      e.getPresentation().setEnabled(false);
+    }
+    if (e.getPlace().equals(ActionPlaces.MAIN_MENU)) {
+      e.getPresentation().setText(NAME + " of Current File");
+    } else {
+      e.getPresentation().setText(NAME);
+    }
   }
 
   @Override

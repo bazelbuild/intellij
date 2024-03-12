@@ -26,6 +26,8 @@ import java.util.function.Supplier;
 /** Holder class for basic information about querysync, e.g. is it enabled? */
 public class QuerySync {
 
+  public static final String BUILD_DEPENDENCIES_ACTION_NAME = "Enable analysis";
+
   private static final FeatureRolloutExperiment ENABLED =
       new FeatureRolloutExperiment("query.sync");
 
@@ -37,6 +39,9 @@ public class QuerySync {
 
   public static final BoolExperiment ATTACH_DEP_SRCJARS =
       new BoolExperiment("querysync.attach.dep.srcjars", true);
+
+  public static final boolean USE_NEW_BUILD_ARTIFACT_MANAGEMENT =
+      new BoolExperiment("query.sync.new.artifact.management", false).getValue();
 
   /**
    * Previously, query sync was enabled by an experiment. Some users still have that experiment set

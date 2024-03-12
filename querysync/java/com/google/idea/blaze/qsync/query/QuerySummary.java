@@ -18,6 +18,7 @@ package com.google.idea.blaze.qsync.query;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.collect.Multimaps.flatteningToMultimap;
+import static com.google.idea.blaze.common.proto.ProtoStringInterner.intern;
 import static java.util.Objects.requireNonNull;
 
 import com.google.auto.value.AutoValue;
@@ -135,7 +136,7 @@ public abstract class QuerySummary {
     Map<String, Query.Rule> ruleMap = Maps.newHashMap();
     Set<String> packagesWithErrors = Sets.newHashSet();
     Build.Target target;
-    while ((target = Target.parseDelimitedFrom(protoInputStream)) != null) {
+    while ((target = intern(Target.parseDelimitedFrom(protoInputStream))) != null) {
       switch (target.getType()) {
         case SOURCE_FILE:
           Query.SourceFile sourceFile =
@@ -193,7 +194,7 @@ public abstract class QuerySummary {
               rule.setInstruments(a.getStringValue());
             }
           }
-          ruleMap.put(target.getRule().getName(), rule.build());
+          ruleMap.put(Label.of(target.getRule().getName()).toString(), rule.build());
           break;
         default:
           break;
@@ -335,7 +336,7 @@ public abstract class QuerySummary {
     }
 
     public QuerySummary build() {
-      return QuerySummary.create(builder.build());
+      return QuerySummary.create(intern(builder.build()));
     }
   }
 }

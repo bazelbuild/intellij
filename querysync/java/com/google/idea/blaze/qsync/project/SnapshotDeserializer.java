@@ -75,20 +75,22 @@ public class SnapshotDeserializer {
   }
 
   private void visitVcsState(SnapshotProto.VcsState proto) {
-    VcsState state =
-        new VcsState(
-            proto.getWorkspaceId(),
-            proto.getUpstreamRevision(),
-            proto.getWorkingSetList().stream()
-                .map(
-                    c ->
-                        new WorkspaceFileChange(
-                            OP_MAP.get(c.getOperation()), Path.of(c.getWorkspaceRelativePath())))
-                .collect(toImmutableSet()),
-            proto.hasWorkspaceSnapshot()
-                ? Optional.of(Path.of(proto.getWorkspaceSnapshot().getPath()))
-                : Optional.empty());
-    snapshot.setVcsState(Optional.of(state));
+    snapshot.setVcsState(Optional.of(convertVcsState(proto)));
+  }
+
+  public static VcsState convertVcsState(SnapshotProto.VcsState proto) {
+    return new VcsState(
+        proto.getWorkspaceId(),
+        proto.getUpstreamRevision(),
+        proto.getWorkingSetList().stream()
+            .map(
+                c ->
+                    new WorkspaceFileChange(
+                        OP_MAP.get(c.getOperation()), Path.of(c.getWorkspaceRelativePath())))
+            .collect(toImmutableSet()),
+        proto.hasWorkspaceSnapshot()
+            ? Optional.of(Path.of(proto.getWorkspaceSnapshot().getPath()))
+            : Optional.empty());
   }
 
   private void visitQuerySummay(Query.Summary proto) {

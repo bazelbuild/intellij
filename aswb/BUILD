@@ -76,7 +76,7 @@ java_library(
             "tests/utils/sdkcompat/as232/com/android/ide/common/repository/GoogleMavenArtifactIdCompat.java",
         ],
     }),
-    visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY + DEFAULT_TEST_VISIBILITY,
+    visibility = combine_visibilities(TEST_ASWB_SUBPACKAGES_VISIBILITY, DEFAULT_TEST_VISIBILITY),
     deps = [
         ":aswb_lib",
         "//base",

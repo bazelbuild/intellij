@@ -24,7 +24,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Set;
 
-/** A local cache of built render jarss. */
+/** A local cache of built render jars. */
 public interface RenderJarArtifactTracker {
 
   /**

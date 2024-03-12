@@ -6,12 +6,35 @@ java_library(
         "//querysync:__subpackages__",
     ],
     deps = [
+        ":artifact_tracker_state_java_proto",
+        "//querysync/java/com/google/idea/blaze/qsync/artifacts",
         "//querysync/java/com/google/idea/blaze/qsync/cc:cc_compilation_info_java_proto",
+        "//querysync/java/com/google/idea/blaze/qsync/java",
         "//querysync/java/com/google/idea/blaze/qsync/java:java_target_info_java_proto",
+        "//querysync/java/com/google/idea/blaze/qsync/project",
         "//shared",
         "//shared:artifact",
+        "//shared:proto",
         "//shared:vcs",
         "//third_party/auto_value",
         "@com_google_guava_guava//jar",
+        "@com_google_protobuf//:protobuf_java",
+        "@error_prone_annotations//jar",
     ],
+)
+
+proto_library(
+    name = "artifact_tracker_state_proto",
+    srcs = ["artifact_tracker_state.proto"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync/project:snapshot_proto",
+    ],
+)
+
+java_proto_library(
+    name = "artifact_tracker_state_java_proto",
+    visibility = [
+        "//querysync:__subpackages__",
+    ],
+    deps = [":artifact_tracker_state_proto"],
 )

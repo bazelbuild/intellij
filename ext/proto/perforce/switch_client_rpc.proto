@@ -12,10 +12,10 @@ message ListSwitchClientsRequest {
 }
 
 message ListSwitchClientsResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
 
   message SwitchClient {
-    optional Status status = 1;
+    optional PerforceStatus perforce_status = 1;
     optional string switch_name = 2;
     optional string target_name = 3;
   }
@@ -30,7 +30,7 @@ message UpdateSwitchClientRequest {
 }
 
 message UpdateSwitchClientResponse {
-  optional Status status = 1002;
-  repeated Status warnings = 1;
+  optional PerforceStatus perforce_status = 1002;
+  repeated PerforceStatus warnings = 1;
   optional string switch_name = 2;
 }

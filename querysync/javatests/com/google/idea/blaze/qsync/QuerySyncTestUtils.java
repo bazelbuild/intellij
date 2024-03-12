@@ -23,6 +23,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Correspondence;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.LoggingContext;
+import com.google.idea.blaze.common.NoopContext;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.qsync.java.PackageReader;
 import com.google.idea.blaze.qsync.query.QuerySummary;
