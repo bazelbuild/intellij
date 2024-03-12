@@ -1,6 +1,10 @@
 v2024.03.12
 ===========
-
+* fix(plugin_dev): Alert users they need the DevKit plugin to work on the codebase #6198
+* Followup for Pass path associations as special compiler flags #6007
+* fix: Try to make the default projectview file a bit more user-friendly #6175
+* Added MODULE.bazel to isBazelWorkspace in AutoImportProjectOpenProcessor #6155
+* Added registry key to disable fission flag #6041
 
 v2024.02.27
 ===========
