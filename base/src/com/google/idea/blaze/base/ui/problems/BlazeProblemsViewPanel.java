@@ -176,11 +176,6 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanelAdapter {
     }
 
     @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    @Override
     public boolean isSelected(AnActionEvent event) {
       return configuration.getAutoscrollToConsole();
     }
@@ -220,11 +215,6 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanelAdapter {
     ShowWarningsAction() {
       super(IdeBundle.message("action.show.warnings"), null, AllIcons.General.ShowWarning);
       configuration = ErrorTreeViewConfiguration.getInstance(getProject());
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
     }
 
     @Override

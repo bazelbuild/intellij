@@ -38,11 +38,6 @@ public abstract class BlazeProjectToggleAction extends ToggleAction {
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  @Override
   public final void update(AnActionEvent e) {
     Project project = e.getProject();
     if (project == null || !Blaze.isBlazeProject(project)) {

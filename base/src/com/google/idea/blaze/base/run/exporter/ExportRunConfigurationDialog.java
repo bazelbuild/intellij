@@ -260,11 +260,6 @@ public class ExportRunConfigurationDialog extends DialogWrapper {
     }
 
     @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    @Override
     public synchronized void actionPerformed(AnActionEvent anActionEvent) {
       boolean newState = !allSelected;
       for (int i = 0; i < tableModel.enabled.length; i++) {

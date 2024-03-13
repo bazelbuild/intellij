@@ -27,11 +27,6 @@ import org.jetbrains.annotations.NotNull;
 public class BlazeMenuGroup extends DefaultActionGroup {
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  @Override
   public final void update(AnActionEvent e) {
     // Don't hide the menu if project is null: it will be null temporarily while loading a
     // Blaze project, and sometimes stays hidden permanently if we hide it during loading.
