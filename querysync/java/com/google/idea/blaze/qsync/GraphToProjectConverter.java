@@ -114,7 +114,8 @@ public class GraphToProjectConverter {
       Predicate<Path> fileExistenceCheck,
       Context<?> context,
       ProjectDefinition projectDefinition,
-      ListeningExecutorService executor) {
+      ListeningExecutorService executor,
+      boolean useNewBuildArtifactLogic) {
     this.packageReader = packageReader;
     this.fileExistenceCheck = fileExistenceCheck;
     this.context = context;
@@ -122,7 +123,7 @@ public class GraphToProjectConverter {
     this.executor = executor;
     this.useNewResDirLogic = Suppliers.ofInstance(true);
     this.guessAndroidResPackages = Suppliers.ofInstance(false);
-    this.useNewBuildArtifactLogic = false;
+    this.useNewBuildArtifactLogic = useNewBuildArtifactLogic;
   }
 
   /**

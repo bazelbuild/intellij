@@ -64,6 +64,8 @@ public abstract class JavaArtifactInfo {
 
   public abstract String androidResourcesPackage();
 
+  public abstract Builder toBuilder();
+
   public static Builder builder() {
     return new AutoValue_JavaArtifactInfo.Builder();
   }

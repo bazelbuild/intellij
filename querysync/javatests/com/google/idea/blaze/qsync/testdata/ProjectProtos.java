@@ -40,6 +40,16 @@ public class ProjectProtos {
   private ProjectProtos() {}
 
   public static Project forTestProject(TestData project) throws IOException, BuildException {
+    return create(project, false);
+  }
+
+  public static Project forTestProjectWithNewArtifactLogic(TestData project)
+      throws IOException, BuildException {
+    return create(project, true);
+  }
+
+  private static Project create(TestData project, boolean useNewArtifactLogic)
+      throws IOException, BuildException {
     Path workspaceImportDirectory = project.getQueryOutputPath();
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
@@ -51,8 +61,8 @@ public class ProjectProtos {
                 ImmutableSet.of(),
                 ImmutableSet.of(QuerySyncLanguage.JAVA),
                 ImmutableSet.of()),
-            newDirectExecutorService());
-
+            newDirectExecutorService(),
+            useNewArtifactLogic);
     return converter.createProject(BuildGraphs.forTestProject(project));
   }
 }

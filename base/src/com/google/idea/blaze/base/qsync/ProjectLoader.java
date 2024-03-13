@@ -53,6 +53,7 @@ import com.google.idea.blaze.qsync.ProjectProtoTransform.Registry;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.VcsStateDiffer;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
+import com.google.idea.blaze.qsync.deps.DependenciesProjectProtoUpdater;
 import com.google.idea.blaze.qsync.deps.NewArtifactTracker;
 import com.google.idea.blaze.qsync.java.PackageStatementParser;
 import com.google.idea.blaze.qsync.java.ParallelPackageReader;
@@ -154,6 +155,7 @@ public class ProjectLoader {
       NewArtifactTracker<BlazeContext> tracker =
           new NewArtifactTracker<>(
               BlazeDataStorage.getProjectDataDir(importSettings).toPath(), artifactCache);
+      projectTransformRegistry.add(new DependenciesProjectProtoUpdater(tracker));
 
       artifactTracker = tracker;
       renderJarArtifactTracker = new RenderJarArtifactTrackerImpl();
