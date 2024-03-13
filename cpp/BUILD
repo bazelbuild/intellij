@@ -37,6 +37,7 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
+        "//common/util:platform",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
