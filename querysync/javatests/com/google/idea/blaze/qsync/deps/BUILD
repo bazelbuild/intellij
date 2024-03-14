@@ -39,3 +39,21 @@ java_test(
         "@truth//jar",
     ],
 )
+
+java_test(
+    name = "AddCompiledJavaDepsTest",
+    size = "small",
+    srcs = ["AddCompiledJavaDepsTest.java"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync/artifacts",
+        "//querysync/java/com/google/idea/blaze/qsync/deps",
+        "//querysync/java/com/google/idea/blaze/qsync/java",
+        "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata:project_protos",
+        "//shared",
+        "@com_google_guava_guava//jar",
+        "@junit//jar",
+        "@truth//jar",
+    ],
+)
