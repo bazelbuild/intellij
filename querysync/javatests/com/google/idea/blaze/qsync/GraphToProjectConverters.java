@@ -80,7 +80,8 @@ abstract class GraphToProjectConverters {
               info.projectExcludes(),
               info.languageClasses(),
               info.testSources()),
-          newDirectExecutorService());
+          newDirectExecutorService(),
+          false);
     }
   }
 }
