@@ -27,6 +27,7 @@ import com.google.idea.blaze.qsync.java.PackageStatementParser;
 import com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
 
 /**
@@ -40,6 +41,7 @@ public class DependenciesProjectProtoUpdater implements ProjectProtoTransform {
       NewArtifactTracker<?> dependencyTracker,
       ProjectDefinition projectDefinition,
       BuildArtifactCache artifactCache,
+      ProjectPath.Resolver pathResolver,
       Supplier<Boolean> attachDepsSrcjarsExperiment) {
     // Require empty package prefixes for srcjar inner paths, since the ultimate consumer of these
     // paths does not support setting a package prefix (see `Library.ModifiableModel.addRoot`).
@@ -51,6 +53,12 @@ public class DependenciesProjectProtoUpdater implements ProjectProtoTransform {
         ImmutableList.<ProjectProtoUpdateOperation>builder()
             .add(new AddCompiledJavaDeps(dependencyTracker::getBuiltDeps));
     if (attachDepsSrcjarsExperiment.get()) {
+      updateOperations.add(
+          new AddDependencySrcJars(
+              dependencyTracker::getBuiltDeps,
+              projectDefinition,
+              pathResolver,
+              srcJarInnerPathFinder));
       updateOperations.add(
           new AddDependencyGenSrcsJars(
               dependencyTracker::getBuiltDeps,
