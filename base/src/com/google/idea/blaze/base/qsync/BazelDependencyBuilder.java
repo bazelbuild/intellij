@@ -236,11 +236,15 @@ public class BazelDependencyBuilder implements DependencyBuilder {
    */
   protected String prepareAspect(BlazeContext context) throws IOException, BuildException {
     Path aspect = getBundledAspectPath();
+    Path projectPath = workspaceRoot.directory().toPath().resolve(".aswb");
     Files.copy(
-        aspect,
-        workspaceRoot.directory().toPath().resolve(".aswb.bzl"),
-        StandardCopyOption.REPLACE_EXISTING);
-    return "//:.aswb.bzl";
+        aspect, projectPath.resolve("build_dependencies.bzl"), StandardCopyOption.REPLACE_EXISTING);
+    // bazel asks BUILD file exists with the .bzl file. It's ok that BUILD file contains nothing.
+    Path buildPath = projectPath.resolve("BUILD");
+    if (!Files.exists(buildPath)) {
+      Files.createFile(buildPath);
+    }
+    return "//.aswb:build_dependencies.bzl";
   }
 
   private OutputInfo createOutputInfo(
