@@ -15,11 +15,18 @@
  */
 package com.google.idea.blaze.qsync.deps;
 
+import static com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder.AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY;
+
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.artifact.BuildArtifactCache;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.ProjectProtoTransform;
+import com.google.idea.blaze.qsync.java.PackageStatementParser;
+import com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
+import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
 
 /**
@@ -29,10 +36,28 @@ import com.google.idea.blaze.qsync.project.ProjectProto.Project;
 public class DependenciesProjectProtoUpdater implements ProjectProtoTransform {
   private final ImmutableList<ProjectProtoUpdateOperation> updateOperations;
 
-  public DependenciesProjectProtoUpdater(NewArtifactTracker<?> dependencyTracker) {
+  public DependenciesProjectProtoUpdater(
+      NewArtifactTracker<?> dependencyTracker,
+      ProjectDefinition projectDefinition,
+      BuildArtifactCache artifactCache,
+      Supplier<Boolean> attachDepsSrcjarsExperiment) {
+    // Require empty package prefixes for srcjar inner paths, since the ultimate consumer of these
+    // paths does not support setting a package prefix (see `Library.ModifiableModel.addRoot`).
+    PackageStatementParser packageReader = new PackageStatementParser();
+    SrcJarInnerPathFinder srcJarInnerPathFinder =
+        new SrcJarInnerPathFinder(packageReader, EMPTY_PACKAGE_PREFIXES_ONLY);
+
     ImmutableList.Builder<ProjectProtoUpdateOperation> updateOperations =
         ImmutableList.<ProjectProtoUpdateOperation>builder()
             .add(new AddCompiledJavaDeps(dependencyTracker::getBuiltDeps));
+    if (attachDepsSrcjarsExperiment.get()) {
+      updateOperations.add(
+          new AddDependencyGenSrcsJars(
+              dependencyTracker::getBuiltDeps,
+              projectDefinition,
+              artifactCache,
+              srcJarInnerPathFinder));
+    }
     this.updateOperations = updateOperations.build();
   }
 
