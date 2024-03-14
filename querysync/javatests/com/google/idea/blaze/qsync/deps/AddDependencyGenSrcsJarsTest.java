@@ -79,7 +79,7 @@ public class AddDependencyGenSrcsJarsTest {
             new SrcJarInnerPathFinder(
                 new PackageStatementParser(), AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY));
 
-    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project());
+    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), new NoopContext());
 
     addGenSrcJars.update(update);
 
@@ -117,7 +117,7 @@ public class AddDependencyGenSrcsJarsTest {
             new SrcJarInnerPathFinder(
                 new PackageStatementParser(), AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY));
 
-    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project());
+    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), new NoopContext());
     addGenSrcJars.update(update);
     ProjectProto.Project newProject = update.build();
 
@@ -161,7 +161,7 @@ public class AddDependencyGenSrcsJarsTest {
             new SrcJarInnerPathFinder(
                 new PackageStatementParser(), AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY));
 
-    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project());
+    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), new NoopContext());
     addGenSrcJars.update(update);
     ProjectProto.Project newProject = update.build();
 

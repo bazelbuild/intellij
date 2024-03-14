@@ -79,7 +79,7 @@ public class AddDependencySrcJarsTest {
             new SrcJarInnerPathFinder(
                 new PackageStatementParser(), AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY));
 
-    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project());
+    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), new NoopContext());
 
     addSrcJars.update(update);
 
@@ -119,7 +119,7 @@ public class AddDependencySrcJarsTest {
             new SrcJarInnerPathFinder(
                 new PackageStatementParser(), AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY));
 
-    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project());
+    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), new NoopContext());
 
     addSrcJars.update(update);
 
