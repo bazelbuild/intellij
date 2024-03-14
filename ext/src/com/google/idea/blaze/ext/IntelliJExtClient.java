@@ -34,6 +34,7 @@ import com.google.idea.blaze.ext.KytheGrpc.KytheFutureStub;
 import com.google.idea.blaze.ext.LinterGrpc.LinterFutureStub;
 import com.google.idea.blaze.ext.PiperServiceGrpc.PiperServiceBlockingStub;
 import com.google.idea.blaze.ext.PiperServiceGrpc.PiperServiceFutureStub;
+import com.google.idea.blaze.ext.mac.IntelliJExts;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.NettyChannelBuilder;
 import io.netty.channel.ChannelOption;
