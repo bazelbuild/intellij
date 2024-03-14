@@ -41,9 +41,13 @@ public class TestDataSyncRunner {
 
   private final Context<?> context;
   private final PackageReader packageReader;
-  public TestDataSyncRunner(Context<?> context, PackageReader packageReader) {
+  private final boolean useNewArtifactLogic;
+
+  public TestDataSyncRunner(
+      Context<?> context, PackageReader packageReader, boolean useNewArtifactLogic) {
     this.context = context;
     this.packageReader = packageReader;
+    this.useNewArtifactLogic = useNewArtifactLogic;
   }
 
   public BlazeProjectSnapshot sync(TestData testProject) throws IOException, BuildException {
@@ -69,7 +73,7 @@ public class TestDataSyncRunner {
             context,
             projectDefinition,
             newDirectExecutorService(),
-            false);
+            useNewArtifactLogic);
     Project project = converter.createProject(buildGraphData);
     return BlazeProjectSnapshot.builder()
         .queryData(pqsd)

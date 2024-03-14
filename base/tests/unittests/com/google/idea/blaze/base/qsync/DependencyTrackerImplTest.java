@@ -44,7 +44,7 @@ public class DependencyTrackerImplTest {
 
   public final BlazeContext context = BlazeContext.create();
   public final TestDataSyncRunner syncRunner =
-      new TestDataSyncRunner(context, QuerySyncTestUtils.PATH_INFERRING_PACKAGE_READER);
+      new TestDataSyncRunner(context, QuerySyncTestUtils.PATH_INFERRING_PACKAGE_READER, false);
 
   public final BlazeProject blazeProject = new BlazeProject();
   @Mock DependencyBuilder dependencyBuilder;
