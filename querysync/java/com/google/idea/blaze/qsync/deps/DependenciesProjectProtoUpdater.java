@@ -51,7 +51,13 @@ public class DependenciesProjectProtoUpdater implements ProjectProtoTransform {
 
     ImmutableList.Builder<ProjectProtoUpdateOperation> updateOperations =
         ImmutableList.<ProjectProtoUpdateOperation>builder()
-            .add(new AddCompiledJavaDeps(dependencyTracker::getBuiltDeps));
+            .add(new AddCompiledJavaDeps(dependencyTracker::getBuiltDeps))
+            .add(
+                new AddProjectGenSrcJars(
+                    dependencyTracker::getBuiltDeps,
+                    projectDefinition,
+                    artifactCache,
+                    srcJarInnerPathFinder));
     if (attachDepsSrcjarsExperiment.get()) {
       updateOperations.add(
           new AddDependencySrcJars(
