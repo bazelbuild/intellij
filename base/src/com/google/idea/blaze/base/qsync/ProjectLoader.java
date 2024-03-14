@@ -157,7 +157,11 @@ public class ProjectLoader {
               BlazeDataStorage.getProjectDataDir(importSettings).toPath(), artifactCache);
       projectTransformRegistry.add(
           new DependenciesProjectProtoUpdater(
-              tracker, latestProjectDef, artifactCache, QuerySync.ATTACH_DEP_SRCJARS::getValue));
+              tracker,
+              latestProjectDef,
+              artifactCache,
+              projectPathResolver,
+              QuerySync.ATTACH_DEP_SRCJARS::getValue));
 
       artifactTracker = tracker;
       renderJarArtifactTracker = new RenderJarArtifactTrackerImpl();

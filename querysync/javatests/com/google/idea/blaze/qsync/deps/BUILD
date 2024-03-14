@@ -79,3 +79,22 @@ java_test(
         "@truth//jar",
     ],
 )
+
+java_test(
+    name = "AddDependencySrcJarsTest",
+    size = "small",
+    srcs = ["AddDependencySrcJarsTest.java"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync/deps",
+        "//querysync/java/com/google/idea/blaze/qsync/java",
+        "//querysync/java/com/google/idea/blaze/qsync/project",
+        "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
+        "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
+        "//shared",
+        "//shared/javatests/com/google/idea/blaze/common:test_utils",
+        "@com_google_guava_guava//jar",
+        "@junit//jar",
+        "@truth//jar",
+    ],
+)
