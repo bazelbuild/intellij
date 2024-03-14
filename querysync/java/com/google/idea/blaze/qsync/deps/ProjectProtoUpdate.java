@@ -16,6 +16,7 @@
 package com.google.idea.blaze.qsync.deps;
 
 import com.google.common.collect.Maps;
+import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.qsync.project.BlazeProjectDataStorage;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Library;
@@ -32,12 +33,14 @@ import java.util.Optional;
 public class ProjectProtoUpdate {
 
   private final ProjectProto.Project.Builder project;
+  private final Context<?> context;
   private final ProjectProto.Module.Builder workspaceModule;
   private final Map<String, Library.Builder> libraries = Maps.newHashMap();
   private final Map<Path, ArtifactDirectoryBuilder> artifactDirs = Maps.newHashMap();
 
-  public ProjectProtoUpdate(ProjectProto.Project existingProject) {
+  public ProjectProtoUpdate(ProjectProto.Project existingProject, Context<?> context) {
     this.project = existingProject.toBuilder();
+    this.context = context;
     this.workspaceModule = getWorkspaceModuleBuilder(project);
   }
 
@@ -52,6 +55,10 @@ public class ProjectProtoUpdate {
         "Module with name "
             + BlazeProjectDataStorage.WORKSPACE_MODULE_NAME
             + " not found in project proto.");
+  }
+
+  public Context<?> context() {
+    return context;
   }
 
   public ProjectProto.Project.Builder project() {

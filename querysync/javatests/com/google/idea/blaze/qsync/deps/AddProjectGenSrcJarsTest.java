@@ -89,7 +89,7 @@ public class AddProjectGenSrcJarsTest {
             new SrcJarInnerPathFinder(
                 new PackageStatementParser(), AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY));
 
-    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project());
+    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), new NoopContext());
     javaDeps.update(update);
     ProjectProto.Project newProject = update.build();
     assertThat(newProject.getLibraryList()).isEqualTo(original.project().getLibraryList());
@@ -131,7 +131,7 @@ public class AddProjectGenSrcJarsTest {
             new SrcJarInnerPathFinder(
                 new PackageStatementParser(), AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY));
 
-    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project());
+    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), new NoopContext());
     javaDeps.update(update);
     ProjectProto.Project newProject = update.build();
     assertThat(newProject.getLibraryList()).isEqualTo(original.project().getLibraryList());

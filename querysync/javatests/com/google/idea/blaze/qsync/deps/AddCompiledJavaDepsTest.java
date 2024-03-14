@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.NoopContext;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
 import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
 import com.google.idea.blaze.qsync.project.ProjectProto;
@@ -42,7 +43,7 @@ public class AddCompiledJavaDepsTest {
 
     AddCompiledJavaDeps javaDeps = new AddCompiledJavaDeps(ImmutableList::of);
 
-    ProjectProtoUpdate update = new ProjectProtoUpdate(original);
+    ProjectProtoUpdate update = new ProjectProtoUpdate(original, new NoopContext());
     javaDeps.update(update);
     ProjectProto.Project newProject = update.build();
     assertThat(newProject.getLibraryList()).isEqualTo(original.getLibraryList());
@@ -77,7 +78,7 @@ public class AddCompiledJavaDepsTest {
 
     AddCompiledJavaDeps javaDeps = new AddCompiledJavaDeps(() -> ImmutableList.of(builtDep));
 
-    ProjectProtoUpdate update = new ProjectProtoUpdate(original);
+    ProjectProtoUpdate update = new ProjectProtoUpdate(original, new NoopContext());
     javaDeps.update(update);
     ProjectProto.Project newProject = update.build();
     assertThat(newProject.getLibraryList()).hasSize(1);
