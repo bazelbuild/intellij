@@ -237,7 +237,7 @@ def _collect_own_java_artifacts(
     own_gensrc_files = []
     own_src_files = []
     own_srcjar_files = []
-    resource_package = None
+    resource_package = ""
 
     if must_build_main_artifacts:
         # For rules that we do not follow dependencies of (either because they don't
