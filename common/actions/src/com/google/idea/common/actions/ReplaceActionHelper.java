@@ -16,12 +16,14 @@
 package com.google.idea.common.actions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import java.util.function.Predicate;
+import org.jetbrains.annotations.NotNull;
 
 /** Helper class to conditionally replace/hide existing actions. */
 public class ReplaceActionHelper {
@@ -87,6 +89,12 @@ public class ReplaceActionHelper {
     }
 
     @Override
+    @NotNull
+    public ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.OLD_EDT;
+    }
+
+    @Override
     public void update(AnActionEvent e) {
       Project project = e.getProject();
       if (project != null && shouldHide.test(project)) {
@@ -112,6 +120,12 @@ public class ReplaceActionHelper {
       this.originalAction = originalAction;
       this.replacementAction = replacementAction;
       this.shouldReplace = shouldReplace;
+    }
+
+    @Override
+    @NotNull
+    public ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.OLD_EDT;
     }
 
     @Override
