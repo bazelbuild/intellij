@@ -807,7 +807,7 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
     consistent functionality with the previous condition of the presence of the .android legacy
     provider.
     """
-    if ctx.rule.kind not in ["android_library", "android_binary"]:
+    if ctx.rule.kind not in ["android_library", "android_binary", "kt_android_library"]:
         return False
 
     android_semantics = semantics.android if hasattr(semantics, "android") else None
