@@ -20,7 +20,7 @@
   <depends>org.jetbrains.android</depends>
   <depends>com.google.gct.test.recorder</depends>
   <depends>com.intellij.modules.java</depends>
-
+  <depends optional="true">com.android.tools.design</depends>
   <extensions defaultExtensionNs="com.intellij">
     <programRunner implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryProgramRunner" order="first"/>
     <programRunner implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestProgramRunner" order="first"/>
