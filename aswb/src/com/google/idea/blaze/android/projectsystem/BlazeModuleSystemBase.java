@@ -119,7 +119,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
   protected final Project project;
   private final ProjectPath.Resolver pathResolver;
   SampleDataDirectoryProvider sampleDataDirectoryProvider;
-  RenderJarClassFileFinder classFileFinder;
+  ClassFileFinder classFileFinder;
   final boolean isWorkspaceModule;
 
   BlazeModuleSystemBase(Module module) {
@@ -132,7 +132,8 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
                 BlazeImportSettingsManager.getInstance(project)
                     .getImportSettings()
                     .getProjectDataDirectory()));
-    classFileFinder = new RenderJarClassFileFinder(module);
+    classFileFinder = BinaryTargetClassFileFinder.isEnabled() ?
+        new BinaryTargetClassFileFinder(module) : new RenderJarClassFileFinder(module);
     sampleDataDirectoryProvider = new BlazeSampleDataDirectoryProvider(module);
     isWorkspaceModule = module.getName().equals(BlazeDataStorage.WORKSPACE_MODULE_NAME);
   }
