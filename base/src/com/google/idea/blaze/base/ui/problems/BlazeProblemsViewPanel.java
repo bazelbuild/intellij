@@ -55,6 +55,7 @@ import javax.swing.JComponent;
 
 /** A custom error tree view panel for Blaze invocation errors. */
 class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
+  private final Project myProject;
 
   private static final DataKey<Navigatable> BLAZE_CONSOLE_NAVIGATABLE_DATA_KEY =
       DataKey.create("blaze.console.navigatable");
@@ -64,6 +65,7 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
 
   BlazeProblemsViewPanel(Project project) {
     super(project, "reference.problems.tool.window", false, false, null);
+    myProject = project;
     myTree.getEmptyText().setText("No problems found");
     configuration = ProblemsViewConfiguration.getInstance(project);
     autoScrollToConsoleHandler =

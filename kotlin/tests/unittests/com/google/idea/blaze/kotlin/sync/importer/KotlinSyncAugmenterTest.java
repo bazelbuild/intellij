@@ -123,7 +123,7 @@ public class KotlinSyncAugmenterTest extends BlazeTestCase {
             .build();
     ArrayList<BlazeJarLibrary> genJars = new ArrayList<>();
 
-    for (BlazeJavaSyncAugmenter augmenter : augmenters) {
+    for (BlazeJavaSyncAugmenter augmenter : augmenters.getExtensionList()) {
       augmenter.addJarsForSourceTarget(
           workspaceLanguageSettings, projectViewSet, target, new ArrayList<>(), genJars);
     }
@@ -166,7 +166,7 @@ public class KotlinSyncAugmenterTest extends BlazeTestCase {
             .build();
     ArrayList<BlazeJarLibrary> genJars = new ArrayList<>();
 
-    for (BlazeJavaSyncAugmenter augmenter : augmenters) {
+    for (BlazeJavaSyncAugmenter augmenter : augmenters.getExtensionList()) {
       augmenter.addJarsForSourceTarget(
           workspaceLanguageSettings, projectViewSet, target, new ArrayList<>(), genJars);
     }

@@ -25,11 +25,10 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.MockSdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.UnknownSdkType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.util.containers.MultiMap;
 import java.io.File;
 import java.util.Optional;
 import org.junit.Test;
@@ -242,18 +241,21 @@ public class JdksTest extends BlazeIntegrationTestCase {
   }
 
   private static Sdk getUniqueMockJdk(LanguageLevel languageLevel) {
-    MockSdk jdk = (MockSdk) IdeaTestUtil.getMockJdk(languageLevel.toJavaVersion());
-    jdk.setName(jdk.getName() + "." + jdk.hashCode());
-    jdk.setHomePath(jdk.getHomePath() + "." + jdk.hashCode());
+    Sdk jdk = IdeaTestUtil.getMockJdk(languageLevel.toJavaVersion());
+    try {
+      jdk = (Sdk) jdk.clone(); // Clone to allow modifications below.
+    } catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
+    SdkModificator jdkModificator = jdk.getSdkModificator();
+    jdkModificator.setName(jdk.getName() + "." + jdk.hashCode());
+    jdkModificator.setHomePath(jdk.getHomePath() + "." + jdk.hashCode());
+    WriteAction.run(jdkModificator::commitChanges);
     return jdk;
   }
 
   private static Sdk getNonJavaMockSdk() {
-    return new MockSdk(
-        /* name= */ "",
-        /* homePath= */ "",
-        /* versionString= */ "",
-        /* roots= */ MultiMap.empty(),
-        UnknownSdkType.getInstance(""));
+    return ProjectJdkTable.getInstance()
+        .createSdk("nonJavaSdk", UnknownSdkType.getInstance("nonJavaSdkType"));
   }
 }
