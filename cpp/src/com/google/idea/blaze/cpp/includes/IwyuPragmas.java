@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
-import com.jetbrains.cidr.lang.editor.OCCommenter;
 import com.jetbrains.cidr.lang.psi.OCFile;
 import com.jetbrains.cidr.lang.psi.OCIncludeDirective;
 import com.jetbrains.cidr.lang.psi.visitors.OCRecursiveVisitor;
@@ -246,7 +245,12 @@ final class IwyuPragmas {
   private static class BuildingVisitor extends OCRecursiveVisitor {
 
     final OCFile file;
-    final OCCommenter commenter;
+
+    private static final String LINE_COMMENT_PREFIX = "//";
+
+    private static final String BLOCK_COMMENT_PREFIX = "/*";
+
+    private static final String BLOCK_COMMENT_SUFFIX = "*/";
 
     Optional<PrivatePragma> privatePragma = Optional.empty();
     ImmutableSet.Builder<KeepPragma> keeps = ImmutableSet.builder();
@@ -258,7 +262,6 @@ final class IwyuPragmas {
 
     BuildingVisitor(OCFile file) {
       this.file = file;
-      this.commenter = new OCCommenter();
     }
 
     IwyuPragmas build() {
@@ -319,12 +322,11 @@ final class IwyuPragmas {
     }
 
     private String trimCommentContent(String text) {
-      if (text.startsWith(commenter.getLineCommentPrefix())) {
-        return StringUtil.trimStart(text, commenter.getLineCommentPrefix()).trim();
-      } else if (text.startsWith(commenter.getBlockCommentPrefix())) {
+      if (text.startsWith(LINE_COMMENT_PREFIX)) {
+        return StringUtil.trimStart(text, LINE_COMMENT_PREFIX).trim();
+      } else if (text.startsWith(BLOCK_COMMENT_PREFIX)) {
         return StringUtil.trimEnd(
-                StringUtil.trimStart(text, commenter.getBlockCommentPrefix()),
-                commenter.getBlockCommentSuffix())
+                StringUtil.trimStart(text, BLOCK_COMMENT_PREFIX), BLOCK_COMMENT_SUFFIX)
             .trim();
       }
       return text.trim();
