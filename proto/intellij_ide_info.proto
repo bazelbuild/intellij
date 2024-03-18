@@ -66,6 +66,8 @@ message CIdeInfo {
 
   string include_prefix = 10;
   string strip_include_prefix = 11;
+
+  repeated string external_includes = 12;
 }
 
 message AndroidIdeInfo {

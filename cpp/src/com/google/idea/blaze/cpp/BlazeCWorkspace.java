@@ -69,7 +69,6 @@ import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Message;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Session;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -251,7 +250,10 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // Note: We would ideally use -isystem here, but it interacts badly with the switches
         // that get built by ClangUtils::addIncludeDirectories (it uses -I for system libraries).
         ImmutableList<String> isystemOptionIncludeDirectories =
-            targetIdeInfo.getcIdeInfo().getTransitiveSystemIncludeDirectories().stream()
+            Stream.concat(
+                    targetIdeInfo.getcIdeInfo().getTransitiveSystemIncludeDirectories().stream(),
+                    targetIdeInfo.getcIdeInfo().getExternalIncludes().stream()
+                )
                 .flatMap(resolver)
                 .filter(configResolveData::isValidHeaderRoot)
                 .map(file -> "-I" + file.getAbsolutePath())
