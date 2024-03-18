@@ -46,8 +46,8 @@ message Module {
   // Separate custom package with source packages as it's only used by R class.
   repeated string android_custom_packages = 7;
 
-  // Android libs are kept separate to regular libraries reflecting the separatation between the
-  // APIs we use to configure them.
+  // Android libs are kept separate to regular libraries reflecting the
+  // separatation between the APIs we use to configure them.
   repeated ExternalAndroidLibrary android_external_libraries = 8;
 }
 
@@ -259,6 +259,7 @@ message ProjectArtifact {
     BuildArtifact build_artifact = 3;
     string workspace_relative_path = 4;
   }
+  string target = 5;
 
   enum ArtifactTransform {
     NONE = 0;

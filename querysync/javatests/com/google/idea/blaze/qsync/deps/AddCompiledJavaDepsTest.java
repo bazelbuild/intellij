@@ -99,6 +99,7 @@ public class AddCompiledJavaDepsTest {
             ProjectProto.ProjectArtifact.newBuilder()
                 .setBuildArtifact(ProjectProto.BuildArtifact.newBuilder().setDigest("jardigest"))
                 .setTransform(ArtifactTransform.COPY)
+                .setTarget("@com_google_guava_guava//jar:jar")
                 .build());
   }
 }
