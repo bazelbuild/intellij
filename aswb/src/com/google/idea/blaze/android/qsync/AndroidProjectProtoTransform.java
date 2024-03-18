@@ -21,13 +21,13 @@ import com.google.idea.blaze.base.qsync.ProjectProtoTransformProvider;
 import com.google.idea.blaze.base.qsync.QuerySyncProject;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.deps.AddAndroidResPackages;
 import com.google.idea.blaze.qsync.deps.AddDependencyAars;
 import com.google.idea.blaze.qsync.deps.ProjectProtoUpdate;
 import com.google.idea.blaze.qsync.deps.ProjectProtoUpdateOperation;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
+import com.google.idea.blaze.qsync.project.ProjectProtoTransform;
 import java.util.List;
 
 /** A {@link ProjectProtoTransform} that adds android specific information to the project proto. */
