@@ -96,12 +96,21 @@ public class ArtifactDirectoryBuilder {
   @CanIgnoreReturnValue
   public Optional<ProjectPath> addIfNewer(
       Path relativePath, BuildArtifact source, DependencyBuildContext fromBuild) {
+    return addIfNewer(relativePath, source, fromBuild, ArtifactTransform.COPY);
+  }
+
+  @CanIgnoreReturnValue
+  public Optional<ProjectPath> addIfNewer(
+      Path relativePath,
+      BuildArtifact source,
+      DependencyBuildContext fromBuild,
+      ArtifactTransform transform) {
     Entry existing = contents.get(relativePath);
     if (existing != null && existing.fromBuild().startTime().isAfter(fromBuild.startTime())) {
       // we already have the same artifact from a more recent build.
       return Optional.empty();
     }
-    Entry e = Entry.create(relativePath, source, fromBuild, ArtifactTransform.COPY);
+    Entry e = Entry.create(relativePath, source, fromBuild, transform);
     contents.put(relativePath, e);
     return Optional.of(ProjectPath.create(Root.PROJECT, path.resolve(relativePath)));
   }
