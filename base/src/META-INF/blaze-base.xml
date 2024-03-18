@@ -470,6 +470,9 @@
       interface="com.google.idea.blaze.base.qsync.HandledRulesProvider" />
     <extensionPoint qualifiedName="com.google.idea.blaze.qsync.BlazeProjectListenerProvider"
       interface="com.google.idea.blaze.base.qsync.BlazeProjectListenerProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.base.qsync.ProjectProtoTransformProvider"
+      interface="com.google.idea.blaze.base.qsync.ProjectProtoTransformProvider"/>
+
   </extensionPoints>
 
   <application-components>
