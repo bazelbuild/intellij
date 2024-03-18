@@ -61,6 +61,14 @@ public interface JavaLikeLanguage {
         .collect(toImmutableSet());
   }
 
+  static ImmutableSet<String> getAllCustomizedDebugFlags(Kind kind) {
+    return Arrays.stream(EP_NAME.getExtensions())
+        .filter(language -> language.getDebuggableKinds().contains(kind))
+        .map(language -> language.getCustomizedDebugFlags(kind))
+        .flatMap(Collection::stream)
+        .collect(toImmutableSet());
+  }
+
   static ImmutableSet<Kind> getAllHandledTestKinds() {
     return Arrays.stream(EP_NAME.getExtensions())
         .map(JavaLikeLanguage::getHandledTestKinds)
@@ -85,6 +93,13 @@ public interface JavaLikeLanguage {
 
   /** @return non-source {@link Kind}s to be filtered out by {@link JavaSourceFilter}. */
   ImmutableSet<Kind> getNonSourceKinds();
+
+  /**
+   * @return all flags need to be set to debug {@link Kind}.
+   */
+  default ImmutableSet<String> getCustomizedDebugFlags(Kind kind) {
+    return ImmutableSet.of();
+  }
 
   /** Java is itself a Java-like language. */
   class Java implements JavaLikeLanguage {

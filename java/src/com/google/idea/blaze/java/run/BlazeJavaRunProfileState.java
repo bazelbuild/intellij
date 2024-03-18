@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
@@ -52,6 +53,7 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.java.TargetKindUtil;
 import com.google.idea.blaze.java.run.hotswap.HotSwapCommandBuilder;
 import com.google.idea.blaze.java.run.hotswap.HotSwapUtils;
+import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -132,7 +134,11 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
       }
       commandBuilder
           .add(getEntryPointScript())
-          .add(debugPortFlag(false, getState(getConfiguration()).getDebugPortState().port));
+          .add(
+              debugPortFlag(
+                  false,
+                  getState(getConfiguration()).getDebugPortState().port,
+                  getConfiguration().getTargetKind()));
       if (TargetKindUtil.isAndroidLocalTest(getConfiguration().getTargetKind())
           && BlazeCommandRunnerExperiments.USE_SINGLEJAR_FOR_DEBUGGING.getValue()) {
         commandBuilder.add("--singlejar");
@@ -262,10 +268,10 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
       boolean isBinary = kind != null && kind.getRuleType() == RuleType.BINARY;
       int debugPort = handlerState.getDebugPortState().port;
       if (isBinary) {
-        command.addExeFlags(debugPortFlag(false, debugPort));
+        command.addExeFlags(debugPortFlag(false, debugPort, kind));
       } else {
         command.addBlazeFlags(BlazeFlags.JAVA_TEST_DEBUG);
-        command.addBlazeFlags(debugPortFlag(true, debugPort));
+        command.addBlazeFlags(debugPortFlag(true, debugPort, kind));
       }
       if (kotlinxCoroutinesJavaAgent != null) {
         command.addBlazeFlags("--jvmopt=-javaagent:" + kotlinxCoroutinesJavaAgent);
@@ -310,7 +316,11 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
         testTargetString.substring(testTargetString.lastIndexOf(":") + 1) + ".runfiles");
   }
 
-  private static String debugPortFlag(boolean isTest, int port) {
+  private static String debugPortFlag(boolean isTest, int port, Kind kind) {
+    ImmutableSet<String> customizedFlags = JavaLikeLanguage.getAllCustomizedDebugFlags(kind);
+    if (!customizedFlags.isEmpty()) {
+      return String.join(" ", customizedFlags);
+    }
     String flag = "--wrapper_script_flag=--debug=127.0.0.1:" + port;
     return isTest ? testArg(flag) : flag;
   }
