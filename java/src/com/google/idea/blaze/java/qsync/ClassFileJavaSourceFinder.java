@@ -21,7 +21,12 @@ import static java.util.Arrays.stream;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.qsync.QuerySyncProject;
+import com.google.idea.blaze.qsync.BlazeProject;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -48,6 +53,7 @@ public class ClassFileJavaSourceFinder {
   private final Project project;
   private final QuerySyncManager querySyncManager;
   private final Path workspaceRoot;
+  private final Path projectPath;
   private final ClsFileImpl clsFile;
 
   public ClassFileJavaSourceFinder(ClsFileImpl clsFile) {
@@ -55,15 +61,21 @@ public class ClassFileJavaSourceFinder {
         clsFile.getProject(),
         QuerySyncManager.getInstance(clsFile.getProject()),
         WorkspaceRoot.fromProject(clsFile.getProject()).path(),
+        Path.of(clsFile.getProject().getBasePath()),
         clsFile);
   }
 
   @VisibleForTesting
   public ClassFileJavaSourceFinder(
-      Project project, QuerySyncManager querySyncManager, Path workspaceRoot, ClsFileImpl clsFile) {
+      Project project,
+      QuerySyncManager querySyncManager,
+      Path workspaceRoot,
+      Path projectPath,
+      ClsFileImpl clsFile) {
     this.project = project;
     this.querySyncManager = querySyncManager;
     this.workspaceRoot = workspaceRoot;
+    this.projectPath = projectPath;
     this.clsFile = clsFile;
   }
 
@@ -133,7 +145,31 @@ public class ClassFileJavaSourceFinder {
       // Not a jar file - ignore it
       return ImmutableSet.of();
     }
-    return querySyncManager.getArtifactTracker().getTargetSources(jar.toNioPath());
+    if (QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT) {
+      Path jarPath = jar.toNioPath();
+      if (!jarPath.startsWith(projectPath)) {
+        return ImmutableSet.of();
+      }
+      jarPath = projectPath.relativize(jarPath);
+
+      BlazeProjectSnapshot snapshot =
+          querySyncManager
+              .getLoadedProject()
+              .map(QuerySyncProject::getSnapshotHolder)
+              .flatMap(BlazeProject::getCurrent)
+              .orElse(null);
+      if (snapshot == null) {
+        return ImmutableSet.of();
+      }
+
+      return snapshot
+          .getArtifactIndex()
+          .getInfoForArtifact(jarPath)
+          .map(JavaArtifactInfo::sources)
+          .orElse(ImmutableSet.of());
+    } else {
+      return querySyncManager.getArtifactTracker().getTargetSources(jar.toNioPath());
+    }
   }
 
   // private ImmutableSet<PsiFile> filterByExpectedQualified

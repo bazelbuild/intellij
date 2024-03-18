@@ -16,11 +16,13 @@
 package com.google.idea.blaze.qsync;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.deps.ArtifactIndex;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
@@ -104,6 +106,11 @@ public abstract class BlazeProjectSnapshot {
   /** Returns mapping of targets to {@link BuildTarget} */
   public ImmutableMap<Label, ProjectTarget> getTargetMap() {
     return graph().targetMap();
+  }
+
+  @Memoized
+  public ArtifactIndex getArtifactIndex() {
+    return ArtifactIndex.create(artifactState(), project().getArtifactDirectories());
   }
 
   /** Builder for {@link BlazeProjectSnapshot}. */

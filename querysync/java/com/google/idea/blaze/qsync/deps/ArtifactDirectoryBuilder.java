@@ -55,6 +55,7 @@ public class ArtifactDirectoryBuilder {
 
     ProjectProto.ProjectArtifact toProto() {
       return ProjectProto.ProjectArtifact.newBuilder()
+          .setTarget(source().target().toString())
           .setBuildArtifact(
               ProjectProto.BuildArtifact.newBuilder().setDigest(source().digest()).build())
           .setTransform(transform())

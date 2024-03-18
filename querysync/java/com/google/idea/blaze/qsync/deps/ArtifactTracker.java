@@ -15,7 +15,11 @@
  */
 package com.google.idea.blaze.qsync.deps;
 
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
@@ -44,6 +48,16 @@ public interface ArtifactTracker<ContextT extends Context<?>> {
 
     public Optional<JavaArtifactInfo> getJavaInfo(Label label) {
       return Optional.ofNullable(depsMap().get(label)).flatMap(TargetBuildInfo::javaInfo);
+    }
+
+    @VisibleForTesting
+    public static State forJavaArtifacts(ImmutableCollection<JavaArtifactInfo> infos) {
+      return create(
+          infos.stream()
+              .collect(
+                  toImmutableMap(
+                      JavaArtifactInfo::label,
+                      j -> TargetBuildInfo.forJavaTarget(j, DependencyBuildContext.NONE))));
     }
   }
 

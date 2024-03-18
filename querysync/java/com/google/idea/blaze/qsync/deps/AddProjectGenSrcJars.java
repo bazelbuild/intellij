@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.qsync.deps;
 
+import static com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder.AllowPackagePrefixes.ALLOW_NON_EMPTY_PACKAGE_PREFIXES;
+
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableCollection;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
@@ -75,7 +77,8 @@ public class AddProjectGenSrcJars implements ProjectProtoUpdateOperation {
             ProjectProto.ContentEntry.Builder genSrcJarContentEntry =
                 ProjectProto.ContentEntry.newBuilder().setRoot(added.toProto());
             for (JarPath innerPath :
-                srcJarInnerPathFinder.findInnerJarPaths(genSrc.blockingGetFrom(buildCache))) {
+                srcJarInnerPathFinder.findInnerJarPaths(
+                    genSrc.blockingGetFrom(buildCache), ALLOW_NON_EMPTY_PACKAGE_PREFIXES)) {
 
               genSrcJarContentEntry.addSources(
                   ProjectProto.SourceFolder.newBuilder()

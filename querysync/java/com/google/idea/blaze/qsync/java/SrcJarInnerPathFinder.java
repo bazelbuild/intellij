@@ -65,17 +65,15 @@ public class SrcJarInnerPathFinder {
 
   private final Logger logger = Logger.getLogger(SrcJarInnerPathFinder.class.getSimpleName());
   private final PackageStatementParser packageStatementParser;
-  private final AllowPackagePrefixes allowPackagePrefixes;
 
-  public SrcJarInnerPathFinder(
-      PackageStatementParser packageStatementParser, AllowPackagePrefixes allowPackagePrefixes) {
+  public SrcJarInnerPathFinder(PackageStatementParser packageStatementParser) {
     this.packageStatementParser = packageStatementParser;
-    this.allowPackagePrefixes = allowPackagePrefixes;
   }
 
-  public ImmutableSet<JarPath> findInnerJarPaths(File jarFile) {
+  public ImmutableSet<JarPath> findInnerJarPaths(
+      File jarFile, AllowPackagePrefixes allowPackagePrefixes) {
     try (InputStream in = new FileInputStream(jarFile)) {
-      return findInnerJarPaths(in);
+      return findInnerJarPaths(in, allowPackagePrefixes);
     } catch (IOException ioe) {
       logger.log(Level.WARNING, "Failed to examine " + jarFile, ioe);
       // return the jar file root to ensure we don't ignore it.
@@ -83,9 +81,10 @@ public class SrcJarInnerPathFinder {
     }
   }
 
-  public ImmutableSet<JarPath> findInnerJarPaths(ByteSource artifact) {
+  public ImmutableSet<JarPath> findInnerJarPaths(
+      ByteSource artifact, AllowPackagePrefixes allowPackagePrefixes) {
     try (InputStream in = artifact.openBufferedStream()) {
-      return findInnerJarPaths(in);
+      return findInnerJarPaths(in, allowPackagePrefixes);
     } catch (IOException ioe) {
       logger.log(Level.WARNING, "Failed to examine " + artifact, ioe);
       // return the jar file root to ensure we don't ignore it.
@@ -93,7 +92,8 @@ public class SrcJarInnerPathFinder {
     }
   }
 
-  private ImmutableSet<JarPath> findInnerJarPaths(InputStream jarFile) throws IOException {
+  private ImmutableSet<JarPath> findInnerJarPaths(
+      InputStream jarFile, AllowPackagePrefixes allowPackagePrefixes) throws IOException {
     Set<JarPath> paths = Sets.newHashSet();
     ZipInputStream zis = new ZipInputStream(new BufferedInputStream(jarFile));
 

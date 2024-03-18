@@ -58,8 +58,7 @@ public class GeneratedSourceProjectUpdater {
     this.genSrcRoots = genSrcFileFolders;
     this.genSrcJars = genSrcJars;
     this.resolver = resolver;
-    srcJarInnerPathFinder =
-        new SrcJarInnerPathFinder(new PackageStatementParser(), ALLOW_NON_EMPTY_PACKAGE_PREFIXES);
+    srcJarInnerPathFinder = new SrcJarInnerPathFinder(new PackageStatementParser());
   }
 
   public Project addGenSrcContentEntry() {
@@ -90,7 +89,8 @@ public class GeneratedSourceProjectUpdater {
       ProjectProto.ContentEntry.Builder genSrcJarContentEntry =
           ProjectProto.ContentEntry.newBuilder().setRoot(jar.path().toProto());
       for (JarPath innerPath :
-          srcJarInnerPathFinder.findInnerJarPaths(resolver.resolve(jar.path()).toFile())) {
+          srcJarInnerPathFinder.findInnerJarPaths(
+              resolver.resolve(jar.path()).toFile(), ALLOW_NON_EMPTY_PACKAGE_PREFIXES)) {
         genSrcJarContentEntry.addSources(
             ProjectProto.SourceFolder.newBuilder()
                 .setProjectPath(jar.path().withInnerJarPath(innerPath.path).toProto())
