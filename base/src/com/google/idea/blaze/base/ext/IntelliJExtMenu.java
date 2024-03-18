@@ -15,12 +15,16 @@
  */
 package com.google.idea.blaze.base.ext;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jetbrains.annotations.NotNull;
 
 /** The menu for all intellij-ext actions */
 public class IntelliJExtMenu extends DefaultActionGroup {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {

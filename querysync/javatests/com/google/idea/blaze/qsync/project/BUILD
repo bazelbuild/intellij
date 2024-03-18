@@ -33,18 +33,6 @@ java_test(
 )
 
 java_test(
-    name = "TargetTreeTest",
-    size = "small",
-    srcs = ["TargetTreeTest.java"],
-    deps = [
-        "//querysync/java/com/google/idea/blaze/qsync/project",
-        "//shared",
-        "@junit//jar",
-        "@truth//jar",
-    ],
-)
-
-java_test(
     name = "ProjectDefinitionTest",
     size = "small",
     srcs = ["ProjectDefinitionTest.java"],

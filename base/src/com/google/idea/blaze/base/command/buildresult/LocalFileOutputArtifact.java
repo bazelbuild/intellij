@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
+import com.google.idea.blaze.common.artifact.OutputArtifact;
 import java.io.File;
 
 /**

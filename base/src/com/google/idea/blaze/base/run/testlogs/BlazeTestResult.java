@@ -17,9 +17,9 @@ package com.google.idea.blaze.base.run.testlogs;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
 import javax.annotation.Nullable;
 
 /** The result of a single blaze test action. */

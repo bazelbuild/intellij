@@ -23,6 +23,6 @@ message RevertFilesRequest {
 }
 
 message RevertFilesResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
   optional SourceFileId source_file_id = 1;
 }

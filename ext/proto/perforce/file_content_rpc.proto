@@ -1,0 +1,28 @@
+syntax = "proto2";
+
+package com.google.idea.blaze.ext.perforce;
+
+import "ext/proto/perforce/base.proto";
+import "ext/proto/perforce/status.proto";
+
+option java_package = "com.google.idea.blaze.ext.p4";
+
+message ReadFilesRequest {
+  optional RequestBase base = 1;
+
+  enum Mode {
+    DEPOT = 0;
+    WORKSPACE = 1;
+  }
+  optional Mode read_mode = 2 [default = WORKSPACE];
+  optional bool follow_symlinks = 5;
+  repeated SourceFileId source_file_ids = 3;
+  repeated PathExpression path_expressions = 4;
+}
+
+message ReadFilesResponse {
+  optional PerforceStatus perforce_status = 1002;
+  optional bytes content = 3;
+  optional bool modified = 4;
+  optional int32 path_index = 5;
+}

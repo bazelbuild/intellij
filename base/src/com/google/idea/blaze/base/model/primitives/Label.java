@@ -20,7 +20,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
-/** Wrapper around a string for a blaze label ([@external_workspace]//package:rule). */
+/**
+ * Wrapper around a string for a blaze label ([@@?external_workspace]//package:rule).
+ *
+ * <p>Unlike {@link com.google.idea.blaze.common.Label} this implementation does not normalize from
+ * a single @ to @@ for external workspaces. Since the expression could be serialized.
+ */
 @Immutable
 public final class Label extends TargetExpression {
   private static final Logger logger = Logger.getInstance(Label.class);
@@ -107,7 +112,7 @@ public final class Label extends TargetExpression {
     }
     int slashesIndex = label.indexOf("//");
     logger.assertTrue(slashesIndex >= 0);
-    return label.substring(1, slashesIndex);
+    return label.substring(0, slashesIndex).replaceFirst("@@?", "");
   }
 
   /**

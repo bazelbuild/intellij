@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.base.toolwindow;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static java.util.Arrays.stream;
+
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.console.NonProblemFilterWrapper;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
@@ -41,10 +44,12 @@ import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressManager;
@@ -53,16 +58,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.content.Content;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import java.awt.Component;
 import java.awt.Container;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
 import javax.swing.LayoutFocusTraversalPolicy;
+import org.jetbrains.annotations.NotNull;
 
 /** ConsoleView handles how the output of a single task is displayed in the tool-window. */
 final class ConsoleView implements Disposable {
@@ -269,6 +275,11 @@ final class ConsoleView implements Disposable {
     public void update(AnActionEvent event) {
       event.getPresentation().setEnabled(stopHandler != null);
     }
+
+    @Override
+    public ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   /** A composite filter composed of a modifiable list of custom filters. */
@@ -300,17 +311,22 @@ final class ConsoleView implements Disposable {
 
   /** Add the global filters, wrapped to separate them from blaze problems. */
   private void addWrappedPredefinedFilters() {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() ->
-                    ApplicationManager.getApplication().runReadAction(() -> {
-                      GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-                      for (ConsoleFilterProvider provider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
-                        Arrays.stream(getFilters(scope, provider))
-                                .forEach(f -> consoleView.addMessageFilter(NonProblemFilterWrapper.wrap(f)));
-                      }
-                    }),
-            "Setting Console Filters",
-            false,
-            null);
+    ReadAction.nonBlocking(
+            () ->
+                stream(ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions())
+                    .flatMap(
+                        provider ->
+                            stream(getFilters(GlobalSearchScope.allScope(project), provider)))
+                    .map(NonProblemFilterWrapper::wrap)
+                    .collect(toImmutableList()))
+        .expireWith(consoleView)
+        .finishOnUiThread(
+            ModalityState.stateForComponent(consoleView),
+            filters -> {
+              filters.forEach(consoleView::addMessageFilter);
+              consoleView.rehighlightHyperlinksAndFoldings();
+            })
+        .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private Filter[] getFilters(GlobalSearchScope scope, ConsoleFilterProvider provider) {

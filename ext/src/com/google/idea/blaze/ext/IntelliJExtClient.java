@@ -15,13 +15,16 @@
  */
 package com.google.idea.blaze.ext;
 
+import com.google.idea.blaze.ext.BlueprintServiceGrpc.BlueprintServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildCleanerServiceGrpc.BuildCleanerServiceFutureStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
 import com.google.idea.blaze.ext.ChatBotModelGrpc.ChatBotModelBlockingStub;
+import com.google.idea.blaze.ext.CitcOperationsServiceGrpc.CitcOperationsServiceBlockingStub;
 import com.google.idea.blaze.ext.CodeSearchGrpc.CodeSearchFutureStub;
 import com.google.idea.blaze.ext.CritiqueServiceGrpc.CritiqueServiceBlockingStub;
 import com.google.idea.blaze.ext.DepServerGrpc.DepServerFutureStub;
+import com.google.idea.blaze.ext.ECatcherServiceGrpc.ECatcherServiceFutureStub;
 import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlockingStub;
 import com.google.idea.blaze.ext.FileApiGrpc.FileApiFutureStub;
 import com.google.idea.blaze.ext.FindingsServiceGrpc.FindingsServiceBlockingStub;
@@ -51,6 +54,7 @@ public class IntelliJExtClient {
             .eventLoopGroup(
                 IntelliJExts.createGroup(new DefaultThreadFactory(EventLoopGroup.class, true)))
             .channelType(IntelliJExts.getClientChannelType())
+            .maxInboundMessageSize(1024 * 1024 * 1024) // To avoid RESOURCE_EXHAUSED errors
             .withOption(ChannelOption.SO_KEEPALIVE, false)
             .usePlaintext()
             .build());
@@ -130,8 +134,16 @@ public class IntelliJExtClient {
     return DepServerGrpc.newFutureStub(channel);
   }
 
+  public CitcOperationsServiceBlockingStub getCitcOperationsService() {
+    return CitcOperationsServiceGrpc.newBlockingStub(channel);
+  }
+
   public CodeSearchFutureStub getCodeSearchService() {
     return CodeSearchGrpc.newFutureStub(channel);
+  }
+
+  public ECatcherServiceFutureStub getECatcherService() {
+    return ECatcherServiceGrpc.newFutureStub(channel);
   }
 
   public PiperServiceFutureStub getPiperService() {
@@ -140,5 +152,9 @@ public class IntelliJExtClient {
 
   public PiperServiceBlockingStub getPiperServiceBlocking() {
     return PiperServiceGrpc.newBlockingStub(channel);
+  }
+
+  public BlueprintServiceBlockingStub getBlueprintService() {
+    return BlueprintServiceGrpc.newBlockingStub(channel);
   }
 }

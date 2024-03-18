@@ -27,6 +27,7 @@ import com.google.idea.blaze.qsync.project.TargetsToBuild;
 import com.intellij.icons.AllIcons.Actions;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -85,7 +86,7 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     private final BuildDependenciesHelper buildDepsHelper;
 
     public BuildDependencies(@NotNull Editor editor) {
-      super("Build file dependencies");
+      super("");
       this.editor = editor;
       buildDepsHelper =
           new BuildDependenciesHelper(editor.getProject(), getClass(), DepsBuildType.SELF);
@@ -95,6 +96,11 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     public void actionPerformed(@NotNull AnActionEvent e) {
       buildDepsHelper.enableAnalysis(
           e, PopupPositioner.showUnderneathClickedComponentOrCentered(e));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -181,12 +187,12 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     private HelpTooltip createPrimaryTooltip(Project project) {
       if (fileInEditorHasNoTargetsToBuild(project)) {
         return new HelpTooltip()
-            .setTitle("Build dependencies")
+            .setTitle(QuerySync.BUILD_DEPENDENCIES_ACTION_NAME)
             .setDescription(
                 "This file is not owned by a project target with external dependencies.");
       } else {
         return new HelpTooltip()
-            .setTitle("Build dependencies")
+            .setTitle(QuerySync.BUILD_DEPENDENCIES_ACTION_NAME)
             .setShortcut(ActionManager.getInstance().getKeyboardShortcut("Blaze.BuildDependencies"))
             .setDescription(
                 "Builds the external dependencies needed for this file and enables analysis")

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.bazel.BazelExitCode;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -94,9 +95,9 @@ public class RenderJarTrackerImpl implements RenderJarTracker {
       context.output(PrintOutput.error("There were build errors when generating render jar."));
     }
 
-    ArtifactTrackerUpdateResult updateResult =
+    ImmutableSet<Path> updatedFiles =
         renderJarArtifactTracker.update(targets, renderJarInfo, context);
-    if (updateResult.updatedFiles().isEmpty()) {
+    if (updatedFiles.isEmpty()) {
       context.output(
           PrintOutput.log(
               "Render jar already generated for files: "
@@ -107,7 +108,7 @@ public class RenderJarTrackerImpl implements RenderJarTracker {
       context.output(
           PrintOutput.log(
               "Generated Render jars: "
-                  + updateResult.updatedFiles()
+                  + updatedFiles
                   + ", for these files: "
                   + workspaceRelativePaths
                   + ", and targets: "

@@ -24,8 +24,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.view.proto.Deps;
 import com.google.devtools.build.lib.view.proto.Deps.Dependency;
 import com.google.idea.blaze.base.async.FutureUtil;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
+import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
+import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -41,6 +41,8 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
+import com.google.idea.blaze.common.artifact.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.java.sync.jdeps.JdepsState.JdepsData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -155,10 +157,10 @@ public class JdepsFileReader {
         RemoteArtifactPrefetcher.getInstance()
             .downloadArtifacts(
                 /* projectName= */ project.getName(),
-                /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(outputArtifacts));
+                /* outputArtifacts= */ RemoteOutputArtifact.getRemoteArtifacts(outputArtifacts));
     ListenableFuture<?> fetchLocalFilesFuture =
         PrefetchService.getInstance()
-            .prefetchFiles(BlazeArtifact.getLocalFiles(outputArtifacts), true, false);
+            .prefetchFiles(LocalFileArtifact.getLocalFiles(outputArtifacts), true, false);
     if (!FutureUtil.waitForFuture(
             context, Futures.allAsList(downloadArtifactsFuture, fetchLocalFilesFuture))
         .timed("FetchJdeps", EventType.Prefetching)

@@ -23,9 +23,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.FutureUtil;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
-import com.google.idea.blaze.base.filecache.ArtifactState;
+import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.LibraryKey;
@@ -40,6 +38,9 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.artifact.ArtifactState;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
+import com.google.idea.blaze.common.artifact.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
 import com.intellij.openapi.diagnostic.Logger;
@@ -183,7 +184,8 @@ public class EmptyLibrary {
       // Prefetch updated artifacts
       ListenableFuture<?> future =
           RemoteArtifactPrefetcher.getInstance()
-              .downloadArtifacts(project.getName(), BlazeArtifact.getRemoteArtifacts(updated));
+              .downloadArtifacts(
+                  project.getName(), RemoteOutputArtifact.getRemoteArtifacts(updated));
 
       FutureUtil.waitForFuture(context, future)
           .timed("FetchJarsForEmptyStatusTracking", EventType.Prefetching)

@@ -17,12 +17,14 @@ package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import java.io.IOException;
+import org.jetbrains.annotations.NotNull;
 
 class BlazeImportProjectAction extends AnAction {
   private static final Logger logger = Logger.getInstance(BlazeImportProjectAction.class);
@@ -54,6 +56,11 @@ class BlazeImportProjectAction extends AnAction {
         .setText(String.format("Import %s Project...", Blaze.defaultBuildSystemName()));
   }
 
+  @Override
+  public ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+  
   static void createFromWizard(
       BlazeProjectCreator blazeProjectCreator,
       WizardContext wizardContext

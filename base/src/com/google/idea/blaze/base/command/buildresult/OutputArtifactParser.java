@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.common.base.Joiner;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.io.URLUtil;
 import java.io.File;

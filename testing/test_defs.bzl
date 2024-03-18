@@ -18,6 +18,8 @@ ADD_OPENS = [
         "java.desktop/java.awt.event",
         "java.desktop/javax.swing",
         "java.desktop/javax.swing.plaf.basic",
+        "java.desktop/javax.swing.text",
+        "java.desktop/javax.swing.text.html",
         "java.desktop/sun.awt",
         "java.desktop/sun.awt.image",
         "java.desktop/sun.font",
@@ -194,7 +196,7 @@ def intellij_integration_test_suite(
         "//testing:lib",
         # Usually, we'd get this from the JetBrains SDK, but the bundled one not aware of Bazel platforms,
         # so it fails on certain setups.
-        "@jna",
+        "@jna//jar",
     ])
     runtime_deps = list(runtime_deps)
     runtime_deps.extend([

@@ -20,9 +20,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
+import com.google.idea.blaze.common.artifact.OutputArtifactInfo;
 import java.nio.file.Path;
 import java.util.Collection;
 

@@ -15,11 +15,11 @@
  */
 package com.google.idea.blaze.base.sync.workspace;
 
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.sync.FakeRemoteOutputArtifact;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
 import java.io.File;
 import org.jetbrains.annotations.Nullable;
 

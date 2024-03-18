@@ -28,7 +28,6 @@ import com.google.idea.blaze.android.sync.aspects.strategy.RenderResolveOutputGr
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifactWithoutDigest;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -47,6 +46,7 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
+import com.google.idea.blaze.common.artifact.OutputArtifactWithoutDigest;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.application.ApplicationManager;

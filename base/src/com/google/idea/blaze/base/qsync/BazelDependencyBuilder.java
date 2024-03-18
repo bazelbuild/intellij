@@ -18,11 +18,13 @@ package com.google.idea.blaze.base.qsync;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -39,9 +41,7 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStats;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -53,9 +53,15 @@ import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
+import com.google.idea.blaze.common.proto.ProtoStringInterner;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
+import com.google.idea.blaze.qsync.deps.DependencyBuildContext;
+import com.google.idea.blaze.qsync.deps.OutputGroup;
+import com.google.idea.blaze.qsync.deps.OutputInfo;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
 import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcCompilationInfo;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -74,6 +80,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -198,6 +205,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
           .forEach(builder::addBlazeFlags);
       buildDepsStatsBuilder.ifPresent(
           stats -> stats.setBuildFlags(builder.build().toArgumentList()));
+      Instant buildTime = Instant.now();
       BlazeBuildOutputs outputs =
           invoker.getCommandRunner().run(project, builder, buildResultHelper, context, ImmutableMap.of());
       buildDepsStatsBuilder.ifPresent(
@@ -212,7 +220,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
           ThrowOption.ALLOW_PARTIAL_SUCCESS,
           ThrowOption.ALLOW_BUILD_FAILURE);
 
-      return createOutputInfo(outputs, outputGroups, context);
+      return createOutputInfo(outputs, outputGroups, buildTime, context);
     }
   }
 
@@ -237,10 +245,13 @@ public class BazelDependencyBuilder implements DependencyBuilder {
   }
 
   private OutputInfo createOutputInfo(
-      BlazeBuildOutputs blazeBuildOutputs, Set<OutputGroup> outputGroups, BlazeContext context)
+      BlazeBuildOutputs blazeBuildOutputs,
+      Set<OutputGroup> outputGroups,
+      Instant buildTime,
+      BlazeContext context)
       throws BuildException {
-    GroupedOutputArtifacts allArtifacts =
-        new GroupedOutputArtifacts(blazeBuildOutputs, outputGroups);
+    ImmutableListMultimap<OutputGroup, OutputArtifact> allArtifacts =
+        GroupedOutputArtifacts.create(blazeBuildOutputs, outputGroups);
 
     ImmutableList<OutputArtifact> artifactInfoFiles =
         allArtifacts.get(OutputGroup.ARTIFACT_INFO_FILE);
@@ -295,6 +306,10 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     if (blazeBuildOutputs.sourceUri.isPresent() && vcsHandler.isPresent()) {
       vcsState = vcsHandler.get().vcsStateForSourceUri(blazeBuildOutputs.sourceUri.get());
     }
+    DependencyBuildContext buildContext =
+        DependencyBuildContext.create(
+            // getOnlyElement should be safe since we never shard querysync builds:
+            getOnlyElement(blazeBuildOutputs.getBuildIds()), buildTime, vcsState);
 
     return OutputInfo.create(
         allArtifacts,
@@ -305,7 +320,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
             .map(Label::of)
             .collect(toImmutableSet()),
         blazeBuildOutputs.buildResult.exitCode,
-        vcsState);
+        buildContext);
   }
 
   @FunctionalInterface
@@ -324,11 +339,13 @@ public class BazelDependencyBuilder implements DependencyBuilder {
   }
 
   private JavaArtifacts readArtifactInfoFile(BlazeArtifact file) throws BuildException {
-    return readArtifactInfoProtoFile(JavaArtifacts.newBuilder(), file).build();
+    return ProtoStringInterner.intern(
+        readArtifactInfoProtoFile(JavaArtifacts.newBuilder(), file).build());
   }
 
   private CcCompilationInfo readCcInfoFile(BlazeArtifact file) throws BuildException {
-    return readArtifactInfoProtoFile(CcCompilationInfo.newBuilder(), file).build();
+    return ProtoStringInterner.intern(
+        readArtifactInfoProtoFile(CcCompilationInfo.newBuilder(), file).build());
   }
 
   protected <B extends Message.Builder> B readArtifactInfoProtoFile(B builder, BlazeArtifact file)

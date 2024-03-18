@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.artifact.ArtifactFetcher;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,7 +39,7 @@ public class FileApiArtifactFetcher implements ArtifactFetcher<LocalFileOutputAr
     for (Entry<? extends LocalFileOutputArtifact, ArtifactDestination> entry :
         artifactToDest.entrySet()) {
       tasks.add(
-          EXECUTOR.submit(
+          ArtifactFetchers.EXECUTOR.submit(
               () -> {
                 Path dest = entry.getValue().path;
                 LocalFileOutputArtifact localFileOutputArtifact = entry.getKey();

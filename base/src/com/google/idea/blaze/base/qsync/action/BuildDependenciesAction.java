@@ -16,9 +16,13 @@
 package com.google.idea.blaze.base.qsync.action;
 
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
 import com.google.idea.blaze.common.Context;
+import com.ibm.icu.lang.UCharacter;
+import com.ibm.icu.text.BreakIterator;
 import com.intellij.icons.AllIcons.Actions;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -26,6 +30,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +43,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class BuildDependenciesAction extends BlazeProjectAction {
 
-  private static final String NAME = "Build dependencies";
+  static final String NAME =
+      UCharacter.toTitleCase(
+          Locale.US, QuerySync.BUILD_DEPENDENCIES_ACTION_NAME, BreakIterator.getWordInstance());
 
   @Override
   @NotNull
@@ -55,13 +62,17 @@ public class BuildDependenciesAction extends BlazeProjectAction {
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setIcon(Actions.Compile);
-    presentation.setText(NAME);
+    if (e.getPlace().equals(ActionPlaces.MAIN_MENU)) {
+      presentation.setText(NAME + " for Current File");
+    } else {
+      presentation.setText(NAME);
+    }
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     BuildDependenciesHelper helper =
         new BuildDependenciesHelper(project, getClass(), DepsBuildType.SELF);
     Optional<Path> relativePath = helper.getRelativePathToEnableAnalysisFor(virtualFile);
     if (relativePath.isEmpty()) {
-      presentation.setEnabledAndVisible(false);
+      presentation.setEnabled(false);
       return;
     }
     if (!helper.canEnableAnalysisNow()) {

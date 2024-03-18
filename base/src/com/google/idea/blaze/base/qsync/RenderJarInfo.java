@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.qsync;
 import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
 
 /** A data class that collecting and converting render jar artifacts. */
 @AutoValue

@@ -1,9 +1,22 @@
+v2024.03.12
+===========
+* fix(plugin_dev): Alert users they need the DevKit plugin to work on the codebase #6198
+* Followup for Pass path associations as special compiler flags #6007
+* fix: Try to make the default projectview file a bit more user-friendly #6175
+* Added MODULE.bazel to isBazelWorkspace in AutoImportProjectOpenProcessor #6155
+* Added registry key to disable fission flag #6041
+
+v2024.02.27
+===========
+* perf: avoid scanning convenience symlink directories during initial import #6094
+* Added MODULE.bazel to valid workspace root files #6127
+* Use path to workspace root as pwd for buildifier #6158
+
 v2024.02.13
 ===========
 * fix: deadlock when more than one project is open and bazel.sync.detec… #5978
 * Changes to BlazeTargetFilter regex to match more target names #6021
 * Fix _virtual_includes handling for absolute strip_include_prefix paths #5969
-
 
 v2024.01.30
 ===========

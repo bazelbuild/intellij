@@ -76,7 +76,7 @@ java_library(
             "tests/utils/sdkcompat/as232/com/android/ide/common/repository/GoogleMavenArtifactIdCompat.java",
         ],
     }),
-    visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY + DEFAULT_TEST_VISIBILITY,
+    visibility = combine_visibilities(TEST_ASWB_SUBPACKAGES_VISIBILITY, DEFAULT_TEST_VISIBILITY),
     deps = [
         ":aswb_lib",
         "//base",
@@ -121,6 +121,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api_for_tests",  # unuseddeps: keep
         "//intellij_platform_sdk:test_libs",
         "//java",
+        "//shared:artifact",
         "//testing:lib",
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
@@ -158,6 +159,7 @@ java_library(
         "//proto:proto_deps",
         "//querysync",
         "//shared",
+        "//shared:artifact",
         "//third_party/auto_value",
         "@gson//jar",
     ],
@@ -190,6 +192,7 @@ intellij_unit_test_suite(
         "//java",
         "//proto:proto_deps",
         "//shared",
+        "//shared:artifact",
         "//testing:lib",
         "@com_google_guava_guava//jar",
         "@junit//jar",
@@ -255,6 +258,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//proto:proto_deps",
+        "//shared:artifact",
         "@com_google_guava_guava//jar",
         "@gson//jar",
         "@junit//jar",
@@ -317,6 +321,7 @@ repackaged_files(
     prefix = "aswb/aspect",
     strip_prefix = "/aspect",
     visibility = ASWB_PACKAGES_VISIBILITY,
+    java_copts = ["-source", "8", "-target", "8"],
 )
 
 repackaged_files(
@@ -324,6 +329,7 @@ repackaged_files(
     srcs = ["//java:fast_build_javac"],
     prefix = "aswb/lib",
     visibility = ASWB_PACKAGES_VISIBILITY,
+    java_copts = ["-source", "8", "-target", "8"],
 )
 
 intellij_plugin_debug_target(

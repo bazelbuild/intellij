@@ -17,7 +17,7 @@ message DeleteChangeRequest {
 }
 
 message DeleteChangeResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
 }
 
 message UpdateChangeRequest {
@@ -26,11 +26,26 @@ message UpdateChangeRequest {
 }
 
 message UpdateChangeResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
 
   optional ChangeId change_id = 2;
   optional int32 num_moved_files = 3;
   optional int32 num_removed_files = 4;
+}
+
+message GetChangesRequest {
+  optional RequestBase base = 1;
+  repeated ChangeId change_ids = 3;
+  optional bool wait_until_submitted = 2 [default = false];
+  optional bool follow_submitted_changes = 4 [default = true];
+  optional bool include_resolved_info = 5 [default = false];
+  optional bool include_files = 6 [default = true];
+  optional bool include_description = 7 [default = true];
+}
+
+message GetChangesResponse {
+  optional PerforceStatus perforce_status = 1002;
+  optional Change change = 2;
 }
 
 message GetChangeRequest {
@@ -44,7 +59,7 @@ message GetChangeRequest {
 }
 
 message GetChangeResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
   optional Change change = 2;
 }
 
@@ -64,6 +79,6 @@ message ListChangesRequest {
 }
 
 message ListChangesResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
   optional Change change = 2;
 }

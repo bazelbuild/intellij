@@ -64,7 +64,7 @@ public class CommonMacroCompletionContributorTest extends BuildFileIntegrationTe
             .build());
 
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "");
-    assertThat(getCompletionItems(file, 0, 0)).asList().containsAllOf("bar", "baz");
+    assertThat(getCompletionItems(file, 0, 0)).asList().containsAtLeast("bar", "baz");
   }
 
   @Test
