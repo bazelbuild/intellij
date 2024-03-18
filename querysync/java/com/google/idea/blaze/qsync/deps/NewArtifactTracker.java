@@ -79,6 +79,10 @@ public class NewArtifactTracker<C extends Context<C>> implements ArtifactTracker
     loadState();
   }
 
+  public BuiltDependenciesSupplier getBuiltDepsSupplier() {
+    return this::getBuiltDeps;
+  }
+
   public ImmutableCollection<TargetBuildInfo> getBuiltDeps() {
     synchronized (stateLock) {
       return ImmutableList.copyOf(builtDeps.values());

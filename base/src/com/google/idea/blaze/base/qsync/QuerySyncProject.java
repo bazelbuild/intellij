@@ -45,12 +45,14 @@ import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.artifact.BuildArtifactCache;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
 import com.google.idea.blaze.qsync.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
+import com.google.idea.blaze.qsync.deps.BuiltDependenciesSupplier;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -89,6 +91,8 @@ public class QuerySyncProject {
   private final BlazeImportSettings importSettings;
   private final WorkspaceRoot workspaceRoot;
   private final ArtifactTracker<?> artifactTracker;
+  private final BuiltDependenciesSupplier builtArtifactsSupplier;
+  private final BuildArtifactCache buildArtifactCache;
   private final ProjectArtifactStore artifactStore;
   private final RenderJarArtifactTracker renderJarArtifactTracker;
   private final AppInspectorArtifactTracker appInspectorArtifactTracker;
@@ -118,6 +122,8 @@ public class QuerySyncProject {
       BlazeImportSettings importSettings,
       WorkspaceRoot workspaceRoot,
       ArtifactTracker<?> artifactTracker,
+      BuiltDependenciesSupplier builtArtifactsSupplier,
+      BuildArtifactCache buildArtifactCache,
       ProjectArtifactStore artifactStore,
       RenderJarArtifactTracker renderJarArtifactTracker,
       AppInspectorArtifactTracker appInspectorArtifactTracker,
@@ -141,6 +147,8 @@ public class QuerySyncProject {
     this.importSettings = importSettings;
     this.workspaceRoot = workspaceRoot;
     this.artifactTracker = artifactTracker;
+    this.builtArtifactsSupplier = builtArtifactsSupplier;
+    this.buildArtifactCache = buildArtifactCache;
     this.artifactStore = artifactStore;
     this.renderJarArtifactTracker = renderJarArtifactTracker;
     this.appInspectorArtifactTracker = appInspectorArtifactTracker;
@@ -191,6 +199,14 @@ public class QuerySyncProject {
 
   public ProjectPath.Resolver getProjectPathResolver() {
     return projectPathResolver;
+  }
+
+  public BuiltDependenciesSupplier getBuiltArtifactsSupplier() {
+    return builtArtifactsSupplier;
+  }
+
+  public BuildArtifactCache getBuildArtifactCache() {
+    return buildArtifactCache;
   }
 
   public ProjectArtifactStore getArtifactStore() {

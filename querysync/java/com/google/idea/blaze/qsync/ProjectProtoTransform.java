@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.qsync;
 
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.common.Context;
@@ -57,6 +58,10 @@ public interface ProjectProtoTransform {
 
     public void add(ProjectProtoTransform transform) {
       transforms.add(transform);
+    }
+
+    public void addAll(ImmutableCollection<ProjectProtoTransform> transforms) {
+      this.transforms.addAll(transforms);
     }
 
     public ProjectProtoTransform getComposedTransform() {

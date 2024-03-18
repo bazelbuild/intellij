@@ -53,6 +53,7 @@ import com.google.idea.blaze.qsync.ProjectProtoTransform.Registry;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.VcsStateDiffer;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
+import com.google.idea.blaze.qsync.deps.BuiltDependenciesSupplier;
 import com.google.idea.blaze.qsync.deps.DependenciesProjectProtoUpdater;
 import com.google.idea.blaze.qsync.deps.NewArtifactTracker;
 import com.google.idea.blaze.qsync.java.PackageStatementParser;
@@ -149,6 +150,7 @@ public class ProjectLoader {
             ideProjectBasePath.resolve("buildcache"), artifactFetcher, executor);
 
     ArtifactTracker<BlazeContext> artifactTracker;
+    BuiltDependenciesSupplier builtDepsSupplier;
     RenderJarArtifactTracker renderJarArtifactTracker;
     AppInspectorArtifactTracker appInspectorArtifactTracker;
     if (QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT) {
@@ -166,6 +168,7 @@ public class ProjectLoader {
       artifactTracker = tracker;
       renderJarArtifactTracker = new RenderJarArtifactTrackerImpl();
       appInspectorArtifactTracker = new AppInspectorArtifactTrackerImpl();
+      builtDepsSupplier = tracker.getBuiltDepsSupplier();
     } else {
       ArtifactTrackerImpl impl =
           new ArtifactTrackerImpl(
@@ -180,6 +183,7 @@ public class ProjectLoader {
       artifactTracker = impl;
       renderJarArtifactTracker = impl;
       appInspectorArtifactTracker = impl;
+      builtDepsSupplier = BuiltDependenciesSupplier.NONE;
     }
     RenderJarTracker renderJarTracker =
         new RenderJarTrackerImpl(graph, renderJarBuilder, renderJarArtifactTracker);
@@ -217,6 +221,8 @@ public class ProjectLoader {
             importSettings,
             workspaceRoot,
             artifactTracker,
+            builtDepsSupplier,
+            artifactCache,
             artifactStore,
             renderJarArtifactTracker,
             appInspectorArtifactTracker,
@@ -235,6 +241,7 @@ public class ProjectLoader {
             buildSystem,
             projectTransformRegistry);
     BlazeProjectListenerProvider.registerListenersFor(querySyncProject);
+    projectTransformRegistry.addAll(ProjectProtoTransformProvider.getAll(querySyncProject));
 
     return querySyncProject;
   }
