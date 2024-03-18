@@ -15,10 +15,13 @@
  */
 package com.google.idea.blaze.qsync.deps;
 
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -27,11 +30,30 @@ import java.util.Set;
 /** A local cache of project dependencies. */
 public interface ArtifactTracker<ContextT extends Context<?>> {
 
+  /** Immutable artifact state at a point in time. */
+  @AutoValue
+  abstract class State {
+
+    public static final State EMPTY = create(ImmutableMap.of());
+
+    abstract ImmutableMap<Label, TargetBuildInfo> depsMap();
+
+    static State create(ImmutableMap<Label, TargetBuildInfo> map) {
+      return new AutoValue_ArtifactTracker_State(map);
+    }
+
+    public Optional<JavaArtifactInfo> getJavaInfo(Label label) {
+      return Optional.ofNullable(depsMap().get(label)).flatMap(TargetBuildInfo::javaInfo);
+    }
+  }
+
   /** Drops all artifacts and clears caches. */
   void clear() throws IOException;
 
   /** Fetches, caches and sets up new artifacts. */
   void update(Set<Label> targets, OutputInfo outputInfo, ContextT context) throws BuildException;
+
+  State getStateSnapshot();
 
   /**
    * Returns a list of local cache files that build by target provided. Returns Optional.empty() if

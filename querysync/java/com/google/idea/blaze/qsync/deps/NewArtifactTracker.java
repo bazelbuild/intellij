@@ -70,6 +70,8 @@ public class NewArtifactTracker<C extends Context<C>> implements ArtifactTracker
   // Lock for making updates to the mutable state
   private final Object stateLock = new Object();
 
+  // TODO(mathewi) this state should really be owned by BlazeProjectSnapshot like all other state,
+  //   and updated in lock step with it.
   @GuardedBy("stateLock")
   private final Map<Label, TargetBuildInfo> builtDeps = Maps.newHashMap();
 
@@ -79,13 +81,16 @@ public class NewArtifactTracker<C extends Context<C>> implements ArtifactTracker
     loadState();
   }
 
-  public BuiltDependenciesSupplier getBuiltDepsSupplier() {
-    return this::getBuiltDeps;
-  }
-
   public ImmutableCollection<TargetBuildInfo> getBuiltDeps() {
     synchronized (stateLock) {
       return ImmutableList.copyOf(builtDeps.values());
+    }
+  }
+
+  @Override
+  public State getStateSnapshot() {
+    synchronized (stateLock) {
+      return State.create(ImmutableMap.copyOf(builtDeps));
     }
   }
 

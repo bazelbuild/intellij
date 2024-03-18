@@ -22,6 +22,7 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.java.PackageReader;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
@@ -77,6 +78,7 @@ public class TestDataSyncRunner {
     return BlazeProjectSnapshot.builder()
         .queryData(pqsd)
         .graph(new BlazeQueryParser(querySummary, context, ImmutableSet.of()).parse())
+        .artifactState(ArtifactTracker.State.EMPTY)
         .project(project)
         .build();
   }
