@@ -51,6 +51,7 @@ import com.google.idea.blaze.qsync.project.ProjectProto.LibraryOrBuilder;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.project.ProjectTarget.SourceType;
+import com.google.idea.blaze.qsync.project.TestSourceGlobMatcher;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import java.io.IOException;
 import java.nio.file.Files;

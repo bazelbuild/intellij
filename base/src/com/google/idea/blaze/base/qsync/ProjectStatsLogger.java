@@ -23,8 +23,8 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.qsync.BlazeProjectListener;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import java.util.Optional;
 
 /** Updates project info according to the newly generated build graph. */

@@ -16,7 +16,6 @@
 package com.google.idea.blaze.qsync;
 
 import com.google.idea.blaze.common.vcs.VcsState;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;

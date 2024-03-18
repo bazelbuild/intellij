@@ -22,13 +22,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.java.PackageStatementParser;
 import com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
+import com.google.idea.blaze.qsync.project.ProjectProtoTransform;
 
 /**
  * A {@link ProjectProtoTransform} that adds built artifact information to the project proto, based
