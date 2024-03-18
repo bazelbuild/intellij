@@ -99,6 +99,7 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
     mockBlazeImportSettings(projectServices); // For Blaze.isBlazeProject.
     createMocksForAddDependency(applicationServices, projectServices);
 
+    project.setBaseDir(new MockVirtualFile("/"));
     service = new BlazeProjectSystem(project);
   }
 
