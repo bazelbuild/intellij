@@ -740,6 +740,11 @@ public class ArtifactTrackerImpl
   }
 
   @Override
+  public ArtifactTracker.State getStateSnapshot() {
+    return State.EMPTY;
+  }
+
+  @Override
   public Set<Label> getLiveCachedTargets() {
     return Sets.union(javaArtifacts.keySet(), ccDepencenciesInfo.targetInfoMap().keySet());
   }

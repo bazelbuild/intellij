@@ -50,11 +50,11 @@ public class AndroidProjectProtoTransform implements ProjectProtoTransform {
     updateOperations =
         ImmutableList.of(
             new AddDependencyAars(
-                project.getBuiltArtifactsSupplier(),
+                project.getArtifactTracker()::getStateSnapshot,
                 project.getBuildArtifactCache(),
                 project.getProjectDefinition(),
                 in -> ManifestParser.parseManifestFromInputStream(in).packageName),
-            new AddAndroidResPackages(project.getBuiltArtifactsSupplier()));
+            new AddAndroidResPackages(project.getArtifactTracker()::getStateSnapshot));
   }
 
   @Override

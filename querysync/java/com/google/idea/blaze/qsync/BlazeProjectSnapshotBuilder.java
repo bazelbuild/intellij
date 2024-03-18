@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.java.PackageReader;
 import com.google.idea.blaze.qsync.java.WorkspaceResolvingPackageReader;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
@@ -68,6 +69,7 @@ public class BlazeProjectSnapshotBuilder {
   public BlazeProjectSnapshot createBlazeProjectSnapshot(
       Context<?> context,
       PostQuerySyncData postQuerySyncData,
+      ArtifactTracker.State artifactTrackerState,
       ProjectProtoTransform projectProtoTransform)
       throws BuildException {
     Path effectiveWorkspaceRoot =
@@ -91,6 +93,7 @@ public class BlazeProjectSnapshotBuilder {
     return BlazeProjectSnapshot.builder()
         .queryData(postQuerySyncData)
         .graph(graph)
+        .artifactState(artifactTrackerState)
         .project(project)
         .build();
   }

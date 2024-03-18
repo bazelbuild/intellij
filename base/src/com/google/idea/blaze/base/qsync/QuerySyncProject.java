@@ -52,7 +52,6 @@ import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
-import com.google.idea.blaze.qsync.deps.BuiltDependenciesSupplier;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
@@ -91,7 +90,6 @@ public class QuerySyncProject {
   private final BlazeImportSettings importSettings;
   private final WorkspaceRoot workspaceRoot;
   private final ArtifactTracker<?> artifactTracker;
-  private final BuiltDependenciesSupplier builtArtifactsSupplier;
   private final BuildArtifactCache buildArtifactCache;
   private final ProjectArtifactStore artifactStore;
   private final RenderJarArtifactTracker renderJarArtifactTracker;
@@ -122,7 +120,6 @@ public class QuerySyncProject {
       BlazeImportSettings importSettings,
       WorkspaceRoot workspaceRoot,
       ArtifactTracker<?> artifactTracker,
-      BuiltDependenciesSupplier builtArtifactsSupplier,
       BuildArtifactCache buildArtifactCache,
       ProjectArtifactStore artifactStore,
       RenderJarArtifactTracker renderJarArtifactTracker,
@@ -147,7 +144,6 @@ public class QuerySyncProject {
     this.importSettings = importSettings;
     this.workspaceRoot = workspaceRoot;
     this.artifactTracker = artifactTracker;
-    this.builtArtifactsSupplier = builtArtifactsSupplier;
     this.buildArtifactCache = buildArtifactCache;
     this.artifactStore = artifactStore;
     this.renderJarArtifactTracker = renderJarArtifactTracker;
@@ -199,10 +195,6 @@ public class QuerySyncProject {
 
   public ProjectPath.Resolver getProjectPathResolver() {
     return projectPathResolver;
-  }
-
-  public BuiltDependenciesSupplier getBuiltArtifactsSupplier() {
-    return builtArtifactsSupplier;
   }
 
   public BuildArtifactCache getBuildArtifactCache() {
@@ -269,7 +261,10 @@ public class QuerySyncProject {
                 : projectQuerier.update(projectDefinition, lastQuery.get(), context);
         BlazeProjectSnapshot newSnapshot =
             blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(
-                context, postQuerySyncData, projectProtoTransforms.getComposedTransform());
+                context,
+                postQuerySyncData,
+                artifactTracker.getStateSnapshot(),
+                projectProtoTransforms.getComposedTransform());
         onNewSnapshot(context, newSnapshot);
 
         // TODO: Revisit SyncListeners once we switch fully to qsync
@@ -348,6 +343,7 @@ public class QuerySyncProject {
             blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(
                 context,
                 snapshotHolder.getCurrent().orElseThrow().queryData(),
+                artifactTracker.getStateSnapshot(),
                 projectProtoTransforms.getComposedTransform());
         onNewSnapshot(context, newSnapshot);
       }
