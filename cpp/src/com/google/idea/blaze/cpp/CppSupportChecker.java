@@ -31,12 +31,12 @@ public interface CppSupportChecker {
   static boolean isSupportedCppConfiguration(
       CidrCompilerSwitches compilerSwitches, Path workspaceRoot) {
     for (CppSupportChecker checker : EP_NAME.getExtensionList()) {
-      if (checker.supportsCppConfiguration(compilerSwitches, workspaceRoot)) {
-        logger.info("CPP support allowed by " + checker.getClass().getName());
-        return true;
+      if (!checker.supportsCppConfiguration(compilerSwitches, workspaceRoot)) {
+        logger.info("CPP support disallowed by " + checker.getClass().getName());
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   boolean supportsCppConfiguration(CidrCompilerSwitches switches, Path workspaceRoot);
