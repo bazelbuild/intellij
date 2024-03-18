@@ -176,11 +176,6 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanelAdapter {
     }
 
     @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    @Override
     public boolean isSelected(AnActionEvent event) {
       return configuration.getAutoscrollToConsole();
     }
@@ -188,6 +183,11 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanelAdapter {
     @Override
     public void setSelected(AnActionEvent event, boolean flag) {
       configuration.setAutoscrollToConsole(flag);
+    }
+
+    @Override
+    public ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -218,11 +218,6 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanelAdapter {
     }
 
     @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    @Override
     public boolean isSelected(AnActionEvent event) {
       return !configuration.isHideWarnings();
     }
@@ -233,6 +228,11 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanelAdapter {
         configuration.setHideWarnings(!showWarnings);
         reload();
       }
+    }
+
+    @Override
+    public ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

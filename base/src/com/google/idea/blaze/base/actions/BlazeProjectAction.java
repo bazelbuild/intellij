@@ -67,11 +67,6 @@ public abstract class BlazeProjectAction extends AnAction {
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  @Override
   public final void update(AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {
@@ -131,6 +126,11 @@ public abstract class BlazeProjectAction extends AnAction {
   }*/
 
   protected void updateForBlazeProject(Project project, AnActionEvent e) {}
+
+  @Override
+  public ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   protected abstract void actionPerformedInBlazeProject(Project project, AnActionEvent e);
 

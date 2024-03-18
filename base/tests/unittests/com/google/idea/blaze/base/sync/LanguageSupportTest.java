@@ -113,7 +113,8 @@ public class LanguageSupportTest extends BlazeTestCase {
     WorkspaceLanguageSettings settings =
         LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
     LanguageSupport.validateLanguageSettings(context, settings);
-    errorCollector.assertIssues("Workspace type 'c' is not supported by this plugin.");
+    errorCollector.assertIssues("Workspace type 'c' is not supported by this plugin. " +
+            "Supported types are [none].");
   }
 
   @Test
@@ -135,7 +136,8 @@ public class LanguageSupportTest extends BlazeTestCase {
       WorkspaceLanguageSettings settings =
               LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
       LanguageSupport.validateLanguageSettings(context, settings);
-      errorCollector.assertIssues("Workspace type 'intellij_plugin' is not supported by this plugin. Do you have the DevKit plugin installed?");
+      errorCollector.assertIssues("Workspace type 'intellij_plugin' is not supported by this plugin. " +
+              "Supported types are [none]. Do you have the DevKit plugin installed?");
   }
 
   @Test
