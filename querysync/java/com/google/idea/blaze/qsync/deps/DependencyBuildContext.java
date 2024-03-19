@@ -27,6 +27,8 @@ import java.util.Optional;
 @AutoValue
 public abstract class DependencyBuildContext {
 
+  public static final DependencyBuildContext NONE = create("", Instant.EPOCH, Optional.empty());
+
   /** The bazel build ID. */
   public abstract String buildId();
 
