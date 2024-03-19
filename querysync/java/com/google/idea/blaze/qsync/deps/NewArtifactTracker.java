@@ -35,6 +35,9 @@ import com.google.idea.blaze.qsync.java.ArtifactTrackerProto;
 import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaTargetArtifacts;
+import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass;
+import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcTargetInfo;
+import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcToolchainInfo;
 import com.google.protobuf.ExtensionRegistry;
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,6 +78,9 @@ public class NewArtifactTracker<C extends Context<C>> implements ArtifactTracker
   @GuardedBy("stateLock")
   private final Map<Label, TargetBuildInfo> builtDeps = Maps.newHashMap();
 
+  @GuardedBy("stateLock")
+  private final Map<String, CcToolchain> ccToolchainMap = Maps.newHashMap();
+
   public NewArtifactTracker(Path projectDirectory, BuildArtifactCache artifactCache) {
     this.artifactCache = artifactCache;
     this.stateFile = projectDirectory.resolve("artifact_state");
@@ -90,7 +96,7 @@ public class NewArtifactTracker<C extends Context<C>> implements ArtifactTracker
   @Override
   public State getStateSnapshot() {
     synchronized (stateLock) {
-      return State.create(ImmutableMap.copyOf(builtDeps));
+      return State.create(ImmutableMap.copyOf(builtDeps), ImmutableMap.copyOf(ccToolchainMap));
     }
   }
 
@@ -120,6 +126,20 @@ public class NewArtifactTracker<C extends Context<C>> implements ArtifactTracker
           TargetBuildInfo targetInfo =
               TargetBuildInfo.forJavaTarget(artifactInfo, outputInfo.getBuildContext());
           builtDeps.put(artifactInfo.label(), targetInfo);
+        }
+      }
+
+      for (CcCompilationInfoOuterClass.CcCompilationInfo ccInfo :
+          outputInfo.getCcCompilationInfo()) {
+        for (CcTargetInfo ccTarget : ccInfo.getTargetsList()) {
+          CcCompilationInfo artifactInfo = CcCompilationInfo.create(ccTarget, digestMap::get);
+          builtDeps.put(
+              Label.of(ccTarget.getLabel()),
+              TargetBuildInfo.forCcTarget(artifactInfo, outputInfo.getBuildContext()));
+        }
+        for (CcToolchainInfo proto : ccInfo.getToolchainsList()) {
+          CcToolchain toolchain = CcToolchain.create(proto);
+          ccToolchainMap.put(toolchain.id(), toolchain);
         }
       }
 
@@ -186,7 +206,10 @@ public class NewArtifactTracker<C extends Context<C>> implements ArtifactTracker
   private void saveState() throws IOException {
     ArtifactTrackerStateSerializer serializer;
     synchronized (stateLock) {
-      serializer = new ArtifactTrackerStateSerializer().visitDepsMap(builtDeps);
+      serializer =
+          new ArtifactTrackerStateSerializer()
+              .visitDepsMap(builtDeps)
+              .visitToolchainMap(ccToolchainMap);
     }
     // TODO(b/328563748) write to a new file and then rename to avoid the risk of truncation.
     try (OutputStream stream = new GZIPOutputStream(Files.newOutputStream(stateFile))) {
@@ -214,6 +237,7 @@ public class NewArtifactTracker<C extends Context<C>> implements ArtifactTracker
 
     synchronized (stateLock) {
       builtDeps.putAll(deserializer.getBuiltDepsMap());
+      ccToolchainMap.putAll(deserializer.getCcToolchainMap());
     }
   }
 }

@@ -18,7 +18,6 @@ package com.google.idea.blaze.qsync.deps;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -27,6 +26,7 @@ import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
 import com.google.idea.blaze.qsync.java.ArtifactTrackerProto;
 import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
+import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.SnapshotDeserializer;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -37,16 +37,22 @@ import java.util.Optional;
 /** Deserializes {@link NewArtifactTracker} state from a proto. */
 public class ArtifactTrackerStateDeserializer {
 
-  private final ImmutableMap.Builder<Label, TargetBuildInfo> map = ImmutableMap.builder();
+  private final ImmutableMap.Builder<Label, TargetBuildInfo> depsMap = ImmutableMap.builder();
+  private final ImmutableMap.Builder<String, CcToolchain> ccToolchainMap = ImmutableMap.builder();
   private final Map<String, DependencyBuildContext> buildContexts = Maps.newHashMap();
 
   public void visit(ArtifactTrackerProto.ArtifactTrackerState proto) {
     proto.getBuildContextsList().forEach(this::visitBuildContext);
     proto.getBuiltDepsMap().entrySet().forEach(this::visitTargetBuildInfo);
+    proto.getCcToolchainsMap().forEach(this::visitCcToolchain);
   }
 
   public ImmutableMap<Label, TargetBuildInfo> getBuiltDepsMap() {
-    return map.buildOrThrow();
+    return depsMap.buildOrThrow();
+  }
+
+  public ImmutableMap<String, CcToolchain> getCcToolchainMap() {
+    return ccToolchainMap.buildOrThrow();
   }
 
   private void visitBuildContext(ArtifactTrackerProto.BuildContext buildContext) {
@@ -64,15 +70,34 @@ public class ArtifactTrackerStateDeserializer {
 
   private void visitTargetBuildInfo(Map.Entry<String, ArtifactTrackerProto.TargetBuildInfo> entry) {
     ArtifactTrackerProto.TargetBuildInfo proto = entry.getValue();
-    DependencyBuildContext buildContext =
-        Preconditions.checkNotNull(buildContexts.get(proto.getBuildId()));
+    TargetBuildInfo.Builder builder =
+        TargetBuildInfo.builder().buildContext(buildContexts.get(proto.getBuildId()));
     Label owner = Label.of(entry.getKey());
     if (proto.hasJavaArtifacts()) {
-      map.put(
-          owner,
-          TargetBuildInfo.forJavaTarget(
-              convertJavaArtifactInfo(owner, proto.getJavaArtifacts()), buildContext));
+      builder.javaInfo(convertJavaArtifactInfo(owner, proto.getJavaArtifacts()));
     }
+    if (proto.hasCcInfo()) {
+      builder.ccInfo(convertCcCompilationInfo(owner, proto.getCcInfo()));
+    }
+    depsMap.put(owner, builder.build());
+  }
+
+  private void visitCcToolchain(String id, ArtifactTrackerProto.CcToolchain proto) {
+    ccToolchainMap.put(
+        id,
+        CcToolchain.builder()
+            .id(id)
+            .compiler(proto.getCompiler())
+            .compilerExecutable(ProjectPath.create(proto.getCompilerExecutable()))
+            .cpu(proto.getCpu())
+            .targetGnuSystemName(proto.getTargetGnuSystemName())
+            .builtInIncludeDirectories(
+                proto.getBuiltInIncludeDirectoriesList().stream()
+                    .map(ProjectPath::create)
+                    .collect(toImmutableList()))
+            .cOptions(ImmutableList.copyOf(proto.getCOptionsList()))
+            .cppOptions(ImmutableList.copyOf(proto.getCppOptionsList()))
+            .build());
   }
 
   private JavaArtifactInfo convertJavaArtifactInfo(
@@ -85,6 +110,32 @@ public class ArtifactTrackerStateDeserializer {
         .setSources(proto.getSourcesList().stream().map(Path::of).collect(toImmutableSet()))
         .setSrcJars(proto.getSrcJarsList().stream().map(Path::of).collect(toImmutableSet()))
         .setAndroidResourcesPackage(proto.getAndroidResourcesPackage())
+        .build();
+  }
+
+  private CcCompilationInfo convertCcCompilationInfo(
+      Label owner, ArtifactTrackerProto.CcCompilationInfo proto) {
+    return CcCompilationInfo.builder()
+        .target(owner)
+        .defines(proto.getDefinesList())
+        .includeDirectories(
+            proto.getIncludeDirectoriesList().stream()
+                .map(ProjectPath::create)
+                .collect(toImmutableList()))
+        .quoteIncludeDirectories(
+            proto.getQuoteIncludeDirectoriesList().stream()
+                .map(ProjectPath::create)
+                .collect(toImmutableList()))
+        .systemIncludeDirectories(
+            proto.getSysytemIncludeDirectoriesList().stream()
+                .map(ProjectPath::create)
+                .collect(toImmutableList()))
+        .frameworkIncludeDirectories(
+            proto.getFrameworkIncludeDirectoriesList().stream()
+                .map(ProjectPath::create)
+                .collect(toImmutableList()))
+        .genHeaders(toArtifactList(proto.getGenHeadersList(), owner))
+        .toolchainId(proto.getToolchainId())
         .build();
   }
 
