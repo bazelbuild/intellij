@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.qsync.deps;
 
+import static com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder.AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY;
+
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableCollection;
 import com.google.idea.blaze.exception.BuildException;
@@ -60,7 +62,9 @@ public class AddDependencySrcJars implements ProjectProtoUpdateOperation {
       for (Path srcJar : javaInfo.srcJars()) {
         // these are workspace relative srcjar paths.
         ProjectPath jarPath = ProjectPath.workspaceRelative(srcJar);
-        srcJarInnerPathFinder.findInnerJarPaths(pathResolver.resolve(jarPath).toFile()).stream()
+        srcJarInnerPathFinder
+            .findInnerJarPaths(pathResolver.resolve(jarPath).toFile(), EMPTY_PACKAGE_PREFIXES_ONLY)
+            .stream()
             .map(p -> p.path)
             .map(jarPath::withInnerJarPath)
             .map(ProjectPath::toProto)

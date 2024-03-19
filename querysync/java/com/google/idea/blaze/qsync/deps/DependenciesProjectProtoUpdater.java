@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.qsync.deps;
 
-import static com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder.AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
@@ -46,8 +45,7 @@ public class DependenciesProjectProtoUpdater implements ProjectProtoTransform {
     // Require empty package prefixes for srcjar inner paths, since the ultimate consumer of these
     // paths does not support setting a package prefix (see `Library.ModifiableModel.addRoot`).
     PackageStatementParser packageReader = new PackageStatementParser();
-    SrcJarInnerPathFinder srcJarInnerPathFinder =
-        new SrcJarInnerPathFinder(packageReader, EMPTY_PACKAGE_PREFIXES_ONLY);
+    SrcJarInnerPathFinder srcJarInnerPathFinder = new SrcJarInnerPathFinder(packageReader);
 
     ImmutableList.Builder<ProjectProtoUpdateOperation> updateOperations =
         ImmutableList.<ProjectProtoUpdateOperation>builder()
