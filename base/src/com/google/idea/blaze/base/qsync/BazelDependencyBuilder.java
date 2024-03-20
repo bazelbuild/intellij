@@ -29,6 +29,8 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.io.CharSource;
+import com.google.common.io.MoreFiles;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -78,7 +80,6 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -223,6 +224,10 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     }
   }
 
+  protected CharSource getAspect() throws IOException {
+    return MoreFiles.asCharSource(getBundledAspectPath(), UTF_8);
+  }
+
   protected Path getBundledAspectPath() {
     PluginDescriptor plugin = checkNotNull(PluginManager.getPluginByClass(getClass()));
     return Paths.get(plugin.getPluginPath().toString(), "aspect", "build_dependencies.bzl");
@@ -235,16 +240,23 @@ public class BazelDependencyBuilder implements DependencyBuilder {
    * the name of the aspect within that file. For example, {@code //package:aspect.bzl}.
    */
   protected String prepareAspect(BlazeContext context) throws IOException, BuildException {
-    Path aspect = getBundledAspectPath();
-    Path projectPath = workspaceRoot.directory().toPath().resolve(".aswb");
-    Files.copy(
-        aspect, projectPath.resolve("build_dependencies.bzl"), StandardCopyOption.REPLACE_EXISTING);
+    Label generatedAspectLabel = getGeneratedAspectLabel();
+    Path generatedAspect =
+        workspaceRoot
+            .path()
+            .resolve(generatedAspectLabel.getPackage())
+            .resolve(generatedAspectLabel.getName());
+    Files.writeString(generatedAspect, getAspect().read());
     // bazel asks BUILD file exists with the .bzl file. It's ok that BUILD file contains nothing.
-    Path buildPath = projectPath.resolve("BUILD");
+    Path buildPath = generatedAspect.resolveSibling("BUILD");
     if (!Files.exists(buildPath)) {
       Files.createFile(buildPath);
     }
-    return "//.aswb:build_dependencies.bzl";
+    return generatedAspectLabel.toString();
+  }
+
+  protected Label getGeneratedAspectLabel() {
+    return Label.of("//.aswb:build_dependencies.bzl");
   }
 
   private OutputInfo createOutputInfo(
