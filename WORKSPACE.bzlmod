@@ -84,9 +84,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2024_1. This is required to build IJwB and run integration tests.
-IC_241_SHA = "0a18e02b611562b4e81f2f5af570975c153874154ad17fdb026eae3b6818e422"
+IC_241_SHA = "7dc317709f981bc772083f39bb4ea73a2a5e441bf7b9400b730004f786dcaed4"
 
-IC_241_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/241.14494.17-EAP-SNAPSHOT/ideaIC-241.14494.17-EAP-SNAPSHOT.zip"
+IC_241_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/241.14494.127-EAP-SNAPSHOT/ideaIC-241.14494.127-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ce_2024_1",
@@ -171,9 +171,9 @@ http_archive(
     url = IU_233_URL,
 )
 
-IU_241_SHA = "6b5df17f4a28844fd02fa500404308660f46f3dc72496f12f6c2eee8b95f4392"
+IU_241_SHA = "9e884acb059d1e2cc2523b2f78c93251ee69c7762c9ca5532ca716a70a698c71"
 
-IU_241_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/241.14494.17-EAP-SNAPSHOT/ideaIU-241.14494.17-EAP-SNAPSHOT.zip"
+IU_241_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/241.14494.127-EAP-SNAPSHOT/ideaIU-241.14494.127-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ue_2024_1",
@@ -257,9 +257,9 @@ http_archive(
     url = CLION_233_URL,
 )
 
-CLION_241_SHA = "55c9130a6b6fda96a9e45766392ee7b2322d66c1d66e2ef89be38227fbbbcb96"
+CLION_241_SHA = "28d38edd0f82674b19ee42f806690e2e5aadb9534a8ab30457cc6585284c80f5"
 
-CLION_241_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/241.14494.27-EAP-SNAPSHOT/clion-241.14494.27-EAP-SNAPSHOT.zip"
+CLION_241_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/241.14494.102-EAP-SNAPSHOT/clion-241.14494.102-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "clion_2024_1",
@@ -276,9 +276,9 @@ java_import(
 )
 """
 
-DEVKIT_233_SHA = "225165191a515ac97c30dad96889d80c88129ce6bf069b9401da6a4c04a123b4"
+DEVKIT_233_SHA = "2523362a9735c72205f53b4be91c5e71e0e7b6b2dbc6dc28894ecaeb6121725d"
 
-DEVKIT_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/233.14808.24/DevKit-233.14808.24.zip"
+DEVKIT_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/233.14475.74/DevKit-233.14475.74.zip"
 
 http_archive(
     name = "devkit_2023_3",
