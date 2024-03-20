@@ -34,7 +34,6 @@ import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
 import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
 import com.google.idea.blaze.qsync.java.PackageStatementParser;
 import com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder;
-import com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder.AllowPackagePrefixes;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.ContentEntry;
 import com.google.idea.blaze.qsync.project.ProjectProto.Module;
@@ -86,8 +85,7 @@ public class AddProjectGenSrcJarsTest {
             () -> ImmutableList.of(builtDep),
             original.queryData().projectDefinition(),
             cache,
-            new SrcJarInnerPathFinder(
-                new PackageStatementParser(), AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY));
+            new SrcJarInnerPathFinder(new PackageStatementParser()));
 
     ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), new NoopContext());
     javaDeps.update(update);
@@ -128,8 +126,7 @@ public class AddProjectGenSrcJarsTest {
             () -> ImmutableList.of(builtDep),
             original.queryData().projectDefinition(),
             cache,
-            new SrcJarInnerPathFinder(
-                new PackageStatementParser(), AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY));
+            new SrcJarInnerPathFinder(new PackageStatementParser()));
 
     ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), new NoopContext());
     javaDeps.update(update);

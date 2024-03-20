@@ -131,6 +131,7 @@ public class AddProjectGenSrcsTest {
                         "        build_artifact {",
                         "          digest: \"gensrcdigest\"",
                         "        }",
+                        "        target: \"" + testData.getAssumedOnlyLabel() + "\"",
                         "      }",
                         "    }"),
                 ArtifactDirectoryContents.class));
@@ -168,6 +169,7 @@ public class AddProjectGenSrcsTest {
             DependencyBuildContext.create(
                 "abc-def", Instant.now().minusSeconds(60), Optional.empty()));
 
+    Label genSrc2Label = testData.getAssumedOnlyLabel().siblingWithName("genSrc2");
     TargetBuildInfo genSrc2 =
         TargetBuildInfo.forJavaTarget(
             JavaArtifactInfo.empty(testLabel.siblingWithName("genSrc2")).toBuilder()
@@ -176,7 +178,7 @@ public class AddProjectGenSrcsTest {
                         BuildArtifact.create(
                             "gensrc2",
                             Path.of("output/otherpath/com/org/Class.java"),
-                            testLabel.siblingWithName("genSrc2"))))
+                            genSrc2Label)))
                 .build(),
             DependencyBuildContext.create("abc-def", Instant.now(), Optional.empty()));
 
@@ -225,6 +227,7 @@ public class AddProjectGenSrcsTest {
                         "        build_artifact {",
                         "          digest: \"gensrc2\"",
                         "        }",
+                        "        target: \"" + genSrc2Label + "\"",
                         "      }",
                         "    }"),
                 ArtifactDirectoryContents.class));

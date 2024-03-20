@@ -34,7 +34,6 @@ import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
 import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
 import com.google.idea.blaze.qsync.java.PackageStatementParser;
 import com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder;
-import com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder.AllowPackagePrefixes;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Library;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath;
@@ -76,8 +75,7 @@ public class AddDependencyGenSrcsJarsTest {
             ImmutableList::of,
             original.queryData().projectDefinition(),
             cache,
-            new SrcJarInnerPathFinder(
-                new PackageStatementParser(), AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY));
+            new SrcJarInnerPathFinder(new PackageStatementParser()));
 
     ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), new NoopContext());
 
@@ -114,8 +112,7 @@ public class AddDependencyGenSrcsJarsTest {
             () -> ImmutableList.of(builtDep),
             original.queryData().projectDefinition(),
             cache,
-            new SrcJarInnerPathFinder(
-                new PackageStatementParser(), AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY));
+            new SrcJarInnerPathFinder(new PackageStatementParser()));
 
     ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), new NoopContext());
     addGenSrcJars.update(update);
@@ -158,8 +155,7 @@ public class AddDependencyGenSrcsJarsTest {
             () -> ImmutableList.of(builtDep),
             original.queryData().projectDefinition(),
             cache,
-            new SrcJarInnerPathFinder(
-                new PackageStatementParser(), AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY));
+            new SrcJarInnerPathFinder(new PackageStatementParser()));
 
     ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), new NoopContext());
     addGenSrcJars.update(update);
