@@ -38,12 +38,16 @@ public interface ArtifactTracker<ContextT extends Context<?>> {
   @AutoValue
   abstract class State {
 
-    public static final State EMPTY = create(ImmutableMap.of());
+    public static final State EMPTY = create(ImmutableMap.of(), ImmutableMap.of());
 
     abstract ImmutableMap<Label, TargetBuildInfo> depsMap();
 
-    static State create(ImmutableMap<Label, TargetBuildInfo> map) {
-      return new AutoValue_ArtifactTracker_State(map);
+    abstract ImmutableMap<String, CcToolchain> ccToolchainMap();
+
+    static State create(
+        ImmutableMap<Label, TargetBuildInfo> map,
+        ImmutableMap<String, CcToolchain> ccToolchainMap) {
+      return new AutoValue_ArtifactTracker_State(map, ccToolchainMap);
     }
 
     public Optional<JavaArtifactInfo> getJavaInfo(Label label) {
@@ -57,7 +61,8 @@ public interface ArtifactTracker<ContextT extends Context<?>> {
               .collect(
                   toImmutableMap(
                       JavaArtifactInfo::label,
-                      j -> TargetBuildInfo.forJavaTarget(j, DependencyBuildContext.NONE))));
+                      j -> TargetBuildInfo.forJavaTarget(j, DependencyBuildContext.NONE))),
+          ImmutableMap.of());
     }
   }
 

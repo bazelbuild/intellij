@@ -32,6 +32,7 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/deps",
         "//querysync/java/com/google/idea/blaze/qsync/deps:artifact_tracker_state_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/java",
+        "//querysync/java/com/google/idea/blaze/qsync/project",
         "//shared",
         "//shared:vcs",
         "@com_google_guava_guava//jar",
