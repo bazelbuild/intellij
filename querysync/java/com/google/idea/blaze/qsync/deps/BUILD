@@ -8,6 +8,7 @@ java_library(
     deps = [
         ":artifact_tracker_state_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/artifacts",
+        "//querysync/java/com/google/idea/blaze/qsync/cc",
         "//querysync/java/com/google/idea/blaze/qsync/cc:cc_compilation_info_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/java",
         "//querysync/java/com/google/idea/blaze/qsync/java:java_target_info_java_proto",
@@ -28,6 +29,7 @@ proto_library(
     name = "artifact_tracker_state_proto",
     srcs = ["artifact_tracker_state.proto"],
     deps = [
+        "//querysync/java/com/google/idea/blaze/qsync/project:project_proto",
         "//querysync/java/com/google/idea/blaze/qsync/project:snapshot_proto",
     ],
 )

@@ -23,12 +23,32 @@ import java.util.Optional;
 abstract class TargetBuildInfo {
   abstract Optional<JavaArtifactInfo> javaInfo();
 
-  // TODO(b/323346056) Add cc info here.
+  abstract Optional<CcCompilationInfo> ccInfo();
 
   abstract DependencyBuildContext buildContext();
 
   static TargetBuildInfo forJavaTarget(
       JavaArtifactInfo javaInfo, DependencyBuildContext buildContext) {
-    return new AutoValue_TargetBuildInfo(Optional.of(javaInfo), buildContext);
+    return builder().buildContext(buildContext).javaInfo(javaInfo).build();
+  }
+
+  static TargetBuildInfo forCcTarget(
+      CcCompilationInfo targetInfo, DependencyBuildContext buildContext) {
+    return builder().buildContext(buildContext).ccInfo(targetInfo).build();
+  }
+
+  static Builder builder() {
+    return new AutoValue_TargetBuildInfo.Builder();
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder {
+    public abstract Builder javaInfo(JavaArtifactInfo javaInfo);
+
+    public abstract Builder ccInfo(CcCompilationInfo ccInfo);
+
+    public abstract Builder buildContext(DependencyBuildContext buildContext);
+
+    public abstract TargetBuildInfo build();
   }
 }

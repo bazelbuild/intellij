@@ -25,6 +25,8 @@ import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
 import com.google.idea.blaze.qsync.java.ArtifactTrackerProto.ArtifactTrackerState;
 import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
+import com.google.idea.blaze.qsync.project.ProjectPath;
+import com.google.idea.blaze.qsync.project.ProjectPath.Root;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Map;
@@ -37,11 +39,20 @@ import org.junit.runners.JUnit4;
 public class ArtifactTrackerStateSerializationTest {
 
   private ImmutableMap<Label, TargetBuildInfo> roundTrip(Map<Label, TargetBuildInfo> depsMap) {
+    return roundTrip(depsMap, ImmutableMap.of()).depsMap();
+  }
+
+  private ArtifactTracker.State roundTrip(
+      Map<Label, TargetBuildInfo> depsMap, Map<String, CcToolchain> toolchainMap) {
     ArtifactTrackerState proto =
-        new ArtifactTrackerStateSerializer().visitDepsMap(depsMap).toProto();
+        new ArtifactTrackerStateSerializer()
+            .visitDepsMap(depsMap)
+            .visitToolchainMap(toolchainMap)
+            .toProto();
     ArtifactTrackerStateDeserializer deserializer = new ArtifactTrackerStateDeserializer();
     deserializer.visit(proto);
-    return deserializer.getBuiltDepsMap();
+    return ArtifactTracker.State.create(
+        deserializer.getBuiltDepsMap(), deserializer.getCcToolchainMap());
   }
 
   @Test
@@ -87,5 +98,66 @@ public class ArtifactTrackerStateSerializationTest {
                     .build(),
                 buildContext));
     assertThat(roundTrip(depsMap)).containsExactlyEntriesIn(depsMap);
+  }
+
+  @Test
+  public void test_cc_info() {
+    DependencyBuildContext buildContext =
+        DependencyBuildContext.create(
+            "abc-def",
+            Instant.ofEpochMilli(1000),
+            Optional.of(new VcsState("workspaceId", "12345", ImmutableSet.of(), Optional.empty())));
+    ImmutableMap<Label, TargetBuildInfo> depsMap =
+        ImmutableMap.of(
+            Label.of("//my/package:target"),
+            TargetBuildInfo.forCcTarget(
+                CcCompilationInfo.builder()
+                    .target(Label.of("//my/package:target"))
+                    .defines(ImmutableList.of("-D", "-w"))
+                    .includeDirectories(
+                        ImmutableList.of(
+                            ProjectPath.create(Root.PROJECT, Path.of("buildout/include")),
+                            ProjectPath.create(Root.WORKSPACE, Path.of("src/include"))))
+                    .quoteIncludeDirectories(
+                        ImmutableList.of(
+                            ProjectPath.create(Root.PROJECT, Path.of("buildout/qinclude")),
+                            ProjectPath.create(Root.WORKSPACE, Path.of("src/qinclude"))))
+                    .systemIncludeDirectories(
+                        ImmutableList.of(
+                            ProjectPath.create(Root.PROJECT, Path.of("buildout/sysinclude")),
+                            ProjectPath.create(Root.WORKSPACE, Path.of("src/sysinclude"))))
+                    .frameworkIncludeDirectories(
+                        ImmutableList.of(
+                            ProjectPath.create(Root.PROJECT, Path.of("buildout/fwinclude")),
+                            ProjectPath.create(Root.WORKSPACE, Path.of("src/fwinclude"))))
+                    .genHeaders(
+                        ImmutableList.of(
+                            BuildArtifact.create(
+                                "genhdrdigest",
+                                Path.of("/build/out/generated.h"),
+                                Label.of("//my/package:target"))))
+                    .toolchainId("my-toolchain")
+                    .build(),
+                buildContext));
+    ImmutableMap<String, CcToolchain> toolchainMap =
+        ImmutableMap.of(
+            "my-toolchain",
+            CcToolchain.builder()
+                .id("my-toolchain")
+                .compiler("clangd")
+                .compilerExecutable(
+                    ProjectPath.WORKSPACE_ROOT.resolveChild(Path.of("path/to/clangd")))
+                .cpu("armv8")
+                .targetGnuSystemName("gnu-linux-armv8")
+                .builtInIncludeDirectories(
+                    ImmutableList.of(
+                        ProjectPath.create(Root.PROJECT, Path.of("buildout/builtininclude")),
+                        ProjectPath.create(Root.WORKSPACE, Path.of("src/builtininclude"))))
+                .cOptions(ImmutableList.of("--copt1"))
+                .cppOptions(ImmutableList.of("--ccopt1"))
+                .build());
+    ArtifactTracker.State newState = roundTrip(depsMap, toolchainMap);
+    assertThat(newState.depsMap()).containsExactlyEntriesIn(depsMap);
+    assertThat(newState.ccToolchainMap()).containsExactlyEntriesIn(toolchainMap);
   }
 }

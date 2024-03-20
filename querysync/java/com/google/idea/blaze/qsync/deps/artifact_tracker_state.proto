@@ -16,6 +16,7 @@ syntax = "proto3";
 
 package ij.qsync.deps;
 
+import "querysync/java/com/google/idea/blaze/qsync/project/project.proto";
 import "querysync/java/com/google/idea/blaze/qsync/project/snapshot.proto";
 
 // option java_api_version = 2;
@@ -28,6 +29,7 @@ message ArtifactTrackerState {
   map<string, TargetBuildInfo> built_deps = 2;
   // Build contexts. These are referred to by their ID from TargetBuildInfo
   repeated BuildContext build_contexts = 3;
+  map<string, CcToolchain> cc_toolchains = 4;
 }
 
 message TargetBuildInfo {
@@ -35,6 +37,7 @@ message TargetBuildInfo {
   string build_id = 1;
   // Java artifacts produced by the build
   JavaArtifacts java_artifacts = 2;
+  CcCompilationInfo cc_info = 3;
 }
 
 message Artifact {
@@ -59,4 +62,24 @@ message BuildContext {
   string build_id = 1;
   int64 start_time_millis = 2;
   VcsState vcs_state = 3;
+}
+
+message CcCompilationInfo {
+  repeated string defines = 1;
+  repeated ProjectPath include_directories = 2;
+  repeated ProjectPath quote_include_directories = 3;
+  repeated ProjectPath sysytem_include_directories = 4;
+  repeated ProjectPath framework_include_directories = 5;
+  repeated Artifact gen_headers = 6;
+  string toolchain_id = 7;
+}
+
+message CcToolchain {
+  string compiler = 1;
+  ProjectPath compiler_executable = 2;
+  string cpu = 3;
+  string target_gnu_system_name = 4;
+  repeated ProjectPath built_in_include_directories = 5;
+  repeated string c_options = 6;
+  repeated string cpp_options = 7;
 }
