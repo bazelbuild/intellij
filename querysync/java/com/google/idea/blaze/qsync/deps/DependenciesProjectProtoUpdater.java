@@ -61,7 +61,8 @@ public class DependenciesProjectProtoUpdater implements ProjectProtoTransform {
                     dependencyTracker::getBuiltDeps,
                     projectDefinition,
                     artifactCache,
-                    packageReader));
+                    packageReader))
+            .add(new ConfigureCcCompilation.UpdateOperation(dependencyTracker::getStateSnapshot));
     if (attachDepsSrcjarsExperiment.get()) {
       updateOperations.add(
           new AddDependencySrcJars(
@@ -83,7 +84,7 @@ public class DependenciesProjectProtoUpdater implements ProjectProtoTransform {
   public Project apply(Project proto, BuildGraphData graph, Context<?> context)
       throws BuildException {
 
-    ProjectProtoUpdate protoUpdate = new ProjectProtoUpdate(proto, context);
+    ProjectProtoUpdate protoUpdate = new ProjectProtoUpdate(proto, graph, context);
     for (ProjectProtoUpdateOperation op : updateOperations) {
       op.update(protoUpdate);
     }

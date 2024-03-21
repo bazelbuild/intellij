@@ -49,6 +49,7 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/artifacts",
         "//querysync/java/com/google/idea/blaze/qsync/deps",
         "//querysync/java/com/google/idea/blaze/qsync/java",
+        "//querysync/java/com/google/idea/blaze/qsync/project",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata:project_protos",
@@ -144,6 +145,29 @@ java_test(
         "@com_google_protobuf//:protobuf_java",
         "@junit//jar",
         "@mockito//jar",
+        "@truth//jar",
+    ],
+)
+
+java_test(
+    name = "ConfigureCcCompilationTest",
+    size = "small",
+    srcs = ["ConfigureCcCompilationTest.java"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync",
+        "//querysync/java/com/google/idea/blaze/qsync/cc",
+        "//querysync/java/com/google/idea/blaze/qsync/cc:cc_compilation_info_java_proto",
+        "//querysync/java/com/google/idea/blaze/qsync/deps",
+        "//querysync/java/com/google/idea/blaze/qsync/java",
+        "//querysync/java/com/google/idea/blaze/qsync/project",
+        "//querysync/java/com/google/idea/blaze/qsync/project:language_class_java_proto",
+        "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
+        "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
+        "//shared",
+        "//shared/javatests/com/google/idea/blaze/common:test_utils",
+        "@com_google_guava_guava//jar",
+        "@junit//jar",
         "@truth//jar",
     ],
 )

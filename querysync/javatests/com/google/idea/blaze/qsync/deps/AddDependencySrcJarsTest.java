@@ -77,7 +77,8 @@ public class AddDependencySrcJarsTest {
             pathResolver,
             new SrcJarInnerPathFinder(new PackageStatementParser()));
 
-    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), new NoopContext());
+    ProjectProtoUpdate update =
+        new ProjectProtoUpdate(original.project(), original.graph(), new NoopContext());
 
     addSrcJars.update(update);
 
@@ -116,7 +117,8 @@ public class AddDependencySrcJarsTest {
             pathResolver,
             new SrcJarInnerPathFinder(new PackageStatementParser()));
 
-    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), new NoopContext());
+    ProjectProtoUpdate update =
+        new ProjectProtoUpdate(original.project(), original.graph(), new NoopContext());
 
     addSrcJars.update(update);
 

@@ -23,6 +23,7 @@ proto_library(
     srcs = ["cc_compilation_info.proto"],
     visibility = [
         "//proto:__pkg__",
+        "//querysync/java/com/google/idea/blaze/qsync/deps:__pkg__",
     ],
 )
 

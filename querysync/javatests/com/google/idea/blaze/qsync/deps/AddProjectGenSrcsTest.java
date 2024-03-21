@@ -94,7 +94,8 @@ public class AddProjectGenSrcsTest {
             cache,
             new PackageStatementParser());
 
-    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), context);
+    ProjectProtoUpdate update =
+        new ProjectProtoUpdate(original.project(), original.graph(), context);
     addGensrcs.update(update);
     ProjectProto.Project newProject = update.build();
 
@@ -189,7 +190,8 @@ public class AddProjectGenSrcsTest {
             cache,
             new PackageStatementParser());
 
-    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), context);
+    ProjectProtoUpdate update =
+        new ProjectProtoUpdate(original.project(), original.graph(), context);
     addGenSrcs.update(update);
     ProjectProto.Project newProject = update.build();
 
