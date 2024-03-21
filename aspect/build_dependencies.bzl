@@ -304,8 +304,8 @@ def _collect_own_java_artifacts(
                     add_base_idl_jar = True
 
                 # An AIDL base jar needed for resolving base classes for aidl generated stubs.
-                if add_base_idl_jar and hasattr(rule.attr, "_android_sdk"):
-                    android_sdk_info = getattr(rule.attr, "_android_sdk")[AndroidSdkInfo]
+                if add_base_idl_jar and hasattr(rule.attr, "_android_sdk") and hasattr(android_common, "AndroidSdkInfo"):
+                    android_sdk_info = getattr(rule.attr, "_android_sdk")[android_common.AndroidSdkInfo]
                     own_jar_depsets.append(android_sdk_info.aidl_lib.files)
 
         # Add generated java_outputs (e.g. from annotation processing)
