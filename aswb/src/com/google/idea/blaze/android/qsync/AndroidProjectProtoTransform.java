@@ -60,7 +60,7 @@ public class AndroidProjectProtoTransform implements ProjectProtoTransform {
   @Override
   public Project apply(Project proto, BuildGraphData graph, Context<?> context)
       throws BuildException {
-    ProjectProtoUpdate update = new ProjectProtoUpdate(proto, context);
+    ProjectProtoUpdate update = new ProjectProtoUpdate(proto, graph, context);
     for (var op : updateOperations) {
       op.update(update);
     }

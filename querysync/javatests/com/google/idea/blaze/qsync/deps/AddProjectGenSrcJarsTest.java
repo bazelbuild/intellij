@@ -87,7 +87,8 @@ public class AddProjectGenSrcJarsTest {
             cache,
             new SrcJarInnerPathFinder(new PackageStatementParser()));
 
-    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), new NoopContext());
+    ProjectProtoUpdate update =
+        new ProjectProtoUpdate(original.project(), original.graph(), new NoopContext());
     javaDeps.update(update);
     ProjectProto.Project newProject = update.build();
     assertThat(newProject.getLibraryList()).isEqualTo(original.project().getLibraryList());
@@ -128,7 +129,8 @@ public class AddProjectGenSrcJarsTest {
             cache,
             new SrcJarInnerPathFinder(new PackageStatementParser()));
 
-    ProjectProtoUpdate update = new ProjectProtoUpdate(original.project(), new NoopContext());
+    ProjectProtoUpdate update =
+        new ProjectProtoUpdate(original.project(), original.graph(), new NoopContext());
     javaDeps.update(update);
     ProjectProto.Project newProject = update.build();
     assertThat(newProject.getLibraryList()).isEqualTo(original.project().getLibraryList());

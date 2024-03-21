@@ -18,6 +18,7 @@ package com.google.idea.blaze.qsync.deps;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.qsync.project.BlazeProjectDataStorage;
+import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Library;
 import java.nio.file.Path;
@@ -33,13 +34,16 @@ import java.util.Optional;
 public class ProjectProtoUpdate {
 
   private final ProjectProto.Project.Builder project;
+  private final BuildGraphData buildGraph;
   private final Context<?> context;
   private final ProjectProto.Module.Builder workspaceModule;
   private final Map<String, Library.Builder> libraries = Maps.newHashMap();
   private final Map<Path, ArtifactDirectoryBuilder> artifactDirs = Maps.newHashMap();
 
-  public ProjectProtoUpdate(ProjectProto.Project existingProject, Context<?> context) {
+  public ProjectProtoUpdate(
+      ProjectProto.Project existingProject, BuildGraphData graph, Context<?> context) {
     this.project = existingProject.toBuilder();
+    this.buildGraph = graph;
     this.context = context;
     this.workspaceModule = getWorkspaceModuleBuilder(project);
   }
@@ -63,6 +67,10 @@ public class ProjectProtoUpdate {
 
   public ProjectProto.Project.Builder project() {
     return project;
+  }
+
+  public BuildGraphData buildGraph() {
+    return buildGraph;
   }
 
   public ProjectProto.Module.Builder workspaceModule() {

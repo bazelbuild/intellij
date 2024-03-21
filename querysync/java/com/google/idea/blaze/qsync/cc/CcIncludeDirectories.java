@@ -33,12 +33,11 @@ public class CcIncludeDirectories {
    */
   public static ProjectPath projectPathFor(String includeDir) {
     Path includePath = Path.of(includeDir);
+    // include paths that refer to generated locations start with the `bazel-out` (or `blaze-out`)
+    // component, so paths that start with that are resolved relative to the generated headers dir
+    // in the project artifact store.
     if (includePath.startsWith("blaze-out") || includePath.startsWith("bazel-out")) {
-      // The directories given by blaze include the "bazel-out" component, but that is not present
-      // in the paths of the generated headers themselves due to the legacy semantics of
-      // OutputArtifactInfo which strips it. Since that determines their location in the
-      // artifact store, remove here too it to ensure consistency:
-      return GEN_INCLUDE_BASE.resolveChild(includePath.getName(0).relativize(includePath));
+      return GEN_INCLUDE_BASE.resolveChild(includePath);
     } else {
       return ProjectPath.WORKSPACE_ROOT.resolveChild(includePath);
     }
