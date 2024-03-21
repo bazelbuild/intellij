@@ -85,19 +85,19 @@ public abstract class CcCompilationInfo {
         .defines(ImmutableList.copyOf(targetInfo.getDefinesList()))
         .includeDirectories(
             targetInfo.getIncludeDirectoriesList().stream()
-                .map(CcIncludeDirectories::projectPathFor)
+                .map(ArtifactDirectories::forCcInclude)
                 .collect(toImmutableList()))
         .quoteIncludeDirectories(
             targetInfo.getQuoteIncludeDirectoriesList().stream()
-                .map(CcIncludeDirectories::projectPathFor)
+                .map(ArtifactDirectories::forCcInclude)
                 .collect(toImmutableList()))
         .systemIncludeDirectories(
             targetInfo.getSystemIncludeDirectoriesList().stream()
-                .map(CcIncludeDirectories::projectPathFor)
+                .map(ArtifactDirectories::forCcInclude)
                 .collect(toImmutableList()))
         .frameworkIncludeDirectories(
             targetInfo.getFrameworkIncludeDirectoriesList().stream()
-                .map(CcIncludeDirectories::projectPathFor)
+                .map(ArtifactDirectories::forCcInclude)
                 .collect(toImmutableList()))
         .genHeaders(
             toArtifacts(targetInfo.getGenHdrsList(), stripBazelOutPrefix(digestMap), target))

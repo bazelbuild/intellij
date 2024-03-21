@@ -27,6 +27,7 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
+import com.google.idea.blaze.qsync.deps.ArtifactDirectories;
 import com.google.idea.blaze.qsync.deps.ArtifactDirectoryBuilder;
 import com.google.idea.blaze.qsync.deps.DependencyBuildContext;
 import com.google.idea.blaze.qsync.deps.JavaArtifactInfo;
@@ -105,8 +106,9 @@ public class AddProjectGenSrcs implements ProjectProtoUpdateOperation {
 
   @Override
   public void update(ProjectProtoUpdate update) throws BuildException {
-    ArtifactDirectoryBuilder javaSrc = update.artifactDirectory(Path.of("gensrc/java"));
-    ArtifactDirectoryBuilder javatestsSrc = update.artifactDirectory(Path.of("gensrc/javatests"));
+    ArtifactDirectoryBuilder javaSrc = update.artifactDirectory(ArtifactDirectories.JAVA_GEN_SRC);
+    ArtifactDirectoryBuilder javatestsSrc =
+        update.artifactDirectory(ArtifactDirectories.JAVA_GEN_TESTSRC);
     ArrayListMultimap<Path, ArtifactWithOrigin> srcsByJavaPath = ArrayListMultimap.create();
     for (TargetBuildInfo target : builtTargetsSupplier.get()) {
       if (target.javaInfo().isEmpty()) {

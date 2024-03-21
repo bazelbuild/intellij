@@ -78,7 +78,7 @@ public abstract class CcToolchain {
         .targetGnuSystemName(proto.getTargetName())
         .builtInIncludeDirectories(
             proto.getBuiltInIncludeDirectoriesList().stream()
-                .map(CcIncludeDirectories::projectPathFor)
+                .map(ArtifactDirectories::forCcInclude)
                 .collect(toImmutableList()))
         .cOptions(ImmutableList.copyOf(proto.getCOptionsList()))
         .cppOptions(ImmutableList.copyOf(proto.getCppOptionsList()))
