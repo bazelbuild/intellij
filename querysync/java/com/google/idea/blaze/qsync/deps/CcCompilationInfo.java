@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.common.Interners;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
-import com.google.idea.blaze.qsync.cc.CcIncludeDirectories;
 import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcTargetInfo;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import java.nio.file.Path;
@@ -34,22 +33,22 @@ import java.util.function.Function;
  * information is extracted from the build at build deps time.
  */
 @AutoValue
-abstract class CcCompilationInfo {
-  abstract Label target();
+public abstract class CcCompilationInfo {
+  public abstract Label target();
 
-  abstract ImmutableList<String> defines();
+  public abstract ImmutableList<String> defines();
 
-  abstract ImmutableList<ProjectPath> includeDirectories();
+  public abstract ImmutableList<ProjectPath> includeDirectories();
 
-  abstract ImmutableList<ProjectPath> quoteIncludeDirectories();
+  public abstract ImmutableList<ProjectPath> quoteIncludeDirectories();
 
-  abstract ImmutableList<ProjectPath> systemIncludeDirectories();
+  public abstract ImmutableList<ProjectPath> systemIncludeDirectories();
 
-  abstract ImmutableList<ProjectPath> frameworkIncludeDirectories();
+  public abstract ImmutableList<ProjectPath> frameworkIncludeDirectories();
 
-  abstract ImmutableList<BuildArtifact> genHeaders();
+  public abstract ImmutableList<BuildArtifact> genHeaders();
 
-  abstract String toolchainId();
+  public abstract String toolchainId();
 
   static CcCompilationInfo.Builder builder() {
     return new AutoValue_CcCompilationInfo.Builder();
@@ -78,7 +77,8 @@ abstract class CcCompilationInfo {
         });
   }
 
-  static CcCompilationInfo create(CcTargetInfo targetInfo, Function<Path, String> digestMap) {
+  public static CcCompilationInfo create(
+      CcTargetInfo targetInfo, Function<Path, String> digestMap) {
     Label target = Label.of(targetInfo.getLabel());
     return builder()
         .target(target)

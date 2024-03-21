@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync.deps;
+package com.google.idea.blaze.qsync.cc;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
@@ -29,8 +29,15 @@ import com.google.common.collect.Multimap;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
-import com.google.idea.blaze.qsync.cc.CcIncludeDirectories;
+import com.google.idea.blaze.qsync.deps.ArtifactDirectoryBuilder;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker.State;
+import com.google.idea.blaze.qsync.deps.CcCompilationInfo;
+import com.google.idea.blaze.qsync.deps.CcIncludeDirectories;
+import com.google.idea.blaze.qsync.deps.CcToolchain;
+import com.google.idea.blaze.qsync.deps.DependencyBuildContext;
+import com.google.idea.blaze.qsync.deps.ProjectProtoUpdate;
+import com.google.idea.blaze.qsync.deps.ProjectProtoUpdateOperation;
+import com.google.idea.blaze.qsync.deps.TargetBuildInfo;
 import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcCompilationContext;
@@ -67,7 +74,7 @@ public class ConfigureCcCompilation {
   }
 
   private static final AtomicInteger nextFlagSetId = new AtomicInteger(0);
-  private final ArtifactTracker.State artifactState;
+  private final State artifactState;
   private final ProjectProtoUpdate update;
 
   /* Map from toolchain ID -> language -> flags for that toolchain & language. */
@@ -79,7 +86,7 @@ public class ConfigureCcCompilation {
    * which can have a large memory footprint. */
   private final Map<Set<CcCompilerFlag>, String> uniqueFlagSetIds = Maps.newHashMap();
 
-  ConfigureCcCompilation(ArtifactTracker.State artifactState, ProjectProtoUpdate projectUpdate) {
+  ConfigureCcCompilation(State artifactState, ProjectProtoUpdate projectUpdate) {
     this.artifactState = artifactState;
     this.update = projectUpdate;
   }

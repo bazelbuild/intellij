@@ -36,7 +36,7 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
-import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
+import com.google.idea.blaze.qsync.deps.JavaArtifactInfo;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.testing.EdtRule;
 import com.google.protobuf.TextFormat;
