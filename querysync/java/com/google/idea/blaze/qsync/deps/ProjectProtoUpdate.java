@@ -15,10 +15,13 @@
  */
 package com.google.idea.blaze.qsync.deps;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.qsync.project.BlazeProjectDataStorage;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
+import com.google.idea.blaze.qsync.project.ProjectPath;
+import com.google.idea.blaze.qsync.project.ProjectPath.Root;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Library;
 import java.nio.file.Path;
@@ -94,8 +97,9 @@ public class ProjectProtoUpdate {
     return libraries.get(name);
   }
 
-  public ArtifactDirectoryBuilder artifactDirectory(Path relativePath) {
-    return artifactDirs.computeIfAbsent(relativePath, ArtifactDirectoryBuilder::new);
+  public ArtifactDirectoryBuilder artifactDirectory(ProjectPath path) {
+    Preconditions.checkState(path.rootType() == Root.PROJECT);
+    return artifactDirs.computeIfAbsent(path.relativePath(), ArtifactDirectoryBuilder::new);
   }
 
   public ProjectProto.Project build() {

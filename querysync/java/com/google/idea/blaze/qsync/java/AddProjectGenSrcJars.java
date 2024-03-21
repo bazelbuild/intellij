@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
+import com.google.idea.blaze.qsync.deps.ArtifactDirectories;
 import com.google.idea.blaze.qsync.deps.JavaArtifactInfo;
 import com.google.idea.blaze.qsync.deps.ProjectProtoUpdate;
 import com.google.idea.blaze.qsync.deps.ProjectProtoUpdateOperation;
@@ -31,7 +32,6 @@ import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.TestSourceGlobMatcher;
-import java.nio.file.Path;
 
 /**
  * Adds in-project generated {@code .srcjar} files to the project proto. This allows these sources
@@ -72,7 +72,7 @@ public class AddProjectGenSrcJars implements ProjectProtoUpdateOperation {
           // a zip of generated sources
           ProjectPath added =
               update
-                  .artifactDirectory(Path.of("buildout"))
+                  .artifactDirectory(ArtifactDirectories.DEFAULT)
                   .addIfNewer(genSrc.path(), genSrc, target.buildContext())
                   .orElse(null);
           if (added != null) {

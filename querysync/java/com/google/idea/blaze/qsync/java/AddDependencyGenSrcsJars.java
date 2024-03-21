@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
+import com.google.idea.blaze.qsync.deps.ArtifactDirectories;
 import com.google.idea.blaze.qsync.deps.JavaArtifactInfo;
 import com.google.idea.blaze.qsync.deps.ProjectProtoUpdate;
 import com.google.idea.blaze.qsync.deps.ProjectProtoUpdateOperation;
@@ -29,7 +30,6 @@ import com.google.idea.blaze.qsync.deps.TargetBuildInfo;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto.LibrarySource;
-import java.nio.file.Path;
 
 /**
  * Adds generated {@code .srcjar} files from external dependencies to the {@code .dependencies}
@@ -71,7 +71,7 @@ public class AddDependencyGenSrcsJars implements ProjectProtoUpdateOperation {
 
         ProjectPath projectArtifact =
             update
-                .artifactDirectory(Path.of("buildout"))
+                .artifactDirectory(ArtifactDirectories.DEFAULT)
                 .addIfNewer(genSrc.path(), genSrc, target.buildContext())
                 .orElse(null);
 

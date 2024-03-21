@@ -19,6 +19,7 @@ import com.google.common.base.Supplier;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
+import com.google.idea.blaze.qsync.deps.ArtifactDirectories;
 import com.google.idea.blaze.qsync.deps.ArtifactDirectoryBuilder;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.deps.JavaArtifactInfo;
@@ -69,7 +70,7 @@ public class AddDependencyAars implements ProjectProtoUpdateOperation {
       }
       for (BuildArtifact aar : javaInfo.ideAars()) {
         if (aarDir == null) {
-          aarDir = update.artifactDirectory(Path.of("buildout"));
+          aarDir = update.artifactDirectory(ArtifactDirectories.DEFAULT);
         }
         String packageName = readPackageFromAarManifest(aar);
         ProjectPath dest =

@@ -19,25 +19,42 @@ import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectPath.Root;
 import java.nio.file.Path;
 
-/** Static helpers for managing C/C++ include paths. */
-public class CcIncludeDirectories {
+/** Static helpers for managing directories in the project artifact store. */
+public class ArtifactDirectories {
 
-  public static final ProjectPath GEN_INCLUDE_BASE =
-      ProjectPath.create(Root.PROJECT, Path.of("buildout"));
+  private static final ProjectPath ROOT = ProjectPath.create(Root.PROJECT, Path.of(".bazel"));
 
-  private CcIncludeDirectories() {}
+  /**
+   * By default, all project artifacts go in this directory, at a path matching their bazel output
+   * path.
+   */
+  public static final ProjectPath DEFAULT = ROOT.resolveChild(Path.of("buildout"));
+
+  /**
+   * Compiled dependency jar files have their own path, since the IDE uses all jars within this
+   * directory and we want to ensure there are no extras there.
+   */
+  public static final ProjectPath JAVADEPS = ROOT.resolveChild(Path.of("javadeps"));
+
+  public static final ProjectPath JAVA_GEN_SRC = ROOT.resolveChild(Path.of("gensrc/java"));
+  public static final ProjectPath JAVA_GEN_TESTSRC = ROOT.resolveChild(Path.of("gensrc/javatests"));
+
+  /** Generated CC headers go in the default directory. */
+  public static final ProjectPath GEN_CC_HEADERS = DEFAULT;
+
+  private ArtifactDirectories() {}
 
   /**
    * Constructs a project path for a given include dir flag value. This can then be used to ensure
    * that the flag passed to the IDE points to the correct location.
    */
-  public static ProjectPath projectPathFor(String includeDir) {
+  public static ProjectPath forCcInclude(String includeDir) {
     Path includePath = Path.of(includeDir);
     // include paths that refer to generated locations start with the `bazel-out` (or `blaze-out`)
     // component, so paths that start with that are resolved relative to the generated headers dir
     // in the project artifact store.
     if (includePath.startsWith("blaze-out") || includePath.startsWith("bazel-out")) {
-      return GEN_INCLUDE_BASE.resolveChild(includePath);
+      return GEN_CC_HEADERS.resolveChild(includePath);
     } else {
       return ProjectPath.WORKSPACE_ROOT.resolveChild(includePath);
     }

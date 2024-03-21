@@ -29,10 +29,10 @@ import com.google.common.collect.Multimap;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
+import com.google.idea.blaze.qsync.deps.ArtifactDirectories;
 import com.google.idea.blaze.qsync.deps.ArtifactDirectoryBuilder;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker.State;
 import com.google.idea.blaze.qsync.deps.CcCompilationInfo;
-import com.google.idea.blaze.qsync.deps.CcIncludeDirectories;
 import com.google.idea.blaze.qsync.deps.CcToolchain;
 import com.google.idea.blaze.qsync.deps.DependencyBuildContext;
 import com.google.idea.blaze.qsync.deps.ProjectProtoUpdate;
@@ -215,7 +215,7 @@ public class ConfigureCcCompilation {
     update.project().getCcWorkspaceBuilder().addContexts(targetContext);
 
     ArtifactDirectoryBuilder headersDir =
-        update.artifactDirectory(CcIncludeDirectories.GEN_INCLUDE_BASE.relativePath());
+        update.artifactDirectory(ArtifactDirectories.GEN_CC_HEADERS);
     for (BuildArtifact artifact : ccInfo.genHeaders()) {
       headersDir.addIfNewer(artifact.path(), artifact, buildContext);
     }
