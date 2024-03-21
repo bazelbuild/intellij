@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync.deps;
+package com.google.idea.blaze.qsync.java;
 
 import static com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder.AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableCollection;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
-import com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder;
+import com.google.idea.blaze.qsync.deps.JavaArtifactInfo;
+import com.google.idea.blaze.qsync.deps.ProjectProtoUpdate;
+import com.google.idea.blaze.qsync.deps.ProjectProtoUpdateOperation;
+import com.google.idea.blaze.qsync.deps.TargetBuildInfo;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto.LibrarySource;

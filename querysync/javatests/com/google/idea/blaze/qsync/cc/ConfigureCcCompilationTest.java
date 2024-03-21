@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync.deps;
+package com.google.idea.blaze.qsync.cc;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
@@ -28,7 +28,12 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.NoopContext;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.TestDataSyncRunner;
-import com.google.idea.blaze.qsync.cc.FlagResolver;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker.State;
+import com.google.idea.blaze.qsync.deps.CcToolchain;
+import com.google.idea.blaze.qsync.deps.DependencyBuildContext;
+import com.google.idea.blaze.qsync.deps.ProjectProtoUpdate;
+import com.google.idea.blaze.qsync.deps.TargetBuildInfo;
 import com.google.idea.blaze.qsync.java.PackageStatementParser;
 import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcCompilationInfo;
 import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcTargetInfo;
@@ -57,7 +62,7 @@ public class ConfigureCcCompilationTest {
   private final TestDataSyncRunner syncRunner =
       new TestDataSyncRunner(context, new PackageStatementParser(), true);
 
-  private static ArtifactTracker.State toArtifactState(CcCompilationInfo proto) {
+  private static State toArtifactState(CcCompilationInfo proto) {
     Function<Path, String> digestMap = p -> Integer.toHexString(p.hashCode());
     return ArtifactTracker.State.create(
         proto.getTargetsList().stream()

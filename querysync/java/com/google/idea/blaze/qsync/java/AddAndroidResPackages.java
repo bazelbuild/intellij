@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync.deps;
+package com.google.idea.blaze.qsync.java;
 
 import static java.util.function.Predicate.not;
 
@@ -22,7 +22,10 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker.State;
-import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
+import com.google.idea.blaze.qsync.deps.JavaArtifactInfo;
+import com.google.idea.blaze.qsync.deps.ProjectProtoUpdate;
+import com.google.idea.blaze.qsync.deps.ProjectProtoUpdateOperation;
+import com.google.idea.blaze.qsync.deps.TargetBuildInfo;
 import java.util.Optional;
 
 /**
@@ -33,7 +36,7 @@ public class AddAndroidResPackages implements ProjectProtoUpdateOperation {
 
   private final Supplier<State> artifactStateSupplier;
 
-  public AddAndroidResPackages(Supplier<ArtifactTracker.State> artifactStateSupplier) {
+  public AddAndroidResPackages(Supplier<State> artifactStateSupplier) {
     this.artifactStateSupplier = artifactStateSupplier;
   }
 

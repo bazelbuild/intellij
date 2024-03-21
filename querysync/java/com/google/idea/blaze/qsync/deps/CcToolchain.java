@@ -19,7 +19,6 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.qsync.cc.CcIncludeDirectories;
 import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcToolchainInfo;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectPath.Root;
@@ -33,37 +32,37 @@ import java.nio.file.Path;
 public abstract class CcToolchain {
 
   /** Unique ID for this toolchain. */
-  abstract String id();
+  public abstract String id();
 
   /** The compiler name, as reported by bazel API {@code CcToolchainInfo.compiler}. */
-  abstract String compiler();
+  public abstract String compiler();
 
   /**
    * Path to the compiler executable, as reported by bazel API {@code
    * CcToolchainInfo.compiler_executable}.
    */
-  abstract ProjectPath compilerExecutable();
+  public abstract ProjectPath compilerExecutable();
 
   /** Target CPU of the C++ toolchain, as reported by bazel API {@code CcToolchainInfo.cpu}. */
-  abstract String cpu();
+  public abstract String cpu();
 
   /** As reported by bazel API {@code CcToolchainInfo.target_gnu_system_name}. */
-  abstract String targetGnuSystemName();
+  public abstract String targetGnuSystemName();
 
   /** As reported by bazel API {@code CcToolchainInfo.built_in_include_directories}. */
-  abstract ImmutableList<ProjectPath> builtInIncludeDirectories();
+  public abstract ImmutableList<ProjectPath> builtInIncludeDirectories();
 
   /**
    * C compiler options, as reported by bazel API {@code
    * cc_common.get_memory_inefficient_command_line} for {@code action_name=C_COMPILE_ACTION_NAME}.
    */
-  abstract ImmutableList<String> cOptions();
+  public abstract ImmutableList<String> cOptions();
 
   /**
    * C++ compiler options, as reported by bazel API {@code
    * cc_common.get_memory_inefficient_command_line} for {@code action_name=CPP_COMPILE_ACTION_NAME}.
    */
-  abstract ImmutableList<String> cppOptions();
+  public abstract ImmutableList<String> cppOptions();
 
   public static Builder builder() {
     return new AutoValue_CcToolchain.Builder();

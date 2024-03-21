@@ -8,12 +8,9 @@ java_library(
     deps = [
         ":artifact_tracker_state_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/artifacts",
-        "//querysync/java/com/google/idea/blaze/qsync/cc",
         "//querysync/java/com/google/idea/blaze/qsync/cc:cc_compilation_info_java_proto",
-        "//querysync/java/com/google/idea/blaze/qsync/java",
         "//querysync/java/com/google/idea/blaze/qsync/java:java_target_info_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/project",
-        "//querysync/java/com/google/idea/blaze/qsync/project:language_class_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//shared",
         "//shared:artifact",

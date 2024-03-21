@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -40,11 +39,11 @@ public interface ArtifactTracker<ContextT extends Context<?>> {
 
     public static final State EMPTY = create(ImmutableMap.of(), ImmutableMap.of());
 
-    abstract ImmutableMap<Label, TargetBuildInfo> depsMap();
+    public abstract ImmutableMap<Label, TargetBuildInfo> depsMap();
 
-    abstract ImmutableMap<String, CcToolchain> ccToolchainMap();
+    public abstract ImmutableMap<String, CcToolchain> ccToolchainMap();
 
-    static State create(
+    public static State create(
         ImmutableMap<Label, TargetBuildInfo> map,
         ImmutableMap<String, CcToolchain> ccToolchainMap) {
       return new AutoValue_ArtifactTracker_State(map, ccToolchainMap);

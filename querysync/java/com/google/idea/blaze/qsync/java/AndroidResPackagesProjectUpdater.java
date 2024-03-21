@@ -20,6 +20,7 @@ import static java.util.function.Predicate.not;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.idea.blaze.qsync.deps.JavaArtifactInfo;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
 
 /**
