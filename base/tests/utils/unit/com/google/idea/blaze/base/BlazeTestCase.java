@@ -139,4 +139,12 @@ public class BlazeTestCase {
     extensionsArea.registerExtensionPoint(name.getName(), type.getName(), Kind.INTERFACE);
     return extensionsArea.getExtensionPoint(name.getName());
   }
+
+  protected <T> ExtensionPointImpl<T> registerProjectExtensionPoint(
+      ExtensionPointName<T> name, Class<T> type) {
+    project
+        .getExtensionArea()
+        .registerExtensionPoint(name.getName(), type.getName(), Kind.INTERFACE);
+    return project.getExtensionArea().getExtensionPoint(name.getName());
+  }
 }

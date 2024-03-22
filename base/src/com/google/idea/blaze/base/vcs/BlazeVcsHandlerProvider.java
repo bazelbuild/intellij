@@ -68,7 +68,8 @@ public interface BlazeVcsHandlerProvider {
   String getVcsName();
 
   /** Returns whether this vcs handler can manage this project */
-  boolean handlesProject(BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot);
+  boolean handlesProject(
+      BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot, Project project);
 
   BlazeVcsHandler getHandlerForProject(Project p);
 
@@ -144,6 +145,7 @@ public interface BlazeVcsHandlerProvider {
 
   /** Sync handler that performs VCS specific computation. */
   interface BlazeVcsSyncHandler {
+    /** Result of a validation. */
     enum ValidationResult {
       OK,
       Error,

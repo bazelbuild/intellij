@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import java.io.File;
@@ -59,16 +60,19 @@ public interface ExternalTask {
     @VisibleForTesting @Nullable public BlazeContext context;
     @VisibleForTesting @Nullable public OutputStream stdout;
     @VisibleForTesting @Nullable public OutputStream stderr;
-    @Nullable BlazeCommand blazeCommand;
-    boolean redirectErrorStream = false;
-    boolean ignoreExitCode = false;
+    @VisibleForTesting @Nullable BlazeCommand blazeCommand;
+    @VisibleForTesting public boolean redirectErrorStream = false;
+    @VisibleForTesting public boolean ignoreExitCode = false;
+    @VisibleForTesting @Nullable public byte[] input;
+    @VisibleForTesting @Nullable public final Project project;
 
-    private Builder(WorkspaceRoot workspaceRoot) {
-      this(workspaceRoot.directory());
+    private Builder(WorkspaceRoot workspaceRoot, Project project) {
+      this(workspaceRoot.directory(), project);
     }
 
-    private Builder(File workingDirectory) {
+    protected Builder(File workingDirectory, Project project) {
       this.workingDirectory = workingDirectory;
+      this.project = project;
     }
 
     @CanIgnoreReturnValue
@@ -158,6 +162,12 @@ public interface ExternalTask {
       return this;
     }
 
+    @CanIgnoreReturnValue
+    public Builder input(byte[] arg) {
+      this.input = arg;
+      return this;
+    }
+
     public ExternalTask build() {
       return ExternalTaskProvider.getInstance().build(this);
     }
@@ -175,8 +185,10 @@ public interface ExternalTask {
     private final OutputStream stdout;
     private final OutputStream stderr;
     private final boolean ignoreExitCode;
+    private final byte[] input;
+    private final Project project;
 
-    ExternalTaskImpl(
+    public ExternalTaskImpl(
         @Nullable BlazeContext context,
         File workingDirectory,
         List<String> command,
@@ -184,7 +196,9 @@ public interface ExternalTask {
         @Nullable OutputStream stdout,
         @Nullable OutputStream stderr,
         boolean redirectErrorStream,
-        boolean ignoreExitCode) {
+        boolean ignoreExitCode,
+        @Nullable byte[] input,
+        Project project) {
       this.workingDirectory = workingDirectory;
       this.command = command;
       this.environmentVariables = environmentVariables;
@@ -193,6 +207,8 @@ public interface ExternalTask {
       this.stdout = stdout != null ? stdout : NULL_STREAM;
       this.stderr = stderr != null ? stderr : NULL_STREAM;
       this.ignoreExitCode = ignoreExitCode;
+      this.input = input;
+      this.project = project;
     }
 
     @Override
@@ -220,6 +236,7 @@ public interface ExternalTask {
                           .redirectStderr(redirectErrorStream)
                           .stderr(stderr)
                           .stdout(stdout)
+                          .stdin(input)
                           .environmentVars(environmentVariables)
                           .build()
                           .run();
@@ -282,23 +299,24 @@ public interface ExternalTask {
     }
   }
 
-  static Builder builder() {
-    return new Builder(new File("/"));
+  static Builder builder(Project project) {
+    return new Builder(new File("/"), project);
   }
 
-  static Builder builder(List<String> command) {
-    return builder().args(command);
+  static Builder builder(List<String> command, Project project) {
+    return builder(project).args(command);
   }
 
-  static Builder builder(File workingDirectory) {
-    return new Builder(workingDirectory);
+  static Builder builder(File workingDirectory, Project project) {
+    return new Builder(workingDirectory, project);
   }
 
-  static Builder builder(Path workingDirectory) {
-    return new Builder(workingDirectory.toFile());
+  static Builder builder(Path workingDirectory, Project project) {
+    return new Builder(workingDirectory.toFile(), project);
   }
 
-  static Builder builder(WorkspaceRoot workspaceRoot) {
-    return new Builder(workspaceRoot);
+  static Builder builder(WorkspaceRoot workspaceRoot, Project project) {
+    return new Builder(workspaceRoot, project);
   }
+
 }
