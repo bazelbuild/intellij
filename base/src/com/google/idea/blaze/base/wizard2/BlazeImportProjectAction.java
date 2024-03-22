@@ -50,15 +50,15 @@ class BlazeImportProjectAction extends AnAction {
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  @Override
   public void update(AnActionEvent e) {
     super.update(e);
     e.getPresentation()
         .setText(String.format("Import %s Project...", Blaze.defaultBuildSystemName()));
+  }
+
+  @Override
+  public ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private static void createFromWizard(

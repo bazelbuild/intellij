@@ -68,9 +68,11 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.artifact.ArtifactFetcher;
 import com.google.idea.blaze.common.artifact.ArtifactFetcher.ArtifactDestination;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
+import com.google.idea.blaze.common.proto.ProtoStringInterner;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.TestSourceGlobMatcher;
+import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
 import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.deps.OutputGroup;
@@ -272,7 +274,8 @@ public class ArtifactTrackerImpl
     cachePathToArtifactKeyMap.clear();
     try (InputStream stream = new GZIPInputStream(Files.newInputStream(persistentFile))) {
       ArtifactTrackerState saved =
-          ArtifactTrackerState.parseFrom(stream, ExtensionRegistry.getEmptyRegistry());
+          ProtoStringInterner.intern(
+              ArtifactTrackerState.parseFrom(stream, ExtensionRegistry.getEmptyRegistry()));
       if (saved.getVersion() != STORAGE_VERSION) {
         return;
       }
@@ -281,10 +284,11 @@ public class ArtifactTrackerImpl
               .collect(toImmutableMap(e -> Path.of(e.getKey()), e -> Path.of(e.getValue()))));
       javaArtifacts.putAll(
           saved.getArtifactInfo().getArtifactsList().stream()
-              .map(JavaArtifactInfo::create)
+              .map(p -> JavaArtifactInfo.create(p, BuildArtifact.NO_DIGESTS))
               .collect(toImmutableMap(JavaArtifactInfo::label, Function.identity())));
       for (JavaTargetArtifacts targetArtifact : saved.getArtifactInfo().getArtifactsList()) {
-        JavaArtifactInfo javaArtifactInfo = JavaArtifactInfo.create(targetArtifact);
+        JavaArtifactInfo javaArtifactInfo =
+            JavaArtifactInfo.create(targetArtifact, BuildArtifact.NO_DIGESTS);
         javaArtifacts.put(javaArtifactInfo.label(), javaArtifactInfo);
       }
       ccDepencenciesInfo = CcDependenciesInfo.create(saved.getCcCompilationInfo());
@@ -613,7 +617,8 @@ public class ArtifactTrackerImpl
    */
   private void updateMaps(Set<Label> targets, JavaArtifacts newArtifacts) {
     for (JavaTargetArtifacts targetArtifacts : newArtifacts.getArtifactsList()) {
-      JavaArtifactInfo javaArtifactInfo = JavaArtifactInfo.create(targetArtifacts);
+      JavaArtifactInfo javaArtifactInfo =
+          JavaArtifactInfo.create(targetArtifacts, BuildArtifact.NO_DIGESTS);
       javaArtifacts.put(javaArtifactInfo.label(), javaArtifactInfo);
     }
     for (Label label : targets) {
@@ -664,17 +669,17 @@ public class ArtifactTrackerImpl
       if (!projectDefinition.isIncluded(ai.label())) {
         continue;
       }
-      for (Path blazeOutRelativePath : ai.genSrcs()) {
+      for (BuildArtifact artifact : ai.genSrcs()) {
         // TODO(mathewi) depending on `JAVA_ARCHIVE_EXTENSIONS` here exposes a design problem, we
         //  shouldn't have to depend on such implementation details. Figure out a better design
         //  for the dance between this class and the cache.
         if (!JavaSourcesArchiveCacheLayout.JAVA_ARCHIVE_EXTENSIONS.contains(
-            FileUtilRt.getExtension(blazeOutRelativePath.toString()))) {
+            artifact.getExtension())) {
           continue;
         }
-        Optional<Path> artifactPath = generatedSrcFileCache.getCacheFile(blazeOutRelativePath);
+        Optional<Path> artifactPath = generatedSrcFileCache.getCacheFile(artifact.path());
         if (artifactPath.isEmpty()) {
-          logger.warn("No cached artifact found for source jar " + blazeOutRelativePath);
+          logger.warn("No cached artifact found for source jar " + artifact.path());
           continue;
         }
         generatedProjectSrcJars.add(
@@ -705,6 +710,7 @@ public class ArtifactTrackerImpl
             .filter(not(ai -> projectDefinition.isIncluded(ai.label())))
             .map(JavaArtifactInfo::genSrcs)
             .flatMap(List::stream)
+            .map(BuildArtifact::path)
             .filter(ArtifactTrackerImpl::hasJarOrZipExtension)
             .map(generatedExternalSrcFileCache::getCacheFile)
             .filter(Optional::isPresent)

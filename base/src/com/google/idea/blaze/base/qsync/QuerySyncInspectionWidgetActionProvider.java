@@ -86,7 +86,7 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     private final BuildDependenciesHelper buildDepsHelper;
 
     public BuildDependencies(@NotNull Editor editor) {
-      super("Build file dependencies");
+      super("");
       this.editor = editor;
       buildDepsHelper =
           new BuildDependenciesHelper(editor.getProject(), getClass(), DepsBuildType.SELF);
@@ -187,12 +187,12 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     private HelpTooltip createPrimaryTooltip(Project project) {
       if (fileInEditorHasNoTargetsToBuild(project)) {
         return new HelpTooltip()
-            .setTitle("Build dependencies")
+            .setTitle(QuerySync.BUILD_DEPENDENCIES_ACTION_NAME)
             .setDescription(
                 "This file is not owned by a project target with external dependencies.");
       } else {
         return new HelpTooltip()
-            .setTitle("Build dependencies")
+            .setTitle(QuerySync.BUILD_DEPENDENCIES_ACTION_NAME)
             .setShortcut(ActionManager.getInstance().getKeyboardShortcut("Blaze.BuildDependencies"))
             .setDescription(
                 "Builds the external dependencies needed for this file and enables analysis")

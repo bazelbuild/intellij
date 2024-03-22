@@ -202,14 +202,17 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
             "# For more documentation, please visit https://ij.bazel.build/docs/project-views.html",
             "# If your repository contains predefined .projectview files, you use 'import' directive to include them.",
             "# Otherwise, please specify 'directories' and 'targets' you want to be imported",
+            " ",
+            "# By default, we keep the 'directories' section empty, so nothing is imported.",
+            "# Please change `-.` to a list of directories you would like to import",
             "# ",
-            "# By default we keep your 'directories' and 'targets' sections empty, so nothing is imported.",
-            "# Please uncomment them and put the correct data there, and then run 'Sync' again" ,
+            "# After that, please look at the `derive_targets_from_directories` section and then:",
+            "#   - either keep it set to `true` to import ALL targets in the directories section",
+            "#   - or set it to `false` and add `targets` section to choose the targets selectively",
             "",
-            "# directories: ",
-            "#  <your directory here>",
-            "# targets: ",
-            "#  <your directory here>",
+            "directories: ",
+            "  -.",
+            "derive_targets_from_directories: true",
             ""
     )));
 

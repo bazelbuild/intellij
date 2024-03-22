@@ -23,6 +23,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Correspondence;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.LoggingContext;
+import com.google.idea.blaze.common.NoopContext;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.qsync.java.PackageReader;
 import com.google.idea.blaze.qsync.query.QuerySummary;
@@ -88,6 +90,20 @@ public class QuerySyncTestUtils {
 
     public static PathPackage of(String path, String pkg) {
       return new AutoValue_QuerySyncTestUtils_PathPackage(Path.of(path), pkg);
+    }
+  }
+
+  public static class LabelIgnoringCanonicalFormat extends Label {
+    public LabelIgnoringCanonicalFormat(String label) {
+      super(label);
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (!(that instanceof Label)) {
+        return false;
+      }
+      return cleanLabel(this.toString()).equals(cleanLabel(that.toString()));
     }
   }
 

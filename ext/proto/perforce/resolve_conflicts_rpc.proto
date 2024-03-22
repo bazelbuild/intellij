@@ -42,7 +42,7 @@ message ResolveConflictsRequest {
 }
 
 message ResolveConflictsResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
   optional Conflict skipped_conflict = 2;
   optional int32 path_index = 3;
 }

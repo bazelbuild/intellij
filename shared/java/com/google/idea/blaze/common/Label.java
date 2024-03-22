@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Interner;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -36,10 +37,13 @@ import java.util.List;
  */
 public class Label {
 
+  private static final Interner<Label> interner =
+      com.google.common.collect.Interners.newWeakInterner();
+
   private final String label;
 
   public static Label of(String label) {
-    return new Label(label);
+    return interner.intern(new Label(label));
   }
 
   public static Label fromPackageAndName(Path packagePath, Path name) {
@@ -54,7 +58,7 @@ public class Label {
     return labels.stream().map(Label::of).collect(toImmutableList());
   }
 
-  public Label(String label) {
+  protected Label(String label) {
     if (label.startsWith("@")) {
       int doubleSlash = label.indexOf("//");
       Preconditions.checkArgument(doubleSlash > 0, label);
@@ -68,7 +72,7 @@ public class Label {
       Preconditions.checkArgument(label.startsWith("//"), label);
       Preconditions.checkArgument(label.contains(":"), label);
     }
-    this.label = label;
+    this.label = Interners.STRING.intern(label);
   }
 
   public Path getPackage() {

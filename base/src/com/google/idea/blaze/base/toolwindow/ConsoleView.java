@@ -272,13 +272,13 @@ final class ConsoleView implements Disposable {
     }
 
     @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+    public void update(AnActionEvent event) {
+      event.getPresentation().setEnabled(stopHandler != null);
     }
 
     @Override
-    public void update(AnActionEvent event) {
-      event.getPresentation().setEnabled(stopHandler != null);
+    public ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

@@ -13,20 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync;
+package com.google.idea.blaze.common;
 
-import com.google.common.flogger.FluentLogger;
-import com.google.idea.blaze.common.Output;
-import com.google.idea.blaze.common.PrintOutput;
-
-public class LoggingContext extends NoopContext {
-
-  private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+/** A basic, non-functional {@link Context} implementation for use in tests. */
+public class NoopContext implements Context<NoopContext> {
 
   @Override
-  public <T extends Output> void output(T output) {
-    if (output instanceof PrintOutput) {
-      logger.atInfo().log("%s", output);
-    }
+  public NoopContext push(Scope<? super NoopContext> scope) {
+    return null;
   }
+
+  @Override
+  public <T extends Scope<?>> T getScope(Class<T> scopeClass) {
+    return null;
+  }
+
+  @Override
+  public <T extends Output> void output(T output) {}
+
+  @Override
+  public void setHasError() {}
+
+  @Override
+  public void setHasWarnings() {}
 }

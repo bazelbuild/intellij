@@ -22,10 +22,10 @@ import com.google.idea.blaze.exception.BuildException;
 import java.nio.file.Path;
 import java.util.Set;
 
-/** A local cache of built render jarss. */
+/** A local cache of built app inspector artifacts. */
 public interface AppInspectorArtifactTracker {
 
-  /** Fetches, caches and sets up new render jar artifacts. */
+  /** Fetches, caches and sets up new app inspector artifacts. */
   ImmutableSet<Path> update(
       Set<Label> targets, AppInspectorInfo appInspectorInfo, BlazeContext context)
       throws BuildException;

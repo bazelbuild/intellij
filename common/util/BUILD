@@ -81,11 +81,18 @@ genrule(
 )
 
 genrule(
+    name = "freeform",
+    outs = ["freeform.txt"],
+    cmd = "echo freeform > $@",
+)
+
+genrule(
     name = "channel_java",
     srcs = select_for_channel({
         "stable": [":stable"],
         "beta": [":beta"],
         "canary": [":canary"],
+        "freeform": [":freeform"],
     }),
     outs = ["com/google/idea/common/util/channel/Channel.java"],
     cmd = "\n".join([

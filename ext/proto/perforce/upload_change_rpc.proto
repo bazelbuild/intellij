@@ -13,5 +13,5 @@ message UploadChangeToCritiqueRequest {
 }
 
 message UploadChangeToCritiqueResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
 }

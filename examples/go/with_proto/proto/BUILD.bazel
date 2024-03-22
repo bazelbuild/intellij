@@ -19,6 +19,7 @@ go_proto_library(
 
 go_library(
     name = "proto",
+    srcs = ["translators.go"],
     embed = [":fooproto_go_proto"],
     importpath = "github.com/bazelbuild/intellij/examples/go/with_proto/proto",
     visibility = ["//visibility:public"],

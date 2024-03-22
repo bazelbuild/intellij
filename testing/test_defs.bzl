@@ -18,6 +18,8 @@ ADD_OPENS = [
         "java.desktop/java.awt.event",
         "java.desktop/javax.swing",
         "java.desktop/javax.swing.plaf.basic",
+        "java.desktop/javax.swing.text",
+        "java.desktop/javax.swing.text.html",
         "java.desktop/sun.awt",
         "java.desktop/sun.awt.image",
         "java.desktop/sun.font",

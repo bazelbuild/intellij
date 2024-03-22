@@ -25,13 +25,8 @@ _not_project_for_tests = [
 _valid = [
 ]
 
-# A temporary list of external targets that plugins are depending on. DO NOT ADD TO THIS
-ALLOWED_EXTERNAL_DEPENDENCIES = [
-]
-
-# A list of targets currently with not allowed dependencies
-EXISTING_EXTERNAL_VIOLATIONS = [
-]
+EXTERNAL_DEPENDENCIES = {
+}
 
 # List of targets that use internal only Guava APIs that need to be cleaned up.
 # Targets in this list are java_library's that do not have the line:
@@ -41,44 +36,10 @@ EXISTING_UNCHECKED = [
 
 # A temporary list of external targets that plugins are depending on. DO NOT ADD TO THIS
 ALLOWED_EXTERNAL_TEST_DEPENDENCIES = [
-    "//dart/build_defs/dart_library:dartinfo",
-    "//devtools/blaze/integration:android_tools",
-    "//devtools/blaze/integration:mobile_install",
-    "//devtools/blaze/integration:mock_tools",
-    "//devtools/blaze/main:blaze",
-    "//devtools/citc/proto:citc_filesystem_manifest_java_proto",
-    "//devtools/citc/proto:java_proto",
-    "//devtools/deps/depserver/proto:dependency_service_java_proto",
-    "//devtools/ide/intellij/filewatcher:regurgitator_client_mock_bin",
-    "//devtools/ide/intellij/filewatcher:regurgitator_java_proto",
-    "//devtools/srcfs/client/proto:delta_java_proto",
-    "//google/corp/devtools/intellij/services/v1:dependency_service_java_grpc",
-    "//java/com/google/common/flags:flags",
-    "//java/com/google/common/hash:hash",
-    "//java/com/google/experiments/framework/options:exempt_existing_client_java",
-    "//java/com/google/testing/junit/junit4:api",
-    "//java/com/google/testing/junit/runner:Runner_deploy.jar",
-    "//java/com/google/testing/testsize:annotations",
-    "//javascript/typescript:providers",
-    "//third_party/java/apache_bcel:apache_bcel",
-    "//third_party/java/flogger:flogger",
-    "//third_party/java/truth/extensions:proto",
-    "//tools/build_defs/js/providers:providers",
-    "//tools/build_defs/js/providers:utils",
-    "//tools/jdk:singlejar",
 ]
 
 # A list of targets currently with not allowed dependencies
 EXISTING_EXTERNAL_TEST_VIOLATIONS = [
-    "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:blaze_integration_tests",
-    "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:integration_tests",
-    "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:unit_tests",
-    "//javatests/com/google/devtools/intellij/blaze/plugin/base:utils",
-    "//javatests/com/google/devtools/intellij/blaze/plugin/shell:blaze_integration_test_wrapper",
-    "//javatests/com/google/devtools/intellij/g3plugins/citc/filewatcher:regurgitator_filewatcher_tests",
-    "//javatests/com/google/devtools/intellij/g3plugins/integrity:integritycheck",
-    "//javatests/com/google/devtools/intellij/g3plugins/services/depserver:unit_tests",
-    "//javatests/com/google/devtools/intellij/g3plugins/services/linter:unit_tests",
 ]
 
 RestrictedInfo = provider(
@@ -163,9 +124,9 @@ def _restricted_deps_aspect_impl(target, ctx):
     )]
 
 # buildifier: disable=function-docstring
-def validate_unchecked_internal(unchecked, existing_unchecked):
-    not_allowed_to_be_unchecked = [t for t in unchecked if t not in existing_unchecked]
-    checked_still_in_list = [t for t in existing_unchecked if t not in unchecked]
+def validate_unchecked_internal(unchecked):
+    not_allowed_to_be_unchecked = [t for t in unchecked if t not in EXISTING_UNCHECKED]
+    checked_still_in_list = [t for t in EXISTING_UNCHECKED if t not in unchecked]
     error = ""
     if not_allowed_to_be_unchecked:
         error += "The following targets do not have either google_internal_checker or beta_checker on:\n    " + "\n    ".join(not_allowed_to_be_unchecked) + "\n"
@@ -193,8 +154,15 @@ def _restricted_test_deps_aspect_impl(target, ctx):
         RestrictedInfo(dependencies = dependencies),
     ]
 
+def validate_restrictions(dependencies):
+    external_dependencies = {str(k.label): [str(vt.label) for vt in v] for (k, v) in dependencies.items()}
+    if external_dependencies != EXTERNAL_DEPENDENCIES:
+        error = (
+        )
+        fail(error)
+
 # buildifier: disable=function-docstring
-def validate_restrictions(dependencies, allowed_external, existing_violations):
+def _validate_test_restrictions(dependencies, allowed_external, existing_violations):
     violations = sorted([str(d.label) for d in dependencies.keys()])
     error = ""
     if violations != sorted(existing_violations):
@@ -248,30 +216,20 @@ restricted_test_deps_aspect = aspect(
     attr_aspects = ["*"],
 )
 
-def _validate_test_dependencies(ctx):
+def _validate_test_dependencies_impl(ctx):
     dependencies = {}
     for k in ctx.attr.deps:
-        if not str(k.label).endswith("_tests") and not _in_tests(k):
-            fail("Undeclared test location: " + str(k))
         if RestrictedInfo in k:
             dependencies.update(k[RestrictedInfo].dependencies)
-    validate_restrictions(dependencies, ctx.attr.allowed_external_dependencies, ctx.attr.existing_external_violations)
-    fake_file = ctx.actions.declare_file("fake_file.txt")
-    ctx.actions.write(
-        fake_file,
-        """#!/bin/sh
+    _validate_test_restrictions(dependencies, ctx.attr.allowed_external_dependencies, ctx.attr.existing_external_violations)
+    return [DefaultInfo(files = depset())]
 
-        true
-        """,
-    )
-    return [DefaultInfo(executable = fake_file)]
-
-validate_test_dependencies_test = rule(
-    implementation = _validate_test_dependencies,
+_validate_test_dependencies = rule(
+    implementation = _validate_test_dependencies_impl,
     attrs = {
         "allowed_external_dependencies": attr.string_list(),
         "existing_external_violations": attr.string_list(),
         "deps": attr.label_list(aspects = [restricted_test_deps_aspect]),
+        "data": attr.label(),
     },
-    test = True,
 )

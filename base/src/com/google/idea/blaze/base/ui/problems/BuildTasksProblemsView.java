@@ -54,6 +54,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
@@ -105,14 +106,15 @@ public class BuildTasksProblemsView {
     ApplicationManager.getApplication().invokeLater(uiFuture);
   }
 
-  @Nullable
-  private BlazeProblemsViewPanel getPanel() {
-    try {
-      return uiFuture.get();
-    } catch (InterruptedException | ExecutionException e) {
-      logger.error("Couldn't create Problems View Panel", e);
-      return null;
-    }
+  private void withPanelOnViewUpdaterThread(Consumer<BlazeProblemsViewPanel> action) {
+    viewUpdater.execute(
+        () -> {
+          try {
+            action.accept(uiFuture.get());
+          } catch (InterruptedException | ExecutionException e) {
+            throw new IllegalStateException(e);
+          }
+        });
   }
 
   private void createToolWindow(
@@ -132,12 +134,8 @@ public class BuildTasksProblemsView {
   }
 
   public void newProblemsContext(FocusBehavior focusBehavior) {
-    BlazeProblemsViewPanel panel = getPanel();
-    if (panel == null) {
-      return;
-    }
-    viewUpdater.execute(
-        () -> {
+    withPanelOnViewUpdaterThread(
+        panel -> {
           currentSessionId = UUID.randomUUID();
           panel.getErrorViewStructure().clear();
           problemCount.set(0);
@@ -149,53 +147,55 @@ public class BuildTasksProblemsView {
         });
   }
 
-  public void addMessage(IssueOutput issue, @Nullable Navigatable openInConsole) {
-    BlazeProblemsViewPanel panel = getPanel();
-    if (panel == null) {
-      return;
-    }
-    if (!problemHashes.add(issue.hashCode())) {
-      return;
-    }
-    int count = problemCount.incrementAndGet();
-    if (count > MAX_ISSUES) {
-      return;
-    }
-    if (count == MAX_ISSUES) {
-      issue =
-          IssueOutput.warn("Too many problems found. Only showing the first " + MAX_ISSUES).build();
-    }
-    VirtualFile file = issue.getFile() != null ? resolveVirtualFile(issue.getFile()) : null;
-    Navigatable navigatable = issue.getNavigatable();
-    if (navigatable == null && file != null) {
-      navigatable =
-          new OpenFileDescriptor(project, file, issue.getLine() - 1, issue.getColumn() - 1);
-    }
-    IssueOutput.Category category = issue.getCategory();
-    int type = translateCategory(category);
-    String[] text = convertMessage(issue);
-    String groupName = file != null ? file.getPresentableUrl() : category.name();
-    addMessage(
-        type,
-        text,
-        groupName,
-        file,
-        navigatable,
-        openInConsole,
-        getExportTextPrefix(issue),
-        getRenderTextPrefix(issue),
-        panel);
+  public void addMessage(final IssueOutput rawIssue, @Nullable final Navigatable openInConsole) {
+    withPanelOnViewUpdaterThread(
+        panel -> {
+          IssueOutput issue = rawIssue;
+          if (!problemHashes.add(issue.hashCode())) {
+            return;
+          }
+          int count = problemCount.incrementAndGet();
+          if (count > MAX_ISSUES) {
+            return;
+          }
+          if (count == MAX_ISSUES) {
+            issue =
+                IssueOutput.warn("Too many problems found. Only showing the first " + MAX_ISSUES)
+                    .build();
+          }
+          VirtualFile file = issue.getFile() != null ? resolveVirtualFile(issue.getFile()) : null;
+          Navigatable navigatable = issue.getNavigatable();
+          if (navigatable == null && file != null) {
+            navigatable =
+                new OpenFileDescriptor(project, file, issue.getLine() - 1, issue.getColumn() - 1);
+          }
+          IssueOutput.Category category = issue.getCategory();
+          int type = translateCategory(category);
+          String[] text = convertMessage(issue);
+          String groupName = file != null ? file.getPresentableUrl() : category.name();
+          addMessage(
+              type,
+              text,
+              groupName,
+              file,
+              navigatable,
+              openInConsole,
+              getExportTextPrefix(issue),
+              getRenderTextPrefix(issue),
+              panel);
 
-    if (didFocusProblemsView) {
-      return;
-    }
-    boolean focus =
-        focusBehavior == FocusBehavior.ALWAYS
-            || (focusBehavior == FocusBehavior.ON_ERROR && category == IssueOutput.Category.ERROR);
-    if (focus) {
-      didFocusProblemsView = true;
-      focusProblemsView();
-    }
+          if (didFocusProblemsView) {
+            return;
+          }
+          boolean focus =
+              focusBehavior == FocusBehavior.ALWAYS
+                  || (focusBehavior == FocusBehavior.ON_ERROR
+                      && category == IssueOutput.Category.ERROR);
+          if (focus) {
+            didFocusProblemsView = true;
+            focusProblemsView();
+          }
+        });
   }
 
   /**
@@ -275,38 +275,29 @@ public class BuildTasksProblemsView {
       String rendererTextPrefix,
       BlazeProblemsViewPanel panel) {
     UUID sessionId = currentSessionId;
-    viewUpdater.execute(
-        () -> {
-          final ErrorViewStructure structure = panel.getErrorViewStructure();
-          final GroupingElement group = structure.lookupGroupingElement(groupName);
-          if (group != null && !sessionId.equals(group.getData())) {
-            structure.removeElement(group);
-          }
-          if (openInConsole != null) {
-            panel.addNavigableMessageElement(
-                groupName,
-                new ProblemsViewMessageElement(
-                    ErrorTreeElementKind.convertMessageFromCompilerErrorType(type),
-                    structure.getGroupingElement(groupName, sessionId, file),
-                    text,
-                    navigatable != null ? navigatable : openInConsole,
-                    openInConsole,
-                    exportTextPrefix,
-                    rendererTextPrefix));
-          } else if (navigatable != null) {
-            panel.addMessage(
-                type,
-                text,
-                groupName,
-                navigatable,
-                exportTextPrefix,
-                rendererTextPrefix,
-                sessionId);
-          } else {
-            panel.addMessage(type, text, null, -1, -1, sessionId);
-          }
-          updateIcon(panel);
-        });
+    final ErrorViewStructure structure = panel.getErrorViewStructure();
+    final GroupingElement group = structure.lookupGroupingElement(groupName);
+    if (group != null && !sessionId.equals(group.getData())) {
+      structure.removeElement(group);
+    }
+    if (openInConsole != null) {
+      panel.addNavigableMessageElement(
+          groupName,
+          new ProblemsViewMessageElement(
+              ErrorTreeElementKind.convertMessageFromCompilerErrorType(type),
+              structure.getGroupingElement(groupName, sessionId, file),
+              text,
+              navigatable != null ? navigatable : openInConsole,
+              openInConsole,
+              exportTextPrefix,
+              rendererTextPrefix));
+    } else if (navigatable != null) {
+      panel.addMessage(
+          type, text, groupName, navigatable, exportTextPrefix, rendererTextPrefix, sessionId);
+    } else {
+      panel.addMessage(type, text, null, -1, -1, sessionId);
+    }
+    updateIcon(panel);
   }
 
   private void updateIcon(BlazeProblemsViewPanel panel) {

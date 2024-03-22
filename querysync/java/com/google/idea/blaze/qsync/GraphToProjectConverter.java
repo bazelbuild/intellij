@@ -47,6 +47,7 @@ import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectProto;
+import com.google.idea.blaze.qsync.project.ProjectProto.LibraryOrBuilder;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.project.ProjectTarget.SourceType;
@@ -86,6 +87,7 @@ public class GraphToProjectConverter {
   private final ListeningExecutorService executor;
   private final Supplier<Boolean> useNewResDirLogic;
   private final Supplier<Boolean> guessAndroidResPackages;
+  private final boolean useNewBuildArtifactLogic;
 
   public GraphToProjectConverter(
       PackageReader packageReader,
@@ -94,7 +96,8 @@ public class GraphToProjectConverter {
       ProjectDefinition projectDefinition,
       ListeningExecutorService executor,
       Supplier<Boolean> useNewResDirLogic,
-      Supplier<Boolean> guessAndroidResPackages) {
+      Supplier<Boolean> guessAndroidResPackages,
+      boolean useNewBuildArtifactLogic) {
     this.packageReader = packageReader;
     this.fileExistenceCheck = p -> Files.isRegularFile(workspaceRoot.resolve(p));
     this.context = context;
@@ -102,6 +105,7 @@ public class GraphToProjectConverter {
     this.executor = executor;
     this.useNewResDirLogic = useNewResDirLogic;
     this.guessAndroidResPackages = guessAndroidResPackages;
+    this.useNewBuildArtifactLogic = useNewBuildArtifactLogic;
   }
 
   @VisibleForTesting
@@ -118,6 +122,7 @@ public class GraphToProjectConverter {
     this.executor = executor;
     this.useNewResDirLogic = Suppliers.ofInstance(true);
     this.guessAndroidResPackages = Suppliers.ofInstance(false);
+    this.useNewBuildArtifactLogic = false;
   }
 
   /**
@@ -280,7 +285,7 @@ public class GraphToProjectConverter {
     // Filter the files that are top level files only
     return candidates.values().stream()
         .filter(file -> isTopLevel(packages, candidates, file))
-        .collect(ImmutableList.toImmutableList());
+        .collect(toImmutableList());
   }
 
   private static boolean isTopLevel(PackageSet packages, Map<Path, Path> candidates, Path file) {
@@ -514,7 +519,7 @@ public class GraphToProjectConverter {
               .distinct()
               .collect(toImmutableSet());
     } else {
-      // TODO(mathewi) Remove this and the corresponding experiment once the locig has been proven.
+      // TODO(mathewi) Remove this and the corresponding experiment once the logic has been proven.
       androidResDirs = computeAndroidResourceDirectories(graph.getAllSourceFiles());
     }
     ImmutableSet<String> androidResPackages;
@@ -530,24 +535,31 @@ public class GraphToProjectConverter {
       context.output(PrintOutput.log("%-10d Android resource packages", androidResPackages.size()));
     }
 
-    ProjectProto.Library depsLib =
-        ProjectProto.Library.newBuilder()
-            .setName(BlazeProjectDataStorage.DEPENDENCIES_LIBRARY)
-            .addClassesJar(
-                ProjectProto.JarDirectory.newBuilder()
-                    .setPath(
-                        Paths.get(
-                                BlazeProjectDataStorage.BLAZE_DATA_SUBDIRECTORY,
-                                BlazeProjectDataStorage.LIBRARY_DIRECTORY)
-                            .toString())
-                    .setRecursive(false))
-            .build();
+    ImmutableList<ProjectProto.Library> depsLibs;
+    if (useNewBuildArtifactLogic) {
+      depsLibs = ImmutableList.of();
+    } else {
+      depsLibs =
+          ImmutableList.of(
+              ProjectProto.Library.newBuilder()
+                  .setName(BlazeProjectDataStorage.DEPENDENCIES_LIBRARY)
+                  .addClassesJar(
+                      ProjectProto.JarDirectory.newBuilder()
+                          .setPath(
+                              Paths.get(
+                                      BlazeProjectDataStorage.BLAZE_DATA_SUBDIRECTORY,
+                                      BlazeProjectDataStorage.LIBRARY_DIRECTORY)
+                                  .toString())
+                          .setRecursive(false))
+                  .build());
+    }
 
     ProjectProto.Module.Builder workspaceModule =
         ProjectProto.Module.newBuilder()
             .setName(BlazeProjectDataStorage.WORKSPACE_MODULE_NAME)
             .setType(ProjectProto.ModuleType.MODULE_TYPE_DEFAULT)
-            .addLibraryName(depsLib.getName())
+            .addAllLibraryName(
+                depsLibs.stream().map(LibraryOrBuilder::getName).collect(toImmutableList()))
             .addAllAndroidResourceDirectories(
                 androidResDirs.stream().map(Path::toString).collect(toImmutableList()))
             .addAllAndroidSourcePackages(androidResPackages)
@@ -605,7 +617,7 @@ public class GraphToProjectConverter {
     }
 
     return ProjectProto.Project.newBuilder()
-        .addLibrary(depsLib)
+        .addAllLibrary(depsLibs)
         .addModules(workspaceModule)
         .addAllActiveLanguages(activeLanguages.build())
         .build();

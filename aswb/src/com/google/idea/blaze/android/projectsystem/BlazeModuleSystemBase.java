@@ -289,7 +289,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
     return MavenArtifactLocator.forBuildSystem(Blaze.getBuildSystemName(module.getProject()))
         .stream()
         .map(locator -> locator.labelFor(coordinate))
-        .map(l -> new Label(l.toString()))
+        .map(l -> Label.of(l.toString()))
         .findFirst()
         .orElse(null);
   }

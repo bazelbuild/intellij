@@ -15,10 +15,12 @@
  */
 package com.google.idea.blaze.ext;
 
+import com.google.idea.blaze.ext.BlueprintServiceGrpc.BlueprintServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildCleanerServiceGrpc.BuildCleanerServiceFutureStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceBlockingStub;
 import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
 import com.google.idea.blaze.ext.ChatBotModelGrpc.ChatBotModelBlockingStub;
+import com.google.idea.blaze.ext.CitcOperationsServiceGrpc.CitcOperationsServiceBlockingStub;
 import com.google.idea.blaze.ext.CodeSearchGrpc.CodeSearchFutureStub;
 import com.google.idea.blaze.ext.CritiqueServiceGrpc.CritiqueServiceBlockingStub;
 import com.google.idea.blaze.ext.DepServerGrpc.DepServerFutureStub;
@@ -132,6 +134,10 @@ public class IntelliJExtClient {
     return DepServerGrpc.newFutureStub(channel);
   }
 
+  public CitcOperationsServiceBlockingStub getCitcOperationsService() {
+    return CitcOperationsServiceGrpc.newBlockingStub(channel);
+  }
+
   public CodeSearchFutureStub getCodeSearchService() {
     return CodeSearchGrpc.newFutureStub(channel);
   }
@@ -146,5 +152,9 @@ public class IntelliJExtClient {
 
   public PiperServiceBlockingStub getPiperServiceBlocking() {
     return PiperServiceGrpc.newBlockingStub(channel);
+  }
+
+  public BlueprintServiceBlockingStub getBlueprintService() {
+    return BlueprintServiceGrpc.newBlockingStub(channel);
   }
 }

@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.Glob;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
+import com.google.idea.blaze.base.qsync.artifacts.ProjectArtifactStore;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
@@ -88,6 +89,7 @@ public class QuerySyncProject {
   private final BlazeImportSettings importSettings;
   private final WorkspaceRoot workspaceRoot;
   private final ArtifactTracker<?> artifactTracker;
+  private final ProjectArtifactStore artifactStore;
   private final RenderJarArtifactTracker renderJarArtifactTracker;
   private final AppInspectorArtifactTracker appInspectorArtifactTracker;
   private final DependencyTracker dependencyTracker;
@@ -116,6 +118,7 @@ public class QuerySyncProject {
       BlazeImportSettings importSettings,
       WorkspaceRoot workspaceRoot,
       ArtifactTracker<?> artifactTracker,
+      ProjectArtifactStore artifactStore,
       RenderJarArtifactTracker renderJarArtifactTracker,
       AppInspectorArtifactTracker appInspectorArtifactTracker,
       DependencyTracker dependencyTracker,
@@ -138,6 +141,7 @@ public class QuerySyncProject {
     this.importSettings = importSettings;
     this.workspaceRoot = workspaceRoot;
     this.artifactTracker = artifactTracker;
+    this.artifactStore = artifactStore;
     this.renderJarArtifactTracker = renderJarArtifactTracker;
     this.appInspectorArtifactTracker = appInspectorArtifactTracker;
     this.dependencyTracker = dependencyTracker;
@@ -189,11 +193,15 @@ public class QuerySyncProject {
     return projectPathResolver;
   }
 
+  public ProjectArtifactStore getArtifactStore() {
+    return artifactStore;
+  }
+
   public WorkspaceLanguageSettings getWorkspaceLanguageSettings() {
     return workspaceLanguageSettings;
   }
 
-  public ArtifactTracker getArtifactTracker() {
+  public ArtifactTracker<?> getArtifactTracker() {
     return artifactTracker;
   }
 

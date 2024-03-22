@@ -16,7 +16,7 @@ message GetWorkspacesRequest {
 }
 
 message GetWorkspacesResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
   optional Workspace workspace = 2;
 }
 
@@ -28,10 +28,10 @@ message UpdateWorkspaceRequest {
 }
 
 message UpdateWorkspaceResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
   optional bool updated = 2 [default = false];
   optional WorkspaceId workspace_id = 3;
-  optional Status components_warning = 4;
+  optional PerforceStatus components_warning = 4;
 }
 
 message ListWorkspacesRequest {
@@ -43,6 +43,6 @@ message ListWorkspacesRequest {
 }
 
 message ListWorkspacesResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
   optional Workspace workspace = 2;
 }

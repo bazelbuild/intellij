@@ -61,6 +61,9 @@ public class IntelliJExtManager {
   private static final BoolExperiment CRITIQUE_SERVICE =
       new BoolExperiment("use.intellij.ext.critiqueservice", false);
 
+  private static final BoolExperiment CITC_OPERATIONS_SERVICE =
+      new BoolExperiment("use.intellij.ext.citcoperationsservice", false);
+
   private static final BoolExperiment CODESEARCH =
       new BoolExperiment("use.intellij.ext.codesearch", false);
 
@@ -187,6 +190,10 @@ public class IntelliJExtManager {
 
   public boolean isCritiqueServiceEnabled() {
     return isEnabled() && CRITIQUE_SERVICE.getValue();
+  }
+
+  public boolean isCitcOperationsServiceEnabled() {
+    return isEnabled() && CITC_OPERATIONS_SERVICE.getValue();
   }
 
   public boolean isCodeSearchEnabled() {

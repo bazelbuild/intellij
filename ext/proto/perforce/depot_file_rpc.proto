@@ -20,7 +20,7 @@ message ListDepotFilesRequest {
 }
 
 message ListDepotFilesResponse {
-  optional Status status = 1002;
+  optional PerforceStatus perforce_status = 1002;
   optional SourceFile source_file = 2;
   optional ChangeDescription change_description = 4;
   optional string user_name = 5;
