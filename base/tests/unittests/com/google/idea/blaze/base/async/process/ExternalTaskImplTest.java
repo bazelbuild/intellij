@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.async.process.ExternalTask.ExternalTaskImpl;
 import java.io.File;
 import java.io.IOException;
 import org.junit.Test;

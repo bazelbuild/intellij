@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -32,7 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -48,10 +46,11 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
   }
 
   @Override
-  public boolean handlesProject(BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot) {
+  public boolean handlesProject(
+      BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot, Project project) {
     return buildSystemName == BuildSystemName.Bazel
-        && isGitRepository(workspaceRoot)
-        && tracksRemote(workspaceRoot);
+        && isGitRepository(workspaceRoot, project)
+        && tracksRemote(workspaceRoot, project);
   }
 
   @Override
@@ -62,8 +61,10 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
   static class GitBlazeVcsHandler implements BlazeVcsHandler {
 
     private final WorkspaceRoot workspaceRoot;
+    private final Project project;
 
     GitBlazeVcsHandler(Project project) {
+      this.project = project;
       this.workspaceRoot = WorkspaceRoot.fromProject(project);
     }
 
@@ -72,11 +73,12 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
         BlazeContext context, ListeningExecutorService executor) {
       return executor.submit(
           () -> {
-            String upstreamSha = getUpstreamSha(workspaceRoot, false);
+            String upstreamSha = getUpstreamSha(workspaceRoot, false, project);
             if (upstreamSha == null) {
               return null;
             }
-            return GitWorkingSetProvider.calculateWorkingSet(workspaceRoot, upstreamSha, context);
+            return GitWorkingSetProvider.calculateWorkingSet(
+                workspaceRoot, upstreamSha, context, project);
           });
     }
 
@@ -94,13 +96,13 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
     @Override
     public ListenableFuture<String> getUpstreamContent(
         BlazeContext context, WorkspacePath path, ListeningExecutorService executor) {
-      return executor.submit(() -> getGitUpstreamContent(workspaceRoot, path));
+      return executor.submit(() -> getGitUpstreamContent(workspaceRoot, path, project));
     }
 
     @Override
     public Optional<ListenableFuture<String>> getUpstreamVersion(
         BlazeContext context, ListeningExecutorService executor) {
-      return Optional.of(executor.submit(() -> getUpstreamSha(workspaceRoot)));
+      return Optional.of(executor.submit(() -> getUpstreamSha(workspaceRoot, project)));
     }
 
     @Override
@@ -109,10 +111,11 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
     }
   }
 
-  private static String getGitUpstreamContent(WorkspaceRoot workspaceRoot, WorkspacePath path) {
-    String upstreamSha = getUpstreamSha(workspaceRoot, false);
+  private static String getGitUpstreamContent(
+      WorkspaceRoot workspaceRoot, WorkspacePath path, Project project) {
+    String upstreamSha = getUpstreamSha(workspaceRoot, false, project);
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    ExternalTask.builder(workspaceRoot)
+    ExternalTask.builder(workspaceRoot, project)
         .args(
             "git",
             "show",
@@ -129,18 +132,20 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
     return outputStream.toString();
   }
 
-  private static boolean isGitRepository(WorkspaceRoot workspaceRoot) {
-    // TODO: What if the git repo root is a parent directory of the workspace root?
-    // Just call 'git rev-parse --is-inside-work-tree' or similar instead?
-    File gitDir = new File(workspaceRoot.directory(), ".git");
-    return FileOperationProvider.getInstance().isDirectory(gitDir);
+  private static boolean isGitRepository(WorkspaceRoot workspaceRoot, Project project) {
+    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+
+    String[] args = new String[] {"git", "rev-parse", "--is-inside-work-tree"};
+    int retVal =
+        ExternalTask.builder(workspaceRoot, project).args(args).stdout(stdout).build().run();
+    return retVal == 0 && "true".equals(StringUtil.trimEnd(stdout.toString(), "\n"));
   }
 
   /**
    * If we're not on a git branch which tracks a remote, we have no way of determining a WorkingSet.
    */
-  private static boolean tracksRemote(WorkspaceRoot workspaceRoot) {
-    return getUpstreamSha(workspaceRoot, true) != null;
+  private static boolean tracksRemote(WorkspaceRoot workspaceRoot, Project project) {
+    return getUpstreamSha(workspaceRoot, true, project) != null;
   }
 
   /**
@@ -148,9 +153,10 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
    * matches a commit in the currently-tracked remote branch, or null if that fails for any reason.
    */
   @Nullable
-  public static String getUpstreamSha(WorkspaceRoot workspaceRoot, boolean suppressErrors) {
+  private static String getUpstreamSha(
+      WorkspaceRoot workspaceRoot, boolean suppressErrors, Project project) {
     try {
-      return getUpstreamSha(workspaceRoot);
+      return getUpstreamSha(workspaceRoot, project);
     } catch (VcsException e) {
       if (!suppressErrors) {
         logger.warn(e.getMessage());
@@ -165,13 +171,19 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
    *
    * @throws VcsException if we cannot get the SHA.
    */
-  public static String getUpstreamSha(WorkspaceRoot workspaceRoot) throws VcsException {
+  private static String getUpstreamSha(WorkspaceRoot workspaceRoot, Project project)
+      throws VcsException {
     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
     ByteArrayOutputStream stderr = new ByteArrayOutputStream();
 
     String[] args = new String[] {"git", "rev-parse", "@{u}"};
     int retVal =
-        ExternalTask.builder(workspaceRoot).args(args).stdout(stdout).stderr(stderr).build().run();
+        ExternalTask.builder(workspaceRoot, project)
+            .args(args)
+            .stdout(stdout)
+            .stderr(stderr)
+            .build()
+            .run();
     if (retVal != 0) {
       throw new VcsException(
           "Could not obtain upstream sha: `"

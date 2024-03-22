@@ -99,7 +99,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     registerExtensionPoint(BuildFlagsProvider.EP_NAME, BuildFlagsProvider.class);
     registerExtensionPoint(BuildBatchingService.EP_NAME, BuildBatchingService.class)
         .registerExtension(fakeBuildBatchingService, testDisposable);
-    registerExtensionPoint(TargetShardSizeLimit.EP_NAME, TargetShardSizeLimit.class)
+    registerProjectExtensionPoint(TargetShardSizeLimit.EP_NAME, TargetShardSizeLimit.class)
         .registerExtension(OptionalInt::empty, testDisposable);
     registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class)
         .registerExtension(new FakeBlazeSyncPlugin(), testDisposable);
