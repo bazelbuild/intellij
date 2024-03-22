@@ -98,8 +98,9 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
           return realFile;
         }
       } catch (IOException ioException) {
-        LOG.warn("Failed to resolve real path for " + artifactLocation.getExecutionRootRelativePath(),
-            ioException);
+        LOG.warn("Failed to resolve real path for " + artifactLocation.getExecutionRootRelativePath() +
+                "\n" + ioException.getClass().getSimpleName() + ": " + ioException.getMessage());
+        LOG.trace(ioException);
       }
     }
     return null;
