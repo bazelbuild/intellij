@@ -465,9 +465,11 @@ public final class BlazeEditProjectViewControl {
       return BlazeValidationResult.failure(
           new BlazeValidationError("Project data directory is not valid"));
     }
-    if (projectDataDir.exists()) {
+
+    File blazeDataDir = new File(projectDataDir, BlazeDataStorage.BLAZE_DATA_SUBDIRECTORY);
+    if (projectDataDir.exists() && blazeDataDir.exists()) {
       return BlazeValidationResult.failure(
-          new BlazeValidationError(projectDataDir + " already exists"));
+          new BlazeValidationError(blazeDataDir + " already exists"));
     }
     for (ProjectDataDirectoryValidator validator :
         ProjectDataDirectoryValidator.EP_NAME.getExtensions()) {
