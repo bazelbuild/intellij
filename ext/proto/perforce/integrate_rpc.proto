@@ -28,4 +28,5 @@ message IntegrateFilesRequest {
 
 message IntegrateFilesResponse {
   optional string destination_file = 3;
+  optional PerforceStatus perforce_status = 1002;
 }
