@@ -174,7 +174,7 @@ public class AddDependencyGenSrcsJarsTest {
                 .setSrcjar(
                     ProjectPath.newBuilder()
                         .setBase(Base.PROJECT)
-                        .setPath("buildout/output/path/to/external.srcjar")
+                        .setPath(".bazel/buildout/output/path/to/external.srcjar")
                         .setInnerPath("root"))
                 .build());
   }

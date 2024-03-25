@@ -54,12 +54,12 @@ public class AddCompiledJavaDepsTest {
     assertThat(newProject.getLibraryList()).isEqualTo(original.getLibraryList());
     assertThat(newProject.getModulesList()).isEqualTo(original.getModulesList());
     assertThat(newProject.getArtifactDirectories().getDirectoriesMap().keySet())
-        .containsExactly("javadeps");
+        .containsExactly(".bazel/javadeps");
     assertThat(
             newProject
                 .getArtifactDirectories()
                 .getDirectoriesMap()
-                .get("javadeps")
+                .get(".bazel/javadeps")
                 .getContentsMap())
         .isEmpty();
   }
@@ -91,14 +91,17 @@ public class AddCompiledJavaDepsTest {
     assertThat(newProject.getLibrary(0).getName()).isEqualTo(".dependencies");
     assertThat(newProject.getLibrary(0).getClassesJarList())
         .containsExactly(
-            ProjectProto.JarDirectory.newBuilder().setPath("javadeps").setRecursive(true).build());
+            ProjectProto.JarDirectory.newBuilder()
+                .setPath(".bazel/javadeps")
+                .setRecursive(true)
+                .build());
     assertThat(newProject.getArtifactDirectories().getDirectoriesMap().keySet())
-        .containsExactly("javadeps");
+        .containsExactly(".bazel/javadeps");
     assertThat(
             newProject
                 .getArtifactDirectories()
                 .getDirectoriesMap()
-                .get("javadeps")
+                .get(".bazel/javadeps")
                 .getContentsMap())
         .containsExactly(
             "build-out/java/com/google/common/collect/libcollect.jar",
