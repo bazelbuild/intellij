@@ -145,13 +145,13 @@ public class AddProjectGenSrcJarsTest {
                 Joiner.on("\n")
                     .join(
                         "root {",
-                        "      path: \"buildout/output/path/to/project.srcjar\"",
+                        "      path: \".bazel/buildout/output/path/to/project.srcjar\"",
                         "      base: PROJECT",
                         "    }",
                         "    sources {",
                         "      is_generated: true",
                         "      project_path {",
-                        "        path: \"buildout/output/path/to/project.srcjar\"",
+                        "        path: \".bazel/buildout/output/path/to/project.srcjar\"",
                         "        base: PROJECT",
                         "        inner_path: \"root\"",
                         "      }",
