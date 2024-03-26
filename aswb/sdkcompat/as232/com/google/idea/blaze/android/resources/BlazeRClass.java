@@ -21,7 +21,7 @@ import static org.jetbrains.android.AndroidResolveScopeEnlarger.MODULE_POINTER_K
 import com.android.ide.common.rendering.api.ResourceNamespace;
 import com.android.tools.idea.res.ResourceRepositoryRClass;
 import com.android.tools.idea.res.StudioResourceRepositoryManager;
-import com.android.tools.res.CacheableResourceRepository;
+import com.android.tools.res.LocalResourceRepository;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,7 +54,7 @@ public class BlazeRClass extends ResourceRepositoryRClass {
           }
 
           @Override
-          public CacheableResourceRepository getResourceRepository() {
+          public LocalResourceRepository getResourceRepository() {
             return StudioResourceRepositoryManager.getAppResources(androidFacet);
           }
 
