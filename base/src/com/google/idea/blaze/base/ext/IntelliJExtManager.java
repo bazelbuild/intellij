@@ -47,7 +47,7 @@ public class IntelliJExtManager {
    * Controls whether the intellij-ext binary is used at all. Ignored if EXPERIMENT_SERVICE_PROPERTY
    * is set.
    */
-  private static final BoolExperiment ENABLED = new BoolExperiment("use.intellij.ext", false);
+  private static final BoolExperiment ENABLED = new BoolExperiment("use.intellij.ext", true);
 
   private static final BoolExperiment RETRY = new BoolExperiment("use.intellij.ext.retry", false);
   private static final BoolExperiment ISSUETRACKER =
@@ -65,7 +65,7 @@ public class IntelliJExtManager {
       new BoolExperiment("use.intellij.ext.citcoperationsservice", false);
 
   private static final BoolExperiment CODESEARCH =
-      new BoolExperiment("use.intellij.ext.codesearch", false);
+      new BoolExperiment("use.intellij.ext.codesearch", true);
 
   private static final BoolExperiment FILEAPI =
       new BoolExperiment("use.intellij.ext.fileapi", false);
