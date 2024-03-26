@@ -25,7 +25,7 @@ public class TestData extends ExternalResource {
   private Runfiles runfiles;
   public Path root;
 
-  private static final String WORKSPACE_NAME = "intellij_with_bazel";
+  private static final String WORKSPACE_NAME = "_main";
 
   @Override
   protected void before() throws IOException {
