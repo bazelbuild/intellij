@@ -42,6 +42,7 @@ class PartialProjectRefresh implements RefreshOperation {
   private final Path effectiveWorkspaceRoot;
   private final PostQuerySyncData previousState;
   private final Optional<VcsState> currentVcsState;
+  private final Optional<String> bazelVersion;
   @VisibleForTesting final ImmutableSet<Path> modifiedPackages;
   @VisibleForTesting final ImmutableSet<Path> deletedPackages;
 
@@ -49,6 +50,7 @@ class PartialProjectRefresh implements RefreshOperation {
       Path effectiveWorkspaceRoot,
       PostQuerySyncData previousState,
       Optional<VcsState> currentVcsState,
+      Optional<String> bazelVersion,
       ImmutableSet<Path> modifiedPackages,
       ImmutableSet<Path> deletedPackages) {
     this.effectiveWorkspaceRoot = effectiveWorkspaceRoot;
@@ -56,6 +58,7 @@ class PartialProjectRefresh implements RefreshOperation {
     this.currentVcsState = currentVcsState;
     this.modifiedPackages = modifiedPackages;
     this.deletedPackages = deletedPackages;
+    this.bazelVersion = bazelVersion;
   }
 
   private Optional<QuerySpec> createQuerySpec() {
@@ -82,6 +85,7 @@ class PartialProjectRefresh implements RefreshOperation {
     QuerySummary effectiveQuery = applyDelta(partialQuery);
     return PostQuerySyncData.builder()
         .setVcsState(currentVcsState)
+        .setBazelVersion(bazelVersion)
         .setProjectDefinition(previousState.projectDefinition())
         .setQuerySummary(effectiveQuery)
         .build();

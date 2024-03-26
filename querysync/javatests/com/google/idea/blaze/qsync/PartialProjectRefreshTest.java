@@ -24,6 +24,7 @@ import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
+import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -101,6 +102,7 @@ public class PartialProjectRefreshTest {
             Path.of("/workspace/root"),
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,
+            Optional.empty(),
             /* modifiedPackages= */ ImmutableSet.of(Path.of("my/build/package1")),
             ImmutableSet.of());
     QuerySummary applied = queryStrategy.applyDelta(delta);
@@ -166,6 +168,7 @@ public class PartialProjectRefreshTest {
             Path.of("/workspace/root"),
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,
+            Optional.empty(),
             ImmutableSet.of(),
             /* deletedPackages= */ ImmutableSet.of(Path.of("my/build/package1")));
     Truth8.assertThat(queryStrategy.getQuerySpec()).isEmpty();
@@ -227,6 +230,7 @@ public class PartialProjectRefreshTest {
             Path.of("/workspace/root"),
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,
+            Optional.empty(),
             /* modifiedPackages= */ ImmutableSet.of(Path.of("my/build/package2")),
             ImmutableSet.of());
     QuerySummary applied = queryStrategy.applyDelta(delta);
@@ -257,6 +261,7 @@ public class PartialProjectRefreshTest {
             Path.of("/workspace/root"),
             baseProject,
             QuerySyncTestUtils.CLEAN_VCS_STATE,
+            Optional.empty(),
             /* modifiedPackages= */ ImmutableSet.of(Path.of("my/build/package")),
             ImmutableSet.of());
     QuerySummary applied = queryStrategy.applyDelta(delta);

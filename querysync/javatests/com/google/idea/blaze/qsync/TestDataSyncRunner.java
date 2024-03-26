@@ -63,6 +63,7 @@ public class TestDataSyncRunner {
             .setProjectDefinition(projectDefinition)
             .setQuerySummary(querySummary)
             .setVcsState(Optional.empty())
+            .setBazelVersion(Optional.empty())
             .build();
     BuildGraphData buildGraphData =
         new BlazeQueryParser(querySummary, context, ImmutableSet.of()).parse();

@@ -121,6 +121,11 @@ class BazelBuildSystem implements BuildSystem {
   }
 
   @Override
+  public Optional<String> getBazelVersionString(BlazeInfo blazeInfo) {
+    return Optional.ofNullable(BazelVersion.parseVersion(blazeInfo).toString());
+  }
+
+  @Override
   public BazelQueryRunner createQueryRunner(Project project) {
     return new BazelQueryRunner(project, this);
   }

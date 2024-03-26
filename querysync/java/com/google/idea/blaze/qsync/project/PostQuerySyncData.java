@@ -44,6 +44,7 @@ public abstract class PostQuerySyncData {
                   /* languageClasses= */ ImmutableSet.of(),
                   /* testSources= */ ImmutableSet.of()))
           .setVcsState(Optional.empty())
+          .setBazelVersion(Optional.empty())
           .setQuerySummary(QuerySummary.EMPTY)
           .build();
 
@@ -52,6 +53,9 @@ public abstract class PostQuerySyncData {
 
   /** The VCS state at the time that the query was run. */
   public abstract Optional<VcsState> vcsState();
+
+  /** The version of bazel that the query was run. */
+  public abstract Optional<String> bazelVersion();
 
   /** The summarised output from the query. */
   public abstract QuerySummary querySummary();
@@ -70,6 +74,8 @@ public abstract class PostQuerySyncData {
     public abstract Builder setProjectDefinition(ProjectDefinition value);
 
     public abstract Builder setVcsState(Optional<VcsState> value);
+
+    public abstract Builder setBazelVersion(Optional<String> value);
 
     public abstract Builder setQuerySummary(QuerySummary value);
 

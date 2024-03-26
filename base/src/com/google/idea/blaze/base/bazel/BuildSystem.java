@@ -131,6 +131,9 @@ public interface BuildSystem {
   void populateBlazeVersionData(
       WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo, BlazeVersionData.Builder builder);
 
+  /** Get bazel only version. Returns empty if it's not bazel project. */
+  Optional<String> getBazelVersionString(BlazeInfo blazeInfo);
+
   /**
    * Returns the parallel invoker if the sync strategy is PARALLEL and the system supports it;
    * otherwise returns the standard invoker.

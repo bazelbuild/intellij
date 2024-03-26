@@ -33,12 +33,15 @@ public class NoopProjectRefresh implements RefreshOperation {
 
   private final Supplier<BlazeProjectSnapshot> latestProjectSnapshotSupplier;
   private final Optional<VcsState> currentVcsState;
+  private final Optional<String> bazelVersion;
 
   public NoopProjectRefresh(
       Supplier<BlazeProjectSnapshot> latestProjectSnapshotSupplier,
-      Optional<VcsState> currentVcsState) {
+      Optional<VcsState> currentVcsState,
+      Optional<String> bazelVersion) {
     this.latestProjectSnapshotSupplier = latestProjectSnapshotSupplier;
     this.currentVcsState = currentVcsState;
+    this.bazelVersion = bazelVersion;
   }
 
   @Override
@@ -50,6 +53,7 @@ public class NoopProjectRefresh implements RefreshOperation {
   public PostQuerySyncData createPostQuerySyncData(QuerySummary output) {
     return latestProjectSnapshotSupplier.get().queryData().toBuilder()
         .setVcsState(currentVcsState)
+        .setBazelVersion(bazelVersion)
         .build();
   }
 }
