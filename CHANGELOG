@@ -1,3 +1,7 @@
+v2024.03.26
+===========
+
+
 v2024.03.12
 ===========
 * fix(plugin_dev): Alert users they need the DevKit plugin to work on the codebase #6198
