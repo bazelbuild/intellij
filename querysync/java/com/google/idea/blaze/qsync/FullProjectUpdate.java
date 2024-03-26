@@ -37,16 +37,19 @@ public class FullProjectUpdate implements RefreshOperation {
   private final Path effectiveWorkspaceRoot;
   private final ProjectDefinition projectDefinition;
   private final Optional<VcsState> vcsState;
+  private final Optional<String> bazelVersion;
 
   public FullProjectUpdate(
       Context<?> context,
       Path effectiveWorkspaceRoot,
       ProjectDefinition definition,
-      Optional<VcsState> vcsState) {
+      Optional<VcsState> vcsState,
+      Optional<String> bazelVersion) {
     this.context = context;
     this.effectiveWorkspaceRoot = effectiveWorkspaceRoot;
     this.projectDefinition = definition;
     this.vcsState = vcsState;
+    this.bazelVersion = bazelVersion;
   }
 
   @Override
@@ -60,6 +63,7 @@ public class FullProjectUpdate implements RefreshOperation {
     return PostQuerySyncData.builder()
         .setProjectDefinition(projectDefinition)
         .setVcsState(vcsState)
+        .setBazelVersion(bazelVersion)
         .setQuerySummary(output)
         .build();
   }

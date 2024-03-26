@@ -205,7 +205,12 @@ public class ProjectLoader {
             () -> !QuerySync.EXTRACT_RES_PACKAGES_AT_BUILD_TIME.getValue(),
             QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT);
     QueryRunner queryRunner = createQueryRunner(buildSystem);
-    ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner, vcsHandler);
+    ProjectQuerier projectQuerier =
+        createProjectQuerier(
+            projectRefresher,
+            queryRunner,
+            vcsHandler,
+            new BazelVersionHandler(buildSystem, buildSystem.getBuildInvoker(project, context)));
     QuerySyncSourceToTargetMap sourceToTargetMap =
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
 
@@ -248,8 +253,9 @@ public class ProjectLoader {
   private ProjectQuerierImpl createProjectQuerier(
       ProjectRefresher projectRefresher,
       QueryRunner queryRunner,
-      Optional<BlazeVcsHandler> vcsHandler) {
-    return new ProjectQuerierImpl(queryRunner, projectRefresher, vcsHandler);
+      Optional<BlazeVcsHandler> vcsHandler,
+      BazelVersionHandler bazelVersionProvider) {
+    return new ProjectQuerierImpl(queryRunner, projectRefresher, vcsHandler, bazelVersionProvider);
   }
 
   protected QueryRunner createQueryRunner(BuildSystem buildSystem) {
