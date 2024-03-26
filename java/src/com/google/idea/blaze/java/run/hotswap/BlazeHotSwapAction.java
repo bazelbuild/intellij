@@ -39,6 +39,14 @@ public class BlazeHotSwapAction extends AnAction {
       }
       ReplaceActionHelper.conditionallyReplaceAction(
           actionManager, ACTION_ID, new BlazeHotSwapAction(delegate), Blaze::isBlazeProject);
+
+      AnAction reload = actionManager.getAction(BlazeReloadFileAction.ACTION_ID);
+      if (reload != null) {
+        reload = new BlazeReloadFileAction(reload);
+      }
+      ReplaceActionHelper.conditionallyReplaceAction(actionManager, BlazeReloadFileAction.ACTION_ID, reload, Blaze::isBlazeProject);
+      //ctrl+shift+F9 action
+      ReplaceActionHelper.conditionallyReplaceAction(actionManager, "CompileFile", reload, Blaze::isBlazeProject);
     }
   }
 
