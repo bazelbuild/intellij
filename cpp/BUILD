@@ -10,12 +10,12 @@ load(
     "optional_plugin_xml",
     "stamped_plugin_xml",
 )
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide", "select_for_plugin_api")
 load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide", "select_for_plugin_api")
 
 java_library(
     name = "cpp",

@@ -25,14 +25,14 @@ load(
     "intellij_plugin_debug_target",
 )
 load(
-    "//testing:test_defs.bzl",
-    "intellij_integration_test_suite",
-    "intellij_unit_test_suite",
-)
-load(
     "//intellij_platform_sdk:build_defs.bzl",
     "combine_visibilities",
     "select_for_plugin_api",
+)
+load(
+    "//testing:test_defs.bzl",
+    "intellij_integration_test_suite",
+    "intellij_unit_test_suite",
 )
 
 optional_plugin_xml(

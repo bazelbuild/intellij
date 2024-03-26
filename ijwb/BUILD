@@ -3,6 +3,12 @@
 #
 
 load(
+    "//:build-visibility.bzl",
+    "IJWB_PACKAGES_VISIBILIY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
+load("//:version.bzl", "VERSION")
+load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
     "intellij_plugin_library",
@@ -15,17 +21,11 @@ load(
     "//build_defs:intellij_plugin_debug_target.bzl",
     "intellij_plugin_debug_target",
 )
-load("//:version.bzl", "VERSION")
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
-)
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
-load(
-    "//:build-visibility.bzl",
-    "IJWB_PACKAGES_VISIBILIY",
-    "PLUGIN_PACKAGES_VISIBILITY",
 )
 
 licenses(["notice"])

@@ -1,11 +1,11 @@
 load(
-    "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
-    "intellij_aspect_test_fixture",
-)
-load(
     "@io_bazel_rules_scala//scala:scala.bzl",
     "scala_binary",
     "scala_library",
+)
+load(
+    "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
+    "intellij_aspect_test_fixture",
 )
 
 licenses(["notice"])  # Apache 2.0
