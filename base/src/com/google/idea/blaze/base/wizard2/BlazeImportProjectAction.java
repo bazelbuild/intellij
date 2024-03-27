@@ -60,19 +60,22 @@ class BlazeImportProjectAction extends AnAction {
   public ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.EDT;
   }
-
-  private static void createFromWizard(
-      BlazeProjectCreator blazeProjectCreator, WizardContext wizardContext) {
-    try {
-      blazeProjectCreator.doCreate(
-          wizardContext.getProjectFileDirectory(),
-          wizardContext.getProjectName(),
-          wizardContext.getProjectStorageFormat());
-    } catch (final IOException e) {
-      logger.error("Project creation failed", e);
-      ApplicationManager.getApplication()
-          .invokeLater(
-              () -> Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed"));
-    }
+  
+  static void createFromWizard(
+      BlazeProjectCreator blazeProjectCreator,
+      WizardContext wizardContext
+  ) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+          try {
+            blazeProjectCreator.doCreate(
+                wizardContext.getProjectFileDirectory(),
+                wizardContext.getProjectName(),
+                wizardContext.getProjectStorageFormat());
+          } catch (final IOException e) {
+            logger.error("Project creation failed", e);
+            Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed");
+          }
+        }
+    );
   }
 }
