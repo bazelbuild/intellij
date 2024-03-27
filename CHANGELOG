@@ -1,6 +1,9 @@
 v2024.03.26
 ===========
-
+* Fix "No such target" errors on incremental sync #6262
+* Reduced the logging level for the stack traces produced when resolving external artifacts. #6310
+* (rebase) Support embedded go_proto_library #6030
+* Improved error message for an unsupported workspace type #6257
 
 v2024.03.12
 ===========
