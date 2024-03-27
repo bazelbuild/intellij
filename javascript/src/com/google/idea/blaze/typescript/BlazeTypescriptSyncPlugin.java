@@ -204,7 +204,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
                     context,
                     BlazeInvocationContext.SYNC_CONTEXT))
             .build();
-    return ExternalTask.builder(workspaceRoot)
+    return ExternalTask.builder(workspaceRoot, project)
         .addBlazeCommand(command)
         .context(context)
         .stderr(

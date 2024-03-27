@@ -79,7 +79,7 @@ public class BuildFileFormatOnSaveHandler extends FileDocumentManagerAdapter {
               }
               ImmutableList<TextRange> toFormat =
                   ImmutableList.of(TextRange.allOf(fileContents.getInitialFileContents()));
-              Replacements replacements = getReplacements(type, fileContents, toFormat);
+              Replacements replacements = getReplacements(project, type, fileContents, toFormat);
               return new Formatter.Result<>(null, replacements);
             });
     FormatUtils.formatWithProgressDialog(project, "Running buildifier", future);

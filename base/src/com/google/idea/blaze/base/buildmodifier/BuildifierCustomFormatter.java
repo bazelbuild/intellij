@@ -44,7 +44,7 @@ final class BuildifierCustomFormatter implements CustomFormatter {
       return null;
     }
     BlazeFileType type = ((BuildFile) fileContents.file).getBlazeFileType();
-    return BuildFileFormatter.getReplacements(type, fileContents, ranges);
+    return BuildFileFormatter.getReplacements(project, type, fileContents, ranges);
   }
 
   @Override
