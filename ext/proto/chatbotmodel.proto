@@ -32,6 +32,12 @@ message GenerateAnswersRequest {
 
   // Unformatted user prompt.
   string text = 3;
+
+  // Path of the source file
+  string file_path = 4;
+
+  // Source file contents
+  string file_content = 5;
 }
 
 message GenerateAnswersResponse {
