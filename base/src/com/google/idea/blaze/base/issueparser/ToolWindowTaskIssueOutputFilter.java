@@ -85,12 +85,12 @@ public class ToolWindowTaskIssueOutputFilter implements Filter {
     if (linkedTask != null) {
       ResultItem dummyResult = dummyResult(offset);
       BuildTasksProblemsView.getInstance(project)
-          .addMessage(
+          .tryAddMessage(
               issue,
               openConsoleToHyperlink(project, linkedTask, dummyResult.getHyperlinkInfo(), offset));
       links.add(dummyResult);
     } else {
-      BuildTasksProblemsView.getInstance(project).addMessage(issue, null);
+      BuildTasksProblemsView.getInstance(project).tryAddMessage(issue, null);
     }
     ResultItem hyperlink = hyperlinkItem(issue, offset);
     if (hyperlink != null) {

@@ -45,6 +45,7 @@ public class IssueOutput implements Output {
     NOTE,
     STATISTICS,
     INFORMATION,
+    IGNORE,
   }
 
   public static Builder issue(Category category, String message) {
@@ -57,6 +58,10 @@ public class IssueOutput implements Output {
 
   public static Builder warn(String message) {
     return new Builder(Category.WARNING, message);
+  }
+
+  public static Builder ignore() {
+    return new Builder(Category.IGNORE, null);
   }
 
   /** Builder for an issue */

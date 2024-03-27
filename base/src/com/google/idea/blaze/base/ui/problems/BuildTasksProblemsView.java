@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.ui.problems;
 import com.google.idea.blaze.base.io.AbsolutePathPatcher.AbsolutePathPatcherUtil;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.intellij.icons.AllIcons;
@@ -147,7 +148,7 @@ public class BuildTasksProblemsView {
         });
   }
 
-  public void addMessage(final IssueOutput rawIssue, @Nullable final Navigatable openInConsole) {
+  public void tryAddMessage(final IssueOutput rawIssue, @Nullable final Navigatable openInConsole) {
     withPanelOnViewUpdaterThread(
         panel -> {
           IssueOutput issue = rawIssue;
@@ -170,32 +171,36 @@ public class BuildTasksProblemsView {
                 new OpenFileDescriptor(project, file, issue.getLine() - 1, issue.getColumn() - 1);
           }
           IssueOutput.Category category = issue.getCategory();
-          int type = translateCategory(category);
-          String[] text = convertMessage(issue);
-          String groupName = file != null ? file.getPresentableUrl() : category.name();
-          addMessage(
-              type,
-              text,
-              groupName,
-              file,
-              navigatable,
-              openInConsole,
-              getExportTextPrefix(issue),
-              getRenderTextPrefix(issue),
-              panel);
-
-          if (didFocusProblemsView) {
+          if (category.equals(Category.IGNORE)) {
             return;
           }
-          boolean focus =
-              focusBehavior == FocusBehavior.ALWAYS
-                  || (focusBehavior == FocusBehavior.ON_ERROR
-                      && category == IssueOutput.Category.ERROR);
-          if (focus) {
-            didFocusProblemsView = true;
-            focusProblemsView();
+            int type = translateCategory(category);
+            String[] text = convertMessage(issue);
+            String groupName = file != null ? file.getPresentableUrl() : category.name();
+            tryAddMessage(
+                type,
+                text,
+                groupName,
+                file,
+                navigatable,
+                openInConsole,
+                getExportTextPrefix(issue),
+                getRenderTextPrefix(issue),
+                panel);
+
+            if (didFocusProblemsView) {
+              return;
+            }
+            boolean focus =
+                focusBehavior == FocusBehavior.ALWAYS
+                    || (focusBehavior == FocusBehavior.ON_ERROR
+                        && category == IssueOutput.Category.ERROR);
+            if (focus) {
+              didFocusProblemsView = true;
+              focusProblemsView();
+            }
           }
-        });
+        );
   }
 
   /**
@@ -229,6 +234,9 @@ public class BuildTasksProblemsView {
         return MessageCategory.STATISTICS;
       case INFORMATION:
         return MessageCategory.INFORMATION;
+      case IGNORE:
+        logger.error(String.format("Tried to translate message category %s. It should have been ignored before reaching this function.", category));
+        return 0;
       default:
         logger.error("Unknown message category: " + category);
         return 0;
@@ -264,7 +272,7 @@ public class BuildTasksProblemsView {
     return "";
   }
 
-  private void addMessage(
+  private void tryAddMessage(
       int type,
       String[] text,
       String groupName,

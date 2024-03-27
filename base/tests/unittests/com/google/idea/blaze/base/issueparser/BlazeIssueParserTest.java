@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
@@ -37,7 +38,9 @@ import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.run.filter.FileResolver;
 import com.google.idea.blaze.base.run.filter.StandardFileResolver;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.util.TextRange;
@@ -60,6 +63,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
 
     WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
     applicationServices.register(ExperimentService.class, new MockExperimentService());
+    applicationServices.register(FileOperationProvider.class, new FileOperationProvider());
     BlazeProjectData blazeProjectData = MockBlazeProjectDataBuilder.builder(workspaceRoot).build();
     projectServices.register(
         BlazeProjectDataManager.class, new MockBlazeProjectDataManager(blazeProjectData));
@@ -83,6 +87,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
                     .build())
             .build();
     when(projectViewManager.getProjectViewSet()).thenReturn(projectViewSet);
+    ImportRoots importRoots = ImportRoots.builder(workspaceRoot, BuildSystemName.Bazel).add(projectViewSet).build();
 
     parsers =
         ImmutableList.of(
@@ -94,11 +99,11 @@ public class BlazeIssueParserTest extends BlazeTestCase {
             new BlazeIssueParser.LinelessBuildParser(),
             new BlazeIssueParser.ProjectViewLabelParser(projectViewSet),
             new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                projectViewSet, "no such package '(.*)': BUILD file not found on package path"),
+                projectViewSet, workspaceRoot, importRoots, "no such package '(.*)': BUILD file not found on package path"),
             new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                projectViewSet, "no targets found beneath '(.*)'"),
+                projectViewSet, workspaceRoot, importRoots, "no targets found beneath '(.*)'"),
             new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                projectViewSet, "ERROR: invalid target format '(.*)'"),
+                projectViewSet, workspaceRoot, importRoots, "ERROR: invalid target format '(.*)'"),
             new BlazeIssueParser.FileNotFoundBuildParser(workspaceRoot),
             BlazeIssueParser.GenericErrorParser.FOR_SYNC);
 

@@ -35,6 +35,8 @@ import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.run.filter.FileResolver;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 
@@ -60,10 +62,10 @@ public class BlazeIssueParser {
                     new BuildParser(),
                     new SkylarkErrorParser(),
                     new LinelessBuildParser(),
-                    new InvalidTargetProjectViewPackageParser(
-                            projectViewSet, "no such package '(.*)': BUILD file not found on package path"),
-                    new InvalidTargetProjectViewPackageParser(
-                            projectViewSet, "ERROR: invalid target format '(.*?)'"),
+                    new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                            projectViewSet, project, "no such package '(.*)': BUILD file not found on package path"),
+                    new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                            projectViewSet, project, "ERROR: invalid target format '(.*?)'"),
                     new FileNotFoundBuildParser(workspaceRoot)
             )
             .build();
@@ -102,11 +104,11 @@ public class BlazeIssueParser {
         ImmutableList.<BlazeIssueParser.Parser>builder()
             .add(
                 new BlazeIssueParser.ProjectViewLabelParser(projectViewSet),
+                    new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                            projectViewSet, project, "no targets found beneath '(.*?)'"),
                 new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                    projectViewSet, "no targets found beneath '(.*?)'"),
-                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                    projectViewSet, "ERROR: Skipping '(.*?)'")
-                )
+                    projectViewSet, project, "ERROR: Skipping '(.*?)'"),
+                new BlazeIssueParser.FileNotFoundBuildParser(workspaceRoot))
             .addAll(commonParsers(project, workspaceRoot, projectViewSet));
     if (invocationContext == BlazeInvocationContext.ContextType.Sync) {
       parsers.add(BlazeIssueParser.GenericErrorParser.FOR_SYNC);
@@ -428,11 +430,56 @@ public class BlazeIssueParser {
   }
 
   static class InvalidTargetProjectViewPackageParser extends SingleLineParser {
-    private final ProjectViewSet projectViewSet;
 
-    InvalidTargetProjectViewPackageParser(ProjectViewSet projectViewSet, String regex) {
+    private static final Logger logger =
+        Logger.getInstance(InvalidTargetProjectViewPackageParser.class);
+    private final ProjectViewSet projectViewSet;
+    private final ImportRoots importRoots;
+    private final WorkspaceRoot workspaceRoot;
+
+    InvalidTargetProjectViewPackageParser(ProjectViewSet projectViewSet, Project project, String regex) {
+      this(projectViewSet, WorkspaceRoot.fromProjectSafe(project), ImportRoots.forProjectSafe(project), regex);
+    }
+
+    InvalidTargetProjectViewPackageParser(ProjectViewSet projectViewSet,
+        WorkspaceRoot workspaceRoot, ImportRoots importRoots, String regex) {
       super(regex);
       this.projectViewSet = projectViewSet;
+      this.workspaceRoot = workspaceRoot;
+      this.importRoots = importRoots;
+    }
+
+
+    private boolean isExcludedWorkspacePath(WorkspacePath packageAsPath) {
+      while (!packageAsPath.isWorkspaceRoot()) {
+        if (importRoots.excludeDirectories().contains(packageAsPath)) {
+          return true;
+        }
+        packageAsPath = packageAsPath.getParent();
+      }
+      return false;
+    }
+
+    private boolean isExcludedPath(String packageString) {
+      WorkspacePath packageAsPath = this.workspaceRoot.workspacePathForSafe(
+          this.workspaceRoot.absolutePathFor(packageString).toFile());
+      // If a package is not in the workspace, it wasn't excluded.
+      if (packageAsPath == null) {
+        return false;
+      }
+      return this.isExcludedWorkspacePath(packageAsPath);
+    }
+
+    private boolean isExcludedLabel(String packageString) {
+      Label packageAsLabel = Label.createIfValid(packageString.replace("/...", ""));
+      if (packageAsLabel == null) {
+        return false;
+      }
+      return this.isExcludedWorkspacePath(packageAsLabel.blazePackage());
+    }
+
+    private boolean isExcluded(String packageString) {
+      return this.isExcludedPath(packageString) || this.isExcludedLabel(packageString);
     }
 
     @Override
@@ -451,6 +498,12 @@ public class BlazeIssueParser {
                 return false;
               });
 
+      if (isExcluded(packageString)) {
+        // We can ignore invalid packages iff they have been excluded in the `directories` section.
+        // We have to return a valid IssueOutput here because uncaught errors flow downstream,
+        // and we have more general parsers that will catch this error if we don't stop propagation.
+        return IssueOutput.ignore().build();
+      }
       return IssueOutput.error(matcher.group(0)).inFile(file).build();
     }
   }

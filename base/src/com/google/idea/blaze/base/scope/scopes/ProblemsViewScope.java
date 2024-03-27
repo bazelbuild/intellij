@@ -51,7 +51,7 @@ public class ProblemsViewScope implements BlazeScope, OutputSink<IssueOutput> {
 
   @Override
   public Propagation onOutput(IssueOutput output) {
-      BuildTasksProblemsView.getInstance(project).addMessage(output, null);
+      BuildTasksProblemsView.getInstance(project).tryAddMessage(output, null);
     return Propagation.Continue;
   }
 }
