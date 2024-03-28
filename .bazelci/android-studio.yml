@@ -12,6 +12,18 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:aswb_tests
+  Android-Studio-internal-stable-macos-arm64:
+    name: Android Studio Internal Stable Mac arm64
+    platform: macos_arm64
+    build_flags:
+      - --define=ij_product=android-studio-latest
+    build_targets:
+      - //aswb/...
+    test_flags:
+      - --define=ij_product=android-studio-latest
+      - --test_output=errors
+    test_targets:
+      - //:aswb_tests
   Android-Studio-internal-beta:
     name: Android Studio Internal Beta
     platform: ubuntu1804
