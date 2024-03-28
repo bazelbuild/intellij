@@ -91,11 +91,6 @@ public abstract class FakeBuildSystemProvider implements BuildSystemProvider {
 
   public abstract ImmutableList<String> getPossibleModuleFileNames();
 
-  @Override
-  public ImmutableList<String> possibleModuleFileNames() {
-    return getPossibleModuleFileNames();
-  }
-
   /**
    * Builder for {@link FakeBuildSystemProvider}.
    *

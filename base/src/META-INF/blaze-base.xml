@@ -402,7 +402,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileTypeFactory implementation="com.google.idea.blaze.base.lang.projectview.language.ProjectViewFileTypeFactory"/>
+    <fileType language="projectview" name="projectview" implementationClass="com.google.idea.blaze.base.lang.projectview.language.ProjectViewFileType" fieldName="INSTANCE" extensions="bazelproject;blazeproject;asproject"/>
     <lang.parserDefinition language="projectview" implementationClass="com.google.idea.blaze.base.lang.projectview.parser.ProjectViewParserDefinition"/>
     <lang.commenter language="projectview" implementationClass="com.google.idea.blaze.base.lang.projectview.formatting.ProjectViewCommenter"/>
     <lang.foldingBuilder language="projectview" implementationClass="com.google.idea.blaze.base.lang.projectview.formatting.ProjectViewFoldingBuilder"/>
@@ -418,7 +418,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileTypeFactory implementation="com.google.idea.blaze.base.lang.buildfile.language.BuildFileTypeFactory"/>
+    <fileType language="BUILD" name="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.language.BuildFileType" fieldName="INSTANCE" fileNames="BUILD.bazel;BUILD;WORKSPACE.bazel;WORKSPACE;MODULE.bazel" extensions="bzl;sky;star"/>
     <annotator language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.HighlightingAnnotator"/>
     <!--<annotator language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.LoadErrorAnnotator"/>-->
     <annotator language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.GlobErrorAnnotator"/>
