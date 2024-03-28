@@ -42,6 +42,7 @@ import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -56,6 +57,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import java.io.File;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /** Collects class jars from the user's build. */
 public class BlazeClassJarProvider implements ClassJarProvider {
@@ -88,6 +90,11 @@ public class BlazeClassJarProvider implements ClassJarProvider {
 
     TargetMap targetMap = blazeProjectData.getTargetMap();
     ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
+    boolean isWorkspaceModule = BlazeDataStorage.WORKSPACE_MODULE_NAME.equals(module.getName());
+
+    if (isWorkspaceModule) {
+      return getAllExternalLibraries(targetMap, decoder);
+    }
 
     if (useRenderJarForExternalLibraries.getValue()) {
       return TargetToBinaryMap.getInstance(project).getSourceBinaryTargets().stream()
@@ -119,7 +126,7 @@ public class BlazeClassJarProvider implements ClassJarProvider {
       if (javaIdeInfo != null) {
         for (LibraryArtifact jar : javaIdeInfo.getJars()) {
           ArtifactLocation classJar = jar.getClassJar();
-          if (classJar != null && classJar.isSource()) {
+          if (classJar != null) {
             results.add(
                 Preconditions.checkNotNull(
                     OutputArtifactResolver.resolve(project, decoder, classJar),
@@ -193,4 +200,15 @@ public class BlazeClassJarProvider implements ClassJarProvider {
 
     return false;
   }
+
+ List<File> getAllExternalLibraries(TargetMap targetMap, ArtifactLocationDecoder decoder) {
+        return targetMap.targets().stream()
+            .map(TargetIdeInfo::getJavaIdeInfo)
+            .filter(Objects::nonNull)
+            .flatMap(x -> x.getJars().stream())
+            .map(LibraryArtifact::getClassJar).filter(Objects::nonNull)
+            .map(x -> OutputArtifactResolver.resolve(project, decoder, x))
+            .distinct()
+            .collect(Collectors.toList());
+      }
 }
