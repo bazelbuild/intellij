@@ -54,3 +54,24 @@ func TestEnvVars(t *testing.T) {
 		}
 	}
 }
+
+func TestCountExternalCats(t *testing.T) {
+	testCases := []struct {
+		name          string
+		expectedCount int
+	}{
+		{
+			name:          "Cats",
+			expectedCount: 2,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			count := CountExternalCats()
+			if count != tc.expectedCount {
+				t.Errorf("Expected to have %d cats, got %d cats", tc.expectedCount, count)
+			}
+		})
+	}
+
+}
