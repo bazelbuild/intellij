@@ -472,6 +472,7 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
         transitive_system_include_directory = compilation_context.system_includes.to_list(),
         include_prefix = getattr(ctx.rule.attr, "include_prefix", None),
         strip_include_prefix = getattr(ctx.rule.attr, "strip_include_prefix", None),
+        external_includes = getattr(compilation_context, "external_includes", depset()).to_list(),
     )
     ide_info["c_ide_info"] = c_info
     resolve_files = compilation_context.headers
