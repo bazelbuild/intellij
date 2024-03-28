@@ -42,6 +42,10 @@
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.clwb.oclang.run.test.BlazeCidrTestEventsHandler"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.google.idea.blaze.cpp">
+    <CppSupportChecker implementation="com.google.idea.blaze.clwb.ClwbSupportsCpp" />
+  </extensions>
+
   <project-components>
     <component>
       <implementation-class>com.google.idea.blaze.plugin.ClwbProjectSpecificInitializer</implementation-class>

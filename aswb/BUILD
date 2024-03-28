@@ -152,6 +152,7 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
+        "//cpp",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:kotlin",
         "//intellij_platform_sdk:plugin_api",
