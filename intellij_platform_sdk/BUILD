@@ -847,6 +847,12 @@ java_library(
     ),
 )
 
+java_library(
+    name = "google_login",
+    neverlink = 1,
+    exports = ["//third_party/corp_installers/jetbrains/android_studio_with_blaze/android_studio_with_blaze_2023_3/linux_archive:google_login"],
+)
+
 # JetBrains com.jetbrains.codeWithMe plugin
 java_library(
     name = "cwm",
