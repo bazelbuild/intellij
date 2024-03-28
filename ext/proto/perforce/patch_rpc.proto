@@ -3,6 +3,7 @@ syntax = "proto2";
 package com.google.idea.blaze.ext.perforce;
 
 import "ext/proto/perforce/base.proto";
+import "ext/proto/perforce/status.proto";
 
 option java_package = "com.google.idea.blaze.ext.p4";
 
@@ -18,4 +19,6 @@ message PatchChangeRequest {
   optional string custom_description_prefix = 8;
 }
 
-message PatchChangeResponse {}
+message PatchChangeResponse {
+  optional PerforceStatus perforce_status = 1002;
+}
