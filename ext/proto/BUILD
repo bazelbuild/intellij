@@ -1,4 +1,3 @@
-load("@io_bazel_rules_go//proto:def.bzl", "go_grpc_library", "go_proto_library")
 load("@io_grpc_grpc_java//:java_grpc_library.bzl", "java_grpc_library")
 
 proto_library(
@@ -22,7 +21,6 @@ proto_library(
         "linter.proto",
         "logentry.proto",
     ] + glob(["perforce/*.proto"]),
-    # END-EXTERNAL
 )
 
 java_proto_library(
@@ -41,7 +39,6 @@ java_grpc_library(
 proto_library(
     name = "perforce_api_proto",
     srcs = glob(["perforce/*.proto"]),
-    # END-EXTERNAL
 )
 
 java_proto_library(
@@ -49,17 +46,3 @@ java_proto_library(
     visibility = ["//visibility:public"],
     deps = [":perforce_api_proto"],
 )
-
-# BEGIN-EXTERNAL
-go_proto_library(
-    name = "intellijext_go_proto",
-    visibility = ["//visibility:public"],
-    deps = [":intellijext_proto"],
-)
-
-go_grpc_library(
-    name = "intellijext_go_grpc",
-    visibility = ["//visibility:public"],
-    deps = [":intellijext_go_proto"],
-)
-# END-EXTERNAL
