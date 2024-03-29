@@ -44,6 +44,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.idea.blaze.android.compose.ComposeStatusProvider;
 import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.npw.project.BlazeAndroidModuleTemplate;
@@ -65,10 +66,13 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.qsync.DependencyTracker;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.qsync.QuerySyncProject;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
+import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -77,7 +81,11 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.BlazeProject;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
+import com.google.idea.blaze.qsync.project.ProjectPath;
+import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -122,6 +130,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
   protected static final Logger logger = Logger.getInstance(BlazeModuleSystem.class);
   protected Module module;
   protected final Project project;
+  private final ProjectPath.Resolver pathResolver;
   SampleDataDirectoryProvider sampleDataDirectoryProvider;
   RenderJarClassFileFinder classFileFinder;
   final boolean isWorkspaceModule;
@@ -130,10 +139,18 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
   BlazeModuleSystemBase(Module module) {
     this.module = module;
     this.project = module.getProject();
+    this.pathResolver =
+        ProjectPath.Resolver.create(
+            WorkspaceRoot.fromProject(project).path(),
+            Path.of(
+                BlazeImportSettingsManager.getInstance(project)
+                    .getImportSettings()
+                    .getProjectDataDirectory()));
     classFileFinder = new RenderJarClassFileFinder(module);
     sampleDataDirectoryProvider = new BlazeSampleDataDirectoryProvider(module);
     isWorkspaceModule = module.getName().equals(BlazeDataStorage.WORKSPACE_MODULE_NAME);
-    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
+    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC
+        && !QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT) {
       androidExternalLibraryManager =
           new AndroidExternalLibraryManager(
               () -> {
@@ -565,7 +582,30 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
 
   public Collection<ExternalAndroidLibrary> getDependentLibraries() {
     if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
-      return androidExternalLibraryManager.getExternalLibraries();
+      if (QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT) {
+        ProjectProto.Project projectProto =
+            QuerySyncManager.getInstance(project)
+                .getLoadedProject()
+                .map(QuerySyncProject::getSnapshotHolder)
+                .flatMap(BlazeProject::getCurrent)
+                .map(BlazeProjectSnapshot::project)
+                .orElse(null);
+        if (projectProto == null) {
+          return ImmutableList.of();
+        }
+        ImmutableList<ProjectProto.Module> matchingModules =
+            projectProto.getModulesList().stream()
+                .filter(m -> m.getName().equals(module.getName()))
+                .collect(ImmutableList.toImmutableList());
+        if (matchingModules.isEmpty()) {
+          return ImmutableList.of();
+        }
+        return Iterables.getOnlyElement(matchingModules).getAndroidExternalLibrariesList().stream()
+            .map(this::fromProto)
+            .collect(toImmutableList());
+      } else {
+        return androidExternalLibraryManager.getExternalLibraries();
+      }
     }
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
@@ -607,6 +647,19 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
       }
     }
     return libraries.build();
+  }
+
+  private ExternalAndroidLibrary fromProto(ProjectProto.ExternalAndroidLibrary proto) {
+    return new ExternalLibraryImpl(proto.getName())
+        .withLocation(toPathString(proto.getLocation()))
+        .withManifestFile(toPathString(proto.getManifestFile()))
+        .withResFolder(new SelectiveResourceFolder(toPathString(proto.getResFolder()), null))
+        .withSymbolFile(toPathString(proto.getSymbolFile()))
+        .withPackageName(proto.getPackageName());
+  }
+
+  private PathString toPathString(ProjectProto.ProjectPath projectPath) {
+    return new PathString(pathResolver.resolve(ProjectPath.create(projectPath)));
   }
 
   private static ImmutableList<ExternalAndroidLibrary> getLibrariesForWorkspaceModule(

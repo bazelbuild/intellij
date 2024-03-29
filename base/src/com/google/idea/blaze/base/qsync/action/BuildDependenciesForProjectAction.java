@@ -19,7 +19,7 @@ import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;

@@ -24,7 +24,7 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;

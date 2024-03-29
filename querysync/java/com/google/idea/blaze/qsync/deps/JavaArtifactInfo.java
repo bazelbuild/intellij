@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync.java;
+package com.google.idea.blaze.qsync.deps;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
@@ -63,6 +63,8 @@ public abstract class JavaArtifactInfo {
   public abstract ImmutableSet<Path> srcJars();
 
   public abstract String androidResourcesPackage();
+
+  public abstract Builder toBuilder();
 
   public static Builder builder() {
     return new AutoValue_JavaArtifactInfo.Builder();

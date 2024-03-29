@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.qsync.BlazeProject;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
 import java.nio.file.Path;

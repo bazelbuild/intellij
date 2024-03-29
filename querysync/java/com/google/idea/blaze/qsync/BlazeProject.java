@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;

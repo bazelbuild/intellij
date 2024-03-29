@@ -6,6 +6,8 @@ java_library(
         "//querysync:__subpackages__",
     ],
     deps = [
+        "//querysync/java/com/google/idea/blaze/qsync/cc",
+        "//querysync/java/com/google/idea/blaze/qsync/deps",
         "//querysync/java/com/google/idea/blaze/qsync/java",
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//querysync/java/com/google/idea/blaze/qsync/project:language_class_java_proto",
@@ -13,6 +15,7 @@ java_library(
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//shared",
+        "//shared:artifact",
         "//shared:vcs",
         "//third_party/auto_value",
         "@com_google_guava_guava//jar",

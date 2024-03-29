@@ -306,6 +306,11 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
     }
 
     @Override
+    public Optional<String> getBazelVersionString(BlazeInfo blazeInfo) {
+      return inner.getBazelVersionString(blazeInfo);
+    }
+
+    @Override
     public BazelQueryRunner createQueryRunner(Project project) {
       return inner.createQueryRunner(project);
     }

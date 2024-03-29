@@ -16,6 +16,7 @@ java_library(
     ],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync",
+        "//querysync/java/com/google/idea/blaze/qsync/deps",
         "//querysync/java/com/google/idea/blaze/qsync/java",
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
@@ -104,18 +105,6 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//shared",
-        "@com_google_guava_guava//jar",
-        "@junit//jar",
-        "@truth//jar",
-    ],
-)
-
-java_test(
-    name = "TestSourceGlobMatcherTest",
-    size = "small",
-    srcs = ["TestSourceGlobMatcherTest.java"],
-    deps = [
-        "//querysync/java/com/google/idea/blaze/qsync",
         "@com_google_guava_guava//jar",
         "@junit//jar",
         "@truth//jar",

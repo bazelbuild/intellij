@@ -186,6 +186,7 @@ proto_library(
     srcs = ["bazel_output_service.proto"],
     deps = [
         "@com_google_protobuf//:any_proto",
+        "@googleapis//:google_rpc_status_proto",
     ],
 )
 
@@ -245,6 +246,9 @@ filegroup(
     name = "dist_jars",
     srcs = [s + "_java_proto_srcs" for s in FILES] + [
         ":analysis_v2_java_proto_srcs",
+        ":bazel_output_service_java_grpc_srcs",
+        ":bazel_output_service_java_proto_srcs",
+        ":bazel_output_service_rev2_java_proto_srcs",
         ":cache_salt_java_proto_srcs",
         ":command_line_java_proto_srcs",
         ":command_server_java_grpc_srcs",

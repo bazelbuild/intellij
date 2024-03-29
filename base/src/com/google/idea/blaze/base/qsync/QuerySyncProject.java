@@ -45,16 +45,17 @@ import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.artifact.BuildArtifactCache;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
-import com.google.idea.blaze.qsync.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
+import com.google.idea.blaze.qsync.project.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.project.SnapshotDeserializer;
 import com.google.idea.blaze.qsync.project.SnapshotSerializer;
 import com.google.idea.blaze.qsync.project.TargetsToBuild;
@@ -89,6 +90,7 @@ public class QuerySyncProject {
   private final BlazeImportSettings importSettings;
   private final WorkspaceRoot workspaceRoot;
   private final ArtifactTracker<?> artifactTracker;
+  private final BuildArtifactCache buildArtifactCache;
   private final ProjectArtifactStore artifactStore;
   private final RenderJarArtifactTracker renderJarArtifactTracker;
   private final AppInspectorArtifactTracker appInspectorArtifactTracker;
@@ -118,6 +120,7 @@ public class QuerySyncProject {
       BlazeImportSettings importSettings,
       WorkspaceRoot workspaceRoot,
       ArtifactTracker<?> artifactTracker,
+      BuildArtifactCache buildArtifactCache,
       ProjectArtifactStore artifactStore,
       RenderJarArtifactTracker renderJarArtifactTracker,
       AppInspectorArtifactTracker appInspectorArtifactTracker,
@@ -141,6 +144,7 @@ public class QuerySyncProject {
     this.importSettings = importSettings;
     this.workspaceRoot = workspaceRoot;
     this.artifactTracker = artifactTracker;
+    this.buildArtifactCache = buildArtifactCache;
     this.artifactStore = artifactStore;
     this.renderJarArtifactTracker = renderJarArtifactTracker;
     this.appInspectorArtifactTracker = appInspectorArtifactTracker;
@@ -191,6 +195,10 @@ public class QuerySyncProject {
 
   public ProjectPath.Resolver getProjectPathResolver() {
     return projectPathResolver;
+  }
+
+  public BuildArtifactCache getBuildArtifactCache() {
+    return buildArtifactCache;
   }
 
   public ProjectArtifactStore getArtifactStore() {
@@ -253,7 +261,10 @@ public class QuerySyncProject {
                 : projectQuerier.update(projectDefinition, lastQuery.get(), context);
         BlazeProjectSnapshot newSnapshot =
             blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(
-                context, postQuerySyncData, projectProtoTransforms.getComposedTransform());
+                context,
+                postQuerySyncData,
+                artifactTracker.getStateSnapshot(),
+                projectProtoTransforms.getComposedTransform());
         onNewSnapshot(context, newSnapshot);
 
         // TODO: Revisit SyncListeners once we switch fully to qsync
@@ -332,6 +343,7 @@ public class QuerySyncProject {
             blazeProjectSnapshotBuilder.createBlazeProjectSnapshot(
                 context,
                 snapshotHolder.getCurrent().orElseThrow().queryData(),
+                artifactTracker.getStateSnapshot(),
                 projectProtoTransforms.getComposedTransform());
         onNewSnapshot(context, newSnapshot);
       }

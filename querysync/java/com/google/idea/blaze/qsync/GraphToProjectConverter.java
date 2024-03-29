@@ -51,6 +51,7 @@ import com.google.idea.blaze.qsync.project.ProjectProto.LibraryOrBuilder;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.project.ProjectTarget.SourceType;
+import com.google.idea.blaze.qsync.project.TestSourceGlobMatcher;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -114,7 +115,8 @@ public class GraphToProjectConverter {
       Predicate<Path> fileExistenceCheck,
       Context<?> context,
       ProjectDefinition projectDefinition,
-      ListeningExecutorService executor) {
+      ListeningExecutorService executor,
+      boolean useNewBuildArtifactLogic) {
     this.packageReader = packageReader;
     this.fileExistenceCheck = fileExistenceCheck;
     this.context = context;
@@ -122,7 +124,7 @@ public class GraphToProjectConverter {
     this.executor = executor;
     this.useNewResDirLogic = Suppliers.ofInstance(true);
     this.guessAndroidResPackages = Suppliers.ofInstance(false);
-    this.useNewBuildArtifactLogic = false;
+    this.useNewBuildArtifactLogic = useNewBuildArtifactLogic;
   }
 
   /**

@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -29,7 +30,7 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -145,18 +146,21 @@ public class QuerySyncProjectData implements BlazeProjectData {
     //  assumes that the base VCS revision is a decimal integer, which may not be true.
     logger.warn("Usage of legacy getBlazeVersionData");
     BlazeVersionData.Builder data = BlazeVersionData.builder();
-    String baseRev =
-        blazeProject
-            .flatMap(p -> p.queryData().vcsState())
-            .map(q -> q.upstreamRevision)
-            .orElse(null);
-    if (baseRev != null) {
-      try {
-        data.setClientCl(Long.parseLong(baseRev));
-      } catch (NumberFormatException e) {
-        logger.warn(e);
-      }
-    }
+    blazeProject
+        .flatMap(p -> p.queryData().vcsState())
+        .map(q -> q.upstreamRevision)
+        .ifPresent(
+            revision -> {
+              try {
+                data.setClientCl(Long.parseLong(revision));
+              } catch (NumberFormatException e) {
+                logger.warn(e);
+              }
+            });
+    blazeProject
+        .flatMap(p -> p.queryData().bazelVersion())
+        .ifPresent(version -> data.setBazelVersion(BazelVersion.parseVersion(version)));
+
     return data.build();
   }
 

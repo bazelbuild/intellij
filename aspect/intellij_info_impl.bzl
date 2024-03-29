@@ -411,7 +411,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
             library_labels = [stringify_label(ctx.rule.attr.library.label)]
         elif getattr(ctx.rule.attr, "embed", None) != None:
             for library in ctx.rule.attr.embed:
-                if library.intellij_info.kind == "go_source":
+                if library.intellij_info.kind == "go_source" or library.intellij_info.kind == "go_proto_library":
                     l = library.intellij_info.output_groups["intellij-sources-go-outputs"].to_list()
                     sources += l
                     generated += [f for f in l if not f.is_source]
@@ -833,7 +833,7 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
     consistent functionality with the previous condition of the presence of the .android legacy
     provider.
     """
-    if ctx.rule.kind not in ["android_library", "android_binary"]:
+    if ctx.rule.kind not in ["android_library", "android_binary", "kt_android_library"]:
         return False
 
     android_semantics = semantics.android if hasattr(semantics, "android") else None

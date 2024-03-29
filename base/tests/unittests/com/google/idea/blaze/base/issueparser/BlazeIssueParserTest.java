@@ -42,6 +42,7 @@ import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.util.TextRange;
 import java.io.File;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,6 +52,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BlazeIssueParserTest extends BlazeTestCase {
   private ImmutableList<BlazeIssueParser.Parser> parsers;
+  private ImmutableList<BlazeIssueParser.Parser> targetDetectionParsers;
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
@@ -98,8 +100,11 @@ public class BlazeIssueParserTest extends BlazeTestCase {
             new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
                 projectViewSet, "ERROR: invalid target format '(.*)'"),
             new BlazeIssueParser.FileNotFoundBuildParser(workspaceRoot),
-            BlazeIssueParser.GenericErrorParser.INSTANCE);
+            BlazeIssueParser.GenericErrorParser.FOR_SYNC);
+
+    targetDetectionParsers = BlazeIssueParser.targetDetectionQueryParsers(project, workspaceRoot);
   }
+
 
   @Test
   public void testParseTargetError() {
@@ -442,14 +447,16 @@ public class BlazeIssueParserTest extends BlazeTestCase {
 
   @Test
   public void testParseGenericError() {
-    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
-    String msg =
-        "Bad target pattern 'USE_CANARY_BLAZE=1': package names may contain only "
-            + "A-Z, a-z, 0-9, '/', '-', '.', ' ', '$', '(', ')' and '_'.";
-    IssueOutput issue = blazeIssueParser.parseIssue("ERROR: " + msg);
-    assertThat(issue).isNotNull();
-    assertThat(issue.getMessage()).isEqualTo(msg);
-    assertThat(issue.getCategory()).isEqualTo(ERROR);
+    for (var parsersList : Arrays.asList(parsers, targetDetectionParsers)) {
+      BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsersList);
+      String msg =
+          "Bad target pattern 'USE_CANARY_BLAZE=1': package names may contain only "
+              + "A-Z, a-z, 0-9, '/', '-', '.', ' ', '$', '(', ')' and '_'.";
+      IssueOutput issue = blazeIssueParser.parseIssue("ERROR: " + msg);
+      assertThat(issue).isNotNull();
+      assertThat(issue.getMessage()).isEqualTo(msg);
+      assertThat(issue.getCategory()).isEqualTo(ERROR);
+    }
   }
 
   @Test
@@ -487,6 +494,18 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     }
     assertThat(blazeIssueParser.parseIssue(lines[1])).isNotNull();
     assertThat(blazeIssueParser.parseIssue(lines[4])).isNotNull();
+  }
+
+  @Test
+  public void testIgnoreInvalidTargetErrorsInTargetDetection() {
+    var lines = """
+        ERROR: Skipping '//foo/...:all': no targets found beneath 'run_configurations'
+        ERROR: Skipping '//foo:foo.iml': no such target '//foo:foo.iml': target 'foo.iml' not declared in package 'foo' defined by /foo/BUILD; however, a source file of this name exists.  (Perhaps add 'exports_files(["foo.iml"])' to /foo/BUILD?)
+        """.lines().toList();
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(targetDetectionParsers);
+    for (String line : lines) {
+      assertThat(blazeIssueParser.parseIssue(line)).isNull();
+    }
   }
 
   @Test

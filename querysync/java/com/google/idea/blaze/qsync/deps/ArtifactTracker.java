@@ -15,6 +15,12 @@
  */
 package com.google.idea.blaze.qsync.deps;
 
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+
+import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
@@ -27,11 +33,45 @@ import java.util.Set;
 /** A local cache of project dependencies. */
 public interface ArtifactTracker<ContextT extends Context<?>> {
 
+  /** Immutable artifact state at a point in time. */
+  @AutoValue
+  abstract class State {
+
+    public static final State EMPTY = create(ImmutableMap.of(), ImmutableMap.of());
+
+    public abstract ImmutableMap<Label, TargetBuildInfo> depsMap();
+
+    public abstract ImmutableMap<String, CcToolchain> ccToolchainMap();
+
+    public static State create(
+        ImmutableMap<Label, TargetBuildInfo> map,
+        ImmutableMap<String, CcToolchain> ccToolchainMap) {
+      return new AutoValue_ArtifactTracker_State(map, ccToolchainMap);
+    }
+
+    public Optional<JavaArtifactInfo> getJavaInfo(Label label) {
+      return Optional.ofNullable(depsMap().get(label)).flatMap(TargetBuildInfo::javaInfo);
+    }
+
+    @VisibleForTesting
+    public static State forJavaArtifacts(ImmutableCollection<JavaArtifactInfo> infos) {
+      return create(
+          infos.stream()
+              .collect(
+                  toImmutableMap(
+                      JavaArtifactInfo::label,
+                      j -> TargetBuildInfo.forJavaTarget(j, DependencyBuildContext.NONE))),
+          ImmutableMap.of());
+    }
+  }
+
   /** Drops all artifacts and clears caches. */
   void clear() throws IOException;
 
   /** Fetches, caches and sets up new artifacts. */
   void update(Set<Label> targets, OutputInfo outputInfo, ContextT context) throws BuildException;
+
+  State getStateSnapshot();
 
   /**
    * Returns a list of local cache files that build by target provided. Returns Optional.empty() if

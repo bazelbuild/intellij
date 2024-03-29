@@ -20,11 +20,12 @@ java_library(
     name = "java",
     srcs = glob(["*.java"]),
     deps = [
-        ":java_target_info_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/artifacts",
+        "//querysync/java/com/google/idea/blaze/qsync/deps",
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//shared",
+        "//shared:artifact",
         "//third_party/auto_value",
         "@com_google_guava_guava//jar",
     ],

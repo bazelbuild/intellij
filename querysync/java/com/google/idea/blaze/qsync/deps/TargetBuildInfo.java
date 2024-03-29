@@ -16,19 +16,40 @@
 package com.google.idea.blaze.qsync.deps;
 
 import com.google.auto.value.AutoValue;
-import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
 import java.util.Optional;
 
+/** Information about a target that was extracted from the build at dependencies build time. */
 @AutoValue
-abstract class TargetBuildInfo {
-  abstract Optional<JavaArtifactInfo> javaInfo();
+public abstract class TargetBuildInfo {
+  public abstract Optional<JavaArtifactInfo> javaInfo();
 
-  // TODO(b/323346056) Add cc info here.
+  public abstract Optional<CcCompilationInfo> ccInfo();
 
-  abstract DependencyBuildContext buildContext();
+  public abstract DependencyBuildContext buildContext();
 
-  static TargetBuildInfo forJavaTarget(
+  public static TargetBuildInfo forJavaTarget(
       JavaArtifactInfo javaInfo, DependencyBuildContext buildContext) {
-    return new AutoValue_TargetBuildInfo(Optional.of(javaInfo), buildContext);
+    return builder().buildContext(buildContext).javaInfo(javaInfo).build();
+  }
+
+  public static TargetBuildInfo forCcTarget(
+      CcCompilationInfo targetInfo, DependencyBuildContext buildContext) {
+    return builder().buildContext(buildContext).ccInfo(targetInfo).build();
+  }
+
+  static Builder builder() {
+    return new AutoValue_TargetBuildInfo.Builder();
+  }
+
+  /** Builder for {@link TargetBuildInfo}. */
+  @AutoValue.Builder
+  public abstract static class Builder {
+    public abstract Builder javaInfo(JavaArtifactInfo javaInfo);
+
+    public abstract Builder ccInfo(CcCompilationInfo ccInfo);
+
+    public abstract Builder buildContext(DependencyBuildContext buildContext);
+
+    public abstract TargetBuildInfo build();
   }
 }

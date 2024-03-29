@@ -123,4 +123,8 @@
     <androidDebuggerInfoProvider implementation="com.google.idea.blaze.android.run.BlazeCommandAndroidDebuggerInfoProvider" />
   </extensions>
 
+  <extensions defaultExtensionNs="com.google.idea.blaze.base.qsync">
+    <ProjectProtoTransformProvider implementation="com.google.idea.blaze.android.qsync.AndroidProjectProtoTransform$Provider" />
+  </extensions>
+
 </idea-plugin>

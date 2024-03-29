@@ -192,33 +192,46 @@ java_binary(
     ],
 )
 
-intellij_integration_test_suite(
-    name = "integration_tests",
-    srcs = glob(
-        ["tests/integrationtests/**/*.java"],
-        # b/292251337 exclude this test to pass copybara test temporarily
-        exclude = ["tests/integrationtests/com/google/idea/blaze/java/qsync/ClassFileJavaSourceFinderTest.java"],
-    ),
-    required_plugins = "com.google.idea.blaze.java",
-    test_package_root = "com.google.idea.blaze.java",
-    visibility = DEFAULT_TEST_VISIBILITY,
-    runtime_deps = [
-        ":java_integration_test_plugin",
-    ],
-    deps = [
-        ":java",
-        "//base",
-        "//base:integration_test_utils",
-        "//base:unit_test_utils",
-        "//common/experiments",
-        "//common/experiments:unit_test_utils",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api_for_tests",
-        "//intellij_platform_sdk:test_libs",
-        "//proto:proto_deps",
-        "//shared",
-        "@com_google_guava_guava//jar",
-        "@junit//jar",
-        "@truth//jar",
-    ],
-)
+# TODO(b/323346056) Get rid of this comprehension when the old artifact tracker is deleted.
+[
+    intellij_integration_test_suite(
+        name = "integration_tests" + test_case["suffix"],
+        srcs = glob(
+            ["tests/integrationtests/**/*.java"],
+        ),
+        jvm_flags = test_case["jvm_flags"],
+        required_plugins = "com.google.idea.blaze.java",
+        test_package_root = "com.google.idea.blaze.java",
+        visibility = DEFAULT_TEST_VISIBILITY,
+        runtime_deps = [
+            ":java_integration_test_plugin",
+        ],
+        deps = [
+            ":java",
+            "//base",
+            "//base:integration_test_utils",
+            "//base:unit_test_utils",
+            "//common/experiments",
+            "//common/experiments:unit_test_utils",
+            "//intellij_platform_sdk:jsr305",
+            "//intellij_platform_sdk:plugin_api_for_tests",
+            "//intellij_platform_sdk:test_libs",
+            "//proto:proto_deps",
+            "//querysync",
+            "//shared",
+            "@com_google_guava_guava//jar",
+            "@junit//jar",
+            "@truth//jar",
+        ],
+    )
+    for test_case in [
+        {
+            "suffix": "",
+            "jvm_flags": [],
+        },
+        {
+            "suffix": "_new_artifact_tracker",
+            "jvm_flags": ["-Dblaze.experiment.query.sync.new.artifact.management=1"],
+        },
+    ]
+]

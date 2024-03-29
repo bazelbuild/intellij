@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync.project;
+package com.google.idea.blaze.qsync;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Label;
-import com.google.idea.blaze.qsync.project.ProjectProto.Project;
+import com.google.idea.blaze.qsync.deps.ArtifactIndex;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
+import com.google.idea.blaze.qsync.project.BuildGraphData;
+import com.google.idea.blaze.qsync.project.PostQuerySyncData;
+import com.google.idea.blaze.qsync.project.ProjectProto;
+import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
@@ -43,13 +49,16 @@ public abstract class BlazeProjectSnapshot {
   public static final BlazeProjectSnapshot EMPTY =
       builder()
           .graph(BuildGraphData.EMPTY)
-          .project(Project.getDefaultInstance())
+          .project(ProjectProto.Project.getDefaultInstance())
+          .artifactState(ArtifactTracker.State.EMPTY)
           .queryData(PostQuerySyncData.EMPTY)
           .build();
 
   public abstract PostQuerySyncData queryData();
 
   public abstract BuildGraphData graph();
+
+  public abstract ArtifactTracker.State artifactState();
 
   /** Project proto reflecting the structure of the IJ project. */
   public abstract ProjectProto.Project project();
@@ -99,6 +108,11 @@ public abstract class BlazeProjectSnapshot {
     return graph().targetMap();
   }
 
+  @Memoized
+  public ArtifactIndex getArtifactIndex() {
+    return ArtifactIndex.create(artifactState(), project().getArtifactDirectories());
+  }
+
   /** Builder for {@link BlazeProjectSnapshot}. */
   @AutoValue.Builder
   public abstract static class Builder {
@@ -106,6 +120,8 @@ public abstract class BlazeProjectSnapshot {
     public abstract Builder queryData(PostQuerySyncData value);
 
     public abstract Builder graph(BuildGraphData value);
+
+    public abstract Builder artifactState(ArtifactTracker.State state);
 
     public abstract Builder project(ProjectProto.Project value);
 

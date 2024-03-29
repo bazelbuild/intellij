@@ -45,6 +45,10 @@ message Module {
 
   // Separate custom package with source packages as it's only used by R class.
   repeated string android_custom_packages = 7;
+
+  // Android libs are kept separate to regular libraries reflecting the
+  // separatation between the APIs we use to configure them.
+  repeated ExternalAndroidLibrary android_external_libraries = 8;
 }
 
 /**
@@ -130,6 +134,20 @@ message JarDirectory {
 message LibrarySource {
   reserved 1;
   ProjectPath srcjar = 2;
+}
+
+/**
+ * An external android library.
+ *
+ * Corresponds to the AS class com.android.projectmodel.ExternalAndroidLibrary.
+ */
+message ExternalAndroidLibrary {
+  string name = 1;
+  ProjectPath location = 2;
+  ProjectPath manifest_file = 3;
+  ProjectPath res_folder = 4;
+  ProjectPath symbol_file = 5;
+  string package_name = 6;
 }
 
 /**
@@ -241,6 +259,7 @@ message ProjectArtifact {
     BuildArtifact build_artifact = 3;
     string workspace_relative_path = 4;
   }
+  string target = 5;
 
   enum ArtifactTransform {
     NONE = 0;

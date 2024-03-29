@@ -70,17 +70,15 @@ import com.google.idea.blaze.common.artifact.ArtifactFetcher.ArtifactDestination
 import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.blaze.common.proto.ProtoStringInterner;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.ProjectProtoTransform;
-import com.google.idea.blaze.qsync.TestSourceGlobMatcher;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
 import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
+import com.google.idea.blaze.qsync.deps.JavaArtifactInfo;
 import com.google.idea.blaze.qsync.deps.OutputGroup;
 import com.google.idea.blaze.qsync.deps.OutputInfo;
 import com.google.idea.blaze.qsync.java.AndroidResPackagesProjectUpdater;
 import com.google.idea.blaze.qsync.java.GeneratedSourceProjectUpdater;
 import com.google.idea.blaze.qsync.java.GeneratedSourceProjectUpdater.GeneratedSourceJar;
-import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaTargetArtifacts;
 import com.google.idea.blaze.qsync.java.SrcJarProjectUpdater;
@@ -89,6 +87,8 @@ import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
+import com.google.idea.blaze.qsync.project.ProjectProtoTransform;
+import com.google.idea.blaze.qsync.project.TestSourceGlobMatcher;
 import com.google.protobuf.ExtensionRegistry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -737,6 +737,11 @@ public class ArtifactTrackerImpl
     }
 
     return projectProto;
+  }
+
+  @Override
+  public ArtifactTracker.State getStateSnapshot() {
+    return State.EMPTY;
   }
 
   @Override

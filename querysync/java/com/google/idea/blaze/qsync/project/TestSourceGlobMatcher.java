@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync;
+package com.google.idea.blaze.qsync.project;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import java.io.File;
 import java.nio.file.Path;
 

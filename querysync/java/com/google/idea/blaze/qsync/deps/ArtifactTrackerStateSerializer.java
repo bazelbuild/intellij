@@ -26,7 +26,7 @@ import com.google.idea.blaze.qsync.java.ArtifactTrackerProto;
 import com.google.idea.blaze.qsync.java.ArtifactTrackerProto.Artifact;
 import com.google.idea.blaze.qsync.java.ArtifactTrackerProto.ArtifactTrackerState;
 import com.google.idea.blaze.qsync.java.ArtifactTrackerProto.BuildContext;
-import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
+import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.SnapshotSerializer;
 import java.nio.file.Path;
 import java.util.Map;
@@ -47,6 +47,12 @@ public class ArtifactTrackerStateSerializer {
     return this;
   }
 
+  @CanIgnoreReturnValue
+  public ArtifactTrackerStateSerializer visitToolchainMap(Map<String, CcToolchain> toolchainMap) {
+    toolchainMap.values().forEach(this::visitCcToolchain);
+    return this;
+  }
+
   public ArtifactTrackerState toProto() {
     return proto.build();
   }
@@ -58,6 +64,7 @@ public class ArtifactTrackerStateSerializer {
         ArtifactTrackerProto.TargetBuildInfo.newBuilder();
     builder.setBuildId(targetBuildInfo.buildContext().buildId());
     targetBuildInfo.javaInfo().ifPresent(ji -> visitJavaInfo(ji, builder));
+    targetBuildInfo.ccInfo().ifPresent(cc -> visitCcInfo(cc, builder));
     proto.putBuiltDeps(target.toString(), builder.build());
   }
 
@@ -95,5 +102,47 @@ public class ArtifactTrackerStateSerializer {
                     .setPath(artifact.path().toString())
                     .build())
         .collect(toImmutableList());
+  }
+
+  private void visitCcInfo(
+      CcCompilationInfo ccInfo, ArtifactTrackerProto.TargetBuildInfo.Builder builder) {
+    builder
+        .getCcInfoBuilder()
+        .addAllDefines(ccInfo.defines())
+        .addAllIncludeDirectories(
+            ccInfo.includeDirectories().stream()
+                .map(ProjectPath::toProto)
+                .collect(toImmutableList()))
+        .addAllQuoteIncludeDirectories(
+            ccInfo.quoteIncludeDirectories().stream()
+                .map(ProjectPath::toProto)
+                .collect(toImmutableList()))
+        .addAllSysytemIncludeDirectories(
+            ccInfo.systemIncludeDirectories().stream()
+                .map(ProjectPath::toProto)
+                .collect(toImmutableList()))
+        .addAllFrameworkIncludeDirectories(
+            ccInfo.frameworkIncludeDirectories().stream()
+                .map(ProjectPath::toProto)
+                .collect(toImmutableList()))
+        .addAllGenHeaders(toProtos(ccInfo.genHeaders()))
+        .setToolchainId(ccInfo.toolchainId());
+  }
+
+  private void visitCcToolchain(CcToolchain toolchain) {
+    proto.putCcToolchains(
+        toolchain.id(),
+        ArtifactTrackerProto.CcToolchain.newBuilder()
+            .setCompiler(toolchain.compiler())
+            .setCompilerExecutable(toolchain.compilerExecutable().toProto())
+            .setCpu(toolchain.cpu())
+            .setTargetGnuSystemName(toolchain.targetGnuSystemName())
+            .addAllBuiltInIncludeDirectories(
+                toolchain.builtInIncludeDirectories().stream()
+                    .map(ProjectPath::toProto)
+                    .collect(toImmutableList()))
+            .addAllCOptions(toolchain.cOptions())
+            .addAllCppOptions(toolchain.cppOptions())
+            .build());
   }
 }

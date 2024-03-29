@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync;
+package com.google.idea.blaze.qsync.project;
 
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.project.BuildGraphData;
-import com.google.idea.blaze.qsync.project.ProjectProto;
 import java.util.List;
 
 /** Applies a transform to a project proto instance, yielding a new instance. */
@@ -57,6 +56,10 @@ public interface ProjectProtoTransform {
 
     public void add(ProjectProtoTransform transform) {
       transforms.add(transform);
+    }
+
+    public void addAll(ImmutableCollection<ProjectProtoTransform> transforms) {
+      this.transforms.addAll(transforms);
     }
 
     public ProjectProtoTransform getComposedTransform() {

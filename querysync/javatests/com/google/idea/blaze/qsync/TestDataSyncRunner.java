@@ -22,8 +22,8 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.java.PackageReader;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -41,10 +41,13 @@ public class TestDataSyncRunner {
 
   private final Context<?> context;
   private final PackageReader packageReader;
+  private final boolean useNewArtifactLogic;
 
-  public TestDataSyncRunner(Context<?> context, PackageReader packageReader) {
+  public TestDataSyncRunner(
+      Context<?> context, PackageReader packageReader, boolean useNewArtifactLogic) {
     this.context = context;
     this.packageReader = packageReader;
+    this.useNewArtifactLogic = useNewArtifactLogic;
   }
 
   public BlazeProjectSnapshot sync(TestData testProject) throws IOException, BuildException {
@@ -60,6 +63,7 @@ public class TestDataSyncRunner {
             .setProjectDefinition(projectDefinition)
             .setQuerySummary(querySummary)
             .setVcsState(Optional.empty())
+            .setBazelVersion(Optional.empty())
             .build();
     BuildGraphData buildGraphData =
         new BlazeQueryParser(querySummary, context, ImmutableSet.of()).parse();
@@ -69,11 +73,13 @@ public class TestDataSyncRunner {
             Predicates.alwaysTrue(),
             context,
             projectDefinition,
-            newDirectExecutorService());
+            newDirectExecutorService(),
+            useNewArtifactLogic);
     Project project = converter.createProject(buildGraphData);
     return BlazeProjectSnapshot.builder()
         .queryData(pqsd)
         .graph(new BlazeQueryParser(querySummary, context, ImmutableSet.of()).parse())
+        .artifactState(ArtifactTracker.State.EMPTY)
         .project(project)
         .build();
   }

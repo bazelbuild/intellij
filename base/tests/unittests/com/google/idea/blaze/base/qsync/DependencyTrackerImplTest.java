@@ -24,10 +24,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.BlazeProject;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.QuerySyncTestUtils;
 import com.google.idea.blaze.qsync.TestDataSyncRunner;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,7 +46,7 @@ public class DependencyTrackerImplTest {
 
   public final BlazeContext context = BlazeContext.create();
   public final TestDataSyncRunner syncRunner =
-      new TestDataSyncRunner(context, QuerySyncTestUtils.PATH_INFERRING_PACKAGE_READER);
+      new TestDataSyncRunner(context, QuerySyncTestUtils.PATH_INFERRING_PACKAGE_READER, false);
 
   public final BlazeProject blazeProject = new BlazeProject();
   @Mock DependencyBuilder dependencyBuilder;

@@ -48,8 +48,7 @@ import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
-import com.google.idea.blaze.qsync.ProjectProtoTransform;
-import com.google.idea.blaze.qsync.ProjectProtoTransform.Registry;
+import com.google.idea.blaze.qsync.DependenciesProjectProtoUpdater;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.VcsStateDiffer;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
@@ -58,6 +57,8 @@ import com.google.idea.blaze.qsync.java.PackageStatementParser;
 import com.google.idea.blaze.qsync.java.ParallelPackageReader;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
+import com.google.idea.blaze.qsync.project.ProjectProtoTransform;
+import com.google.idea.blaze.qsync.project.ProjectProtoTransform.Registry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -154,6 +155,13 @@ public class ProjectLoader {
       NewArtifactTracker<BlazeContext> tracker =
           new NewArtifactTracker<>(
               BlazeDataStorage.getProjectDataDir(importSettings).toPath(), artifactCache);
+      projectTransformRegistry.add(
+          new DependenciesProjectProtoUpdater(
+              tracker,
+              latestProjectDef,
+              artifactCache,
+              projectPathResolver,
+              QuerySync.ATTACH_DEP_SRCJARS::getValue));
 
       artifactTracker = tracker;
       renderJarArtifactTracker = new RenderJarArtifactTrackerImpl();
@@ -197,7 +205,12 @@ public class ProjectLoader {
             () -> !QuerySync.EXTRACT_RES_PACKAGES_AT_BUILD_TIME.getValue(),
             QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT);
     QueryRunner queryRunner = createQueryRunner(buildSystem);
-    ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner, vcsHandler);
+    ProjectQuerier projectQuerier =
+        createProjectQuerier(
+            projectRefresher,
+            queryRunner,
+            vcsHandler,
+            new BazelVersionHandler(buildSystem, buildSystem.getBuildInvoker(project, context)));
     QuerySyncSourceToTargetMap sourceToTargetMap =
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
 
@@ -209,6 +222,7 @@ public class ProjectLoader {
             importSettings,
             workspaceRoot,
             artifactTracker,
+            artifactCache,
             artifactStore,
             renderJarArtifactTracker,
             appInspectorArtifactTracker,
@@ -227,6 +241,7 @@ public class ProjectLoader {
             buildSystem,
             projectTransformRegistry);
     BlazeProjectListenerProvider.registerListenersFor(querySyncProject);
+    projectTransformRegistry.addAll(ProjectProtoTransformProvider.getAll(querySyncProject));
 
     return querySyncProject;
   }
@@ -238,8 +253,9 @@ public class ProjectLoader {
   private ProjectQuerierImpl createProjectQuerier(
       ProjectRefresher projectRefresher,
       QueryRunner queryRunner,
-      Optional<BlazeVcsHandler> vcsHandler) {
-    return new ProjectQuerierImpl(queryRunner, projectRefresher, vcsHandler);
+      Optional<BlazeVcsHandler> vcsHandler,
+      BazelVersionHandler bazelVersionProvider) {
+    return new ProjectQuerierImpl(queryRunner, projectRefresher, vcsHandler, bazelVersionProvider);
   }
 
   protected QueryRunner createQueryRunner(BuildSystem buildSystem) {
