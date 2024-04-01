@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.android.projectsystem;
 
-import static com.android.ide.common.repository.GoogleMavenArtifactIdHelper.APP_COMPAT_V7;
+import static com.android.ide.common.repository.GoogleMavenArtifactIdCompat.APP_COMPAT_V7;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -77,12 +77,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 
-/** Test cases for {@link BazelModuleSystem}. */
+/** Test cases for {@link BlazeModuleSystem}. */
 @RunWith(JUnit4.class)
-public class BazelModuleSystemTest extends BlazeTestCase {
+public class BlazeModuleSystemTest extends BlazeTestCase {
   WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/"));
   Module module;
-  BazelProjectSystem service;
+  BlazeProjectSystem service;
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
@@ -102,7 +102,7 @@ public class BazelModuleSystemTest extends BlazeTestCase {
     createMocksForAddDependency(applicationServices, projectServices);
 
     project.setBaseDir(new MockVirtualFile("/"));
-    service = new BazelProjectSystem(project);
+    service = new BlazeProjectSystem(project);
   }
 
   @Test
@@ -120,7 +120,7 @@ public class BazelModuleSystemTest extends BlazeTestCase {
     assertThat(buildFile).isNotNull();
     when(psiFile.getVirtualFile()).thenReturn(buildFile);
 
-    BazelModuleSystem.create(module).registerDependency(APP_COMPAT_V7);
+    BlazeModuleSystem.create(module).registerDependency(APP_COMPAT_V7);
 
     ArgumentCaptor<OpenFileDescriptor> descriptorCaptor =
         ArgumentCaptor.forClass(OpenFileDescriptor.class);
@@ -143,7 +143,7 @@ public class BazelModuleSystemTest extends BlazeTestCase {
         VirtualFileSystemProvider.getInstance().getSystem().findFileByPath("/foo/BUILD");
     assertThat(buildFile).isNotNull();
 
-    BazelModuleSystem.create(module).registerDependency(APP_COMPAT_V7);
+    BlazeModuleSystem.create(module).registerDependency(APP_COMPAT_V7);
 
     verify(FileEditorManager.getInstance(project)).openFile(buildFile, true);
     verifyNoMoreInteractions(FileEditorManager.getInstance(project));
@@ -152,15 +152,15 @@ public class BazelModuleSystemTest extends BlazeTestCase {
   @Test
   public void testGetResolvedDependencyWithoutLocators() throws Exception {
     registerExtensionPoint(MavenArtifactLocator.EP_NAME, MavenArtifactLocator.class);
-    assertThat(BazelModuleSystem.create(module).getResolvedDependency(APP_COMPAT_V7)).isNull();
+    assertThat(BlazeModuleSystem.create(module).getResolvedDependency(APP_COMPAT_V7)).isNull();
   }
 
   @Test
   public void testGetDesugaringConfigFilesWithoutLocators() throws Exception {
     registerExtensionPoint(
         DesugaringLibraryConfigFilesLocator.EP_NAME, DesugaringLibraryConfigFilesLocator.class);
-    assertThat(BazelModuleSystem.create(module).getDesugarLibraryConfigFilesKnown()).isFalse();
-    assertThat(BazelModuleSystem.create(module).getDesugarLibraryConfigFiles()).isEmpty();
+    assertThat(BlazeModuleSystem.create(module).getDesugarLibraryConfigFilesKnown()).isFalse();
+    assertThat(BlazeModuleSystem.create(module).getDesugarLibraryConfigFiles()).isEmpty();
   }
 
   @Test
@@ -187,15 +187,15 @@ public class BazelModuleSystemTest extends BlazeTestCase {
             return BuildSystemName.Blaze;
           }
         });
-    assertThat(BazelModuleSystem.create(module).getDesugarLibraryConfigFilesKnown()).isTrue();
-    assertThat(BazelModuleSystem.create(module).getDesugarLibraryConfigFiles())
+    assertThat(BlazeModuleSystem.create(module).getDesugarLibraryConfigFilesKnown()).isTrue();
+    assertThat(BlazeModuleSystem.create(module).getDesugarLibraryConfigFiles())
         .isEqualTo(desugaringFilePaths);
   }
 
   @Test
   public void testBlazeTargetNameToKotlinModuleName() {
     assertThat(
-            BazelModuleSystem.create(module)
+            BlazeModuleSystem.create(module)
                 .blazeTargetNameToKotlinModuleName(
                     "//third_party/java_src/android_app/compose_samples/Rally:lib"))
         .isEqualTo("third_party_java_src_android_app_compose_samples_Rally_lib");

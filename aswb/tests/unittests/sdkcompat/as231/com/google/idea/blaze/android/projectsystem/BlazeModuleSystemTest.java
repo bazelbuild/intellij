@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.android.projectsystem;
 
-import static com.android.ide.common.repository.GoogleMavenArtifactIdHelper.APP_COMPAT_V7;
+import static com.android.ide.common.repository.GoogleMavenArtifactIdCompat.APP_COMPAT_V7;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -24,7 +24,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.android.tools.idea.rendering.classloading.loaders.JarManager;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
@@ -62,27 +61,24 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 
-/** Test cases for {@link BazelModuleSystem}. */
+/** Test cases for {@link BlazeModuleSystem}. */
 @RunWith(JUnit4.class)
-public class BazelModuleSystemTest extends BlazeTestCase {
+public class BlazeModuleSystemTest extends BlazeTestCase {
   WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/"));
   Module module;
-  BazelProjectSystem service;
+  BlazeProjectSystem service;
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
@@ -102,7 +98,7 @@ public class BazelModuleSystemTest extends BlazeTestCase {
     createMocksForAddDependency(applicationServices, projectServices);
 
     project.setBaseDir(new MockVirtualFile("/"));
-    service = new BazelProjectSystem(project);
+    service = new BlazeProjectSystem(project);
   }
 
   @Test
@@ -120,7 +116,7 @@ public class BazelModuleSystemTest extends BlazeTestCase {
     assertThat(buildFile).isNotNull();
     when(psiFile.getVirtualFile()).thenReturn(buildFile);
 
-    BazelModuleSystem.create(module).registerDependency(APP_COMPAT_V7);
+    BlazeModuleSystem.create(module).registerDependency(APP_COMPAT_V7);
 
     ArgumentCaptor<OpenFileDescriptor> descriptorCaptor =
         ArgumentCaptor.forClass(OpenFileDescriptor.class);
@@ -143,7 +139,7 @@ public class BazelModuleSystemTest extends BlazeTestCase {
         VirtualFileSystemProvider.getInstance().getSystem().findFileByPath("/foo/BUILD");
     assertThat(buildFile).isNotNull();
 
-    BazelModuleSystem.create(module).registerDependency(APP_COMPAT_V7);
+    BlazeModuleSystem.create(module).registerDependency(APP_COMPAT_V7);
 
     verify(FileEditorManager.getInstance(project)).openFile(buildFile, true);
     verifyNoMoreInteractions(FileEditorManager.getInstance(project));
@@ -152,53 +148,7 @@ public class BazelModuleSystemTest extends BlazeTestCase {
   @Test
   public void testGetResolvedDependencyWithoutLocators() throws Exception {
     registerExtensionPoint(MavenArtifactLocator.EP_NAME, MavenArtifactLocator.class);
-    assertThat(BazelModuleSystem.create(module).getResolvedDependency(APP_COMPAT_V7)).isNull();
-  }
-
-  @Test
-  public void testGetDesugaringConfigFilesWithoutLocators() throws Exception {
-    registerExtensionPoint(
-        DesugaringLibraryConfigFilesLocator.EP_NAME, DesugaringLibraryConfigFilesLocator.class);
-    assertThat(BazelModuleSystem.create(module).getDesugarLibraryConfigFilesKnown()).isFalse();
-    assertThat(BazelModuleSystem.create(module).getDesugarLibraryConfigFiles()).isEmpty();
-  }
-
-  @Test
-  public void testGetDesugaringConfigFiles() throws Exception {
-    ImmutableList<Path> desugaringFilePaths =
-        ImmutableList.of(Paths.get("a/a.json"), Paths.get("b/b.json"));
-    ExtensionPointImpl<DesugaringLibraryConfigFilesLocator> extensionPointImpl =
-        registerExtensionPoint(
-            DesugaringLibraryConfigFilesLocator.EP_NAME, DesugaringLibraryConfigFilesLocator.class);
-    extensionPointImpl.registerExtension(
-        new DesugaringLibraryConfigFilesLocator() {
-          @Override
-          public boolean getDesugarLibraryConfigFilesKnown() {
-            return true;
-          }
-
-          @Override
-          public ImmutableList<Path> getDesugarLibraryConfigFiles(Project project) {
-            return desugaringFilePaths;
-          }
-
-          @Override
-          public BuildSystemName buildSystem() {
-            return BuildSystemName.Blaze;
-          }
-        });
-    assertThat(BazelModuleSystem.create(module).getDesugarLibraryConfigFilesKnown()).isTrue();
-    assertThat(BazelModuleSystem.create(module).getDesugarLibraryConfigFiles())
-        .isEqualTo(desugaringFilePaths);
-  }
-
-  @Test
-  public void testBlazeTargetNameToKotlinModuleName() {
-    assertThat(
-            BazelModuleSystem.create(module)
-                .blazeTargetNameToKotlinModuleName(
-                    "//third_party/java_src/android_app/compose_samples/Rally:lib"))
-        .isEqualTo("third_party_java_src_android_app_compose_samples_Rally_lib");
+    assertThat(BlazeModuleSystem.create(module).getResolvedDependency(APP_COMPAT_V7)).isNull();
   }
 
   private void mockBlazeImportSettings(Container projectServices) {
