@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import com.android.tools.idea.rendering.classloading.loaders.JarManager;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
@@ -91,6 +92,7 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
 
     // For the 'blaze.class.file.finder.name' experiment.
     applicationServices.register(ExperimentService.class, new MockExperimentService());
+    projectServices.register(JarManager.class, JarManager.Companion.forTesting());
 
     mockBlazeImportSettings(projectServices); // For Blaze.isBlazeProject.
     createMocksForAddDependency(applicationServices, projectServices);
