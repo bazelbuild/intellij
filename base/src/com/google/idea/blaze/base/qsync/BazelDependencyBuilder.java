@@ -248,7 +248,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
             .resolve(generatedAspectLabel.getPackage())
             .resolve(generatedAspectLabel.getName());
     if (!Files.exists(generatedAspect.getParent())) {
-      Files.createDirectories(generatedAspect);
+      Files.createDirectories(generatedAspect.getParent());
     }
     Files.writeString(generatedAspect, getAspect().read());
     // bazel asks BUILD file exists with the .bzl file. It's ok that BUILD file contains nothing.
