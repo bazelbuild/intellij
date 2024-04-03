@@ -31,6 +31,9 @@ public class QuerySync {
   private static final FeatureRolloutExperiment ENABLED =
       new FeatureRolloutExperiment("query.sync");
 
+  public static final BoolExperiment ENABLE_QUERY_SYNC_BY_PROJECT_VIEW =
+      new BoolExperiment("query.sync.projectview", true);
+
   public static final BoolExperiment USE_NEW_RES_DIR_LOGIC =
       new BoolExperiment("query.sync.new.resdir.logic", true);
 
