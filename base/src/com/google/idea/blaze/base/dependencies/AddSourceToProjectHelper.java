@@ -145,23 +145,29 @@ class AddSourceToProjectHelper {
             project,
             builder -> {
               if (addDirectory) {
+                boolean directoryAdded = false;
                 // Directory addition is not enough, we need to try to add something that Bazel can use.
                 // This will be a folder with BUILD file that is responsible for building of the current source or package.
-                WorkspaceRoot root = WorkspaceRoot.fromProject(project);
-                File buildFile = null;
-                if (workspacePath.asPath().getNameCount() > 0) {
-                  String candidateRootDirectory = workspacePath.asPath().getName(0).toFile().getName();
-                  ImportRoots amendedRoots = ImportRoots.builder(root, Blaze.getBuildSystemName(project))
-                          .add(DirectoryEntry
-                                  .include(WorkspacePath.createIfValid(candidateRootDirectory)))
-                          .build();
-                  BuildTargetFinder buildTargetFinder = new BuildTargetFinder(project, root, amendedRoots);
-                  buildFile = buildTargetFinder.findBuildFileForFile(root.fileForPath(workspacePath));
+                if (autoDeriveTargets(project)) {
+                  if (workspacePath.asPath().getNameCount() > 0) {
+                    WorkspaceRoot root = WorkspaceRoot.fromProject(project);
+
+                    String candidateRootDirectory = workspacePath.asPath().getName(0).toFile().getName();
+                    ImportRoots candidateImportRoot = ImportRoots.builder(root, Blaze.getBuildSystemName(project))
+                            .add(DirectoryEntry
+                                    .include(WorkspacePath.createIfValid(candidateRootDirectory)))
+                            .build();
+
+                    File buildFile = new BuildTargetFinder(project, root, candidateImportRoot)
+                            .findBuildFileForFile(root.fileForPath(workspacePath));
+                    if (buildFile != null) {
+                      String buildFileParentRelativePath = root.path().relativize(buildFile.getParentFile().toPath()).toString();
+                      addDirectory(builder, WorkspacePath.createIfValid(buildFileParentRelativePath));
+                      directoryAdded = true;
+                    }
+                  }
                 }
-                if (buildFile != null) {
-                  String buildFileParentRelativePath = root.path().relativize(buildFile.getParentFile().toPath()).toString();
-                  addDirectory(builder, WorkspacePath.createIfValid(buildFileParentRelativePath));
-                } else {
+                if (!directoryAdded) {
                   addDirectory(builder, parentPath);
                 }
               }
