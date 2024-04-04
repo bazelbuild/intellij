@@ -131,7 +131,7 @@ public final class ListSection<T> extends Section<T> {
     public final Builder<T> replaceElement(T what, T with) {
       for (int i = 0; i < items.size(); i++) {
         var cur = items.get(i);
-        if (cur.item != null && cur.item.equals(what)){
+        if (cur.item != null && cur.item.equals(what)) {
           items.set(i, new ItemOrTextBlock<>(with));
           break;
         }
