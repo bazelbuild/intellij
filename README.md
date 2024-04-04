@@ -44,6 +44,11 @@ and follow the instructions in the project import wizard.
 
 Detailed docs are available [here](http://ij.bazel.build).
 
+## Known issues
+
+### Python debugging
+Please read this comment https://github.com/bazelbuild/intellij/issues/4745#issue-1668398619
+
 
 ## Building the plugin
 
