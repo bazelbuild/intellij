@@ -128,7 +128,7 @@ public final class ListSection<T> extends Section<T> {
     }
 
     @CanIgnoreReturnValue
-    public final Builder<T> replaceDirectory(T what, T with) {
+    public final Builder<T> replaceElement(T what, T with) {
       for (int i =0; i < items.size(); i++) {
         var cur = items.get(i);
         if (cur.item != null && cur.item.equals(what)){
