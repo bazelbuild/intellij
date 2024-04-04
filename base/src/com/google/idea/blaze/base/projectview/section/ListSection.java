@@ -127,6 +127,19 @@ public final class ListSection<T> extends Section<T> {
       return this;
     }
 
+    @CanIgnoreReturnValue
+    public final Builder<T> replaceDirectory(T what, T with) {
+      for (int i =0; i < items.size(); i++) {
+        var cur = items.get(i);
+        if (cur.item != null && cur.item.equals(what)){
+          items.set(i, new ItemOrTextBlock<>(with));
+          break;
+        }
+      }
+
+      return this;
+    }
+
     @Override
     public final ListSection<T> build() {
       return new ListSection<>(getSectionKey(), ImmutableList.copyOf(items));
