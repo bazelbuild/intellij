@@ -19,7 +19,7 @@ fun main(args: Array<String>) { // run with WORKSPACE file path as the first arg
     bumpPlugins("232", out)
     bumpRelease("2023.3", "233", out)
     bumpPlugins("233", out)
-    bumpEap("241", out)
+    bumpRelease("2024.1", "241", out)
     bumpPlugins("241", out)
     bumpMavenPackages("junit:junit", "JUNIT", out)
 }
