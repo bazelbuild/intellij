@@ -186,7 +186,7 @@ class AddSourceToProjectHelper {
     // filtering
     List<? extends TargetExpression> targetsToSync = targets;
     if (autoDeriveTargets(project)) {
-      targetsToSync = ImmutableList.of(TargetExpression.allFromPackageRecursive(parentPath));
+      targetsToSync = ImmutableList.of(TargetExpression.allFromPackageRecursive(addedPath[0]));
     }
     BlazeSyncManager.getInstance(project)
         .partialSync(targetsToSync, /* reason= */ "AddSourceToProjectHelper");
