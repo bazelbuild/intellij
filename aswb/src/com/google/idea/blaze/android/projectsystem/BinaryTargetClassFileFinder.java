@@ -21,6 +21,7 @@ import com.android.tools.idea.projectsystem.ClassFileFinderUtil;
 import com.android.tools.idea.rendering.classloading.loaders.JarManager;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
@@ -172,25 +173,26 @@ public class BinaryTargetClassFileFinder implements ClassFileFinder {
     ClassContentCache classContentCache = ClassContentCache.getInstance(project);
     String packageName = StringUtil.getPackageName(fqcn);
     Set<TargetKey> visitedTargets = new HashSet<>();
+    // 1st attempt from cache
+    ClassContent classContent = classContentCache.getClassContent(fqcn);
+    if (classContent != null) {
+      return classContent;
+    }
+
+    // 2nd attempt from the target key that contains the package
+    if(packageToTargetKeyMap.containsKey(packageName)) {
+      TargetKey targetKey = packageToTargetKeyMap.get(packageName);
+      classContent = getClassFromClassJar(projectData, fqcn, targetKey);
+      if (classContent != null) {
+        classContentCache.putEntry(fqcn, classContent);
+        return classContent;
+      }
+    }
+
+    // 3rd attempt from the binary target transitive dependencies
     for (TargetKey binaryTarget : binaryTargets) {
-        // 1st attempt from cache
-        ClassContent classContent = classContentCache.getClassContent(fqcn);
-        if (classContent != null) {
-          return classContent;
-        }
-
-        if(packageToTargetKeyMap.containsKey(packageName)) {
-          // 2nd attempt from the target key that contains the package
-          TargetKey targetKey = packageToTargetKeyMap.get(packageName);
-          classContent = getClassFromClassJar(projectData, fqcn, targetKey);
-          if (classContent != null) {
-            classContentCache.putEntry(fqcn, classContent);
-            return classContent;
-          }
-        }
-
-        // 3rd attempt from the binary target transitive dependencies
-       classContent = getClassFromTransitiveDeps(projectData, fqcn, visitedTargets, binaryTarget);
+      ImmutableCollection<TargetKey> transitiveKeys = TransitiveDependencyMap.getInstance(project).getTransitiveDependencies(binaryTarget);
+       classContent = getClassFromTargetKeys(projectData, fqcn, visitedTargets, transitiveKeys);
         if (classContent != null) {
           classContentCache.putEntry(fqcn, classContent);
           return classContent;
@@ -198,13 +200,15 @@ public class BinaryTargetClassFileFinder implements ClassFileFinder {
     }
 
     // 4th attempt from non visited targets in the entire target map
-    for (TargetIdeInfo targetIdeInfo : projectData.getTargetMap().targets()) {
-      if(visitedTargets.contains(targetIdeInfo.getKey())) {
-        continue;
-      }
-      ClassContent classContent = getClassFromClassJar(projectData, fqcn, targetIdeInfo.getKey());
+    List<TargetKey> nonVisitedTargetKeys = projectData.getTargetMap().targets().stream()
+            .map(TargetIdeInfo::getKey)
+            .filter(key -> !visitedTargets.contains(key))
+            .collect(Collectors.toList());
+    List<TargetKey> sortedTargetKeys = sortTargetKeysWithPackageName(nonVisitedTargetKeys, packageName);
+    for (TargetKey targetKey : sortedTargetKeys) {
+      classContent = getClassFromClassJar(projectData, fqcn, targetKey);
       if (classContent != null) {
-        packageToTargetKeyMap.put(packageName, targetIdeInfo.getKey());
+        packageToTargetKeyMap.put(packageName, targetKey);
         classContentCache.putEntry(fqcn, classContent);
         return classContent;
       }
@@ -215,23 +219,22 @@ public class BinaryTargetClassFileFinder implements ClassFileFinder {
   }
 
   @Nullable
-  private ClassContent getClassFromTransitiveDeps(BlazeProjectData projectData, String fqcn,Set<TargetKey> visitedTargets, TargetKey binaryTarget) {
+  private ClassContent getClassFromTargetKeys(BlazeProjectData projectData, String fqcn, Set<TargetKey> visitedTargets, Collection<TargetKey> targetKeys) {
     String packageName  = StringUtil.getPackageName(fqcn);
-    List<TargetKey> targetKeysSorted = sortTargetKeysWithPackageName(TransitiveDependencyMap.getInstance(project).getTransitiveDependencies(binaryTarget), packageName);
-    for (TargetKey dependencyTargetKey : targetKeysSorted) {
-      if(visitedTargets.contains(dependencyTargetKey)) {
+    List<TargetKey> targetKeysSorted = sortTargetKeysWithPackageName(targetKeys, packageName);
+    for (TargetKey targetKey : targetKeysSorted) {
+      if(visitedTargets.contains(targetKey)) {
         continue;
       }
-      ClassContent classFile = getClassFromClassJar(projectData, fqcn, dependencyTargetKey);
-      visitedTargets.add(dependencyTargetKey);
+      ClassContent classFile = getClassFromClassJar(projectData, fqcn, targetKey);
+      visitedTargets.add(targetKey);
       if (classFile != null) {
-        packageToTargetKeyMap.put(packageName, dependencyTargetKey);
+        packageToTargetKeyMap.put(packageName, targetKey);
         return classFile;
       }
     }
     return null;
   }
-
 
   @VisibleForTesting
   static boolean isResourceClass(String fqcn) {
