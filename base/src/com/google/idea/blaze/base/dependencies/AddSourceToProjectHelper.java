@@ -135,7 +135,7 @@ class AddSourceToProjectHelper {
       return;
     }
     WorkspacePath parentPath = Preconditions.checkNotNull(workspacePath.getParent());
-
+    final WorkspacePath[] addedPath = {parentPath};
     boolean addDirectory = !roots.containsWorkspacePath(parentPath);
     if (targets.isEmpty() && !addDirectory) {
       return;
@@ -162,7 +162,8 @@ class AddSourceToProjectHelper {
                             .findBuildFileForFile(root.fileForPath(workspacePath));
                     if (buildFile != null) {
                       String buildFileParentRelativePath = root.path().relativize(buildFile.getParentFile().toPath()).toString();
-                      addDirectory(builder, WorkspacePath.createIfValid(buildFileParentRelativePath));
+                      addedPath[0] = WorkspacePath.createIfValid(buildFileParentRelativePath);
+                      addDirectory(builder, addedPath[0]);
                       directoryAdded = true;
                     }
                   }
@@ -189,7 +190,7 @@ class AddSourceToProjectHelper {
     }
     BlazeSyncManager.getInstance(project)
         .partialSync(targetsToSync, /* reason= */ "AddSourceToProjectHelper");
-    notifySuccess(project, addDirectory ? parentPath : null, targets);
+    notifySuccess(project, addDirectory ? addedPath[0] : null, targets);
   }
 
   private static void addDirectory(ProjectView.Builder builder, WorkspacePath dir) {
