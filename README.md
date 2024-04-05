@@ -49,6 +49,8 @@ Detailed docs are available [here](http://ij.bazel.build).
 ### Python debugging
 Please read this comment https://github.com/bazelbuild/intellij/issues/4745#issue-1668398619
 
+### Mixed Python & Java projects
+In order to get correct python highlighting, please try to open "Project Structure" window and set "Python facet" there
 
 ## Building the plugin
 
