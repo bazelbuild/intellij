@@ -101,7 +101,7 @@ public class AndroidSdkPlatformSection {
                 .stream()
                 .map(androidSdk -> "# android_sdk_platform: " + androidSdk)
                 .collect(toList());
-        builder.add(TextBlockSection.of(new TextBlock(-1, ImmutableList.copyOf(sdkOptions))));
+        builder.add(TextBlockSection.of(new TextBlock(ImmutableList.copyOf(sdkOptions), -1)));
       }
       return builder.build();
     }

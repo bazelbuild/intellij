@@ -98,8 +98,8 @@ public final class ListSection<T> extends Section<T> {
     }
 
     @CanIgnoreReturnValue
-    public final Builder<T> add(T item) {//FIXME what about first item?
-      items.add(new ItemOrTextBlock<>(item, getLastLineIndex()));
+    public final Builder<T> add(T item) {
+      items.add(new ItemOrTextBlock<>(item, -1));
       return this;
     }
 
@@ -113,12 +113,8 @@ public final class ListSection<T> extends Section<T> {
 
     @CanIgnoreReturnValue
     public final Builder<T> add(TextBlock textBlock) {
-      items.add(new ItemOrTextBlock<T>(textBlock, getLastLineIndex()));
+      items.add(new ItemOrTextBlock<T>(textBlock, -1));
       return this;
-    }
-
-    private int getLastLineIndex() {
-      return this.items.get(items.size() - 1).getLineIndex() + 1;
     }
 
     @CanIgnoreReturnValue
