@@ -426,7 +426,7 @@ public class ProjectViewParserTest extends BlazeTestCase {
   @Test
   public void testListParserAcceptsWhitespace() throws Exception {
     String text =
-        Joiner.on('\n')
+        Joiner.on("\n")
             .join(
                 "directories:",
                 "  dir0",
@@ -457,16 +457,16 @@ public class ProjectViewParserTest extends BlazeTestCase {
                 .add(
                     ListSection.builder(DirectorySection.KEY)
                         .add(DirectoryEntry.include(new WorkspacePath("dir0")))
-                        .add(TextBlock.of(-1, "  "))
-                        .add(TextBlock.of(1, ""))
+                        .add(TextBlock.of(3, "  "))
+                        .add(TextBlock.of(4, ""))
                         .add(DirectoryEntry.include(new WorkspacePath("dir1")))
-                        .add(TextBlock.of(1, "  ", "  "))
-                        .add(TextBlock.of(1, "# comment"))
+                        .add(TextBlock.of(6, "  ", "  "))
+                        .add(TextBlock.of(7, "# comment"))
                         .add(DirectoryEntry.include(new WorkspacePath("dir2")))
-                        .add(TextBlock.of(1, ""))
-                        .add(TextBlock.of(1, "  # commented out dir"))
-                        .add(TextBlock.of(1, "  ")))
-                .add(TextBlockSection.of(TextBlock.of(1, "# comment", "# comment")))
+                        .add(TextBlock.of(8, ""))
+                        .add(TextBlock.of(10, "  # commented out dir"))
+                        .add(TextBlock.of(11, "  ")))
+                .add(TextBlockSection.of(TextBlock.of(12, "# comment", "# comment")))
                 .build());
 
     String outputString = ProjectViewParser.projectViewToString(projectView);
