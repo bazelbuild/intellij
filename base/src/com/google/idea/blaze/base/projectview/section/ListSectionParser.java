@@ -49,6 +49,7 @@ public abstract class ListSectionParser<T> extends SectionParser {
     if (!parseContext.current().text.equals(name + ':')) {
       return null;
     }
+    int firstLineIndex = parseContext.getCurrentLineIndex();
     parseContext.consume();
 
     ImmutableList.Builder<ItemOrTextBlock<T>> builder = ImmutableList.builder();
@@ -64,13 +65,14 @@ public abstract class ListSectionParser<T> extends SectionParser {
 
       ItemOrTextBlock<T> itemOrTextBlock = null;
       TextBlock textBlock = TextBlockSection.parseTextBlock(parseContext);
+      int lineIndex = parseContext.getCurrentLineIndex();
       if (textBlock != null) {
-        itemOrTextBlock = new ItemOrTextBlock<>(textBlock);
+        itemOrTextBlock = new ItemOrTextBlock<>(textBlock, lineIndex);
       } else if (isIndented) {
         T item = parseItem(parser, parseContext);
         if (item != null) {
           parseContext.consume();
-          itemOrTextBlock = new ItemOrTextBlock<>(item);
+          itemOrTextBlock = new ItemOrTextBlock<>(item, lineIndex);
         }
       }
 
@@ -84,7 +86,7 @@ public abstract class ListSectionParser<T> extends SectionParser {
         savedTextBlocks.clear();
         parseContext.clearSavedPosition();
       } else {
-        savedTextBlocks.add(new ItemOrTextBlock<>(textBlock));
+        savedTextBlocks.add(new ItemOrTextBlock<>(textBlock, lineIndex));
       }
     }
     parseContext.resetToSavedPosition();
@@ -94,31 +96,36 @@ public abstract class ListSectionParser<T> extends SectionParser {
       parseContext.addError(String.format("Empty section: '%s'", name));
     }
 
-    return new ListSection<>(key, items);
+    return new ListSection<>(key, items, firstLineIndex);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public final void print(StringBuilder sb, Section<?> section) {
+  public final int print(StringBuilder sb, Section<?> section, int firstLineIndex) {
     ListSection<T> listSection = (ListSection<T>) section;
+    int addedLinesNumber = 0;
 
     // Omit empty sections completely
     if (listSection.itemsOrComments().isEmpty()) {
-      return;
+      return addedLinesNumber;
     }
 
     sb.append(getName()).append(':').append('\n');
+    addedLinesNumber += 1;
     for (ItemOrTextBlock<T> item : listSection.itemsOrComments()) {
+      item.setLineIndex(firstLineIndex + addedLinesNumber); // Fix line indexes since the caller does not know them
+
       if (item.item != null) {
-        for (int i = 0; i < SectionParser.INDENT; ++i) {
-          sb.append(' ');
-        }
+        sb.append(" ".repeat(SectionParser.INDENT));
         printItem(item.item, sb);
         sb.append('\n');
+        addedLinesNumber += 1;
       } else if (item.textBlock != null) {
-        item.textBlock.print(sb);
+        addedLinesNumber += item.textBlock.print(sb);
       }
     }
+
+    return addedLinesNumber;
   }
 
   @Nullable

@@ -24,8 +24,8 @@ public final class ScalarSection<T> extends Section<T> {
 
   private final T value;
 
-  public ScalarSection(SectionKey<T, ScalarSection<T>> sectionKey, T value) {
-    super(sectionKey);
+  public ScalarSection(SectionKey<T, ScalarSection<T>> sectionKey, T value, int startingLineIndex) {
+    super(sectionKey, startingLineIndex);
     this.value = value;
   }
 
@@ -73,7 +73,7 @@ public final class ScalarSection<T> extends Section<T> {
 
     @Override
     public ScalarSection<T> build() {
-      return new ScalarSection<>(getSectionKey(), value);
+      return new ScalarSection<>(getSectionKey(), value, -1);
     }
   }
 }

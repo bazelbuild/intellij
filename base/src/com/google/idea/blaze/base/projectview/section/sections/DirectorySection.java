@@ -87,12 +87,12 @@ public class DirectorySection {
         return topLevelProjectView;
       }
       ListSection.Builder<DirectoryEntry> builder = ListSection.builder(KEY);
-      builder.add(TextBlock.of("  # Add the directories you want added as source here"));
+      builder.add(TextBlock.of(-1, "  # Add the directories you want added as source here"));
       if (buildSystemName == BuildSystemName.Bazel) {
-        builder.add(TextBlock.of("  # By default, we've added your entire workspace ('.')"));
+        builder.add(TextBlock.of(-1, "  # By default, we've added your entire workspace ('.')"));
         builder.add(DirectoryEntry.include(new WorkspacePath(".")));
       }
-      builder.add(TextBlock.newLine());
+      builder.add(TextBlock.newLine(-1));
       return ProjectView.builder(topLevelProjectView).add(builder).build();
     }
 

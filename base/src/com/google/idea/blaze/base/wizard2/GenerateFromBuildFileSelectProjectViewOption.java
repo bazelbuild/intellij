@@ -168,7 +168,7 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
     return ProjectViewParser.projectViewToString(
         ProjectView.builder()
             .add(directorySectionBuilder)
-            .add(TextBlockSection.of(TextBlock.newLine()))
+            .add(TextBlockSection.of(TextBlock.newLine(-1)))
             .build());
   }
 

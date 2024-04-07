@@ -38,8 +38,10 @@ public final class ListSection<T> extends Section<T> {
   private final ImmutableList<ItemOrTextBlock<T>> itemsOrComments;
 
   ListSection(
-      SectionKey<T, ? extends ListSection<T>> sectionKey, ImmutableList<ItemOrTextBlock<T>> items) {
-    super(sectionKey);
+      SectionKey<T, ? extends ListSection<T>> sectionKey,
+      ImmutableList<ItemOrTextBlock<T>> items,
+      int firstLineIndex) {
+    super(sectionKey, firstLineIndex);
     this.itemsOrComments = items;
   }
 
@@ -96,8 +98,8 @@ public final class ListSection<T> extends Section<T> {
     }
 
     @CanIgnoreReturnValue
-    public final Builder<T> add(T item) {
-      items.add(new ItemOrTextBlock<>(item));
+    public final Builder<T> add(T item) {//FIXME what about first item?
+      items.add(new ItemOrTextBlock<>(item, getLastLineIndex()));
       return this;
     }
 
@@ -111,8 +113,12 @@ public final class ListSection<T> extends Section<T> {
 
     @CanIgnoreReturnValue
     public final Builder<T> add(TextBlock textBlock) {
-      items.add(new ItemOrTextBlock<T>(textBlock));
+      items.add(new ItemOrTextBlock<T>(textBlock, getLastLineIndex()));
       return this;
+    }
+
+    private int getLastLineIndex() {
+      return this.items.get(items.size() - 1).getLineIndex() + 1;
     }
 
     @CanIgnoreReturnValue
@@ -122,14 +128,32 @@ public final class ListSection<T> extends Section<T> {
     }
 
     @CanIgnoreReturnValue
-    public final Builder<T> remove(T item) {
-      items.remove(new ItemOrTextBlock<>(item));
+    public final Builder<T> remove(T item, int lineIndex) {
+      items.remove(new ItemOrTextBlock<>(item, lineIndex));
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public final Builder<T> removeAll(T item) {
+      items.removeIf(it -> it.item != null && it.item.equals(item));
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public final Builder<T> replaceElement(int lineIndex, T with) {
+      for (int i = 0; i < items.size(); i++) {
+        if (items.get(i).getLineIndex() == lineIndex) {
+          items.set(i, new ItemOrTextBlock<>(with, lineIndex));
+          break;
+        }
+      }
+
       return this;
     }
 
     @Override
     public final ListSection<T> build() {
-      return new ListSection<>(getSectionKey(), ImmutableList.copyOf(items));
+      return new ListSection<>(getSectionKey(), ImmutableList.copyOf(items), -1);
     }
   }
 }

@@ -51,18 +51,22 @@ public abstract class ScalarSectionParser<T> extends SectionParser {
     String rest = line.text.substring(name.length() + 1).trim();
     parseContext.consume();
     T item = parseItem(parser, parseContext, rest);
-    return item != null ? new ScalarSection<>(key, item) : null;
+    return item != null ? new ScalarSection<>(key, item, parseContext.getCurrentLineIndex()) : null;
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public final void print(StringBuilder sb, Section<?> section) {
+  public final int print(StringBuilder sb, Section<?> section, int firstLineIndex) {
     sb.append(getName()).append(divider);
     if (divider != ' ') {
       sb.append(' ');
     }
-    printItem(sb, ((ScalarSection<T>) section).getValue());
+    var scalarSection = (ScalarSection<T>) section;
+
+    printItem(sb, scalarSection.getValue());
     sb.append('\n');
+
+    return 1;
   }
 
   /** Used by psi-parser for validation. */
