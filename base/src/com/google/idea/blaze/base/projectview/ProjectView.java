@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.Section;
 import com.google.idea.blaze.base.projectview.section.SectionBuilder;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
@@ -129,6 +130,10 @@ public final class ProjectView implements Serializable {
       return null;
     }
 
+    public <T, SectionType extends Section<T>> Builder add(SectionBuilder<T, SectionType> builder, int firstLineIndex) {
+      return null;
+    }
+
     @CanIgnoreReturnValue
     public <T, SectionType extends Section<T>> Builder add(SectionBuilder<T, SectionType> builder) {
       return add(builder.build());
@@ -145,6 +150,7 @@ public final class ProjectView implements Serializable {
       sections.remove(section);
       return this;
     }
+
 
     /** Replaces a section if it already exists. If it doesn't, just add the section. */
     @CanIgnoreReturnValue

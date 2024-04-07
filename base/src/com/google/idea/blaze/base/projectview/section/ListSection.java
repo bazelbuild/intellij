@@ -90,6 +90,8 @@ public final class ListSection<T> extends Section<T> {
   public static class Builder<T> extends SectionBuilder<T, ListSection<T>> {
     private final List<ItemOrTextBlock<T>> items = new ArrayList<>();
 
+    private int firstLineNumber = -1;
+
     public Builder(SectionKey<T, ListSection<T>> sectionKey, @Nullable ListSection<T> section) {
       super(sectionKey);
       if (section != null) {
@@ -97,9 +99,20 @@ public final class ListSection<T> extends Section<T> {
       }
     }
 
+    public Builder<T> setFirstLineNumber(int firstLineNumber) {
+      this.firstLineNumber = firstLineNumber;
+      return this;
+    }
+
     @CanIgnoreReturnValue
     public final Builder<T> add(T item) {
       items.add(new ItemOrTextBlock<>(item, -1));
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public final Builder<T> add(T item, int firstLineNumber) {
+      items.add(new ItemOrTextBlock<>(item, firstLineNumber));
       return this;
     }
 
@@ -113,7 +126,7 @@ public final class ListSection<T> extends Section<T> {
 
     @CanIgnoreReturnValue
     public final Builder<T> add(TextBlock textBlock) {
-      items.add(new ItemOrTextBlock<T>(textBlock, -1));
+      items.add(new ItemOrTextBlock<T>(textBlock, textBlock.firstLineIndex));
       return this;
     }
 
@@ -149,7 +162,7 @@ public final class ListSection<T> extends Section<T> {
 
     @Override
     public final ListSection<T> build() {
-      return new ListSection<>(getSectionKey(), ImmutableList.copyOf(items), -1);
+      return new ListSection<>(getSectionKey(), ImmutableList.copyOf(items), firstLineNumber);
     }
   }
 }

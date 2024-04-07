@@ -63,16 +63,18 @@ public abstract class ListSectionParser<T> extends SectionParser {
       }
       correctIndentationRun = isIndented;
 
+      int currentLineIndex = parseContext.getCurrentLineIndex(); // save the current line number just in case multiple lines are consumed
       ItemOrTextBlock<T> itemOrTextBlock = null;
       TextBlock textBlock = TextBlockSection.parseTextBlock(parseContext);
-      int lineIndex = parseContext.getCurrentLineIndex();
+
       if (textBlock != null) {
-        itemOrTextBlock = new ItemOrTextBlock<>(textBlock, lineIndex);
+        // the line has already been consumed so we need the address of the previous line
+        itemOrTextBlock = new ItemOrTextBlock<>(textBlock, currentLineIndex);
       } else if (isIndented) {
         T item = parseItem(parser, parseContext);
         if (item != null) {
+          itemOrTextBlock = new ItemOrTextBlock<>(item, parseContext.getCurrentLineIndex());
           parseContext.consume();
-          itemOrTextBlock = new ItemOrTextBlock<>(item, lineIndex);
         }
       }
 
@@ -86,7 +88,7 @@ public abstract class ListSectionParser<T> extends SectionParser {
         savedTextBlocks.clear();
         parseContext.clearSavedPosition();
       } else {
-        savedTextBlocks.add(new ItemOrTextBlock<>(textBlock, lineIndex));
+        savedTextBlocks.add(new ItemOrTextBlock<>(textBlock, parseContext.getCurrentLineIndex() - 1)); // The line is already consumed
       }
     }
     parseContext.resetToSavedPosition();
@@ -113,7 +115,7 @@ public abstract class ListSectionParser<T> extends SectionParser {
     sb.append(getName()).append(':').append('\n');
     addedLinesNumber += 1;
     for (ItemOrTextBlock<T> item : listSection.itemsOrComments()) {
-      item.setLineIndex(firstLineIndex + addedLinesNumber); // Fix line indexes since the caller does not know them
+      item.setLineIndex(firstLineIndex); // Fix line indexes since the caller does not know them
 
       if (item.item != null) {
         sb.append(" ".repeat(SectionParser.INDENT));

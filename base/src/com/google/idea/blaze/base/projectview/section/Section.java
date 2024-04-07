@@ -30,14 +30,14 @@ public abstract class Section<T> implements Serializable {
 
   private int firstLineIndex;
 
-  public void setFirstLineIndex(int firstLineIndex) {
-    this.firstLineIndex = firstLineIndex;
-  }
   private final String sectionName;
-
 
   public int getFirstLineIndex() {
     return firstLineIndex;
+  }
+
+  public void setFirstLineIndex(int firstLineIndex) {
+    this.firstLineIndex = firstLineIndex;
   }
 
   protected Section(SectionKey<T, ?> key, int firstLineIndex) {

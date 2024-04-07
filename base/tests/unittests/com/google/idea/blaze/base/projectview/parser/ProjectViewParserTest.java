@@ -451,23 +451,24 @@ public class ProjectViewParserTest extends BlazeTestCase {
     assert projectViewFile != null;
     ProjectView projectView = projectViewFile.projectView;
 
-    assertThat(projectView)
-        .isEqualTo(
-            ProjectView.builder()
-                .add(
+    ProjectView expectedProjectView = ProjectView.builder()
+            .add(
                     ListSection.builder(DirectorySection.KEY)
-                        .add(DirectoryEntry.include(new WorkspacePath("dir0")))
-                        .add(TextBlock.of(3, "  "))
-                        .add(TextBlock.of(4, ""))
-                        .add(DirectoryEntry.include(new WorkspacePath("dir1")))
-                        .add(TextBlock.of(6, "  ", "  "))
-                        .add(TextBlock.of(7, "# comment"))
-                        .add(DirectoryEntry.include(new WorkspacePath("dir2")))
-                        .add(TextBlock.of(8, ""))
-                        .add(TextBlock.of(10, "  # commented out dir"))
-                        .add(TextBlock.of(11, "  ")))
-                .add(TextBlockSection.of(TextBlock.of(12, "# comment", "# comment")))
-                .build());
+                            .setFirstLineNumber(0)
+                            .add(DirectoryEntry.include(new WorkspacePath("dir0")), 1)
+                            .add(TextBlock.of(2, "  "))
+                            .add(TextBlock.of(3, ""))
+                            .add(DirectoryEntry.include(new WorkspacePath("dir1")), 4)
+                            .add(TextBlock.of(5, "  ", "  "))
+                            .add(TextBlock.of(7, "# comment"))
+                            .add(DirectoryEntry.include(new WorkspacePath("dir2")), 8)
+                            .add(TextBlock.of(9, ""))
+                            .add(TextBlock.of(10, "  # commented out dir"))
+                            .add(TextBlock.of(11, "  ")))
+            .add(TextBlockSection.of(TextBlock.of(12, "# comment", "# comment")))
+            .build();
+
+    assertThat(projectView).isEqualTo(expectedProjectView);
 
     String outputString = ProjectViewParser.projectViewToString(projectView);
     assertThat(outputString).isEqualTo(text);
