@@ -77,14 +77,15 @@ public class AndroidSdkPlatformSection {
       }
       List<Sdk> sdks = BlazeSdkProvider.getInstance().getAllAndroidSdks();
       ProjectView.Builder builder =
-          ProjectView.builder(topLevelProjectView).add(TextBlockSection.of(TextBlock.newLine()));
+          ProjectView.builder(topLevelProjectView).add(TextBlockSection.of(TextBlock.newLine(-1)));
 
       if (sdks.isEmpty()) {
         builder
-            .add(TextBlockSection.of(TextBlock.of("# Please set to an android SDK platform")))
+            .add(TextBlockSection.of(TextBlock.of(-1, "# Please set to an android SDK platform")))
             .add(
                 TextBlockSection.of(
                     TextBlock.of(
+                            -1,
                         "# You currently have no SDKs. Please use the SDK manager first.")))
             .add(ScalarSection.builder(KEY).set("(android sdk goes here)"));
       } else if (sdks.size() == 1) {
@@ -94,13 +95,13 @@ public class AndroidSdkPlatformSection {
       } else {
         builder.add(
             TextBlockSection.of(
-                TextBlock.of("# Please uncomment an android-SDK platform. Available SDKs are:")));
+                TextBlock.of(-1, "# Please uncomment an android-SDK platform. Available SDKs are:")));
         List<String> sdkOptions =
             AndroidSdkFromProjectView.getAvailableSdkTargetHashes(sdks)
                 .stream()
                 .map(androidSdk -> "# android_sdk_platform: " + androidSdk)
                 .collect(toList());
-        builder.add(TextBlockSection.of(new TextBlock(ImmutableList.copyOf(sdkOptions))));
+        builder.add(TextBlockSection.of(new TextBlock(-1, ImmutableList.copyOf(sdkOptions))));
       }
       return builder.build();
     }
