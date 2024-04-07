@@ -41,7 +41,7 @@ public abstract class SectionParser {
   @Nullable
   public abstract Section<?> parse(ProjectViewParser parser, ParseContext parseContext);
 
-  public abstract void print(StringBuilder sb, Section<?> section);
+  public abstract int print(StringBuilder sb, Section<?> section, int firstLineIndex);
 
   public boolean isDeprecated() {
     return false;

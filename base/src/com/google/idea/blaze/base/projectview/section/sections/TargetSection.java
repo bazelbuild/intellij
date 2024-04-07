@@ -82,8 +82,9 @@ public class TargetSection {
       ListSection.Builder<TargetExpression> builder = ListSection.builder(KEY);
       builder.add(
           TextBlock.of(
-              "  # If source code isn't resolving, add additional targets that compile it here"));
-      builder.add(TextBlock.newLine());
+                  -1,
+                  "  # If source code isn't resolving, add additional targets that compile it here"));
+      builder.add(TextBlock.newLine(-1));
       return ProjectView.builder(topLevelProjectView).add(builder).build();
     }
 

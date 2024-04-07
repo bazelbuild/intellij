@@ -85,13 +85,14 @@ public class AdditionalLanguagesSection {
         return topLevelProjectView;
       }
       ListSection.Builder<LanguageClass> builder = ListSection.builder(KEY);
-      builder.add(TextBlock.of("  # Uncomment any additional languages you want supported"));
+      // Line index is not known at build time which is supposed to be corrected by the print() operations
+      builder.add(TextBlock.of(-1, "  # Uncomment any additional languages you want supported"));
       additionalLanguages
           .stream()
           .sorted(Ordering.usingToString())
           .map(lang -> "  # " + lang.getName())
-          .forEach(string -> builder.add(TextBlock.of(string)));
-      builder.add(TextBlock.newLine());
+          .forEach(string -> builder.add(TextBlock.of(-1, string)));
+      builder.add(TextBlock.newLine(-1));
       return ProjectView.builder(topLevelProjectView).add(builder).build();
     }
 

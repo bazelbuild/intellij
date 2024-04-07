@@ -377,7 +377,7 @@
         implementationClass="com.google.idea.blaze.base.query.MacroLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider
             language="projectview"
-            implementationClass="com.google.idea.blaze.base.projectview.section.sections.DirectoryLineMarkerProvider"/>
+            implementationClass="com.google.idea.blaze.base.projectview.section.DirectoryLineMarkerProvider"/>
 
     <runLineMarkerContributor
         language="BUILD"

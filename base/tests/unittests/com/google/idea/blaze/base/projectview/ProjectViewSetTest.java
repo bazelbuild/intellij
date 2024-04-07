@@ -102,7 +102,7 @@ public class ProjectViewSetTest extends BlazeTestCase {
                     .add(ScalarSection.builder(WorkspaceTypeSection.KEY).set(WorkspaceType.JAVA))
                     .add(
                         ListSection.builder(AdditionalLanguagesSection.KEY).add(LanguageClass.JAVA))
-                    .add(TextBlockSection.of(TextBlock.newLine()))
+                    .add(TextBlockSection.of(TextBlock.newLine(-1)))
                     .add(
                         ListSection.builder(RunConfigurationsSection.KEY)
                             .add(new WorkspacePath("test")))

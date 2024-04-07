@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.projectview.section.sections;
+package com.google.idea.blaze.base.projectview.section;
 
 import com.google.idea.blaze.base.lang.projectview.psi.ProjectViewPsiListItem;
 import com.google.idea.blaze.base.lang.projectview.psi.ProjectViewPsiListSection;
@@ -21,7 +21,9 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewEdit;
-import com.google.idea.blaze.base.projectview.section.ListSection;
+import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
+import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
+import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.settings.ui.AddDirectoryToProjectAction;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -119,9 +121,7 @@ public class DirectoryLineMarkerProvider implements LineMarkerProvider {
         var directoryStr = elt.getText().substring(disabled ? 1 : 0);
 
         directoriesUpdater.replaceElement(
-                disabled ?
-                        DirectoryEntry.exclude(new WorkspacePath(directoryStr)) :
-                        DirectoryEntry.include(new WorkspacePath(directoryStr)),
+                getPsiElementLineNumber(elt),
                 disabled ?
                         DirectoryEntry.include(new WorkspacePath(directoryStr)) :
                         DirectoryEntry.exclude(new WorkspacePath(directoryStr))
@@ -132,6 +132,10 @@ public class DirectoryLineMarkerProvider implements LineMarkerProvider {
         return true;
     }
 
+    private static int getPsiElementLineNumber(PsiElement elt) {
+        return elt.getContainingFile().getFileDocument().getLineNumber(elt.getTextRange().getStartOffset());
+    }
+
     private static boolean toggleTarget(ProjectView.Builder builder, PsiElement elt, boolean disabled) {
         var targets = builder.getLast(TargetSection.KEY);
         var targetsUpdater = ListSection.update(TargetSection.KEY, targets);
@@ -139,7 +143,7 @@ public class DirectoryLineMarkerProvider implements LineMarkerProvider {
         var targetStr = elt.getText();
 
         targetsUpdater.replaceElement(
-                TargetExpression.fromStringSafe(targetStr),
+                getPsiElementLineNumber(elt),
                 disabled ?
                         TargetExpression.fromStringSafe(targetStr.substring(1)) :
                         TargetExpression.fromStringSafe('-' + targetStr)

@@ -393,7 +393,7 @@ public class ProjectViewParserTest extends BlazeTestCase {
     ProjectViewSet.ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();
     ProjectView projectView = projectViewFile.projectView;
     assertThat(projectView.getSectionsOfType(TextBlockSection.KEY).get(0).getTextBlock())
-        .isEqualTo(new TextBlock(ImmutableList.of("# comment")));
+        .isEqualTo(new TextBlock(ImmutableList.of("# comment"), -1));
     assertThat(projectView.getSectionsOfType(DirectorySection.KEY).get(0).items())
         .containsExactly(
             DirectoryEntry.include(new WorkspacePath("java/com/google")),
@@ -457,16 +457,16 @@ public class ProjectViewParserTest extends BlazeTestCase {
                 .add(
                     ListSection.builder(DirectorySection.KEY)
                         .add(DirectoryEntry.include(new WorkspacePath("dir0")))
-                        .add(TextBlock.of("  "))
-                        .add(TextBlock.of(""))
+                        .add(TextBlock.of(-1, "  "))
+                        .add(TextBlock.of(1, ""))
                         .add(DirectoryEntry.include(new WorkspacePath("dir1")))
-                        .add(TextBlock.of("  ", "  "))
-                        .add(TextBlock.of("# comment"))
+                        .add(TextBlock.of(1, "  ", "  "))
+                        .add(TextBlock.of(1, "# comment"))
                         .add(DirectoryEntry.include(new WorkspacePath("dir2")))
-                        .add(TextBlock.of(""))
-                        .add(TextBlock.of("  # commented out dir"))
-                        .add(TextBlock.of("  ")))
-                .add(TextBlockSection.of(TextBlock.of("# comment", "# comment")))
+                        .add(TextBlock.of(1, ""))
+                        .add(TextBlock.of(1, "  # commented out dir"))
+                        .add(TextBlock.of(1, "  ")))
+                .add(TextBlockSection.of(TextBlock.of(1, "# comment", "# comment")))
                 .build());
 
     String outputString = ProjectViewParser.projectViewToString(projectView);

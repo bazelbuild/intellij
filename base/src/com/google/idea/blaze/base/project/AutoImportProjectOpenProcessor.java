@@ -198,6 +198,7 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
   private ProjectView defaultEmptyProjectView() {
     Builder projectViewBuilder = ProjectView.builder();
     projectViewBuilder.add(TextBlockSection.of(TextBlock.of(
+            1,
             "# This is a projectview file generated automatically during bazel project auto-import ",
             "# For more documentation, please visit https://ij.bazel.build/docs/project-views.html",
             "# If your repository contains predefined .projectview files, you use 'import' directive to include them.",
