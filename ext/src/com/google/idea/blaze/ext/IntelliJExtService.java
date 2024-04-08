@@ -93,6 +93,10 @@ public final class IntelliJExtService {
       server.destroy();
     }
     try {
+      if (client != null) {
+        logger.log(Level.INFO, "Forcibly shutting down the client.");
+        client.shutdownNow();
+      }
       server = IntelliJExtServer.create(binary, serverArgs);
       client = IntelliJExtClient.create(server.getSocket());
       boolean ready = server.waitToBeReady();
@@ -100,6 +104,15 @@ public final class IntelliJExtService {
     } catch (IOException e) {
       status = ServiceStatus.FAILED;
       throw e;
+    }
+  }
+
+  public void shutdown() {
+    if (client != null) {
+      client.shutdown();
+      if (server != null) {
+        server.destroy();
+      }
     }
   }
 
