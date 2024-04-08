@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.projectview.parser;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -393,7 +394,7 @@ public class ProjectViewParserTest extends BlazeTestCase {
     ProjectViewSet.ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();
     ProjectView projectView = projectViewFile.projectView;
     assertThat(projectView.getSectionsOfType(TextBlockSection.KEY).get(0).getTextBlock())
-        .isEqualTo(new TextBlock(ImmutableList.of("# comment"), -1));
+        .isEqualTo(new TextBlock(ImmutableList.of("# comment"), TEMPORARY_LINE_NUMBER));
     assertThat(projectView.getSectionsOfType(DirectorySection.KEY).get(0).items())
         .containsExactly(
             DirectoryEntry.include(new WorkspacePath("java/com/google")),
@@ -426,7 +427,7 @@ public class ProjectViewParserTest extends BlazeTestCase {
   @Test
   public void testListParserAcceptsWhitespace() throws Exception {
     String text =
-        Joiner.on("\n")
+        Joiner.on('\n')
             .join(
                 "directories:",
                 "  dir0",

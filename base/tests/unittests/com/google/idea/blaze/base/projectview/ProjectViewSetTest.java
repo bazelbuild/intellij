@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.projectview;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
@@ -102,7 +103,7 @@ public class ProjectViewSetTest extends BlazeTestCase {
                     .add(ScalarSection.builder(WorkspaceTypeSection.KEY).set(WorkspaceType.JAVA))
                     .add(
                         ListSection.builder(AdditionalLanguagesSection.KEY).add(LanguageClass.JAVA))
-                    .add(TextBlockSection.of(TextBlock.newLine(-1)))
+                    .add(TextBlockSection.of(TextBlock.newLine(TEMPORARY_LINE_NUMBER)))
                     .add(
                         ListSection.builder(RunConfigurationsSection.KEY)
                             .add(new WorkspacePath("test")))

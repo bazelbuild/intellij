@@ -32,6 +32,8 @@ import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import java.util.Set;
 import javax.annotation.Nullable;
 
+import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
+
 /** Allows users to set the rule classes they want to be imported */
 public class AdditionalLanguagesSection {
   public static final SectionKey<LanguageClass, ListSection<LanguageClass>> KEY =
@@ -86,13 +88,13 @@ public class AdditionalLanguagesSection {
       }
       ListSection.Builder<LanguageClass> builder = ListSection.builder(KEY);
       // Line index is not known at build time which is supposed to be corrected by the print() operations
-      builder.add(TextBlock.of(-1, "  # Uncomment any additional languages you want supported"));
+      builder.add(TextBlock.of(TEMPORARY_LINE_NUMBER, "  # Uncomment any additional languages you want supported"));
       additionalLanguages
           .stream()
           .sorted(Ordering.usingToString())
           .map(lang -> "  # " + lang.getName())
-          .forEach(string -> builder.add(TextBlock.of(-1, string)));
-      builder.add(TextBlock.newLine(-1));
+          .forEach(string -> builder.add(TextBlock.of(TEMPORARY_LINE_NUMBER, string)));
+      builder.add(TextBlock.newLine(TEMPORARY_LINE_NUMBER));
       return ProjectView.builder(topLevelProjectView).add(builder).build();
     }
 

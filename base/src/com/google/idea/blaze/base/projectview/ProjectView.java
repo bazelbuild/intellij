@@ -130,10 +130,6 @@ public final class ProjectView implements Serializable {
       return null;
     }
 
-    public <T, SectionType extends Section<T>> Builder add(SectionBuilder<T, SectionType> builder, int firstLineIndex) {
-      return null;
-    }
-
     @CanIgnoreReturnValue
     public <T, SectionType extends Section<T>> Builder add(SectionBuilder<T, SectionType> builder) {
       return add(builder.build());

@@ -27,6 +27,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
+import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
+
 /**
  * List value. Eg.
  *
@@ -90,7 +92,7 @@ public final class ListSection<T> extends Section<T> {
   public static class Builder<T> extends SectionBuilder<T, ListSection<T>> {
     private final List<ItemOrTextBlock<T>> items = new ArrayList<>();
 
-    private int firstLineNumber = -1;
+    private int firstLineNumber = TEMPORARY_LINE_NUMBER;
 
     public Builder(SectionKey<T, ListSection<T>> sectionKey, @Nullable ListSection<T> section) {
       super(sectionKey);
@@ -106,7 +108,7 @@ public final class ListSection<T> extends Section<T> {
 
     @CanIgnoreReturnValue
     public final Builder<T> add(T item) {
-      items.add(new ItemOrTextBlock<>(item, -1));
+      items.add(new ItemOrTextBlock<>(item, TEMPORARY_LINE_NUMBER));
       return this;
     }
 

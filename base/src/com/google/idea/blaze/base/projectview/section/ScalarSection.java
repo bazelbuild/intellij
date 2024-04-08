@@ -18,6 +18,8 @@ package com.google.idea.blaze.base.projectview.section;
 import com.google.common.base.Objects;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 
+import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
+
 /** Scalar value. */
 public final class ScalarSection<T> extends Section<T> {
   private static final long serialVersionUID = 1L;
@@ -73,7 +75,7 @@ public final class ScalarSection<T> extends Section<T> {
 
     @Override
     public ScalarSection<T> build() {
-      return new ScalarSection<>(getSectionKey(), value, -1);
+      return new ScalarSection<>(getSectionKey(), value, TEMPORARY_LINE_NUMBER);
     }
   }
 }
