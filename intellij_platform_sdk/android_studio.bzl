@@ -156,13 +156,6 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
     )
     unpacked += hg4idea_jars
 
-    native.java_import(
-        name = "google_login",
-        jars = ["android-studio/plugins/android/lib/google-login.jar"],
-        tags = ["incomplete-deps"],
-        **kwargs
-    )
-
     android_jars = (
         my_glob(files, "plugins/android/lib", ".jar") +
         my_glob(files, "plugins/studio-bot/lib", ".jar") +
