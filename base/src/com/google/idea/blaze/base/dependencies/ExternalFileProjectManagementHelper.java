@@ -167,7 +167,8 @@ public class ExternalFileProjectManagementHelper
       return null;
     }
 
-    boolean addTargets = !alreadyBuilt && !AddSourceToProjectHelper.autoDeriveTargets(project);
+    boolean autoDeriveTargetsFromDirectories = AddSourceToProjectHelper.autoDeriveTargets(project);
+    boolean addTargets = !alreadyBuilt && !autoDeriveTargetsFromDirectories;
     ListenableFuture<List<TargetInfo>> targetsFuture =
         addTargets
             ? AddSourceToProjectHelper.getTargetsBuildingSource(context)
@@ -181,7 +182,7 @@ public class ExternalFileProjectManagementHelper
             vf,
             p ->
                 p.createActionLabel(
-                    "Add file to project",
+                    String.format("Add file's %s to Project", autoDeriveTargetsFromDirectories ? "package" : "parent directory"),
                     () -> {
                       AddSourceToProjectHelper.addSourceToProject(
                           project, context.workspacePath, inProjectDirectories, targetsFuture);
