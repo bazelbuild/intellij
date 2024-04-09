@@ -1,3 +1,9 @@
+v2024.04.09
+===========
+* Fix imports for go modules named "external" #6325
+* Fix: Ensure .projectview exclusion rules apply only to specified directories #6376
+* Fix: Silence false positive "No such target" errors for files in the project root #6377
+
 v2024.03.26
 ===========
 * Fix "No such target" errors on incremental sync #6262
