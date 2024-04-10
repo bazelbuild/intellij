@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.Section;
 import com.google.idea.blaze.base.projectview.section.SectionBuilder;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
-
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
