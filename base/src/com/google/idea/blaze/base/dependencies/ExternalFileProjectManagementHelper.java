@@ -55,6 +55,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -167,43 +168,56 @@ public class ExternalFileProjectManagementHelper
       return null;
     }
 
-    boolean autoDeriveTargetsFromDirectories = AddSourceToProjectHelper.autoDeriveTargets(project);
-    boolean addTargets = !alreadyBuilt && !autoDeriveTargetsFromDirectories;
-    ListenableFuture<List<TargetInfo>> targetsFuture =
-        addTargets
-            ? AddSourceToProjectHelper.getTargetsBuildingSource(context)
-            : Futures.immediateFuture(ImmutableList.of());
-    if (targetsFuture == null) {
-      return null;
+    if(!AddSourceToProjectHelper.autoDeriveTargets(project)) {
+      boolean addTargets = !alreadyBuilt && !AddSourceToProjectHelper.autoDeriveTargets(project);
+      ListenableFuture<List<TargetInfo>> targetsFuture =
+              addTargets
+                      ? AddSourceToProjectHelper.getTargetsBuildingSource(context)
+                      : Futures.immediateFuture(ImmutableList.of());
+      if (targetsFuture == null) {
+        return null;
+      }
+      EditorNotificationPanel panel =
+              createPanel(
+                      vf,
+                      p ->
+                              p.createActionLabel(
+                                      "Add file to project",
+                                      () -> {
+                                        AddSourceToProjectHelper.addSourceToProject(
+                                                project, context.workspacePath, inProjectDirectories, targetsFuture);
+                                        EditorNotifications.getInstance(project).updateNotifications(vf);
+                                      }));
+      panel.setVisible(false); // starts off not visible until we get the query results
+
+      targetsFuture.addListener(
+              () -> {
+                try {
+                  List<TargetInfo> targets = targetsFuture.get();
+                  if (!targets.isEmpty() || !inProjectDirectories) {
+                    panel.setVisible(true);
+                  }
+                } catch (InterruptedException | ExecutionException e) {
+                  // ignore
+                }
+              },
+              MoreExecutors.directExecutor());
+      return panel;
+    } else {
+      EditorNotificationPanel panel =
+              createPanel(
+                      vf,
+                      p ->
+                              p.createActionLabel(
+                                      "Add package to project",
+                                      () -> {
+                                        AddSourceToProjectHelper.addDirectoryAndDerivedTargetsToProject(
+                                                project, context.workspacePath, inProjectDirectories);
+                                        EditorNotifications.getInstance(project).updateNotifications(vf);
+                                      }));
+      return panel;
     }
-
-    EditorNotificationPanel panel =
-        createPanel(
-            vf,
-            p ->
-                p.createActionLabel(
-                    String.format("Add file's %s to Project", autoDeriveTargetsFromDirectories ? "package" : "parent directory"),
-                    () -> {
-                      AddSourceToProjectHelper.addSourceToProject(
-                          project, context.workspacePath, inProjectDirectories, targetsFuture);
-                      EditorNotifications.getInstance(project).updateNotifications(vf);
-                    }));
-    panel.setVisible(false); // starts off not visible until we get the query results
-
-    targetsFuture.addListener(
-        () -> {
-          try {
-            List<TargetInfo> targets = targetsFuture.get();
-            if (!targets.isEmpty() || !inProjectDirectories) {
-              panel.setVisible(true);
-            }
-          } catch (InterruptedException | ExecutionException e) {
-            // ignore
-          }
-        },
-        MoreExecutors.directExecutor());
-    return panel;
-  }
+      }
 
   @Nullable
   private EditorNotificationPanel createNotificationPanelForQuerySync(VirtualFile virtualFile) {
