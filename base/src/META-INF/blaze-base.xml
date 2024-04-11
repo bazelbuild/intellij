@@ -387,8 +387,13 @@
     <registryKey defaultValue="false" description="Allow to have optional imports in project view" key="bazel.projectview.optional.imports"/>
     <registryKey
       key="bazel.sync.resolve.virtual.includes"
-      description="Apply heuristics to detect correct location of headers which are accessed from _virtual_includes during build"
+      description="Apply heuristics to detect correct location of headers which are accessed from _virtual_includes during build. (requires re-sync)"
       defaultValue="true"
+    />
+    <registryKey
+      key="bazel.sync.clangd.virtual.includes"
+      description="Use clangd to resolve virtual includes. Only available with legacy engine. (requires re-sync)"
+      defaultValue="false"
     />
     <registryKey defaultValue="true"
                  description="Enables opening the project view file the first time the project is imported"

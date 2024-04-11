@@ -108,9 +108,37 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
         .build();
   }
 
+  @NotNull
+  private static TargetMap getTargetMap() {
+    ImmutableMap.Builder<TargetKey, TargetIdeInfo> builder = new ImmutableMap.Builder<>();
+
+    for (String workspaceName : WORKSPACES) {
+      for (WorkspacePath workspacePath : WORKSPACE_PATHS) {
+        for (TargetName targetName : TARGET_NAMES) {
+          builder.put(
+              TargetKey.forPlainTarget(Label.create(workspaceName, workspacePath, targetName)),
+              getTargetIdeInfo(targetName));
+        }
+      }
+
+      builder.put(
+          TargetKey.forPlainTarget(
+              Label.create(workspaceName, ABSOLUTE_STRIP_PREFIX_WORKSPACE_PATH, TARGET_WITH_ABSOLUTE_STRIP_PREFIX)),
+          getTargetIdeInfo(TARGET_WITH_ABSOLUTE_STRIP_PREFIX));
+    }
+
+    builder.put(
+        TargetKey.forPlainTarget(
+            Label.create(WORKSPACES.get(0), WORKSPACE_PATHS.get(0), TARGET_WITH_INCLUDE_PREFIX)),
+        getTargetIdeInfo(TARGET_WITH_INCLUDE_PREFIX));
+
+    return new TargetMap(builder.build());
+  }
+
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
     Registry.get("bazel.sync.resolve.virtual.includes").setValue(true);
+    Registry.get("bazel.sync.clangd.virtual.includes").setValue(false);
 
     pathResolver =
         new ExecutionRootPathResolver(
@@ -118,7 +146,8 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
             WORKSPACE_ROOT,
             new File(EXECUTION_ROOT),
             new File(OUTPUT_BASE),
-            new WorkspacePathResolverImpl(WORKSPACE_ROOT));
+            new WorkspacePathResolverImpl(WORKSPACE_ROOT),
+            getTargetMap());
   }
 
   @Test
@@ -160,6 +189,99 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
         pathResolver.resolveToIncludeDirectories(new ExecutionRootPath("tools/fast/:include"));
     assertThat(files).isEmpty();
   }
+
+  @Test
+  public void testVirtualIncludes() {
+    for (String workspaceName : WORKSPACES) {
+      for (WorkspacePath workspacePath : WORKSPACE_PATHS) {
+        for (TargetName targetName : TARGET_NAMES) {
+          String workspaceNameString = workspaceName != null ? workspaceName : "";
+
+          ExecutionRootPath generatedPath = new ExecutionRootPath(Path.of(
+              "bazel-out/k8-fastbuild/bin",
+              (workspaceName == null ? "" : ExecutionRootPathResolver.externalPath.getPath()),
+              workspaceNameString,
+              workspacePath.toString(),
+              VirtualIncludesHandler.VIRTUAL_INCLUDES_DIRECTORY.toString(),
+              targetName.toString()).toFile());
+
+          ImmutableList<File> files =
+              pathResolver.resolveToIncludeDirectories(generatedPath);
+
+          String stripPrefix = getStripPrefix(targetName);
+          if (stripPrefix.endsWith("/")) {
+            stripPrefix = stripPrefix.substring(0, stripPrefix.length() - 1);
+          }
+          String expectedPath = Path.of(workspaceNameString,
+              workspacePath.toString(),
+              stripPrefix).toString();
+
+          if (workspaceName != null) {
+            // check external workspace
+            assertThat(files).containsExactly(
+                Path.of(OUTPUT_BASE, ExecutionRootPathResolver.externalPath.getPath(), expectedPath)
+                    .toFile());
+          } else {
+            // check local
+            assertThat(files).containsExactly(
+                WORKSPACE_ROOT.fileForPath(new WorkspacePath(expectedPath)));
+          }
+        }
+      }
+    }
+  }
+
+  @Test
+  public void testVirtualIncludesWithAbsoluteStripPrefix() {
+    for (String workspaceName : WORKSPACES) {
+      String workspaceNameString = workspaceName != null ? workspaceName : "";
+
+      ExecutionRootPath generatedPath = new ExecutionRootPath(Path.of(
+          "bazel-out/k8-fastbuild/bin",
+          (workspaceName == null ? "" : ExecutionRootPathResolver.externalPath.getPath()),
+          workspaceNameString,
+          ABSOLUTE_STRIP_PREFIX_WORKSPACE_PATH.toString(),
+          VirtualIncludesHandler.VIRTUAL_INCLUDES_DIRECTORY.toString(),
+          TARGET_WITH_ABSOLUTE_STRIP_PREFIX.toString()).toFile());
+
+      ImmutableList<File> files =
+          pathResolver.resolveToIncludeDirectories(generatedPath);
+
+      String expectedPath = Path.of(workspaceNameString,
+          ABSOLUTE_STRIP_PREFIX_PATH).toString();
+
+      if (workspaceName != null) {
+        // check external workspace
+        assertThat(files).containsExactly(
+            Path.of(OUTPUT_BASE, ExecutionRootPathResolver.externalPath.getPath(), expectedPath)
+                .toFile());
+      } else {
+        // check local
+        assertThat(files).containsExactly(
+            WORKSPACE_ROOT.fileForPath(new WorkspacePath(expectedPath)));
+      }
+    }
+  }
+
+  @Test
+  public void testVirtualIncludesWithIncludePrefix() {
+    File fileToBeResolved = Path.of(
+        "bazel-out/k8-fastbuild/bin",
+        WORKSPACE_PATHS.get(0).toString(),
+        VirtualIncludesHandler.VIRTUAL_INCLUDES_DIRECTORY.toString(),
+        TARGET_WITH_INCLUDE_PREFIX.toString(),
+        INCLUDE_PREFIX).toFile();
+
+    ExecutionRootPath generatedPath = new ExecutionRootPath(fileToBeResolved);
+
+    ImmutableList<File> files =
+        pathResolver.resolveToIncludeDirectories(generatedPath);
+
+    // check that include path for target with "include_prefix" attribute is resolved to execution root
+    assertThat(files).containsExactly(
+        new File(EXECUTION_ROOT, fileToBeResolved.toString()));
+  }
+
 
   @Test
   public void testExternalWorkspaceSymlinkToProject() throws IOException {

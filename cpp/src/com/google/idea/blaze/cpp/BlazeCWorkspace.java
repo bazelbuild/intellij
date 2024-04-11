@@ -183,7 +183,8 @@ public final class BlazeCWorkspace implements ProjectComponent {
             workspaceRoot,
             blazeProjectData.getBlazeInfo().getExecutionRoot(),
             blazeProjectData.getBlazeInfo().getOutputBase(),
-            blazeProjectData.getWorkspacePathResolver());
+            blazeProjectData.getWorkspacePathResolver(),
+            blazeProjectData.getTargetMap());
 
     int progress = 0;
 
@@ -257,9 +258,12 @@ public final class BlazeCWorkspace implements ProjectComponent {
                 .map(file -> "-I" + file.getAbsolutePath())
                 .collect(toImmutableList());
 
-        Path rootPath = workspaceRoot.directory().toPath();
-        ImmutableList<String> includePrefixHints = VirtualIncludesHandler.collectIncludeHints(rootPath,
-            targetKey, blazeProjectData, executionRootPathResolver, indicator);
+        ImmutableList<String> includePrefixHints = ImmutableList.of();
+        if (VirtualIncludesHandler.useClangd()) {
+          Path rootPath = workspaceRoot.directory().toPath();
+          includePrefixHints = VirtualIncludesHandler.collectClangdIncludeHints(rootPath, targetKey, blazeProjectData,
+              executionRootPathResolver, indicator);
+        }
 
         for (VirtualFile vf : resolveConfiguration.getSources(targetKey)) {
           OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(vf);
