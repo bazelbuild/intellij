@@ -611,16 +611,24 @@ message Refactoring {
 
   optional string refactoring_id = 1;
   optional string action_class_name = 8;
+  optional string action_text = 9;
   optional string workspace_id = 2;
-  optional uint64 snapshot_before = 3;
+  optional string project_hash = 10;
+  // Citc snapshot when the refactoring action was triggered.
+  optional uint64 snapshot_before_action = 3;
+  // Citc snapshot when the refactoring handler was called.
+  optional uint64 snapshot_before_handler = 11;
   optional uint64 snapshot_after = 4;
-  // The selected text when the refactoring was executed.
+  // The selected text when the refactoring action was triggered.
   // In case of a caret, the start and end values will be the same.
-  optional TextRange selection = 5;
+  optional TextRange selection_before_action = 5;
+  // The selected text when the refactoring handler was called.
+  // In case of a caret, the start and end values will be the same.
+  optional TextRange selection_before_handler = 12;
   // IntelliJ element ranges before the refactoring. Note that this does not
   // include all changed ranges in the file and depends on the refactoring
   // implementation.
-  repeated TextRange element_ranges_before = 6;
+  repeated TextRange element_ranges_before_handler = 6;
   // IntelliJ element ranges after the refactoring. Note that this does not
   // include all changed ranges in the file and depends on the refactoring
   // implementation.
