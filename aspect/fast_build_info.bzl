@@ -1,5 +1,6 @@
 """An aspect to gather info needed by the FastBuildService."""
 
+load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load(
     ":artifacts.bzl",
     "artifact_location",
