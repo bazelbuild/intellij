@@ -393,7 +393,7 @@
     <registryKey
       key="bazel.sync.collect.virtual.includes.hints"
       description="Collect the actual location of includes during sync. Currently, only available with the legacy engine. (requires re-sync)"
-      defaultValue="false"
+      defaultValue="true"
     />
     <registryKey defaultValue="true"
                  description="Enables opening the project view file the first time the project is imported"
