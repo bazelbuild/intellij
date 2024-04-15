@@ -272,7 +272,7 @@ public class VirtualIncludesHandler {
       WorkspacePath stripPrefixWorkspacePath = stripPrefix.startsWith(ABSOLUTE_LABEL_PREFIX) ?
           new WorkspacePath(stripPrefix.substring(ABSOLUTE_LABEL_PREFIX_LENGTH)) :
           new WorkspacePath(key.getLabel().blazePackage(), stripPrefix);
-      if (key.getLabel().externalWorkspaceName() != null) {
+      if (externalWorkspaceName != null) {
         ExecutionRootPath external = new ExecutionRootPath(
             ExecutionRootPathResolver.externalPath.toPath()
                 .resolve(externalWorkspaceName)
