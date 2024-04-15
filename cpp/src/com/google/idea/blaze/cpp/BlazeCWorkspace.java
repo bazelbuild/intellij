@@ -259,9 +259,9 @@ public final class BlazeCWorkspace implements ProjectComponent {
                 .collect(toImmutableList());
 
         ImmutableList<String> includePrefixHints = ImmutableList.of();
-        if (VirtualIncludesHandler.useClangd()) {
+        if (VirtualIncludesHandler.useHints()) {
           Path rootPath = workspaceRoot.directory().toPath();
-          includePrefixHints = VirtualIncludesHandler.collectClangdIncludeHints(rootPath, targetKey, blazeProjectData,
+          includePrefixHints = VirtualIncludesHandler.collectIncludeHints(rootPath, targetKey, blazeProjectData,
               executionRootPathResolver, indicator);
         }
 

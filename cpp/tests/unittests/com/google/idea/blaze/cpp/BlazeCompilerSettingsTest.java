@@ -56,7 +56,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
     applicationServices.register(ExperimentService.class, new MockExperimentService());
 
     Registry.get("bazel.sync.resolve.virtual.includes").setValue(true);
-    Registry.get("bazel.sync.clangd.virtual.includes").setValue(true);
+    Registry.get("bazel.sync.collect.virtual.includes.hints").setValue(true);
 
     applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
 

@@ -391,8 +391,8 @@
       defaultValue="true"
     />
     <registryKey
-      key="bazel.sync.clangd.virtual.includes"
-      description="Use clangd to resolve virtual includes. Only available with legacy engine. (requires re-sync)"
+      key="bazel.sync.collect.virtual.includes.hints"
+      description="Collect the actual location of includes during sync. Currently, only available with the legacy engine. (requires re-sync)"
       defaultValue="false"
     />
     <registryKey defaultValue="true"

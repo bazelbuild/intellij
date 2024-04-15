@@ -57,11 +57,11 @@ public class VirtualIncludesHandler {
   private static final int ABSOLUTE_LABEL_PREFIX_LENGTH = ABSOLUTE_LABEL_PREFIX.length();
 
   public static boolean useHeuristic() {
-    return Registry.is("bazel.sync.resolve.virtual.includes") && !useClangd();
+    return Registry.is("bazel.sync.resolve.virtual.includes") && !useHints();
   }
 
-  public static boolean useClangd() {
-    return Registry.is("bazel.sync.clangd.virtual.includes");
+  public static boolean useHints() {
+    return Registry.is("bazel.sync.collect.virtual.includes.hints");
   }
 
   private static Path trimStart(Path value, @Nullable Path prefix) {
@@ -91,7 +91,7 @@ public class VirtualIncludesHandler {
     }
   }
 
-  private static void collectClangdTargetIncludeHints(
+  private static void collectTargetIncludeHints(
       Path root,
       TargetKey targetKey,
       TargetIdeInfo targetIdeInfo,
@@ -150,7 +150,7 @@ public class VirtualIncludesHandler {
     }
   }
 
-  private static ImmutableList<String> doCollectClangdIncludeHints(
+  private static ImmutableList<String> doCollectIncludeHints(
       Path root,
       TargetKey targetKey,
       BlazeProjectData projectData,
@@ -175,7 +175,7 @@ public class VirtualIncludesHandler {
         continue;
       }
 
-      collectClangdTargetIncludeHints(root, currentKey, currentIdeInfo, resolver, indicator,
+      collectTargetIncludeHints(root, currentKey, currentIdeInfo, resolver, indicator,
           includes);
 
       for (Dependency dep : currentIdeInfo.getDependencies()) {
@@ -191,7 +191,7 @@ public class VirtualIncludesHandler {
    * mappings. The mappings are used to resolve headers which use an 'include_prefix' or a
    * 'strip_include_prefix'.
    */
-  public static ImmutableList<String> collectClangdIncludeHints(
+  public static ImmutableList<String> collectIncludeHints(
       Path projectRoot,
       TargetKey targetKey,
       BlazeProjectData projectData,
@@ -206,7 +206,7 @@ public class VirtualIncludesHandler {
     indicator.setText2("Collecting include hints...");
 
     Stopwatch stopwatch = Stopwatch.createStarted();
-    ImmutableList<String> result = doCollectClangdIncludeHints(projectRoot, targetKey, projectData,
+    ImmutableList<String> result = doCollectIncludeHints(projectRoot, targetKey, projectData,
         resolver, indicator);
 
     long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
