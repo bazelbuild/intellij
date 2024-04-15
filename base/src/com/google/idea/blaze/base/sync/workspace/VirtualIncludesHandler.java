@@ -197,10 +197,6 @@ public class VirtualIncludesHandler {
       BlazeProjectData projectData,
       ExecutionRootPathResolver resolver,
       ProgressIndicator indicator) {
-    if (Registry.is("bazel.cpp.sync.workspace.collect.include.prefix.hints.disabled")) {
-      return ImmutableList.of();
-    }
-
     indicator.pushState();
     indicator.setIndeterminate(true);
     indicator.setText2("Collecting include hints...");
