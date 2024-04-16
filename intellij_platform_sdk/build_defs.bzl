@@ -1,5 +1,7 @@
 """Convenience methods for plugin_api."""
 
+load("@rules_java//java:defs.bzl", "java_import")
+
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
     # Indirect ij_product mapping for internal Blaze Plugin
@@ -503,8 +505,7 @@ def no_mockito_extensions(name, jars, **kwargs):
             """,
         )
         output_jars.append(output_jar_name)
-
-    native.java_import(
+    java_import(
         name = name,
         jars = output_jars,
         **kwargs
