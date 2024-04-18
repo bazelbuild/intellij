@@ -187,7 +187,7 @@ public class ExternalFileProjectManagementHelper
                                         AddSourceToProjectHelper.addSourceToProject(
                                                 project, context.workspacePath, inProjectDirectories, targetsFuture);
                                         EditorNotifications.getInstance(project).updateNotifications(vf);
-                                      }));
+                                      }), "Do you want to add this file to your project sources?");
       panel.setVisible(false); // starts off not visible until we get the query results
 
       targetsFuture.addListener(
@@ -203,21 +203,21 @@ public class ExternalFileProjectManagementHelper
               },
               MoreExecutors.directExecutor());
       return panel;
-    } else {
+    } else if (!inProjectDirectories) {
       EditorNotificationPanel panel =
-              createPanel(
-                      vf,
-                      p ->
-                              p.createActionLabel(
-                                      "Add package to project",
-                                      () -> {
-                                        AddSourceToProjectHelper.addDirectoryAndDerivedTargetsToProject(
-                                                project, context.workspacePath, inProjectDirectories);
-                                        EditorNotifications.getInstance(project).updateNotifications(vf);
-                                      }));
+          createPanel(
+              vf,
+              p ->
+                  p.createActionLabel(
+                      "Add package to project",
+                      () -> {
+                        AddSourceToProjectHelper.addDirectoryAndDerivedTargetsToProject(
+                            project, context.workspacePath);
+                        EditorNotifications.getInstance(project).updateNotifications(vf);
+                      }), "Do you want to add this package to your project sources?");
       return panel;
-    }
-      }
+    } else return null;
+  }
 
   @Nullable
   private EditorNotificationPanel createNotificationPanelForQuerySync(VirtualFile virtualFile) {
@@ -250,13 +250,13 @@ public class ExternalFileProjectManagementHelper
         p ->
             p.createActionLabel(
                 "Add file to project",
-                () -> AddToProjectAction.Performer.create(project, virtualFile, p).perform()));
+                () -> AddToProjectAction.Performer.create(project, virtualFile, p).perform()), "Do you want to add this file to your project sources?");
   }
 
   private EditorNotificationPanel createPanel(
-      VirtualFile virtualFile, Consumer<EditorNotificationPanel> mainActionAdder) {
+          VirtualFile virtualFile, Consumer<EditorNotificationPanel> mainActionAdder, String title) {
     EditorNotificationPanel panel = new EditorNotificationPanel();
-    panel.setText("Do you want to add this file to your project sources?");
+    panel.setText(title);
     mainActionAdder.accept(panel);
     panel.createActionLabel(
         "Hide notification",

@@ -127,15 +127,11 @@ class AddSourceToProjectHelper {
    */
   static void addDirectoryAndDerivedTargetsToProject(
           Project project,
-          WorkspacePath workspacePath,
-          boolean inProjectDirectories) {
+          WorkspacePath workspacePath) {
 
     EventLoggingService.getInstance()
             .logEvent(AddSourceToProjectHelper.class, "AddSourceToProject");
 
-    if (inProjectDirectories) {
-      return;
-    }
     var directory = AddSourceToProjectHelper.getPackagePath(project, workspacePath);
     if (directory == null) {
       notifyFailed(project, "Failed to find package dir for %s".formatted(workspacePath.asPath()));
@@ -145,7 +141,13 @@ class AddSourceToProjectHelper {
             String.format("Would you like to add the whole '%s' directory and all targets beneath it to the project?", directory),
             project, "Yes", "No", null);
     if (ok) {
-      AddSourceToProjectHelper.addDirectoryAndDerivedTargets(project, directory);
+      ImportRoots roots = ImportRoots.forProjectSafe(project);
+      if (roots == null) {
+        notifyFailed(
+                project, "Couldn't parse existing project view file. Please sync the project and retry.");
+        return;
+      }
+      AddSourceToProjectHelper.addDirectoryAndDerivedTargets(project, directory, roots);
     }
   }
 
@@ -203,18 +205,13 @@ class AddSourceToProjectHelper {
    * Adds the directory of the specified {@link WorkspacePath}
    */
   static void addDirectoryAndDerivedTargets(
-          @NotNull Project project, WorkspacePath pathToAdd) {
-    ImportRoots roots = ImportRoots.forProjectSafe(project);
-    if (roots == null) {
-      notifyFailed(
-          project, "Couldn't parse existing project view file. Please sync the project and retry.");
-      return;
-    }
+          @NotNull Project project, WorkspacePath pathToAdd, ImportRoots roots) {
+
     boolean addDirectory = !roots.containsWorkspacePath(pathToAdd);
     if (!addDirectory) {
       return;
     }
-    List<? extends TargetExpression> targets = null;
+
 
     ProjectViewEdit edit =
             ProjectViewEdit.editLocalProjectView(
@@ -235,12 +232,7 @@ class AddSourceToProjectHelper {
       return;
     }
     edit.apply();
-    // TODO(brendandouglas): support partially syncing a directory with the same query-based
-    // filtering
-    List<? extends TargetExpression> targetsToSync = targets;
-    if (autoDeriveTargets(project)) {
-      targetsToSync = ImmutableList.of(TargetExpression.allFromPackageRecursive(pathToAdd));
-    }
+    List<? extends TargetExpression> targetsToSync = ImmutableList.of(TargetExpression.allFromPackageRecursive(pathToAdd));
     BlazeSyncManager.getInstance(project)
             .partialSync(targetsToSync, /* reason= */ "AddSourceToProjectHelper");
     notifySuccess(project, pathToAdd, targetsToSync);
