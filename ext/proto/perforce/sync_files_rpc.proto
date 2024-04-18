@@ -3,6 +3,7 @@ syntax = "proto2";
 package com.google.idea.blaze.ext.perforce;
 
 import "ext/proto/perforce/base.proto";
+import "ext/proto/perforce/status.proto";
 
 option java_package = "com.google.idea.blaze.ext.p4";
 
@@ -16,4 +17,6 @@ message SyncFilesRequest {
   optional bool include_synced_files = 7 [default = true];
 }
 
-message SyncFilesResponse {}
+message SyncFilesResponse {
+  optional PerforceStatus perforce_status = 1002;
+}
