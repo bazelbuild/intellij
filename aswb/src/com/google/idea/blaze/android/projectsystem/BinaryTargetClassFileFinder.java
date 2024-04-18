@@ -204,7 +204,7 @@ public class BinaryTargetClassFileFinder implements ClassFileFinder {
             .map(TargetIdeInfo::getKey)
             .filter(key -> !visitedTargets.contains(key))
             .collect(Collectors.toList());
-    List<TargetKey> sortedTargetKeys = sortTargetKeysWithPackageName(nonVisitedTargetKeys, packageName);
+    List<TargetKey> sortedTargetKeys = sortTargetKeysWithPackageName(nonVisitedTargetKeys, packageName, Integer.MAX_VALUE);
     for (TargetKey targetKey : sortedTargetKeys) {
       classContent = getClassFromClassJar(projectData, fqcn, targetKey);
       if (classContent != null) {
@@ -336,14 +336,19 @@ public class BinaryTargetClassFileFinder implements ClassFileFinder {
     return (double) intersectionCount / unionCount;
   }
 
-  public static List<TargetKey> sortTargetKeysWithPackageName(Collection<TargetKey> targetKeys, String packageName) {
-    Set<String> packageWords = Set.of(packageName.split(REGEX_WORDS));
+  private static List<TargetKey> sortTargetKeysWithPackageName(Collection<TargetKey> targetKeys, String packageName) {
+    return sortTargetKeysWithPackageName(targetKeys, packageName, MAX_SORTED_TARGET_KEY_SIZE);
+  }
+
+  private static List<TargetKey> sortTargetKeysWithPackageName(Collection<TargetKey> targetKeys, String packageName, int maxSortedTargetKeySize) {
+    Set<String> packageWords = new HashSet<>();
+    Collections.addAll(packageWords, packageName.split(REGEX_WORDS));
     Map<TargetKey, Double> jaccardIndexes = targetKeys.stream()
-        .collect(Collectors.toMap(Function.identity(), tk -> jaccardIndex(tk.toString(), packageWords)));
+            .collect(Collectors.toMap(Function.identity(), tk -> jaccardIndex(tk.toString(), packageWords)));
 
     return targetKeys.stream()
-        .sorted(Comparator.comparing(jaccardIndexes::get).reversed())
-        .limit(MAX_SORTED_TARGET_KEY_SIZE)
-        .collect(Collectors.toList());
+            .sorted(Comparator.comparing(jaccardIndexes::get).reversed())
+            .limit(maxSortedTargetKeySize)
+            .collect(Collectors.toList());
   }
 }
