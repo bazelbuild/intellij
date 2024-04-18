@@ -387,7 +387,12 @@
     <registryKey defaultValue="false" description="Allow to have optional imports in project view" key="bazel.projectview.optional.imports"/>
     <registryKey
       key="bazel.sync.resolve.virtual.includes"
-      description="Apply heuristics to detect correct location of headers which are accessed from _virtual_includes during build"
+      description="Apply heuristics to detect correct location of headers which are accessed from _virtual_includes during build. (requires re-sync)"
+      defaultValue="true"
+    />
+    <registryKey
+      key="bazel.sync.collect.virtual.includes.hints"
+      description="Collect the actual location of includes during sync. Currently, only available with the legacy engine. (requires re-sync)"
       defaultValue="true"
     />
     <registryKey defaultValue="true"

@@ -47,17 +47,20 @@ public class ExecutionRootPathResolver {
   private final File executionRoot;
   private final File outputBase;
   private final WorkspacePathResolver workspacePathResolver;
+  private final TargetMap targetMap;
 
   public ExecutionRootPathResolver(
       BuildSystemProvider buildSystemProvider,
       WorkspaceRoot workspaceRoot,
       File executionRoot,
       File outputBase,
-      WorkspacePathResolver workspacePathResolver) {
+      WorkspacePathResolver workspacePathResolver,
+      TargetMap targetMap) {
     this.buildArtifactDirectories = buildArtifactDirectories(buildSystemProvider, workspaceRoot);
     this.executionRoot = executionRoot;
     this.outputBase = outputBase;
     this.workspacePathResolver = workspacePathResolver;
+    this.targetMap = targetMap;
   }
 
   @Nullable
@@ -72,7 +75,8 @@ public class ExecutionRootPathResolver {
         WorkspaceRoot.fromProject(project),
         projectData.getBlazeInfo().getExecutionRoot(),
         projectData.getBlazeInfo().getOutputBase(),
-        projectData.getWorkspacePathResolver());
+        projectData.getWorkspacePathResolver(),
+        projectData.getTargetMap());
   }
 
   private static ImmutableList<String> buildArtifactDirectories(
@@ -109,7 +113,24 @@ public class ExecutionRootPathResolver {
     }
     String firstPathComponent = getFirstPathComponent(path.getAbsoluteOrRelativeFile().getPath());
     if (buildArtifactDirectories.contains(firstPathComponent)) {
-      return ImmutableList.of(path.getFileRootedAt(executionRoot));
+      // Build artifacts accumulate under the execution root, independent of symlink settings
+
+      if(VirtualIncludesHandler.useHeuristic() && VirtualIncludesHandler.containsVirtualInclude(path)) {
+        // Resolve virtual_include from execution root either to local or external workspace for correct code insight
+        ImmutableList<File> resolved = ImmutableList.of();
+        try {
+          resolved = VirtualIncludesHandler.resolveVirtualInclude(path, outputBase,
+                  workspacePathResolver, targetMap);
+        } catch (Throwable throwable) {
+          LOG.error("Failed to resolve virtual includes for " + path, throwable);
+        }
+
+        return resolved.isEmpty()
+                ? ImmutableList.of(path.getFileRootedAt(executionRoot))
+                : resolved;
+      } else {
+        return ImmutableList.of(path.getFileRootedAt(executionRoot));
+      }
     }
     if (firstPathComponent.equals(externalPrefix)) { // In external workspace
       // External workspaces accumulate under the output base.
