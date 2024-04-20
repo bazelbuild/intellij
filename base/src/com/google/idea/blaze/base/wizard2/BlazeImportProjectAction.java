@@ -22,7 +22,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,10 +69,16 @@ class BlazeImportProjectAction extends AnAction {
   private static void createFromWizard(
       BlazeProjectCreator blazeProjectCreator, WizardContext wizardContext) {
     try {
-      blazeProjectCreator.doCreate(
-          wizardContext.getProjectFileDirectory(),
-          wizardContext.getProjectName(),
-          wizardContext.getProjectStorageFormat());
+      ProgressManager.getInstance().run(new Task.WithResult<Void, IOException>(null, "Creating Project...", true) {
+        @Override
+        protected Void compute(@NotNull ProgressIndicator progressIndicator) throws IOException {
+          blazeProjectCreator.doCreate(
+                  wizardContext.getProjectFileDirectory(),
+                  wizardContext.getProjectName(),
+                  wizardContext.getProjectStorageFormat());
+          return null;
+        }
+      });
     } catch (final IOException e) {
       logger.error("Project creation failed", e);
       ApplicationManager.getApplication()
