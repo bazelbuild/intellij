@@ -55,6 +55,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -167,41 +168,55 @@ public class ExternalFileProjectManagementHelper
       return null;
     }
 
-    boolean addTargets = !alreadyBuilt && !AddSourceToProjectHelper.autoDeriveTargets(project);
-    ListenableFuture<List<TargetInfo>> targetsFuture =
-        addTargets
-            ? AddSourceToProjectHelper.getTargetsBuildingSource(context)
-            : Futures.immediateFuture(ImmutableList.of());
-    if (targetsFuture == null) {
-      return null;
-    }
+    if(!AddSourceToProjectHelper.autoDeriveTargets(project)) {
+      boolean addTargets = !alreadyBuilt && !AddSourceToProjectHelper.autoDeriveTargets(project);
+      ListenableFuture<List<TargetInfo>> targetsFuture =
+              addTargets
+                      ? AddSourceToProjectHelper.getTargetsBuildingSource(context)
+                      : Futures.immediateFuture(ImmutableList.of());
+      if (targetsFuture == null) {
+        return null;
+      }
+      EditorNotificationPanel panel =
+              createPanel(
+                      vf,
+                      p ->
+                              p.createActionLabel(
+                                      "Add file to project",
+                                      () -> {
+                                        AddSourceToProjectHelper.addSourceToProject(
+                                                project, context.workspacePath, inProjectDirectories, targetsFuture);
+                                        EditorNotifications.getInstance(project).updateNotifications(vf);
+                                      }), "Do you want to add this file to your project sources?");
+      panel.setVisible(false); // starts off not visible until we get the query results
 
-    EditorNotificationPanel panel =
-        createPanel(
-            vf,
-            p ->
-                p.createActionLabel(
-                    "Add file to project",
-                    () -> {
-                      AddSourceToProjectHelper.addSourceToProject(
-                          project, context.workspacePath, inProjectDirectories, targetsFuture);
-                      EditorNotifications.getInstance(project).updateNotifications(vf);
-                    }));
-    panel.setVisible(false); // starts off not visible until we get the query results
-
-    targetsFuture.addListener(
-        () -> {
-          try {
-            List<TargetInfo> targets = targetsFuture.get();
-            if (!targets.isEmpty() || !inProjectDirectories) {
-              panel.setVisible(true);
-            }
-          } catch (InterruptedException | ExecutionException e) {
-            // ignore
-          }
-        },
-        MoreExecutors.directExecutor());
-    return panel;
+      targetsFuture.addListener(
+              () -> {
+                try {
+                  List<TargetInfo> targets = targetsFuture.get();
+                  if (!targets.isEmpty() || !inProjectDirectories) {
+                    panel.setVisible(true);
+                  }
+                } catch (InterruptedException | ExecutionException e) {
+                  // ignore
+                }
+              },
+              MoreExecutors.directExecutor());
+      return panel;
+    } else if (!inProjectDirectories) {
+      EditorNotificationPanel panel =
+          createPanel(
+              vf,
+              p ->
+                  p.createActionLabel(
+                      "Add package to project",
+                      () -> {
+                        AddSourceToProjectHelper.addDirectoryAndDerivedTargetsToProject(
+                            project, context.workspacePath);
+                        EditorNotifications.getInstance(project).updateNotifications(vf);
+                      }), "Do you want to add this package to your project sources?");
+      return panel;
+    } else return null;
   }
 
   @Nullable
@@ -235,13 +250,13 @@ public class ExternalFileProjectManagementHelper
         p ->
             p.createActionLabel(
                 "Add file to project",
-                () -> AddToProjectAction.Performer.create(project, virtualFile, p).perform()));
+                () -> AddToProjectAction.Performer.create(project, virtualFile, p).perform()), "Do you want to add this file to your project sources?");
   }
 
   private EditorNotificationPanel createPanel(
-      VirtualFile virtualFile, Consumer<EditorNotificationPanel> mainActionAdder) {
+          VirtualFile virtualFile, Consumer<EditorNotificationPanel> mainActionAdder, String title) {
     EditorNotificationPanel panel = new EditorNotificationPanel();
-    panel.setText("Do you want to add this file to your project sources?");
+    panel.setText(title);
     mainActionAdder.accept(panel);
     panel.createActionLabel(
         "Hide notification",
