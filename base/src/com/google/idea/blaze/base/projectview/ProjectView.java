@@ -117,6 +117,14 @@ public final class ProjectView implements Serializable {
       sections.addAll(projectView.sections);
     }
 
+      @SuppressWarnings("unchecked")
+    public <T, SectionType extends Section<T>> List<SectionType> getAll(SectionKey<T, SectionType> key) {
+      return sections.stream()
+              .filter(section -> section.isSectionType(key))
+              .map(section -> (SectionType) section)
+              .toList();
+    }
+
     /** Gets the last section of the type in the builder. Useful to add on to sections. */
     @SuppressWarnings("unchecked")
     @Nullable

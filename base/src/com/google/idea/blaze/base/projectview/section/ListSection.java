@@ -88,6 +88,10 @@ public final class ListSection<T> extends Section<T> {
     return new Builder<>(sectionKey, section);
   }
 
+  public boolean hasLineNumber(int elementLineNumber) {
+    return getFirstLineIndex() == elementLineNumber || itemsOrComments().stream().anyMatch(it ->it.getLineIndex() == elementLineNumber);
+  }
+
   /** Builder for list sections */
   public static class Builder<T> extends SectionBuilder<T, ListSection<T>> {
     private final List<ItemOrTextBlock<T>> items = new ArrayList<>();

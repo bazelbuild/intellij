@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A line marker provider for project view files, showing a plus icon for adding new directories.
@@ -74,7 +75,7 @@ public class DirectoryLineMarkerProvider implements LineMarkerProvider {
                             element.getTextRange(),
                             icon,
                             psi -> txt,
-                            (e, elt) -> toggleTarget(elt, disabled, parentTag),
+                            (e, elt) -> toggleSectionItem(elt, disabled, parentTag),
                             GutterIconRenderer.Alignment.RIGHT,
                             () -> txt);
                 }
@@ -88,10 +89,10 @@ public class DirectoryLineMarkerProvider implements LineMarkerProvider {
     public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements, @NotNull Collection<? super LineMarkerInfo<?>> result) {
     }
 
-    private void toggleTarget(PsiElement elt, boolean disabled, String parentTag) {
+    private void toggleSectionItem(PsiElement elt, boolean disabled, String parentTag) {
         ProjectViewEdit.ProjectViewEditor action = switch (parentTag) {
             case "directories" -> (builder) -> toggleDirectory(builder, elt, disabled);
-            case "targets" -> (builder) -> toggleTarget(builder, elt, disabled);
+            case "targets" -> (builder) -> toggleSectionItem(builder, elt, disabled);
             default -> null;
         };
 
@@ -114,31 +115,60 @@ public class DirectoryLineMarkerProvider implements LineMarkerProvider {
         edit.apply();
     }
 
+    @SuppressWarnings("unchecked")
     private static boolean toggleDirectory(ProjectView.Builder builder, PsiElement elt, boolean disabled) {
-        var directories = builder.getLast(DirectorySection.KEY);
-        var directoriesUpdater = ListSection.update(DirectorySection.KEY, directories);
+        int elementLineNumber = getPsiElementLineNumber(elt);
+
+        var optionalSection = getListByLineNumber(builder, DirectorySection.KEY, elementLineNumber);
+
+        if (optionalSection.isEmpty()) {
+            return false;
+        }
+
+        var listSection = optionalSection.get();
+
+        var directoriesUpdater = ListSection.update(DirectorySection.KEY, listSection);
 
         var directoryStr = elt.getText().substring(disabled ? 1 : 0);
 
         directoriesUpdater.replaceElement(
-                getPsiElementLineNumber(elt),
+                elementLineNumber,
                 disabled ?
                         DirectoryEntry.include(new WorkspacePath(directoryStr)) :
                         DirectoryEntry.exclude(new WorkspacePath(directoryStr))
         );
 
-        builder.replace(directories, directoriesUpdater);
+        builder.replace(listSection, directoriesUpdater);
 
         return true;
+    }
+
+    private static <T, SectionType extends Section<T>> Optional<SectionType> getListByLineNumber(ProjectView.Builder builder, SectionKey<T, SectionType> key, int lineNumber) {
+        for (var section : builder.getAll(key)) {
+            if (section instanceof ListSection<?> listSection && listSection.hasLineNumber(lineNumber)) {
+                return Optional.of(section);
+            }
+        }
+
+        return Optional.empty();
     }
 
     private static int getPsiElementLineNumber(PsiElement elt) {
         return elt.getContainingFile().getFileDocument().getLineNumber(elt.getTextRange().getStartOffset());
     }
 
-    private static boolean toggleTarget(ProjectView.Builder builder, PsiElement elt, boolean disabled) {
-        var targets = builder.getLast(TargetSection.KEY);
-        var targetsUpdater = ListSection.update(TargetSection.KEY, targets);
+    private static boolean toggleSectionItem(ProjectView.Builder builder, PsiElement elt, boolean disabled) {
+        int elementLineNumber = getPsiElementLineNumber(elt);
+
+        var optionalSection = getListByLineNumber(builder, TargetSection.KEY, elementLineNumber);
+
+        if (optionalSection.isEmpty()) {
+            return false;
+        }
+
+        var listSection = optionalSection.get();
+
+        var targetsUpdater = ListSection.update(TargetSection.KEY, listSection);
 
         var targetStr = elt.getText();
 
@@ -149,7 +179,7 @@ public class DirectoryLineMarkerProvider implements LineMarkerProvider {
                         TargetExpression.fromStringSafe('-' + targetStr)
         );
 
-        builder.replace(targets, targetsUpdater);
+        builder.replace(listSection, targetsUpdater);
 
         return true;
     }
