@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.android.projectview;
 
+import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
+import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ImmutableList;
@@ -95,7 +97,7 @@ public class AndroidSdkPlatformSection {
       } else {
         builder.add(
             TextBlockSection.of(
-                TextBlock.of(-1, "# Please uncomment an android-SDK platform. Available SDKs are:")));
+                TextBlock.of(TEMPORARY_LINE_NUMBER, "# Please uncomment an android-SDK platform. Available SDKs are:")));
         List<String> sdkOptions =
             AndroidSdkFromProjectView.getAvailableSdkTargetHashes(sdks)
                 .stream()

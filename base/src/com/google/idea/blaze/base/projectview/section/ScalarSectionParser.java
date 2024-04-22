@@ -56,17 +56,13 @@ public abstract class ScalarSectionParser<T> extends SectionParser {
 
   @SuppressWarnings("unchecked")
   @Override
-  public final int print(StringBuilder sb, Section<?> section, int firstLineIndex) {
+  public final void print(StringBuilder sb, Section<?> section) {
     sb.append(getName()).append(divider);
     if (divider != ' ') {
       sb.append(' ');
     }
-    var scalarSection = (ScalarSection<T>) section;
-
-    printItem(sb, scalarSection.getValue());
+    printItem(sb, ((ScalarSection<T>) section).getValue());
     sb.append('\n');
-
-    return 1;
   }
 
   /** Used by psi-parser for validation. */
