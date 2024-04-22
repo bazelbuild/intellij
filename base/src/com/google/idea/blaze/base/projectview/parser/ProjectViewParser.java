@@ -33,7 +33,7 @@ import java.util.Set;
 
 /** Parses and writes project views. */
 public class ProjectViewParser {
-
+  public static final int TEMPORARY_LINE_NUMBER = -1; // On ly use if you are creating a ProjectView and then you would create a file using print() statements
   private final BlazeContext context;
   private final WorkspacePathResolver workspacePathResolver;
   private final boolean recursive;

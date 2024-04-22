@@ -27,13 +27,16 @@ import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
+import com.google.idea.blaze.base.projectview.section.sections.UseQuerySyncSection;
 import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
@@ -226,21 +229,39 @@ public final class BlazeNewProjectBuilder {
     // Initial sync of the project happens in BlazeSyncStartupActivity
   }
 
-  private BlazeImportSettings getImportSettings() {
-    boolean useQuerySync;
+  /**
+   * Checks if a new project should be query sync project.
+   *
+   * <p>There are two ways to get query sync enabled for new project: via blaze project view and via
+   * query sync settings. blaze project view file take higher priority.
+   */
+  private boolean isQuerySyncProject() {
+    ProjectViewParser projectViewParser =
+        new ProjectViewParser(BlazeContext.create(), new WorkspacePathResolverImpl(workspaceRoot));
+    projectViewParser.parseProjectView(projectViewFile);
+    return projectViewParser
+        .getResult()
+        .getScalarValue(UseQuerySyncSection.KEY)
+        .orElse(useQuerySyncDefault());
+  }
+
+  /** Checks if query sync for new project is enabled via experiment or settings page. */
+  private boolean useQuerySyncDefault() {
     if (QuerySync.useByDefault()) {
-      useQuerySync = QuerySyncSettings.getInstance().useQuerySync();
+      return QuerySyncSettings.getInstance().useQuerySync();
     } else {
-      useQuerySync =
-          QuerySync.isLegacyExperimentEnabled()
-              || QuerySyncSettings.getInstance().useQuerySyncBeta();
+      return QuerySync.isLegacyExperimentEnabled()
+          || QuerySyncSettings.getInstance().useQuerySyncBeta();
     }
+  }
+
+  private BlazeImportSettings getImportSettings() {
     return new BlazeImportSettings(
         workspaceRoot.directory().getPath(),
         projectName,
         projectDataDirectory,
         Optional.ofNullable(projectViewFile).map(File::getPath).orElse(null),
         getBuildSystem(),
-        useQuerySync ? ProjectType.QUERY_SYNC : ProjectType.ASPECT_SYNC);
+        isQuerySyncProject() ? ProjectType.QUERY_SYNC : ProjectType.ASPECT_SYNC);
   }
 }

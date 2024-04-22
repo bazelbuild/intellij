@@ -30,6 +30,8 @@ import com.intellij.util.PathUtil;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
+import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
+
 /** "directories" section. */
 public class DirectorySection {
   public static final SectionKey<DirectoryEntry, ListSection<DirectoryEntry>> KEY =
@@ -87,9 +89,9 @@ public class DirectorySection {
         return topLevelProjectView;
       }
       ListSection.Builder<DirectoryEntry> builder = ListSection.builder(KEY);
-      builder.add(TextBlock.of(-1, "  # Add the directories you want added as source here"));
+      builder.add(TextBlock.of(TEMPORARY_LINE_NUMBER, "  # Add the directories you want added as source here"));
       if (buildSystemName == BuildSystemName.Bazel) {
-        builder.add(TextBlock.of(-1, "  # By default, we've added your entire workspace ('.')"));
+        builder.add(TextBlock.of(TEMPORARY_LINE_NUMBER, "  # By default, we've added your entire workspace ('.')"));
         builder.add(DirectoryEntry.include(new WorkspacePath(".")));
       }
       builder.add(TextBlock.newLine(-1));

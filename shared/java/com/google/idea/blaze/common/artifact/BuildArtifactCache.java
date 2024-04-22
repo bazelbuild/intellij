@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.exception.BuildException;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -61,4 +62,7 @@ public interface BuildArtifactCache {
    *     deleted since then.
    */
   Optional<ListenableFuture<ByteSource>> get(String digest);
+
+  /** Synchronously clean the cache. */
+  void clean() throws IOException;
 }

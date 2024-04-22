@@ -27,6 +27,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
+import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
+
 /**
  * List value. Eg.
  *
@@ -90,6 +92,8 @@ public final class ListSection<T> extends Section<T> {
   public static class Builder<T> extends SectionBuilder<T, ListSection<T>> {
     private final List<ItemOrTextBlock<T>> items = new ArrayList<>();
 
+    private int firstLineNumber = TEMPORARY_LINE_NUMBER;
+
     public Builder(SectionKey<T, ListSection<T>> sectionKey, @Nullable ListSection<T> section) {
       super(sectionKey);
       if (section != null) {
@@ -97,9 +101,20 @@ public final class ListSection<T> extends Section<T> {
       }
     }
 
+    public Builder<T> setFirstLineNumber(int firstLineNumber) {
+      this.firstLineNumber = firstLineNumber;
+      return this;
+    }
+
     @CanIgnoreReturnValue
-    public final Builder<T> add(T item) {//FIXME what about first item?
-      items.add(new ItemOrTextBlock<>(item, getLastLineIndex()));
+    public final Builder<T> add(T item) {
+      items.add(new ItemOrTextBlock<>(item, TEMPORARY_LINE_NUMBER));
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public final Builder<T> add(T item, int firstLineNumber) {
+      items.add(new ItemOrTextBlock<>(item, firstLineNumber));
       return this;
     }
 
@@ -113,7 +128,7 @@ public final class ListSection<T> extends Section<T> {
 
     @CanIgnoreReturnValue
     public final Builder<T> add(TextBlock textBlock) {
-      items.add(new ItemOrTextBlock<T>(textBlock, getLastLineIndex()));
+      items.add(new ItemOrTextBlock<T>(textBlock, textBlock.firstLineIndex));
       return this;
     }
 
@@ -153,7 +168,7 @@ public final class ListSection<T> extends Section<T> {
 
     @Override
     public final ListSection<T> build() {
-      return new ListSection<>(getSectionKey(), ImmutableList.copyOf(items), -1);
+      return new ListSection<>(getSectionKey(), ImmutableList.copyOf(items), firstLineNumber);
     }
   }
 }

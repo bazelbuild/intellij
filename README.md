@@ -52,6 +52,14 @@ Please read this comment https://github.com/bazelbuild/intellij/issues/4745#issu
 ### Mixed Python & Java projects
 In order to get correct python highlighting, please try to open "Project Structure" window and set "Python facet" there
 
+### Remote Development
+To properly set up Remote Development (https://www.jetbrains.com/remote-development/), follow these steps:
+1. Create an empty project on the remote machine (this can be just an empty directory).
+2. Import the project using Remote Development.
+3. Install the Bazel Plugin on the host machine.
+4. Close the project.
+5. Open the initially intended project.
+
 ## Building the plugin
 
 Install Bazel, then build the target `*:*_bazel_zip` for your desired product:

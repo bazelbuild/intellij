@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.sync.projectstructure;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -69,13 +70,17 @@ public class ContentEntryEditor {
           modifiableRootModel.addContentEntry(UrlUtil.pathToUrl(rootFile.getPath()));
 
       for (WorkspacePath exclude : excludesByRootDirectory.get(rootDirectory)) {
+        File excludeFolder = workspaceRoot.fileForPath(exclude);
+        contentEntry.addExcludeFolder(UrlUtil.fileToIdeaUrl(excludeFolder));
+      }
+
+      for (String dir : BuildSystemProvider.getBuildSystemProvider(Blaze.getBuildSystemName(project))
+              .buildArtifactDirectories(workspaceRoot)) {
+        var workspacePath = new WorkspacePath(dir);
         if (projectViewSet.getScalarValue(UseExclusionPatternsSection.KEY).orElse(true)
-                && !exclude.asPath().isAbsolute()
-                && exclude.asPath().getNameCount() == 1) {
-          contentEntry.addExcludePattern(exclude.relativePath());
-        } else {
-          File excludeFolder = workspaceRoot.fileForPath(exclude);
-          contentEntry.addExcludeFolder(UrlUtil.fileToIdeaUrl(excludeFolder));
+                && !workspacePath.asPath().isAbsolute()
+                && workspacePath.asPath().getNameCount() == 1) {
+          contentEntry.addExcludePattern(workspacePath.relativePath());
         }
       }
 

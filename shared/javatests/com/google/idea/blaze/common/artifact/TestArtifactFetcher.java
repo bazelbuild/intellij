@@ -88,6 +88,12 @@ public class TestArtifactFetcher implements ArtifactFetcher<OutputArtifact> {
     pendingTasks.remove(0).run();
   }
 
+  public void flushTasks() {
+    while (!pendingTasks.isEmpty()) {
+      executeOldestTask();
+    }
+  }
+
   public ImmutableSet<String> takeRequestedDigests() {
     ImmutableSet<String> requested = ImmutableSet.copyOf(requestedDigests);
     requestedDigests.clear();

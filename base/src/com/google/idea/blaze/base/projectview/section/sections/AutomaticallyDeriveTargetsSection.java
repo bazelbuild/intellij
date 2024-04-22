@@ -23,6 +23,8 @@ import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 
+import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
+
 /** If set to true, automatically derives targets from the project directories. */
 public class AutomaticallyDeriveTargetsSection {
   public static final SectionKey<Boolean, ScalarSection<Boolean>> KEY =
@@ -45,7 +47,7 @@ public class AutomaticallyDeriveTargetsSection {
           .add(
               TextBlockSection.of(
                   TextBlock.of(
-                          -1,
+                          TEMPORARY_LINE_NUMBER,
                       "# Automatically includes all relevant targets under the 'directories'"
                           + " above")))
           .add(ScalarSection.builder(KEY).set(true))

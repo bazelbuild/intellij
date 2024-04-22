@@ -20,6 +20,8 @@ import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
+import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -37,14 +39,22 @@ import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.artifact.ArtifactFetcher.ArtifactDestination;
 import com.google.idea.blaze.exception.BuildException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.FileTime;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
+import java.util.PriorityQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
+import java.util.logging.Logger;
 import javax.annotation.Nullable;
 
 /**
@@ -63,11 +73,21 @@ import javax.annotation.Nullable;
  */
 class BuildArtifactCacheDirectory implements BuildArtifactCache {
 
+  private static final Logger logger =
+      Logger.getLogger(BuildArtifactCacheDirectory.class.getName());
+
   private final Path cacheDir;
   private final ListeningExecutorService executor;
   private final ArtifactFetcher<OutputArtifact> fetcher;
 
   private final Map<String, ListenableFuture<?>> activeFetches;
+
+  /**
+   * Read-write lock where the "read" is also used to adding items to the cache. The write is only
+   * acquired for cleaning the cache whcih allows all other functionality to assume that cache items
+   * are never deleted.
+   */
+  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
   public BuildArtifactCacheDirectory(
       Path cacheDir, ArtifactFetcher<OutputArtifact> fetcher, ListeningExecutorService executor)
@@ -89,7 +109,18 @@ class BuildArtifactCacheDirectory implements BuildArtifactCache {
     }
   }
 
-  private Path artifactPath(String digest) {
+  @VisibleForTesting
+  int readLockCount() {
+    return lock.getReadHoldCount();
+  }
+
+  @VisibleForTesting
+  int writeLockCount() {
+    return lock.getWriteHoldCount();
+  }
+
+  @VisibleForTesting
+  Path artifactPath(String digest) {
     return cacheDir.resolve(digest);
   }
 
@@ -206,6 +237,25 @@ class BuildArtifactCacheDirectory implements BuildArtifactCache {
     return markActiveUntilComplete(artifacts, done);
   }
 
+  private <T> Optional<ListenableFuture<T>> performWithReadLock(
+      Supplier<Optional<ListenableFuture<T>>> method) {
+    Lock readLock = lock.readLock();
+    readLock.lock();
+    try {
+      Optional<ListenableFuture<T>> future = method.get();
+      if (future.isEmpty()) {
+        return future;
+      }
+      future.get().addListener(readLock::unlock, directExecutor());
+      readLock = null;
+      return future;
+    } finally {
+      if (readLock != null) {
+        readLock.unlock();
+      }
+    }
+  }
+
   /**
    * Requests that the given artifacts are added to the cache.
    *
@@ -215,6 +265,11 @@ class BuildArtifactCacheDirectory implements BuildArtifactCache {
    */
   @Override
   public ListenableFuture<?> addAll(
+      ImmutableCollection<OutputArtifact> artifacts, Context<?> context) {
+    return performWithReadLock(() -> Optional.of(performAdd(artifacts, context))).get();
+  }
+
+  private ListenableFuture<?> performAdd(
       ImmutableCollection<OutputArtifact> artifacts, Context<?> context) {
     synchronized (activeFetches) {
       Instant accessTime = Instant.now();
@@ -258,6 +313,10 @@ class BuildArtifactCacheDirectory implements BuildArtifactCache {
    */
   @Override
   public Optional<ListenableFuture<ByteSource>> get(String digest) {
+    return performWithReadLock(() -> performGet(digest));
+  }
+
+  public Optional<ListenableFuture<ByteSource>> performGet(String digest) {
     ListenableFuture<?> activeFetch;
     synchronized (activeFetches) {
       activeFetch = activeFetches.get(digest);
@@ -272,6 +331,102 @@ class BuildArtifactCacheDirectory implements BuildArtifactCache {
       return Optional.of(
           Futures.transform(
               activeFetch, unused2 -> MoreFiles.asByteSource(artifactPath), directExecutor()));
+    }
+  }
+
+  @VisibleForTesting
+  void insertForTest(InputStream content, String digest, Instant lastAccessTime)
+      throws IOException {
+    MoreFiles.asByteSink(artifactPath(digest)).writeFrom(content);
+    updateMetadata(digest, lastAccessTime);
+  }
+
+  @AutoValue
+  abstract static class Entry {
+    abstract Path path();
+
+    abstract FileTime lastAccessTime();
+
+    abstract long size();
+
+    static Entry create(Path p, FileTime lastAccessTime, long size) {
+      return new AutoValue_BuildArtifactCacheDirectory_Entry(p, lastAccessTime, size);
+    }
+  }
+
+  private ImmutableList<Path> list() throws IOException {
+    return MoreFiles.listFiles(cacheDir);
+  }
+
+  @VisibleForTesting
+  ImmutableList<String> listDigests() throws IOException {
+    return list().stream().map(Path::getFileName).map(Path::toString).collect(toImmutableList());
+  }
+
+  @VisibleForTesting
+  FileTime readAccessTime(String digest) throws IOException {
+    return readAccessTime(artifactPath(digest));
+  }
+
+  FileTime readAccessTime(Path entry) throws IOException {
+    return Files.getFileAttributeView(entry, BasicFileAttributeView.class)
+        .readAttributes()
+        .lastAccessTime();
+  }
+
+  @Override
+  public void clean() throws IOException {
+    Lock writeLock = lock.writeLock();
+    writeLock.lock();
+    try {
+      // We keep 1GB of artifacts, or any accessed in the last 24 hours if this is more:
+      clean(1024L * 1024L * 1024L, Instant.now().minus(Duration.ofHours(24)));
+    } finally {
+      writeLock.unlock();
+    }
+  }
+
+  @VisibleForTesting
+  void clean(long maxTargetSize, Instant minAgeToDelete) throws IOException {
+    ImmutableList<Path> entries = list();
+    int failed = 0;
+    long totalSize = 0;
+    PriorityQueue<Entry> queue = new PriorityQueue<>(Comparator.comparing(Entry::lastAccessTime));
+    for (Path p : entries) {
+      try {
+        Entry e = Entry.create(p, readAccessTime(p), Files.size(p));
+        queue.add(e);
+        totalSize += e.size();
+      } catch (IOException e) {
+        // If we fail read the attributes for a file, we just ignore it and clean up the rest of the
+        // cache as best we can.
+        failed += 1;
+      }
+    }
+    if (failed > 0) {
+      logger.warning("Failed to read attributes from " + failed + " cache files when cleaning");
+    }
+    long remainingSize = totalSize;
+    while (!queue.isEmpty()) {
+      if (remainingSize <= maxTargetSize) {
+        // size target reached
+        logger.info("Reached target cache size: " + remainingSize + "<=" + maxTargetSize);
+        return;
+      }
+      if (queue.peek().lastAccessTime().toInstant().isAfter(minAgeToDelete)) {
+        // the oldest artifact is newer than the minimum age, so we stop deleting artifacts even
+        // though the cache is bigger than the max size.
+        logger.info(
+            "Not deleting entries accessed since "
+                + minAgeToDelete
+                + "; remaining cache size="
+                + remainingSize);
+        return;
+      }
+
+      Entry toDelete = queue.poll();
+      remainingSize -= toDelete.size();
+      Files.delete(toDelete.path());
     }
   }
 }
