@@ -30,6 +30,7 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -154,7 +156,17 @@ public class DirectoryLineMarkerProvider implements LineMarkerProvider {
     }
 
     private static int getPsiElementLineNumber(PsiElement elt) {
-        return elt.getContainingFile().getFileDocument().getLineNumber(elt.getTextRange().getStartOffset());
+        return Objects.requireNonNull(
+                FileDocumentManager
+                        .getInstance()
+                        .getDocument(
+                                elt.getContainingFile()
+                                        .getVirtualFile()
+                        )
+        ).getLineNumber(
+                elt.getTextRange()
+                        .getStartOffset()
+        );
     }
 
     private static boolean toggleSectionItem(ProjectView.Builder builder, PsiElement elt, boolean disabled) {
