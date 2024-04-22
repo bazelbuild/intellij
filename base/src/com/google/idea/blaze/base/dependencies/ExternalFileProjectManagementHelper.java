@@ -90,6 +90,8 @@ public class ExternalFileProjectManagementHelper
 
   private final Project project;
 
+  private static final String addFilePanelTitle = "Do you want to add this file to your project sources?";
+
   public ExternalFileProjectManagementHelper(Project project) {
     this.project = project;
   }
@@ -187,7 +189,7 @@ public class ExternalFileProjectManagementHelper
                                         AddSourceToProjectHelper.addSourceToProject(
                                                 project, context.workspacePath, inProjectDirectories, targetsFuture);
                                         EditorNotifications.getInstance(project).updateNotifications(vf);
-                                      }), "Do you want to add this file to your project sources?");
+                                      }), addFilePanelTitle);
       panel.setVisible(false); // starts off not visible until we get the query results
 
       targetsFuture.addListener(
@@ -250,7 +252,7 @@ public class ExternalFileProjectManagementHelper
         p ->
             p.createActionLabel(
                 "Add file to project",
-                () -> AddToProjectAction.Performer.create(project, virtualFile, p).perform()), "Do you want to add this file to your project sources?");
+                () -> AddToProjectAction.Performer.create(project, virtualFile, p).perform()), addFilePanelTitle);
   }
 
   private EditorNotificationPanel createPanel(
