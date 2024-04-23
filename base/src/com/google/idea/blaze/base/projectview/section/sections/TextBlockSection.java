@@ -129,11 +129,10 @@ public final class TextBlockSection extends Section<TextBlock> {
     }
 
     @Override
-    public int print(StringBuilder sb, Section<?> section, int firstLineIndex) {
-      section.setFirstLineIndex(firstLineIndex);
+    public void print(StringBuilder sb, Section<?> section) {
       TextBlockSection textBlockSection = (TextBlockSection) section;
 
-      return textBlockSection.getTextBlock().print(sb);
+      textBlockSection.getTextBlock().print(sb);
     }
 
     @Override

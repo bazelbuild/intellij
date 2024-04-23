@@ -138,7 +138,7 @@ public class ProjectViewParser {
               .findFirst()
               .orElse(null);
       if (sectionParser != null) {
-        curLineIndex += sectionParser.print(sb, section, curLineIndex);
+        sectionParser.print(sb, section);
       }
     }
 

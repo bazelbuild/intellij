@@ -103,31 +103,26 @@ public abstract class ListSectionParser<T> extends SectionParser {
 
   @SuppressWarnings("unchecked")
   @Override
-  public final int print(StringBuilder sb, Section<?> section, int firstLineIndex) {
+  public final void print(StringBuilder sb, Section<?> section) {
     ListSection<T> listSection = (ListSection<T>) section;
-    int addedLinesNumber = 0;
 
     // Omit empty sections completely
     if (listSection.itemsOrComments().isEmpty()) {
-      return addedLinesNumber;
+      return;
     }
 
     sb.append(getName()).append(':').append('\n');
-    addedLinesNumber += 1;
     for (ItemOrTextBlock<T> item : listSection.itemsOrComments()) {
-      item.setLineIndex(firstLineIndex + addedLinesNumber); // Fix line indexes since the caller does not know them
-
       if (item.item != null) {
-        sb.append(" ".repeat(SectionParser.INDENT));
+        for (int i = 0; i < SectionParser.INDENT; ++i) {
+          sb.append(' ');
+        }
         printItem(item.item, sb);
         sb.append('\n');
-        addedLinesNumber += 1;
       } else if (item.textBlock != null) {
-        addedLinesNumber += item.textBlock.print(sb);
+        item.textBlock.print(sb);
       }
     }
-
-    return addedLinesNumber;
   }
 
   @Nullable

@@ -87,7 +87,6 @@ public class AdditionalLanguagesSection {
         return topLevelProjectView;
       }
       ListSection.Builder<LanguageClass> builder = ListSection.builder(KEY);
-      // Line index is not known at build time which is supposed to be corrected by the print() operations
       builder.add(TextBlock.of(TEMPORARY_LINE_NUMBER, "  # Uncomment any additional languages you want supported"));
       additionalLanguages
           .stream()
