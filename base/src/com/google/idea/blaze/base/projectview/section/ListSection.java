@@ -136,10 +136,6 @@ public final class ListSection<T> extends Section<T> {
       return this;
     }
 
-    private int getLastLineIndex() {
-      return this.items.get(items.size() - 1).getLineIndex() + 1;
-    }
-
     @CanIgnoreReturnValue
     public final Builder<T> removeMatches(Predicate<ItemOrTextBlock<T>> predicate) {
       items.removeIf(predicate);
