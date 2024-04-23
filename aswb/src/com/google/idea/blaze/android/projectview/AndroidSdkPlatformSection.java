@@ -82,7 +82,7 @@ public class AndroidSdkPlatformSection {
 
       if (sdks.isEmpty()) {
         builder
-            .add(TextBlockSection.of(TextBlock.of(-1, "# Please set to an android SDK platform")))
+            .add(TextBlockSection.of(TextBlock.of(TEMPORARY_LINE_NUMBER, "# Please set to an android SDK platform")))
             .add(
                 TextBlockSection.of(
                     TextBlock.of(
