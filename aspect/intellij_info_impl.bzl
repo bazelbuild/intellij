@@ -44,6 +44,7 @@ DEPS = [
     "tests",  # From test_suite
     "compilers",  # From go_proto_library
     "associates",  # From kotlin rules
+    "_kt_toolchain",  # From rules_kotlin
 ]
 
 # Run-time dependency attributes, grouped by type.
@@ -1020,13 +1021,15 @@ def collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups):
 def artifact_to_path(artifact):
     return artifact.root_execution_path_fragment + "/" + artifact.relative_path
 
-def collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups):
+def collect_kotlin_toolchain_info(target, ctx, ide_info, ide_info_file, output_groups):
     """Updates kotlin_toolchain-relevant output groups, returns false if not a kotlin_toolchain target."""
-    if not hasattr(target, "kt"):
+    if ctx.rule.kind == "_kt_toolchain" and platform_common.ToolchainInfo in target:
+        kt = target[platform_common.ToolchainInfo]
+    elif hasattr(target, "kt") and hasattr(target.kt, "language_version"):
+        kt = target.kt  # Legacy struct provider mechanism
+    else:
         return False
-    kt = target.kt
-    if not hasattr(kt, "language_version"):
-        return False
+
     ide_info["kt_toolchain_ide_info"] = struct(
         language_version = kt.language_version,
     )
@@ -1186,7 +1189,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
     handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
-    handled = collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
+    handled = collect_kotlin_toolchain_info(target, ctx, ide_info, ide_info_file, output_groups) or handled
 
     # Any extra ide info
     if hasattr(semantics, "extra_ide_info"):
