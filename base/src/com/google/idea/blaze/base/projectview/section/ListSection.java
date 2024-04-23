@@ -154,18 +154,6 @@ public final class ListSection<T> extends Section<T> {
       return this;
     }
 
-    @CanIgnoreReturnValue
-    public final Builder<T> replaceElement(int lineIndex, T with) {
-      for (int i = 0; i < items.size(); i++) {
-        if (items.get(i).getLineIndex() == lineIndex) {
-          items.set(i, new ItemOrTextBlock<>(with, lineIndex));
-          break;
-        }
-      }
-
-      return this;
-    }
-
     @Override
     public final ListSection<T> build() {
       return new ListSection<>(getSectionKey(), ImmutableList.copyOf(items), firstLineNumber);
