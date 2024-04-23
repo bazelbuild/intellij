@@ -16,7 +16,6 @@
 package com.google.idea.blaze.android.projectview;
 
 import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
-import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ImmutableList;
