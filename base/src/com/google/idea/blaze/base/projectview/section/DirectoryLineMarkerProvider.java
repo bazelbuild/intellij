@@ -53,7 +53,7 @@ public class DirectoryLineMarkerProvider implements LineMarkerProvider {
     @Override
     @SuppressWarnings("rawtypes")
     public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
-        if (enabled.getValue() && element instanceof LeafPsiElement leafPsiElement) {
+        if (enabled.getValue() && element instanceof LeafPsiElement leafPsiElement && leafPsiElement.getStartOffsetInParent() == 0) {
             if (element.getText().equals("directories") &&
                     leafPsiElement.getParent() instanceof ProjectViewPsiListSection) {
                 return new LineMarkerInfo<>(
@@ -94,7 +94,7 @@ public class DirectoryLineMarkerProvider implements LineMarkerProvider {
     private void toggleSectionItem(PsiElement elt, boolean disabled, String parentTag) {
         ProjectViewEdit.ProjectViewEditor action = switch (parentTag) {
             case "directories" -> (builder) -> toggleDirectory(builder, elt, disabled);
-            case "targets" -> (builder) -> toggleSectionItem(builder, elt, disabled);
+            case "targets" -> (builder) -> toggleTarget(builder, elt, disabled);
             default -> null;
         };
 
@@ -117,7 +117,6 @@ public class DirectoryLineMarkerProvider implements LineMarkerProvider {
         edit.apply();
     }
 
-    @SuppressWarnings("unchecked")
     private static boolean toggleDirectory(ProjectView.Builder builder, PsiElement elt, boolean disabled) {
         int elementLineNumber = getPsiElementLineNumber(elt);
 
@@ -145,31 +144,7 @@ public class DirectoryLineMarkerProvider implements LineMarkerProvider {
         return true;
     }
 
-    private static <T, SectionType extends Section<T>> Optional<SectionType> getListByLineNumber(ProjectView.Builder builder, SectionKey<T, SectionType> key, int lineNumber) {
-        for (var section : builder.getAll(key)) {
-            if (section instanceof ListSection<?> listSection && listSection.hasLineNumber(lineNumber)) {
-                return Optional.of(section);
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    private static int getPsiElementLineNumber(PsiElement elt) {
-        return Objects.requireNonNull(
-                FileDocumentManager
-                        .getInstance()
-                        .getDocument(
-                                elt.getContainingFile()
-                                        .getVirtualFile()
-                        )
-        ).getLineNumber(
-                elt.getTextRange()
-                        .getStartOffset()
-        );
-    }
-
-    private static boolean toggleSectionItem(ProjectView.Builder builder, PsiElement elt, boolean disabled) {
+    private static boolean toggleTarget(ProjectView.Builder builder, PsiElement elt, boolean disabled) {
         int elementLineNumber = getPsiElementLineNumber(elt);
 
         var optionalSection = getListByLineNumber(builder, TargetSection.KEY, elementLineNumber);
@@ -194,5 +169,29 @@ public class DirectoryLineMarkerProvider implements LineMarkerProvider {
         builder.replace(listSection, targetsUpdater);
 
         return true;
+    }
+
+    private static <T, SectionType extends Section<T>> Optional<SectionType> getListByLineNumber(ProjectView.Builder builder, SectionKey<T, SectionType> key, int lineNumber) {
+        for (var section : builder.getAll(key)) {
+            if (section instanceof ListSection<?> listSection && listSection.hasLineNumber(lineNumber)) {
+                return Optional.of(section);
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private static int getPsiElementLineNumber(PsiElement elt) {
+        return Objects.requireNonNull(
+                FileDocumentManager
+                        .getInstance()
+                        .getDocument(
+                                elt.getContainingFile()
+                                        .getVirtualFile()
+                        )
+        ).getLineNumber(
+                elt.getTextRange()
+                        .getStartOffset()
+        );
     }
 }
