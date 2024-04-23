@@ -51,7 +51,7 @@ public class AutomaticallyDeriveTargetsSection {
                       "# Automatically includes all relevant targets under the 'directories'"
                           + " above")))
           .add(ScalarSection.builder(KEY).set(true))
-          .add(TextBlockSection.of(TextBlock.newLine(-1)))
+          .add(TextBlockSection.of(TextBlock.newLine(TEMPORARY_LINE_NUMBER)))
           .build();
     }
 

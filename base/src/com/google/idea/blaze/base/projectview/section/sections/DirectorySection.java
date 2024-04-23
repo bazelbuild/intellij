@@ -94,7 +94,7 @@ public class DirectorySection {
         builder.add(TextBlock.of(TEMPORARY_LINE_NUMBER, "  # By default, we've added your entire workspace ('.')"));
         builder.add(DirectoryEntry.include(new WorkspacePath(".")));
       }
-      builder.add(TextBlock.newLine(-1));
+      builder.add(TextBlock.newLine(TEMPORARY_LINE_NUMBER));
       return ProjectView.builder(topLevelProjectView).add(builder).build();
     }
 

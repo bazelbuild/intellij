@@ -154,7 +154,6 @@ public final class ProjectView implements Serializable {
       return this;
     }
 
-
     /** Replaces a section if it already exists. If it doesn't, just add the section. */
     @CanIgnoreReturnValue
     public <T, SectionType extends Section<T>> Builder replace(
