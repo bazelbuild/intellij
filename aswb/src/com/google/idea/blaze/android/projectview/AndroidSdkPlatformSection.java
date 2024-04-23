@@ -86,7 +86,7 @@ public class AndroidSdkPlatformSection {
             .add(
                 TextBlockSection.of(
                     TextBlock.of(
-                            -1,
+                            TEMPORARY_LINE_NUMBER,
                         "# You currently have no SDKs. Please use the SDK manager first.")))
             .add(ScalarSection.builder(KEY).set("(android sdk goes here)"));
       } else if (sdks.size() == 1) {
