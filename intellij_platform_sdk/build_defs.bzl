@@ -22,7 +22,7 @@ INDIRECT_IJ_PRODUCTS = {
     "clion-latest": "clion-2022.3",
     "clion-latest-mac": "clion-2022.3-mac",
     "clion-beta": "clion-2022.3",
-    "clion-under-dev": "clion-2022.3",
+    "clion-under-dev": "clion-2023.3",
     # Indirect ij_product mapping for Bazel Plugin OSS
     "intellij-oss-oldest-stable": "intellij-2022.3",
     "intellij-oss-latest-stable": "intellij-2022.3",
@@ -35,7 +35,7 @@ INDIRECT_IJ_PRODUCTS = {
     "android-studio-oss-under-dev": "android-studio-2023.3",
     "clion-oss-oldest-stable": "clion-2022.3",
     "clion-oss-latest-stable": "clion-2022.3",
-    "clion-oss-under-dev": "clion-2022.3",
+    "clion-oss-under-dev": "clion-2023.3",
     # Indirect ij_product mapping for Cloud Code Plugin OSS
     "intellij-cc-oldest-stable": "intellij-2022.3",
     "intellij-cc-latest-stable": "intellij-2022.3",
@@ -219,6 +219,14 @@ DIRECT_IJ_PRODUCTS = {
     "clion-2022.3-mac": struct(
         ide = "clion",
         directory = "clion_2022_3",
+    ),
+    "clion-2023.3": struct(
+        ide = "clion",
+        directory = "clion_2023_3",
+    ),
+    "clion-2023.3-mac": struct(
+        ide = "clion",
+        directory = "clion_2023_3",
     ),
 }
 
