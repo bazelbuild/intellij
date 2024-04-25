@@ -40,6 +40,9 @@ public class BazelNotificationProvider implements EditorNotificationProvider, Du
     if (!BazelImportCurrentProjectAction.projectCouldBeImported(project)) {
       return null;
     }
+    if (BazelDisableImportNotification.isNotificationDisabled(project)) {
+      return null;
+    }
 
     String root = project.getBasePath();
     if (root == null) {
@@ -52,6 +55,7 @@ public class BazelNotificationProvider implements EditorNotificationProvider, Du
 
       panel.setText("Project is not configured");
       panel.createActionLabel("Import Bazel project", importAction);
+      panel.createActionLabel("Dismiss", "Bazel.DisableImportNotification");
 
       return panel;
     };

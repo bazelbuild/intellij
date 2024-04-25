@@ -16,6 +16,7 @@
 
 package com.google.idea.blaze.clwb;
 
+import com.google.idea.blaze.base.wizard2.BazelDisableImportNotification;
 import com.google.idea.blaze.base.wizard2.BazelImportCurrentProjectAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -32,6 +33,9 @@ public class BazelCMakeNotificationProvider implements AdditionalActionProvider 
     if (!BazelImportCurrentProjectAction.projectCouldBeImported(project)) {
       return;
     }
+    if (BazelDisableImportNotification.isNotificationDisabled(project)) {
+      return;
+    }
 
     String root = project.getBasePath();
     if (root == null) {
@@ -40,5 +44,6 @@ public class BazelCMakeNotificationProvider implements AdditionalActionProvider 
 
     Runnable importAction = BazelImportCurrentProjectAction.createAction(panel, root);
     panel.createActionLabel("Import Bazel project", importAction);
+    panel.createActionLabel("Ignore Bazel project", "Bazel.DisableImportNotification");
   }
 }

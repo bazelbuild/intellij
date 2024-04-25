@@ -149,6 +149,9 @@
         class="com.google.idea.blaze.base.qsync.action.AddToProjectAction"
         text="Add to project"
         icon="AllIcons.General.Add" />
+    <action id="Bazel.DisableImportNotification"
+      class="com.google.idea.blaze.base.wizard2.BazelDisableImportNotification$Action"
+      text="Dismiss import notification"/>
 
     <group id="Blaze.MainMenuActionGroup" class="com.google.idea.blaze.base.actions.BlazeMenuGroup" popup="true">
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="HelpMenu"/>
