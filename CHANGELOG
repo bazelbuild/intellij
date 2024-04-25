@@ -1,7 +1,7 @@
 v2024.04.23
 ===========
-
-
+* Feature flags for resolve virtual includes using heuristics or clangd #6387
+* feat: create "Add package" EditorNotificationPanel if derive_targets_from_directories is on #6388
 
 v2024.04.09
 ===========
