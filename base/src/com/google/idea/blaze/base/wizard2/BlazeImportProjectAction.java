@@ -58,7 +58,7 @@ class BlazeImportProjectAction extends AnAction {
 
   @Override
   public ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
+    return ActionUpdateThread.BGT;
   }
 
   private static void createFromWizard(
