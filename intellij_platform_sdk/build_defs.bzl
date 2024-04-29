@@ -669,4 +669,7 @@ def select_for_channel(channel_map):
             if direct_product not in inverse_ij_products
         },
     )
+
+    select_map.update({"//conditions:default": channel_map[CHANNEL_STABLE]})
+
     return select(select_map)
