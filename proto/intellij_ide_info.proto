@@ -177,8 +177,9 @@ message CToolchainIdeInfo {
   string target_name = 1;
   repeated string cpp_option = 2;
   repeated string c_option = 3;
-  string cpp_executable = 4;
   repeated string built_in_include_directory = 5;
+  string c_compiler = 6;
+  string cpp_compiler = 7;
 }
 
 message TestInfo {

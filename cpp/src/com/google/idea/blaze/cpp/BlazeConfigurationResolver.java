@@ -133,12 +133,12 @@ final class BlazeConfigurationResolver {
     ImmutableMap<ExecutionRootPath, String> compilerVersionByPath =
             compilerSettings.entrySet().stream().collect(
                     ImmutableMap.toImmutableMap(
-                            e -> e.getKey().getCppExecutable(),
-                            e -> e.getValue().getCompilerVersion()));
+                            e -> e.getKey().getCppCompiler(),
+                            e -> e.getValue().getCppCompilerVersion()));
     return toolchainLookupMap.entrySet().stream()
             .map(e -> new AbstractMap.SimpleImmutableEntry<>(
                     e.getKey().getLabel().toString(),
-                    compilerVersionByPath.get(e.getValue().getCppExecutable())))
+                    compilerVersionByPath.get(e.getValue().getCppCompiler())))
             // In case of a broken compiler, the version string is null, but Collectors.toMap requires non-null value function.
             .filter(e -> e.getValue() != null)
             .collect(ImmutableMap.toImmutableMap(e -> e.getKey(), e -> e.getValue()));

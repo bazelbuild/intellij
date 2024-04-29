@@ -541,22 +541,35 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
             action_name = ACTION_NAMES.c_compile,
             variables = c_variables,
         )
+        c_compiler = cc_common.get_tool_for_action(
+            feature_configuration = feature_configuration,
+            # TODO(#391): Use constants from action_names.bzl
+            action_name = "c-compile",
+        )
         cpp_options = cc_common.get_memory_inefficient_command_line(
             feature_configuration = feature_configuration,
             action_name = ACTION_NAMES.cpp_compile,
             variables = cpp_variables,
+        )
+        cpp_compiler = cc_common.get_tool_for_action(
+            feature_configuration = feature_configuration,
+            # TODO(#391): Use constants from action_names.bzl
+            action_name = "c++-compile",
         )
     else:
         # See the plugin's BazelVersionChecker. We should have checked that we are Bazel 0.16+,
         # so get_memory_inefficient_command_line should be available.
         c_options = []
         cpp_options = []
+        c_compiler = str(cpp_toolchain.compiler_executable)
+        cpp_compiler = str(cpp_toolchain.compiler_executable)
 
     c_toolchain_info = struct_omit_none(
         built_in_include_directory = [str(d) for d in cpp_toolchain.built_in_include_directories],
         c_option = c_options,
-        cpp_executable = str(cpp_toolchain.compiler_executable),
         cpp_option = cpp_options,
+        c_compiler = c_compiler,
+        cpp_compiler = cpp_compiler,
         target_name = cpp_toolchain.target_gnu_system_name,
     )
     ide_info["c_toolchain_ide_info"] = c_toolchain_info
