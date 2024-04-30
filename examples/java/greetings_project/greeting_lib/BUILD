@@ -10,6 +10,7 @@ java_test(
     test_class = "com.example.GreetingTest",
     deps = [
         ":greeting_lib",
+        "//codegen_hello:generated_hello_lib",
         "@junit//jar",
     ],
 )
