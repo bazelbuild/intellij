@@ -141,6 +141,13 @@ public final class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.CTo
     }
 
     @CanIgnoreReturnValue
+    public Builder setCompiler(ExecutionRootPath compiler) {
+      setCCompiler(compiler);
+      setCppCompiler(compiler);
+      return this;
+    }
+
+    @CanIgnoreReturnValue
     public Builder setTargetName(String targetName) {
       this.targetName = targetName;
       return this;

@@ -65,7 +65,9 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setCToolchainInfo(
                         CToolchainIdeInfo.builder()
                             .setTargetName("arm-linux-androideabi")
-                            .setCppExecutable(
+                            .setCCompiler(
+                                new ExecutionRootPath("bin/arm-linux-androideabi-gcc"))
+                            .setCppCompiler(
                                 new ExecutionRootPath("bin/arm-linux-androideabi-gcc"))
                             .addBuiltInIncludeDirectories(
                                 ImmutableList.of(
@@ -79,7 +81,9 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setCToolchainInfo(
                         CToolchainIdeInfo.builder()
                             .setTargetName("aarch64-linux-android")
-                            .setCppExecutable(
+                            .setCCompiler(
+                                new ExecutionRootPath("bin/aarch64-linux-android-gcc"))
+                            .setCppCompiler(
                                 new ExecutionRootPath("bin/aarch64-linux-android-gcc"))
                             .addBuiltInIncludeDirectories(
                                 ImmutableList.of(
