@@ -78,7 +78,7 @@ public class AndroidSdkPlatformSection {
       }
       List<Sdk> sdks = BlazeSdkProvider.getInstance().getAllAndroidSdks();
       ProjectView.Builder builder =
-          ProjectView.builder(topLevelProjectView).add(TextBlockSection.of(TextBlock.newLine(-1)));
+          ProjectView.builder(topLevelProjectView).add(TextBlockSection.of(TextBlock.newLine(TEMPORARY_LINE_NUMBER)));
 
       if (sdks.isEmpty()) {
         builder
