@@ -6,4 +6,7 @@ derive_targets_from_directories: true
 additional_languages:
   go
 
+build_flags:
+  --enable_bzlmod=false
+
 gazelle_target: //:gazelle
