@@ -1,6 +1,7 @@
 v2024.05.07
 ===========
-
+* Plugin aspect now depends on @rules_java. If this breaks you, please update your @rules_java version to 5.3.5 or later.
+* Internal cleanup
 
 v2024.04.23
 ===========
