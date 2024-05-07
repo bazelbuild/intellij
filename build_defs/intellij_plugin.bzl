@@ -37,6 +37,7 @@ intellij_plugin(
 
 """
 
+load("@rules_java//java:defs.bzl", "java_binary", "java_import")
 load(
     "//build_defs:restrictions.bzl",
     "RestrictedInfo",
@@ -291,7 +292,7 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
         name = java_deps_name,
         deps = deps,
     )
-    native.java_binary(
+    java_binary(
         name = binary_name,
         runtime_deps = [":" + java_deps_name] + extra_runtime_deps,
         create_executable = 0,
@@ -335,7 +336,7 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
     )
 
     # included (with tag) as a hack so that IJwB can recognize this is an intellij plugin
-    native.java_import(
+    java_import(
         name = name,
         jars = [jar_target_name],
         tags = ["intellij-plugin"] + kwargs.pop("tags", []),

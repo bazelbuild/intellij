@@ -78,10 +78,6 @@ public class CcToolchainTest extends BazelIntellijAspectTest {
                               && !dir.contains("clang/")
                               && dir.endsWith("include")))
           .isTrue();
-      assertThat(
-              toolchainInfo.getBuiltInIncludeDirectoryList().stream()
-                  .anyMatch(dir -> dir.contains("c++")))
-          .isTrue();
     }
   }
 

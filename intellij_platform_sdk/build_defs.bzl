@@ -1,5 +1,7 @@
 """Convenience methods for plugin_api."""
 
+load("@rules_java//java:defs.bzl", "java_import")
+
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
     # Indirect ij_product mapping for internal Blaze Plugin
@@ -596,8 +598,7 @@ def no_mockito_extensions(name, jars, **kwargs):
             """,
         )
         output_jars.append(output_jar_name)
-
-    native.java_import(
+    java_import(
         name = name,
         jars = output_jars,
         **kwargs
@@ -668,4 +669,7 @@ def select_for_channel(channel_map):
             if direct_product not in inverse_ij_products
         },
     )
+
+    select_map.update({"//conditions:default": channel_map[CHANNEL_STABLE]})
+
     return select(select_map)
