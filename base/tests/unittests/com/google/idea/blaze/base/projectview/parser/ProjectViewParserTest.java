@@ -525,6 +525,5 @@ public class ProjectViewParserTest extends BlazeTestCase {
 
     ProjectViewSet projectViewSet = projectViewParser.getResult();
     assertThat(projectViewSet.getScalarValue(ViewProjectRootSection.KEY)).isEqualTo(Optional.of(true));
-
   }
 }
