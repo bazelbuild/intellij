@@ -40,6 +40,7 @@ import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
 import com.google.idea.blaze.base.projectview.section.sections.TryImportSection;
+import com.google.idea.blaze.base.projectview.section.sections.ViewProjectRootSection;
 import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
@@ -52,6 +53,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 import com.intellij.openapi.util.registry.Registry;
@@ -507,5 +509,22 @@ public class ProjectViewParserTest extends BlazeTestCase {
     ProjectView projectView = projectViewFile.projectView;
     String outputString = ProjectViewParser.projectViewToString(projectView);
     assertThat(outputString).isEqualTo(text);
+  }
+
+  @Test
+  public void testParserParsesVieProjectRootSection() throws Exception {
+    String text =
+        Joiner.on('\n')
+            .join(
+                "directories:",
+                "  java/com/google",
+                "view_project_root: true");
+    projectViewStorageManager.add(".blazeproject", text);
+    projectViewParser.parseProjectView(new File(".blazeproject"));
+    errorCollector.assertNoIssues();
+
+    ProjectViewSet projectViewSet = projectViewParser.getResult();
+    assertThat(projectViewSet.getScalarValue(ViewProjectRootSection.KEY)).isEqualTo(Optional.of(true));
+
   }
 }
