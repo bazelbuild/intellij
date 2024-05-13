@@ -19,7 +19,6 @@ import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 
-/** If set to true, automatically derives targets from the project directories. */
 public class ViewProjectRootSection {
   public static final SectionKey<Boolean, ScalarSection<Boolean>> KEY =
       SectionKey.of("view_project_root");
