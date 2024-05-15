@@ -28,10 +28,12 @@ import com.google.idea.common.settings.AutoConfigurable;
 import com.google.idea.common.settings.ConfigurableSetting;
 import com.google.idea.common.settings.ConfigurableSetting.ComponentFactory;
 import com.google.idea.common.settings.SearchableText;
+import com.google.idea.common.settings.SettingComponent;
 import com.google.idea.common.settings.SettingComponent.LabeledComponent;
 import com.google.idea.common.settings.SettingComponent.SimpleComponent;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -70,37 +72,37 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
       SearchableText.forLabel(String.format("%s Console", Blaze.defaultBuildSystemName()));
   private static final ConfigurableSetting<?, ? extends LabeledComponent<?, ?>>
       SHOW_CONSOLE_ON_SYNC =
-          setting("On Sync:")
-              .getter(BlazeUserSettings::getShowBlazeConsoleOnSync)
-              .setter(BlazeUserSettings::setShowBlazeConsoleOnSync)
-              .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
+      setting("On Sync:")
+          .getter(BlazeUserSettings::getShowBlazeConsoleOnSync)
+          .setter(BlazeUserSettings::setShowBlazeConsoleOnSync)
+          .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
   private static final ConfigurableSetting<?, ? extends LabeledComponent<?, ?>>
       SHOW_CONSOLE_ON_RUN =
-          setting("For Run/Debug actions:")
-              .getter(BlazeUserSettings::getShowBlazeConsoleOnRun)
-              .setter(BlazeUserSettings::setShowBlazeConsoleOnRun)
-              .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
+      setting("For Run/Debug actions:")
+          .getter(BlazeUserSettings::getShowBlazeConsoleOnRun)
+          .setter(BlazeUserSettings::setShowBlazeConsoleOnRun)
+          .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
 
   private static final SearchableText SHOW_PROBLEMS_VIEW_TEXT =
       SearchableText.forLabel("Problems View");
   private static final ConfigurableSetting<?, ? extends LabeledComponent<?, ?>>
       SHOW_PROBLEMS_VIEW_ON_SYNC =
-          setting(SHOW_CONSOLE_ON_SYNC.label())
-              .getter(BlazeUserSettings::getShowProblemsViewOnSync)
-              .setter(BlazeUserSettings::setShowProblemsViewOnSync)
-              .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
+      setting(SHOW_CONSOLE_ON_SYNC.label())
+          .getter(BlazeUserSettings::getShowProblemsViewOnSync)
+          .setter(BlazeUserSettings::setShowProblemsViewOnSync)
+          .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
   private static final ConfigurableSetting<?, ? extends LabeledComponent<?, ?>>
       SHOW_PROBLEMS_VIEW_ON_RUN =
-          setting(SHOW_CONSOLE_ON_RUN.label())
-              .getter(BlazeUserSettings::getShowProblemsViewOnRun)
-              .setter(BlazeUserSettings::setShowProblemsViewOnRun)
-              .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
+      setting(SHOW_CONSOLE_ON_RUN.label())
+          .getter(BlazeUserSettings::getShowProblemsViewOnRun)
+          .setter(BlazeUserSettings::setShowProblemsViewOnRun)
+          .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
 
   private static final ConfigurableSetting<?, ?>  ALLOW_JAVASCRIPT_TESTS =
-          setting("Enable Javascript test configuration producers (Requires application restart to take effect)")
-                  .getter(BlazeUserSettings::isJavascriptTestrunnersEnabled)
-                  .setter(BlazeUserSettings::setJavascriptTestrunnersEnabled)
-                  .componentFactory(SimpleComponent::createCheckBox);
+      setting("Enable Javascript test configuration producers (Requires application restart to take effect)")
+          .getter(BlazeUserSettings::isJavascriptTestrunnersEnabled)
+          .setter(BlazeUserSettings::setJavascriptTestrunnersEnabled)
+          .componentFactory(SimpleComponent::createCheckBox);
 
   private static final ConfigurableSetting<?, ?> COLLAPSE_PROJECT_VIEW =
       setting("Collapse project view directory roots")
@@ -150,6 +152,16 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
           .componentFactory(
               fileSelector(BUILDIFIER_BINARY_PATH_KEY, "Specify the buildifier binary path"));
 
+  public static final String FAST_BUILD_JAVA_BINARY_PATH_IN_RUN_FILES_KEY = "java.runfiles.binary.path";
+  private static final ConfigurableSetting<?, ?> FAST_BUILD_JAVA_IN_RUN_FILES_BINARY_PATH =
+      setting("FastBuild Java binary location in runfiles dir")
+          .getter(BlazeUserSettings::getFastBuildJavaBinaryPathInRunFiles)
+          .setter(BlazeUserSettings::setFastBuildJavaBinaryPathInRunFiles)
+          .componentFactory(SettingComponent.LabeledComponent.factory(
+              () -> new TextFieldWithStoredHistory(FAST_BUILD_JAVA_BINARY_PATH_IN_RUN_FILES_KEY),
+              s -> Strings.nullToEmpty(s.getText()).trim(),
+              TextFieldWithStoredHistory::setTextAndAddToHistory));
+
   private static final ImmutableList<ConfigurableSetting<?, ?>> SETTINGS =
       ImmutableList.of(
           SHOW_CONSOLE_ON_SYNC,
@@ -163,14 +175,15 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
           ALWAYS_SELECT_NEWEST_CHILD_TASK,
           BLAZE_BINARY_PATH,
           BAZEL_BINARY_PATH,
-          BUILDIFIER_BINARY_PATH);
+          BUILDIFIER_BINARY_PATH,
+          FAST_BUILD_JAVA_IN_RUN_FILES_BINARY_PATH);
 
   private static ConfigurableSetting.Builder<BlazeUserSettings> setting(String label) {
     return ConfigurableSetting.builder(BlazeUserSettings::getInstance).label(label);
   }
 
   private static ComponentFactory<LabeledComponent<String, FileSelectorWithStoredHistory>>
-      fileSelector(String historyKey, String title) {
+  fileSelector(String historyKey, String title) {
     return LabeledComponent.factory(
         () -> FileSelectorWithStoredHistory.create(historyKey, title),
         s -> Strings.nullToEmpty(s.getText()).trim(),
@@ -193,7 +206,8 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
             ALWAYS_SELECT_NEWEST_CHILD_TASK,
             BLAZE_BINARY_PATH,
             BAZEL_BINARY_PATH,
-            BUILDIFIER_BINARY_PATH));
+            BUILDIFIER_BINARY_PATH,
+            FAST_BUILD_JAVA_IN_RUN_FILES_BINARY_PATH));
   }
 
   private JComponent getFocusBehaviorSettingsUi() {

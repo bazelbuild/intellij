@@ -17,15 +17,16 @@ package com.google.idea.blaze.java.run.fastbuild;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.project.Project;
-import java.io.File;
 import javax.annotation.Nullable;
+import java.io.File;
 
 final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmentCreator {
 
   // Bazel adds the Java launcher to the runfiles path when building a Java test target.
-  private static final File STANDARD_JAVA_BINARY = new File("../jdk_mac/Contents/Home/bin/java");
+  private static final File STANDARD_JAVA_BINARY = new File("../local_jdk/bin/java");
 
   // TODO: b/295221112 - remove LAUNCHER_ALIAS once label_flag is used
   private static final String LAUNCHER_ALIAS = "@@bazel_tools//tools/jdk:launcher_flag_alias";
@@ -76,6 +77,12 @@ final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmen
         return file.toPath().resolve("bin/java").toFile();
       }
     }
+
+    String javaBinaryPath = BlazeUserSettings.getInstance().getFastBuildJavaBinaryPathInRunFiles();
+    if (javaBinaryPath != null && !javaBinaryPath.isBlank()) {
+      return new File("../").toPath().resolve(javaBinaryPath).toFile();
+    }
+
     return STANDARD_JAVA_BINARY;
   }
 
