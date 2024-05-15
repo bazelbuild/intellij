@@ -413,7 +413,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
             library_labels = [stringify_label(ctx.rule.attr.library.label)]
         elif getattr(ctx.rule.attr, "embed", None) != None:
             for library in ctx.rule.attr.embed:
-                if library.intellij_info.kind == "go_source" or library.intellij_info.kind == "go_proto_library":
+                if "intellij-sources-go-outputs" in library.intellij_info.output_groups:
                     l = library.intellij_info.output_groups["intellij-sources-go-outputs"].to_list()
                     sources += l
                     generated += [f for f in l if not f.is_source]
