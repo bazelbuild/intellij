@@ -82,14 +82,20 @@ stamped_plugin_xml(
 
 optional_plugin_xml(
     name = "optional_java",
-    module = "JUnit",
+    module = ["JUnit"],
     plugin_xml = "src/META-INF/java-contents.xml",
 )
 
 optional_plugin_xml(
     name = "optional_coverage",
-    module = "com.intellij.modules.coverage",
+    module = ["com.intellij.modules.coverage"],
     plugin_xml = "src/META-INF/coverage-contents.xml",
+)
+
+optional_plugin_xml(
+    name = "optional_java_coverage",
+    module = ["com.intellij.modules.coverage", "com.intellij.java"],
+    plugin_xml = "src/META-INF/java-coverage-contents.xml",
 )
 
 intellij_plugin_library(
@@ -97,6 +103,7 @@ intellij_plugin_library(
     optional_plugin_xmls = [
         ":optional_java",
         ":optional_coverage",
+        ":optional_java_coverage",
     ],
     plugin_xmls = ["src/META-INF/blaze-java.xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,

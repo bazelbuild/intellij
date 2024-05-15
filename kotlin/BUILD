@@ -43,7 +43,7 @@ java_library(
 
 optional_plugin_xml(
     name = "optional_xml",
-    module = "org.jetbrains.kotlin",
+    module = ["org.jetbrains.kotlin"],
     plugin_xml = "src/META-INF/kotlin-contents.xml",
 )
 

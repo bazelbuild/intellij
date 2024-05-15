@@ -37,7 +37,7 @@ load(
 
 optional_plugin_xml(
     name = "optional_ndk_xml",
-    module = "com.android.tools.ndk",
+    module = ["com.android.tools.ndk"],
     plugin_xml = "src/META-INF/ndk_contents.xml",
 )
 
