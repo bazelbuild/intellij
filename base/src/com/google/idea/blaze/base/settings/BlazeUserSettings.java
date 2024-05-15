@@ -32,8 +32,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 @State(
     name = "BlazeUserSettings",
     storages = {
-        @Storage("blaze.user.settings.xml"),
-        @Storage(value = "blaze.view.xml", deprecated = true)
+      @Storage("blaze.user.settings.xml"),
+      @Storage(value = "blaze.view.xml", deprecated = true)
     })
 public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSettings> {
 
