@@ -72,37 +72,37 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
       SearchableText.forLabel(String.format("%s Console", Blaze.defaultBuildSystemName()));
   private static final ConfigurableSetting<?, ? extends LabeledComponent<?, ?>>
       SHOW_CONSOLE_ON_SYNC =
-      setting("On Sync:")
-          .getter(BlazeUserSettings::getShowBlazeConsoleOnSync)
-          .setter(BlazeUserSettings::setShowBlazeConsoleOnSync)
-          .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
+          setting("On Sync:")
+              .getter(BlazeUserSettings::getShowBlazeConsoleOnSync)
+              .setter(BlazeUserSettings::setShowBlazeConsoleOnSync)
+              .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
   private static final ConfigurableSetting<?, ? extends LabeledComponent<?, ?>>
       SHOW_CONSOLE_ON_RUN =
-      setting("For Run/Debug actions:")
-          .getter(BlazeUserSettings::getShowBlazeConsoleOnRun)
-          .setter(BlazeUserSettings::setShowBlazeConsoleOnRun)
-          .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
+          setting("For Run/Debug actions:")
+              .getter(BlazeUserSettings::getShowBlazeConsoleOnRun)
+              .setter(BlazeUserSettings::setShowBlazeConsoleOnRun)
+              .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
 
   private static final SearchableText SHOW_PROBLEMS_VIEW_TEXT =
       SearchableText.forLabel("Problems View");
   private static final ConfigurableSetting<?, ? extends LabeledComponent<?, ?>>
       SHOW_PROBLEMS_VIEW_ON_SYNC =
-      setting(SHOW_CONSOLE_ON_SYNC.label())
-          .getter(BlazeUserSettings::getShowProblemsViewOnSync)
-          .setter(BlazeUserSettings::setShowProblemsViewOnSync)
-          .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
+          setting(SHOW_CONSOLE_ON_SYNC.label())
+              .getter(BlazeUserSettings::getShowProblemsViewOnSync)
+              .setter(BlazeUserSettings::setShowProblemsViewOnSync)
+              .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
   private static final ConfigurableSetting<?, ? extends LabeledComponent<?, ?>>
       SHOW_PROBLEMS_VIEW_ON_RUN =
-      setting(SHOW_CONSOLE_ON_RUN.label())
-          .getter(BlazeUserSettings::getShowProblemsViewOnRun)
-          .setter(BlazeUserSettings::setShowProblemsViewOnRun)
-          .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
+          setting(SHOW_CONSOLE_ON_RUN.label())
+              .getter(BlazeUserSettings::getShowProblemsViewOnRun)
+              .setter(BlazeUserSettings::setShowProblemsViewOnRun)
+              .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
 
   private static final ConfigurableSetting<?, ?>  ALLOW_JAVASCRIPT_TESTS =
-      setting("Enable Javascript test configuration producers (Requires application restart to take effect)")
-          .getter(BlazeUserSettings::isJavascriptTestrunnersEnabled)
-          .setter(BlazeUserSettings::setJavascriptTestrunnersEnabled)
-          .componentFactory(SimpleComponent::createCheckBox);
+          setting("Enable Javascript test configuration producers (Requires application restart to take effect)")
+                  .getter(BlazeUserSettings::isJavascriptTestrunnersEnabled)
+                  .setter(BlazeUserSettings::setJavascriptTestrunnersEnabled)
+                  .componentFactory(SimpleComponent::createCheckBox);
 
   private static final ConfigurableSetting<?, ?> COLLAPSE_PROJECT_VIEW =
       setting("Collapse project view directory roots")
