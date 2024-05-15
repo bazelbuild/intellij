@@ -25,7 +25,6 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
-import com.google.idea.blaze.qsync.project.SnapshotProto.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.protobuf.ExtensionRegistry;
 import java.io.IOException;
@@ -38,9 +37,6 @@ public class SnapshotDeserializer {
 
   private static final ImmutableBiMap<SnapshotProto.WorkspaceFileChange.VcsOperation, Operation>
       OP_MAP = SnapshotSerializer.OP_MAP.inverse();
-
-  private static final ImmutableBiMap<LanguageClass, ProjectDefinition.LanguageClass>
-      LANGUAGE_CLASS_MAP = SnapshotSerializer.LANGUAGE_CLASS_MAP.inverse();
 
   private final PostQuerySyncData.Builder snapshot;
 
@@ -61,6 +57,9 @@ public class SnapshotDeserializer {
     if (proto.hasVcsState()) {
       visitVcsState(proto.getVcsState());
     }
+    if (proto.hasBazelVersion()) {
+      snapshot.setBazelVersion(Optional.of(proto.getBazelVersion()));
+    }
     visitQuerySummay(proto.getQuerySummary());
     return Optional.of(this);
   }
@@ -74,27 +73,27 @@ public class SnapshotDeserializer {
         ProjectDefinition.create(
             proto.getIncludePathsList().stream().map(Path::of).collect(toImmutableSet()),
             proto.getExcludePathsList().stream().map(Path::of).collect(toImmutableSet()),
-            proto.getLanguageClassesList().stream()
-                .map(LANGUAGE_CLASS_MAP::get)
-                .collect(toImmutableSet()),
+            QuerySyncLanguage.fromProtoList(proto.getLanguageClassesList()),
             ImmutableSet.copyOf(proto.getTestSourcesList())));
   }
 
   private void visitVcsState(SnapshotProto.VcsState proto) {
-    VcsState state =
-        new VcsState(
-            proto.getWorkspaceId(),
-            proto.getUpstreamRevision(),
-            proto.getWorkingSetList().stream()
-                .map(
-                    c ->
-                        new WorkspaceFileChange(
-                            OP_MAP.get(c.getOperation()), Path.of(c.getWorkspaceRelativePath())))
-                .collect(toImmutableSet()),
-            proto.hasWorkspaceSnapshot()
-                ? Optional.of(Path.of(proto.getWorkspaceSnapshot().getPath()))
-                : Optional.empty());
-    snapshot.setVcsState(Optional.of(state));
+    snapshot.setVcsState(Optional.of(convertVcsState(proto)));
+  }
+
+  public static VcsState convertVcsState(SnapshotProto.VcsState proto) {
+    return new VcsState(
+        proto.getWorkspaceId(),
+        proto.getUpstreamRevision(),
+        proto.getWorkingSetList().stream()
+            .map(
+                c ->
+                    new WorkspaceFileChange(
+                        OP_MAP.get(c.getOperation()), Path.of(c.getWorkspaceRelativePath())))
+            .collect(toImmutableSet()),
+        proto.hasWorkspaceSnapshot()
+            ? Optional.of(Path.of(proto.getWorkspaceSnapshot().getPath()))
+            : Optional.empty());
   }
 
   private void visitQuerySummay(Query.Summary proto) {

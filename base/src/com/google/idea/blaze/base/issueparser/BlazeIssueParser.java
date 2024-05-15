@@ -22,6 +22,7 @@ import static com.google.idea.blaze.base.scope.output.IssueOutput.Category.WARNI
 
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Streams;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -36,6 +37,7 @@ import com.google.idea.blaze.base.run.filter.FileResolver;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,10 +51,46 @@ public class BlazeIssueParser {
 
   private static final String BAZEL_BUILD_FILES_PATTERN = "(/.*?BUILD(?:\\.bazel)?)";
 
-  public static ImmutableList<BlazeIssueParser.Parser> defaultIssueParsers(
+  private static ImmutableList<Parser> commonParsers(Project project, WorkspaceRoot workspaceRoot, ProjectViewSet projectViewSet) {
+    return ImmutableList.<Parser>builder()
+            .add(
+                    new PythonCompileParser(project),
+                    new DefaultCompileParser(project),
+                    new TracebackParser(),
+                    new BuildParser(),
+                    new SkylarkErrorParser(),
+                    new LinelessBuildParser(),
+                    new InvalidTargetProjectViewPackageParser(
+                            projectViewSet, "no such package '(.*)': BUILD file not found on package path"),
+                    new InvalidTargetProjectViewPackageParser(
+                            projectViewSet, "ERROR: invalid target format '(.*?)'"),
+                    new FileNotFoundBuildParser(workspaceRoot)
+            )
+            .build();
+  }
+
+  // When it comes to target detection, it's highly probable that we'll encounter files that aren't
+  // associated with any target. We aim to avoid raising visible errors in such cases.
+  public static ImmutableList<BlazeIssueParser.Parser> targetDetectionQueryParsers(
       Project project,
-      WorkspaceRoot workspaceRoot,
-      BlazeInvocationContext.ContextType invocationContext) {
+      WorkspaceRoot workspaceRoot) {
+    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    if (projectViewSet == null) {
+      // some parsers will work regardless, but don't even bother splitting them if there's no
+      // project view available
+      return ImmutableList.of();
+    }
+
+    return ImmutableList.<Parser>builder()
+            .addAll(commonParsers(project, workspaceRoot, projectViewSet))
+            .add(GenericErrorParser.FOR_TARGET_DETECTION_QUERY)
+            .build();
+  }
+
+  public static ImmutableList<BlazeIssueParser.Parser> defaultIssueParsers(
+          Project project,
+          WorkspaceRoot workspaceRoot,
+          BlazeInvocationContext.ContextType invocationContext) {
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
     if (projectViewSet == null) {
       // some parsers will work regardless, but don't even bother splitting them if there's no
@@ -63,25 +101,15 @@ public class BlazeIssueParser {
     ImmutableList.Builder<BlazeIssueParser.Parser> parsers =
         ImmutableList.<BlazeIssueParser.Parser>builder()
             .add(
-                new BlazeIssueParser.PythonCompileParser(project),
-                new BlazeIssueParser.DefaultCompileParser(project),
-                new BlazeIssueParser.TracebackParser(),
-                new BlazeIssueParser.BuildParser(),
-                new BlazeIssueParser.SkylarkErrorParser(),
-                new BlazeIssueParser.LinelessBuildParser(),
                 new BlazeIssueParser.ProjectViewLabelParser(projectViewSet),
-                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                    projectViewSet, "no such package '(.*)': BUILD file not found on package path"),
                 new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
                     projectViewSet, "no targets found beneath '(.*?)'"),
                 new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                    projectViewSet, "ERROR: invalid target format '(.*?)'"),
-                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                    projectViewSet, "ERROR: Skipping '(.*?)'"),
-                new BlazeIssueParser.FileNotFoundBuildParser(workspaceRoot))
-            .addAll(BlazeIssueParserProvider.getAllIssueParsers(project));
+                    projectViewSet, "ERROR: Skipping '(.*?)'")
+                )
+            .addAll(commonParsers(project, workspaceRoot, projectViewSet));
     if (invocationContext == BlazeInvocationContext.ContextType.Sync) {
-      parsers.add(BlazeIssueParser.GenericErrorParser.INSTANCE);
+      parsers.add(BlazeIssueParser.GenericErrorParser.FOR_SYNC);
     }
     return parsers.build();
   }
@@ -432,21 +460,29 @@ public class BlazeIssueParser {
    * parsers. Avoids parsing build/test failure notifications.
    */
   static class GenericErrorParser extends SingleLineParser {
-    static final GenericErrorParser INSTANCE = new GenericErrorParser();
 
     // Match either specific blacklisted patterns we don't want, or the generic error message we do.
     // Then throw away the blacklisted matches later.
-    private static final String PATTERN =
-        "^ERROR: (?:"
-            + "(//.+?: Exit [0-9]+\\.)|"
-            + "(.*: Process exited with status [0-9]+\\.)|"
-            + "(build interrupted\\.)|"
-            + "(Couldn't start the build. Unable to run tests.)|"
-            + "(" + BAZEL_BUILD_FILES_PATTERN + ":[0-9]+:[0-9]+: Couldn't build file .*)|"
-            + "(.*))$";
+    private static final ImmutableList<String> COMMON_PATTERNS = ImmutableList.of(
+            "(//.+?: Exit [0-9]+\\.)",
+            "(.*: Process exited with status [0-9]+\\.)",
+            "(build interrupted\\.)",
+            "(Couldn't start the build. Unable to run tests.)",
+            "(" + BAZEL_BUILD_FILES_PATTERN + ":[0-9]+:[0-9]+: Couldn't build file .*)");
 
-    private GenericErrorParser() {
-      super(PATTERN);
+    private static final ImmutableList<String> QUERY_PATTERNS = ImmutableList.of(
+            "(Skipping '//.+': no such target '//.+': target '.*' not declared in package '.*' defined by .+)",
+            "(Skipping '//.+': no targets found beneath '.+')"
+    );
+
+    private static final ImmutableList<String> PATTERN_FOR_DETECTION_QUERY = ImmutableList.copyOf(Streams.concat(COMMON_PATTERNS.stream(), QUERY_PATTERNS.stream()).toList());
+    private static final ImmutableList<String> PATTERN_FOR_SYNC = COMMON_PATTERNS;
+
+    static final GenericErrorParser FOR_SYNC = new GenericErrorParser(PATTERN_FOR_SYNC);
+    static final GenericErrorParser FOR_TARGET_DETECTION_QUERY = new GenericErrorParser(PATTERN_FOR_DETECTION_QUERY);
+
+    private GenericErrorParser(ImmutableList<String> ignoredPatterns) {
+      super("^ERROR: (?:" + String.join("|", ImmutableList.<String>builder().addAll(ignoredPatterns).add("(.*)").build()) + ")$");
     }
 
     @Nullable

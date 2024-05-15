@@ -17,9 +17,9 @@ package com.google.idea.blaze.base.qsync.cache;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.hash.Hashing;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
+import com.google.idea.blaze.common.artifact.OutputArtifactInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.PathUtil;
@@ -37,9 +37,9 @@ import java.nio.file.Path;
 class CacheDirectoryManager {
 
   private final Path digestDirectory;
-  private final ImmutableList<Path> cacheDirectories;
+  private final ImmutableCollection<Path> cacheDirectories;
 
-  public CacheDirectoryManager(Path digestDirectory, ImmutableList<Path> cacheDirectories) {
+  public CacheDirectoryManager(Path digestDirectory, ImmutableCollection<Path> cacheDirectories) {
     this.digestDirectory = digestDirectory;
     this.cacheDirectories = cacheDirectories;
   }

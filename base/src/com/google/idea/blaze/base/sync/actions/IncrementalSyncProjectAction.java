@@ -16,9 +16,10 @@
 package com.google.idea.blaze.base.sync.actions;
 
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
@@ -27,29 +28,33 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import icons.BlazeIcons;
-import java.awt.event.InputEvent;
+import javax.annotation.Nullable;
 import javax.swing.Icon;
 
 /** Syncs the project with BUILD files. */
 public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
 
+  public static final String ID = "Blaze.IncrementalSyncProject";
+
   @Override
   protected void runSync(Project project, AnActionEvent e) {
-    if (QuerySync.isEnabled()) {
+    doIncrementalSync(getClass(), project, e);
+  }
+
+  public static void doIncrementalSync(Class<?> klass, Project project, @Nullable AnActionEvent e) {
+    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
       QuerySyncManager qsm = QuerySyncManager.getInstance(project);
-      QuerySyncActionStatsScope scope = new QuerySyncActionStatsScope(getClass(), e);
+      QuerySyncActionStatsScope scope = QuerySyncActionStatsScope.create(klass, e);
       if (!qsm.isProjectLoaded()) {
         qsm.onStartup(scope);
-      } else if ((e.getInputEvent() != null)
-          && (e.getInputEvent().getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0) {
-        qsm.fullSync(scope);
       } else {
-        qsm.deltaSync(scope);
+        qsm.deltaSync(scope, TaskOrigin.USER_ACTION);
       }
     } else {
       BlazeSyncManager.getInstance(project)
@@ -67,7 +72,7 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
     Presentation presentation = e.getPresentation();
     BlazeSyncStatus statusHelper = BlazeSyncStatus.getInstance(project);
     presentation.setEnabled(!statusHelper.syncInProgress());
-    if (QuerySync.isEnabled()) {
+    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
       return;
     }
     BlazeSyncStatus.SyncStatus status = statusHelper.getStatus();
@@ -112,5 +117,11 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
   @Override
   protected QuerySyncStatus querySyncSupport() {
     return QuerySyncStatus.SUPPORTED;
+  }
+
+  @Override
+  public ActionUpdateThread getActionUpdateThread() {
+    // Not clear what `showPopupNotification` does and why.
+    return ActionUpdateThread.EDT;
   }
 }

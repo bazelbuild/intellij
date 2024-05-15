@@ -10,7 +10,6 @@ java_library(
         "com/google/idea/sdkcompat/editor/**",
         "com/google/idea/sdkcompat/general/**",
         "com/google/idea/sdkcompat/fig/**",
-        "com/google/idea/sdkcompat/logging/**",
         "com/google/idea/sdkcompat/platform/**",
         "com/google/idea/sdkcompat/psi/**",
         "com/google/idea/sdkcompat/python/**",
@@ -37,12 +36,14 @@ java_library(
             "com/google/idea/sdkcompat/scala/**",
             "com/google/idea/sdkcompat/kotlin/**",
             "com/google/idea/sdkcompat/javascript/**",
+            "com/google/idea/sdkcompat/go/**",  #api231
         ]) + ["com/google/idea/sdkcompat/refactoring/safedelete/JavaSafeDeleteProcessorCompat.java"],
     ),
     visibility = ["//sdkcompat:__pkg__"],
     deps = [
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:plugin_api",
+        "//third_party/go",  #api231
         "//third_party/scala",
         "//third_party/javascript"
     ],

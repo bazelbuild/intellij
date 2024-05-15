@@ -18,18 +18,14 @@ package com.google.idea.blaze.qsync.testdata;
 import static com.google.common.util.concurrent.MoreExecutors.newDirectExecutorService;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.EMPTY_PACKAGE_READER;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
-import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 
 import com.google.common.base.Predicates;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.GraphToProjectConverter;
-import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
+import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -44,7 +40,17 @@ public class ProjectProtos {
   private ProjectProtos() {}
 
   public static Project forTestProject(TestData project) throws IOException, BuildException {
-    Path workspaceImportDirectory = TestData.getPathFor(project);
+    return create(project, false);
+  }
+
+  public static Project forTestProjectWithNewArtifactLogic(TestData project)
+      throws IOException, BuildException {
+    return create(project, true);
+  }
+
+  private static Project create(TestData project, boolean useNewArtifactLogic)
+      throws IOException, BuildException {
+    Path workspaceImportDirectory = project.getQueryOutputPath();
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             EMPTY_PACKAGE_READER,
@@ -53,17 +59,10 @@ public class ProjectProtos {
             ProjectDefinition.create(
                 ImmutableSet.of(workspaceImportDirectory),
                 ImmutableSet.of(),
-                ImmutableSet.of(LanguageClass.JAVA),
+                ImmutableSet.of(QuerySyncLanguage.JAVA),
                 ImmutableSet.of()),
-            newDirectExecutorService());
-
-    BuildGraphData buildGraphData =
-        new BlazeQueryParser(
-                getQuerySummary(project),
-                NOOP_CONTEXT,
-                ImmutableSet.of(),
-                Suppliers.ofInstance(true))
-            .parse();
-    return converter.createProject(buildGraphData);
+            newDirectExecutorService(),
+            useNewArtifactLogic);
+    return converter.createProject(BuildGraphs.forTestProject(project));
   }
 }

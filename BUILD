@@ -6,6 +6,7 @@ load("@bazel_tools//tools/jdk:default_java_toolchain.bzl", "default_java_toolcha
 load(
     "//:build-visibility.bzl",
     "BAZEL_PLUGIN_SUBPACKAGES",
+    "DEFAULT_TEST_VISIBILITY",
     "create_plugin_packages_group",
 )
 
@@ -20,6 +21,7 @@ filegroup(
     visibility = BAZEL_PLUGIN_SUBPACKAGES,
 )
 
+# BEGIN-EXTERNAL
 # IJwB tests, run with an IntelliJ plugin SDK
 test_suite(
     name = "ijwb_common_tests",
@@ -36,6 +38,7 @@ test_suite(
         "//plugin_dev:integration_tests",
         "//scala:integration_tests",
         "//scala:unit_tests",
+        "//skylark:unit_tests",
     ],
 )
 
@@ -65,6 +68,20 @@ test_suite(
     ],
 )
 
+# CLwB tests, run with a CLion plugin SDK
+test_suite(
+    name = "clwb_tests",
+    tests = [
+        "//base:unit_tests",
+        "//clwb:unit_tests",
+        "//cpp:unit_tests",
+        "//dart:unit_tests",
+        "//python:unit_tests",
+        "//skylark:unit_tests",
+    ],
+)
+# END-EXTERNAL
+
 # ASwB tests, run with an Android Studio plugin SDK
 test_suite(
     name = "aswb_tests",
@@ -78,27 +95,9 @@ test_suite(
         "//dart:unit_tests",
         "//java:integration_tests",
         "//java:unit_tests",
+        "//skylark:unit_tests",
     ],
-)
-
-test_suite(
-    name = "aswb_python_tests",
-    tests = [
-        "//python:integration_tests",
-        "//python:unit_tests",
-    ],
-)
-
-# CLwB tests, run with a CLion plugin SDK
-test_suite(
-    name = "clwb_tests",
-    tests = [
-        "//base:unit_tests",
-        "//clwb:unit_tests",
-        "//cpp:unit_tests",
-        "//dart:unit_tests",
-        "//python:unit_tests",
-    ],
+    visibility = DEFAULT_TEST_VISIBILITY,
 )
 
 default_java_toolchain(

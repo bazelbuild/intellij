@@ -22,6 +22,7 @@ import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.and
 
 import com.android.SdkConstants;
 import com.android.ide.common.repository.GradleCoordinate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
@@ -29,6 +30,7 @@ import com.google.idea.blaze.android.libraries.LibraryFileBuilder;
 import com.google.idea.blaze.android.libraries.UnpackedAarUtils;
 import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.projectsystem.BlazeModuleSystem;
+import com.google.idea.blaze.android.projectsystem.DesugaringLibraryConfigFilesLocator;
 import com.google.idea.blaze.android.projectsystem.MavenArtifactLocator;
 import com.google.idea.blaze.android.targetmapbuilder.NbAarTarget;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -36,10 +38,12 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,6 +61,24 @@ public class BlazeModuleSystemExternalDependencyIntegrationTest
 
   @Before
   public void setupSourcesAndProjectView() {
+    registerExtension(
+        DesugaringLibraryConfigFilesLocator.EP_NAME,
+        new DesugaringLibraryConfigFilesLocator() {
+          @Override
+          public boolean getDesugarLibraryConfigFilesKnown() {
+            return true;
+          }
+
+          @Override
+          public ImmutableList<Path> getDesugarLibraryConfigFiles(Project project) {
+            return ImmutableList.of(Paths.get("a/a.json"), Paths.get("b/b.json"));
+          }
+
+          @Override
+          public BuildSystemName buildSystem() {
+            return BuildSystemName.Blaze;
+          }
+        });
     registerExtension(
         MavenArtifactLocator.EP_NAME,
         new MavenArtifactLocator() {

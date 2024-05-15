@@ -38,16 +38,19 @@ public class RefreshParameters {
 
   final PostQuerySyncData currentProject;
   final Optional<VcsState> latestVcsState;
+  final Optional<String> latestBazelVersion;
   final ProjectDefinition latestProjectDefinition;
   final VcsStateDiffer vcsDiffer;
 
   RefreshParameters(
       PostQuerySyncData currentProject,
       Optional<VcsState> latestVcsState,
+      Optional<String> latestBazelVersion,
       ProjectDefinition latestProjectDefinition,
       VcsStateDiffer vcsDiffer) {
     this.currentProject = currentProject;
     this.latestVcsState = latestVcsState;
+    this.latestBazelVersion = latestBazelVersion;
     this.latestProjectDefinition = latestProjectDefinition;
     this.vcsDiffer = vcsDiffer;
   }
@@ -85,6 +88,13 @@ public class RefreshParameters {
               "Upstream revision has changed %s -> %s: performing full query",
               currentProject.vcsState().get().upstreamRevision,
               latestVcsState.get().upstreamRevision));
+      return true;
+    }
+    if (!Objects.equals(currentProject.bazelVersion(), latestBazelVersion)) {
+      context.output(
+          PrintOutput.output(
+              "Bazel version has changed %s -> %s",
+              currentProject.bazelVersion().orElse(null), latestBazelVersion.orElse(null)));
       return true;
     }
     return false;

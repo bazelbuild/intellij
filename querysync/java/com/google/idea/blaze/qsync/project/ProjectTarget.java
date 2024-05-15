@@ -16,10 +16,11 @@
 package com.google.idea.blaze.qsync.project;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Label;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
 import java.util.Optional;
 
 /**
@@ -30,6 +31,23 @@ import java.util.Optional;
  */
 @AutoValue
 public abstract class ProjectTarget implements BuildTarget {
+
+  /** The type of a source file within {@link #sourceLabels()}. */
+  public enum SourceType {
+    /**
+     * Regular sources, i.e. a java or kotlin file for a java target, a c or c++ file for a cc
+     * target, etc.
+     */
+    REGULAR,
+    ANDROID_RESOURCES,
+    ANDROID_MANIFEST,
+    CC_HEADERS;
+
+    /** Helper method to improve code readability when passing an array of source types to match. */
+    public static SourceType[] all() {
+      return values();
+    }
+  }
 
   @Override
   public abstract Label label();
@@ -43,7 +61,7 @@ public abstract class ProjectTarget implements BuildTarget {
   /** All the runtime dependencies of a java rule. */
   public abstract ImmutableSet<Label> runtimeDeps();
 
-  public abstract ImmutableSet<Label> sourceLabels();
+  public abstract ImmutableSetMultimap<SourceType, Label> sourceLabels();
 
   public abstract Optional<Label> testApp();
 
@@ -51,7 +69,13 @@ public abstract class ProjectTarget implements BuildTarget {
 
   public abstract Optional<String> customPackage();
 
-  public abstract ImmutableSet<LanguageClass> languages();
+  public abstract ImmutableList<String> copts();
+
+  public abstract ImmutableSet<QuerySyncLanguage> languages();
+
+  public abstract ImmutableList<String> tags();
+
+  public abstract Optional<String> mainClass();
 
   public static Builder builder() {
     return new AutoValue_ProjectTarget.Builder();
@@ -68,7 +92,9 @@ public abstract class ProjectTarget implements BuildTarget {
 
     public abstract ImmutableSet.Builder<Label> runtimeDepsBuilder();
 
-    public abstract ImmutableSet.Builder<Label> sourceLabelsBuilder();
+    public abstract ImmutableSetMultimap.Builder<SourceType, Label> sourceLabelsBuilder();
+
+    public abstract ImmutableList.Builder<String> coptsBuilder();
 
     public abstract Builder testApp(Label testApp);
 
@@ -76,7 +102,11 @@ public abstract class ProjectTarget implements BuildTarget {
 
     public abstract Builder customPackage(String customPackage);
 
-    public abstract ImmutableSet.Builder<LanguageClass> languagesBuilder();
+    public abstract ImmutableSet.Builder<QuerySyncLanguage> languagesBuilder();
+
+    public abstract Builder tags(Iterable<String> tags);
+
+    public abstract Builder mainClass(String mainClass);
 
     public abstract ProjectTarget build();
   }

@@ -1,3 +1,10 @@
+load(
+    "//:build-visibility.bzl",
+    "ASPECT_PROTO_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+    "create_proto_visibility_group",
+)
+
 #
 # Description:
 # Proto dependencies from bazel.
@@ -5,12 +12,6 @@
 load(
     "//intellij_platform_sdk:build_defs.bzl",
     "combine_visibilities",
-)
-load(
-    "//:build-visibility.bzl",
-    "ASPECT_PROTO_VISIBILITY",
-    "PLUGIN_PACKAGES_VISIBILITY",
-    "create_proto_visibility_group",
 )
 
 licenses(["notice"])
@@ -85,8 +86,8 @@ proto_library(
     name = "artifact_tracker_data_proto",
     srcs = ["artifact_tracker_data.proto"],
     deps = [
-        ":project_data_proto",
-        "//third_party/bazel/src/main/protobuf:build_proto",
+        "//querysync/java/com/google/idea/blaze/qsync/cc:cc_compilation_info_proto",
+        "//querysync/java/com/google/idea/blaze/qsync/java:java_target_info",
     ],
 )
 

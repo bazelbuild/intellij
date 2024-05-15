@@ -32,6 +32,8 @@ import javax.annotation.Nullable;
 
 /** A collection of project views and their file names. */
 public final class ProjectViewSet implements Serializable {
+
+  public static final ProjectViewSet EMPTY = builder().build();
   private static final long serialVersionUID = 2L;
 
   private final ImmutableList<ProjectViewFile> projectViewFiles;
@@ -50,10 +52,12 @@ public final class ProjectViewSet implements Serializable {
   }
 
   /** Returns all values from all scalar sections in the project views, in order */
-  public <T> List<T> listScalarItems(SectionKey<T, ScalarSection<T>> key) {
+  public <T> List<T> listScalarItems(SectionKey<T, ScalarSection<T>>... keys) {
     List<T> result = Lists.newArrayList();
-    for (ScalarSection<T> section : getSections(key)) {
-      result.add(section.getValue());
+    for (SectionKey<T, ScalarSection<T>> key: keys) {
+      for (ScalarSection<T> section : getSections(key)) {
+        result.add(section.getValue());
+      }
     }
     return result;
   }

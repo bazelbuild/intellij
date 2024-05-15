@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.filecache;
 
 import com.google.devtools.intellij.model.ProjectData.LocalFileOrOutputArtifact;
-import com.google.idea.blaze.base.filecache.ArtifactState.LocalFileState;
+import com.google.idea.blaze.common.artifact.ArtifactState;
 import javax.annotation.Nullable;
 
 /** Implementation of {@link ArtifactStateProtoConverter} for {@link LocalFileState} */

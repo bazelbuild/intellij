@@ -1,6 +1,7 @@
 """Custom rule for creating IntelliJ plugin tests.
 """
 
+load("@rules_java//java:defs.bzl", "java_test")
 load(
     "//build_defs:build_defs.bzl",
     "api_version_txt",
@@ -18,6 +19,8 @@ ADD_OPENS = [
         "java.desktop/java.awt.event",
         "java.desktop/javax.swing",
         "java.desktop/javax.swing.plaf.basic",
+        "java.desktop/javax.swing.text",
+        "java.desktop/javax.swing.text.html",
         "java.desktop/sun.awt",
         "java.desktop/sun.awt.image",
         "java.desktop/sun.font",
@@ -125,7 +128,7 @@ def intellij_unit_test_suite(
         test_package_root = test_package_root,
         class_rules = class_rules,
     )
-    native.java_test(
+    java_test(
         name = name,
         size = size,
         srcs = srcs + [suite_class_name],
@@ -192,6 +195,9 @@ def intellij_integration_test_suite(
     deps = list(deps)
     deps.extend([
         "//testing:lib",
+        # Usually, we'd get this from the JetBrains SDK, but the bundled one not aware of Bazel platforms,
+        # so it fails on certain setups.
+        "@jna//jar",
     ])
     runtime_deps = list(runtime_deps)
     runtime_deps.extend([
@@ -226,8 +232,7 @@ def intellij_integration_test_suite(
     args = kwargs.pop("args", [])
     args.append("--main_advice_classpath=./%s/%s_protoeditor_resource_fix" % (native.package_name(), name))
     data.append(name + "_protoeditor_resource_fix")
-
-    native.java_test(
+    java_test(
         name = name,
         size = size,
         srcs = srcs + [suite_class_name],

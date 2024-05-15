@@ -29,6 +29,8 @@ import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import javax.annotation.Nullable;
 
+import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
+
 /** "targets" section. */
 public class TargetSection {
   public static final SectionKey<TargetExpression, ListSection<TargetExpression>> KEY =
@@ -82,8 +84,9 @@ public class TargetSection {
       ListSection.Builder<TargetExpression> builder = ListSection.builder(KEY);
       builder.add(
           TextBlock.of(
-              "  # If source code isn't resolving, add additional targets that compile it here"));
-      builder.add(TextBlock.newLine());
+                  TEMPORARY_LINE_NUMBER,
+                  "  # If source code isn't resolving, add additional targets that compile it here"));
+      builder.add(TextBlock.newLine(TEMPORARY_LINE_NUMBER));
       return ProjectView.builder(topLevelProjectView).add(builder).build();
     }
 

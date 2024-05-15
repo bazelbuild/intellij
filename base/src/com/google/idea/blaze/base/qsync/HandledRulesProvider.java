@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import java.util.Set;
 
 /**
@@ -26,5 +27,5 @@ public interface HandledRulesProvider {
   ExtensionPointName<HandledRulesProvider> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.base.qsync.HandledRulesProvider");
 
-  Set<String> handledRuleKinds();
+  Set<String> handledRuleKinds(Project project);
 }

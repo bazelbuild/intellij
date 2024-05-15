@@ -19,7 +19,9 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Arrays.stream;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.devtools.build.runfiles.Runfiles;
+import com.google.idea.blaze.common.Label;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Locale;
@@ -36,9 +38,16 @@ public enum TestData {
   JAVA_LIBRARY_NO_DEPS_QUERY("nodeps"),
   JAVA_LIBRARY_PROTO_DEP_QUERY("protodep"),
   JAVA_LIBRARY_TRANSITIVE_DEP_QUERY("transitivedep", "externaldep"),
+  JAVA_LIBRARY_TRANSITIVE_INTERNAL_DEP_QUERY("transitiveinternaldep", "internaldep", "nodeps"),
   BUILDINCLUDES_QUERY("buildincludes"),
   FILEGROUP_QUERY("filegroup"),
-  CC_LIBRARY_QUERY("cc");
+  CC_LIBRARY_QUERY("cc"),
+  CC_EXTERNAL_DEP_QUERY("cc_externaldep"),
+  CC_MULTISRC_QUERY("cc_multisrc"),
+  PROTO_ONLY_QUERY("protoonly"),
+  NESTED_PROTO_QUERY("nestedproto"),
+  TAGS_QUERY("tags"),
+  EMPTY_QUERY("empty");
 
   public final ImmutableList<Path> srcPaths;
 
@@ -46,7 +55,8 @@ public enum TestData {
     this.srcPaths = stream(paths).map(Path::of).collect(toImmutableList());
   }
 
-  private static final String WORKSPACE_NAME = "intellij_with_bazel";
+  // TODO: Probably there's a better way to do this.
+  private static final String WORKSPACE_NAME = "_main";
 
   public static final Path ROOT =
       Path.of(
@@ -54,12 +64,30 @@ public enum TestData {
 
   public static final String ROOT_PACKAGE = "//" + ROOT;
 
-  public static Path getPathFor(TestData name) throws IOException {
+  public Path getQueryOutputPath() throws IOException {
     return Path.of(Runfiles.preload().unmapped().rlocation(WORKSPACE_NAME + "/" + ROOT))
-        .resolve(name.toString().toLowerCase(Locale.ROOT));
+        .resolve(name().toLowerCase(Locale.ROOT));
   }
 
-  public static ImmutableList<Path> getRelativeSourcePathsFor(TestData name) {
-    return name.srcPaths.stream().map(ROOT::resolve).collect(toImmutableList());
+  public ImmutableList<Path> getRelativeSourcePaths() {
+    return srcPaths.stream().map(ROOT::resolve).collect(toImmutableList());
+  }
+
+  public Path getOnlySourcePath() {
+    return Iterables.getOnlyElement(getRelativeSourcePaths());
+  }
+
+  /**
+   * Gets labels included in this project, making the assumption that each package has a single
+   * target who's name matches the directory name.
+   */
+  public ImmutableList<Label> getAssumedLabels() {
+    return srcPaths.stream()
+        .map(p -> Label.fromPackageAndName(ROOT.resolve(p), p.toString()))
+        .collect(toImmutableList());
+  }
+
+  public Label getAssumedOnlyLabel() {
+    return Iterables.getOnlyElement(getAssumedLabels());
   }
 }

@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
+import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
@@ -169,6 +170,11 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
     return inner().possibleWorkspaceFileNames();
   }
 
+  @Override
+  public ImmutableList<String> possibleModuleFileNames() {
+    return inner().possibleModuleFileNames();
+  }
+
   /**
    * Sets a boolean value to toggle the outcome of getBlazeInfo() to be returned by {@code
    * getBuildSystem().getBuildInvoker().getBlazeInfo()}.
@@ -270,6 +276,12 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
     }
 
     @Override
+    public BuildInvoker getBuildInvoker(
+        Project project, BlazeContext context, BlazeCommandName command) {
+      return new BuildInvokerWrapper(inner.getBuildInvoker(project, context));
+    }
+
+    @Override
     public Optional<BuildInvoker> getParallelBuildInvoker(Project project, BlazeContext context) {
       return inner.getParallelBuildInvoker(project, context).map(i -> new BuildInvokerWrapper(i));
     }
@@ -291,6 +303,11 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
     public void populateBlazeVersionData(
         WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo, BlazeVersionData.Builder builder) {
       inner.populateBlazeVersionData(workspaceRoot, blazeInfo, builder);
+    }
+
+    @Override
+    public Optional<String> getBazelVersionString(BlazeInfo blazeInfo) {
+      return inner.getBazelVersionString(blazeInfo);
     }
 
     @Override

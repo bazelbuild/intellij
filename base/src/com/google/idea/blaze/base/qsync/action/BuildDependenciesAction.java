@@ -16,9 +16,13 @@
 package com.google.idea.blaze.base.qsync.action;
 
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
-import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.PopupPosititioner;
-import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
+import com.google.idea.blaze.common.Context;
+import com.ibm.icu.lang.UCharacter;
+import com.ibm.icu.text.BreakIterator;
 import com.intellij.icons.AllIcons.Actions;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -26,6 +30,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,12 +38,14 @@ import org.jetbrains.annotations.NotNull;
  * Action to build dependencies and enable analysis.
  *
  * <p>It can operate on a source file, BUILD file or package. See {@link
- * com.google.idea.blaze.base.qsync.DependencyTracker#getProjectTargets(BlazeContext, Path)} for a
+ * com.google.idea.blaze.qsync.project.BuildGraphData#getProjectTargets(Context, Path)} for a
  * description of what targets dependencies aren built for in each case.
  */
 public class BuildDependenciesAction extends BlazeProjectAction {
 
-  private static final String NAME = "Build dependencies";
+  static final String NAME =
+      UCharacter.toTitleCase(
+          Locale.US, QuerySync.BUILD_DEPENDENCIES_ACTION_NAME, BreakIterator.getWordInstance());
 
   @Override
   @NotNull
@@ -55,12 +62,17 @@ public class BuildDependenciesAction extends BlazeProjectAction {
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setIcon(Actions.Compile);
-    presentation.setText(NAME);
+    if (e.getPlace().equals(ActionPlaces.MAIN_MENU)) {
+      presentation.setText(NAME + " for Current File");
+    } else {
+      presentation.setText(NAME);
+    }
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    BuildDependenciesHelper helper = new BuildDependenciesHelper(project, getClass());
+    BuildDependenciesHelper helper =
+        new BuildDependenciesHelper(project, getClass(), DepsBuildType.SELF);
     Optional<Path> relativePath = helper.getRelativePathToEnableAnalysisFor(virtualFile);
     if (relativePath.isEmpty()) {
-      presentation.setEnabledAndVisible(false);
+      presentation.setEnabled(false);
       return;
     }
     if (!helper.canEnableAnalysisNow()) {
@@ -72,7 +84,8 @@ public class BuildDependenciesAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    BuildDependenciesHelper helper = new BuildDependenciesHelper(project, getClass());
-    helper.enableAnalysis(e, PopupPosititioner.showAtMousePointerOrCentered(e));
+    BuildDependenciesHelper helper =
+        new BuildDependenciesHelper(project, getClass(), DepsBuildType.SELF);
+    helper.enableAnalysis(e, PopupPositioner.showAtMousePointerOrCentered(e));
   }
 }

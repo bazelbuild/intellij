@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.errorprone.annotations.MustBeClosed;
+import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.CommandLineBlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
@@ -71,6 +72,12 @@ class BazelBuildSystem implements BuildSystem {
   }
 
   @Override
+  public BuildInvoker getBuildInvoker(
+      Project project, BlazeContext context, BlazeCommandName command) {
+    return getBuildInvoker(project, context);
+  }
+
+  @Override
   public BuildInvoker getBuildInvoker(Project project, BlazeContext context) {
     String binaryPath;
     File projectSpecificBinary = getProjectSpecificBazelBinary(project);
@@ -111,6 +118,11 @@ class BazelBuildSystem implements BuildSystem {
   public void populateBlazeVersionData(
       WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo, BlazeVersionData.Builder builder) {
     builder.setBazelVersion(BazelVersion.parseVersion(blazeInfo));
+  }
+
+  @Override
+  public Optional<String> getBazelVersionString(BlazeInfo blazeInfo) {
+    return Optional.ofNullable(BazelVersion.parseVersion(blazeInfo).toString());
   }
 
   @Override

@@ -1,0 +1,36 @@
+syntax = "proto2";
+
+package com.google.idea.blaze.ext.perforce;
+
+import "ext/proto/perforce/base.proto";
+import "ext/proto/perforce/status.proto";
+
+option java_package = "com.google.idea.blaze.ext.p4";
+
+message ListSwitchClientsRequest {
+  optional RequestBase base = 1;
+}
+
+message ListSwitchClientsResponse {
+  optional PerforceStatus perforce_status = 1002;
+
+  message SwitchClient {
+    optional PerforceStatus perforce_status = 1;
+    optional string switch_name = 2;
+    optional string target_name = 3;
+  }
+  repeated SwitchClient switch_clients = 1;
+}
+
+message UpdateSwitchClientRequest {
+  optional RequestBase base = 1;
+  optional string switch_name = 3;
+  optional string target_name = 4;
+  optional bool delete_switch = 5;
+}
+
+message UpdateSwitchClientResponse {
+  optional PerforceStatus perforce_status = 1002;
+  repeated PerforceStatus warnings = 1;
+  optional string switch_name = 2;
+}

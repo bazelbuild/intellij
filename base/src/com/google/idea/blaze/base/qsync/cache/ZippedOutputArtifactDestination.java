@@ -15,58 +15,55 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+import com.google.auto.value.AutoValue;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /** A record that describes the location of an output artifact in cache directories. */
-public class ZippedOutputArtifactDestination implements OutputArtifactDestinationAndLayout {
+@AutoValue
+public abstract class ZippedOutputArtifactDestination
+    implements OutputArtifactDestinationAndLayout {
 
-  private final String key;
+  public static ZippedOutputArtifactDestination create(
+      Path finalDestination, Path copyDestination) {
+    return new AutoValue_ZippedOutputArtifactDestination(finalDestination, copyDestination);
+  }
+
+  private static void extract(Path source, Path destination) {
+    try {
+      Files.createDirectories(destination);
+      try (ZipFile zip = new ZipFile(source.toFile())) {
+        for (var entries = zip.entries(); entries.hasMoreElements(); ) {
+          ZipEntry entry = entries.nextElement();
+          if (entry.isDirectory()) {
+            Files.createDirectories(destination.resolve(entry.getName()));
+          } else {
+            // Srcjars do not contain separate directory entries
+            Files.createDirectories(destination.resolve(entry.getName()).getParent());
+            Files.copy(
+                zip.getInputStream(entry),
+                destination.resolve(entry.getName()),
+                StandardCopyOption.REPLACE_EXISTING);
+          }
+        }
+      }
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to extract " + source + " to " + destination, e);
+    }
+  }
 
   /**
    * The location where in the cache directory the representation of the artifact for the IDE should
    * be placed.
    */
-  public final Path finalDestination;
-
-  private final Path copyDestination;
-
-  public ZippedOutputArtifactDestination(String key, Path finalDestination, Path copyDestination) {
-    this.key = key;
-    this.finalDestination = finalDestination;
-    this.copyDestination = copyDestination;
-  }
-
-  private static void extract(Path source, Path destination) throws IOException {
-    Files.createDirectories(destination);
-    try (ZipFile zip = new ZipFile(source.toFile())) {
-      for (var entries = zip.entries(); entries.hasMoreElements(); ) {
-        ZipEntry entry = entries.nextElement();
-        if (entry.isDirectory()) {
-          Files.createDirectories(destination.resolve(entry.getName()));
-        } else {
-          // Srcjars do not contain separate directory entries
-          Files.createDirectories(destination.resolve(entry.getName()).getParent());
-          Files.copy(
-              zip.getInputStream(entry),
-              destination.resolve(entry.getName()),
-              StandardCopyOption.REPLACE_EXISTING);
-        }
-      }
-    }
-  }
-
-  @Override
-  public String getKey() {
-    return key;
-  }
+  protected abstract Path getFinalDestination();
 
   /**
    * The location where in the cache directory the artifact file itself should be placed.
@@ -74,35 +71,18 @@ public class ZippedOutputArtifactDestination implements OutputArtifactDestinatio
    * <p>The final and copy destinations are the same if the artifact file needs not to be extracted.
    */
   @Override
-  public Path getCopyDestination() {
-    return copyDestination;
+  public abstract Path getCopyDestination();
+
+  @Override
+  public Path determineFinalDestination() {
+    return getFinalDestination();
   }
 
   @Override
-  public Path prepareFinalLayout() throws IOException {
+  public void createFinalDestination(Path finalDestination) {
     if (Files.exists(finalDestination)) {
       FileUtil.delete(finalDestination.toFile());
     }
-    extract(copyDestination, finalDestination);
-    return finalDestination;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof ZippedOutputArtifactDestination)) {
-      return false;
-    }
-    ZippedOutputArtifactDestination that = (ZippedOutputArtifactDestination) o;
-    return key.equals(that.key)
-        && finalDestination.equals(that.finalDestination)
-        && copyDestination.equals(that.copyDestination);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(key, finalDestination, copyDestination);
+    extract(getCopyDestination(), finalDestination);
   }
 }

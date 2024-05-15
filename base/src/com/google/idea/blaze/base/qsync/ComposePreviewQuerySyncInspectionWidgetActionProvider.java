@@ -16,9 +16,10 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
-import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.intellij.icons.AllIcons.Actions;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -48,10 +49,7 @@ public class ComposePreviewQuerySyncInspectionWidgetActionProvider
   @Nullable
   @Override
   public AnAction createAction(@NotNull Editor editor) {
-    if (!QuerySync.isComposeEnabled()) {
-      return null;
-    }
-    if (!Blaze.isBlazeProject(editor.getProject())) {
+    if (!QuerySync.isComposeEnabled(editor.getProject())) {
       return null;
     }
     if (!editor.getEditorKind().equals(EditorKind.MAIN_EDITOR)) {
@@ -76,7 +74,14 @@ public class ComposePreviewQuerySyncInspectionWidgetActionProvider
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       QuerySyncManager.getInstance(project)
           .generateRenderJar(
-              psiFile, new QuerySyncActionStatsScope(getClass(), e, psiFile.getVirtualFile()));
+              psiFile,
+              QuerySyncActionStatsScope.createForFile(getClass(), e, psiFile.getVirtualFile()),
+              TaskOrigin.USER_ACTION);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

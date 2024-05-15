@@ -69,10 +69,21 @@ public class LanguageSupport {
     Set<WorkspaceType> supportedTypes = supportedWorkspaceTypes();
     WorkspaceType workspaceType = languageSettings.getWorkspaceType();
     if (!supportedTypes.contains(languageSettings.getWorkspaceType())) {
-      String message =
-          String.format(
-              "Workspace type '%s' is not supported by this plugin",
-              languageSettings.getWorkspaceType().getName());
+      StringBuilder messageBuilder = new StringBuilder();
+      messageBuilder.append(
+              String.format(
+                      "Workspace type '%s' is not supported by this plugin. Supported types are %s.",
+                      languageSettings.getWorkspaceType().getName(), supportedTypes
+              )
+      );
+      // `//:plugin_dev` is a completely optional dependency that won't get enabled
+      // unless you have DevKit installed.
+      // Unlike language-specific plugins like Go or Scala, we don't have a good indicator
+      // (like a source file) to indicate we should alert to the user.
+      if (languageSettings.getWorkspaceType().equals(WorkspaceType.INTELLIJ_PLUGIN)) {
+        messageBuilder.append(" Do you have the DevKit plugin installed?");
+      }
+      String message = messageBuilder.toString();
       IssueOutput.error(message).submit(context);
       context.output(new PrintOutput(message, OutputType.ERROR));
       return false;

@@ -33,6 +33,9 @@ import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.run.SourceToTargetFinder;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
+import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.common.experiments.ExperimentService;
@@ -64,6 +67,11 @@ public class TestMapTest extends BlazeTestCase {
     mockBlazeProjectDataManager = new MockBlazeProjectDataManager();
     projectServices.register(BlazeProjectDataManager.class, mockBlazeProjectDataManager);
     projectServices.register(SyncCache.class, new SyncCache(project));
+    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
+    BlazeImportSettings settings =
+        new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze, ProjectType.ASPECT_SYNC);
+    importSettingsManager.setImportSettings(settings);
+    projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
 
     ExtensionPointImpl<SourceToTargetFinder> ep =
         registerExtensionPoint(SourceToTargetFinder.EP_NAME, SourceToTargetFinder.class);

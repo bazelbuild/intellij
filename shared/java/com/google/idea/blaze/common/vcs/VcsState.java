@@ -15,7 +15,10 @@
  */
 package com.google.idea.blaze.common.vcs;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
@@ -40,6 +43,7 @@ public class VcsState {
 
   /** The set of files in the workspace that differ compared to {@link #upstreamRevision}. */
   public final ImmutableSet<WorkspaceFileChange> workingSet;
+
   /**
    * The readonly workspace snapshot path that this state derives from. If set, this can be used to
    * ensure atomic operations on the workspace by ensuring that a set of sequential operations are
@@ -81,5 +85,15 @@ public class VcsState {
   @Override
   public int hashCode() {
     return Objects.hash(workspaceId, upstreamRevision, workingSet, workspaceSnapshotPath);
+  }
+
+  /**
+   * Returns workspace-relative paths of modified files (excluding deletions), according to the VCS
+   */
+  public ImmutableSet<Path> modifiedFiles() {
+    return workingSet.stream()
+        .filter(c -> c.operation != Operation.DELETE)
+        .map(c -> c.workspaceRelativePath)
+        .collect(toImmutableSet());
   }
 }

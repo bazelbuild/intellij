@@ -1,3 +1,108 @@
+v2024.05.07
+===========
+* Plugin aspect now depends on @rules_java. If this breaks you, please update your @rules_java version to 5.3.5 or later.
+* Internal cleanup
+
+v2024.04.23
+===========
+* Feature flags for resolve virtual includes using heuristics or clangd #6387
+* feat: create "Add package" EditorNotificationPanel if derive_targets_from_directories is on #6388
+
+v2024.04.09
+===========
+* Fix imports for go modules named "external" #6325
+* Fix: Ensure .projectview exclusion rules apply only to specified directories #6376
+* Fix: Silence false positive "No such target" errors for files in the project root #6377
+
+v2024.03.26
+===========
+* Fix "No such target" errors on incremental sync #6262
+* Reduced the logging level for the stack traces produced when resolving external artifacts. #6310
+* (rebase) Support embedded go_proto_library #6030
+* Improved error message for an unsupported workspace type #6257
+
+v2024.03.12
+===========
+* fix(plugin_dev): Alert users they need the DevKit plugin to work on the codebase #6198
+* Followup for Pass path associations as special compiler flags #6007
+* fix: Try to make the default projectview file a bit more user-friendly #6175
+* Added MODULE.bazel to isBazelWorkspace in AutoImportProjectOpenProcessor #6155
+* Added registry key to disable fission flag #6041
+
+v2024.02.27
+===========
+* perf: avoid scanning convenience symlink directories during initial import #6094
+* Added MODULE.bazel to valid workspace root files #6127
+* Use path to workspace root as pwd for buildifier #6158
+
+v2024.02.13
+===========
+* fix: deadlock when more than one project is open and bazel.sync.detec… #5978
+* Changes to BlazeTargetFilter regex to match more target names #6021
+* Fix _virtual_includes handling for absolute strip_include_prefix paths #5969
+
+v2024.01.30
+===========
+* feat: Allow environment variables in run configurations #5885
+* Support JetBrains IDEs 2024.1 #5960
+
+v2024.01.16
+===========
+* Internal cleanup
+
+v2024.01.02
+===========
+* fix: Fix bazel sync errors when using non-default convenience symlinks #5910
+* fix: Fix warnings when syncing a workspace containing a bazelignore file #5873
+
+v2023.12.19
+===========
+* feat: Allow to have non-existent import entries in projectview file #5689
+* feat: Pass environment variables from BlazeCidrLauncher down to bazel #5771
+* feat: Enable debugging the gazelle binary #5816
+* fix: Fix buildifier formatting for MODULE.bazel and WORKSPACE #5829
+* fix: Update glob validation to support allow_empty parameter #5855
+* fix: Don't throw "Non-blaze project is provided error" on source attachment #5864
+
+v2023.12.05
+===========
+* Escape regex-relevant characters in test filter #5745
+* Mitigate StartupActivity warnings #5760
+
+v2023.11.21
+===========
+* feat: Add support for Starlark float literals #5678
+* feat: Add visibility reference contributor #5650
+* fix: Work around NPE for toolwindow #5665
+* fix: Expect double-@-prefixed labels in Bazel output
+* fix: Do not throw "Non-blaze project is provided" exception in various places #5704, #5706, #5658
+* fix: Do not complete ignored directories #5573
+* fix: Fix NPE when accessing xcodeProperties #5714
+* fix: Pass -include compilation flags down to OC language model #5645
+* fix: Rename 'fast' run configurations to 'Fast Run' and 'Fast Debug' … #5743
+* fix: Fast Test with Bzlmod enabled
+
+v2023.11.07
+===========
+* New feature:
+* feat: Support gutter icons in java_test_suite #5579
+* Fixes:
+* Fix go debugging #5585
+* fix: Allow multiple providers to contribute attribute specific references #5507
+* Fix "slow operations exception" in welcome screen #5598
+* Fix missing "Bazel" item in main menu. #5610
+* Fix "Non-blaze project is provided" error #5596
+
+
+v2023.10.24
+===========
+* Bump to newest EAPs #5522
+* Make //clwb(plugin) and //cpp(plugin) dependency on cidr.lang optional: plugin xmls split #5473
+* Adapt paths and line breaks for Windows #5471
+* Fix manual targets sync for target explicitly specified #5458
+* Make //cpp dependency on cidr.lang optional: remove dead code #5474
+* fix: Mark package with BUILD.bazel file in completion #5526
+
 v2023.10.10
 ===========
 * Fix a bug where C++ debugging is broken after IDE restart on Mac #5420

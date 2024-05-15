@@ -17,38 +17,46 @@ package com.google.idea.blaze.base.qsync;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
+import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
+import java.util.Collection;
 import java.util.Optional;
 
-/** A utility class to translate variants of {@link LanguageClass} enumerations. */
-class LanguageClasses {
+/** A utility class to translate between language related enums. */
+public class LanguageClasses {
+
+  static final ImmutableBiMap<QuerySyncLanguage, LanguageClass>
+      QUERY_SYNC_TO_BASE_LANGUAGE_CLASS_MAP =
+          ImmutableBiMap.of(
+              QuerySyncLanguage.JAVA, LanguageClass.JAVA,
+              QuerySyncLanguage.KOTLIN, LanguageClass.KOTLIN,
+              QuerySyncLanguage.CC, LanguageClass.C);
 
   private LanguageClasses() {}
 
   /**
-   * Translates a set of {@link com.google.idea.blaze.base.model.primitives.LanguageClass} values to
-   * a set of {@link LanguageClass} values retaining only values meaningful in the query sync
-   * context.
+   * Translates a set of {@link LanguageClass} values to a set of {@link QuerySyncLanguage} values
+   * retaining only values meaningful in the query sync context.
    */
-  static ImmutableSet<LanguageClass> translateFrom(
-      ImmutableSet<com.google.idea.blaze.base.model.primitives.LanguageClass> from) {
-    return from.stream().flatMap(it -> translateFrom(it).stream()).collect(toImmutableSet());
+  static ImmutableSet<QuerySyncLanguage> toQuerySync(Collection<LanguageClass> from) {
+    return from.stream().flatMap(it -> toQuerySync(it).stream()).collect(toImmutableSet());
   }
 
   /**
-   * Translates a value of {@link com.google.idea.blaze.base.model.primitives.LanguageClass} to a
-   * value of {@link LanguageClass}, if it has a meaning in the query sync context.
+   * Translates a value of {@link LanguageClass} to a value of {@link QuerySyncLanguage}, if it has
+   * a meaning in the query sync context.
    */
-  static Optional<LanguageClass> translateFrom(
-      com.google.idea.blaze.base.model.primitives.LanguageClass from) {
-    switch (from) {
-      case JAVA:
-        return Optional.of(LanguageClass.JAVA);
-      case KOTLIN:
-        return Optional.of(LanguageClass.KOTLIN);
-      default:
-        return Optional.<LanguageClass>empty();
-    }
+  static Optional<QuerySyncLanguage> toQuerySync(LanguageClass from) {
+    return Optional.ofNullable(QUERY_SYNC_TO_BASE_LANGUAGE_CLASS_MAP.inverse().get(from));
+  }
+
+  static LanguageClass fromQuerySync(QuerySyncLanguage from) {
+    return QUERY_SYNC_TO_BASE_LANGUAGE_CLASS_MAP.get(from);
+  }
+
+  static ImmutableSet<LanguageClass> fromQuerySync(Collection<QuerySyncLanguage> from) {
+    return from.stream().map(LanguageClasses::fromQuerySync).collect(toImmutableSet());
   }
 }

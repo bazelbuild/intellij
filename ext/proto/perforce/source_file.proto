@@ -1,0 +1,43 @@
+syntax = "proto2";
+
+package com.google.idea.blaze.ext.perforce;
+
+import "ext/proto/perforce/base.proto";
+
+option java_package = "com.google.idea.blaze.ext.p4";
+option java_outer_classname = "SourceFileProto";
+
+message SourceFile {
+  optional SourceFileId source_file_id = 1;
+  optional FileOperation operation = 2;
+  optional int64 size = 5;
+  repeated FileIntegrationRecord integration_records = 8;
+  optional int64 mod_time_micros = 9;
+  optional ChangeId change_id = 11;
+  optional int32 baseline_revision_number = 13;
+}
+
+enum FileOperation {
+  OPERATION_NONE = 0x0;
+  OPERATION_INTEGRATE_BRANCH = 0x901;
+  OPERATION_ADD = 0x102;
+  OPERATION_INTEGRATE_BRANCH_EDIT = 0x903;
+  OPERATION_INTEGRATE_ADD = 0x904;
+  OPERATION_DELETE = 0x205;
+  OPERATION_INTEGRATE_DELETE = 0xA06;
+  OPERATION_EDIT = 0x407;
+  OPERATION_INTEGRATE_EDIT = 0xC08;
+  OPERATION_INTEGRATE = 0xC09;
+  OPERATION_UNRESOLVED_INTEGRATE_DELETE = 0xA0A;
+}
+
+message FileIntegrationRecord {
+  optional string source_depot_path = 1;
+  optional string target_depot_path = 6;
+  optional RevisionRange source_revision_range = 2;
+  optional int32 target_revision_number = 7;
+  optional FileIntegration action = 5;
+  optional ChangeId change_id = 8;
+  optional string base_depot_path = 9;
+  optional int32 base_revision_number = 10;
+}

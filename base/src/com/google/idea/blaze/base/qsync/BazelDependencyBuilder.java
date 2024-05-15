@@ -18,14 +18,23 @@ package com.google.idea.blaze.base.qsync;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
+import com.google.common.io.CharSource;
+import com.google.common.io.MoreFiles;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException.ThrowOption;
 import com.google.idea.blaze.base.bazel.BuildSystem;
@@ -34,41 +43,77 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStats;
+import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
+import com.google.idea.blaze.common.proto.ProtoStringInterner;
+import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
+import com.google.idea.blaze.qsync.deps.DependencyBuildContext;
+import com.google.idea.blaze.qsync.deps.OutputGroup;
+import com.google.idea.blaze.qsync.deps.OutputInfo;
+import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
+import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcCompilationInfo;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.google.idea.blaze.qsync.project.ProjectDefinition.LanguageClass;
+import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
+import com.google.idea.common.experiments.BoolExperiment;
+import com.google.protobuf.Message;
 import com.google.protobuf.TextFormat;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtilRt;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /** An object that knows how to build dependencies for given targets */
 public class BazelDependencyBuilder implements DependencyBuilder {
+
+  public static final BoolExperiment fetchArtifactInfoInParallel =
+      new BoolExperiment("qsync.parallel.artifact.info.fetch", true);
+
+  public static final BoolExperiment buildGeneratedSrcJars =
+      new BoolExperiment("qsync.build.generated.src.jars", false);
+
+  /**
+   * Logs message if the number of artifact info files fetched is greater than
+   * FILE_NUMBER_LOG_THRESHOLD
+   */
+  private static final int FILE_NUMBER_LOG_THRESHOLD = 1;
+
+  /**
+   * Logs message if the size of all artifact info files fetched is greater than
+   * FETCH_SIZE_LOG_THRESHOLD
+   */
+  private static final long FETCH_SIZE_LOG_THRESHOLD = (1 << 20); // 1 mB
 
   protected final Project project;
   protected final BuildSystem buildSystem;
   protected final ProjectDefinition projectDefinition;
   protected final WorkspaceRoot workspaceRoot;
+  protected final Optional<BlazeVcsHandler> vcsHandler;
   protected final ImmutableSet<String> handledRuleKinds;
 
   public BazelDependencyBuilder(
@@ -76,29 +121,35 @@ public class BazelDependencyBuilder implements DependencyBuilder {
       BuildSystem buildSystem,
       ProjectDefinition projectDefinition,
       WorkspaceRoot workspaceRoot,
+      Optional<BlazeVcsHandler> vcsHandler,
       ImmutableSet<String> handledRuleKinds) {
     this.project = project;
     this.buildSystem = buildSystem;
     this.projectDefinition = projectDefinition;
     this.workspaceRoot = workspaceRoot;
+    this.vcsHandler = vcsHandler;
     this.handledRuleKinds = handledRuleKinds;
   }
 
-  private static final ImmutableMultimap<LanguageClass, OutputGroup> OUTPUT_GROUPS_BY_LANGUAGE =
-      ImmutableMultimap.<LanguageClass, OutputGroup>builder()
+  private static final ImmutableMultimap<QuerySyncLanguage, OutputGroup> OUTPUT_GROUPS_BY_LANGUAGE =
+      ImmutableMultimap.<QuerySyncLanguage, OutputGroup>builder()
           .putAll(
-              LanguageClass.JAVA,
+              QuerySyncLanguage.JAVA,
               OutputGroup.JARS,
               OutputGroup.AARS,
               OutputGroup.GENSRCS,
               OutputGroup.ARTIFACT_INFO_FILE)
+          .putAll(QuerySyncLanguage.CC, OutputGroup.CC_HEADERS, OutputGroup.CC_INFO_FILE)
           .build();
 
   @Override
   public OutputInfo build(
-      BlazeContext context, Set<Label> buildTargets, Set<LanguageClass> languages)
+      BlazeContext context, Set<Label> buildTargets, Set<QuerySyncLanguage> languages)
       throws IOException, BuildException {
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
+    Optional<BuildDepsStats.Builder> buildDepsStatsBuilder =
+        BuildDepsStatsScope.fromContext(context);
+    buildDepsStatsBuilder.ifPresent(stats -> stats.setBlazeBinaryType(invoker.getType()));
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
       String includes =
           projectDefinition.projectIncludes().stream()
@@ -144,22 +195,38 @@ public class BazelDependencyBuilder implements DependencyBuilder {
               .addBlazeFlags(
                   String.format("--aspects_parameters=always_build_rules=%s", alwaysBuildParam))
               .addBlazeFlags("--aspects_parameters=generate_aidl_classes=True")
+              .addBlazeFlags(
+                  String.format(
+                      "--aspects_parameters=use_generated_srcjars=%s",
+                      buildGeneratedSrcJars.getValue() ? "True" : "False"))
               .addBlazeFlags("--noexperimental_run_validations")
               .addBlazeFlags("--keep_going");
       outputGroups.stream()
           .map(g -> "--output_groups=" + g.outputGroupName())
           .forEach(builder::addBlazeFlags);
-
+      buildDepsStatsBuilder.ifPresent(
+          stats -> stats.setBuildFlags(builder.build().toArgumentList()));
+      Instant buildTime = Instant.now();
       BlazeBuildOutputs outputs =
-          invoker.getCommandRunner().run(project, builder, buildResultHelper, context);
+          invoker.getCommandRunner().run(project, builder, buildResultHelper, context, ImmutableMap.of());
+      buildDepsStatsBuilder.ifPresent(
+          stats -> {
+            stats.setBuildIds(outputs.getBuildIds());
+            stats.setBepByteConsumed(outputs.bepBytesConsumed);
+          });
+
       BazelExitCodeException.throwIfFailed(
           builder,
           outputs.buildResult,
           ThrowOption.ALLOW_PARTIAL_SUCCESS,
           ThrowOption.ALLOW_BUILD_FAILURE);
 
-      return createOutputInfo(outputs, outputGroups);
+      return createOutputInfo(outputs, outputGroups, buildTime, context);
     }
+  }
+
+  protected CharSource getAspect() throws IOException {
+    return MoreFiles.asCharSource(getBundledAspectPath(), UTF_8);
   }
 
   protected Path getBundledAspectPath() {
@@ -174,39 +241,138 @@ public class BazelDependencyBuilder implements DependencyBuilder {
    * the name of the aspect within that file. For example, {@code //package:aspect.bzl}.
    */
   protected String prepareAspect(BlazeContext context) throws IOException, BuildException {
-    Path aspect = getBundledAspectPath();
-    Files.copy(
-        aspect,
-        workspaceRoot.directory().toPath().resolve(".aswb.bzl"),
-        StandardCopyOption.REPLACE_EXISTING);
-    return "//:.aswb.bzl";
+    Label generatedAspectLabel = getGeneratedAspectLabel();
+    Path generatedAspect =
+        workspaceRoot
+            .path()
+            .resolve(generatedAspectLabel.getPackage())
+            .resolve(generatedAspectLabel.getName());
+    if (!Files.exists(generatedAspect.getParent())) {
+      Files.createDirectories(generatedAspect.getParent());
+    }
+    Files.writeString(generatedAspect, getAspect().read());
+    // bazel asks BUILD file exists with the .bzl file. It's ok that BUILD file contains nothing.
+    Path buildPath = generatedAspect.resolveSibling("BUILD");
+    if (!Files.exists(buildPath)) {
+      Files.createFile(buildPath);
+    }
+    return generatedAspectLabel.toString();
+  }
+
+  protected Label getGeneratedAspectLabel() {
+    return Label.of("//.aswb:build_dependencies.bzl");
   }
 
   private OutputInfo createOutputInfo(
-      BlazeBuildOutputs blazeBuildOutputs, Set<OutputGroup> outputGroups) throws BuildException {
-    GroupedOutputArtifacts allArtifacts =
-        new GroupedOutputArtifacts(blazeBuildOutputs, outputGroups);
-    ImmutableSet.Builder<BuildArtifacts> artifactInfoFilesBuilder = ImmutableSet.builder();
+      BlazeBuildOutputs blazeBuildOutputs,
+      Set<OutputGroup> outputGroups,
+      Instant buildTime,
+      BlazeContext context)
+      throws BuildException {
+    ImmutableListMultimap<OutputGroup, OutputArtifact> allArtifacts =
+        GroupedOutputArtifacts.create(blazeBuildOutputs, outputGroups);
 
-    for (OutputArtifact artifactInfoFile : allArtifacts.get(OutputGroup.ARTIFACT_INFO_FILE)) {
-      artifactInfoFilesBuilder.add(readArtifactInfoFile(artifactInfoFile));
+    ImmutableList<OutputArtifact> artifactInfoFiles =
+        allArtifacts.get(OutputGroup.ARTIFACT_INFO_FILE);
+    ImmutableList<OutputArtifact> ccArtifactInfoFiles = allArtifacts.get(OutputGroup.CC_INFO_FILE);
+    long startTime = System.currentTimeMillis();
+    int totalFilesToFetch = artifactInfoFiles.size() + ccArtifactInfoFiles.size();
+    long totalBytesToFetch =
+        artifactInfoFiles.stream().mapToLong(OutputArtifact::getLength).sum()
+            + ccArtifactInfoFiles.stream().mapToLong(OutputArtifact::getLength).sum();
+
+    boolean shouldLog =
+        totalFilesToFetch > FILE_NUMBER_LOG_THRESHOLD
+            || totalBytesToFetch > FETCH_SIZE_LOG_THRESHOLD;
+    if (shouldLog) {
+      context.output(
+          PrintOutput.log(
+              String.format(
+                  "Fetching %d artifact info files (%s)",
+                  totalFilesToFetch, StringUtilRt.formatFileSize(totalBytesToFetch))));
     }
+
+    ImmutableSet.Builder<JavaArtifacts> artifactInfoFilesBuilder = ImmutableSet.builder();
+    ImmutableSet.Builder<CcCompilationInfo> ccInfoBuilder = ImmutableSet.builder();
+
+    if (fetchArtifactInfoInParallel.getValue()) {
+      try {
+        ListenableFuture<List<JavaArtifacts>> artifactInfoFutures =
+            readAndTransformInfoFiles(artifactInfoFiles, this::readArtifactInfoFile);
+        ListenableFuture<List<CcCompilationInfo>> ccInfoFutures =
+            readAndTransformInfoFiles(ccArtifactInfoFiles, this::readCcInfoFile);
+
+        artifactInfoFilesBuilder.addAll(Uninterruptibles.getUninterruptibly(artifactInfoFutures));
+        ccInfoBuilder.addAll(Uninterruptibles.getUninterruptibly(ccInfoFutures));
+      } catch (ExecutionException e) {
+        throw new BuildException(e);
+      }
+    } else {
+      for (OutputArtifact artifactInfoFile : artifactInfoFiles) {
+        artifactInfoFilesBuilder.add(readArtifactInfoFile(artifactInfoFile));
+      }
+      for (OutputArtifact artifactInfoFile : ccArtifactInfoFiles) {
+        ccInfoBuilder.add(readCcInfoFile(artifactInfoFile));
+      }
+    }
+
+    long elapsed = System.currentTimeMillis() - startTime;
+    if (shouldLog) {
+      context.output(
+          PrintOutput.log(String.format("Fetched artifact info files in %d ms", elapsed)));
+    }
+    Optional<VcsState> vcsState = Optional.empty();
+    if (blazeBuildOutputs.sourceUri.isPresent() && vcsHandler.isPresent()) {
+      vcsState = vcsHandler.get().vcsStateForSourceUri(blazeBuildOutputs.sourceUri.get());
+    }
+    DependencyBuildContext buildContext =
+        DependencyBuildContext.create(
+            // getOnlyElement should be safe since we never shard querysync builds:
+            getOnlyElement(blazeBuildOutputs.getBuildIds()), buildTime, vcsState);
+
     return OutputInfo.create(
         allArtifacts,
         artifactInfoFilesBuilder.build(),
+        ccInfoBuilder.build(),
         blazeBuildOutputs.getTargetsWithErrors().stream()
             .map(Object::toString)
             .map(Label::of)
             .collect(toImmutableSet()),
-        blazeBuildOutputs.buildResult.exitCode);
+        blazeBuildOutputs.buildResult.exitCode,
+        buildContext);
   }
 
-  private BuildArtifacts readArtifactInfoFile(BlazeArtifact file) throws BuildException {
+  @FunctionalInterface
+  private interface CheckedTransform<T, R> {
+    R apply(T t) throws BuildException;
+  }
+
+  private <T> ListenableFuture<List<T>> readAndTransformInfoFiles(
+      ImmutableList<OutputArtifact> artifactInfoFiles,
+      CheckedTransform<OutputArtifact, T> transform) {
+    List<ListenableFuture<T>> futures = Lists.newArrayList();
+    for (OutputArtifact artifactInfoFile : artifactInfoFiles) {
+      futures.add(Futures.submit(() -> transform.apply(artifactInfoFile), FetchExecutor.EXECUTOR));
+    }
+    return Futures.allAsList(futures);
+  }
+
+  private JavaArtifacts readArtifactInfoFile(BlazeArtifact file) throws BuildException {
+    return ProtoStringInterner.intern(
+        readArtifactInfoProtoFile(JavaArtifacts.newBuilder(), file).build());
+  }
+
+  private CcCompilationInfo readCcInfoFile(BlazeArtifact file) throws BuildException {
+    return ProtoStringInterner.intern(
+        readArtifactInfoProtoFile(CcCompilationInfo.newBuilder(), file).build());
+  }
+
+  protected <B extends Message.Builder> B readArtifactInfoProtoFile(B builder, BlazeArtifact file)
+      throws BuildException {
     try (InputStream inputStream = file.getInputStream()) {
-      BuildArtifacts.Builder builder = BuildArtifacts.newBuilder();
       TextFormat.Parser parser = TextFormat.Parser.newBuilder().build();
       parser.merge(new InputStreamReader(inputStream, UTF_8), builder);
-      return builder.build();
+      return builder;
     } catch (IOException e) {
       throw new BuildException(e);
     }

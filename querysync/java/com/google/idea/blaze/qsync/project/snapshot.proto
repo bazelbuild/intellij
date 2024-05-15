@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package ij.qsync;
 
+import "querysync/java/com/google/idea/blaze/qsync/project/language_class.proto";
 import "querysync/java/com/google/idea/blaze/qsync/query/querysummary.proto";
 
 // option java_api_version = 2;
@@ -13,15 +14,10 @@ message Snapshot {
   VcsState vcs_state = 2;
   Summary query_summary = 3;
   int32 version = 4;
+  optional string bazel_version = 5;
 }
 
 message ProjectDefinition {
-  enum LanguageClass {
-    UNSPECIFIED = 0;
-    JAVA = 1;
-    KOTLIN = 2;
-  }
-
   repeated string include_paths = 1;
   repeated string exclude_paths = 2;
   repeated LanguageClass language_classes = 3;

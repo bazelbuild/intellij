@@ -1,0 +1,18 @@
+<configuration default="false" name="Test Environment Variables" type="BlazeCommandRunConfigurationType"
+               factoryName="Bazel Command">
+    <blaze-settings blaze-command="test" kind="go_test" handler-id="BlazeGoRunConfigurationHandlerProvider"
+                    context-element="$PROJECT_DIR$/../go/main_test.go#TestEnvVars">
+        <blaze-target>//go:go_test</blaze-target>
+        <blaze-user-flag>--test_env=GO_TEST_WRAP_TESTV=1</blaze-user-flag>
+        <blaze-user-flag>--test_env=GO_TEST_WRAP_TESTV=1</blaze-user-flag>
+        <blaze-user-flag>--test_filter=^TestEnvVars$</blaze-user-flag>
+        <env_state>
+            <envs>
+                <env name="ENV_VAR_IN_PLAIN_RUN_CONFIG" value="it works"/>
+            </envs>
+        </env_state>
+    </blaze-settings>
+    <method v="2">
+        <option name="Blaze.BeforeRunTask" enabled="true"/>
+    </method>
+</configuration>

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.run.testmap;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static java.util.function.Predicate.not;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -26,9 +27,10 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.RuleType;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncProjectData;
 import com.google.idea.blaze.base.run.SourceToTargetFinder;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -50,7 +52,7 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
   @Override
   public Future<Collection<TargetInfo>> targetsForSourceFiles(
       Project project, Set<File> sourceFiles, Optional<RuleType> ruleType) {
-    if (QuerySync.isEnabled()) {
+    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
       QuerySyncProjectData projectData =
           (QuerySyncProjectData) BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
       if (projectData == null) {
@@ -61,6 +63,7 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
               .map(file -> projectData.getWorkspacePathResolver().getWorkspacePath(file))
               .filter(Objects::nonNull)
               .flatMap(path -> projectData.getReverseDeps(path.asPath()).stream())
+              .filter(not(target -> target.tags().contains("no-ide")))
               .filter(
                   buildTarget -> {
                     if (ruleType.isEmpty()) {

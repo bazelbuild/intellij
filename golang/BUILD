@@ -1,7 +1,7 @@
 load(
-    "//testing:test_defs.bzl",
-    "intellij_integration_test_suite",
-    "intellij_unit_test_suite",
+    "//:build-visibility.bzl",
+    "GOLANG_PACKAGES_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
 )
 load(
     "//build_defs:build_defs.bzl",
@@ -11,9 +11,9 @@ load(
     "stamped_plugin_xml",
 )
 load(
-    "//:build-visibility.bzl",
-    "GOLANG_PACKAGES_VISIBILITY",
-    "PLUGIN_PACKAGES_VISIBILITY",
+    "//testing:test_defs.bzl",
+    "intellij_integration_test_suite",
+    "intellij_unit_test_suite",
 )
 
 licenses(["notice"])
@@ -29,13 +29,14 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//sdkcompat",
         "//third_party/go",
     ],
 )
 
 optional_plugin_xml(
     name = "optional_xml",
-    module = "org.jetbrains.plugins.go",
+    module = ["org.jetbrains.plugins.go"],
     plugin_xml = "src/META-INF/go-contents.xml",
 )
 

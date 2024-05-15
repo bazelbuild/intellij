@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+package com.google.idea.blaze.ext.perforce;
+
+option java_package = "com.google.idea.blaze.ext.p4";
+option java_multiple_files = true;
+
+message PerforceStatus {
+  optional int32 code = 1;
+  optional string space = 2;
+  optional string message = 3;
+  optional int32 canonical_code = 6;
+}

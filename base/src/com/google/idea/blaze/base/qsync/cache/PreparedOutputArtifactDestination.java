@@ -15,30 +15,25 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+import com.google.auto.value.AutoValue;
+import com.google.common.base.Preconditions;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
-import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Objects;
 
 /** A record that describes the location of an output artifact in cache directories. */
-public class PreparedOutputArtifactDestination implements OutputArtifactDestinationAndLayout {
+@AutoValue
+public abstract class PreparedOutputArtifactDestination
+    implements OutputArtifactDestinationAndLayout {
 
-  private final String key;
+  public static PreparedOutputArtifactDestination create(Path finalDestination) {
+    return new AutoValue_PreparedOutputArtifactDestination(finalDestination);
+  }
+
   /**
    * The location where in the cache directory the representation of the artifact for the IDE should
    * be placed.
    */
-  public final Path finalDestination;
-
-  public PreparedOutputArtifactDestination(String key, Path finalDestination) {
-    this.key = key;
-    this.finalDestination = finalDestination;
-  }
-
-  @Override
-  public String getKey() {
-    return key;
-  }
+  public abstract Path getFinalDestination();
 
   /**
    * The location where in the cache directory the artifact should be placed.
@@ -47,28 +42,17 @@ public class PreparedOutputArtifactDestination implements OutputArtifactDestinat
    */
   @Override
   public Path getCopyDestination() {
-    return finalDestination;
+    return getFinalDestination();
   }
 
   @Override
-  public Path prepareFinalLayout() throws IOException {
-    return finalDestination;
+  public Path determineFinalDestination() {
+    return getFinalDestination();
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof PreparedOutputArtifactDestination)) {
-      return false;
-    }
-    PreparedOutputArtifactDestination that = (PreparedOutputArtifactDestination) o;
-    return key.equals(that.key) && finalDestination.equals(that.finalDestination);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(key, finalDestination);
+  public void createFinalDestination(Path finalDestination) {
+    // We don't move the artifact from it's original location so nothing needs doing:
+    Preconditions.checkState(getCopyDestination().equals(finalDestination));
   }
 }

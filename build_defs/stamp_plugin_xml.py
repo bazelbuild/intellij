@@ -244,7 +244,10 @@ def main():
         idea_version_element.setAttribute("until-build",
                                           until_build_numbers[build_version])
       else:
-        idea_version_element.setAttribute("until-build", build_version + ".*")
+        if is_eap:
+          idea_version_element.setAttribute("until-build", _parse_major_version(build_version) + ".*")
+        else:
+          idea_version_element.setAttribute("until-build", build_version + ".*")
 
   if args.changelog_file:
     if idea_plugin.getElementsByTagName("change-notes"):

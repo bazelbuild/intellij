@@ -34,6 +34,11 @@ public class ParseContext {
 
   @Nullable private Line currentLine;
   @Nullable private String currentRawLine;
+
+  public int getCurrentLineIndex() {
+    return currentLineIndex;
+  }
+
   private int currentLineIndex;
   private int savedPosition = -1;
 

@@ -53,6 +53,11 @@ import javax.annotation.Nullable;
 class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
 
   @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.HIDDEN;
+  }
+
+  @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     Library library = LibraryActionHelper.findLibraryForAction(e);
     if (library != null) {

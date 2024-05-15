@@ -4,9 +4,24 @@ load("@io_bazel_rules_go//proto:def.bzl", "go_grpc_library", "go_proto_library")
 proto_library(
     name = "intellijext_proto",
     srcs = [
+        "blueprint.proto",
+        "build_cleaner.proto",
+        "build_service.proto",
+        "chatbotmodel.proto",
+        "citc_operations.proto",
+        "codereview.proto",
+        "codesearch.proto",
+        "comments2code.proto",
+        "depserver.proto",
+        "ecatcher.proto",
+        "experiments.proto",
+        "fileapi.proto",
         "intellijext.proto",
         "issuetracker.proto",
-    ],
+        "kythe.proto",
+        "linter.proto",
+        "logentry.proto",
+    ] + glob(["perforce/*.proto"]),
 )
 
 java_proto_library(
@@ -22,14 +37,13 @@ java_grpc_library(
     deps = [":intellijext_java_proto"],
 )
 
-go_proto_library(
-    name = "intellijext_go_proto",
-    visibility = ["//visibility:public"],
-    deps = [":intellijext_proto"],
+proto_library(
+    name = "perforce_api_proto",
+    srcs = glob(["perforce/*.proto"]),
 )
 
-go_grpc_library(
-    name = "intellijext_go_grpc",
+java_proto_library(
+    name = "perforce_api_java_proto",
     visibility = ["//visibility:public"],
-    deps = [":intellijext_go_proto"],
+    deps = [":perforce_api_proto"],
 )

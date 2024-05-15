@@ -127,6 +127,7 @@ public class JarCacheTest extends BlazeTestCase {
         .registerExtension(new BlazeJavaSyncPlugin(), testDisposable);
     registerExtensionPoint(BlazeLibrarySorter.EP_NAME, BlazeLibrarySorter.class);
     applicationServices.register(BlazeJavaUserSettings.class, new BlazeJavaUserSettings());
+    BlazeJavaUserSettings.getInstance().setUseJarCache(true); // It's turned off by default for Bazel users, but we absolutely want to test it here.
     applicationServices.register(ExperimentService.class, new MockExperimentService());
     applicationServices.register(BlazeExecutor.class, new MockBlazeExecutor());
   }
@@ -135,7 +136,7 @@ public class JarCacheTest extends BlazeTestCase {
   protected BuildSystemProvider createBuildSystemProvider() {
     return new BuildSystemProviderWrapper(
         FakeBuildSystemProvider.builder()
-            .setBuildSystem(FakeBuildSystem.builder(BuildSystemName.Blaze).build())
+            .setBuildSystem(FakeBuildSystem.builder(BuildSystemName.Bazel).build())
             .build());
   }
 

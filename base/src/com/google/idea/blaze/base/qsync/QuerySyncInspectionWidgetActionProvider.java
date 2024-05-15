@@ -15,13 +15,19 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.idea.blaze.base.qsync.QuerySyncManager.OperationType;
 import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper;
-import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.PopupPosititioner;
-import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurable;
+import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
+import com.google.idea.blaze.base.qsync.action.PopupPositioner;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncConfigurableProvider;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
+import com.google.idea.blaze.qsync.project.TargetsToBuild;
 import com.intellij.icons.AllIcons.Actions;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -46,6 +52,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.HierarchyBoundsListener;
 import java.awt.event.HierarchyEvent;
+import java.util.Optional;
 import javax.swing.JComponent;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -63,10 +70,7 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
   @Nullable
   @Override
   public AnAction createAction(@NotNull Editor editor) {
-    if (!QuerySync.isEnabled()) {
-      return null;
-    }
-    if (!Blaze.isBlazeProject(editor.getProject())) {
+    if (Blaze.getProjectType(editor.getProject()) != ProjectType.QUERY_SYNC) {
       return null;
     }
     if (!editor.getEditorKind().equals(EditorKind.MAIN_EDITOR)) {
@@ -82,15 +86,21 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     private final BuildDependenciesHelper buildDepsHelper;
 
     public BuildDependencies(@NotNull Editor editor) {
-      super("Build file dependencies");
+      super("");
       this.editor = editor;
-      buildDepsHelper = new BuildDependenciesHelper(editor.getProject(), getClass());
+      buildDepsHelper =
+          new BuildDependenciesHelper(editor.getProject(), getClass(), DepsBuildType.SELF);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       buildDepsHelper.enableAnalysis(
-          e, PopupPosititioner.showUnderneathClickedComponentOrCentered(e));
+          e, PopupPositioner.showUnderneathClickedComponentOrCentered(e));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -107,6 +117,17 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
       VirtualFile vf = psiFile != null ? psiFile.getVirtualFile() : null;
       if (vf == null) {
         presentation.setEnabled(false);
+        return;
+      }
+
+      Optional<OperationType> currentOperation =
+          QuerySyncManager.getInstance(project).currentOperation();
+      if (currentOperation.isPresent()) {
+        presentation.setEnabled(false);
+        presentation.setText(
+            currentOperation.get() == OperationType.SYNC
+                ? "Syncing project..."
+                : "Building dependencies...");
         return;
       }
       TargetsToBuild toBuild = buildDepsHelper.getTargetsToEnableAnalysisFor(vf);
@@ -141,26 +162,14 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
             @Override
             protected void updateToolTipText() {
               Project project = editor.getProject();
-              if (project != null) {
-                HelpTooltip.dispose(this);
-                new HelpTooltip()
-                    .setTitle("Build dependencies")
-                    .setDescription(
-                        "Builds the external dependencies needed for this file and "
-                            + " enables analysis")
-                    .setLink(
-                        "Settings...",
-                        new Runnable() {
-                          @Override
-                          public void run() {
-                            ShowSettingsUtil.getInstance()
-                                .showSettingsDialog(project, QuerySyncConfigurable.class);
-                          }
-                        })
-                    .installOn(this);
+              if (project == null) {
+                return;
               }
+              HelpTooltip.dispose(this);
+              createPrimaryTooltip(project).installOn(this);
             }
           };
+
       button.setHorizontalTextPosition(SwingConstants.LEFT);
       button.setFont(
           new FontUIResource(
@@ -173,6 +182,40 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
       createGotItTooltip(button);
 
       return button;
+    }
+
+    private HelpTooltip createPrimaryTooltip(Project project) {
+      if (fileInEditorHasNoTargetsToBuild(project)) {
+        return new HelpTooltip()
+            .setTitle(QuerySync.BUILD_DEPENDENCIES_ACTION_NAME)
+            .setDescription(
+                "This file is not owned by a project target with external dependencies.");
+      } else {
+        return new HelpTooltip()
+            .setTitle(QuerySync.BUILD_DEPENDENCIES_ACTION_NAME)
+            .setShortcut(ActionManager.getInstance().getKeyboardShortcut("Blaze.BuildDependencies"))
+            .setDescription(
+                "Builds the external dependencies needed for this file and enables analysis")
+            .setLink(
+                "Settings...",
+                () ->
+                    ShowSettingsUtil.getInstance()
+                        .showSettingsDialog(
+                            project, QuerySyncConfigurableProvider.getConfigurableClass()));
+      }
+    }
+
+    private boolean fileInEditorHasNoTargetsToBuild(Project project) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      VirtualFile vf = psiFile != null ? psiFile.getVirtualFile() : null;
+      QuerySyncManager querySyncManager = QuerySyncManager.getInstance(project);
+      if (vf != null
+          && querySyncManager.isProjectLoaded()
+          && !querySyncManager.operationInProgress()) {
+        TargetsToBuild toBuild = buildDepsHelper.getTargetsToEnableAnalysisFor(vf);
+        return toBuild.isEmpty();
+      }
+      return false;
     }
 
     private void createGotItTooltip(ActionButtonWithText button) {

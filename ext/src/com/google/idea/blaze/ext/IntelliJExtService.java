@@ -16,9 +16,27 @@
 package com.google.idea.blaze.ext;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.idea.blaze.ext.BlueprintServiceGrpc.BlueprintServiceBlockingStub;
+import com.google.idea.blaze.ext.BuildCleanerServiceGrpc.BuildCleanerServiceFutureStub;
+import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceBlockingStub;
+import com.google.idea.blaze.ext.BuildServiceGrpc.BuildServiceFutureStub;
+import com.google.idea.blaze.ext.ChatBotModelGrpc.ChatBotModelBlockingStub;
+import com.google.idea.blaze.ext.CitcOperationsServiceGrpc.CitcOperationsServiceBlockingStub;
+import com.google.idea.blaze.ext.CodeSearchGrpc.CodeSearchFutureStub;
+import com.google.idea.blaze.ext.CritiqueServiceGrpc.CritiqueServiceBlockingStub;
+import com.google.idea.blaze.ext.DepServerGrpc.DepServerFutureStub;
+import com.google.idea.blaze.ext.ECatcherServiceGrpc.ECatcherServiceFutureStub;
+import com.google.idea.blaze.ext.ExperimentsServiceGrpc.ExperimentsServiceBlockingStub;
+import com.google.idea.blaze.ext.FileApiGrpc.FileApiFutureStub;
+import com.google.idea.blaze.ext.FindingsServiceGrpc.FindingsServiceBlockingStub;
 import com.google.idea.blaze.ext.IntelliJExtGrpc.IntelliJExtBlockingStub;
 import com.google.idea.blaze.ext.IssueTrackerGrpc.IssueTrackerBlockingStub;
+import com.google.idea.blaze.ext.KytheGrpc.KytheFutureStub;
+import com.google.idea.blaze.ext.LinterGrpc.LinterFutureStub;
+import com.google.idea.blaze.ext.PiperServiceGrpc.PiperServiceBlockingStub;
+import com.google.idea.blaze.ext.PiperServiceGrpc.PiperServiceFutureStub;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A service that maintains the connection to an external extension service. The external service is
@@ -50,10 +69,18 @@ public final class IntelliJExtService {
     FAILED,
   }
 
-  public IntelliJExtService(Path binary) {
+  public IntelliJExtService(Path binary, @Nullable Path logDir) {
     this.binary = binary;
     this.serverArgs = new ArrayList<>();
     this.status = ServiceStatus.INITIALIZING;
+    if (logDir != null) {
+      this.serverArgs.add("--log_dir");
+      this.serverArgs.add(logDir.toString());
+    }
+  }
+
+  public IntelliJExtService(Path binary) {
+    this(binary, null);
   }
 
   private synchronized void start() throws IOException {
@@ -66,6 +93,10 @@ public final class IntelliJExtService {
       server.destroy();
     }
     try {
+      if (client != null) {
+        logger.log(Level.INFO, "Forcibly shutting down the client.");
+        client.shutdownNow();
+      }
       server = IntelliJExtServer.create(binary, serverArgs);
       client = IntelliJExtClient.create(server.getSocket());
       boolean ready = server.waitToBeReady();
@@ -74,6 +105,20 @@ public final class IntelliJExtService {
       status = ServiceStatus.FAILED;
       throw e;
     }
+  }
+
+  public void shutdown() {
+    if (client != null) {
+      client.shutdown();
+      if (server != null) {
+        server.destroy();
+      }
+    }
+  }
+
+  /** Registers a customized {@link IntellijExtClient} for test cases. */
+  public void registerForTest(IntelliJExtClient client) {
+    this.client = client;
   }
 
   /**
@@ -94,7 +139,7 @@ public final class IntelliJExtService {
     try {
       return client.getStubSafe();
     } catch (RuntimeException e) {
-      logger.log(Level.SEVERE, "Error running the intellij-ext server, restarting", e);
+      logger.log(Level.INFO, "Pinging intellij-ext server failed, restarting");
       start();
       return client.getStubSafe();
     }
@@ -133,5 +178,102 @@ public final class IntelliJExtService {
   public IssueTrackerBlockingStub getIssueTrackerService() throws IOException {
     IntelliJExtBlockingStub unused = connect();
     return client.getIssueTrackerService();
+  }
+
+  public BuildServiceFutureStub getBuildService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getBuildService();
+  }
+
+  public BuildServiceBlockingStub getBuildServiceBlocking() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getBuildServiceBlocking();
+  }
+
+  public KytheFutureStub getKytheService() {
+    try {
+      IntelliJExtBlockingStub unused = connect();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    return client.getKytheService();
+  }
+
+  public ExperimentsServiceBlockingStub getExperimentsService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getExperimentsService();
+  }
+
+  public ChatBotModelBlockingStub getChatBotModelService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getChatBotModelService();
+  }
+
+  public LinterFutureStub getLinterService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getLinterService();
+  }
+
+  public FindingsServiceBlockingStub getFindingsService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getFindingsService();
+  }
+
+  public CritiqueServiceBlockingStub getCritiqueService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getCritiqueService();
+  }
+
+  public CitcOperationsServiceBlockingStub getCitcOperationsService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getCitcOperationsService();
+  }
+
+  public CodeSearchFutureStub getCodeSearchService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getCodeSearchService();
+  }
+
+  public ECatcherServiceFutureStub getECatcherService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getECatcherService();
+  }
+
+  public FileApiFutureStub getFileApiService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getFileApiService();
+  }
+
+  public BuildCleanerServiceFutureStub getBuildCleanerService() {
+    try {
+      IntelliJExtBlockingStub unused = connect();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    return client.getBuildCleanerService();
+  }
+
+  public DepServerFutureStub getDependencyService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getDependencyService();
+  }
+
+  public PiperServiceFutureStub getPiperService() {
+    try {
+      IntelliJExtBlockingStub unused = connect();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    return client.getPiperService();
+  }
+
+  public PiperServiceBlockingStub getPiperServiceBlocking() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getPiperServiceBlocking();
+  }
+
+  public BlueprintServiceBlockingStub getBlueprintService() throws IOException {
+    IntelliJExtBlockingStub unused = connect();
+    return client.getBlueprintService();
   }
 }

@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.build;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -64,6 +66,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
@@ -86,6 +89,11 @@ public class BlazeBuildService {
   public BlazeBuildService(Project project) {
     this.project = project;
     this.buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
+  }
+
+  public void buildFileForLabels(
+      String fileName, ImmutableSet<com.google.idea.blaze.common.Label> labels) {
+    buildFile(fileName, labels.stream().map(Label::create).collect(toImmutableSet()));
   }
 
   public void buildFile(String fileName, ImmutableCollection<Label> targets) {
@@ -132,7 +140,7 @@ public class BlazeBuildService {
                     projectData.getWorkspacePathResolver(),
                     projectData.getWorkspaceLanguageSettings())
                 .getTargetsToSync();
-          } catch (SyncCanceledException e) {
+          } catch (SyncCanceledException | ExecutionException | InterruptedException e) {
             context.setCancelled();
             return null;
           } catch (SyncFailedException e) {

@@ -17,16 +17,16 @@ package com.google.idea.blaze.base.actions;
 
 import static com.google.idea.blaze.base.actions.BlazeProjectAction.QuerySyncStatus.HIDDEN;
 import static com.google.idea.blaze.base.actions.BlazeProjectAction.QuerySyncStatus.REQUIRED;
-import static com.google.idea.blaze.base.actions.BlazeProjectAction.QuerySyncStatus.SUPPORTED;
 
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
+import org.jetbrains.annotations.NotNull;
 
 /** Base class action that hides for non-blaze projects. */
 public abstract class BlazeProjectAction extends AnAction {
@@ -40,7 +40,10 @@ public abstract class BlazeProjectAction extends AnAction {
     /**
      * The action may support querysync in future, but does not yet. It is visible in the UI, but
      * disabled.
+     *
+     * @deprecated All existing users should migrate to another of the enum values instead.
      */
+    @Deprecated
     DISABLED,
     /** The action supports querysync and is available in the UI. */
     SUPPORTED,
@@ -66,32 +69,41 @@ public abstract class BlazeProjectAction extends AnAction {
   @Override
   public final void update(AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null || !Blaze.isBlazeProject(project)) {
+    if (project == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    final QuerySyncStatus querySyncStatus = querySyncSupport();
-    if (QuerySync.isEnabled()) {
-      if (querySyncStatus == HIDDEN) {
+    switch (Blaze.getProjectType(project)) {
+      case UNKNOWN:
         e.getPresentation().setEnabledAndVisible(false);
         return;
-      }
-    } else {
-      if (querySyncStatus == REQUIRED) {
-        e.getPresentation().setEnabledAndVisible(false);
-        return;
-      }
+      case QUERY_SYNC:
+        switch (querySyncSupport()) {
+          case HIDDEN:
+            e.getPresentation().setEnabledAndVisible(false);
+            return;
+          case DISABLED:
+            e.getPresentation().setVisible(true);
+            e.getPresentation().setEnabled(false);
+            return;
+          case REQUIRED:
+          case SUPPORTED:
+            e.getPresentation().setEnabledAndVisible(true);
+            break;
+        }
+        break;
+      case ASPECT_SYNC:
+        switch (querySyncSupport()) {
+          case REQUIRED:
+            e.getPresentation().setEnabledAndVisible(false);
+            return;
+          default:
+            e.getPresentation().setEnabledAndVisible(true);
+        }
+        break;
     }
-
-    e.getPresentation().setEnabledAndVisible(true);
 
     if (!compatibleBuildSystem(project)) {
-      e.getPresentation().setEnabled(false);
-      return;
-    }
-    if (QuerySync.isEnabled() && querySyncStatus != SUPPORTED && querySyncStatus != REQUIRED) {
-      // TODO(b/260643753) disabling all blaze actions for querysync is way too broad, instead we
-      //  should investigate which can be supported and update them accordingly.
       e.getPresentation().setEnabled(false);
       return;
     }
@@ -108,12 +120,17 @@ public abstract class BlazeProjectAction extends AnAction {
     actionPerformedInBlazeProject(project, anActionEvent);
   }
 
-  protected QuerySyncStatus querySyncSupport() {
+  protected abstract QuerySyncStatus querySyncSupport(); /* {
     // Default to disabled, meaning that the action has not yet been updated for querysync.
     return QuerySyncStatus.DISABLED;
-  }
+  }*/
 
   protected void updateForBlazeProject(Project project, AnActionEvent e) {}
+
+  @Override
+  public ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   protected abstract void actionPerformedInBlazeProject(Project project, AnActionEvent e);
 

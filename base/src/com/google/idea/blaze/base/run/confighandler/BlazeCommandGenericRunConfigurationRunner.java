@@ -62,7 +62,9 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.CommandLineState;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilderImpl;
@@ -80,6 +82,7 @@ import com.intellij.openapi.project.Project;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -191,9 +194,16 @@ public final class BlazeCommandGenericRunConfigurationRunner
     private ProcessHandler getScopedProcessHandler(
         Project project, BlazeCommand blazeCommand, WorkspaceRoot workspaceRoot)
         throws ExecutionException {
+      GeneralCommandLine commandLine = new GeneralCommandLine(blazeCommand.toList());
+      EnvironmentVariablesData envVarState = handlerState.getUserEnvVarsState().getData();
+      commandLine.withEnvironment(envVarState.getEnvs());
+      commandLine.withParentEnvironmentType(
+              envVarState.isPassParentEnvs()
+                      ? GeneralCommandLine.ParentEnvironmentType.CONSOLE
+                      : GeneralCommandLine.ParentEnvironmentType.NONE);
       return new ScopedBlazeProcessHandler(
           project,
-          blazeCommand,
+          commandLine,
           workspaceRoot,
           new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
             @Override
@@ -238,13 +248,14 @@ public final class BlazeCommandGenericRunConfigurationRunner
           });
       addConsoleFilters(consoleFilters.toArray(new Filter[0]));
 
+      @NotNull Map<String, String> envVars = handlerState.getUserEnvVarsState().getData().getEnvs();
       ListenableFuture<BlazeBuildOutputs> blazeBuildOutputsListenableFuture =
           BlazeExecutor.getInstance()
               .submit(
                   () ->
                       invoker
                           .getCommandRunner()
-                          .run(project, blazeCommandBuilder, buildResultHelper, context));
+                          .run(project, blazeCommandBuilder, buildResultHelper, context, envVars));
       Futures.addCallback(
           blazeBuildOutputsListenableFuture,
           new FutureCallback<BlazeBuildOutputs>() {
@@ -310,18 +321,28 @@ public final class BlazeCommandGenericRunConfigurationRunner
         context.addOutputSink(PrintOutput.class, new WritingOutputSink(consoleView));
       }
       addConsoleFilters(consoleFilters.toArray(new Filter[0]));
-      return !invoker.getCommandRunner().canUseCli()
-          ? getCommandRunnerProcessHandler(
+      @NotNull Map<String, String> envVars = handlerState.getUserEnvVarsState().getData().getEnvs();
+
+      if (invoker.getCommandRunner().canUseCli()) {
+        // If we can use the CLI, that means we will run through Bazel (as opposed to a raw process handler)
+        // When running `bazel test`, bazel will not forward the environment to the tests themselves -- we need to use
+        // the --test_env flag for that. Therefore, we convert all the env vars to --test_env flags here.
+        for (Map.Entry<String, String> env: envVars.entrySet()) {
+          blazeCommandBuilder.addBlazeFlags(BlazeFlags.TEST_ENV, String.format("%s=%s", env.getKey(), env.getValue()));
+        }
+
+        return getScopedProcessHandler(project, blazeCommandBuilder.build(), workspaceRoot);
+      }
+      return getCommandRunnerProcessHandlerForTests(
               project,
               invoker,
               buildResultHelper,
               blazeCommandBuilder,
               testResultFinderStrategy,
-              context)
-          : getScopedProcessHandler(project, blazeCommandBuilder.build(), workspaceRoot);
+              context);
     }
 
-    private ProcessHandler getCommandRunnerProcessHandler(
+    private ProcessHandler getCommandRunnerProcessHandlerForTests(
         Project project,
         BuildInvoker invoker,
         BuildResultHelper buildResultHelper,
@@ -329,13 +350,14 @@ public final class BlazeCommandGenericRunConfigurationRunner
         BlazeTestResultFinderStrategy testResultFinderStrategy,
         BlazeContext context) {
       ProcessHandler processHandler = getGenericProcessHandler();
+      @NotNull Map<String, String> envVars = handlerState.getUserEnvVarsState().getData().getEnvs();
       ListenableFuture<BlazeTestResults> blazeTestResultsFuture =
           BlazeExecutor.getInstance()
               .submit(
                   () ->
                       invoker
                           .getCommandRunner()
-                          .runTest(project, blazeCommandBuilder, buildResultHelper, context));
+                          .runTest(project, blazeCommandBuilder, buildResultHelper, context, envVars));
       Futures.addCallback(
           blazeTestResultsFuture,
           new FutureCallback<BlazeTestResults>() {

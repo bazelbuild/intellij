@@ -15,15 +15,19 @@
  */
 package com.google.idea.blaze.qsync;
 
+import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.util.Comparator.comparingInt;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
@@ -35,12 +39,19 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.RuleKinds;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.java.PackageReader;
 import com.google.idea.blaze.qsync.project.BlazeProjectDataStorage;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
+import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectProto;
-import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
+import com.google.idea.blaze.qsync.project.ProjectProto.LibraryOrBuilder;
+import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
+import com.google.idea.blaze.qsync.project.ProjectTarget;
+import com.google.idea.blaze.qsync.project.ProjectTarget.SourceType;
+import com.google.idea.blaze.qsync.project.TestSourceGlobMatcher;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -51,17 +62,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /** Converts a {@link BuildGraphData} instance into a project proto. */
@@ -73,18 +86,27 @@ public class GraphToProjectConverter {
 
   private final ProjectDefinition projectDefinition;
   private final ListeningExecutorService executor;
+  private final Supplier<Boolean> useNewResDirLogic;
+  private final Supplier<Boolean> guessAndroidResPackages;
+  private final boolean useNewBuildArtifactLogic;
 
   public GraphToProjectConverter(
       PackageReader packageReader,
       Path workspaceRoot,
       Context<?> context,
       ProjectDefinition projectDefinition,
-      ListeningExecutorService executor) {
+      ListeningExecutorService executor,
+      Supplier<Boolean> useNewResDirLogic,
+      Supplier<Boolean> guessAndroidResPackages,
+      boolean useNewBuildArtifactLogic) {
     this.packageReader = packageReader;
     this.fileExistenceCheck = p -> Files.isRegularFile(workspaceRoot.resolve(p));
     this.context = context;
     this.projectDefinition = projectDefinition;
     this.executor = executor;
+    this.useNewResDirLogic = useNewResDirLogic;
+    this.guessAndroidResPackages = guessAndroidResPackages;
+    this.useNewBuildArtifactLogic = useNewBuildArtifactLogic;
   }
 
   @VisibleForTesting
@@ -93,12 +115,16 @@ public class GraphToProjectConverter {
       Predicate<Path> fileExistenceCheck,
       Context<?> context,
       ProjectDefinition projectDefinition,
-      ListeningExecutorService executor) {
+      ListeningExecutorService executor,
+      boolean useNewBuildArtifactLogic) {
     this.packageReader = packageReader;
     this.fileExistenceCheck = fileExistenceCheck;
     this.context = context;
     this.projectDefinition = projectDefinition;
     this.executor = executor;
+    this.useNewResDirLogic = Suppliers.ofInstance(true);
+    this.guessAndroidResPackages = Suppliers.ofInstance(false);
+    this.useNewBuildArtifactLogic = useNewBuildArtifactLogic;
   }
 
   /**
@@ -142,7 +168,7 @@ public class GraphToProjectConverter {
    *     prefix. A content root contains multiple source roots, each one with a package prefix.
    */
   @VisibleForTesting
-  public Map<Path, Map<Path, String>> calculateRootSources(
+  public ImmutableMap<Path, ImmutableMap<Path, String>> calculateJavaRootSources(
       Collection<Path> srcFiles, PackageSet packages) throws BuildException {
 
     // A map from package to the file chosen to represent it.
@@ -152,19 +178,45 @@ public class GraphToProjectConverter {
     ImmutableMap<Path, String> prefixes = readPackages(chosenFiles);
 
     // All packages split by their content roots
-    Map<Path, Map<Path, String>> rootToPrefix = splitByRoot(prefixes);
+    ImmutableMap<Path, ImmutableMap<Path, String>> rootToPrefix = splitByRoot(prefixes);
 
     // Merging packages that can share the same prefix
-    mergeCompatibleSourceRoots(rootToPrefix);
+    rootToPrefix = mergeCompatibleSourceRoots(rootToPrefix);
 
     return rootToPrefix;
   }
 
+  /**
+   * Calculates directories containing non-java source files.
+   *
+   * @param srcFiles all the sources in the project, excluding java.
+   * @return mapping of content roots (project includes) to directories (relative to the content
+   *     root) containing proto files.
+   */
   @VisibleForTesting
-  Map<Path, Map<Path, String>> splitByRoot(Map<Path, String> prefixes) {
-    Map<Path, Map<Path, String>> split = new HashMap<>();
+  public ImmutableMultimap<Path, Path> nonJavaSourceFolders(Collection<Path> srcFiles) {
+    ImmutableMultimap.Builder<Path, Path> contentRootToSource = ImmutableMultimap.builder();
+
+    // Calculate all source directories.
+    ImmutableSet<Path> srcDirectories =
+        srcFiles.stream().map(Path::getParent).filter(Objects::nonNull).collect(toImmutableSet());
+
+    // Separate by project includes
+    for (Path srcDir : srcDirectories) {
+      projectDefinition
+          .getIncludingContentRoot(srcDir)
+          .ifPresent(
+              contentRoot -> contentRootToSource.put(contentRoot, contentRoot.relativize(srcDir)));
+    }
+
+    return contentRootToSource.build();
+  }
+
+  @VisibleForTesting
+  ImmutableMap<Path, ImmutableMap<Path, String>> splitByRoot(Map<Path, String> prefixes) {
+    ImmutableMap.Builder<Path, ImmutableMap<Path, String>> split = ImmutableMap.builder();
     for (Path root : projectDefinition.projectIncludes()) {
-      Map<Path, String> inRoot = new HashMap<>();
+      ImmutableMap.Builder<Path, String> inRoot = ImmutableMap.builder();
       for (Entry<Path, String> pkg : prefixes.entrySet()) {
         Path rel = pkg.getKey();
         if (rel.startsWith(root)) {
@@ -172,9 +224,9 @@ public class GraphToProjectConverter {
           inRoot.put(relToRoot, pkg.getValue());
         }
       }
-      split.put(root, inRoot);
+      split.put(root, inRoot.buildKeepingLast());
     }
-    return split;
+    return split.buildKeepingLast();
   }
 
   private ImmutableMap<Path, String> readPackages(Collection<Path> files) throws BuildException {
@@ -235,7 +287,7 @@ public class GraphToProjectConverter {
     // Filter the files that are top level files only
     return candidates.values().stream()
         .filter(file -> isTopLevel(packages, candidates, file))
-        .collect(ImmutableList.toImmutableList());
+        .collect(toImmutableList());
   }
 
   private static boolean isTopLevel(PackageSet packages, Map<Path, Path> candidates, Path file) {
@@ -267,7 +319,11 @@ public class GraphToProjectConverter {
     return pkg.substring(pkg.lastIndexOf('.') + 1);
   }
 
+  @Nullable
   private static String parentPackageOf(String pkg) {
+    if (pkg.isEmpty()) {
+      return null;
+    }
     int ix = pkg.lastIndexOf('.');
     return ix == -1 ? "" : pkg.substring(0, ix);
   }
@@ -297,92 +353,259 @@ public class GraphToProjectConverter {
    * This is true even if the parent source root is later moved up.
    */
   @VisibleForTesting
-  static void mergeCompatibleSourceRoots(Map<Path, Map<Path, String>> srcRoots) {
-    for (Entry<Path, Map<Path, String>> contentRoot : srcRoots.entrySet()) {
-      Map<Path, String> sourceRoots = contentRoot.getValue();
-      Set<Path> directories = new TreeSet<>(sourceRoots.keySet());
-      for (Path directory : directories) {
-        String prefix = sourceRoots.remove(directory);
-        while (!prefix.isEmpty()
-            && lastSubpackageOf(prefix).equals(directory.getFileName().toString())) {
-          Path parentDirectory = relativeParentOf(directory);
-          String parentPrefix = parentPackageOf(prefix);
-          String existing = sourceRoots.get(parentDirectory);
-          if (existing != null) {
-            if (existing.equals(parentPrefix)) {
-              // Exists and it's the same it would have been, go up and merge both
-              // Note that if the existing was or not already processed does not matter
-              directory = parentDirectory;
-              prefix = parentPrefix;
-              break;
-            } else {
-              // The roots are not compatible, stop here
-              break;
-            }
-          } else {
-            // We can move one up, and keep trying
-            directory = parentDirectory;
-            prefix = parentPrefix;
-          }
-        }
-        sourceRoots.putIfAbsent(directory, prefix);
+  static ImmutableMap<Path, ImmutableMap<Path, String>> mergeCompatibleSourceRoots(
+      ImmutableMap<Path, ImmutableMap<Path, String>> srcRoots) {
+    ImmutableMap.Builder<Path, ImmutableMap<Path, String>> result = ImmutableMap.builder();
+    for (Entry<Path, ImmutableMap<Path, String>> contentRoot : srcRoots.entrySet()) {
+      result.put(contentRoot.getKey(), mergeSourceRoots(contentRoot.getValue()));
+    }
+    return result.buildOrThrow();
+  }
+
+  /**
+   * Given directory to package mappings known to be true from the source code builds finds the root
+   * mappings that are sufficient for the IDE to derive the provided mappings, i.e. having
+   *
+   * <pre>
+   *   java/src/com/google/app => com.google.app
+   *   java/src/com/google/lib => com.google.lib
+   *   java/src/com/google/sample/else => com.example.else
+   * </pre>
+   *
+   * <p>produces:
+   *
+   * <pre>
+   *   java/src => ""
+   *   java/src/com/google/sample => com.example
+   * </pre>
+   */
+  private static ImmutableMap<Path, String> mergeSourceRoots(
+      Map<Path, String> expectedDirectoryToPackageMap) {
+    final Map<Path, Set<String>> dirWants = addPossibleParentMatches(expectedDirectoryToPackageMap);
+    final ImmutableMap<Path, String> dirAllResult =
+        chooseFinalMappings(expectedDirectoryToPackageMap, dirWants);
+    return selectEssentialMappings(dirAllResult);
+  }
+
+  /**
+   * Given an unambiguous directory to package mapping that includes intermediate directories
+   * selects those root mappings that are required to establish top level mappings and drops any
+   * that can be derived from them.
+   *
+   * <p>i.e.
+   *
+   * <pre>
+   *   src/ => ""
+   *   src/com/ => com
+   *   src/com/google/ => com.google
+   *   src/com/google/lib => com.google.lib
+   *   src/com/google/else => smth.else
+   * </pre>
+   *
+   * <p>results in
+   *
+   * <pre>
+   *   src/ => ""
+   *   src/com/google/else => smth.else
+   * </pre>
+   */
+  private static ImmutableMap<Path, String> selectEssentialMappings(
+      ImmutableMap<Path, String> dirAllResult) {
+    ImmutableMap.Builder<Path, String> result = ImmutableMap.builder();
+    for (Entry<Path, String> entry : dirAllResult.entrySet()) {
+      final var parentPath = relativeParentOf(entry.getKey());
+      final var existingParentPkg = dirAllResult.get(parentPath);
+      if (existingParentPkg == null
+          || !appendPackage(existingParentPkg, entry.getKey().getFileName().toString())
+              .equals(entry.getValue())) {
+        result.put(entry.getKey(), entry.getValue());
       }
     }
+    return result.buildOrThrow();
+  }
+
+  /**
+   * Given expanded directory to package mappings and the originally expected directory to package
+   * map builds an unambiguous map from directories to packages.
+   *
+   * <p>If the expanded map contains conflicting entries (result of local package mapping and parent
+   * expansion) they are ignored and the local package mapping is used, if present.
+   *
+   * <p>For example, in the following structure:
+   *
+   * <pre>
+   *   src/ => ""
+   *   src/com/ => com
+   *   src/com/google/ => com.google; smth
+   *   src/com/google/lib => com.google.lib
+   *   src/com/google/else => smth.else
+   * </pre>
+   *
+   * <p>`src/com/google/ => com.google; smth` is resolved as `com.google` if it is also a local
+   * mapping, which would later result in a new source folder created for `src/com/google/else =>
+   * smth.else`.
+   */
+  private static ImmutableMap<Path, String> chooseFinalMappings(
+      Map<Path, String> expectedDirectoryToPackageMap, Map<Path, Set<String>> dirWants) {
+    ImmutableMap.Builder<Path, String> dirAllResult = ImmutableMap.builder();
+    for (final Path directory : new TreeSet<>(dirWants.keySet())) {
+      final var wants = dirWants.get(directory);
+      String pkg;
+      if (wants != null && wants.size() == 1) {
+        pkg = wants.iterator().next();
+      } else {
+        pkg = expectedDirectoryToPackageMap.get(directory);
+      }
+      if (pkg != null) {
+        dirAllResult.put(directory, pkg);
+      }
+    }
+    return dirAllResult.buildOrThrow();
+  }
+
+  /**
+   * Given a set of directory to package mappings expand them to all mappings that can be derived
+   * from parent directories.
+   *
+   * <p>i.e. in the presence of `src/com/google/smth => com.google.smth` add mappings like `src =>
+   * ""`, `src/com => com`, `src/com/google => com.google`, but stop if there is a mismatch between
+   * directory names and package names, i.e. when `java/src/smth => com.google.smth` is present
+   * expand it only to `java/src => com.google` as it would still correctly map sub-directories and
+   * when multiple similar sub-directories are present this is a preferred configuration.
+   */
+  private static Map<Path, Set<String>> addPossibleParentMatches(Map<Path, String> sourceRoots) {
+    final Set<Path> directories = new TreeSet<>(sourceRoots.keySet());
+    final Map<Path, Set<String>> dirWants = new LinkedHashMap<>();
+    for (final Path directory : directories) {
+      final String prefix = sourceRoots.get(directory);
+      var dir = directory;
+      var pref = prefix;
+      while (dir != null
+          && pref != null
+          && dir.getFileName().toString().equals(lastSubpackageOf(pref))) {
+        Set<String> wants = dirWants.computeIfAbsent(dir, it -> new HashSet<>());
+        wants.add(pref);
+        dir = relativeParentOf(dir);
+        pref = parentPackageOf(pref);
+      }
+      if (dir != null && pref != null) {
+        dirWants.computeIfAbsent(dir, it -> new HashSet<>()).add(pref);
+      }
+    }
+    return dirWants;
+  }
+
+  private static String appendPackage(String parentPackage, String subpackage) {
+    return parentPackage.isEmpty() ? subpackage : parentPackage + "." + subpackage;
   }
 
   public ProjectProto.Project createProject(BuildGraphData graph) throws BuildException {
-    Map<Path, Map<Path, String>> rootToPrefix =
-        calculateRootSources(graph.getJavaSourceFiles(), graph.packages());
-    ImmutableSet<Path> dirs = computeAndroidResourceDirectories(graph.getAllSourceFiles());
-    ImmutableSet<String> pkgs =
-        computeAndroidSourcePackages(graph.getAndroidSourceFiles(), rootToPrefix);
+    ImmutableMap<Path, ImmutableMap<Path, String>> javaSourceRoots =
+        calculateJavaRootSources(graph.getJavaSourceFiles(), graph.packages());
+    ImmutableMultimap<Path, Path> rootToNonJavaSource =
+        nonJavaSourceFolders(
+            graph.getSourceFilesByRuleKindAndType(not(RuleKinds::isJava), SourceType.all()));
+    ImmutableSet<Path> androidResDirs;
+    if (useNewResDirLogic.get()) {
+      // Note: according to:
+      //  https://developer.android.com/guide/topics/resources/providing-resources
+      // "Never save resource files directly inside the res/ directory. It causes a compiler error."
+      // This implies that we can safely take the grandparent of each resource file to find the
+      // top level res dir:
+      List<Path> resList = graph.getAndroidResourceFiles();
+      androidResDirs =
+          resList.stream()
+              .map(Path::getParent)
+              .distinct()
+              .map(Path::getParent)
+              .distinct()
+              .collect(toImmutableSet());
+    } else {
+      // TODO(mathewi) Remove this and the corresponding experiment once the logic has been proven.
+      androidResDirs = computeAndroidResourceDirectories(graph.getAllSourceFiles());
+    }
+    ImmutableSet<String> androidResPackages;
+    if (guessAndroidResPackages.get()) {
+      androidResPackages =
+          computeAndroidSourcePackages(graph.getAndroidSourceFiles(), javaSourceRoots);
+    } else {
+      androidResPackages = ImmutableSet.of();
+    }
 
-    context.output(PrintOutput.log("%-10d Android resource directories", dirs.size()));
-    context.output(PrintOutput.log("%-10d Android resource packages", pkgs.size()));
+    context.output(PrintOutput.log("%-10d Android resource directories", androidResDirs.size()));
+    if (guessAndroidResPackages.get()) {
+      context.output(PrintOutput.log("%-10d Android resource packages", androidResPackages.size()));
+    }
 
-    ProjectProto.Library depsLib =
-        ProjectProto.Library.newBuilder()
-            .setName(BlazeProjectDataStorage.DEPENDENCIES_LIBRARY)
-            .addClassesJar(
-                ProjectProto.JarDirectory.newBuilder()
-                    .setPath(
-                        Paths.get(
-                                BlazeProjectDataStorage.BLAZE_DATA_SUBDIRECTORY,
-                                BlazeProjectDataStorage.LIBRARY_DIRECTORY)
-                            .toString())
-                    .setRecursive(false))
-            .build();
+    ImmutableList<ProjectProto.Library> depsLibs;
+    if (useNewBuildArtifactLogic) {
+      depsLibs = ImmutableList.of();
+    } else {
+      depsLibs =
+          ImmutableList.of(
+              ProjectProto.Library.newBuilder()
+                  .setName(BlazeProjectDataStorage.DEPENDENCIES_LIBRARY)
+                  .addClassesJar(
+                      ProjectProto.JarDirectory.newBuilder()
+                          .setPath(
+                              Paths.get(
+                                      BlazeProjectDataStorage.BLAZE_DATA_SUBDIRECTORY,
+                                      BlazeProjectDataStorage.LIBRARY_DIRECTORY)
+                                  .toString())
+                          .setRecursive(false))
+                  .build());
+    }
 
     ProjectProto.Module.Builder workspaceModule =
         ProjectProto.Module.newBuilder()
             .setName(BlazeProjectDataStorage.WORKSPACE_MODULE_NAME)
             .setType(ProjectProto.ModuleType.MODULE_TYPE_DEFAULT)
-            .addLibraryName(depsLib.getName())
+            .addAllLibraryName(
+                depsLibs.stream().map(LibraryOrBuilder::getName).collect(toImmutableList()))
             .addAllAndroidResourceDirectories(
-                dirs.stream().map(Path::toString).collect(toImmutableList()))
-            .addAllAndroidSourcePackages(pkgs)
+                androidResDirs.stream().map(Path::toString).collect(toImmutableList()))
+            .addAllAndroidSourcePackages(androidResPackages)
             .addAllAndroidCustomPackages(graph.getAllCustomPackages());
 
     ListMultimap<Path, Path> excludesByRootDirectory =
         projectDefinition.getExcludesByRootDirectory();
-    TestSourceGlobMatcher testSourceGlobMatcher =
-        new TestSourceGlobMatcher(projectDefinition.testSources());
+    TestSourceGlobMatcher testSourceGlobMatcher = TestSourceGlobMatcher.create(projectDefinition);
     for (Path dir : projectDefinition.projectIncludes()) {
       ProjectProto.ContentEntry.Builder contentEntry =
           ProjectProto.ContentEntry.newBuilder()
               .setRoot(
-                  ProjectProto.ContentRoot.newBuilder()
+                  ProjectProto.ProjectPath.newBuilder()
                       .setPath(dir.toString())
                       .setBase(Base.WORKSPACE));
-      Map<Path, String> sourceRootsWithPrefixes = rootToPrefix.get(dir);
+      Map<Path, String> sourceRootsWithPrefixes = javaSourceRoots.get(dir);
       for (Entry<Path, String> entry : sourceRootsWithPrefixes.entrySet()) {
         Path path = dir.resolve(entry.getKey());
         contentEntry.addSources(
             ProjectProto.SourceFolder.newBuilder()
-                .setPath(path.toString())
+                .setProjectPath(
+                    ProjectProto.ProjectPath.newBuilder()
+                        .setBase(Base.WORKSPACE)
+                        .setPath(path.toString()))
                 .setPackagePrefix(entry.getValue())
                 .setIsTest(testSourceGlobMatcher.matches(path))
                 .build());
+      }
+      for (Path nonJavaDirPath : rootToNonJavaSource.get(dir)) {
+        if (javaSourceRoots.get(dir).keySet().stream()
+            .noneMatch(p -> p.toString().isEmpty() || nonJavaDirPath.startsWith(p))) {
+          Path path = dir.resolve(nonJavaDirPath);
+          // TODO(b/305743519): make java source properties like package prefix specific to java
+          // source folders only.
+          contentEntry.addSources(
+              ProjectProto.SourceFolder.newBuilder()
+                  .setProjectPath(
+                      ProjectProto.ProjectPath.newBuilder()
+                          .setBase(Base.WORKSPACE)
+                          .setPath(path.toString()))
+                  .setPackagePrefix("")
+                  .setIsTest(testSourceGlobMatcher.matches(path))
+                  .build());
+        }
       }
       for (Path exclude : excludesByRootDirectory.get(dir)) {
         contentEntry.addExcludes(exclude.toString());
@@ -390,9 +613,15 @@ public class GraphToProjectConverter {
       workspaceModule.addContentEntries(contentEntry);
     }
 
+    ImmutableSet.Builder<LanguageClass> activeLanguages = ImmutableSet.builder();
+    if (graph.targetMap().values().stream().map(ProjectTarget::kind).anyMatch(RuleKinds::isJava)) {
+      activeLanguages.add(LanguageClass.LANGUAGE_CLASS_JAVA);
+    }
+
     return ProjectProto.Project.newBuilder()
-        .addLibrary(depsLib)
+        .addAllLibrary(depsLibs)
         .addModules(workspaceModule)
+        .addAllActiveLanguages(activeLanguages.build())
         .build();
   }
 
@@ -401,7 +630,8 @@ public class GraphToProjectConverter {
    * /res/ somewhere in the path. To be replaced by a more robust implementation.
    */
   @VisibleForTesting
-  public static ImmutableSet<Path> computeAndroidResourceDirectories(List<Path> sourceFiles) {
+  public static ImmutableSet<Path> computeAndroidResourceDirectories(
+      ImmutableSet<Path> sourceFiles) {
     Set<Path> directories = new HashSet<>();
     for (Path sourceFile : sourceFiles) {
 
@@ -423,7 +653,7 @@ public class GraphToProjectConverter {
    */
   @VisibleForTesting
   public ImmutableSet<String> computeAndroidSourcePackages(
-      List<Path> androidSourceFiles, Map<Path, Map<Path, String>> rootToPrefix) {
+      List<Path> androidSourceFiles, ImmutableMap<Path, ImmutableMap<Path, String>> rootToPrefix) {
     ImmutableSet.Builder<String> androidSourcePackages = ImmutableSet.builder();
 
     // Map entries are sorted by path length to ensure that, if the map contains keys k1 and k2,

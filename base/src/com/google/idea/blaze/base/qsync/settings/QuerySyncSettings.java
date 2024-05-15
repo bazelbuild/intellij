@@ -15,10 +15,15 @@
  */
 package com.google.idea.blaze.base.qsync.settings;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.base.logging.LoggedSettingsProvider;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import java.util.function.Supplier;
 
 /** The settings for query sync to be stored per user. */
 @State(
@@ -26,11 +31,18 @@ import com.intellij.openapi.components.Storage;
     storages = {@Storage("query.sync.user.settings.xml")})
 public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSettings.State> {
   static class State {
+
+    /** Default query sync enabled settings, used when we are out of beta. */
+    public boolean enabled = true;
+
+    /** Query sync enabled setting, used when in beta only. */
     public boolean useQuerySync = false;
 
-    public boolean showDetailedInformationInEditor = false;
+    public boolean showDetailedInformationInEditor = true;
 
-    public boolean syncBeforeBuild = false;
+    public boolean buildWorkingSet = false;
+
+    public boolean syncOnFileChanges = false;
   }
 
   private QuerySyncSettings.State state = new QuerySyncSettings.State();
@@ -39,18 +51,25 @@ public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSett
     return ApplicationManager.getApplication().getService(QuerySyncSettings.class);
   }
 
-  public void enableUseQuerySync(boolean useQuerySync) {
+  public void enableUseQuerySyncBeta(boolean useQuerySync) {
     state.useQuerySync = useQuerySync;
   }
 
+  public void enableUseQuerySync(boolean enable) {
+    state.enabled = enable;
+  }
+
   /**
-   * Gets current state.useQuerySync value. It's a field to store current user selection for
-   * enabling query sync or not and it indicates whether query sync is enabled next time after IDE
-   * get restart. But it should not be used to decide if query sync is enabled now. Refer to {@code
-   * QuerySync#isEnable()} when you need to decide if a query sync feature is enabled or not.
+   * Gets current state.useQuerySync value. This should only be used for query sync beta; when query
+   * sync is enabled by default (as per {@link QuerySync#useByDefault()}, the value returned by
+   * {@link #useQuerySync()} should be used instead.
    */
-  public boolean useQuerySync() {
+  public boolean useQuerySyncBeta() {
     return state.useQuerySync;
+  }
+
+  public boolean useQuerySync() {
+    return state.enabled;
   }
 
   public void enableShowDetailedInformationInEditor(boolean showDetailedInformationInEditor) {
@@ -61,12 +80,20 @@ public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSett
     return state.showDetailedInformationInEditor;
   }
 
-  public void enableSyncBeforeBuild(boolean syncBeforeBuild) {
-    state.syncBeforeBuild = syncBeforeBuild;
+  public void enableBuildWorkingSet(boolean buildWorkingSet) {
+    state.buildWorkingSet = buildWorkingSet;
   }
 
-  public boolean syncBeforeBuild() {
-    return state.syncBeforeBuild;
+  public boolean buildWorkingSet() {
+    return state.buildWorkingSet;
+  }
+
+  public void enableSyncOnFileChanges(boolean syncOnFileChanges) {
+    state.syncOnFileChanges = syncOnFileChanges;
+  }
+
+  public boolean syncOnFileChanges() {
+    return state.syncOnFileChanges;
   }
 
   @Override
@@ -77,5 +104,44 @@ public class QuerySyncSettings implements PersistentStateComponent<QuerySyncSett
   @Override
   public void loadState(QuerySyncSettings.State state) {
     this.state = state;
+  }
+
+  /**
+   * Implementation of {@link LoggedSettingsProvider} which provides query sync related settings to
+   * logger.
+   */
+  public static class SettingsLogger implements LoggedSettingsProvider {
+    private final Supplier<Boolean> legacyExperimentSupplier;
+
+    public SettingsLogger() {
+      this(QuerySync::isLegacyExperimentEnabled);
+    }
+
+    @VisibleForTesting
+    public SettingsLogger(Supplier<Boolean> legacyExperimentSupplier) {
+      this.legacyExperimentSupplier = legacyExperimentSupplier;
+    }
+
+    @Override
+    public String getNamespace() {
+      return "QuerySyncSettings";
+    }
+
+    @Override
+    public ImmutableMap<String, String> getApplicationSettings() {
+      QuerySyncSettings settings = QuerySyncSettings.getInstance();
+
+      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+      builder.put(
+          "useQuerySync",
+          Boolean.toString(settings.useQuerySyncBeta() || legacyExperimentSupplier.get()));
+      builder.put("enabled", Boolean.toString(settings.useQuerySync()));
+      builder.put(
+          "showDetailedInformationInEditor",
+          Boolean.toString(settings.showDetailedInformationInEditor()));
+      builder.put("buildWorkingSet", Boolean.toString(settings.buildWorkingSet()));
+      builder.put("syncOnFileChanges", Boolean.toString(settings.syncOnFileChanges()));
+      return builder.buildOrThrow();
+    }
   }
 }

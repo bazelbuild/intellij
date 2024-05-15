@@ -7,3 +7,14 @@ additional_languages:
   go
 
 gazelle_target: //:gazelle
+
+import_run_configurations:
+  # Test that validates that macro expansion works, as per issue:
+  #    https://github.com/bazelbuild/intellij/issues/4112#event-7958662669
+  # This configuration should only be executed on 'run' (the green arrow) mode,
+  # as currently macros are not expanded in debug mode.
+  run_configurations/test_macro_expansion.xml
+
+  # Test that validates that environment variables are received correctly
+  # This configuration should be run on both 'run' and 'debug' modes.
+  run_configurations/test_env_vars.xml

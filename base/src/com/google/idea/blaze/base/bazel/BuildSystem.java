@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.errorprone.annotations.MustBeClosed;
+import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
@@ -23,9 +24,10 @@ import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.qsync.BazelQueryRunner;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
@@ -103,6 +105,15 @@ public interface BuildSystem {
             this.getClass().getSimpleName()));
   }
 
+  /** Get a Blaze invoker specific to the blaze command. */
+  default BuildInvoker getBuildInvoker(
+      Project project, BlazeContext context, BlazeCommandName command) {
+    throw new UnsupportedOperationException(
+        String.format(
+            "The getBuildInvoker method specific to a blaze command is not implemented in %s",
+            this.getClass().getSimpleName()));
+  }
+
   /** Get a Blaze invoker that only run build locally. */
   Optional<BuildInvoker> getLocalBuildInvoker(Project project, BlazeContext context);
 
@@ -120,12 +131,16 @@ public interface BuildSystem {
   void populateBlazeVersionData(
       WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo, BlazeVersionData.Builder builder);
 
+  /** Get bazel only version. Returns empty if it's not bazel project. */
+  Optional<String> getBazelVersionString(BlazeInfo blazeInfo);
+
   /**
    * Returns the parallel invoker if the sync strategy is PARALLEL and the system supports it;
    * otherwise returns the standard invoker.
    */
   default BuildInvoker getDefaultInvoker(Project project, BlazeContext context) {
-    if (!QuerySync.isEnabled() && getSyncStrategy(project) == SyncStrategy.PARALLEL) {
+    if (Blaze.getProjectType(project) != ProjectType.QUERY_SYNC
+        && getSyncStrategy(project) == SyncStrategy.PARALLEL) {
       return getParallelBuildInvoker(project, context).orElse(getBuildInvoker(project, context));
     } else {
       return getBuildInvoker(project, context);

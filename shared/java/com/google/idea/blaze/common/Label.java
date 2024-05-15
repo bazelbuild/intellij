@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Interner;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -36,10 +37,13 @@ import java.util.List;
  */
 public class Label {
 
+  private static final Interner<Label> interner =
+      com.google.common.collect.Interners.newWeakInterner();
+
   private final String label;
 
   public static Label of(String label) {
-    return new Label(label);
+    return interner.intern(new Label(label));
   }
 
   public static Label fromPackageAndName(Path packagePath, Path name) {
@@ -54,17 +58,21 @@ public class Label {
     return labels.stream().map(Label::of).collect(toImmutableList());
   }
 
-  public Label(String label) {
+  protected Label(String label) {
     if (label.startsWith("@")) {
       int doubleSlash = label.indexOf("//");
       Preconditions.checkArgument(doubleSlash > 0, label);
       int colon = label.indexOf(":");
       Preconditions.checkArgument(colon > doubleSlash, label);
+      if (!label.startsWith("@@")) {
+        // Normalize `label` to either start with double-at or start with double-slash.
+        label = '@' + label;
+      }
     } else {
       Preconditions.checkArgument(label.startsWith("//"), label);
       Preconditions.checkArgument(label.contains(":"), label);
     }
-    this.label = label;
+    this.label = Interners.STRING.intern(label);
   }
 
   public Path getPackage() {
@@ -78,15 +86,23 @@ public class Label {
   }
 
   public String getWorkspaceName() {
-    if (!label.startsWith("@")) {
-      return "";
+    if (label.startsWith("@@")) {
+      return label.substring(2, label.indexOf("//"));
     } else {
-      return label.substring(1, label.indexOf("//"));
+      return "";
     }
   }
 
   public Label siblingWithName(String name) {
     return fromPackageAndName(getPackage(), name);
+  }
+
+  public Label siblingWithPathAndName(String pathAndName) {
+    int colonPos = pathAndName.indexOf(':');
+    Preconditions.checkArgument(colonPos > 0, pathAndName);
+    return fromPackageAndName(
+        getPackage().resolve(pathAndName.substring(0, colonPos)),
+        pathAndName.substring(colonPos + 1));
   }
 
   /** When this label refers to a source file, returns the workspace relative path to that file. */

@@ -2,13 +2,14 @@
 
 # Visibility labels lists
 PLUGIN_PACKAGES_VISIBILITY = ["//visibility:public"]
-G3PLUGINS_VISIBILITY = None  # this is similar to not having visibility attribute
+G3PLUGINS_VISIBILITY = ["//visibility:public"]
 INTELLIJ_PLUGINS_VISIBILITY = ["//visibility:public"]
+DEFAULT_TEST_VISIBILITY = ["//visibility:public"]
 
-TEST_ASWB_SUBPACKAGES_VISIBILITY = None
-ASWB_SUBPACKAGES_VISIBILITY = None
-ASWB_PACKAGES_VISIBILITY = None
-ASWB_PLUGIN_PACKAGES_VISIBILITY = None
+TEST_ASWB_SUBPACKAGES_VISIBILITY = []
+ASWB_SUBPACKAGES_VISIBILITY = ["//visibility:public"]
+ASWB_PACKAGES_VISIBILITY = ["//visibility:public"]
+ASWB_PLUGIN_PACKAGES_VISIBILITY = ["//visibility:public"]
 
 CLWB_PACKAGES_VISIBILITY = None
 
@@ -24,14 +25,11 @@ BAZEL_PLUGIN_SUBPACKAGES = ["//:__subpackages__"]
 
 JAVASCRIPT_PACKAGES_VISIBILITY = None
 
-PYTHON_PACKAGES_VISIBILITY = None
+PYTHON_PACKAGES_VISIBILITY = ["//visibility:public"]
 
-SKYLARK_PACKAGES_VISIBILITY = None
+SKYLARK_PACKAGES_VISIBILITY = ["//visibility:public"]
 
-FAST_BUILD_JAVAC_VISIBILITY = [
-    "//aswb:__pkg__",
-    "//ijwb:__pkg__",
-]
+FAST_BUILD_JAVAC_VISIBILITY = ["//visibility:public"]
 
 COMMON_PLUGINS_VISIBILITY = ["//visibility:public"]
 
@@ -46,19 +44,25 @@ ASPECT_TEST_RULES_VISIBILITY_TO_ALL = [
 
 SERVICES_EXPERIMENT_SUBPACKAGES = None
 
-ASPECT_TOOLS_PACKAGE = ["//aspect/tools:__pkg__"]
-
 def create_plugin_packages_group(name = None):
-    # This group is not needed externally
-    pass
+    native.package_group(
+        name = "plugin_packages",
+        packages = [
+            "//...",
+        ],
+    )
 
 def create_proto_visibility_group(name = None):
     # This group is not needed externally
     pass
 
 def create_common_plugins_package(name = None):
-    # This group is not needed externally
-    pass
+    native.package_group(
+        name = "common_plugins",
+        packages = [
+            "//...",
+        ],
+    )
 
 def create_sdkcompat_visibility_package(name = None):
     # This group is not needed externally

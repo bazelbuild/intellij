@@ -17,6 +17,7 @@ package com.google.idea.blaze.cpp.oclang;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,7 +45,8 @@ public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelper {
     if (rootAndConfiguration.getConfiguration() == null) {
       return false;
     }
-    return Blaze.isBlazeProject(rootAndConfiguration.getConfiguration().getProject());
+    Project project = rootAndConfiguration.getConfiguration().getProject();
+    return Blaze.getProjectType(project) == ProjectType.ASPECT_SYNC;
   }
 
   /**

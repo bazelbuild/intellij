@@ -16,16 +16,15 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.bazel.BazelExitCode;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
-import com.google.idea.blaze.base.qsync.ArtifactTracker.UpdateResult;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -40,15 +39,15 @@ public class RenderJarTrackerImpl implements RenderJarTracker {
 
   private final BlazeProject blazeProject;
   private final RenderJarBuilder renderJarBuilder;
-  private final ArtifactTracker artifactTracker;
+  private final RenderJarArtifactTracker renderJarArtifactTracker;
 
   public RenderJarTrackerImpl(
       BlazeProject blazeProject,
       RenderJarBuilder renderJarBuilder,
-      ArtifactTracker artifactTracker) {
+      RenderJarArtifactTracker renderJarArtifactTracker) {
     this.blazeProject = blazeProject;
     this.renderJarBuilder = renderJarBuilder;
-    this.artifactTracker = artifactTracker;
+    this.renderJarArtifactTracker = renderJarArtifactTracker;
   }
 
   /** Builds the render jars of the given files and adds then to the cache */
@@ -96,16 +95,9 @@ public class RenderJarTrackerImpl implements RenderJarTracker {
       context.output(PrintOutput.error("There were build errors when generating render jar."));
     }
 
-    Stopwatch stopwatch = Stopwatch.createStarted();
-    UpdateResult updateResult = artifactTracker.update(targets, renderJarInfo, context);
-    context.output(
-        PrintOutput.log(
-            String.format(
-                "Updated cache in %d ms: updated %d artifacts, removed %d artifacts",
-                stopwatch.elapsed().toMillis(),
-                updateResult.updatedFiles().size(),
-                updateResult.removedKeys().size())));
-    if (updateResult.updatedFiles().isEmpty()) {
+    ImmutableSet<Path> updatedFiles =
+        renderJarArtifactTracker.update(targets, renderJarInfo, context);
+    if (updatedFiles.isEmpty()) {
       context.output(
           PrintOutput.log(
               "Render jar already generated for files: "
@@ -116,7 +108,7 @@ public class RenderJarTrackerImpl implements RenderJarTracker {
       context.output(
           PrintOutput.log(
               "Generated Render jars: "
-                  + updateResult.updatedFiles()
+                  + updatedFiles
                   + ", for these files: "
                   + workspaceRelativePaths
                   + ", and targets: "

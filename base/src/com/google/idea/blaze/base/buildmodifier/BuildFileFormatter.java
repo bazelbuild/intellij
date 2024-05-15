@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
@@ -93,7 +94,13 @@ public class BuildFileFormatter {
   }
 
   private static String fileTypeArg(BlazeFileType fileType) {
-    return fileType == BlazeFileType.SkylarkExtension ? "--type=bzl" : "--type=build";
+    return "--type="
+        + switch (fileType) {
+          case SkylarkExtension -> "bzl";
+          case BuildPackage -> "build";
+          case Workspace -> "workspace";
+          case MODULE -> "module";
+        };
   }
 
   private static Iterable<String> pathArg(@Nullable BuildFile buildFile) {
@@ -119,7 +126,19 @@ public class BuildFileFormatter {
   @Nullable
   private static String formatText(
       String buildifierBinaryPath, BuildFile buildFile, String inputText) throws IOException {
-    Process process = new ProcessBuilder(getCommandLineArgs(buildifierBinaryPath, buildFile)).start();
+    // We need to be in a proper directory to respect default buildifier config placement convention
+    // see https://github.com/bazelbuild/buildtools/blob/03bf520394afefdf48c558187b2d76b8b4b60ef1/buildifier/buildifier.go#L85
+    // `a file named '.buildifier.json' at the root of the workspace (e.g., in the same directory as the WORKSPACE file)`
+    File buildifierWorkingDir = null;
+
+    WorkspaceRoot workspaceRoot = BazelWorkspaceRootProvider.INSTANCE.findWorkspaceRoot(buildFile.getFile());
+    if (workspaceRoot != null) {
+      buildifierWorkingDir = workspaceRoot.directory();
+    }
+
+    Process process = new ProcessBuilder(getCommandLineArgs(buildifierBinaryPath, buildFile))
+            .directory(buildifierWorkingDir)
+            .start();
     process.getOutputStream().write(inputText.getBytes(UTF_8));
     process.getOutputStream().close();
 

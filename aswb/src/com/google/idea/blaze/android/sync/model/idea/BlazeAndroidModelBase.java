@@ -25,7 +25,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LintCollector;
 import com.intellij.openapi.diagnostic.Logger;
@@ -118,7 +119,7 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
   @Override
   @Nullable
   public Iterable<File> getLintRuleJarsOverride() {
-    if (QuerySync.isEnabled()) {
+    if (Blaze.getProjectType(project) != ProjectType.ASPECT_SYNC) {
       return ImmutableList.of();
     }
     BlazeProjectData blazeProjectData =

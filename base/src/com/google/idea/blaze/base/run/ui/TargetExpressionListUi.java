@@ -27,8 +27,9 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
@@ -229,7 +230,7 @@ public class TargetExpressionListUi extends JPanel {
               .add(projectViewSet)
               .build();
 
-      if (QuerySync.isEnabled()) {
+      if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
         return projectData.targets().stream()
             .map(TargetInfo::getLabel)
             .filter(importRoots::importAsSource)

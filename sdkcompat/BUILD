@@ -19,7 +19,6 @@ java_library(
         "android-studio-2022.3": ["//sdkcompat/v223"],
         "android-studio-2023.1": ["//sdkcompat/v231"],
         "android-studio-2023.2": ["//sdkcompat/v232"],
-        "android-studio-dev": ["//sdkcompat/asdev"],
         "intellij-2021.3": ["//sdkcompat/v213"],
         "intellij-ue-2021.3": ["//sdkcompat/v213"],
         "intellij-2022.1": ["//sdkcompat/v221"],
@@ -34,6 +33,8 @@ java_library(
         "intellij-ue-2023.2": ["//sdkcompat/v232"],
         "intellij-2023.3": ["//sdkcompat/v233"],
         "intellij-ue-2023.3": ["//sdkcompat/v233"],
+        "intellij-2024.1": ["//sdkcompat/v241"],
+        "intellij-ue-2024.1": ["//sdkcompat/v241"],
         "clion-2021.3": ["//sdkcompat/v213"],
         "clion-2022.1": ["//sdkcompat/v221"],
         "clion-2022.2": ["//sdkcompat/v222"],
@@ -41,5 +42,6 @@ java_library(
         "clion-2023.1": ["//sdkcompat/v231"],
         "clion-2023.2": ["//sdkcompat/v232"],
         "clion-2023.3": ["//sdkcompat/v233"],
+        "clion-2024.1": ["//sdkcompat/v241"],
     }),
 )

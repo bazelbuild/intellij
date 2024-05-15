@@ -45,30 +45,11 @@ public interface DependencyTracker {
   Set<Label> getPendingTargets(Path workspaceRelativePath);
 
   /**
-   * Builds the external dependencies of the given targets, putting the resultant libraries in the
+   * Builds the external dependencies of the given target(s), putting the resultant libraries in the
    * shared library directory so that they are picked up by the IDE.
    */
-  boolean buildDependenciesForTargets(BlazeContext context, Set<Label> projectTargets)
+  boolean buildDependenciesForTargets(BlazeContext context, DependencyBuildRequest request)
       throws IOException, BuildException;
-
-  /**
-   * Builds the dependencies of the given target, putting the resultant libraries in the shared
-   * library directory so that they are picked up by the IDE.
-   */
-  void buildDependenciesForTarget(BlazeContext context, Label target)
-      throws IOException, BuildException;
-
-  /**
-   * Returns the list of project targets related to the given workspace paths.
-   *
-   * @param context Context
-   * @param workspaceRelativePath Workspace relative path to find targets for. This may be a source
-   *     file, directory or BUILD file.
-   * @return Corresponding project targets. For a source file, this is the targets that build that
-   *     file. For a BUILD file, it's the set or targets defined in that file. For a directory, it's
-   *     the set of all targets defined in all build packages within the directory (recursively).
-   */
-  TargetsToBuild getProjectTargets(BlazeContext context, Path workspaceRelativePath);
 
   /**
    * Returns a list of local cache files that build by target provided. Returns Optional.empty() if
@@ -76,18 +57,41 @@ public interface DependencyTracker {
    */
   Optional<ImmutableSet<Path>> getCachedArtifacts(Label target);
 
-  /**
-   * A data structure that describes what targets were requested to be built and what targets
-   * (including transitive ones) are expected to be built as a result.
-   */
-  class RequestedTargets {
-    public final ImmutableSet<Label> buildTargets;
-    public final ImmutableSet<Label> expectedDependencyTargets;
+  /** Request to {@link #buildDependenciesForTargets(BlazeContext, DependencyBuildRequest)}. */
+  class DependencyBuildRequest {
+    enum RequestType {
+      /** Build a single target and do not check if its dependencies were built. */
+      SINGLE_TARGET,
+      /**
+       * Build multiple targets and mark all dependencies as built even if they produce no
+       * artifacts.
+       */
+      MULTIPLE_TARGETS,
+      /**
+       * Build thw whole project and mark all dependencies as built even if they produce no
+       * artifacts.
+       */
+      WHOLE_PROJECT,
+    };
 
-    RequestedTargets(
-        ImmutableSet<Label> targetsToRequestBuild, ImmutableSet<Label> expectedToBeBuiltTargets) {
-      this.buildTargets = targetsToRequestBuild;
-      this.expectedDependencyTargets = expectedToBeBuiltTargets;
+    final RequestType requestType;
+    final ImmutableSet<Label> targets;
+
+    private DependencyBuildRequest(RequestType type, ImmutableSet<Label> targets) {
+      this.requestType = type;
+      this.targets = targets;
+    }
+
+    public static DependencyBuildRequest singleTarget(Label target) {
+      return new DependencyBuildRequest(RequestType.SINGLE_TARGET, ImmutableSet.of(target));
+    }
+
+    public static DependencyBuildRequest multiTarget(Set<Label> targets) {
+      return new DependencyBuildRequest(RequestType.MULTIPLE_TARGETS, ImmutableSet.copyOf(targets));
+    }
+
+    public static DependencyBuildRequest wholeProject() {
+      return new DependencyBuildRequest(RequestType.WHOLE_PROJECT, ImmutableSet.of());
     }
   }
 }

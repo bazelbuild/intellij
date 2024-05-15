@@ -31,8 +31,10 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
+import com.google.idea.blaze.base.sync.workspace.VirtualIncludesHandler;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -44,6 +46,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,6 +71,7 @@ import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -105,6 +109,9 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
   @Override
   public void projectOpened() {
+    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
+      return;
+    }
     CMakeWorkspaceOverride.undoCMakeModifications(project);
   }
 
@@ -200,8 +207,11 @@ public final class BlazeCWorkspace implements ProjectComponent {
             UnfilteredCompilerOptions.builder()
                 .registerSingleOrSplitOption("-I")
                 .build(targetIdeInfo.getcIdeInfo().getLocalCopts());
-        ImmutableList<String> plainLocalCopts =
-            filterIncompatibleFlags(coptsExtractor.getUninterpretedOptions());
+        List<String> plainLocalCopts = coptsExtractor.getUninterpretedOptions();
+        if (Registry.is("bazel.cpp.sync.workspace.filter.out.incompatible.flags")) {
+          plainLocalCopts = filterIncompatibleFlags(plainLocalCopts);
+        }
+
         ImmutableList<ExecutionRootPath> localIncludes =
             coptsExtractor.getExtractedOptionValues("-I").stream()
                 .map(ExecutionRootPath::new)
@@ -209,7 +219,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
         // transitiveDefines are sourced from a target's (and transitive deps) "defines" attribute
         ImmutableList<String> transitiveDefineOptions =
-            targetIdeInfo.getcIdeInfo().getTransitiveDefines().stream()
+                targetIdeInfo.getcIdeInfo().getTransitiveDefines().stream()
                 .map(s -> "-D" + s)
                 .collect(toImmutableList());
 
@@ -248,6 +258,13 @@ public final class BlazeCWorkspace implements ProjectComponent {
                 .map(file -> "-I" + file.getAbsolutePath())
                 .collect(toImmutableList());
 
+        ImmutableList<String> includePrefixHints = ImmutableList.of();
+        if (VirtualIncludesHandler.useHints()) {
+          Path rootPath = workspaceRoot.directory().toPath();
+          includePrefixHints = VirtualIncludesHandler.collectIncludeHints(rootPath, targetKey, blazeProjectData,
+              executionRootPathResolver, indicator);
+        }
+
         for (VirtualFile vf : resolveConfiguration.getSources(targetKey)) {
           OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(vf);
           if (kind == null) {
@@ -263,6 +280,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
           fileSpecificSwitchBuilder.addAllRaw(iOptionIncludeDirectories);
           fileSpecificSwitchBuilder.addAllRaw(isystemOptionIncludeDirectories);
           fileSpecificSwitchBuilder.addAllRaw(plainLocalCopts);
+          fileSpecificSwitchBuilder.addAllRaw(includePrefixHints);
 
           PerFileCompilerOpts perFileCompilerOpts =
               new PerFileCompilerOpts(kind, fileSpecificSwitchBuilder.build());
@@ -312,18 +330,24 @@ public final class BlazeCWorkspace implements ProjectComponent {
             id, displayName, null, OCResolveConfiguration.DEFAULT_FILE_SEPARATORS);
     for (Map.Entry<OCLanguageKind, PerLanguageCompilerOpts> languageEntry :
         configLanguages.entrySet()) {
-      OCCompilerSettings.ModifiableModel langSettings =
-          config.getLanguageCompilerSettings(languageEntry.getKey());
       PerLanguageCompilerOpts configForLanguage = languageEntry.getValue();
-      langSettings.setCompiler(configForLanguage.kind, configForLanguage.compiler, directory);
-      langSettings.setCompilerSwitches(configForLanguage.switches);
+      if (CppSupportChecker.isSupportedCppConfiguration(
+          configForLanguage.switches, directory.toPath())) {
+        OCCompilerSettings.ModifiableModel langSettings =
+            config.getLanguageCompilerSettings(languageEntry.getKey());
+        langSettings.setCompiler(configForLanguage.kind, configForLanguage.compiler, directory);
+        langSettings.setCompilerSwitches(configForLanguage.switches);
+      }
     }
 
     for (Map.Entry<VirtualFile, PerFileCompilerOpts> fileEntry : configSourceFiles.entrySet()) {
       PerFileCompilerOpts compilerOpts = fileEntry.getValue();
-      OCCompilerSettings.ModifiableModel fileCompilerSettings =
-          config.addSource(fileEntry.getKey(), compilerOpts.kind);
-      fileCompilerSettings.setCompilerSwitches(compilerOpts.switches);
+      if (CppSupportChecker.isSupportedCppConfiguration(
+          compilerOpts.switches, directory.toPath())) {
+        OCCompilerSettings.ModifiableModel fileCompilerSettings =
+            config.addSource(fileEntry.getKey(), compilerOpts.kind);
+        fileCompilerSettings.setCompilerSwitches(compilerOpts.switches);
+      }
     }
   }
   /** Group compiler options for a specific file. */

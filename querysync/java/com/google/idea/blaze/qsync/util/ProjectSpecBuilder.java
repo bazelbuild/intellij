@@ -22,10 +22,10 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.GraphToProjectConverter;
-import com.google.idea.blaze.qsync.PackageReader;
-import com.google.idea.blaze.qsync.PackageStatementParser;
-import com.google.idea.blaze.qsync.ParallelPackageReader;
-import com.google.idea.blaze.qsync.WorkspaceResolvingPackageReader;
+import com.google.idea.blaze.qsync.java.PackageReader;
+import com.google.idea.blaze.qsync.java.PackageStatementParser;
+import com.google.idea.blaze.qsync.java.ParallelPackageReader;
+import com.google.idea.blaze.qsync.java.WorkspaceResolvingPackageReader;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.SnapshotDeserializer;
@@ -87,12 +87,17 @@ public class ProjectSpecBuilder {
             .orElseThrow()
             .getSyncData();
     BuildGraphData buildGraph =
-        new BlazeQueryParser(
-                snapshot.querySummary(), context, ImmutableSet.of(), Suppliers.ofInstance(true))
-            .parse();
+        new BlazeQueryParser(snapshot.querySummary(), context, ImmutableSet.of()).parse();
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
-            packageReader, workspaceRoot, context, snapshot.projectDefinition(), executor);
+            packageReader,
+            workspaceRoot,
+            context,
+            snapshot.projectDefinition(),
+            executor,
+            Suppliers.ofInstance(true),
+            Suppliers.ofInstance(false),
+            true);
     System.out.println(TextFormat.printer().printToString(converter.createProject(buildGraph)));
     return context.hasError() ? 1 : 0;
   }

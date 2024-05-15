@@ -23,6 +23,8 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.python.resolve.BlazePyResolverUtils;
@@ -89,6 +91,9 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
 
   @Nullable
   private PySourcesIndex getSourcesIndex(Project project) {
+    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
+      return null;
+    }
     return SyncCache.getInstance(project).get(getClass(), this::buildSourcesIndex);
   }
 

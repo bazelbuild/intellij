@@ -45,14 +45,18 @@ public class ProjectQuerierImpl implements ProjectQuerier {
   private final ProjectRefresher projectRefresher;
   private final Optional<BlazeVcsHandler> vcsHandler;
 
+  private final BazelVersionHandler bazelVersionProvider;
+
   @VisibleForTesting
   public ProjectQuerierImpl(
       QueryRunner queryRunner,
       ProjectRefresher projectRefresher,
-      Optional<BlazeVcsHandler> vcsHandler) {
+      Optional<BlazeVcsHandler> vcsHandler,
+      BazelVersionHandler bazelVersionProvider) {
     this.queryRunner = queryRunner;
     this.projectRefresher = projectRefresher;
     this.vcsHandler = vcsHandler;
+    this.bazelVersionProvider = bazelVersionProvider;
   }
 
   /**
@@ -74,13 +78,16 @@ public class ProjectQuerierImpl implements ProjectQuerier {
             vcsState.map(s -> s.upstreamRevision).orElse("<unknown>"),
             vcsState.flatMap(s -> s.workspaceSnapshotPath).map(Object::toString).orElse("<none>")));
 
-    RefreshOperation fullQuery = projectRefresher.startFullUpdate(context, projectDef, vcsState);
+    RefreshOperation fullQuery =
+        projectRefresher.startFullUpdate(
+            context, projectDef, vcsState, bazelVersionProvider.getBazelVersion());
 
     QuerySpec querySpec = fullQuery.getQuerySpec().get();
     return fullQuery.createPostQuerySyncData(queryRunner.runQuery(querySpec, context));
   }
 
-  private Optional<VcsState> getVcsState(BlazeContext context) {
+  @Override
+  public Optional<VcsState> getVcsState(BlazeContext context) {
     Optional<ListenableFuture<VcsState>> stateFuture =
         vcsHandler.flatMap(h -> h.getVcsState(context, BlazeExecutor.getInstance().getExecutor()));
     if (stateFuture.isEmpty()) {
@@ -123,7 +130,12 @@ public class ProjectQuerierImpl implements ProjectQuerier {
             vcsState.flatMap(s -> s.workspaceSnapshotPath).map(Object::toString).orElse("<none>")));
 
     RefreshOperation refresh =
-        projectRefresher.startPartialRefresh(context, previousState, vcsState, currentProjectDef);
+        projectRefresher.startPartialRefresh(
+            context,
+            previousState,
+            vcsState,
+            bazelVersionProvider.getBazelVersion(),
+            currentProjectDef);
 
     Optional<QuerySpec> spec = refresh.getQuerySpec();
     QuerySummary querySummary;

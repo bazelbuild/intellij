@@ -15,11 +15,15 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+import static com.intellij.openapi.util.io.FileUtilRt.getExtension;
+
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactInfo;
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
+import com.google.idea.blaze.common.artifact.OutputArtifactInfo;
 import java.nio.file.Path;
+import java.util.Collection;
 import javax.annotation.Nullable;
 
 /** Places java/kt source files in a subdirectory matching their package name. */
@@ -27,20 +31,15 @@ public class JavaSourcesCacheLayout implements CacheLayout {
 
   private static final ImmutableSet<String> JAVA_EXTENSIONS = ImmutableSet.of("java", "kt");
 
+  /** Cache subdirectory in which all source files (w/ package subdirectories) are placed. */
+  public static final String ROOT_DIRECTORY_NAME = "java";
+
   private final Path cacheDirectory;
   private final Path dotCacheDirectory;
 
-  public JavaSourcesCacheLayout(Path cacheDirectory, Path dotCacheDirectory) {
+  public JavaSourcesCacheLayout(Path cacheDirectory) {
     this.cacheDirectory = cacheDirectory;
-    this.dotCacheDirectory = dotCacheDirectory;
-  }
-
-  private static String getExtension(Path p) {
-    String name = p.getFileName().toString();
-    if (name.contains(".")) {
-      return name.substring(name.indexOf('.') + 1);
-    }
-    return "";
+    this.dotCacheDirectory = cacheDirectory.resolveSibling("." + cacheDirectory.getFileName());
   }
 
   @Nullable
@@ -48,14 +47,19 @@ public class JavaSourcesCacheLayout implements CacheLayout {
   public OutputArtifactDestinationAndLayout getOutputArtifactDestinationAndLayout(
       OutputArtifactInfo outputArtifact) {
     Path artifactPath = Path.of(outputArtifact.getRelativePath());
-    if (!JAVA_EXTENSIONS.contains(getExtension(artifactPath))) {
+    if (!JAVA_EXTENSIONS.contains(getExtension(artifactPath.toString()))) {
       return null;
     }
     String key = CacheDirectoryManager.cacheKeyForArtifact(outputArtifact);
     return JavaSourceOutputArtifactDestination.create(
-        key,
+        artifactPath,
         artifactPath.getFileName().toString(),
         dotCacheDirectory.resolve(".gensrc").resolve(key),
-        cacheDirectory.resolve("java"));
+        cacheDirectory.resolve(ROOT_DIRECTORY_NAME));
+  }
+
+  @Override
+  public Collection<Path> getCachePaths() {
+    return ImmutableList.of(cacheDirectory, dotCacheDirectory);
   }
 }

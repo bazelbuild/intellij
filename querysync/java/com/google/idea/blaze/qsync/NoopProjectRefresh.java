@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.qsync;
 
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
@@ -23,17 +23,25 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
- * A project update that does nothing other than return the existing project state.
+ * A project update that does nothing other than return the existing project state, with the vcs
+ * state updated.
  *
- * <p>This is used when performing a partial sync when there have been no changes to the workspace
- * since the last sync.
+ * <p>This is used when performing a partial sync when there have been no significant changes to
+ * targets in the workspace (e.g. dependencies modified or source files added) since the last sync.
  */
 public class NoopProjectRefresh implements RefreshOperation {
 
   private final Supplier<BlazeProjectSnapshot> latestProjectSnapshotSupplier;
+  private final Optional<VcsState> currentVcsState;
+  private final Optional<String> bazelVersion;
 
-  public NoopProjectRefresh(Supplier<BlazeProjectSnapshot> latestProjectSnapshotSupplier) {
+  public NoopProjectRefresh(
+      Supplier<BlazeProjectSnapshot> latestProjectSnapshotSupplier,
+      Optional<VcsState> currentVcsState,
+      Optional<String> bazelVersion) {
     this.latestProjectSnapshotSupplier = latestProjectSnapshotSupplier;
+    this.currentVcsState = currentVcsState;
+    this.bazelVersion = bazelVersion;
   }
 
   @Override
@@ -43,6 +51,9 @@ public class NoopProjectRefresh implements RefreshOperation {
 
   @Override
   public PostQuerySyncData createPostQuerySyncData(QuerySummary output) {
-    return latestProjectSnapshotSupplier.get().queryData();
+    return latestProjectSnapshotSupplier.get().queryData().toBuilder()
+        .setVcsState(currentVcsState)
+        .setBazelVersion(bazelVersion)
+        .build();
   }
 }

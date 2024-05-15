@@ -2,6 +2,11 @@
 # Description: Builds clwb
 #
 
+load(
+    "//:build-visibility.bzl",
+    "CLWB_PACKAGES_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
 load("//:version.bzl", "VERSION")
 load(
     "//build_defs:build_defs.bzl",
@@ -20,25 +25,20 @@ load(
     "//testing:test_defs.bzl",
     "intellij_unit_test_suite",
 )
-load(
-    "//:build-visibility.bzl",
-    "CLWB_PACKAGES_VISIBILITY",
-    "PLUGIN_PACKAGES_VISIBILITY",
-)
 
 licenses(["notice"])
 
 intellij_plugin_library(
     name = "plugin_library",
-    plugin_xmls = ["src/META-INF/clwb.xml"],
     optional_plugin_xmls = ["optional_clwb_oclang"],
+    plugin_xmls = ["src/META-INF/clwb.xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":clwb_lib"],
 )
 
 optional_plugin_xml(
     name = "optional_clwb_oclang",
-    module = "com.intellij.modules.cidr.lang",
+    module = ["com.intellij.modules.cidr.lang"],
     plugin_xml = "src/META-INF/clwb-oclang.xml",
 )
 
@@ -99,6 +99,7 @@ repackaged_files(
     prefix = "clwb/aspect",
     strip_prefix = "/aspect",
     visibility = CLWB_PACKAGES_VISIBILITY,
+    java_copts = ["-source", "8", "-target", "8"],
 )
 
 repackaged_files(

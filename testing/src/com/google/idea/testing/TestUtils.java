@@ -22,6 +22,8 @@ import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.client.ClientAppSessionsManager;
+import com.intellij.openapi.client.ClientSessionsManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
@@ -135,6 +137,7 @@ public final class TestUtils {
     final MyMockApplication instance = new MyMockApplication(parentDisposable);
     ApplicationManager.setApplication(instance, FileTypeManager::getInstance, parentDisposable);
     instance.registerService(EncodingManager.class, EncodingManagerImpl.class);
+    instance.registerService(ClientSessionsManager.class, ClientAppSessionsManager.class);
     return instance;
   }
 

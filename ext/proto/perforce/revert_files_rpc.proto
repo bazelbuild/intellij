@@ -1,0 +1,27 @@
+syntax = "proto2";
+
+package com.google.idea.blaze.ext.perforce;
+
+import "ext/proto/perforce/base.proto";
+import "ext/proto/perforce/status.proto";
+
+option java_package = "com.google.idea.blaze.ext.p4";
+
+message RevertFilesRequest {
+  optional RequestBase base = 1;
+  optional bool update_local_files = 2 [default = true];
+  optional bool dry_run = 3;
+  optional ChangeId change_id = 7;
+  message FilePathInfo {
+    optional string file_path = 1;
+    optional bool symlink = 3;
+  }
+  repeated FilePathInfo file_path_infos = 5;
+  optional bool revert_unchanged = 6 [default = false];
+  optional bool always_delete_added_files = 8 [default = false];
+}
+
+message RevertFilesResponse {
+  optional PerforceStatus perforce_status = 1002;
+  optional SourceFileId source_file_id = 1;
+}

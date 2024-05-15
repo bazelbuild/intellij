@@ -34,13 +34,14 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -86,6 +87,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
               BuildSystemName.Blaze,
               AndroidBlazeRules.RuleTypes.ANDROID_ROBOLECTRIC_TEST.getKind(),
               AndroidBlazeRules.RuleTypes.ANDROID_LOCAL_TEST.getKind(),
+              AndroidBlazeRules.RuleTypes.KT_ANDROID_LOCAL_TEST.getKind(),
               JavaBlazeRules.RuleTypes.JAVA_TEST.getKind())
           .build();
 
@@ -267,14 +269,20 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
       Label label,
       FastBuildParameters buildParameters,
       BuildResultHelper resultHelper) {
+    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+    BlazeInfo blazeInfo = getBlazeInfo(context, buildParameters);
+
+    BlazeVersionData blazeVersionData =
+        BlazeVersionData.build(
+            Blaze.getBuildSystemProvider(project).getBuildSystem(), workspaceRoot, blazeInfo);
+
     FastBuildDeployJarStrategy deployJarStrategy =
         FastBuildDeployJarStrategy.getInstance(Blaze.getBuildSystemName(project));
-    Label deployJarLabel = deployJarStrategy.createDeployJarLabel(label);
+    Label deployJarLabel = deployJarStrategy.createDeployJarLabel(label, blazeVersionData);
     context.output(
         new StatusOutput(
             "Building base deploy jar for fast builds: " + deployJarLabel.targetName()));
 
-    BlazeInfo blazeInfo = getBlazeInfo(context, buildParameters);
     FastBuildAspectStrategy aspectStrategy =
         FastBuildAspectStrategy.getInstance(Blaze.getBuildSystemName(project));
 
@@ -282,15 +290,16 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
 
     BlazeCommand.Builder command =
         BlazeCommand.builder(buildParameters.blazeBinary(), BlazeCommandName.BUILD)
-            .addTargets(deployJarStrategy.getBuildTargets(label))
-            .addBlazeFlags(deployJarStrategy.getBuildFlags())
+            .addTargets(deployJarStrategy.getBuildTargets(label, blazeVersionData))
+            .addBlazeFlags(deployJarStrategy.getBuildFlags(blazeVersionData))
             .addBlazeFlags(buildParameters.buildFlags())
             .addBlazeFlags(resultHelper.getBuildFlags());
 
-    aspectStrategy.addAspectAndOutputGroups(command, /* additionalOutputGroups...= */ "default");
+    aspectStrategy.addAspectAndOutputGroups(
+        command, blazeVersionData, /* additionalOutputGroups...= */ "default");
 
     int exitCode =
-        ExternalTask.builder(WorkspaceRoot.fromProject(project))
+        ExternalTask.builder(workspaceRoot)
             .addBlazeCommand(command.build())
             .context(context)
             .stderr(
@@ -308,16 +317,16 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     Predicate<String> jarPredicate = file -> file.endsWith(deployJarLabel.targetName().toString());
     try {
       ImmutableList<File> deployJarArtifacts =
-          BlazeArtifact.getLocalFiles(
+          LocalFileArtifact.getLocalFiles(
               resultHelper.getBuildArtifactsForTarget(
-                  deployJarStrategy.deployJarOwnerLabel(label), jarPredicate));
+                  deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData), jarPredicate));
       checkState(deployJarArtifacts.size() == 1);
       File deployJar = deployJarArtifacts.get(0);
 
       Predicate<String> filePredicate =
           file -> aspectStrategy.getAspectOutputFilePredicate().test(file);
       ImmutableList<File> ideInfoFiles =
-          BlazeArtifact.getLocalFiles(
+          LocalFileArtifact.getLocalFiles(
               resultHelper.getArtifactsForOutputGroup(
                   aspectStrategy.getAspectOutputGroup(), filePredicate));
 

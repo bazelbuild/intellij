@@ -23,10 +23,11 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.PendingRunConfigurationContext;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.common.experiments.BoolExperiment;
@@ -73,7 +74,7 @@ public class PendingWebTestContext extends TestContext implements PendingRunConf
       return null;
     }
     // TODO(b/274800785): Add query sync support
-    if (QuerySync.isEnabled()) {
+    if (Blaze.getProjectType(project) != ProjectType.ASPECT_SYNC) {
       return null;
     }
     ImmutableList<TargetInfo> wrapperTests = getWebTestWrappers(project, target);

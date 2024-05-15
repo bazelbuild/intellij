@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.references;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.lang.buildfile.completion.FilePathLookupElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
@@ -38,6 +39,7 @@ import javax.swing.Icon;
 
 /** The data relevant to finding file lookups. */
 public class FileLookupData {
+  private static final ImmutableSet<String> BUILDFILE_NAMES = ImmutableSet.of("BUILD", "BUILD.bazel");
 
   /** The type of path string format */
   public enum PathFormat {
@@ -121,7 +123,7 @@ public class FileLookupData {
   private final QuoteType quoteType;
   @Nullable private final VirtualFileFilter fileFilter;
 
-  private FileLookupData(
+  protected FileLookupData(
       String originalLabel,
       @Nullable BuildFile containingFile,
       @Nullable String containingPackage,
@@ -163,8 +165,10 @@ public class FileLookupData {
         new NullableLazyValue<Icon>() {
           @Override
           protected Icon compute() {
-            if (file.findChild("BUILD") != null) {
-              return BlazeIcons.BuildFile;
+            for (String buildfileName : BUILDFILE_NAMES) {
+              if (file.findChild(buildfileName) != null) {
+                return BlazeIcons.BuildFile;
+              }
             }
             if (file.isDirectory()) {
               return PlatformIcons.FOLDER_ICON;
@@ -176,7 +180,7 @@ public class FileLookupData {
     String fullLabel =
         workspacePath != null ? getFullLabel(workspacePath.relativePath()) : file.getPath();
     String itemText = workspacePath != null ? getItemText(workspacePath.relativePath()) : fullLabel;
-    return new FilePathLookupElement(fullLabel, itemText, quoteType, icon);
+    return new FilePathLookupElement(fullLabel, itemText, quoteType, file.isDirectory(), icon);
   }
 
   private String getFullLabel(String relativePath) {

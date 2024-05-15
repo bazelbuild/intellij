@@ -102,6 +102,11 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
         BlazeContext context, ListeningExecutorService executor) {
       return Optional.of(executor.submit(() -> getUpstreamSha(workspaceRoot)));
     }
+
+    @Override
+    public Optional<VcsState> vcsStateForSourceUri(String sourceUri) {
+      return Optional.empty();
+    }
   }
 
   private static String getGitUpstreamContent(WorkspaceRoot workspaceRoot, WorkspacePath path) {

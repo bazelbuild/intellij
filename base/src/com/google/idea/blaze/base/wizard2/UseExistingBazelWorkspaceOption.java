@@ -25,6 +25,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -120,7 +121,7 @@ public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceO
     if (!isWorkspaceRoot(workspaceRootFile)) {
       throw new ConfigurationException(
           "Invalid workspace root: choose a bazel workspace directory "
-              + "(containing a WORKSPACE file)");
+              + "(containing a WORKSPACE or MODULE.bazel file)");
     }
     WorkspaceRoot root = new WorkspaceRoot(workspaceRootFile);
     return WorkspaceTypeData.builder()
@@ -157,8 +158,11 @@ public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceO
     final VirtualFile[] files;
     File existingLocation = new File(getDirectory());
     if (existingLocation.exists()) {
-      VirtualFile toSelect =
-          LocalFileSystem.getInstance().refreshAndFindFileByPath(existingLocation.getPath());
+      VirtualFile toSelect = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+              () -> LocalFileSystem.getInstance().refreshAndFindFileByPath(existingLocation.getPath()),
+              "Refreshing Location",
+              false,
+              null);
       files = chooser.choose(null, toSelect);
     } else {
       files = chooser.choose(null);

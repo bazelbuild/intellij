@@ -18,6 +18,7 @@ package com.google.idea.blaze.qsync.query;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.collect.Multimaps.flatteningToMultimap;
+import static com.google.idea.blaze.common.proto.ProtoStringInterner.intern;
 import static java.util.Objects.requireNonNull;
 
 import com.google.auto.value.AutoValue;
@@ -72,7 +73,7 @@ public abstract class QuerySummary {
    * <p>Whenever changing the logic in this class such that the Query.Summary proto contents will be
    * different for the same input, this version should be incremented.
    */
-  @VisibleForTesting public static final int PROTO_VERSION = 7;
+  @VisibleForTesting public static final int PROTO_VERSION = 9;
 
   public static final QuerySummary EMPTY =
       create(Query.Summary.newBuilder().setVersion(PROTO_VERSION).build());
@@ -101,7 +102,8 @@ public abstract class QuerySummary {
               "_java_grpc_library",
               "_java_lite_grpc_library",
               "kt_jvm_library_helper",
-              "android_library"));
+              "android_library",
+              "kt_android_library"));
 
   // Runtime dependency attributes
   private static final ImmutableSet<String> RUNTIME_DEP_ATTRIBUTES =
@@ -134,7 +136,7 @@ public abstract class QuerySummary {
     Map<String, Query.Rule> ruleMap = Maps.newHashMap();
     Set<String> packagesWithErrors = Sets.newHashSet();
     Build.Target target;
-    while ((target = Target.parseDelimitedFrom(protoInputStream)) != null) {
+    while ((target = intern(Target.parseDelimitedFrom(protoInputStream))) != null) {
       switch (target.getType()) {
         case SOURCE_FILE:
           Query.SourceFile sourceFile =
@@ -178,6 +180,12 @@ public abstract class QuerySummary {
               rule.setManifest(a.getStringValue());
             } else if (a.getName().equals("custom_package")) {
               rule.setCustomPackage(a.getStringValue());
+            } else if (a.getName().equals("copts")) {
+              rule.addAllCopts(a.getStringListValueList());
+            } else if (a.getName().equals("tags")) {
+              rule.addAllTags(a.getStringListValueList());
+            } else if (a.getName().equals("main_class")) {
+              rule.setMainClass(a.getStringValue());
             }
 
             if (a.getName().equals("test_app")) {
@@ -186,7 +194,7 @@ public abstract class QuerySummary {
               rule.setInstruments(a.getStringValue());
             }
           }
-          ruleMap.put(target.getRule().getName(), rule.build());
+          ruleMap.put(Label.of(target.getRule().getName()).toString(), rule.build());
           break;
         default:
           break;
@@ -259,7 +267,7 @@ public abstract class QuerySummary {
   public PackageSet getPackages() {
     return new PackageSet(
         Stream.concat(
-                getRulesMap().keySet().stream().map(Label::getPackage),
+                getSourceFilesMap().keySet().stream().map(Label::getPackage).distinct(),
                 getPackagesWithErrors().stream())
             .collect(toImmutableSet()));
   }
@@ -328,7 +336,7 @@ public abstract class QuerySummary {
     }
 
     public QuerySummary build() {
-      return QuerySummary.create(builder.build());
+      return QuerySummary.create(intern(builder.build()));
     }
   }
 }

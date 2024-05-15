@@ -1,2 +1,168 @@
-# TODO: migrate all dependencies from WORKSPACE to MODULE.bazel
-# https://github.com/bazelbuild/intellij/issues/5432
+module(
+    bazel_compatibility = [">=7.0.0"],
+    repo_name = "intellij_with_bazel",
+)
+
+bazel_dep(
+    name = "platforms",
+    version = "0.0.8",
+)
+bazel_dep(
+    name = "rules_java",
+    version = "7.4.0",
+)
+bazel_dep(
+    name = "rules_python",
+    version = "0.31.0",
+)
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    configure_coverage_tool = True,
+    python_version = "3.12",
+)
+use_repo(python, "python_3_12", "python_versions")
+
+bazel_dep(
+    name = "rules_proto",
+    version = "5.3.0-21.7",
+)
+bazel_dep(
+    name = "protobuf",
+    version = "21.7",
+    repo_name = "com_google_protobuf",
+)
+bazel_dep(
+    name = "bazel_skylib",
+    version = "1.5.0",
+)
+bazel_dep(
+    name = "rules_pkg",
+    version = "0.10.1",
+)
+bazel_dep(
+    name = "rules_kotlin",
+    version = "1.9.0",
+)
+bazel_dep(
+    name = "rules_android",
+    version = "0.1.1",
+    repo_name = "build_bazel_rules_android",
+)
+
+remote_android_extensions = use_extension("@bazel_tools//tools/android:android_extensions.bzl", "remote_android_tools_extensions")
+use_repo(remote_android_extensions, "android_gmaven_r8", "android_tools")
+
+bazel_dep(
+    name = "rules_bazel_integration_test",
+    version = "0.23.0",
+    dev_dependency = True,
+)
+
+bazel_binaries = use_extension(
+    "@rules_bazel_integration_test//:extensions.bzl",
+    "bazel_binaries",
+    dev_dependency = True,
+)
+bazel_binaries.download(version = "5.4.1")
+bazel_binaries.download(version = "6.5.0")
+bazel_binaries.download(version = "7.0.2")
+use_repo(
+    bazel_binaries,
+    "bazel_binaries",
+    "bazel_binaries_bazelisk",
+    "build_bazel_bazel_5_4_1",
+    "build_bazel_bazel_6_5_0",
+    "build_bazel_bazel_7_0_2",
+)
+
+bazel_dep(name = "rules_jvm_external", version = "6.0")
+
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+maven.install(
+    name = "maven",
+    artifacts = [
+        "junit:junit:4.13.2",
+        "org.mockito:mockito-core:5.8.0",
+        "org.objenesis:objenesis:3.3",
+        "net.bytebuddy:byte-buddy:1.14.0",
+        "net.bytebuddy:byte-buddy-agent:1.14.10",
+        "com.google.flogger:flogger:0.8",
+        "com.google.flogger:flogger-system-backend:0.8",
+        "com.googlecode.java-diff-utils:diffutils:1.3.0",
+        # Usually, we'd get this from the JetBrains SDK, but the bundled one not aware of Bazel platforms,
+        # so it fails on certain setups.
+        "net.java.dev.jna:jna:5.14.0",
+        "com.google.auto.value:auto-value-annotations:1.10.2",
+        "com.google.auto.value:auto-value:1.10.4",
+        "com.google.code.findbugs:jsr305:3.0.2",
+        "com.google.code.gson:gson:2.10.1",
+        "com.google.errorprone:error_prone_annotations:2.20.0",
+        "com.google.guava:guava:33.0.0-jre",  # changed to jre
+        "com.google.truth:truth:1.1.5",
+        "com.google.truth.extensions:truth-java8-extension:1.1.5",
+        "com.google.api.grpc:proto-google-common-protos:2.34.0",
+        "com.google.j2objc:j2objc-annotations:2.8",
+        "com.google.guava:failureaccess:1.0.2",
+        # Apparently bumping grpc to >= 1.58 causes a dependency cycle
+        "io.grpc:grpc-netty:1.57.0",
+        "io.grpc:grpc-stub:1.57.0",
+        "io.grpc:grpc-api:1.57.0",
+        "io.grpc:grpc-protobuf:1.57.0",
+        "io.grpc:grpc-protobuf-lite:1.57.0",
+        "io.grpc:grpc-core:1.57.0",
+        "io.netty:netty-common:4.1.97.Final",
+        "io.netty:netty-transport-classes-epoll:4.1.97.Final",
+        "io.netty:netty-transport-native-epoll:4.1.97.Final",
+        "io.netty:netty-transport-native-unix-common:4.1.97.Final",
+        "io.netty:netty-transport-classes-kqueue:4.1.97.Final",
+        "io.netty:netty-transport:4.1.97.Final",
+        "org.apache.tomcat:annotations-api:6.0.53",
+    ],
+    exclusions = [
+        # Required because of https://github.com/bazelbuild/rules_jvm_external/issues/966
+        "io.grpc:grpc-util",
+        "io.grpc:grpc-core",
+    ],
+    fail_if_repin_required = True,
+    generate_compat_repositories = True,
+    lock_file = "//:maven_install.json",
+)
+use_repo(
+    maven,
+    "com_google_guava_guava",
+    "com_google_api_grpc_proto_google_common_protos",
+    "com_google_j2objc_j2objc_annotations",
+    "com_google_guava_failureaccess",
+    "io_grpc_grpc_api",
+    "io_grpc_grpc_core",
+    "io_grpc_grpc_netty",
+    "io_grpc_grpc_protobuf",
+    "io_grpc_grpc_protobuf_lite",
+    "io_grpc_grpc_stub",
+    "io_netty_netty_common",
+    "io_netty_netty_transport",
+    "io_netty_netty_transport_classes_epoll",
+    "io_netty_netty_transport_classes_kqueue",
+    "io_netty_netty_transport_native_epoll",
+    "io_netty_netty_transport_native_unix_common",
+    "maven",
+    "org_apache_tomcat_annotations_api",
+    "unpinned_maven",
+    auto_value = "com_google_auto_value_auto_value",
+    auto_value_annotations = "com_google_auto_value_auto_value_annotations",
+    bytebuddy = "net_bytebuddy_byte_buddy",
+    bytebuddy_agent = "net_bytebuddy_byte_buddy_agent",  # Can it be `bytebuddy-agent`? (not a legal identifier)
+    diffutils = "com_googlecode_java_diff_utils_diffutils",
+    error_prone_annotations = "com_google_errorprone_error_prone_annotations",
+    flogger = "com_google_flogger_flogger",
+    flogger_system_backend = "com_google_flogger_flogger_system_backend",
+    gson = "com_google_code_gson_gson",
+    jna = "net_java_dev_jna_jna",
+    jsr305_annotations = "com_google_code_findbugs_jsr305",
+    junit = "junit_junit",
+    mockito = "org_mockito_mockito_core",
+    objenesis = "org_objenesis_objenesis",
+    truth = "com_google_truth_truth",
+    truth8 = "com_google_truth_extensions_truth_java8_extension",
+)

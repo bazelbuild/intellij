@@ -61,7 +61,7 @@ class SkylarkDebugValue extends XNamedValue {
   // TODO(brendandouglas): move this logic onto the server side?
   private static final ImmutableSet<String> ARRAY_TYPES = ImmutableSet.of("dict", "list", "depset");
   private static final ImmutableSet<String> PRIMITIVE_TYPES =
-      ImmutableSet.of("bool", "string", "int");
+      ImmutableSet.of("bool", "string", "int", "float");
   private static final ImmutableSet<String> FUNCTION_TYPES =
       ImmutableSet.of("function", "Provider");
 

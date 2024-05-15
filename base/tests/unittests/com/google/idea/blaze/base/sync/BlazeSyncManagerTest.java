@@ -73,7 +73,7 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
 
     doNothing().when(manager).requestProjectSync(any());
     projectServices.register(BlazeSyncManager.class, manager);
-    assertThat(BlazeSyncManager.getInstance(project)).isSameAs(manager);
+    assertThat(BlazeSyncManager.getInstance(project)).isSameInstanceAs(manager);
   }
 
   @Override
@@ -215,11 +215,10 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
       return ProjectViewSet.builder().build();
     }
 
-    @Nullable
     @Override
     public ProjectViewSet reloadProjectView(
         BlazeContext context, WorkspacePathResolver workspacePathResolver) {
-      return ProjectViewSet.builder().build();
+      return ProjectViewSet.EMPTY;
     }
   }
 }

@@ -140,6 +140,9 @@ public interface BuildSystemProvider {
    */
   ImmutableList<String> possibleBuildFileNames();
 
+  /** The MODULE.bazel file in Bazel repository root if bzlmod is used. */
+  ImmutableList<String> possibleModuleFileNames();
+
   /** The WORKSPACE file in the repository root. */
   ImmutableList<String> possibleWorkspaceFileNames();
 
@@ -190,6 +193,7 @@ public interface BuildSystemProvider {
     possibleBuildFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
     possibleWorkspaceFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
     possibleFileExtensions().forEach(s -> list.add(new ExtensionFileNameMatcher(s)));
+    possibleModuleFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
     return list.build();
   }
 

@@ -19,11 +19,13 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
+import com.google.idea.blaze.qsync.java.PackageReader;
+import com.google.idea.blaze.qsync.java.WorkspaceResolvingPackageReader;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
-import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
+import com.google.idea.blaze.qsync.project.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
 import java.util.function.Supplier;
@@ -38,25 +40,25 @@ public class BlazeProjectSnapshotBuilder {
   private final PackageReader workspaceRelativePackageReader;
   private final Path workspaceRoot;
   private final ImmutableSet<String> handledRuleKinds;
-  private final Supplier<Boolean> ccEnabledFlag;
+  private final Supplier<Boolean> useNewResDirLogic;
+  private final Supplier<Boolean> guessAndroidResPackages;
+  private final boolean useNewBuildArtifactLogic;
 
   public BlazeProjectSnapshotBuilder(
       ListeningExecutorService executor,
       PackageReader workspaceRelativePackageReader,
       Path workspaceRoot,
       ImmutableSet<String> handledRuleKinds,
-      Supplier<Boolean> ccEnabledFlag) {
+      Supplier<Boolean> useNewResDirLogic,
+      Supplier<Boolean> guessAndroidResPackages,
+      boolean useNewBuildArtifactLogic) {
     this.executor = executor;
     this.workspaceRelativePackageReader = workspaceRelativePackageReader;
     this.workspaceRoot = workspaceRoot;
     this.handledRuleKinds = handledRuleKinds;
-    this.ccEnabledFlag = ccEnabledFlag;
-  }
-
-  /** {@code Function<ProjectProto.Project, ProjectProto.Project>} that can throw exceptions. */
-  @FunctionalInterface
-  public interface ProjectProtoTransform {
-    ProjectProto.Project apply(ProjectProto.Project proto) throws BuildException;
+    this.useNewResDirLogic = useNewResDirLogic;
+    this.guessAndroidResPackages = guessAndroidResPackages;
+    this.useNewBuildArtifactLogic = useNewBuildArtifactLogic;
   }
 
   /**
@@ -67,7 +69,8 @@ public class BlazeProjectSnapshotBuilder {
   public BlazeProjectSnapshot createBlazeProjectSnapshot(
       Context<?> context,
       PostQuerySyncData postQuerySyncData,
-      ProjectProtoTransform applyBuiltDependenciesTransform)
+      ArtifactTracker.State artifactTrackerState,
+      ProjectProtoTransform projectProtoTransform)
       throws BuildException {
     Path effectiveWorkspaceRoot =
         postQuerySyncData.vcsState().flatMap(s -> s.workspaceSnapshotPath).orElse(workspaceRoot);
@@ -79,19 +82,18 @@ public class BlazeProjectSnapshotBuilder {
             effectiveWorkspaceRoot,
             context,
             postQuerySyncData.projectDefinition(),
-            executor);
+            executor,
+            useNewResDirLogic,
+            guessAndroidResPackages,
+            useNewBuildArtifactLogic);
     QuerySummary querySummary = postQuerySyncData.querySummary();
-    BuildGraphData graph =
-        new BlazeQueryParser(querySummary, context, handledRuleKinds, ccEnabledFlag).parse();
-    Project project = null;
-    try {
-      project = applyBuiltDependenciesTransform.apply(graphToProjectConverter.createProject(graph));
-    } catch (Exception e) {
-      throw new BuildException(e);
-    }
+    BuildGraphData graph = new BlazeQueryParser(querySummary, context, handledRuleKinds).parse();
+    Project project =
+        projectProtoTransform.apply(graphToProjectConverter.createProject(graph), graph, context);
     return BlazeProjectSnapshot.builder()
         .queryData(postQuerySyncData)
         .graph(graph)
+        .artifactState(artifactTrackerState)
         .project(project)
         .build();
   }

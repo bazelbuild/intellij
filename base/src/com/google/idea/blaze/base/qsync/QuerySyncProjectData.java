@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -24,11 +26,13 @@ import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
+import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -42,7 +46,13 @@ public class QuerySyncProjectData implements BlazeProjectData {
 
   private final WorkspacePathResolver workspacePathResolver;
   private final Optional<BlazeProjectSnapshot> blazeProject;
-  private final WorkspaceLanguageSettings workspaceLanguageSettings;
+
+  /**
+   * Static language settings are those derived from the {@code .blazeproject} file. The dynamic
+   * ones (those derived based on the project structure and dependency builds) are added to this
+   * later.
+   */
+  private final WorkspaceLanguageSettings staticLanguageSettings;
 
   QuerySyncProjectData(
       WorkspacePathResolver workspacePathResolver,
@@ -56,12 +66,12 @@ public class QuerySyncProjectData implements BlazeProjectData {
       WorkspaceLanguageSettings workspaceLanguageSettings) {
     this.blazeProject = projectSnapshot;
     this.workspacePathResolver = workspacePathResolver;
-    this.workspaceLanguageSettings = workspaceLanguageSettings;
+    this.staticLanguageSettings = workspaceLanguageSettings;
   }
 
   public QuerySyncProjectData withSnapshot(BlazeProjectSnapshot newSnapshot) {
     return new QuerySyncProjectData(
-        Optional.of(newSnapshot), workspacePathResolver, workspaceLanguageSettings);
+        Optional.of(newSnapshot), workspacePathResolver, staticLanguageSettings);
   }
 
   @Nullable
@@ -104,7 +114,20 @@ public class QuerySyncProjectData implements BlazeProjectData {
 
   @Override
   public WorkspaceLanguageSettings getWorkspaceLanguageSettings() {
-    return workspaceLanguageSettings;
+
+    ImmutableSet<LanguageClass> projectLanguages =
+        blazeProject
+            .map(p -> p.project().getActiveLanguagesList())
+            .map(QuerySyncLanguage::fromProtoList)
+            .map(LanguageClasses::fromQuerySync)
+            .orElse(ImmutableSet.of());
+
+    return new WorkspaceLanguageSettings(
+        staticLanguageSettings.getWorkspaceType(),
+        ImmutableSet.<LanguageClass>builder()
+            .addAll(projectLanguages)
+            .addAll(staticLanguageSettings.getActiveLanguages())
+            .build());
   }
 
   @Override
@@ -123,18 +146,21 @@ public class QuerySyncProjectData implements BlazeProjectData {
     //  assumes that the base VCS revision is a decimal integer, which may not be true.
     logger.warn("Usage of legacy getBlazeVersionData");
     BlazeVersionData.Builder data = BlazeVersionData.builder();
-    String baseRev =
-        blazeProject
-            .flatMap(p -> p.queryData().vcsState())
-            .map(q -> q.upstreamRevision)
-            .orElse(null);
-    if (baseRev != null) {
-      try {
-        data.setClientCl(Long.parseLong(baseRev));
-      } catch (NumberFormatException e) {
-        logger.warn(e);
-      }
-    }
+    blazeProject
+        .flatMap(p -> p.queryData().vcsState())
+        .map(q -> q.upstreamRevision)
+        .ifPresent(
+            revision -> {
+              try {
+                data.setClientCl(Long.parseLong(revision));
+              } catch (NumberFormatException e) {
+                logger.warn(e);
+              }
+            });
+    blazeProject
+        .flatMap(p -> p.queryData().bazelVersion())
+        .ifPresent(version -> data.setBazelVersion(BazelVersion.parseVersion(version)));
+
     return data.build();
   }
 
@@ -151,5 +177,10 @@ public class QuerySyncProjectData implements BlazeProjectData {
   @Override
   public SyncState getSyncState() {
     throw new NotSupportedWithQuerySyncException("getSyncState");
+  }
+
+  @Override
+  public boolean isQuerySync() {
+    return true;
   }
 }

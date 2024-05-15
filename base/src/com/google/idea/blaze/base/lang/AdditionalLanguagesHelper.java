@@ -26,8 +26,8 @@ import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.projectview.ProjectViewEdit;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguagesSection;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
@@ -93,6 +93,10 @@ public class AdditionalLanguagesHelper
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(VirtualFile file, FileEditor fileEditor) {
+    if (Blaze.getProjectType(project).equals(ProjectType.UNKNOWN)) {
+      return null;
+    }
+
     String ext = file.getExtension();
     if (ext == null) {
       return null;
@@ -101,7 +105,7 @@ public class AdditionalLanguagesHelper
     if (language == null || notifiedLanguages.contains(language)) {
       return null;
     }
-    if (QuerySync.isEnabled()) {
+    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
       // TODO(b/260643753)
       return null;
     }

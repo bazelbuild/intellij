@@ -44,4 +44,6 @@ public interface Context<C extends Context<C>> {
   <T extends Output> void output(T output);
 
   void setHasError();
+
+  void setHasWarnings();
 }

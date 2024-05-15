@@ -28,8 +28,8 @@ import com.google.devtools.intellij.plugin.IntellijPluginTargetDeployInfo.Intell
 import com.google.devtools.intellij.plugin.IntellijPluginTargetDeployInfo.IntellijPluginDeployInfo;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.protobuf.TextFormat;
 import com.intellij.concurrency.AsyncUtil;
@@ -89,7 +89,7 @@ class BlazeIntellijPluginDeployer {
     deployInfoArtifacts.clear();
     deployInfoArtifacts.addAll(
         buildArtifacts.stream()
-            .filter(a -> a.toString().endsWith(".intellij-plugin-debug-target-deploy-info"))
+            .filter(a -> a.getRelativePath().endsWith(".intellij-plugin-debug-target-deploy-info"))
             .collect(toImmutableList()));
   }
 

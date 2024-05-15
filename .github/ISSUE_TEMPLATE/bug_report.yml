@@ -2,7 +2,7 @@ name: Bug Report
 description: File a bug report
 labels: ["type: bug", "awaiting-maintainer"]
 assignees:
-  - pavank1992
+  - satyanandak
   - sgowroji
   - iancha1992
 body:
@@ -17,6 +17,18 @@ body:
     attributes:
       label: >
         Description of the bug:
+  - type: dropdown
+    id: subteam
+    attributes:
+      label: Which category does this issue belong to?
+      description: Help us triage this issue faster and more accurately to the relevant team(s).
+      multiple: true
+      options:
+        - Intellij
+        - GoLand
+        - CLion
+        - PyCharm
+        - Android Studio
   - type: textarea
     id: repro
     attributes:

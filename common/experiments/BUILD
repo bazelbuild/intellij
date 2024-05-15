@@ -1,13 +1,14 @@
+load(
+    "//:build-visibility.bzl",
+    "COMMON_PLUGINS_VISIBILITY",
+    "DEFAULT_TEST_VISIBILITY",
+    "G3PLUGINS_VISIBILITY",
+    "SERVICES_EXPERIMENT_SUBPACKAGES",
+)
 load("//build_defs:build_defs.bzl", "intellij_plugin_library")
 load(
     "//testing:test_defs.bzl",
     "intellij_unit_test_suite",
-)
-load(
-    "//:build-visibility.bzl",
-    "COMMON_PLUGINS_VISIBILITY",
-    "G3PLUGINS_VISIBILITY",
-    "SERVICES_EXPERIMENT_SUBPACKAGES",
 )
 
 licenses(["notice"])
@@ -18,6 +19,7 @@ java_library(
     resources = [":experiment_properties"],
     visibility = COMMON_PLUGINS_VISIBILITY,
     deps = [
+        "//common/util:platform",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//third_party/auto_value",
@@ -30,7 +32,7 @@ filegroup(
     visibility = SERVICES_EXPERIMENT_SUBPACKAGES,
 )
 
-# includes an test ExperimentService registered in plugin XML. This is required
+# includes a test ExperimentService registered in plugin XML. This is required
 # for tests of code hit during test fixture setup (before the test code itself
 # can register services / components)
 intellij_plugin_library(
@@ -57,6 +59,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.common.experiments",
+    visibility = DEFAULT_TEST_VISIBILITY,
     deps = [
         ":experiments",
         ":unit_test_utils",

@@ -1,4 +1,9 @@
 load(
+    "//:build-visibility.bzl",
+    "DEFAULT_TEST_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
+load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
     "intellij_plugin_library",
@@ -11,18 +16,13 @@ load(
     "intellij_unit_test_suite",
 )
 load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
-load(
-    "//:build-visibility.bzl",
-    "PLUGIN_PACKAGES_VISIBILITY",
-)
-
-licenses(["notice"])
 
 java_library(
     name = "cpp",
     srcs = glob([
         "src/com/google/idea/blaze/cpp/*.java",
         "src/com/google/idea/blaze/cpp/includes/*.java",
+        "src/com/google/idea/blaze/cpp/qsync/*.java",
         "src/com/google/idea/blaze/cpp/syncstatus/*.java",
         "src/com/google/idea/blaze/cpp/navigation/*.java",
         "src/com/google/idea/blaze/cpp/oclang/*.java",
@@ -31,9 +31,12 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
+        "//cpp/sdkcompat",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//querysync",
+        "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//sdkcompat",
         "//shared",
         "//third_party/auto_value",
@@ -48,14 +51,14 @@ stamped_plugin_xml(
 
 optional_plugin_xml(
     name = "optional_cidr",
-    module = "com.intellij.modules.cidr.lang",
+    module = ["com.intellij.modules.cidr.lang"],
     plugin_xml = "src/META-INF/blaze-cpp-oclang.xml",
 )
 
 intellij_plugin_library(
     name = "plugin_library",
-    plugin_xmls = [":non_optional_cidr"],
     optional_plugin_xmls = [":optional_cidr"],
+    plugin_xmls = [":non_optional_cidr"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":cpp"],
 )
@@ -111,6 +114,7 @@ intellij_unit_test_suite(
         default = [],
     ),
     test_package_root = "com.google.idea.blaze.cpp",
+    visibility = DEFAULT_TEST_VISIBILITY,
     # Needed to work around one-version issue
     runtime_deps = ["//intellij_platform_sdk:test_libs"],
     deps = [
@@ -181,6 +185,7 @@ intellij_integration_test_suite(
     ),
     required_plugins = "com.google.idea.bazel.cpp",
     test_package_root = "com.google.idea.blaze.cpp",
+    visibility = DEFAULT_TEST_VISIBILITY,
     runtime_deps = [
         ":cpp_integration_test_plugin",
     ],

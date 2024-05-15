@@ -1,5 +1,5 @@
 load(
-    "@io_bazel_rules_kotlin//kotlin:kotlin.bzl",
+    "@rules_kotlin//kotlin:kotlin.bzl",
     "kt_jvm_binary",
     "kt_jvm_library",
     "kt_jvm_test",
@@ -27,7 +27,7 @@ kt_jvm_test(
     test_class = "test.lib.GreetingTest",
     deps = [
         ":greeting_lib",
-        "@diffutils//jar",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
         "@truth//jar",
     ],

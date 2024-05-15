@@ -56,7 +56,7 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
-            "glob(['**/*.java'], exclude = ['test/*.java'], exclude_directories = 0)");
+            "glob(['**/*.java'], exclude = ['test/*.java'], exclude_directories = 0, allow_empty = False)");
 
     assertNoErrors(file);
   }
@@ -103,6 +103,16 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
             "glob(['**/*.java'], exclude = ['test/*.java'], exclude_directories = true)");
 
     assertHasError(file, "exclude_directories parameter to glob must be 0 or 1");
+  }
+
+  @Test
+  public void testInvalidAllowEmptyValue() {
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"),
+            "glob(['**/*.java'], exclude = ['test/*.java'], allow_empty = 0)");
+
+    assertHasError(file, "allow_empty parameter to glob must be True or False");
   }
 
   @Test

@@ -94,4 +94,8 @@ public class LabelRuleLookupElement extends BuildLookupElement {
   protected String getItemText() {
     return targetName;
   }
+
+  public String getRuleType() {
+    return ruleType;
+  }
 }

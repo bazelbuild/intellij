@@ -16,121 +16,119 @@
 package com.google.idea.blaze.base.qsync;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth8.assertThat;
+import static com.google.idea.blaze.qsync.QuerySyncTestUtils.REPOSITORY_MAPPED_LABEL_CORRESPONDENCE;
+import static com.google.idea.blaze.qsync.QuerySyncTestUtils.LabelIgnoringCanonicalFormat;
+import static org.mockito.Mockito.when;
 
-import com.google.common.collect.Iterables;
-import com.google.idea.blaze.base.qsync.DependencyTracker.RequestedTargets;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.BlazeProject;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.QuerySyncTestUtils;
 import com.google.idea.blaze.qsync.TestDataSyncRunner;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.testdata.TestData;
-import java.nio.file.Path;
-import java.util.Optional;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+
+
 
 @RunWith(JUnit4.class)
 public class DependencyTrackerImplTest {
 
+  @Rule public final MockitoRule mockito = MockitoJUnit.rule();
+
   public final BlazeContext context = BlazeContext.create();
   public final TestDataSyncRunner syncRunner =
-      new TestDataSyncRunner(context, QuerySyncTestUtils.PATH_INFERRING_PACKAGE_READER);
+      new TestDataSyncRunner(context, QuerySyncTestUtils.PATH_INFERRING_PACKAGE_READER, false);
+
+  public final BlazeProject blazeProject = new BlazeProject();
+  @Mock DependencyBuilder dependencyBuilder;
+  @Mock ArtifactTracker artifactTracker;
 
   @Test
-  public void computeRequestedTargets_srcFile() throws Exception {
+  public void getPendingExternalDeps_noSnapshot() {
+    DependencyTrackerImpl dt =
+        new DependencyTrackerImpl(blazeProject, dependencyBuilder, artifactTracker);
+    assertThat(dt.getPendingExternalDeps(ImmutableSet.of(Label.of("//some/package:target"))))
+        .isEmpty();
+  }
+
+  @Test
+  public void getPendingExternalDeps_followJavaDeps_noneBuilt() throws Exception {
     BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
-    Optional<RequestedTargets> targets =
-        DependencyTrackerImpl.computeRequestedTargets(
-            snapshot,
-            DependencyTrackerImpl.getProjectTargets(
-                    context,
-                    snapshot,
-                    Iterables.getOnlyElement(
-                            TestData.getRelativeSourcePathsFor(
-                                TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY))
-                        .resolve(Path.of("TestClassExternalDep.java")))
-                .getUnambiguousTargets()
-                .orElseThrow());
-    assertThat(targets).isPresent();
-    Path targetName = Iterables.getOnlyElement(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.srcPaths);
-    assertThat(targets.get().buildTargets)
-        .containsExactly(Label.fromPackageAndName(TestData.ROOT.resolve(targetName), targetName));
-    assertThat(targets.get().expectedDependencyTargets)
-        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
+    blazeProject.setCurrent(context, snapshot);
+    DependencyTrackerImpl dt =
+        new DependencyTrackerImpl(blazeProject, dependencyBuilder, artifactTracker);
+    when(artifactTracker.getLiveCachedTargets()).thenReturn(ImmutableSet.of());
+    String expected = "@com_google_guava_guava//jar:jar";
+
+    assertThat(
+            dt.getPendingExternalDeps(
+                ImmutableSet.copyOf(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.getAssumedLabels())))
+        .comparingElementsUsing(REPOSITORY_MAPPED_LABEL_CORRESPONDENCE)
+        .containsExactly(Label.of(expected));
   }
 
   @Test
-  public void computeRequestedTargets_buildFile_multiTarget() throws Exception {
-    BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_MULTI_TARGETS);
-    Optional<RequestedTargets> targets =
-        DependencyTrackerImpl.computeRequestedTargets(
-            snapshot,
-            DependencyTrackerImpl.getProjectTargets(
-                    context,
-                    snapshot,
-                    Iterables.getOnlyElement(
-                            TestData.getRelativeSourcePathsFor(TestData.JAVA_LIBRARY_MULTI_TARGETS))
-                        .resolve(Path.of("BUILD")))
-                .getUnambiguousTargets()
-                .orElseThrow());
-    assertThat(targets).isPresent();
-    Path targetName = Iterables.getOnlyElement(TestData.JAVA_LIBRARY_MULTI_TARGETS.srcPaths);
-    assertThat(targets.get().buildTargets)
-        .containsExactly(
-            Label.fromPackageAndName(TestData.ROOT.resolve(targetName), "externaldep"),
-            Label.fromPackageAndName(TestData.ROOT.resolve(targetName), "nodeps"));
-    assertThat(targets.get().expectedDependencyTargets)
-        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
+  public void getPendingExternalDeps_followJavaDeps_allBuilt() throws Exception {
+    BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
+    blazeProject.setCurrent(context, snapshot);
+    DependencyTrackerImpl dt =
+        new DependencyTrackerImpl(blazeProject, dependencyBuilder, artifactTracker);
+    LabelIgnoringCanonicalFormat guava = new LabelIgnoringCanonicalFormat("@com_google_guava_guava//jar:jar");
+    when(artifactTracker.getLiveCachedTargets()).thenReturn(ImmutableSet.of(guava));
+
+    assertThat(
+            dt.getPendingExternalDeps(
+                ImmutableSet.copyOf(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY.getAssumedLabels())))
+        .isEmpty();
   }
 
   @Test
-  public void computeRequestedTargets_buildFile_nested() throws Exception {
-    BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_NESTED_PACKAGE);
-    Optional<RequestedTargets> targets =
-        DependencyTrackerImpl.computeRequestedTargets(
-            snapshot,
-            DependencyTrackerImpl.getProjectTargets(
-                    context,
-                    snapshot,
-                    Iterables.getOnlyElement(
-                            TestData.getRelativeSourcePathsFor(
-                                TestData.JAVA_LIBRARY_NESTED_PACKAGE))
-                        .resolve(Path.of("BUILD")))
-                .getUnambiguousTargets()
-                .orElseThrow());
-    assertThat(targets).isPresent();
-    Path targetName = Iterables.getOnlyElement(TestData.JAVA_LIBRARY_NESTED_PACKAGE.srcPaths);
-    assertThat(targets.get().buildTargets)
-        .containsExactly(Label.fromPackageAndName(TestData.ROOT.resolve(targetName), targetName));
-    assertThat(targets.get().expectedDependencyTargets)
-        .containsExactly(Label.of("@com_google_guava_guava//jar:jar"));
+  public void getPendingExternalDeps_ccTarget_returnSelf() throws Exception {
+    BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.CC_LIBRARY_QUERY);
+    blazeProject.setCurrent(context, snapshot);
+    DependencyTrackerImpl dt =
+        new DependencyTrackerImpl(blazeProject, dependencyBuilder, artifactTracker);
+    when(artifactTracker.getLiveCachedTargets()).thenReturn(ImmutableSet.of());
+    assertThat(
+            dt.getPendingExternalDeps(
+                ImmutableSet.copyOf(TestData.CC_LIBRARY_QUERY.getAssumedLabels())))
+        .containsExactlyElementsIn(TestData.CC_LIBRARY_QUERY.getAssumedLabels());
   }
 
   @Test
-  public void computeRequestedTargets_directory() throws Exception {
-    BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.JAVA_LIBRARY_NESTED_PACKAGE);
-    Optional<RequestedTargets> targets =
-        DependencyTrackerImpl.computeRequestedTargets(
-            snapshot,
-            DependencyTrackerImpl.getProjectTargets(
-                    context,
-                    snapshot,
-                    Iterables.getOnlyElement(
-                        TestData.getRelativeSourcePathsFor(TestData.JAVA_LIBRARY_NESTED_PACKAGE)))
-                .getUnambiguousTargets()
-                .orElseThrow());
-    assertThat(targets).isPresent();
-    Path targetName = Iterables.getOnlyElement(TestData.JAVA_LIBRARY_NESTED_PACKAGE.srcPaths);
-    assertThat(targets.get().buildTargets)
-        .containsExactly(
-            Label.fromPackageAndName(TestData.ROOT.resolve(targetName), targetName),
-            Label.fromPackageAndName(TestData.ROOT.resolve(targetName).resolve("inner"), "inner"));
-    assertThat(targets.get().expectedDependencyTargets)
-        .containsExactly(
-            Label.of("@com_google_guava_guava//jar:jar"),
-            Label.of("@gson//jar:jar"));
+  public void getPendingExternalDeps_ccTarget_alreadyBuilt_returnEmpty() throws Exception {
+    BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.CC_LIBRARY_QUERY);
+    blazeProject.setCurrent(context, snapshot);
+    DependencyTrackerImpl dt =
+        new DependencyTrackerImpl(blazeProject, dependencyBuilder, artifactTracker);
+    when(artifactTracker.getLiveCachedTargets())
+        .thenReturn(ImmutableSet.copyOf(TestData.CC_LIBRARY_QUERY.getAssumedLabels()));
+    assertThat(
+            dt.getPendingExternalDeps(
+                ImmutableSet.copyOf(TestData.CC_LIBRARY_QUERY.getAssumedLabels())))
+        .isEmpty();
+  }
+
+  @Test
+
+  public void getPendingExternalDeps_ccTarget_externalDepsIgnored() throws Exception {
+    BlazeProjectSnapshot snapshot = syncRunner.sync(TestData.CC_EXTERNAL_DEP_QUERY);
+    blazeProject.setCurrent(context, snapshot);
+    DependencyTrackerImpl dt =
+        new DependencyTrackerImpl(blazeProject, dependencyBuilder, artifactTracker);
+    when(artifactTracker.getLiveCachedTargets()).thenReturn(ImmutableSet.of());
+    assertThat(
+            dt.getPendingExternalDeps(
+                ImmutableSet.copyOf(TestData.CC_EXTERNAL_DEP_QUERY.getAssumedLabels())))
+        .containsExactlyElementsIn(TestData.CC_EXTERNAL_DEP_QUERY.getAssumedLabels());
   }
 }

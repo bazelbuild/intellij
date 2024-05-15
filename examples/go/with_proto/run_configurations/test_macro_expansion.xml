@@ -1,14 +1,19 @@
-<configuration name="Bazel test go:go_test" type="BlazeCommandRunConfigurationType"
-  factoryName="Bazel Command" nameIsGenerated="true">
-  <blaze-settings handler-id="BlazeGoRunConfigurationHandlerProvider" blaze-command="test"
-    kind="go_test">
-    <blaze-target>//go:go_test</blaze-target>
-    <blaze-user-flag>--test_filter=^TestFlagMacros$</blaze-user-flag>
-    <blaze-user-flag>--test_env=GO_TEST_WRAP_TESTV=1</blaze-user-flag>
-    <blaze-user-flag>--test_env=WORKSPACE_ROOT=$WorkspaceRoot$</blaze-user-flag>
-    <blaze-user-flag>--test_env=PROJECT_NAME=$ProjectName$</blaze-user-flag>
-  </blaze-settings>
-  <method v="2">
-    <option name="Blaze.BeforeRunTask" enabled="true"/>
-  </method>
+<configuration name="Test Macro Expansion" type="BlazeCommandRunConfigurationType"
+               factoryName="Bazel Command" nameIsGenerated="true">
+    <blaze-settings handler-id="BlazeGoRunConfigurationHandlerProvider" blaze-command="test"
+                    kind="go_test">
+        <blaze-target>//go:go_test</blaze-target>
+        <blaze-user-flag>--test_filter=^TestFlagMacros$</blaze-user-flag>
+        <blaze-user-flag>--test_env=GO_TEST_WRAP_TESTV=1</blaze-user-flag>
+        <blaze-user-flag>--test_env=WORKSPACE_ROOT=$WorkspaceRoot$</blaze-user-flag>
+        <blaze-user-flag>--test_env=PROJECT_NAME=$ProjectName$</blaze-user-flag>
+        <env_state>
+            <envs>
+                <env name="ENV_VAR_IN_PLAIN_RUN_CONFIG" value="it works" />
+            </envs>
+        </env_state>
+    </blaze-settings>
+    <method v="2">
+        <option name="Blaze.BeforeRunTask" enabled="true"/>
+    </method>
 </configuration>

@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -68,6 +69,7 @@ import javax.swing.JTable;
 import javax.swing.table.TableColumn;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.NotNull;
 
 /** UI for exporting run configurations. */
 public class ExportRunConfigurationDialog extends DialogWrapper {
@@ -275,6 +277,11 @@ public class ExportRunConfigurationDialog extends DialogWrapper {
       tableModel.fireTableDataChanged();
       table.revalidate();
       table.repaint();
+    }
+
+    @Override
+    public ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

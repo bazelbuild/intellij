@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,10 +27,15 @@ import com.jetbrains.cidr.lang.workspace.OCLanguageKindCalculatorHelper;
 import javax.annotation.Nullable;
 
 final class BlazeLanguageKindCalculatorHelper implements OCLanguageKindCalculatorHelper {
+
+  private static boolean isEnabled(Project project) {
+    return Blaze.getProjectType(project) == ProjectType.ASPECT_SYNC;
+  }
+
   /** #api212: add @Override */
   @Nullable
   public OCLanguageKind getLanguageByPsiFile(PsiFile psiFile) {
-    if (Blaze.isBlazeProject(psiFile.getProject())) {
+    if (isEnabled(psiFile.getProject())) {
       return getLanguageFromExtension(psiFile.getFileType().getDefaultExtension());
     }
     return null;
@@ -38,7 +44,7 @@ final class BlazeLanguageKindCalculatorHelper implements OCLanguageKindCalculato
   @Nullable
   @Override
   public OCLanguageKind getSpecifiedLanguage(Project project, VirtualFile file) {
-    if (Blaze.isBlazeProject(project)) {
+    if (isEnabled(project)) {
       return getLanguageFromExtension(file.getExtension());
     }
     return null;
@@ -47,7 +53,7 @@ final class BlazeLanguageKindCalculatorHelper implements OCLanguageKindCalculato
   @Nullable
   @Override
   public OCLanguageKind getLanguageByExtension(Project project, String name) {
-    if (Blaze.isBlazeProject(project)) {
+    if (isEnabled(project)) {
       return getLanguageFromExtension(FileUtilRt.getExtension(name));
     }
     return null;

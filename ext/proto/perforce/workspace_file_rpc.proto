@@ -1,0 +1,25 @@
+syntax = "proto2";
+
+package com.google.idea.blaze.ext.perforce;
+
+import "ext/proto/perforce/base.proto";
+import "ext/proto/perforce/source_file.proto";
+import "ext/proto/perforce/status.proto";
+
+option java_package = "com.google.idea.blaze.ext.p4";
+
+message ListWorkspaceFilesRequest {
+  optional RequestBase base = 1;
+  repeated string paths = 2;
+  optional bool include_synced_files = 4 [default = false];
+  optional bool include_opened_files = 5 [default = true];
+  optional ChangeId change_id = 8;
+  optional bool include_baseline_files = 9 [default = false];
+}
+
+message ListWorkspaceFilesResponse {
+  optional PerforceStatus perforce_status = 1002;
+  optional int32 path_index = 3;
+  optional SourceFile source_file = 4;
+  optional string user_name = 5;
+}

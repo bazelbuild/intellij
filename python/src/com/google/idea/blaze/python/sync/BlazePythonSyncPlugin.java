@@ -507,6 +507,6 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
     builder.replace(
         existingSection,
         ListSection.update(AdditionalLanguagesSection.KEY, existingSection)
-            .remove(LanguageClass.PYTHON));
+            .removeAll(LanguageClass.PYTHON));
   }
 }

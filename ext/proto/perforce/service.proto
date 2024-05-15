@@ -1,0 +1,119 @@
+syntax = "proto2";
+
+package com.google.idea.blaze.ext.perforce;
+
+import "ext/proto/perforce/annotation_rpc.proto";
+import "ext/proto/perforce/change_rpc.proto";
+import "ext/proto/perforce/depot_file_rpc.proto";
+import "ext/proto/perforce/file_content_rpc.proto";
+import "ext/proto/perforce/file_state_rpc.proto";
+import "ext/proto/perforce/get_client_context_rpc.proto";
+import "ext/proto/perforce/integrate_rpc.proto";
+import "ext/proto/perforce/mail_change_rpc.proto";
+import "ext/proto/perforce/patch_rpc.proto";
+import "ext/proto/perforce/resolve_conflicts_rpc.proto";
+import "ext/proto/perforce/revert_files_rpc.proto";
+import "ext/proto/perforce/submit_change_rpc.proto";
+import "ext/proto/perforce/switch_client_rpc.proto";
+import "ext/proto/perforce/sync_files_rpc.proto";
+import "ext/proto/perforce/upload_change_rpc.proto";
+import "ext/proto/perforce/workspace_file_rpc.proto";
+import "ext/proto/perforce/workspace_rpc.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = 'PiperServiceProto';
+option java_package = "com.google.idea.blaze.ext";
+
+
+service PiperService {
+  // Get workspaces
+  rpc GetWorkspaces(GetWorkspacesRequest)
+      returns (stream GetWorkspacesResponse) {}
+
+  // Creates or updates a Piper workspace.
+  rpc UpdateWorkspace(UpdateWorkspaceRequest)
+      returns (UpdateWorkspaceResponse) {}
+
+  // Retrieves a list of changes
+  rpc GetChanges(GetChangesRequest) returns (stream GetChangesResponse) {}
+
+  // Resolves conflicts in a Piper workspace after sync or integrate.
+  rpc ResolveConflicts(ResolveConflictsRequest)
+      returns (stream ResolveConflictsResponse) {}
+
+  // Read the content of a depot or workspace file.
+  rpc ReadFiles(ReadFilesRequest) returns (stream ReadFilesResponse) {}
+
+  // Update the state and type of files that are open in a Piper workspace.
+  rpc UpdateFileStates(UpdateFileStatesRequest)
+      returns (stream UpdateFileStatesResponse) {}
+
+  // Delete a change.
+  rpc DeleteChange(DeleteChangeRequest) returns (DeleteChangeResponse) {}
+
+  // Retrieve annotations for files stored in the Piper depot.
+  rpc GetAnnotations(GetAnnotationsRequest)
+      returns (stream GetAnnotationsResponse) {}
+
+  // A single RPC version of GetChanges.  If you're querying multiple changes at
+  // once, please use GetChanges.
+  rpc GetChange(GetChangeRequest) returns (GetChangeResponse) {}
+
+  // Gets client context
+  rpc GetClientContext(GetClientContextRequest)
+      returns (GetClientContextResponse) {}
+
+  // Integrates revisions from one branch to another.
+  rpc IntegrateFiles(IntegrateFilesRequest)
+      returns (stream IntegrateFilesResponse) {}
+
+  // Search for matching files and return metadata about each match.
+  rpc ListDepotFiles(ListDepotFilesRequest)
+      returns (stream ListDepotFilesResponse) {}
+
+  // Search for matching changes and return metadata about each match.
+  rpc ListChanges(ListChangesRequest) returns (stream ListChangesResponse) {}
+
+  // Search for matching files in the workspace and return metadata about each
+  // match.
+  rpc ListWorkspaceFiles(ListWorkspaceFilesRequest)
+      returns (stream ListWorkspaceFilesResponse) {}
+
+  // Searches for matching workspaces, and retrieves metadata for each match.
+  rpc ListWorkspaces(ListWorkspacesRequest)
+      returns (stream ListWorkspacesResponse) {}
+
+  // List CitC switch clients of a user.
+  rpc ListSwitchClients(ListSwitchClientsRequest)
+      returns (ListSwitchClientsResponse) {}
+
+  // Move (rename) file(s) in a workspace.
+  rpc MoveFiles(MoveFilesRequest) returns (stream MoveFilesResponse) {}
+
+  // Patches a change to a workspace.
+  rpc PatchChange(PatchChangeRequest) returns (PatchChangeResponse) {}
+
+  // Reverts files that are open in a Piper workspace.
+  rpc RevertFiles(RevertFilesRequest) returns (stream RevertFilesResponse) {}
+
+  // Update the revision and content of files that are in a Piper workspace.
+  rpc SyncFiles(SyncFilesRequest) returns (stream SyncFilesResponse) {}
+
+  // Edit/Create a change.
+  rpc UpdateChange(UpdateChangeRequest) returns (UpdateChangeResponse) {}
+
+  // Updates a CitC switch client to point to the new target or create a new
+  // switch client with the new target.
+  rpc UpdateSwitchClient(UpdateSwitchClientRequest)
+      returns (UpdateSwitchClientResponse) {}
+
+  // Uploads a pending change to Critique.
+  rpc UploadChangeToCritique(UploadChangeToCritiqueRequest)
+      returns (UploadChangeToCritiqueResponse) {}
+
+  // Runs presubmits and/or submits a numbered pending change.
+  rpc SubmitChange(SubmitChangeRequest) returns (stream SubmitChangeResponse) {}
+
+  // Runs presubmits and mails pending change for review.
+  rpc MailChange(MailChangeRequest) returns (stream MailChangeResponse) {}
+}

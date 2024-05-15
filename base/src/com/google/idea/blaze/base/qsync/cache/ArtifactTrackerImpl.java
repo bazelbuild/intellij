@@ -15,25 +15,30 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.google.common.collect.MoreCollectors.onlyElement;
 import static com.google.common.util.concurrent.Uninterruptibles.getUninterruptibly;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.AAR_DIRECTORY;
+import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.APP_INSPECTOR_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.DEPENDENCIES_SOURCES;
+import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.GEN_HEADERS_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.GEN_SRC_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.LIBRARY_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.RENDER_JARS_DIRECTORY;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.function.Predicate.not;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Multimaps;
@@ -42,33 +47,51 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.ArtifactTrackerState;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.CachedArtifacts;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStats;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
-import com.google.idea.blaze.base.qsync.ArtifactTracker;
-import com.google.idea.blaze.base.qsync.OutputGroup;
-import com.google.idea.blaze.base.qsync.OutputInfo;
+import com.google.idea.blaze.base.qsync.AppInspectorArtifactTracker;
+import com.google.idea.blaze.base.qsync.AppInspectorInfo;
+import com.google.idea.blaze.base.qsync.FileRefresher;
+import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.qsync.RenderJarArtifactTracker;
 import com.google.idea.blaze.base.qsync.RenderJarInfo;
-import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher.ArtifactDestination;
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestination;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
+import com.google.idea.blaze.base.qsync.cc.CcProjectProtoTransform;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.DownloadTrackingScope;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.artifact.ArtifactFetcher;
+import com.google.idea.blaze.common.artifact.ArtifactFetcher.ArtifactDestination;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
+import com.google.idea.blaze.common.proto.ProtoStringInterner;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.GeneratedSourceProjectUpdater;
-import com.google.idea.blaze.qsync.SrcJarProjectUpdater;
+import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
+import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
+import com.google.idea.blaze.qsync.deps.JavaArtifactInfo;
+import com.google.idea.blaze.qsync.deps.OutputGroup;
+import com.google.idea.blaze.qsync.deps.OutputInfo;
+import com.google.idea.blaze.qsync.java.AndroidResPackagesProjectUpdater;
+import com.google.idea.blaze.qsync.java.GeneratedSourceProjectUpdater;
+import com.google.idea.blaze.qsync.java.GeneratedSourceProjectUpdater.GeneratedSourceJar;
+import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
+import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaTargetArtifacts;
+import com.google.idea.blaze.qsync.java.SrcJarProjectUpdater;
+import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcCompilationInfo;
+import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
-import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.blaze.qsync.project.ProjectProtoTransform;
+import com.google.idea.blaze.qsync.project.TestSourceGlobMatcher;
 import com.google.protobuf.ExtensionRegistry;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
 import java.io.IOException;
@@ -89,28 +112,29 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * A class that track the artifacts during build and its local copy.
  *
  * <p>This class maps all the targets that have been built to their artifacts.
  */
-public class ArtifactTrackerImpl implements ArtifactTracker {
-
-  private static final BoolExperiment ATTACH_DEP_SRCJARS =
-      new BoolExperiment("querysync.attach.dep.srcjars", true);
+public class ArtifactTrackerImpl
+    implements ArtifactTracker<BlazeContext>,
+        RenderJarArtifactTracker,
+        AppInspectorArtifactTracker {
 
   public static final String DIGESTS_DIRECTORY_NAME = ".digests";
   public static final int STORAGE_VERSION = 3;
   private static final Logger logger = Logger.getInstance(ArtifactTrackerImpl.class);
 
-  // Information about dependency artifacts derived when the dependencies were built.
+  // Information about java dependency artifacts derived when the dependencies were built.
   // Note that artifacts that do not produce files are also stored here.
-  private final Map<Label, ArtifactInfo> artifacts = new HashMap<>();
+  private final Map<Label, JavaArtifactInfo> javaArtifacts = new HashMap<>();
+  private CcDependenciesInfo ccDepencenciesInfo = CcDependenciesInfo.EMPTY;
   // Information about the origin of files in the cache. For each file in the cache, stores the
   // artifact key that the file was derived from.
   private final Map<Path, Path> cachePathToArtifactKeyMap = new HashMap<>();
@@ -118,16 +142,23 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   private final ArtifactFetcher<OutputArtifact> artifactFetcher;
   private final ProjectPath.Resolver projectPathResolver;
   private final ProjectDefinition projectDefinition;
+  private final FileRefresher fileRefresher;
+
   @VisibleForTesting public final CacheDirectoryManager cacheDirectoryManager;
+  private final Path jarCacheDirectory;
   private final FileCache jarCache;
   private final Path aarCacheDirectory;
   private final Path renderJarCacheDirectory;
+  @VisibleForTesting final Path generatedHeadersDirectory;
   private final FileCache renderJarCache;
   private final FileCache aarCache;
   private final Path generatedSrcFileCacheDirectory;
   private final FileCache generatedSrcFileCache;
   private final Path generatedExternalSrcFileCacheDirectory;
   private final FileCache generatedExternalSrcFileCache;
+  private final FileCache generatedHeadersCache;
+  private final Path appInspectorCacheDirectory;
+  private final FileCache appInspectorCache;
   private final Path persistentFile;
   private final Path ideProjectBasePath;
 
@@ -136,56 +167,69 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
       Path ideProjectBasePath,
       ArtifactFetcher<OutputArtifact> artifactFetcher,
       ProjectPath.Resolver projectPathResolver,
-      ProjectDefinition projectDefinition) {
+      ProjectDefinition projectDefinition,
+      ProjectProtoTransform.Registry transformRegistry,
+      FileRefresher fileRefresher) {
     this.ideProjectBasePath = ideProjectBasePath;
     this.artifactFetcher = artifactFetcher;
     this.projectPathResolver = projectPathResolver;
     this.projectDefinition = projectDefinition;
+    this.fileRefresher = fileRefresher;
 
     FileCacheCreator fileCacheCreator = new FileCacheCreator();
-    jarCache =
-        fileCacheCreator.createFileCache(
-            projectDirectory.resolve(LIBRARY_DIRECTORY), ImmutableSet.of(), false);
+    jarCacheDirectory = projectDirectory.resolve(LIBRARY_DIRECTORY);
+    jarCache = fileCacheCreator.createFileCache(new KeyBasedCacheLayout(jarCacheDirectory));
     aarCacheDirectory = projectDirectory.resolve(AAR_DIRECTORY);
-    aarCache = fileCacheCreator.createFileCache(aarCacheDirectory, ImmutableSet.of("aar"), false);
+    aarCache =
+        fileCacheCreator.createFileCache(
+            DelegatingCacheLayout.builder()
+                .addLayout(new UnzippingCacheLayout(aarCacheDirectory, ImmutableSet.of("aar")))
+                .setFallback(new KeyBasedCacheLayout(aarCacheDirectory))
+                .build());
     renderJarCacheDirectory = projectDirectory.resolve(RENDER_JARS_DIRECTORY);
     renderJarCache =
-        fileCacheCreator.createFileCache(renderJarCacheDirectory, ImmutableSet.of(), false);
+        fileCacheCreator.createFileCache(new KeyBasedCacheLayout(renderJarCacheDirectory));
     generatedSrcFileCacheDirectory = projectDirectory.resolve(GEN_SRC_DIRECTORY);
     generatedSrcFileCache =
         fileCacheCreator.createFileCache(
-            generatedSrcFileCacheDirectory, ImmutableSet.of("jar", "srcjar"), true);
+            DelegatingCacheLayout.builder()
+                .addLayout(new JavaSourcesCacheLayout(generatedSrcFileCacheDirectory))
+                .addLayout(new JavaSourcesArchiveCacheLayout(generatedSrcFileCacheDirectory))
+                .setFallback(new KeyBasedCacheLayout(generatedSrcFileCacheDirectory))
+                .build());
     generatedExternalSrcFileCacheDirectory = projectDirectory.resolve(DEPENDENCIES_SOURCES);
     generatedExternalSrcFileCache =
         fileCacheCreator.createFileCache(
-            generatedExternalSrcFileCacheDirectory, ImmutableSet.of(), false);
+            new KeyBasedCacheLayout(generatedExternalSrcFileCacheDirectory));
+    generatedHeadersDirectory = projectDirectory.resolve(GEN_HEADERS_DIRECTORY);
+    generatedHeadersCache =
+        fileCacheCreator.createFileCache(new ArtifactPathCacheLayout(generatedHeadersDirectory));
+    appInspectorCacheDirectory = projectDirectory.resolve(APP_INSPECTOR_DIRECTORY);
+    appInspectorCache =
+        fileCacheCreator.createFileCache(
+            DelegatingCacheLayout.builder()
+                .addLayout(
+                    new UnzippingCacheLayout(appInspectorCacheDirectory, ImmutableSet.of("aar")))
+                .setFallback(new KeyBasedCacheLayout(appInspectorCacheDirectory))
+                .build());
     cacheDirectoryManager =
         new CacheDirectoryManager(
             projectDirectory.resolve(DIGESTS_DIRECTORY_NAME),
             fileCacheCreator.getCacheDirectories());
     persistentFile = projectDirectory.resolve("artifact_tracker_state");
+    transformRegistry.add(this::updateProjectProto);
+    transformRegistry.add(new CcProjectProtoTransform(this::getCcDependenciesInfo));
   }
 
   private static class FileCacheCreator {
-    private final ImmutableList.Builder<Path> cacheDirectories = ImmutableList.builder();
+    private final ImmutableSet.Builder<Path> cacheDirectories = ImmutableSet.builder();
 
-    public FileCache createFileCache(
-        Path cacheDirectory, ImmutableSet<String> zipFileExtensions, boolean handleJavaSources) {
-      // TODO(mathewi) this is a bit messy, make a cleaner way of dealing with zips & java srcs
-      Path cacheDotDirectory = cacheDirectory.resolveSibling("." + cacheDirectory.getFileName());
-      cacheDirectories.add(cacheDirectory);
-      cacheDirectories.add(cacheDotDirectory);
-      CacheLayout layout =
-          new DefaultCacheLayout(cacheDirectory, cacheDotDirectory, zipFileExtensions);
-      if (handleJavaSources) {
-        layout =
-            new DelegatingCacheLayout(
-                layout, new JavaSourcesCacheLayout(cacheDirectory, cacheDotDirectory));
-      }
+    public FileCache createFileCache(CacheLayout layout) {
+      cacheDirectories.addAll(layout.getCachePaths());
       return new FileCache(layout);
     }
 
-    public ImmutableList<Path> getCacheDirectories() {
+    public ImmutableCollection<Path> getCacheDirectories() {
       return cacheDirectories.build();
     }
   }
@@ -197,14 +241,15 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
 
   @Override
   public void clear() throws IOException {
-    artifacts.clear();
+    javaArtifacts.clear();
     cacheDirectoryManager.clear();
     saveState();
   }
 
   private void saveState() throws IOException {
-    BuildArtifacts.Builder builder = BuildArtifacts.newBuilder();
-    artifacts.values().stream().map(ArtifactInfo::toProto).forEach(builder::addArtifacts);
+    JavaArtifacts.Builder builder = JavaArtifacts.newBuilder();
+    javaArtifacts.values().stream().map(JavaArtifactInfo::toProto).forEach(builder::addArtifacts);
+    CcCompilationInfo ccCompilationInfo = ccDepencenciesInfo.toProto();
     CachedArtifacts.Builder cachedArtifactsBuilder = CachedArtifacts.newBuilder();
     for (Map.Entry<Path, Path> entry : cachePathToArtifactKeyMap.entrySet()) {
       cachedArtifactsBuilder.putCachePathToArtifactPath(
@@ -215,6 +260,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
           .setVersion(STORAGE_VERSION)
           .setArtifactInfo(builder.build())
           .setCachedArtifacts(cachedArtifactsBuilder.build())
+          .setCcCompilationInfo(ccCompilationInfo)
           .build()
           .writeTo(stream);
     }
@@ -224,26 +270,30 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     if (!Files.exists(persistentFile)) {
       return;
     }
-    artifacts.clear();
+    javaArtifacts.clear();
     cachePathToArtifactKeyMap.clear();
     try (InputStream stream = new GZIPInputStream(Files.newInputStream(persistentFile))) {
       ArtifactTrackerState saved =
-          ArtifactTrackerState.parseFrom(stream, ExtensionRegistry.getEmptyRegistry());
+          ProtoStringInterner.intern(
+              ArtifactTrackerState.parseFrom(stream, ExtensionRegistry.getEmptyRegistry()));
       if (saved.getVersion() != STORAGE_VERSION) {
         return;
       }
       cachePathToArtifactKeyMap.putAll(
           saved.getCachedArtifacts().getCachePathToArtifactPathMap().entrySet().stream()
               .collect(toImmutableMap(e -> Path.of(e.getKey()), e -> Path.of(e.getValue()))));
-      artifacts.putAll(
+      javaArtifacts.putAll(
           saved.getArtifactInfo().getArtifactsList().stream()
-              .map(ArtifactInfo::create)
-              .collect(toImmutableMap(ArtifactInfo::label, Function.identity())));
-      for (TargetArtifacts targetArtifact : saved.getArtifactInfo().getArtifactsList()) {
-        ArtifactInfo artifactInfo = ArtifactInfo.create(targetArtifact);
-        artifacts.put(artifactInfo.label(), artifactInfo);
+              .map(p -> JavaArtifactInfo.create(p, BuildArtifact.NO_DIGESTS))
+              .collect(toImmutableMap(JavaArtifactInfo::label, Function.identity())));
+      for (JavaTargetArtifacts targetArtifact : saved.getArtifactInfo().getArtifactsList()) {
+        JavaArtifactInfo javaArtifactInfo =
+            JavaArtifactInfo.create(targetArtifact, BuildArtifact.NO_DIGESTS);
+        javaArtifacts.put(javaArtifactInfo.label(), javaArtifactInfo);
       }
+      ccDepencenciesInfo = CcDependenciesInfo.create(saved.getCcCompilationInfo());
     } catch (IOException e) {
+      logger.warn("Failed to load artifact tracker state", e);
       // TODO: If there is an error parsing the index, reinitialize the cache properly.
     }
   }
@@ -254,17 +304,17 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
       return ImmutableSet.of();
     }
     Path artifactPath = cachePathToArtifactKeyMap.get(cachedArtifact);
-    return artifacts.values().stream()
+    return javaArtifacts.values().stream()
         .filter(d -> d.containsPath(artifactPath))
-        .map(ArtifactInfo::sources)
+        .map(JavaArtifactInfo::sources)
         .flatMap(Set::stream)
         .collect(toImmutableSet());
   }
 
   @Override
   public Optional<ImmutableSet<Path>> getCachedFiles(Label target) {
-    ArtifactInfo artifactInfo = artifacts.get(target);
-    if (artifactInfo == null) {
+    JavaArtifactInfo javaArtifactInfo = javaArtifacts.get(target);
+    if (javaArtifactInfo == null) {
       return Optional.empty();
     }
 
@@ -272,7 +322,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
         Multimaps.invertFrom(
             Multimaps.forMap(cachePathToArtifactKeyMap), ArrayListMultimap.create());
     return Optional.of(
-        artifactInfo
+        javaArtifactInfo
             .artifactStream()
             .map(artifactToCachedMap::get)
             .flatMap(Collection::stream)
@@ -285,8 +335,9 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
    * @return A map of {@link OutputArtifactDestination}'s from the original request to the original
    *     artifact key that it was derived from.
    */
-  private <T extends OutputArtifactDestination> ListenableFuture<Map<T, Path>> fetchArtifacts(
-      BlazeContext context, ImmutableMap<OutputArtifact, T> artifactToDestinationMap) {
+  private <T extends OutputArtifactDestination>
+      ListenableFuture<ImmutableMap<T, Path>> fetchArtifacts(
+          BlazeContext context, ImmutableMap<OutputArtifact, T> artifactToDestinationMap) {
     final ImmutableMap<OutputArtifact, ArtifactDestination> artifactToDestinationPathMap =
         runMeasureAndLog(
             () ->
@@ -330,24 +381,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
                 },
                 String.format("Store %d artifact digests", artifactToDestinationPathMap.size()),
                 Duration.ofSeconds(1)),
-        ArtifactFetcher.EXECUTOR);
-  }
-
-  /**
-   * Caches {@code artifacts} in the local cache and returns a map from paths that the IDE should
-   * use to find them to the original artifact path.
-   *
-   * @noinspection UnstableApiUsage
-   */
-  @VisibleForTesting
-  public ListenableFuture<ImmutableMap<Path, Path>> cache(
-      ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactToDestinationMap,
-      BlazeContext context)
-      throws IOException {
-    return Futures.transform(
-        fetchArtifacts(context, artifactToDestinationMap),
-        this::prepareFinalLayouts,
-        ArtifactFetcher.EXECUTOR);
+        ArtifactFetchers.EXECUTOR);
   }
 
   /**
@@ -358,107 +392,190 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
    * @return A map of final destination path to the key of the artifact that it was derived from.
    */
   private ImmutableMap<Path, Path> prepareFinalLayouts(
-      Map<OutputArtifactDestinationAndLayout, Path> destinationToArtifact) {
-    ImmutableMap.Builder<Path, Path> result = ImmutableMap.builder();
+      Map<OutputArtifactDestinationAndLayout, Path> destinationToArtifact, BlazeContext context)
+      throws BuildException {
+    ArrayListMultimap<Path, OutputArtifactDestinationAndLayout> finalDestMap =
+        ArrayListMultimap.create();
     for (OutputArtifactDestinationAndLayout destination : destinationToArtifact.keySet()) {
-      try {
-        result.put(destination.prepareFinalLayout(), destinationToArtifact.get(destination));
-      } catch (IOException e) {
-        throw new UncheckedIOException(
-            "Failed to prepare " + destinationToArtifact.get(destination), e);
-      }
+      finalDestMap.put(destination.determineFinalDestination(), destination);
     }
+    ImmutableMap.Builder<Path, Path> result = ImmutableMap.builder();
+    for (Path finalDest : finalDestMap.keySet()) {
+      List<OutputArtifactDestinationAndLayout> artifacts = finalDestMap.get(finalDest);
+      OutputArtifactDestinationAndLayout selectedArtifact;
+      if (artifacts.size() == 1) {
+        selectedArtifact = Iterables.getOnlyElement(artifacts);
+      } else {
+        // If multiple artifacts map to the same cache path, we expect that they all come from
+        // the same cache layout (since each cache layout should have its own cache dir) and
+        // therefore the same resolution strategy.
+        selectedArtifact =
+            artifacts.stream()
+                .map(OutputArtifactDestinationAndLayout::getConflictStrategy)
+                .distinct()
+                .collect(onlyElement())
+                .resolveConflicts(finalDest, artifacts, context);
+      }
+      selectedArtifact.createFinalDestination(finalDest);
+      result.put(finalDest, destinationToArtifact.get(selectedArtifact));
+    }
+
     return result.build();
   }
 
-  /**
-   * Merges TargetToDeps into tracker maps and cache necessary OutputArtifact to local. The
-   * artifacts will not be added into tracker if it's failed to be cached.
-   */
+  /** Fetches, caches and sets up new render jar artifacts. */
   @Override
-  public UpdateResult update(
+  public ImmutableSet<Path> update(
       Set<Label> targets, RenderJarInfo renderJarInfo, BlazeContext outerContext)
       throws BuildException {
+    ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap;
+    try {
+      artifactMap = renderJarInfoToArtifactMap(renderJarInfo);
+    } catch (IOException e) {
+      throw new BuildException(e);
+    }
     try (BlazeContext context = BlazeContext.create(outerContext)) {
-      DownloadTrackingScope downloads = new DownloadTrackingScope();
-      context.push(downloads);
-      ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap =
-          ImmutableMap.<OutputArtifact, OutputArtifactDestinationAndLayout>builder()
-              .putAll(
-                  renderJarCache.prepareDestinationPathsAndDirectories(
-                      renderJarInfo.getRenderJars()))
-              .buildOrThrow();
-
-      ListenableFuture<ImmutableMap<Path, Path>> artifactPaths = cache(artifactMap, context);
-      if (downloads.getFileCount() > 0) {
-        context.output(
-            PrintOutput.log(
-                "Downloading %d render jar artifacts (%s)",
-                downloads.getFileCount(), StringUtil.formatFileSize(downloads.getTotalBytes())));
-      }
-
-      ImmutableMap<Path, Path> updated = getUninterruptibly(artifactPaths);
+      ImmutableMap<Path, Path> updated = cache(context, artifactMap);
       saveState();
-      BuildDepsStatsScope.fromContext(context)
-          .ifPresent(stats -> stats.setUpdatedFilesCount(updated.size()));
-      return UpdateResult.create(updated.keySet(), ImmutableSet.of());
+      return updated.keySet();
+    } catch (ExecutionException | IOException e) {
+      throw new BuildException(e);
+    }
+  }
+
+  @Override
+  public ImmutableSet<Path> update(
+      Set<Label> targets, AppInspectorInfo appInspectorInfo, BlazeContext outerContext)
+      throws BuildException {
+    ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap;
+    try {
+      artifactMap = appInspectorInfoToArtifactMap(appInspectorInfo);
+    } catch (IOException e) {
+      throw new BuildException(e);
+    }
+    try (BlazeContext context = BlazeContext.create(outerContext)) {
+      ImmutableMap<Path, Path> unused = cache(context, artifactMap);
+      ImmutableSet.Builder<Path> paths = ImmutableSet.builder();
+      for (OutputArtifactDestinationAndLayout layout : artifactMap.values()) {
+        Path finalDest = layout.determineFinalDestination();
+        layout.createFinalDestination(finalDest);
+        paths.add(finalDest);
+      }
+      saveState();
+      return paths.build();
+    } catch (ExecutionException | IOException e) {
+      throw new BuildException(e);
+    }
+  }
+
+  /** Fetches, caches and sets up new artifacts. */
+  @Override
+  public void update(Set<Label> targets, OutputInfo outputInfo, BlazeContext outerContext)
+      throws BuildException {
+    ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap;
+    try {
+      artifactMap = outputInfoToArtifactMap(outputInfo);
+    } catch (IOException e) {
+      throw new BuildException(e);
+    }
+    try (BlazeContext context = BlazeContext.create(outerContext)) {
+      ImmutableMap<Path, Path> updated = cache(context, artifactMap);
+
+      this.cachePathToArtifactKeyMap.putAll(updated);
+      for (JavaArtifacts artifacts : outputInfo.getArtifactInfo()) {
+        updateMaps(targets, artifacts);
+      }
+      CcDependenciesInfo.Builder ccDepsBuilder = ccDepencenciesInfo.toBuilder();
+      outputInfo.getCcCompilationInfo().forEach(ccDepsBuilder::add);
+      ccDepencenciesInfo = ccDepsBuilder.build();
+
+      saveState();
+
+      fileRefresher.refreshFiles(context, updated.keySet());
+
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
     }
   }
 
   /**
-   * Merges TargetToDeps into tracker maps and cache necessary OutputArtifact to local. The
-   * artifacts will not be added into tracker if it's failed to be cached.
+   * Caches {@code artifacts} in the local cache and returns a map from paths that the IDE should
+   * use to find them to the original artifact path.
+   *
+   * @noinspection UnstableApiUsage
    */
-  @Override
-  public UpdateResult update(Set<Label> targets, OutputInfo outputInfo, BlazeContext outerContext)
-      throws BuildException {
-    try (BlazeContext context = BlazeContext.create(outerContext)) {
-      DownloadTrackingScope downloads = new DownloadTrackingScope();
-      context.push(downloads);
+  private ImmutableMap<Path, Path> cache(
+      BlazeContext context,
+      ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap)
+      throws BuildException, ExecutionException {
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    DownloadTrackingScope downloads = new DownloadTrackingScope();
+    context.push(downloads);
+    Optional<BuildDepsStats.Builder> builder = BuildDepsStatsScope.fromContext(context);
+    ListenableFuture<ImmutableMap<OutputArtifactDestinationAndLayout, Path>>
+        cachePathToArtifactKeyMapFuture = fetchArtifacts(context, artifactMap);
 
-      ImmutableListMultimap<Boolean, OutputArtifact> genSrcsByInclusion =
-          getGensrcsByInclusion(outputInfo);
-
-      ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap =
-          ImmutableMap.<OutputArtifact, OutputArtifactDestinationAndLayout>builder()
-              .putAll(
-                  jarCache.prepareDestinationPathsAndDirectories(outputInfo.get(OutputGroup.JARS)))
-              .putAll(
-                  aarCache.prepareDestinationPathsAndDirectories(outputInfo.get(OutputGroup.AARS)))
-              .putAll(
-                  generatedSrcFileCache.prepareDestinationPathsAndDirectories(
-                      genSrcsByInclusion.get(true)))
-              .putAll(
-                  generatedExternalSrcFileCache.prepareDestinationPathsAndDirectories(
-                      genSrcsByInclusion.get(false)))
-              .buildOrThrow();
-
-      ListenableFuture<ImmutableMap<Path, Path>> cachePathToArtifactKeyMapFuture =
-          cache(artifactMap, context);
-      if (downloads.getFileCount() > 0) {
-        context.output(
-            PrintOutput.log(
-                "Downloading %d build artifacts (%s)",
-                downloads.getFileCount(), StringUtil.formatFileSize(downloads.getTotalBytes())));
-      }
-
-      ImmutableMap<Path, Path> cachePathToArtifactKeyMap =
-          getUninterruptibly(cachePathToArtifactKeyMapFuture);
-
-      this.cachePathToArtifactKeyMap.putAll(cachePathToArtifactKeyMap);
-
-      for (BuildArtifacts artifacts : outputInfo.getArtifactInfo()) {
-        updateMaps(targets, artifacts);
-      }
-      saveState();
-      BuildDepsStatsScope.fromContext(context)
-          .ifPresent(stats -> stats.setUpdatedFilesCount(cachePathToArtifactKeyMap.size()));
-      return UpdateResult.create(cachePathToArtifactKeyMap.keySet(), ImmutableSet.of());
-    } catch (ExecutionException | IOException e) {
-      throw new BuildException(e);
+    if (downloads.getFileCount() > 0) {
+      context.output(
+          PrintOutput.log(
+              "Downloading %d artifacts (%s)",
+              downloads.getFileCount(), StringUtil.formatFileSize(downloads.getTotalBytes())));
+      builder.ifPresent(
+          stats -> {
+            stats.setArtifactBytesConsumed(downloads.getTotalBytes());
+          });
     }
+
+    // NOTE: The cache conflict detection inside `prepareFinalLayouts` doesn't work as we'd want it,
+    // as we only pass the updated artifacts in here. Than means that conflict cache entries
+    // produced by subsequent builds will not be detected. Instead, we should consider the entire
+    // cache contents when detecting conflicts, and then subsequently update just those that are
+    // new/changed.
+    ImmutableMap<Path, Path> updated =
+        prepareFinalLayouts(getUninterruptibly(cachePathToArtifactKeyMapFuture), context);
+    builder.ifPresent(stats -> stats.setUpdatedFilesCount(updated.size()));
+    ImmutableSet<Path> updatedFiles = updated.keySet();
+    ImmutableSet<String> removedKeys = ImmutableSet.of();
+    context.output(
+        PrintOutput.log(
+            String.format(
+                "Updated cache in %d ms: updated %d artifacts, removed %d artifacts",
+                stopwatch.elapsed().toMillis(), updatedFiles.size(), removedKeys.size())));
+    return updated;
+  }
+
+  private ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout>
+      renderJarInfoToArtifactMap(RenderJarInfo renderJarInfo) throws IOException {
+    return ImmutableMap.<OutputArtifact, OutputArtifactDestinationAndLayout>builder()
+        .putAll(renderJarCache.prepareDestinationPathsAndDirectories(renderJarInfo.getRenderJars()))
+        .buildOrThrow();
+  }
+
+  private ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout>
+      appInspectorInfoToArtifactMap(AppInspectorInfo appInspectorInfo) throws IOException {
+    return ImmutableMap.<OutputArtifact, OutputArtifactDestinationAndLayout>builder()
+        .putAll(appInspectorCache.prepareDestinationPathsAndDirectories(appInspectorInfo.getJars()))
+        .buildOrThrow();
+  }
+
+  private ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> outputInfoToArtifactMap(
+      OutputInfo outputInfo) throws IOException {
+
+    ImmutableListMultimap<Boolean, OutputArtifact> genSrcsByInclusion =
+        getGensrcsByInclusion(outputInfo);
+    return ImmutableMap.<OutputArtifact, OutputArtifactDestinationAndLayout>builder()
+        .putAll(jarCache.prepareDestinationPathsAndDirectories(outputInfo.get(OutputGroup.JARS)))
+        .putAll(aarCache.prepareDestinationPathsAndDirectories(outputInfo.get(OutputGroup.AARS)))
+        .putAll(
+            generatedSrcFileCache.prepareDestinationPathsAndDirectories(
+                genSrcsByInclusion.get(true)))
+        .putAll(
+            generatedExternalSrcFileCache.prepareDestinationPathsAndDirectories(
+                genSrcsByInclusion.get(false)))
+        .putAll(
+            generatedHeadersCache.prepareDestinationPathsAndDirectories(
+                outputInfo.get(OutputGroup.CC_HEADERS)))
+        .buildOrThrow();
   }
 
   /**
@@ -471,7 +588,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
     // files produced by the aspect.
     SetMultimap<Label, String> genSrcsByTarget =
         outputInfo.getArtifactInfo().stream()
-            .map(BuildArtifacts::getArtifactsList)
+            .map(JavaArtifacts::getArtifactsList)
             .flatMap(List::stream)
             .collect(
                 Multimaps.flatteningToMultimap(
@@ -498,16 +615,17 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
    * @param targets the list of targets that were expected to be built. (From blaze query)
    * @param newArtifacts the artifacts that were actually built. From (blaze build)
    */
-  private void updateMaps(Set<Label> targets, BuildArtifacts newArtifacts) {
-    for (TargetArtifacts targetArtifacts : newArtifacts.getArtifactsList()) {
-      ArtifactInfo artifactInfo = ArtifactInfo.create(targetArtifacts);
-      artifacts.put(artifactInfo.label(), artifactInfo);
+  private void updateMaps(Set<Label> targets, JavaArtifacts newArtifacts) {
+    for (JavaTargetArtifacts targetArtifacts : newArtifacts.getArtifactsList()) {
+      JavaArtifactInfo javaArtifactInfo =
+          JavaArtifactInfo.create(targetArtifacts, BuildArtifact.NO_DIGESTS);
+      javaArtifacts.put(javaArtifactInfo.label(), javaArtifactInfo);
     }
     for (Label label : targets) {
-      if (!artifacts.containsKey(label)) {
+      if (!javaArtifacts.containsKey(label)) {
         logger.warn(
             "Target " + label + " was not built. If the target is an alias, this is expected");
-        artifacts.put(label, ArtifactInfo.empty(label));
+        javaArtifacts.put(label, JavaArtifactInfo.empty(label));
       }
     }
   }
@@ -516,38 +634,83 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
       ImmutableSet.of("jar", "zip", "srcjar");
 
   private static boolean hasJarOrZipExtension(Path p) {
-    return JAR_ZIP_EXTENSIONS.contains(FileUtil.getExtension(p.toString()));
+    return JAR_ZIP_EXTENSIONS.contains(FileUtilRt.getExtension(p.toString()));
   }
 
-  @Override
-  public ProjectProto.Project updateProjectProto(ProjectProto.Project projectProto)
+  /**
+   * Makes the project snapshot reflect the current state of tracked artifacts.
+   *
+   * <p>When additional artifacts are brought into the IDE they may require additional configuration
+   * to be applied to the IDE project.
+   */
+  public ProjectProto.Project updateProjectProto(
+      ProjectProto.Project projectProto, BuildGraphData graph, Context<?> context)
+      throws BuildException {
+    return updateProjectProtoForJavaDeps(projectProto);
+  }
+
+  private ProjectProto.Project updateProjectProtoForJavaDeps(ProjectProto.Project projectProto)
       throws BuildException {
 
-    Path genSrcCacheRelativeToProject =
-        ideProjectBasePath.relativize(generatedSrcFileCacheDirectory);
-    ImmutableList<Path> subfolders;
-    try {
-      subfolders = getGenSrcSubfolders();
-    } catch (IOException e) {
-      throw new BuildException(e);
+    Set<ProjectPath> generatedJavaSrcRoots = Sets.newHashSet();
+
+    ProjectPath javaSrcRoot =
+        ProjectPath.projectRelative(
+            ideProjectBasePath.relativize(
+                generatedSrcFileCacheDirectory.resolve(
+                    JavaSourcesCacheLayout.ROOT_DIRECTORY_NAME)));
+    if (projectPathResolver.resolve(javaSrcRoot).toFile().exists()) {
+      generatedJavaSrcRoots.add(javaSrcRoot);
     }
+
+    TestSourceGlobMatcher testSourceMatcher = TestSourceGlobMatcher.create(projectDefinition);
+    ImmutableSet.Builder<GeneratedSourceJar> generatedProjectSrcJars = ImmutableSet.builder();
+    for (JavaArtifactInfo ai : javaArtifacts.values()) {
+      if (!projectDefinition.isIncluded(ai.label())) {
+        continue;
+      }
+      for (BuildArtifact artifact : ai.genSrcs()) {
+        // TODO(mathewi) depending on `JAVA_ARCHIVE_EXTENSIONS` here exposes a design problem, we
+        //  shouldn't have to depend on such implementation details. Figure out a better design
+        //  for the dance between this class and the cache.
+        if (!JavaSourcesArchiveCacheLayout.JAVA_ARCHIVE_EXTENSIONS.contains(
+            artifact.getExtension())) {
+          continue;
+        }
+        Optional<Path> artifactPath = generatedSrcFileCache.getCacheFile(artifact.path());
+        if (artifactPath.isEmpty()) {
+          logger.warn("No cached artifact found for source jar " + artifact.path());
+          continue;
+        }
+        generatedProjectSrcJars.add(
+            GeneratedSourceJar.create(
+                ProjectPath.projectRelative(artifactPath.get()),
+                testSourceMatcher.matches(ai.label().getPackage())));
+      }
+    }
+
     GeneratedSourceProjectUpdater updater =
-        new GeneratedSourceProjectUpdater(projectProto, genSrcCacheRelativeToProject, subfolders);
+        new GeneratedSourceProjectUpdater(
+            projectProto,
+            ImmutableSet.copyOf(generatedJavaSrcRoots),
+            generatedProjectSrcJars.build(),
+            projectPathResolver);
 
     projectProto = updater.addGenSrcContentEntry();
 
     ImmutableSet<ProjectPath> workspaceSrcJars =
-        artifacts.values().stream()
-            .map(ArtifactInfo::srcJars)
+        javaArtifacts.values().stream()
+            .map(JavaArtifactInfo::srcJars)
             .flatMap(Set::stream)
             .map(ProjectPath::workspaceRelative)
             .collect(ImmutableSet.toImmutableSet());
 
     ImmutableSet<ProjectPath> generatedExternalSrcJars =
-        artifacts.values().stream()
+        javaArtifacts.values().stream()
             .filter(not(ai -> projectDefinition.isIncluded(ai.label())))
-            .map(ArtifactInfo::genSrcs)
+            .map(JavaArtifactInfo::genSrcs)
             .flatMap(List::stream)
+            .map(BuildArtifact::path)
             .filter(ArtifactTrackerImpl::hasJarOrZipExtension)
             .map(generatedExternalSrcFileCache::getCacheFile)
             .filter(Optional::isPresent)
@@ -556,7 +719,7 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
             .map(ProjectPath::projectRelative)
             .collect(ImmutableSet.toImmutableSet());
 
-    if (ATTACH_DEP_SRCJARS.getValue()) {
+    if (QuerySync.ATTACH_DEP_SRCJARS.getValue()) {
       SrcJarProjectUpdater srcJarUpdater =
           new SrcJarProjectUpdater(
               projectProto,
@@ -567,23 +730,36 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
       logger.info("srcjar attachment disabled.");
     }
 
+    if (QuerySync.EXTRACT_RES_PACKAGES_AT_BUILD_TIME.getValue()) {
+      AndroidResPackagesProjectUpdater resPackagesUpdater =
+          new AndroidResPackagesProjectUpdater(projectProto, javaArtifacts.values());
+      projectProto = resPackagesUpdater.addAndroidResPackages();
+    }
+
     return projectProto;
   }
 
-  private ImmutableList<Path> getGenSrcSubfolders() throws IOException {
-    try (Stream<Path> pathStream = Files.list(generatedSrcFileCacheDirectory)) {
-      return pathStream.collect(toImmutableList());
-    }
+  @Override
+  public ArtifactTracker.State getStateSnapshot() {
+    return State.EMPTY;
   }
 
   @Override
   public Set<Label> getLiveCachedTargets() {
-    return artifacts.keySet();
+    return Sets.union(javaArtifacts.keySet(), ccDepencenciesInfo.targetInfoMap().keySet());
   }
 
   @Override
   public Path getExternalAarDirectory() {
     return aarCacheDirectory;
+  }
+
+  /**
+   * Returns the CC target info from the cache. This is the compilation info created by the aspect
+   * when dependencies are build for a CC targets.
+   */
+  public CcDependenciesInfo getCcDependenciesInfo() {
+    return ccDepencenciesInfo;
   }
 
   private <T> T runMeasureAndLog(
@@ -614,5 +790,22 @@ public class ArtifactTrackerImpl implements ArtifactTracker {
   public ImmutableList<File> getRenderJars() {
     return ImmutableList.copyOf(
         renderJarCacheDirectory.toFile().listFiles((file, name) -> name.endsWith(".jar")));
+  }
+
+  @Override
+  public Integer getJarsCount() {
+    try (Stream<Path> pathsStream = Files.walk(jarCacheDirectory)) {
+      return pathsStream
+          .filter(path -> !Files.isDirectory(path) && path.endsWith(".jar"))
+          .collect(Collectors.reducing(0, e -> 1, Integer::sum));
+    } catch (IOException e) {
+      logger.warn("Faled to read jar cache directory " + jarCacheDirectory);
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  @Override
+  public Iterable<Path> getBugreportFiles() {
+    return ImmutableList.of(persistentFile);
   }
 }

@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import groovyjarjarantlr4.v4.runtime.misc.Nullable;
 
 /** Contribute blaze specific render errors. */
-public class RenderErrorContributorCompat extends RenderErrorContributor {
+public class RenderErrorContributorCompat extends RenderErrorContributorImpl {
   public RenderErrorContributorCompat(
       EditorDesignSurface surface, RenderResultCompat result, @Nullable DataContext dataContext) {
     super(surface, result.get());

@@ -1,5 +1,6 @@
 """Implementation of IntelliJ-specific information collecting aspect."""
 
+load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load(
     ":artifacts.bzl",
     "artifact_location",
@@ -43,6 +44,7 @@ DEPS = [
     "tests",  # From test_suite
     "compilers",  # From go_proto_library
     "associates",  # From kotlin rules
+    "_kt_toolchain",  # From rules_kotlin
 ]
 
 # Run-time dependency attributes, grouped by type.
@@ -138,8 +140,8 @@ def get_res_artifacts(resources):
 def build_file_artifact_location(ctx):
     """Creates an ArtifactLocation proto representing a location of a given BUILD file."""
     return to_artifact_location(
-        ctx.build_file_path,
-        ctx.build_file_path,
+        ctx.label.package + "/BUILD",
+        ctx.label.package + "/BUILD",
         True,
         is_external_artifact(ctx.label),
     )
@@ -220,13 +222,11 @@ def is_valid_aspect_target(target):
     """Returns whether the target has had the aspect run on it."""
     return hasattr(target, "intellij_info")
 
-def get_aspect_ids(ctx, target):
+def get_aspect_ids(ctx):
     """Returns the all aspect ids, filtering out self."""
     aspect_ids = None
     if hasattr(ctx, "aspect_ids"):
         aspect_ids = ctx.aspect_ids
-    elif hasattr(target, "aspect_ids"):
-        aspect_ids = target.aspect_ids
     else:
         return None
     return [aspect_id for aspect_id in aspect_ids if "intellij_info_aspect" not in aspect_id]
@@ -413,7 +413,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
             library_labels = [stringify_label(ctx.rule.attr.library.label)]
         elif getattr(ctx.rule.attr, "embed", None) != None:
             for library in ctx.rule.attr.embed:
-                if library.intellij_info.kind == "go_source":
+                if library.intellij_info.kind == "go_source" or library.intellij_info.kind == "go_proto_library":
                     l = library.intellij_info.output_groups["intellij-sources-go-outputs"].to_list()
                     sources += l
                     generated += [f for f in l if not f.is_source]
@@ -531,7 +531,6 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
         cpp_variables = cc_common.create_compile_variables(
             feature_configuration = feature_configuration,
             cc_toolchain = cpp_toolchain,
-            add_legacy_cxx_options = True,
             user_compile_flags = copts + cxxopts,
         )
         c_options = cc_common.get_memory_inefficient_command_line(
@@ -566,11 +565,9 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
 def get_java_provider(target):
     """Find a provider exposing java compilation/outputs data."""
 
-    # Check for scala and kt providers before JavaInfo. e.g. scala targets have
-    # JavaInfo, but their data lives in the "scala" provider and not JavaInfo.
+    # Check for kt providers before JavaInfo. e.g. kt targets have
+    # JavaInfo, but their data lives in the "kt" provider and not JavaInfo.
     # See https://github.com/bazelbuild/intellij/pull/1202
-    if hasattr(target, "scala"):
-        return target.scala
     if hasattr(target, "kt") and hasattr(target.kt, "outputs"):
         return target.kt
     if JavaInfo in target:
@@ -831,17 +828,47 @@ def collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output
     return handled
 
 def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
-    """Updates ide_info proto with android_ide_info, and intellij_resolve_android with android resolve files. Returns false if target doesn't contain android attribute."""
-    if not hasattr(target, "android"):
+    """Populates ide_info proto and intellij_resolve_android output group
+
+    Updates ide_info proto with android_ide_info, and intellij_resolve_android with android
+    resolve files. It returns false on android_library and android_binary targets, as this preserves
+    consistent functionality with the previous condition of the presence of the .android legacy
+    provider.
+    """
+    if ctx.rule.kind not in ["android_library", "android_binary", "kt_android_library"]:
         return False
 
     android_semantics = semantics.android if hasattr(semantics, "android") else None
     extra_ide_info = android_semantics.extra_ide_info(target, ctx) if android_semantics else {}
 
-    android = target.android
+    if hasattr(android_common, "AndroidIdeInfo"):
+        android = target[android_common.AndroidIdeInfo]
+    else:
+        # Backwards compatibility: supports android struct provider
+        legacy_android = getattr(target, "android")
+
+        # Transform into AndroidIdeInfo form
+        android = struct(
+            java_package = legacy_android.java_package,
+            manifest = legacy_android.manifest,
+            idl_source_jar = getattr(legacy_android.idl.output, "source_jar", None),
+            idl_class_jar = getattr(legacy_android.idl.output, "class_jar", None),
+            defines_android_resources = legacy_android.defines_resources,
+            idl_import_root = getattr(legacy_android.idl, "import_root", None),
+            resource_jar = legacy_android.resource_jar,
+            signed_apk = legacy_android.apk,
+            apks_under_test = legacy_android.apks_under_test,
+        )
+
+    output_jar = struct(
+        class_jar = android.idl_class_jar,
+        ijar = None,
+        source_jar = android.idl_source_jar,
+    ) if android.idl_class_jar else None
+
     resources = []
     res_folders = []
-    resolve_files = jars_from_output(android.idl.output)
+    resolve_files = jars_from_output(output_jar)
     if hasattr(ctx.rule.attr, "resource_files"):
         for artifact_path_fragments, res_files in get_res_artifacts(ctx.rule.attr.resource_files).items():
             # Generate unique ArtifactLocation for resource directories.
@@ -891,14 +918,14 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
 
     android_info = struct_omit_none(
         java_package = android.java_package,
-        idl_import_root = android.idl.import_root if hasattr(android.idl, "import_root") else None,
+        idl_import_root = getattr(android, "idl_import_root", None),
         manifest = artifact_location(android.manifest),
         manifest_values = [struct_omit_none(key = key, value = value) for key, value in ctx.rule.attr.manifest_values.items()] if hasattr(ctx.rule.attr, "manifest_values") else None,
-        apk = artifact_location(android.apk),
+        apk = artifact_location(android.signed_apk),
         dependency_apk = [artifact_location(apk) for apk in android.apks_under_test],
-        has_idl_sources = android.idl.output != None,
-        idl_jar = library_artifact(android.idl.output),
-        generate_resource_class = android.defines_resources,
+        has_idl_sources = android.idl_class_jar != None,
+        idl_jar = library_artifact(output_jar),
+        generate_resource_class = android.defines_android_resources,
         resources = resources,
         res_folders = res_folders,
         resource_jar = library_artifact(android.resource_jar),
@@ -994,13 +1021,15 @@ def collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups):
 def artifact_to_path(artifact):
     return artifact.root_execution_path_fragment + "/" + artifact.relative_path
 
-def collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups):
+def collect_kotlin_toolchain_info(target, ctx, ide_info, ide_info_file, output_groups):
     """Updates kotlin_toolchain-relevant output groups, returns false if not a kotlin_toolchain target."""
-    if not hasattr(target, "kt"):
+    if ctx.rule.kind == "_kt_toolchain" and platform_common.ToolchainInfo in target:
+        kt = target[platform_common.ToolchainInfo]
+    elif hasattr(target, "kt") and hasattr(target.kt, "language_version"):
+        kt = target.kt  # Legacy struct provider mechanism
+    else:
         return False
-    kt = target.kt
-    if not hasattr(kt, "language_version"):
-        return False
+
     ide_info["kt_toolchain_ide_info"] = struct(
         language_version = kt.language_version,
     )
@@ -1074,7 +1103,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
         for export in direct_exports:
             export_deps.extend(export.intellij_info.export_deps)
 
-        if ctx.rule.kind == "android_library":
+        if ctx.rule.kind == "android_library" or ctx.rule.kind == "kt_android_library":
             # Empty android libraries export all their dependencies.
             if not hasattr(rule_attrs, "srcs") or not ctx.rule.attr.srcs:
                 export_deps.extend(compiletime_deps)
@@ -1132,7 +1161,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     # bazel allows target names differing only by case, so append a hash to support
     # case-insensitive file systems
     file_name = file_name + "-" + str(hash(file_name))
-    aspect_ids = get_aspect_ids(ctx, target)
+    aspect_ids = get_aspect_ids(ctx)
     if aspect_ids:
         aspect_hash = hash(".".join(aspect_ids))
         file_name = file_name + "-" + str(aspect_hash)
@@ -1160,7 +1189,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
     handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
-    handled = collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
+    handled = collect_kotlin_toolchain_info(target, ctx, ide_info, ide_info_file, output_groups) or handled
 
     # Any extra ide info
     if hasattr(semantics, "extra_ide_info"):

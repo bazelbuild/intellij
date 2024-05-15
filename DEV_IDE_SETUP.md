@@ -1,5 +1,11 @@
 # IntelliJ Development Instance Setup
 
+## DevKit Plugin
+
+For IntelliJ 2023.3 and newer, make sure you have DevKit plugin installed in your host IntelliJ.
+
+https://plugins.jetbrains.com/plugin/22851-plugin-devkit
+
 ## Import the plugin project.
 
 Clone and import this repository as you would any other Bazel project.
