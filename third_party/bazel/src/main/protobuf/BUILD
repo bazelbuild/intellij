@@ -230,10 +230,10 @@ package_group(
     packages = [
         "//src/test/java/com/google/devtools/build/docgen/...",
         "//src/test/java/com/google/devtools/build/lib/rules/starlarkdocextract/...",
-        "//src/test/java/com/google/devtools/build/skydoc/...",
+        "//src/test/java/com/google/devtools/build/lib/starlarkdocextract/...",
         "//third_party/bazel/src/main/java/com/google/devtools/build/docgen/...",
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/rules/starlarkdocextract/...",
-        "//third_party/bazel/src/main/java/com/google/devtools/build/skydoc/...",
+        "//third_party/bazel/src/main/java/com/google/devtools/build/lib/starlarkdocextract/...",
     ],
 )
 
