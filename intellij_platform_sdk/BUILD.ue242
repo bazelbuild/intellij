@@ -145,7 +145,22 @@ java_import(
 
 java_import(
     name = "intellij_platform_vcs_dvcs",
-    jars = []
+    jars = ["lib/modules/intellij.platform.vcs.dvcs.impl.jar"]
+)
+
+java_import(
+    name = "intellij_libraries_grpc",
+    jars = ["lib/modules/intellij.libraries.grpc.jar"]
+)
+
+java_import(
+    name = "intellij_platform_lvcs",
+    jars = ["lib/modules/intellij.platform.lvcs.impl.jar"]
+)
+
+java_import(
+    name = "intellij_platform_vcs",
+    jars = ["lib/modules/intellij.platform.vcs.impl.jar"]
 )
 
 # The plugins required by IJwB. We need to include them

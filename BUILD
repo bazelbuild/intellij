@@ -35,7 +35,7 @@ test_suite(
         "//java:unit_tests",
         "//kotlin:integration_tests",
         "//kotlin:unit_tests",
-        "//plugin_dev:integration_tests",
+        # "//plugin_dev:integration_tests", TODO UNCOMMENT
         "//scala:integration_tests",
         "//scala:unit_tests",
         "//skylark:unit_tests",

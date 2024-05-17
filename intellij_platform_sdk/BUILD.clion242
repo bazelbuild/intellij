@@ -14,7 +14,7 @@
 
 # Description:
 #
-# Plugin source jars for IntelliJ UE, accessed remotely.
+# Plugin source jars for CLion, accessed remotely.
 
 load("@//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
 
@@ -41,30 +41,26 @@ no_mockito_extensions(
 
 java_import(
     name = "guava",
-    jars = ["lib/lib.jar", "lib/lib-client.jar"],
-)
-
-java_library(name = "jsr305")  # not bundled
-
-java_import(
-    name = "java",
-    jars = glob(["plugins/java/lib/*.jar"]) + ["plugins/java/lib/resources/jdkAnnotations.jar"],
+    jars = glob([
+        "lib/lib.jar",
+        "lib/lib-client.jar",
+    ]),
 )
 
 java_import(
-    name = "platform_images",
-    jars = glob(["plugins/platform-images/lib/*.jar"]),
-)
-
-java_import(
-    name = "coverage",
-    jars = glob(["plugins/coverage/lib/*.jar"]),
-)
-
-#api232
-java_import(
-    name = "devkit",
-    jars = [],
+    name = "clion_plugins",
+    jars = glob([
+        "plugins/c-plugin/lib/*.jar",
+        "plugins/cidr-base-plugin/lib/*.jar",
+        "plugins/cidr-debugger-plugin/lib/*.jar",
+        "plugins/clion/lib/*.jar",
+        "plugins/clion-test-google/lib/*.jar",
+        "plugins/clion-test-catch/lib/*.jar",
+        "plugins/clion-test-boost/lib/*.jar",
+        "plugins/nativeDebug-plugin/lib/*.jar",
+        "plugins/clion-ide/lib/clion-ide.jar", # For CMakeNotificationProvider
+        "plugins/clion-test-google-plugin/lib/clion-test-google-plugin.jar", # for com.jetbrains.cidr.execution.testing.google
+    ]),
 )
 
 java_import(
@@ -79,10 +75,7 @@ java_import(
 
 java_import(
     name = "css",
-    jars = glob([
-        "plugins/css-impl/lib/*.jar",
-        "plugins/platform-images/lib/*.jar",
-    ]),
+    jars = glob(["plugins/css-impl/lib/*.jar"]),
 )
 
 java_import(
@@ -91,72 +84,25 @@ java_import(
 )
 
 java_import(
-    name = "angular",
-    jars = glob(["plugins/AngularJS/lib/*.jar"]),
-)
-
-java_import(
-    name = "intellilang",
-    jars = glob(["plugins/IntelliLang/lib/*.jar"]),
-)
-
-java_import(
-    name = "kotlin",
-    jars = glob(["plugins/Kotlin/lib/*.jar"]),
-)
-
-filegroup(
-    name = "kotlinc_version",
-    srcs = ["plugins/Kotlin/kotlinc/build.txt"],
-)
-
-java_import(
-    name = "junit",
-    jars = glob(["plugins/junit/lib/*.jar"]),
-)
-
-java_import(
     name = "terminal",
     jars = glob(["plugins/terminal/lib/terminal.jar"]),
 )
 
 java_import(
-    name = "protoeditor",
-    jars = glob(["plugins/protoeditor/lib/*.jar"]),
+    name = "python",
+    jars = glob(["plugins/python-ce/lib/*.jar"]),
 )
 
-java_import(
-    name = "shared_indexes",
-    jars = [
-        "plugins/indexing-shared/lib/indexing-shared.jar",
-        "plugins/indexing-shared-ultimate/lib/indexing-shared-ultimate.jar",
-    ],
+filegroup(
+    name = "python_helpers",
+    srcs = glob(["plugins/python-ce/helpers/**/*"]),
 )
 
-java_import(
-    name = "git4idea",
-    jars = glob(["plugins/vcs-git/lib/*.jar"]),
-)
-
-java_import(
-    name = "cwm",
-    jars = glob(["plugins/cwm-plugin/lib/*.jar"]),
-)
-
-java_import(
-    name = "intellij_platform_vcs_dvcs",
-    jars = []
-)
-
-# The plugins required by IJwB. We need to include them
-# when running integration tests.
+# The plugins required by CLwB. Presumably there will be some, when we write
+# some integration tests.
 java_import(
     name = "bundled_plugins",
-    jars = glob([
-        "plugins/java-i18n/lib/*.jar",
-        "plugins/junit/lib/*.jar",
-        "plugins/properties/lib/*.jar",
-    ]),
+    jars = [],
     tags = ["intellij-provided-by-sdk"],
 )
 

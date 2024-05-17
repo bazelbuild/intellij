@@ -95,6 +95,18 @@ http_archive(
     url = IC_241_URL,
 )
 
+# The plugin api for intellij_ce_2024_2. This is required to build IJwB and run integration tests.
+IC_242_SHA = "b44d4ab97aea30128db6564d02a8046f37c08869d8270ba56cc424c5d3aa9a8d"
+
+IC_242_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/242.10180.25-EAP-SNAPSHOT/ideaIC-242.10180.25-EAP-SNAPSHOT.zip"
+
+http_archive(
+    name = "intellij_ce_2024_2",
+    build_file = "@//intellij_platform_sdk:BUILD.idea242",
+    sha256 = IC_242_SHA,
+    url = IC_242_URL,
+)
+
 # The plugin api for IntelliJ UE 2021.2. This is required to run UE-specific
 # integration tests.
 http_archive(
@@ -180,6 +192,17 @@ http_archive(
     build_file = "@//intellij_platform_sdk:BUILD.ue241",
     sha256 = IU_241_SHA,
     url = IU_241_URL,
+)
+
+IU_242_SHA = "91f8a7ca171d2dbadaefa9bec3a5529ad22993a38a43f84305300696c7be1e40"
+
+IU_242_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/242.10180.25-EAP-SNAPSHOT/ideaIU-242.10180.25-EAP-SNAPSHOT.zip"
+
+http_archive(
+    name = "intellij_ue_2024_2",
+    build_file = "@//intellij_platform_sdk:BUILD.ue242",
+    sha256 = IU_242_SHA,
+    url = IU_242_URL,
 )
 
 # The plugin api for clion_2021_2. This is required to build CLwB, and run integration tests.
@@ -268,6 +291,17 @@ http_archive(
     url = CLION_241_URL,
 )
 
+CLION_242_SHA = ""
+
+CLION_242_URL = ""
+
+http_archive(
+    name = "clion_2024_2",
+    build_file = "@//intellij_platform_sdk:BUILD.clion242",
+    sha256 = CLION_242_SHA,
+    url = CLION_242_URL,
+)
+
 DEVKIT_BUILD_FILE = """
 java_import(
     name = "devkit",
@@ -297,6 +331,17 @@ http_archive(
     sha256 = DEVKIT_241_SHA,
     url = DEVKIT_241_URL,
 )
+
+# DEVKIT_242_SHA = ""
+#
+# DEVKIT_242_URL = ""
+#
+# http_archive(
+#     name = "devkit_2024_2",
+#     build_file_content = DEVKIT_BUILD_FILE,
+#     sha256 = DEVKIT_242_SHA,
+#     url = DEVKIT_242_URL,
+# )
 
 _PYTHON_CE_BUILD_FILE = """
 java_import(
@@ -402,6 +447,30 @@ http_archive(
     url = PYTHON_PLUGIN_241_URL,
 )
 
+_PYTHON_CE_242_BUILD_FILE = """
+java_import(
+    name = "python",
+    jars = ["python-ce/lib/python-ce.jar", "python-ce/lib/python-common.jar"],
+    visibility = ["//visibility:public"],
+)
+filegroup(
+  name = "python_helpers",
+  srcs = glob(["python-ce/helpers/**/*"]),
+  visibility = ["//visibility:public"],
+)
+"""
+
+PYTHON_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/242.10180.25/PythonCore-242.10180.25.zip"
+
+PYTHON_PLUGIN_242_SHA = "6e94538d8c204ce89c089dcb2540df4f90fb2202a500e1911094fabe02b9e1a3"
+
+http_archive(
+    name = "python_2024_2",
+    build_file_content = _PYTHON_CE_242_BUILD_FILE,
+    sha256 = PYTHON_PLUGIN_242_SHA,
+    url = PYTHON_PLUGIN_242_URL,
+)
+
 _GO_BUILD_FILE = """
 java_import(
     name = "go",
@@ -500,6 +569,17 @@ http_archive(
     url = GO_PLUGIN_241_URL,
 )
 
+GO_PLUGIN_242_SHA = "f1c94b45795f7165e174a98e8edae1f72cf43d7d3c2d710b44a9f954f6a841f7"
+
+GO_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/242.10180.25/org.jetbrains.plugins.go-242.10180.25.zip"
+
+http_archive(
+    name = "go_2024_2",
+    build_file_content = _GO_BUILD_FILE_223,
+    sha256 = GO_PLUGIN_242_SHA,
+    url = GO_PLUGIN_242_URL,
+)
+
 _SCALA_BUILD_FILE = """
 java_import(
     name = "scala",
@@ -590,6 +670,17 @@ http_archive(
     url = SCALA_PLUGIN_241_URL,
 )
 
+SCALA_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.2.1/org.intellij.scala-2024.2.1.zip"
+
+SCALA_PLUGIN_242_SHA = "177f1ceba8e0e6ae4c2623016d2b9021a357abc25893f3c713ac1c76e31c465b"
+
+http_archive(
+    name = "scala_2024_2",
+    build_file_content = _SCALA_BUILD_FILE,
+    sha256 = SCALA_PLUGIN_242_SHA,
+    url = SCALA_PLUGIN_242_URL,
+)
+
 _TOML_BUILD_FILE = """
 java_import(
     name = "toml",
@@ -608,6 +699,18 @@ http_archive(
     build_file_content = _TOML_BUILD_FILE,
     sha256 = TOML_PLUGIN_241_SHA,
     url = TOML_PLUGIN_241_URL,
+)
+
+TOML_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/242.14494.150/org.toml.lang-242.14494.150.zip"
+
+TOML_PLUGIN_242_SHA = "f2ad603910c59b6f2b3623e52af9256f7b560ecf17f9f80b4fbc3060ee59aeee"
+
+# TOML required by Python since 242.13688.18
+http_archive(
+    name = "toml_2024_2",
+    build_file_content = _TOML_BUILD_FILE,
+    sha256 = TOML_PLUGIN_242_SHA,
+    url = TOML_PLUGIN_242_URL,
 )
 
 # The plugin api for android_studio_2022_2 android_studio. This is required to build ASwB and run integration tests

@@ -14,7 +14,7 @@
 
 # Description:
 #
-# Plugin source jars for IntelliJ UE, accessed remotely.
+# Plugin source jars for IntelliJ CE, accessed remotely.
 
 load("@//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
 
@@ -56,15 +56,15 @@ java_import(
     jars = glob(["plugins/platform-images/lib/*.jar"]),
 )
 
-java_import(
-    name = "coverage",
-    jars = glob(["plugins/coverage/lib/*.jar"]),
-)
-
 #api232
 java_import(
     name = "devkit",
     jars = [],
+)
+
+java_import(
+    name = "coverage",
+    jars = glob(["plugins/coverage/lib/*.jar"]),
 )
 
 java_import(
@@ -73,31 +73,8 @@ java_import(
 )
 
 java_import(
-    name = "javascript",
-    jars = glob(["plugins/javascript-plugin/lib/*.jar"]),
-)
-
-java_import(
-    name = "css",
-    jars = glob([
-        "plugins/css-impl/lib/*.jar",
-        "plugins/platform-images/lib/*.jar",
-    ]),
-)
-
-java_import(
-    name = "tslint",
-    jars = glob(["plugins/tslint/lib/*.jar"]),
-)
-
-java_import(
-    name = "angular",
-    jars = glob(["plugins/AngularJS/lib/*.jar"]),
-)
-
-java_import(
     name = "intellilang",
-    jars = glob(["plugins/IntelliLang/lib/*.jar"]),
+    jars = [],
 )
 
 java_import(
@@ -121,15 +98,9 @@ java_import(
 )
 
 java_import(
-    name = "protoeditor",
-    jars = glob(["plugins/protoeditor/lib/*.jar"]),
-)
-
-java_import(
     name = "shared_indexes",
     jars = [
         "plugins/indexing-shared/lib/indexing-shared.jar",
-        "plugins/indexing-shared-ultimate/lib/indexing-shared-ultimate.jar",
     ],
 )
 
@@ -145,7 +116,22 @@ java_import(
 
 java_import(
     name = "intellij_platform_vcs_dvcs",
-    jars = []
+    jars = ["lib/modules/intellij.platform.vcs.dvcs.impl.jar"]
+)
+
+java_import(
+    name = "intellij_libraries_grpc",
+    jars = ["lib/modules/intellij.libraries.grpc.jar"]
+)
+
+java_import(
+    name = "intellij_platform_lvcs",
+    jars = ["lib/modules/intellij.platform.lvcs.impl.jar"]
+)
+
+java_import(
+    name = "intellij_platform_vcs",
+    jars = ["lib/modules/intellij.platform.vcs.impl.jar"]
 )
 
 # The plugins required by IJwB. We need to include them

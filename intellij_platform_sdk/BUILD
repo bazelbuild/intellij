@@ -225,6 +225,19 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-2024.2",
+    values = {"define": "ij_product=intellij-2024.2"},
+)
+
+config_setting(
+    name = "intellij-2024.2-mac",
+    values = {
+        "define": "ij_product=intellij-2024.2",
+        "cpu": "darwin_x86_64",
+    },
+)
+
+config_setting(
     name = "intellij-2024.1-mac",
     values = {
         "define": "ij_product=intellij-2024.1",
@@ -340,6 +353,19 @@ config_setting(
 config_setting(
     name = "intellij-ue-2024.1",
     values = {"define": "ij_product=intellij-ue-2024.1"},
+)
+
+config_setting(
+    name = "intellij-ue-2024.2",
+    values = {"define": "ij_product=intellij-ue-2024.2"},
+)
+
+config_setting(
+    name = "intellij-ue-2024.2-mac",
+    values = {
+        "define": "ij_product=intellij-ue-2024.2",
+        "cpu": "darwin_x86_64",
+    },
 )
 
 config_setting(
@@ -643,6 +669,19 @@ config_setting(
 )
 
 config_setting(
+    name = "clion-2024.2",
+    values = {"define": "ij_product=clion-2024.2"},
+)
+
+config_setting(
+    name = "clion-2024.2-mac",
+    values = {
+        "define": "ij_product=clion-2024.2",
+        "cpu": "darwin_x86_64",
+    },
+)
+
+config_setting(
     name = "clion-2024.1-mac",
     values = {
         "define": "ij_product=clion-2024.1",
@@ -725,6 +764,10 @@ java_library(
             ":java",
             ":kotlin",
             ":platform_images",
+            ":intellij_platform_vcs_dvcs",
+            ":intellij_libraries_grpc",
+            ":intellij_platform_lvcs",
+            ":intellij_platform_vcs",
         ],
     ),
 )
@@ -790,6 +833,7 @@ java_library(
         "clion-2022.2": ["@jsr305_annotations//jar"],
         "clion-2022.3": ["@jsr305_annotations//jar"],
         "clion-2024.1": [],
+        "clion-2024.2": [],
         "intellij-2021.3": ["@jsr305_annotations//jar"],
         "intellij-2022.1": ["@jsr305_annotations//jar"],
         "intellij-2022.2": ["@jsr305_annotations//jar"],
@@ -798,6 +842,7 @@ java_library(
         "intellij-2023.2": ["@jsr305_annotations//jar"],
         "intellij-2023.3": ["@jsr305_annotations//jar"],
         "intellij-2024.1": ["@jsr305_annotations//jar"],
+        "intellij-2024.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2021.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.2": ["@jsr305_annotations//jar"],
@@ -806,6 +851,7 @@ java_library(
         "intellij-ue-2023.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2023.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2024.1": ["@jsr305_annotations//jar"],
+        "intellij-ue-2024.2": ["@jsr305_annotations//jar"],
         "android-studio-2022.2": ["@jsr305_annotations//jar"],
         "android-studio-2022.3": ["@jsr305_annotations//jar"],
         "android-studio-2023.1": ["@jsr305_annotations//jar"],
