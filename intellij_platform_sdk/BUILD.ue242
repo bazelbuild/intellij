@@ -22,8 +22,10 @@ package(default_visibility = ["//visibility:public"])
 
 java_import(
     name = "sdk",
-    jars = glob(
-        ["lib/*.jar"],
+    jars = glob([
+            "lib/*.jar",
+            "lib/modules/*.jar"
+        ],
         exclude = [
             # mockito-extensions needs to be removed from this jar.
             "lib/testFramework.jar",
@@ -48,7 +50,7 @@ java_library(name = "jsr305")  # not bundled
 
 java_import(
     name = "java",
-    jars = glob(["plugins/java/lib/*.jar"]) + ["plugins/java/lib/resources/jdkAnnotations.jar"],
+    jars = glob(["plugins/java/lib/*.jar", "plugins/java/lib/modules/*.jar"]) + ["plugins/java/lib/resources/jdkAnnotations.jar"],
 )
 
 java_import(
@@ -141,26 +143,6 @@ java_import(
 java_import(
     name = "cwm",
     jars = glob(["plugins/cwm-plugin/lib/*.jar"]),
-)
-
-java_import(
-    name = "intellij_platform_vcs_dvcs",
-    jars = ["lib/modules/intellij.platform.vcs.dvcs.impl.jar"]
-)
-
-java_import(
-    name = "intellij_libraries_grpc",
-    jars = ["lib/modules/intellij.libraries.grpc.jar"]
-)
-
-java_import(
-    name = "intellij_platform_lvcs",
-    jars = ["lib/modules/intellij.platform.lvcs.impl.jar"]
-)
-
-java_import(
-    name = "intellij_platform_vcs",
-    jars = ["lib/modules/intellij.platform.vcs.impl.jar"]
 )
 
 # The plugins required by IJwB. We need to include them

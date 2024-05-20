@@ -764,10 +764,6 @@ java_library(
             ":java",
             ":kotlin",
             ":platform_images",
-            ":intellij_platform_vcs_dvcs",
-            ":intellij_libraries_grpc",
-            ":intellij_platform_lvcs",
-            ":intellij_platform_vcs",
         ],
     ),
 )
