@@ -90,6 +90,7 @@ func main() {
 	// MISSING: //intellij_platform_sdk:jsr305
 	// MISSING: //testing:lib
 	// MISSING: toml
+	// MISSING: WORKSPACE.bzlmod
 }
 
 func insertIntoSelect(attribute string, target string, newLine string) {
