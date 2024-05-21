@@ -101,7 +101,7 @@ func insertIntoSelect(attribute string, target string, newLine string) {
 }
 
 func runBuildozer(command string, target string) []string {
-	return getOutput([]string{"/home/t/go/bin/buildozer", "-tables", "override.json", command, target})
+	return getOutput([]string{"buildozer", "-tables", "override.json", command, target})
 }
 
 func getOutput(cmdStrings []string) []string {
