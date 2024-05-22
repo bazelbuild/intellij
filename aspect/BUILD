@@ -81,10 +81,8 @@ genrule(
     srcs = ["intellij_info_impl.bzl"],
     outs = ["intellij_info_impl_bundled.bzl"],
     cmd = "cat $(SRCS) >$@ && " +
-          "sed -i " +
-          "-e '/BUNDLED-IGNORE-BEGIN/,/BUNDLED-IGNORE-END/d' " +
-          "-e 's,load(\".*/rules_java/,load(\"@rules_java//', " +
-          "$@",
+          "sed -i -e '/BUNDLED-IGNORE-BEGIN/,/BUNDLED-IGNORE-END/d' $@ && " +
+          "sed -i -e 's,load(\".*/rules_java/,load(\"@rules_java//', $@",
 )
 
 # Makes bundled fast_build_info.bzl use bundled intellij_info_impl.bzl
