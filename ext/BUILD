@@ -30,6 +30,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "@com_google_guava_guava//jar",
         "@io_grpc_grpc_core//jar",
+        "@io_grpc_grpc_java//api",
         "@io_grpc_grpc_netty//jar",
     ] + select({
         "@platforms//os:macos": ["@io_netty_netty_transport_classes_kqueue//jar"],
