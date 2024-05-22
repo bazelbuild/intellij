@@ -701,9 +701,9 @@ http_archive(
     url = TOML_PLUGIN_241_URL,
 )
 
-TOML_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/242.14494.150/org.toml.lang-242.14494.150.zip"
+TOML_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/242.10180.28/org.toml.lang-242.10180.28.zip"
 
-TOML_PLUGIN_242_SHA = "f2ad603910c59b6f2b3623e52af9256f7b560ecf17f9f80b4fbc3060ee59aeee"
+TOML_PLUGIN_242_SHA = "d45e970f39fa8c0bc4c07add494abb5474769acf647efa6c922dcaf76b0bbe15"
 
 # TOML required by Python since 242.13688.18
 http_archive(
