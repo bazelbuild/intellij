@@ -1,6 +1,9 @@
 v2024.05.21
 ===========
-
+* Plugin aspect now depends on @rules_java. If this breaks you, please update your @rules_java version to 5.3.5 or later.
+* #6370 Add line numbers to sections and text-blocks #6371
+* Add 'View project root' flag #6422
+* Fixes: Test/Coverage throws exception NoClassDefFoundError in GoLand #2053
 
 v2024.05.07
 ===========
