@@ -13,6 +13,11 @@ load(
     ":make_variables.bzl",
     "expand_make_variables",
 )
+load(
+    "@bazel_tools//tools/build_defs/cc:action_names.bzl",
+    "ACTION_NAMES",
+)
+
 
 # Defensive list of features that can appear in the C++ toolchain, but which we
 # definitely don't want to enable (when enabled, they'd contribute command line
@@ -533,14 +538,12 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
         )
         c_options = cc_common.get_memory_inefficient_command_line(
             feature_configuration = feature_configuration,
-            # TODO(#391): Use constants from action_names.bzl
-            action_name = "c-compile",
+            action_name = ACTION_NAMES.c_compile,
             variables = c_variables,
         )
         cpp_options = cc_common.get_memory_inefficient_command_line(
             feature_configuration = feature_configuration,
-            # TODO(#391): Use constants from action_names.bzl
-            action_name = "c++-compile",
+            action_name = ACTION_NAMES.cpp_compile,
             variables = cpp_variables,
         )
     else:
