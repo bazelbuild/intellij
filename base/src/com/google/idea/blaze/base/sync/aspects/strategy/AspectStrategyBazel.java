@@ -74,6 +74,6 @@ public class AspectStrategyBazel extends AspectStrategy {
   }
 
   private static String getAspectRepositoryOverrideFlag() {
-    return OVERRIDE_REPOSITORY_FLAG + "=\"" + findAspectDirectory().getPath() + "\"";
+    return OVERRIDE_REPOSITORY_FLAG + "=" + findAspectDirectory().getPath();
   }
 }
