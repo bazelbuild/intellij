@@ -47,7 +47,7 @@ final class BazelFastBuildAspectStrategy extends FastBuildAspectStrategy {
 
   private static String getAspectRepositoryOverrideFlag() {
     return String.format(
-        "--override_repository=intellij_aspect=\"%s\"", findAspectDirectory().getPath());
+        "--override_repository=intellij_aspect=%s", findAspectDirectory().getPath());
   }
 
   @Override
