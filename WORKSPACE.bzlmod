@@ -84,9 +84,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2024_1. This is required to build IJwB and run integration tests.
-IC_241_SHA = "910a9c8161d8c3729aa30db17edcc1295ab9d8565d60cd1f0b44884824d7c9c2"
+IC_241_SHA = "456805da1a95f98b8bd7b26ee2b49705ef1656598d438889ee4cc18099e87928"
 
-IC_241_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2024.1.1/ideaIC-2024.1.1.zip"
+IC_241_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2024.1.2/ideaIC-2024.1.2.zip"
 
 http_archive(
     name = "intellij_ce_2024_1",
@@ -171,9 +171,9 @@ http_archive(
     url = IU_233_URL,
 )
 
-IU_241_SHA = "77ee22cfad8bac0bd13509188ab02bab61abc54ecf9251c73774c87e695577d0"
+IU_241_SHA = "dcaa925724bcdea67d6b45856d44bf231d5e0653e466967f1c53f364b8394b10"
 
-IU_241_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2024.1.1/ideaIU-2024.1.1.zip"
+IU_241_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2024.1.2/ideaIU-2024.1.2.zip"
 
 http_archive(
     name = "intellij_ue_2024_1",
@@ -287,9 +287,9 @@ http_archive(
     url = DEVKIT_233_URL,
 )
 
-DEVKIT_241_SHA = "8e1e393b639b0cd5c2a5b44bf122923e412b8e4672967bc41982fc324bf21830"
+DEVKIT_241_SHA = "7fbabd16a4b8b66de40a3fac80ea927dc44c1f5234b829b5dfb082f0b8de4cc2"
 
-DEVKIT_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/241.15989.157/DevKit-241.15989.157.zip"
+DEVKIT_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/241.17011.92/DevKit-241.17011.92.zip"
 
 http_archive(
     name = "devkit_2024_1",
@@ -391,9 +391,9 @@ http_archive(
     url = PYTHON_PLUGIN_233_URL,
 )
 
-PYTHON_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/241.15989.150/PythonCore-241.15989.150.zip"
+PYTHON_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/241.17011.48/PythonCore-241.17011.48.zip"
 
-PYTHON_PLUGIN_241_SHA = "186354d508221e14b2c7adcf7d26ad5476b57193b4c8d66d6e624d4e403cb443"
+PYTHON_PLUGIN_241_SHA = "f0d1a93979a9aa650250ee46d3b21038f7b37c2c02f17ab879fc188c29a54592"
 
 http_archive(
     name = "python_2024_1",
@@ -489,9 +489,9 @@ http_archive(
     url = GO_PLUGIN_233_URL,
 )
 
-GO_PLUGIN_241_SHA = "fa9bea13214efb30020328f5f98787d783e888ceb54ebf4fb5b73693269d87eb"
+GO_PLUGIN_241_SHA = "93a2393f6ad2d91f1282e49b89cf108193d6de87f7760c000ccacf757c8a13ef"
 
-GO_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/241.15989.21/org.jetbrains.plugins.go-241.15989.21.zip"
+GO_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/241.17011.2/org.jetbrains.plugins.go-241.17011.2.zip"
 
 http_archive(
     name = "go_2024_1",
@@ -568,9 +568,9 @@ http_archive(
     url = SCALA_PLUGIN_232_URL,
 )
 
-SCALA_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.3.28/org.intellij.scala-2023.3.28.zip"
+SCALA_PLUGIN_233_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.3.29/org.intellij.scala-2023.3.29.zip"
 
-SCALA_PLUGIN_233_SHA = "97f8cfb950a05764e00b508b9ea440eead2414d47d43f5408cd03fcbfeb1f569"
+SCALA_PLUGIN_233_SHA = "3cca8b34df8ee012539027d03f78dafa3fee159477825f688cd5a9860f59ece9"
 
 http_archive(
     name = "scala_2023_3",
@@ -579,9 +579,9 @@ http_archive(
     url = SCALA_PLUGIN_233_URL,
 )
 
-SCALA_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.1.17/org.intellij.scala-2024.1.17.zip"
+SCALA_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.1.21/org.intellij.scala-2024.1.21.zip"
 
-SCALA_PLUGIN_241_SHA = "6d0cd49eb9f9f32ab91a45423f41c26f03c01f0748fa26a431396ab94ebccc75"
+SCALA_PLUGIN_241_SHA = "2fe164ca781715c9d94d7904b7f4bdb03d8020e6ea922be631222c4493c3294b"
 
 http_archive(
     name = "scala_2024_1",
@@ -598,9 +598,9 @@ java_import(
 )
 """
 
-TOML_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/241.14494.150/org.toml.lang-241.14494.150.zip"
+TOML_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/241.17011.8/org.toml.lang-241.17011.8.zip"
 
-TOML_PLUGIN_241_SHA = "f2ad603910c59b6f2b3623e52af9256f7b560ecf17f9f80b4fbc3060ee59aeee"
+TOML_PLUGIN_241_SHA = "17572527d9aa2f31cd9fa670de68054cb586af3aa2eca9cb204b0f33043e9839"
 
 # TOML required by Python since 241.13688.18
 http_archive(
