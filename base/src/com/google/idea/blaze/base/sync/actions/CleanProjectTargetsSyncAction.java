@@ -140,7 +140,7 @@ public class CleanProjectTargetsSyncAction extends BlazeProjectSyncAction {
 
     BlazeQueryLabelKindParser outputProcessor = new BlazeQueryLabelKindParser(t -> true);
     int retVal =
-        ExternalTask.builder(WorkspaceRoot.fromProject(project))
+        ExternalTask.builder(WorkspaceRoot.fromProject(project), project)
             .addBlazeCommand(command)
             .context(context)
             .stdout(LineProcessingOutputStream.of(outputProcessor))

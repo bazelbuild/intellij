@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import java.io.File;
 
 /** Runs a compiler to check its version. */
@@ -44,5 +45,6 @@ public interface CompilerVersionChecker {
   }
 
   /** Returns the compiler's version string */
-  String checkCompilerVersion(File executionRoot, File cppExecutable) throws VersionCheckException;
+  String checkCompilerVersion(File executionRoot, File cppExecutable, Project project)
+      throws VersionCheckException;
 }
