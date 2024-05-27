@@ -116,7 +116,7 @@ SRC_PY3ONLY = 5
 def get_registry_flag(ctx, name):
     """Registry flags are passed to aspects using defines. See CppAspectArgsProvider."""
 
-    return ctx.var[name] == "true"
+    return ctx.var.get(name) == "true"
 
 def source_directory_tuple(resource_file):
     """Creates a tuple of (exec_path, root_exec_path_fragment, is_source, is_external)."""
