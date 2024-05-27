@@ -113,6 +113,11 @@ SRC_PY3ONLY = 5
 
 ##### Helpers
 
+def get_registry_flag(ctx, name):
+    """Registry flags are passed to aspects using defines. See CppAspectArgsProvider."""
+
+    return ctx.var[name] == "true"
+
 def source_directory_tuple(resource_file):
     """Creates a tuple of (exec_path, root_exec_path_fragment, is_source, is_external)."""
     relative_path = str(android_common.resource_source_directory(resource_file))
@@ -509,56 +514,47 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
     # cpp fragment to access bazel options
     cpp_fragment = ctx.fragments.cpp
 
-    # Enabled in Bazel 0.16
-    if hasattr(cc_common, "get_memory_inefficient_command_line"):
-        # Enabled in Bazel 0.17
-        if hasattr(cpp_fragment, "copts"):
-            copts = cpp_fragment.copts
-            cxxopts = cpp_fragment.cxxopts
-            conlyopts = cpp_fragment.conlyopts
-        else:
-            copts = []
-            cxxopts = []
-            conlyopts = []
-        feature_configuration = cc_common.configure_features(
-            ctx = ctx,
-            cc_toolchain = cpp_toolchain,
-            requested_features = ctx.features,
-            unsupported_features = ctx.disabled_features + UNSUPPORTED_FEATURES,
-        )
-        c_variables = cc_common.create_compile_variables(
-            feature_configuration = feature_configuration,
-            cc_toolchain = cpp_toolchain,
-            user_compile_flags = copts + conlyopts,
-        )
-        cpp_variables = cc_common.create_compile_variables(
-            feature_configuration = feature_configuration,
-            cc_toolchain = cpp_toolchain,
-            user_compile_flags = copts + cxxopts,
-        )
-        c_options = cc_common.get_memory_inefficient_command_line(
-            feature_configuration = feature_configuration,
-            action_name = ACTION_NAMES.c_compile,
-            variables = c_variables,
-        )
+    copts = cpp_fragment.copts
+    cxxopts = cpp_fragment.cxxopts
+    conlyopts = cpp_fragment.conlyopts
+
+    feature_configuration = cc_common.configure_features(
+        ctx = ctx,
+        cc_toolchain = cpp_toolchain,
+        requested_features = ctx.features,
+        unsupported_features = ctx.disabled_features + UNSUPPORTED_FEATURES,
+    )
+    c_variables = cc_common.create_compile_variables(
+        feature_configuration = feature_configuration,
+        cc_toolchain = cpp_toolchain,
+        user_compile_flags = copts + conlyopts,
+    )
+    cpp_variables = cc_common.create_compile_variables(
+        feature_configuration = feature_configuration,
+        cc_toolchain = cpp_toolchain,
+        user_compile_flags = copts + cxxopts,
+    )
+    c_options = cc_common.get_memory_inefficient_command_line(
+        feature_configuration = feature_configuration,
+        action_name = ACTION_NAMES.c_compile,
+        variables = c_variables,
+    )
+    cpp_options = cc_common.get_memory_inefficient_command_line(
+        feature_configuration = feature_configuration,
+        action_name = ACTION_NAMES.cpp_compile,
+        variables = cpp_variables,
+    )
+
+    if (get_registry_flag(ctx, "_cpp_use_get_tool_for_action")):
         c_compiler = cc_common.get_tool_for_action(
             feature_configuration = feature_configuration,
             action_name = ACTION_NAMES.c_compile,
         )
-        cpp_options = cc_common.get_memory_inefficient_command_line(
-            feature_configuration = feature_configuration,
-            action_name = ACTION_NAMES.cpp_compile,
-            variables = cpp_variables,
-        )
         cpp_compiler = cc_common.get_tool_for_action(
             feature_configuration = feature_configuration,
-            action_name = ACTION_NAMES.ccp_compile,
+            action_name = ACTION_NAMES.cpp_compile,
         )
     else:
-        # See the plugin's BazelVersionChecker. We should have checked that we are Bazel 0.16+,
-        # so get_memory_inefficient_command_line should be available.
-        c_options = []
-        cpp_options = []
         c_compiler = str(cpp_toolchain.compiler_executable)
         cpp_compiler = str(cpp_toolchain.compiler_executable)
 
