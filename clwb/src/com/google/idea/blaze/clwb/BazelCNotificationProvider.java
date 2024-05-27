@@ -22,28 +22,48 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
-import com.jetbrains.cidr.cpp.cmake.workspace.CMakeNotificationProvider.AdditionalActionProvider;
+import com.intellij.ui.EditorNotificationPanel.Status;
+import com.intellij.ui.EditorNotificationProvider;
+import com.jetbrains.cidr.lang.OCFileType;
+import java.util.function.Function;
+import javax.swing.JComponent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class BazelCMakeNotificationProvider implements AdditionalActionProvider {
+/**
+ * Provide notification for C-family files temporarily until moving to new CLion project status
+ * api.
+ */
+public class BazelCNotificationProvider implements EditorNotificationProvider {
 
   @Override
-  public void installAction(@NotNull EditorNotificationPanel panel,
-      @NotNull VirtualFile virtualFile, @NotNull FileEditor fileEditor, @NotNull Project project) {
+  public @Nullable Function<? super FileEditor, ? extends JComponent> collectNotificationData(
+      @NotNull Project project, @NotNull VirtualFile file) {
+    if (file.getFileType() != OCFileType.INSTANCE) {
+      return null;
+    }
+
     if (!BazelImportCurrentProjectAction.projectCouldBeImported(project)) {
-      return;
+      return null;
     }
     if (BazelDisableImportNotification.isNotificationDisabled(project)) {
-      return;
+      return null;
     }
 
     String root = project.getBasePath();
     if (root == null) {
-      return;
+      return null;
     }
 
-    Runnable importAction = BazelImportCurrentProjectAction.createAction(panel, root);
-    panel.createActionLabel("Import Bazel project", importAction);
-    panel.createActionLabel("Ignore Bazel project", "Bazel.DisableImportNotification");
+    return fileEditor -> {
+      EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, Status.Warning);
+      Runnable importAction = BazelImportCurrentProjectAction.createAction(panel, root);
+
+      panel.setText("Project is not configured");
+      panel.createActionLabel("Import Bazel project", importAction);
+      panel.createActionLabel("Dismiss", "Bazel.DisableImportNotification");
+
+      return panel;
+    };
   }
 }
