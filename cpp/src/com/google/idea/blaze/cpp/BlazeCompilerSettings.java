@@ -34,8 +34,7 @@ final class BlazeCompilerSettings {
   @Nullable private final File cppCompiler;
   private final ImmutableList<String> cCompilerSwitches;
   private final ImmutableList<String> cppCompilerSwitches;
-  private final String cCompilerVersion;
-  private final String cppCompilerVersion;
+  private final String compilerVersion;
   private final ImmutableMap<String, String> compilerEnvironment;
 
   BlazeCompilerSettings(
@@ -44,15 +43,13 @@ final class BlazeCompilerSettings {
       @Nullable File cppCompiler,
       ImmutableList<String> cFlags,
       ImmutableList<String> cppFlags,
-      String cCompilerVersion,
-      String cppCompilerVersion,
+      String compilerVersion,
       ImmutableMap<String, String> compilerEnvironment) {
     this.cCompiler = cCompiler;
     this.cppCompiler = cppCompiler;
     this.cCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cFlags));
     this.cppCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cppFlags));
-    this.cCompilerVersion = cCompilerVersion;
-    this.cppCompilerVersion = cppCompilerVersion;
+    this.compilerVersion = compilerVersion;
     this.compilerEnvironment = compilerEnvironment;
   }
 
@@ -87,12 +84,8 @@ final class BlazeCompilerSettings {
     return BlazeCompilerFlagsProcessor.process(project, allCompilerFlags);
   }
 
-  String getCCompilerVersion() {
-    return cCompilerVersion;
-  }
-
-  String getCppCompilerVersion() {
-    return cppCompilerVersion;
+  String getCompilerVersion() {
+    return compilerVersion;
   }
 
   String getCompilerEnvironment(String variable) {

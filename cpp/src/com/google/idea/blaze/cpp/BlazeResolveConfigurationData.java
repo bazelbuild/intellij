@@ -75,10 +75,8 @@ final class BlazeResolveConfigurationData {
         && this.localCopts.equals(otherData.localCopts)
         && this.transitiveDefines.equals(otherData.transitiveDefines)
         && this.toolchainIdeInfo.equals(otherData.toolchainIdeInfo)
-        && this.compilerSettings.getCCompilerVersion().equals(
-            otherData.compilerSettings.getCCompilerVersion())
-        && this.compilerSettings.getCppCompilerVersion().equals(
-            otherData.compilerSettings.getCppCompilerVersion());
+        && this.compilerSettings.getCompilerVersion().equals(
+            otherData.compilerSettings.getCompilerVersion());
   }
 
   @Override
@@ -90,8 +88,7 @@ final class BlazeResolveConfigurationData {
         localCopts,
         transitiveDefines,
         toolchainIdeInfo,
-        compilerSettings.getCCompilerVersion(),
-        compilerSettings.getCppCompilerVersion());
+        compilerSettings.getCompilerVersion());
   }
 
   CToolchainIdeInfo getCToolchainIdeInfo() {

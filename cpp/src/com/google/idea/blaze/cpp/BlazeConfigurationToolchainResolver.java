@@ -212,25 +212,37 @@ public final class BlazeConfigurationToolchainResolver {
         });
   }
 
-  private static @Nullable Pair<File, String> resolveCompilerAndVersion(
+  private static @Nullable File resolveCompilerExecutable(
       BlazeContext context,
-      Project project,
-      Optional<XcodeCompilerSettings> xcodeCompilerSettings,
       ExecutionRootPathResolver executionRootPathResolver,
       ExecutionRootPath compilerPath
   ) {
     File compilerFile = executionRootPathResolver.resolveExecutionRootPath(compilerPath);
     if (compilerFile == null) {
       IssueOutput.error("Unable to find compiler executable: " + compilerPath).submit(context);
-      return null;
-    }
-    String compilerVersion = getCompilerVersion(project, context, executionRootPathResolver,
-        xcodeCompilerSettings, compilerFile);
-    if (compilerVersion == null) {
-      return null;
     }
 
-    return Pair.create(compilerFile, compilerVersion);
+    return compilerFile;
+  }
+
+  private static @Nullable String mergeCompilerVersions(
+      BlazeContext context,
+      @Nullable String cVersion,
+      @Nullable String cppVersion) {
+    if (cVersion == null) {
+      return cppVersion;
+    }
+    if (cppVersion == null) {
+      return cVersion;
+    }
+    if (cVersion.equals(cppVersion)) {
+      return cppVersion;
+    }
+
+    IssueOutput.warn("C and Cpp compiler version mismatch. Defaulting to Cpp compiler version.")
+        .submit(context);
+
+    return cppVersion;
   }
 
   private static ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> doBuildCompilerSettingsMap(
@@ -247,20 +259,31 @@ public final class BlazeConfigurationToolchainResolver {
       compilerSettingsFutures.add(
           submit(
               () -> {
-                Pair<File, String> cCompiler = resolveCompilerAndVersion(context, project,
-                    xcodeCompilerSettings, executionRootPathResolver, toolchain.getCCompiler());
+                File cCompiler = resolveCompilerExecutable(context, executionRootPathResolver,
+                    toolchain.getCCompiler());
                 if (cCompiler == null) {
                   return null;
                 }
-                Pair<File, String> cppCompiler = resolveCompilerAndVersion(context, project,
-                    xcodeCompilerSettings, executionRootPathResolver, toolchain.getCppCompiler());
+                File cppCompiler = resolveCompilerExecutable(context, executionRootPathResolver,
+                    toolchain.getCppCompiler());
                 if (cppCompiler == null) {
                   return null;
                 }
+
+                String cCompilerVersion = getCompilerVersion(project, context,
+                    executionRootPathResolver, xcodeCompilerSettings, cCompiler);
+                String cppCompilerVersion = getCompilerVersion(project, context,
+                    executionRootPathResolver, xcodeCompilerSettings, cppCompiler);
+
+                String compilerVersion = mergeCompilerVersions(context, cCompilerVersion,
+                    cppCompilerVersion);
+                if (compilerVersion == null) {
+                  return null;
+                }
+
                 BlazeCompilerSettings oldSettings = oldCompilerSettings.get(toolchain);
                 if (oldSettings != null
-                    && oldSettings.getCCompilerVersion().equals(cCompiler.second)
-                    && oldSettings.getCppCompilerVersion().equals(cppCompiler.second)) {
+                    && oldSettings.getCompilerVersion().equals(compilerVersion)) {
                   return new SimpleImmutableEntry<>(toolchain, oldSettings);
                 }
                 BlazeCompilerSettings settings =
@@ -270,10 +293,9 @@ public final class BlazeConfigurationToolchainResolver {
                         toolchain,
                         xcodeCompilerSettings,
                         executionRootPathResolver.getExecutionRoot(),
-                        cCompiler.first,
-                        cppCompiler.first,
-                        cCompiler.second,
-                        cppCompiler.second);
+                        cCompiler,
+                        cppCompiler,
+                        compilerVersion);
                 if (settings == null) {
                   return null;
                 }
@@ -360,8 +382,7 @@ public final class BlazeConfigurationToolchainResolver {
       File executionRoot,
       File cCompiler,
       File cppCompiler,
-      String cCompilerVersion,
-      String cppCompilerVersion) {
+      String compilerVersion) {
     ImmutableMap<String, String> compilerWrapperEnvVars =
         XcodeCompilerSettingsProvider.getInstance(project).asEnvironmentVariables(xcodeCompilerSettings);
     File cCompilerWrapper =
@@ -394,8 +415,7 @@ public final class BlazeConfigurationToolchainResolver {
         cppCompilerWrapper,
         cFlagsBuilder.build(),
         cppFlagsBuilder.build(),
-        cCompilerVersion,
-        cppCompilerVersion,
+        compilerVersion,
         compilerEnv.build());
   }
 

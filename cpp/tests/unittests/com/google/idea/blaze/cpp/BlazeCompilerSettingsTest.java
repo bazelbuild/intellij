@@ -87,8 +87,6 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
   @Test
   public void testCompilerSwitchesSimple() {
     ImmutableList<String> cFlags = ImmutableList.of("-fast", "-slow");
-    String cVersion = "cc version (trunk r123456)";
-
     BlazeCompilerSettings settings =
         new BlazeCompilerSettings(
             getProject(),
@@ -96,8 +94,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             new File("bin/c++"),
             cFlags,
             cFlags,
-            cVersion,
-            cVersion,
+            "cc version (trunk r123456)",
             ImmutableMap.of());
 
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
@@ -108,8 +105,6 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
   @Test
   public void relativeSysroot_makesAbsolutePathInMainWorkspace() {
     ImmutableList<String> cFlags = ImmutableList.of("--sysroot=third_party/toolchain/");
-    String cVersion = "cc version (trunk r123456)";
-
     BlazeCompilerSettings settings =
         new BlazeCompilerSettings(
             getProject(),
@@ -117,8 +112,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             new File("bin/c++"),
             cFlags,
             cFlags,
-            cVersion,
-            cVersion,
+            "cc version (trunk r123456)",
             ImmutableMap.of());
 
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
@@ -128,8 +122,6 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
   @Test
   public void absoluteSysroot_doesNotChange() {
     ImmutableList<String> cFlags = ImmutableList.of("--sysroot=/usr");
-    String cVersion = "cc version (trunk r123456)";
-
     BlazeCompilerSettings settings =
         new BlazeCompilerSettings(
             getProject(),
@@ -137,8 +129,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             new File("bin/c++"),
             cFlags,
             cFlags,
-            cVersion,
-            cVersion,
+            "cc version (trunk r123456)",
             ImmutableMap.of());
 
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
@@ -149,8 +140,6 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
   public void relativeIsystem_makesAbsolutePathInWorkspaces() {
     ImmutableList<String> cFlags =
         ImmutableList.of("-isystem", "external/arm_gcc/include", "-DFOO=1", "-Ithird_party/stl");
-    String cVersion = "cc version (trunk r123456)";
-
     BlazeCompilerSettings settings =
         new BlazeCompilerSettings(
             getProject(),
@@ -158,8 +147,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             new File("bin/c++"),
             cFlags,
             cFlags,
-            cVersion,
-            cVersion,
+            "cc version (trunk r123456)",
             ImmutableMap.of());
 
     String outputBase = blazeProjectData.getBlazeInfo().getOutputBase().toString();
@@ -176,8 +164,6 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
   public void relativeIquote_makesAbsolutePathInExecRoot() {
     ImmutableList<String> cFlags =
         ImmutableList.of("-iquote", "bazel-out/android-arm64-v8a-opt/bin/external/boringssl");
-    String cVersion = "cc version (trunk r123456)";
-
     BlazeCompilerSettings settings =
         new BlazeCompilerSettings(
             getProject(),
@@ -185,8 +171,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             new File("bin/c++"),
             cFlags,
             cFlags,
-            cVersion,
-            cVersion,
+            "cc version (trunk r123456)",
             ImmutableMap.of());
 
     String execRoot = blazeProjectData.getBlazeInfo().getExecutionRoot().toString();
@@ -199,8 +184,6 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
   @Test
   public void absoluteISystem_doesNotChange() {
     ImmutableList<String> cFlags = ImmutableList.of("-isystem", "/usr/include");
-    String cVersion = "cc version (trunk r123456)";
-
     BlazeCompilerSettings settings =
         new BlazeCompilerSettings(
             getProject(),
@@ -208,8 +191,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             new File("bin/c++"),
             cFlags,
             cFlags,
-            cVersion,
-            cVersion,
+            "cc version (trunk r123456)",
             ImmutableMap.of());
 
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
@@ -218,8 +200,6 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
 
   @Test
   public void developerDirEnvVar_doesNotChange() {
-    String cVersion = "cc version (trunk r123456)";
-
     BlazeCompilerSettings settings =
         new BlazeCompilerSettings(
             getProject(),
@@ -227,8 +207,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             new File("bin/c++"),
             ImmutableList.of(),
             ImmutableList.of(),
-            cVersion,
-            cVersion,
+            "cc version (trunk r123456)",
             ImmutableMap.of("DEVELOPER_DIR", "/tmp/foobar"));
 
     assertThat(settings.getCompilerEnvironment("DEVELOPER_DIR"))
