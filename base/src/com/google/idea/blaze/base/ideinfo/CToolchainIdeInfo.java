@@ -85,7 +85,7 @@ public final class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.CTo
   }
 
   public ExecutionRootPath getCppCompiler() {
-    return cCompiler;
+    return cppCompiler;
   }
 
   public String getTargetName() {
@@ -141,7 +141,7 @@ public final class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.CTo
     }
 
     @CanIgnoreReturnValue
-    public Builder setCompiler(ExecutionRootPath compiler) {
+    public Builder setCCppCompiler(ExecutionRootPath compiler) {
       setCCompiler(compiler);
       setCppCompiler(compiler);
       return this;

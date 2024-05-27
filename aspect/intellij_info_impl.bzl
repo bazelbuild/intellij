@@ -543,8 +543,7 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
         )
         c_compiler = cc_common.get_tool_for_action(
             feature_configuration = feature_configuration,
-            # TODO(#391): Use constants from action_names.bzl
-            action_name = "c-compile",
+            action_name = ACTION_NAMES.c_compile,
         )
         cpp_options = cc_common.get_memory_inefficient_command_line(
             feature_configuration = feature_configuration,
@@ -553,8 +552,7 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
         )
         cpp_compiler = cc_common.get_tool_for_action(
             feature_configuration = feature_configuration,
-            # TODO(#391): Use constants from action_names.bzl
-            action_name = "c++-compile",
+            action_name = ACTION_NAMES.ccp_compile,
         )
     else:
         # See the plugin's BazelVersionChecker. We should have checked that we are Bazel 0.16+,
