@@ -45,7 +45,9 @@ public interface ExternalTaskProvider {
           builder.stdout,
           builder.stderr,
           builder.redirectErrorStream,
-          builder.ignoreExitCode);
+          builder.ignoreExitCode,
+          builder.input,
+          builder.project);
     }
   }
 }
