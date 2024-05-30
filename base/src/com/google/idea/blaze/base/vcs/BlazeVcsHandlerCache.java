@@ -16,8 +16,6 @@
 package com.google.idea.blaze.base.vcs;
 
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
@@ -37,10 +35,9 @@ class BlazeVcsHandlerCache {
 
   @Nullable
   static BlazeVcsHandlerProvider vcsHandlerProviderForProject(Project project) {
-    BuildSystemName buildSystemName = Blaze.getBuildSystemName(project);
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     for (BlazeVcsHandlerProvider candidate : BlazeVcsHandlerProvider.EP_NAME.getExtensions()) {
-      if (candidate.handlesProject(buildSystemName, workspaceRoot)) {
+      if (candidate.handlesProject(project, workspaceRoot)) {
         return candidate;
       }
     }

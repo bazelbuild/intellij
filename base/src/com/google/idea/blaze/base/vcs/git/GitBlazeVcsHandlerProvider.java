@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
@@ -48,8 +49,8 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
   }
 
   @Override
-  public boolean handlesProject(BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot) {
-    return buildSystemName == BuildSystemName.Bazel
+  public boolean handlesProject(Project project, WorkspaceRoot workspaceRoot) {
+    return Blaze.getBuildSystemName(project) == BuildSystemName.Bazel
         && isGitRepository(workspaceRoot)
         && tracksRemote(workspaceRoot);
   }
@@ -148,7 +149,7 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
    * matches a commit in the currently-tracked remote branch, or null if that fails for any reason.
    */
   @Nullable
-  public static String getUpstreamSha(WorkspaceRoot workspaceRoot, boolean suppressErrors) {
+  private static String getUpstreamSha(WorkspaceRoot workspaceRoot, boolean suppressErrors) {
     try {
       return getUpstreamSha(workspaceRoot);
     } catch (VcsException e) {
@@ -165,7 +166,7 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
    *
    * @throws VcsException if we cannot get the SHA.
    */
-  public static String getUpstreamSha(WorkspaceRoot workspaceRoot) throws VcsException {
+  private static String getUpstreamSha(WorkspaceRoot workspaceRoot) throws VcsException {
     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
     ByteArrayOutputStream stderr = new ByteArrayOutputStream();
 
