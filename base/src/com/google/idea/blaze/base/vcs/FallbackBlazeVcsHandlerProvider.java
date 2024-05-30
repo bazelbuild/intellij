@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.common.vcs.VcsState;
@@ -42,8 +43,8 @@ public class FallbackBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider 
   }
 
   @Override
-  public boolean handlesProject(BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot) {
-    return buildSystemName == BuildSystemName.Bazel;
+  public boolean handlesProject(Project project, WorkspaceRoot workspaceRoot) {
+    return Blaze.getBuildSystemName(project) == BuildSystemName.Bazel;
   }
 
   @Override
