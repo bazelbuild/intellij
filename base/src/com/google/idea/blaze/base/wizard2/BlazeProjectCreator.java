@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
+import com.google.idea.blaze.base.project.ExtendableBazelProjectCreator;
 import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.ProjectUtil;
@@ -104,7 +105,10 @@ public class BlazeProjectCreator {
       FileUtil.ensureExists(ideaDir);
     }
 
-    Project newProject = projectBuilder.createProject(projectName, projectFilePath);
+    Project newProject =
+        ApplicationManager.getApplication()
+            .getService(ExtendableBazelProjectCreator.class)
+            .createProject(projectBuilder, projectName, projectFilePath);
     if (newProject == null) {
       return null;
     }
