@@ -278,7 +278,7 @@ public final class BlazeConfigurationToolchainResolver {
     File executionRoot = executionRootPathResolver.getExecutionRoot();
     try {
       return CompilerVersionChecker.getInstance()
-          .checkCompilerVersion(executionRoot, cppExecutable);
+          .checkCompilerVersion(executionRoot, cppExecutable, project);
     } catch (VersionCheckException e) {
       switch (e.kind) {
         case MISSING_EXEC_ROOT:

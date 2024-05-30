@@ -213,7 +213,7 @@ public class MobileInstallBuildStep implements ApkBuildStep {
       SaveUtil.saveAllFiles();
       context.output(new StatusOutput("Invoking mobile-install..."));
       ExternalTask task =
-          ExternalTask.builder(workspaceRoot)
+          ExternalTask.builder(workspaceRoot, project)
               .addBlazeCommand(command.build())
               .context(context)
               .stdout(LineProcessingOutputStream.of(new PrintOutputLineProcessor(context)))

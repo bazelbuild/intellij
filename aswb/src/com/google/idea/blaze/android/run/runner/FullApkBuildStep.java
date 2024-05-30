@@ -177,7 +177,7 @@ public class FullApkBuildStep implements ApkBuildStep {
 
       SaveUtil.saveAllFiles();
       int retVal =
-          ExternalTask.builder(workspaceRoot)
+          ExternalTask.builder(workspaceRoot, project)
               .addBlazeCommand(command.build())
               .context(context)
               .stderr(

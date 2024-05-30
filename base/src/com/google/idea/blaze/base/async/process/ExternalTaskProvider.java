@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.async.process;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.async.process.ExternalTask.Builder;
-import com.google.idea.blaze.base.async.process.ExternalTask.ExternalTaskImpl;
 import com.intellij.openapi.application.ApplicationManager;
 
 /**
@@ -37,15 +36,7 @@ public interface ExternalTaskProvider {
   class Impl implements ExternalTaskProvider {
     @Override
     public ExternalTask build(Builder builder) {
-      return new ExternalTaskImpl(
-          builder.context,
-          builder.workingDirectory,
-          builder.command.build(),
-          builder.environmentVariables,
-          builder.stdout,
-          builder.stderr,
-          builder.redirectErrorStream,
-          builder.ignoreExitCode);
+      return builder.createTask();
     }
   }
 }

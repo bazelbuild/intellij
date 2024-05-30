@@ -64,7 +64,7 @@ public class BlazeQueryMacroTargetProvider implements MacroTargetProvider {
     // would be nicer to use the Process inputStream directly, rather having two round trips...
     ByteArrayOutputStream out = new ByteArrayOutputStream(/* size= */ 4096);
     int retVal =
-        ExternalTask.builder(WorkspaceRoot.fromProject(project))
+        ExternalTask.builder(WorkspaceRoot.fromProject(project), project)
             .args(getBinaryPath(project), outputBase, "query", "--output=proto", query)
             .stdout(out)
             .stderr(

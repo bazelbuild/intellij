@@ -147,7 +147,7 @@ public final class BlazeBeforeRunCommandHelper {
                         .addBlazeFlags(buildResultHelper.getBuildFlags());
 
                 int exitCode =
-                    ExternalTask.builder(workspaceRoot)
+                    ExternalTask.builder(workspaceRoot, project)
                         .addBlazeCommand(command.build())
                         .context(context)
                         .stderr(
