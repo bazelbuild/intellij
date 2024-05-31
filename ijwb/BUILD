@@ -83,7 +83,7 @@ intellij_plugin(
         "//dart:plugin_library",
         "//java:plugin_library",
         "//kotlin:plugin_library",
-        # "//plugin_dev:plugin_library", TODO uncomment when devkit is available at MP
+        "//plugin_dev:plugin_library",
         "//python:plugin_library",
         "//scala:plugin_library",
         "//skylark:plugin_library",
