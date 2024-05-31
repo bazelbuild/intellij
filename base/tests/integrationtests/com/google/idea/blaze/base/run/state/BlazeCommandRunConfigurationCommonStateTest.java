@@ -20,7 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -30,28 +30,28 @@ import com.google.idea.blaze.base.settings.BuildSystemName;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** Tests for {@link BlazeCommandRunConfigurationCommonState}. */
 @RunWith(JUnit4.class)
-public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
+public class BlazeCommandRunConfigurationCommonStateTest extends BlazeIntegrationTestCase {
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
       new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze, ProjectType.ASPECT_SYNC);
   private static final BlazeCommandName COMMAND = BlazeCommandName.fromString("command");
 
   private BlazeCommandRunConfigurationCommonState state;
 
-  @Override
-  protected void initTest(Container applicationServices, Container projectServices) {
-    super.initTest(applicationServices, projectServices);
+  @Before
+  public void init() throws Throwable {
+    super.setUp();
 
-    projectServices.register(
-        BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
+    registerProjectService(BlazeImportSettingsManager.class, new BlazeImportSettingsManager(getProject()));
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
-    state = new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystemName(project));
+    state = new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystemName(getProject()));
   }
 
   @Test
@@ -65,7 +65,7 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
     Element element = new Element("test");
     state.writeExternal(element);
     BlazeCommandRunConfigurationCommonState readState =
-        new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystemName(project));
+        new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystemName(getProject()));
     readState.readExternal(element);
 
     assertThat(readState.getCommandState().getCommand()).isEqualTo(COMMAND);
@@ -82,7 +82,7 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
     Element element = new Element("test");
     state.writeExternal(element);
     BlazeCommandRunConfigurationCommonState readState =
-        new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystemName(project));
+        new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystemName(getProject()));
     readState.readExternal(element);
 
     assertThat(readState.getCommandState().getCommand())
@@ -109,7 +109,7 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
     Element element = new Element("test");
     state.writeExternal(element);
     BlazeCommandRunConfigurationCommonState readState =
-        new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystemName(project));
+        new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystemName(getProject()));
     readState.readExternal(element);
 
     assertThat(readState.getBlazeFlagsState().getRawFlags())
@@ -140,7 +140,7 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
 
   @Test
   public void editorApplyToAndResetFromShouldMatch() throws Exception {
-    RunConfigurationStateEditor editor = state.getEditor(project);
+    RunConfigurationStateEditor editor = state.getEditor(getProject());
 
     state.getCommandState().setCommand(COMMAND);
     state.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
@@ -149,7 +149,7 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
 
     editor.resetEditorFrom(state);
     BlazeCommandRunConfigurationCommonState readState =
-        new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystemName(project));
+        new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystemName(getProject()));
     editor.applyEditorTo(readState);
 
     assertThat(readState.getCommandState().getCommand())
@@ -166,11 +166,11 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
 
   @Test
   public void editorApplyToAndResetFromShouldHandleNulls() throws Exception {
-    RunConfigurationStateEditor editor = state.getEditor(project);
+    RunConfigurationStateEditor editor = state.getEditor(getProject());
 
     editor.resetEditorFrom(state);
     BlazeCommandRunConfigurationCommonState readState =
-        new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystemName(project));
+        new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystemName(getProject()));
     editor.applyEditorTo(readState);
 
     assertThat(readState.getCommandState().getCommand())
