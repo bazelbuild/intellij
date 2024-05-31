@@ -50,8 +50,8 @@ public class AspectStrategyBazel extends AspectStrategy {
 
   @Override
   @VisibleForTesting
-  public String getAspectFlag() {
-    return aspectFlag;
+  public Optional<String> getAspectFlag() {
+    return Optional.of(aspectFlag);
   }
 
   // In tests, the location of @intellij_aspect is not known at compile time.

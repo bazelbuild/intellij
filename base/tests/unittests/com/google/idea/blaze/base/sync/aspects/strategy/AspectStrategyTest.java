@@ -35,8 +35,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import javax.annotation.Nullable;
-
 
 /** Unit tests for {@link AspectStrategy}. */
 @RunWith(JUnit4.class)
@@ -215,10 +213,9 @@ public class AspectStrategyTest extends BlazeTestCase {
       return "MockAspectStrategy";
     }
 
-    @Nullable
     @Override
-    protected String getAspectFlag() {
-      return null;
+    protected Optional<String> getAspectFlag() {
+      return Optional.empty();
     }
   }
 }

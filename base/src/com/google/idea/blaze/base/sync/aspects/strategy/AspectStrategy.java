@@ -40,7 +40,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /** Aspect strategy for Skylark. */
@@ -90,7 +89,7 @@ public abstract class AspectStrategy {
 
   public abstract String getName();
 
-  protected abstract String getAspectFlag();
+  protected abstract Optional<String> getAspectFlag();
 
   /**
    * Add the aspect to the build and request the given {@code OutputGroup}s. This method should only
@@ -108,9 +107,8 @@ public abstract class AspectStrategy {
         outputGroups.stream()
             .flatMap(g -> getOutputGroups(g, activeLanguages, directDepsOnly).stream())
             .collect(toImmutableList());
-    var aspectFlag = getAspectFlag();
     builder
-        .addBlazeFlags(aspectFlag == null ? List.of() : List.of(aspectFlag))
+        .addBlazeFlags(getAspectFlag().map(List::of).orElse(List.of()))
         .addBlazeFlags("--output_groups=" + Joiner.on(',').join(groups));
   }
 
