@@ -90,7 +90,7 @@ public abstract class AspectStrategy {
 
   public abstract String getName();
 
-  protected abstract Optional<String> getAspectFlag();
+  protected abstract String getAspectFlag();
 
   /**
    * Add the aspect to the build and request the given {@code OutputGroup}s. This method should only
@@ -108,8 +108,9 @@ public abstract class AspectStrategy {
         outputGroups.stream()
             .flatMap(g -> getOutputGroups(g, activeLanguages, directDepsOnly).stream())
             .collect(toImmutableList());
+    var aspectFlag = getAspectFlag();
     builder
-        .addBlazeFlags(getAspectFlag().map(List::of).orElse(List.of()))
+        .addBlazeFlags(aspectFlag == null ? List.of() : List.of(aspectFlag))
         .addBlazeFlags("--output_groups=" + Joiner.on(',').join(groups));
   }
 
