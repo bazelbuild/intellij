@@ -143,7 +143,7 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
 
     @Override
     protected String getAspectFlag() {
-      return null
+      return null;
     }
 
   }
