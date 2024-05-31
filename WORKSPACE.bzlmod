@@ -569,13 +569,21 @@ http_archive(
     url = GO_PLUGIN_241_URL,
 )
 
+_GO_BUILD_FILE_242 = """
+java_import(
+    name = "go",
+    jars = glob(["go-plugin/lib/*.jar", "go-plugin/lib/modules/*.jar"]),
+    visibility = ["//visibility:public"],
+)
+"""
+
 GO_PLUGIN_242_SHA = "0121c273808f255622ff8d448aa6d33c8db69dbd651957bfabc68b96c42889c5"
 
 GO_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/242.12881.66/org.jetbrains.plugins.go-242.12881.66.zip"
 
 http_archive(
     name = "go_2024_2",
-    build_file_content = _GO_BUILD_FILE_223,
+    build_file_content = _GO_BUILD_FILE_242,
     sha256 = GO_PLUGIN_242_SHA,
     url = GO_PLUGIN_242_URL,
 )
