@@ -20,6 +20,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyBazel;
+
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -108,6 +110,9 @@ public final class BlazeCommand {
       this.invokeParallel = false;
       // Tell forge what tool we used to call blaze so we can track usage.
       addBlazeFlags(BlazeFlags.getToolTagFlag());
+      AspectStrategyBazel.getAspectRepositoryOverrideFlag().ifPresent(it ->
+          addBlazeFlags(it)
+      );
     }
 
     private ImmutableList<String> getArguments() {
