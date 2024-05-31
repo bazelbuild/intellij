@@ -137,11 +137,6 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
     }
 
     @Override
-    protected List<String> getAspectFlags() {
-      return ImmutableList.of();
-    }
-
-    @Override
     protected String getAspectFlag() {
       return null;
     }
