@@ -19,6 +19,17 @@ package com.google.idea.blaze.ext;
 
 option java_package = "com.google.idea.blaze.ext";
 
+
+service LoggingService {
+  // Writes a log entry to the log file
+  rpc Write(IntellijLogEntry) returns (Boolean) {}
+
+  // Flushes the log to disk
+  rpc Flush(Boolean) returns (Boolean) {}
+
+  // Closes the log file
+  rpc Close(Boolean) returns (Boolean) {}
+}
 message IntellijLogEntry {
   optional int64 end_time_millis = 1;
   optional int64 duration_millis = 2;
@@ -633,4 +644,8 @@ message Refactoring {
   // include all changed ranges in the file and depends on the refactoring
   // implementation.
   repeated TextRange element_ranges_after = 7;
+}
+
+message Boolean {
+  bool value = 1;
 }
