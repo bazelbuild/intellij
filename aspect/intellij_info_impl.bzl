@@ -28,7 +28,6 @@ UNSUPPORTED_FEATURES = [
 
 # Compile-time dependency attributes, grouped by type.
 DEPS = [
-    "_cc_toolchain",  # From cc rules
     "_stl",  # From cc rules
     "malloc",  # From cc_binary rules
     "_java_toolchain",  # From java rules
