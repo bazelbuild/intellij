@@ -61,7 +61,7 @@ class BlazeImportProjectAction extends AnAction {
     return ActionUpdateThread.EDT;
   }
 
-  private static void createFromWizard(
+  static void createFromWizard(
       BlazeProjectCreator blazeProjectCreator, WizardContext wizardContext) {
     ApplicationManager.getApplication().invokeLater(() -> {
           try {
