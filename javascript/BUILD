@@ -35,7 +35,7 @@ java_library(
 
 optional_plugin_xml(
     name = "optional_xml",
-    module = "JavaScript",
+    module = ["JavaScript"],
     plugin_xml = "src/META-INF/javascript-contents.xml",
 )
 

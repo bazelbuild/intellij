@@ -19,12 +19,20 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.util.concurrent.MoreExecutors.newDirectExecutorService;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.ByteSource;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.common.NoopContext;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.attribute.FileTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.Future;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -35,14 +43,25 @@ import org.junit.runners.JUnit4;
 public class BuildArtifactCacheTest {
   @Rule public TemporaryFolder cacheDir = new TemporaryFolder();
 
-  final TestArtifactFetcher artifactFetcher = new TestArtifactFetcher();
+  private final TestArtifactFetcher artifactFetcher = new TestArtifactFetcher();
+  private BuildArtifactCacheDirectory cache;
+
+  @Before
+  public void createCache() throws Exception {
+    cache =
+        new BuildArtifactCacheDirectory(
+            cacheDir.getRoot().toPath(), artifactFetcher, newDirectExecutorService());
+  }
+
+  @After
+  public void checkLocks() {
+    artifactFetcher.flushTasks();
+    assertThat(cache.readLockCount()).isEqualTo(0);
+    assertThat(cache.writeLockCount()).isEqualTo(0);
+  }
 
   @Test
   public void basic_fetch() throws Exception {
-    BuildArtifactCache cache =
-        BuildArtifactCache.create(
-            cacheDir.getRoot().toPath(), artifactFetcher, newDirectExecutorService());
-
     OutputArtifact artifact = TestOutputArtifact.forDigest("abc");
     ListenableFuture<?> fetch = cache.addAll(ImmutableList.of(artifact), new NoopContext());
     assertThat(fetch.isDone()).isFalse();
@@ -59,10 +78,6 @@ public class BuildArtifactCacheTest {
 
   @Test
   public void get_already_present() throws Exception {
-    BuildArtifactCache cache =
-        BuildArtifactCache.create(
-            cacheDir.getRoot().toPath(), artifactFetcher, newDirectExecutorService());
-
     OutputArtifact artifact = TestOutputArtifact.forDigest("abc");
     ListenableFuture<?> unused = cache.addAll(ImmutableList.of(artifact), new NoopContext());
     artifactFetcher.executePendingTasks();
@@ -77,10 +92,6 @@ public class BuildArtifactCacheTest {
 
   @Test
   public void get_multiple() throws Exception {
-    BuildArtifactCache cache =
-        BuildArtifactCache.create(
-            cacheDir.getRoot().toPath(), artifactFetcher, newDirectExecutorService());
-
     OutputArtifact artifact1 = TestOutputArtifact.forDigest("a1digest");
     OutputArtifact artifact2 = TestOutputArtifact.forDigest("a2digest");
     ListenableFuture<?> fetch1 = cache.addAll(ImmutableList.of(artifact1), new NoopContext());
@@ -107,10 +118,6 @@ public class BuildArtifactCacheTest {
 
   @Test
   public void get_multiple_partial_completion() throws Exception {
-    BuildArtifactCache cache =
-        BuildArtifactCache.create(
-            cacheDir.getRoot().toPath(), artifactFetcher, newDirectExecutorService());
-
     OutputArtifact artifact1 = TestOutputArtifact.forDigest("abc");
     OutputArtifact artifact2 = TestOutputArtifact.forDigest("def");
     ListenableFuture<?> fetch1 = cache.addAll(ImmutableList.of(artifact1), new NoopContext());
@@ -130,10 +137,6 @@ public class BuildArtifactCacheTest {
 
   @Test
   public void get_multiple_out_of_order_completion() throws Exception {
-    BuildArtifactCache cache =
-        BuildArtifactCache.create(
-            cacheDir.getRoot().toPath(), artifactFetcher, newDirectExecutorService());
-
     OutputArtifact artifact1 = TestOutputArtifact.forDigest("abc");
     OutputArtifact artifact2 = TestOutputArtifact.forDigest("def");
     ListenableFuture<?> fetch1 = cache.addAll(ImmutableList.of(artifact1), new NoopContext());
@@ -149,5 +152,53 @@ public class BuildArtifactCacheTest {
     assertThat(cache.get("def").map(Future::isDone)).hasValue(true);
     assertThat(Futures.getDone(cache.get("def").get()).asCharSource(UTF_8).read())
         .isEqualTo(artifactFetcher.getExpectedArtifactContents("def"));
+  }
+
+  private static InputStream fileOfSize(int size) throws IOException {
+    return ByteSource.wrap(new byte[size]).openStream();
+  }
+
+  @Test
+  public void clean_verify_test_functionality() throws Exception {
+    Instant now = Instant.now();
+    cache.insertForTest(fileOfSize(10), "a", now.minus(Duration.ofMinutes(1)));
+    cache.insertForTest(fileOfSize(10), "b", now.minus(Duration.ofMinutes(2)));
+    cache.insertForTest(fileOfSize(10), "c", now.minus(Duration.ofMinutes(3)));
+    cache.insertForTest(fileOfSize(10), "d", now.minus(Duration.ofMinutes(4)));
+
+    assertThat(cache.listDigests()).containsExactly("a", "b", "c", "d");
+    assertThat(cache.readAccessTime("a"))
+        .isEquivalentAccordingToCompareTo(FileTime.from(now.minus(Duration.ofMinutes(1))));
+    assertThat(Files.size(cache.artifactPath("a"))).isEqualTo(10);
+  }
+
+  @Test
+  public void clean_target_size_reached() throws Exception {
+    Instant now = Instant.now();
+
+    cache.insertForTest(fileOfSize(10), "a", now.minus(Duration.ofMinutes(10)));
+    cache.insertForTest(fileOfSize(10), "b", now.minus(Duration.ofMinutes(20)));
+    cache.insertForTest(fileOfSize(10), "c", now.minus(Duration.ofMinutes(30)));
+    cache.insertForTest(fileOfSize(10), "d", now.minus(Duration.ofMinutes(40)));
+    assertThat(cache.listDigests()).containsExactly("a", "b", "c", "d");
+
+    cache.clean(20, now.minus(Duration.ofMinutes(5)));
+
+    assertThat(cache.listDigests()).containsExactly("a", "b");
+  }
+
+  @Test
+  public void clean_min_age_reached() throws Exception {
+    Instant now = Instant.now();
+    cache.insertForTest(fileOfSize(10), "a", now.minus(Duration.ofMinutes(5)));
+    cache.insertForTest(fileOfSize(10), "b", now.minus(Duration.ofMinutes(15)));
+    cache.insertForTest(fileOfSize(10), "c", now.minus(Duration.ofMinutes(25)));
+    cache.insertForTest(fileOfSize(10), "d", now.minus(Duration.ofMinutes(35)));
+    assertThat(cache.listDigests()).containsExactly("a", "b", "c", "d");
+
+    cache.clean(20, now.minus(Duration.ofMinutes(30)));
+
+    // We keep C despite it being over the max size because it's newer than max age.
+    assertThat(cache.listDigests()).containsExactly("a", "b", "c");
   }
 }

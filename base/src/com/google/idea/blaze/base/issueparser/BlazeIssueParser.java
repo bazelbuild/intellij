@@ -471,7 +471,7 @@ public class BlazeIssueParser {
             "(" + BAZEL_BUILD_FILES_PATTERN + ":[0-9]+:[0-9]+: Couldn't build file .*)");
 
     private static final ImmutableList<String> QUERY_PATTERNS = ImmutableList.of(
-            "(Skipping '//.+': no such target '//.+': target '.*' not declared in package '.+' defined by .+)",
+            "(Skipping '//.+': no such target '//.+': target '.*' not declared in package '.*' defined by .+)",
             "(Skipping '//.+': no targets found beneath '.+')"
     );
 

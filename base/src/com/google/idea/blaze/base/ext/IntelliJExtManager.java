@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.ext;
 
 import com.google.idea.blaze.ext.IntelliJExtService;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * the executable that provides the extended services. This executable must implement the
  * intellij-ext grpc interface for the IDE to communicate with it.
  */
-public class IntelliJExtManager {
+public class IntelliJExtManager implements Disposable {
 
   public static final String INTELLIJ_EXT_BINARY = "intellij.ext.binary";
 
@@ -237,5 +238,16 @@ public class IntelliJExtManager {
 
   public boolean isPiperEnabled() {
     return isEnabled() && PIPER.getValue();
+  }
+
+  @Override
+  public void dispose() {
+    if (service != null) {
+      logger.warn("Shutting down intellij-ext");
+      IntelliJExtService service = this.service;
+      this.service = null;
+      service.shutdown();
+      logger.warn("intellij-ext shutdown completed");
+    }
   }
 }

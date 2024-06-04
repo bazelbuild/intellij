@@ -1,3 +1,26 @@
+v2024.05.21
+===========
+* Plugin aspect now depends on @rules_java. If this breaks you, please update your @rules_java version to 5.3.5 or later.
+* #6370 Add line numbers to sections and text-blocks #6371
+* Add 'View project root' flag #6422
+* Fixes: Test/Coverage throws exception NoClassDefFoundError in GoLand #2053
+
+v2024.05.07
+===========
+* Plugin aspect now depends on @rules_java. If this breaks you, please update your @rules_java version to 5.3.5 or later.
+* Internal cleanup
+
+v2024.04.23
+===========
+* Feature flags for resolve virtual includes using heuristics or clangd #6387
+* feat: create "Add package" EditorNotificationPanel if derive_targets_from_directories is on #6388
+
+v2024.04.09
+===========
+* Fix imports for go modules named "external" #6325
+* Fix: Ensure .projectview exclusion rules apply only to specified directories #6376
+* Fix: Silence false positive "No such target" errors for files in the project root #6377
+
 v2024.03.26
 ===========
 * Fix "No such target" errors on incremental sync #6262

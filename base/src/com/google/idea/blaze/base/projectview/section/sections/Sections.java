@@ -47,7 +47,9 @@ public class Sections {
           TargetShardSizeSection.PARSER,
           BazelBinarySection.PARSER,
           BuildConfigSection.PARSER,
-          UseExclusionPatternsSection.PARSER);
+          UseExclusionPatternsSection.PARSER,
+          UseQuerySyncSection.PARSER,
+          ViewProjectRootSection.PARSER);
 
   public static List<SectionParser> getParsers() {
     List<SectionParser> parsers = Lists.newArrayList(PARSERS);

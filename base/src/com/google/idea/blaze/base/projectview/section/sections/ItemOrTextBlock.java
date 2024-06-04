@@ -25,17 +25,28 @@ public class ItemOrTextBlock<T> implements Serializable {
   @Nullable public final T item;
   @Nullable public final TextBlock textBlock;
 
-  public ItemOrTextBlock(T item) {
-    this(item, null);
+  private int lineIndex;
+
+  public int getLineIndex() {
+    return lineIndex;
   }
 
-  public ItemOrTextBlock(TextBlock comment) {
-    this(null, comment);
+  public void setLineIndex(int lineIndex) {
+    this.lineIndex = lineIndex;
   }
 
-  private ItemOrTextBlock(@Nullable T item, @Nullable TextBlock comment) {
+  public ItemOrTextBlock(T item, int lineIndex) {
+    this(item, null, lineIndex);
+  }
+
+  public ItemOrTextBlock(TextBlock comment, int lineIndex) {
+    this(null, comment, lineIndex);
+  }
+
+  private ItemOrTextBlock(@Nullable T item, @Nullable TextBlock comment, int lineIndex) {
     this.item = item;
     this.textBlock = comment;
+    this.lineIndex = lineIndex;
   }
 
   @Override
@@ -47,7 +58,7 @@ public class ItemOrTextBlock<T> implements Serializable {
       return false;
     }
     ItemOrTextBlock<?> that = (ItemOrTextBlock<?>) o;
-    return Objects.equal(item, that.item) && Objects.equal(textBlock, that.textBlock);
+    return Objects.equal(item, that.item) && Objects.equal(textBlock, that.textBlock) && Objects.equal(lineIndex, that.lineIndex);
   }
 
   @Override

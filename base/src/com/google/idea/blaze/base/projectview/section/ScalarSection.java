@@ -18,14 +18,16 @@ package com.google.idea.blaze.base.projectview.section;
 import com.google.common.base.Objects;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 
+import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
+
 /** Scalar value. */
 public final class ScalarSection<T> extends Section<T> {
   private static final long serialVersionUID = 1L;
 
   private final T value;
 
-  public ScalarSection(SectionKey<T, ScalarSection<T>> sectionKey, T value) {
-    super(sectionKey);
+  public ScalarSection(SectionKey<T, ScalarSection<T>> sectionKey, T value, int startingLineIndex) {
+    super(sectionKey, startingLineIndex);
     this.value = value;
   }
 
@@ -73,7 +75,7 @@ public final class ScalarSection<T> extends Section<T> {
 
     @Override
     public ScalarSection<T> build() {
-      return new ScalarSection<>(getSectionKey(), value);
+      return new ScalarSection<>(getSectionKey(), value, TEMPORARY_LINE_NUMBER);
     }
   }
 }

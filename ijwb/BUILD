@@ -32,7 +32,7 @@ licenses(["notice"])
 
 optional_plugin_xml(
     name = "optional_java",
-    module = "com.intellij.java",
+    module = ["com.intellij.java"],
     plugin_xml = "src/META-INF/java-contents.xml",
 )
 

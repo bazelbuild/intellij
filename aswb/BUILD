@@ -37,7 +37,7 @@ load(
 
 optional_plugin_xml(
     name = "optional_ndk_xml",
-    module = "com.android.tools.ndk",
+    module = ["com.android.tools.ndk"],
     plugin_xml = "src/META-INF/ndk_contents.xml",
 )
 
@@ -152,6 +152,7 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
+        "//cpp",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:kotlin",
         "//intellij_platform_sdk:plugin_api",

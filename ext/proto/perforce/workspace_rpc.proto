@@ -12,7 +12,8 @@ message GetWorkspacesRequest {
   optional RequestBase base = 1;
   repeated WorkspaceId workspace_ids = 2;
   optional WorkspaceId template_id = 3;
-  optional bool return_default_workspace_if_missing = 5 [default = false];
+  optional bool return_default_workspace_if_missing = 5
+      [default = false, deprecated = true];
 }
 
 message GetWorkspacesResponse {

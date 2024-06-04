@@ -9,14 +9,15 @@ FILES = [
     "bazel_flags",
     "build",
     "builtin",
+    "crash_debugging",
     "crosstool_config",
     "deps",
     "desugar_deps",
     "execution_statistics",
     "extra_actions_base",
-    "invocation_policy",
     "java_compilation",
     "memory_pressure",
+    "strategy_policy",
     "test_status",
     "worker_protocol",
     "execution_graph",
@@ -81,6 +82,17 @@ proto_library(
 java_proto_library(
     name = "failure_details_java_proto",
     deps = [":failure_details_proto"],
+)
+
+proto_library(
+    name = "invocation_policy_proto",
+    srcs = ["invocation_policy.proto"],
+    deps = [":strategy_policy_proto"],
+)
+
+java_proto_library(
+    name = "invocation_policy_java_proto",
+    deps = [":invocation_policy_proto"],
 )
 
 proto_library(
@@ -213,12 +225,39 @@ proto_library(
     srcs = ["spawn.proto"],
     deps = [
         "@com_google_protobuf//:duration_proto",
+        "@com_google_protobuf//:timestamp_proto",
     ],
 )
 
 java_proto_library(
     name = "spawn_java_proto",
     deps = [":spawn_proto"],
+)
+
+# Note that stardoc_output_proto and stardoc_output_java_proto are vendored by
+# Stardoc: https://github.com/bazelbuild/stardoc/tree/master/stardoc/proto
+package_group(
+    name = "stardoc_output_users",
+    packages = [
+        "//src/test/java/com/google/devtools/build/docgen/...",
+        "//src/test/java/com/google/devtools/build/lib/rules/starlarkdocextract/...",
+        "//src/test/java/com/google/devtools/build/lib/starlarkdocextract/...",
+        "//third_party/bazel/src/main/java/com/google/devtools/build/docgen/...",
+        "//third_party/bazel/src/main/java/com/google/devtools/build/lib/rules/starlarkdocextract/...",
+        "//third_party/bazel/src/main/java/com/google/devtools/build/lib/starlarkdocextract/...",
+    ],
+)
+
+proto_library(
+    name = "stardoc_output_proto",
+    srcs = ["stardoc_output.proto"],
+    visibility = [":stardoc_output_users"],
+)
+
+java_proto_library(
+    name = "stardoc_output_java_proto",
+    visibility = [":stardoc_output_users"],
+    deps = [":stardoc_output_proto"],
 )
 
 proto_library(
@@ -254,11 +293,13 @@ filegroup(
         ":command_server_java_grpc_srcs",
         ":command_server_java_proto_srcs",
         ":failure_details_java_proto_srcs",
+        ":invocation_policy_java_proto_srcs",
         ":option_filters_java_proto_srcs",
         ":profile_java_proto_srcs",
         ":remote_execution_log_java_proto_srcs",
         ":remote_scrubbing_java_proto_srcs",
         ":spawn_java_proto_srcs",
+        ":stardoc_output_java_proto_srcs",
         ":xcode_java_proto_srcs",
     ],
 )

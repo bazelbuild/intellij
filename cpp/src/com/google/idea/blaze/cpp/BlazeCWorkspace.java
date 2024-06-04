@@ -183,7 +183,8 @@ public final class BlazeCWorkspace implements ProjectComponent {
             workspaceRoot,
             blazeProjectData.getBlazeInfo().getExecutionRoot(),
             blazeProjectData.getBlazeInfo().getOutputBase(),
-            blazeProjectData.getWorkspacePathResolver());
+            blazeProjectData.getWorkspacePathResolver(),
+            blazeProjectData.getTargetMap());
 
     int progress = 0;
 
@@ -257,9 +258,12 @@ public final class BlazeCWorkspace implements ProjectComponent {
                 .map(file -> "-I" + file.getAbsolutePath())
                 .collect(toImmutableList());
 
-        Path rootPath = workspaceRoot.directory().toPath();
-        ImmutableList<String> includePrefixHints = VirtualIncludesHandler.collectIncludeHints(rootPath,
-            targetKey, blazeProjectData, executionRootPathResolver, indicator);
+        ImmutableList<String> includePrefixHints = ImmutableList.of();
+        if (VirtualIncludesHandler.useHints()) {
+          Path rootPath = workspaceRoot.directory().toPath();
+          includePrefixHints = VirtualIncludesHandler.collectIncludeHints(rootPath, targetKey, blazeProjectData,
+              executionRootPathResolver, indicator);
+        }
 
         for (VirtualFile vf : resolveConfiguration.getSources(targetKey)) {
           OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(vf);
@@ -326,18 +330,24 @@ public final class BlazeCWorkspace implements ProjectComponent {
             id, displayName, null, OCResolveConfiguration.DEFAULT_FILE_SEPARATORS);
     for (Map.Entry<OCLanguageKind, PerLanguageCompilerOpts> languageEntry :
         configLanguages.entrySet()) {
-      OCCompilerSettings.ModifiableModel langSettings =
-          config.getLanguageCompilerSettings(languageEntry.getKey());
       PerLanguageCompilerOpts configForLanguage = languageEntry.getValue();
-      langSettings.setCompiler(configForLanguage.kind, configForLanguage.compiler, directory);
-      langSettings.setCompilerSwitches(configForLanguage.switches);
+      if (CppSupportChecker.isSupportedCppConfiguration(
+          configForLanguage.switches, directory.toPath())) {
+        OCCompilerSettings.ModifiableModel langSettings =
+            config.getLanguageCompilerSettings(languageEntry.getKey());
+        langSettings.setCompiler(configForLanguage.kind, configForLanguage.compiler, directory);
+        langSettings.setCompilerSwitches(configForLanguage.switches);
+      }
     }
 
     for (Map.Entry<VirtualFile, PerFileCompilerOpts> fileEntry : configSourceFiles.entrySet()) {
       PerFileCompilerOpts compilerOpts = fileEntry.getValue();
-      OCCompilerSettings.ModifiableModel fileCompilerSettings =
-          config.addSource(fileEntry.getKey(), compilerOpts.kind);
-      fileCompilerSettings.setCompilerSwitches(compilerOpts.switches);
+      if (CppSupportChecker.isSupportedCppConfiguration(
+          compilerOpts.switches, directory.toPath())) {
+        OCCompilerSettings.ModifiableModel fileCompilerSettings =
+            config.addSource(fileEntry.getKey(), compilerOpts.kind);
+        fileCompilerSettings.setCompilerSwitches(compilerOpts.switches);
+      }
     }
   }
   /** Group compiler options for a specific file. */

@@ -40,33 +40,28 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.util.concurrent.DefaultThreadFactory;
+import io.netty.util.concurrent.Future;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 
 /** The local client connected to the running intellij-ext service. */
 public class IntelliJExtClient {
 
   private final IntelliJExtBlockingStub stub;
+  private final EventLoopGroup eventLoopGroup;
   private final ManagedChannel channel;
 
-  public IntelliJExtClient(Path socket) {
-    this(
+  public static IntelliJExtClient create(Path socket) {
+    EventLoopGroup eventLoopGroup = createEventLoopGroup();
+    ManagedChannel channel =
         NettyChannelBuilder.forAddress(new DomainSocketAddress(socket.toFile()))
-            .eventLoopGroup(
-                IntelliJExts.createGroup(new DefaultThreadFactory(EventLoopGroup.class, true)))
+            .eventLoopGroup(eventLoopGroup)
             .channelType(IntelliJExts.getClientChannelType())
             .maxInboundMessageSize(1024 * 1024 * 1024) // To avoid RESOURCE_EXHAUSED errors
             .withOption(ChannelOption.SO_KEEPALIVE, false)
             .usePlaintext()
-            .build());
-  }
-
-  public IntelliJExtClient(ManagedChannel channel) {
-    this.channel = channel;
-    stub = IntelliJExtGrpc.newBlockingStub(channel);
-  }
-
-  public static IntelliJExtClient create(Path socket) {
-    return new IntelliJExtClient(socket);
+            .build();
+    return new IntelliJExtClient(channel, eventLoopGroup);
   }
 
   /**
@@ -74,7 +69,26 @@ public class IntelliJExtClient {
    * connecting to the real intellij ext server but use the mock one that unit test created.
    */
   public static IntelliJExtClient createForTest(ManagedChannel channel) {
-    return new IntelliJExtClient(channel);
+    EventLoopGroup eventLoopGroup = createEventLoopGroup();
+    return new IntelliJExtClient(channel, eventLoopGroup);
+  }
+
+  private IntelliJExtClient(ManagedChannel channel, EventLoopGroup eventLoopGroup) {
+    this.channel = channel;
+    this.eventLoopGroup = eventLoopGroup;
+    stub = IntelliJExtGrpc.newBlockingStub(channel);
+  }
+
+  /** Gracefully shutdown the underlying channel. */
+  public void shutdown() {
+    channel.shutdown();
+    eventLoopGroup.shutdownGracefully().awaitUninterruptibly(30, TimeUnit.SECONDS); // Best effort.
+  }
+
+  /** Forcibly shutdown the underlying channel. */
+  public void shutdownNow() {
+    channel.shutdownNow();
+    Future<?> unused = eventLoopGroup.shutdownGracefully(); // Best effort.
   }
 
   /**
@@ -156,5 +170,9 @@ public class IntelliJExtClient {
 
   public BlueprintServiceBlockingStub getBlueprintService() {
     return BlueprintServiceGrpc.newBlockingStub(channel);
+  }
+
+  private static EventLoopGroup createEventLoopGroup() {
+    return IntelliJExts.createGroup(new DefaultThreadFactory(EventLoopGroup.class, true));
   }
 }
