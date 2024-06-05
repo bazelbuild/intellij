@@ -1,6 +1,9 @@
 v2024.06.04
 ===========
-
+* feat: Support JetBrains IDEs 2024.2 #6434
+* feat: Editor notification on bazel files if the project is not imported #6153
+* perf: perf: Pass --override_repository flag to all commands for faster analysis phase #6453
+* fix: Default to project name to workspace name instead of root directory #6458
 
 v2024.05.21
 ===========
