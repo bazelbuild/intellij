@@ -315,7 +315,7 @@ public final class BlazeEditProjectViewControl {
     branchDefaultNameOption.setEnabled(workspaceData.branchName() != null);
     importDirectoryDefaultNameOption.setEnabled(projectViewOption.getImportDirectory() != null);
 
-    InferDefaultNameMode inferDefaultNameMode = InferDefaultNameMode.FromImportDirectory;
+    InferDefaultNameMode inferDefaultNameMode = InferDefaultNameMode.FromWorkspace;
     try {
       String lastModeString =
           PropertiesComponent.getInstance().getValue(LAST_WORKSPACE_MODE_PROPERTY);

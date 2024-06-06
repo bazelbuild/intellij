@@ -618,8 +618,26 @@ def no_mockito_extensions(name, jars, **kwargs):
             cmd = """
             cp "$<" "$@"
             chmod u+w "$@"
-            zip -d "$@" mockito-extensions/*
+            tmpdir=$$(mktemp -d)
+            zipper="$$(pwd)/$(execpath @bazel_tools//tools/zip:zipper)"
+            "$$zipper" x "$@" -d ".out"
+            mv ".out" "$$tmpdir"
+
+            pushd "$$tmpdir/.out" >/dev/null
+            rm -fr "mockito-extensions"
+
+            # We store the results from `find` in a file to deal with filenames with spaces
+            files_to_tar_file=$$(mktemp)
+            find . -type f | sed 's:^./::' > "$${files_to_tar_file}"
+            IFS="\n" read -r -d "" -a files_to_tar < "$${files_to_tar_file}" || true
+
+            "$$zipper" cC "../out.jar" "$${files_to_tar[@]}"
+            popd
+
+            cp "$$tmpdir/out.jar" "$@"
+            chmod u+rw "$@"
             """,
+            tools = ["@bazel_tools//tools/zip:zipper"],
         )
         output_jars.append(output_jar_name)
     java_import(
