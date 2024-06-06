@@ -103,7 +103,6 @@ java_library(
         "clion-2023.1": ["@intellij_ue_2023_1//:angular"],
         "clion-2023.2": ["@intellij_ue_2023_2//:angular"],
         "clion-2023.3": ["@intellij_ue_2023_3//:angular"],
-        "clion-2024.2": ["@clion_2024_2//:angular"],
         "default": [],
     }),
 )

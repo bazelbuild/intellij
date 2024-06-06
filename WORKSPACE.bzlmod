@@ -291,16 +291,16 @@ http_archive(
     url = CLION_241_URL,
 )
 
-# CLION_242_SHA = "23039b46c172d820a3764e16b2f2f88bf6a2859436ae8ccf6fe5d9c78689b068"
+CLION_242_SHA = "cd018a71bccd28512dc22d8b3824f68ec9450b37c9e87e6c8553d3292acf9d0e"
 
-# CLION_242_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/242.14146.22-EAP-SNAPSHOT/clion-242.14146.22-EAP-SNAPSHOT.zip"
+CLION_242_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/242.16677.29-EAP-SNAPSHOT/clion-242.16677.29-EAP-SNAPSHOT.zip"
 
-# http_archive(
-#     name = "clion_2024_2",
-#     build_file = "@//intellij_platform_sdk:BUILD.clion242",
-#     sha256 = CLION_242_SHA,
-#     url = CLION_242_URL,
-# )
+http_archive(
+    name = "clion_2024_2",
+    build_file = "@//intellij_platform_sdk:BUILD.clion242",
+    sha256 = CLION_242_SHA,
+    url = CLION_242_URL,
+)
 
 DEVKIT_BUILD_FILE = """
 java_import(
