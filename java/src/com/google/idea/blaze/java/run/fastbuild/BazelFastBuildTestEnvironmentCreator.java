@@ -68,6 +68,8 @@ final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmen
    * <p>Bazel adds the Java launcher to the runfiles path when building a Java test target. If
    * `bzlmod` is enabled, the directory name is formatted as
    * 'rules_java~{RULES_JAVA_VERSION}~toolchains~local_jdk' otherwise it is `local_jdk`.
+   * If the user setting `java.runfiles.binary.path` is specified it will take precedence
+   * over `local_jdk`.
    */
   private static File getStandardJavaBinary(String runfilesPath) {
     for (File file :
