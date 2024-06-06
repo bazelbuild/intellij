@@ -35,6 +35,8 @@ java_library(
         "intellij-ue-2023.3": ["//sdkcompat/v233"],
         "intellij-2024.1": ["//sdkcompat/v241"],
         "intellij-ue-2024.1": ["//sdkcompat/v241"],
+        "intellij-2024.2": ["//sdkcompat/v242"],
+        "intellij-ue-2024.2": ["//sdkcompat/v242"],
         "clion-2021.3": ["//sdkcompat/v213"],
         "clion-2022.1": ["//sdkcompat/v221"],
         "clion-2022.2": ["//sdkcompat/v222"],
@@ -43,5 +45,6 @@ java_library(
         "clion-2023.2": ["//sdkcompat/v232"],
         "clion-2023.3": ["//sdkcompat/v233"],
         "clion-2024.1": ["//sdkcompat/v241"],
+        "clion-2024.2": ["//sdkcompat/v242"],
     }),
 )

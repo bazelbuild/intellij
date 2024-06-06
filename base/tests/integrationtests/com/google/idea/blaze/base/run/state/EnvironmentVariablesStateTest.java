@@ -3,9 +3,8 @@ package com.google.idea.blaze.base.run.state;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -14,7 +13,7 @@ import java.util.Map;
 
 /** Unit tests for {@link EnvironmentVariablesState}. */
 @RunWith(JUnit4.class)
-public class EnvironmentVariablesStateTest extends BlazeTestCase {
+public class EnvironmentVariablesStateTest extends BlazeIntegrationTestCase {
 
     @Test
     public void testSetEnvVarsReadWrite() {
