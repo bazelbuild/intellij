@@ -629,9 +629,8 @@ def no_mockito_extensions(name, jars, **kwargs):
             # We store the results from `find` in a file to deal with filenames with spaces
             files_to_tar_file=$$(mktemp)
             find . -type f | sed 's:^./::' > "$${files_to_tar_file}"
-            IFS="\n" read -r -d "" -a files_to_tar < "$${files_to_tar_file}" || true
 
-            "$$zipper" cC "../out.jar" "$${files_to_tar[@]}"
+            "$$zipper" cC "../out.jar" "@$${files_to_tar_file}"
             popd
 
             cp "$$tmpdir/out.jar" "$@"
