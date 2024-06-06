@@ -81,6 +81,30 @@ public class BlazeCoverageDataTest {
     assertThat(data.perFileData.keySet()).containsExactly("path/to/another/file.txt");
   }
 
+  /**
+   * Some test runners, such as the one for `py_test` in rules_python, append extra data to DA entries.
+   * This test data is taken from a run of one such `py_test`.
+   * @throws IOException
+   */
+  @Test
+  public void testDALinesWithShaCanBeParsed() throws IOException {
+    BlazeCoverageData data =
+       BlazeCoverageData.parse(
+           inputStream(
+               "SF:path/to/file.txt",
+              "DA:1,1,CjTuYq8+gnNfbQNgi09Ocg",
+              "DA:40,1,E/tvV9JPVDhEcTCkgrwOFw",
+              "DA:42,1,SZ/sLwIPxdnoU2xnoUB7pg",
+              "end_of_record"
+           ));
+
+    assertThat(data.perFileData).hasSize(1);
+    FileData fileData = data.perFileData.get("path/to/file.txt");
+    assertThat(fileData).isNotNull();
+    assertThat(fileData.source).isEqualTo("path/to/file.txt");
+    assertThat(toMap(fileData.lineHits)).containsExactly(1, 1, 40, 1, 42, 1);
+  }
+
   private static ImmutableMap<Integer, Integer> toMap(TIntIntHashMap troveMap) {
     return Arrays.stream(troveMap.keys())
         .boxed()
