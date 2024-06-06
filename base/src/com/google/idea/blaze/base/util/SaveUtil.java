@@ -21,7 +21,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 /** Utility for saving all files. */
 public class SaveUtil {
   public static void saveAllFiles() {
-    Transactions.submitTransactionAndWait(
+    Transactions.submitWriteActionTransactionAndWait(
         () -> FileDocumentManager.getInstance().saveAllDocuments());
   }
 }
