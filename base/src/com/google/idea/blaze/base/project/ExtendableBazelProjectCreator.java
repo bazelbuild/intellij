@@ -15,8 +15,12 @@
  */
 package com.google.idea.blaze.base.project;
 
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
 /** Interface for creating a project with additional configuration. */
 public interface ExtendableBazelProjectCreator {
@@ -26,10 +30,14 @@ public interface ExtendableBazelProjectCreator {
    * @param builder the project builder
    * @param name the name of the project
    * @param path the path to the project
-   * @return the created project
+   * @return the created project, can be null if the project cannot be created
    */
-  public Project createProject(ProjectBuilder builder, String name, String path);
+  public Optional<Project> createProject(ProjectBuilder builder, String name, String path);
 
   /** Returns true if the project can be created. */
-  public boolean canCreateProject();
+  public boolean canCreateProject(@Nullable BuildSystemName buildSystemName);
+
+  static ExtendableBazelProjectCreator getInstance() {
+    return ApplicationManager.getApplication().getService(ExtendableBazelProjectCreator.class);
+  }
 }
