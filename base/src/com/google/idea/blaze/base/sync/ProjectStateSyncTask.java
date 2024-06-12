@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.FutureUtil;
+import com.google.idea.blaze.base.async.FutureUtil.FutureResult;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -28,6 +29,7 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
+import com.google.idea.blaze.base.execution.ExecutionDeniedException;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -126,15 +128,24 @@ final class ProjectStateSyncTask {
       workingSetFuture = Futures.immediateFuture(null);
     }
 
-    BlazeInfo blazeInfo =
+    FutureResult<BlazeInfo> blazeInfoResult =
         FutureUtil.waitForFuture(context, blazeInfoFuture)
             .timed(Blaze.buildSystemName(project) + "Info", EventType.BlazeInvocation)
             .withProgressMessage(
                 String.format("Running %s info...", Blaze.buildSystemName(project)))
             .onError(String.format("Could not run %s info", Blaze.buildSystemName(project)))
-            .run()
-            .result();
+            .run();
+
+    BlazeInfo blazeInfo = blazeInfoResult.result();
     if (blazeInfo == null) {
+      Exception exception = blazeInfoResult.exception();
+      if (exception != null) {
+        Throwable cause = exception.getCause();
+        if (cause instanceof BuildException
+            && cause.getCause() instanceof ExecutionDeniedException) {
+          throw new SyncCanceledException();
+        }
+      }
       throw new SyncFailedException();
     }
     BlazeVersionData blazeVersionData =

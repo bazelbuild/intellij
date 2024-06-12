@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.wizard2.BlazeWizardUserSettings;
 import com.google.idea.blaze.base.wizard2.TopLevelSelectWorkspaceOption;
 import com.google.idea.blaze.base.wizard2.WorkspaceTypeList;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.CancelledConfigurationException;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.ui.IdeBorderFactory.PlainSmallWithoutIndent;
@@ -155,9 +154,8 @@ public class BlazeSelectWorkspaceControl {
   }
 
   public void validateAndUpdateBuilder() throws ConfigurationException {
-    if (!ApplicationManager.getApplication()
-        .getService(ExtendableBazelProjectCreator.class)
-        .canCreateProject()) {
+    if (!ExtendableBazelProjectCreator.getInstance()
+        .canCreateProject(getSelectedOption().getWorkspaceData().buildSystem())) {
       throw new CancelledConfigurationException();
     }
 

@@ -28,13 +28,17 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtif
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.execution.BazelGuard;
+import com.google.idea.blaze.base.execution.ExecutionDeniedException;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.SummaryOutput;
+import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.SharedStringPoolScope;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
@@ -65,6 +69,11 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
           BuildResultHelper buildResultHelper,
           BlazeContext context,
           Map<String, String> envVars) {
+    try {
+      performGuardCheck(project, context);
+    } catch (ExecutionDeniedException e) {
+      return BlazeBuildOutputs.noOutputs(BuildResult.FATAL_ERROR);
+    }
 
     BuildResult buildResult =
         issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), envVars, context);
@@ -104,10 +113,17 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       BuildResultHelper buildResultHelper,
       BlazeContext context,
       Map<String, String> envVars) {
+    try {
+      performGuardCheck(project, context);
+    } catch (ExecutionDeniedException e) {
+      return BlazeTestResults.NO_RESULTS;
+    }
+
     // For tests, we have to pass the environment variables as `--test_env`, otherwise they don't get forwarded
     for (Map.Entry<String, String> env: envVars.entrySet()) {
       blazeCommandBuilder.addBlazeFlags(BlazeFlags.TEST_ENV, String.format("%s=%s", env.getKey(), env.getValue()));
     }
+
     BuildResult buildResult =
         issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), envVars, context);
     if (buildResult.status == Status.FATAL_ERROR) {
@@ -130,6 +146,8 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       BuildResultHelper buildResultHelper,
       BlazeContext context)
       throws BuildException {
+    performGuardCheckAsBuildException(project, context);
+
     try (Closer closer = Closer.create()) {
       Path tempFile =
           Files.createTempFile(
@@ -176,6 +194,8 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       BuildResultHelper buildResultHelper,
       BlazeContext context)
       throws BuildException {
+    performGuardCheckAsBuildException(project, context);
+
     try (Closer closer = Closer.create()) {
       Path tmpFile =
           Files.createTempFile(
@@ -226,5 +246,28 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
     // On linux, `xargs --show-limits` says "Size of command buffer we are actually using: 131072"
     // so choose a value somewhere south of that, which seems to work.
     return Optional.of(130000);
+  }
+
+  private void performGuardCheck(Project project, BlazeContext context)
+      throws ExecutionDeniedException {
+    try {
+      BazelGuard.checkExtensionsIsExecutionAllowed(project);
+    } catch (ExecutionDeniedException e) {
+      IssueOutput.error(
+              "Can't invoke "
+                  + Blaze.buildSystemName(project)
+                  + " because the project is not trusted")
+          .submit(context);
+      throw e;
+    }
+  }
+
+  private void performGuardCheckAsBuildException(Project project, BlazeContext context)
+      throws BuildException {
+    try {
+      performGuardCheck(project, context);
+    } catch (ExecutionDeniedException e) {
+      throw new BuildException(e);
+    }
   }
 }
