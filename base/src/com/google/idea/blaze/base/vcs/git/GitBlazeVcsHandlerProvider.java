@@ -20,6 +20,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.process.ExternalTask;
+import com.google.idea.blaze.base.execution.BazelGuard;
+import com.google.idea.blaze.base.execution.ExecutionDeniedException;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -50,6 +52,12 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
 
   @Override
   public boolean handlesProject(Project project, WorkspaceRoot workspaceRoot) {
+    try {
+      BazelGuard.checkExtensionsIsExecutionAllowed(project);
+    } catch (ExecutionDeniedException e) {
+      logger.warn("Git provider is not allowed because of", e);
+      return false;
+    }
     return Blaze.getBuildSystemName(project) == BuildSystemName.Bazel
         && isGitRepository(workspaceRoot)
         && tracksRemote(workspaceRoot);
