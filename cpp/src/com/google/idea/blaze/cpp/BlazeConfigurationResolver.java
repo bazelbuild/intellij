@@ -51,6 +51,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
@@ -130,18 +131,23 @@ final class BlazeConfigurationResolver {
 
   @NotNull
   private static ImmutableMap<String, String> getTargetToVersionMap(ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap, ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings) {
-    ImmutableMap<ExecutionRootPath, String> compilerVersionByPath =
-            compilerSettings.entrySet().stream().collect(
-                    ImmutableMap.toImmutableMap(
-                            e -> e.getKey().getCppExecutable(),
-                            e -> e.getValue().getCompilerVersion()));
-    return toolchainLookupMap.entrySet().stream()
-            .map(e -> new AbstractMap.SimpleImmutableEntry<>(
-                    e.getKey().getLabel().toString(),
-                    compilerVersionByPath.get(e.getValue().getCppExecutable())))
-            // In case of a broken compiler, the version string is null, but Collectors.toMap requires non-null value function.
-            .filter(e -> e.getValue() != null)
-            .collect(ImmutableMap.toImmutableMap(e -> e.getKey(), e -> e.getValue()));
+    // since the cpp and c compiler versions should be the same per toolchain, it is okay to only
+    // store one version per toolchain
+    final var compilerVersionByPath = new HashMap<ExecutionRootPath, String>();
+    compilerSettings.forEach((toolchain, settings) -> {
+      compilerVersionByPath.put(toolchain.getCppCompiler(), settings.getCompilerVersion());
+    });
+
+    final var targetToVersionBuilder = new ImmutableMap.Builder<String, String>();
+    toolchainLookupMap.forEach((key, toolchain) -> {
+      final var version = compilerVersionByPath.get(toolchain.getCCompiler()) ;
+
+      if (version != null) {
+        targetToVersionBuilder.put(key.getLabel().toString(), version);
+      }
+    });
+
+    return targetToVersionBuilder.build();
   }
 
   private static Predicate<TargetIdeInfo> getTargetFilter(

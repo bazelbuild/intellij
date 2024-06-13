@@ -40,7 +40,8 @@ public class CcToolchainTest extends BazelIntellijAspectTest {
     for (TargetIdeInfo toolchain : toolchains) {
       CToolchainIdeInfo toolchainInfo = toolchain.getCToolchainIdeInfo();
       assertThat(toolchainInfo.getBuiltInIncludeDirectoryList()).isNotEmpty();
-      assertThat(toolchainInfo.getCppExecutable()).isNotEmpty();
+      assertThat(toolchainInfo.getCCompiler()).isNotEmpty();
+      assertThat(toolchainInfo.getCppCompiler()).isNotEmpty();
       assertThat(toolchainInfo.getTargetName()).isNotEmpty();
       assertThat(toolchainInfo.getCOptionList()).isNotEmpty();
       assertThat(toolchainInfo.getCppOptionList()).isNotEmpty();
