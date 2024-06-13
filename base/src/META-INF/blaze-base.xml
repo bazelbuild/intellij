@@ -508,6 +508,8 @@
       interface="com.google.idea.blaze.base.qsync.BlazeProjectListenerProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.base.qsync.ProjectProtoTransformProvider"
       interface="com.google.idea.blaze.base.qsync.ProjectProtoTransformProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.base.sync.projectstructure.ExternalModuleProvider"
+                    interface="com.google.idea.blaze.base.sync.projectstructure.ExternalModuleProvider"/>
 
   </extensionPoints>
 
