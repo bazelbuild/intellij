@@ -292,10 +292,10 @@ public final class BlazeConfigurationToolchainResolver {
                         project,
                         toolchain,
                         xcodeCompilerSettings,
-                        executionRootPathResolver.getExecutionRoot(),
                         cCompiler,
                         cppCompiler,
-                        compilerVersion);
+                        compilerVersion,
+                        executionRootPathResolver);
                 if (settings == null) {
                   return null;
                 }
@@ -379,10 +379,12 @@ public final class BlazeConfigurationToolchainResolver {
       Project project,
       CToolchainIdeInfo toolchainIdeInfo,
       Optional<XcodeCompilerSettings> xcodeCompilerSettings,
-      File executionRoot,
       File cCompiler,
       File cppCompiler,
-      String compilerVersion) {
+      String compilerVersion,
+      ExecutionRootPathResolver executionRootPathResolver) {
+    File executionRoot = executionRootPathResolver.getExecutionRoot();
+
     ImmutableMap<String, String> compilerWrapperEnvVars =
         XcodeCompilerSettingsProvider.getInstance(project).asEnvironmentVariables(xcodeCompilerSettings);
     File cCompilerWrapper =
@@ -407,6 +409,11 @@ public final class BlazeConfigurationToolchainResolver {
     ImmutableList.Builder<String> cppFlagsBuilder = ImmutableList.builder();
     cppFlagsBuilder.addAll(toolchainIdeInfo.getCppCompilerOptions());
 
+    ImmutableList<File> builtInIncludes = toolchainIdeInfo.getBuiltInIncludeDirectories()
+        .stream()
+        .map(executionRootPathResolver::resolveExecutionRootPath)
+        .collect(ImmutableList.toImmutableList());
+
     ImmutableMap.Builder<String, String> compilerEnv = ImmutableMap.builder();
     compilerEnv.putAll(compilerWrapperEnvVars);
     return new BlazeCompilerSettings(
@@ -416,7 +423,8 @@ public final class BlazeConfigurationToolchainResolver {
         cFlagsBuilder.build(),
         cppFlagsBuilder.build(),
         compilerVersion,
-        compilerEnv.build());
+        compilerEnv.build(),
+        builtInIncludes);
   }
 
   private static <T> ListenableFuture<T> submit(Callable<T> callable) {

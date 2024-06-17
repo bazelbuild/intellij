@@ -25,7 +25,6 @@ import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.UnknownCompilerKind;
 import java.io.File;
-import java.util.List;
 import javax.annotation.Nullable;
 
 final class BlazeCompilerSettings {
@@ -44,11 +43,12 @@ final class BlazeCompilerSettings {
       ImmutableList<String> cFlags,
       ImmutableList<String> cppFlags,
       String compilerVersion,
-      ImmutableMap<String, String> compilerEnvironment) {
+      ImmutableMap<String, String> compilerEnvironment,
+      ImmutableList<File> builtInIncludes) {
     this.cCompiler = cCompiler;
     this.cppCompiler = cppCompiler;
-    this.cCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cFlags));
-    this.cppCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cppFlags));
+    this.cCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cFlags, builtInIncludes));
+    this.cppCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cppFlags, builtInIncludes));
     this.compilerVersion = compilerVersion;
     this.compilerEnvironment = compilerEnvironment;
   }
@@ -80,8 +80,18 @@ final class BlazeCompilerSettings {
     return ImmutableList.of();
   }
 
-  private static List<String> getCompilerSwitches(Project project, List<String> allCompilerFlags) {
-    return BlazeCompilerFlagsProcessor.process(project, allCompilerFlags);
+  private static ImmutableList<String> getCompilerSwitches(
+      Project project,
+      ImmutableList<String> allCompilerFlags,
+      ImmutableList<File> builtInIncludes) {
+    final var builder = ImmutableList.<String>builder();
+    builder.addAll(BlazeCompilerFlagsProcessor.process(project, allCompilerFlags));
+
+    for (final var include : builtInIncludes) {
+      builder.add("-isystem" + include.getAbsolutePath());
+    }
+
+    return builder.build();
   }
 
   String getCompilerVersion() {
