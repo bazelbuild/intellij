@@ -50,7 +50,9 @@ import com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider.XcodeCompilerSett
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.pom.NavigatableAdapter;
+
 import java.io.File;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
@@ -218,8 +220,15 @@ public final class BlazeConfigurationToolchainResolver {
       ExecutionRootPath compilerPath
   ) {
     File compilerFile = executionRootPathResolver.resolveExecutionRootPath(compilerPath);
+
     if (compilerFile == null) {
       IssueOutput.error("Unable to find compiler executable: " + compilerPath).submit(context);
+      return null;
+    }
+
+    if (!compilerFile.exists() && SystemInfo.isWindows) {
+      // bazel reports the compiler executable without the exe suffix
+      compilerFile = new File(compilerFile.getAbsolutePath() + ".exe");
     }
 
     return compilerFile;
