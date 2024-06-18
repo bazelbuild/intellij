@@ -870,9 +870,6 @@ load("@io_grpc_grpc_java//:repositories.bzl", "grpc_java_repositories")
 
 grpc_java_repositories()
 
-# Register custom java 17 toolchain
-register_toolchains("//:custom_java_17_toolchain_definition")
-
 # Dependency needed for Go test library
 http_archive(
     name = "bazel_gazelle",
