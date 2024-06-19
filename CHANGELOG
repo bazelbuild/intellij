@@ -1,3 +1,21 @@
+v2024.06.18
+===========
+* fix: Missing directories when view_project_root is on #6493
+* fix: "Read access is allowed from inside read-action" exception when opening a file #6489
+* Add extension point to detect whether a module is to be orphaned or retained. #6467
+* Fix for wrong compiler executable when using custom toolchains #6419
+* fix(coverage): Account for SHA in lcov DA parsing #6463
+* fix: Mark saveAllFiles as a WriteAction #6459
+* fix: Rely on the bazel zipper instead of zip #6462
+
+v2024.06.04-RC-2
+================
+* Address CVE-2024-5899
+* feat: Support JetBrains IDEs 2024.2 #6434
+* feat: Editor notification on bazel files if the project is not imported #6153
+* perf: perf: Pass --override_repository flag to all commands for faster analysis phase #6453
+* fix: Default to project name to workspace name instead of root directory #6458
+
 v2024.06.04
 ===========
 * feat: Support JetBrains IDEs 2024.2 #6434
