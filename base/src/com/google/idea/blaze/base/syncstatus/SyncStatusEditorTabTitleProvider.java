@@ -18,10 +18,13 @@ package com.google.idea.blaze.base.syncstatus;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+
 import javax.annotation.Nullable;
 
 /** Changes the tab title for unsynced files. */
@@ -32,8 +35,10 @@ public class SyncStatusEditorTabTitleProvider implements EditorTabTitleProvider,
     if (Blaze.getProjectType(project).equals(BlazeImportSettings.ProjectType.UNKNOWN)) {
       return null;
     }
-    
-    SyncStatus status = SyncStatusContributor.getSyncStatus(project, file);
+
+    SyncStatus status = ApplicationManager.getApplication()
+        .runReadAction((Computable<SyncStatus>) () -> SyncStatusContributor.getSyncStatus(project, file));
+
     if (status == null) {
       return null;
     }

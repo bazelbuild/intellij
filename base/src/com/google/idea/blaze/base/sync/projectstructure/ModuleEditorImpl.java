@@ -39,6 +39,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -118,8 +119,9 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
   public void commitWithGc(BlazeContext context) {
     List<Module> orphanModules = Lists.newArrayList();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (!modules.containsKey(module.getName())) {
-        orphanModules.add(module);
+      if (!modules.containsKey(module.getName())
+              && !ExternalModuleProvider.EP_NAME.getExtensionList().stream().anyMatch(n -> n.isOwnedByExternalPlugin(module))) {
+          orphanModules.add(module);
       }
     }
     if (orphanModules.size() > 0) {
