@@ -22,8 +22,10 @@ package(default_visibility = ["//visibility:public"])
 
 java_import(
     name = "sdk",
-    jars = glob(
-        ["lib/*.jar"],
+    jars = glob([
+            "lib/*.jar",
+            "lib/modules/*.jar"
+        ],
         exclude = [
             # mockito-extensions needs to be removed from this jar.
             "lib/testFramework.jar",

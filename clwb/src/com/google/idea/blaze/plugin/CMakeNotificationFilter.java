@@ -18,14 +18,12 @@ package com.google.idea.blaze.plugin;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.sdkcompat.clion.CMakeNotificationProviderWrapper;
 import com.google.idea.sdkcompat.general.EditorNotificationCompat;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
-import com.jetbrains.cidr.cpp.cmake.workspace.CMakeNotificationProvider;
 
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
@@ -56,16 +54,7 @@ public class CMakeNotificationFilter extends EditorNotifications.Provider<JCompo
   }
 
   public static void overrideProjectExtension(Project project) {
-    unregisterDelegateExtension(EditorNotificationCompat.getEp(project));
-    EditorNotificationCompat.getEp(project)
-        .registerExtension(new CMakeNotificationFilter(project));
-  }
-
-  private static <T> void unregisterDelegateExtension(ExtensionPoint<T> extensionPoint) {
-    for (T extension : extensionPoint.getExtensions()) {
-      if (extension instanceof CMakeNotificationProvider) {
-        extensionPoint.unregisterExtension(extension);
-      }
-    }
+    CMakeNotificationProviderWrapper.unregisterDelegateExtension(EditorNotificationCompat.getEp(project));
+    EditorNotificationCompat.getEp(project).registerExtension(new CMakeNotificationFilter(project));
   }
 }

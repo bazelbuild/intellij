@@ -17,6 +17,7 @@
 package com.google.idea.sdkcompat.clion;
 
 
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,5 +45,13 @@ public class CMakeNotificationProviderWrapper {
         }
 
         return null;
+    }
+
+    public static <T> void unregisterDelegateExtension(ExtensionPoint<T> extensionPoint) {
+        for (T extension : extensionPoint.getExtensions()) {
+            if (extension instanceof CMakeNotificationProvider) {
+                extensionPoint.unregisterExtension(extension);
+            }
+        }
     }
 }
