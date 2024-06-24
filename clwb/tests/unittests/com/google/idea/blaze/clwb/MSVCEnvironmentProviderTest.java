@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.idea.blaze.cpp;
+package com.google.idea.blaze.clwb;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeTrue;
@@ -29,24 +29,24 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /**
- * Tests for {@link MSVCEnvironment}.
+ * Tests for {@link MSVCEnvironmentProvider}.
  */
 @RunWith(JUnit4.class)
-public class MSVCEnvironmentTest {
+public class MSVCEnvironmentProviderTest {
   @Before
   public void windowsOnly() {
     assumeTrue(SystemInfo.isWindows);
   }
 
   private static void setBazelVC(String value) {
-    TestModeFlags.set(MSVCEnvironment.BAZEL_VC_KEY, value);
+    TestModeFlags.set(MSVCEnvironmentProvider.BAZEL_VC_KEY, value);
   }
 
   @Test
   public void getToolSetPath_usesBazelVC() {
     setBazelVC("C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC");
 
-    assertThat(MSVCEnvironment.getToolSetPath(new File("")))
+    assertThat(MSVCEnvironmentProvider.getToolSetPath(new File("")))
         .isEqualTo("C:\\Program Files\\Microsoft Visual Studio\\2022\\Community");
   }
 
@@ -54,14 +54,14 @@ public class MSVCEnvironmentTest {
   public void getToolSetPath_emptyBazelVC() {
     setBazelVC("");
 
-    assertThat(MSVCEnvironment.getToolSetPath(new File(""))).isNull();
+    assertThat(MSVCEnvironmentProvider.getToolSetPath(new File(""))).isNull();
   }
 
   @Test
   public void getToolSetPath_fromCompilerPath() {
     final var path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\bin\\Hostx64\\x64\\cl.exe";
 
-    assertThat(MSVCEnvironment.getToolSetPath(new File(path)))
+    assertThat(MSVCEnvironmentProvider.getToolSetPath(new File(path)))
         .isEqualTo("c:\\program files\\microsoft visual studio\\2022\\community");
   }
 }

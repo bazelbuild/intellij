@@ -45,6 +45,7 @@
 
   <extensions defaultExtensionNs="com.google.idea.blaze.cpp">
     <CppSupportChecker implementation="com.google.idea.blaze.clwb.ClwbSupportsCpp" />
+    <CppEnvironmentProvider implementation="com.google.idea.blaze.clwb.MSVCEnvironmentProvider" />
   </extensions>
 
   <project-components>
