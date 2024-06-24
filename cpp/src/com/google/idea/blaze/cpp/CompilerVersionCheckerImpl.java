@@ -18,6 +18,7 @@ package com.google.idea.blaze.cpp;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException.IssueKind;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 
@@ -39,18 +40,37 @@ public class CompilerVersionCheckerImpl implements CompilerVersionChecker {
     int result =
         ExternalTask.builder(executionRoot)
             .args(cppExecutable.toString())
-            // NOTE: this won't work with MSVC if we ever support that (check CToolchainIdeInfo?)
             .args("--version")
             .environmentVars(checkerEnv)
             .stdout(outputStream)
             .stderr(errStream)
             .build()
             .run();
-    if (result != 0) {
-      throw new VersionCheckException(
-          IssueKind.GENERIC_FAILURE,
-          String.format("stderr: \"%s\"\nstdout: \"%s\"", errStream, outputStream));
+
+    final var out = outputStream.toString();
+    final var err = errStream.toString();
+
+    if (result == 0) {
+      return out;
     }
-    return outputStream.toString();
+
+    // MSVC does not know the --version flag and will fail. However, the error message does contain
+    // the compiler version.
+    if (err.contains("Microsoft")) {
+      return getMSVCVersion(err);
+    }
+
+    throw new VersionCheckException(
+        IssueKind.GENERIC_FAILURE,
+        String.format("stderr: \"%s\"\nstdout: \"%s\"", err, out));
+  }
+
+  private String getMSVCVersion(String err) {
+    final var endOfLine = err.indexOf('\r');
+    if (endOfLine < 0) {
+      return err;
+    }
+
+    return err.substring(0, endOfLine);
   }
 }

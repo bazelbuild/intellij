@@ -94,7 +94,6 @@ public final class BlazeCWorkspace implements ProjectComponent {
       ImmutableList.of(CLanguageKind.C, CLanguageKind.CPP);
 
   private final Project project;
-  private final CidrToolEnvironment toolEnvironment = new CidrToolEnvironment();
 
   @Keep // Instantiated as an IntelliJ project component.
   private BlazeCWorkspace(Project project) {
@@ -148,11 +147,11 @@ public final class BlazeCWorkspace implements ProjectComponent {
                   indicator.setIndeterminate(false);
                   indicator.setText("Updating Configurations...");
                   indicator.setFraction(0.0);
-                  OCWorkspaceImpl.ModifiableModel model =
+                  WorkspaceModel model =
                       calculateConfigurations(
                           blazeProjectData, workspaceRoot, newResult, indicator);
                   ImmutableList<String> issues =
-                      commit(model, SERIALIZATION_VERSION, toolEnvironment, workspaceRoot);
+                      commit(SERIALIZATION_VERSION, model, workspaceRoot);
                   logger.info(
                       String.format(
                           "Update configurations took %dms", s.elapsed(TimeUnit.MILLISECONDS)));
@@ -166,7 +165,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
             });
   }
 
-  private OCWorkspaceImpl.ModifiableModel calculateConfigurations(
+  private WorkspaceModel calculateConfigurations(
       BlazeProjectData blazeProjectData,
       WorkspaceRoot workspaceRoot,
       BlazeConfigurationResolverResult configResolveData,
@@ -175,6 +174,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
     OCWorkspaceImpl.ModifiableModel workspaceModifiable =
         OCWorkspaceImpl.getInstanceImpl(project)
             .getModifiableModel(OCWorkspace.LEGACY_CLIENT_KEY, true);
+    Map<OCResolveConfiguration.ModifiableModel, CidrToolEnvironment> environmentMap = new HashMap<>();
     ImmutableList<BlazeResolveConfiguration> configurations =
         configResolveData.getAllConfigurations();
     ExecutionRootPathResolver executionRootPathResolver =
@@ -219,7 +219,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
         // transitiveDefines are sourced from a target's (and transitive deps) "defines" attribute
         ImmutableList<String> transitiveDefineOptions =
-                targetIdeInfo.getcIdeInfo().getTransitiveDefines().stream()
+            targetIdeInfo.getcIdeInfo().getTransitiveDefines().stream()
                 .map(s -> "-D" + s)
                 .collect(toImmutableList());
 
@@ -306,19 +306,35 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
       String id = resolveConfiguration.getDisplayName();
 
-      addConfiguration(
+      OCResolveConfiguration.ModifiableModel modelConfig = addConfiguration(
           workspaceModifiable,
           id,
           id,
           workspaceRoot.directory(),
           configLanguages,
           configSourceFiles);
+
+      environmentMap.put(modelConfig, calculateEnvironment(resolveConfiguration));
+
       progress++;
     }
-    return workspaceModifiable;
+
+    return new WorkspaceModel(workspaceModifiable, environmentMap);
   }
 
-  private static void addConfiguration(
+  private static CidrToolEnvironment calculateEnvironment(BlazeResolveConfiguration config) {
+    final var compilerSettings = config.getCompilerSettings();
+    final var compilerVersion = compilerSettings.getCompilerVersion();
+
+    // only msvc needs a special environment
+    if (CompilerVersionUtil.isMSVC(compilerVersion)) {
+      return MSVCEnvironment.create(compilerSettings);
+    } else {
+      return new CidrToolEnvironment();
+    }
+  }
+
+  private static OCResolveConfiguration.ModifiableModel addConfiguration(
       OCWorkspaceImpl.ModifiableModel workspaceModifiable,
       String id,
       String displayName,
@@ -349,6 +365,8 @@ public final class BlazeCWorkspace implements ProjectComponent {
         fileCompilerSettings.setCompilerSwitches(compilerOpts.switches);
       }
     }
+
+    return config;
   }
   /** Group compiler options for a specific file. */
   private static class PerFileCompilerOpts {
@@ -372,6 +390,19 @@ public final class BlazeCWorkspace implements ProjectComponent {
       this.kind = kind;
       this.compiler = compiler;
       this.switches = switches;
+    }
+  }
+
+  private static class WorkspaceModel {
+
+    final OCWorkspaceImpl.ModifiableModel model;
+    final Map<OCResolveConfiguration.ModifiableModel, CidrToolEnvironment> environments;
+
+    private WorkspaceModel(
+        OCWorkspace.ModifiableModel model,
+        Map<OCResolveConfiguration.ModifiableModel, CidrToolEnvironment> environments) {
+      this.model = model;
+      this.environments = environments;
     }
   }
 
@@ -454,34 +485,37 @@ public final class BlazeCWorkspace implements ProjectComponent {
   }
 
   private ImmutableList<String> commit(
-      OCWorkspaceImpl.ModifiableModel model,
       int serialVersion,
-      CidrToolEnvironment toolEnvironment,
+      WorkspaceModel workspaceModel,
       WorkspaceRoot workspaceRoot) {
-    ImmutableList<String> issues =
-        collectCompilerSettingsInParallel(model, toolEnvironment, workspaceRoot);
-    model.setClientVersion(serialVersion);
-    model.preCommit();
-    TransactionGuard.getInstance()
-        .submitTransactionAndWait(
-            () -> {
-              ApplicationManager.getApplication().runWriteAction((Runnable) model::commit);
-            });
+    final var issues = collectCompilerSettingsInParallel(workspaceModel, workspaceRoot);
+
+    workspaceModel.model.setClientVersion(serialVersion);
+    workspaceModel.model.preCommit();
+
+    TransactionGuard.getInstance().submitTransactionAndWait(
+        () -> ApplicationManager.getApplication().runWriteAction((Runnable) workspaceModel.model::commit)
+    );
+
     return issues;
   }
 
   private ImmutableList<String> collectCompilerSettingsInParallel(
-      OCWorkspaceImpl.ModifiableModel model,
-      CidrToolEnvironment toolEnvironment,
+      WorkspaceModel workspaceModel,
       WorkspaceRoot workspaceRoot) {
     CompilerInfoCache compilerInfoCache = new CompilerInfoCache();
     TempFilesPool tempFilesPool = new CachedTempFilesPool();
     Session<Integer> session = compilerInfoCache.createSession(new EmptyProgressIndicator());
     ImmutableList.Builder<String> issues = ImmutableList.builder();
+
     try {
       int i = 0;
-      for (OCResolveConfiguration.ModifiableModel config : model.getConfigurations()) {
-        session.schedule(i++, config, toolEnvironment, workspaceRoot.directory().getAbsolutePath());
+      for (OCResolveConfiguration.ModifiableModel config : workspaceModel.model.getConfigurations()) {
+        session.schedule(
+            i++,
+            config,
+            workspaceModel.environments.get(config),
+            workspaceRoot.directory().getAbsolutePath());
       }
       MultiMap<Integer, Message> messages = new MultiMap<>();
       session.waitForAll(messages);
