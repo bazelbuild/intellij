@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package com.google.idea.blaze.cpp;
+package com.google.idea.blaze.clwb;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.google.idea.blaze.cpp.BlazeCompilerSettings;
+import com.google.idea.blaze.cpp.CompilerVersionUtil;
+import com.google.idea.blaze.cpp.CppEnvironmentProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
@@ -25,9 +27,6 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.cidr.cpp.toolchains.CPPEnvironment;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolSet.Kind;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
-import com.jetbrains.cidr.cpp.toolchains.MSVC;
-import com.jetbrains.cidr.cpp.toolchains.msvc.MSVCArchAndVersion;
-import com.jetbrains.cidr.cpp.toolchains.msvc.MSVCCompilerToVersionCacheService;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
 import com.jetbrains.cidr.toolchains.OSType;
@@ -37,8 +36,8 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-class MSVCEnvironment {
-  private static final Logger LOG = Logger.getInstance(MSVCEnvironment.class);
+class MSVCEnvironmentProvider implements CppEnvironmentProvider {
+  private static final Logger LOG = Logger.getInstance(MSVCEnvironmentProvider.class);
 
   /**
    * The environment variable used by bazel to find the Visual Studio directory.
@@ -57,7 +56,12 @@ class MSVCEnvironment {
       "(?<path>.*)/vc/tools/msvc/.*/bin/.*/cl\\.exe".replace("/", "\\\\")
   );
 
-  static @Nullable CidrToolEnvironment create(BlazeCompilerSettings settings) {
+  @Override
+  public @Nullable CidrToolEnvironment create(BlazeCompilerSettings settings) {
+    if (!CompilerVersionUtil.isMSVC(settings.getCompilerVersion())) {
+      return null;
+    }
+
     final var compiler = selectCompiler(settings);
     if (compiler == null) {
       LOG.warn("No suitable compiler found.");
@@ -70,8 +74,8 @@ class MSVCEnvironment {
       return null;
     }
 
-    final var archAndVersion = getArchAndVersion(compiler);
-    if (archAndVersion == null) {
+    final var version = MSVCCompilerVersionCompat.getCompilerVersion(compiler);
+    if (version == null) {
       LOG.warn("Could not derive arch and version.");
       return null;
     }
@@ -82,8 +86,7 @@ class MSVCEnvironment {
     toolchain.setToolSetPath(toolSetPath);
 
     final var environment = new CPPEnvironment(toolchain);
-    final var msvc = (MSVC) environment.getToolSet();
-    msvc.setToolsVersion(archAndVersion);
+    MSVCCompilerVersionCompat.setEnvironmentVersion(environment, version);
 
     return environment;
   }
@@ -140,12 +143,5 @@ class MSVCEnvironment {
     }
 
     return matcher.group("path");
-  }
-
-  private static @Nullable MSVCArchAndVersion getArchAndVersion(File compiler) {
-    final var service = ApplicationManager.getApplication()
-        .getService(MSVCCompilerToVersionCacheService.class);
-
-    return service.getCompilerVersion(compiler.getAbsolutePath());
   }
 }

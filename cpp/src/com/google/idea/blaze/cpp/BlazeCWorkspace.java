@@ -314,24 +314,12 @@ public final class BlazeCWorkspace implements ProjectComponent {
           configLanguages,
           configSourceFiles);
 
-      environmentMap.put(modelConfig, calculateEnvironment(resolveConfiguration));
+      environmentMap.put(modelConfig, CppEnvironmentProvider.createEnvironment(compilerSettings));
 
       progress++;
     }
 
     return new WorkspaceModel(workspaceModifiable, environmentMap);
-  }
-
-  private static CidrToolEnvironment calculateEnvironment(BlazeResolveConfiguration config) {
-    final var compilerSettings = config.getCompilerSettings();
-    final var compilerVersion = compilerSettings.getCompilerVersion();
-
-    // only msvc needs a special environment
-    if (CompilerVersionUtil.isMSVC(compilerVersion)) {
-      return MSVCEnvironment.create(compilerSettings);
-    } else {
-      return new CidrToolEnvironment();
-    }
   }
 
   private static OCResolveConfiguration.ModifiableModel addConfiguration(
