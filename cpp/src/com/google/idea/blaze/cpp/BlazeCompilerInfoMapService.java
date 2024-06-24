@@ -79,6 +79,6 @@ final public class BlazeCompilerInfoMapService implements PersistentStateCompone
             logger.warn(String.format("Could not find version string for target %s", label));
             return false;
         }
-        return result.contains("clang");
+        return CompilerVersionUtil.isClang(result);
     }
 }
