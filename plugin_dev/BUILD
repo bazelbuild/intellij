@@ -36,7 +36,7 @@ java_library(
 
 optional_plugin_xml(
     name = "optional_xml",
-    module = "DevKit",
+    module = ["DevKit"],
     plugin_xml = "src/META-INF/blaze-plugin-dev.xml",
 )
 

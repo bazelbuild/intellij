@@ -17,10 +17,11 @@ package com.google.idea.blaze.java.run.fastbuild;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.project.Project;
-import java.io.File;
 import javax.annotation.Nullable;
+import java.io.File;
 
 final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmentCreator {
 
@@ -67,6 +68,8 @@ final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmen
    * <p>Bazel adds the Java launcher to the runfiles path when building a Java test target. If
    * `bzlmod` is enabled, the directory name is formatted as
    * 'rules_java~{RULES_JAVA_VERSION}~toolchains~local_jdk' otherwise it is `local_jdk`.
+   * If the user setting `java.runfiles.binary.path` is specified it will take precedence
+   * over `local_jdk`.
    */
   private static File getStandardJavaBinary(String runfilesPath) {
     for (File file :
@@ -76,6 +79,12 @@ final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmen
         return file.toPath().resolve("bin/java").toFile();
       }
     }
+
+    String javaBinaryPath = BlazeUserSettings.getInstance().getFastBuildJavaBinaryPathInRunFiles();
+    if (javaBinaryPath != null && !javaBinaryPath.isBlank()) {
+      return new File("../").toPath().resolve(javaBinaryPath).toFile();
+    }
+
     return STANDARD_JAVA_BINARY;
   }
 

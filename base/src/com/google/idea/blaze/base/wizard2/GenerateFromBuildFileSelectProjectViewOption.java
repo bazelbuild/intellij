@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.wizard2;
 
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
 
 import com.google.common.base.Strings;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
@@ -168,7 +169,7 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
     return ProjectViewParser.projectViewToString(
         ProjectView.builder()
             .add(directorySectionBuilder)
-            .add(TextBlockSection.of(TextBlock.newLine()))
+            .add(TextBlockSection.of(TextBlock.newLine(TEMPORARY_LINE_NUMBER)))
             .build());
   }
 

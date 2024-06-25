@@ -30,6 +30,7 @@ import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -137,8 +138,8 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
     }
 
     @Override
-    protected List<String> getAspectFlags() {
-      return ImmutableList.of();
+    protected Optional<String> getAspectFlag() {
+      return Optional.empty();
     }
   }
 }

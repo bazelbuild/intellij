@@ -76,3 +76,12 @@ tasks:
       - //:clwb_tests
     soft_fail:
       - exit_status: 1
+  CLion-OSS-under-dev:
+    name: CLion OSS Under Development
+    platform: windows
+    build_flags:
+      - --define=ij_product=clion-oss-under-dev
+    build_targets:
+      - //clwb/...
+    soft_fail:
+      - exit_status: 1

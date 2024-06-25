@@ -68,6 +68,7 @@ public class ContentEntryEditor {
       File rootFile = workspaceRoot.fileForPath(rootDirectory);
       ContentEntry contentEntry =
           modifiableRootModel.addContentEntry(UrlUtil.pathToUrl(rootFile.getPath()));
+      contentEntry.clearExcludeFolders();
 
       for (WorkspacePath exclude : excludesByRootDirectory.get(rootDirectory)) {
         File excludeFolder = workspaceRoot.fileForPath(exclude);

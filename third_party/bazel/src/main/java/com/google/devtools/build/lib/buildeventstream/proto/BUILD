@@ -17,6 +17,7 @@ java_proto_library(
 proto_library(
     name = "build_event_stream_proto",
     srcs = ["build_event_stream.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/packages/metrics:package_load_metrics_proto",
         "//third_party/bazel/src/main/protobuf:action_cache_proto",

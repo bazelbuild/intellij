@@ -20,7 +20,6 @@
     <coverageRunner implementation="com.google.idea.blaze.java.run.coverage.BlazeCoverageRunner"/>
     <programRunner implementation="com.google.idea.blaze.java.run.coverage.BlazeCoverageProgramRunner"/>
     <projectService serviceImplementation="com.google.idea.blaze.java.run.coverage.BlazeCoverageAnnotator"/>
-    <projectViewNodeDecorator implementation="com.google.idea.blaze.java.run.coverage.BlazeCoverageProjectViewClassDecorator"/>
   </extensions>
 
 </idea-plugin>

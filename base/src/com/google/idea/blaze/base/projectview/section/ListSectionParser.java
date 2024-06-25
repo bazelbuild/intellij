@@ -49,6 +49,7 @@ public abstract class ListSectionParser<T> extends SectionParser {
     if (!parseContext.current().text.equals(name + ':')) {
       return null;
     }
+    int firstLineIndex = parseContext.getCurrentLineIndex();
     parseContext.consume();
 
     ImmutableList.Builder<ItemOrTextBlock<T>> builder = ImmutableList.builder();
@@ -62,15 +63,18 @@ public abstract class ListSectionParser<T> extends SectionParser {
       }
       correctIndentationRun = isIndented;
 
+      int currentLineIndex = parseContext.getCurrentLineIndex(); // save the current line number just in case multiple lines are consumed
       ItemOrTextBlock<T> itemOrTextBlock = null;
       TextBlock textBlock = TextBlockSection.parseTextBlock(parseContext);
+
       if (textBlock != null) {
-        itemOrTextBlock = new ItemOrTextBlock<>(textBlock);
+        // the line has already been consumed so we need the address of the previous line
+        itemOrTextBlock = new ItemOrTextBlock<>(textBlock, currentLineIndex);
       } else if (isIndented) {
         T item = parseItem(parser, parseContext);
         if (item != null) {
+          itemOrTextBlock = new ItemOrTextBlock<>(item, parseContext.getCurrentLineIndex());
           parseContext.consume();
-          itemOrTextBlock = new ItemOrTextBlock<>(item);
         }
       }
 
@@ -84,7 +88,7 @@ public abstract class ListSectionParser<T> extends SectionParser {
         savedTextBlocks.clear();
         parseContext.clearSavedPosition();
       } else {
-        savedTextBlocks.add(new ItemOrTextBlock<>(textBlock));
+        savedTextBlocks.add(new ItemOrTextBlock<>(textBlock, parseContext.getCurrentLineIndex() - 1)); // The line is already consumed
       }
     }
     parseContext.resetToSavedPosition();
@@ -94,7 +98,7 @@ public abstract class ListSectionParser<T> extends SectionParser {
       parseContext.addError(String.format("Empty section: '%s'", name));
     }
 
-    return new ListSection<>(key, items);
+    return new ListSection<>(key, items, firstLineIndex);
   }
 
   @SuppressWarnings("unchecked")

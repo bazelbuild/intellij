@@ -13,6 +13,11 @@ load(
     ":make_variables.bzl",
     "expand_make_variables",
 )
+load(
+    "@bazel_tools//tools/build_defs/cc:action_names.bzl",
+    "ACTION_NAMES",
+)
+
 
 # Defensive list of features that can appear in the C++ toolchain, but which we
 # definitely don't want to enable (when enabled, they'd contribute command line
@@ -43,6 +48,7 @@ DEPS = [
     "tests",  # From test_suite
     "compilers",  # From go_proto_library
     "associates",  # From kotlin rules
+    "_kt_toolchain",  # From rules_kotlin
 ]
 
 # Run-time dependency attributes, grouped by type.
@@ -107,6 +113,11 @@ SRC_PY2ONLY = 4
 SRC_PY3ONLY = 5
 
 ##### Helpers
+
+def get_registry_flag(ctx, name):
+    """Registry flags are passed to aspects using defines. See CppAspectArgsProvider."""
+
+    return ctx.var.get(name) == "true"
 
 def source_directory_tuple(resource_file):
     """Creates a tuple of (exec_path, root_exec_path_fragment, is_source, is_external)."""
@@ -504,56 +515,56 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
     # cpp fragment to access bazel options
     cpp_fragment = ctx.fragments.cpp
 
-    # Enabled in Bazel 0.16
-    if hasattr(cc_common, "get_memory_inefficient_command_line"):
-        # Enabled in Bazel 0.17
-        if hasattr(cpp_fragment, "copts"):
-            copts = cpp_fragment.copts
-            cxxopts = cpp_fragment.cxxopts
-            conlyopts = cpp_fragment.conlyopts
-        else:
-            copts = []
-            cxxopts = []
-            conlyopts = []
-        feature_configuration = cc_common.configure_features(
-            ctx = ctx,
-            cc_toolchain = cpp_toolchain,
-            requested_features = ctx.features,
-            unsupported_features = ctx.disabled_features + UNSUPPORTED_FEATURES,
-        )
-        c_variables = cc_common.create_compile_variables(
+    copts = cpp_fragment.copts
+    cxxopts = cpp_fragment.cxxopts
+    conlyopts = cpp_fragment.conlyopts
+
+    feature_configuration = cc_common.configure_features(
+        ctx = ctx,
+        cc_toolchain = cpp_toolchain,
+        requested_features = ctx.features,
+        unsupported_features = ctx.disabled_features + UNSUPPORTED_FEATURES,
+    )
+    c_variables = cc_common.create_compile_variables(
+        feature_configuration = feature_configuration,
+        cc_toolchain = cpp_toolchain,
+        user_compile_flags = copts + conlyopts,
+    )
+    cpp_variables = cc_common.create_compile_variables(
+        feature_configuration = feature_configuration,
+        cc_toolchain = cpp_toolchain,
+        user_compile_flags = copts + cxxopts,
+    )
+    c_options = cc_common.get_memory_inefficient_command_line(
+        feature_configuration = feature_configuration,
+        action_name = ACTION_NAMES.c_compile,
+        variables = c_variables,
+    )
+    cpp_options = cc_common.get_memory_inefficient_command_line(
+        feature_configuration = feature_configuration,
+        action_name = ACTION_NAMES.cpp_compile,
+        variables = cpp_variables,
+    )
+
+    if (get_registry_flag(ctx, "_cpp_use_get_tool_for_action")):
+        c_compiler = cc_common.get_tool_for_action(
             feature_configuration = feature_configuration,
-            cc_toolchain = cpp_toolchain,
-            user_compile_flags = copts + conlyopts,
+            action_name = ACTION_NAMES.c_compile,
         )
-        cpp_variables = cc_common.create_compile_variables(
+        cpp_compiler = cc_common.get_tool_for_action(
             feature_configuration = feature_configuration,
-            cc_toolchain = cpp_toolchain,
-            user_compile_flags = copts + cxxopts,
-        )
-        c_options = cc_common.get_memory_inefficient_command_line(
-            feature_configuration = feature_configuration,
-            # TODO(#391): Use constants from action_names.bzl
-            action_name = "c-compile",
-            variables = c_variables,
-        )
-        cpp_options = cc_common.get_memory_inefficient_command_line(
-            feature_configuration = feature_configuration,
-            # TODO(#391): Use constants from action_names.bzl
-            action_name = "c++-compile",
-            variables = cpp_variables,
+            action_name = ACTION_NAMES.cpp_compile,
         )
     else:
-        # See the plugin's BazelVersionChecker. We should have checked that we are Bazel 0.16+,
-        # so get_memory_inefficient_command_line should be available.
-        c_options = []
-        cpp_options = []
+        c_compiler = str(cpp_toolchain.compiler_executable)
+        cpp_compiler = str(cpp_toolchain.compiler_executable)
 
     c_toolchain_info = struct_omit_none(
         built_in_include_directory = [str(d) for d in cpp_toolchain.built_in_include_directories],
         c_option = c_options,
-        cpp_executable = str(cpp_toolchain.compiler_executable),
         cpp_option = cpp_options,
+        c_compiler = c_compiler,
+        cpp_compiler = cpp_compiler,
         target_name = cpp_toolchain.target_gnu_system_name,
     )
     ide_info["c_toolchain_ide_info"] = c_toolchain_info
@@ -1019,13 +1030,15 @@ def collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups):
 def artifact_to_path(artifact):
     return artifact.root_execution_path_fragment + "/" + artifact.relative_path
 
-def collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups):
+def collect_kotlin_toolchain_info(target, ctx, ide_info, ide_info_file, output_groups):
     """Updates kotlin_toolchain-relevant output groups, returns false if not a kotlin_toolchain target."""
-    if not hasattr(target, "kt"):
+    if ctx.rule.kind == "_kt_toolchain" and platform_common.ToolchainInfo in target:
+        kt = target[platform_common.ToolchainInfo]
+    elif hasattr(target, "kt") and hasattr(target.kt, "language_version"):
+        kt = target.kt  # Legacy struct provider mechanism
+    else:
         return False
-    kt = target.kt
-    if not hasattr(kt, "language_version"):
-        return False
+
     ide_info["kt_toolchain_ide_info"] = struct(
         language_version = kt.language_version,
     )
@@ -1185,7 +1198,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
     handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
-    handled = collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
+    handled = collect_kotlin_toolchain_info(target, ctx, ide_info, ide_info_file, output_groups) or handled
 
     # Any extra ide info
     if hasattr(semantics, "extra_ide_info"):

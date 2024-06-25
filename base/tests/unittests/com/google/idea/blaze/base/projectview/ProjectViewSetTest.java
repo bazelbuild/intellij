@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.projectview;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
@@ -55,6 +56,7 @@ import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
 import com.google.idea.blaze.base.projectview.section.sections.TryImportSection;
 import com.google.idea.blaze.base.projectview.section.sections.UseExclusionPatternsSection;
 import com.google.idea.blaze.base.projectview.section.sections.UseQuerySyncSection;
+import com.google.idea.blaze.base.projectview.section.sections.ViewProjectRootSection;
 import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.common.experiments.ExperimentService;
@@ -104,7 +106,7 @@ public class ProjectViewSetTest extends BlazeTestCase {
                     .add(ScalarSection.builder(WorkspaceTypeSection.KEY).set(WorkspaceType.JAVA))
                     .add(
                         ListSection.builder(AdditionalLanguagesSection.KEY).add(LanguageClass.JAVA))
-                    .add(TextBlockSection.of(TextBlock.newLine()))
+                    .add(TextBlockSection.of(TextBlock.newLine(TEMPORARY_LINE_NUMBER)))
                     .add(
                         ListSection.builder(RunConfigurationsSection.KEY)
                             .add(new WorkspacePath("test")))
@@ -119,6 +121,7 @@ public class ProjectViewSetTest extends BlazeTestCase {
                         ScalarSection.builder(BuildConfigSection.KEY)
                             .set(new WorkspacePath("test")))
                     .add(ScalarSection.builder(UseExclusionPatternsSection.KEY).set(false))
+                    .add(ScalarSection.builder(ViewProjectRootSection.KEY).set(false))
                     .build())
             .build();
 

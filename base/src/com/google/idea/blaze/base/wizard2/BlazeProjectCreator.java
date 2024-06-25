@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
+import com.google.idea.blaze.base.project.ExtendableBazelProjectCreator;
 import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.ProjectUtil;
@@ -36,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import javax.swing.SwingUtilities;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -104,11 +106,13 @@ public class BlazeProjectCreator {
       FileUtil.ensureExists(ideaDir);
     }
 
-    Project newProject = projectBuilder.createProject(projectName, projectFilePath);
-    if (newProject == null) {
+    Optional<Project> returnedValue =
+        ExtendableBazelProjectCreator.getInstance()
+            .createProject(projectBuilder, projectName, projectFilePath);
+    if (returnedValue.isEmpty()) {
       return null;
     }
-
+    Project newProject = returnedValue.get();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       newProject.save();
     }

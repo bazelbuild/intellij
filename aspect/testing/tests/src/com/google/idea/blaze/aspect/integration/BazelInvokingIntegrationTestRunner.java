@@ -51,7 +51,7 @@ public class BazelInvokingIntegrationTestRunner {
     // Flags for wiring up the plugin aspect from the external @intellij_aspect repository.
     ImmutableList<String> aspectFlags =
         ImmutableList.of(
-            aspectStrategyBazel.getAspectFlag(),
+            aspectStrategyBazel.getAspectFlag().get(),
             String.format(
                 "%s=%s/%s/aspect",
                 AspectStrategyBazel.OVERRIDE_REPOSITORY_FLAG,

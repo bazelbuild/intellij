@@ -17,6 +17,8 @@ package com.google.idea.blaze.base.projectview.section.sections;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+
 import java.io.Serializable;
 
 /**
@@ -28,9 +30,11 @@ import java.io.Serializable;
 public class TextBlock implements Serializable {
   private static final long serialVersionUID = 1L;
   private final ImmutableList<String> lines;
+  public final int firstLineIndex;
 
-  public TextBlock(ImmutableList<String> lines) {
+  public TextBlock(ImmutableList<String> lines, int firstLineIndex) {
     this.lines = lines;
+    this.firstLineIndex = firstLineIndex;
   }
 
   /** Returns raw lines, including any indentation and surrounding whitespace */
@@ -38,13 +42,13 @@ public class TextBlock implements Serializable {
     return lines;
   }
 
-  public static TextBlock of(String... lines) {
-    return new TextBlock(ImmutableList.<String>builder().add(lines).build());
+  public static TextBlock of(int firstLineIndex, String... lines) {
+    return new TextBlock(ImmutableList.<String>builder().add(lines).build(), firstLineIndex);
   }
 
   /** A text block that is a single newline */
-  public static TextBlock newLine() {
-    return new TextBlock(ImmutableList.of(""));
+  public static TextBlock newLine(int firstLineIndex) {
+    return new TextBlock(ImmutableList.of(""), firstLineIndex);
   }
 
   public void print(StringBuilder sb) {

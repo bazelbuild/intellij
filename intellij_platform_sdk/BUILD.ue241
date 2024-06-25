@@ -74,7 +74,7 @@ java_import(
 
 java_import(
     name = "javascript",
-    jars = glob(["plugins/javascript-impl/lib/*.jar"]),
+    jars = glob(["plugins/javascript-plugin/lib/*.jar"]),
 )
 
 java_import(
