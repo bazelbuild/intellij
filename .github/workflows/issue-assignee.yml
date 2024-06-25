@@ -1,4 +1,4 @@
-name: Auto Add Assignees to issues
+name: Auto-add assignees to issues
 on:
  issues:
     types:
@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v2
-      - name: Set Assignees
+      - name: Set assignees
         uses: actions/github-script@v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
