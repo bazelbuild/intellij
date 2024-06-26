@@ -22,7 +22,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
       - name: Set Assignees
-        uses: actions/github-script@v4
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
