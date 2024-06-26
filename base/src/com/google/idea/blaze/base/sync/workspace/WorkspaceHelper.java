@@ -125,29 +125,28 @@ public class WorkspaceHelper {
     }
 
     BlazeProjectData blazeProjectData = getBlazeProjectData(project);
-    Path bzelRootPath = Paths.get(blazeProjectData.getBlazeInfo().getOutputBase().getAbsolutePath(),
+    Path bazelRootPath = Paths.get(
+        blazeProjectData.getBlazeInfo().getOutputBase().getAbsolutePath(),
         "external").normalize();
+
+    logger.debug("the bazelRootPath is " + bazelRootPath);
     Path path = Paths.get(absoluteFile.getAbsolutePath()).normalize();
 
     // Check if the file path starts with the root directory path
-    if (!path.startsWith(bzelRootPath)) {
+    if (!path.startsWith(bazelRootPath)) {
       return null;
     }
 
-    Path relativePath = bzelRootPath.relativize(path);
+    Path relativePath = bazelRootPath.relativize(path);
     if (relativePath.getNameCount() > 0) {
       String firstFolder = relativePath.getName(0).toString();
-      try {
-        Path workspaceRootPath = Files.createDirectories(bzelRootPath.resolve(firstFolder));
+      Path workspaceRootPath = bazelRootPath.resolve(firstFolder);
+      if (workspaceRootPath.toFile().exists()) {
         logger.debug("resolveWorkspace: " + workspaceRootPath + " firstFolder: " + firstFolder);
         return new Workspace(new WorkspaceRoot(workspaceRootPath.toFile()), firstFolder);
-      } catch (IOException e) {
-        logger.error("Error creating directories", e);
-        return null;
       }
-    } else {
-      return null;
     }
+    return null;
   }
 
   private static Label deriveLabel(
@@ -184,7 +183,6 @@ public class WorkspaceHelper {
     }
     return null;
   }
-
 
   @VisibleForTesting
   public static File getExternalSourceRoot(BlazeProjectData projectData) {
