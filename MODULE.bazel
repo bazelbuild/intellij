@@ -76,7 +76,7 @@ use_repo(
     "build_bazel_bazel_7_0_2",
 )
 
-bazel_dep(name = "rules_jvm_external", version = "6.0")
+bazel_dep(name = "rules_jvm_external", version = "6.1")
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
