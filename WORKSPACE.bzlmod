@@ -834,10 +834,10 @@ scalatest_toolchain()
 # needed for cpp tests
 http_archive(
     name = "com_google_absl",
-    sha256 = "7c11539617af1f332f0854a6fb21e296a1b29c27d03f23c7b49d4adefcd102cc",
-    strip_prefix = "abseil-cpp-20230802.2",
+    sha256 = "733726b8c3a6d39a4120d7e45ea8b41a434cdacde401cba500f14236c49b39dc",
+    strip_prefix = "abseil-cpp-20240116.2",
     urls = [
-        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.2.tar.gz",
+        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20240116.2.tar.gz",
     ],
 )
 
