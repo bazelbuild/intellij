@@ -1,5 +1,5 @@
 # Add 'awaiting-review' to any PR opened
-awaiting-review:
+'awaiting-review':
 - '**/*'
 
 'product: CLion':
