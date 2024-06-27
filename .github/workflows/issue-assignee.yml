@@ -1,0 +1,58 @@
+name: Auto-add assignees to issues
+on:
+ issues:
+    types:
+      - reopened
+      - opened
+jobs:
+  add_label:
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/labeler@v4
+  add_assignee:
+    runs-on: ubuntu-latest
+    needs: add_label
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Set assignees
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            let issue_number = context.payload.issue.number;
+            let issueDetails = await github.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+            });
+            let labels = issueDetails.data.labels;
+            const labelToAssignees = {
+              'product: CLion': ['tpasternak'],
+              'product: IntelliJ': ['mai93'],
+              'product: GoLand': ['mai93'],
+              'product: Android Studio': ['mai93'],
+              'product: PyCharm': ['mai93']
+              };
+            const assignees = labels.some(label => label.name.startsWith('product:'))
+              ? labels.reduce((acc, label) => {
+                  const assignee = label.name in labelToAssignees ? labelToAssignees[label.name] : [];
+                  return acc.concat(assignee);
+                }, [])
+              : ['sgowroji', 'satyanandak', 'iancha1992'];
+
+            if (assignees.length > 0) {
+              await github.issues.addAssignees({
+                issue_number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                assignees,
+              });
+            }
+
