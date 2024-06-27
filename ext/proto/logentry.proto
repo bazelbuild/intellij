@@ -21,15 +21,14 @@ option java_package = "com.google.idea.blaze.ext";
 
 
 service LoggingService {
-  // Writes a log entry to the log file
-  rpc Write(IntellijLogEntry) returns (Boolean) {}
-
-  // Flushes the log to disk
-  rpc Flush(Boolean) returns (Boolean) {}
-
-  // Closes the log file
-  rpc Close(Boolean) returns (Boolean) {}
+  // Writes a log entry to the disk
+  rpc Write(LogBatch) returns (Boolean) {}
 }
+
+message LogBatch {
+  repeated IntellijLogEntry entry = 1;
+}
+
 message IntellijLogEntry {
   optional int64 end_time_millis = 1;
   optional int64 duration_millis = 2;
