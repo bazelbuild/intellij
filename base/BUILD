@@ -32,7 +32,6 @@ java_library(
         "//common/util:platform",
         "//common/util:process",
         "//common/util:transactions",
-        "//ext:intellijext",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
