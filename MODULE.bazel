@@ -9,11 +9,11 @@ bazel_dep(
 )
 bazel_dep(
     name = "rules_java",
-    version = "7.4.0",
+    version = "7.6.5",
 )
 bazel_dep(
     name = "rules_python",
-    version = "0.31.0",
+    version = "0.33.2",
 )
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
@@ -25,7 +25,7 @@ use_repo(python, "python_3_12", "python_versions")
 
 bazel_dep(
     name = "rules_proto",
-    version = "5.3.0-21.7",
+    version = "6.0.2",
 )
 bazel_dep(
     name = "protobuf",
@@ -34,7 +34,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "bazel_skylib",
-    version = "1.5.0",
+    version = "1.7.1",
 )
 bazel_dep(
     name = "rules_pkg",
@@ -42,7 +42,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "rules_kotlin",
-    version = "1.9.0",
+    version = "1.9.5",
 )
 bazel_dep(
     name = "rules_android",
@@ -76,7 +76,7 @@ use_repo(
     "build_bazel_bazel_7_0_2",
 )
 
-bazel_dep(name = "rules_jvm_external", version = "6.0")
+bazel_dep(name = "rules_jvm_external", version = "6.1")
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(

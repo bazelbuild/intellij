@@ -321,9 +321,9 @@ http_archive(
     url = DEVKIT_233_URL,
 )
 
-DEVKIT_241_SHA = "fb5ed32868dc200dae99539811661ce6033ae109c0fc8777f5cacda82c188d68"
+DEVKIT_241_SHA = "1a5f6f7b51dc757a598890a66b130b9b101207924687f84b000b269ddec9fe6c"
 
-DEVKIT_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/241.18034.61/DevKit-241.18034.61.zip"
+DEVKIT_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/241.18034.69/DevKit-241.18034.69.zip"
 
 http_archive(
     name = "devkit_2024_1",
@@ -667,9 +667,9 @@ http_archive(
     url = SCALA_PLUGIN_233_URL,
 )
 
-SCALA_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.1.21/org.intellij.scala-2024.1.21.zip"
+SCALA_PLUGIN_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.1.24/org.intellij.scala-2024.1.24.zip"
 
-SCALA_PLUGIN_241_SHA = "2fe164ca781715c9d94d7904b7f4bdb03d8020e6ea922be631222c4493c3294b"
+SCALA_PLUGIN_241_SHA = "76a63b684800df7f393308c8ae4b1b997dced0a926a22051e284a0b4a4be3fe5"
 
 http_archive(
     name = "scala_2024_1",
@@ -678,9 +678,9 @@ http_archive(
     url = SCALA_PLUGIN_241_URL,
 )
 
-SCALA_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.2.6/org.intellij.scala-2024.2.6.zip"
+SCALA_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.2.7/org.intellij.scala-2024.2.7.zip"
 
-SCALA_PLUGIN_242_SHA = "07557b8c0f49feb7fb9c7b85eb2d021cae5783382bf3231e0bd768e7493f52ba"
+SCALA_PLUGIN_242_SHA = "113d08c62bf1f683cdb298a8318cb2eaaec784955fcc788eefc735602973a1d5"
 
 http_archive(
     name = "scala_2024_2",
@@ -834,10 +834,10 @@ scalatest_toolchain()
 # needed for cpp tests
 http_archive(
     name = "com_google_absl",
-    sha256 = "987ce98f02eefbaf930d6e38ab16aa05737234d7afbab2d5c4ea7adbe50c28ed",
-    strip_prefix = "abseil-cpp-20230802.1",
+    sha256 = "733726b8c3a6d39a4120d7e45ea8b41a434cdacde401cba500f14236c49b39dc",
+    strip_prefix = "abseil-cpp-20240116.2",
     urls = [
-        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.1.tar.gz",
+        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20240116.2.tar.gz",
     ],
 )
 
