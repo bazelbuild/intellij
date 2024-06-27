@@ -36,7 +36,7 @@ jobs:
             const labelToAssignees = {
               'product: CLion': ['tpasternak'],
               'product: IntelliJ': ['mai93'],
-              'product: GoLand': ['blorente'],
+              'product: GoLand': ['mai93'],
               'product: Android Studio': ['mai93'],
               'product: PyCharm': ['mai93']
               };
