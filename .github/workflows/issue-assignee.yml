@@ -36,11 +36,11 @@ jobs:
                 repo: context.repo.repo,
               })).data.map(label => label.name);
             const labelToAssignees = {
-              'product: CLion': ['gowrojisunil'],
-              'product: IntelliJ': ['gowrojisunil'],
-              'product: GoLand': ['gowrojisunil'],
-              'product: Android Studio': ['gowrojisunil'],
-              'product: PyCharm': ['gowrojisunil']
+              'product: CLion': ['ujohnny'],
+              'product: IntelliJ': ['mai93'],
+              'product: GoLand': ['tpasternak'],
+              'product: Android Studio': ['mai93'],
+              'product: PyCharm': ['mai93']
               };
             const assignees = labels.some(label => label.startsWith('product:'))
               ? labels.reduce((acc, label) => {

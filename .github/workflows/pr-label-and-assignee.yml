@@ -37,10 +37,11 @@ jobs:
               })).data.map(label => label.name);
             const assignees = [];
             const labelsToAssignees = {
-              'product: CLion': ['gowrojisunil'],
-              'product: IntelliJ': ['gowrojisunil'],
-              'product: GoLand': ['gowrojisunil'],
-              'product: Android Studio': ['gowrojisunil']
+              'product: CLion': ['ujohnny'],
+              'product: IntelliJ': ['mai93'],
+              'product: GoLand': ['tpasternak'],
+              'product: Android Studio': ['mai93'],
+              'product: PyCharm': ['mai93']
             };
             for (const label of labels) {
               if (label in labelsToAssignees) {
