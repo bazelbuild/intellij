@@ -41,6 +41,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.project.ProjectProtoTransform;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import java.io.BufferedReader;
@@ -48,11 +49,18 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
 import javax.annotation.Nullable;
+
+import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 /**
@@ -185,10 +193,11 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
   @Nullable
   private static ImmutableList<TargetInfo> getTargetInfoList(
       Project project, BlazeContext context, ContextType type, String rdepsQuery)
-      throws BlazeQuerySourceToTargetException {
+          throws BlazeQuerySourceToTargetException {
+    Path queryFile = prepareQueryFile(project, rdepsQuery);
     BlazeCommand.Builder command =
         getBlazeCommandBuilder(
-            project, type, rdepsQuery, ImmutableList.of("--output=label_kind"), context);
+            project, type, "--query_file=" + queryFile.toAbsolutePath(), ImmutableList.of("--output=label_kind"), context);
     try (InputStream queryResultStream = runQuery(project, command, context)) {
       BlazeQueryLabelKindParser blazeQueryLabelKindParser =
           new BlazeQueryLabelKindParser(t -> true);
@@ -201,7 +210,27 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
       return blazeQueryLabelKindParser.getTargets();
     } catch (IOException e) {
       throw new BlazeQuerySourceToTargetException("Failed to get target info list", e);
+    } finally {
+      if (!Registry.get("bazel.sync.keep.query.files").asBoolean()) {
+        queryFile.toFile().delete();
+      }
     }
+  }
+
+  private static @NotNull Path prepareQueryFile(Project project, String rdepsQuery) throws BlazeQuerySourceToTargetException {
+    Path queryFile = null;
+    try {
+      Path queriesDir = Paths.get(project.getBasePath()).resolve("queries");
+      queriesDir.toFile().mkdir();
+      queryFile = Files.createTempFile(queriesDir, "query-", "");
+      Files.writeString(queryFile, rdepsQuery, StandardOpenOption.WRITE);
+    } catch (IOException e) {
+      if (queryFile != null) {
+        queryFile.toFile().delete();
+      }
+      throw new BlazeQuerySourceToTargetException("Couldn't create query file", e);
+    }
+    return queryFile;
   }
 
   @Nullable
