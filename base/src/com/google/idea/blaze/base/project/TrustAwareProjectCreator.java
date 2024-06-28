@@ -48,6 +48,10 @@ public class TrustAwareProjectCreator implements ExtendableBazelProjectCreator {
   /** Returns true if the user has trusted the project. */
   @Override
   public boolean canCreateProject(@Nullable BuildSystemName buildSystemName) {
+    if (TrustedProjects.isTrustedCheckDisabled()) {
+      return true;
+    }
+
     var trustText = IdeBundle.message("untrusted.project.dialog.trust.button");
     var dontOpenText = IdeBundle.message("untrusted.project.open.dialog.cancel.button");
 
