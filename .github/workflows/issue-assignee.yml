@@ -11,7 +11,7 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/labeler@v4
+    - uses: actions/labeler@v5
   add_assignee:
     runs-on: ubuntu-latest
     needs: add_label
@@ -20,39 +20,40 @@ jobs:
       issues: write
     steps:
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Set assignees
-        uses: actions/github-script@v4
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          result-encoding: string
+          retries: 3
+          retry-exempt-status-codes: 400,401
           script: |
             let issue_number = context.payload.issue.number;
-            let issueDetails = await github.issues.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number,
-            });
-            let labels = issueDetails.data.labels;
+            const labels = (await github.rest.issues.listLabelsOnIssue({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              })).data.map(label => label.name);
             const labelToAssignees = {
-              'product: CLion': ['tpasternak'],
-              'product: IntelliJ': ['mai93'],
-              'product: GoLand': ['mai93'],
-              'product: Android Studio': ['mai93'],
-              'product: PyCharm': ['mai93']
+              'product: CLion': ['gowrojisunil'],
+              'product: IntelliJ': ['gowrojisunil'],
+              'product: GoLand': ['gowrojisunil'],
+              'product: Android Studio': ['gowrojisunil'],
+              'product: PyCharm': ['gowrojisunil']
               };
-            const assignees = labels.some(label => label.name.startsWith('product:'))
+            const assignees = labels.some(label => label.startsWith('product:'))
               ? labels.reduce((acc, label) => {
-                  const assignee = label.name in labelToAssignees ? labelToAssignees[label.name] : [];
+                  const assignee = label in labelToAssignees ? labelToAssignees[label] : [];
                   return acc.concat(assignee);
                 }, [])
               : ['sgowroji', 'satyanandak', 'iancha1992'];
 
             if (assignees.length > 0) {
-              await github.issues.addAssignees({
+              await github.rest.issues.addAssignees({
                 issue_number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 assignees,
               });
             }
-
