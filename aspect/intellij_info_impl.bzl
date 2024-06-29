@@ -31,7 +31,7 @@ DEPS = [
     "_cc_toolchain",  # From cc rules
     "_stl",  # From cc rules
     "malloc",  # From cc_binary rules
-    "_java_toolchain",  # From java rules
+    #"_java_toolchain",  # From java rules
     "deps",
     "jars",  # from java_import rules
     "exports",
