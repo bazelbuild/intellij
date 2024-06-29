@@ -61,16 +61,21 @@ _intellij_aspect_test_fixture = rule(
             executable = True,
             allow_files = True,
         ),
+        "optimize_building_jars": attr.bool(
+            default = False,
+            doc = "Whether to optimize building jars by using the same jar for all targets that have the same jar dependencies.",
+        ),
     },
 )
 
-def intellij_aspect_test_fixture(name, deps, transitive_configs = []):
+def intellij_aspect_test_fixture(name, deps, transitive_configs = [], optimize_building_jars = False):
     _intellij_aspect_test_fixture(
         name = name,
         output = name + ".intellij-aspect-test-fixture",
         deps = deps,
         testonly = 1,
         transitive_configs = transitive_configs,
+        optimize_building_jars = optimize_building_jars,
     )
 
 def test_sources(outs):

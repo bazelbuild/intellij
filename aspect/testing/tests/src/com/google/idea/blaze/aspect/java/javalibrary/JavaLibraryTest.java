@@ -123,6 +123,118 @@ public class JavaLibraryTest extends BazelIntellijAspectTest {
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
         .containsExactly(
             // foo
+            testRelative("libfoo.jar"),
+            testRelative("libfoo-hjar.jar"),
+            testRelative("libfoo-src.jar"),
+            testRelative("libfoo.jdeps"),
+            // direct
+            testRelative("libdirect.jar"),
+            testRelative("libdirect-hjar.jar"),
+            testRelative("libdirect-src.jar"),
+            testRelative("libdirect.jdeps"),
+            // indirect
+            testRelative("libindirect.jar"),
+            testRelative("libindirect-hjar.jar"),
+            testRelative("libindirect-src.jar"),
+            testRelative("libindirect.jdeps"),
+            // distant
+            testRelative("libdistant.jar"),
+            testRelative("libdistant-hjar.jar"),
+            testRelative("libdistant-src.jar"),
+            testRelative("libdistant.jdeps"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java-outputs"))
+        .containsExactly(
+            testRelative("libfoo.jar"),
+            testRelative("libfoo-hjar.jar"),
+            testRelative("libfoo-src.jar"),
+            testRelative("libfoo.jdeps"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java-direct-deps"))
+        .containsExactly(
+            // foo
+            testRelative("libfoo.jar"),
+            testRelative("libfoo-hjar.jar"),
+            testRelative("libfoo-src.jar"),
+            testRelative("libfoo.jdeps"),
+            // direct
+            testRelative("libdirect.jar"),
+            testRelative("libdirect-hjar.jar"),
+            testRelative("libdirect-src.jar"),
+            testRelative("libdirect.jdeps"),
+            // indirect (only hjar and src-jar)
+            testRelative("libindirect-hjar.jar"),
+            testRelative("libindirect-src.jar"),
+            // distant (only hjar and src-jar)
+            testRelative("libdistant-hjar.jar"),
+            testRelative("libdistant-src.jar"));
+
+    // intellij-compile groups
+    assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
+        .containsExactly(
+            testRelative("libfoo.jar"),
+            testRelative("libdirect.jar"),
+            testRelative("libindirect.jar"),
+            testRelative("libdistant.jar"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java-outputs"))
+        .containsExactly(testRelative("libfoo.jar"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java-direct-deps"))
+        .containsExactly(testRelative("libfoo.jar"), testRelative("libdirect.jar"));
+
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
+
+    assertThat(target.getJavaIdeInfo().getJdeps().getRelativePath())
+        .isEqualTo(testRelative("libfoo.jdeps"));
+
+    assertThat(target.getJavaIdeInfo().getMainClass()).isEmpty();
+  }
+
+  @Test
+  public void testJavaLibraryOptimizedJars() throws Exception {
+    IntellijAspectTestFixture testFixture = loadTestFixture(":foo_fixture_optimize_building_jars");
+    TargetIdeInfo target = findTarget(testFixture, ":foo");
+
+    assertThat(target.getKindString()).isEqualTo("java_library");
+    assertThat(target.hasJavaIdeInfo()).isTrue();
+    assertThat(target.hasCIdeInfo()).isFalse();
+    assertThat(target.hasAndroidIdeInfo()).isFalse();
+    assertThat(target.hasPyIdeInfo()).isFalse();
+
+    assertThat(relativePathsForArtifacts(target.getJavaIdeInfo().getSourcesList()))
+        .containsExactly(testRelative("Foo.java"));
+    assertThat(
+        target.getJavaIdeInfo().getJarsList().stream()
+            .map(IntellijAspectTest::libraryArtifactToString)
+            .collect(toList()))
+        .containsExactly(
+            jarString(
+                testRelative("libfoo.jar"),
+                testRelative("libfoo-hjar.jar"),
+                testRelative("libfoo-src.jar")));
+
+    // intellij-info groups
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
+        .containsAtLeast(
+            testRelative("foo.java-manifest"), testRelative(intellijInfoFileName("foo")),
+            testRelative("direct.java-manifest"), testRelative(intellijInfoFileName("direct")),
+            testRelative("indirect.java-manifest"), testRelative(intellijInfoFileName("indirect")),
+            testRelative("distant.java-manifest"), testRelative(intellijInfoFileName("distant")));
+
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-outputs"))
+        .containsExactly(
+            testRelative("foo.java-manifest"), testRelative(intellijInfoFileName("foo")));
+
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-direct-deps"))
+        .containsAtLeast(
+            testRelative("foo.java-manifest"), testRelative(intellijInfoFileName("foo")),
+            testRelative("direct.java-manifest"), testRelative(intellijInfoFileName("direct")));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-direct-deps"))
+        .containsNoneOf(
+            testRelative("indirect.java-manifest"), testRelative(intellijInfoFileName("indirect")),
+            testRelative("distant.java-manifest"), testRelative(intellijInfoFileName("distant")));
+
+    // intellij-resolve groups
+    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
+        .containsExactly(
+            // foo
             testRelative("libfoo-hjar.jar"),
             testRelative("libfoo-src.jar"),
             testRelative("libfoo.jdeps"),
