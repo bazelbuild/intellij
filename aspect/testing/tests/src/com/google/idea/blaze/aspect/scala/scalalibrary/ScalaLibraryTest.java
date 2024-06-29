@@ -45,7 +45,7 @@ public class ScalaLibraryTest extends BazelIntellijAspectTest {
     // Also contains ijars for scala-library.
     // Also contains jars + srcjars for liblibrary.
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
-        .contains(testRelative("simple-ijar.jar"));
+        .containsAnyOf(testRelative("simple.jar"), testRelative("simple-ijar.jar"));
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
         .contains(testRelative(intellijInfoFileName("simple")));

@@ -30,6 +30,13 @@ java_library(
 
 intellij_aspect_test_fixture(
     name = "foo_fixture",
+    optimize_building_jars = False,
+    deps = [":foo"],
+)
+
+intellij_aspect_test_fixture(
+    name = "foo_fixture_optimize_building_jars",
+    optimize_building_jars = True,
     deps = [":foo"],
 )
 
@@ -56,6 +63,7 @@ java_library(
 
 intellij_aspect_test_fixture(
     name = "foo_exports_fixture",
+    optimize_building_jars = False,
     deps = [":foo_exports"],
 )
 
@@ -63,8 +71,9 @@ java_test(
     name = "JavaLibraryTest",
     srcs = ["JavaLibraryTest.java"],
     data = [
-        "foo_exports_fixture",
+        ":foo_exports_fixture",
         ":foo_fixture",
+        ":foo_fixture_optimize_building_jars",
     ],
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",

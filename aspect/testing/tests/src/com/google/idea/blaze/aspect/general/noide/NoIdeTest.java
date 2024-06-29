@@ -38,6 +38,26 @@ public class NoIdeTest extends BazelIntellijAspectTest {
             testRelative("foo.java-manifest"), testRelative(intellijInfoFileName("foo")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
         .containsExactly(
+            testRelative("libfoo.jar"),
+            testRelative("libfoo-hjar.jar"),
+            testRelative("libfoo-src.jar"),
+            testRelative("libfoo.jdeps"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
+        .containsExactly(testRelative("libfoo.jar"));
+  }
+
+  @Test
+  public void testNoIdeOptimizedJars() throws Exception {
+    IntellijAspectTestFixture testFixture = loadTestFixture(":noide_fixture_optimize_building_jars");
+    assertThat(findTarget(testFixture, ":foo")).isNotNull();
+    assertThat(findTarget(testFixture, ":bar")).isNull();
+    assertThat(findTarget(testFixture, ":baz")).isNull();
+
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
+        .containsAtLeast(
+            testRelative("foo.java-manifest"), testRelative(intellijInfoFileName("foo")));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
+        .containsExactly(
             testRelative("libfoo-hjar.jar"),
             testRelative("libfoo-src.jar"),
             testRelative("libfoo.jdeps"));
