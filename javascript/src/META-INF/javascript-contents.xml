@@ -36,6 +36,8 @@
     <editorNotificationProvider
         implementation="com.google.idea.blaze.typescript.AddTsConfigNotificationProvider"/>
     <postStartupActivity implementation="com.google.idea.blaze.javascript.run.producers.NonBlazeProducerSuppressor"/>
+    <!--  TODO(b/197086700): Find a permanent fix for excessive file watching  -->
+    <postStartupActivity implementation="com.google.idea.blaze.typescript.ModuleReferenceContributorRemover"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
