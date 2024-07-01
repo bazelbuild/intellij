@@ -768,7 +768,7 @@ def _build_filtered_gen_jar(ctx, target, java_outputs, gen_java_sources, srcjars
     """Filters the passed jar to contain only classes from the given manifest."""
     jar_artifacts = []
     source_jar_artifacts = []
-    should_should_optimize_building_jars = ctx.attr.should_optimize_building_jars
+    should_should_optimize_building_jars = ctx.attr.optimize_building_jars
     for jar in java_outputs:
         if jar.ijar:
             jar_artifacts.append(jar.ijar)
