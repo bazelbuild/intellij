@@ -29,6 +29,13 @@ java_library(
 
 intellij_aspect_test_fixture(
     name = "lib_fixture",
+    optimize_building_jars = False,
+    deps = [":lib"],
+)
+
+intellij_aspect_test_fixture(
+    name = "lib_fixture_optimized_jars",
+    optimize_building_jars = True,
     deps = [":lib"],
 )
 
@@ -37,6 +44,7 @@ java_test(
     srcs = ["JavaProtoLibraryTest.java"],
     data = [
         ":lib_fixture",
+        ":lib_fixture_optimized_jars",
     ],
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
