@@ -546,6 +546,7 @@ final class SyncPhaseCoordinator {
                   + "'%1$s > Sync > Expand Sync to Working Set' and try again.",
               buildSystem);
       context.output(PrintOutput.error(message));
+      context.setHasWarnings();
       IssueOutput.warn(message).submit(context);
       return SyncResult.PARTIAL_SUCCESS;
     }
