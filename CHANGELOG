@@ -1,3 +1,7 @@
+v2024.07.02
+===========
+
+
 v2024.06.18
 ===========
 * fix: Missing directories when view_project_root is on #6493
