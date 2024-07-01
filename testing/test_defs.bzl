@@ -15,6 +15,7 @@ ADD_OPENS = [
         "java.base/java.lang",
         "java.base/java.util",
         "java.base/java.util.concurrent",
+        "java.base/sun.nio.fs",
         "java.desktop/java.awt",
         "java.desktop/java.awt.event",
         "java.desktop/javax.swing",
