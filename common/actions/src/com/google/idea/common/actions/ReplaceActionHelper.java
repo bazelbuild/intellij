@@ -22,6 +22,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.function.Predicate;
 import org.jetbrains.annotations.NotNull;
 
@@ -153,6 +155,11 @@ public class ReplaceActionHelper {
       } else {
         originalAction.actionPerformed(e);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return originalAction.getActionUpdateThread();
     }
 
     private static void applyPresentation(
