@@ -126,6 +126,7 @@ intellij_unit_test_suite(
         "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "@maven//:org_mockito_mockito_core",
         "@com_google_guava_guava//jar",
         "@junit//jar",
     ] + select_for_ide(

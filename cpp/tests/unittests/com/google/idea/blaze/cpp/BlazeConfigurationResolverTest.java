@@ -23,6 +23,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import com.intellij.mock.MockProject;
+import org.mockito.MockedStatic;
+
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
@@ -82,6 +85,7 @@ import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
 /** Tests for {@link BlazeConfigurationResolver}. */
 @RunWith(JUnit4.class)
@@ -838,14 +842,18 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     when(mockExternalSourceRootFile.listFiles()).thenReturn(
         List.of(spyExternalDependencyRoot).toArray(File[]::new));
 
-    doReturn(mockExternalSourceRootFile.listFiles()).when(spyFileOperationProvider)
-        .listFiles(externalRoot);
+   try (MockedStatic<WorkspaceHelper> mockedStatic = Mockito.mockStatic(WorkspaceHelper.class)) {
+     mockedStatic.when(
+         () -> WorkspaceHelper.resolveExternalWorkspace(Mockito.any(MockProject.class),
+             Mockito.any(String.class))).thenReturn(new WorkspaceRoot(spyExternalDependencyRoot));
 
-    assertThatResolving(projectView,targetMap).producesConfigurationsFor("//test:target and 1 other target(s)");
-    assertThat(resolverResult.getAllConfigurations().get(0).getTargets().stream()
-        .map(targetKey -> targetKey.getLabel().toString())
-        .collect(Collectors.toList())).containsAtLeast("//test:target",
-        "@external_dependency//foo:bar");
+     assertThatResolving(projectView, targetMap).producesConfigurationsFor(
+         "//test:target and 1 other target(s)");
+     assertThat(resolverResult.getAllConfigurations().get(0).getTargets().stream()
+         .map(targetKey -> targetKey.getLabel().toString())
+         .collect(Collectors.toList())).containsAtLeast("//test:target",
+         "@external_dependency//foo:bar");
+   }
   }
 
   @Test
