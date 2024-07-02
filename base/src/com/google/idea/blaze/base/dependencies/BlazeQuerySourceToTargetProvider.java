@@ -42,6 +42,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.BufferedReader;
 import java.io.File;
@@ -95,6 +96,8 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
       super(message, cause);
     }
   }
+
+  static Logger logger = Logger.getInstance(BlazeQuerySourceToTargetProvider.class);
 
   @Override
   public Future<List<TargetInfo>> getTargetsBuildingSourceFile(
@@ -210,8 +213,12 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
     } catch (IOException e) {
       throw new BlazeQuerySourceToTargetException("Failed to get target info list", e);
     } finally {
-      if (!Registry.get("bazel.sync.keep.query.files").asBoolean()) {
-        queryFile.toFile().delete();
+      if (!Registry.is("bazel.sync.keep.query.files")) {
+          try {
+              Files.deleteIfExists(queryFile);
+          } catch (IOException e) {
+              logger.error("Failed to delete query file", e);
+          }
       }
     }
   }
