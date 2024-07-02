@@ -22,6 +22,8 @@ java_library(
     srcs = glob(["src/**/*.java"]),
     deps = [
         "//base",
+        "//common/experiments",
+        "//common/util:transactions",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//java",
