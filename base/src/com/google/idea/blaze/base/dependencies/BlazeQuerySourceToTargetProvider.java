@@ -41,7 +41,6 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.project.ProjectProtoTransform;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import java.io.BufferedReader;
@@ -221,12 +220,16 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
     Path queryFile = null;
     try {
       Path queriesDir = Paths.get(project.getBasePath()).resolve("queries");
-      queriesDir.toFile().mkdir();
+      Files.createDirectories(queriesDir);
       queryFile = Files.createTempFile(queriesDir, "query-", "");
       Files.writeString(queryFile, rdepsQuery, StandardOpenOption.WRITE);
     } catch (IOException e) {
       if (queryFile != null) {
-        queryFile.toFile().delete();
+        try {
+          Files.deleteIfExists(queryFile);
+        } catch (IOException ex) {
+          throw new BlazeQuerySourceToTargetException("Couldn't delete file after creation failure", e);
+        }
       }
       throw new BlazeQuerySourceToTargetException("Couldn't create query file", e);
     }
