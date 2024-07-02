@@ -57,10 +57,10 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
       ImportRoots directories,
       WorkspacePathResolver pathResolver,
       BlazeContext context) {
-    return runQuery(project, getQueryString(directories, shouldManualTargetSync), context);
+    return runQuery(project, getQueryString(directories, shouldManualTargetSync, pathResolver), context);
   }
 
-  protected static String getQueryString(ImportRoots directories, boolean allowManualTargetsSync) {
+  protected static String getQueryString(ImportRoots directories, boolean allowManualTargetsSync, WorkspacePathResolver pathResolver) {
     StringBuilder targets = new StringBuilder();
     targets.append(
         directories.rootDirectories().stream()
@@ -69,7 +69,7 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
     for (WorkspacePath excluded : directories.excludePathsForBazelQuery()) {
       // Bazel produces errors for paths that don't exist (e.g. bazel-out in a project that overrides the default symlinks),
       // so only include paths that actually exist.
-      if (Files.exists(excluded.asPath())) {
+      if (Files.exists(pathResolver.resolveToFile(excluded).toPath())) {
         targets.append(" - " + TargetExpression.allFromPackageRecursive(excluded).toString());
       }
     }

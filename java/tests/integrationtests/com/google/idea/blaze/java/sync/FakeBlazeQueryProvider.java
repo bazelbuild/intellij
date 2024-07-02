@@ -30,7 +30,7 @@ class FakeBlazeQueryProvider extends BlazeQueryDirectoryToTargetProvider {
             ImportRoots directories,
             WorkspacePathResolver pathResolver,
             BlazeContext context) {
-        return runQuery(project, getQueryString(directories, shouldManualTargetSync), context);
+        return runQuery(project, getQueryString(directories, shouldManualTargetSync, pathResolver), context);
     }
 
     @Nullable
