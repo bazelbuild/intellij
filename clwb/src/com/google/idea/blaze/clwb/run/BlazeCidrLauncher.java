@@ -46,6 +46,7 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.google.idea.blaze.cpp.CppBlazeRules;
+import com.google.idea.sdkcompat.clion.CidrDebugProcessCreator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.CommandLineState;
@@ -256,7 +257,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
       state.setConsoleBuilder(createConsoleBuilder(null));
       state.addConsoleFilters(getConsoleFilters().toArray(new Filter[0]));
-      return new CidrLocalDebugProcess(parameters, session, state.getConsoleBuilder());
+      return CidrDebugProcessCreator.create(() -> new CidrLocalDebugProcess(parameters, session, state.getConsoleBuilder()));
     }
     List<String> extraDebugFlags = BlazeGDBServerProvider.getFlagsForDebugging(handlerState);
 
@@ -279,8 +280,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     BlazeCLionGDBDriverConfiguration debuggerDriverConfiguration =
         new BlazeCLionGDBDriverConfiguration(project);
 
-    return new BlazeCidrRemoteDebugProcess(
-        targetProcess, debuggerDriverConfiguration, parameters, session, state.getConsoleBuilder());
+    return CidrDebugProcessCreator.create(() -> new BlazeCidrRemoteDebugProcess(
+        targetProcess, debuggerDriverConfiguration, parameters, session, state.getConsoleBuilder()));
   }
 
   /** Get the correct test prefix for blaze/bazel */
