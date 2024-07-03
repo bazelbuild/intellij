@@ -94,7 +94,10 @@ optional_plugin_xml(
 
 optional_plugin_xml(
     name = "optional_java_coverage",
-    module = ["com.intellij.modules.coverage", "com.intellij.java"],
+    module = [
+        "com.intellij.modules.coverage",
+        "com.intellij.java",
+    ],
     plugin_xml = "src/META-INF/java-coverage-contents.xml",
 )
 
@@ -208,7 +211,7 @@ java_binary(
         ),
         jvm_flags = test_case["jvm_flags"],
         required_plugins = "com.google.idea.blaze.java",
-        test_package_root = "com.google.idea.blaze.java",
+        test_package_root = "com.google.idea.blaze",
         visibility = DEFAULT_TEST_VISIBILITY,
         runtime_deps = [
             ":java_integration_test_plugin",
