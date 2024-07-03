@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.errorprone.annotations.Keep;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -132,7 +133,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
     BlazeConfigurationResolverResult newResult =
         configurationResolver.update(
             context, workspaceRoot, projectViewSet, blazeProjectData, oldResult);
-    BlazeCompilerInfoMapService.getInstance(project).setState(newResult.getTargetToCompilerVersion());
+    BlazeCTargetInfoService.setState(project, calculatePersistentInformation(newResult));
     // calculateConfigurations is expensive, so run async without a read lock (b/78570947)
     ProgressManager.getInstance()
         .run(
@@ -163,6 +164,24 @@ public final class BlazeCWorkspace implements ProjectComponent {
                 incModificationTrackers();
               }
             });
+  }
+
+  private ImmutableMap<TargetKey, BlazeCTargetInfoService.TargetInfo> calculatePersistentInformation(
+      BlazeConfigurationResolverResult resolverResult) {
+
+    final var infoMap = new ImmutableMap.Builder<TargetKey, BlazeCTargetInfoService.TargetInfo>();
+    resolverResult.getConfigurationMap().forEach((data, config) -> {
+      final var info = new BlazeCTargetInfoService.TargetInfo(
+          data.compilerSettings.getCompilerVersion(),
+          config.getDisplayName()
+      );
+
+      for (final var target : config.getTargets()) {
+        infoMap.put(target, info);
+      }
+    });
+
+    return infoMap.build();
   }
 
   private WorkspaceModel calculateConfigurations(
@@ -261,7 +280,8 @@ public final class BlazeCWorkspace implements ProjectComponent {
         ImmutableList<String> includePrefixHints = ImmutableList.of();
         if (VirtualIncludesHandler.useHints()) {
           Path rootPath = workspaceRoot.directory().toPath();
-          includePrefixHints = VirtualIncludesHandler.collectIncludeHints(rootPath, targetKey, blazeProjectData,
+          includePrefixHints = VirtualIncludesHandler.collectIncludeHints(rootPath, targetKey,
+              blazeProjectData,
               executionRootPathResolver, indicator);
         }
 
@@ -482,7 +502,8 @@ public final class BlazeCWorkspace implements ProjectComponent {
     workspaceModel.model.preCommit();
 
     TransactionGuard.getInstance().submitTransactionAndWait(
-        () -> ApplicationManager.getApplication().runWriteAction((Runnable) workspaceModel.model::commit)
+        () -> ApplicationManager.getApplication()
+            .runWriteAction((Runnable) workspaceModel.model::commit)
     );
 
     return issues;

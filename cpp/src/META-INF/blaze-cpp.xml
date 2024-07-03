@@ -47,7 +47,7 @@
     <ownModuleDetector implementation="com.google.idea.blaze.cpp.BlazeOwnModuleDetector"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="com.google.idea.blaze.cpp.BlazeCompilerInfoMapService"/>
+    <projectService serviceImplementation="com.google.idea.blaze.cpp.BlazeCTargetInfoService"/>
     <!-- It may look like we're registering the same service twice, but this is intentional.
      In non-macOS systems, we don't want to return any Xcode compiler settings.
      Therefore, we register a service that returns nothing.
