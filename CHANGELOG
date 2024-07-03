@@ -1,3 +1,15 @@
+v2024.07.02
+===========
+Performance fix:
+* Use a global bounded threadpool when using persistent workers #6508
+Bug fixes:
+* fix: Display "Coverage" tool window correctly after executing "run wi… #6502
+* Disable include hints (-ibazel) by default #6534
+* trusted project: respect intellij settings controlling project trustness #6521
+* clion: fix broken debug in 2024.2 #6538
+Internal changes:
+* CI build on Windows #6494
+
 v2024.06.18
 ===========
 * fix: Missing directories when view_project_root is on #6493
