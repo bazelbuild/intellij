@@ -1,50 +1,50 @@
 # Add 'awaiting-review' to any PR opened
 awaiting-review:
-- changed-files:
-  - any-glob-to-any-file: '**/*'
+  - changed-files:
+    - any-glob-to-any-file: '**/*'
 
 'product: CLion':
-- changed-files:
-  - any-glob-to-any-file:
-    - clwb/**/*
-    - cpp/**/*
-    - base/**/*
-    - examples/cpp/simple_project/**/*
-    - intellij_platform_sdk/BUILD.clion213
-    - intellij_platform_sdk/BUILD.clion221
-    - intellij_platform_sdk/BUILD.clion222
-    - intellij_platform_sdk/BUILD.clion223
-    - intellij_platform_sdk/BUILD.clion231
-    - intellij_platform_sdk/BUILD.clion232
+  - changed-files:
+    - any-glob-to-any-file:
+      - clwb/**/*
+      - cpp/**/*
+      - base/**/*
+      - examples/cpp/simple_project/**/*
+      - intellij_platform_sdk/BUILD.clion213
+      - intellij_platform_sdk/BUILD.clion221
+      - intellij_platform_sdk/BUILD.clion222
+      - intellij_platform_sdk/BUILD.clion223
+      - intellij_platform_sdk/BUILD.clion231
+      - intellij_platform_sdk/BUILD.clion232
 
 'product: IntelliJ':
-- changed-files:
-  - any-glob-to-any-file:
-    - base/**/*
-    - examples/java/greetings_project/**/*
-    - ijwb/**/*
-    - kotlin/**/*
-    - java/**/*
-    - examples/kotlin/**/*
-    - javascript/**/*
-    - python/**/*
-    - scala/**/*
-    - intellij_platform_sdk/BUILD.idea221
-    - intellij_platform_sdk/BUILD.idea222
-    - intellij_platform_sdk/BUILD.idea223
-    - intellij_platform_sdk/BUILD.idea231
-    - intellij_platform_sdk/BUILD.idea232
-    - intellij_platform_sdk/BUILD.ue213
-    - intellij_platform_sdk/BUILD.ue221
-    - intellij_platform_sdk/BUILD.ue222
-    - intellij_platform_sdk/BUILD.ue223
-    - intellij_platform_sdk/BUILD.ue231
-    - intellij_platform_sdk/BUILD.ue232
+  - changed-files:
+    - any-glob-to-any-file:
+      - base/**/*
+      - examples/java/greetings_project/**/*
+      - ijwb/**/*
+      - kotlin/**/*
+      - java/**/*
+      - examples/kotlin/**/*
+      - javascript/**/*
+      - python/**/*
+      - scala/**/*
+      - intellij_platform_sdk/BUILD.idea221
+      - intellij_platform_sdk/BUILD.idea222
+      - intellij_platform_sdk/BUILD.idea223
+      - intellij_platform_sdk/BUILD.idea231
+      - intellij_platform_sdk/BUILD.idea232
+      - intellij_platform_sdk/BUILD.ue213
+      - intellij_platform_sdk/BUILD.ue221
+      - intellij_platform_sdk/BUILD.ue222
+      - intellij_platform_sdk/BUILD.ue223
+      - intellij_platform_sdk/BUILD.ue231
+      - intellij_platform_sdk/BUILD.ue232
 
 'product: GoLand':
-- changed-files:
-  - any-glob-to-any-file:
-    - base/**/*
-    - examples/go/**/*
-    - gazelle/**/*
-    - golang/**/*
+  - changed-files:
+    - any-glob-to-any-file:
+      - base/**/*
+      - examples/go/**/*
+      - gazelle/**/*
+      - golang/**/*
