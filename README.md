@@ -38,6 +38,7 @@ Beta versions are usually uploaded to the Beta channel 2 weeks before they becom
   - Android Studio -> `https://plugins.jetbrains.com/plugins/beta/9185`
 
 ## Usage
+We recommend watching [this video](https://www.youtube.com/watch?v=GV_KwWK3Qy8) to familiarize yourself with the plugin's features.
 
 To import an existing Bazel project, choose `Import Bazel Project`,
 and follow the instructions in the project import wizard.
