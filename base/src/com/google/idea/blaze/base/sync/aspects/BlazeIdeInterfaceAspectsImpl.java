@@ -373,7 +373,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                                   importRoots,
                                   message,
                                   ignoredLanguages,
-                                  syncTime);
+                                  syncTime,
+                                  project);
                           return new TargetFilePair(file, target);
                         }));
               }
@@ -486,13 +487,14 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       ImportRoots importRoots,
       IntellijIdeInfo.TargetIdeInfo message,
       Set<LanguageClass> ignoredLanguages,
-      Instant syncTime) {
+      Instant syncTime,
+      Project project)  {
     Kind kind = Kind.fromProto(message);
     if (kind == null) {
       return null;
     }
     if (kind.getLanguageClasses().stream().anyMatch(languageSettings::isLanguageActive)) {
-      return TargetIdeInfo.fromProto(message, syncTime);
+      return TargetIdeInfo.fromProto(message, syncTime, project);
     }
     TargetKey key = message.hasKey() ? TargetKey.fromProto(message.getKey()) : null;
     if (key != null && importRoots.importAsSource(key.getLabel())) {
@@ -587,7 +589,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       BlazeInvocationContext blazeInvocationContext,
       boolean invokeParallel) {
     AspectStrategy aspectStrategy = AspectStrategy.getInstance(blazeVersion);
-
     final Ref<BlazeBuildOutputs> combinedResult = new Ref<>();
 
     // The build is a sync iff INFO output group is present

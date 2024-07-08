@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.common.BuildTarget;
+import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -73,11 +74,11 @@ public final class AspectSyncProjectData implements BlazeProjectData {
 
   @VisibleForTesting
   public static AspectSyncProjectData fromProto(
-      BuildSystemName buildSystemName, ProjectData.BlazeProjectData proto) {
+      BuildSystemName buildSystemName, ProjectData.BlazeProjectData proto, Project project) {
     BlazeInfo blazeInfo = BlazeInfo.fromProto(buildSystemName, proto.getBlazeInfo());
     WorkspacePathResolver workspacePathResolver =
         WorkspacePathResolver.fromProto(proto.getWorkspacePathResolver());
-    ProjectTargetData targetData = parseTargetData(proto);
+    ProjectTargetData targetData = parseTargetData(proto, project);
     return new AspectSyncProjectData(
         targetData,
         blazeInfo,
@@ -88,12 +89,12 @@ public final class AspectSyncProjectData implements BlazeProjectData {
         SyncState.fromProto(proto.getSyncState()));
   }
 
-  private static ProjectTargetData parseTargetData(ProjectData.BlazeProjectData proto) {
+  private static ProjectTargetData parseTargetData(ProjectData.BlazeProjectData proto, Project project) {
     if (proto.hasTargetData()) {
-      return ProjectTargetData.fromProto(proto.getTargetData());
+      return ProjectTargetData.fromProto(proto.getTargetData(), project);
     }
     // handle older version of project data
-    TargetMap map = TargetMap.fromProto(proto.getTargetMap());
+    TargetMap map = TargetMap.fromProto(proto.getTargetMap(), project);
     BlazeIdeInterfaceState ideInterfaceState =
         BlazeIdeInterfaceState.fromProto(proto.getSyncState().getBlazeIdeInterfaceState());
     RemoteOutputArtifacts remoteOutputs =
@@ -197,10 +198,11 @@ public final class AspectSyncProjectData implements BlazeProjectData {
     return false;
   }
 
-  public static AspectSyncProjectData loadFromDisk(BuildSystemName buildSystemName, File file)
+  public static AspectSyncProjectData loadFromDisk(BuildSystemName buildSystemName, File file,
+      Project project)
       throws IOException {
     try (InputStream stream = new GZIPInputStream(new FileInputStream(file))) {
-      return fromProto(buildSystemName, ProjectData.BlazeProjectData.parseFrom(stream));
+      return fromProto(buildSystemName, ProjectData.BlazeProjectData.parseFrom(stream), project);
     }
   }
 
