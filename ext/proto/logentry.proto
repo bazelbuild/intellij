@@ -210,7 +210,7 @@ message EditedFile {
 message FreezeInfo {
   // This is used to group related thread dumps together, since they'll be in
   // different log messages, but have the same start_time.
-  optional int64 start_time_millis = 1;
+  optional uint64 start_time_millis = 1;
   repeated ThreadInfo thread_info = 2;
   // Indicates if IDE-wide freeze: not just UI thread blocked, but sampling
   // thread too.
