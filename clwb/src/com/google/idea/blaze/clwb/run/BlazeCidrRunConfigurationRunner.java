@@ -39,6 +39,7 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.PathUtil;
@@ -114,7 +115,10 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
 
     if (debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB && !Registry.is("bazel.trim.absolute.path.disabled")) {
       flagsBuilder.add("--copt=-fdebug-compilation-dir=" + WorkspaceRoot.fromProject(env.getProject()));
-      flagsBuilder.add("--linkopt=-Wl,-oso_prefix,.");
+
+      if (SystemInfo.isMac) {
+        flagsBuilder.add("--linkopt=-Wl,-oso_prefix,.");
+      }
     }
 
     flagsBuilder.add("--compilation_mode=dbg");

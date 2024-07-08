@@ -18,7 +18,6 @@ package com.google.idea.blaze.clwb.run;
 import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 
 public enum BlazeDebuggerKind {
@@ -70,11 +69,8 @@ public enum BlazeDebuggerKind {
       return BUNDLED_LLDB;
     }
     if (SystemInfo.isWindows) {
-       if (compilerKind instanceof MSVCCompilerKind) {
-         return BUNDLED_LLDB;
-       } else {
-         return BUNDLED_GDB;
-       }
+      // TODO: gdb configuration is not working correctly on windows because of path mappings
+      return BUNDLED_LLDB;
     }
 
     // fallback to default toolchain
