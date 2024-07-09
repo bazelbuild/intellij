@@ -4,7 +4,7 @@ awaiting-review:
     - any-glob-to-any-file: ['**/*']
 
 'product: CLion':
-  - changed_files:
+  - changed-files:
     -  any-glob-to-any-file: [
     'clwb/**/*',
     'cpp/**/*',
@@ -19,7 +19,7 @@ awaiting-review:
     ]
 
 'product: IntelliJ':
- - changed_files:
+ - changed-files:
     -  any-glob-to-any-file: [
     'base/**/*',
     'examples/java/greetings_project/**/*',
@@ -44,7 +44,7 @@ awaiting-review:
     ]
 
 'product: GoLand':
- - changed_files:
+ - changed-files:
     -  any-glob-to-any-file: [
     'base/**/*',
     'examples/go/**/*',
