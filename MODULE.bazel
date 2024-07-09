@@ -66,7 +66,7 @@ bazel_binaries = use_extension(
 )
 bazel_binaries.download(version = "5.4.1")
 bazel_binaries.download(version = "6.5.0")
-bazel_binaries.download(version = "7.0.2")
+bazel_binaries.download(version = "7.0.2", current = True)
 use_repo(
     bazel_binaries,
     "bazel_binaries",

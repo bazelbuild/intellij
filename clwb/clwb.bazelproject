@@ -6,8 +6,7 @@ directories:
   -examples
 
 targets:
-  //clwb:clwb_bazel_dev
-  //:clwb_tests
+  //clwb:all
 
 workspace_type: intellij_plugin
 

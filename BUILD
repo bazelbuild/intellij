@@ -72,6 +72,7 @@ test_suite(
     tests = [
         "//base:unit_tests",
         "//clwb:unit_tests",
+        "//clwb:integration_tests",
         "//cpp:unit_tests",
         "//dart:unit_tests",
         "//python:unit_tests",
