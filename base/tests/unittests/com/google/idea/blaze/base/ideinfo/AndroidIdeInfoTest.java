@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.ideinfo;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.mock;
 
 import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import com.intellij.openapi.project.Project;
 
 /** Tests for {@link AndroidIdeInfo}. */
 @RunWith(JUnit4.class)
@@ -40,9 +42,8 @@ public class AndroidIdeInfoTest {
             .addResources(sourceProto("com/google/mylib/res"))
             .addResources(sourceProto("com/google/anotherlib/res"))
             .build();
-
-    AndroidIdeInfo output = AndroidIdeInfo.fromProto(input);
-
+    Project project = mock(Project.class);
+    AndroidIdeInfo output = AndroidIdeInfo.fromProto(input, project);
     assertThat(
             output.getResources().stream()
                 .map(AndroidResFolder::getRoot)
@@ -75,7 +76,8 @@ public class AndroidIdeInfoTest {
                 IntellijIdeInfo.ResFolderLocation.newBuilder().setRoot(anotherLibRoot).build())
             .build();
 
-    AndroidIdeInfo output = AndroidIdeInfo.fromProto(input);
+    Project project = mock(Project.class);
+    AndroidIdeInfo output = AndroidIdeInfo.fromProto(input, project);
 
     assertThat(
             output.getResources().stream()
@@ -115,8 +117,8 @@ public class AndroidIdeInfoTest {
             .addResFolders(
                 IntellijIdeInfo.ResFolderLocation.newBuilder().setRoot(anotherLibRoot).build())
             .build();
-
-    AndroidIdeInfo output = AndroidIdeInfo.fromProto(input);
+    Project project = mock(Project.class);
+    AndroidIdeInfo output = AndroidIdeInfo.fromProto(input, project);
 
     assertThat(
             output.getResources().stream()
