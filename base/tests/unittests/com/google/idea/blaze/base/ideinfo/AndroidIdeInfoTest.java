@@ -16,15 +16,21 @@
 package com.google.idea.blaze.base.ideinfo;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
 import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.util.ManifestPackageParser;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import com.intellij.openapi.project.Project;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 /** Tests for {@link AndroidIdeInfo}. */
 @RunWith(JUnit4.class)
@@ -136,7 +142,51 @@ public class AndroidIdeInfoTest {
     assertThat(folder0.getAar()).isEqualTo(ArtifactLocation.fromProto(resourceAar));
   }
 
+
+  /**
+   * Test when the javaPackage passed as null or empty, when the AndroidManifest and resource are
+   * presented, try to read the javaPackage from the AndroidManifest.
+   */
+  @Test
+  public void readJavapackageFromManifestWhenItIsNullTest() {
+    IntellijIdeInfo.AndroidIdeInfo input =
+        IntellijIdeInfo.AndroidIdeInfo.newBuilder()
+            .addResources(sourceProto("com/google/mylib/res"))
+            .addResources(sourceProto("com/google/anotherlib/res"))
+            .setResourceJar(libraryArtifactProto())
+            .setManifest(sourceProto("AndroidManifest.xml"))
+            .build();
+
+    try (MockedStatic<WorkspaceRoot> mockedStatic = Mockito.mockStatic(WorkspaceRoot.class)) {
+      Project project = mock(Project.class);
+      WorkspaceRoot mockedRoot = mock(WorkspaceRoot.class);
+      mockedStatic.when(() -> WorkspaceRoot.fromProject(any())).thenReturn(mockedRoot);
+
+      try (MockedStatic<ManifestPackageParser> staticParser = Mockito.mockStatic(
+          ManifestPackageParser.class)) {
+        try (MockedStatic<LibraryArtifact> staticLibraryArtifact = Mockito.mockStatic(
+            LibraryArtifact.class)) {
+          staticLibraryArtifact.when(() -> LibraryArtifact.fromProto(any()))
+              .thenReturn(mock(LibraryArtifact.class));
+
+          staticParser.when(() -> ManifestPackageParser.extractPackageName(any()))
+              .thenReturn("com.google.mylib");
+
+          AndroidIdeInfo output = AndroidIdeInfo.fromProto(input, project);
+
+          assertThat(
+              output.getResourceJavaPackage().equals("com.google.mylib"));
+        }
+      }
+    }
+  }
+
   private static Common.ArtifactLocation sourceProto(String location) {
     return Common.ArtifactLocation.newBuilder().setRelativePath(location).setIsSource(true).build();
+  }
+
+  private static IntellijIdeInfo.LibraryArtifact libraryArtifactProto() {
+    return IntellijIdeInfo.LibraryArtifact.newBuilder()
+        .addAllSourceJars(new ArrayList()).build();
   }
 }
