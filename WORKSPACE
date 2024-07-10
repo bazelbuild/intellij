@@ -690,14 +690,6 @@ http_archive(
     ],
 )
 
-# gRPC Java
-http_archive(
-    name = "io_grpc_grpc_java",
-    sha256 = "3bcf6be49fc7ab8187577a5211421258cb8e6d179f46023cc82e42e3a6188e51",
-    strip_prefix = "grpc-java-1.59.0",
-    url = "https://github.com/grpc/grpc-java/archive/refs/tags/v1.59.0.tar.gz",
-)
-
 jvm_maven_import_external(
     name = "io_netty_netty_common",
     artifact = "io.netty:netty-common:4.1.96.Final",
@@ -737,44 +729,6 @@ jvm_maven_import_external(
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )
-
-# io_grpc_grpc_java dependencies
-load("@io_grpc_grpc_java//:repositories.bzl", "IO_GRPC_GRPC_JAVA_ARTIFACTS", "IO_GRPC_GRPC_JAVA_OVERRIDE_TARGETS", "grpc_java_repositories")
-
-grpc_java_repositories()
-
-# Java Maven-based repositories.
-http_archive(
-    name = "rules_jvm_external",
-    sha256 = "cd1a77b7b02e8e008439ca76fd34f5b07aecb8c752961f9640dea15e9e5ba1ca",
-    strip_prefix = "rules_jvm_external-4.2",
-    url = "https://github.com/bazelbuild/rules_jvm_external/archive/4.2.zip",
-)
-
-load("@rules_jvm_external//:repositories.bzl", "rules_jvm_external_deps")
-
-rules_jvm_external_deps()
-
-load("@rules_jvm_external//:setup.bzl", "rules_jvm_external_setup")
-
-rules_jvm_external_setup()
-
-load("@rules_jvm_external//:defs.bzl", "maven_install")
-
-maven_install(
-    artifacts = IO_GRPC_GRPC_JAVA_ARTIFACTS,
-    generate_compat_repositories = True,
-    override_targets = IO_GRPC_GRPC_JAVA_OVERRIDE_TARGETS,
-    repositories = [
-        "https://maven.google.com",
-        "https://repo1.maven.org/maven2",
-        "https://repository.mulesoft.org/nexus/content/repositories/public",
-    ],
-)
-
-load("@maven//:compat.bzl", "compat_repositories")
-
-compat_repositories()
 
 # Register custom java 17 toolchain
 register_toolchains("//:custom_java_17_toolchain_definition")
