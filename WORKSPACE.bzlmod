@@ -852,24 +852,6 @@ http_archive(
 load("@io_bazel_rules_go//go:deps.bzl", "go_rules_dependencies")
 go_rules_dependencies()
 
-grpc_java_version = "1.61.1"
-
-http_archive(
-    name = "io_grpc_grpc_java",
-    sha256 = "4264560a4d0ed6053c88e202ba161e87edd4eb7ac4ea88d070b9b822041a3f2d",
-    strip_prefix = "grpc-java-{}".format(grpc_java_version),
-    url = "https://github.com/grpc/grpc-java/archive/refs/tags/v{}.tar.gz".format(grpc_java_version),
-    repo_mapping = {
-        "@com_google_code_findbugs_jsr305": "@jsr305_annotations",
-        "@com_google_errorprone_error_prone_annotations": "@error_prone_annotations",
-    }
-)
-
-# io_grpc_grpc_java dependencies
-load("@io_grpc_grpc_java//:repositories.bzl", "grpc_java_repositories")
-
-grpc_java_repositories()
-
 # Dependency needed for Go test library
 http_archive(
     name = "bazel_gazelle",
