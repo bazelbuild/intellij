@@ -21,6 +21,10 @@ public class CompilerVersionUtil {
     return version.contains("clang");
   }
 
+  public static boolean isAppleClang(String version) {
+    return version.contains("Apple") && isClang(version);
+  }
+
   public static boolean isMSVC(String version) {
     return version.contains("Microsoft");
   }

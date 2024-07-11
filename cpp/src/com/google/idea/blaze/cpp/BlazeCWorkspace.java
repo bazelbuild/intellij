@@ -47,6 +47,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -64,13 +65,17 @@ import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceEventImpl;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceImpl;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceModificationTrackersImpl;
+import com.jetbrains.cidr.lang.workspace.compiler.AppleClangSwitchBuilder;
 import com.jetbrains.cidr.lang.workspace.compiler.CachedTempFilesPool;
+import com.jetbrains.cidr.lang.workspace.compiler.ClangSwitchBuilder;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Message;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Session;
+import com.jetbrains.cidr.lang.workspace.compiler.CompilerSpecificSwitchBuilder;
+import com.jetbrains.cidr.lang.workspace.compiler.GCCSwitchBuilder;
+import com.jetbrains.cidr.lang.workspace.compiler.MSVCSwitchBuilder;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -184,6 +189,35 @@ public final class BlazeCWorkspace implements ProjectComponent {
     return infoMap.build();
   }
 
+  private CompilerSpecificSwitchBuilder selectSwitchBuilder(
+      BlazeCompilerSettings compilerSettings) {
+    final var version = compilerSettings.getCompilerVersion();
+
+    if (CompilerVersionUtil.isAppleClang(version)) {
+      return new AppleClangSwitchBuilder();
+    }
+    if (CompilerVersionUtil.isClang(version)) {
+      return new ClangSwitchBuilder();
+    }
+    if (CompilerVersionUtil.isMSVC(version)) {
+      return new MSVCSwitchBuilder();
+    }
+
+    // default to gcc
+    return new GCCSwitchBuilder();
+  }
+
+  private CidrCompilerSwitches buildSwitchBuilder(
+      BlazeCompilerSettings compilerSettings,
+      CompilerSpecificSwitchBuilder builder,
+      OCLanguageKind language) {
+    final var combinedBuilder = new CidrSwitchBuilder();
+    combinedBuilder.addAllRaw(compilerSettings.getCompilerSwitches(language, null));
+    combinedBuilder.addAll(builder.build());
+
+    return combinedBuilder.build();
+  }
+
   private WorkspaceModel calculateConfigurations(
       BlazeProjectData blazeProjectData,
       WorkspaceRoot workspaceRoot,
@@ -221,90 +255,92 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
         // defines and include directories are the same for all sources in a given target, so lets
         // collect them once and reuse for each source file's options
+        final var compilerSwitchesBuilder = selectSwitchBuilder(compilerSettings);
 
-        UnfilteredCompilerOptions coptsExtractor =
-            UnfilteredCompilerOptions.builder()
-                .registerSingleOrSplitOption("-I")
-                .build(targetIdeInfo.getcIdeInfo().getLocalCopts());
-        List<String> plainLocalCopts = coptsExtractor.getUninterpretedOptions();
+        // this parses user defined copts filed, later -I include paths are resolved using the
+        // ExecutionRootPathResolver
+        // TODO: this can either be dropped or we might need to add support for other include types
+        UnfilteredCompilerOptions coptsExtractor = UnfilteredCompilerOptions.builder()
+            .registerSingleOrSplitOption("-I")
+            .build(targetIdeInfo.getcIdeInfo().getLocalCopts());
+
+        // forward user defined switches either directly or filter them first
+        final var plainLocalCopts = coptsExtractor.getUninterpretedOptions();
         if (Registry.is("bazel.cpp.sync.workspace.filter.out.incompatible.flags")) {
-          plainLocalCopts = filterIncompatibleFlags(plainLocalCopts);
+          compilerSwitchesBuilder.withSwitches(filterIncompatibleFlags(plainLocalCopts));
+        } else {
+          compilerSwitchesBuilder.withSwitches(plainLocalCopts);
         }
 
-        ImmutableList<ExecutionRootPath> localIncludes =
-            coptsExtractor.getExtractedOptionValues("-I").stream()
-                .map(ExecutionRootPath::new)
-                .collect(toImmutableList());
-
         // transitiveDefines are sourced from a target's (and transitive deps) "defines" attribute
-        ImmutableList<String> transitiveDefineOptions =
-            targetIdeInfo.getcIdeInfo().getTransitiveDefines().stream()
-                .map(s -> "-D" + s)
-                .collect(toImmutableList());
+        targetIdeInfo.getcIdeInfo().getTransitiveDefines()
+            .forEach(compilerSwitchesBuilder::withMacro);
 
         Function<ExecutionRootPath, Stream<File>> resolver =
             executionRootPath ->
                 executionRootPathResolver.resolveToIncludeDirectories(executionRootPath).stream();
-        // localIncludes are sourced from -I options in a target's "copts" attribute. They  can be
-        // arbitrarily declared and may not exist in configResolveData.
-        // transitiveIncludeDirectories are sourced from CcSkylarkApiProvider.include_directories
 
-        ImmutableList<String> iOptionIncludeDirectories =
-            Stream.concat(
-                    localIncludes.stream().flatMap(resolver),
-                    targetIdeInfo.getcIdeInfo().getTransitiveIncludeDirectories().stream()
-                        .flatMap(resolver)
-                        .filter(configResolveData::isValidHeaderRoot))
-                .map(file -> "-I" + file.getAbsolutePath())
-                .collect(toImmutableList());
+        // localIncludes are sourced from -I options in a target's "copts" attribute. They can be
+        // arbitrarily declared and may not exist in configResolveData.
+        coptsExtractor.getExtractedOptionValues("-I").stream()
+            .map(ExecutionRootPath::new)
+            .flatMap(resolver)
+            .map(File::getAbsolutePath)
+            .forEach(compilerSwitchesBuilder::withIncludePath);
+
+        // transitiveIncludeDirectories are sourced from CcSkylarkApiProvider.include_directories
+        targetIdeInfo.getcIdeInfo().getTransitiveIncludeDirectories().stream()
+            .flatMap(resolver)
+            .filter(configResolveData::isValidHeaderRoot)
+            .map(File::getAbsolutePath)
+            .forEach(compilerSwitchesBuilder::withIncludePath);
 
         // transitiveQuoteIncludeDirectories are sourced from
         // CcSkylarkApiProvider.quote_include_directories
-        ImmutableList<String> iquoteOptionIncludeDirectories =
-            targetIdeInfo.getcIdeInfo().getTransitiveQuoteIncludeDirectories().stream()
-                .flatMap(resolver)
-                .filter(configResolveData::isValidHeaderRoot)
-                .map(file -> "-iquote" + file.getAbsolutePath())
-                .collect(toImmutableList());
+        final var quoteIncludePaths = targetIdeInfo.getcIdeInfo()
+            .getTransitiveQuoteIncludeDirectories()
+            .stream()
+            .flatMap(resolver)
+            .filter(configResolveData::isValidHeaderRoot)
+            .map(File::getAbsolutePath)
+            .collect(ImmutableList.toImmutableList());
+        quoteIncludePaths.forEach(compilerSwitchesBuilder::withQuoteIncludePath);
+
         // transitiveSystemIncludeDirectories are sourced from
         // CcSkylarkApiProvider.system_include_directories
         // Note: We would ideally use -isystem here, but it interacts badly with the switches
         // that get built by ClangUtils::addIncludeDirectories (it uses -I for system libraries).
-        ImmutableList<String> isystemOptionIncludeDirectories =
-            targetIdeInfo.getcIdeInfo().getTransitiveSystemIncludeDirectories().stream()
-                .flatMap(resolver)
-                .filter(configResolveData::isValidHeaderRoot)
-                .map(file -> "-I" + file.getAbsolutePath())
-                .collect(toImmutableList());
+        targetIdeInfo.getcIdeInfo().getTransitiveSystemIncludeDirectories().stream()
+            .flatMap(resolver)
+            .filter(configResolveData::isValidHeaderRoot)
+            .map(File::getAbsolutePath)
+            .forEach(compilerSwitchesBuilder::withSystemIncludePath);
 
-        ImmutableList<String> includePrefixHints = ImmutableList.of();
         if (VirtualIncludesHandler.useHints()) {
-          Path rootPath = workspaceRoot.directory().toPath();
-          includePrefixHints = VirtualIncludesHandler.collectIncludeHints(rootPath, targetKey,
+          compilerSwitchesBuilder.withSwitches(VirtualIncludesHandler.collectIncludeHints(
+              workspaceRoot.directory().toPath(),
+              targetKey,
               blazeProjectData,
-              executionRootPathResolver, indicator);
+              executionRootPathResolver,
+              indicator));
         }
+
+        final var cCompilerSwitches =
+            buildSwitchBuilder(compilerSettings, compilerSwitchesBuilder, CLanguageKind.C);
+        final var cppCompilerSwitches =
+            buildSwitchBuilder(compilerSettings, compilerSwitchesBuilder, CLanguageKind.CPP);
 
         for (VirtualFile vf : resolveConfiguration.getSources(targetKey)) {
           OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(vf);
-          if (kind == null) {
-            kind = CLanguageKind.CPP;
+
+          final PerFileCompilerOpts perFileCompilerOpts;
+          if (kind == CLanguageKind.C) {
+            perFileCompilerOpts = new PerFileCompilerOpts(kind, cCompilerSwitches);
+          } else {
+            perFileCompilerOpts = new PerFileCompilerOpts(CLanguageKind.CPP, cppCompilerSwitches);
           }
-
-          CidrSwitchBuilder fileSpecificSwitchBuilder = new CidrSwitchBuilder();
-
-          ImmutableList<String> baseSwitches = compilerSettings.getCompilerSwitches(kind, vf);
-          fileSpecificSwitchBuilder.addAllRaw(baseSwitches);
-          fileSpecificSwitchBuilder.addAllRaw(transitiveDefineOptions);
-          fileSpecificSwitchBuilder.addAllRaw(iquoteOptionIncludeDirectories);
-          fileSpecificSwitchBuilder.addAllRaw(iOptionIncludeDirectories);
-          fileSpecificSwitchBuilder.addAllRaw(isystemOptionIncludeDirectories);
-          fileSpecificSwitchBuilder.addAllRaw(plainLocalCopts);
-          fileSpecificSwitchBuilder.addAllRaw(includePrefixHints);
-
-          PerFileCompilerOpts perFileCompilerOpts =
-              new PerFileCompilerOpts(kind, fileSpecificSwitchBuilder.build());
           configSourceFiles.put(vf, perFileCompilerOpts);
+
           if (!configLanguages.containsKey(kind)) {
             addConfigLanguageSwitches(
                 configLanguages, compilerSettings,
@@ -312,7 +348,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
                 // configLanguages switches. We want some basic header search roots (genfiles),
                 // which are part of every target's iquote directories. See:
                 // https://github.com/bazelbuild/bazel/blob/2c493e8a2132d54f4b2fb8046f6bcef11e92cd22/src/main/java/com/google/devtools/build/lib/rules/cpp/CcCompilationHelper.java#L911
-                iquoteOptionIncludeDirectories, kind);
+                quoteIncludePaths, kind);
           }
         }
       }
@@ -417,14 +453,15 @@ public final class BlazeCWorkspace implements ProjectComponent {
   private void addConfigLanguageSwitches(
       Map<OCLanguageKind, PerLanguageCompilerOpts> configLanguages,
       BlazeCompilerSettings compilerSettings,
-      List<String> additionalSwitches,
+      List<String> quoteIncludePaths,
       OCLanguageKind language) {
     OCCompilerKind compilerKind = compilerSettings.getCompiler(language);
     File executable = compilerSettings.getCompilerExecutable(language);
-    CidrSwitchBuilder switchBuilder = new CidrSwitchBuilder();
-    ImmutableList<String> switches = compilerSettings.getCompilerSwitches(language, null);
-    switchBuilder.addAllRaw(switches);
-    switchBuilder.addAllRaw(additionalSwitches);
+
+    final var switchBuilder = selectSwitchBuilder(compilerSettings);
+    switchBuilder.withSwitches(compilerSettings.getCompilerSwitches(language, null));
+    quoteIncludePaths.forEach(switchBuilder::withQuoteIncludePath);
+
     PerLanguageCompilerOpts perLanguageCompilerOpts =
         new PerLanguageCompilerOpts(compilerKind, executable, switchBuilder.build());
     configLanguages.put(language, perLanguageCompilerOpts);

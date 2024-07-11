@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
+import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.UnknownCompilerKind;
@@ -62,8 +63,13 @@ public final class BlazeCompilerSettings {
     if (CompilerVersionUtil.isMSVC(compilerVersion)) {
       return MSVCCompilerKind.INSTANCE;
     }
-    
-    return ClangCompilerKind.INSTANCE;
+
+    if (CompilerVersionUtil.isClang(compilerVersion)) {
+      return ClangCompilerKind.INSTANCE;
+    }
+
+    // default to gcc
+    return GCCCompilerKind.INSTANCE;
   }
 
   public File getCompilerExecutable(OCLanguageKind lang) {
