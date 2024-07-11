@@ -9,11 +9,11 @@ bazel_dep(
 )
 bazel_dep(
     name = "rules_java",
-    version = "7.6.5",
+    version = "7.7.0",
 )
 bazel_dep(
     name = "rules_python",
-    version = "0.33.2",
+    version = "0.34.0",
 )
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
@@ -38,7 +38,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "rules_pkg",
-    version = "0.10.1",
+    version = "1.0.1",
 )
 bazel_dep(
     name = "rules_kotlin",
