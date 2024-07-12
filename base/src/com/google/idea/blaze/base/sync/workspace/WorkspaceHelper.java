@@ -201,7 +201,7 @@ public class WorkspaceHelper {
     Map<String, WorkspaceRoot> workspaceRootCache = SyncCache.getInstance(project)
         .get(WorkspaceHelper.class, (p, data) -> new ConcurrentHashMap<String, WorkspaceRoot>());
 
-    //this the null cache value case could happen when the blazeProjectData is null.
+    //the null cache value case could happen when the blazeProjectData is null.
     if(workspaceRootCache == null) {
       return null;
     }
@@ -220,22 +220,6 @@ public class WorkspaceHelper {
     }
 
     return root;
-//    File externalBase = SyncCache.getInstance(project)
-//        .get(workspaceName, (Project theProject, BlazeProjectData projectData) -> {
-//          if (blazeProjectData == null) {
-//            logger.debug("the blazeProjectData is null " + project.getName());
-//            return null;
-//          }
-//          return new File(blazeProjectData.getBlazeInfo().getOutputBase(),
-//              "external/" + workspaceName);
-//        });
-//
-//    if (externalBase == null) {
-//      return null;
-//    }
-//
-//    return ((externalBase.exists() || isInTestMode())) ?
-//        new WorkspaceRoot(externalBase) : null;
   }
 
   //The unit test use the TempFileSystem to create VirtualFile which does not exist on disk.
