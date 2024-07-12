@@ -35,6 +35,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 /**
@@ -195,22 +198,44 @@ public class WorkspaceHelper {
       return null;
     }
     logger.debug("getExternalWorkspaceRootsFile for " + workspaceName);
-    File externalBase = SyncCache.getInstance(project)
-        .get(workspaceName, (Project theProject, BlazeProjectData projectData) -> {
-          if (blazeProjectData == null) {
-            logger.debug("the blazeProjectData is null " + project.getName());
-            return null;
-          }
-          return new File(blazeProjectData.getBlazeInfo().getOutputBase(),
-              "external/" + workspaceName);
-        });
+    Map<String, WorkspaceRoot> workspaceRootCache = SyncCache.getInstance(project)
+        .get(WorkspaceHelper.class, (p, data) -> new ConcurrentHashMap<String, WorkspaceRoot>());
 
-    if (externalBase == null) {
+    //this the null cache value case could happen when the blazeProjectData is null.
+    if(workspaceRootCache == null) {
       return null;
     }
 
-    return ((externalBase.exists() || isInTestMode())) ?
-        new WorkspaceRoot(externalBase) : null;
+    WorkspaceRoot root = null;
+    if (workspaceRootCache.containsKey(workspaceName)) {
+      root = workspaceRootCache.get(workspaceName);
+    } else if (getBlazeProjectData(project) != null) {
+      File externalDir = new File(getBlazeProjectData(project).getBlazeInfo().getOutputBase(),
+          "external/" + workspaceName);
+
+      if (externalDir.exists() || isInTestMode()) {
+        root = new WorkspaceRoot(externalDir);
+        workspaceRootCache.put(workspaceName, root);
+      }
+    }
+
+    return root;
+//    File externalBase = SyncCache.getInstance(project)
+//        .get(workspaceName, (Project theProject, BlazeProjectData projectData) -> {
+//          if (blazeProjectData == null) {
+//            logger.debug("the blazeProjectData is null " + project.getName());
+//            return null;
+//          }
+//          return new File(blazeProjectData.getBlazeInfo().getOutputBase(),
+//              "external/" + workspaceName);
+//        });
+//
+//    if (externalBase == null) {
+//      return null;
+//    }
+//
+//    return ((externalBase.exists() || isInTestMode())) ?
+//        new WorkspaceRoot(externalBase) : null;
   }
 
   //The unit test use the TempFileSystem to create VirtualFile which does not exist on disk.
