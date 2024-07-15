@@ -143,8 +143,6 @@
     <action id="Blaze.BuildDependenciesForProject"
       class="com.google.idea.blaze.base.qsync.action.BuildDependenciesForProjectAction"
       text="Enable Analysis for Whole Project" />
-    <action id="Blaze.IntelliJExt.Status" class="com.google.idea.blaze.base.ext.IntelliJExtStatusAction" text="Status" >
-    </action>
     <action id="Blaze.AddToQuerySyncProjectView"
         class="com.google.idea.blaze.base.qsync.action.AddToProjectAction"
         text="Add to project"
@@ -175,10 +173,6 @@
       <group id="Blaze.BuildMenuGroup" text="_Build" popup="true">
         <reference id="MakeBlazeProject"/>
         <reference id="MakeBlazeModule"/>
-      </group>
-      <group id="Blaze.IntelliJExtMenuGroup" class="com.google.idea.blaze.base.ext.IntelliJExtMenu"
-          text="_Extensions" popup="true">
-        <reference id="Blaze.IntelliJExt.Status"/>
       </group>
       <group id="Blaze.Project" text="_Project" popup="true">
         <reference id="Blaze.EditProjectView"/>
