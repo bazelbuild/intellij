@@ -174,10 +174,6 @@
         <reference id="MakeBlazeProject"/>
         <reference id="MakeBlazeModule"/>
       </group>
-      <group id="Blaze.IntelliJExtMenuGroup" class="com.google.idea.blaze.base.ext.IntelliJExtMenu"
-          text="_Extensions" popup="true">
-        <reference id="Blaze.IntelliJExt.Status"/>
-      </group>
       <group id="Blaze.Project" text="_Project" popup="true">
         <reference id="Blaze.EditProjectView"/>
         <reference id="Blaze.AddDirectoryToProjectView"/>
