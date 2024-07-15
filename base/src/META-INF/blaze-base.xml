@@ -143,8 +143,6 @@
     <action id="Blaze.BuildDependenciesForProject"
       class="com.google.idea.blaze.base.qsync.action.BuildDependenciesForProjectAction"
       text="Enable Analysis for Whole Project" />
-    <action id="Blaze.IntelliJExt.Status" class="com.google.idea.blaze.base.ext.IntelliJExtStatusAction" text="Status" >
-    </action>
     <action id="Blaze.AddToQuerySyncProjectView"
         class="com.google.idea.blaze.base.qsync.action.AddToProjectAction"
         text="Add to project"
