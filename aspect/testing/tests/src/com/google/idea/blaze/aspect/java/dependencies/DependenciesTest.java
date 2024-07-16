@@ -110,7 +110,7 @@ public class DependenciesTest extends BazelIntellijAspectTest {
         .containsAtLeast(
             testRelative("libfoo.jar"),
             testRelative("libfoo_exporter.jar"),
-            testRelative("libexport_consumer.jar"));z
+            testRelative("libexport_consumer.jar"));
   }
 
   @Test
