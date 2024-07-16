@@ -16,9 +16,7 @@
 package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
-import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetName;
@@ -27,22 +25,34 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.SyncCache;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+
 import java.io.File;
-import java.util.Arrays;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
-/** External-workspace-aware resolution of workspace paths. */
+/**
+ * External-workspace-aware resolution of workspace paths.
+ */
 public class WorkspaceHelper {
 
+  private static BlazeProjectData blazeProjectData;
+  private static final Logger logger = Logger.getInstance(WorkspaceHelper.class);
+
   private static class Workspace {
+
     private final WorkspaceRoot root;
-    @Nullable private final String externalWorkspaceName;
+    @Nullable
+    private final String externalWorkspaceName;
 
     private Workspace(WorkspaceRoot root, @Nullable String externalWorkspaceName) {
       this.root = root;
@@ -50,25 +60,31 @@ public class WorkspaceHelper {
     }
   }
 
-  @Nullable
-  public static WorkspaceRoot resolveExternalWorkspace(Project project, String workspaceName) {
-    Map<String, WorkspaceRoot> externalWorkspaces = getExternalWorkspaceRoots(project);
-    return externalWorkspaces != null ? externalWorkspaces.get(workspaceName) : null;
+  private static synchronized BlazeProjectData getBlazeProjectData(Project project) {
+    if (blazeProjectData == null) {
+      blazeProjectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    }
+    return blazeProjectData;
   }
 
-  /** Resolves the parent blaze package corresponding to this label. */
+  @Nullable
+  public static WorkspaceRoot resolveExternalWorkspace(Project project, String workspaceName) {
+    return getExternalWorkspaceRootsFile(workspaceName, project);
+  }
+
+  /**
+   * Resolves the parent blaze package corresponding to this label.
+   */
   @Nullable
   public static File resolveBlazePackage(Project project, Label label) {
+    logger.debug("resolveBlazePackage: " + label + " in project " + project.getName());
     if (!label.isExternal()) {
       WorkspacePathResolver pathResolver =
           WorkspacePathResolverProvider.getInstance(project).getPathResolver();
       return pathResolver != null ? pathResolver.resolveToFile(label.blazePackage()) : null;
     }
-    Map<String, WorkspaceRoot> externalWorkspaces = getExternalWorkspaceRoots(project);
-    if (externalWorkspaces == null) {
-      return null;
-    }
-    WorkspaceRoot root = externalWorkspaces.get(label.externalWorkspaceName());
+
+    WorkspaceRoot root = getExternalWorkspaceRootsFile(label.externalWorkspaceName(), project);
     return root != null ? root.fileForPath(label.blazePackage()) : null;
   }
 
@@ -78,9 +94,12 @@ public class WorkspaceHelper {
     return workspace != null ? workspace.root.workspacePathForSafe(absoluteFile) : null;
   }
 
-  /** Converts a file to the corresponding BUILD label for this project, if valid. */
+  /**
+   * Converts a file to the corresponding BUILD label for this project, if valid.
+   */
   @Nullable
   public static Label getBuildLabel(Project project, File absoluteFile) {
+    logger.debug("getBuildLabel for file " + absoluteFile.getAbsolutePath());
     Workspace workspace = resolveWorkspace(project, absoluteFile);
     if (workspace == null) {
       return null;
@@ -103,18 +122,30 @@ public class WorkspaceHelper {
     // try project workspace first
     WorkspaceRoot root = pathResolver.findWorkspaceRoot(absoluteFile);
     if (root != null) {
+      logger.debug("resolveWorkspace: " + root.directory().getAbsolutePath());
       return new Workspace(root, null);
     }
 
-    Map<String, WorkspaceRoot> externalWorkspaces = getExternalWorkspaceRoots(project);
-    if (externalWorkspaces == null) {
+    BlazeProjectData blazeProjectData = getBlazeProjectData(project);
+    Path bazelRootPath = Paths.get(
+        blazeProjectData.getBlazeInfo().getOutputBase().getAbsolutePath(),
+        "external").normalize();
+
+    logger.debug("the bazelRootPath is " + bazelRootPath);
+    Path path = Paths.get(absoluteFile.getAbsolutePath()).normalize();
+
+    // Check if the file path starts with the root directory path
+    if (!path.startsWith(bazelRootPath)) {
       return null;
     }
-    for (Entry<String, WorkspaceRoot> entry : externalWorkspaces.entrySet()) {
-      root = entry.getValue();
-      WorkspacePath workspacePath = root.workspacePathForSafe(absoluteFile);
-      if (workspacePath != null) {
-        return new Workspace(root, entry.getKey());
+
+    Path relativePath = bazelRootPath.relativize(path);
+    if (relativePath.getNameCount() > 0) {
+      String firstFolder = relativePath.getName(0).toString();
+      Path workspaceRootPath = bazelRootPath.resolve(firstFolder);
+      if (workspaceRootPath.toFile().exists() || isInTestMode()) {
+        logger.debug("resolveWorkspace: " + workspaceRootPath + " firstFolder: " + firstFolder);
+        return new Workspace(new WorkspaceRoot(workspaceRootPath.toFile()), firstFolder);
       }
     }
     return null;
@@ -155,31 +186,44 @@ public class WorkspaceHelper {
     return null;
   }
 
-  @Nullable
-  private static synchronized Map<String, WorkspaceRoot> getExternalWorkspaceRoots(
-      Project project) {
-    if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze) {
-      return ImmutableMap.of();
-    }
-    return SyncCache.getInstance(project)
-        .get(WorkspaceHelper.class, WorkspaceHelper::enumerateExternalWorkspaces);
-  }
-
-  @SuppressWarnings("unused")
-  private static Map<String, WorkspaceRoot> enumerateExternalWorkspaces(
-      Project project, BlazeProjectData blazeProjectData) {
-    FileOperationProvider provider = FileOperationProvider.getInstance();
-    File[] children = provider.listFiles(getExternalSourceRoot(blazeProjectData));
-    if (children == null) {
-      return ImmutableMap.of();
-    }
-    return Arrays.stream(children)
-        .filter(provider::isDirectory)
-        .collect(Collectors.toMap(File::getName, WorkspaceRoot::new));
-  }
-
   @VisibleForTesting
   public static File getExternalSourceRoot(BlazeProjectData projectData) {
     return new File(projectData.getBlazeInfo().getOutputBase(), "external");
+  }
+
+  @Nullable
+  private static synchronized WorkspaceRoot getExternalWorkspaceRootsFile(String workspaceName,
+      Project project) {
+    if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze) {
+      return null;
+    }
+    logger.debug("getExternalWorkspaceRootsFile for " + workspaceName);
+    Map<String, WorkspaceRoot> workspaceRootCache = SyncCache.getInstance(project)
+        .get(WorkspaceHelper.class, (p, data) -> new ConcurrentHashMap<String, WorkspaceRoot>());
+
+    //the null cache value case could happen when the blazeProjectData is null.
+    if(workspaceRootCache == null) {
+      return null;
+    }
+
+    WorkspaceRoot root = null;
+    if (workspaceRootCache.containsKey(workspaceName)) {
+      root = workspaceRootCache.get(workspaceName);
+    } else if (getBlazeProjectData(project) != null) {
+      File externalDir = new File(getBlazeProjectData(project).getBlazeInfo().getOutputBase(),
+          "external/" + workspaceName);
+
+      if (externalDir.exists() || isInTestMode()) {
+        root = new WorkspaceRoot(externalDir);
+        workspaceRootCache.put(workspaceName, root);
+      }
+    }
+
+    return root;
+  }
+
+  //The unit test use the TempFileSystem to create VirtualFile which does not exist on disk.
+  private static boolean isInTestMode() {
+    return ApplicationManager.getApplication().isUnitTestMode();
   }
 }
