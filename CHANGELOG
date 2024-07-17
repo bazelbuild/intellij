@@ -1,3 +1,12 @@
+v2024.07.16
+===========
+Performance Fix
+* Fixes after sync freeze on MacOS  #6562
+* Improve performance when resolving the workspace root #6530
+Bug Fixes
+* fix: Resolve query failure when there is a large number of files in t… #6537
+* Propagate build errors to UI #6546
+
 v2024.07.02
 ===========
 Performance fix:
