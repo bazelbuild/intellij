@@ -82,6 +82,9 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
     if (buildResult.status == Status.FATAL_ERROR) {
       return BlazeBuildOutputs.noOutputs(buildResult);
     }
+    if (buildResult.status == Status.BUILD_ERROR) {
+      context.setHasError();
+    }
     context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, "Build command finished. Retrieving BEP outputs ..."));
     if (buildResultHelper instanceof BuildResultHelperBep) {
       File outputFile = ((BuildResultHelperBep) buildResultHelper).getOutputFile();
