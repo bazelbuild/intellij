@@ -114,7 +114,7 @@ public abstract class AspectStrategy {
     if (optimize_building_jars.isEnabled()){
       builder
         .addBlazeFlags(getAspectFlag().map(List::of).orElse(List.of()))
-        .addBlazeFlags("--aspects_parameters=optimize_building_jars=True")
+        .addBlazeFlags("--aspects_parameters=optimize_building_jars=enabled")
         .addBlazeFlags("--output_groups=" + Joiner.on(',').join(groups));
     } else {
       builder

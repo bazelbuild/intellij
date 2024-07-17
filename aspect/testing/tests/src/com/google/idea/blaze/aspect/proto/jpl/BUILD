@@ -29,13 +29,13 @@ java_library(
 
 intellij_aspect_test_fixture(
     name = "lib_fixture",
-    optimize_building_jars = False,
+    optimize_building_jars = "disabled",
     deps = [":lib"],
 )
 
 intellij_aspect_test_fixture(
     name = "lib_fixture_optimized_jars",
-    optimize_building_jars = True,
+    optimize_building_jars = "enabled",
     deps = [":lib"],
 )
 

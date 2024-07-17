@@ -25,7 +25,7 @@ java_library(
 
 intellij_aspect_test_fixture(
     name = "noide_fixture",
-    optimize_building_jars = False,
+    optimize_building_jars = "disabled",
     deps = [
         ":baz",
         ":foo",
@@ -34,7 +34,7 @@ intellij_aspect_test_fixture(
 
 intellij_aspect_test_fixture(
     name = "noide_fixture_optimize_building_jars",
-    optimize_building_jars = True,
+    optimize_building_jars = "enabled",
     deps = [
         ":baz",
         ":foo",
