@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.dependencies;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
@@ -60,7 +61,8 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
     return runQuery(project, getQueryString(directories, shouldManualTargetSync, pathResolver), context);
   }
 
-  protected static String getQueryString(ImportRoots directories, boolean allowManualTargetsSync, WorkspacePathResolver pathResolver) {
+  @VisibleForTesting
+  public static String getQueryString(ImportRoots directories, boolean allowManualTargetsSync, WorkspacePathResolver pathResolver) {
     StringBuilder targets = new StringBuilder();
     targets.append(
         directories.rootDirectories().stream()

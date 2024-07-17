@@ -1,4 +1,4 @@
-package com.google.idea.blaze.base.dependencies;
+package com.google.idea.blaze.java.base.dependencies;
 
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -9,6 +9,7 @@ import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.blaze.base.dependencies.BlazeQueryDirectoryToTargetProvider;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
