@@ -13,7 +13,7 @@ public interface AspectRepositoryProvider {
   Optional<File> aspectDirectory();
 
   static Optional<File> findAspectDirectory() {
-    return EP_NAME.getExtensionList().stream()
+    return EP_NAME.getExtensionsIfPointIsRegistered().stream()
         .map(AspectRepositoryProvider::aspectDirectory)
         .filter(Optional::isPresent)
         .findFirst()

@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyBazel;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectRepositoryProvider;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -54,7 +55,7 @@ public class BazelInvokingIntegrationTestRunner {
             aspectStrategyBazel.getAspectFlag().get(),
             String.format(
                 "%s=%s/%s/aspect",
-                AspectStrategyBazel.OVERRIDE_REPOSITORY_FLAG,
+                AspectRepositoryProvider.OVERRIDE_REPOSITORY_FLAG,
                 System.getenv("TEST_SRCDIR"),
                 System.getenv("TEST_WORKSPACE")));
 
