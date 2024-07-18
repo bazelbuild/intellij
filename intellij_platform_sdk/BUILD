@@ -12,7 +12,6 @@ load(
 )
 load(
     ":build_defs.bzl",
-    "select_for_plugin_api",
     "select_from_plugin_api_directory",
 )
 
@@ -819,54 +818,9 @@ java_library(
     ),
 )
 
-# Some versions of the IDE include jsr305.jar, but others don't. So we need to include the JSR 305
-# classes (@Nullable, etc.) in the plugin jars for IDEs that don't already have it on the classpath.
 java_library(
     name = "jsr305",
-    exports = select_for_plugin_api({
-        "clion-2021.3": [":bundled_jsr305"],
-        "clion-2022.1": ["@jsr305_annotations//jar"],
-        "clion-2022.2": ["@jsr305_annotations//jar"],
-        "clion-2022.3": ["@jsr305_annotations//jar"],
-        "clion-2024.1": [],
-        "clion-2024.2": [],
-        "intellij-2021.3": ["@jsr305_annotations//jar"],
-        "intellij-2022.1": ["@jsr305_annotations//jar"],
-        "intellij-2022.2": ["@jsr305_annotations//jar"],
-        "intellij-2022.3": ["@jsr305_annotations//jar"],
-        "intellij-2023.1": ["@jsr305_annotations//jar"],
-        "intellij-2023.2": ["@jsr305_annotations//jar"],
-        "intellij-2023.3": ["@jsr305_annotations//jar"],
-        "intellij-2024.1": ["@jsr305_annotations//jar"],
-        "intellij-2024.2": ["@jsr305_annotations//jar"],
-        "intellij-ue-2021.3": ["@jsr305_annotations//jar"],
-        "intellij-ue-2022.1": ["@jsr305_annotations//jar"],
-        "intellij-ue-2022.2": ["@jsr305_annotations//jar"],
-        "intellij-ue-2022.3": ["@jsr305_annotations//jar"],
-        "intellij-ue-2023.1": ["@jsr305_annotations//jar"],
-        "intellij-ue-2023.2": ["@jsr305_annotations//jar"],
-        "intellij-ue-2023.3": ["@jsr305_annotations//jar"],
-        "intellij-ue-2024.1": ["@jsr305_annotations//jar"],
-        "intellij-ue-2024.2": ["@jsr305_annotations//jar"],
-        "android-studio-2022.2": ["@jsr305_annotations//jar"],
-        "android-studio-2022.3": ["@jsr305_annotations//jar"],
-        "android-studio-2023.1": ["@jsr305_annotations//jar"],
-        "android-studio-2023.2": ["@jsr305_annotations//jar"],
-        # We default to intellij-latest when no plugin api is selected.
-        "default": [":bundled_jsr305"],
-    }),
-)
-
-# The version of jsr305 bundled with the IntelliJ plugin API.
-java_library(
-    name = "bundled_jsr305",
-    neverlink = 1,
-    visibility = ["//visibility:private"],
-    exports = select_from_plugin_api_directory(
-        android_studio = [":jsr305"],
-        clion = [":jsr305"],
-        intellij = [":jsr305"],
-    ),
+    exports = ["@jsr305_annotations//jar"],
 )
 
 # The version of truth bundled with the IntelliJ plugin API.
