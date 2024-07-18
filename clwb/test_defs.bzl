@@ -15,7 +15,6 @@ def clwb_integration_test(name, project, srcs, deps = []):
 
     intellij_integration_test_suite(
         name = runner,
-        tags = ["manual"],
         srcs = srcs + native.glob(["tests/integrationtests/com/google/idea/blaze/clwb/base/*.java"]),
         test_package_root = "com.google.idea.blaze.clwb",
         runtime_deps = [":clwb_bazel"],
