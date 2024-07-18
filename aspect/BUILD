@@ -98,7 +98,7 @@ genrule(
     name = "create_workspace_file",
     outs = ["WORKSPACE"],
     srcs = [],
-    cmd = r"""echo 'workspace(name = \"intellij_aspect\")' > $@"""
+    cmd = r"""echo 'workspace(name = "intellij_aspect")' > $@"""
 )
 
 define_flag_hack()
