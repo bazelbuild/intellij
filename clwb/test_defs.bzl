@@ -2,7 +2,6 @@ load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
 )
-
 load(
     "@rules_bazel_integration_test//bazel_integration_test:defs.bzl",
     "bazel_integration_test",
@@ -16,6 +15,7 @@ def clwb_integration_test(name, project, srcs, deps = []):
 
     intellij_integration_test_suite(
         name = runner,
+        tags = ["manual"],
         srcs = srcs + native.glob(["tests/integrationtests/com/google/idea/blaze/clwb/base/*.java"]),
         test_package_root = "com.google.idea.blaze.clwb",
         runtime_deps = [":clwb_bazel"],
@@ -34,9 +34,19 @@ def clwb_integration_test(name, project, srcs, deps = []):
         ],
     )
 
-    bazel_integration_test(
+    bazel_integration_tests(
         name = name,
-        bazel_version = bazel_binaries.versions.current,
+        tags = [],
+        bazel_versions = bazel_binaries.versions.all,
         test_runner = ":" + runner,
         workspace_path = "tests/projects/" + project,
+    )
+
+    native.test_suite(
+        name = name,
+        tags = ["manual"],
+        tests = integration_test_utils.bazel_integration_test_names(
+            name,
+            bazel_binaries.versions.all,
+        ),
     )
