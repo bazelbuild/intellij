@@ -94,4 +94,11 @@ genrule(
           "sed -i -e 's,:intellij_info_impl.bzl,:intellij_info_impl_bundled.bzl,g' $@",
 )
 
+genrule(
+    name = "create_workspace_file",
+    outs = ["WORKSPACE"],
+    srcs = [],
+    cmd = r"""echo 'workspace(name = \"intellij_aspect\")' > $@"""
+)
+
 define_flag_hack()
