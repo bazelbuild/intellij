@@ -270,7 +270,6 @@
     <projectService serviceInterface="com.google.idea.blaze.base.sync.libraries.LibraryFilesProviderFactory"
                     serviceImplementation="com.google.idea.blaze.base.sync.libraries.DefaultLibraryFilesProviderFactory"/>
 
-    <applicationService serviceImplementation="com.google.idea.blaze.base.ext.IntelliJExtManager"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.async.executor.BlazeExecutor"
                         serviceImplementation="com.google.idea.blaze.base.async.executor.BlazeExecutorImpl"/>
     <fileDocumentManagerListener implementation="com.google.idea.blaze.base.buildmodifier.BuildFileFormatOnSaveHandler" order="first"/>
