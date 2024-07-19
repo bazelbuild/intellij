@@ -192,6 +192,7 @@ final class HeaderRootTrimmer {
         paths.addAll(target.getcIdeInfo().getTransitiveSystemIncludeDirectories());
         paths.addAll(target.getcIdeInfo().getTransitiveIncludeDirectories());
         paths.addAll(target.getcIdeInfo().getTransitiveQuoteIncludeDirectories());
+        paths.addAll(target.getcIdeInfo().getExternalIncludes());
       }
     }
     Set<CToolchainIdeInfo> toolchains = new LinkedHashSet<>(toolchainLookupMap.values());
