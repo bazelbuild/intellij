@@ -18,6 +18,16 @@ load(
     "ACTION_NAMES",
 )
 
+IntelliJInfo = provider(
+    doc = "Collected infromation about the targets visited by the aspect.",
+    fields = [
+        "export_deps",
+        "kind",
+        "output_groups",
+        "target_key",
+    ],
+)
+
 # Defensive list of features that can appear in the C++ toolchain, but which we
 # definitely don't want to enable (when enabled, they'd contribute command line
 # flags that don't make sense in the context of intellij info).
@@ -235,7 +245,7 @@ def list_omit_none(value):
 
 def is_valid_aspect_target(target):
     """Returns whether the target has had the aspect run on it."""
-    return hasattr(target, "intellij_info")
+    return IntelliJInfo in target
 
 def get_aspect_ids(ctx):
     """Returns the all aspect ids, filtering out self."""
@@ -277,7 +287,7 @@ def make_dep(dep, dependency_type):
     """Returns a Dependency proto struct."""
     return struct(
         dependency_type = dependency_type,
-        target = dep.intellij_info.target_key,
+        target = dep[IntelliJInfo].target_key,
     )
 
 def make_deps(deps, dependency_type):
@@ -1068,7 +1078,7 @@ def _is_proto_library_wrapper(target, ctx):
 
     # treat any *proto_library rule with a single proto_library dep as a shim
     deps = collect_targets_from_attrs(ctx.rule.attr, ["deps"])
-    return len(deps) == 1 and deps[0].intellij_info and deps[0].intellij_info.kind == "proto_library"
+    return len(deps) == 1 and IntelliJInfo in deps[0] and deps[0][IntelliJInfo].kind == "proto_library"
 
 def _get_forwarded_deps(target, ctx):
     """Returns the list of deps of this target to forward.
@@ -1112,7 +1122,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     # Add exports from direct dependencies
     exported_deps_from_deps = []
     for dep in direct_dep_targets:
-        exported_deps_from_deps = exported_deps_from_deps + dep.intellij_info.export_deps
+        exported_deps_from_deps = exported_deps_from_deps + dep[IntelliJInfo].export_deps
 
     # Combine into all compile time deps
     compiletime_deps = direct_deps + exported_deps_from_deps
@@ -1126,7 +1136,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
 
         # Collect transitive exports
         for export in direct_exports:
-            export_deps.extend(export.intellij_info.export_deps)
+            export_deps.extend(export[IntelliJInfo].export_deps)
 
         if ctx.rule.kind == "android_library" or ctx.rule.kind == "kt_android_library":
             # Empty android libraries export all their dependencies.
@@ -1156,7 +1166,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     prerequisites = direct_dep_targets + runtime_dep_targets + extra_prerequisite_targets + direct_exports
     output_groups = dict()
     for dep in prerequisites:
-        for k, v in dep.intellij_info.output_groups.items():
+        for k, v in dep[IntelliJInfo].output_groups.items():
             if dep in forwarded_deps:
                 # unconditionally roll up deps for these targets
                 output_groups[k] = output_groups[k] + [v] if k in output_groups else [v]
@@ -1229,15 +1239,15 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     ctx.actions.write(ide_info_file, proto.encode_text(info))
 
     # Return providers.
-    return struct_omit_none(
-        intellij_info = struct(
+    return [
+        IntelliJInfo(
             export_deps = export_deps,
             kind = ctx.rule.kind,
             output_groups = output_groups,
             target_key = target_key,
         ),
-        output_groups = output_groups,
-    )
+        OutputGroupInfo(**output_groups),
+    ]
 
 def semantics_extra_deps(base, semantics, name):
     if not hasattr(semantics, name):
