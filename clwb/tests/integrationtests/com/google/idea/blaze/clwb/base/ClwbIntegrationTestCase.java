@@ -1,5 +1,7 @@
 package com.google.idea.blaze.clwb.base;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.project.AutoImportProjectOpenProcessor;
@@ -9,11 +11,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.ErrorCollector;
-import com.google.idea.blaze.base.scope.OutputSink;
-import com.google.idea.blaze.base.scope.OutputSink.Propagation;
-import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
@@ -26,26 +23,34 @@ import com.google.idea.blaze.base.wizard2.BlazeProjectCommitException;
 import com.google.idea.blaze.base.wizard2.BlazeProjectImportBuilder;
 import com.google.idea.blaze.base.wizard2.CreateFromScratchProjectViewOption;
 import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
-import com.google.idea.blaze.common.Output;
-import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.testing.ServiceHelper;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import com.google.idea.blaze.base.sync.SyncPhaseCoordinator;
+import com.jetbrains.cidr.lang.CLanguageKind;
+import com.jetbrains.cidr.lang.OCLanguageUtils;
+import com.jetbrains.cidr.lang.psi.OCFile;
+import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
+import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
+import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 import org.intellij.lang.annotations.Language;
 
 public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
+  protected VirtualFile myProjectRoot;
+
   /**
    * Gets the path to the test project and performs some basic checks. The path
    * is provided by `bazel_integration_test` rule in the `BIT_WORKSPACE_DIR`
@@ -104,6 +109,10 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
         new TestAspectRepositoryProvider(),
         getTestRootDisposable()
     );
+
+    // create the temp directory, because CLion expected it to be present but bazel does not create it
+    final var tmpDir = new File(FileUtil.getTempDirectory());
+    tmpDir.mkdirs();
   }
 
   /**
@@ -112,6 +121,8 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
   @Override
   protected void setUpProject() throws Exception {
     final var rootFile = getTestProjectRoot();
+    myProjectRoot = HeavyPlatformTestCase.getVirtualFile(rootFile);
+
     final var projectFile = new File(rootFile, BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY);
 
     try {
@@ -178,35 +189,22 @@ derive_targets_from_directories: true
     """;
   }
 
-  private <T extends Output> OutputSink<T> logOutput(String prefix, Function<T, String> message) {
-    return (output) -> {
-      LOG.info(String.format("%s: %s", prefix, message.apply(output)));
-      return Propagation.Continue;
-    };
-  }
-
-  protected ErrorCollector runSync(BlazeSyncParams params) {
+  protected SyncOutput runSync(BlazeSyncParams params) {
     final var context = BlazeContext.create();
 
-    final var collector = new ErrorCollector();
-    context.addOutputSink(IssueOutput.class, collector);
+    final var output = new SyncOutput();
+    output.install(context);
 
-    context.addOutputSink(IssueOutput.class, logOutput("SYNC ISSUE", IssueOutput::getMessage));
-    context.addOutputSink(PrintOutput.class, logOutput("SYNC PRINT", PrintOutput::getText));
-    context.addOutputSink(StatusOutput.class, logOutput("SYNC STATUS", StatusOutput::getStatus));
-
-    LOG.info("SYNC START");
     final var future = CompletableFuture.runAsync(() -> {
       SyncPhaseCoordinator.getInstance(myProject).runSync(params, true, context);
     }, ApplicationManager.getApplication()::executeOnPooledThread);
-    LOG.info("SYNC END");
 
     while (!future.isDone()) {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
 
     context.close();
-    return collector;
+    return output;
   }
 
   protected BlazeSyncParams.Builder defaultSyncParams() {
@@ -215,5 +213,50 @@ derive_targets_from_directories: true
         .setSyncMode(SyncMode.FULL)
         .setSyncOrigin("test")
         .setAddProjectViewTargets(true);
+  }
+
+  protected VirtualFile findProjectFile(String relativePath) {
+    final var file = myProjectRoot.findFileByRelativePath(relativePath);
+    assertThat(file).isNotNull();
+
+    return file;
+  }
+
+  protected PsiFile findProjectPsiFile(String relativePath) {
+    final var virtualFile = findProjectFile(relativePath);
+
+    return ReadAction.compute(() -> {
+      final var psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
+      assertThat(psiFile).isNotNull();
+
+      return OCLanguageUtils.tryGetOCFile(psiFile);
+    });
+  }
+
+  protected OCFile findProjectOCFile(String relativePath) {
+    final var psiFile = findProjectPsiFile(relativePath);
+    assertThat(psiFile).isInstanceOf(OCFile.class);
+
+    return (OCFile) psiFile;
+  }
+
+  protected OCWorkspace getWorkspace() {
+    return OCWorkspace.getInstance(myProject);
+  }
+
+  protected OCResolveConfiguration findFileResolveConfiguration(String relativePath) {
+    final var file = findProjectFile(relativePath);
+
+    final var configurations = getWorkspace().getConfigurationsForFile(file);
+    assertThat(configurations).hasSize(1);
+
+    return configurations.get(0);
+  }
+
+  protected OCCompilerSettings findFileCompilerSettings(String relativePath) {
+    final var file = findProjectFile(relativePath);
+    final var resolveConfiguration = findFileResolveConfiguration(relativePath);
+
+    return resolveConfiguration.getCompilerSettings(CLanguageKind.CPP, file);
   }
 }

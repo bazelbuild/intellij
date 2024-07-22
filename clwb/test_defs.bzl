@@ -22,7 +22,6 @@ def clwb_integration_test(name, project, srcs, deps = []):
         deps = deps + [
             ":clwb_lib",
             "//base",
-            "//base:unit_test_utils",
             "//shared",
             "//common/util:process",
             "//intellij_platform_sdk:jsr305",
