@@ -189,7 +189,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
     return infoMap.build();
   }
 
-  private CompilerSpecificSwitchBuilder selectSwitchBuilder(
+  private static CompilerSpecificSwitchBuilder selectSwitchBuilder(
       BlazeCompilerSettings compilerSettings) {
     final var version = compilerSettings.getCompilerVersion();
 
@@ -207,7 +207,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
     return new GCCSwitchBuilder();
   }
 
-  private CidrCompilerSwitches buildSwitchBuilder(
+  private static CidrCompilerSwitches buildSwitchBuilder(
       BlazeCompilerSettings compilerSettings,
       CompilerSpecificSwitchBuilder builder,
       OCLanguageKind language) {
