@@ -5,7 +5,7 @@ import com.jetbrains.cidr.cpp.toolchains.CPPEnvironment;
 import java.io.File;
 import javax.annotation.Nullable;
 
-// #api231
+// #api223
 public class MSVCCompilerVersionCompat {
   public record ArchAndVersion() {}
 

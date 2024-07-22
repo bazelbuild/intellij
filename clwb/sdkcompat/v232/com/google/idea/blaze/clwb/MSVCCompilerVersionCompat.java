@@ -8,7 +8,7 @@ import com.jetbrains.cidr.cpp.toolchains.msvc.MSVCCompilerToVersionCacheService;
 import java.io.File;
 import javax.annotation.Nullable;
 
-// #api231
+// #api232
 public class MSVCCompilerVersionCompat {
   public record ArchAndVersion(MSVCArchAndVersion delegate) {}
 
