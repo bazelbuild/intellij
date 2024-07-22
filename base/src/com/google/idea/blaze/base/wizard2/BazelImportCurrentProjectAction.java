@@ -23,14 +23,13 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.EditorNotificationPanel;
 import java.io.File;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +48,7 @@ public class BazelImportCurrentProjectAction extends AnAction {
     return BazelWorkspaceRootProvider.INSTANCE.isWorkspaceRoot(new File(root));
   }
 
-  public static Runnable createAction(EditorNotificationPanel panel, String basePath) {
+  public static Runnable createAction(String basePath) {
     File baseFile = new File(basePath);
     BazelImportCurrentProjectAction action = new BazelImportCurrentProjectAction(baseFile);
 
@@ -58,7 +57,7 @@ public class BazelImportCurrentProjectAction extends AnAction {
           action,
           null,
           ActionPlaces.UNKNOWN,
-          DataManager.getInstance().getDataContext(panel)
+          DataContext.EMPTY_CONTEXT
       );
 
       if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
@@ -69,7 +68,8 @@ public class BazelImportCurrentProjectAction extends AnAction {
 
   final File workspaceRootFile;
 
-  private BazelImportCurrentProjectAction(File workspaceRootFile) {
+  public BazelImportCurrentProjectAction(File workspaceRootFile) {
+    super("Import current project");
     this.workspaceRootFile = workspaceRootFile;
   }
 

@@ -28,5 +28,8 @@ java_library(
         "clion-2024.2": ["//clwb/sdkcompat/v242"],
     }),
     visibility = ["//clwb:__pkg__"],
-    deps = ["//intellij_platform_sdk:plugin_api"],
+    deps = [
+        "//base",
+        "//intellij_platform_sdk:plugin_api",
+    ],
 )
