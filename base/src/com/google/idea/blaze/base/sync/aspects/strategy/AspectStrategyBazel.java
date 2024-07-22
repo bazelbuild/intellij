@@ -41,7 +41,8 @@ public class AspectStrategyBazel extends AspectStrategy {
   static final class RepositoryProvider implements AspectRepositoryProvider {
     @Override
     public Optional<File> aspectDirectory() {
-      return Optional.ofNullable(PluginManager.getPluginByClass(AspectStrategy.class)).map(PluginDescriptor::getPath);
+      return Optional.ofNullable(PluginManager.getPluginByClass(AspectStrategy.class))
+          .map((it) -> new File(it.getPath(), "aspect"));
     }
   }
 
