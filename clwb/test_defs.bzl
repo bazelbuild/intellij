@@ -19,6 +19,8 @@ def clwb_integration_test(name, project, srcs, deps = []):
         test_package_root = "com.google.idea.blaze.clwb",
         runtime_deps = [":clwb_bazel"],
         data = ["//aspect:aspect_files"],
+        # disables the default bazel security manager, causes tests to fail on windows
+        jvm_flags = ["-Dcom.google.testing.junit.runner.shouldInstallTestSecurityManager=false"],
         deps = deps + [
             ":clwb_lib",
             "//base",
@@ -38,6 +40,10 @@ def clwb_integration_test(name, project, srcs, deps = []):
         bazel_versions = bazel_binaries.versions.all,
         test_runner = ":" + runner,
         workspace_path = "tests/projects/" + project,
+        # disables automatic conversion of bazel target names to absolut windows paths by msys
+        env = {"MSYS_NO_PATHCONV": "true"},
+        # inherit bash shell and visual studio path from host for windows
+        additional_env_inherit = ["BAZEL_SH", "BAZEL_VC"],
     )
 
     native.test_suite(
