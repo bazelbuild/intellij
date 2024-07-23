@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.common.artifact.BlazeArtifact;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.google.protobuf.TextFormat;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,6 +48,9 @@ public abstract class AspectStrategy {
 
   public static final Predicate<String> ASPECT_OUTPUT_FILE_PREDICATE =
       str -> str.endsWith(".intellij-info.txt");
+
+  static final FeatureRolloutExperiment optimize_building_jars =
+      new FeatureRolloutExperiment("optimize_building_jars");
 
   /** A Blaze output group created by the aspect. */
   public enum OutputGroup {
@@ -107,9 +111,16 @@ public abstract class AspectStrategy {
         outputGroups.stream()
             .flatMap(g -> getOutputGroups(g, activeLanguages, directDepsOnly).stream())
             .collect(toImmutableList());
-    builder
+    if (optimize_building_jars.isEnabled()){
+      builder
+        .addBlazeFlags(getAspectFlag().map(List::of).orElse(List.of()))
+        .addBlazeFlags("--aspects_parameters=optimize_building_jars=enabled")
+        .addBlazeFlags("--output_groups=" + Joiner.on(',').join(groups));
+    } else {
+      builder
         .addBlazeFlags(getAspectFlag().map(List::of).orElse(List.of()))
         .addBlazeFlags("--output_groups=" + Joiner.on(',').join(groups));
+    }
   }
 
   /**

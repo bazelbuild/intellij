@@ -61,16 +61,22 @@ _intellij_aspect_test_fixture = rule(
             executable = True,
             allow_files = True,
         ),
+        "optimize_building_jars": attr.string(
+            doc = "Reduce the number of jars built by the aspect and tracked by the ide",
+            default = "disabled",
+            values = ["enabled", "disabled"],
+        ),
     },
 )
 
-def intellij_aspect_test_fixture(name, deps, transitive_configs = []):
+def intellij_aspect_test_fixture(name, deps, transitive_configs = [], optimize_building_jars = "disabled"):
     _intellij_aspect_test_fixture(
         name = name,
         output = name + ".intellij-aspect-test-fixture",
         deps = deps,
         testonly = 1,
         transitive_configs = transitive_configs,
+        optimize_building_jars = optimize_building_jars,
     )
 
 def test_sources(outs):

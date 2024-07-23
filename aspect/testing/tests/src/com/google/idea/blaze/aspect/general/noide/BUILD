@@ -25,6 +25,16 @@ java_library(
 
 intellij_aspect_test_fixture(
     name = "noide_fixture",
+    optimize_building_jars = "disabled",
+    deps = [
+        ":baz",
+        ":foo",
+    ],
+)
+
+intellij_aspect_test_fixture(
+    name = "noide_fixture_optimize_building_jars",
+    optimize_building_jars = "enabled",
     deps = [
         ":baz",
         ":foo",
@@ -34,7 +44,10 @@ intellij_aspect_test_fixture(
 java_test(
     name = "NoIdeTest",
     srcs = ["NoIdeTest.java"],
-    data = [":noide_fixture"],
+    data = [
+        ":noide_fixture",
+        ":noide_fixture_optimize_building_jars",
+    ],
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing:guava",

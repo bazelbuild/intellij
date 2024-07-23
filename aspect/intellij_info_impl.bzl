@@ -18,7 +18,6 @@ load(
     "ACTION_NAMES",
 )
 
-
 # Defensive list of features that can appear in the C++ toolchain, but which we
 # definitely don't want to enable (when enabled, they'd contribute command line
 # flags that don't make sense in the context of intellij info).
@@ -195,13 +194,20 @@ def annotation_processing_jars(generated_class_jar, generated_source_jar):
         source_jars = [artifact_location(src_jar)] if src_jar else None,
     )
 
-def jars_from_output(output):
+def jars_from_output(output, should_optimize_building_jars):
     """Collect jars for intellij-resolve-files from Java output."""
     if output == None:
         return []
+    source_jars = get_source_jars(output)
+    if should_optimize_building_jars:
+        return [
+            jar
+            for jar in ([output.ijar if len(source_jars) > 0 and output.ijar else output.class_jar] + source_jars)
+            if jar != None and not jar.is_source
+        ]
     return [
         jar
-        for jar in ([output.class_jar, output.ijar] + get_source_jars(output))
+        for jar in ([output.class_jar, output.ijar] + source_jars)
         if jar != None and not jar.is_source
     ]
 
@@ -599,6 +605,11 @@ def _collect_generated_files(java):
         return [(java.annotation_processing.class_jar, java.annotation_processing.source_jar)]
     return []
 
+def _should_optimize_building_jars(ctx):
+    if ctx.attr.optimize_building_jars == "enabled":
+        return True
+    return False
+
 def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates Java-specific output groups, returns false if not a Java target."""
     java = get_java_provider(target)
@@ -619,7 +630,7 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     sources = sources_from_target(ctx)
     jars = [library_artifact(output, ctx.rule.kind) for output in java_outputs]
     class_jars = [output.class_jar for output in java_outputs if output and output.class_jar]
-    output_jars = [jar for output in java_outputs for jar in jars_from_output(output)]
+    output_jars = [jar for output in java_outputs for jar in jars_from_output(output, _should_optimize_building_jars(ctx))]
     resolve_files = output_jars
     compile_files = class_jars
 
@@ -762,15 +773,20 @@ def _build_filtered_gen_jar(ctx, target, java_outputs, gen_java_sources, srcjars
     """Filters the passed jar to contain only classes from the given manifest."""
     jar_artifacts = []
     source_jar_artifacts = []
+    should_optimize_building_jars = _should_optimize_building_jars(ctx)
     for jar in java_outputs:
         if jar.ijar:
             jar_artifacts.append(jar.ijar)
-        elif jar.class_jar:
+        elif jar.class_jar and not should_optimize_building_jars:
             jar_artifacts.append(jar.class_jar)
         if hasattr(jar, "source_jars") and jar.source_jars:
             source_jar_artifacts.extend(_list_or_depset_to_list(jar.source_jars))
         elif hasattr(jar, "source_jar") and jar.source_jar:
             source_jar_artifacts.append(jar.source_jar)
+
+    if should_optimize_building_jars:
+        if len(source_jar_artifacts) == 0 or len(jar_artifacts) == 0:
+            jar_artifacts.extend([jar.class_jar for jar in java_outputs.jars if jar.class_jar])
 
     filtered_jar = ctx.actions.declare_file(target.label.name + "-filtered-gen.jar")
     filtered_source_jar = ctx.actions.declare_file(target.label.name + "-filtered-gen-src.jar")
@@ -877,7 +893,7 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
 
     resources = []
     res_folders = []
-    resolve_files = jars_from_output(output_jar)
+    resolve_files = jars_from_output(output_jar, _should_optimize_building_jars(ctx))
     if hasattr(ctx.rule.attr, "resource_files"):
         for artifact_path_fragments, res_files in get_res_artifacts(ctx.rule.attr.resource_files).items():
             # Generate unique ArtifactLocation for resource directories.
@@ -949,7 +965,7 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
     # b/176209293: expose resource jar to make sure empty library
     # knows they are remote output artifact
     if android.resource_jar:
-        resolve_files += [jar for jar in jars_from_output(android.resource_jar)]
+        resolve_files += [jar for jar in jars_from_output(android.resource_jar, _should_optimize_building_jars(ctx))]
 
     ide_info["android_ide_info"] = android_info
     update_sync_output_groups(output_groups, "intellij-resolve-android", depset(resolve_files))
@@ -1260,6 +1276,11 @@ def make_intellij_info_aspect(aspect_impl, semantics):
             cfg = "exec",
             executable = True,
             allow_files = True,
+        ),
+        "optimize_building_jars": attr.string(
+            doc = "Reduce the number of jars built by the aspect and tracked by the ide",
+            default = "disabled",
+            values = ["enabled", "disabled"],
         ),
     }
 
