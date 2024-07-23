@@ -96,9 +96,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2024_2. This is required to build IJwB and run integration tests.
-IC_242_SHA = "fa041584635957a7f40471e5331b4e9a9967a2c9b5ce52b908c7fe8a48ef6ec8"
+IC_242_SHA = "c90e24c1229a03770957d7a416023bf240e66fcad0213de6115bc7725f4eba39"
 
-IC_242_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/242.20224.38-EAP-SNAPSHOT/ideaIC-242.20224.38-EAP-SNAPSHOT.zip"
+IC_242_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/242.20224.91-EAP-SNAPSHOT/ideaIC-242.20224.91-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ce_2024_2",
@@ -194,9 +194,9 @@ http_archive(
     url = IU_241_URL,
 )
 
-IU_242_SHA = "251becd944645a8ec65101a8c168b4dabc38f4b53e61fd2a465f28f1d27fd523"
+IU_242_SHA = "79d1fb89d1ac6a9d0e1114b90eb66d4f6a08c937b6e763ae545d2e55ce9a36ec"
 
-IU_242_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/242.20224.38-EAP-SNAPSHOT/ideaIU-242.20224.38-EAP-SNAPSHOT.zip"
+IU_242_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/242.20224.91-EAP-SNAPSHOT/ideaIU-242.20224.91-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ue_2024_2",
@@ -321,9 +321,9 @@ http_archive(
     url = DEVKIT_233_URL,
 )
 
-DEVKIT_241_SHA = "1a5f6f7b51dc757a598890a66b130b9b101207924687f84b000b269ddec9fe6c"
+DEVKIT_241_SHA = "58cb8ad533b4b1fef84896952fb1d6638266d812d453fd6b6844fcce5cfc2033"
 
-DEVKIT_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/241.18034.69/DevKit-241.18034.69.zip"
+DEVKIT_241_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/241.17890.34/DevKit-241.17890.34.zip"
 
 http_archive(
     name = "devkit_2024_1",
@@ -678,9 +678,9 @@ http_archive(
     url = SCALA_PLUGIN_241_URL,
 )
 
-SCALA_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.2.11/org.intellij.scala-2024.2.11.zip"
+SCALA_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.2.13/org.intellij.scala-2024.2.13.zip"
 
-SCALA_PLUGIN_242_SHA = "dc8f02360fa8d199fee45e8a13dac39ec24bf24ee9acea228324e5d64ece5810"
+SCALA_PLUGIN_242_SHA = "7cdc1730a6fe620116d461bdc2312353d2ae0cc181a1fd07e19b71073214b324"
 
 http_archive(
     name = "scala_2024_2",
