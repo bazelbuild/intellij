@@ -37,8 +37,8 @@ public class CompilerWrapperProviderImpl implements CompilerWrapperProvider {
   public File createCompilerExecutableWrapper(
       File executionRoot, File blazeCompilerExecutableFile,
       ImmutableMap<String, String> compilerWrapperEnvVars) {
-    // bazel only uses a wrapper script on Mac, so we only need this script when running on mac
-    if (!SystemInfo.isMac) {
+    // bazel only uses a wrapper script on unix, so we do not need this script when running on windows
+    if (SystemInfo.isWindows) {
       return blazeCompilerExecutableFile;
     }
 
