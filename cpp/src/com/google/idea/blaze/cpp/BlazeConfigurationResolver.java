@@ -109,7 +109,6 @@ final class BlazeConfigurationResolver {
             xcodeSettings
         );
 
-    ImmutableMap<String, String> targetToVersion = getTargetToVersionMap(toolchainLookupMap, compilerSettings);
     ProjectViewTargetImportFilter projectViewFilter =
         new ProjectViewTargetImportFilter(
             Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet);
@@ -123,31 +122,9 @@ final class BlazeConfigurationResolver {
         HeaderRootTrimmer.getValidRoots(
             context, blazeProjectData, toolchainLookupMap, targetFilter, executionRootPathResolver);
     builder.setValidHeaderRoots(validHeaderRoots);
-    builder.setTargetToVersionMap(targetToVersion);
     builder.setXcodeSettings(xcodeSettings);
 
     return builder.build();
-  }
-
-  @NotNull
-  private static ImmutableMap<String, String> getTargetToVersionMap(ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap, ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings) {
-    // since the cpp and c compiler versions should be the same per toolchain, it is okay to only
-    // store one version per toolchain
-    final var compilerVersionByPath = new HashMap<ExecutionRootPath, String>();
-    compilerSettings.forEach((toolchain, settings) -> {
-      compilerVersionByPath.put(toolchain.getCppCompiler(), settings.getCompilerVersion());
-    });
-
-    final var targetToVersionBuilder = new ImmutableMap.Builder<String, String>();
-    toolchainLookupMap.forEach((key, toolchain) -> {
-      final var version = compilerVersionByPath.get(toolchain.getCCompiler()) ;
-
-      if (version != null) {
-        targetToVersionBuilder.put(key.getLabel().toString(), version);
-      }
-    });
-
-    return targetToVersionBuilder.build();
   }
 
   private static Predicate<TargetIdeInfo> getTargetFilter(

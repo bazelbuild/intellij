@@ -62,13 +62,13 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.xdebugger.XDebugSession;
-import com.jetbrains.cidr.cpp.toolchains.CPPDebugger.Kind;
 import com.jetbrains.cidr.execution.CidrConsoleBuilder;
 import com.jetbrains.cidr.execution.CidrLauncher;
 import com.jetbrains.cidr.execution.TrivialInstaller;
 import com.jetbrains.cidr.execution.TrivialRunParameters;
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
 import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess;
+import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemoteDebugParameters;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemotePathMapping;
 import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestConsoleProperties;
@@ -227,7 +227,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     File workspaceRootDirectory = workspaceRoot.directory();
 
-    if (!BlazeGDBServerProvider.shouldUseGdbserver()) {
+    final var debuggerKind = RunConfigurationUtils.getDebuggerKind(configuration);
+    if (debuggerKind != BlazeDebuggerKind.GDB_SERVER) {
 
       File workingDir =
           new File(runner.executableToDebug + ".runfiles", workspaceRootDirectory.getName());
@@ -246,14 +247,15 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         convertBlazeTestFilterToExecutableFlag().ifPresent(commandLine::addParameters);
       }
 
-      TrivialInstaller installer = new TrivialInstaller(commandLine);
-      ImmutableList<String> startupCommands = getGdbStartupCommands(workspaceRootDirectory);
-      TrivialRunParameters parameters =
-          new TrivialRunParameters(
-              ToolchainUtils.getToolchain().getDebuggerKind() == Kind.BUNDLED_LLDB
-                  ? new BlazeLLDBDriverConfiguration(project, workspaceRoot.directory().toPath())
-                  : new BlazeGDBDriverConfiguration(project, startupCommands, workspaceRoot),
-              installer);
+      final DebuggerDriverConfiguration debuggerDriver;
+      if (debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB) {
+        debuggerDriver = new BlazeLLDBDriverConfiguration(project, workspaceRoot.directory().toPath());
+      } else {
+        final var startupCommands = getGdbStartupCommands(workspaceRootDirectory);
+        debuggerDriver = new BlazeGDBDriverConfiguration(project, startupCommands, workspaceRoot);
+      }
+
+      final var parameters = new TrivialRunParameters(debuggerDriver, new TrivialInstaller(commandLine));
 
       state.setConsoleBuilder(createConsoleBuilder(null));
       state.addConsoleFilters(getConsoleFilters().toArray(new Filter[0]));
