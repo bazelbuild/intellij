@@ -405,6 +405,9 @@
     <registryKey defaultValue="false"
                  description="The Bazel Plugin sometimes uses the --query_file option to pass the query via a file. By default, the file is deleted immediately after the query execution is finished. Set this flag to true to avoid file deletion"
                  key="bazel.sync.keep.query.files"/>
+    <registryKey defaultValue="false"
+                 description="The Bazel Plugin uses the --target_pattern_file option to pass the targets via a file. By default, the file is deleted immediately after the build execution is finished. Set this flag to true to avoid file deletion"
+                 key="bazel.sync.keep.target.files"/>
     <editorNotificationProvider implementation="com.google.idea.blaze.base.wizard2.BazelNotificationProvider"/>
   </extensions>
 
