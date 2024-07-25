@@ -6,3 +6,7 @@ build --deleted_packages=aspect/testing/tests/src/com/google/idea/blaze/aspect/i
 query --deleted_packages=aspect/testing/tests/src/com/google/idea/blaze/aspect/integration/testdata,clwb/tests/projects/simple/main
 
 common --enable_bzlmod
+
+# Required for CLion integration tests on windows
+startup --windows_enable_symlinks
+build --enable_runfiles

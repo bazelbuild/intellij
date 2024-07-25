@@ -83,5 +83,10 @@ tasks:
       - --define=ij_product=clion-oss-under-dev
     build_targets:
       - //clwb/...
+    test_flags:
+      - --define=ij_product=clion-oss-under-dev
+      - --test_output=errors
+    test_targets:
+      - //clwb:integration_tests
     soft_fail:
       - exit_status: 1
