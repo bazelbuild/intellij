@@ -209,14 +209,16 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
             "# Otherwise, please specify 'directories' and 'targets' you want to be imported",
             " ",
             "# By default, we keep the 'directories' section empty, so nothing is imported.",
-            "# Please change `-.` to a list of directories you would like to import",
+            "# Specify the source directories you wish to include in the 'directories' section.",
             "# ",
             "# After that, please look at the `derive_targets_from_directories` section and then:",
             "#   - either keep it set to `true` to import ALL targets in the directories section",
             "#   - or set it to `false` and add `targets` section to choose the targets selectively",
             "",
             "directories: ",
-            "  -.",
+            "#  Specify the source directories to be imported here",
+            "",
+            "view_project_root: true",
             "derive_targets_from_directories: true",
             ""
     )));
