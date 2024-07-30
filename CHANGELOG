@@ -1,6 +1,14 @@
 v2024.07.30
 ===========
-
+Features:
+* feat: enable view_project_root by default in auto import mode #6596
+* CLion MSVC Support #6500
+Bug Fixes:
+* Fix wrong heuristic for when bazel uses a wrapper script #6592
+* use absolute directories paths while deriving targets #6544
+Performance Fixes:
+* Don't build unnecessary jars. #5515
+* fix: Adjust executor threads based on device core count #6588
 
 v2024.07.16
 ===========
