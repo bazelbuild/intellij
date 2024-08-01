@@ -136,6 +136,9 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
 
   /**
    * Very similar to {@link AutoImportProjectOpenProcessor}.
+   *
+   * However, it is not possible to use the auto import processor directly because it immediately runs a sync, and it
+   * is not possible to perform any kind of project setup between the import and the initial sync.
    */
   @Override
   protected void setUpProject() throws Exception {
@@ -196,7 +199,7 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
       fail("could not validate project");
     }
 
-    builder.builder().commitToProject(myProject); // required to trigger sync
+    builder.builder().commitToProject(myProject);
   }
 
   protected @Language("projectview") String projectViewText() {
@@ -250,13 +253,6 @@ derive_targets_from_directories: true
 
       return OCLanguageUtils.tryGetOCFile(psiFile);
     });
-  }
-
-  protected OCFile findProjectOCFile(String relativePath) {
-    final var psiFile = findProjectPsiFile(relativePath);
-    assertThat(psiFile).isInstanceOf(OCFile.class);
-
-    return (OCFile) psiFile;
   }
 
   protected OCWorkspace getWorkspace() {
