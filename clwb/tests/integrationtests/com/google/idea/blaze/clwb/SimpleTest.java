@@ -6,6 +6,7 @@ import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 import com.intellij.openapi.util.SystemInfo;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind;
+import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
 import com.google.idea.blaze.clwb.base.ClwbIntegrationTestCase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,7 +29,9 @@ public class SimpleTest extends ClwbIntegrationTestCase {
     if (SystemInfo.isMac) {
       assertThat(compilerSettings.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
     } else if (SystemInfo.isLinux) {
-     assertThat(compilerSettings.getCompilerKind()).isEqualTo(GCCCompilerKind.INSTANCE);
+      assertThat(compilerSettings.getCompilerKind()).isEqualTo(GCCCompilerKind.INSTANCE);
+    } else if (SystemInfo.isWindows) {
+      assertThat(compilerSettings.getCompilerKind()).isEqualTo(MSVCCompilerKind.INSTANCE);
     }
 
     final var headersSearchRoots = compilerSettings.getHeadersSearchRoots().getAllRoots();
