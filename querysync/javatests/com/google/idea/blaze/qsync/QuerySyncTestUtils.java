@@ -129,7 +129,7 @@ public class QuerySyncTestUtils {
   }
 
   private static String cleanLabel(String label) {
-    return label.replaceAll(".*~", "").replaceAll("@@", "");
+    return label.replaceAll(".*~", "").replaceAll(".*\\+", "").replaceAll("@@", "");
   }
 
   /**
