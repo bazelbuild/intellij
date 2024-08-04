@@ -22,30 +22,49 @@ import com.google.common.collect.Lists;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.util.ManifestPackageParser;
+import com.intellij.openapi.project.Project;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.Nullable;
 
-/** Ide info specific to android rules. */
+/**
+ * Ide info specific to android rules.
+ */
 public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.AndroidIdeInfo> {
+
   private final ImmutableList<AndroidResFolder> resources;
-  @Nullable private final ArtifactLocation manifest;
+
+  private static final Logger logger = Logger.getLogger(ManifestPackageParser.class.getName());
+
+  @Nullable
+  private final ArtifactLocation manifest;
   /**
    * Maps overridable Android manifest attributes or arbitrary placeholder strings to the values
-   * that Bazel substitutes for them during merged manifest computation. {@see <a
+   * that Bazel substitutes for them during merged manifest computation.
+   * {@see <a
    * href="https://docs.bazel.build/versions/master/be/android.html#android_binary.manifest_values">manifest_values</a>}
    */
   private final ImmutableMap<String, String> manifestValues;
 
-  @Nullable private final LibraryArtifact idlJar;
-  @Nullable private final LibraryArtifact resourceJar;
+  @Nullable
+  private final LibraryArtifact idlJar;
+  @Nullable
+  private final LibraryArtifact resourceJar;
   private final boolean hasIdlSources;
-  @Nullable private final String resourceJavaPackage;
+  @Nullable
+  private final String resourceJavaPackage;
   private final boolean generateResourceClass;
-  @Nullable private final Label legacyResources;
-  @Nullable private final Label instruments;
-  @Nullable private final ArtifactLocation renderResolveJar;
+  @Nullable
+  private final Label legacyResources;
+  @Nullable
+  private final Label instruments;
+  @Nullable
+  private final ArtifactLocation renderResolveJar;
 
   private AndroidIdeInfo(
       List<AndroidResFolder> resources,
@@ -72,12 +91,13 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
     this.renderResolveJar = renderResolveJar;
   }
 
-  static AndroidIdeInfo fromProto(IntellijIdeInfo.AndroidIdeInfo proto) {
+  static AndroidIdeInfo fromProto(IntellijIdeInfo.AndroidIdeInfo proto, Project project) {
     return new AndroidIdeInfo(
         !proto.getResFoldersList().isEmpty()
             ? ProtoWrapper.map(proto.getResFoldersList(), AndroidResFolder::fromProto)
             : ProtoWrapper.map(proto.getResourcesList(), AndroidResFolder::fromProto),
-        Strings.emptyToNull(proto.getJavaPackage()),
+
+        Strings.emptyToNull(getJavaPackage(proto, project)),
         proto.getGenerateResourceClass(),
         proto.hasManifest() ? ArtifactLocation.fromProto(proto.getManifest()) : null,
         ImmutableMap.copyOf(proto.getManifestValuesMap()),
@@ -93,6 +113,20 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
         proto.hasRenderResolveJar()
             ? ArtifactLocation.fromProto(proto.getRenderResolveJar())
             : null);
+  }
+
+  private static String getJavaPackage(IntellijIdeInfo.AndroidIdeInfo proto, Project project) {
+    String javaPackage = proto.getJavaPackage();
+    logger.log(Level.INFO, "The manifest path is " + proto.getManifest().getRelativePath() +
+        " javaPackage: " + javaPackage +
+        " has resource " + proto.hasResourceJar() + "  has manifest " + proto.hasManifest());
+
+    if (Strings.emptyToNull(javaPackage) == null && proto.hasManifest() && proto.hasResourceJar()) {
+      WorkspaceRoot root = WorkspaceRoot.fromProject(project);
+      return ManifestPackageParser.extractPackageName(root + "/"
+          + proto.getManifest().getRelativePath());
+    }
+    return javaPackage;
   }
 
   @Override
@@ -168,8 +202,11 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
     return new Builder();
   }
 
-  /** Builder for android rule */
+  /**
+   * Builder for android rule
+   */
   public static class Builder {
+
     private List<AndroidResFolder> resources = Lists.newArrayList();
     private ArtifactLocation manifest;
     private final ImmutableMap.Builder<String, String> manifestValues = ImmutableMap.builder();

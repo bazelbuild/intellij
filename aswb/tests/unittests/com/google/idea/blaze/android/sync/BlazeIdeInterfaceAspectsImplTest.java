@@ -36,6 +36,7 @@ import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.project.Project;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -85,7 +86,8 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
                     .addDependencyApk(artifactLocation("apk"))
                     .setJavaPackage("package"))
             .build();
-    TargetIdeInfo target = TargetIdeInfo.fromProto(ideProto);
+
+    TargetIdeInfo target = TargetIdeInfo.fromProto(ideProto, project);
     assertThat(target).isNotNull();
     ImmutableList<AndroidResFolder> resources = target.getAndroidIdeInfo().getResources();
     assertThat(resources)
