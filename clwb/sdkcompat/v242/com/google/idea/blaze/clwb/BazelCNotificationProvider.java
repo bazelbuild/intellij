@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 The Bazel Authors. All rights reserved.
+ * Copyright 2023 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-package com.google.idea.sdkcompat.clion;
+package com.google.idea.blaze.clwb;
 
-
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import javax.annotation.Nullable;
-import javax.swing.JComponent;
+import com.intellij.ui.EditorNotificationProvider;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-// #api242
-public class CMakeNotificationProviderWrapper {
+import javax.swing.*;
+import java.util.function.Function;
 
-    @Nullable
-    public JComponent createNotificationPanel(VirtualFile virtualFile, FileEditor fileEditor, Project project) {
-        return null;
-    }
+// #api241
+class BazelCNotificationProvider implements EditorNotificationProvider {
 
-    public static <T> void unregisterDelegateExtension(ExtensionPoint<T> extensionPoint) {}
+  @Override
+  public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(
+      @NotNull Project project, @NotNull VirtualFile virtualFile) {
+    return null;
+  }
 }
