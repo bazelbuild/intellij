@@ -94,6 +94,11 @@
       text="Partially Sync File"
       icon="BlazeIcons.Logo">
     </action>
+    <action id="Blaze.CompileCorrespondingBuildFiles"
+            class="com.google.idea.blaze.base.actions.CompileCorrespondingBuildFilesAction"
+            text="Compiles corresponding build files"
+            icon="BlazeIcons.BuildFile">
+    </action>
     <action id="Blaze.UpdateDirectories"
         class="com.google.idea.blaze.base.sync.actions.UpdateDirectoriesSyncAction"
         text="Sync Directories"
@@ -203,6 +208,7 @@
       <reference ref="Blaze.BuildReverseDependencies" />
 
       <reference ref="Blaze.PartialSync"/>
+      <reference ref="Blaze.CompileCorrespondingBuildFiles"/>
       <reference ref="Blaze.AddSourceToProject"/>
       <reference ref="Blaze.AddToQuerySyncProjectView"/>
       <reference ref="Blaze.OpenCorrespondingBuildFile"/>
