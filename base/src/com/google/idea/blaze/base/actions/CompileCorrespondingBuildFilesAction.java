@@ -61,7 +61,7 @@ public class CompileCorrespondingBuildFilesAction extends BlazeProjectAction {
   private static void getAllTargetsRecursive(Project project, VirtualFile vf, ImmutableSet.Builder<Label> targetsBuilder){
     if(!vf.isDirectory()){
       BlazePackage parentPackage = BuildFileUtils.getBuildFile(project, vf);
-      if (parentPackage == null) {
+      if (parentPackage != null) {
         targetsBuilder.add(getLabelForBuildFile(parentPackage.buildFile));
       }
       return;
