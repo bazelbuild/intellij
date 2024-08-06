@@ -35,18 +35,21 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
   private final PythonVersion version;
   private final PythonSrcsVersion srcsVersion;
   private final ImmutableList<String> args;
+  private final ImmutableList<String> imports;
 
   private PyIdeInfo(
       ImmutableList<ArtifactLocation> sources,
       @Nullable Label launcher,
       PythonVersion version,
       PythonSrcsVersion srcsVersion,
-      ImmutableList<String> args) {
+      ImmutableList<String> args,
+      ImmutableList<String> imports) {
     this.sources = sources;
     this.launcher = launcher;
     this.version = version;
     this.srcsVersion = srcsVersion;
     this.args = args;
+    this.imports = imports;
   }
 
   static PyIdeInfo fromProto(IntellijIdeInfo.PyIdeInfo proto) {
@@ -60,7 +63,8 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
         launcher,
         proto.getPythonVersion(),
         proto.getSrcsVersion(),
-        parseArgs(proto.getArgsList()));
+        parseArgs(proto.getArgsList()),
+        ImmutableList.copyOf(proto.getImportsList()));
   }
 
   /** Blaze has a layer of bash-like parsing to args - apply that here. */
@@ -87,6 +91,7 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
     builder.setPythonVersion(version);
     builder.setSrcsVersion(srcsVersion);
     builder.addAllArgs(encodeArgs(args));
+    builder.addAllImports(imports);
     return builder.build();
   }
 
@@ -111,6 +116,10 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
     return args;
   }
 
+  public ImmutableList<String> getImports() {
+    return imports;
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -122,6 +131,7 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
     private PythonVersion version;
     private PythonSrcsVersion srcsVersion;
     private final ImmutableList.Builder<String> args = ImmutableList.builder();
+    private final ImmutableList.Builder<String> imports = ImmutableList.builder();
 
     @CanIgnoreReturnValue
     public Builder addSources(Iterable<ArtifactLocation> sources) {
@@ -153,8 +163,14 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
       return this;
     }
 
+    @CanIgnoreReturnValue
+    public Builder addImports(Iterable<String> imports) {
+      this.imports.addAll(imports);
+      return this;
+    }
+
     public PyIdeInfo build() {
-      return new PyIdeInfo(sources.build(), launcher, version, srcsVersion, args.build());
+      return new PyIdeInfo(sources.build(), launcher, version, srcsVersion, args.build(), imports.build());
     }
   }
 
@@ -170,6 +186,7 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
     s.append("  python_version = ").append(version).append("\n");
     s.append("  srcs_version = ").append(srcsVersion).append("\n");
     s.append("  args = ").append(getArgs()).append("\n");
+    s.append("  imports = ").append(getImports()).append("\n");
     s.append("}");
     return s.toString();
   }
@@ -187,11 +204,12 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
         && Objects.equals(launcher, pyIdeInfo.launcher)
         && Objects.equals(version, pyIdeInfo.version)
         && Objects.equals(srcsVersion, pyIdeInfo.srcsVersion)
-        && Objects.equals(args, pyIdeInfo.args);
+        && Objects.equals(args, pyIdeInfo.args)
+        && Objects.equals(imports, pyIdeInfo.imports);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sources, launcher, version, srcsVersion, args);
+    return Objects.hash(sources, launcher, version, srcsVersion, args, imports);
   }
 }

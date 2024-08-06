@@ -151,6 +151,7 @@ message PyIdeInfo {
   // the python versions this target is compatible with
   PythonSrcsVersion srcs_version = 4;
   repeated string args = 5;
+  repeated string imports = 6;
 }
 
 message GoIdeInfo {
