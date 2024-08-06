@@ -373,6 +373,7 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     args = getattr(ctx.rule.attr, "args", [])
     data_deps = getattr(ctx.rule.attr, "data", [])
     args = _do_starlark_string_expansion(ctx, "args", args, data_deps)
+    imports = getattr(ctx.rule.attr, "imports", [])
 
     ide_info["py_ide_info"] = struct_omit_none(
         launcher = py_launcher,
@@ -380,6 +381,7 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         sources = sources,
         srcs_version = _get_python_srcs_version(ctx),
         args = args,
+        imports = imports,
     )
 
     update_sync_output_groups(output_groups, "intellij-info-py", depset([ide_info_file]))
