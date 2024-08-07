@@ -183,11 +183,8 @@ public interface CommandLineTask {
 
     @Override
     public int run() throws IOException, InterruptedException, TimeoutException {
-
-      // ensure execution on background thread
-      assert !EDT.isCurrentThreadEdt();
-      // ensure no read lock is kept
-      assert !ApplicationManager.getApplication().isReadAccessAllowed();
+      logger.assertTrue(!EDT.isCurrentThreadEdt(), "runs on background thread");
+      logger.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed(), "runs without read lock");
 
       String logCommand = ParametersListUtil.join(command);
       if (logCommand.length() > 2000) {
