@@ -96,9 +96,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2024_2. This is required to build IJwB and run integration tests.
-IC_242_SHA = "b934a915e4e08f8b09d97dcce11ae228c24022fe0014ae039b0b5971b8d390b8"
+IC_242_SHA = "5c618005e274356f361da7644bcde5055305aa4b75a24e0f7b4eb5ab17d0b97b"
 
-IC_242_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/242.20224.159-EAP-SNAPSHOT/ideaIC-242.20224.159-EAP-SNAPSHOT.zip"
+IC_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2024.2/ideaIC-2024.2.zip"
 
 http_archive(
     name = "intellij_ce_2024_2",
@@ -194,9 +194,9 @@ http_archive(
     url = IU_241_URL,
 )
 
-IU_242_SHA = "5263c04e869ba60c9b7c17c0ec0a9d38fde19bb6225c05bf6e1285bd153d06ee"
+IU_242_SHA = "2f923d53e568eedb4d86884fbb68bf6799f48479be7d2255185651f6f021312c"
 
-IU_242_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/242.20224.159-EAP-SNAPSHOT/ideaIU-242.20224.159-EAP-SNAPSHOT.zip"
+IU_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2024.2/ideaIU-2024.2.zip"
 
 http_archive(
     name = "intellij_ue_2024_2",
@@ -460,9 +460,9 @@ filegroup(
 )
 """
 
-PYTHON_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/242.20224.159/PythonCore-242.20224.159.zip"
+PYTHON_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/242.20224.300/PythonCore-242.20224.300.zip"
 
-PYTHON_PLUGIN_242_SHA = "c6b5e5998ba56f3fbd5fc440f13d87589cda85436333958c7ca00e3fe6cb7efc"
+PYTHON_PLUGIN_242_SHA = "8ebc7a48bce70bc2dae1a337b40bb17fdd05957126b8df6d480f482517da0f6c"
 
 http_archive(
     name = "python_2024_2",
@@ -577,9 +577,9 @@ java_import(
 )
 """
 
-GO_PLUGIN_242_SHA = "dd15e640f3cbc91999ea6bdfaef181278e75ad0fb0b5f426cefd7c3b5ce74104"
+GO_PLUGIN_242_SHA = "f8abaeaaf7db02fd707ab36ecf24595d275c3fea0b5bb2d66d000b7175c2d940"
 
-GO_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/242.20224.159/org.jetbrains.plugins.go-242.20224.159.zip"
+GO_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/242.20224.300/org.jetbrains.plugins.go-242.20224.300.zip"
 
 http_archive(
     name = "go_2024_2",
