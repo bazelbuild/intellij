@@ -212,16 +212,9 @@
       <action internal="true" id="Blaze.QSync.CleanDependencies" class="com.google.idea.blaze.base.qsync.action.CleanDependencies" text="QSync - Clean Dependencies" />
       <action internal="true" id="Blaze.QSync.ReloadProject" class="com.google.idea.blaze.base.qsync.action.ReloadProject" text="QSync - Reload project" />
       <action internal="true" id="Blaze.QSync.ShowPromo" class="com.google.idea.blaze.base.qsync.action.ShowPromoAction" text="Show qsync promo" />
-      <action internal="true" id="Blaze.VFS.DumpVfsDirs" class="com.google.idea.blaze.base.actions.internal.AswbDumpVfs" text="ASwB - Dump VFS Dirs"/>
       <add-to-group group-id="Internal"/>
     </group>
   </actions>
-
-  <applicationListeners>
-    <listener
-        class="com.google.idea.blaze.base.actions.internal.AswbDumpVfs$BulkListener"
-        topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-  </applicationListeners>
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.google.idea.blaze.base.sync.BlazeSyncStartupActivity"/>
