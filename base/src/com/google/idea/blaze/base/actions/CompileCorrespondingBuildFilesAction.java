@@ -26,7 +26,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
-/** Allows a partial sync of the project depending on what's been selected. */
+/** Action to compile all build files in folder if folder picked or compile corresponding build file if file picked */
 public class CompileCorrespondingBuildFilesAction extends BlazeProjectAction {
 
   @Override
