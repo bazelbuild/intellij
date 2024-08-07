@@ -89,7 +89,8 @@ public class CompileCorrespondingBuildFilesAction extends BlazeProjectAction {
 
     ActionPresentationHelper.of(e)
         .disableIf(BlazeSyncStatus.getInstance(project).syncInProgress())
-        .setText("Compile corresponding build files")
+        .disableIf(virtualFile == null)
+        .setText(virtualFile.isDirectory() ? "Compile " + virtualFile.getName() + "/...:all" : "Compile corresponding build file")
         .hideInContextMenuIfDisabled()
         .commit();
   }
