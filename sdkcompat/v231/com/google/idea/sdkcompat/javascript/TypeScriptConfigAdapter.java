@@ -9,6 +9,7 @@ import com.intellij.lang.javascript.config.JSModuleTarget;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import org.jetbrains.annotations.NotNull;
 
+// #api233
 public abstract class TypeScriptConfigAdapter implements TypeScriptConfig {
 
     public abstract JSModuleTargetWrapper getAdapterModule();

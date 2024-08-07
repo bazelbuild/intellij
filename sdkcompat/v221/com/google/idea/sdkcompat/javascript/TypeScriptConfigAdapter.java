@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
 
+// #api233
 public abstract class TypeScriptConfigAdapter implements TypeScriptConfig {
 
     public abstract JSModuleTargetWrapper getAdapterModule();
