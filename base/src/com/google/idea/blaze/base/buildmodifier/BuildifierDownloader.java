@@ -54,11 +54,6 @@ public final class BuildifierDownloader {
   static final Key<CpuArch> CPU_ARCH_KEY = new Key<>("CPU_ARCH_KEY");
 
   /**
-   * Key for {@link TestModeFlags} to mock the download location.
-   */
-  static final Key<Path> DOWNLOAD_PATH_KEY = new Key<>("DOWNLOAD_PATH_KEY");
-
-  /**
    * Hardcoded buildifier version, update it to bump the version.
    */
   private static final String BUILDIFIER_VERSION = "7.1.2";
@@ -93,16 +88,13 @@ public final class BuildifierDownloader {
     LOG.assertTrue(!EDT.isCurrentThreadEdt(), "runs on background thread");
     LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed(), "runs without read lock");
 
-    final var path = getDownloadPath();
-    if (!Files.exists(path)) {
-      Files.createDirectories(path);
+    if (!Files.exists(DOWNLOAD_PATH)) {
+      Files.createDirectories(DOWNLOAD_PATH);
     }
 
     final var fileName = getFileName();
-    final var file = path.resolve(fileName);
-    if (Files.exists(file)) {
-      return file.toFile();
-    }
+    final var file = DOWNLOAD_PATH.resolve(fileName);
+    Files.deleteIfExists(file);
 
     final var url = getDownloadUrl();
     if (url == null) {
@@ -123,13 +115,6 @@ public final class BuildifierDownloader {
     FileUtil.setExecutable(resultFile);
 
     return resultFile;
-  }
-
-  private static Path getDownloadPath() {
-    return ObjectUtils.coalesce(
-        TestModeFlags.get(DOWNLOAD_PATH_KEY),
-        PathManager.getPluginsDir().resolve("buildifier")
-    );
   }
 
   private static String getFileName() {
