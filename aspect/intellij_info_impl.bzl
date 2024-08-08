@@ -796,7 +796,7 @@ def _build_filtered_gen_jar(ctx, target, java_outputs, gen_java_sources, srcjars
 
     if should_optimize_building_jars:
         if len(source_jar_artifacts) == 0 or len(jar_artifacts) == 0:
-            jar_artifacts.extend([jar.class_jar for jar in java_outputs.jars if jar.class_jar])
+            jar_artifacts.extend([jar.class_jar for jar in java_outputs if jar.class_jar])
 
     filtered_jar = ctx.actions.declare_file(target.label.name + "-filtered-gen.jar")
     filtered_source_jar = ctx.actions.declare_file(target.label.name + "-filtered-gen-src.jar")
