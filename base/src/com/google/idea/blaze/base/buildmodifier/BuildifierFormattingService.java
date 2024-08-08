@@ -41,14 +41,11 @@ public final class BuildifierFormattingService extends AsyncDocumentFormattingSe
   static final FeatureRolloutExperiment useNewBuildifierFormattingService =
       new FeatureRolloutExperiment("formatter.api.buildifier");
 
-  static final Supplier<Optional<String>> binaryPath = Suppliers.memoize(() -> getBinary());
-
   @Override
   @Nullable
   protected FormattingTask createFormattingTask(AsyncFormattingRequest request) {
     BuildFile buildFile = (BuildFile) request.getContext().getContainingFile();
-    return binaryPath
-        .get()
+    return getBinary()
         .map(binary -> BuildFileFormatter.getCommandLineArgs(binary, buildFile))
         .map(args -> new BuildifierFormattingTask(request, args))
         .orElse(null);
@@ -75,7 +72,7 @@ public final class BuildifierFormattingService extends AsyncDocumentFormattingSe
   public boolean canFormat(PsiFile file) {
     return useNewBuildifierFormattingService.isEnabled()
         && file instanceof BuildFile
-        && binaryPath.get().isPresent();
+        && getBinary().isPresent();
   }
 
   private static Optional<String> getBinary() {
