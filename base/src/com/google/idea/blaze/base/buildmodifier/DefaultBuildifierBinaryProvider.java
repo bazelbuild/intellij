@@ -15,12 +15,8 @@
  */
 package com.google.idea.blaze.base.buildmodifier;
 
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
-import com.intellij.notification.NotificationGroupManager;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -43,19 +39,12 @@ public class DefaultBuildifierBinaryProvider implements BuildifierBinaryProvider
       return relativeBinaryFile.getPath();
     }
 
-    notifyError(
-        "Could not find the buildifier binary. Please install buildifier via the instructions at"
-            + " https://github.com/bazelbuild/buildtools/tree/master/buildifier#readme and point"
-            + " to it in the "
-            + Blaze.guessBuildSystemName()
-            + " settings.");
-    return null;
-  }
+    if (BuildifierDownloader.canDownload()) {
+      BuildifierNotification.showDownloadNotification();
+    } else {
+      BuildifierNotification.showNotFoundNotification();
+    }
 
-  public static void notifyError(String content) {
-    Notifications.Bus.notify(
-        NotificationGroupManager.getInstance()
-            .getNotificationGroup("BuildifierBinaryMissing")
-            .createNotification(content, NotificationType.ERROR));
+    return null;
   }
 }
