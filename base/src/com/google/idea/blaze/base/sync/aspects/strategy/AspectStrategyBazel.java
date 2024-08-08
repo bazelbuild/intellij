@@ -18,8 +18,8 @@ package com.google.idea.blaze.base.sync.aspects.strategy;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import java.io.File;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -35,6 +35,14 @@ public class AspectStrategyBazel extends AspectStrategy {
       return versionData.buildSystem() == BuildSystemName.Bazel
           ? new AspectStrategyBazel(versionData)
           : null;
+    }
+  }
+
+  static final class RepositoryProvider implements AspectRepositoryProvider {
+    @Override
+    public Optional<File> aspectDirectory() {
+      return Optional.ofNullable(PluginManager.getPluginByClass(AspectStrategy.class))
+          .map((it) -> new File(it.getPath(), "aspect"));
     }
   }
 
@@ -54,24 +62,8 @@ public class AspectStrategyBazel extends AspectStrategy {
     return Optional.of(aspectFlag);
   }
 
-  // In tests, the location of @intellij_aspect is not known at compile time.
-  public static final String OVERRIDE_REPOSITORY_FLAG = "--override_repository=intellij_aspect";
-
   @Override
   public String getName() {
     return "AspectStrategySkylarkBazel";
-  }
-
-  private static Optional<File> findAspectDirectory() {
-    IdeaPluginDescriptor plugin =
-        PluginManager.getPlugin(PluginManager.getPluginByClassName(AspectStrategy.class.getName()));
-    if (plugin == null) {
-      return Optional.empty();
-    }
-    return Optional.of(new File(plugin.getPath(), "aspect"));
-  }
-
-  public static Optional<String> getAspectRepositoryOverrideFlag() {
-    return findAspectDirectory().map(it -> OVERRIDE_REPOSITORY_FLAG + "=" + it.getPath());
   }
 }

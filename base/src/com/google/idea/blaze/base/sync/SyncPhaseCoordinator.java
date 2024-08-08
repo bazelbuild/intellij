@@ -101,11 +101,11 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 
 /** Manages sync execution, coordinating the possibly-separate build/update phases. */
-final class SyncPhaseCoordinator {
+public final class SyncPhaseCoordinator {
 
   private static final Logger logger = Logger.getInstance(SyncPhaseCoordinator.class);
 
-  static SyncPhaseCoordinator getInstance(Project project) {
+  public static SyncPhaseCoordinator getInstance(Project project) {
     return project.getService(SyncPhaseCoordinator.class);
   }
 
@@ -410,7 +410,7 @@ final class SyncPhaseCoordinator {
    *     Otherwise runs the build phase then passes the result to the project update queue.
    */
   @VisibleForTesting
-  void runSync(BlazeSyncParams params, boolean singleThreaded, BlazeContext context) {
+  public void runSync(BlazeSyncParams params, boolean singleThreaded, BlazeContext context) {
     Instant startTime = Instant.now();
     int buildId = nextBuildId.getAndIncrement();
     try {

@@ -25,6 +25,7 @@ ADD_OPENS = [
         "java.desktop/sun.awt",
         "java.desktop/sun.awt.image",
         "java.desktop/sun.font",
+        "java.desktop/sun.swing",
     ]
 ]
 

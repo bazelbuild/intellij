@@ -84,12 +84,12 @@ filegroup(
     name = "python_helpers",
     srcs = glob(["clion-*/plugins/python-ce/helpers/**/*"]),
 )
-
-# The plugins required by CLwB. Presumably there will be some, when we write
-# some integration tests.
 java_import(
     name = "bundled_plugins",
-    jars = [],
+    jars = glob([
+       "plugins/clion-ide/lib/clion-ide.jar",
+       "plugins/clion-ide/lib/modules/*.jar",
+    ]),
     tags = ["intellij-provided-by-sdk"],
 )
 
