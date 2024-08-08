@@ -21,8 +21,6 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.system.OS;
-import java.io.IOException;
-import java.nio.file.Files;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -37,36 +35,33 @@ public class BuildifierDownloaderTest extends LightPlatformTestCase {
   }
 
   @Test
-  public void testMacArm64() throws IOException {
+  public void testMacArm64() {
     doTest(OS.macOS, CpuArch.ARM64);
   }
 
   @Test
-  public void testMacAmd64() throws IOException {
+  public void testMacAmd64() {
     doTest(OS.macOS, CpuArch.X86_64);
   }
 
   @Test
-  public void testLinuxArm64() throws IOException {
+  public void testLinuxArm64() {
     doTest(OS.Linux, CpuArch.ARM64);
   }
 
   @Test
-  public void testLinuxAmd64() throws IOException {
+  public void testLinuxAmd64() {
     doTest(OS.Linux, CpuArch.X86_64);
   }
 
   @Test
-  public void testWindowsAmd64() throws IOException {
+  public void testWindowsAmd64() {
     doTest(OS.Windows, CpuArch.X86_64);
   }
 
-  private void doTest(OS os, CpuArch arch) throws IOException {
+  private void doTest(OS os, CpuArch arch) {
     TestModeFlags.set(BuildifierDownloader.OS_KEY, os);
     TestModeFlags.set(BuildifierDownloader.CPU_ARCH_KEY, arch);
-
-    final var tempDir = Files.createTempDirectory(String.format("%s_%s", os, arch));
-    TestModeFlags.set(BuildifierDownloader.DOWNLOAD_PATH_KEY, tempDir);
 
     assertThat(BuildifierDownloader.downloadSync()).isNotNull();
   }
