@@ -128,6 +128,7 @@ public class ProjectViewParser {
   public static String projectViewToString(ProjectView projectView) {
     StringBuilder sb = new StringBuilder();
 
+    int curLineIndex = 0;
     List<SectionParser> sectionParsers = Sections.getParsers();
     for (Section<?> section : projectView.getSections()) {
       SectionParser sectionParser =

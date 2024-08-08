@@ -51,11 +51,16 @@ public class TextBlock implements Serializable {
     return new TextBlock(ImmutableList.of(""), firstLineIndex);
   }
 
-  public void print(StringBuilder sb) {
+  @CanIgnoreReturnValue
+  public int print(StringBuilder sb) {
+    int addedLines = 0;
     for (String line : lines) {
       sb.append(line);
       sb.append('\n');
+      addedLines += 1;
     }
+
+    return addedLines;
   }
 
   @Override
