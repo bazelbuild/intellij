@@ -11,12 +11,12 @@ load(
     "intellij_plugin_library",
     "stamped_plugin_xml",
 )
+load("//intellij_platform_sdk:build_defs.bzl", "java_version_flags", "select_for_plugin_api")
 load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "java_version_flags")
 
 java_library(
     name = "base",
@@ -50,7 +50,35 @@ java_library(
 
 intellij_plugin_library(
     name = "plugin_library",
-    plugin_xmls = ["src/META-INF/blaze-base.xml"],
+    plugin_xmls = ["src/META-INF/blaze-base.xml"] +  #api241
+                  select_for_plugin_api({
+                      "android-studio-2022.2": [],
+                      "android-studio-2022.3": [],
+                      "android-studio-2023.1": [],
+                      "android-studio-2023.2": [],
+                      "intellij-2022.1": [],
+                      "intellij-ue-2022.1": [],
+                      "intellij-2022.2": [],
+                      "intellij-ue-2022.2": [],
+                      "intellij-2022.3": [],
+                      "intellij-ue-2022.3": [],
+                      "intellij-2023.1": [],
+                      "intellij-ue-2023.1": [],
+                      "intellij-2023.2": [],
+                      "intellij-ue-2023.2": [],
+                      "intellij-2023.3": [],
+                      "intellij-ue-2023.3": [],
+                      "intellij-2024.1": [],
+                      "intellij-ue-2024.1": [],
+                      "clion-2022.1": [],
+                      "clion-2022.2": [],
+                      "clion-2022.3": [],
+                      "clion-2023.1": [],
+                      "clion-2023.2": [],
+                      "clion-2023.3": [],
+                      "clion-2024.1": [],
+                      "default": ["src/META-INF/dependency-on-lvcs-impl.xml"],
+                  }),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":base"],
 )
