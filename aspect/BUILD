@@ -32,6 +32,7 @@ filegroup(
         "WORKSPACE",
         "artifacts.bzl",
         "build_dependencies.bzl",
+        "build_render_dependencies.bzl",
         "fast_build_info_bundled.bzl",
         "intellij_info.bzl",
         "intellij_info_bundled.bzl",
