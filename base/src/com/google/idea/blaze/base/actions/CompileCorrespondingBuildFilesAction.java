@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.actions;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
@@ -62,7 +63,11 @@ public class CompileCorrespondingBuildFilesAction extends BlazeProjectAction {
     if(!vf.isDirectory()){
       BlazePackage parentPackage = BuildFileUtils.getBuildFile(project, vf);
       if (parentPackage != null) {
-        targetsBuilder.add(getLabelForBuildFile(parentPackage.buildFile));
+        for (FuncallExpression expr : parentPackage.buildFile.childrenOfClass(FuncallExpression.class)) {
+          String ruleName = expr.getNameArgumentValue();
+          if(ruleName != null && !ruleName.equals("null") && !ruleName.equals("image"))
+            targetsBuilder.add(getLabelForBuildFile(parentPackage.buildFile, ruleName));
+        }
       }
       return;
     }
@@ -71,8 +76,8 @@ public class CompileCorrespondingBuildFilesAction extends BlazeProjectAction {
     }
   }
 
-  private static Label getLabelForBuildFile(BuildFile buildFile){
-    return Label.create("//" + buildFile.getBlazePackage().getPackageLabel().blazePackage() + ":all");
+  private static Label getLabelForBuildFile(BuildFile buildFile,String ruleName){
+    return Label.create("//" + buildFile.getBlazePackage().getPackageLabel().blazePackage() + ":" + ruleName);
   }
 
   @Override
@@ -88,11 +93,11 @@ public class CompileCorrespondingBuildFilesAction extends BlazeProjectAction {
     presentation.setEnabled(enabled);
 
     ActionPresentationHelper.of(e)
-        .disableIf(BlazeSyncStatus.getInstance(project).syncInProgress())
-        .disableIf(virtualFile == null)
-        .setText(virtualFile.isDirectory() ? "Compile " + virtualFile.getName() + "/...:all" : "Compile corresponding build file")
-        .hideInContextMenuIfDisabled()
-        .commit();
+            .disableIf(BlazeSyncStatus.getInstance(project).syncInProgress())
+            .disableIf(virtualFile == null)
+            .setText(virtualFile.isDirectory() ? "Compile " + virtualFile.getName() + "/...:all" : "Compile corresponding build file")
+            .hideInContextMenuIfDisabled()
+            .commit();
   }
 
   @Override
