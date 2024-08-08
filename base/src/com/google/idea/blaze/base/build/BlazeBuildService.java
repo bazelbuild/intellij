@@ -119,6 +119,33 @@ public class BlazeBuildService {
         buildSystem);
   }
 
+
+  public void buildFolder(String folderName,List<TargetExpression> targets) {
+    if (!Blaze.isBlazeProject(project)) {
+      return;
+    }
+    ProjectViewSet projectView = ProjectViewManager.getInstance(project).getProjectViewSet();
+    BlazeProjectData projectData =
+            BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (projectView == null || projectData == null) {
+      return;
+    }
+
+    buildTargetExpressions(
+            project,
+            projectView,
+            projectData,
+            context -> targets,
+            new NotificationScope(
+                    project,
+                    "Make",
+                    "Make " + folderName + "/...:all",
+                    "Make" + folderName + "/...:all completed successfully",
+                    "Make" + folderName + "/...:all failed"),
+            "Make " + folderName + "/...:all",
+            buildSystem);
+  }
+
   public void buildProject() {
     if (!Blaze.isBlazeProject(project)) {
       return;
@@ -226,7 +253,7 @@ public class BlazeBuildService {
                             projectData.getWorkspacePathResolver(),
                             targets,
                             buildInvoker,
-                            SyncStrategy.SERIAL);
+                            SyncStrategy.SERIAL_NOT_EXPAND);
                     if (shardedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
                       return null;
                     }
