@@ -19,8 +19,12 @@ def clwb_integration_test(name, project, srcs, deps = []):
         test_package_root = "com.google.idea.blaze.clwb",
         runtime_deps = [":clwb_bazel"],
         data = ["//aspect:aspect_files"],
-        # disables the default bazel security manager, causes tests to fail on windows
-        jvm_flags = ["-Dcom.google.testing.junit.runner.shouldInstallTestSecurityManager=false"],
+        jvm_flags = [
+            # disables the default bazel security manager, causes tests to fail on windows
+            "-Dcom.google.testing.junit.runner.shouldInstallTestSecurityManager=false",
+            # fixes preferences not writable on mac
+            "-Djava.util.prefs.PreferencesFactory=com.google.idea.blaze.clwb.base.InMemoryPreferencesFactory",
+        ],
         deps = deps + [
             ":clwb_lib",
             "//base",
