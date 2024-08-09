@@ -226,6 +226,8 @@ derive_targets_from_directories: true
     }
 
     context.close();
+    LOG.info(String.format("PROJECT SYNC LOG:%n%s", output.collectLog()));
+
     return output;
   }
 
