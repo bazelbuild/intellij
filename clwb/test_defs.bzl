@@ -41,7 +41,7 @@ def clwb_integration_test(name, project, srcs, deps = []):
         test_runner = ":" + runner,
         workspace_path = "tests/projects/" + project,
         # disables automatic conversion of bazel target names to absolut windows paths by msys
-        env = {"MSYS_NO_PATHCONV": "true"},
+        env = {"MSYS_NO_PATHCONV": "true", "HOME": "$(execpath %s)" % runner},
         # inherit bash shell and visual studio path from host for windows
         additional_env_inherit = ["BAZEL_SH", "BAZEL_VC"],
     )

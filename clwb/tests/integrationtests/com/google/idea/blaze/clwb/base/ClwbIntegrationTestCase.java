@@ -123,12 +123,12 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
     // create preferences directory, does not exist on macos CI runners
     final var preferences = Path.of(System.getProperty("user.home"), "Library", "Preferences");
     FileUtil.ensureExists(preferences.toFile());
-    LOG.warn("HOME env writable: " + Files.isWritable(preferences));
+    LOG.warn("user.home property writable: " + Files.isWritable(preferences));
 
 
     final var preferences1 = Path.of(System.getenv("HOME"), "Library", "Preferences");
-    FileUtil.ensureExists(preferences1.toFile());
-    LOG.warn("user.home property writable: " + Files.isWritable(preferences1));
+    Files.createDirectories(preferences1);
+    LOG.warn("HOME env writable: " + Files.isWritable(preferences1));
 
     super.setUp();
 
