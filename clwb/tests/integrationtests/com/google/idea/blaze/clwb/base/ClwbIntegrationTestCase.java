@@ -46,6 +46,8 @@ import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import org.intellij.lang.annotations.Language;
 
@@ -113,6 +115,21 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
 
   @Override
   protected void setUp() throws Exception {
+    LOG.warn("HOME env: " + System.getenv("HOME"));
+    LOG.warn("HOME env exists: " + new File(System.getenv("HOME") + "/Library/Preferences").exists());
+    LOG.warn("user.home property: " + System.getProperty("user.home"));
+    LOG.warn("user.home property exists: " + new File(System.getProperty("user.home") + "/Library/Preferences").exists());
+
+    // create preferences directory, does not exist on macos CI runners
+    final var preferences = Path.of(System.getProperty("user.home"), "Library", "Preferences");
+    FileUtil.ensureExists(preferences.toFile());
+    LOG.warn("HOME env writable: " + Files.isWritable(preferences));
+
+
+    final var preferences1 = Path.of(System.getenv("HOME"), "Library", "Preferences");
+    FileUtil.ensureExists(preferences1.toFile());
+    LOG.warn("user.home property writable: " + Files.isWritable(preferences1));
+
     super.setUp();
 
     final var bazelBinary = getTestBazelPath();
