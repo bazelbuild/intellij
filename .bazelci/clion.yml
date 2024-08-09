@@ -92,7 +92,7 @@ tasks:
       - exit_status: 1
   CLion-MacOS-OSS-under-dev:
     name: CLion MacOS OSS Under Development
-    platform: macos
+    platform: macos_arm64
     build_flags:
       - --define=ij_product=clion-oss-under-dev
     build_targets:
