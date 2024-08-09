@@ -62,8 +62,8 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:clwb_tests
-  CLion-OSS-under-dev:
-    name: CLion OSS Under Development
+  CLion-Linux-OSS-under-dev:
+    name: CLion Linux OSS Under Development
     platform: ubuntu1804
     build_flags:
       - --define=ij_product=clion-oss-under-dev
@@ -76,8 +76,8 @@ tasks:
       - //:clwb_tests
     soft_fail:
       - exit_status: 1
-  CLion-OSS-under-dev:
-    name: CLion OSS Under Development
+  CLion-Windows-OSS-under-dev:
+    name: CLion Windows OSS Under Development
     platform: windows
     build_flags:
       - --define=ij_product=clion-oss-under-dev
@@ -88,5 +88,19 @@ tasks:
       - --test_output=errors
     test_targets:
       - //clwb:integration_tests
+    soft_fail:
+      - exit_status: 1
+  CLion-MacOS-OSS-under-dev:
+    name: CLion MacOS OSS Under Development
+    platform: macos
+    build_flags:
+      - --define=ij_product=clion-oss-under-dev
+    build_targets:
+      - //clwb/...
+    test_flags:
+      - --define=ij_product=clion-oss-under-dev
+      - --test_output=errors
+    test_targets:
+      - //:clwb_tests
     soft_fail:
       - exit_status: 1
