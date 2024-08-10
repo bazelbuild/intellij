@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.*;
+import java.io.File;
 import java.util.List;
 
 /** Action to compile all build files in folder if folder picked or compile corresponding build file if file picked */
@@ -61,7 +61,7 @@ public class CompileFolderAction extends BlazeProjectAction {
     ActionPresentationHelper.of(e)
             .disableIf(virtualFile == null)
             .disableIf(!virtualFile.isDirectory())
-            .setText(virtualFile.getName() + "/...:all")
+            .setText("Compile " + virtualFile.getName() + "/...:all")
             .hideInContextMenuIfDisabled()
             .commit();
   }
