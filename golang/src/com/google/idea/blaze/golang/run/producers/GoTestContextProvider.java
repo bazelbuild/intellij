@@ -15,12 +15,15 @@
  */
 package com.google.idea.blaze.golang.run.producers;
 
+import javax.annotation.Nullable;
+
 import com.goide.execution.testing.GoTestFinder;
 import com.goide.execution.testing.GoTestRunConfigurationProducerBase;
 import com.goide.psi.GoFile;
 import com.goide.psi.GoFunctionOrMethodDeclaration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
@@ -30,7 +33,6 @@ import com.google.idea.blaze.base.run.producers.TestContextProvider;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import javax.annotation.Nullable;
 
 class GoTestContextProvider implements TestContextProvider {
 
@@ -114,7 +116,8 @@ class GoTestContextProvider implements TestContextProvider {
     return TestContext.builder(/* sourceElement= */ function, ExecutorType.DEBUG_SUPPORTED_TYPES)
         .addTestEnv(GO_TEST_WRAP_TESTV)
         .setTarget(target)
-        .setTestFilter(testFilterRegex)
+        .addBlazeFlagsModification(TestContext.BlazeFlagsModification.addFlagIfNotPresent(
+            BlazeFlags.TEST_ARG + "-testify.m=" + testFilterRegex))
         .setDescription(String.format("%s#%s", file.getName(), function.getName()))
         .build();
   }
