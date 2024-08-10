@@ -43,6 +43,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import java.util.List;
+import java.util.Objects;
+
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
@@ -227,7 +229,7 @@ public class BlazeGoTestConfigurationProducerTest extends BlazeRunConfigurationP
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
     assertThat(config.getTargets())
         .containsExactly(TargetExpression.fromStringSafe("//foo/bar:foo_test"));
-    assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=" + expectedTestFilter);
+    assertThat(Objects.requireNonNull(getTestArgsContents(config)).get(0)).isEqualTo("-testify.m=" + expectedTestFilter);
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
 }
