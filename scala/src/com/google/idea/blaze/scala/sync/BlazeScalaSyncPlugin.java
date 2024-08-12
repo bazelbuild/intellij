@@ -70,7 +70,7 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
    */
   private static final Pattern LIBRARY_VERSION = Pattern.compile("(?<=[:\\-])\\d+\\.\\d+\\.\\d+[^:\\s]*");
 
-  private static final Pattern RUNTIME_LIBRARY = Pattern.compile("((?:scala|dotty|scala3)-library).+");
+  private static final Pattern RUNTIME_LIBRARY = Pattern.compile("((?:scala-|dotty-|scala3-|org_scala_lang_scala_)library).+");
 
   private static boolean isRuntimeLibrary(String name) {
     return RUNTIME_LIBRARY.matcher(name).find();
