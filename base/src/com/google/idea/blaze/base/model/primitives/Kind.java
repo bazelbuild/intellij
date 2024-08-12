@@ -45,6 +45,13 @@ import javax.annotation.Nullable;
 public abstract class Kind {
 
   /**
+   * When a rule has a transition applied to it then it will present with this
+   * prefix on it.
+   */
+
+  private final static String RULE_NAME_PREFIX_TRANSITION = "_transition_";
+
+  /**
    * Provides a set of recognized blaze rule names. Individual language-specific sub-plugins can use
    * this EP to register rule types relevant to that language.
    *
@@ -134,7 +141,13 @@ public abstract class Kind {
 
   @Nullable
   public static Kind fromRuleName(String ruleName) {
-    return ApplicationState.getService().stringToKind.get(ruleName);
+    if (null != ruleName) {
+      if (ruleName.startsWith(RULE_NAME_PREFIX_TRANSITION)) {
+        ruleName = ruleName.substring(RULE_NAME_PREFIX_TRANSITION.length());
+      }
+      return ApplicationState.getService().stringToKind.get(ruleName);
+    }
+    return null;
   }
 
   /**
