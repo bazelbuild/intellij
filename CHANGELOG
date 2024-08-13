@@ -1,7 +1,19 @@
 v2024.08.13
 ===========
+## Features
+- Python: Implemented `imports` Attribute Handling
+  Improved support for Python imports in Bazel projects. [#6606]
 
+- Python: Transition Rules Handling
+  Added handling for Bazel rules involving transitions, such as pinned Python interpreter targets, enhancing project configuration. [#6605]
 
+- C++: Project Status API Integration
+  Integrated the Project Status API with Bazel for CLion, improving project sync and status reporting. [#6585]
+
+## Bug Fixes
+- Fixed an issue causing `NoClassDefFoundError: com/intellij/history/core/Paths` during project operations. [#6616]
+- Stopped printing `AswbDumpVfs` logs. [#6617]
+- Scala: Updated the plugin to correctly recognize `org_scala_lang_scala_library` as a valid Scala library name, improving Scala project support. [#6629]
 
 v2024.07.30
 ===========
