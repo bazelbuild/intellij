@@ -162,9 +162,9 @@ private fun latestRelease(version: String, releasesPage: String, product: String
         "clion" -> "clion"
         else -> throw RuntimeException("No such product: $product")
     }
-    return "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/$productFamily/$product/$version\\.?(\\d*)/$product-$version\\.?(\\d*).zip".toRegex()
-        .findAll(releasesPage).maxBy { it.groupValues[1].toIntOrNull() ?: 0 }.value
-
+    return "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/$productFamily/$product/$version\\.?(\\d*)\\.?(\\d*)/$product-$version\\.?(\\d*)\\.?(\\d*).zip".toRegex()
+        .findAll(releasesPage).maxWith(compareBy({ it.groupValues[1].toIntOrNull() ?: 0 }, { it.groupValues[2].toIntOrNull() ?: 0 }))
+        .value
 }
 
 fun pluginLatestVersion(pluginId: String, major: String): String? {
