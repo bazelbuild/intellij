@@ -96,9 +96,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2024_2. This is required to build IJwB and run integration tests.
-IC_242_SHA = "5c618005e274356f361da7644bcde5055305aa4b75a24e0f7b4eb5ab17d0b97b"
+IC_242_SHA = "c225a6ac5a1b95c39f3207c2b2075f2f23ff50690586f86f8031ebc4f40d5ade"
 
-IC_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2024.2/ideaIC-2024.2.zip"
+IC_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2024.2.0.1/ideaIC-2024.2.0.1.zip"
 
 http_archive(
     name = "intellij_ce_2024_2",
@@ -194,9 +194,9 @@ http_archive(
     url = IU_241_URL,
 )
 
-IU_242_SHA = "2f923d53e568eedb4d86884fbb68bf6799f48479be7d2255185651f6f021312c"
+IU_242_SHA = "e4e886ff06bb57c99a8057cfb1cb86f28c8f99ca7384283c5d6263239c79e5f0"
 
-IU_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2024.2/ideaIU-2024.2.zip"
+IU_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2024.2.0.1/ideaIU-2024.2.0.1.zip"
 
 http_archive(
     name = "intellij_ue_2024_2",
@@ -291,9 +291,9 @@ http_archive(
     url = CLION_241_URL,
 )
 
-CLION_242_SHA = "a8f92b39bc424f6d5feb63d9775d353fde24e872b1eb4baf7554fa175580cba3"
+CLION_242_SHA = "31e7aeb8b6e94b1d309eae989e7b8b611c415e853401214024891ae32de611b8"
 
-CLION_242_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/242.20224.214-EAP-SNAPSHOT/clion-242.20224.214-EAP-SNAPSHOT.zip"
+CLION_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2024.2/clion-2024.2.zip"
 
 http_archive(
     name = "clion_2024_2",
