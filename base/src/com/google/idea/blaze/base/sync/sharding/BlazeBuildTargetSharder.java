@@ -44,7 +44,6 @@ import com.google.idea.blaze.base.sync.sharding.WildcardTargetExpander.ExpandedT
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.common.experiments.IntExperiment;
 import com.intellij.openapi.project.Project;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -112,9 +111,6 @@ public class BlazeBuildTargetSharder {
 
   private static ShardingApproach getShardingApproach(
       SyncStrategy parallelStrategy, ProjectViewSet viewSet) {
-    if (parallelStrategy == SyncStrategy.SERIAL_NOT_EXPAND) {
-      return ShardingApproach.SHARD_WITHOUT_EXPANDING;
-    }
     if (shardingRequested(viewSet)) {
       return ShardingApproach.EXPAND_AND_SHARD;
     }
