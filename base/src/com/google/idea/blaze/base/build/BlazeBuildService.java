@@ -116,7 +116,8 @@ public class BlazeBuildService {
         new NotificationScope(
             project, "Make", title, title + " completed successfully", title + " failed"),
         title,
-        buildSystem);
+        buildSystem,
+        SyncStrategy.SERIAL);
   }
 
 
@@ -143,7 +144,8 @@ public class BlazeBuildService {
                     "Make" + folderName + "/...:all completed successfully",
                     "Make" + folderName + "/...:all failed"),
             "Make " + folderName + "/...:all",
-            buildSystem);
+            buildSystem,
+            SyncStrategy.SERIAL_NOT_EXPAND);
   }
 
   public void buildProject() {
@@ -188,7 +190,8 @@ public class BlazeBuildService {
             "Make project completed successfully",
             "Make project failed"),
         "Make project",
-        buildSystem);
+        buildSystem,
+        SyncStrategy.SERIAL);
 
     // In case the user touched a file, but didn't change its content. The user will get a false
     // positive for class file out of date. We need a way for the user to suppress the false
@@ -203,7 +206,8 @@ public class BlazeBuildService {
       ScopedFunction<List<TargetExpression>> targetsFunction,
       NotificationScope notificationScope,
       String taskName,
-      BuildSystem buildSystem) {
+      BuildSystem buildSystem,
+      SyncStrategy syncStrategy) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // a gross hack to avoid breaking change detector tests. We had a few tests which relied on
       // this never being called *and* relied on PROJECT_LAST_BUILD_TIMESTAMP_KEY being set
@@ -253,7 +257,7 @@ public class BlazeBuildService {
                             projectData.getWorkspacePathResolver(),
                             targets,
                             buildInvoker,
-                            SyncStrategy.SERIAL);
+                            syncStrategy);
                     if (shardedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
                       return null;
                     }
