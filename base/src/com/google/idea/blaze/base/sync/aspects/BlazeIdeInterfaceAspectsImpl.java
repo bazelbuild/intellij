@@ -788,7 +788,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     try {
       Path targetsDir = Paths.get(project.getBasePath()).resolve("targets");
       Files.createDirectories(targetsDir);
-      targetPatternFile = Files.createTempFile(queriesDir, "targets-", "");
+      targetPatternFile = Files.createTempFile(targetsDir, "targets-", "");
       String targetsString =
           targets.stream()
               .map(t -> t.toString())
