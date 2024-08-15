@@ -112,9 +112,6 @@ public class BlazeBuildTargetSharder {
 
   private static ShardingApproach getShardingApproach(
       SyncStrategy parallelStrategy, ProjectViewSet viewSet) {
-    if (parallelStrategy == SyncStrategy.SERIAL_NOT_EXPAND) {
-      return ShardingApproach.SHARD_WITHOUT_EXPANDING;
-    }
     if (shardingRequested(viewSet)) {
       return ShardingApproach.EXPAND_AND_SHARD;
     }
