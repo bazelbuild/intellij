@@ -19,6 +19,9 @@ import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryKind;
+import com.intellij.openapi.roots.libraries.LibraryKindRegistry;
+import com.intellij.util.LazyInitializer;
+
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
@@ -29,20 +32,22 @@ class BlazeJavascriptLibrarySource extends LibrarySource.Adapter {
 
   private BlazeJavascriptLibrarySource() {}
 
-  @Nullable static final LibraryKind JS_LIBRARY_KIND = LibraryKind.findById("javaScript");
+  static final LazyInitializer.LazyValue<LibraryKind> JS_LIBRARY_KIND = LazyInitializer.create(
+          () -> LibraryKindRegistry.getInstance().findKindById("javaScript")
+  );
 
   @Nullable
   @Override
   public Predicate<Library> getGcRetentionFilter() {
-    if (JS_LIBRARY_KIND == null) {
+    if (JS_LIBRARY_KIND.get() == null) {
       return null;
     }
     return BlazeJavascriptLibrarySource::isJavascriptLibrary;
   }
 
   static boolean isJavascriptLibrary(Library library) {
-    return JS_LIBRARY_KIND != null
+    return JS_LIBRARY_KIND.get() != null
         && library instanceof LibraryEx
-        && JS_LIBRARY_KIND.equals(((LibraryEx) library).getKind());
+        && JS_LIBRARY_KIND.get().equals(((LibraryEx) library).getKind());
   }
 }
