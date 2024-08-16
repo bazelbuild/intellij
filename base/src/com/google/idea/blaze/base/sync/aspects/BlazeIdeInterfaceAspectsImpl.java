@@ -750,7 +750,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     boolean onlyDirectDeps =
         viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
 
-    Path targetPatternFile = prepareTargetPatternFile(targets);
+    Path targetPatternFile = prepareTargetPatternFile(project, targets);
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
       BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.BUILD);
       builder
@@ -784,7 +784,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     }
   }
 
-  private static @NotNull Path prepareTargetPatternFile(List<? extends TargetExpression> targets) throws BuildException {
+  private static @NotNull Path prepareTargetPatternFile(Project project, List<? extends TargetExpression> targets) throws BuildException {
     Path targetPatternFile = null;
     try {
       Path targetsDir = Paths.get(project.getBasePath()).resolve("targets");
