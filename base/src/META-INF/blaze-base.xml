@@ -89,6 +89,11 @@
       class="com.google.idea.blaze.base.actions.CopyBlazeTargetPathAction"
       text="Copy BUILD Target String">
     </action>
+    <action id="Blaze.CompileFolder"
+            class="com.google.idea.blaze.base.actions.CompileFolderAction"
+            text="Compiles folder"
+            icon="AllIcons.Actions.Compile">
+    </action>
     <action id="Blaze.PartialSync"
       class="com.google.idea.blaze.base.sync.actions.PartialSyncAction"
       text="Partially Sync File"
@@ -202,6 +207,8 @@
       <reference ref="Blaze.BuildDependencies"/>
       <reference ref="Blaze.BuildReverseDependencies" />
 
+
+      <reference ref="Blaze.CompileFolder"/>
       <reference ref="Blaze.PartialSync"/>
       <reference ref="Blaze.AddSourceToProject"/>
       <reference ref="Blaze.AddToQuerySyncProjectView"/>
