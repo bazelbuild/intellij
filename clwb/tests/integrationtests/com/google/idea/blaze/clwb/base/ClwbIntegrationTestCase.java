@@ -98,7 +98,7 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
 
     // run bazel binary in project root to avoid downloading it twice
     final var result = ExternalTask.builder(getTestProjectRoot())
-        .args(file.getAbsolutePath(), "--version")
+        .args(file.getAbsolutePath(), "version")
         .stderr(errStream)
         .build()
         .runAsync()

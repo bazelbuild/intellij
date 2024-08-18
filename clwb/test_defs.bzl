@@ -48,6 +48,8 @@ def clwb_integration_test(name, project, srcs, deps = []):
         env = {"MSYS_NO_PATHCONV": "true"},
         # inherit bash shell and visual studio path from host for windows
         additional_env_inherit = ["BAZEL_SH", "BAZEL_VC"],
+        # mac CI runners ship invalid flags in system rc file
+        startup_options = "--nosystem_rc",
     )
 
     native.test_suite(
