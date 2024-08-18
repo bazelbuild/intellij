@@ -16,7 +16,6 @@
 package com.google.idea.blaze.typescript;
 
 import com.google.common.base.Ascii;
-import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonElement;
@@ -56,6 +55,7 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -131,7 +131,7 @@ class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
           new JsonParser()
               .parse(
                   new InputStreamReader(
-                      InputStreamProvider.getInstance().forFile(tsconfig), Charsets.UTF_8))
+                      InputStreamProvider.getInstance().forFile(tsconfig), StandardCharsets.UTF_8))
               .getAsJsonObject();
       tsconfigEditor =
           FileOperationProvider.getInstance()
@@ -249,7 +249,8 @@ class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
           new JsonParser()
               .parse(
                   new InputStreamReader(
-                      InputStreamProvider.getInstance().forFile(tsconfigEditor), Charsets.UTF_8))
+                      InputStreamProvider.getInstance().forFile(tsconfigEditor),
+                      StandardCharsets.UTF_8))
               .getAsJsonObject());
     } catch (IOException e) {
       logger.warn(e);
