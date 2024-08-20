@@ -95,6 +95,8 @@ public abstract class AspectStrategy {
 
   protected abstract Optional<String> getAspectFlag();
 
+  protected abstract Boolean supportsAspectsParameters();
+
   /**
    * Add the aspect to the build and request the given {@code OutputGroup}s. This method should only
    * be called once.
@@ -111,7 +113,7 @@ public abstract class AspectStrategy {
         outputGroups.stream()
             .flatMap(g -> getOutputGroups(g, activeLanguages, directDepsOnly).stream())
             .collect(toImmutableList());
-    if (optimize_building_jars.isEnabled()){
+    if (optimize_building_jars.isEnabled() && supportsAspectsParameters()){
       builder
         .addBlazeFlags(getAspectFlag().map(List::of).orElse(List.of()))
         .addBlazeFlags("--aspects_parameters=optimize_building_jars=enabled")
