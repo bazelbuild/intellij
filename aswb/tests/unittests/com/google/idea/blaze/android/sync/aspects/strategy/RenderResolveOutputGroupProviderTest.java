@@ -141,5 +141,10 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
     protected Optional<String> getAspectFlag() {
       return Optional.empty();
     }
+
+    @Override
+    protected Boolean supportsAspectsParameters() {
+      return true;
+    }
   }
 }
