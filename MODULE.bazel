@@ -55,7 +55,7 @@ use_repo(remote_android_extensions, "android_gmaven_r8", "android_tools")
 
 bazel_dep(
     name = "rules_bazel_integration_test",
-    version = "0.24.1",
+    version = "0.25.0",
     dev_dependency = True,
 )
 
