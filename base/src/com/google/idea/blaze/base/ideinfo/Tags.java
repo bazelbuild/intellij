@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2016-2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,4 +30,9 @@ public final class Tags {
 
   /** Ignores the target. */
   public static final String TARGET_TAG_EXCLUDE_TARGET = "intellij-exclude-target";
+
+  /**
+   * Signals to the IDE that a rule produces Python code rather than has code as input.
+   */
+  public static final String TARGET_TAG_PY_CODE_GENERATOR = "intellij-py-code-generator";
 }

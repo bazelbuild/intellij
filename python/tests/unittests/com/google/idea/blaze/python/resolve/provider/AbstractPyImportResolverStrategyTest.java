@@ -19,16 +19,27 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.ideinfo.*;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
 import java.io.File;
@@ -37,6 +48,9 @@ import java.util.Set;
 import static com.google.common.truth.Truth.assertThat;
 
 public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
+
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   /**
    * It is possible to specify import paths for a <code>py_...</code> target so that the modules in
@@ -50,6 +64,7 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
     Project project = Mockito.mock(Project.class);
     BlazeProjectData projectData = Mockito.mock(BlazeProjectData.class);
 
+    Mockito.when(projectData.getWorkspacePathResolver()).thenReturn(Mockito.mock(WorkspacePathResolver.class));
     Mockito.when(projectData.getTargetMap()).thenReturn(targetMap);
     Mockito.when(projectData.getArtifactLocationDecoder()).thenReturn(
         new MockArtifactLocationDecoder(new File("/workspaceroot"), false));
@@ -113,6 +128,7 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
     Project project = Mockito.mock(Project.class);
     BlazeProjectData projectData = Mockito.mock(BlazeProjectData.class);
 
+    Mockito.when(projectData.getWorkspacePathResolver()).thenReturn(Mockito.mock(WorkspacePathResolver.class));
     Mockito.when(projectData.getTargetMap()).thenReturn(targetMap);
     Mockito.when(projectData.getArtifactLocationDecoder()).thenReturn(
         new MockArtifactLocationDecoder(new File("/workspaceroot"), false));
@@ -172,6 +188,7 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
     Project project = Mockito.mock(Project.class);
     BlazeProjectData projectData = Mockito.mock(BlazeProjectData.class);
 
+    Mockito.when(projectData.getWorkspacePathResolver()).thenReturn(Mockito.mock(WorkspacePathResolver.class));
     Mockito.when(projectData.getTargetMap()).thenReturn(targetMap);
     Mockito.when(projectData.getArtifactLocationDecoder()).thenReturn(
         new MockArtifactLocationDecoder(new File("/workspaceroot"), false));
@@ -234,6 +251,7 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
     Project project = Mockito.mock(Project.class);
     BlazeProjectData projectData = Mockito.mock(BlazeProjectData.class);
 
+    Mockito.when(projectData.getWorkspacePathResolver()).thenReturn(Mockito.mock(WorkspacePathResolver.class));
     Mockito.when(projectData.getTargetMap()).thenReturn(targetMap);
     Mockito.when(projectData.getArtifactLocationDecoder()).thenReturn(
         new MockArtifactLocationDecoder(new File("/workspaceroot"), false));
@@ -268,6 +286,114 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
       PsiElement fullElement = actualSourcesIndex.sourceMap.get(expectedBarModule).get(manager);
       assertThat(fullElement).isNotNull();
       assertThat(fullElement.toString()).isEqualTo("top_level/lib/tea.py");
+    }
+  }
+
+  /**
+   * If the {@link TargetIdeInfo} has generated code then the sources might be a directory. In this
+   * case, the logic should walk the directory tree and pull {@code .py} source files from it. There
+   * are plenty of other test cases in this test class that cover the situation where the sources
+   * are not coming from a directory.
+   */
+
+  @Test
+  public void testGetPySourcesWithDirectory() throws IOException {
+    AbstractPyImportResolverStrategy strategy = new TestPyImportResolverStrategy();
+
+    PyIdeInfo.Builder pyIdeInfoBuilder = PyIdeInfo.builder()
+        .addSources(ImmutableSet.of(
+            ArtifactLocation.builder()
+                .setRootExecutionPathFragment("bazel-out/anyos_arm64-fastbuild/bin")
+                .setRelativePath("example/materials")
+                //^ This would be a typical source path for a code generation scenario.
+                .setIsSource(false)
+                // ^ When working with code-gen, the source is marked as false.
+                .build()
+            ))
+        .addImports(ImmutableSet.of());
+
+    TargetMap targetMap = TargetMapBuilder.builder()
+        .addTarget(
+            TargetIdeInfo.builder()
+                .setLabel("//example:generated_directory_lib")
+                .setBuildFile(source("example/BUILD"))
+                .setPyInfo(pyIdeInfoBuilder)
+        )
+        .build();
+
+    // Configure a directory tree with the files in it that can be searched.
+
+    File rootDirectory = temporaryFolder.newFolder("workspaceroot");
+    File pythonModuleDirectory = new File(rootDirectory, "bazel-out/anyos_arm64-fastbuild/bin/example/materials/artificial");
+    assertThat(pythonModuleDirectory.mkdirs()).isTrue();
+    touchFile(new File(pythonModuleDirectory, "plastics.py"));
+
+    // This will not happen in this situation, but just in case the directory is not within
+    // `bazel-out` then the logic should exclude anything below a barrier file such as
+    // `BUILD.bazel`
+
+    File outOfBoundsDirectory = new File(rootDirectory, "bazel-out/anyos_arm64-fastbuild/bin/example/anotherworkspace");
+    assertThat(outOfBoundsDirectory.mkdirs()).isTrue();
+    touchFile(new File(outOfBoundsDirectory, "BUILD.bazel"));
+    touchFile(new File(outOfBoundsDirectory, "metals.py"));
+
+    Project project = Mockito.mock(Project.class);
+    BlazeProjectData projectData = Mockito.mock(BlazeProjectData.class);
+    WorkspacePathResolver workspacePathResolver = new WorkspacePathResolverImpl(new WorkspaceRoot(rootDirectory));
+
+    Mockito.when(projectData.getWorkspacePathResolver()).thenReturn(workspacePathResolver);
+    Mockito.when(projectData.getTargetMap()).thenReturn(targetMap);
+    Mockito.when(projectData.getArtifactLocationDecoder())
+        .thenReturn(new MockArtifactLocationDecoder(rootDirectory, false));
+
+    // code under test
+    PySourcesIndex actualSourcesIndex = strategy.buildSourcesIndex(project, projectData);
+
+    // Expect the logic under test has found the source code `plastics.py` but has not found the
+    // sources that lie under the `anotherworkspace` directory.
+
+    // Verify the short names capture the right mapping to possible modules. The path from which
+    // the modules are calculated is from the .../bin directory.
+    Set<QualifiedName> shortNamesImports = actualSourcesIndex.shortNames.get("plastics");
+    assertThat(shortNamesImports).containsExactly(
+        QualifiedName.fromComponents("example", "materials", "artificial", "plastics")
+    );
+
+    // Verify that the mappings from possible modules to actual files works. Because the strategy
+    // class was initialized with a special class to provide the PsiElement, we know that the
+    // `toString()` method will return specific information that we can relay on in this test.
+    // The Python source is found in the directory. The Python source that is behind a "boundary"
+    // (in this case a `BUILD.bazel` file) is not found.
+
+    assertThat(actualSourcesIndex.sourceMap).hasSize(2);
+    // ^ Only one file should have been found. The file and its parent directory are included.
+
+    PsiManager manager = Mockito.mock(PsiManager.class);
+
+    HashMap<QualifiedName, String> expectedBarModuleToSourceMap = new LinkedHashMap<>();
+    expectedBarModuleToSourceMap.put(
+        QualifiedName.fromComponents("example", "materials", "artificial", "plastics"),
+        "bazel-out/anyos_arm64-fastbuild/bin/example/materials/artificial/plastics.py");
+    expectedBarModuleToSourceMap.put(
+        QualifiedName.fromComponents("example", "materials", "artificial"),
+        "bazel-out/anyos_arm64-fastbuild/bin/example/materials/artificial");
+
+    expectedBarModuleToSourceMap.forEach((expectedModule, expectedPath) -> {
+      PsiElement fullElement = actualSourcesIndex.sourceMap.get(expectedModule).get(manager);
+      assertThat(fullElement).isNotNull();
+      assertThat(fullElement.toString()).isEqualTo(expectedPath);
+    });
+
+  }
+
+  /**
+   * Writes a couple of bytes to the supplied {@link File}.
+   */
+  private void touchFile(File file) {
+    try (OutputStream outputStream = new FileOutputStream(file)) {
+      outputStream.write("TEST".getBytes());
+    } catch (IOException ioe) {
+      throw new UncheckedIOException(ioe);
     }
   }
 

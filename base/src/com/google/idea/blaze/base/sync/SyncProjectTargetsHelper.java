@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Bazel Authors. All rights reserved.
+ * Copyright 2019-2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndi
 import com.google.idea.blaze.base.dependencies.DirectoryToTargetProvider;
 import com.google.idea.blaze.base.dependencies.SourceToTargetFilteringStrategy;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.dependencies.TargetTagFilter;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -48,7 +50,10 @@ import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.openapi.project.Project;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 /** Derives sync targets from the project directories. */
 public final class SyncProjectTargetsHelper {
@@ -146,15 +151,21 @@ public final class SyncProjectTargetsHelper {
                   return DirectoryToTargetProvider.expandDirectoryTargets(
                       project, shouldSyncManualTargets(projectViewSet), importRoots, pathResolver, childContext);
                 })).get(); // We still call no-timeout waitFor in ExternalTask.run()
+
     if (context.isCancelled()) {
       throw new SyncCanceledException();
     }
+
     if (targets == null) {
       IssueOutput.error("Deriving targets from project directories failed." + fileBugSuggestion)
           .submit(context);
       throw new SyncFailedException();
     }
-    ImmutableList<TargetExpression> retained =
+
+    // retainedByKind will contain the targets which are to be kept because their Kind matches
+    // one of the languages actively in use in the IDE.
+
+    ImmutableList<TargetExpression> retainedByKind =
         SourceToTargetFilteringStrategy.filterTargets(targets).stream()
             .filter(
                 t ->
@@ -163,11 +174,46 @@ public final class SyncProjectTargetsHelper {
                             .anyMatch(languageSettings::isLanguageActive))
             .map(t -> t.label)
             .collect(toImmutableList());
+
+    // Gather together those targets that are rejected. Run the rejected targets through another
+    // Bazel query to see if they are code-generation (code-gen) ones. If any of them are then we
+    // should include those as well. In such cases the rule name might be something like
+    // `my_code_gen` which will not be detected as a library for example.
+
+    List<TargetExpression> rejectedByKind = targets.stream()
+        .map(TargetInfo::getLabel)
+        .filter(label -> !retainedByKind.contains(label))
+        .collect(Collectors.toUnmodifiableList());
+
+    List<TargetExpression> retainedByCodeGen = ImmutableList.of();
+
+    if (!rejectedByKind.isEmpty() && TargetTagFilter.hasProvider()) {
+      Set<String> activeLanguageCodeGeneratorTags = languageSettings.getActiveLanguages()
+          .stream()
+          .map(LanguageClass::getCodeGeneratorTag)
+          .filter(Objects::nonNull)
+          .collect(Collectors.toSet());
+
+      if (!activeLanguageCodeGeneratorTags.isEmpty()) {
+        retainedByCodeGen = TargetTagFilter.filterCodeGen(
+            project,
+            context,
+            rejectedByKind,
+            activeLanguageCodeGeneratorTags);
+      }
+    }
+
+    ImmutableList<TargetExpression> retained = ImmutableList.<TargetExpression>builder()
+        .addAll(retainedByKind)
+        .addAll(retainedByCodeGen)
+        .build();
+
     context.output(
         PrintOutput.log(
             String.format(
-                "%d targets found under project directories; syncing %d of them.",
+                "%d targets found under project directories; syncing %d of them",
                 targets.size(), retained.size())));
+
     return retained;
   }
 }
