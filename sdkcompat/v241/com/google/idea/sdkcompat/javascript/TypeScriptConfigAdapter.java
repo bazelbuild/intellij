@@ -16,6 +16,8 @@
 
 package com.google.idea.sdkcompat.javascript;
 
+import com.intellij.lang.javascript.frameworks.modules.JSModulePathMappings;
+import com.intellij.lang.javascript.frameworks.modules.JSModulePathSubstitution;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.lang.javascript.config.JSFileImports;
@@ -58,5 +60,10 @@ public abstract class TypeScriptConfigAdapter implements TypeScriptConfig {
     @Override
     public JSFileImports getConfigImportResolveStructure() {
         return importStructure.getValue();
+    }
+
+    @Override
+    public @NotNull JSModulePathMappings<JSModulePathSubstitution> getPathMappings() {
+        return JSModulePathMappings.build(getPaths());
     }
 }
