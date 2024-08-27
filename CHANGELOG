@@ -1,7 +1,11 @@
 v2024.08.27
 ===========
-
-
+Features
+* Added build folder action #6615
+* Invoke bazel build during sync using --target_pattern_fi… #6595
+Bug Fixes
+* fix: Exception when opening a JavaScript project #6645
+* fix go test not found problem #6634
 
 v2024.08.13
 ===========
