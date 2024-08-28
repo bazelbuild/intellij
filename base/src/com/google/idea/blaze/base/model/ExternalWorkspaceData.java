@@ -1,5 +1,6 @@
 package com.google.idea.blaze.base.model;
 
+import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.model.ProjectData;
@@ -22,7 +23,7 @@ public final class ExternalWorkspaceData implements ProtoWrapper<ProjectData.Ext
             .collect(
                 ImmutableMap.toImmutableMap(
                     ExternalWorkspace::name,
-                    e -> e))
+                    Functions.identity()))
     );
   }
 
