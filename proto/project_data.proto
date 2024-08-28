@@ -240,6 +240,14 @@ message SyncState {
   RemoteOutputArtifacts remote_output_artifacts = 7 [deprecated = true];
 }
 
+message ExternalWorkspace {
+  string name = 1;
+  string repo_name = 2;
+}
+message ExternalWorkspaceData {
+  repeated ExternalWorkspace workspaces = 1;
+}
+
 message BlazeProjectData {
   reserved 1;
   TargetMap target_map = 2 [deprecated = true];
@@ -249,4 +257,5 @@ message BlazeProjectData {
   WorkspaceLanguageSettings workspace_language_settings = 6;
   SyncState sync_state = 7;
   TargetData target_data = 8;
+  ExternalWorkspaceData external_workspace_data = 9;
 }
