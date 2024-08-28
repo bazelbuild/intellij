@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -34,12 +35,16 @@ import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import com.intellij.openapi.diagnostic.Logger;
+
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
+
 import org.jetbrains.annotations.Nullable;
 
-/** Implementation of {@link BlazeProjectData} specific to querysync. */
+/**
+ * Implementation of {@link BlazeProjectData} specific to querysync.
+ */
 public class QuerySyncProjectData implements BlazeProjectData {
 
   private static final Logger logger = Logger.getInstance(QuerySyncProjectData.class);
@@ -172,6 +177,11 @@ public class QuerySyncProjectData implements BlazeProjectData {
   @Override
   public RemoteOutputArtifacts getRemoteOutputs() {
     throw new NotSupportedWithQuerySyncException("getRemoteOutputs");
+  }
+
+  @Override
+  public ExternalWorkspaceData getExternalWorkspaceData() {
+    throw new NotSupportedWithQuerySyncException("getExternalWorkspaceData");
   }
 
   @Override
