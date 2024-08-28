@@ -51,8 +51,7 @@ public class BlazeModRunnerImpl extends BlazeModRunner {
           JsonObject json = JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8).trim()).getAsJsonObject();
 
           ImmutableList<ExternalWorkspace> externalWorkspaces =
-              json
-                  .asMap().entrySet().stream()
+              json.entrySet().stream()
                   .filter(e -> e.getValue().isJsonPrimitive())
                   .filter(e -> !e.getValue().getAsString().trim().isEmpty())
                   .map(e -> ExternalWorkspace.create(e.getValue().getAsString(), e.getKey()))
