@@ -45,12 +45,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -180,7 +179,7 @@ public final class ImportRoots {
     }
 
     private @NotNull List<WorkspacePath> selectExcludes(ImmutableCollection<WorkspacePath> rootDirectories) {
-      Queue<File> files = new LinkedList<>(Arrays.asList(workspaceRoot.directory().listFiles()));
+      Queue<File> files = new LinkedList<>(Collections.singletonList(workspaceRoot.directory()));
       var result = new ArrayList<File>();
       while (!files.isEmpty()) {
         File file = files.poll();
