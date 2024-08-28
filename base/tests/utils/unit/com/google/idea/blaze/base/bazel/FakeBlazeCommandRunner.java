@@ -40,88 +40,88 @@ import java.util.Map;
  */
 public class FakeBlazeCommandRunner implements BlazeCommandRunner {
 
-    @FunctionalInterface
-    public interface BuildFunction {
-        BlazeBuildOutputs runBuild(BuildResultHelper buildResultHelper) throws BuildException;
-    }
+  @FunctionalInterface
+  public interface BuildFunction {
+    BlazeBuildOutputs runBuild(BuildResultHelper buildResultHelper) throws BuildException;
+  }
 
-    private final BuildFunction resultsFunction;
-    private BlazeCommand command;
+  private final BuildFunction resultsFunction;
+  private BlazeCommand command;
 
-    public FakeBlazeCommandRunner() {
-        this(
-                buildResultHelper ->
-                        BlazeBuildOutputs.fromParsedBepOutput(
-                                BuildResult.SUCCESS, buildResultHelper.getBuildOutput()));
-    }
+  public FakeBlazeCommandRunner() {
+    this(
+        buildResultHelper ->
+            BlazeBuildOutputs.fromParsedBepOutput(
+                BuildResult.SUCCESS, buildResultHelper.getBuildOutput()));
+  }
 
-    public FakeBlazeCommandRunner(BuildFunction buildFunction) {
-        this.resultsFunction = buildFunction;
-    }
+  public FakeBlazeCommandRunner(BuildFunction buildFunction) {
+    this.resultsFunction = buildFunction;
+  }
 
-    @Override
-    public BlazeBuildOutputs run(
-            Project project,
-            BlazeCommand.Builder blazeCommandBuilder,
-            BuildResultHelper buildResultHelper,
-            BlazeContext context,
-            Map<String, String> envVars)
-            throws BuildException {
-        command = blazeCommandBuilder.build();
-        try {
-            BlazeBuildOutputs blazeBuildOutputs = resultsFunction.runBuild(buildResultHelper);
-            int exitCode = blazeBuildOutputs.buildResult.exitCode;
-            BuildDepsStatsScope.fromContext(context).ifPresent(stats -> stats.setBazelExitCode(exitCode));
-            return blazeBuildOutputs;
-        } catch (GetArtifactsException e) {
-            return BlazeBuildOutputs.noOutputs(BuildResult.FATAL_ERROR);
-        }
+  @Override
+  public BlazeBuildOutputs run(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context,
+      Map<String, String> envVars)
+      throws BuildException {
+    command = blazeCommandBuilder.build();
+    try {
+      BlazeBuildOutputs blazeBuildOutputs = resultsFunction.runBuild(buildResultHelper);
+      int exitCode = blazeBuildOutputs.buildResult.exitCode;
+      BuildDepsStatsScope.fromContext(context).ifPresent(stats -> stats.setBazelExitCode(exitCode));
+      return blazeBuildOutputs;
+    } catch (GetArtifactsException e) {
+      return BlazeBuildOutputs.noOutputs(BuildResult.FATAL_ERROR);
     }
+  }
 
-    @Override
-    public BlazeTestResults runTest(
-            Project project,
-            BlazeCommand.Builder blazeCommandBuilder,
-            BuildResultHelper buildResultHelper,
-            BlazeContext context,
-            Map<String, String> envVars) {
-        return BlazeTestResults.NO_RESULTS;
-    }
+  @Override
+  public BlazeTestResults runTest(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context,
+      Map<String, String> envVars) {
+    return BlazeTestResults.NO_RESULTS;
+  }
 
-    @Override
-    public InputStream runQuery(
-            Project project,
-            BlazeCommand.Builder blazeCommandBuilder,
-            BuildResultHelper buildResultHelper,
-            BlazeContext context)
-            throws BuildException {
-        SyncQueryStatsScope.fromContext(context).ifPresent(stats -> stats.setBazelExitCode(0));
-        return InputStream.nullInputStream();
-    }
+  @Override
+  public InputStream runQuery(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context)
+      throws BuildException {
+    SyncQueryStatsScope.fromContext(context).ifPresent(stats -> stats.setBazelExitCode(0));
+    return InputStream.nullInputStream();
+  }
 
-    @Override
-    @MustBeClosed
-    public InputStream runBlazeInfo(
-            Project project,
-            BlazeCommand.Builder blazeCommandBuilder,
-            BuildResultHelper buildResultHelper,
-            BlazeContext context)
-            throws BlazeInfoException {
-        return InputStream.nullInputStream();
-    }
+  @Override
+  @MustBeClosed
+  public InputStream runBlazeInfo(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context)
+      throws BlazeInfoException {
+    return InputStream.nullInputStream();
+  }
 
-    @Override
-    @MustBeClosed
-    public InputStream runBlazeMod(
-            Project project,
-            BlazeCommand.Builder blazeCommandBuilder,
-            BuildResultHelper buildResultHelper,
-            BlazeContext context)
-        throws BlazeModException {
-        return InputStream.nullInputStream();
-    }
+  @Override
+  @MustBeClosed
+  public InputStream runBlazeMod(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context)
+      throws BlazeModException {
+    return InputStream.nullInputStream();
+  }
 
-    public BlazeCommand getIssuedCommand() {
-        return command;
-    }
+  public BlazeCommand getIssuedCommand() {
+    return command;
+  }
 }
