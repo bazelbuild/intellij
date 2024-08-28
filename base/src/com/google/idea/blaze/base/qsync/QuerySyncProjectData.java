@@ -42,9 +42,7 @@ import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Implementation of {@link BlazeProjectData} specific to querysync.
- */
+/** Implementation of {@link BlazeProjectData} specific to querysync. */
 public class QuerySyncProjectData implements BlazeProjectData {
 
   private static final Logger logger = Logger.getInstance(QuerySyncProjectData.class);

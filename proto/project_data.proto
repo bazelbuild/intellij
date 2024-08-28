@@ -244,6 +244,7 @@ message ExternalWorkspace {
   string name = 1;
   string repo_name = 2;
 }
+
 message ExternalWorkspaceData {
   repeated ExternalWorkspace workspaces = 1;
 }
