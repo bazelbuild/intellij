@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 
 import java.util.List;
 
-/** Runs the blaze info command. The results may be cached in the workspace. */
+/** Runs the {@code blaze mod ...} command. The results may be cached in the workspace. */
 public abstract class BlazeModRunner {
 
   public static BlazeModRunner getInstance() {
@@ -33,28 +33,28 @@ public abstract class BlazeModRunner {
   }
 
   /**
-   * This calls blaze info without any specific key so blaze info will return all keys and values
-   * that it has.
+   * This calls {@code blaze mod dump_repo_mapping workspace} so blaze mod will return all mapped
+   * repos visible to the current workspace.
    *
-   * @param blazeFlags The blaze flags that will be passed to Blaze.
-   * @return The blaze info data fields.
+   * @param flags The blaze flags that will be passed to Blaze.
+   * @return a ListenableFuture<ExternalWorkspaceData>
    */
   public abstract ListenableFuture<ExternalWorkspaceData> dumpRepoMapping(
       Project project,
       BuildInvoker invoker,
       BlazeContext context,
       BuildSystemName buildSystemName,
-      List<String> blazeFlags);
+      List<String> flags);
 
   /**
-   * @param modArgs The arguments passed into `blaze mod ...`
-   * @param blazeFlags The blaze flags that will be passed to Blaze.
-   * @return The blaze info value associated with the specified key
+   * @param args The arguments passed into `blaze mod ...`
+   * @param flags The blaze flags that will be passed to {@code blaze ...}
+   * @return the stdout bytes of the command
    */
   protected abstract ListenableFuture<byte[]> runBlazeModGetBytes(
       Project project,
       BuildInvoker invoker,
       BlazeContext context,
-      List<String> modArgs,
-      List<String> blazeFlags);
+      List<String> args,
+      List<String> flags);
 }

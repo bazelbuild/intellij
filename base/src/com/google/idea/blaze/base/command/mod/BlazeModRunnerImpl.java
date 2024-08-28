@@ -29,9 +29,9 @@ public class BlazeModRunnerImpl extends BlazeModRunner {
       BuildSystem.BuildInvoker invoker,
       BlazeContext context,
       BuildSystemName buildSystemName,
-      List<String> blazeFlags) {
+      List<String> flags) {
     return Futures.transform(
-        runBlazeModGetBytes(project, invoker, context, ImmutableList.of( "dump_repo_mapping", "workspace"), blazeFlags),
+        runBlazeModGetBytes(project, invoker, context, ImmutableList.of( "dump_repo_mapping", "workspace"), flags),
         bytes -> {
           JsonObject json = JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8).trim()).getAsJsonObject();
 
@@ -53,16 +53,16 @@ public class BlazeModRunnerImpl extends BlazeModRunner {
       Project project,
       BuildSystem.BuildInvoker invoker,
       BlazeContext context,
-      List<String> modArgs,
-      List<String> blazeFlags) {
+      List<String> args,
+      List<String> flags) {
     return BlazeExecutor.getInstance()
                .submit(() -> {
                  BlazeCommand.Builder builder =
                      BlazeCommand.builder(invoker, BlazeCommandName.MOD)
-                         .addBlazeFlags(blazeFlags);
+                         .addBlazeFlags(flags);
 
-                 if (modArgs != null) {
-                   builder.addBlazeFlags(modArgs);
+                 if (args != null) {
+                   builder.addBlazeFlags(args);
                  }
 
                  try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
