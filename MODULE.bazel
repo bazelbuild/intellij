@@ -46,7 +46,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "rules_android",
-    version = "0.1.1",
+    version = "0.5.1",
     repo_name = "build_bazel_rules_android",
 )
 
