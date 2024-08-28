@@ -15,14 +15,6 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2021.2.4/ideaIC-2021.2.4.zip",
 )
 
-# The plugin api for intellij_ce_2021_3. This is required to build IJwB and run integration tests.
-http_archive(
-    name = "intellij_ce_2021_3",
-    build_file = "@//intellij_platform_sdk:BUILD.idea213",
-    sha256 = "7686d43fe0ea621718c1c9816460028146586ec10de1420500fc847edc603bb9",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2021.3.3/ideaIC-2021.3.3.zip",
-)
-
 # The plugin api for intellij_ce_2022_1. This is required to build IJwB and run integration tests.
 http_archive(
     name = "intellij_ce_2022_1",
@@ -116,14 +108,6 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2021.2.4/ideaIU-2021.2.4.zip",
 )
 
-# The plugin api for intellij_ue_2021_3. This is required to run UE-specific integration tests.
-http_archive(
-    name = "intellij_ue_2021_3",
-    build_file = "@//intellij_platform_sdk:BUILD.ue213",
-    sha256 = "fc5ce48e614d5c083270a892cd5b38c9300f18aac41e1e0c7d15c518e978e96a",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2021.3.3/ideaIU-2021.3.3.zip",
-)
-
 # The plugin api for intellij_ue_2022_1. This is required to run UE-specific integration tests.
 http_archive(
     name = "intellij_ue_2022_1",
@@ -211,14 +195,6 @@ http_archive(
     build_file = "@//intellij_platform_sdk:BUILD.clion212",
     sha256 = "1b9a882aa703303dead8b9459bd8d4f2572bd977d46dce99af96c1647231da2c",
     url = "https://download.jetbrains.com/cpp/CLion-2021.2.4.tar.gz",
-)
-
-# The plugin api for clion_2021_3. This is required to build CLwB, and run integration tests.
-http_archive(
-    name = "clion_2021_3",
-    build_file = "@//intellij_platform_sdk:BUILD.clion213",
-    sha256 = "f3b0b9e0dd0cd4aebef5d424e7a22868c732daad47d6c94f73630cef449ccf78",
-    url = "https://download.jetbrains.com/cpp/CLion-2021.3.4.tar.gz",
 )
 
 # The plugin api for clion_2022_1. This is required to build CLwB\, and run integration tests.
@@ -375,14 +351,6 @@ http_archive(
 
 # Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
 http_archive(
-    name = "python_2021_3",
-    build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = "47df4c32a19354efcc2d8171de85083e8e43b849c066bb979ed313b6309de08b",
-    url = "https://plugins.jetbrains.com/files/7322/162748/python-ce-213.7172.26.zip",
-)
-
-# Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
-http_archive(
     name = "python_2022_1",
     build_file_content = _PYTHON_CE_BUILD_FILE,
     sha256 = "1b0fb6824a7db252dfe3fd4eb638470bb96db4712bf1347560acee20eac1e8bc",
@@ -485,14 +453,6 @@ http_archive(
     build_file_content = _GO_BUILD_FILE,
     sha256 = "5c868f2be8feb552aa4f9edb2a3c48db68193eb49ba50ca0a0976f4b9de82c67",
     url = "https://plugins.jetbrains.com/files/9568/149614/go-212.5712.14.zip",
-)
-
-# Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
-http_archive(
-    name = "go_2021_3",
-    build_file_content = _GO_BUILD_FILE,
-    sha256 = "12c3acf0e75f8d7fb5655e9400faa26bbc7b314c515c4a3ca9e6bb8c3a130a58",
-    url = "https://plugins.jetbrains.com/files/9568/160433/go-213.7172.6.zip",
 )
 
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
@@ -602,14 +562,6 @@ http_archive(
     build_file_content = _SCALA_BUILD_FILE,
     sha256 = "8d9c2831920fb69a52898598dc7f78c455001b3ebd1956b972757ffae7c0f056",
     url = "https://plugins.jetbrains.com/files/1347/153522/scala-intellij-bin-2021.2.30.zip",
-)
-
-# Scala plugin for IntelliJ CE. Required at compile-time for scala-specific features.
-http_archive(
-    name = "scala_2021_3",
-    build_file_content = _SCALA_BUILD_FILE,
-    sha256 = "c14a15321060260360c3b8d41e9ef4080b5e552d2d0eb30ce6b141da08ee4764",
-    url = "https://plugins.jetbrains.com/files/1347/160380/scala-intellij-bin-2021.3.20.zip",
 )
 
 # Scala plugin for IntelliJ CE. Required at compile-time for scala-specific features.
