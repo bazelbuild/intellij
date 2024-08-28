@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+
 import java.io.File;
 
 /**
@@ -36,120 +37,133 @@ import java.io.File;
  * objects using whatever data you have supplied if applicable.
  */
 public class MockBlazeProjectDataBuilder {
-  private final WorkspaceRoot workspaceRoot;
+    private final WorkspaceRoot workspaceRoot;
 
-  private TargetMap targetMap;
-  private String outputBase;
-  private BlazeInfo blazeInfo;
-  private BlazeVersionData blazeVersionData;
-  private WorkspacePathResolver workspacePathResolver;
-  private ArtifactLocationDecoder artifactLocationDecoder;
-  private WorkspaceLanguageSettings workspaceLanguageSettings;
-  private SyncState syncState;
+    private TargetMap targetMap;
+    private String outputBase;
+    private BlazeInfo blazeInfo;
+    private BlazeVersionData blazeVersionData;
+    private WorkspacePathResolver workspacePathResolver;
+    private ArtifactLocationDecoder artifactLocationDecoder;
+    private WorkspaceLanguageSettings workspaceLanguageSettings;
+    private ExternalWorkspaceData externalWorkspaceData;
+    private SyncState syncState;
 
-  private MockBlazeProjectDataBuilder(WorkspaceRoot workspaceRoot) {
-    this.workspaceRoot = workspaceRoot;
-  }
-
-  public static MockBlazeProjectDataBuilder builder() {
-    return builder(new WorkspaceRoot(new File("/")));
-  }
-
-  public static MockBlazeProjectDataBuilder builder(WorkspaceRoot workspaceRoot) {
-    return new MockBlazeProjectDataBuilder(workspaceRoot);
-  }
-
-  @CanIgnoreReturnValue
-  public MockBlazeProjectDataBuilder setTargetMap(TargetMap targetMap) {
-    this.targetMap = targetMap;
-    return this;
-  }
-
-  @CanIgnoreReturnValue
-  public MockBlazeProjectDataBuilder setOutputBase(String outputBase) {
-    this.outputBase = outputBase;
-    return this;
-  }
-
-  @CanIgnoreReturnValue
-  public MockBlazeProjectDataBuilder setBlazeInfo(BlazeInfo blazeInfo) {
-    this.blazeInfo = blazeInfo;
-    return this;
-  }
-
-  @CanIgnoreReturnValue
-  public MockBlazeProjectDataBuilder setBlazeVersionData(BlazeVersionData blazeVersionData) {
-    this.blazeVersionData = blazeVersionData;
-    return this;
-  }
-
-  @CanIgnoreReturnValue
-  public MockBlazeProjectDataBuilder setWorkspacePathResolver(
-      WorkspacePathResolver workspacePathResolver) {
-    this.workspacePathResolver = workspacePathResolver;
-    return this;
-  }
-
-  @CanIgnoreReturnValue
-  public MockBlazeProjectDataBuilder setArtifactLocationDecoder(
-      ArtifactLocationDecoder artifactLocationDecoder) {
-    this.artifactLocationDecoder = artifactLocationDecoder;
-    return this;
-  }
-
-  @CanIgnoreReturnValue
-  public MockBlazeProjectDataBuilder setWorkspaceLanguageSettings(
-      WorkspaceLanguageSettings workspaceLanguageSettings) {
-    this.workspaceLanguageSettings = workspaceLanguageSettings;
-    return this;
-  }
-
-  @CanIgnoreReturnValue
-  public MockBlazeProjectDataBuilder setSyncState(SyncState syncState) {
-    this.syncState = syncState;
-    return this;
-  }
-
-  public BlazeProjectData build() {
-    TargetMap targetMap =
-        this.targetMap != null ? this.targetMap : new TargetMap(ImmutableMap.of());
-    BlazeInfo blazeInfo = this.blazeInfo;
-    if (blazeInfo == null) {
-      String outputBase = this.outputBase != null ? this.outputBase : "/usr/workspace/1234";
-      blazeInfo =
-          BlazeInfo.createMockBlazeInfo(
-              outputBase,
-              outputBase + "/execroot",
-              outputBase + "/execroot/bin",
-              outputBase + "/execroot/gen",
-              outputBase + "/execroot/testlogs");
+    private MockBlazeProjectDataBuilder(WorkspaceRoot workspaceRoot) {
+        this.workspaceRoot = workspaceRoot;
     }
-    BlazeVersionData blazeVersionData =
-        this.blazeVersionData != null ? this.blazeVersionData : BlazeVersionData.builder().build();
-    WorkspacePathResolver workspacePathResolver =
-        this.workspacePathResolver != null
-            ? this.workspacePathResolver
-            : new WorkspacePathResolverImpl(workspaceRoot);
-    ArtifactLocationDecoder artifactLocationDecoder =
-        this.artifactLocationDecoder != null
-            ? this.artifactLocationDecoder
-            : new ArtifactLocationDecoderImpl(
-                blazeInfo, workspacePathResolver, RemoteOutputArtifacts.EMPTY);
-    WorkspaceLanguageSettings workspaceLanguageSettings =
-        this.workspaceLanguageSettings != null
-            ? this.workspaceLanguageSettings
-            : new WorkspaceLanguageSettings(WorkspaceType.JAVA, ImmutableSet.of());
-    SyncState syncState =
-        this.syncState != null ? this.syncState : new SyncState(ImmutableMap.of());
 
-    return new AspectSyncProjectData(
-        new ProjectTargetData(
-            targetMap, /* ideInterfaceState= */ null, RemoteOutputArtifacts.EMPTY),
-        blazeInfo,
-        blazeVersionData,
-        workspacePathResolver,
-        artifactLocationDecoder,
-        workspaceLanguageSettings,
-        syncState);
-  }
+    public static MockBlazeProjectDataBuilder builder() {
+        return builder(new WorkspaceRoot(new File("/")));
+    }
+
+    public static MockBlazeProjectDataBuilder builder(WorkspaceRoot workspaceRoot) {
+        return new MockBlazeProjectDataBuilder(workspaceRoot);
+    }
+
+    @CanIgnoreReturnValue
+    public MockBlazeProjectDataBuilder setTargetMap(TargetMap targetMap) {
+        this.targetMap = targetMap;
+        return this;
+    }
+
+    @CanIgnoreReturnValue
+    public MockBlazeProjectDataBuilder setOutputBase(String outputBase) {
+        this.outputBase = outputBase;
+        return this;
+    }
+
+    @CanIgnoreReturnValue
+    public MockBlazeProjectDataBuilder setBlazeInfo(BlazeInfo blazeInfo) {
+        this.blazeInfo = blazeInfo;
+        return this;
+    }
+
+    @CanIgnoreReturnValue
+    public MockBlazeProjectDataBuilder setBlazeVersionData(BlazeVersionData blazeVersionData) {
+        this.blazeVersionData = blazeVersionData;
+        return this;
+    }
+
+    @CanIgnoreReturnValue
+    public MockBlazeProjectDataBuilder setWorkspacePathResolver(
+            WorkspacePathResolver workspacePathResolver) {
+        this.workspacePathResolver = workspacePathResolver;
+        return this;
+    }
+
+    @CanIgnoreReturnValue
+    public MockBlazeProjectDataBuilder setArtifactLocationDecoder(
+            ArtifactLocationDecoder artifactLocationDecoder) {
+        this.artifactLocationDecoder = artifactLocationDecoder;
+        return this;
+    }
+
+    @CanIgnoreReturnValue
+    public MockBlazeProjectDataBuilder setWorkspaceLanguageSettings(
+            WorkspaceLanguageSettings workspaceLanguageSettings) {
+        this.workspaceLanguageSettings = workspaceLanguageSettings;
+        return this;
+    }
+
+    @CanIgnoreReturnValue
+    public MockBlazeProjectDataBuilder setExternalWorkspaceData(ExternalWorkspaceData externalWorkspaceData) {
+        this.externalWorkspaceData = externalWorkspaceData;
+        return this;
+    }
+
+    @CanIgnoreReturnValue
+    public MockBlazeProjectDataBuilder setSyncState(SyncState syncState) {
+        this.syncState = syncState;
+        return this;
+    }
+
+    public BlazeProjectData build() {
+        TargetMap targetMap =
+                this.targetMap != null ? this.targetMap : new TargetMap(ImmutableMap.of());
+        BlazeInfo blazeInfo = this.blazeInfo;
+        if (blazeInfo == null) {
+            String outputBase = this.outputBase != null ? this.outputBase : "/usr/workspace/1234";
+            blazeInfo =
+                    BlazeInfo.createMockBlazeInfo(
+                            outputBase,
+                            outputBase + "/execroot",
+                            outputBase + "/execroot/bin",
+                            outputBase + "/execroot/gen",
+                            outputBase + "/execroot/testlogs");
+        }
+        BlazeVersionData blazeVersionData =
+                this.blazeVersionData != null ? this.blazeVersionData : BlazeVersionData.builder().build();
+        WorkspacePathResolver workspacePathResolver =
+                this.workspacePathResolver != null
+                        ? this.workspacePathResolver
+                        : new WorkspacePathResolverImpl(workspaceRoot);
+        ArtifactLocationDecoder artifactLocationDecoder =
+                this.artifactLocationDecoder != null
+                        ? this.artifactLocationDecoder
+                        : new ArtifactLocationDecoderImpl(
+                        blazeInfo, workspacePathResolver, RemoteOutputArtifacts.EMPTY);
+        WorkspaceLanguageSettings workspaceLanguageSettings =
+                this.workspaceLanguageSettings != null
+                        ? this.workspaceLanguageSettings
+                        : new WorkspaceLanguageSettings(WorkspaceType.JAVA, ImmutableSet.of());
+        SyncState syncState =
+                this.syncState != null ? this.syncState : new SyncState(ImmutableMap.of());
+
+        ExternalWorkspaceData externalWorkspaceData =
+                this.externalWorkspaceData != null
+                        ? this.externalWorkspaceData
+                        : ExternalWorkspaceData.EMPTY;
+
+        return new AspectSyncProjectData(
+                new ProjectTargetData(
+                        targetMap, /* ideInterfaceState= */ null, RemoteOutputArtifacts.EMPTY),
+                blazeInfo,
+                blazeVersionData,
+                workspacePathResolver,
+                artifactLocationDecoder,
+                workspaceLanguageSettings,
+                externalWorkspaceData,
+                syncState);
+    }
 }
