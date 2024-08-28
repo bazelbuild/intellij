@@ -224,6 +224,41 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
     }
   }
 
+  @Override
+  @MustBeClosed
+  public InputStream runBlazeMod(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context)
+      throws BuildException {
+    performGuardCheckAsBuildException(project, context);
+
+    try (Closer closer = Closer.create()) {
+      Path tmpFile =
+          Files.createTempFile(
+              String.format("intellij-bazel-%s-", blazeCommandBuilder.build().getName()),
+              ".stdout");
+      OutputStream out = closer.register(Files.newOutputStream(tmpFile));
+      OutputStream stderr =
+          closer.register(LineProcessingOutputStream.of(new PrintOutputLineProcessor(context)));
+      int exitCode =
+          ExternalTask.builder(WorkspaceRoot.fromProject(project))
+              .addBlazeCommand(blazeCommandBuilder.build())
+              .context(context)
+              .stdout(out)
+              .stderr(stderr)
+              .ignoreExitCode(true)
+              .build()
+              .run();
+      BazelExitCodeException.throwIfFailed(blazeCommandBuilder, exitCode);
+      return new BufferedInputStream(
+          Files.newInputStream(tmpFile, StandardOpenOption.DELETE_ON_CLOSE));
+    } catch (IOException e) {
+      throw new BuildException(e);
+    }
+  }
+
   private BuildResult issueBuild(
       BlazeCommand.Builder blazeCommandBuilder, WorkspaceRoot workspaceRoot, Map<String, String> envVars, BlazeContext context) {
     blazeCommandBuilder.addBlazeFlags(getExtraBuildFlags(blazeCommandBuilder));

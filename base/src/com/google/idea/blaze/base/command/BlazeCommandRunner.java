@@ -77,6 +77,14 @@ public interface BlazeCommandRunner {
       BlazeContext context)
       throws BuildException;
 
+  @MustBeClosed
+  InputStream runBlazeMod(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context)
+      throws BuildException;
+
   /** Allows enabling the use of command runner for restricted set of users. */
   default boolean canUseCli() {
     return true;
