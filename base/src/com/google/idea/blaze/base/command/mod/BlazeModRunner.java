@@ -39,7 +39,6 @@ public abstract class BlazeModRunner {
    * @param flags The blaze flags that will be passed to Blaze.
    * @return a ListenableFuture<ExternalWorkspaceData>
    */
-  @SuppressWarnings({"unused"}) // will be used shortly
   public abstract ListenableFuture<ExternalWorkspaceData> dumpRepoMapping(
       Project project,
       BuildInvoker invoker,

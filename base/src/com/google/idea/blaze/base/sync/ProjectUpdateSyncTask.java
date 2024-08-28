@@ -28,7 +28,6 @@ import com.google.idea.blaze.base.model.AspectSyncProjectData;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
-import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.SyncState;
@@ -228,7 +227,7 @@ final class ProjectUpdateSyncTask {
             projectState.getWorkspacePathResolver(),
             artifactLocationDecoder,
             projectState.getLanguageSettings(),
-            ExternalWorkspaceData.EMPTY,
+            projectState.getExternalWorkspaceData(),
             syncStateBuilder.build());
 
     FileCaches.onSync(

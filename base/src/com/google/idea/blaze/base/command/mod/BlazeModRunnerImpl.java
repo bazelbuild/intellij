@@ -63,7 +63,7 @@ public class BlazeModRunnerImpl extends BlazeModRunner {
   }
 
   @Override
-  public ListenableFuture<byte[]> runBlazeModGetBytes(
+  protected ListenableFuture<byte[]> runBlazeModGetBytes(
       Project project,
       BuildSystem.BuildInvoker invoker,
       BlazeContext context,

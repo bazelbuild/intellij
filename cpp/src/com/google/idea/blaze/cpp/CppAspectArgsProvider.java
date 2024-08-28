@@ -46,6 +46,10 @@ public class CppAspectArgsProvider implements BuildFlagsProvider {
       BlazeContext context,
       BlazeInvocationContext invocationContext,
       List<String> flags) {
+    //  bazel mod does not support this flag
+    if (command == BlazeCommandName.MOD) {
+      return;
+    }
     flags.add(String.format(
         "--define=%s=%b", CPP_USE_GET_TOOL_FOR_ACTION,
         Registry.is(REGISTRY_PREFIX + CPP_USE_GET_TOOL_FOR_ACTION)
