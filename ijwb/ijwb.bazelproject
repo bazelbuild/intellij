@@ -14,7 +14,7 @@ targets:
 workspace_type: intellij_plugin
 
 build_flags:
-  --define=ij_product=intellij-ue-oss-latest-stable
+  --define=ij_product=intellij-latest
 
 test_sources:
   */tests/unittests*
