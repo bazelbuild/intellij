@@ -281,6 +281,8 @@
                         serviceImplementation="com.google.idea.blaze.base.io.VirtualFileSystemProviderImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.command.info.BlazeInfoRunner"
                         serviceImplementation="com.google.idea.blaze.base.command.info.BlazeInfoRunnerImpl"/>
+    <applicationService serviceInterface="com.google.idea.blaze.base.command.mod.BlazeModRunner"
+                        serviceImplementation="com.google.idea.blaze.base.command.mod.BlazeModRunnerImpl"/>
     <applicationService serviceImplementation="com.google.idea.blaze.base.model.primitives.Kind$ApplicationState"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.io.TempDirectoryProvider"
                         serviceImplementation="com.google.idea.blaze.base.io.TempDirectoryProviderImpl"/>
