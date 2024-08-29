@@ -37,7 +37,7 @@ import java.util.List;
 public final class BaseSdkTestCompat {
   private BaseSdkTestCompat() {}
 
-  /** #api212: inline into ServiceHelper */
+  /** #api221: inline into ServiceHelper */
   public static void unregisterComponent(ComponentManager componentManager, Class<?> key) {
     ((ComponentManagerImpl) componentManager).unregisterComponent(key);
   }
