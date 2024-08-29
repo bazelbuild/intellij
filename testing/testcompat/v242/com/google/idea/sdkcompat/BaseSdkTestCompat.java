@@ -29,7 +29,7 @@ import com.intellij.testFramework.UITestUtil;
 public final class BaseSdkTestCompat {
   private BaseSdkTestCompat() {}
 
-  /** #api223: inline into ServiceHelper */
+  /** #api221: inline into ServiceHelper */
   public static void unregisterComponent(ComponentManager componentManager, Class<?> componentKey) {
     ((ComponentManagerImpl) componentManager).unregisterComponent(componentKey);
   }
