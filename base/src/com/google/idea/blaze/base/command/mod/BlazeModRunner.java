@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public abstract class BlazeModRunner {
    * @param flags The blaze flags that will be passed to Blaze.
    * @return a ListenableFuture<ExternalWorkspaceData>
    */
+  @SuppressWarnings({"unused"}) // will be used shortly
   public abstract ListenableFuture<ExternalWorkspaceData> dumpRepoMapping(
       Project project,
       BuildInvoker invoker,
