@@ -22,11 +22,13 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.sdkcompat.BaseSdkTestCompat;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -105,9 +107,8 @@ public class LoadStatementAnnotatorTest extends BuildFileIntegrationTestCase {
   }
 
   private List<Annotation> validateFile(BuildFile file) {
-    return BaseSdkTestCompat.testAnnotator(
-        new LoadStatementAnnotator(),
-        PsiUtils.findAllChildrenOfClassRecursive(file, BuildElement.class)
-            .toArray(BuildElement[]::new));
+      PsiElement[] elements = PsiUtils.findAllChildrenOfClassRecursive(file, BuildElement.class)
+          .toArray(BuildElement[]::new);
+      return CodeInsightTestUtil.testAnnotator(new LoadStatementAnnotator(), elements);
   }
 }

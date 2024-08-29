@@ -22,10 +22,12 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.GlobExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.sdkcompat.BaseSdkTestCompat;
 import com.intellij.lang.annotation.Annotation;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -263,10 +265,9 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
   }
 
   private List<Annotation> validateFile(BuildFile file) {
-    return BaseSdkTestCompat.testAnnotator(
-        new GlobErrorAnnotator(),
-        PsiUtils.findAllChildrenOfClassRecursive(file, GlobExpression.class)
-            .toArray(GlobExpression[]::new));
+      PsiElement[] elements = PsiUtils.findAllChildrenOfClassRecursive(file, GlobExpression.class)
+          .toArray(GlobExpression[]::new);
+      return CodeInsightTestUtil.testAnnotator(new GlobErrorAnnotator(), elements);
   }
 
 }

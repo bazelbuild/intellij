@@ -15,21 +15,12 @@
  */
 package com.google.idea.sdkcompat;
 
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.serviceContainer.ComponentManagerImpl;
-import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.UITestUtil;
-import com.intellij.ui.IconManager;
-import com.intellij.ui.icons.CoreIconManager;
-
-import javax.swing.*;
-import java.util.List;
 
 /**
  * Provides SDK compatibility shims for base plugin API classes, available to all IDEs during
@@ -37,11 +28,6 @@ import java.util.List;
  */
 public final class BaseSdkTestCompat {
   private BaseSdkTestCompat() {}
-
-  /** #api212: inline into test cases */
-  public static List<Annotation> testAnnotator(Annotator annotator, PsiElement... elements) {
-    return CodeInsightTestUtil.testAnnotator(annotator, elements);
-  }
 
   /** #api223: inline into ServiceHelper */
   public static void unregisterComponent(ComponentManager componentManager, Class<?> componentKey) {
