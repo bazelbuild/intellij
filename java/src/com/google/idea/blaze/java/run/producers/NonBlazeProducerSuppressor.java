@@ -45,13 +45,7 @@ public class NonBlazeProducerSuppressor implements StartupActivity.DumbAware {
           "org.jetbrains.kotlin.idea.run.KotlinJvmTestClassGradleConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.KotlinMultiplatformJvmTestClassGradleConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.KotlinMultiplatformJvmTestMethodGradleConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer",
-          /** #api212: remove these duplicate producers. */
-          "org.jetbrains.kotlin.idea.run.KotlinJUnitRunConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinPatternConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinTestClassGradleConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinTestMethodGradleConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinJvmTestMethodGradleConfigurationProducer");
+          "org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer");
 
   private static final ImmutableList<String> ANDROID_PRODUCERS =
       ImmutableList.of(

@@ -49,6 +49,7 @@ public class SyncOutput {
       builder.append(String.format("%03d: %s%n", i, messages.get(i)));
     }
 
+    builder.append(separator);
     return builder.toString();
   }
 
@@ -58,6 +59,6 @@ public class SyncOutput {
         collectLog()
     );
 
-    assertWithMessage(message).that(issues).isEmpty();
+    assertThat(issues).isEmpty();
   }
 }
