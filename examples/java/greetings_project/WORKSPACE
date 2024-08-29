@@ -1,4 +1,5 @@
 load("@bazel_tools//tools/build_defs/repo:jvm.bzl", "jvm_maven_import_external")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 jvm_maven_import_external(
     name = "junit",
@@ -7,3 +8,15 @@ jvm_maven_import_external(
     licenses = ["notice"],  # Common Public License 1.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )
+
+http_archive(
+    name = "rules_java",
+    urls = [
+      "https://mirror.bazel.build/github.com/bazelbuild/rules_java/releases/download/5.0.0/rules_java-5.0.0.tar.gz",
+      "https://github.com/bazelbuild/rules_java/releases/download/5.0.0/rules_java-5.0.0.tar.gz",
+    ],
+    sha256 = "8c376f1e4ab7d7d8b1880e4ef8fc170862be91b7c683af97ca2768df546bb073",
+)
+load("@rules_java//java:repositories.bzl", "rules_java_dependencies", "rules_java_toolchains")
+rules_java_dependencies()
+rules_java_toolchains()
