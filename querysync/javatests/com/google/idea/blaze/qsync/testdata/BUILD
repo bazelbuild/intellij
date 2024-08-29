@@ -119,20 +119,6 @@ genquery(
 # END-EXTERNAL
 
 genquery(
-    name = "android_lib_query",
-    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/android:*",
-    opts = ["--output=streamed_proto"],
-    scope = scopeForAndroidPackageWithResources("//querysync/javatests/com/google/idea/blaze/qsync/testdata/android"),
-)
-
-genquery(
-    name = "android_aidl_source_query",
-    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/aidl:*",
-    opts = ["--output=streamed_proto"],
-    scope = scopeForAndroidPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/aidl"),
-)
-
-genquery(
     name = "java_exported_dep_query",
     expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/exports:*",
     opts = ["--output=streamed_proto"],
@@ -192,8 +178,6 @@ java_library(
     name = "testdata",
     srcs = ["TestData.java"],
     data = [
-        ":android_aidl_source_query",
-        ":android_lib_query",
         ":buildincludes_query",
         ":filegroup_query",
         ":java_exported_dep_query",
