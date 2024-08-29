@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -242,7 +242,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
 
     try (Closer closer = Closer.create()) {
       Path queriesDir = Files.createDirectories(Paths.get(project.getBasePath()).resolve("queries"));
-      Path tmpFile = Files.createTempFile(queriesDir, "query-mod-", ".stdout");
+      Path tmpFile = Files.createTempFile(queriesDir, "blaze-mod-", ".stdout");
 
       OutputStream stdout = closer.register(Files.newOutputStream(tmpFile));
       OutputStream stderr = closer.register(
