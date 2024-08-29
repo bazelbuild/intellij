@@ -45,6 +45,7 @@ java_library(
         "//shared:vcs",
         "//third_party/auto_value",
         "@error_prone_annotations//jar",
+        "@gson//jar"
     ],
 )
 

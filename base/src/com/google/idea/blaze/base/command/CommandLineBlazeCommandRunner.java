@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
+import com.google.idea.blaze.base.command.mod.BlazeModException;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.execution.BazelGuard;
 import com.google.idea.blaze.base.execution.ExecutionDeniedException;
@@ -54,6 +55,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.Optional;
@@ -64,11 +66,11 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
 
   @Override
   public BlazeBuildOutputs run(
-          Project project,
-          BlazeCommand.Builder blazeCommandBuilder,
-          BuildResultHelper buildResultHelper,
-          BlazeContext context,
-          Map<String, String> envVars) {
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context,
+      Map<String, String> envVars) {
     try {
       performGuardCheck(project, context);
     } catch (ExecutionDeniedException e) {
@@ -99,7 +101,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       ParsedBepOutput buildOutput = buildResultHelper.getBuildOutput(stringInterner);
       context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, "Handling parsed BEP outputs..."));
       BlazeBuildOutputs blazeBuildOutputs = BlazeBuildOutputs.fromParsedBepOutput(
-              buildResult, buildOutput);
+          buildResult, buildOutput);
       context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, "BEP outputs have been processed."));
       return blazeBuildOutputs;
     } catch (GetArtifactsException e) {
@@ -123,7 +125,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
     }
 
     // For tests, we have to pass the environment variables as `--test_env`, otherwise they don't get forwarded
-    for (Map.Entry<String, String> env: envVars.entrySet()) {
+    for (Map.Entry<String, String> env : envVars.entrySet()) {
       blazeCommandBuilder.addBlazeFlags(BlazeFlags.TEST_ENV, String.format("%s=%s", env.getKey(), env.getValue()));
     }
 
@@ -221,6 +223,45 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
           Files.newInputStream(tmpFile, StandardOpenOption.DELETE_ON_CLOSE));
     } catch (IOException e) {
       throw new BuildException(e);
+    }
+  }
+
+  @Override
+  @MustBeClosed
+  public InputStream runBlazeMod(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context)
+      throws BuildException {
+    performGuardCheckAsBuildException(project, context);
+
+    if (project.getBasePath() == null) {
+      throw new BlazeModException("Project base path is null");
+    }
+
+    try (Closer closer = Closer.create()) {
+      Path queriesDir = Files.createDirectories(Paths.get(project.getBasePath()).resolve("queries"));
+      Path tmpFile = Files.createTempFile(queriesDir, "blaze-mod-", ".stdout");
+
+      OutputStream stdout = closer.register(Files.newOutputStream(tmpFile));
+      OutputStream stderr = closer.register(
+          LineProcessingOutputStream.of(
+              new PrintOutputLineProcessor(context)));
+      int exitCode =
+          ExternalTask.builder(WorkspaceRoot.fromProject(project))
+              .addBlazeCommand(blazeCommandBuilder.build())
+              .context(context)
+              .stdout(stdout)
+              .stderr(stderr)
+              .ignoreExitCode(true)
+              .build()
+              .run();
+      BazelExitCodeException.throwIfFailed(blazeCommandBuilder, exitCode);
+      return new BufferedInputStream(
+          Files.newInputStream(tmpFile, StandardOpenOption.DELETE_ON_CLOSE));
+    } catch (IOException e) {
+      throw new BlazeModException("io error while running blaze mod", e);
     }
   }
 
