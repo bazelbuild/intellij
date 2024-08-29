@@ -37,11 +37,6 @@ import java.util.List;
 public final class BaseSdkTestCompat {
   private BaseSdkTestCompat() {}
 
-  /** #api212: inline into ServiceHelper */
-  public static void unregisterComponent(ComponentManager componentManager, Class<?> key) {
-    ((ComponentManagerImpl) componentManager).unregisterComponent(key);
-  }
-
   /** #api213: inline into tests */
   public static TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(
       IdeaTestFixtureFactory factory, String projectName) {
