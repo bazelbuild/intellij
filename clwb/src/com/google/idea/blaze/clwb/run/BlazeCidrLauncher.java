@@ -97,8 +97,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
   BlazeCidrLauncher(
       BlazeCommandRunConfiguration configuration,
       BlazeCidrRunConfigurationRunner runner,
-      ExecutionEnvironment env
-      ) {
+      ExecutionEnvironment env) {
     this.configuration = configuration;
     this.handlerState = (BlazeCidrRunConfigState) configuration.getHandler().getState();
     this.runner = runner;
