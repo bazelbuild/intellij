@@ -18,8 +18,8 @@ import com.google.idea.blaze.base.wizard2.BlazeProjectCommitException;
 import com.google.idea.blaze.base.wizard2.BlazeProjectImportBuilder;
 import com.google.idea.blaze.base.wizard2.CreateFromScratchProjectViewOption;
 import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
-import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -126,7 +126,7 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
     ProjectManagerEx.getInstanceEx()
             .openProject(
                     projectFilePath,
-                    BaseSdkCompat.createOpenProjectTask(newProject)
+                    OpenProjectTask.build().withProject(newProject)
             );
     SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject);
     return newProject;
