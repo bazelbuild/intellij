@@ -20,31 +20,6 @@ import javax.annotation.Nullable;
 public final class BaseSdkCompat {
   private BaseSdkCompat() {}
 
-  /** #api213: inline this method */
-  @Nullable
-  public static String getIdeRestarterPath() {
-    Path startFilePath = Restarter.getIdeStarter();
-    return startFilePath == null ? null : startFilePath.toString();
-  }
-
-  /** #api213: inline into IndexingLogger */
-  public static JsonDuration getTotalIndexingTime(
-      JsonFileProviderIndexStatistics providerStatisticInput) {
-    return providerStatisticInput.getTotalIndexingVisibleTime();
-  }
-
-  /** #api213: Inline into KytheRenameProcessor. */
-  public static RenamePsiElementProcessor[] renamePsiElementProcessorsList() {
-    ArrayList<RenamePsiElementProcessor> result = new ArrayList<>();
-    for (RenamePsiElementProcessorBase processor :
-        RenamePsiElementProcessor.EP_NAME.getExtensions()) {
-      if (processor instanceof RenamePsiElementProcessor) {
-        result.add((RenamePsiElementProcessor) processor);
-      }
-    }
-    return result.toArray(new RenamePsiElementProcessor[0]);
-  }
-
   /** #api213: Inline into WorkspaceFileTextField . */
   public static LocalFsFinder.VfsFile getVfsFile(VirtualFile file) {
     return new LocalFsFinder.VfsFile(file);
