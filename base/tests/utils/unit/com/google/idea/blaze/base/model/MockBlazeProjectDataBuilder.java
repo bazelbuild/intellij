@@ -107,7 +107,8 @@ public class MockBlazeProjectDataBuilder {
   }
 
   @CanIgnoreReturnValue
-  public MockBlazeProjectDataBuilder setExternalWorkspaceData(ExternalWorkspaceData externalWorkspaceData) {
+  public MockBlazeProjectDataBuilder setExternalWorkspaceData(
+      ExternalWorkspaceData externalWorkspaceData) {
     this.externalWorkspaceData = externalWorkspaceData;
     return this;
   }

@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.sync.workspace;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.primitives.ExternalWorkspace;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetName;
@@ -37,7 +36,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
@@ -213,7 +211,7 @@ public class WorkspaceHelper {
       return workspaceRootCache.get(workspaceName);
     }
 
-    BlazeProjectData blazeProjectData = getBlazeProjectData(project);
+    BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData != null) {
       File workspaceDir = new File(blazeProjectData.getBlazeInfo().getOutputBase(), "external/" + workspaceName);
 

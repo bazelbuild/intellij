@@ -1,6 +1,7 @@
 package com.google.idea.blaze.base.lang.buildfile.references;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.ExternalWorkspaceFixture;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.ExternalWorkspaceData;
@@ -18,17 +19,23 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertNotNull;
 
 @RunWith(JUnit4.class)
-public class ModuleRepositoryCompletionTest extends BuildFileIntegrationTestCase {
+public class ModuleRepositoryReferenceTest extends BuildFileIntegrationTestCase {
 
-  final ExternalWorkspaceFixture unmappedWorkspace =
-      new ExternalWorkspaceFixture(ExternalWorkspace.create("workspace_one", "workspace_one"));
-
-  final ExternalWorkspaceFixture remappedWorkspace =
-      new ExternalWorkspaceFixture(ExternalWorkspace.create("workspace_one", "com_workspace_one"));
+  protected ExternalWorkspaceFixture unmappedWorkspace;
+  protected ExternalWorkspaceFixture remappedWorkspace;
 
   @Override
   protected ExternalWorkspaceData mockExternalWorkspaceData() {
-    return ExternalWorkspaceData.create(ImmutableList.of(unmappedWorkspace.workspace, remappedWorkspace.workspace));
+    System.out.println("mockExternalWorkspaceData called");
+    new Exception().printStackTrace();
+    unmappedWorkspace = new ExternalWorkspaceFixture(
+        ExternalWorkspace.create("workspace_one", "workspace_one"), fileSystem);
+
+    remappedWorkspace = new ExternalWorkspaceFixture(
+        ExternalWorkspace.create("workspace_two", "com_workspace_two"), fileSystem);
+
+    return ExternalWorkspaceData.create(
+        ImmutableList.of(unmappedWorkspace.workspace, remappedWorkspace.workspace));
   }
 
   @Test
