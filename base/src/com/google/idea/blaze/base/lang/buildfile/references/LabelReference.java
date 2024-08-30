@@ -32,9 +32,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+
 import javax.annotation.Nullable;
 
 /** Converts a blaze label into an absolute path, then resolves that path to a PsiElements */

@@ -3,9 +3,12 @@ package com.google.idea.blaze.base.model;
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.primitives.ExternalWorkspace;
+
+import javax.annotation.Nullable;
 
 public final class ExternalWorkspaceData implements ProtoWrapper<ProjectData.ExternalWorkspaceData> {
   public ImmutableMap<String, ExternalWorkspace> workspaces;
@@ -22,7 +25,7 @@ public final class ExternalWorkspaceData implements ProtoWrapper<ProjectData.Ext
             .stream()
             .collect(
                 ImmutableMap.toImmutableMap(
-                    ExternalWorkspace::name,
+                    ExternalWorkspace::repoName,
                     Functions.identity()))
     );
   }
@@ -42,5 +45,10 @@ public final class ExternalWorkspaceData implements ProtoWrapper<ProjectData.Ext
 
   public static ExternalWorkspaceData fromProto(ProjectData.ExternalWorkspaceData proto) {
     return new ExternalWorkspaceData(proto.getWorkspacesList().stream().map(ExternalWorkspace::fromProto).collect(ImmutableList.toImmutableList()));
+  }
+
+  @Nullable
+  public ExternalWorkspace getByRepoName(String name) {
+    return Maps.filterValues(workspaces, w -> w.repoName() != null && w.repoName().equals(name)).values().stream().findFirst().orElse(null);
   }
 }

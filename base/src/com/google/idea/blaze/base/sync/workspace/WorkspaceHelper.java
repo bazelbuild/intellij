@@ -18,6 +18,8 @@ package com.google.idea.blaze.base.sync.workspace;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.ExternalWorkspaceData;
+import com.google.idea.blaze.base.model.primitives.ExternalWorkspace;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -169,8 +171,8 @@ public class WorkspaceHelper {
         TargetName.createIfValid(
             FileUtil.getRelativePath(workspace.root.fileForPath(packagePath), file));
     return targetName != null
-        ? Label.create(workspace.externalWorkspaceName, packagePath, targetName)
-        : null;
+               ? Label.create(workspace.externalWorkspaceName, packagePath, targetName)
+               : null;
   }
 
   private static WorkspacePath getPackagePath(
@@ -193,33 +195,41 @@ public class WorkspaceHelper {
 
   @Nullable
   private static synchronized WorkspaceRoot getExternalWorkspaceRootsFile(String workspaceName,
-      Project project) {
+                                                                          Project project) {
     if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze) {
       return null;
     }
     logger.debug("getExternalWorkspaceRootsFile for " + workspaceName);
-    Map<String, WorkspaceRoot> workspaceRootCache = SyncCache.getInstance(project)
-        .get(WorkspaceHelper.class, (p, data) -> new ConcurrentHashMap<String, WorkspaceRoot>());
+    Map<String, WorkspaceRoot> workspaceRootCache =
+        SyncCache.getInstance(project)
+            .get(WorkspaceHelper.class, (p, data) -> new ConcurrentHashMap<>());
 
     //the null cache value case could happen when the blazeProjectData is null.
-    if(workspaceRootCache == null) {
+    if (workspaceRootCache == null) {
       return null;
     }
 
-    WorkspaceRoot root = null;
     if (workspaceRootCache.containsKey(workspaceName)) {
-      root = workspaceRootCache.get(workspaceName);
-    } else if (getBlazeProjectData(project) != null) {
-      File externalDir = new File(getBlazeProjectData(project).getBlazeInfo().getOutputBase(),
-          "external/" + workspaceName);
+      return workspaceRootCache.get(workspaceName);
+    }
 
-      if (externalDir.exists() || isInTestMode()) {
-        root = new WorkspaceRoot(externalDir);
+    BlazeProjectData blazeProjectData = getBlazeProjectData(project);
+    if (blazeProjectData != null) {
+      File workspaceDir = new File(blazeProjectData.getBlazeInfo().getOutputBase(), "external/" + workspaceName);
+
+      ExternalWorkspace workspace = blazeProjectData.getExternalWorkspaceData().getByRepoName(workspaceName);
+      if (workspace != null) {
+        workspaceDir = new File(blazeProjectData.getBlazeInfo().getOutputBase(), "external/" + workspace.name());
+      }
+
+      if (workspaceDir.exists() || isInTestMode()) {
+        WorkspaceRoot root = new WorkspaceRoot(workspaceDir);
         workspaceRootCache.put(workspaceName, root);
+        return root;
       }
     }
 
-    return root;
+    return null;
   }
 
   //The unit test use the TempFileSystem to create VirtualFile which does not exist on disk.
