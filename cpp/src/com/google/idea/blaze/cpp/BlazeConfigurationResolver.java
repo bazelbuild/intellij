@@ -149,7 +149,7 @@ final class BlazeConfigurationResolver {
       Project project,
       WorkspacePathResolver workspacePathResolver) {
     if (target.toTargetInfo().getLabel().isExternal()) {
-      WorkspaceRoot externalWorkspace = WorkspaceHelper.resolveExternalWorkspace(project,
+      WorkspaceRoot externalWorkspace = WorkspaceHelper.getExternalWorkspace(project,
           target.getKey().getLabel().externalWorkspaceName());
 
       if (externalWorkspace != null) {
