@@ -16,30 +16,22 @@
 
 package com.google.idea.sdkcompat.kotlin;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.psi.PsiElement;
-import java.util.ArrayList;
+
 import java.util.Collection;
-import java.util.List;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.cli.common.arguments.Freezable;
-import org.jetbrains.kotlin.cli.common.arguments.FreezableKt;
 import org.jetbrains.kotlin.config.ApiVersion;
 import org.jetbrains.kotlin.config.LanguageFeature;
 import org.jetbrains.kotlin.config.LanguageFeature.State;
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup;
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus;
-import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator;
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator;
-import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector;
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor;
 import org.jetbrains.kotlin.platform.TargetPlatform;
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms;
