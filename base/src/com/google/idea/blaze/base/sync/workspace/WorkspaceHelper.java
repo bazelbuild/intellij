@@ -213,11 +213,12 @@ public class WorkspaceHelper {
 
     BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData != null) {
-      File workspaceDir = new File(blazeProjectData.getBlazeInfo().getOutputBase(), "external/" + workspaceName);
+      File externalBase = new File(blazeProjectData.getBlazeInfo().getOutputBase(), "external");
 
+      File workspaceDir = new File(externalBase, workspaceName);
       ExternalWorkspace workspace = blazeProjectData.getExternalWorkspaceData().getByRepoName(workspaceName);
       if (workspace != null) {
-        workspaceDir = new File(blazeProjectData.getBlazeInfo().getOutputBase(), "external/" + workspace.name());
+        workspaceDir = new File(externalBase, workspace.name());
       }
 
       if (workspaceDir.exists() || isInTestMode()) {
