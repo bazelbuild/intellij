@@ -263,6 +263,7 @@
     <editorNotificationProvider implementation="com.google.idea.blaze.base.qsync.UnsyncedFileEditorNotificationProvider" />
 
     <projectService serviceImplementation="com.google.idea.blaze.base.command.info.BlazeInfoProvider"/>
+    <projectService serviceImplementation="com.google.idea.blaze.base.model.ExternalWorkspaceDataProvider"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.sync.SyncPhaseCoordinator"/>
     <projectService serviceInterface="com.google.idea.blaze.base.sync.status.BlazeSyncStatus"
                     serviceImplementation="com.google.idea.blaze.base.sync.status.BlazeSyncStatusImpl"/>
@@ -604,6 +605,7 @@
     <SyncListener implementation="com.google.idea.blaze.base.sync.autosync.ProjectTargetManagerImpl$TargetSyncListener"/>
     <SyncListener implementation="com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProviderImpl$Listener"/>
     <SyncListener implementation="com.google.idea.blaze.base.command.info.BlazeInfoProvider$Invalidator"/>
+    <SyncListener implementation="com.google.idea.blaze.base.model.ExternalWorkspaceDataProvider$Invalidator"/>
     <SyncListener implementation="com.google.idea.blaze.base.qsync.QuerySyncAsyncFileListener$QuerySyncListener"/>
     <SyncPlugin implementation="com.google.idea.blaze.base.lang.buildfile.sync.BuildLangSyncPlugin"/>
     <SyncPlugin implementation="com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager$SyncPlugin"/>
