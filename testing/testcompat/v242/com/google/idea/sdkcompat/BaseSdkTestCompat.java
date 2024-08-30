@@ -17,9 +17,6 @@ package com.google.idea.sdkcompat;
 
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.serviceContainer.ComponentManagerImpl;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.UITestUtil;
 
 /**
@@ -32,12 +29,6 @@ public final class BaseSdkTestCompat {
   /** #api221: inline into ServiceHelper */
   public static void unregisterComponent(ComponentManager componentManager, Class<?> componentKey) {
     ((ComponentManagerImpl) componentManager).unregisterComponent(componentKey);
-  }
-
-  /** #api213: inline into tests */
-  public static TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(
-      IdeaTestFixtureFactory factory, String projectName) {
-    return factory.createLightFixtureBuilder(projectName);
   }
 
   /** #api222 */

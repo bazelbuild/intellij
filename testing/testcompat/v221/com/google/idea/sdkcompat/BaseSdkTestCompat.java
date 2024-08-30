@@ -37,10 +37,4 @@ public final class BaseSdkTestCompat {
   public static void unregisterComponent(ComponentManager componentManager, Class<?> key) {
     ((ComponentManagerImpl) componentManager.getPicoContainer()).unregisterComponent(key);
   }
-
-  /** #api213: inline into tests */
-  public static TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(
-      IdeaTestFixtureFactory factory, String projectName) {
-    return factory.createLightFixtureBuilder(projectName);
-  }
 }
