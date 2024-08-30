@@ -42,12 +42,6 @@ public final class BaseSdkTestCompat {
     ((ComponentManagerImpl) componentManager).unregisterComponent(key);
   }
 
-  /** #api213: inline into tests */
-  public static TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(
-      IdeaTestFixtureFactory factory, String projectName) {
-    return factory.createLightFixtureBuilder(projectName);
-  }
-
   /** #api222 */
   public static void replaceIdeEventQueueSafely() {
       TestRunnerUtil.replaceIdeEventQueueSafely();
