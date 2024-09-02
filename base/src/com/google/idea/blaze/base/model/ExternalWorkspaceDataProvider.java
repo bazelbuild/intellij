@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -60,7 +61,7 @@ public class ExternalWorkspaceDataProvider {
     // bg: some blaze workspaces with blaze > MINIMUM_BLAZE_VERSION
     // have explicitly disabled this bzlmod support and this causes
     // `blaze mod` to fail.
-    return false /* blazeVersionData.bazelIsAtLeastVersion(MINIMUM_BLAZE_VERSION) */;
+    return blazeVersionData.bazelIsAtLeastVersion(MINIMUM_BLAZE_VERSION) && Registry.is("bazel.read.external.workspace.data");
   }
 
   public ListenableFuture<ExternalWorkspaceData> getExternalWorkspaceData(
