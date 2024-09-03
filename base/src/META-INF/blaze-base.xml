@@ -411,7 +411,7 @@
     <registryKey defaultValue="false"
                  description="The Bazel Plugin uses the --target_pattern_file option to pass the targets via a file. By default, the file is deleted immediately after the build execution is finished. Set this flag to true to avoid file deletion"
                  key="bazel.sync.keep.target.files"/>
-    <registryKey defaultValue="false"
+    <registryKey defaultValue="true"
                  description="Causes the plugin to read external workspace data, enabling features such as code completion for external targets. This may incur the cost of an additional 'bazel mod' call, which could cause issues with older versions or setups."
                  key="bazel.read.external.workspace.data"/>
     <editorNotificationProvider implementation="com.google.idea.blaze.base.wizard2.BazelNotificationProvider"/>
