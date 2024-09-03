@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.command.info;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
@@ -26,6 +27,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.project.Project;
+
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -76,16 +78,27 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
       BlazeContext context,
       BuildSystemName buildSystemName,
       List<String> blazeFlags) {
-    return Futures.transform(
+    ListeningExecutorService executor = BlazeExecutor.getInstance().getExecutor();
+
+    return Futures.transformAsync(
         runBlazeInfoGetBytes(project, invoker, context, blazeFlags, /* key= */ null),
-        bytes ->
-            BlazeInfo.create(
-                buildSystemName,
-                parseBlazeInfoResult(new String(bytes, StandardCharsets.UTF_8).trim())),
-        BlazeExecutor.getInstance().getExecutor());
+        bytes -> {
+          ImmutableMap.Builder<String, String> builder = parseBlazeInfoResult(new String(bytes, StandardCharsets.UTF_8).trim());
+
+          return Futures.transform(
+              runBlazeInfo(project, invoker, context, blazeFlags, BlazeInfo.STARLARK_SEMANTICS),
+
+              starLarkSemantics -> {
+                builder.put(BlazeInfo.STARLARK_SEMANTICS, starLarkSemantics);
+
+                return BlazeInfo.create(buildSystemName, builder.build());
+              }, executor);
+        },
+        executor);
   }
-  private static ImmutableMap<String, String> parseBlazeInfoResult(String blazeInfoString) {
-    ImmutableMap.Builder<String, String> blazeInfoMapBuilder = ImmutableMap.builder();
+
+  private static ImmutableMap.Builder<String, String> parseBlazeInfoResult(String blazeInfoString) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     String[] blazeInfoLines = blazeInfoString.split("\n");
     for (String blazeInfoLine : blazeInfoLines) {
       // Just split on the first ":".
@@ -96,8 +109,9 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
       }
       String key = keyValue[0].trim();
       String value = keyValue[1].trim();
-      blazeInfoMapBuilder.put(key, value);
+      builder.put(key, value);
     }
-    return blazeInfoMapBuilder.build();
+
+    return builder;
   }
 }

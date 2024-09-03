@@ -161,7 +161,7 @@ final class ProjectStateSyncTask {
     }
 
     ExternalWorkspaceData externalWorkspaceData =
-        getExternalWorkspaceData(context, projectViewSet, blazeVersionData, params.syncMode());
+        getExternalWorkspaceData(context, projectViewSet, blazeVersionData, blazeInfo, params.syncMode());
 
     WorkspacePathResolver workspacePathResolver =
         workspacePathResolverAndProjectView.workspacePathResolver;
@@ -229,6 +229,7 @@ final class ProjectStateSyncTask {
       BlazeContext context,
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
+      BlazeInfo blazeInfo,
       SyncMode syncMode)
       throws SyncCanceledException, SyncFailedException {
 
@@ -242,7 +243,7 @@ final class ProjectStateSyncTask {
 
     ListenableFuture<ExternalWorkspaceData> externalWorkspaceDataFuture =
         ExternalWorkspaceDataProvider.getInstance(project)
-            .getExternalWorkspaceData(context, syncFlags, blazeVersionData);
+            .getExternalWorkspaceData(context, syncFlags, blazeVersionData, blazeInfo);
 
     FutureResult<ExternalWorkspaceData> externalWorkspaceDataResult =
         FutureUtil.waitForFuture(context, externalWorkspaceDataFuture)
