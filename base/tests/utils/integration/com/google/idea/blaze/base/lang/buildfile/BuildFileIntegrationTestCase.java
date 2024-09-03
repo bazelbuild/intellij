@@ -91,6 +91,6 @@ public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestC
     BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
     assertThat(blazeProjectData).isNotNull();
 
-    return WorkspaceHelper.getExternalSourceRoot(blazeProjectData).toFile();
+    return WorkspaceHelper.getExternalSourceRoot(blazeProjectData);
   }
 }
