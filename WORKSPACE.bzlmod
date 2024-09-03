@@ -267,9 +267,9 @@ http_archive(
     url = CLION_241_URL,
 )
 
-CLION_242_SHA = "72665b37d4934d9ef3c3283e21b07cd6ef691e52157db3b66f48168e7a64a9e6"
+CLION_242_SHA = "a1dcbcf2d8fd926d4100cad90b15a70f59299cdec6861555dab7b03960ef57bb"
 
-CLION_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2024.2.0.1/clion-2024.2.0.1.zip"
+CLION_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2024.2.1/clion-2024.2.1.zip"
 
 http_archive(
     name = "clion_2024_2",
@@ -630,9 +630,9 @@ http_archive(
     url = SCALA_PLUGIN_241_URL,
 )
 
-SCALA_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.2.20/org.intellij.scala-2024.2.20.zip"
+SCALA_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.2.25/org.intellij.scala-2024.2.25.zip"
 
-SCALA_PLUGIN_242_SHA = "930c6139dbafbb9891a33241c6f5c77a566c4c2d70063b41ef5155fde6df924f"
+SCALA_PLUGIN_242_SHA = "9358ac824310fc13d7336c46a2c7e7bf17984c6f4ff75d4986ea2c89901418aa"
 
 http_archive(
     name = "scala_2024_2",
