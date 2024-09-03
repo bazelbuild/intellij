@@ -1,13 +1,18 @@
 package com.google.idea.blaze.base;
 
+import com.google.idea.blaze.base.ideinfo.ProjectDataInterner;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExternalWorkspace;
+import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.psi.PsiFile;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,13 +22,13 @@ import static com.google.idea.blaze.base.settings.ui.ProjectViewUi.getProject;
 import static org.junit.Assert.assertNotNull;
 
 public class ExternalWorkspaceFixture {
-  public final ExternalWorkspace workspace;
+  public final ExternalWorkspace w;
 
   final TestFileSystem fileSystem;
   WorkspaceFileSystem workspaceFileSystem;
 
-  public ExternalWorkspaceFixture(ExternalWorkspace workspace, TestFileSystem fileSystem) {
-    this.workspace = workspace;
+  public ExternalWorkspaceFixture(ExternalWorkspace w, TestFileSystem fileSystem) {
+    this.w = w;
     this.fileSystem = fileSystem;
   }
 
@@ -35,7 +40,7 @@ public class ExternalWorkspaceFixture {
 
     Path workspaceRootPath = Paths.get(
         blazeProjectData.getBlazeInfo().getOutputBase().getAbsolutePath(),
-        "external", workspace.name());
+        "external", w.name());
 
     return new WorkspaceRoot(workspaceRootPath.normalize().toFile());
   }
@@ -56,7 +61,7 @@ public class ExternalWorkspaceFixture {
 
       WorkspaceRoot workspaceRoot = new WorkspaceRoot(Paths.get(
           blazeProjectData.getBlazeInfo().getOutputBase().getAbsolutePath(),
-          "external", workspace.name()).normalize().toFile());
+          "external", w.name()).normalize().toFile());
 
       File workspaceRootFile = workspaceRoot.directory();
       assertThat(workspaceRootFile).isNotNull();
@@ -66,4 +71,7 @@ public class ExternalWorkspaceFixture {
     return workspaceFileSystem;
   }
 
+  public Label createLabel(WorkspacePath packagePath, TargetName targetName) {
+    return Label.create(w.repositoryName(), packagePath, targetName);
+  }
 }
