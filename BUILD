@@ -1,4 +1,5 @@
 load("@bazel_tools//tools/jdk:default_java_toolchain.bzl", "default_java_toolchain")
+load("@rules_java//java:defs.bzl", "java_package_configuration")
 
 #
 # Description: Blaze plugin for various IntelliJ products.
