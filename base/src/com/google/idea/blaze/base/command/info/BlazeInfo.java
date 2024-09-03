@@ -36,6 +36,8 @@ public abstract class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
   public static final String MASTER_LOG = "master-log";
   public static final String RELEASE = "release";
 
+  public static final String STARLARK_SEMANTICS = "starlark-semantics";
+
   public static String blazeBinKey(BuildSystemName buildSystemName) {
     switch (buildSystemName) {
       case Blaze:
