@@ -27,7 +27,6 @@ public class ModuleRepositoryReferenceTest extends BuildFileIntegrationTestCase 
   @Override
   protected ExternalWorkspaceData mockExternalWorkspaceData() {
     System.out.println("mockExternalWorkspaceData called");
-    new Exception().printStackTrace();
     unmappedWorkspace = new ExternalWorkspaceFixture(
         ExternalWorkspace.create("workspace_one", "workspace_one"), fileSystem);
 
@@ -44,7 +43,9 @@ public class ModuleRepositoryReferenceTest extends BuildFileIntegrationTestCase 
     assertNotNull(externalWorkspaceRoot);
 
     BuildFile otherPackage =
-        unmappedWorkspace.createBuildFile(new WorkspacePath( "p1/p2/BUILD"), "java_library(name = 'rule1')");
+        unmappedWorkspace.createBuildFile(
+            new WorkspacePath( "p1/p2/BUILD"),
+            "java_library(name = 'rule1')");
 
     String targetRule = "@" + unmappedWorkspace.workspace.repoName() + "//p1/p2:rule1";
 
@@ -70,7 +71,9 @@ public class ModuleRepositoryReferenceTest extends BuildFileIntegrationTestCase 
     assertNotNull(externalWorkspaceRoot);
 
     BuildFile otherPackage =
-        remappedWorkspace.createBuildFile(new WorkspacePath("p1/p2/BUILD"), "java_library(name = 'rule1')");
+        remappedWorkspace.createBuildFile(
+            new WorkspacePath("p1/p2/BUILD"),
+            "java_library(name = 'rule1')");
 
     String targetRule = "@" + remappedWorkspace.workspace.repoName() + "//p1/p2:rule1";
 
