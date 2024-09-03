@@ -8,8 +8,6 @@ java_library(
     name = "go_internal",
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
-        "intellij-2022.1": ["@go_2022_1//:go"],
-        "intellij-ue-2022.1": ["@go_2022_1//:go"],
         "intellij-2022.2": ["@go_2022_2//:go"],
         "intellij-ue-2022.2": ["@go_2022_2//:go"],
         "intellij-2022.3": ["@go_2022_3//:go"],
