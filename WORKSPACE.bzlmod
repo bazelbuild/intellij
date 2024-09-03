@@ -15,14 +15,6 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2021.2.4/ideaIC-2021.2.4.zip",
 )
 
-# The plugin api for intellij_ce_2022_2. This is required to build IJwB and run integration tests.
-http_archive(
-    name = "intellij_ce_2022_2",
-    build_file = "@//intellij_platform_sdk:BUILD.idea222",
-    sha256 = "19cf087718400dbc5a90c6423aa71ebfbfe1c504e8fc399034b864cb6d2e7275",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2022.2.5/ideaIC-2022.2.5.zip",
-)
-
 # The plugin api for intellij_ce_2022_3. This is required to build IJwB and run integration tests.
 http_archive(
     name = "intellij_ce_2022_3",
@@ -100,14 +92,6 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2021.2.4/ideaIU-2021.2.4.zip",
 )
 
-# The plugin api for intellij_ue_2022_2. This is required to run UE-specific integration tests.
-http_archive(
-    name = "intellij_ue_2022_2",
-    build_file = "@//intellij_platform_sdk:BUILD.ue222",
-    sha256 = "557eb6ddab79894ea3b96f072b7ab797b7733329c0ae03b3701fb098e0ebb63a",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2022.2.5/ideaIU-2022.2.5.zip",
-)
-
 # The plugin api for intellij_ue_2022_3. This is required to run UE-specific integration tests.
 http_archive(
     name = "intellij_ue_2022_3",
@@ -179,14 +163,6 @@ http_archive(
     build_file = "@//intellij_platform_sdk:BUILD.clion212",
     sha256 = "1b9a882aa703303dead8b9459bd8d4f2572bd977d46dce99af96c1647231da2c",
     url = "https://download.jetbrains.com/cpp/CLion-2021.2.4.tar.gz",
-)
-
-# The plugin api for clion_2022_2. This is required to build CLwB\, and run integration tests.
-http_archive(
-    name = "clion_2022_2",
-    build_file = "@//intellij_platform_sdk:BUILD.clion222",
-    sha256 = "94ffbdf82606f2f90618c1fdb89432d627e7f24ae158b36a591da2c303047436",
-    url = "https://download.jetbrains.com/cpp/CLion-2022.2.tar.gz",
 )
 
 # The plugin api for clion_2022_3. This is required to build CLwB\, and run integration tests.
@@ -326,13 +302,6 @@ http_archive(
 )
 
 http_archive(
-    name = "python_2022_2",
-    build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = "aaae5ea44b5ad18793f8de63c00dce0371d91c14f7381260d19c4adaf4f9c9bf",
-    url = "https://plugins.jetbrains.com/files/7322/305491/python-ce-222.4554.5.zip",
-)
-
-http_archive(
     name = "python_2022_3",
     build_file_content = _PYTHON_CE_BUILD_FILE,
     sha256 = "65db7c364a3f1756cf07fb161ff4eb67fd8f8612a8c3da812b2f9ba5b2d6e13d",
@@ -421,13 +390,6 @@ http_archive(
     build_file_content = _GO_BUILD_FILE,
     sha256 = "5c868f2be8feb552aa4f9edb2a3c48db68193eb49ba50ca0a0976f4b9de82c67",
     url = "https://plugins.jetbrains.com/files/9568/149614/go-212.5712.14.zip",
-)
-
-http_archive(
-    name = "go_2022_2",
-    build_file_content = _GO_BUILD_FILE,
-    sha256 = "cc19cc418b512420643c8c94eaf2cf1775de3183b1a8d0c2703959fcc4275afd",
-    url = "https://plugins.jetbrains.com/files/9568/256314/go-222.4459.24.zip",
 )
 
 _GO_BUILD_FILE_223 = """
@@ -525,13 +487,6 @@ http_archive(
 )
 
 http_archive(
-    name = "scala_2022_2",
-    build_file_content = _SCALA_BUILD_FILE,
-    sha256 = "67e0634b4a1c9431fde6f804da9714c935382c1442f541000e7dcd598d74bde7",
-    url = "https://plugins.jetbrains.com/files/1347/202220/scala-intellij-bin-2022.2.659.zip",
-)
-
-http_archive(
     name = "scala_2022_3",
     build_file_content = _SCALA_BUILD_FILE,
     sha256 = "f028ac7263433c8692d9d4c92aaba9e114fc75f6299d4d86817db371409f74f3",
@@ -623,14 +578,6 @@ http_archive(
     build_file_content = _TOML_BUILD_FILE,
     sha256 = TOML_PLUGIN_242_SHA,
     url = TOML_PLUGIN_242_URL,
-)
-
-# The plugin api for android_studio_2022_2 android_studio. This is required to build ASwB and run integration tests
-http_archive(
-    name = "android_studio_2022_2",
-    build_file = "@//intellij_platform_sdk:BUILD.android_studio222",
-    sha256 = "cdd852c4499b5f7402df44dfc69e8ca418ffc9a684caab34047476fd2cb24efc",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2022.2.1.18/android-studio-2022.2.1.18-linux.tar.gz",
 )
 
 # The plugin api for android_studio_dev android_studio. This is required to build ASwB and run integration tests
