@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.bazel.BuildSystem;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.mod.BlazeModException;
 import com.google.idea.blaze.base.command.mod.BlazeModRunner;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -31,6 +32,7 @@ import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -55,14 +57,29 @@ public class ExternalWorkspaceDataProvider {
   }
 
   static Boolean isEnabled(BlazeVersionData blazeVersionData) {
-    return blazeVersionData.bazelIsAtLeastVersion(MINIMUM_BLAZE_VERSION);
+    // disable this until a more reliable opt-in mechanism is chosen.
+    //
+    // bg: some blaze workspaces with blaze > MINIMUM_BLAZE_VERSION
+    // have explicitly disabled this bzlmod support and this causes
+    // `blaze mod` to fail.
+    return blazeVersionData.bazelIsAtLeastVersion(MINIMUM_BLAZE_VERSION) && Registry.is("bazel.read.external.workspace.data");
   }
 
   public ListenableFuture<ExternalWorkspaceData> getExternalWorkspaceData(
       BlazeContext context,
       List<String> blazeFlags,
-      BlazeVersionData blazeVersionData) {
+      BlazeVersionData blazeVersionData,
+      BlazeInfo blazeInfo
+  ) {
+    // check minimum bazel version
     if (!isEnabled(blazeVersionData)) {
+      return Futures.immediateFuture(ExternalWorkspaceData.EMPTY);
+    }
+
+    // validate that bzlmod is enabled (technically this validates that the --enable_bzlmod is not
+    // changed from the default `true` aka set to false)
+    String starLarkSemantics = blazeInfo.get(BlazeInfo.STARLARK_SEMANTICS);
+    if (starLarkSemantics == null || starLarkSemantics.isEmpty() || starLarkSemantics.contains("enable_bzlmod=false")) {
       return Futures.immediateFuture(ExternalWorkspaceData.EMPTY);
     }
 
@@ -108,6 +125,7 @@ public class ExternalWorkspaceDataProvider {
   }
 
   public void invalidate(BlazeContext context, SyncMode syncMode) {
+    logger.info("Invalidating External Repository Mapping info");
     context.output(new StatusOutput(String.format("Invalidating External Repository Mapping info (%s)", syncMode)));
     externalWorkspaceData = null;
   }
@@ -118,7 +136,7 @@ public class ExternalWorkspaceDataProvider {
         Project project,
         BlazeContext context,
         SyncMode syncMode) {
-      if (syncMode == SyncMode.NO_BUILD || syncMode == SyncMode.FULL) {
+      if (syncMode == SyncMode.FULL) {
         ExternalWorkspaceDataProvider provider = ExternalWorkspaceDataProvider.getInstance(project);
         if (provider != null) {
           provider.invalidate(context, syncMode);

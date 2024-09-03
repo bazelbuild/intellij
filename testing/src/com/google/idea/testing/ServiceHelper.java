@@ -15,7 +15,6 @@
  */
 package com.google.idea.testing;
 
-import com.google.idea.sdkcompat.BaseSdkTestCompat;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockProject;
@@ -33,8 +32,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.testFramework.ServiceContainerUtil;
 import org.picocontainer.MutablePicoContainer;
-import com.intellij.mock.MockApplication;
-import com.intellij.mock.MockProject;
 
 /** Utility class for registering project services, application services and extensions. */
 public class ServiceHelper {
@@ -169,6 +166,6 @@ public class ServiceHelper {
     }
     Disposer.register(
         parentDisposable,
-        () -> BaseSdkTestCompat.unregisterComponent(componentManager, key));
+        () -> ((ComponentManagerImpl) componentManager).unregisterComponent(key));
   }
 }
