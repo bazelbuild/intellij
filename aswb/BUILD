@@ -226,7 +226,6 @@ intellij_integration_test_suite(
         "default": [],
     }),
     additional_class_rules = select_for_plugin_api({
-        "android-studio-2022.2": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "android-studio-2022.3": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "android-studio-2023.1": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "android-studio-2023.2": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
