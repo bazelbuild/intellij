@@ -106,14 +106,6 @@ def _check_channel_map():
         fail("Unexpected values in INDIRECT_PRODUCT_CHANNELS: %s" % unexpected)
 
 DIRECT_IJ_PRODUCTS = {
-    "intellij-2022.1": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2022_1",
-    ),
-    "intellij-2022.1-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2022_1",
-    ),
     "intellij-2022.2": struct(
         ide = "intellij",
         directory = "intellij_ce_2022_2",
@@ -169,14 +161,6 @@ DIRECT_IJ_PRODUCTS = {
     "intellij-2024.2-mac": struct(
         ide = "intellij",
         directory = "intellij_ce_2024_2",
-    ),
-    "intellij-ue-2022.1": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2022_1",
-    ),
-    "intellij-ue-2022.1-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2022_1",
     ),
     "intellij-ue-2022.2": struct(
         ide = "intellij-ue",
@@ -248,14 +232,6 @@ DIRECT_IJ_PRODUCTS = {
         ide = "android-studio",
         archive = "android_studio_with_blaze_2023_2",
         oss_workspace = "android_studio_2023_2",
-    ),
-    "clion-2022.1": struct(
-        ide = "clion",
-        directory = "clion_2022_1",
-    ),
-    "clion-2022.1-mac": struct(
-        ide = "clion",
-        directory = "clion_2022_1",
     ),
     "clion-2022.2": struct(
         ide = "clion",
@@ -627,17 +603,11 @@ def java_version_flags():
     java11 = ["-source", "11", "-target", "11"]
     java17 = ["-source", "17", "-target", "17"]
     return select_for_plugin_api({
-        "intellij-2022.1": java11,
-        "intellij-2022.1-mac": java11,
         "intellij-2022.2": java11,
         "intellij-2022.2-mac": java11,
-        "intellij-ue-2022.1": java11,
-        "intellij-ue-2022.1-mac": java11,
         "intellij-ue-2022.2": java11,
         "intellij-ue-2022.2-mac": java11,
         "android-studio-2022.2": java11,
-        "clion-2022.1": java11,
-        "clion-2022.1-mac": java11,
         "clion-2022.2": java11,
         "clion-2022.2-mac": java11,
         "default": java17,

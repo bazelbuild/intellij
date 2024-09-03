@@ -122,21 +122,6 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-2022.1",
-    values = {
-        "define": "ij_product=intellij-2022.1",
-    },
-)
-
-config_setting(
-    name = "intellij-2022.1-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=intellij-2022.1",
-    },
-)
-
-config_setting(
     name = "intellij-2022.2",
     values = {
         "define": "ij_product=intellij-2022.2",
@@ -234,21 +219,6 @@ config_setting(
     values = {
         "cpu": "darwin_x86_64",
         "define": "ij_product=intellij-2023.3",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2022.1",
-    values = {
-        "define": "ij_product=intellij-ue-2022.1",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2022.1-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=intellij-ue-2022.1",
     },
 )
 
@@ -532,21 +502,6 @@ config_setting(
     name = "clion-under-dev",
     values = {
         "define": "ij_product=clion-under-dev",
-    },
-)
-
-config_setting(
-    name = "clion-2022.1",
-    values = {
-        "define": "ij_product=clion-2022.1",
-    },
-)
-
-config_setting(
-    name = "clion-2022.1-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=clion-2022.1",
     },
 )
 
