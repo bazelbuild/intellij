@@ -12,6 +12,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,18 +52,16 @@ public class ExternalWorkspaceReferenceBzlModeTest extends BuildFileIntegrationT
 
   @Test
   public void testUnmappedExternalWorkspace() throws Throwable {
-    Label targetLabel = workspaceOne.createLabel(new WorkspacePath("p1/p2"), TargetName.create("rule1"));
+    Label targetLabel = workspaceOne.createLabel(
+        new WorkspacePath("p1/p2"), TargetName.create("rule1"));
 
-    BuildFile file = createBuildFile(
-        new WorkspacePath("java/BUILD"),
+    PsiFile file = testFixture.configureByText("BUILD",
         String.format("""
             java_library(
                 name = 'lib',
-                deps = ['%s']
+                deps = ['%s<caret>']
             )""", targetLabel));
-
-    Editor editor = editorTest.openFileInEditor(file);
-    editorTest.setCaretPosition(editor, 2, ("    deps = ['" + targetLabel).length());
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
 
     PsiElement target =
         GotoDeclarationAction.findTargetElement(
@@ -73,18 +72,16 @@ public class ExternalWorkspaceReferenceBzlModeTest extends BuildFileIntegrationT
 
   @Test
   public void testRemappedExternalWorkspace() throws Throwable {
-    Label targetLabel = workspaceTwoMapped.createLabel(new WorkspacePath("p1/p2"), TargetName.create("rule1"));
+    Label targetLabel = workspaceTwoMapped.createLabel(
+        new WorkspacePath("p1/p2"), TargetName.create("rule1"));
 
-    BuildFile file = createBuildFile(
-        new WorkspacePath("java/BUILD"),
+    PsiFile file = testFixture.configureByText("BUILD",
         String.format("""
             java_library(
                 name = 'lib',
-                deps = ['%s']
+                deps = ['%s<caret>']
             )""", targetLabel));
-
-    Editor editor = editorTest.openFileInEditor(file);
-    editorTest.setCaretPosition(editor, 2, ("    deps = ['" + targetLabel).length());
+    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
 
     PsiElement target =
         GotoDeclarationAction.findTargetElement(
