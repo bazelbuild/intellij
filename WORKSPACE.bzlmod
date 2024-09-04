@@ -1,48 +1,8 @@
 workspace(name = "intellij_with_bazel")
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 android_sdk_repository(name = "androidsdk")
-
-_JARJAR_BUILD_FILE = """
-java_binary(
-    name = "jarjar_bin",
-    srcs = glob(
-        ["src/main/**/*.java"],
-        exclude = [
-            "src/main/com/tonicsystems/jarjar/JarJarMojo.java",
-            "src/main/com/tonicsystems/jarjar/util/AntJarProcessor.java",
-            "src/main/com/tonicsystems/jarjar/JarJarTask.java",
-        ],
-    ),
-    main_class = "com.tonicsystems.jarjar.Main",
-    resources = [":help"],
-    use_launcher = False,
-    visibility = ["//visibility:public"],
-    deps = [":asm"],
-)
-
-java_import(
-    name = "asm",
-    jars = glob(["lib/asm-*.jar"]),
-)
-
-genrule(
-    name = "help",
-    srcs = ["src/main/com/tonicsystems/jarjar/help.txt"],
-    outs = ["com/tonicsystems/jarjar/help.txt"],
-    cmd = "cp $< $@",
-)
-"""
-
-new_git_repository(
-    name = "jarjar",
-    build_file_content = _JARJAR_BUILD_FILE,
-    commit = "38ff702d10baec78f30d5f57485ae452f0fe33b5",
-    remote = "https://github.com/google/jarjar",
-    shallow_since = "1518210648 -0800",
-)
 
 # LICENSE: The Apache Software License, Version 2.0
 rules_scala_version = "8f255cd1fecfe4d43934b161b3edda58bdb2e8f4"
@@ -72,3 +32,5 @@ load("@io_bazel_rules_scala//testing:scalatest.bzl", "scalatest_repositories", "
 scalatest_repositories()
 
 scalatest_toolchain()
+
+
