@@ -1,8 +1,6 @@
 package com.google.idea.blaze.base;
 
-import com.google.idea.blaze.base.ideinfo.ProjectDataInterner;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
-import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExternalWorkspace;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -12,9 +10,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.psi.PsiFile;
 
-import javax.annotation.Nullable;
 import java.io.File;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -30,19 +26,6 @@ public class ExternalWorkspaceFixture {
   public ExternalWorkspaceFixture(ExternalWorkspace w, TestFileSystem fileSystem) {
     this.w = w;
     this.fileSystem = fileSystem;
-  }
-
-  public WorkspaceRoot getWorkspaceRoot() {
-    BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
-    assertThat(blazeProjectData).isNotNull();
-
-    File outputBase = blazeProjectData.getBlazeInfo().getOutputBase();
-
-    Path workspaceRootPath = Paths.get(
-        blazeProjectData.getBlazeInfo().getOutputBase().getAbsolutePath(),
-        "external", w.name());
-
-    return new WorkspaceRoot(workspaceRootPath.normalize().toFile());
   }
 
   public BuildFile createBuildFile(WorkspacePath workspacePath, String... contentLines) {

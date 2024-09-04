@@ -224,9 +224,4 @@ public class ExternalWorkspaceReferenceTest extends BuildFileIntegrationTestCase
   protected ExternalWorkspaceData mockExternalWorkspaceData() {
     return super.mockExternalWorkspaceData();
   }
-
-  @Test
-  public void testBzlModExternalWorkspaceReference() {
-
-  }
 }

@@ -50,7 +50,7 @@ public class ExternalWorkspaceReferenceBzlModeTest extends BuildFileIntegrationT
   }
 
   @Test
-  public void testUnmappedExternalWorkspaceCompletion() throws Throwable {
+  public void testUnmappedExternalWorkspace() throws Throwable {
     Label targetLabel = workspaceOne.createLabel(new WorkspacePath("p1/p2"), TargetName.create("rule1"));
 
     BuildFile file = createBuildFile(
@@ -72,7 +72,7 @@ public class ExternalWorkspaceReferenceBzlModeTest extends BuildFileIntegrationT
   }
 
   @Test
-  public void testRemappedExternalWorkspaceCompletion() throws Throwable {
+  public void testRemappedExternalWorkspace() throws Throwable {
     Label targetLabel = workspaceTwoMapped.createLabel(new WorkspacePath("p1/p2"), TargetName.create("rule1"));
 
     BuildFile file = createBuildFile(
