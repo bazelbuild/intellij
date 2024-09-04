@@ -3,7 +3,6 @@ package com.google.idea.blaze.base.lang.buildfile.references;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ExternalWorkspaceFixture;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
-import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.primitives.ExternalWorkspace;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -36,7 +35,7 @@ public class ExternalWorkspaceReferenceBzlModeTest extends BuildFileIntegrationT
         ExternalWorkspace.create("workspace_two", "com_workspace_two"), fileSystem);
 
     return ExternalWorkspaceData.create(
-        ImmutableList.of(workspaceOne.w, workspaceTwoMapped.w));
+        ImmutableList.of(workspaceOne.workspace, workspaceTwoMapped.workspace));
   }
 
   @Before
