@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguag
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import javax.annotation.Nullable;
@@ -186,6 +187,11 @@ public class RuleTargetCompletionTest extends BuildFileIntegrationTestCase {
     String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).asList().contains("'//java:root_rule'");
     assertThat(completionItems).asList().doesNotContain("'//java/com/google:other_rule'");
+  }
+
+  @Test
+  public void testExternalRepoCompletion() throws Throwable {
+
   }
 
   private static void setBuildLanguageSpecRules(

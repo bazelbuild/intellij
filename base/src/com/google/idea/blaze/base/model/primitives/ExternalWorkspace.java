@@ -13,7 +13,11 @@ public abstract class ExternalWorkspace implements ProtoWrapper<ProjectData.Exte
   public abstract String name();
 
   @Nullable
-  public abstract String repoName();
+  protected abstract String repoName();
+
+  public String repositoryName() {
+    return repoName() != null ? repoName() : name();
+  }
 
   public static ExternalWorkspace fromProto(ProjectData.ExternalWorkspace proto) {
     return create(proto.getName(), proto.getRepoName());
@@ -21,16 +25,16 @@ public abstract class ExternalWorkspace implements ProtoWrapper<ProjectData.Exte
 
   @Override
   public ProjectData.ExternalWorkspace toProto() {
-    ProjectData.ExternalWorkspace.Builder builder = ProjectData.ExternalWorkspace.newBuilder().setName(name());
-    if (repoName() != null && !repoName().isEmpty()) {
-      builder = builder.setRepoName(repoName());
-    }
-    return builder.build();
+    return
+        ProjectData.ExternalWorkspace.newBuilder()
+            .setName(name())
+            .setRepoName(repoName())
+            .build();
   }
 
   public static ExternalWorkspace create(String name, String repoName) {
     ExternalWorkspace.Builder builder = ExternalWorkspace.builder().setName(name);
-    if (repoName != null && !repoName.isEmpty()) {
+    if (repoName != null && !repoName.isEmpty() && repoName.compareTo(name) != 0) {
       builder = builder.setRepoName(repoName);
     }
     return builder.build();
@@ -42,10 +46,10 @@ public abstract class ExternalWorkspace implements ProtoWrapper<ProjectData.Exte
 
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract Builder setName(String name);
+    abstract Builder setName(String name);
 
-    public abstract Builder setRepoName(String repoName);
+    abstract Builder setRepoName(String repoName);
 
-    public abstract ExternalWorkspace build();
+    abstract ExternalWorkspace build();
   }
 }

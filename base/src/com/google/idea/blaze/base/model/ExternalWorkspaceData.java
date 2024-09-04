@@ -7,6 +7,9 @@ import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.primitives.ExternalWorkspace;
 
+import javax.annotation.Nullable;
+
+
 public final class ExternalWorkspaceData implements ProtoWrapper<ProjectData.ExternalWorkspaceData> {
   public ImmutableMap<String, ExternalWorkspace> workspaces;
 
@@ -22,25 +25,32 @@ public final class ExternalWorkspaceData implements ProtoWrapper<ProjectData.Ext
             .stream()
             .collect(
                 ImmutableMap.toImmutableMap(
-                    ExternalWorkspace::name,
+                    ExternalWorkspace::repositoryName,
                     Functions.identity()))
     );
   }
 
   @Override
   public ProjectData.ExternalWorkspaceData toProto() {
-    ImmutableList<ProjectData.ExternalWorkspace> protoWorkspaces = workspaces
-        .values()
-        .stream()
-        .map(ExternalWorkspace::toProto)
-        .collect(ImmutableList.toImmutableList());
+    ProjectData.ExternalWorkspaceData.Builder builder = ProjectData.ExternalWorkspaceData.newBuilder();
 
-    return ProjectData.ExternalWorkspaceData.newBuilder()
-        .addAllWorkspaces(protoWorkspaces)
-        .build();
+    for (ExternalWorkspace externalWorkspace : workspaces.values()) {
+      builder = builder.addWorkspaces(externalWorkspace.toProto());
+    }
+
+    return builder.build();
   }
 
   public static ExternalWorkspaceData fromProto(ProjectData.ExternalWorkspaceData proto) {
-    return new ExternalWorkspaceData(proto.getWorkspacesList().stream().map(ExternalWorkspace::fromProto).collect(ImmutableList.toImmutableList()));
+    return new ExternalWorkspaceData(
+        proto.getWorkspacesList()
+            .stream()
+            .map(ExternalWorkspace::fromProto)
+            .collect(ImmutableList.toImmutableList()));
+  }
+
+  @Nullable
+  public ExternalWorkspace getByRepoName(String name) {
+    return workspaces.get(name);
   }
 }
