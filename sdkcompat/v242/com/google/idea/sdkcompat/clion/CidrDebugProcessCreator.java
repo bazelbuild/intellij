@@ -5,7 +5,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.jetbrains.cidr.execution.CidrCoroutineHelper;
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
 
-// #api242
+// #api241
 public class CidrDebugProcessCreator {
   public static CidrDebugProcess create(ThrowableComputable<CidrDebugProcess, ExecutionException> creator) throws ExecutionException {
     return CidrCoroutineHelper.runOnEDT(creator);
