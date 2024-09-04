@@ -61,7 +61,9 @@ public abstract class ScalarSectionParser<T> extends SectionParser {
     if (divider != ' ') {
       sb.append(' ');
     }
-    printItem(sb, ((ScalarSection<T>) section).getValue());
+    var scalarSection = (ScalarSection<T>) section;
+
+    printItem(sb, scalarSection.getValue());
     sb.append('\n');
   }
 

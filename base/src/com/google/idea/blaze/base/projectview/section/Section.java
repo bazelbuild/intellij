@@ -19,7 +19,7 @@ import com.google.common.base.Objects;
 import java.io.Serializable;
 
 /**
- * A section is a part of an project view file. For instance:
+ * A section is a part of a project view file. For instance:
  *
  * <p>directories java/com/a java/com/b
  *

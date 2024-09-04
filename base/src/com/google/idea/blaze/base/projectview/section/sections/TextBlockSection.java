@@ -131,6 +131,7 @@ public final class TextBlockSection extends Section<TextBlock> {
     @Override
     public void print(StringBuilder sb, Section<?> section) {
       TextBlockSection textBlockSection = (TextBlockSection) section;
+
       textBlockSection.getTextBlock().print(sb);
     }
 
