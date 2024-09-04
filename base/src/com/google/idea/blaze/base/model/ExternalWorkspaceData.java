@@ -9,7 +9,6 @@ import com.google.idea.blaze.base.model.primitives.ExternalWorkspace;
 
 import javax.annotation.Nullable;
 
-
 public final class ExternalWorkspaceData implements ProtoWrapper<ProjectData.ExternalWorkspaceData> {
   public ImmutableMap<String, ExternalWorkspace> workspaces;
 
@@ -25,14 +24,15 @@ public final class ExternalWorkspaceData implements ProtoWrapper<ProjectData.Ext
             .stream()
             .collect(
                 ImmutableMap.toImmutableMap(
-                    ExternalWorkspace::repositoryName,
+                    ExternalWorkspace::repoName,
                     Functions.identity()))
     );
   }
 
   @Override
   public ProjectData.ExternalWorkspaceData toProto() {
-    ProjectData.ExternalWorkspaceData.Builder builder = ProjectData.ExternalWorkspaceData.newBuilder();
+    ProjectData.ExternalWorkspaceData.Builder builder =
+        ProjectData.ExternalWorkspaceData.newBuilder();
 
     for (ExternalWorkspace externalWorkspace : workspaces.values()) {
       builder = builder.addWorkspaces(externalWorkspace.toProto());

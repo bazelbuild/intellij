@@ -18,13 +18,13 @@ import static com.google.idea.blaze.base.settings.ui.ProjectViewUi.getProject;
 import static org.junit.Assert.assertNotNull;
 
 public class ExternalWorkspaceFixture {
-  public final ExternalWorkspace w;
+  public final ExternalWorkspace workspace;
 
   final TestFileSystem fileSystem;
   WorkspaceFileSystem workspaceFileSystem;
 
-  public ExternalWorkspaceFixture(ExternalWorkspace w, TestFileSystem fileSystem) {
-    this.w = w;
+  public ExternalWorkspaceFixture(ExternalWorkspace workspace, TestFileSystem fileSystem) {
+    this.workspace = workspace;
     this.fileSystem = fileSystem;
   }
 
@@ -44,7 +44,7 @@ public class ExternalWorkspaceFixture {
 
       WorkspaceRoot workspaceRoot = new WorkspaceRoot(Paths.get(
           blazeProjectData.getBlazeInfo().getOutputBase().getAbsolutePath(),
-          "external", w.name()).normalize().toFile());
+          "external", workspace.name()).normalize().toFile());
 
       File workspaceRootFile = workspaceRoot.directory();
       assertThat(workspaceRootFile).isNotNull();
@@ -55,6 +55,6 @@ public class ExternalWorkspaceFixture {
   }
 
   public Label createLabel(WorkspacePath packagePath, TargetName targetName) {
-    return Label.create(w.repositoryName(), packagePath, targetName);
+    return Label.create(workspace.repoName(), packagePath, targetName);
   }
 }
