@@ -6,15 +6,6 @@ load("@bazel_tools//tools/build_defs/repo:jvm.bzl", "jvm_maven_import_external")
 
 # Long-lived download links available at: https://www.jetbrains.com/intellij-repository/releases
 
-# The plugin api for IntelliJ 2021.2. This is required to build IJwB,
-# and run integration tests.
-http_archive(
-    name = "intellij_ce_2021_2",
-    build_file = "@//intellij_platform_sdk:BUILD.idea212",
-    sha256 = "aa38bf2f86b570ce9cac14b01f7e3bf8f592d05641384e7ecedde13cbfa6491a",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2021.2.4/ideaIC-2021.2.4.zip",
-)
-
 # The plugin api for intellij_ce_2022_3. This is required to build IJwB and run integration tests.
 http_archive(
     name = "intellij_ce_2022_3",
@@ -83,15 +74,6 @@ http_archive(
     url = IC_242_URL,
 )
 
-# The plugin api for IntelliJ UE 2021.2. This is required to run UE-specific
-# integration tests.
-http_archive(
-    name = "intellij_ue_2021_2",
-    build_file = "@//intellij_platform_sdk:BUILD.ue212",
-    sha256 = "f5e942e090693c139dda22e798823285e22d7b31aaad5d52c23a370a6e91ec7d",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2021.2.4/ideaIU-2021.2.4.zip",
-)
-
 # The plugin api for intellij_ue_2022_3. This is required to run UE-specific integration tests.
 http_archive(
     name = "intellij_ue_2022_3",
@@ -155,14 +137,6 @@ http_archive(
     build_file = "@//intellij_platform_sdk:BUILD.ue242",
     sha256 = IU_242_SHA,
     url = IU_242_URL,
-)
-
-# The plugin api for clion_2021_2. This is required to build CLwB, and run integration tests.
-http_archive(
-    name = "clion_2021_2",
-    build_file = "@//intellij_platform_sdk:BUILD.clion212",
-    sha256 = "1b9a882aa703303dead8b9459bd8d4f2572bd977d46dce99af96c1647231da2c",
-    url = "https://download.jetbrains.com/cpp/CLion-2021.2.4.tar.gz",
 )
 
 # The plugin api for clion_2022_3. This is required to build CLwB\, and run integration tests.
@@ -293,14 +267,6 @@ http_archive(
     url = "https://plugins.jetbrains.com/files/7322/125352/python-ce-211.7628.24.zip",
 )
 
-# Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
-http_archive(
-    name = "python_2021_2",
-    build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = "ce110ae1a5d3787bc85ae88d67fa2faa2be959a3e8acfc3567f8ed7b64c9151a",
-    url = "https://plugins.jetbrains.com/files/7322/151370/python-ce-212.5712.43.zip",
-)
-
 http_archive(
     name = "python_2022_3",
     build_file_content = _PYTHON_CE_BUILD_FILE,
@@ -374,22 +340,6 @@ http_archive(
     build_file_content = _PYTHON_CE_242_BUILD_FILE,
     sha256 = PYTHON_PLUGIN_242_SHA,
     url = PYTHON_PLUGIN_242_URL,
-)
-
-_GO_BUILD_FILE = """
-java_import(
-    name = "go",
-    jars = glob(["go/lib/*.jar"]),
-    visibility = ["//visibility:public"],
-)
-"""
-
-# Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
-http_archive(
-    name = "go_2021_2",
-    build_file_content = _GO_BUILD_FILE,
-    sha256 = "5c868f2be8feb552aa4f9edb2a3c48db68193eb49ba50ca0a0976f4b9de82c67",
-    url = "https://plugins.jetbrains.com/files/9568/149614/go-212.5712.14.zip",
 )
 
 _GO_BUILD_FILE_223 = """
@@ -477,14 +427,6 @@ java_import(
     visibility = ["//visibility:public"],
 )
 """
-
-# Scala plugin for IntelliJ CE. Required at compile-time for scala-specific features.
-http_archive(
-    name = "scala_2021_2",
-    build_file_content = _SCALA_BUILD_FILE,
-    sha256 = "8d9c2831920fb69a52898598dc7f78c455001b3ebd1956b972757ffae7c0f056",
-    url = "https://plugins.jetbrains.com/files/1347/153522/scala-intellij-bin-2021.2.30.zip",
-)
 
 http_archive(
     name = "scala_2022_3",
