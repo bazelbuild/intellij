@@ -129,6 +129,20 @@ use_repo(
     truth8 = "com_google_truth_extensions_truth_java8_extension",
 )
 
+bazel_dep(name = "rules_go", version = "0.39.1", repo_name = "io_bazel_rules_go")
+bazel_dep(name = "gazelle", version = "0.31.0", repo_name = "bazel_gazelle")
+
+go_repository = use_repo_rule("@bazel_gazelle//:deps.bzl", "go_repository")
+# gRPC is used to generate Go from proto in the aspect tests, in
+# //aspect/testing/tests/src/com/google/idea/blaze/aspect/go/...
+go_repository(
+    name = "org_golang_google_grpc",
+    build_file_proto_mode = "disable",
+    importpath = "google.golang.org/grpc",
+    sum = "h1:zvIju4sqAGvwKspUQOhwnpcqSbzi7/H6QomNNjTL4sk=",
+    version = "v1.27.1",
+)
+
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 # Long-lived download links available at: https://www.jetbrains.com/intellij-repository/releases
@@ -679,5 +693,15 @@ http_archive(
     build_file = "@//intellij_platform_sdk:BUILD.android_studio223",
     sha256 = "250625dcab183e0c68ebf12ef8a522af7369527d76f1efc704f93c05b02ffa9e",
     url = "https://dl.google.com/dl/android/studio/ide-zips/2022.3.1.19/android-studio-2022.3.1.19-linux.tar.gz",
+)
+
+# needed for cpp tests
+http_archive(
+    name = "com_google_absl",
+    sha256 = "f50e5ac311a81382da7fa75b97310e4b9006474f9560ac46f54a9967f07d4ae3",
+    strip_prefix = "abseil-cpp-20240722.0",
+    urls = [
+        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20240722.0.tar.gz",
+    ],
 )
 
