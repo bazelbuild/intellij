@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.kotlin.sync;
 
-import com.google.idea.sdkcompat.kotlin.KotlinCompat.KotlinProjectConfiguratorBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
