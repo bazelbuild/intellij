@@ -42,14 +42,14 @@ public class BlazeModRunnerImpl extends BlazeModRunner {
   private static final String ROOT_WORKSPACE = "";
 
   /**
-   * {@code bazel mod dump_repo_mapping} takes a canonical repository name and will dump a map
-   * from repoName -> canonicalName of all the external repositories available to that repository
-   * The name {@code ""} is special and considered to be <em>the main workspace</em> so in order to dump the main
-   * repository map we would invoke it like {@code bazel mod dump_repo_mapping ""}.
-   * <p />
-   * Additionally the flag {@code --enable_workspace} needs to be off for this to work. The flag is default
-   * off in bazel 8.0.0 but it is on between 7.1.0 and 8.0.0. So we need to also pass this along in
-   * between those versions for the command to work well.
+   * {@code bazel mod dump_repo_mapping} takes a canonical repository name and will dump a map from
+   * repoName -> canonicalName of all the external repositories available to that repository The
+   * name {@code ""} is special and considered to be <em>the main workspace</em> so in order to dump
+   * the main repository map we would invoke it like {@code bazel mod dump_repo_mapping ""}.
+   *
+   * <p>Additionally the flag {@code --enable_workspace} needs to be off for this to work. The flag
+   * is default off in bazel 8.0.0 but it is on between 7.1.0 and 8.0.0. So we need to also pass
+   * this along in between those versions for the command to work well.
    */
   @Override
   public ListenableFuture<ExternalWorkspaceData> dumpRepoMapping(
@@ -63,9 +63,12 @@ public class BlazeModRunnerImpl extends BlazeModRunner {
     flags.add("--noenable_workspace");
 
     return Futures.transform(
-        runBlazeModGetBytes(project, invoker, context, ImmutableList.of(DUMP_REPO_MAPPING, ROOT_WORKSPACE), flags),
+        runBlazeModGetBytes(
+            project, invoker, context, ImmutableList.of(DUMP_REPO_MAPPING, ROOT_WORKSPACE), flags),
         bytes -> {
-          JsonObject json = JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8).trim()).getAsJsonObject();
+          JsonObject json =
+              JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8).trim())
+                  .getAsJsonObject();
 
           ImmutableList<ExternalWorkspace> externalWorkspaces =
               json.entrySet().stream()
@@ -87,21 +90,22 @@ public class BlazeModRunnerImpl extends BlazeModRunner {
       List<String> args,
       List<String> flags) {
     return BlazeExecutor.getInstance()
-               .submit(() -> {
-                 BlazeCommand.Builder builder =
-                     BlazeCommand.builder(invoker, BlazeCommandName.MOD)
-                         .addBlazeFlags(flags);
+        .submit(
+            () -> {
+              BlazeCommand.Builder builder =
+                  BlazeCommand.builder(invoker, BlazeCommandName.MOD).addBlazeFlags(flags);
 
-                 if (args != null) {
-                   builder.addBlazeFlags(args);
-                 }
+              if (args != null) {
+                builder.addBlazeFlags(args);
+              }
 
-                 try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
-                   BlazeCommandRunner runner = invoker.getCommandRunner();
-                   try (InputStream stream = runner.runBlazeMod(project, builder, buildResultHelper, context)) {
-                     return stream.readAllBytes();
-                   }
-                 }
-               });
+              try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
+                BlazeCommandRunner runner = invoker.getCommandRunner();
+                try (InputStream stream =
+                    runner.runBlazeMod(project, builder, buildResultHelper, context)) {
+                  return stream.readAllBytes();
+                }
+              }
+            });
   }
 }
