@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms;
 import java.util.Collection;
 
 /** A kotlin project configurator to suppress "Configure Kotlin" banner. */
-public class BlazeKotlinProjectConfigurator extends KotlinProjectConfiguratorBase implements KotlinProjectConfigurator {
+public class BlazeKotlinProjectConfigurator implements KotlinProjectConfigurator {
 
   @NotNull
   public ConfigureKotlinStatus getStatus(@NotNull Module module) {
