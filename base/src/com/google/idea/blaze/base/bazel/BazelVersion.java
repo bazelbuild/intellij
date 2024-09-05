@@ -102,7 +102,7 @@ public class BazelVersion implements ProtoWrapper<ProjectData.BazelVersion> {
   }
 
   static BazelVersion parseVersion(BlazeInfo blazeInfo) {
-    return parseVersion(blazeInfo.get(BlazeInfo.RELEASE));
+    return parseVersion(blazeInfo.getRelease());
   }
 
   @Override
