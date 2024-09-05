@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExternalWorkspace;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -68,8 +69,8 @@ public class WorkspaceHelper {
   }
 
   @Nullable
-  public static WorkspaceRoot resolveExternalWorkspace(Project project, String workspaceName) {
-    return getExternalWorkspaceRootsFile(workspaceName, project);
+  public static WorkspaceRoot getExternalWorkspace(Project project, String workspaceName) {
+    return resolveExternalWorkspaceRoot(project, workspaceName, null);
   }
 
   /**
@@ -84,7 +85,7 @@ public class WorkspaceHelper {
       return pathResolver != null ? pathResolver.resolveToFile(label.blazePackage()) : null;
     }
 
-    WorkspaceRoot root = getExternalWorkspaceRootsFile(label.externalWorkspaceName(), project);
+    WorkspaceRoot root = resolveExternalWorkspaceRoot(project, label.externalWorkspaceName(), null);
     return root != null ? root.fileForPath(label.blazePackage()) : null;
   }
 
@@ -127,9 +128,7 @@ public class WorkspaceHelper {
     }
 
     BlazeProjectData blazeProjectData = getBlazeProjectData(project);
-    Path bazelRootPath = Paths.get(
-        blazeProjectData.getBlazeInfo().getOutputBase().getAbsolutePath(),
-        "external").normalize();
+    Path bazelRootPath = getExternalSourceRoot(blazeProjectData);
 
     logger.debug("the bazelRootPath is " + bazelRootPath);
     Path path = Paths.get(absoluteFile.getAbsolutePath()).normalize();
@@ -187,16 +186,21 @@ public class WorkspaceHelper {
   }
 
   @VisibleForTesting
-  public static File getExternalSourceRoot(BlazeProjectData projectData) {
-    return new File(projectData.getBlazeInfo().getOutputBase(), "external");
+  public static Path getExternalSourceRoot(BlazeProjectData projectData) {
+    return Paths.get(projectData.getBlazeInfo().getOutputBase().getAbsolutePath(), "external").normalize();
   }
 
   @Nullable
-  private static synchronized WorkspaceRoot getExternalWorkspaceRootsFile(String workspaceName,
-                                                                          Project project) {
+  private static synchronized WorkspaceRoot resolveExternalWorkspaceRoot(
+      Project project, String workspaceName, @Nullable BuildFile buildFile) {
     if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze) {
       return null;
     }
+
+    if (workspaceName == null || workspaceName.isEmpty()) {
+      return WorkspaceRoot.fromProjectSafe(project);
+    }
+
     logger.debug("getExternalWorkspaceRootsFile for " + workspaceName);
     Map<String, WorkspaceRoot> workspaceRootCache =
         SyncCache.getInstance(project)
