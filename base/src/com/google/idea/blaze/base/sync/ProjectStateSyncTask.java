@@ -233,7 +233,7 @@ final class ProjectStateSyncTask {
       SyncMode syncMode)
       throws SyncCanceledException, SyncFailedException {
 
-    List<String> syncFlags =
+    List<String> blazeModFlags =
         BlazeFlags.blazeFlags(
             project,
             projectViewSet,
@@ -243,7 +243,7 @@ final class ProjectStateSyncTask {
 
     ListenableFuture<ExternalWorkspaceData> externalWorkspaceDataFuture =
         ExternalWorkspaceDataProvider.getInstance(project)
-            .getExternalWorkspaceData(context, syncFlags, blazeVersionData, blazeInfo);
+            .getExternalWorkspaceData(context, blazeModFlags, blazeVersionData, blazeInfo);
 
     FutureResult<ExternalWorkspaceData> externalWorkspaceDataResult =
         FutureUtil.waitForFuture(context, externalWorkspaceDataFuture)
