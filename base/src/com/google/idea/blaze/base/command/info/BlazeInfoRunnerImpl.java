@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.command.info;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
@@ -39,14 +38,14 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
       BuildInvoker invoker,
       BlazeContext context,
       List<String> blazeFlags,
-      String key) {
+      String... keys) {
     return BlazeExecutor.getInstance()
         .submit(
             () -> {
               BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.INFO);
               builder.addBlazeFlags(blazeFlags);
-              if (key != null) {
-                builder.addBlazeFlags(key);
+              if (keys != null) {
+                builder.addBlazeFlags(keys);
               }
               try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper();
                   InputStream blazeInfoStream =
@@ -64,9 +63,9 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
       BuildInvoker invoker,
       BlazeContext context,
       List<String> blazeFlags,
-      String key) {
+      String... keys) {
     return Futures.transform(
-        runBlazeInfoGetBytes(project, invoker, context, blazeFlags, key),
+        runBlazeInfoGetBytes(project, invoker, context, blazeFlags, keys),
         bytes -> new String(bytes, StandardCharsets.UTF_8).trim(),
         BlazeExecutor.getInstance().getExecutor());
   }
@@ -78,23 +77,27 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
       BlazeContext context,
       BuildSystemName buildSystemName,
       List<String> blazeFlags) {
-    ListeningExecutorService executor = BlazeExecutor.getInstance().getExecutor();
 
-    return Futures.transformAsync(
-        runBlazeInfoGetBytes(project, invoker, context, blazeFlags, /* key= */ null),
-        bytes -> {
-          ImmutableMap.Builder<String, String> builder = parseBlazeInfoResult(new String(bytes, StandardCharsets.UTF_8).trim());
-
-          return Futures.transform(
-              runBlazeInfo(project, invoker, context, blazeFlags, BlazeInfo.STARLARK_SEMANTICS),
-
-              starLarkSemantics -> {
-                builder.put(BlazeInfo.STARLARK_SEMANTICS, starLarkSemantics);
-
-                return BlazeInfo.create(buildSystemName, builder.build());
-              }, executor);
-        },
-        executor);
+    return Futures.transform(
+        runBlazeInfoGetBytes(
+            project,
+            invoker,
+            context,
+            blazeFlags,
+            BlazeInfo.blazeBinKey(buildSystemName),
+            BlazeInfo.blazeGenfilesKey(buildSystemName),
+            BlazeInfo.blazeTestlogsKey(buildSystemName),
+            BlazeInfo.EXECUTION_ROOT_KEY,
+            BlazeInfo.PACKAGE_PATH_KEY,
+            BlazeInfo.OUTPUT_PATH_KEY,
+            BlazeInfo.OUTPUT_BASE_KEY,
+            BlazeInfo.RELEASE,
+            BlazeInfo.STARLARK_SEMANTICS),
+        bytes ->
+            BlazeInfo.create(
+                buildSystemName,
+                parseBlazeInfoResult(new String(bytes, StandardCharsets.UTF_8).trim()).build()),
+        BlazeExecutor.getInstance().getExecutor());
   }
 
   private static ImmutableMap.Builder<String, String> parseBlazeInfoResult(String blazeInfoString) {

@@ -66,7 +66,7 @@ public class CoverageUtils {
   }
 
   public static File getOutputFile(BlazeInfo blazeInfo) {
-    File coverageRoot = new File(blazeInfo.get(BlazeInfo.OUTPUT_PATH_KEY), "_coverage");
+    File coverageRoot = new File(blazeInfo.getOutputBase(), "_coverage");
     return new File(coverageRoot, "_coverage_report.dat");
   }
 }

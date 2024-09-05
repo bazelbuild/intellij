@@ -826,7 +826,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .build();
 
     File externalRoot = WorkspaceHelper.getExternalSourceRoot(
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData());
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData()).toFile();
 
     File spyExternalDependencyRoot = spy(new File(externalRoot, "external_dependency"));
     doReturn(true).when(spyExternalDependencyRoot).isDirectory();
@@ -844,7 +844,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
 
    try (MockedStatic<WorkspaceHelper> mockedStatic = Mockito.mockStatic(WorkspaceHelper.class)) {
      mockedStatic.when(
-         () -> WorkspaceHelper.resolveExternalWorkspace(Mockito.any(MockProject.class),
+         () -> WorkspaceHelper.getExternalWorkspace(Mockito.any(MockProject.class),
              Mockito.any(String.class))).thenReturn(new WorkspaceRoot(spyExternalDependencyRoot));
 
      assertThatResolving(projectView, targetMap).producesConfigurationsFor(

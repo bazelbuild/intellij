@@ -80,10 +80,13 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.lang.JavaVersion;
+
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.junit.After;
 import org.junit.Before;
@@ -287,8 +290,11 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BuildInvoker invoker,
         BlazeContext context,
         List<String> blazeFlags,
-        String key) {
-      return Futures.immediateFuture(results.get(key));
+        String ...keys) {
+      return Futures.immediateFuture(
+          Arrays.stream(keys)
+              .map(key -> String.format("%s: %s", key, results.get(key)))
+              .collect(Collectors.joining("\n")));
     }
 
     @Override
@@ -308,7 +314,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BuildInvoker invoker,
         BlazeContext context,
         List<String> blazeFlags,
-        String key) {
+        String ...key) {
       return Futures.immediateFuture(null);
     }
 

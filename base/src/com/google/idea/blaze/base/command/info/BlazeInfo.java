@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.command.info;
 import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
@@ -33,7 +34,6 @@ public abstract class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
   public static final String BUILD_LANGUAGE = "build-language";
   public static final String OUTPUT_BASE_KEY = "output_base";
   public static final String OUTPUT_PATH_KEY = "output_path";
-  public static final String MASTER_LOG = "master-log";
   public static final String RELEASE = "release";
 
   public static final String STARLARK_SEMANTICS = "starlark-semantics";
@@ -114,7 +114,7 @@ public abstract class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
 
   abstract ImmutableMap<String, String> getBlazeInfoMap();
 
-  public String get(String key) {
+  protected String get(String key) {
     return getBlazeInfoMap().get(key);
   }
 
@@ -139,6 +139,14 @@ public abstract class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
   }
 
   public abstract File getOutputBase();
+
+  public String getStarlarkSemantics() {
+    return getBlazeInfoMap().get(STARLARK_SEMANTICS);
+  }
+
+  public String getRelease() {
+    return getBlazeInfoMap().get(RELEASE);
+  }
 
   /** Creates a mock blaze info with the minimum information required for syncing. */
   @VisibleForTesting

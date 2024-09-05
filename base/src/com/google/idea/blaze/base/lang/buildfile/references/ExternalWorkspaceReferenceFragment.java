@@ -15,13 +15,19 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.references;
 
+import com.google.idea.blaze.base.lang.buildfile.completion.BuildLookupElement;
+import com.google.idea.blaze.base.lang.buildfile.completion.ExternalWorkspaceLookupElement;
+import com.google.idea.blaze.base.lang.buildfile.psi.BuildElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -30,6 +36,8 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /** The external workspace component of a label (between '@' and '//') */
@@ -42,26 +50,45 @@ public class ExternalWorkspaceReferenceFragment extends PsiReferenceBase<StringL
   @Override
   public TextRange getRangeInElement() {
     String rawText = myElement.getText();
-    boolean valid = LabelUtils.getExternalWorkspaceComponent(myElement.getStringContents()) != null;
-    if (!valid) {
+    String unquotedText = LabelUtils.trimToDummyIdentifier(myElement.getStringContents());
+    QuoteType quoteType = myElement.getQuoteType();
+
+    String externalWorkspace = LabelUtils.getExternalWorkspaceComponent(unquotedText);
+    if (!unquotedText.trim().isEmpty() && externalWorkspace == null) {
       return TextRange.EMPTY_RANGE;
     }
+
     int endIndex = rawText.indexOf("//");
     if (endIndex == -1) {
-      endIndex = rawText.length() - 1;
+      endIndex = rawText.length() - quoteType.quoteString.length();
+    } else {
+      endIndex += 2;
     }
     return new TextRange(1, endIndex);
   }
 
   @Nullable
   @Override
-  public FuncallExpression resolve() {
+  public BuildElement resolve() {
     String name = LabelUtils.getExternalWorkspaceComponent(myElement.getStringContents());
     if (name == null) {
       return null;
     }
+
     BuildFile workspaceFile = resolveProjectWorkspaceFile(myElement.getProject());
-    return workspaceFile != null ? workspaceFile.findRule(name) : null;
+    if (workspaceFile != null) {
+      FuncallExpression expression = workspaceFile.findRule(name);
+      if (expression != null) {
+        return expression;
+      }
+    };
+
+    WorkspaceRoot workspaceRoot = WorkspaceHelper.getExternalWorkspace(myElement.getProject(), name);
+    if (workspaceRoot != null) {
+      return BuildReferenceManager.getInstance(myElement.getProject()).findBuildFile(workspaceRoot.directory());
+    }
+
+    return null;
   }
 
   @Nullable
@@ -83,8 +110,16 @@ public class ExternalWorkspaceReferenceFragment extends PsiReferenceBase<StringL
   }
 
   @Override
-  public Object[] getVariants() {
-    return EMPTY_ARRAY;
+  @Nonnull
+  public BuildLookupElement[] getVariants() {
+    BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(myElement.getProject()).getBlazeProjectData();
+    if (blazeProjectData == null) {
+      return BuildLookupElement.EMPTY_ARRAY;
+    }
+
+    return blazeProjectData.getExternalWorkspaceData().workspaces.values().stream()
+        .map(ExternalWorkspaceLookupElement::new)
+        .toArray(BuildLookupElement[]::new);
   }
 
   @Override

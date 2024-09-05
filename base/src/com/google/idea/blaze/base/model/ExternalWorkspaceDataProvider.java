@@ -78,7 +78,7 @@ public class ExternalWorkspaceDataProvider {
 
     // validate that bzlmod is enabled (technically this validates that the --enable_bzlmod is not
     // changed from the default `true` aka set to false)
-    String starLarkSemantics = blazeInfo.get(BlazeInfo.STARLARK_SEMANTICS);
+    String starLarkSemantics = blazeInfo.getStarlarkSemantics();
     if (starLarkSemantics == null || starLarkSemantics.isEmpty() || starLarkSemantics.contains("enable_bzlmod=false")) {
       return Futures.immediateFuture(ExternalWorkspaceData.EMPTY);
     }
