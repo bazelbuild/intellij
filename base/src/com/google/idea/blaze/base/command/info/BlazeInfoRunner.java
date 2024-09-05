@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.util.List;
@@ -27,12 +28,12 @@ import java.util.List;
 public abstract class BlazeInfoRunner {
 
   public static BlazeInfoRunner getInstance() {
-    return ServiceManager.getService(BlazeInfoRunner.class);
+    return ApplicationManager.getApplication().getService(BlazeInfoRunner.class);
   }
 
   /**
    * @param blazeFlags The blaze flags that will be passed to Blaze.
-   * @param key The key passed to blaze info
+   * @param keys The key passed to blaze info
    * @return The blaze info value associated with the specified key
    */
   public abstract ListenableFuture<String> runBlazeInfo(
@@ -40,11 +41,11 @@ public abstract class BlazeInfoRunner {
       BuildInvoker invoker,
       BlazeContext context,
       List<String> blazeFlags,
-      String key);
+      String ...keys);
 
   /**
    * @param blazeFlags The blaze flags that will be passed to Blaze.
-   * @param key The key passed to blaze info
+   * @param keys The keys passed to blaze info
    * @return The blaze info value associated with the specified key
    */
   public abstract ListenableFuture<byte[]> runBlazeInfoGetBytes(
@@ -52,7 +53,7 @@ public abstract class BlazeInfoRunner {
       BuildInvoker invoker,
       BlazeContext context,
       List<String> blazeFlags,
-      String key);
+      String ...keys);
 
   /**
    * This calls blaze info without any specific key so blaze info will return all keys and values
