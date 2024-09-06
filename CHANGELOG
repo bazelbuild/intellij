@@ -7,6 +7,7 @@ Bug Fixes
 * fix: Exception when opening a JavaScript project #6645
 * go: fix testify single test execution #6634
 * fix: Resolve collision between view_project_root and "directories: ." #6665
+* Fix googletest integration with CLion 2024.2 #6741
 
 v2024.08.13
 ===========
