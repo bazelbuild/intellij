@@ -59,6 +59,7 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.xdebugger.XDebugSession;
@@ -135,26 +136,28 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         Preconditions.checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet());
 
     if (shouldDisplayBazelTestFilterWarning()) {
-      String messageContents =
-          "<html>The Google Test framework did not apply test filtering correctly before "
-              + "git commit <a href='https://github.com/google/googletest/commit/"
-              + "ba96d0b1161f540656efdaed035b3c062b60e006"
-              + "'>ba96d0b<a>.<br/>"
-              + "Please ensure you are past this commit if you are using it.<br/><br/>"
-              + "More information on the bazel <a href='https://github.com/bazelbuild/bazel/issues/"
-              + "4411'>issue</a></html>";
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        String messageContents =
+                "<html>The Google Test framework did not apply test filtering correctly before "
+                        + "git commit <a href='https://github.com/google/googletest/commit/"
+                        + "ba96d0b1161f540656efdaed035b3c062b60e006"
+                        + "'>ba96d0b<a>.<br/>"
+                        + "Please ensure you are past this commit if you are using it.<br/><br/>"
+                        + "More information on the bazel <a href='https://github.com/bazelbuild/bazel/issues/"
+                        + "4411'>issue</a></html>";
 
-      int selectedOption =
-          Messages.showDialog(
-              getProject(),
-              messageContents,
-              "Please update 'Google Test' past ba96d0b...",
-              new String[] {"Close", "Don't show again"},
-              0, // Default to "Close"
-              Messages.getWarningIcon());
-      if (selectedOption == 1) {
-        PropertiesComponent.getInstance().setValue(DISABLE_BAZEL_GOOGLETEST_FILTER_WARNING, "true");
-      }
+        int selectedOption =
+                Messages.showDialog(
+                        getProject(),
+                        messageContents,
+                        "Please update 'Google Test' past ba96d0b...",
+                        new String[] {"Close", "Don't show again"},
+                        0, // Default to "Close"
+                        Messages.getWarningIcon());
+        if (selectedOption == 1) {
+          PropertiesComponent.getInstance().setValue(DISABLE_BAZEL_GOOGLETEST_FILTER_WARNING, "true");
+        }
+      });
     }
 
     BlazeCommand.Builder commandBuilder =
