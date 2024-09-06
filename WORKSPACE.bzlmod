@@ -2,8 +2,6 @@ workspace(name = "intellij_with_bazel")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-android_sdk_repository(name = "androidsdk")
-
 # LICENSE: The Apache Software License, Version 2.0
 rules_scala_version = "8f255cd1fecfe4d43934b161b3edda58bdb2e8f4"
 
