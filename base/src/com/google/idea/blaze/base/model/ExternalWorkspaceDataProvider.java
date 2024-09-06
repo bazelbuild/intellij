@@ -57,12 +57,12 @@ public class ExternalWorkspaceDataProvider {
   }
 
   static Boolean isEnabled(BlazeVersionData blazeVersionData) {
-    // disable this until a more reliable opt-in mechanism is chosen.
-    //
-    // bg: some blaze workspaces with blaze > MINIMUM_BLAZE_VERSION
-    // have explicitly disabled this bzlmod support and this causes
-    // `blaze mod` to fail.
-    return blazeVersionData.bazelIsAtLeastVersion(MINIMUM_BLAZE_VERSION) && Registry.is("bazel.read.external.workspace.data");
+    if (!Registry.is("bazel.read.external.workspace.data")) {
+      logger.info("disabled by registry");
+      return false;
+    }
+
+    return blazeVersionData.bazelIsAtLeastVersion(MINIMUM_BLAZE_VERSION);
   }
 
   public ListenableFuture<ExternalWorkspaceData> getExternalWorkspaceData(
