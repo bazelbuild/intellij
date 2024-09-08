@@ -25,11 +25,12 @@ public class ExternalWorkspaceCompletionTest extends BuildFileIntegrationTestCas
 
   @Override
   protected ExternalWorkspaceData mockExternalWorkspaceData() {
-    workspaceOne = new ExternalWorkspaceFixture(
-        ExternalWorkspace.create("workspace_one", "workspace_one"), fileSystem);
+    workspaceOne =
+        createExternalWorkspaceFixture(ExternalWorkspace.create("workspace_one", "workspace_one"));
 
-    workspaceTwoMapped = new ExternalWorkspaceFixture(
-        ExternalWorkspace.create("workspace_two", "com_workspace_two"), fileSystem);
+    workspaceTwoMapped =
+        createExternalWorkspaceFixture(
+            ExternalWorkspace.create("workspace_two", "com_workspace_two"));
 
     return ExternalWorkspaceData.create(
         ImmutableList.of(workspaceOne.workspace, workspaceTwoMapped.workspace));
@@ -41,13 +42,11 @@ public class ExternalWorkspaceCompletionTest extends BuildFileIntegrationTestCas
 
     String[] strings = editorTest.getCompletionItemsAsStrings();
     assertThat(strings).hasLength(2);
-    assertThat(strings)
-        .asList()
-        .containsExactly("@com_workspace_two", "@workspace_one");
+    assertThat(strings).asList().containsExactly("@com_workspace_two", "@workspace_one");
   }
 
   @Test
-  public void testCompleteWillIncludeSlashes () {
+  public void testCompleteWillIncludeSlashes() {
     PsiFile file = testFixture.configureByText("BUILD", "'@com<caret>'");
     assertThat(editorTest.completeIfUnique()).isTrue();
 
@@ -55,7 +54,7 @@ public class ExternalWorkspaceCompletionTest extends BuildFileIntegrationTestCas
   }
 
   @Test
-  public void testCompleteWillFixUpRemainingSlashed () {
+  public void testCompleteWillFixUpRemainingSlashed() {
     PsiFile file = testFixture.configureByText("BUILD", "'@com<caret>//'");
     assertThat(editorTest.completeIfUnique()).isTrue();
 
@@ -73,9 +72,10 @@ public class ExternalWorkspaceCompletionTest extends BuildFileIntegrationTestCas
   @Test
   public void testCompleteWillRespectAutoQuoting() {
     boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE;
+    PsiFile file;
     try {
       CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE = false;
-      PsiFile file = testFixture.configureByText("BUILD", "'@com<caret>");
+      file = testFixture.configureByText("BUILD", "'@com<caret>");
 
       assertThat(editorTest.completeIfUnique()).isTrue();
       assertFileContents(file, "'@com_workspace_two//");

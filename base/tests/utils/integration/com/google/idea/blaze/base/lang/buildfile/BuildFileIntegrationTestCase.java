@@ -18,11 +18,13 @@ package com.google.idea.blaze.base.lang.buildfile;
 import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.EditorTestHelper;
+import com.google.idea.blaze.base.ExternalWorkspaceFixture;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
+import com.google.idea.blaze.base.model.primitives.ExternalWorkspace;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
@@ -66,6 +68,13 @@ public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestC
     return (BuildFile) file;
   }
 
+  protected BuildFile createBuildFileWithCaret(WorkspacePath workspacePath, String... contentLines) {
+    PsiFile file = workspace.createPsiFile(workspacePath, contentLines);
+    assertThat(file).isInstanceOf(BuildFile.class);
+    testFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    return (BuildFile) file;
+  }
+
   protected void assertFileContents(VirtualFile file, String... contentLines) {
     assertFileContents(fileSystem.getPsiFile(file), contentLines);
   }
@@ -92,5 +101,9 @@ public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestC
     assertThat(blazeProjectData).isNotNull();
 
     return WorkspaceHelper.getExternalSourceRoot(blazeProjectData).toFile();
+  }
+
+  protected ExternalWorkspaceFixture createExternalWorkspaceFixture(ExternalWorkspace workspace) {
+    return new ExternalWorkspaceFixture(workspace, fileSystem, testFixture);
   }
 }

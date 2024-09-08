@@ -8,7 +8,9 @@ import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -21,11 +23,17 @@ public class ExternalWorkspaceFixture {
   public final ExternalWorkspace workspace;
 
   final TestFileSystem fileSystem;
+  final CodeInsightTestFixture testFixture;
   WorkspaceFileSystem workspaceFileSystem;
 
-  public ExternalWorkspaceFixture(ExternalWorkspace workspace, TestFileSystem fileSystem) {
+  public ExternalWorkspaceFixture(ExternalWorkspace workspace, TestFileSystem fileSystem, CodeInsightTestFixture testFixture) {
     this.workspace = workspace;
     this.fileSystem = fileSystem;
+    this.testFixture = testFixture;
+  }
+
+  public VirtualFile createDirectory(WorkspacePath path) {
+    return getWorkspaceFileSystem().createDirectory(path);
   }
 
   public BuildFile createBuildFile(WorkspacePath workspacePath, String... contentLines) {
@@ -33,6 +41,14 @@ public class ExternalWorkspaceFixture {
     assertThat(file).isInstanceOf(BuildFile.class);
     return (BuildFile) file;
   }
+
+  protected BuildFile configureByFile(WorkspacePath workspacePath, String... contentLines) {
+    PsiFile file = getWorkspaceFileSystem().createPsiFile(workspacePath, contentLines);
+    assertThat(file).isInstanceOf(BuildFile.class);
+    testFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    return (BuildFile) file;
+  }
+
 
   WorkspaceFileSystem getWorkspaceFileSystem() {
     if (workspaceFileSystem == null) {

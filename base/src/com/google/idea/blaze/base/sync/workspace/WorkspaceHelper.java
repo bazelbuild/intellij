@@ -190,6 +190,7 @@ public class WorkspaceHelper {
     return Paths.get(projectData.getBlazeInfo().getOutputBase().getAbsolutePath(), "external").normalize();
   }
 
+  /** resolve workspace root for a named external repository. needs context since the same name can mean something different in different workspaces. */
   @Nullable
   private static synchronized WorkspaceRoot resolveExternalWorkspaceRoot(
       Project project, String workspaceName, @Nullable BuildFile buildFile) {

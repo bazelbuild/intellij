@@ -189,11 +189,6 @@ public class RuleTargetCompletionTest extends BuildFileIntegrationTestCase {
     assertThat(completionItems).asList().doesNotContain("'//java/com/google:other_rule'");
   }
 
-  @Test
-  public void testExternalRepoCompletion() throws Throwable {
-
-  }
-
   private static void setBuildLanguageSpecRules(
       MockBuildLanguageSpecProvider specProvider, String... ruleNames) {
     ImmutableMap.Builder<String, RuleDefinition> rules = ImmutableMap.builder();
