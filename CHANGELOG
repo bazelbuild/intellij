@@ -1,7 +1,5 @@
 v2024.09.10
 ===========
-Features
-* Proper resolution / completion of external workspaces / repositories in label definitions #6664 (credits: @mtoader)
 Bug Fixes
 * Fix reading MatchedMatcher data in BlazePyTracebackParser #6693
 * Fix googletest integration with CLion 2024.2 #6741
