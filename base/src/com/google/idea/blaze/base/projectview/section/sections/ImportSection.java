@@ -66,7 +66,7 @@ public class ImportSection {
           if (projectViewImportsMandatory || projectViewFile.exists()) {
             parser.parseProjectView(projectViewFile);
           } else {
-            String warningMessage = String.format("Could not load optional project view file: '%s'", projectViewFile.getPath());
+            String warningMessage = String.format("Could not load project view file: '%s'", projectViewFile.getPath());
             if (parseContext.getContext() != null) {
               IssueOutput.warn(warningMessage).submit(parseContext.getContext());
             } else {
