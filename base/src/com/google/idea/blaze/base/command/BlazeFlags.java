@@ -77,7 +77,9 @@ public final class BlazeFlags {
     for (BuildFlagsProvider buildFlagsProvider : BuildFlagsProvider.EP_NAME.getExtensions()) {
       buildFlagsProvider.addBuildFlags(project, projectViewSet, command, invocationContext, flags);
     }
-    flags.addAll(expandBuildFlags(projectViewSet.listItems(BuildFlagsSection.KEY)));
+    if (command != BlazeCommandName.MOD) {
+      flags.addAll(expandBuildFlags(projectViewSet.listItems(BuildFlagsSection.KEY)));
+    }
     if (invocationContext.type() == ContextType.Sync) {
       for (BuildFlagsProvider buildFlagsProvider : BuildFlagsProvider.EP_NAME.getExtensions()) {
         buildFlagsProvider.addSyncFlags(
