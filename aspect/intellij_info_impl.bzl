@@ -47,7 +47,7 @@ DEPS = [
     "exports",
     "java_lib",  # From old proto_library rules
     "_android_sdk",  # from android rules
-    "aidl_lib",  # from android_sdk
+    "_aidl_lib",  # from android_library
     "_scala_toolchain",  # From scala rules
     "test_app",  # android_instrumentation_test
     "instruments",  # android_instrumentation_test
@@ -827,6 +827,7 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
 
     if hasattr(android_common, "AndroidIdeInfo"):
         android = target[android_common.AndroidIdeInfo]
+
     else:
         # Backwards compatibility: supports android struct provider
         legacy_android = getattr(target, "android")
