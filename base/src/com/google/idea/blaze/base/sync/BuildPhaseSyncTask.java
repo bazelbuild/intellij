@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.sync;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.idea.blaze.base.issueparser.BlazeIssueParser.targetDetectionQueryParsers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -262,8 +261,7 @@ public final class BuildPhaseSyncTask {
     buildStats
         .setBuildResult(blazeBuildResult.buildResult)
         .setBuildIds(blazeBuildResult.getBuildIds())
-        .setBuildBinaryType(syncBuildInvoker.getType())
-        .setBepBytesConsumed(blazeBuildResult.bepBytesConsumed);
+        .setBuildBinaryType(syncBuildInvoker.getType());
 
     if (context.isCancelled()) {
       throw new SyncCanceledException();
@@ -385,28 +383,28 @@ public final class BuildPhaseSyncTask {
     }
     String title = "Query targets building source files";
     List<TargetInfo> result =
-        ProgressiveTaskWithProgressIndicator.builder(project, title).submitTaskWithResult(
-            indicator -> Scope.push(
-                context,
-                childContext -> {
-                  childContext.push(new TimingScope("QuerySourceTargets", EventType.BlazeInvocation));
-                  childContext.output(new StatusOutput("Querying targets building source files..."));
-                  var scope = childContext.getScope(ToolWindowScope.class);
-                  if(scope != null) { // If ToolWindowScope doesn't already exist, it means the output is not supposed to be printed to toolwindow (for example in tests)
-                    var task = new Task(project, title, Task.Type.SYNC, scope.getTask());
-                    var newScope = new ToolWindowScope.Builder(project, task)
-                        .setProgressIndicator(indicator)
-                        .setPopupBehavior(BlazeUserSettings.FocusBehavior.ON_ERROR)
-                        .setIssueParsers(targetDetectionQueryParsers(project, WorkspaceRoot.fromProject(project)))
-                        .build();
-                    childContext.push(newScope);
-                  }
+        ProgressiveTaskWithProgressIndicator.builder(project, title)
+            .submitTaskWithResult(
+                indicator -> Scope.push(
+                    context,
+                    childContext -> {
+                      childContext.push(new TimingScope("QuerySourceTargets", EventType.BlazeInvocation));
+                      childContext.output(new StatusOutput("Querying targets building source files..."));
+                      var scope = childContext.getScope(ToolWindowScope.class);
+                      if(scope != null) { // If ToolWindowScope doesn't already exist, it means the output is not supposed to be printed to toolwindow (for example in tests)
+                        var task = new Task(project, title, Task.Type.SYNC, scope.getTask());
+                        var newScope = new ToolWindowScope.Builder(project, task)
+                            .setProgressIndicator(indicator)
+                            .setPopupBehavior(BlazeUserSettings.FocusBehavior.ON_ERROR)
+                            .build();
+                        childContext.push(newScope);
+                      }
 
-                  // We don't want blaze build errors to fail the whole sync
-                  childContext.setPropagatesErrors(false);
-                  return BlazeQuerySourceToTargetProvider.getTargetsBuildingSourceFiles(
-                      project, pathsToQuery.build(), childContext, ContextType.Sync);
-                })).get(); // We still call no-timeout waitFor in ExternalTask.run()
+                      // We don't want blaze build errors to fail the whole sync
+                      childContext.setPropagatesErrors(false);
+                      return BlazeQuerySourceToTargetProvider.getTargetsBuildingSourceFiles(
+                          project, pathsToQuery.build(), childContext, ContextType.Sync);
+                    })).get(); // We still call no-timeout waitFor in ExternalTask.run()
     if (context.isCancelled()) {
       throw new SyncCanceledException();
     }
