@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.common.PrintOutput;
@@ -39,6 +38,7 @@ import com.google.idea.blaze.java.fastbuild.FastBuildCompiler.CompileInstruction
 import com.google.idea.blaze.java.fastbuild.FastBuildJavac.CompilerOutput;
 import com.google.idea.blaze.java.fastbuild.FastBuildJavac.DiagnosticLine;
 import com.google.idea.blaze.java.fastbuild.FastBuildLogDataScope.FastBuildLogOutput;
+import com.intellij.build.events.MessageEvent;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -60,7 +60,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 
 final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
@@ -354,28 +353,24 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
   }
 
   private static void processDiagostic(BlazeContext context, DiagnosticLine line) {
-    IssueOutput.Builder output = IssueOutput.issue(toCategory(line.kind), line.message);
+    IssueOutput.Builder output = IssueOutput.issue(toMessageKind(line.kind), line.message);
     if (line.uri != null) {
-      output.inFile(new File(line.uri));
-    }
-    if (line.lineNumber != Diagnostic.NOPOS) {
-      output.onLine((int) line.lineNumber).inColumn((int) line.columnNumber);
+      output.withFile(new File(line.uri));
     }
     context.output(output.build());
     context.output(new PrintOutput(line.formattedMessage));
   }
 
-  private static Category toCategory(Kind kind) {
+  private static MessageEvent.Kind toMessageKind(Kind kind) {
     switch (kind) {
       case ERROR:
-        return Category.ERROR;
+        return MessageEvent.Kind.ERROR;
       case MANDATORY_WARNING:
       case WARNING:
-        return Category.WARNING;
+        return MessageEvent.Kind.WARNING;
       case NOTE:
-        return Category.NOTE;
       case OTHER:
-        return Category.INFORMATION;
+        return MessageEvent.Kind.INFO;
     }
     throw new AssertionError("Unknown Kind " + kind);
   }

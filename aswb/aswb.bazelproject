@@ -22,3 +22,7 @@ test_sources:
   */testcompat/unittests*
   */testcompat/integrationtests*
   */testcompat/utils/integration*
+
+additional_languages:
+  kotlin
+
