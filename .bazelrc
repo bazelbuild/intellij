@@ -1,4 +1,5 @@
 build --java_language_version=17 --java_runtime_version=17
+build --tool_java_language_version=17 --tool_java_runtime_version=17
 
 # Delete test data packages, needed for bazel integration tests. Update by running the following command:
 # bazel run @rules_bazel_integration_test//tools:update_deleted_packages

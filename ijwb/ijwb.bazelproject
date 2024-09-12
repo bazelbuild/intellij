@@ -19,3 +19,6 @@ build_flags:
 test_sources:
   */tests/unittests*
   */tests/integrationtests*
+
+additional_languages:
+  kotlin

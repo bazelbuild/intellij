@@ -524,7 +524,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             + "isn't enabled. Click here to enable support for: "
             + Joiner.on(", ").join(sorted);
     IssueOutput.warn(msg)
-        .navigatable(
+        .withNavigatable(
             new NavigatableAdapter() {
               @Override
               public void navigate(boolean requestFocus) {

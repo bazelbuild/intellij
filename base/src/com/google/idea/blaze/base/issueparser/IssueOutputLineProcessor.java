@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.PrintOutput.OutputType;
+import com.intellij.build.events.MessageEvent.Kind;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -57,7 +58,7 @@ public class IssueOutputLineProcessor implements LineProcessingOutputStream.Line
   public boolean processLine(String line) {
     IssueOutput issue = blazeIssueParser.parseIssue(line);
     if (issue != null) {
-      if (issue.getCategory() == IssueOutput.Category.ERROR) {
+      if (issue.getKind() == Kind.ERROR) {
         context.setHasError();
       }
       context.output(issue);

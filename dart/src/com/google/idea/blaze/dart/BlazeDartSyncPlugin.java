@@ -106,7 +106,7 @@ public class BlazeDartSyncPlugin implements BlazeSyncPlugin {
       IssueOutput.error(
               "The Dart plugin is required for Dart support. "
                   + "Click here to install/enable the plugin and restart")
-          .navigatable(PluginUtils.installOrEnablePluginNavigable(DART_PLUGIN_ID))
+          .withNavigatable(PluginUtils.installOrEnablePluginNavigable(DART_PLUGIN_ID))
           .submit(context);
       return false;
     }

@@ -39,6 +39,7 @@ import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.common.Output;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
+import com.intellij.build.events.MessageEvent.Kind;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.util.Collection;
@@ -110,8 +111,7 @@ public class BlazeImportUtil {
       context.output(issue);
       if (issue instanceof IssueOutput) {
         IssueOutput issueOutput = (IssueOutput) issue;
-        if (issueOutput.getCategory()
-            == com.google.idea.blaze.base.scope.output.IssueOutput.Category.ERROR) {
+        if (issueOutput.getKind() == Kind.ERROR) {
           context.setHasError();
         }
       }

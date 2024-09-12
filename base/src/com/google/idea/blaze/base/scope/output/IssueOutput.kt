@@ -13,178 +13,114 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.scope.output;
+@file:Suppress("UnstableApiUsage")
 
-import com.google.common.base.Objects;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.google.idea.blaze.common.Context;
-import com.google.idea.blaze.common.Output;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.Navigatable;
-import java.io.File;
-import javax.annotation.Nullable;
+package com.google.idea.blaze.base.scope.output
 
-/** An issue in a blaze operation. */
-public class IssueOutput implements Output {
+import com.google.idea.blaze.base.io.VfsUtils
+import com.google.idea.blaze.common.Context
+import com.google.idea.blaze.common.Output
+import com.intellij.build.events.MessageEvent
+import com.intellij.build.issue.BuildIssue
+import com.intellij.build.issue.BuildIssueQuickFix
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.project.Project
+import com.intellij.pom.Navigatable
+import java.io.File
 
-  static final int NO_LINE = -1;
-  static final int NO_COLUMN = -1;
+/** An issue in a blaze operation.  */
+class IssueOutput (
+  issue: BuildIssue,
+  val kind: MessageEvent.Kind,
+) : Output, BuildIssue by issue {
 
-  @Nullable private final File file;
-  private final int line;
-  private final int column;
-  private final Category category;
-  private final String message;
-  @Nullable private final Navigatable navigatable;
-  @Nullable private final TextRange consoleHyperlinkRange;
+  companion object {
+    @JvmStatic
+    fun issue(kind: MessageEvent.Kind, title: String): Builder {
+      return Builder(kind, title)
+    }
 
-  /** Issue category */
-  public enum Category {
-    ERROR,
-    WARNING,
-    NOTE,
-    STATISTICS,
-    INFORMATION,
+    @JvmStatic
+    fun error(title: String): Builder {
+      return Builder(MessageEvent.Kind.ERROR, title)
+    }
+
+    @JvmStatic
+    fun warn(title: String): Builder {
+      return Builder(MessageEvent.Kind.WARNING, title)
+    }
   }
 
-  public static Builder issue(Category category, String message) {
-    return new Builder(category, message);
-  }
+  @Deprecated("used only for backwards compatibility")
+  fun getMessage(): String = "$title\n$description"
 
-  public static Builder error(String message) {
-    return new Builder(Category.ERROR, message);
-  }
+  class Builder(private val kind: MessageEvent.Kind, private val title: String) {
+    private var description: String = ""
+    private var navigatable: (Project) -> Navigatable? = { null }
+    private val fixes: MutableList<Pair<String, BuildIssueQuickFix>> = mutableListOf()
 
-  public static Builder warn(String message) {
-    return new Builder(Category.WARNING, message);
-  }
+    fun withFile(file: File): Builder = withFile(file, line = 0, column = 0)
 
-  /** Builder for an issue */
-  public static class Builder {
-    private final Category category;
-    private final String message;
-    @Nullable private File file;
-    private int line = NO_LINE;
-    private int column = NO_COLUMN;
-    @Nullable Navigatable navigatable;
-    @Nullable private TextRange consoleHyperlinkRange;
+    fun withFile(file: File, line: Int = 0, column: Int = 0): Builder {
+      val virtualFile = VfsUtils.resolveVirtualFile(file, false)
 
-    public Builder(Category category, String message) {
-      this.category = category;
-      this.message = message;
+      if (virtualFile != null) {
+        navigatable = { OpenFileDescriptor(it, virtualFile, line, column) }
+      }
+
+      return this
     }
 
-    @CanIgnoreReturnValue
-    public Builder inFile(@Nullable File file) {
-      this.file = file;
-      return this;
+    fun withNavigatable(navigatable: Navigatable): Builder {
+      this.navigatable = { navigatable }
+      return this
     }
 
-    @CanIgnoreReturnValue
-    public Builder onLine(int line) {
-      this.line = line;
-      return this;
+    fun withDescription(description: String): Builder {
+      this.description = description
+      return this
     }
 
-    @CanIgnoreReturnValue
-    public Builder inColumn(int column) {
-      this.column = column;
-      return this;
+    fun withFix(description: String, fix: BuildIssueQuickFix): Builder {
+      fixes.add(description to fix)
+      return this
     }
 
-    @CanIgnoreReturnValue
-    public Builder navigatable(@Nullable Navigatable navigatable) {
-      this.navigatable = navigatable;
-      return this;
+    fun build(): IssueOutput {
+      val builder = StringBuilder(description)
+
+      if (fixes.isNotEmpty()) {
+        builder.append("\n\nPossible fixes:\n")
+      }
+
+      for ((description, fix) in fixes) {
+        builder.append("$description (<a href=\"${fix.id}\">click here</a>)")
+      }
+
+      val issue = object : BuildIssue {
+        override val description: String
+          get() = builder.toString()
+
+        override val quickFixes: List<BuildIssueQuickFix>
+          get() = fixes.map { it.second }
+
+        override val title: String
+          get() = this@Builder.title
+
+        override fun getNavigatable(project: Project): Navigatable? = navigatable(project)
+      }
+
+      return IssueOutput(issue, kind)
     }
 
-    @CanIgnoreReturnValue
-    public Builder consoleHyperlinkRange(@Nullable TextRange consoleHyperlinkRange) {
-      this.consoleHyperlinkRange = consoleHyperlinkRange;
-      return this;
-    }
-
-    public IssueOutput build() {
-      return new IssueOutput(
-          file, line, column, navigatable, consoleHyperlinkRange, category, message);
-    }
-
-    public void submit(Context<?> context) {
-      context.output(build());
-      if (category == Category.ERROR) {
-        context.setHasError();
+    fun submit(context: Context<*>) {
+      context.output(build())
+      if (kind == MessageEvent.Kind.ERROR) {
+        context.setHasError()
+      }
+      if (kind == MessageEvent.Kind.WARNING) {
+        context.setHasWarnings()
       }
     }
-  }
-
-  private IssueOutput(
-      @Nullable File file,
-      int line,
-      int column,
-      @Nullable Navigatable navigatable,
-      @Nullable TextRange consoleHyperlinkRange,
-      Category category,
-      String message) {
-    this.file = file;
-    this.line = line;
-    this.column = column;
-    this.navigatable = navigatable;
-    this.consoleHyperlinkRange = consoleHyperlinkRange;
-    this.category = category;
-    this.message = message;
-  }
-
-  @Nullable
-  public File getFile() {
-    return file;
-  }
-
-  public int getLine() {
-    return line;
-  }
-
-  public int getColumn() {
-    return column;
-  }
-
-  @Nullable
-  public Navigatable getNavigatable() {
-    return navigatable;
-  }
-
-  @Nullable
-  public TextRange getConsoleHyperlinkRange() {
-    return consoleHyperlinkRange;
-  }
-
-  public Category getCategory() {
-    return category;
-  }
-
-  public String getMessage() {
-    return message;
-  }
-
-  @Override
-  public String toString() {
-    return message;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (!(o instanceof IssueOutput)) {
-      return false;
-    }
-    IssueOutput other = (IssueOutput) o;
-    return Objects.equal(file, other.file)
-        && line == other.line
-        && column == other.column
-        && category == other.category
-        && message.equals(other.message);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(file, line, column, category, message);
   }
 }
