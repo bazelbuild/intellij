@@ -409,6 +409,8 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
   private static final Pattern TEST_SRCDIR = Pattern.compile("TEST_SRCDIR=([^ ]+)");
   // Matches RUNFILES_<NAME>=<value>
   private static final Pattern RUNFILES_VAR = Pattern.compile("RUNFILES_([A-Z_]+)=([^ ]+)");
+  // Matches TEST_TARGET=//<package_path>:<target>
+  private static final Pattern TEST_TARGET = Pattern.compile("TEST_TARGET=//([^:]*):([^\\s]+)");
   // Matches a space-delimited arg list. Supports wrapping arg in single quotes.
   private static final Pattern ARGS = Pattern.compile("([^\']\\S*|\'.+?\')\\s*");
 
@@ -443,7 +445,6 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
       while (runfilesVars.find()) {
         envVars.put(String.format("RUNFILES_%s", runfilesVars.group(1)), runfilesVars.group(2));
       }
-      workingDir = workspaceRoot.directory();
       String workspaceName = execRoot.getName();
       binary =
           Paths.get(
@@ -452,6 +453,21 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
                   workspaceName,
                   args.get(1))
               .toFile();
+
+      Matcher testTarget = TEST_TARGET.matcher(text);
+      if (testTarget.find()) {
+        String packagePath = testTarget.group(1);
+        workingDir = 
+            Paths.get(
+                    workspaceRoot.directory().getPath(),
+                    testScrDir.group(1),
+                    workspaceName,
+                    packagePath)
+                .toFile();
+      } else {
+        workingDir = workspaceRoot.directory();
+      }
+
       // Remove everything except the args.
       args = args.subList(2, args.size() - 1);
     } else {
