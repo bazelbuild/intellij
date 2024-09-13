@@ -18,24 +18,23 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertNotNull;
 
 @RunWith(JUnit4.class)
 public class ExternalWorkspaceReferenceBzlModeTest extends BuildFileIntegrationTestCase {
 
   protected ExternalWorkspaceFixture workspaceOne;
-  protected ExternalWorkspaceFixture workspaceTwoMapped;
+  protected ExternalWorkspaceFixture workspaceTwo;
 
   @Override
   protected ExternalWorkspaceData mockExternalWorkspaceData() {
-    workspaceOne = new ExternalWorkspaceFixture(
-        ExternalWorkspace.create("workspace_one", "workspace_one"), fileSystem);
+    workspaceOne = createExternalWorkspaceFixture(
+        ExternalWorkspace.create("workspace_one", "workspace_one"));
 
-    workspaceTwoMapped = new ExternalWorkspaceFixture(
-        ExternalWorkspace.create("workspace_two", "com_workspace_two"), fileSystem);
+    workspaceTwo = createExternalWorkspaceFixture(
+        ExternalWorkspace.create("workspace_two", "com_workspace_two"));
 
     return ExternalWorkspaceData.create(
-        ImmutableList.of(workspaceOne.workspace, workspaceTwoMapped.workspace));
+        ImmutableList.of(workspaceOne.workspace, workspaceTwo.workspace));
   }
 
   @Before
@@ -44,7 +43,7 @@ public class ExternalWorkspaceReferenceBzlModeTest extends BuildFileIntegrationT
         new WorkspacePath("p1/p2/BUILD"),
         "java_library(name = 'rule1')");
 
-    workspaceTwoMapped.createBuildFile(
+    workspaceTwo.createBuildFile(
         new WorkspacePath("p1/p2/BUILD"),
         "java_library(name = 'rule1')");
   }
@@ -55,33 +54,32 @@ public class ExternalWorkspaceReferenceBzlModeTest extends BuildFileIntegrationT
         new WorkspacePath("p1/p2"), TargetName.create("rule1"));
 
     PsiFile file = testFixture.configureByText("BUILD",
-        String.format("""
+        """
             java_library(
                 name = 'lib',
-                deps = ['%s<caret>']
-            )""", targetLabel));
-    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+                deps = ['@workspace_one//p1/p2:rule1<caret>']
+            )""");
 
+    Editor editor = testFixture.getEditor();
     PsiElement target =
         GotoDeclarationAction.findTargetElement(
             getProject(), editor, editor.getCaretModel().getOffset());
-
     assertThat(target).isNotNull();
   }
 
   @Test
   public void testRemappedExternalWorkspace() throws Throwable {
-    Label targetLabel = workspaceTwoMapped.createLabel(
+    Label targetLabel = workspaceTwo.createLabel(
         new WorkspacePath("p1/p2"), TargetName.create("rule1"));
 
-    PsiFile file = testFixture.configureByText("BUILD",
-        String.format("""
+    testFixture.configureByText("BUILD",
+        """
             java_library(
                 name = 'lib',
-                deps = ['%s<caret>']
-            )""", targetLabel));
-    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+                deps = ['@com_workspace_two//p1/p2:rule1<caret>']
+            )""");
 
+    Editor editor = testFixture.getEditor();
     PsiElement target =
         GotoDeclarationAction.findTargetElement(
             getProject(), editor, editor.getCaretModel().getOffset());

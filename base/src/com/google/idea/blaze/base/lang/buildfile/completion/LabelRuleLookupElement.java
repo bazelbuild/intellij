@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,16 +32,10 @@ import javax.swing.Icon;
 public class LabelRuleLookupElement extends BuildLookupElement {
 
   public static BuildLookupElement[] collectAllRules(
-      BuildFile file,
-      String originalString,
-      String packagePrefix,
-      @Nullable String excluded,
-      QuoteType quoteType) {
-    if (packagePrefix.startsWith("//") || originalString.startsWith(":")) {
-      packagePrefix += ":";
-    }
+      BuildFile file, String originalLabel, @Nullable String excluded, QuoteType quoteType) {
 
-    String ruleFragment = LabelUtils.getRuleComponent(originalString);
+    String ruleFragment = LabelUtils.getRuleComponent(originalLabel);
+
     List<BuildLookupElement> lookups = Lists.newArrayList();
     for (FuncallExpression target : file.findChildrenByClass(FuncallExpression.class)) {
       String targetName = target.getName();
@@ -54,12 +48,15 @@ public class LabelRuleLookupElement extends BuildLookupElement {
       if (ruleType == null) {
         continue;
       }
+      String lookupPrefix =
+          originalLabel.substring(0, originalLabel.length() - ruleFragment.length());
+
       lookups.add(
-          new LabelRuleLookupElement(packagePrefix, target, targetName, ruleType, quoteType));
+          new LabelRuleLookupElement(lookupPrefix, target, targetName, ruleType, quoteType));
     }
     return lookups.isEmpty()
         ? BuildLookupElement.EMPTY_ARRAY
-        : lookups.toArray(new BuildLookupElement[lookups.size()]);
+        : lookups.toArray(BuildLookupElement.EMPTY_ARRAY);
   }
 
   private final FuncallExpression target;
@@ -67,17 +64,17 @@ public class LabelRuleLookupElement extends BuildLookupElement {
   private final String ruleType;
 
   private LabelRuleLookupElement(
-      String packagePrefix,
+      String namePrefix,
       FuncallExpression target,
       String targetName,
       String ruleType,
       QuoteType quoteType) {
-    super(packagePrefix + targetName, quoteType);
+    super(namePrefix + targetName, quoteType);
     this.target = target;
     this.targetName = targetName;
     this.ruleType = ruleType;
 
-    assert (packagePrefix.isEmpty() || packagePrefix.endsWith(":"));
+    assert (namePrefix.isEmpty() || namePrefix.endsWith(":"));
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,9 +62,11 @@ public class PackageReferenceFragment extends PsiReferenceBase<StringLiteral> {
   @Nullable
   @Override
   public BuildFile resolve() {
-    WorkspacePath workspacePath = getWorkspacePath(myElement.getStringContents());
+    String labelString = myElement.getStringContents();
+    WorkspacePath workspacePath = getWorkspacePath(labelString);
+    String externalWorkspace = LabelUtils.getExternalWorkspaceComponent(labelString);
     return BuildReferenceManager.getInstance(myElement.getProject())
-        .resolveBlazePackage(workspacePath);
+        .resolveBlazePackage(workspacePath, externalWorkspace);
   }
 
   @Override
