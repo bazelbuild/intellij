@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
+import kotlinx.coroutines.scheduling.WorkQueueKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,25 +54,6 @@ public class VirtualIncludesHandler {
 
   static boolean containsVirtualInclude(ExecutionRootPath executionRootPath) {
     return splitExecutionPath(executionRootPath).contains(VIRTUAL_INCLUDES_DIRECTORY);
-  }
-
-  @Nullable
-  private static Path pathOf(@Nullable String value) {
-    if (value == null || value.isEmpty()) {
-      return null;
-    }
-
-    // turns a windows absolut path into a normal absolut path
-    if (value.startsWith("//")) {
-      value = value.substring(1);
-    }
-
-    try {
-      return Path.of(value);
-    } catch (InvalidPathException e) {
-      LOG.warn("invalid path: " + value);
-      return null;
-    }
   }
 
   /**
@@ -121,16 +103,24 @@ public class VirtualIncludesHandler {
       return ImmutableList.of();
     }
 
-    final var stripPrefix = pathOf(cIdeInfo.getStripIncludePrefix());
-    if (stripPrefix == null) {
+    var stripPrefix = cIdeInfo.getStripIncludePrefix();
+    if (stripPrefix == null || stripPrefix.isBlank()) {
       return ImmutableList.of();
     }
 
+    // strip prefix is a path not a label, `//something` is invalid
+    stripPrefix = stripPrefix.replaceAll("/+", "/");
+
+    // remove trailing slash
+    if (stripPrefix.endsWith("/")) {
+      stripPrefix = stripPrefix.substring(0, stripPrefix.length() - 1);
+    }
+
     final WorkspacePath workspacePath;
-    if (stripPrefix.isAbsolute()) {
-      workspacePath = new WorkspacePath(stripPrefix.getRoot().relativize(stripPrefix).toString());
+    if (stripPrefix.startsWith("/")) {
+      workspacePath = new WorkspacePath(stripPrefix.substring(1));
     } else {
-      workspacePath = new WorkspacePath(key.getLabel().blazePackage(), stripPrefix.toString());
+      workspacePath = new WorkspacePath(key.getLabel().blazePackage(), stripPrefix);
     }
 
     final var externalWorkspace = key.getLabel().externalWorkspaceName();
