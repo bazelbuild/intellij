@@ -316,15 +316,6 @@ public final class BlazeCWorkspace implements ProjectComponent {
             .map(File::getAbsolutePath)
             .forEach(compilerSwitchesBuilder::withSystemIncludePath);
 
-        if (VirtualIncludesHandler.useHints()) {
-          compilerSwitchesBuilder.withSwitches(VirtualIncludesHandler.collectIncludeHints(
-              workspaceRoot.directory().toPath(),
-              targetKey,
-              blazeProjectData,
-              executionRootPathResolver,
-              indicator));
-        }
-
         final var cCompilerSwitches =
             buildSwitchBuilder(compilerSettings, compilerSwitchesBuilder, CLanguageKind.C);
         final var cppCompilerSwitches =
