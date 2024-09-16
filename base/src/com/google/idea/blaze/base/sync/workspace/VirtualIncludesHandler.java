@@ -1,21 +1,14 @@
 package com.google.idea.blaze.base.sync.workspace;
 
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.CIdeInfo;
-import com.google.idea.blaze.base.ideinfo.Dependency;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 
@@ -23,11 +16,7 @@ import java.io.File;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Stack;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,12 +38,10 @@ public class VirtualIncludesHandler {
   static final Path VIRTUAL_INCLUDES_DIRECTORY = Path.of("_virtual_includes");
 
   private static final Logger LOG = Logger.getInstance(VirtualIncludesHandler.class);
-  private static final String ABSOLUTE_LABEL_PREFIX = "//";
   private static final int EXTERNAL_DIRECTORY_IDX = 3;
   private static final int EXTERNAL_WORKSPACE_NAME_IDX = 4;
   private static final int WORKSPACE_PATH_START_FOR_EXTERNAL_WORKSPACE = 5;
   private static final int WORKSPACE_PATH_START_FOR_LOCAL_WORKSPACE = 3;
-  private static final int ABSOLUTE_LABEL_PREFIX_LENGTH = ABSOLUTE_LABEL_PREFIX.length();
 
   static boolean useHeuristic() {
     return Registry.is("bazel.sync.resolve.virtual.includes");
@@ -68,6 +55,25 @@ public class VirtualIncludesHandler {
     return splitExecutionPath(executionRootPath).contains(VIRTUAL_INCLUDES_DIRECTORY);
   }
 
+  @Nullable
+  private static Path pathOf(@Nullable String value) {
+    if (value == null || value.isEmpty()) {
+      return null;
+    }
+
+    // turns a windows absolut path into a normal absolut path
+    if (value.startsWith("//")) {
+      value = value.substring(1);
+    }
+
+    try {
+      return Path.of(value);
+    } catch (InvalidPathException e) {
+      LOG.warn("invalid path: " + value);
+      return null;
+    }
+  }
+
   /**
    * Resolves execution root path to {@code _virtual_includes} directory to the matching workspace
    * location
@@ -76,7 +82,8 @@ public class VirtualIncludesHandler {
    * target data or empty list if resolution has failed
    */
   @NotNull
-  static ImmutableList<File> resolveVirtualInclude(ExecutionRootPath executionRootPath,
+  static ImmutableList<File> resolveVirtualInclude(
+      ExecutionRootPath executionRootPath,
       File externalWorkspacePath,
       WorkspacePathResolver workspacePathResolver,
       TargetMap targetMap) {
@@ -94,45 +101,48 @@ public class VirtualIncludesHandler {
       return ImmutableList.of();
     }
 
-    TargetIdeInfo info = targetMap.get(key);
+    final var info = targetMap.get(key);
     if (info == null) {
       return ImmutableList.of();
     }
 
-    CIdeInfo cIdeInfo = info.getcIdeInfo();
+    if (info.getSources().stream().anyMatch((it) -> !it.isSource())) {
+      // target contains generated sources which cannot be found in the project root, fallback to virtual include directory
+      return ImmutableList.of();
+    }
+
+    final var cIdeInfo = info.getcIdeInfo();
     if (cIdeInfo == null) {
       return ImmutableList.of();
     }
 
-    if (!info.getcIdeInfo().getIncludePrefix().isEmpty()) {
-      LOG.debug(
-          "_virtual_includes cannot be handled for targets with include_prefix attribute");
+    if (!cIdeInfo.getIncludePrefix().isEmpty()) {
+      // it is not possible to handle include prefixes here, fallback to virtual include directory
       return ImmutableList.of();
     }
 
-    String stripPrefix = info.getcIdeInfo().getStripIncludePrefix();
-    if (!stripPrefix.isEmpty()) {
-      if (stripPrefix.endsWith("/")) {
-        stripPrefix = stripPrefix.substring(0, stripPrefix.length() - 1);
-      }
-      String externalWorkspaceName = key.getLabel().externalWorkspaceName();
-      WorkspacePath stripPrefixWorkspacePath = stripPrefix.startsWith(ABSOLUTE_LABEL_PREFIX) ?
-          new WorkspacePath(stripPrefix.substring(ABSOLUTE_LABEL_PREFIX_LENGTH)) :
-          new WorkspacePath(key.getLabel().blazePackage(), stripPrefix);
-      if (externalWorkspaceName != null) {
-        ExecutionRootPath external = new ExecutionRootPath(
-            ExecutionRootPathResolver.externalPath.toPath()
-                .resolve(externalWorkspaceName)
-                .resolve(stripPrefixWorkspacePath.toString()).toString());
+    final var stripPrefix = pathOf(cIdeInfo.getStripIncludePrefix());
+    if (stripPrefix == null) {
+      return ImmutableList.of();
+    }
 
-        return ImmutableList.of(external.getFileRootedAt(externalWorkspacePath));
-      } else {
-        return workspacePathResolver.resolveToIncludeDirectories(
-            stripPrefixWorkspacePath);
-      }
+    final WorkspacePath workspacePath;
+    if (stripPrefix.isAbsolute()) {
+      workspacePath = new WorkspacePath(stripPrefix.getRoot().relativize(stripPrefix).toString());
     } else {
-      return ImmutableList.of();
+      workspacePath = new WorkspacePath(key.getLabel().blazePackage(), stripPrefix.toString());
     }
+
+    final var externalWorkspace = key.getLabel().externalWorkspaceName();
+    if (externalWorkspace == null) {
+      return workspacePathResolver.resolveToIncludeDirectories(workspacePath);
+    }
+
+    final var externalRoot = ExecutionRootPathResolver.externalPath.toPath()
+        .resolve(externalWorkspace)
+        .resolve(workspacePath.toString()).toString();
+
+    return ImmutableList.of(new ExecutionRootPath(externalRoot).getFileRootedAt(externalWorkspacePath));
   }
 
   /**
