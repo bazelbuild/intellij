@@ -31,6 +31,8 @@ import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.vcs.VcsSyncListener;
 import com.google.idea.common.util.Transactions;
+import com.google.idea.sdkcompat.vfs.AsyncVfsEventsPostProcessorCompat;
+import com.google.idea.sdkcompat.vfs.AsyncVfsEventsListenerCompat;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -39,7 +41,10 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.vfs.AsyncVfsEventsListener;
 import com.intellij.vfs.AsyncVfsEventsPostProcessor;
+import kotlinx.coroutines.CoroutineScope;
+
 import java.io.File;
 import java.util.Map;
 import java.util.Objects;
@@ -62,26 +67,28 @@ public class ExternalLibraryManager implements Disposable {
     return project.getService(ExternalLibraryManager.class);
   }
 
-  ExternalLibraryManager(Project project) {
+  ExternalLibraryManager(Project project, CoroutineScope scope) {
     this.project = project;
     this.duringBlazeSync = false;
     this.libraries = ImmutableMap.of();
-    AsyncVfsEventsPostProcessor.getInstance()
-        .addListener(
-            events -> {
-              if (duringBlazeSync || libraries.isEmpty()) {
-                return;
-              }
-              ImmutableList<VirtualFile> deletedFiles =
+
+    AsyncVfsEventsListener listener = new AsyncVfsEventsListenerCompat(
+        events -> {
+          if (duringBlazeSync || libraries.isEmpty()) {
+            return;
+          }
+          ImmutableList<VirtualFile> deletedFiles =
                   events.stream()
-                      .filter(VFileDeleteEvent.class::isInstance)
-                      .map(VFileEvent::getFile)
-                      .collect(toImmutableList());
-              if (!deletedFiles.isEmpty()) {
-                libraries.values().forEach(library -> library.removeInvalidFiles(deletedFiles));
-              }
-            },
-            this);
+                          .filter(VFileDeleteEvent.class::isInstance)
+                          .map(VFileEvent::getFile)
+                          .collect(toImmutableList());
+          if (!deletedFiles.isEmpty()) {
+            libraries.values().forEach(library -> library.removeInvalidFiles(deletedFiles));
+          }
+        });
+
+    AsyncVfsEventsPostProcessorCompat
+        .addListener(listener,this, scope);
   }
 
   @Nullable

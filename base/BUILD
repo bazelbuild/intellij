@@ -45,7 +45,7 @@ java_library(
         "//shared:vcs",
         "//third_party/auto_value",
         "@error_prone_annotations//jar",
-        "@gson//jar"
+        "@gson//jar",
     ],
 )
 
@@ -144,6 +144,7 @@ java_library(
         "//proto:proto_deps",
         "//shared",
         "//third_party/auto_value",
+        "@maven//:com_google_errorprone_error_prone_annotations",
     ],
 )
 
@@ -326,6 +327,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//shared",
+        "@maven//:com_google_errorprone_error_prone_annotations",
     ],
 )
 
@@ -347,6 +349,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//third_party/auto_value",
+        "@maven//:com_google_errorprone_error_prone_annotations",
     ],
 )
 
@@ -395,6 +398,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//shared:artifact",
+        "@maven//:com_google_errorprone_error_prone_annotations",
     ],
 )
 
@@ -428,6 +432,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//shared:artifact",
+        "@maven//:com_google_errorprone_error_prone_annotations",
     ],
 )
 
@@ -448,6 +453,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//shared",
         "//shared:artifact",
+        "@maven//:com_google_errorprone_error_prone_annotations",
     ],
 )
 

@@ -1,0 +1,115 @@
+# Copyright 2024 The Bazel Authors. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Description:
+#
+# Plugin source jars for CLion, accessed remotely.
+
+load("@//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
+
+package(default_visibility = ["//visibility:public"])
+
+java_import(
+    name = "sdk",
+    jars = glob([
+            "lib/*.jar",
+            "lib/modules/*.jar"
+        ],
+        exclude = [
+            # mockito-extensions needs to be removed from this jar.
+            "lib/testFramework.jar",
+        ],
+    ),
+    tags = ["intellij-provided-by-sdk"],
+    exports = [":jars_without_mockito_extensions"],
+    deps = ["@error_prone_annotations//jar"],
+)
+
+no_mockito_extensions(
+    name = "jars_without_mockito_extensions",
+    jars = ["lib/testFramework.jar"],
+)
+
+java_import(
+    name = "guava",
+    jars = glob([
+        "lib/lib.jar",
+        "lib/lib-client.jar",
+    ]),
+)
+
+java_import(
+    name = "clion_plugins",
+    jars = glob([
+        "plugins/c-plugin/lib/*.jar",
+        "plugins/cidr-base-plugin/lib/*.jar",
+        "plugins/cidr-debugger-plugin/lib/*.jar",
+        "plugins/clion/lib/*.jar",
+        "plugins/clion-test-google/lib/*.jar",
+        "plugins/clion-test-catch/lib/*.jar",
+        "plugins/clion-test-boost/lib/*.jar",
+        "plugins/nativeDebug-plugin/lib/*.jar",
+        "plugins/clion-ide/lib/clion-ide.jar", # For CMakeNotificationProvider
+        "plugins/clion-test-google-plugin/lib/clion-test-google-plugin.jar", # for com.jetbrains.cidr.execution.testing.google
+    ]),
+)
+
+java_import(
+    name = "hg4idea",
+    jars = glob(["plugins/hg4idea/lib/hg4idea.jar"]),
+)
+
+java_import(
+    name = "javascript",
+    jars = glob(["plugins/javascript-plugin/lib/*.jar"]),
+)
+
+java_import(
+    name = "css",
+    jars = glob(["plugins/css-impl/lib/*.jar"]),
+)
+
+java_import(
+    name = "tslint",
+    jars = glob(["plugins/tslint/lib/*.jar"]),
+)
+
+java_import(
+    name = "terminal",
+    jars = glob(["plugins/terminal/lib/terminal.jar"]),
+)
+
+java_import(
+    name = "python",
+    jars = glob(["plugins/python-ce/lib/*.jar"]),
+)
+
+filegroup(
+    name = "python_helpers",
+    srcs = glob(["plugins/python-ce/helpers/**/*"]),
+)
+
+java_import(
+    name = "bundled_plugins",
+    jars = glob([
+       "plugins/clion-ide/lib/clion-ide.jar",
+       "plugins/clion-ide/lib/modules/*.jar",
+    ]),
+    tags = ["intellij-provided-by-sdk"],
+)
+
+filegroup(
+    name = "application_info_json",
+    srcs = ["product-info.json"],
+)
