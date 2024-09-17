@@ -13,6 +13,13 @@ load(
 
 _DEP_ATTRS = ["deps", "exports", "runtime_deps", "_java_toolchain"]
 
+def _get_android_ide_info(target):
+    if hasattr(android_common, "AndroidIdeInfo") and android_common.AndroidIdeInfo in target:
+        return target[android_common.AndroidIdeInfo]
+    if hasattr(target, "android"):
+        return target.android
+    return None
+
 def _fast_build_info_impl(target, ctx):
     dep_targets = _get_all_dep_targets(target, ctx)
     dep_outputs = _get_all_dep_outputs(dep_targets)
@@ -88,11 +95,7 @@ def _fast_build_info_impl(target, ctx):
             ]
         info["java_info"] = struct_omit_none(**java_info)
 
-    android_ide_info = None
-    if hasattr(android_common, "AndroidIdeInfo") and android_common.AndroidIdeInfo in target:
-        android_ide_info = target[android_common.AndroidIdeInfo]
-    if hasattr(target, "android"):
-        android_ide_info = target.android
+    android_ide_info = _get_android_ide_info(target)
     if android_ide_info:
         write_output = True
         android_info = struct_omit_none(
