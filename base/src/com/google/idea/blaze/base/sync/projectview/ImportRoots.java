@@ -183,7 +183,9 @@ public final class ImportRoots {
       var result = new ArrayList<File>();
       while (!files.isEmpty()) {
         File file = files.poll();
-        if (rootDirectories.stream().anyMatch(d -> FileUtil.isAncestor(file, workspaceRoot.fileForPath(d), /*strict=*/ true))) {
+        if (rootDirectories.stream().anyMatch(d -> FileUtil.isAncestor(file, workspaceRoot.fileForPath(d), /*strict=*/ true)) &&
+            rootDirectories.stream().noneMatch(d -> FileUtil.filesEqual(file, workspaceRoot.fileForPath(d)))
+        ) {
           var children = file.listFiles(File::isDirectory);
           if (children != null) {
             files.addAll(List.of(children));
