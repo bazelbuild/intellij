@@ -3,6 +3,7 @@ v2024.09.10
 Bug Fixes
 * Fix reading MatchedMatcher data in BlazePyTracebackParser #6693
 * Fix googletest integration with CLion 2024.2 #6741
+* Fix coverage display when running tests #6766
 
 v2024.08.27
 ===========
