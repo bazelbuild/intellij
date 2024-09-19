@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationProvider;
+import com.jetbrains.cidr.lang.daemon.OCFileScopeProvider;
 import com.jetbrains.cidr.project.ui.ProjectStatusHelperKt;
 import com.jetbrains.cidr.project.ui.notifications.EditorNotificationWarningProvider;
 import com.jetbrains.cidr.project.ui.notifications.ProjectNotification;
@@ -75,26 +76,38 @@ public class CLionNotificationProvider implements ProjectFixesProvider, WidgetSt
     registered = true;
   }
 
-  @NotNull
-  @Override
-  public List<AnAction> collectFixes(@NotNull Project project, @Nullable VirtualFile file,
-      @NotNull DataContext dataContext) {
-    if (file == null) {
-      return List.of();
-    }
-
+  private static Boolean isBazelAwareFile(Project project, VirtualFile file) {
     if (Blaze.isBlazeProject(project)) {
-      return List.of();
+      return false;
     }
 
     if (!isProjectAwareFile(file, project) && file.getFileType() != BuildFileType.INSTANCE) {
-      return List.of();
+      return false;
     }
+
+    if (OCFileScopeProvider.Companion.getProjectSourceLocationKind(project, file).isInProject()) {
+      return false;
+    }
+
     if (!BazelImportCurrentProjectAction.projectCouldBeImported(project)) {
+      return false;
+    }
+
+    if (project.getBasePath() == null) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @NotNull
+  @Override
+  public List<AnAction> collectFixes(@NotNull Project project, @Nullable VirtualFile file, @NotNull DataContext dataContext) {
+    if (file == null || !isBazelAwareFile(project, file)) {
       return List.of();
     }
 
-    String root = project.getBasePath();
+    final var root = project.getBasePath();
     if (root == null) {
       return List.of();
     }
@@ -127,24 +140,11 @@ public class CLionNotificationProvider implements ProjectFixesProvider, WidgetSt
   @Nullable
   @Override
   public WidgetStatus getWidgetStatus(@NotNull Project project, @Nullable VirtualFile file) {
-
     if (Blaze.isBlazeProject(project)) {
       return new DefaultWidgetStatus(Status.OK, Scope.Project, "Project is configured");
     }
 
-    if (file == null) {
-      return null;
-    }
-
-    if (!isProjectAwareFile(file, project) && file.getFileType() != BuildFileType.INSTANCE) {
-      return null;
-    }
-    if (!BazelImportCurrentProjectAction.projectCouldBeImported(project)) {
-      return null;
-    }
-
-    String root = project.getBasePath();
-    if (root == null) {
+    if (file == null || !isBazelAwareFile(project, file)) {
       return null;
     }
 
