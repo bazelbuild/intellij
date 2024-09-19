@@ -41,6 +41,8 @@ import static com.jetbrains.cidr.project.ui.ProjectStatusHelperKt.isProjectAware
 public class CLionNotificationProvider implements ProjectFixesProvider, WidgetStatusProvider,
     EditorNotificationWarningProvider {
 
+  private static Boolean registered = false;
+
   private static void unregisterGenericProvider(Project project) {
     final var extensionPoint = EditorNotificationProvider.EP_NAME.getPoint(project);
 
@@ -53,16 +55,24 @@ public class CLionNotificationProvider implements ProjectFixesProvider, WidgetSt
     }
   }
 
+  private static void registerSpecificProvider() {
+    final var projectFixes = ProjectFixesProvider.Companion.getEP_NAME().getPoint();
+    projectFixes.registerExtension(new CLionNotificationProvider());
+
+    final var projectNotifications = EditorNotificationWarningProvider.Companion.getEP_NAME().getPoint();
+    projectNotifications.registerExtension(new CLionNotificationProvider());
+
+    final var widgetStatus = WidgetStatusProvider.Companion.getEP_NAME().getPoint();
+    widgetStatus.registerExtension(new CLionNotificationProvider());
+  }
+
   public static void register(Project project) {
     unregisterGenericProvider(project);
 
-    final var projectFixes = ProjectFixesProvider.Companion.getEP_NAME().getPoint();
-    projectFixes.registerExtension(new CLionNotificationProvider());
-    final var projectNotifications = EditorNotificationWarningProvider.Companion.getEP_NAME()
-        .getPoint();
-    projectNotifications.registerExtension(new CLionNotificationProvider());
-    final var widgetStatus = WidgetStatusProvider.Companion.getEP_NAME().getPoint();
-    widgetStatus.registerExtension(new CLionNotificationProvider());
+    if (!registered) {
+      registerSpecificProvider();
+    }
+    registered = true;
   }
 
   @NotNull
