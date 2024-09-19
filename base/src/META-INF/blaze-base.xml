@@ -687,7 +687,9 @@
     <ExperimentLoader implementation="com.google.idea.common.experiments.SystemPropertyExperimentLoader" order="first" id="SystemPropertyExperimentLoader"/>
     <ExperimentLoader implementation="com.google.idea.common.experiments.UserOverridesExperimentLoader" order="after SystemPropertyExperimentLoader" id="UserOverridesExperimentLoader"/>
     <ExperimentLoader implementation="com.google.idea.common.experiments.DefaultValuesExperimentLoader" order="last" id="DefaultValuesExperimentLoader"/>
-    <BlazeGuard implementation="com.google.idea.blaze.base.execution.TrustedProjectGuard"/> 
+    <BlazeGuard implementation="com.google.idea.blaze.base.execution.TrustedProjectGuard"/>
+    <BuildEventParser implementation="com.google.idea.blaze.base.buildview.events.AbortedParser"/>
+    <BuildEventParser implementation="com.google.idea.blaze.base.buildview.events.ActionCompletedParser"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze.qsync">
