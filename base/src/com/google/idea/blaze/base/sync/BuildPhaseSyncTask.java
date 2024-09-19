@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndi
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
+import com.google.idea.blaze.base.buildview.BuildViewMigration;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.command.BlazercMigrator;
@@ -384,6 +385,7 @@ public final class BuildPhaseSyncTask {
     String title = "Query targets building source files";
     List<TargetInfo> result =
         ProgressiveTaskWithProgressIndicator.builder(project, title)
+            .setModality(BuildViewMigration.progressModality())
             .submitTaskWithResult(
                 indicator -> Scope.push(
                     context,

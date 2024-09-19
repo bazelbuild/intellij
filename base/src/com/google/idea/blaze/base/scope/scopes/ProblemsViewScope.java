@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.scope.scopes;
 
+import com.google.idea.blaze.base.buildview.BuildViewMigration;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.OutputSink;
@@ -43,6 +44,8 @@ public class ProblemsViewScope implements BlazeScope, OutputSink<IssueOutput> {
 
   @Override
   public void onScopeBegin(BlazeContext context) {
+    if (BuildViewMigration.present(context)) return;
+
     context.addOutputSink(IssueOutput.class, this);
     if (resetProblemsContext) {
         BuildTasksProblemsView.getInstance(project).newProblemsContext(problemsViewFocusBehavior);
