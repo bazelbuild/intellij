@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
+import com.google.idea.blaze.base.buildview.BuildViewMigration;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -234,6 +235,7 @@ public final class SyncPhaseCoordinator {
     boolean singleThreaded = !useRemoteExecutor(syncParams);
     return ProgressiveTaskWithProgressIndicator.builder(project, "Syncing Project")
         .setExecutor(singleThreaded ? singleThreadedExecutor : remoteBuildExecutor)
+        .setModality(BuildViewMigration.progressModality())
         .submitTask(
             indicator ->
                 Scope.push(
@@ -282,6 +284,7 @@ public final class SyncPhaseCoordinator {
     Future<?> possiblyIgnoredError =
         ProgressiveTaskWithProgressIndicator.builder(project, "Filtering Project Targets")
             .setExecutor(singleThreadedExecutor)
+            .setModality(BuildViewMigration.progressModality())
             .submitTask(
                 indicator ->
                     Scope.root(
@@ -495,6 +498,7 @@ public final class SyncPhaseCoordinator {
 
     ProgressiveTaskWithProgressIndicator.builder(project, "Syncing Project")
         .setExecutor(singleThreadedExecutor)
+        .setModality(BuildViewMigration.progressModality())
         .submitTaskLater(
             indicator ->
                 Scope.root(

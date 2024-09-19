@@ -408,6 +408,9 @@
     <registryKey defaultValue="true"
                  description="Causes the plugin to read external workspace data, enabling features such as code completion for external targets. This may incur the cost of an additional 'bazel mod' call, which could cause issues with older versions or setups."
                  key="bazel.read.external.workspace.data"/>
+    <registryKey defaultValue="true"
+                 description="Enables the new sync view"
+                 key="bazel.new.sync.view"/>
     <editorNotificationProvider implementation="com.google.idea.blaze.base.wizard2.BazelNotificationProvider"/>
   </extensions>
 
@@ -588,6 +591,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.OutputGroupsProvider" interface="com.google.idea.blaze.base.sync.aspects.strategy.OutputGroupsProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.ExperimentLoader" interface="com.google.idea.common.experiments.ExperimentLoader"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.EmptyLibraryFilterSettings" interface="com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyLibraryFilterSettings" />
+    <extensionPoint qualifiedName="com.google.idea.blaze.BuildEventParser" interface="com.google.idea.blaze.base.buildview.events.BuildEventParser" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
