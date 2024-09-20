@@ -25,13 +25,12 @@ def scopeForAndroidPackage(blaze_package):
 
 def scopeForAndroidPackageWithResources(blaze_package):
     label = Label(blaze_package)
-    resource_dir = "_migrated/"
 
     return scopeForAndroidPackage(blaze_package) + [
         "//" + label.package + ":" + label.name + ".aar",
-        "//" + label.package + ":" + resource_dir + label.name + ".srcjar",
-        "//" + label.package + ":" + resource_dir + label.name + "_resources.jar",
-        "//" + label.package + ":" + resource_dir + label.name + "_symbols/R.txt",
+        "//" + label.package + ":" + label.name + ".srcjar",
+        "//" + label.package + ":" + label.name + "_resources.jar",
+        "//" + label.package + ":" + label.name + "_symbols/R.txt",
     ]
 
 def scopeForAndroidBinary(blaze_package):

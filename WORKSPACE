@@ -503,11 +503,13 @@ rules_proto_setup()
 load("@rules_proto//proto:toolchains.bzl", "rules_proto_toolchains")
 rules_proto_toolchains()
 
+RULES_ANDROID_COMMIT = "57bed3f556c698b0a0e692f729ed7edfd804db98"
+
 http_archive(
     name = "rules_android",
-    sha256 = "b1599e4604c1594a1b0754184c5e50f895a68f444d1a5a82b688b2370d990ba0",
-    strip_prefix = "rules_android-0.5.1",
-    url = "https://github.com/bazelbuild/rules_android/releases/download/v0.5.1/rules_android-v0.5.1.tar.gz",
+    sha256 = "e1ee3cd26581bd563f8087a9d325b97f130ab26cd5dede7139340603a93223d5",
+    strip_prefix = "rules_android-" + RULES_ANDROID_COMMIT,
+    urls = ["https://github.com/bazelbuild/rules_android/archive/%s.zip" % RULES_ANDROID_COMMIT],
 )
 load("@rules_android//:prereqs.bzl", "rules_android_prereqs")
 rules_android_prereqs()
