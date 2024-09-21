@@ -13,192 +13,110 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.command.buildresult;
+package com.google.idea.blaze.base.command.buildresult
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Interner;
-import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.common.artifact.OutputArtifact;
-import com.google.idea.blaze.exception.BuildException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
+import com.google.common.collect.ImmutableSet
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent
+import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException
+import com.google.idea.blaze.base.model.primitives.Label
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResults
+import com.google.idea.blaze.common.artifact.OutputArtifact
+import com.google.idea.blaze.exception.BuildException
+import com.intellij.openapi.diagnostic.Logger
+import java.io.BufferedInputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
+import java.util.*
+import java.util.function.Predicate
 
-/** Assists in getting build artifacts from a build operation. */
-public interface BuildResultHelper extends AutoCloseable {
+private val LOG = Logger.getInstance(BuildResultHelper::class.java)
+
+/**
+ * Build event protocol implementation to get build results.
+ *
+ * The build even protocol (BEP for short) is a proto-based protocol used by bazel to communicate
+ * build events.
+ */
+class BuildResultHelper : AutoCloseable {
+  val outputFile: File = BuildEventProtocolUtils.createTempOutputFile()
 
   /**
    * Returns the build flags necessary for the build result helper to work.
    *
    * <p>The user must add these flags to their build command.
    */
-  List<String> getBuildFlags();
+  fun getBuildFlags(): List<String> = BuildEventProtocolUtils.getBuildFlags(outputFile)
 
   /**
-   * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
-   * called once, after the build is complete.
-   *
-   * <p>As BEP retrieval can be memory-intensive for large projects, implementations of
-   * getBuildOutput may restrict parallelism for cases in which many builds are executed in parallel
-   * (e.g. remote builds).
+   * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}.
    */
-  default ParsedBepOutput getBuildOutput() throws GetArtifactsException {
-    return getBuildOutput(Optional.empty());
+  @Throws(GetArtifactsException::class)
+  fun getBuildOutput(): ParsedBepOutput {
+    return try {
+      BufferedInputStream(FileInputStream(outputFile)).use(ParsedBepOutput::parseBepArtifacts)
+    } catch (e: IOException) {
+      LOG.error(e)
+      throw GetArtifactsException(e.message)
+    } catch (e: BuildEventStreamException) {
+      LOG.error(e)
+      throw GetArtifactsException(e.message)
+    }
   }
 
   /**
-   * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
-   * called once, after the build is complete.
-   *
-   * <p>As BEP retrieval can be memory-intensive for large projects, implementations of
-   * getBuildOutput may restrict parallelism for cases in which many builds are executed in parallel
-   * (e.g. remote builds).
+   * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}.
    */
-  default ParsedBepOutput getBuildOutput(Interner<String> stringInterner)
-      throws GetArtifactsException {
-    return getBuildOutput(Optional.empty(), stringInterner);
+  fun getTestResults(): BlazeTestResults {
+    return try {
+      BufferedInputStream(FileInputStream(outputFile)).use(BuildEventProtocolOutputReader::parseTestResults)
+    } catch (e: IOException) {
+      LOG.warn(e)
+      return BlazeTestResults.NO_RESULTS
+    } catch (e: BuildEventStreamException) {
+      LOG.warn(e)
+      return BlazeTestResults.NO_RESULTS
+    }
   }
 
-  /**
-   * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
-   * called once, after the build is complete.
-   *
-   * <p>As BEP retrieval can be memory-intensive for large projects, implementations of
-   * getBuildOutput may restrict parallelism for cases in which many builds are executed in parallel
-   * (e.g. remote builds).
-   */
-  default ParsedBepOutput getBuildOutput(
-      Optional<String> completionBuildId, Interner<String> stringInterner)
-      throws GetArtifactsException {
-    return getBuildOutput(completionBuildId);
+  fun deleteTemporaryOutputFiles() {
+    outputFile.delete()
   }
 
-  /**
-   * Retrieves BEP build events according to given id, parses them and returns the corresponding
-   * {@link ParsedBepOutput}. May only be called once, after the build is complete.
-   *
-   * <p>As BEP retrieval can be memory-intensive for large projects, implementations of
-   * getBuildOutput may restrict parallelism for cases in which many builds are executed in parallel
-   * (e.g. remote builds).
-   */
-  ParsedBepOutput getBuildOutput(Optional<String> completedBuildId) throws GetArtifactsException;
-
-  /**
-   * Retrieves test results, parses them and returns the corresponding {@link BlazeTestResults}. May
-   * only be called once, after the build is complete.
-   */
-  BlazeTestResults getTestResults(Optional<String> completedBuildId) throws GetArtifactsException;
-
-  /** Deletes the local BEP output file associated with the test results */
-  default void deleteTemporaryOutputFiles() {}
-
-  /**
-   * Parses the BEP output data to collect all build flags used. Return all flags that pass filters
-   */
-  BuildFlags getBlazeFlags(Optional<String> completedBuildId) throws GetFlagsException;
-
-  /**
-   * Parses the BEP output data to collect message on stdout.
-   *
-   * <p>This function is designed for remote build which does not have local console output. Local
-   * build should not use this since {@link ExternalTask} provide stdout handler.
-   *
-   * @param completedBuildId build id.
-   * @param stderrConsumer process stderr
-   * @param blazeContext blaze context may contains logging scope
-   * @return a list of message on stdout.
-   */
-  default InputStream getStdout(
-      String completedBuildId, Consumer<String> stderrConsumer, BlazeContext blazeContext)
-      throws BuildException {
-    return InputStream.nullInputStream();
-  }
-
-  /**
-   * Parses the BEP output data to collect message on stderr.
-   *
-   * <p>This function is designed for remote build which does not have local console output. Local
-   * build should not use this since {@link ExternalTask} provide stderr handler.
-   *
-   * @param completedBuildId build id.
-   * @return a list of message on stderr.
-   */
-  default InputStream getStderr(String completedBuildId) throws BuildException {
-    return InputStream.nullInputStream();
-  }
-
-  /**
-   * Parses the BEP output data to collect all build flags used. Return all flags that pass filters
-   */
-  default BuildFlags getBlazeFlags() throws GetFlagsException {
-    return getBlazeFlags(Optional.empty());
-  }
-
-  /**
-   * Returns the build result. May only be called once, after the build is complete, or no artifacts
-   * will be returned.
-   *
-   * @return The build artifacts from the build operation.
-   */
-  default ImmutableList<OutputArtifact> getAllOutputArtifacts(Predicate<String> pathFilter)
-      throws GetArtifactsException {
-    return getBuildOutput().getAllOutputArtifacts(pathFilter).asList();
+  @Throws(GetFlagsException::class)
+  fun getBlazeFlags(): BuildFlags {
+    return try {
+      BufferedInputStream(FileInputStream(outputFile)).use(BuildFlags::parseBep)
+    } catch (e: IOException) {
+      throw GetFlagsException(e)
+    } catch (e: BuildEventStreamException) {
+      throw GetFlagsException(e)
+    }
   }
 
   /**
    * Returns the build artifacts, filtering out all artifacts not directly produced by the specified
    * target.
-   *
-   * <p>May only be called once, after the build is complete, or no artifacts will be returned.
    */
-  default ImmutableList<OutputArtifact> getBuildArtifactsForTarget(
-      Label target, Predicate<String> pathFilter) throws GetArtifactsException {
-    return getBuildOutput().getDirectArtifactsForTarget(target, pathFilter).asList();
+  @Throws(GetArtifactsException::class)
+  fun getBuildArtifactsForTarget(
+    target: Label,
+    pathFilter: Predicate<String>,
+  ): ImmutableSet<OutputArtifact> {
+    return getBuildOutput().getDirectArtifactsForTarget(target, pathFilter)
   }
 
-  /**
-   * Returns all build artifacts belonging to the given output groups. May only be called once,
-   * after the build is complete, or no artifacts will be returned.
-   */
-  default ImmutableList<OutputArtifact> getArtifactsForOutputGroup(
-      String outputGroup, Predicate<String> pathFilter) throws GetArtifactsException {
-    return getBuildOutput().getOutputGroupArtifacts(outputGroup, pathFilter);
+  override fun close() {
+    deleteTemporaryOutputFiles()
   }
 
-  @Override
-  void close();
+  class GetArtifactsException : BuildException {
+    constructor(cause: Throwable?) : super(cause)
 
-  /** Indicates a failure to get artifact information */
-  class GetArtifactsException extends BuildException {
-    public GetArtifactsException(Throwable cause) {
-      super(cause);
-    }
+    constructor(message: String?) : super(message)
 
-    public GetArtifactsException(String message) {
-      super(message);
-    }
-
-    public GetArtifactsException(String message, Throwable cause) {
-      super(message, cause);
-    }
+    constructor(message: String?, cause: Throwable?) : super(message, cause)
   }
 
-  /** Indicates a failure to get artifact information */
-  class GetFlagsException extends Exception {
-    public GetFlagsException(String message, Throwable cause) {
-      super(message, cause);
-    }
-
-    public GetFlagsException(String message) {
-      super(message);
-    }
-
-    public GetFlagsException(Throwable cause) {
-      super(cause);
-    }
-  }
+  class GetFlagsException(cause: Throwable?) : Exception(cause)
 }

@@ -34,6 +34,7 @@ import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.buildview.BazelService;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -751,13 +752,12 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
 
     Path targetPatternFile = prepareTargetPatternFile(project, targets);
-    try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
+    try {
       BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project);
       builder
           .setInvokeParallel(invokeParallel)
           .addBlazeFlags(BlazeFlags.TARGET_PATTERN_FILE, targetPatternFile.toString())
           .addBlazeFlags(BlazeFlags.KEEP_GOING)
-          .addBlazeFlags(buildResultHelper.getBuildFlags())
           .addBlazeFlags(additionalBlazeFlags);
       if (disableValidationActionExperiment.getValue()) {
         builder.addBlazeFlags(BlazeFlags.DISABLE_VALIDATIONS);
@@ -772,7 +772,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       aspectStrategy.addAspectAndOutputGroups(
           builder, outputGroups, activeLanguages, onlyDirectDeps);
 
-      return invoker.getCommandRunner().run(project, builder, buildResultHelper, context, ImmutableMap.of());
+      return BazelService.instance(project).build(context, builder);
     } finally {
       if (!Registry.is("bazel.sync.keep.target.files")) {
           try {
