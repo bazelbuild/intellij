@@ -28,10 +28,10 @@ INDIRECT_IJ_PRODUCTS = {
     # -oss-stable and -oss-beta respectively.
     "intellij-oss-oldest-stable": "intellij-2024.1",
     "intellij-oss-latest-stable": "intellij-2024.2",
-    "intellij-oss-under-dev": "intellij-2024.2",
+    "intellij-oss-under-dev": "intellij-2024.3",
     "intellij-ue-oss-oldest-stable": "intellij-ue-2024.1",
     "intellij-ue-oss-latest-stable": "intellij-ue-2024.2",
-    "intellij-ue-oss-under-dev": "intellij-ue-2024.2",
+    "intellij-ue-oss-under-dev": "intellij-ue-2024.3",
     "android-studio-oss-oldest-stable": "android-studio-2023.1",
     "android-studio-oss-latest-stable": "android-studio-2023.2",
     "android-studio-oss-under-dev": "android-studio-2023.2",
