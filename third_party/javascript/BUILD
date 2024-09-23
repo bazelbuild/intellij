@@ -9,6 +9,8 @@ java_library(
     tags = ["no-ide"],
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
+        "clion-2024.3": ["@clion_2024_3//:javascript"],
+        "intellij-ue-2024.3": ["@intellij_ue_2024_3//:javascript"],
         "intellij-ue-2022.3": ["@intellij_ue_2022_3//:javascript"],
         "intellij-ue-2023.1": ["@intellij_ue_2023_1//:javascript"],
         "intellij-ue-2023.2": ["@intellij_ue_2023_2//:javascript"],
@@ -30,6 +32,8 @@ java_library(
     tags = ["no-ide"],
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
+        "clion-2024.3": ["@clion_2024_3//:css"],
+        "intellij-ue-2024.3": ["@intellij_ue_2024_3//:css"],
         "intellij-ue-2022.3": ["@intellij_ue_2022_3//:css"],
         "intellij-ue-2023.1": ["@intellij_ue_2023_1//:css"],
         "intellij-ue-2023.2": ["@intellij_ue_2023_2//:css"],
@@ -51,6 +55,8 @@ java_library(
     tags = ["no-ide"],
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
+        "clion-2024.3": ["@clion_2024_3//:tslint"],
+        "intellij-ue-2024.3": ["@intellij_ue_2024_3//:tslint"],
         "intellij-ue-2022.3": ["@intellij_ue_2022_3//:tslint"],
         "intellij-ue-2023.1": ["@intellij_ue_2023_1//:tslint"],
         "intellij-ue-2023.2": ["@intellij_ue_2023_2//:tslint"],
@@ -70,6 +76,8 @@ java_library(
     tags = ["no-ide"],
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
+        "clion-2024.3": ["@clion_2024_3//:angular"],
+        "intellij-ue-2024.3": ["@intellij_ue_2024_3//:angular"],
         "intellij-ue-2022.3": ["@intellij_ue_2022_3//:angular"],
         "intellij-ue-2023.1": ["@intellij_ue_2023_1//:angular"],
         "intellij-ue-2023.2": ["@intellij_ue_2023_2//:angular"],

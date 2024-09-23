@@ -154,6 +154,14 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij",
         directory = "intellij_ce_2024_2",
     ),
+    "intellij-2024.3": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2024_3",
+    ),
+    "intellij-2024.3-mac": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2024_3",
+    ),
     "intellij-ue-2022.3": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2022_3",
@@ -201,6 +209,14 @@ DIRECT_IJ_PRODUCTS = {
     "intellij-ue-2024.2-mac": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2024_2",
+    ),
+    "intellij-ue-2024.3": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2024_3",
+    ),
+    "intellij-ue-2024.3-mac": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2024_3",
     ),
     "android-studio-2022.3": struct(
         ide = "android-studio",
@@ -264,6 +280,14 @@ DIRECT_IJ_PRODUCTS = {
     "clion-2024.2-mac": struct(
         ide = "clion",
         directory = "clion_2024_2",
+    ),
+    "clion-2024.3": struct(
+        ide = "clion",
+        directory = "clion_2024_3",
+    ),
+    "clion-2024.3-mac": struct(
+        ide = "clion",
+        directory = "clion_2024_3",
     ),
 }
 

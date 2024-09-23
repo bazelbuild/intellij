@@ -8,6 +8,9 @@ java_library(
     name = "python_internal",
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
+        "clion-2024.3": ["@python_2024_3//:python"],
+        "intellij-ue-2024.3": ["@python_2024_3//:python"],
+        "intellij-2024.3": ["@python_2024_3//:python"],
         "intellij-2022.3": ["@python_2022_3//:python"],
         "intellij-ue-2022.3": ["@python_2022_3//:python"],
         "intellij-2023.1": ["@python_2023_1//:python"],
@@ -35,6 +38,9 @@ java_library(
 filegroup(
     name = "python_helpers",
     srcs = select_for_plugin_api({
+        "clion-2024.3": ["@python_2024_3//:python_helpers"],
+        "intellij-ue-2024.3": ["@python_2024_3//:python_helpers"],
+        "intellij-2024.3": ["@python_2024_3//:python_helpers"],
         "intellij-2022.3": ["@python_2022_3//:python_helpers"],
         "intellij-ue-2022.3": ["@python_2022_3//:python_helpers"],
         "intellij-2023.1": ["@python_2023_1//:python_helpers"],
