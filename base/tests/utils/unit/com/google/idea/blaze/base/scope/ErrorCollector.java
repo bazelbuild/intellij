@@ -20,7 +20,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
+import com.intellij.build.events.MessageEvent.Kind;
 import java.util.List;
 
 /** Test class that collects issues. */
@@ -52,11 +52,11 @@ public class ErrorCollector implements OutputSink<IssueOutput> {
   }
 
   public void assertHasErrors() {
-    assertThat(issues.stream().anyMatch(i -> i.getCategory() == Category.ERROR)).isTrue();
+    assertThat(issues.stream().anyMatch(i -> i.getKind() == Kind.ERROR)).isTrue();
   }
 
   public void assertHasNoErrors() {
-    assertThat(issues.stream().anyMatch(i -> i.getCategory() == Category.ERROR)).isFalse();
+    assertThat(issues.stream().anyMatch(i -> i.getKind() == Kind.ERROR)).isFalse();
   }
 
   public void assertIssues(String... requiredMessages) {

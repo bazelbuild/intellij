@@ -38,8 +38,9 @@ private val LOG = Logger.getInstance(BuildResultHelper::class.java)
  * The build even protocol (BEP for short) is a proto-based protocol used by bazel to communicate
  * build events.
  */
-class BuildResultHelper : AutoCloseable {
-  val outputFile: File = BuildEventProtocolUtils.createTempOutputFile()
+class BuildResultHelper(val outputFile: File) : AutoCloseable {
+
+  constructor() : this(BuildEventProtocolUtils.createTempOutputFile())
 
   /**
    * Returns the build flags necessary for the build result helper to work.
