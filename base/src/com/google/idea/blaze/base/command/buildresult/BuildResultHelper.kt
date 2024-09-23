@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.command.buildresult
 
+import com.google.common.collect.ImmutableList
 import com.google.common.collect.ImmutableSet
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException
@@ -105,6 +106,17 @@ class BuildResultHelper(val outputFile: File) : AutoCloseable {
     pathFilter: Predicate<String>,
   ): ImmutableSet<OutputArtifact> {
     return getBuildOutput().getDirectArtifactsForTarget(target, pathFilter)
+  }
+
+  /**
+   * Returns all build artifacts belonging to the given output groups.
+   */
+  @Throws(GetArtifactsException::class)
+  fun getArtifactsForOutputGroup(
+    outputGroup: String,
+    pathFilter: Predicate<String>,
+  ): ImmutableList<OutputArtifact> {
+    return getBuildOutput().getOutputGroupArtifacts(outputGroup, pathFilter)
   }
 
   override fun close() {
