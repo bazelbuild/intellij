@@ -215,6 +215,18 @@ http_archive(
     url = IC_242_URL,
 )
 
+# The plugin api for intellij_ce_2024_2. This is required to build IJwB and run integration tests.
+IC_243_SHA = "d4003ba9082ed7b82f328c7bd9ada538ca7ac997e0b8e3139e4d7d4e6845aab6"
+
+IC_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/243.15521.24-EAP-SNAPSHOT/ideaIC-243.15521.24-EAP-SNAPSHOT.zip"
+
+http_archive(
+    name = "intellij_ce_2024_3",
+    build_file = "@//intellij_platform_sdk:BUILD.idea243",
+    sha256 = IC_243_SHA,
+    url = IC_243_URL,
+)
+
 # The plugin api for intellij_ue_2022_3. This is required to run UE-specific integration tests.
 http_archive(
     name = "intellij_ue_2022_3",
@@ -278,6 +290,17 @@ http_archive(
     build_file = "@//intellij_platform_sdk:BUILD.ue242",
     sha256 = IU_242_SHA,
     url = IU_242_URL,
+)
+
+IU_243_SHA = "23057a78113e4172404ee544574eef9833ca88231b70a1fe816e0f57f5dc7a74"
+
+IU_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/243.15521.24-EAP-SNAPSHOT/ideaIU-243.15521.24-EAP-SNAPSHOT.zip"
+
+http_archive(
+    name = "intellij_ue_2024_3",
+    build_file = "@//intellij_platform_sdk:BUILD.ue243",
+    sha256 = IU_243_SHA,
+    url = IU_243_URL,
 )
 
 # The plugin api for clion_2022_3. This is required to build CLwB\, and run integration tests.
@@ -373,6 +396,17 @@ http_archive(
     build_file_content = DEVKIT_BUILD_FILE,
     sha256 = DEVKIT_241_SHA,
     url = DEVKIT_241_URL,
+)
+
+DEVKIT_243_SHA = "8726bbc4ec32e58b96c0bb9aacc94f51a14c57e9c90563388cf1518f77c3ce1f"
+
+DEVKIT_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/243.15521.24/DevKit-243.15521.24.zip"
+
+http_archive(
+    name = "devkit_2024_3",
+    build_file_content = DEVKIT_BUILD_FILE,
+    sha256 = DEVKIT_243_SHA,
+    url = DEVKIT_243_URL,
 )
 
 DEVKIT_242_SHA = "bf72f615b34fe07d7ba65ee5fa22f0e02d14b619f6bce4cd68de488f768ccde4"
@@ -483,6 +517,17 @@ http_archive(
     url = PYTHON_PLUGIN_242_URL,
 )
 
+PYTHON_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/243.15521.24/PythonCore-243.15521.24.zip"
+
+PYTHON_PLUGIN_243_SHA = "bad6c1269de37ddf418f5db858a2be7e956ca5b6d7f982d317758733e956541e"
+
+http_archive(
+    name = "python_2024_3",
+    build_file_content = _PYTHON_CE_242_BUILD_FILE,
+    sha256 = PYTHON_PLUGIN_243_SHA,
+    url = PYTHON_PLUGIN_243_URL,
+)
+
 _GO_BUILD_FILE_223 = """
 java_import(
     name = "go",
@@ -561,6 +606,18 @@ http_archive(
     url = GO_PLUGIN_242_URL,
 )
 
+GO_PLUGIN_243_SHA = "42e942cba7b36228f72a50ec7789b05f3824e166d89f94b22de923522861a2b3"
+
+GO_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/243.15521.24/org.jetbrains.plugins.go-243.15521.24.zip"
+
+http_archive(
+    name = "go_2024_3",
+    build_file_content = _GO_BUILD_FILE_242,
+    sha256 = GO_PLUGIN_243_SHA,
+    url = GO_PLUGIN_243_URL,
+)
+
+
 _SCALA_BUILD_FILE = """
 java_import(
     name = "scala",
@@ -631,6 +688,18 @@ http_archive(
     url = SCALA_PLUGIN_242_URL,
 )
 
+SCALA_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.3.3/org.intellij.scala-2024.3.3.zip"
+
+SCALA_PLUGIN_243_SHA = "2a4fb00048ad5d1a0ab0bef76a4c76637bb4c4e95df0fb39097e69e410ff5999"
+
+http_archive(
+    name = "scala_2024_3",
+    build_file_content = _SCALA_BUILD_FILE,
+    sha256 = SCALA_PLUGIN_243_SHA,
+    url = SCALA_PLUGIN_243_URL,
+)
+
+
 _TOML_BUILD_FILE = """
 java_import(
     name = "toml",
@@ -662,6 +731,18 @@ http_archive(
     sha256 = TOML_PLUGIN_242_SHA,
     url = TOML_PLUGIN_242_URL,
 )
+
+TOML_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/243.15521.25/org.toml.lang-243.15521.25.zip"
+
+TOML_PLUGIN_243_SHA = "9920c8c5f2f7a01f9d804d8b765326e714d1f98c045641991a9ca8bdf5b8317f"
+
+http_archive(
+    name = "toml_2024_3",
+    build_file_content = _TOML_BUILD_FILE,
+    sha256 = TOML_PLUGIN_243_SHA,
+    url = TOML_PLUGIN_243_URL,
+)
+
 
 # The plugin api for android_studio_dev android_studio. This is required to build ASwB and run integration tests
 http_archive(
