@@ -17,7 +17,6 @@
 
 package com.google.idea.blaze.base.scope.output
 
-import com.google.idea.blaze.base.io.VfsUtils
 import com.google.idea.blaze.common.Context
 import com.google.idea.blaze.common.Output
 import com.intellij.build.events.MessageEvent
@@ -25,11 +24,12 @@ import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.Navigatable
 import java.io.File
 
 /** An issue in a blaze operation.  */
-class IssueOutput (
+class IssueOutput(
   issue: BuildIssue,
   val kind: MessageEvent.Kind,
 ) : Output, BuildIssue by issue {
@@ -52,18 +52,25 @@ class IssueOutput (
   }
 
   @Deprecated("used only for backwards compatibility")
-  fun getMessage(): String = "$title\n$description"
+  fun getMessage(): String {
+    return if (description.isBlank()) {
+      title
+    } else {
+      "$title\n$description"
+    }
+  }
 
   class Builder(private val kind: MessageEvent.Kind, private val title: String) {
     private var description: String = ""
     private var navigatable: (Project) -> Navigatable? = { null }
     private val fixes: MutableList<Pair<String, BuildIssueQuickFix>> = mutableListOf()
 
-    fun withFile(file: File): Builder = withFile(file, line = 0, column = 0)
+    fun withFile(file: File?): Builder = withFile(file, line = 0, column = 0)
 
-    fun withFile(file: File, line: Int = 0, column: Int = 0): Builder {
-      val virtualFile = VfsUtils.resolveVirtualFile(file, false)
+    fun withFile(file: File?, line: Int = 0, column: Int = 0): Builder {
+      if (file == null) return this
 
+      val virtualFile = VfsUtil.findFileByIoFile(file, false)
       if (virtualFile != null) {
         navigatable = { OpenFileDescriptor(it, virtualFile, line, column) }
       }
