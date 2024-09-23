@@ -15,6 +15,9 @@ java_library(
     name = "sdkcompat",
     visibility = SDK_COMPAT_VISIBILITY,
     exports = select_for_plugin_api({
+        "clion-2024.3": ["//sdkcompat/v243"],
+        "intellij-ue-2024.3": ["//sdkcompat/v243"],
+        "intellij-2024.3": ["//sdkcompat/v243"],
         "android-studio-2022.3": ["//sdkcompat/v223"],
         "android-studio-2023.1": ["//sdkcompat/v231"],
         "android-studio-2023.2": ["//sdkcompat/v232"],

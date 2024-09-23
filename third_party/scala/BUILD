@@ -8,6 +8,8 @@ java_library(
     name = "scala_internal",
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
+        "intellij-ue-2024.3": ["@scala_2024_3//:scala"],
+        "intellij-2024.3": ["@scala_2024_3//:scala"],
         "intellij-2022.3": ["@scala_2022_3//:scala"],
         "intellij-ue-2022.3": ["@scala_2022_3//:scala"],
         "intellij-2023.1": ["@scala_2023_1//:scala"],
