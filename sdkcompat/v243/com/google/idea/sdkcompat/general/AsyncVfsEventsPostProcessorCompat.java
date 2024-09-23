@@ -19,8 +19,18 @@ package com.google.idea.sdkcompat.general;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+
+import com.intellij.util.JavaCoroutines;
 import com.intellij.vfs.AsyncVfsEventsListener;
 import com.intellij.vfs.AsyncVfsEventsPostProcessor;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.function.Consumer;
 
 // #api242
 public class AsyncVfsEventsPostProcessorCompat {
@@ -28,7 +38,16 @@ public class AsyncVfsEventsPostProcessorCompat {
 
     }
 
-    public static void addListener(AsyncVfsEventsListener listener, Disposable disposable, Project project) {
-        AsyncVfsEventsPostProcessor.getInstance().addListener(listener, ((ComponentManagerEx)project).getCoroutineScope());
+    public static void addListener(Consumer<List<? extends VFileEvent>> listener, Disposable disposable, Project project) {
+        AsyncVfsEventsPostProcessor.getInstance().addListener(new AsyncVfsEventsListener() {
+            @Override
+            public @Nullable Object filesChanged(@NotNull List<? extends VFileEvent> list, @NotNull Continuation<? super Unit> continuation) {
+                return JavaCoroutines.suspendJava(javaContinuation -> {
+                            listener.accept(list);
+                            javaContinuation.resume(Unit.INSTANCE);
+                        }
+                        , continuation);
+            }
+        }, ((ComponentManagerEx) project).getCoroutineScope());
     }
 }
