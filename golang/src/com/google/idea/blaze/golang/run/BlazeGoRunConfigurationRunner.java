@@ -33,7 +33,6 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
@@ -289,8 +288,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
     SaveUtil.saveAllFiles();
     // Explicitly create local build helper, because the debuggable script is expected to be present
     // locally
-    try (BuildResultHelper buildResultHelper =
-        BuildResultHelperProvider.createForLocalBuild(project)) {
+    try (final var buildResultHelper = new BuildResultHelper()) {
       ImmutableList.Builder<String> flags = ImmutableList.builder();
       if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze) {
         // $ go tool compile
