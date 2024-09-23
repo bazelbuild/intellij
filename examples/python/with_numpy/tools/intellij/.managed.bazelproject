@@ -1,0 +1,10 @@
+directories:
+  .
+
+targets:
+  //app:main
+
+derive_targets_from_directories: true
+
+additional_languages:
+  python
