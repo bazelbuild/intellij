@@ -20,6 +20,8 @@ java_library(
         "intellij-ue-2024.1": ["@scala_2024_1//:scala"],
         "intellij-2024.2": ["@scala_2024_2//:scala"],
         "intellij-ue-2024.2": ["@scala_2024_2//:scala"],
+        "intellij-2024.3": ["@scala_2024_3//:scala"],
+        "intellij-ue-2024.3": ["@scala_2024_3//:scala"],
         "default": [],
     }),
 )

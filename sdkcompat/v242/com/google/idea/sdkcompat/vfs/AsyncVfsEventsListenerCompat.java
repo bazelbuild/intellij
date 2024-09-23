@@ -19,7 +19,7 @@ public class AsyncVfsEventsListenerCompat implements AsyncVfsEventsListener {
     }
 
     @Override
-    public void filesChanged(@NotNull List<? extends @NotNull VFileEvent> list) {
+    public void filesChanged(@NotNull List<? extends VFileEvent> list) {
         listener.accept(list);
     }
 }

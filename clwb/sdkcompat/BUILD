@@ -26,6 +26,7 @@ java_library(
         "clion-2023.3": ["//clwb/sdkcompat/v233"],
         "clion-2024.1": ["//clwb/sdkcompat/v241"],
         "clion-2024.2": ["//clwb/sdkcompat/v242"],
+        "clion-2024.3": ["//clwb/sdkcompat/v243"],
     }),
     visibility = ["//clwb:__pkg__"],
     deps = [
