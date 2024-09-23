@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.pom.NavigatableAdapter
-import com.intellij.psi.util.startOffset
 
 data class BazelBuildIssue(
   override val title: String,
@@ -27,7 +26,7 @@ data class BazelBuildIssue(
       val element = BuildReferenceManager.getInstance(project).resolveLabel(label) ?: return
 
       val file = element.containingFile.virtualFile ?: return
-      OpenFileDescriptor(project, file, element.startOffset).navigate(requestFocus)
+      OpenFileDescriptor(project, file, element.textRange.startOffset).navigate(requestFocus)
     }
   }
 

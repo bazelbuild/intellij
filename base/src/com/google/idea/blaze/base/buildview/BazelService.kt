@@ -13,6 +13,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -24,14 +25,22 @@ import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import java.io.FileInputStream
 import java.io.IOException
+import kotlin.io.path.pathString
 
 @Service(Service.Level.PROJECT)
-class BazelService(private val project: Project, private val scope: CoroutineScope) {
+class BazelService(private val project: Project) : Disposable {
   companion object {
     private val LOG: Logger = thisLogger()
 
     @JvmStatic
     fun instance(project: Project): BazelService = project.service()
+  }
+
+  // #api223 use the injected scope
+  private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+  override fun dispose() {
+    scope.cancel()
   }
 
   private fun assertNonBlocking() {
@@ -60,7 +69,7 @@ class BazelService(private val project: Project, private val scope: CoroutineSco
     val handler = GeneralCommandLine()
       .withExePath(cmd.binaryPath)
       .withParameters(cmd.toArgumentList())
-      .withWorkingDirectory(root)
+      .apply { setWorkDirectory(root.pathString) } // required for backwards compatability
       .withRedirectErrorStream(true)
       .let(::OSProcessHandler)
 
