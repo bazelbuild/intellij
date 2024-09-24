@@ -2,6 +2,7 @@
 # Description: Builds clwb
 #
 
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
     "CLWB_PACKAGES_VISIBILITY",
