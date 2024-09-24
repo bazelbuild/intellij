@@ -1,3 +1,5 @@
+load("@rules_java//java:defs.bzl", "java_library")
+
 proto_library(
     name = "nested_proto",
     srcs = ["java/com/testdata/nestedproto/proto/nested.proto"],
