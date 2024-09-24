@@ -1,3 +1,13 @@
+v2024.09.24
+===========
+Bug Fixes
+* Fix auto-import exception #6753
+* Fix unrecognized options by bazel mod command #6756
+* Set go DebugConfguration working directory for tests #6748
+Features
+* CLion add support for additional_compiler_inputs #6774
+* Added completion support for external targets from modules. Needs --incompatible_use_plus_in_repo_names set (defaults to true in bazel 8.0+) to work optimally. (credits: @mtoader)
+
 v2024.09.10
 ===========
 Bug Fixes
