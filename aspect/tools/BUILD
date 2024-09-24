@@ -3,6 +3,8 @@
 # Tools needed by the bazel plugin's aspect.
 #
 
+load("@rules_java//java:defs.bzl", "java_binary", "java_library", "java_test")
+
 package(default_visibility = ["//aspect:__pkg__"])
 
 licenses(["notice"])
