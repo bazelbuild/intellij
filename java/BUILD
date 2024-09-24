@@ -162,6 +162,7 @@ intellij_unit_test_suite(
         "//testing:lib",
         "@com_google_guava_guava//jar",
         "@junit//jar",
+        "@org_opentest4j_opentest4j//jar",
     ],
 )
 
@@ -228,6 +229,7 @@ java_binary(
             "//shared",
             "@com_google_guava_guava//jar",
             "@junit//jar",
+            "@org_opentest4j_opentest4j//jar",
             "@truth//jar",
         ],
     )

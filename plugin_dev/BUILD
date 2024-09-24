@@ -89,5 +89,6 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//third_party/devkit:devkit_for_tests",
         "@junit//jar",
+        "@org_opentest4j_opentest4j//jar",
     ],
 )
