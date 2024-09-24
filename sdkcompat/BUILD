@@ -1,5 +1,6 @@
 # Description: Indirections for SDK changes to the underlying platform library.
 
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
     "SDK_COMPAT_VISIBILITY",
