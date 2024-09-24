@@ -79,6 +79,7 @@ maven.install(
     name = "maven",
     artifacts = [
         "junit:junit:4.13.2",
+        "org.opentest4j:opentest4j:1.3.0",
         "org.mockito:mockito-core:5.8.0",
         "org.objenesis:objenesis:3.3",
         "net.bytebuddy:byte-buddy:1.14.0",
@@ -106,10 +107,11 @@ maven.install(
 )
 use_repo(
     maven,
+    "com_google_guava_failureaccess",
     "com_google_guava_guava",
     "com_google_j2objc_j2objc_annotations",
-    "com_google_guava_failureaccess",
     "maven",
+    "org_opentest4j_opentest4j",
     "unpinned_maven",
     auto_value = "com_google_auto_value_auto_value",
     auto_value_annotations = "com_google_auto_value_auto_value_annotations",

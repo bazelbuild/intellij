@@ -104,5 +104,6 @@ intellij_integration_test_suite(
         "//third_party/javascript:javascript_for_tests",
         "@com_google_guava_guava//jar",
         "@junit//jar",
+        "@org_opentest4j_opentest4j//jar",
     ],
 )

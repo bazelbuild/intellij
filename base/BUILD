@@ -598,5 +598,6 @@ intellij_integration_test_suite(
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
         "@junit//jar",
+        "@org_opentest4j_opentest4j//jar",
     ],
 )
