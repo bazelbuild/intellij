@@ -1056,6 +1056,16 @@ java_library(
     ),
 )
 
+java_library(
+    name = "json_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":json"],
+    ),
+)
+
 filegroup(
     name = "application_info_json",
     srcs = select_from_plugin_api_directory(
