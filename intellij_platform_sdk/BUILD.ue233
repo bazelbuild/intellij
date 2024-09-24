@@ -141,6 +141,11 @@ java_import(
     tags = ["intellij-provided-by-sdk"],
 )
 
+java_import(
+    name = "json",
+    jars = glob(["plugins/json/lib/*.jar"])
+)
+
 filegroup(
     name = "application_info_json",
     srcs = ["product-info.json"],
