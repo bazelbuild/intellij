@@ -207,6 +207,11 @@ java_proto_library(
     deps = [":bazel_output_service_proto"],
 )
 
+cc_proto_library(
+    name = "bazel_output_service_cc_proto",
+    deps = [":bazel_output_service_proto"],
+)
+
 proto_library(
     name = "bazel_output_service_rev2_proto",
     srcs = ["bazel_output_service_rev2.proto"],
@@ -217,6 +222,11 @@ proto_library(
 
 java_proto_library(
     name = "bazel_output_service_rev2_java_proto",
+    deps = [":bazel_output_service_rev2_proto"],
+)
+
+cc_proto_library(
+    name = "bazel_output_service_rev2_cc_proto",
     deps = [":bazel_output_service_rev2_proto"],
 )
 
