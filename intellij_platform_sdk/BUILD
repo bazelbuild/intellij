@@ -5,6 +5,7 @@
 #   plugin apis to known packages that build plugins. Only packages
 #   listed here may depend on these libraries.
 
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
     "INTELLIJ_PLUGINS_VISIBILITY",
