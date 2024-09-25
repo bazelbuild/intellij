@@ -1,3 +1,4 @@
+load("@rules_java//java:defs.bzl", "java_test")
 load(
     "//aspect/testing/rules:fast_build_aspect_test_fixture.bzl",
     "fast_build_aspect_test_fixture",

@@ -1,3 +1,4 @@
+load("@rules_java//java:defs.bzl", "java_test")
 load("@rules_python//python:defs.bzl", "py_test")
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
