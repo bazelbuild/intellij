@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2018 The Bazel Authors. All rights reserved.
+  ~ Copyright 2024 The Bazel Authors. All rights reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -22,10 +22,6 @@
         order="first"/>
     <additionalLibraryRootsProvider
         implementation="com.google.idea.blaze.typescript.BlazeTypeScriptAdditionalLibraryRootsProvider"/>
-    <projectService
-        serviceInterface="com.intellij.lang.typescript.tsconfig.TypeScriptConfigLibraryUpdater"
-        serviceImplementation="com.google.idea.blaze.typescript.BlazeTypeScriptConfigLibraryUpdater"
-        overrides="true"/>
     <projectService
         serviceInterface="com.intellij.lang.typescript.tsconfig.TypeScriptConfigService"
         serviceImplementation="com.google.idea.blaze.typescript.DelegatingTypeScriptConfigService"

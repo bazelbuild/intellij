@@ -1,19 +1,20 @@
 load(
+    "//:build-visibility.bzl",
+    "JAVASCRIPT_PACKAGES_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
+load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
     "intellij_plugin_library",
     "optional_plugin_xml",
     "stamped_plugin_xml",
 )
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
-)
-load(
-    "//:build-visibility.bzl",
-    "JAVASCRIPT_PACKAGES_VISIBILITY",
-    "PLUGIN_PACKAGES_VISIBILITY",
 )
 
 licenses(["notice"])
@@ -39,9 +40,19 @@ optional_plugin_xml(
     plugin_xml = "src/META-INF/javascript-contents.xml",
 )
 
+optional_plugin_xml(
+    name = "optional_xml_243",
+    module = ["JavaScript"],
+    plugin_xml = "src/META-INF/javascript-contents-243.xml",
+)
+
 intellij_plugin_library(
     name = "plugin_library",
-    optional_plugin_xmls = [":optional_xml"],
+    optional_plugin_xmls = [":optional_xml"] + select_for_plugin_api({
+        "intellij-2024.3": [],
+        "intellij-ue-2024.3": [],
+        "default": [":optional_xml_243"],
+    }),
     plugin_xmls = ["src/META-INF/blaze-javascript.xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":javascript"],
