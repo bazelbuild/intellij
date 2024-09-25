@@ -2,6 +2,7 @@
 # Description: Builds ijwb
 #
 
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
