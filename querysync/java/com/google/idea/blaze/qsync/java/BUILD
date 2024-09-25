@@ -1,3 +1,5 @@
+load("@rules_java//java:defs.bzl", "java_library")
+
 package(default_visibility = [
     "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
     "//querysync:__subpackages__",
