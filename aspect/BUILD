@@ -37,6 +37,7 @@ filegroup(
         "intellij_info_bundled.bzl",
         "intellij_info_impl_bundled.bzl",
         "java_classpath.bzl",
+        "java_info.bzl",
         "make_variables.bzl",
         ":BUILD.bazel",
         "//aspect/tools:CreateAar",
