@@ -1,3 +1,4 @@
+load("@rules_java//java:defs.bzl", "java_binary", "java_library", "java_test")
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",

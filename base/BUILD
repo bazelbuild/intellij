@@ -1,3 +1,4 @@
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
     "DEFAULT_TEST_VISIBILITY",
@@ -32,7 +33,6 @@ java_library(
         "//common/util:platform",
         "//common/util:process",
         "//common/util:transactions",
-        "//ext:intellijext",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",

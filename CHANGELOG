@@ -1,3 +1,49 @@
+v2024.08.27
+===========
+* Internal cleanup
+
+v2024.08.13
+===========
+* Internal cleanup
+
+v2024.07.30
+===========
+* Internal cleanup
+
+v2024.07.16
+===========
+* Internal cleanup
+
+v2024.07.02
+===========
+* Internal cleanup
+
+v2024.06.18
+===========
+* Internal cleanup
+
+v2024.06.04-RC-2
+================
+* Address CVE-2024-5899
+* Internal cleanup
+
+v2024.06.04
+===========
+* Internal cleanup
+
+v2024.05.21
+===========
+* Internal cleanup
+
+v2024.05.07
+===========
+* Internal cleanup
+
+v2024.04.23
+===========
+* Plugin aspect now depends on @rules_java. If this breaks you, please update your @rules_java version to 5.3.5 or later.
+* Internal Cleanup
+
 v2024.04.09
 ===========
 * Internal cleanup

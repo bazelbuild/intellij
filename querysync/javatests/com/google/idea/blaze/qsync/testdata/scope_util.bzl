@@ -25,6 +25,7 @@ def scopeForAndroidPackage(blaze_package):
 
 def scopeForAndroidPackageWithResources(blaze_package):
     label = Label(blaze_package)
+
     return scopeForAndroidPackage(blaze_package) + [
         "//" + label.package + ":" + label.name + ".aar",
         "//" + label.package + ":" + label.name + ".srcjar",

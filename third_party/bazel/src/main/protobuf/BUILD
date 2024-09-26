@@ -9,14 +9,15 @@ FILES = [
     "bazel_flags",
     "build",
     "builtin",
+    "crash_debugging",
     "crosstool_config",
     "deps",
     "desugar_deps",
     "execution_statistics",
     "extra_actions_base",
-    "invocation_policy",
     "java_compilation",
     "memory_pressure",
+    "strategy_policy",
     "test_status",
     "worker_protocol",
     "execution_graph",
@@ -81,6 +82,17 @@ proto_library(
 java_proto_library(
     name = "failure_details_java_proto",
     deps = [":failure_details_proto"],
+)
+
+proto_library(
+    name = "invocation_policy_proto",
+    srcs = ["invocation_policy.proto"],
+    deps = [":strategy_policy_proto"],
+)
+
+java_proto_library(
+    name = "invocation_policy_java_proto",
+    deps = [":invocation_policy_proto"],
 )
 
 proto_library(
@@ -195,6 +207,11 @@ java_proto_library(
     deps = [":bazel_output_service_proto"],
 )
 
+cc_proto_library(
+    name = "bazel_output_service_cc_proto",
+    deps = [":bazel_output_service_proto"],
+)
+
 proto_library(
     name = "bazel_output_service_rev2_proto",
     srcs = ["bazel_output_service_rev2.proto"],
@@ -208,11 +225,17 @@ java_proto_library(
     deps = [":bazel_output_service_rev2_proto"],
 )
 
+cc_proto_library(
+    name = "bazel_output_service_rev2_cc_proto",
+    deps = [":bazel_output_service_rev2_proto"],
+)
+
 proto_library(
     name = "spawn_proto",
     srcs = ["spawn.proto"],
     deps = [
         "@com_google_protobuf//:duration_proto",
+        "@com_google_protobuf//:timestamp_proto",
     ],
 )
 
@@ -228,10 +251,10 @@ package_group(
     packages = [
         "//src/test/java/com/google/devtools/build/docgen/...",
         "//src/test/java/com/google/devtools/build/lib/rules/starlarkdocextract/...",
-        "//src/test/java/com/google/devtools/build/skydoc/...",
+        "//src/test/java/com/google/devtools/build/lib/starlarkdocextract/...",
         "//third_party/bazel/src/main/java/com/google/devtools/build/docgen/...",
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/rules/starlarkdocextract/...",
-        "//third_party/bazel/src/main/java/com/google/devtools/build/skydoc/...",
+        "//third_party/bazel/src/main/java/com/google/devtools/build/lib/starlarkdocextract/...",
     ],
 )
 
@@ -280,6 +303,7 @@ filegroup(
         ":command_server_java_grpc_srcs",
         ":command_server_java_proto_srcs",
         ":failure_details_java_proto_srcs",
+        ":invocation_policy_java_proto_srcs",
         ":option_filters_java_proto_srcs",
         ":profile_java_proto_srcs",
         ":remote_execution_log_java_proto_srcs",

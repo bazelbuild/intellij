@@ -351,11 +351,14 @@ http_archive(
 
 http_archive(
     name = "rules_java",
-    sha256 = "7b0d9ba216c821ee8697dedc0f9d0a705959ace462a3885fe9ba0347ba950111",
     urls = [
-        "https://github.com/bazelbuild/rules_java/releases/download/6.5.1/rules_java-6.5.1.tar.gz",
+        "https://github.com/bazelbuild/rules_java/releases/download/7.10.0/rules_java-7.10.0.tar.gz",
     ],
+    sha256 = "eb5447f019734b0c4284eaa5f8248415084da5445ba8201c935a211ab8af43a0",
 )
+load("@rules_java//java:repositories.bzl", "rules_java_dependencies", "rules_java_toolchains")
+rules_java_dependencies()
+rules_java_toolchains()
 
 # LICENSE: Common Public License 1.0
 jvm_maven_import_external(
@@ -483,11 +486,44 @@ jvm_maven_import_external(
     ],
 )
 
+# LICENSE: The Apache Software License, Version 2.0
 http_archive(
-    name = "build_bazel_rules_android",
-    sha256 = "cd06d15dd8bb59926e4d65f9003bfc20f9da4b2519985c27e190cddc8b7a7806",
-    strip_prefix = "rules_android-0.1.1",
-    urls = ["https://github.com/bazelbuild/rules_android/archive/v0.1.1.zip"],
+    name = "rules_proto",
+    sha256 = "6fb6767d1bef535310547e03247f7518b03487740c11b6c6adb7952033fe1295",
+    strip_prefix = "rules_proto-6.0.2",
+    url = "https://github.com/bazelbuild/rules_proto/releases/download/6.0.2/rules_proto-6.0.2.tar.gz",
+)
+
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies")
+rules_proto_dependencies()
+
+load("@rules_proto//proto:setup.bzl", "rules_proto_setup")
+rules_proto_setup()
+
+load("@rules_proto//proto:toolchains.bzl", "rules_proto_toolchains")
+rules_proto_toolchains()
+
+RULES_ANDROID_COMMIT = "57bed3f556c698b0a0e692f729ed7edfd804db98"
+
+http_archive(
+    name = "rules_android",
+    sha256 = "e1ee3cd26581bd563f8087a9d325b97f130ab26cd5dede7139340603a93223d5",
+    strip_prefix = "rules_android-" + RULES_ANDROID_COMMIT,
+    urls = ["https://github.com/bazelbuild/rules_android/archive/%s.zip" % RULES_ANDROID_COMMIT],
+)
+load("@rules_android//:prereqs.bzl", "rules_android_prereqs")
+rules_android_prereqs()
+load("@rules_android//:defs.bzl", "rules_android_workspace")
+rules_android_workspace()
+
+load("@rules_android//rules:rules.bzl", "android_sdk_repository")
+android_sdk_repository(
+    name = "androidsdk",
+)
+
+register_toolchains(
+    "@rules_android//toolchains/android:android_default_toolchain",
+    "@rules_android//toolchains/android_sdk:android_sdk_tools",
 )
 
 _JARJAR_BUILD_FILE = """
@@ -578,22 +614,6 @@ bazel_binaries(versions = [
     "4.0.0",
     "6.0.0",
 ])
-
-# LICENSE: The Apache Software License, Version 2.0
-http_archive(
-    name = "rules_proto",
-    sha256 = "dc3fb206a2cb3441b485eb1e423165b231235a1ea9b031b4433cf7bc1fa460dd",
-    strip_prefix = "rules_proto-5.3.0-21.7",
-    urls = [
-        "https://github.com/bazelbuild/rules_proto/archive/refs/tags/5.3.0-21.7.tar.gz",
-    ],
-)
-
-load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
-
-rules_proto_dependencies()
-
-rules_proto_toolchains()
 
 # LICENSE: The Apache Software License, Version 2.0
 rules_scala_version = "8f255cd1fecfe4d43934b161b3edda58bdb2e8f4"
@@ -690,14 +710,6 @@ http_archive(
     ],
 )
 
-# gRPC Java
-http_archive(
-    name = "io_grpc_grpc_java",
-    sha256 = "3bcf6be49fc7ab8187577a5211421258cb8e6d179f46023cc82e42e3a6188e51",
-    strip_prefix = "grpc-java-1.59.0",
-    url = "https://github.com/grpc/grpc-java/archive/refs/tags/v1.59.0.tar.gz",
-)
-
 jvm_maven_import_external(
     name = "io_netty_netty_common",
     artifact = "io.netty:netty-common:4.1.96.Final",
@@ -737,44 +749,6 @@ jvm_maven_import_external(
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )
-
-# io_grpc_grpc_java dependencies
-load("@io_grpc_grpc_java//:repositories.bzl", "IO_GRPC_GRPC_JAVA_ARTIFACTS", "IO_GRPC_GRPC_JAVA_OVERRIDE_TARGETS", "grpc_java_repositories")
-
-grpc_java_repositories()
-
-# Java Maven-based repositories.
-http_archive(
-    name = "rules_jvm_external",
-    sha256 = "cd1a77b7b02e8e008439ca76fd34f5b07aecb8c752961f9640dea15e9e5ba1ca",
-    strip_prefix = "rules_jvm_external-4.2",
-    url = "https://github.com/bazelbuild/rules_jvm_external/archive/4.2.zip",
-)
-
-load("@rules_jvm_external//:repositories.bzl", "rules_jvm_external_deps")
-
-rules_jvm_external_deps()
-
-load("@rules_jvm_external//:setup.bzl", "rules_jvm_external_setup")
-
-rules_jvm_external_setup()
-
-load("@rules_jvm_external//:defs.bzl", "maven_install")
-
-maven_install(
-    artifacts = IO_GRPC_GRPC_JAVA_ARTIFACTS,
-    generate_compat_repositories = True,
-    override_targets = IO_GRPC_GRPC_JAVA_OVERRIDE_TARGETS,
-    repositories = [
-        "https://maven.google.com",
-        "https://repo1.maven.org/maven2",
-        "https://repository.mulesoft.org/nexus/content/repositories/public",
-    ],
-)
-
-load("@maven//:compat.bzl", "compat_repositories")
-
-compat_repositories()
 
 # Register custom java 17 toolchain
 register_toolchains("//:custom_java_17_toolchain_definition")

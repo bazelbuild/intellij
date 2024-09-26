@@ -6,6 +6,7 @@ load(
 )
 load(
     "//aspect:intellij_info_impl.bzl",
+    "IntelliJInfo",
     "update_set_in_dict",
 )
 
@@ -13,9 +14,9 @@ def _impl(ctx):
     """Implementation method for _intellij_aspect_test_fixture."""
     output_groups = dict()
     inputs = depset()
-    deps = [dep for dep in ctx.attr.deps if hasattr(dep, "intellij_info")]
+    deps = [dep for dep in ctx.attr.deps if IntelliJInfo in dep]
     for dep in deps:
-        for k, v in dep.intellij_info.output_groups.items():
+        for k, v in dep[IntelliJInfo].output_groups.items():
             update_set_in_dict(output_groups, k, v)
             inputs = depset(
                 [f for f in v.to_list() if f.short_path.endswith(".intellij-info.txt")],

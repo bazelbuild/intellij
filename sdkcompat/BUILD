@@ -1,5 +1,6 @@
 # Description: Indirections for SDK changes to the underlying platform library.
 
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
     "SDK_COMPAT_VISIBILITY",
@@ -20,15 +21,12 @@ java_library(
         "android-studio-2023.1": ["//sdkcompat/v231"],
         "android-studio-2023.2": ["//sdkcompat/v232"],
         "android-studio-2023.3": ["//sdkcompat/v233"],
-        "intellij-2021.3": ["//sdkcompat/v213"],
-        "intellij-ue-2021.3": ["//sdkcompat/v213"],
         "intellij-2022.1": ["//sdkcompat/v221"],
         "intellij-ue-2022.1": ["//sdkcompat/v221"],
         "intellij-2022.2": ["//sdkcompat/v222"],
         "intellij-2022.3": ["//sdkcompat/v223"],
         "intellij-ue-2022.2": ["//sdkcompat/v222"],
         "intellij-ue-2022.3": ["//sdkcompat/v223"],
-        "clion-2021.3": ["//sdkcompat/v213"],
         "clion-2022.1": ["//sdkcompat/v221"],
         "clion-2022.2": ["//sdkcompat/v222"],
         "clion-2022.3": ["//sdkcompat/v223"],

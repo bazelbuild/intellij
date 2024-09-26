@@ -15,6 +15,16 @@ load(
     "expand_make_variables",
 )
 
+IntelliJInfo = provider(
+    doc = "Collected infromation about the targets visited by the aspect.",
+    fields = [
+        "export_deps",
+        "kind",
+        "output_groups",
+        "target_key",
+    ],
+)
+
 # Defensive list of features that can appear in the C++ toolchain, but which we
 # definitely don't want to enable (when enabled, they'd contribute command line
 # flags that don't make sense in the context of intellij info).
@@ -37,11 +47,12 @@ DEPS = [
     "exports",
     "java_lib",  # From old proto_library rules
     "_android_sdk",  # from android rules
-    "aidl_lib",  # from android_sdk
+    "_aidl_lib",  # from android_library
     "_scala_toolchain",  # From scala rules
     "test_app",  # android_instrumentation_test
     "instruments",  # android_instrumentation_test
     "tests",  # From test_suite
+    "_kt_toolchain",  # From rules_kotlin
 ]
 
 # Run-time dependency attributes, grouped by type.
@@ -215,7 +226,7 @@ def list_omit_none(value):
 
 def is_valid_aspect_target(target):
     """Returns whether the target has had the aspect run on it."""
-    return hasattr(target, "intellij_info")
+    return IntelliJInfo in target
 
 def get_aspect_ids(ctx):
     """Returns the all aspect ids, filtering out self."""
@@ -257,7 +268,7 @@ def make_dep(dep, dependency_type):
     """Returns a Dependency proto struct."""
     return struct(
         dependency_type = dependency_type,
-        target = dep.intellij_info.target_key,
+        target = dep[IntelliJInfo].target_key,
     )
 
 def make_deps(deps, dependency_type):
@@ -800,6 +811,28 @@ def collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output
         update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
     return handled
 
+def _get_android_ide_info(target):
+    """Returns the AndroidIdeInfo provider for the given target."""
+
+    if hasattr(android_common, "AndroidIdeInfo"):
+        return target[android_common.AndroidIdeInfo]
+
+    # Backwards compatibility: supports android struct provider
+    legacy_android = getattr(target, "android")
+
+    # Transform into AndroidIdeInfo form
+    return struct(
+        java_package = legacy_android.java_package,
+        manifest = legacy_android.manifest,
+        idl_source_jar = getattr(legacy_android.idl.output, "source_jar", None),
+        idl_class_jar = getattr(legacy_android.idl.output, "class_jar", None),
+        defines_android_resources = legacy_android.defines_resources,
+        idl_import_root = getattr(legacy_android.idl, "import_root", None),
+        resource_jar = legacy_android.resource_jar,
+        signed_apk = legacy_android.apk,
+        apks_under_test = legacy_android.apks_under_test,
+    )
+
 def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Populates ide_info proto and intellij_resolve_android output group
 
@@ -814,24 +847,7 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
     android_semantics = semantics.android if hasattr(semantics, "android") else None
     extra_ide_info = android_semantics.extra_ide_info(target, ctx) if android_semantics else {}
 
-    if hasattr(android_common, "AndroidIdeInfo"):
-        android = target[android_common.AndroidIdeInfo]
-    else:
-        # Backwards compatibility: supports android struct provider
-        legacy_android = getattr(target, "android")
-
-        # Transform into AndroidIdeInfo form
-        android = struct(
-            java_package = legacy_android.java_package,
-            manifest = legacy_android.manifest,
-            idl_source_jar = getattr(legacy_android.idl.output, "source_jar", None),
-            idl_class_jar = getattr(legacy_android.idl.output, "class_jar", None),
-            defines_android_resources = legacy_android.defines_resources,
-            idl_import_root = getattr(legacy_android.idl, "import_root", None),
-            resource_jar = legacy_android.resource_jar,
-            signed_apk = legacy_android.apk,
-            apks_under_test = legacy_android.apks_under_test,
-        )
+    android = _get_android_ide_info(target)
 
     output_jar = struct(
         class_jar = android.idl_class_jar,
@@ -994,13 +1010,15 @@ def collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups):
 def artifact_to_path(artifact):
     return artifact.root_execution_path_fragment + "/" + artifact.relative_path
 
-def collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups):
+def collect_kotlin_toolchain_info(target, ctx, ide_info, ide_info_file, output_groups):
     """Updates kotlin_toolchain-relevant output groups, returns false if not a kotlin_toolchain target."""
-    if not hasattr(target, "kt"):
+    if ctx.rule.kind == "_kt_toolchain" and platform_common.ToolchainInfo in target:
+        kt = target[platform_common.ToolchainInfo]
+    elif hasattr(target, "kt") and hasattr(target.kt, "language_version"):
+        kt = target.kt  # Legacy struct provider mechanism
+    else:
         return False
-    kt = target.kt
-    if not hasattr(kt, "language_version"):
-        return False
+
     ide_info["kt_toolchain_ide_info"] = struct(
         language_version = kt.language_version,
     )
@@ -1014,7 +1032,7 @@ def _is_proto_library_wrapper(target, ctx):
 
     # treat any *proto_library rule with a single proto_library dep as a shim
     deps = collect_targets_from_attrs(ctx.rule.attr, ["deps"])
-    return len(deps) == 1 and deps[0].intellij_info and deps[0].intellij_info.kind == "proto_library"
+    return len(deps) == 1 and IntelliJInfo in deps[0] and deps[0][IntelliJInfo].kind == "proto_library"
 
 def _get_forwarded_deps(target, ctx):
     """Returns the list of deps of this target to forward.
@@ -1058,7 +1076,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     # Add exports from direct dependencies
     exported_deps_from_deps = []
     for dep in direct_dep_targets:
-        exported_deps_from_deps = exported_deps_from_deps + dep.intellij_info.export_deps
+        exported_deps_from_deps = exported_deps_from_deps + dep[IntelliJInfo].export_deps
 
     # Combine into all compile time deps
     compiletime_deps = direct_deps + exported_deps_from_deps
@@ -1072,7 +1090,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
 
         # Collect transitive exports
         for export in direct_exports:
-            export_deps.extend(export.intellij_info.export_deps)
+            export_deps.extend(export[IntelliJInfo].export_deps)
 
         if ctx.rule.kind == "android_library" or ctx.rule.kind == "kt_android_library":
             # Empty android libraries export all their dependencies.
@@ -1102,7 +1120,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     prerequisites = direct_dep_targets + runtime_dep_targets + extra_prerequisite_targets + direct_exports
     output_groups = dict()
     for dep in prerequisites:
-        for k, v in dep.intellij_info.output_groups.items():
+        for k, v in dep[IntelliJInfo].output_groups.items():
             if dep in forwarded_deps:
                 # unconditionally roll up deps for these targets
                 output_groups[k] = output_groups[k] + [v] if k in output_groups else [v]
@@ -1160,7 +1178,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
     handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
-    handled = collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
+    handled = collect_kotlin_toolchain_info(target, ctx, ide_info, ide_info_file, output_groups) or handled
 
     # Any extra ide info
     if hasattr(semantics, "extra_ide_info"):
@@ -1175,15 +1193,15 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     ctx.actions.write(ide_info_file, proto.encode_text(info))
 
     # Return providers.
-    return struct_omit_none(
-        intellij_info = struct(
+    return [
+        IntelliJInfo(
             export_deps = export_deps,
             kind = ctx.rule.kind,
             output_groups = output_groups,
             target_key = target_key,
         ),
-        output_groups = output_groups,
-    )
+        OutputGroupInfo(**output_groups),
+    ]
 
 def semantics_extra_deps(base, semantics, name):
     if not hasattr(semantics, name):

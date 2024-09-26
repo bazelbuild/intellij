@@ -1,3 +1,4 @@
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
     "JAVASCRIPT_PACKAGES_VISIBILITY",

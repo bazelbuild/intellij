@@ -13,8 +13,8 @@ INDIRECT_IJ_PRODUCTS = {
     "intellij-ue-latest-mac": "intellij-ue-2022.3-mac",
     "intellij-ue-beta": "intellij-ue-2022.3",
     "intellij-ue-under-dev": "intellij-ue-2022.3",
-    "android-studio-latest": "android-studio-2023.2",
-    "android-studio-latest-mac": "android-studio-2023.2-mac",
+    "android-studio-latest": "android-studio-2023.3",
+    "android-studio-latest-mac": "android-studio-2023.3-mac",
     "android-studio-beta": "android-studio-2023.3",
     "android-studio-beta-mac": "android-studio-2023.3-mac",
     "android-studio-canary": "android-studio-2023.3",
@@ -539,4 +539,6 @@ def select_for_channel(channel_map):
             for direct_product, indirect_product in inverse_ij_products.items()
         },
     )
+
+    select_map.update({"//conditions:default": channel_map[CHANNEL_STABLE]})
     return select(select_map)
