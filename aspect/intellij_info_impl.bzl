@@ -1,6 +1,10 @@
 """Implementation of IntelliJ-specific information collecting aspect."""
 
 load(
+    "@bazel_tools//tools/build_defs/cc:action_names.bzl",
+    "ACTION_NAMES",
+)
+load(
     ":artifacts.bzl",
     "artifact_location",
     "artifacts_from_target_list_attr",
@@ -9,13 +13,10 @@ load(
     "struct_omit_none",
     "to_artifact_location",
 )
+load(":get_java_provider.bzl", "get_java_provider")
 load(
     ":make_variables.bzl",
     "expand_make_variables",
-)
-load(
-    "@bazel_tools//tools/build_defs/cc:action_names.bzl",
-    "ACTION_NAMES",
 )
 
 IntelliJInfo = provider(
@@ -585,20 +586,6 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
     ide_info["c_toolchain_ide_info"] = c_toolchain_info
     update_sync_output_groups(output_groups, "intellij-info-cpp", depset([ide_info_file]))
     return True
-
-def get_java_provider(target):
-    """Find a provider exposing java compilation/outputs data."""
-
-    # Check for kt providers before JavaInfo. e.g. kt targets have
-    # JavaInfo, but their data lives in the "kt" provider and not JavaInfo.
-    # See https://github.com/bazelbuild/intellij/pull/1202
-    if hasattr(target, "kt") and hasattr(target.kt, "outputs"):
-        return target.kt
-    if JavaInfo in target:
-        return target[JavaInfo]
-    if hasattr(java_common, "JavaPluginInfo") and java_common.JavaPluginInfo in target:
-        return target[java_common.JavaPluginInfo]
-    return None
 
 def _collect_generated_files(java):
     """Collects generated files from a Java target"""
