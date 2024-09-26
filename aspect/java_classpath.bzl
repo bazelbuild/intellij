@@ -1,5 +1,7 @@
 """An aspect which extracts the runtime classpath from a java target."""
 
+load(":java_info.bzl", "get_java_info", "java_info_in_target")
+
 def _runtime_classpath_impl(target, ctx):
     """The top level aspect implementation function.
 
@@ -18,15 +20,16 @@ def _runtime_classpath_impl(target, ctx):
     })
 
 def _get_runtime_jars(target):
-    if JavaInfo not in target:
+    java_info = get_java_info(target)
+    if not java_info:
         return depset()
-    if target[JavaInfo].compilation_info:
-        return target[JavaInfo].compilation_info.runtime_classpath
+    if java_info.compilation_info:
+        return java_info.compilation_info.runtime_classpath
 
     # JavaInfo constructor doesn't fill in compilation info, so just return the
     # full transitive set of runtime jars
     # https://github.com/bazelbuild/bazel/issues/10170
-    return target[JavaInfo].transitive_runtime_jars
+    return java_info.transitive_runtime_jars
 
 def _aspect_def(impl):
     return aspect(implementation = impl)

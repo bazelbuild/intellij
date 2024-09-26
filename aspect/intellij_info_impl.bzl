@@ -1,6 +1,10 @@
 """Implementation of IntelliJ-specific information collecting aspect."""
 
 load(
+    "@bazel_tools//tools/build_defs/cc:action_names.bzl",
+    "ACTION_NAMES",
+)
+load(
     ":artifacts.bzl",
     "artifact_location",
     "artifacts_from_target_list_attr",
@@ -9,13 +13,10 @@ load(
     "struct_omit_none",
     "to_artifact_location",
 )
+load(":java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
 load(
     ":make_variables.bzl",
     "expand_make_variables",
-)
-load(
-    "@bazel_tools//tools/build_defs/cc:action_names.bzl",
-    "ACTION_NAMES",
 )
 
 IntelliJInfo = provider(
@@ -254,7 +255,7 @@ def _is_language_specific_proto_library(ctx, target, semantics):
     """Returns True if the target is a proto library with attached language-specific aspect."""
     if ctx.rule.kind != "proto_library":
         return False
-    if JavaInfo in target:
+    if java_info_in_target(target):
         return True
     if CcInfo in target:
         return True
@@ -594,8 +595,9 @@ def get_java_provider(target):
     # See https://github.com/bazelbuild/intellij/pull/1202
     if hasattr(target, "kt") and hasattr(target.kt, "outputs"):
         return target.kt
-    if JavaInfo in target:
-        return target[JavaInfo]
+    java_info = get_java_info(target)
+    if java_info:
+        return java_info
     if hasattr(java_common, "JavaPluginInfo") and java_common.JavaPluginInfo in target:
         return target[java_common.JavaPluginInfo]
     return None
@@ -725,8 +727,9 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     return True
 
 def _android_lint_plugin_jars(target):
-    if JavaInfo in target:
-        return target[JavaInfo].transitive_runtime_jars.to_list()
+    java_info = get_java_info(target)
+    if java_info:
+        return java_info.transitive_runtime_jars.to_list()
     else:
         return []
 
@@ -1125,7 +1128,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     # Propagate my own exports
     export_deps = []
     direct_exports = []
-    if JavaInfo in target:
+    if java_info_in_target(target):
         direct_exports = collect_targets_from_attrs(rule_attrs, ["exports"])
         export_deps.extend(make_deps(direct_exports, COMPILE_TIME))
 
@@ -1292,6 +1295,6 @@ def make_intellij_info_aspect(aspect_impl, semantics):
         attr_aspects = attr_aspects,
         attrs = attrs,
         fragments = ["cpp"],
-        required_aspect_providers = [[JavaInfo], [CcInfo]] + semantics.extra_required_aspect_providers,
+        required_aspect_providers = [java_info_reference(), [CcInfo]] + semantics.extra_required_aspect_providers,
         implementation = aspect_impl,
     )
