@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public final class BlazeCommandName {
   public static final BlazeCommandName INFO = fromString("info");
   public static final BlazeCommandName MOBILE_INSTALL = fromString("mobile-install");
   public static final BlazeCommandName COVERAGE = fromString("coverage");
+  public static final BlazeCommandName MOD = fromString("mod");
 
   public static BlazeCommandName fromString(String name) {
     knownCommands.putIfAbsent(name, new BlazeCommandName(name));

@@ -20,6 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +37,11 @@ public class CompilerWrapperProviderImpl implements CompilerWrapperProvider {
   public File createCompilerExecutableWrapper(
       File executionRoot, File blazeCompilerExecutableFile,
       ImmutableMap<String, String> compilerWrapperEnvVars) {
+    // bazel only uses a wrapper script on unix, so we do not need this script when running on windows
+    if (SystemInfo.isWindows) {
+      return blazeCompilerExecutableFile;
+    }
+
     try {
       File blazeCompilerWrapper =
           FileUtil.createTempFile("blaze_compiler", ".sh", true /* deleteOnExit */);

@@ -5,7 +5,6 @@ load(
     "CPP_COMPILE_ACTION_NAME",
     "C_COMPILE_ACTION_NAME",
 )
-load("@rules_java//java:defs.bzl", "JavaInfo")
 
 ALWAYS_BUILD_RULES = "java_proto_library,java_lite_proto_library,java_mutable_proto_library,kt_proto_library_helper,_java_grpc_library,_java_lite_grpc_library,kt_grpc_library_helper,java_stubby_library,kt_stubby_library_helper,aar_import,java_import"
 
@@ -305,9 +304,12 @@ def _collect_own_java_artifacts(
                     add_base_idl_jar = True
 
                 # An AIDL base jar needed for resolving base classes for aidl generated stubs.
-                if add_base_idl_jar and hasattr(rule.attr, "_android_sdk") and hasattr(android_common, "AndroidSdkInfo"):
-                    android_sdk_info = getattr(rule.attr, "_android_sdk")[android_common.AndroidSdkInfo]
-                    own_jar_depsets.append(android_sdk_info.aidl_lib.files)
+                if add_base_idl_jar:
+                    if hasattr(rule.attr, "_aidl_lib"):
+                        own_jar_depsets.append(rule.attr._aidl_lib.files)
+                    elif hasattr(rule.attr, "_android_sdk") and hasattr(android_common, "AndroidSdkInfo"):
+                        android_sdk_info = getattr(rule.attr, "_android_sdk")[android_common.AndroidSdkInfo]
+                        own_jar_depsets.append(android_sdk_info.aidl_lib.files)
 
         # Add generated java_outputs (e.g. from annotation processing)
         generated_class_jars = []

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.typescript;
 
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.sdkcompat.javascript.TypeScriptConfigLibraryUpdaterAdapter;
 import com.intellij.lang.javascript.library.JSLibraryMappings;
 import com.intellij.lang.typescript.TypeScriptSettings;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigLibraryUpdater;
@@ -25,7 +26,7 @@ import com.intellij.openapi.project.Project;
  * Dummy {@link TypeScriptConfigLibraryUpdater} that does nothing, to prevent tsconfig$paths from
  * being created.
  */
-class BlazeTypeScriptConfigLibraryUpdater extends TypeScriptConfigLibraryUpdater {
+class BlazeTypeScriptConfigLibraryUpdater extends TypeScriptConfigLibraryUpdaterAdapter {
   private final Project project;
   private final boolean isBlaze;
   private boolean initialized;

@@ -42,12 +42,17 @@ import com.google.idea.blaze.base.util.WorkspacePathUtil;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Objects;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -148,10 +153,7 @@ public final class ImportRoots {
       }
 
       if (viewProjectRoot) {
-        Arrays.stream(Objects.requireNonNull(workspaceRoot.directory().listFiles()))
-            .filter(f -> f.isDirectory() && rootDirectoriesBuilder.build().stream().noneMatch(r -> FileUtil.filesEqual(workspaceRoot.fileForPath(r), f)))
-            .map(workspaceRoot::workspacePathFor)
-            .forEach(excludeDirectoriesBuilder::add);
+          selectExcludes(rootDirectoriesBuilder.build()).forEach(excludeDirectoriesBuilder::add);
       }
 
       ImmutableSet<WorkspacePath> minimalExcludes =
@@ -174,6 +176,25 @@ public final class ImportRoots {
               : TargetExpressionList.create(projectTargets.build());
 
       return new ImportRoots(directories, targets);
+    }
+
+    private @NotNull List<WorkspacePath> selectExcludes(ImmutableCollection<WorkspacePath> rootDirectories) {
+      Queue<File> files = new LinkedList<>(Collections.singletonList(workspaceRoot.directory()));
+      var result = new ArrayList<File>();
+      while (!files.isEmpty()) {
+        File file = files.poll();
+        if (rootDirectories.stream().anyMatch(d -> FileUtil.isAncestor(file, workspaceRoot.fileForPath(d), /*strict=*/ true)) &&
+            rootDirectories.stream().noneMatch(d -> FileUtil.filesEqual(file, workspaceRoot.fileForPath(d)))
+        ) {
+          var children = file.listFiles(File::isDirectory);
+          if (children != null) {
+            files.addAll(List.of(children));
+          }
+        } else if (rootDirectories.stream().noneMatch(d -> FileUtil.filesEqual(file, workspaceRoot.fileForPath(d)))) {
+          result.add(file);
+        }
+      }
+      return result.stream().map(workspaceRoot::workspacePathFor).toList();
     }
 
     private void excludeBuildSystemArtifacts() {

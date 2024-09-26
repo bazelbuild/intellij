@@ -27,6 +27,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -35,6 +36,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
 
 /**
@@ -59,16 +61,15 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
    * -version'. This is wrapped in a LazyValue because it's called from the action update function
    * that runs twice a second, so it cannot be an expensive computation.
    */
-  private static final NotNullLazyValue<Boolean> isCorpMachine =
-      NotNullLazyValue.createValue(
-          () -> {
-            String which = SystemInfo.isWindows ? "where" : "which";
-            int retVal = ExternalTask.builder().args(which, "glogin").build().run();
-            if (retVal == 0) {
-              retVal = ExternalTask.builder().args("glogin", "-version").build().run();
-            }
-            return retVal == 0;
-          });
+  private static final CompletableFuture<Boolean> isCorpMachine =
+      CompletableFuture.supplyAsync(() -> {
+        String which = SystemInfo.isWindows ? "where" : "which";
+        int retVal = ExternalTask.builder().args(which, "glogin").build().run();
+        if (retVal == 0) {
+          retVal = ExternalTask.builder().args("glogin", "-version").build().run();
+        }
+        return retVal == 0;
+      }, ApplicationManager.getApplication()::executeOnPooledThread);
 
   @Override
   protected QuerySyncStatus querySyncSupport() {
@@ -80,7 +81,7 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
     // Hide and disable this action for Google-internal usage.
     if (!enabled.getValue()
         || Blaze.defaultBuildSystem() == BuildSystemName.Blaze
-        || isCorpMachine.getValue()) {
+        || isCorpMachine.getNow(false)) {
       e.getPresentation().setEnabledAndVisible(false);
     }
   }

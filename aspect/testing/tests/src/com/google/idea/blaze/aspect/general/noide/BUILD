@@ -34,7 +34,9 @@ intellij_aspect_test_fixture(
 java_test(
     name = "NoIdeTest",
     srcs = ["NoIdeTest.java"],
-    data = [":noide_fixture"],
+    data = [
+        ":noide_fixture",
+    ],
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing:guava",

@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.common.vcs.VcsState;
@@ -68,7 +67,7 @@ public interface BlazeVcsHandlerProvider {
   String getVcsName();
 
   /** Returns whether this vcs handler can manage this project */
-  boolean handlesProject(BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot);
+  boolean handlesProject(Project project, WorkspaceRoot workspaceRoot);
 
   BlazeVcsHandler getHandlerForProject(Project p);
 

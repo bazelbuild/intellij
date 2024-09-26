@@ -51,6 +51,8 @@ public interface BlazeProjectData {
 
   RemoteOutputArtifacts getRemoteOutputs();
 
+  ExternalWorkspaceData getExternalWorkspaceData();
+
   SyncState getSyncState();
 
   boolean isQuerySync();

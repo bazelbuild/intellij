@@ -32,7 +32,7 @@ licenses(["notice"])
 
 optional_plugin_xml(
     name = "optional_java",
-    module = "com.intellij.java",
+    module = ["com.intellij.java"],
     plugin_xml = "src/META-INF/java-contents.xml",
 )
 
@@ -176,5 +176,6 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "@com_google_guava_guava//jar",
         "@junit//jar",
+        "@org_opentest4j_opentest4j//jar",
     ],
 )

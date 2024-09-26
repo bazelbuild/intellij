@@ -11,12 +11,12 @@ load(
     "intellij_plugin_library",
     "stamped_plugin_xml",
 )
+load("//intellij_platform_sdk:build_defs.bzl", "java_version_flags", "select_for_plugin_api")
 load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "java_version_flags")
 
 java_library(
     name = "base",
@@ -33,7 +33,6 @@ java_library(
         "//common/util:platform",
         "//common/util:process",
         "//common/util:transactions",
-        "//ext:intellijext",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
@@ -46,12 +45,34 @@ java_library(
         "//shared:vcs",
         "//third_party/auto_value",
         "@error_prone_annotations//jar",
+        "@gson//jar"
     ],
 )
 
 intellij_plugin_library(
     name = "plugin_library",
-    plugin_xmls = ["src/META-INF/blaze-base.xml"],
+    plugin_xmls = ["src/META-INF/blaze-base.xml"] +  #api241
+                  select_for_plugin_api({
+                      "android-studio-2022.3": [],
+                      "android-studio-2023.1": [],
+                      "android-studio-2023.2": [],
+                      "intellij-2022.3": [],
+                      "intellij-ue-2022.3": [],
+                      "intellij-2023.1": [],
+                      "intellij-ue-2023.1": [],
+                      "intellij-2023.2": [],
+                      "intellij-ue-2023.2": [],
+                      "intellij-2023.3": [],
+                      "intellij-ue-2023.3": [],
+                      "intellij-2024.1": [],
+                      "intellij-ue-2024.1": [],
+                      "clion-2022.3": [],
+                      "clion-2023.1": [],
+                      "clion-2023.2": [],
+                      "clion-2023.3": [],
+                      "clion-2024.1": [],
+                      "default": ["src/META-INF/dependency-on-lvcs-impl.xml"],
+                  }),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":base"],
 )
@@ -577,5 +598,6 @@ intellij_integration_test_suite(
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
         "@junit//jar",
+        "@org_opentest4j_opentest4j//jar",
     ],
 )

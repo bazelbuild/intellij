@@ -28,11 +28,13 @@ import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
 
 /** Unit tests for {@link AspectStrategy}. */
 @RunWith(JUnit4.class)
@@ -212,8 +214,13 @@ public class AspectStrategyTest extends BlazeTestCase {
     }
 
     @Override
-    protected List<String> getAspectFlags() {
-      return ImmutableList.of();
+    protected Optional<String> getAspectFlag() {
+      return Optional.empty();
+    }
+
+    @Override
+    protected Boolean supportsAspectsParameters() {
+      return true;
     }
   }
 }

@@ -36,7 +36,7 @@ java_library(
 
 optional_plugin_xml(
     name = "optional_xml",
-    module = "DevKit",
+    module = ["DevKit"],
     plugin_xml = "src/META-INF/blaze-plugin-dev.xml",
 )
 
@@ -89,5 +89,6 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//third_party/devkit:devkit_for_tests",
         "@junit//jar",
+        "@org_opentest4j_opentest4j//jar",
     ],
 )

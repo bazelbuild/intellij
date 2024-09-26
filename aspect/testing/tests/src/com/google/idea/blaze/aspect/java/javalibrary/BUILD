@@ -63,7 +63,7 @@ java_test(
     name = "JavaLibraryTest",
     srcs = ["JavaLibraryTest.java"],
     data = [
-        "foo_exports_fixture",
+        ":foo_exports_fixture",
         ":foo_fixture",
     ],
     deps = [

@@ -52,17 +52,23 @@ public class DependenciesTest extends BazelIntellijAspectTest {
             testRelative(intellijInfoFileName("single_dep")),
             testRelative("transitive_dep.java-manifest"),
             testRelative(intellijInfoFileName("transitive_dep")));
-    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
+
+    var intellijResolveJava = getOutputGroupFiles(testFixture, "intellij-resolve-java");
+    assertThat(intellijResolveJava)
         .containsAtLeast(
-            testRelative("libfoo.jar"),
             testRelative("libfoo-hjar.jar"),
             testRelative("libfoo-src.jar"),
-            testRelative("libsingle_dep.jar"),
             testRelative("libsingle_dep-hjar.jar"),
             testRelative("libsingle_dep-src.jar"),
-            testRelative("libtransitive_dep.jar"),
             testRelative("libtransitive_dep-hjar.jar"),
             testRelative("libtransitive_dep-src.jar"));
+    assertThat(intellijResolveJava)
+            .doesNotContain(testRelative("libfoo.jar"));
+    assertThat(intellijResolveJava)
+            .doesNotContain(testRelative("libsingle_dep.jar"));
+    assertThat(intellijResolveJava)
+            .doesNotContain(testRelative("libtransitive_dep.jar"));
+
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
         .containsAtLeast(
             testRelative("libfoo.jar"),
@@ -101,17 +107,23 @@ public class DependenciesTest extends BazelIntellijAspectTest {
             testRelative(intellijInfoFileName("foo_exporter")),
             testRelative("export_consumer.java-manifest"),
             testRelative(intellijInfoFileName("export_consumer")));
-    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
+
+    var intellijResolveJava = getOutputGroupFiles(testFixture, "intellij-resolve-java");
+    assertThat(intellijResolveJava)
         .containsAtLeast(
-            testRelative("libfoo.jar"),
             testRelative("libfoo-hjar.jar"),
             testRelative("libfoo-src.jar"),
-            testRelative("libfoo_exporter.jar"),
             testRelative("libfoo_exporter-hjar.jar"),
             testRelative("libfoo_exporter-src.jar"),
-            testRelative("libexport_consumer.jar"),
             testRelative("libexport_consumer-hjar.jar"),
             testRelative("libexport_consumer-src.jar"));
+    assertThat(intellijResolveJava)
+            .doesNotContain(testRelative("libfoo.jar"));
+    assertThat(intellijResolveJava)
+            .doesNotContain(testRelative("libfoo_exporter.jar"));
+    assertThat(intellijResolveJava)
+            .doesNotContain(testRelative("libexport_consumer.jar"));
+
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
         .containsAtLeast(
             testRelative("libfoo.jar"),

@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyBazel;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectRepositoryProvider;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -51,10 +52,10 @@ public class BazelInvokingIntegrationTestRunner {
     // Flags for wiring up the plugin aspect from the external @intellij_aspect repository.
     ImmutableList<String> aspectFlags =
         ImmutableList.of(
-            aspectStrategyBazel.getAspectFlag(),
+            aspectStrategyBazel.getAspectFlag().get(),
             String.format(
                 "%s=%s/%s/aspect",
-                AspectStrategyBazel.OVERRIDE_REPOSITORY_FLAG,
+                AspectRepositoryProvider.OVERRIDE_REPOSITORY_FLAG,
                 System.getenv("TEST_SRCDIR"),
                 System.getenv("TEST_WORKSPACE")));
 
@@ -138,10 +139,13 @@ public class BazelInvokingIntegrationTestRunner {
       return null;
     }
     String bazelDir = new File(bazelBinaryPath).getParentFile().getName();
-    // Get the part after last ~ (becase of canonicalization with bzlmod)
+    // Get the part after last ~ or + (becase of canonicalization with bzlmod)
     if (bazelDir.contains("~")) {
       bazelDir = bazelDir.substring(bazelDir.lastIndexOf("~") + 1);
+    } else if (bazelDir.contains("+")) {
+      bazelDir = bazelDir.substring(bazelDir.lastIndexOf("+") + 1);
     }
+    
     String[] parts = bazelDir.split("_|-");
     if (parts.length < 6) {
       return null;

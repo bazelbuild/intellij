@@ -15,20 +15,28 @@
  */
 package com.google.idea.blaze.base.lang.buildfile;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.EditorTestHelper;
+import com.google.idea.blaze.base.ExternalWorkspaceFixture;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
+import com.google.idea.blaze.base.model.primitives.ExternalWorkspace;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import java.util.List;
 import org.junit.Before;
+
+import java.io.File;
+import java.nio.file.Paths;
+import java.util.List;
+
+import static com.google.common.truth.Truth.assertThat;
 
 /** BUILD file specific integration test base */
 public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestCase {
@@ -40,9 +48,14 @@ public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestC
         new MockBlazeProjectDataManager(
             MockBlazeProjectDataBuilder.builder(workspaceRoot)
                 .setOutputBase(fileSystem.getRootDir() + "/output_base")
+                .setExternalWorkspaceData(mockExternalWorkspaceData())
                 .build());
     registerProjectService(BlazeProjectDataManager.class, mockProjectDataManager);
     editorTest = new EditorTestHelper(getProject(), testFixture);
+  }
+
+  protected ExternalWorkspaceData mockExternalWorkspaceData() {
+    return ExternalWorkspaceData.EMPTY;
   }
 
   /**
@@ -52,6 +65,13 @@ public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestC
   protected BuildFile createBuildFile(WorkspacePath workspacePath, String... contentLines) {
     PsiFile file = workspace.createPsiFile(workspacePath, contentLines);
     assertThat(file).isInstanceOf(BuildFile.class);
+    return (BuildFile) file;
+  }
+
+  protected BuildFile createBuildFileWithCaret(WorkspacePath workspacePath, String... contentLines) {
+    PsiFile file = workspace.createPsiFile(workspacePath, contentLines);
+    assertThat(file).isInstanceOf(BuildFile.class);
+    testFixture.configureFromExistingVirtualFile(file.getVirtualFile());
     return (BuildFile) file;
   }
 
@@ -67,5 +87,23 @@ public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestC
   protected void assertFileContents(PsiFile file, List<String> contentLines) {
     String contents = Joiner.on('\n').join(contentLines);
     assertThat(file.getText()).isEqualTo(contents);
+  }
+
+  protected PsiFile createFileInExternalWorkspace(
+      String workspaceName, WorkspacePath path, String... contents) {
+    String filePath =
+        Paths.get(getExternalSourceRoot().getPath(), workspaceName, path.relativePath()).toString();
+    return fileSystem.createPsiFile(filePath, contents);
+  }
+
+  protected File getExternalSourceRoot() {
+    BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
+    assertThat(blazeProjectData).isNotNull();
+
+    return WorkspaceHelper.getExternalSourceRoot(blazeProjectData).toFile();
+  }
+
+  protected ExternalWorkspaceFixture createExternalWorkspaceFixture(ExternalWorkspace workspace) {
+    return new ExternalWorkspaceFixture(workspace, fileSystem, testFixture);
   }
 }

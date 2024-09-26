@@ -31,11 +31,13 @@ import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
+import com.google.idea.blaze.base.command.mod.BlazeModRunner;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
 import com.google.idea.blaze.base.model.AspectSyncProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -78,10 +80,13 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.lang.JavaVersion;
+
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.junit.After;
 import org.junit.Before;
@@ -101,6 +106,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   private Disposable thisClassDisposable; // disposed prior to calling parent class's @After methods
   private MockProjectViewManager projectViewManager;
   private MockBlazeInfoRunner blazeInfoData;
+  private MockBlazeModRunner blazeModData;
   private MockBlazeIdeInterface blazeIdeInterface;
   private MockEventLoggingService eventLogger;
   @Nullable private ProjectModuleMocker moduleMocker; // this will be null for heavy test cases
@@ -115,12 +121,14 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     ServiceHelper.registerExtension(
         BlazeVcsHandlerProvider.EP_NAME, new MockBlazeVcsHandlerProvider(), thisClassDisposable);
     blazeInfoData = new MockBlazeInfoRunner();
+    blazeModData = new MockBlazeModRunner();
     blazeIdeInterface = new MockBlazeIdeInterface();
     eventLogger = new MockEventLoggingService(thisClassDisposable);
     if (isLightTestCase()) {
       moduleMocker = new ProjectModuleMocker(getProject(), thisClassDisposable);
     }
     registerApplicationService(BlazeInfoRunner.class, blazeInfoData);
+    registerApplicationService(BlazeModRunner.class, blazeModData);
     registerApplicationService(BlazeIdeInterface.class, blazeIdeInterface);
 
     errorCollector = new ErrorCollector();
@@ -282,8 +290,11 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BuildInvoker invoker,
         BlazeContext context,
         List<String> blazeFlags,
-        String key) {
-      return Futures.immediateFuture(results.get(key));
+        String ...keys) {
+      return Futures.immediateFuture(
+          Arrays.stream(keys)
+              .map(key -> String.format("%s: %s", key, results.get(key)))
+              .collect(Collectors.joining("\n")));
     }
 
     @Override
@@ -303,7 +314,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BuildInvoker invoker,
         BlazeContext context,
         List<String> blazeFlags,
-        String key) {
+        String ...key) {
       return Futures.immediateFuture(null);
     }
 
@@ -312,6 +323,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
       this.results.putAll(results);
     }
   }
+
   private static class MockBlazeIdeInterface implements BlazeIdeInterface {
     private TargetMap targetMap = new TargetMap(ImmutableMap.of());
 
@@ -341,6 +353,28 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BlazeInvocationContext blazeInvocationContext,
         boolean invokeParallel) {
       return BlazeBuildOutputs.noOutputs(BuildResult.SUCCESS);
+    }
+  }
+
+  private static class MockBlazeModRunner extends BlazeModRunner {
+    @Override
+    public ListenableFuture<ExternalWorkspaceData> dumpRepoMapping(
+        Project project,
+        BuildInvoker invoker,
+        BlazeContext context,
+        BuildSystemName buildSystemName,
+        List<String> flags) {
+      return Futures.immediateFuture(ExternalWorkspaceData.EMPTY);
+    }
+
+    @Override
+    protected ListenableFuture<byte[]> runBlazeModGetBytes(
+        Project project,
+        BuildInvoker invoker,
+        BlazeContext context,
+        List<String> args,
+        List<String> flags) {
+      return Futures.immediateFuture(null);
     }
   }
 }

@@ -25,6 +25,7 @@ load(
     "//testing:test_defs.bzl",
     "intellij_unit_test_suite",
 )
+load(":test_defs.bzl", "clwb_integration_test")
 
 licenses(["notice"])
 
@@ -38,7 +39,7 @@ intellij_plugin_library(
 
 optional_plugin_xml(
     name = "optional_clwb_oclang",
-    module = "com.intellij.modules.cidr.lang",
+    module = ["com.intellij.modules.cidr.lang"],
     plugin_xml = "src/META-INF/clwb-oclang.xml",
 )
 
@@ -66,6 +67,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
+        "//clwb/sdkcompat",
     ],
 )
 
@@ -146,4 +148,15 @@ filegroup(
     name = "gdbserver_wrapper",
     srcs = ["gdbserver"],
     visibility = ["//visibility:public"],
+)
+
+clwb_integration_test(
+    name = "simple_integration_test",
+    project = "simple",
+    srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/SimpleTest.java"],
+)
+
+test_suite(
+    name = "integration_tests",
+    tests = [":simple_integration_test"],
 )

@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.command.info;
 import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
@@ -33,8 +34,9 @@ public abstract class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
   public static final String BUILD_LANGUAGE = "build-language";
   public static final String OUTPUT_BASE_KEY = "output_base";
   public static final String OUTPUT_PATH_KEY = "output_path";
-  public static final String MASTER_LOG = "master-log";
   public static final String RELEASE = "release";
+
+  public static final String STARLARK_SEMANTICS = "starlark-semantics";
 
   public static String blazeBinKey(BuildSystemName buildSystemName) {
     switch (buildSystemName) {
@@ -83,6 +85,7 @@ public abstract class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
         ExecutionRootPath.createAncestorRelativePath(
             executionRoot, new File(getOrThrow(blazeInfoMap, blazeTestlogsKey(buildSystemName))));
     File outputBase = new File(getOrThrow(blazeInfoMap, OUTPUT_BASE_KEY).trim());
+    File outputPath = new File(getOrThrow(blazeInfoMap, OUTPUT_PATH_KEY).trim());
     return AutoValue_BlazeInfo.builder()
         .setBlazeInfoMap(blazeInfoMap)
         .setExecutionRoot(executionRoot)
@@ -90,6 +93,7 @@ public abstract class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
         .setBlazeGenfiles(blazeGenfiles)
         .setBlazeTestlogs(blazeTestlogs)
         .setOutputBase(outputBase)
+        .setOutputPath(outputPath)
         .autoBuild();
   }
 
@@ -112,7 +116,7 @@ public abstract class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
 
   abstract ImmutableMap<String, String> getBlazeInfoMap();
 
-  public String get(String key) {
+  protected String get(String key) {
     return getBlazeInfoMap().get(key);
   }
 
@@ -138,6 +142,16 @@ public abstract class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
 
   public abstract File getOutputBase();
 
+  public abstract File getOutputPath();
+
+  public String getStarlarkSemantics() {
+    return getBlazeInfoMap().get(STARLARK_SEMANTICS);
+  }
+
+  public String getRelease() {
+    return getBlazeInfoMap().get(RELEASE);
+  }
+
   /** Creates a mock blaze info with the minimum information required for syncing. */
   @VisibleForTesting
   public static BlazeInfo createMockBlazeInfo(
@@ -150,6 +164,7 @@ public abstract class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
     ImmutableMap.Builder<String, String> blazeInfoMap =
         ImmutableMap.<String, String>builder()
             .put(OUTPUT_BASE_KEY, outputBase)
+            .put(OUTPUT_PATH_KEY, outputBase + "/output")
             .put(EXECUTION_ROOT_KEY, executionRoot)
             .put(blazeBinKey(buildSystemName), blazeBin)
             .put(blazeGenfilesKey(buildSystemName), blazeGenFiles)
@@ -171,12 +186,15 @@ public abstract class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
 
     public abstract Builder setOutputBase(File value);
 
+    public abstract Builder setOutputPath(File value);
+
     public abstract BlazeInfo autoBuild();
 
     // A build method to populate the blazeInfoMap
     public BlazeInfo build(BuildSystemName buildSystemName) {
       BlazeInfo blazeInfo = autoBuild();
       blazeInfoMapBuilder().put(OUTPUT_BASE_KEY, blazeInfo.getOutputBase().getPath());
+      blazeInfoMapBuilder().put(OUTPUT_PATH_KEY, blazeInfo.getOutputPath().getPath());
       blazeInfoMapBuilder().put(EXECUTION_ROOT_KEY, blazeInfo.getExecutionRoot().getPath());
       File execRoot = new File(blazeInfo.getExecutionRoot().getAbsolutePath());
       blazeInfoMapBuilder()

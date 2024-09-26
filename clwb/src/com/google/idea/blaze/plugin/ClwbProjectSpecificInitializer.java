@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.plugin;
 
+import com.google.idea.blaze.clwb.CLionNotificationProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 
@@ -29,6 +30,6 @@ public class ClwbProjectSpecificInitializer implements ProjectComponent {
 
   @Override
   public void projectOpened() {
-    CMakeNotificationFilter.overrideProjectExtension(project);
+    CLionNotificationProvider.register(project);
   }
 }

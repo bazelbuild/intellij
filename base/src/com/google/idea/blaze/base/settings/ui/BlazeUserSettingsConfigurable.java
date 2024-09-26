@@ -28,10 +28,12 @@ import com.google.idea.common.settings.AutoConfigurable;
 import com.google.idea.common.settings.ConfigurableSetting;
 import com.google.idea.common.settings.ConfigurableSetting.ComponentFactory;
 import com.google.idea.common.settings.SearchableText;
+import com.google.idea.common.settings.SettingComponent;
 import com.google.idea.common.settings.SettingComponent.LabeledComponent;
 import com.google.idea.common.settings.SettingComponent.SimpleComponent;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -150,6 +152,16 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
           .componentFactory(
               fileSelector(BUILDIFIER_BINARY_PATH_KEY, "Specify the buildifier binary path"));
 
+  public static final String FAST_BUILD_JAVA_BINARY_PATH_IN_RUN_FILES_KEY = "java.runfiles.binary.path";
+  private static final ConfigurableSetting<?, ?> FAST_BUILD_JAVA_IN_RUN_FILES_BINARY_PATH =
+      setting("FastBuild Java binary location in runfiles dir")
+          .getter(BlazeUserSettings::getFastBuildJavaBinaryPathInRunFiles)
+          .setter(BlazeUserSettings::setFastBuildJavaBinaryPathInRunFiles)
+          .componentFactory(SettingComponent.LabeledComponent.factory(
+              () -> new TextFieldWithStoredHistory(FAST_BUILD_JAVA_BINARY_PATH_IN_RUN_FILES_KEY),
+              s -> Strings.nullToEmpty(s.getText()).trim(),
+              TextFieldWithStoredHistory::setTextAndAddToHistory));
+
   private static final ImmutableList<ConfigurableSetting<?, ?>> SETTINGS =
       ImmutableList.of(
           SHOW_CONSOLE_ON_SYNC,
@@ -163,14 +175,15 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
           ALWAYS_SELECT_NEWEST_CHILD_TASK,
           BLAZE_BINARY_PATH,
           BAZEL_BINARY_PATH,
-          BUILDIFIER_BINARY_PATH);
+          BUILDIFIER_BINARY_PATH,
+          FAST_BUILD_JAVA_IN_RUN_FILES_BINARY_PATH);
 
   private static ConfigurableSetting.Builder<BlazeUserSettings> setting(String label) {
     return ConfigurableSetting.builder(BlazeUserSettings::getInstance).label(label);
   }
 
   private static ComponentFactory<LabeledComponent<String, FileSelectorWithStoredHistory>>
-      fileSelector(String historyKey, String title) {
+  fileSelector(String historyKey, String title) {
     return LabeledComponent.factory(
         () -> FileSelectorWithStoredHistory.create(historyKey, title),
         s -> Strings.nullToEmpty(s.getText()).trim(),
@@ -193,7 +206,8 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
             ALWAYS_SELECT_NEWEST_CHILD_TASK,
             BLAZE_BINARY_PATH,
             BAZEL_BINARY_PATH,
-            BUILDIFIER_BINARY_PATH));
+            BUILDIFIER_BINARY_PATH,
+            FAST_BUILD_JAVA_IN_RUN_FILES_BINARY_PATH));
   }
 
   private JComponent getFocusBehaviorSettingsUi() {

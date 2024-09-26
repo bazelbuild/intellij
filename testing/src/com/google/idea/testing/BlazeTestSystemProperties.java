@@ -87,20 +87,6 @@ class BlazeTestSystemProperties {
       VfsRootAccess.allowRootAccess(disposable, platformApi);
     }
 
-    List<String> pluginJars = Lists.newArrayList();
-    try {
-      Enumeration<URL> urls =
-          BlazeTestSystemProperties.class.getClassLoader().getResources("META-INF/plugin.xml");
-      while (urls.hasMoreElements()) {
-        URL url = urls.nextElement();
-        addArchiveFile(url, pluginJars);
-      }
-    } catch (IOException e) {
-      System.err.println("Cannot find plugin.xml resources");
-      e.printStackTrace();
-    }
-
-    setIfEmpty("idea.plugins.path", Joiner.on(File.pathSeparator).join(pluginJars));
     setIfEmpty("idea.force.use.core.classloader", "true");
   }
 
@@ -171,19 +157,6 @@ class BlazeTestSystemProperties {
       }
     }
     return null;
-  }
-
-  private static void addArchiveFile(URL url, List<String> files) {
-    if ("jar".equals(url.getProtocol())) {
-      String path = url.getPath();
-      int index = path.indexOf("!/");
-      if (index > 0) {
-        String jarPath = path.substring(0, index);
-        if (jarPath.startsWith("file:")) {
-          files.add(jarPath.substring(5));
-        }
-      }
-    }
   }
 
   private static void setSandboxPath(String property, File path) {

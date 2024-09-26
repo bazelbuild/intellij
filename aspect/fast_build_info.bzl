@@ -1,6 +1,5 @@
 """An aspect to gather info needed by the FastBuildService."""
 
-load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load(
     ":artifacts.bzl",
     "artifact_location",
@@ -13,6 +12,13 @@ load(
 )
 
 _DEP_ATTRS = ["deps", "exports", "runtime_deps", "_java_toolchain"]
+
+def _get_android_ide_info(target):
+    if hasattr(android_common, "AndroidIdeInfo") and android_common.AndroidIdeInfo in target:
+        return target[android_common.AndroidIdeInfo]
+    if hasattr(target, "android"):
+        return target.android
+    return None
 
 def _fast_build_info_impl(target, ctx):
     dep_targets = _get_all_dep_targets(target, ctx)
@@ -89,11 +95,7 @@ def _fast_build_info_impl(target, ctx):
             ]
         info["java_info"] = struct_omit_none(**java_info)
 
-    android_ide_info = None
-    if hasattr(android_common, "AndroidIdeInfo") and android_common.AndroidIdeInfo in target:
-        android_ide_info = target[android_common.AndroidIdeInfo]
-    if hasattr(target, "android"):
-        android_ide_info = target.android
+    android_ide_info = _get_android_ide_info(target)
     if android_ide_info:
         write_output = True
         android_info = struct_omit_none(

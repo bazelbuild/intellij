@@ -51,9 +51,6 @@ public class BlazeGDBServerProvider {
         }
       };
 
-  private static final BoolExperiment useRemoteDebugging =
-      new BoolExperiment("cc.remote.debugging", true);
-
   private static final BoolExperiment useRemoteDebuggingWrapper =
       new BoolExperiment("cc.remote.debugging.wrapper", true);
 
@@ -83,16 +80,6 @@ public class BlazeGDBServerProvider {
     } else {
       return ImmutableList.of("--fission=yes");
     }
-  }
-
-  static boolean shouldUseGdbserver() {
-    // Only provide support for Linux for now:
-    // - Mac does not have gdbserver, so use the old gdb method for debugging
-    // - Windows does not support the gdbwrapper script
-    if (!SystemInfo.isLinux) {
-      return false;
-    }
-    return useRemoteDebugging.getValue();
   }
 
   static ImmutableList<String> getFlagsForDebugging(RunConfigurationState state) {
@@ -143,12 +130,7 @@ public class BlazeGDBServerProvider {
   private static String getGDBServerPath(CPPToolchains.Toolchain toolchain) {
     String gdbPath;
 
-    if (!shouldUseGdbserver()) {
-      logger.error(
-          "Trying to resolve gdbserver executable for " + SystemInfo.getOsNameAndVersion());
-      return null;
-    }
-
+    // TODO: this still depends on the default toolchain
     CPPDebugger.Kind debuggerKind = toolchain.getDebuggerKind();
     switch (debuggerKind) {
       case CUSTOM_GDB:
