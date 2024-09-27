@@ -2,7 +2,7 @@
 tasks:
   CLion-internal-stable:
     name: CLion Internal Stable
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=clion-latest
     build_targets:
@@ -14,7 +14,7 @@ tasks:
       - //:clwb_tests
   CLion-internal-beta:
     name: CLion Internal Beta
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=clion-beta
     build_targets:
@@ -26,7 +26,7 @@ tasks:
       - //:clwb_tests
   CLion-internal-under-dev:
     name: CLion Internal Under Development
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=clion-under-dev
     build_targets:
@@ -40,7 +40,7 @@ tasks:
       - exit_status: 1
   CLion-OSS-oldest-stable:
     name: CLion OSS Oldest Stable
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=clion-oss-oldest-stable
     build_targets:
@@ -52,7 +52,7 @@ tasks:
       - //:clwb_tests
   CLion-OSS-latest-stable:
     name: CLion OSS Latest Stable
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=clion-oss-latest-stable
     build_targets:
@@ -64,7 +64,7 @@ tasks:
       - //:clwb_tests
   CLion-Linux-OSS-under-dev:
     name: CLion Linux OSS Under Development
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=clion-oss-under-dev
     build_targets:
