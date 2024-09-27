@@ -2,7 +2,7 @@
 tasks:
   Android-Studio-internal-stable:
     name: Android Studio Internal Stable
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=android-studio-latest
     build_targets:
@@ -14,7 +14,7 @@ tasks:
       - //:aswb_tests
   Android-Studio-internal-beta:
     name: Android Studio Internal Beta
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=android-studio-beta
     build_targets:
@@ -26,7 +26,7 @@ tasks:
       - //:aswb_tests
   Android-Studio-internal-canary:
     name: Android Studio Internal Canary
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=android-studio-canary
     build_targets:
@@ -40,7 +40,7 @@ tasks:
       - exit_status: 1
   Android-Studio-OSS-oldest-stable:
     name: Android Studio OSS Oldest Stable
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=android-studio-oss-oldest-stable
     build_targets:
@@ -52,7 +52,7 @@ tasks:
       - //:aswb_tests
   Android-Studio-OSS-latest-stable:
     name: Android Studio OSS Latest Stable
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=android-studio-oss-latest-stable
     build_targets:
@@ -64,7 +64,7 @@ tasks:
       - //:aswb_tests
   Android-Studio-OSS-under-dev:
     name: Android Studio OSS Under Development
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=android-studio-oss-under-dev
     build_targets:
