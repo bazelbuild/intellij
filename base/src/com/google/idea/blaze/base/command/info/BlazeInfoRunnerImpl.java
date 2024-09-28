@@ -92,7 +92,8 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
             BlazeInfo.OUTPUT_PATH_KEY,
             BlazeInfo.OUTPUT_BASE_KEY,
             BlazeInfo.RELEASE,
-            BlazeInfo.STARLARK_SEMANTICS),
+            BlazeInfo.STARLARK_SEMANTICS,
+            BlazeInfo.JAVA_HOME),
         bytes ->
             BlazeInfo.create(
                 buildSystemName,
