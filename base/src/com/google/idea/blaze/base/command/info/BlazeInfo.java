@@ -173,7 +173,8 @@ public abstract class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
             .put(EXECUTION_ROOT_KEY, executionRoot)
             .put(blazeBinKey(buildSystemName), blazeBin)
             .put(blazeGenfilesKey(buildSystemName), blazeGenFiles)
-            .put(blazeTestlogsKey(buildSystemName), blazeTestlogs);
+            .put(blazeTestlogsKey(buildSystemName), blazeTestlogs)
+            .put(JAVA_HOME, "/tmp/java");
     return BlazeInfo.create(buildSystemName, blazeInfoMap.build());
   }
 
