@@ -45,7 +45,17 @@ optional_plugin_xml(
 intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [":optional_ndk_xml"],
-    plugin_xmls = ["src/META-INF/aswb.xml"],
+    plugin_xmls = [
+        "src/META-INF/aswb.xml",
+    ] + select_for_plugin_api({
+        "android-studio-2023.2": [
+            "sdkcompat/as232/com/META-INF/aswb.xml",
+        ],
+        "android-studio-2023.3": [
+            "sdkcompat/as233/com/META-INF/aswb.xml",
+        ],
+        "default": [],
+    }),
     visibility = ASWB_PLUGIN_PACKAGES_VISIBILITY,
     deps = [":aswb_lib"],
 )
