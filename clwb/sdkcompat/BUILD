@@ -16,8 +16,9 @@ load(
     "//intellij_platform_sdk:build_defs.bzl",
     "select_for_plugin_api",
 )
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
-java_library(
+kt_jvm_library(
     name = "sdkcompat",
     srcs = select_for_plugin_api({
         "clion-2022.3": ["//clwb/sdkcompat/v223"],
@@ -26,6 +27,7 @@ java_library(
         "clion-2023.3": ["//clwb/sdkcompat/v233"],
         "clion-2024.1": ["//clwb/sdkcompat/v241"],
         "clion-2024.2": ["//clwb/sdkcompat/v242"],
+        "clion-2024.3": ["//clwb/sdkcompat/v243"],
     }),
     visibility = ["//clwb:__pkg__"],
     deps = [
