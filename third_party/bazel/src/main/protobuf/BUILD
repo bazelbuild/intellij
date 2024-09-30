@@ -7,7 +7,6 @@ FILES = [
     "action_cache",
     "android_deploy_info",
     "bazel_flags",
-    "build",
     "builtin",
     "crash_debugging",
     "crosstool_config",
@@ -32,6 +31,17 @@ FILES = [
     name = s + "_java_proto",
     deps = [":" + s + "_proto"],
 ) for s in FILES]
+
+proto_library(
+    name = "build_proto",
+    srcs = ["build.proto"],
+    deps = [":stardoc_output_proto"],
+)
+
+java_proto_library(
+    name = "build_java_proto",
+    deps = [":build_proto"],
+)
 
 proto_library(
     name = "analysis_v2_proto",
@@ -298,6 +308,7 @@ filegroup(
         ":bazel_output_service_java_grpc_srcs",
         ":bazel_output_service_java_proto_srcs",
         ":bazel_output_service_rev2_java_proto_srcs",
+        ":build_java_proto_srcs",
         ":cache_salt_java_proto_srcs",
         ":command_line_java_proto_srcs",
         ":command_server_java_grpc_srcs",
