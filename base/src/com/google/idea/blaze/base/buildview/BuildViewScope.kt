@@ -18,6 +18,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import java.util.function.Consumer
 
@@ -28,9 +30,18 @@ class BuildViewScope(project: Project, private val title: String) : BlazeScope {
   }
 
   private var progress = SyncViewManager.createBuildProgress(project)
+  private var indicator = BackgroundableProcessIndicator(project, title, "Cancel", "Cancel", true)
 
   override fun onScopeBegin(ctx: BlazeContext) {
     progress.start(ProgressDescriptor(title, ctx))
+
+    indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
+      override fun cancel() {
+        super.cancel()
+        ctx.setCancelled()
+      }
+    })
+    indicator.start()
 
     addOutputSink<PrintOutput>(ctx) {
       progress.output(it.text + '\n', true)
@@ -58,9 +69,13 @@ class BuildViewScope(project: Project, private val title: String) : BlazeScope {
       ctx.hasErrors() -> progress.fail()
       else -> progress.finish()
     }
+
+    indicator.stop()
+    indicator.processFinish()
   }
 
   fun startProgress(title: String): BuildProgress<BuildProgressDescriptor>? {
+    indicator.text2 = title
     return progress?.progress(title)
   }
 }
