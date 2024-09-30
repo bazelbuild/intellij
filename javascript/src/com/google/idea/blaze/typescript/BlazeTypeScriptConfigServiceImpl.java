@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.sdkcompat.javascript.TypeScriptConfigServiceImplCompat;
 import com.intellij.lang.typescript.compiler.TypeScriptCompilerService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
@@ -221,9 +222,9 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
     return ImmutableSet.of();
   }
 
-  private static ImmutableList<? extends VirtualFile> getNearestParentTsConfigs(
+  private ImmutableList<? extends VirtualFile> getNearestParentTsConfigs(
       @Nullable VirtualFile scopeFile, ImmutableMap<VirtualFile, TypeScriptConfig> configs) {
-    return TypeScriptConfigServiceImpl.getNearestParentTsConfigs(scopeFile, false).stream()
+    return TypeScriptConfigServiceImplCompat.getNearestParentTsConfigs(project, scopeFile, false).stream()
         .filter(configs::containsKey)
         .collect(toImmutableList());
   }
