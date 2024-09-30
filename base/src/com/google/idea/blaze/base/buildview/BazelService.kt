@@ -101,7 +101,7 @@ class BazelService(private val project: Project) : Disposable {
       // wait for bazel to create the output file
       while (!helper.outputFile.exists()) delay(10)
 
-      FileInputStream(helper.outputFile).use { stream ->
+      FileInputStream(helper.outputFile).buffered().use { stream ->
 
         // keep reading events while the coroutine is active i.e. bazel is still running
         // or while the stream has data available (to ensure that all events are processed)
