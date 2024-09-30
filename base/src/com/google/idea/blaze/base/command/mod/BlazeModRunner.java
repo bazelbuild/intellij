@@ -46,6 +46,13 @@ public abstract class BlazeModRunner {
       BuildSystemName buildSystemName,
       List<String> flags);
 
+  public abstract ListenableFuture<String> getDeps(
+          Project project,
+          BuildInvoker invoker,
+          BlazeContext context,
+          BuildSystemName buildSystemName,
+          List<String> flags);
+
   /**
    * @param args The arguments passed into `blaze mod ...`
    * @param flags The blaze flags that will be passed to {@code blaze ...}

@@ -368,6 +368,11 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     }
 
     @Override
+    public ListenableFuture<String> getDeps(Project project, BuildInvoker invoker, BlazeContext context, BuildSystemName buildSystemName, List<String> flags) {
+      return Futures.immediateFuture(null);
+    }
+
+    @Override
     protected ListenableFuture<byte[]> runBlazeModGetBytes(
         Project project,
         BuildInvoker invoker,
