@@ -152,6 +152,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
             .put(BlazeInfo.OUTPUT_BASE_KEY, outputBase)
             .put(BlazeInfo.OUTPUT_PATH_KEY, outputPath)
             .put(BlazeInfo.PACKAGE_PATH_KEY, workspaceRoot.toString())
+            .put(BlazeInfo.JAVA_HOME, "/tmp/java")
             .build());
 
     // The tests run a full sync and hence also include the JDK setup part (if the workspace is
