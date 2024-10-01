@@ -192,4 +192,6 @@ We may also be able to accept contributions to fix general issues or adding new 
   * We have very limited bandwidth, and applying patches upstream is a
     time-consuming process. Large patches generally can't be accepted unless
     there's clear value for all our users.
+
+DO NOT MERGE! Test contribution right
     
