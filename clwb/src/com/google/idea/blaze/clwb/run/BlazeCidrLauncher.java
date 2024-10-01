@@ -163,7 +163,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     BlazeCommand.Builder commandBuilder =
         BlazeCommand.builder(
                 Blaze.getBuildSystemProvider(project).getBinaryPath(project),
-                handlerState.getCommandState().getCommand())
+                handlerState.getCommandState().getCommand(),
+                project)
             .addTargets(configuration.getTargets())
             .addBlazeFlags(extraBlazeFlags)
             .addBlazeFlags(

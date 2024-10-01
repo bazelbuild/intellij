@@ -65,7 +65,7 @@ public class BazelAppInspectorBuilder implements AppInspectorBuilder {
               BlazeInvocationContext.OTHER_CONTEXT);
 
       BlazeCommand.Builder builder =
-          BlazeCommand.builder(invoker, BlazeCommandName.BUILD)
+          BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project)
               .addBlazeFlags(buildTargets.stream().map(Label::toString).collect(toImmutableList()))
               .addBlazeFlags(buildResultHelper.getBuildFlags())
               .addBlazeFlags(additionalBlazeFlags);

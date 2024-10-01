@@ -20,6 +20,8 @@ import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.project.Project;
+
 import java.io.File;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -41,7 +43,7 @@ public class AspectStrategyBazel extends AspectStrategy {
 
   static final class RepositoryProvider implements AspectRepositoryProvider {
     @Override
-    public Optional<File> aspectDirectory() {
+    public Optional<File> aspectDirectory(Project project) {
       return Optional.ofNullable(PluginManager.getPluginByClass(AspectStrategy.class))
           .map((it) -> new File(it.getPath(), "aspect"));
     }

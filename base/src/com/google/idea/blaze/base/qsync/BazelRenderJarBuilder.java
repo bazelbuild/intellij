@@ -68,7 +68,7 @@ public class BazelRenderJarBuilder implements RenderJarBuilder {
 
       // TODO(b/283283123): Refactor render jar functionality to build_dependencies.bzl
       BlazeCommand.Builder builder =
-          BlazeCommand.builder(invoker, BlazeCommandName.BUILD)
+          BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project)
               .addBlazeFlags(buildTargets.stream().map(Label::toString).collect(toImmutableList()))
               .addBlazeFlags(buildResultHelper.getBuildFlags())
               .addBlazeFlags(additionalBlazeFlags)

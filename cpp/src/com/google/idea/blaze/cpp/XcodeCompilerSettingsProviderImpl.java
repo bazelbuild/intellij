@@ -83,7 +83,7 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
         }
         String xcodeVersion = versions.xcodeVersion.get();
         String developerDir = XcodeCompilerSettingsProviderImpl.queryDeveloperDir(context, invoker,
-            workspaceRoot, xcodeVersion);
+            workspaceRoot, xcodeVersion, project);
         String sdkVersionString = String.format("MacOSX%s.sdk", macosSdkVersion);
         settings = Optional.of(XcodeCompilerSettings.create(
             Path.of(developerDir),
@@ -160,8 +160,8 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
    * https://github.com/bazelbuild/bazel/blob/1811e82ca4e68c2dd52eed7907c3d1926237e18a/src/main/java/com/google/devtools/build/lib/exec/local/XcodeLocalEnvProvider.java#L241
    */
   private static String queryDeveloperDir(BlazeContext context, BuildInvoker invoker,
-      WorkspaceRoot workspaceRoot, String xcodeVersion) throws XcodeCompilerSettingsException {
-    BlazeCommand.Builder runXcodeLocator = BlazeCommand.builder(invoker, BlazeCommandName.RUN);
+                                          WorkspaceRoot workspaceRoot, String xcodeVersion, Project project) throws XcodeCompilerSettingsException {
+    BlazeCommand.Builder runXcodeLocator = BlazeCommand.builder(invoker, BlazeCommandName.RUN, project);
     runXcodeLocator.addTargets(
         Label.fromStringSafe("@bazel_tools//tools/osx:xcode-locator"));
     runXcodeLocator.addExeFlags(xcodeVersion).build();

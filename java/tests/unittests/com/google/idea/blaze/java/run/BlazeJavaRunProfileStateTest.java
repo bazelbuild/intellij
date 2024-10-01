@@ -313,7 +313,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
   @Test
   public void getBashCommandsToRunScript() throws Exception {
     BlazeCommand.Builder commandBuilder =
-        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD)
+        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD, getProject())
             .addTargets(Label.create("//label:java_binary_rule"));
     List<String> command =
         HotSwapCommandBuilder.getBashCommandsToRunScript(getProject(), commandBuilder);
