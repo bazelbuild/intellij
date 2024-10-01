@@ -158,7 +158,7 @@ public class FullApkBuildStep implements ApkBuildStep {
 
     BuildInvoker invoker =
         Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
-    BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.BUILD);
+    BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project);
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
