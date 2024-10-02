@@ -387,16 +387,9 @@
     <notificationGroup displayType="BALLOON" id="QuerySyncBuild" />
     <registryKey defaultValue="false" description="Disable auto import of bazel projects" key="bazel.auto.import.disabled"/>
     <registryKey defaultValue="false" description="Allow to have optional imports in project view" key="bazel.projectview.optional.imports"/>
-    <registryKey
-      key="bazel.sync.resolve.virtual.includes"
-      description="Apply heuristics to detect correct location of headers which are accessed from _virtual_includes during build. (requires re-sync)"
-      defaultValue="true"
-    />
-    <registryKey
-      key="bazel.sync.collect.virtual.includes.hints"
-      description="CAN BREAK SYNC. Collect the actual location of includes during sync. Currently, only available with the legacy engine. (requires re-sync)"
-      defaultValue="false"
-    />
+    <registryKey key="bazel.sync.resolve.virtual.includes"
+                 description="Apply heuristics to detect correct location of headers which are accessed from _virtual_includes during build. (requires re-sync)"
+                 defaultValue="true"/>
     <registryKey defaultValue="true"
                  description="Enables opening the project view file the first time the project is imported"
                  key="bazel.project.import.open_project_view"/>
