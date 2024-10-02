@@ -218,9 +218,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2024_2. This is required to build IJwB and run integration tests.
-IC_243_SHA = "ccc4bc6e7e32dda6d817cc33c17ee67656d15496550c1dd4f5d13e7a30833c29"
+IC_243_SHA = "e3b0f1404cbc80e903324a24341bb6840a6114c607fb11450be3c1a19a283627"
 
-IC_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/243.16718.32-EAP-SNAPSHOT/ideaIC-243.16718.32-EAP-SNAPSHOT.zip"
+IC_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/243.18137.10-EAP-SNAPSHOT/ideaIC-243.18137.10-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ce_2024_3",
@@ -294,9 +294,9 @@ http_archive(
     url = IU_242_URL,
 )
 
-IU_243_SHA = "78927f4ebf99d34fabe63658b982033b8444f2c23d2e716eadfcb4b1d0455b81"
+IU_243_SHA = "66f6043ca1a8329637f80e9afea5bf9a5a7d30a32261ae40c2e63b68fa7f316d"
 
-IU_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/243.16718.32-EAP-SNAPSHOT/ideaIU-243.16718.32-EAP-SNAPSHOT.zip"
+IU_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/243.18137.10-EAP-SNAPSHOT/ideaIU-243.18137.10-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ue_2024_3",
@@ -400,9 +400,9 @@ http_archive(
     url = DEVKIT_241_URL,
 )
 
-DEVKIT_243_SHA = "1eb17c0fc937441cef177c7ad5b104b436d8cbe4a3c95528e0ca708906760e96"
+DEVKIT_243_SHA = "29a17a540f1064b5569e92380ec50c080184a78dfda5d08cea84f8573affe161"
 
-DEVKIT_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/243.16718.32/DevKit-243.16718.32.zip"
+DEVKIT_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/243.18137.10/DevKit-243.18137.10.zip"
 
 http_archive(
     name = "devkit_2024_3",
@@ -411,9 +411,9 @@ http_archive(
     url = DEVKIT_243_URL,
 )
 
-DEVKIT_242_SHA = "964fa6c2af5c7256928ccd6637cd6722ff9a81f57f08fab87310d328048768c9"
+DEVKIT_242_SHA = "4a277913eac450d2936e1b0352138b02dfee575c07a58f7097e44db759b6d385"
 
-DEVKIT_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/242.23339.11/DevKit-242.23339.11.zip"
+DEVKIT_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/242.22855.128/DevKit-242.22855.128.zip"
 
 http_archive(
     name = "devkit_2024_2",
@@ -519,9 +519,9 @@ http_archive(
     url = PYTHON_PLUGIN_242_URL,
 )
 
-PYTHON_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/243.16718.32/PythonCore-243.16718.32.zip"
+PYTHON_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/243.18137.10/PythonCore-243.18137.10.zip"
 
-PYTHON_PLUGIN_243_SHA = "60d01c7bfbb905ddd444d10bc848e2a47b2a167c48fb805f887ca008713167df"
+PYTHON_PLUGIN_243_SHA = "8804d1ebd215492d74fb2e71af8e526d69593a6cff913983300e36ebce3ac178"
 
 http_archive(
     name = "python_2024_3",
@@ -608,9 +608,9 @@ http_archive(
     url = GO_PLUGIN_242_URL,
 )
 
-GO_PLUGIN_243_SHA = "0a54ca737070d9ad1d589fecc6f5a464a32e6f8448b7573c2f79b61d3919818f"
+GO_PLUGIN_243_SHA = "0c6c15f17b9c0320816a0d55d87fd991a1951072eda1e4ca2223936bf3777695"
 
-GO_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/243.16718.32/org.jetbrains.plugins.go-243.16718.32.zip"
+GO_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/243.18137.10/org.jetbrains.plugins.go-243.18137.10.zip"
 
 http_archive(
     name = "go_2024_3",
@@ -734,9 +734,9 @@ http_archive(
     url = TOML_PLUGIN_242_URL,
 )
 
-TOML_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/243.16718.28/org.toml.lang-243.16718.28.zip"
+TOML_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/243.18137.23/org.toml.lang-243.18137.23.zip"
 
-TOML_PLUGIN_243_SHA = "075bcd8603076557bf4fa2f392a6c4edf3c0269311f8c239531e4743abd8339e"
+TOML_PLUGIN_243_SHA = "059c855ecee105b6cbcbfb4e4824db1379a2e84fc8ff22674b16877ae4123c4a"
 
 http_archive(
     name = "toml_2024_3",
