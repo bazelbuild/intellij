@@ -34,7 +34,7 @@ object ProgressIndicatorStub : ProgressIndicatorEx {
 
   override fun isModal(): Boolean { return false }
 
-  override fun getModalityState(): ModalityState { return ModalityState.defaultModalityState() }
+  override fun getModalityState(): ModalityState { return ModalityState.NON_MODAL /* required for backwards compatability */ }
 
   override fun setModalityProgress(p0: ProgressIndicator?) { }
 
