@@ -1,4 +1,4 @@
-load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_java//java:defs.bzl", "java_proto_library")
 
 package(default_visibility = ["//visibility:public"])
@@ -24,8 +24,8 @@ proto_library(
         "//third_party/bazel/src/main/protobuf:command_line_proto",
         "//third_party/bazel/src/main/protobuf:failure_details_proto",
         "//third_party/bazel/src/main/protobuf:invocation_policy_proto",
-        "@com_google_protobuf//:any_proto",
-        "@com_google_protobuf//:duration_proto",
-        "@com_google_protobuf//:timestamp_proto",
+        "@protobuf//:any_proto",
+        "@protobuf//:duration_proto",
+        "@protobuf//:timestamp_proto",
     ],
 )
