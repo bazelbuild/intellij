@@ -191,5 +191,5 @@ We may also be able to accept contributions to fix general issues or adding new 
   * We can't accept stylistic, refactoring, or "cleanup" changes.
   * We have very limited bandwidth, and applying patches upstream is a
     time-consuming process. Large patches generally can't be accepted unless
-    there's clear value for all our users.
+    there's clear value for all our users..
     
