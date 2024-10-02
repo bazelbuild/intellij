@@ -349,6 +349,20 @@ http_archive(
     url = "https://dl.google.com/dl/android/studio/ide-zips/2022.3.1.19/android-studio-2022.3.1.19-linux.tar.gz",
 )
 
+_protobuf_version = "29.0-rc1"
+
+_protobuf_sha256 = "32247eed6fa8c9792d2667b9fb306e8403736097226b478711d7f3bfece6fbda"
+
+http_archive(
+    name = "protobuf",
+    sha256 = _protobuf_sha256,
+    strip_prefix = "protobuf-%s" % _protobuf_version,
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v%s.tar.gz" % _protobuf_version],
+)
+
+load("@protobuf//:protobuf_deps.bzl", "protobuf_deps")
+protobuf_deps()
+
 http_archive(
     name = "rules_java",
     urls = [
