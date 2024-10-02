@@ -114,7 +114,7 @@ public class BlazeModRunnerImpl extends BlazeModRunner {
         .submit(
             () -> {
               BlazeCommand.Builder builder =
-                  BlazeCommand.builder(invoker, BlazeCommandName.MOD).addBlazeFlags(flags);
+                  BlazeCommand.builder(invoker, BlazeCommandName.MOD, project).addBlazeFlags(flags);
 
               if (args != null) {
                 builder.addBlazeFlags(args);

@@ -194,7 +194,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
       commandName = BlazeCommandName.RUN;
     }
     BlazeCommand command =
-        BlazeCommand.builder(binaryPath, commandName)
+        BlazeCommand.builder(binaryPath, commandName, project)
             .addTargets(target)
             .addBlazeFlags(
                 BlazeFlags.blazeFlags(

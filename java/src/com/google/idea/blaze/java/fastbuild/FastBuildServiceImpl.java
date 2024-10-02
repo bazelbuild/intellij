@@ -289,7 +289,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     Stopwatch timer = Stopwatch.createStarted();
 
     BlazeCommand.Builder command =
-        BlazeCommand.builder(buildParameters.blazeBinary(), BlazeCommandName.BUILD)
+        BlazeCommand.builder(buildParameters.blazeBinary(), BlazeCommandName.BUILD, project)
             .addTargets(deployJarStrategy.getBuildTargets(label, blazeVersionData))
             .addBlazeFlags(deployJarStrategy.getBuildFlags(blazeVersionData))
             .addBlazeFlags(buildParameters.buildFlags())

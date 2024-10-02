@@ -111,8 +111,8 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
     assertThat(getOutputGroups(builder)).doesNotContain("intellij-render-resolve-android");
   }
 
-  private static BlazeCommand.Builder emptyBuilder() {
-    return BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD);
+  private BlazeCommand.Builder emptyBuilder() {
+    return BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD, getProject());
   }
 
   private static ImmutableList<String> getOutputGroups(BlazeCommand.Builder builder) {

@@ -204,7 +204,7 @@ public final class BuildPluginBeforeRunTaskProvider
                           .getBuildInvoker(project, context);
                   try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
                     BlazeCommand.Builder command =
-                        BlazeCommand.builder(invoker, BlazeCommandName.BUILD)
+                        BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project)
                             .addTargets(config.getTargets())
                             .addBlazeFlags(
                                 BlazeFlags.blazeFlags(
