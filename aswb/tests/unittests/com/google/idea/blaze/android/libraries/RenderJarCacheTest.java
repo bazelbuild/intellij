@@ -26,6 +26,8 @@ import com.google.idea.blaze.android.sync.aspects.strategy.RenderResolveOutputGr
 import com.google.idea.blaze.base.MockProjectViewManager;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
+import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
@@ -152,7 +154,7 @@ public class RenderJarCacheTest {
     intellijRule.registerProjectService(ProjectViewManager.class, projectViewManager);
 
     intellijRule.registerApplicationService(BlazeExecutor.class, new MockBlazeExecutor());
-
+    registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class).registerExtension(new BazelBuildSystemProvider());
     setupProjectData();
     setProjectView(
         "directories:",
