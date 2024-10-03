@@ -154,7 +154,7 @@ public class RenderJarCacheTest {
     intellijRule.registerProjectService(ProjectViewManager.class, projectViewManager);
 
     intellijRule.registerApplicationService(BlazeExecutor.class, new MockBlazeExecutor());
-    registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class).registerExtension(new BazelBuildSystemProvider());
+    intellijRule.registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class).registerExtension(new BazelBuildSystemProvider());
     setupProjectData();
     setProjectView(
         "directories:",
