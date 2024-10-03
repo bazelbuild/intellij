@@ -76,7 +76,6 @@ java_library(
     tags = ["no-ide"],
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
-        "clion-2024.3": ["@clion_2024_3//:angular"],
         "intellij-ue-2024.3": ["@intellij_ue_2024_3//:angular"],
         "intellij-ue-2022.3": ["@intellij_ue_2022_3//:angular"],
         "intellij-ue-2023.1": ["@intellij_ue_2023_1//:angular"],

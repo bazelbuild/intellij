@@ -43,6 +43,7 @@ def clwb_integration_test(name, project, srcs, deps = []):
             "//intellij_platform_sdk:test_libs",
             "//sdkcompat",
             "@junit//jar",
+            "@org_opentest4j_opentest4j//jar",
         ],
     )
 
