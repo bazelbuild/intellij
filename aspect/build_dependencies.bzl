@@ -5,7 +5,6 @@ load(
     "CPP_COMPILE_ACTION_NAME",
     "C_COMPILE_ACTION_NAME",
 )
-load(":java_info.bzl", "get_java_info")
 
 ALWAYS_BUILD_RULES = "java_proto_library,java_lite_proto_library,java_mutable_proto_library,kt_proto_library_helper,_java_grpc_library,_java_lite_grpc_library,kt_grpc_library_helper,java_stubby_library,kt_stubby_library_helper,aar_import,java_import"
 
@@ -15,6 +14,16 @@ PROTO_RULE_KINDS = [
     "java_mutable_proto_library",
     "kt_proto_library_helper",
 ]
+
+def java_info_in_target(target):
+    return JavaInfo in target
+
+def get_java_info(target):
+    if JavaInfo in target:
+        return target[JavaInfo]
+
+def java_info_reference():
+    return [JavaInfo]
 
 def _package_dependencies_impl(target, ctx):
     java_info_file = _write_java_target_info(target, ctx)
