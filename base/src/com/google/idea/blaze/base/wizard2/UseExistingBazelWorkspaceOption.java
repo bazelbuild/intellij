@@ -127,7 +127,6 @@ public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceO
     return WorkspaceTypeData.builder()
         .setWorkspaceName(workspaceRootFile.getName())
         .setWorkspaceRoot(root)
-        .setCanonicalProjectDataLocation(workspaceRootFile)
         .setFileBrowserRoot(workspaceRootFile)
         .setWorkspacePathResolver(new WorkspacePathResolverImpl(root))
         .setBuildSystem(BuildSystemName.Bazel)
