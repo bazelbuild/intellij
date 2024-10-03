@@ -182,7 +182,9 @@ public class TargetExpressionListTest extends BlazeTestCase {
             new ProjectDirectoriesHelper(
                 /* rootDirectories= */ ImmutableList.of(new WorkspacePath("foo")),
                 /* excludeDirectories= */ ImmutableSet.of(),
-                /* excludePathsForBazelQuery= */ ImmutableSet.of()
+                /* excludePathsForBazelQuery= */ ImmutableSet.of(),
+                    ImmutableSet.of()
+
                 ));
 
     assertThat(helper.includesTarget(Label.create("//foo:target"))).isTrue();
@@ -203,7 +205,8 @@ public class TargetExpressionListTest extends BlazeTestCase {
             new ProjectDirectoriesHelper(
                 /* rootDirectories= */ ImmutableList.of(new WorkspacePath("foo")),
                 /* excludeDirectories= */ ImmutableSet.of(new WorkspacePath("bar")),
-                /* excludePathsForBazelQuery= */ ImmutableSet.of()
+                /* excludePathsForBazelQuery= */ ImmutableSet.of(),
+                    ImmutableSet.of()
                 ));
 
     assertThat(helper.includesTarget(Label.create("//foo:target"))).isFalse();
@@ -224,7 +227,8 @@ public class TargetExpressionListTest extends BlazeTestCase {
             new ProjectDirectoriesHelper(
                 /* rootDirectories= */ ImmutableList.of(new WorkspacePath("foo")),
                 /* excludeDirectories= */ ImmutableSet.of(new WorkspacePath("foo/bar")),
-                /* excludePathsForBazelQuery= */ ImmutableSet.of()
+                /* excludePathsForBazelQuery= */ ImmutableSet.of(),
+                    ImmutableSet.of()
                 ));
 
     assertThat(helper.includesTarget(Label.create("//foo:target"))).isTrue();

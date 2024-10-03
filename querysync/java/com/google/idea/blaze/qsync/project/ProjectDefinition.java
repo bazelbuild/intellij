@@ -42,7 +42,8 @@ public abstract class ProjectDefinition {
           /* includes= */ ImmutableSet.of(),
           /* excludes= */ ImmutableSet.of(),
           /* languageClasses= */ ImmutableSet.of(),
-          /* testSources= */ ImmutableSet.of());
+          /* testSources= */ ImmutableSet.of(),
+          /* systemExcludes = */ ImmutableSet.of());
 
   /**
    * Project includes, also know as root directories. Taken from the users {@code .blazeproject}
@@ -65,12 +66,16 @@ public abstract class ProjectDefinition {
    */
   public abstract ImmutableSet<String> testSources();
 
+  public abstract ImmutableSet<String> systemExcludes();
+
   public static ProjectDefinition create(
       ImmutableSet<Path> includes,
       ImmutableSet<Path> excludes,
       ImmutableSet<QuerySyncLanguage> languageClasses,
-      ImmutableSet<String> testSources) {
-    return new AutoValue_ProjectDefinition(includes, excludes, languageClasses, testSources);
+      ImmutableSet<String> testSources,
+      ImmutableSet<String> systemExcludes
+  ) {
+    return new AutoValue_ProjectDefinition(includes, excludes, languageClasses, testSources, systemExcludes);
   }
 
   /**
@@ -85,6 +90,11 @@ public abstract class ProjectDefinition {
       }
     }
     for (Path exclude : projectExcludes()) {
+     if(systemExcludes().contains(exclude.toString())){
+       // We don't have to check if these dirs are valid for queries, because they also don't fall into //... wildcard
+       continue;
+     }
+
       if (isValidPathForQuery(context, workspaceRoot.resolve(exclude))) {
         result.excludePath(exclude);
       }
