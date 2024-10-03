@@ -60,8 +60,9 @@ java_import(
         "plugins/clion-test-catch/lib/*.jar",
         "plugins/clion-test-boost/lib/*.jar",
         "plugins/nativeDebug-plugin/lib/*.jar",
-        "plugins/clion-ide/lib/clion-ide.jar", # For CMakeNotificationProvider
+        "plugins/clion-ide/lib/clion-ide.jar", # for CMakeNotificationProvider
         "plugins/clion-test-google-plugin/lib/clion-test-google-plugin.jar", # for com.jetbrains.cidr.execution.testing.google
+        "plugins/platform-images/lib/*.jar", # for native debug plugin
     ]),
 )
 
