@@ -37,6 +37,7 @@ import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.Query.Rule;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -97,8 +98,12 @@ public class BlazeQueryParser {
     for (Map.Entry<Label, Query.SourceFile> sourceFileEntry :
         query.getSourceFilesMap().entrySet()) {
       Location l = new Location(sourceFileEntry.getValue().getLocation());
-      if (l.file.endsWith(Path.of("BUILD"))) {
-        packages.add(l.file.getParent());
+      if (l.file.endsWith(Path.of("BUILD")) || l.file.endsWith(Path.of("BUILD.bazel"))){
+        if(l.file.getParent() == null){
+          packages.add(Paths.get(""));
+        } else{
+          packages.add(l.file.getParent());
+        }
       }
       graphBuilder.locationsBuilder().put(sourceFileEntry.getKey(), l);
       graphBuilder.fileToTargetBuilder().put(l.file, sourceFileEntry.getKey());
