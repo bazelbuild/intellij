@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.info.BlazeInfoException;
+import com.google.idea.blaze.base.command.mod.BlazeModException;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
@@ -29,7 +30,9 @@ import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.project.Project;
+
 import java.io.InputStream;
+import java.util.Map;
 
 /**
  * A fake for {@link BlazeCommandRunner} that doesn't execute the build, but returns results from
@@ -61,7 +64,8 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
-      BlazeContext context)
+      BlazeContext context,
+      Map<String, String> envVars)
       throws BuildException {
     command = blazeCommandBuilder.build();
     try {
@@ -79,7 +83,8 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
-      BlazeContext context) {
+      BlazeContext context,
+      Map<String, String> envVars) {
     return BlazeTestResults.NO_RESULTS;
   }
 
@@ -102,6 +107,17 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
       BuildResultHelper buildResultHelper,
       BlazeContext context)
       throws BlazeInfoException {
+    return InputStream.nullInputStream();
+  }
+
+  @Override
+  @MustBeClosed
+  public InputStream runBlazeMod(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context)
+      throws BlazeModException {
     return InputStream.nullInputStream();
   }
 

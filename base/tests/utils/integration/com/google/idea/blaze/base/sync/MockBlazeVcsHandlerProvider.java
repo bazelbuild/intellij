@@ -25,7 +25,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.google.idea.blaze.common.vcs.VcsState;
@@ -58,7 +57,7 @@ public class MockBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
   }
 
   @Override
-  public boolean handlesProject(BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot) {
+  public boolean handlesProject(Project project, WorkspaceRoot workspaceRoot) {
     return true;
   }
 
@@ -91,6 +90,11 @@ public class MockBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
     @Override
     public BlazeVcsSyncHandler createSyncHandler() {
       return null;
+    }
+
+    @Override
+    public Optional<VcsState> vcsStateForSourceUri(String sourceUri) {
+      return Optional.empty();
     }
 
     @Override

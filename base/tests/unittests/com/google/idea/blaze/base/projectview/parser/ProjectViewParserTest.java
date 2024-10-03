@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.projectview.parser;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.base.projectview.parser.ProjectViewParser.TEMPORARY_LINE_NUMBER;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -39,6 +40,7 @@ import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
 import com.google.idea.blaze.base.projectview.section.sections.TryImportSection;
+import com.google.idea.blaze.base.projectview.section.sections.ViewProjectRootSection;
 import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
@@ -51,6 +53,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 import com.intellij.openapi.util.registry.Registry;
@@ -393,7 +396,7 @@ public class ProjectViewParserTest extends BlazeTestCase {
     ProjectViewSet.ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();
     ProjectView projectView = projectViewFile.projectView;
     assertThat(projectView.getSectionsOfType(TextBlockSection.KEY).get(0).getTextBlock())
-        .isEqualTo(new TextBlock(ImmutableList.of("# comment")));
+        .isEqualTo(new TextBlock(ImmutableList.of("# comment"), TEMPORARY_LINE_NUMBER));
     assertThat(projectView.getSectionsOfType(DirectorySection.KEY).get(0).items())
         .containsExactly(
             DirectoryEntry.include(new WorkspacePath("java/com/google")),
@@ -451,23 +454,24 @@ public class ProjectViewParserTest extends BlazeTestCase {
     assert projectViewFile != null;
     ProjectView projectView = projectViewFile.projectView;
 
-    assertThat(projectView)
-        .isEqualTo(
-            ProjectView.builder()
-                .add(
+    ProjectView expectedProjectView = ProjectView.builder()
+            .add(
                     ListSection.builder(DirectorySection.KEY)
-                        .add(DirectoryEntry.include(new WorkspacePath("dir0")))
-                        .add(TextBlock.of("  "))
-                        .add(TextBlock.of(""))
-                        .add(DirectoryEntry.include(new WorkspacePath("dir1")))
-                        .add(TextBlock.of("  ", "  "))
-                        .add(TextBlock.of("# comment"))
-                        .add(DirectoryEntry.include(new WorkspacePath("dir2")))
-                        .add(TextBlock.of(""))
-                        .add(TextBlock.of("  # commented out dir"))
-                        .add(TextBlock.of("  ")))
-                .add(TextBlockSection.of(TextBlock.of("# comment", "# comment")))
-                .build());
+                            .setFirstLineNumber(0)
+                            .add(DirectoryEntry.include(new WorkspacePath("dir0")), 1)
+                            .add(TextBlock.of(2, "  "))
+                            .add(TextBlock.of(3, ""))
+                            .add(DirectoryEntry.include(new WorkspacePath("dir1")), 4)
+                            .add(TextBlock.of(5, "  ", "  "))
+                            .add(TextBlock.of(7, "# comment"))
+                            .add(DirectoryEntry.include(new WorkspacePath("dir2")), 8)
+                            .add(TextBlock.of(9, ""))
+                            .add(TextBlock.of(10, "  # commented out dir"))
+                            .add(TextBlock.of(11, "  ")))
+            .add(TextBlockSection.of(TextBlock.of(12, "# comment", "# comment")))
+            .build();
+
+    assertThat(projectView).isEqualTo(expectedProjectView);
 
     String outputString = ProjectViewParser.projectViewToString(projectView);
     assertThat(outputString).isEqualTo(text);
@@ -505,5 +509,21 @@ public class ProjectViewParserTest extends BlazeTestCase {
     ProjectView projectView = projectViewFile.projectView;
     String outputString = ProjectViewParser.projectViewToString(projectView);
     assertThat(outputString).isEqualTo(text);
+  }
+
+  @Test
+  public void testParserParsesVieProjectRootSection() throws Exception {
+    String text =
+        Joiner.on('\n')
+            .join(
+                "directories:",
+                "  java/com/google",
+                "view_project_root: true");
+    projectViewStorageManager.add(".blazeproject", text);
+    projectViewParser.parseProjectView(new File(".blazeproject"));
+    errorCollector.assertNoIssues();
+
+    ProjectViewSet projectViewSet = projectViewParser.getResult();
+    assertThat(projectViewSet.getScalarValue(ViewProjectRootSection.KEY)).isEqualTo(Optional.of(true));
   }
 }

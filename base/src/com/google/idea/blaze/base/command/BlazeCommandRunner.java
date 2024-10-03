@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.project.Project;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /** Runs a blaze command. */
@@ -38,7 +39,8 @@ public interface BlazeCommandRunner {
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
-      BlazeContext context)
+      BlazeContext context,
+      Map<String, String> envVars)
       throws BuildException;
 
   /**
@@ -46,11 +48,12 @@ public interface BlazeCommandRunner {
    * the given {@link BuildResultHelper}.
    */
   BlazeTestResults runTest(
-      Project project,
-      BlazeCommand.Builder blazeCommandBuilder,
-      BuildResultHelper buildResultHelper,
-      BlazeContext context)
-      throws BuildException;
+          Project project,
+          BlazeCommand.Builder blazeCommandBuilder,
+          BuildResultHelper buildResultHelper,
+          BlazeContext context,
+          Map<String, String> envVars)
+          throws BuildException;
 
   /**
    * Runs a blaze query command.
@@ -68,6 +71,14 @@ public interface BlazeCommandRunner {
 
   @MustBeClosed
   InputStream runBlazeInfo(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context)
+      throws BuildException;
+
+  @MustBeClosed
+  InputStream runBlazeMod(
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,

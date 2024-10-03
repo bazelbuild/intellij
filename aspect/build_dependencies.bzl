@@ -5,6 +5,7 @@ load(
     "CPP_COMPILE_ACTION_NAME",
     "C_COMPILE_ACTION_NAME",
 )
+load(":java_info.bzl", "get_java_info")
 
 ALWAYS_BUILD_RULES = "java_proto_library,java_lite_proto_library,java_mutable_proto_library,kt_proto_library_helper,_java_grpc_library,_java_lite_grpc_library,kt_grpc_library_helper,java_stubby_library,kt_stubby_library_helper,aar_import,java_import"
 
@@ -142,9 +143,35 @@ def declares_android_resources(target, ctx):
     Returns:
       True if the target has resource files and an android provider.
     """
-    if AndroidIdeInfo not in target:
+    if _get_android_provider(target) == None:
         return False
     return hasattr(ctx.rule.attr, "resource_files") and len(ctx.rule.attr.resource_files) > 0
+
+def _get_android_provider(target):
+    if hasattr(android_common, "AndroidIdeInfo"):
+        if android_common.AndroidIdeInfo in target:
+            return target[android_common.AndroidIdeInfo]
+        else:
+            return None
+    elif hasattr(target, "android"):
+        # Backwards compatibility: supports android struct provider
+        legacy_android = getattr(target, "android")
+
+        # Transform into AndroidIdeInfo form
+        return struct(
+            aar = legacy_android.aar,
+            java_package = legacy_android.java_package,
+            manifest = legacy_android.manifest,
+            idl_source_jar = getattr(legacy_android.idl.output, "source_jar", None),
+            idl_class_jar = getattr(legacy_android.idl.output, "class_jar", None),
+            defines_android_resources = legacy_android.defines_resources,
+            idl_import_root = getattr(legacy_android.idl, "import_root", None),
+            idl_generated_java_files = getattr(legacy_android.idl, "generated_java_files", []),
+            resource_jar = legacy_android.resource_jar,
+            signed_apk = legacy_android.apk,
+            apks_under_test = legacy_android.apks_under_test,
+        )
+    return None
 
 def declares_aar_import(ctx):
     """
@@ -165,6 +192,7 @@ def _collect_dependencies_impl(target, ctx):
         ctx.attr.exclude,
         ctx.attr.always_build_rules,
         ctx.attr.generate_aidl_classes,
+        ctx.attr.use_generated_srcjars,
         test_mode = False,
     )
 
@@ -176,6 +204,7 @@ def _collect_all_dependencies_for_tests_impl(target, ctx):
         exclude = None,
         always_build_rules = ALWAYS_BUILD_RULES,
         generate_aidl_classes = None,
+        use_generated_srcjars = False,
         test_mode = True,
     )
 
@@ -217,6 +246,7 @@ def _collect_own_java_artifacts(
         dependency_infos,
         always_build_rules,
         generate_aidl_classes,
+        use_generated_srcjars,
         target_is_within_project_scope):
     rule = ctx.rule
 
@@ -234,7 +264,7 @@ def _collect_own_java_artifacts(
     own_gensrc_files = []
     own_src_files = []
     own_srcjar_files = []
-    resource_package = None
+    resource_package = ""
 
     if must_build_main_artifacts:
         # For rules that we do not follow dependencies of (either because they don't
@@ -244,11 +274,12 @@ def _collect_own_java_artifacts(
         # This is done primarily for rules like proto, whose toolchain classes
         # are collected via attribute traversal, but still requires jars for any
         # proto deps of the underlying proto_library.
-        if JavaInfo in target:
+        java_info = get_java_info(target)
+        if java_info:
             if can_follow_dependencies:
-                own_jar_depsets.append(target[JavaInfo].compile_jars)
+                own_jar_depsets.append(java_info.compile_jars)
             else:
-                own_jar_depsets.append(target[JavaInfo].transitive_compile_time_jars)
+                own_jar_depsets.append(java_info.transitive_compile_time_jars)
 
         if declares_android_resources(target, ctx):
             ide_aar = _get_ide_aar_file(target, ctx)
@@ -258,32 +289,37 @@ def _collect_own_java_artifacts(
             own_ide_aar_files.append(rule.attr.aar.files.to_list()[0])
 
     else:
-        if AndroidIdeInfo in target:
-            resource_package = target[AndroidIdeInfo].java_package
+        android = _get_android_provider(target)
+        if android != None:
+            resource_package = android.java_package
 
             if generate_aidl_classes:
                 add_base_idl_jar = False
-                idl_jar = target[AndroidIdeInfo].idl_class_jar
+                idl_jar = android.idl_class_jar
                 if idl_jar != None:
                     own_jar_files.append(idl_jar)
                     add_base_idl_jar = True
 
-                generated_java_files = target[AndroidIdeInfo].idl_generated_java_files
+                generated_java_files = android.idl_generated_java_files
                 if generated_java_files:
                     own_gensrc_files += generated_java_files
                     add_base_idl_jar = True
 
                 # An AIDL base jar needed for resolving base classes for aidl generated stubs.
-                if add_base_idl_jar and hasattr(rule.attr, "_android_sdk"):
-                    android_sdk_info = getattr(rule.attr, "_android_sdk")[AndroidSdkInfo]
-                    own_jar_depsets.append(android_sdk_info.aidl_lib.files)
+                if add_base_idl_jar:
+                    if hasattr(rule.attr, "_aidl_lib"):
+                        own_jar_depsets.append(rule.attr._aidl_lib.files)
+                    elif hasattr(rule.attr, "_android_sdk") and hasattr(android_common, "AndroidSdkInfo"):
+                        android_sdk_info = getattr(rule.attr, "_android_sdk")[android_common.AndroidSdkInfo]
+                        own_jar_depsets.append(android_sdk_info.aidl_lib.files)
 
         # Add generated java_outputs (e.g. from annotation processing)
         generated_class_jars = []
-        if JavaInfo in target:
-            for java_output in target[JavaInfo].java_outputs:
+        java_info = get_java_info(target)
+        if java_info:
+            for java_output in java_info.java_outputs:
                 # Prefer source jars if they exist:
-                if java_output.generated_source_jar:
+                if use_generated_srcjars and java_output.generated_source_jar:
                     own_gensrc_files.append(java_output.generated_source_jar)
                 elif java_output.generated_class_jar:
                     generated_class_jars.append(java_output.generated_class_jar)
@@ -340,6 +376,7 @@ def _collect_own_and_dependency_java_artifacts(
         dependency_infos,
         always_build_rules,
         generate_aidl_classes,
+        use_generated_srcjars,
         target_is_within_project_scope):
     own_files = _collect_own_java_artifacts(
         target,
@@ -347,6 +384,7 @@ def _collect_own_and_dependency_java_artifacts(
         dependency_infos,
         always_build_rules,
         generate_aidl_classes,
+        use_generated_srcjars,
         target_is_within_project_scope,
     )
 
@@ -443,6 +481,7 @@ def _collect_dependencies_core_impl(
         exclude,
         always_build_rules,
         generate_aidl_classes,
+        use_generated_srcjars,
         test_mode):
     dep_infos = _collect_java_dependencies_core_impl(
         target,
@@ -451,6 +490,7 @@ def _collect_dependencies_core_impl(
         exclude,
         always_build_rules,
         generate_aidl_classes,
+        use_generated_srcjars,
         test_mode,
     )
     if CcInfo in target:
@@ -466,6 +506,7 @@ def _collect_java_dependencies_core_impl(
         exclude,
         always_build_rules,
         generate_aidl_classes,
+        use_generated_srcjars,
         test_mode):
     target_is_within_project_scope = _target_within_project_scope(str(target.label), include, exclude) and not test_mode
     dependency_infos = _get_followed_java_dependency_infos(ctx.rule)
@@ -476,6 +517,7 @@ def _collect_java_dependencies_core_impl(
         dependency_infos,
         always_build_rules,
         generate_aidl_classes,
+        use_generated_srcjars,
         target_is_within_project_scope,
     )
 
@@ -487,6 +529,7 @@ def _collect_java_dependencies_core_impl(
             dependency_infos,
             always_build_rules,
             generate_aidl_classes,
+            use_generated_srcjars,
             target_is_within_project_scope = True,
         )
         test_mode_own_files = struct(
@@ -604,10 +647,11 @@ def _get_ide_aar_file(target, ctx):
     The function builds a minimalistic .aar file that contains resources and the
     manifest only.
     """
-    full_aar = target[AndroidIdeInfo].aar
+    android = _get_android_provider(target)
+    full_aar = android.aar
     if full_aar:
         resource_files = _collect_resource_files(ctx)
-        resource_map = _build_ide_aar_file_map(target[AndroidIdeInfo].manifest, resource_files)
+        resource_map = _build_ide_aar_file_map(android.manifest, resource_files)
         aar = ctx.actions.declare_file(full_aar.short_path.removesuffix(".aar") + "_ide/" + full_aar.basename)
         _package_ide_aar(ctx, aar, resource_map)
         return aar
@@ -720,6 +764,10 @@ collect_dependencies = aspect(
         ),
         "generate_aidl_classes": attr.bool(
             doc = "If True, generates classes for aidl files included as source for the project targets",
+            default = False,
+        ),
+        "use_generated_srcjars": attr.bool(
+            doc = "If True, collects generated source jars for a target instead of compiled jar",
             default = False,
         ),
         "_build_zip": attr.label(

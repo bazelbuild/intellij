@@ -15,12 +15,12 @@
  */
 package com.google.idea.blaze.base.sync.workspace;
 
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
@@ -98,8 +98,9 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
           return realFile;
         }
       } catch (IOException ioException) {
-        LOG.warn("Failed to resolve real path for " + artifactLocation.getExecutionRootRelativePath(),
-            ioException);
+        LOG.warn("Failed to resolve real path for " + artifactLocation.getExecutionRootRelativePath() +
+                "\n" + ioException.getClass().getSimpleName() + ": " + ioException.getMessage());
+        LOG.trace(ioException);
       }
     }
     return null;

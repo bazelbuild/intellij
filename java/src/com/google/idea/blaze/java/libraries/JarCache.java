@@ -28,9 +28,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.FutureUtil;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
+import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.filecache.FileCache;
@@ -55,6 +53,8 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
+import com.google.idea.blaze.common.artifact.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.java.settings.BlazeJavaUserSettings;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.openapi.application.ApplicationManager;
@@ -224,7 +224,7 @@ public class JarCache {
           RemoteArtifactPrefetcher.getInstance()
               .downloadArtifacts(
                   /* projectName= */ project.getName(),
-                  /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(updated.values()));
+                  /* outputArtifacts= */ RemoteOutputArtifact.getRemoteArtifacts(updated.values()));
       FutureUtil.waitForFuture(context, downloadArtifactsFuture)
           .timed("FetchJars", EventType.Prefetching)
           .withProgressMessage("Fetching jar files...")

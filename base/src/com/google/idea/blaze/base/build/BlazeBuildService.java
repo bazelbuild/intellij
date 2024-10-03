@@ -66,6 +66,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
@@ -115,7 +116,36 @@ public class BlazeBuildService {
         new NotificationScope(
             project, "Make", title, title + " completed successfully", title + " failed"),
         title,
-        buildSystem);
+        buildSystem,
+        SyncStrategy.SERIAL);
+  }
+
+
+  public void buildFolder(String folderName,List<TargetExpression> targets) {
+    if (!Blaze.isBlazeProject(project)) {
+      return;
+    }
+    ProjectViewSet projectView = ProjectViewManager.getInstance(project).getProjectViewSet();
+    BlazeProjectData projectData =
+            BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (projectView == null || projectData == null) {
+      return;
+    }
+
+    buildTargetExpressions(
+            project,
+            projectView,
+            projectData,
+            context -> targets,
+            new NotificationScope(
+                    project,
+                    "Make",
+                    "Make " + folderName + "/...:all",
+                    "Make" + folderName + "/...:all completed successfully",
+                    "Make" + folderName + "/...:all failed"),
+            "Make " + folderName + "/...:all",
+            buildSystem,
+            SyncStrategy.SERIAL_NOT_EXPAND);
   }
 
   public void buildProject() {
@@ -139,7 +169,7 @@ public class BlazeBuildService {
                     projectData.getWorkspacePathResolver(),
                     projectData.getWorkspaceLanguageSettings())
                 .getTargetsToSync();
-          } catch (SyncCanceledException e) {
+          } catch (SyncCanceledException | ExecutionException | InterruptedException e) {
             context.setCancelled();
             return null;
           } catch (SyncFailedException e) {
@@ -160,7 +190,8 @@ public class BlazeBuildService {
             "Make project completed successfully",
             "Make project failed"),
         "Make project",
-        buildSystem);
+        buildSystem,
+        SyncStrategy.SERIAL);
 
     // In case the user touched a file, but didn't change its content. The user will get a false
     // positive for class file out of date. We need a way for the user to suppress the false
@@ -175,7 +206,8 @@ public class BlazeBuildService {
       ScopedFunction<List<TargetExpression>> targetsFunction,
       NotificationScope notificationScope,
       String taskName,
-      BuildSystem buildSystem) {
+      BuildSystem buildSystem,
+      SyncStrategy syncStrategy) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // a gross hack to avoid breaking change detector tests. We had a few tests which relied on
       // this never being called *and* relied on PROJECT_LAST_BUILD_TIMESTAMP_KEY being set
@@ -225,7 +257,7 @@ public class BlazeBuildService {
                             projectData.getWorkspacePathResolver(),
                             targets,
                             buildInvoker,
-                            SyncStrategy.SERIAL);
+                            syncStrategy);
                     if (shardedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
                       return null;
                     }

@@ -20,7 +20,6 @@ import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.base.Functions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -32,7 +31,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.Keep;
 import com.google.idea.blaze.base.async.FutureUtil;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -59,6 +57,7 @@ import com.intellij.util.PathUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -181,7 +180,7 @@ public final class RemoteOutputsCache {
         }
       }
       ImmutableList<RemoteOutputArtifact> artifactsToDownload =
-          BlazeArtifact.getRemoteArtifacts(updatedOutputs.values());
+          RemoteOutputArtifact.getRemoteArtifacts(updatedOutputs.values());
       ListenableFuture<?> downloadArtifactsFuture =
           RemoteArtifactPrefetcher.getInstance()
               .downloadArtifacts(
@@ -242,7 +241,7 @@ public final class RemoteOutputsCache {
       return key.hashCode();
     }
     Hasher hasher = Hashing.sha256().newHasher();
-    hasher.putString(key, Charsets.UTF_8);
+    hasher.putString(key, StandardCharsets.UTF_8);
     return hasher.hash().asInt();
   }
 

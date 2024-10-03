@@ -1,4 +1,10 @@
 load(
+    "//:build-visibility.bzl",
+    "DEFAULT_TEST_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+    "PYTHON_PACKAGES_VISIBILITY",
+)
+load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
     "intellij_plugin_library",
@@ -10,13 +16,6 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
-load(
-    "//:build-visibility.bzl",
-    "PLUGIN_PACKAGES_VISIBILITY",
-    "PYTHON_PACKAGES_VISIBILITY",
-)
-
-licenses(["notice"])
 
 java_library(
     name = "python",
@@ -36,7 +35,7 @@ java_library(
 
 optional_plugin_xml(
     name = "optional_xml",
-    module = "com.intellij.modules.python",
+    module = ["com.intellij.modules.python"],
     plugin_xml = "src/META-INF/python-contents.xml",
 )
 
@@ -72,6 +71,7 @@ intellij_integration_test_suite(
     srcs = glob(["tests/integrationtests/**/*.java"]),
     required_plugins = "com.google.idea.blaze.python",
     test_package_root = "com.google.idea.blaze.python",
+    visibility = DEFAULT_TEST_VISIBILITY,
     runtime_deps = [
         ":python_integration_test_plugin",
     ],
@@ -85,6 +85,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//third_party/python:python_for_tests",
+        "//third_party/toml:toml_for_tests",
         "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
@@ -94,6 +95,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze.python",
+    visibility = DEFAULT_TEST_VISIBILITY,
     deps = [
         ":python",
         "//base",

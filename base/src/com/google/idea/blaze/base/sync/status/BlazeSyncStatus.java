@@ -41,7 +41,7 @@ public interface BlazeSyncStatus {
 
   /**
    * @deprecated For query sync, use {@link
-   *     com.google.idea.blaze.base.qsync.QuerySyncManager#syncInProgress}
+   *     com.google.idea.blaze.base.qsync.QuerySyncManager#operationInProgress}
    */
   @Deprecated
   boolean syncInProgress();

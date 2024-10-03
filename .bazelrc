@@ -1,9 +1,15 @@
 build --java_language_version=17 --java_runtime_version=17
 
-# delete testdata package needed for bazel integration tests
-build --deleted_packages=//aspect/testing/tests/src/com/google/idea/blaze/aspect/integration/testdata
-query --deleted_packages=//aspect/testing/tests/src/com/google/idea/blaze/aspect/integration/testdata
+# Delete test data packages, needed for bazel integration tests. Update by running the following command:
+# bazel run @rules_bazel_integration_test//tools:update_deleted_packages
+build --deleted_packages=aspect/testing/tests/src/com/google/idea/blaze/aspect/integration/testdata,clwb/tests/projects/simple/main,clwb/tests/projects/virtual_includes/lib/strip_absolut,clwb/tests/projects/virtual_includes/lib/strip_relative,clwb/tests/projects/virtual_includes/main
+query --deleted_packages=aspect/testing/tests/src/com/google/idea/blaze/aspect/integration/testdata,clwb/tests/projects/simple/main,clwb/tests/projects/virtual_includes/lib/strip_absolut,clwb/tests/projects/virtual_includes/lib/strip_relative,clwb/tests/projects/virtual_includes/main
 
-# TODO: migrate all dependencies from WORKSPACE to MODULE.bazel
-# https://github.com/bazelbuild/intellij/issues/5432
-common --noenable_bzlmod
+common --enable_bzlmod
+common --enable_workspace # to load rules_scala from WORKSPACE.bzlmod
+common --android_sdk=@androidsdk//:sdk
+
+# Required for CLion integration tests on windows
+startup --windows_enable_symlinks
+build --enable_runfiles
+common --incompatible_use_plus_in_repo_names

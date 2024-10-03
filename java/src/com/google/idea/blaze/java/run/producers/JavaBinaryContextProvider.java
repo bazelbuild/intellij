@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.run.producers;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -35,7 +36,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.java.run.RunUtil;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.intellij.execution.JavaExecutionUtil;
@@ -96,7 +97,8 @@ public class JavaBinaryContextProvider implements BinaryContextProvider {
   }
 
   @Nullable
-  private static TargetInfo getTargetInfo(Project project, PsiClass mainClass) {
+  @VisibleForTesting
+  public static TargetInfo getTargetInfo(Project project, PsiClass mainClass) {
     File mainClassFile = RunUtil.getFileForClass(mainClass);
     if (mainClassFile == null) {
       return null;

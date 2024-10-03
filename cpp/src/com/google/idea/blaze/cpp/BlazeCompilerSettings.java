@@ -22,13 +22,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
+import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind;
+import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.UnknownCompilerKind;
 import java.io.File;
 import java.util.List;
 import javax.annotation.Nullable;
 
-final class BlazeCompilerSettings {
+public final class BlazeCompilerSettings {
 
   @Nullable private final File cCompiler;
   @Nullable private final File cppCompiler;
@@ -53,14 +55,24 @@ final class BlazeCompilerSettings {
     this.compilerEnvironment = compilerEnvironment;
   }
 
-  OCCompilerKind getCompiler(OCLanguageKind languageKind) {
-    if (languageKind == CLanguageKind.C || languageKind == CLanguageKind.CPP) {
+  public OCCompilerKind getCompiler(OCLanguageKind languageKind) {
+    if (languageKind != CLanguageKind.C && languageKind != CLanguageKind.CPP) {
+      return UnknownCompilerKind.INSTANCE;
+    }
+
+    if (CompilerVersionUtil.isMSVC(compilerVersion)) {
+      return MSVCCompilerKind.INSTANCE;
+    }
+
+    if (CompilerVersionUtil.isClang(compilerVersion)) {
       return ClangCompilerKind.INSTANCE;
     }
-    return UnknownCompilerKind.INSTANCE;
+
+    // default to gcc
+    return GCCCompilerKind.INSTANCE;
   }
 
-  File getCompilerExecutable(OCLanguageKind lang) {
+  public File getCompilerExecutable(OCLanguageKind lang) {
     if (lang == CLanguageKind.C) {
       return cCompiler;
     } else if (lang == CLanguageKind.CPP) {
@@ -70,7 +82,7 @@ final class BlazeCompilerSettings {
     return null;
   }
 
-  ImmutableList<String> getCompilerSwitches(OCLanguageKind lang, @Nullable VirtualFile sourceFile) {
+  public ImmutableList<String> getCompilerSwitches(OCLanguageKind lang, @Nullable VirtualFile sourceFile) {
     if (lang == CLanguageKind.C) {
       return cCompilerSwitches;
     }
@@ -84,11 +96,11 @@ final class BlazeCompilerSettings {
     return BlazeCompilerFlagsProcessor.process(project, allCompilerFlags);
   }
 
-  String getCompilerVersion() {
+  public String getCompilerVersion() {
     return compilerVersion;
   }
 
-  String getCompilerEnvironment(String variable) {
+  public String getCompilerEnvironment(String variable) {
     return compilerEnvironment.get(variable);
   }
 }

@@ -44,6 +44,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.ui.OpenProjectViewAction;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
+import com.google.idea.blaze.base.sync.BuildTargetFinder;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
@@ -55,10 +56,13 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
@@ -117,6 +121,36 @@ class AddSourceToProjectHelper {
                 });
   }
 
+  /**
+   * Given the workspace targets building a source file, updates the .blazeproject 'directories' and
+   * 'targets' sections accordingly.
+   */
+  static void addDirectoryAndDerivedTargetsToProject(
+          Project project,
+          WorkspacePath workspacePath) {
+
+    EventLoggingService.getInstance()
+            .logEvent(AddSourceToProjectHelper.class, "AddSourceToProject");
+
+    var directory = AddSourceToProjectHelper.getPackagePath(project, workspacePath);
+    if (directory == null) {
+      notifyFailed(project, "Failed to find package dir for %s".formatted(workspacePath.asPath()));
+      return;
+    }
+    var ok = MessageUtil.showYesNoDialog("Add Package to Project",
+            String.format("Would you like to add the whole '%s' directory and all targets beneath it to the project?", directory),
+            project, "Yes", "No", null);
+    if (ok) {
+      ImportRoots roots = ImportRoots.forProjectSafe(project);
+      if (roots == null) {
+        notifyFailed(
+                project, "Couldn't parse existing project view file. Please sync the project and retry.");
+        return;
+      }
+      AddSourceToProjectHelper.addDirectoryAndDerivedTargets(project, directory, roots);
+    }
+  }
+
   private static List<Label> convertTargets(List<TargetInfo> targets) {
     return targets.stream().map(t -> t.label).collect(Collectors.toList());
   }
@@ -166,6 +200,64 @@ class AddSourceToProjectHelper {
         .partialSync(targetsToSync, /* reason= */ "AddSourceToProjectHelper");
     notifySuccess(project, addDirectory ? parentPath : null, targets);
   }
+
+  /**
+   * Adds the directory of the specified {@link WorkspacePath}
+   */
+  static void addDirectoryAndDerivedTargets(
+          @NotNull Project project, WorkspacePath pathToAdd, ImportRoots roots) {
+
+    boolean addDirectory = !roots.containsWorkspacePath(pathToAdd);
+    if (!addDirectory) {
+      return;
+    }
+
+
+    ProjectViewEdit edit =
+            ProjectViewEdit.editLocalProjectView(
+                    project,
+                    builder -> {
+                        // Directory addition is not enough, we need to try to add something that Bazel can use.
+                        // This will be a folder with BUILD file that is responsible for building of the current source or package.
+                        if(pathToAdd != null) {
+                              addDirectory(builder, pathToAdd);
+                        }
+                        return true;
+                    });
+
+    if (edit == null) {
+      Messages.showErrorDialog(
+          "Could not modify project view. Check for errors in your project view and try again",
+          "Error");
+      return;
+    }
+    edit.apply();
+    List<? extends TargetExpression> targetsToSync = ImmutableList.of(TargetExpression.allFromPackageRecursive(pathToAdd));
+    BlazeSyncManager.getInstance(project)
+            .partialSync(targetsToSync, /* reason= */ "AddSourceToProjectHelper");
+    notifySuccess(project, pathToAdd, targetsToSync);
+  }
+
+  public static @Nullable WorkspacePath getPackagePath(Project project, WorkspacePath workspacePath) {
+    WorkspacePath addedPath = null;
+    WorkspaceRoot root = WorkspaceRoot.fromProject(project);
+    String candidateRootDirectory = workspacePath.asPath().getName(0).toFile().getName();
+    ImportRoots candidateImportRoot = ImportRoots.builder(root, Blaze.getBuildSystemName(project))
+            .add(DirectoryEntry
+                    .include(WorkspacePath.createIfValid(candidateRootDirectory)))
+            .build();
+    File buildFile = new BuildTargetFinder(project, root, candidateImportRoot)
+            .findBuildFileForFile(root.fileForPath(workspacePath));
+
+    if (workspacePath.asPath().getNameCount() > 0) {
+      if (buildFile != null) {
+        String buildFileParentRelativePath = root.path().relativize(buildFile.getParentFile().toPath()).toString();
+        addedPath= WorkspacePath.createIfValid(buildFileParentRelativePath);
+      }
+    }
+    return addedPath;
+  }
+
 
   private static void addDirectory(ProjectView.Builder builder, WorkspacePath dir) {
     ListSection<DirectoryEntry> section = builder.getLast(DirectorySection.KEY);

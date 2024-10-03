@@ -39,13 +39,10 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactWithoutDigest;
+import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
+import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
-import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -92,6 +89,9 @@ import com.google.idea.blaze.base.sync.sharding.ShardedBuildProgressTracker;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.artifact.ArtifactState;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
+import com.google.idea.blaze.common.artifact.OutputArtifactWithoutDigest;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -100,8 +100,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.NavigatableAdapter;
+import java.io.IOException;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -117,7 +123,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+
+import org.jetbrains.annotations.NotNull;
+
 
 /** Implementation of BlazeIdeInterface based on aspects. */
 public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
@@ -236,11 +246,13 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         RemoteArtifactPrefetcher.getInstance()
             .downloadArtifacts(
                 /* projectName= */ project.getName(),
-                /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(diff.getUpdatedOutputs()));
+                /* outputArtifacts= */ RemoteOutputArtifact.getRemoteArtifacts(
+                    diff.getUpdatedOutputs()));
     ListenableFuture<?> loadFilesInJvmFuture =
         RemoteArtifactPrefetcher.getInstance()
             .loadFilesInJvm(
-                /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(diff.getUpdatedOutputs()));
+                /* outputArtifacts= */ RemoteOutputArtifact.getRemoteArtifacts(
+                    diff.getUpdatedOutputs()));
 
     if (!FutureUtil.waitForFuture(
             context, Futures.allAsList(downloadArtifactsFuture, loadFilesInJvmFuture))
@@ -254,7 +266,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     ListenableFuture<?> fetchLocalFilesFuture =
         PrefetchService.getInstance()
             .prefetchFiles(
-                /* files= */ BlazeArtifact.getLocalFiles(diff.getUpdatedOutputs()),
+                /* files= */ LocalFileArtifact.getLocalFiles(diff.getUpdatedOutputs()),
                 /* refetchCachedFiles= */ true,
                 /* fetchFileTypes= */ false);
     if (!FutureUtil.waitForFuture(context, fetchLocalFilesFuture)
@@ -738,12 +750,12 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     boolean onlyDirectDeps =
         viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
 
+    Path targetPatternFile = prepareTargetPatternFile(project, targets);
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
-
-      BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.BUILD);
+      BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project);
       builder
           .setInvokeParallel(invokeParallel)
-          .addTargets(targets)
+          .addBlazeFlags(BlazeFlags.TARGET_PATTERN_FILE, targetPatternFile.toString())
           .addBlazeFlags(BlazeFlags.KEEP_GOING)
           .addBlazeFlags(buildResultHelper.getBuildFlags())
           .addBlazeFlags(additionalBlazeFlags);
@@ -760,7 +772,39 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       aspectStrategy.addAspectAndOutputGroups(
           builder, outputGroups, activeLanguages, onlyDirectDeps);
 
-      return invoker.getCommandRunner().run(project, builder, buildResultHelper, context);
+      return invoker.getCommandRunner().run(project, builder, buildResultHelper, context, ImmutableMap.of());
+    } finally {
+      if (!Registry.is("bazel.sync.keep.target.files")) {
+          try {
+              Files.deleteIfExists(targetPatternFile);
+          } catch (IOException e) {
+              logger.error("Failed to delete target pattern file", e);
+          }
+      }
     }
+  }
+
+  private static @NotNull Path prepareTargetPatternFile(Project project, List<? extends TargetExpression> targets) throws BuildException {
+    Path targetPatternFile = null;
+    try {
+      Path targetsDir = Paths.get(project.getBasePath()).resolve("targets");
+      Files.createDirectories(targetsDir);
+      targetPatternFile = Files.createTempFile(targetsDir, "targets-", "");
+      String targetsString =
+          targets.stream()
+              .map(t -> t.toString())
+              .collect(Collectors.joining(System.lineSeparator()));
+      Files.writeString(targetPatternFile, targetsString, StandardOpenOption.WRITE);
+    } catch (IOException e) {
+      if (targetPatternFile != null) {
+        try {
+          Files.deleteIfExists(targetPatternFile);
+        } catch (IOException ex) {
+          throw new BuildException("Couldn't delete file after creation failure", e);
+        }
+      }
+      throw new BuildException("Couldn't create target pattern file", e);
+    }
+    return targetPatternFile;
   }
 }

@@ -56,6 +56,7 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.filters.TextConsoleBuilderImpl;
 import com.intellij.execution.process.ProcessHandler;
@@ -70,6 +71,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -245,7 +247,7 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
       blazeCommand = BlazeCommandName.COVERAGE;
     }
     BlazeCommand.Builder command =
-        BlazeCommand.builder(binaryPath, blazeCommand)
+        BlazeCommand.builder(binaryPath, blazeCommand, project)
             .addTargets(configuration.getTargets())
             .addBlazeFlags(
                 BlazeFlags.blazeFlags(
@@ -257,6 +259,10 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
                         executorType, configuration.getType(), false)))
             .addBlazeFlags(blazeFlags)
             .addBlazeFlags(handlerState.getBlazeFlagsState().getFlagsForExternalProcesses());
+
+    if (blazeCommand.equals(BlazeCommandName.TEST)) {
+      command.addBlazeFlags(handlerState.getUserEnvVarsState().asBlazeTestEnvFlags());
+    }
 
     if (executorType == ExecutorType.DEBUG) {
       Kind kind = configuration.getTargetKind();
@@ -280,9 +286,16 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
   private ProcessHandler getScopedProcessHandler(
       Project project, ImmutableList<String> command, WorkspaceRoot workspaceRoot)
       throws ExecutionException {
+    GeneralCommandLine commandLine = new GeneralCommandLine(command);
+    EnvironmentVariablesData envVarState = getState(getConfiguration()).getUserEnvVarsState().getData();
+    commandLine.withEnvironment(envVarState.getEnvs());
+    commandLine.withParentEnvironmentType(
+            envVarState.isPassParentEnvs()
+                    ? GeneralCommandLine.ParentEnvironmentType.CONSOLE
+                    : GeneralCommandLine.ParentEnvironmentType.NONE);
     return new ScopedBlazeProcessHandler(
         project,
-        new GeneralCommandLine(command),
+        commandLine,
         workspaceRoot,
         new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
           @Override

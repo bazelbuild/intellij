@@ -1,3 +1,159 @@
+v2024.09.24
+===========
+Bug Fixes
+* Fix auto-import exception #6753
+* Fix unrecognized options by bazel mod command #6756
+* Set go DebugConfguration working directory for tests #6748
+Features
+* CLion add support for additional_compiler_inputs #6774
+* Added completion support for external targets from modules. Needs --incompatible_use_plus_in_repo_names set (defaults to true in bazel 8.0+) to work optimally. (credits: @mtoader)
+
+v2024.09.10
+===========
+Bug Fixes
+* Fix reading MatchedMatcher data in BlazePyTracebackParser #6693
+* Fix googletest integration with CLion 2024.2 #6741
+
+v2024.08.27
+===========
+Features
+* Added build folder action #6615
+* Invoke bazel build during sync using --target_pattern_fi… #6595
+Bug Fixes
+* fix: Exception when opening a JavaScript project #6645
+* go: fix testify single test execution #6634
+* fix: Resolve collision between view_project_root and "directories: ." #6665
+
+v2024.08.13
+===========
+## Features
+- Python: Implemented `imports` Attribute Handling
+  Improved support for Python imports in Bazel projects. [#6606]
+
+- Python: Transition Rules Handling
+  Added handling for Bazel rules involving transitions, such as pinned Python interpreter targets, enhancing project configuration. [#6605]
+
+- C++: Project Status API Integration
+  Integrated the Project Status API with Bazel for CLion, improving project sync and status reporting. [#6585]
+
+## Bug Fixes
+- Fixed an issue causing `NoClassDefFoundError: com/intellij/history/core/Paths` during project operations. [#6616]
+- Stopped printing `AswbDumpVfs` logs. [#6617]
+- Scala: Updated the plugin to correctly recognize `org_scala_lang_scala_library` as a valid Scala library name, improving Scala project support. [#6629]
+
+v2024.07.30
+===========
+Features:
+* feat: enable view_project_root by default in auto import mode #6596
+* CLion MSVC Support #6500
+Bug Fixes:
+* Fix wrong heuristic for when bazel uses a wrapper script #6592
+* use absolute directories paths while deriving targets #6544
+Performance Fixes:
+* Don't build unnecessary jars. #5515
+* fix: Adjust executor threads based on device core count #6588
+
+v2024.07.16
+===========
+Performance Fix
+* Fixes after sync freeze on MacOS  #6562
+* Improve performance when resolving the workspace root #6530
+Bug Fixes
+* fix: Resolve query failure when there is a large number of files in t… #6537
+* Propagate build errors to UI #6546
+
+v2024.07.02
+===========
+Performance fix:
+* Use a global bounded threadpool when using persistent workers #6508
+Bug fixes:
+* fix: Display "Coverage" tool window correctly after executing "run wi… #6502
+* Disable include hints (-ibazel) by default #6534
+* trusted project: respect intellij settings controlling project trustness #6521
+* clion: fix broken debug in 2024.2 #6538
+Internal changes:
+* CI build on Windows #6494
+
+v2024.06.18
+===========
+* fix: Missing directories when view_project_root is on #6493
+* fix: "Read access is allowed from inside read-action" exception when opening a file #6489
+* Add extension point to detect whether a module is to be orphaned or retained. #6467
+* Fix for wrong compiler executable when using custom toolchains #6419
+* fix(coverage): Account for SHA in lcov DA parsing #6463
+* fix: Mark saveAllFiles as a WriteAction #6459
+* fix: Rely on the bazel zipper instead of zip #6462
+
+v2024.06.04-RC-2
+================
+* Address CVE-2024-5899
+* feat: Support JetBrains IDEs 2024.2 #6434
+* feat: Editor notification on bazel files if the project is not imported #6153
+* perf: perf: Pass --override_repository flag to all commands for faster analysis phase #6453
+* fix: Default to project name to workspace name instead of root directory #6458
+
+v2024.06.04
+===========
+* feat: Support JetBrains IDEs 2024.2 #6434
+* feat: Editor notification on bazel files if the project is not imported #6153
+* perf: perf: Pass --override_repository flag to all commands for faster analysis phase #6453
+* fix: Default to project name to workspace name instead of root directory #6458
+
+v2024.05.21
+===========
+* Plugin aspect now depends on @rules_java. If this breaks you, please update your @rules_java version to 5.3.5 or later.
+* #6370 Add line numbers to sections and text-blocks #6371
+* Add 'View project root' flag #6422
+* Fixes: Test/Coverage throws exception NoClassDefFoundError in GoLand #2053
+
+v2024.05.07
+===========
+* Plugin aspect now depends on @rules_java. If this breaks you, please update your @rules_java version to 5.3.5 or later.
+* Internal cleanup
+
+v2024.04.23
+===========
+* Feature flags for resolve virtual includes using heuristics or clangd #6387
+* feat: create "Add package" EditorNotificationPanel if derive_targets_from_directories is on #6388
+
+v2024.04.09
+===========
+* Fix imports for go modules named "external" #6325
+* Fix: Ensure .projectview exclusion rules apply only to specified directories #6376
+* Fix: Silence false positive "No such target" errors for files in the project root #6377
+
+v2024.03.26
+===========
+* Fix "No such target" errors on incremental sync #6262
+* Reduced the logging level for the stack traces produced when resolving external artifacts. #6310
+* (rebase) Support embedded go_proto_library #6030
+* Improved error message for an unsupported workspace type #6257
+
+v2024.03.12
+===========
+* fix(plugin_dev): Alert users they need the DevKit plugin to work on the codebase #6198
+* Followup for Pass path associations as special compiler flags #6007
+* fix: Try to make the default projectview file a bit more user-friendly #6175
+* Added MODULE.bazel to isBazelWorkspace in AutoImportProjectOpenProcessor #6155
+* Added registry key to disable fission flag #6041
+
+v2024.02.27
+===========
+* perf: avoid scanning convenience symlink directories during initial import #6094
+* Added MODULE.bazel to valid workspace root files #6127
+* Use path to workspace root as pwd for buildifier #6158
+
+v2024.02.13
+===========
+* fix: deadlock when more than one project is open and bazel.sync.detec… #5978
+* Changes to BlazeTargetFilter regex to match more target names #6021
+* Fix _virtual_includes handling for absolute strip_include_prefix paths #5969
+
+v2024.01.30
+===========
+* feat: Allow environment variables in run configurations #5885
+* Support JetBrains IDEs 2024.1 #5960
+
 v2024.01.16
 ===========
 * Internal cleanup

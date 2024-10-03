@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.ui.problems;
 
+import com.google.idea.sdkcompat.general.NewErrorTreeViewPanelAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -23,11 +24,11 @@ import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.NavigatableMessageElement;
-import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -51,9 +52,10 @@ import java.awt.Component;
 import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
+import org.jetbrains.annotations.NotNull;
 
 /** A custom error tree view panel for Blaze invocation errors. */
-class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
+class BlazeProblemsViewPanel extends NewErrorTreeViewPanelAdapter {
 
   private static final DataKey<Navigatable> BLAZE_CONSOLE_NAVIGATABLE_DATA_KEY =
       DataKey.create("blaze.console.navigatable");
@@ -182,6 +184,11 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
     public void setSelected(AnActionEvent event, boolean flag) {
       configuration.setAutoscrollToConsole(flag);
     }
+
+    @Override
+    public ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private static class OpenInConsoleAction extends BaseNavigateToSourceAction {
@@ -207,7 +214,7 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
 
     ShowWarningsAction() {
       super(IdeBundle.message("action.show.warnings"), null, AllIcons.General.ShowWarning);
-      configuration = ErrorTreeViewConfiguration.getInstance(myProject);
+      configuration = ErrorTreeViewConfiguration.getInstance(getProject());
     }
 
     @Override
@@ -221,6 +228,11 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
         configuration.setHideWarnings(!showWarnings);
         reload();
       }
+    }
+
+    @Override
+    public ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

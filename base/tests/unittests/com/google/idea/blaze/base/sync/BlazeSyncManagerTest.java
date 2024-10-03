@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -73,7 +74,7 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
 
     doNothing().when(manager).requestProjectSync(any());
     projectServices.register(BlazeSyncManager.class, manager);
-    assertThat(BlazeSyncManager.getInstance(project)).isSameAs(manager);
+    assertThat(BlazeSyncManager.getInstance(project)).isSameInstanceAs(manager);
   }
 
   @Override
@@ -192,6 +193,7 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
         .setBlazeVersionData(BlazeVersionData.builder().build())
         .setWorkspacePathResolver(
             new WorkspacePathResolverImpl(WorkspaceRoot.fromProjectSafe(project)))
+        .setExternalWorkspaceData(ExternalWorkspaceData.EMPTY)
         .build();
   }
 

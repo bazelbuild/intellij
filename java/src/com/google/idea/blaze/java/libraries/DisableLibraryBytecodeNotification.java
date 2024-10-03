@@ -17,10 +17,10 @@ package com.google.idea.blaze.java.libraries;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.sdkcompat.general.EditorNotificationCompat;
 import com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.ui.EditorNotificationProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,7 +38,7 @@ final class DisableLibraryBytecodeNotification implements StartupActivity {
     if (!enabled.getValue() || !Blaze.isBlazeProject(project)) {
       return;
     }
-    EditorNotificationCompat.getEp(project)
+    EditorNotificationProvider.EP_NAME.getPoint(project)
         .unregisterExtension(LibrarySourceNotificationProvider.class);
   }
 }

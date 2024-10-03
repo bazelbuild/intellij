@@ -75,7 +75,10 @@ public class SnapshotSerializer {
   }
 
   private void visitVcsState(VcsState vcsState) {
-    SnapshotProto.VcsState.Builder vcsProto = proto.getVcsStateBuilder();
+    visitVcsState(vcsState, proto.getVcsStateBuilder());
+  }
+
+  public static void visitVcsState(VcsState vcsState, SnapshotProto.VcsState.Builder vcsProto) {
     vcsProto.setWorkspaceId(vcsState.workspaceId).setUpstreamRevision(vcsState.upstreamRevision);
     for (WorkspaceFileChange change : vcsState.workingSet) {
       vcsProto.addWorkingSet(

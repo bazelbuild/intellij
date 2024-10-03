@@ -18,8 +18,8 @@ package com.google.idea.blaze.base.qsync.cache;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
-import com.google.idea.blaze.base.filecache.ArtifactState;
+import com.google.idea.blaze.common.artifact.ArtifactState;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import javax.annotation.Nullable;

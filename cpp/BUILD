@@ -1,5 +1,6 @@
 load(
     "//:build-visibility.bzl",
+    "DEFAULT_TEST_VISIBILITY",
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 load(
@@ -15,8 +16,6 @@ load(
     "intellij_unit_test_suite",
 )
 load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
-
-licenses(["notice"])
 
 java_library(
     name = "cpp",
@@ -52,7 +51,7 @@ stamped_plugin_xml(
 
 optional_plugin_xml(
     name = "optional_cidr",
-    module = "com.intellij.modules.cidr.lang",
+    module = ["com.intellij.modules.cidr.lang"],
     plugin_xml = "src/META-INF/blaze-cpp-oclang.xml",
 )
 
@@ -115,6 +114,7 @@ intellij_unit_test_suite(
         default = [],
     ),
     test_package_root = "com.google.idea.blaze.cpp",
+    visibility = DEFAULT_TEST_VISIBILITY,
     # Needed to work around one-version issue
     runtime_deps = ["//intellij_platform_sdk:test_libs"],
     deps = [
@@ -126,6 +126,7 @@ intellij_unit_test_suite(
         "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "@maven//:org_mockito_mockito_core",
         "@com_google_guava_guava//jar",
         "@junit//jar",
     ] + select_for_ide(
@@ -185,6 +186,7 @@ intellij_integration_test_suite(
     ),
     required_plugins = "com.google.idea.bazel.cpp",
     test_package_root = "com.google.idea.blaze.cpp",
+    visibility = DEFAULT_TEST_VISIBILITY,
     runtime_deps = [
         ":cpp_integration_test_plugin",
     ],

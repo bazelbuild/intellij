@@ -2,6 +2,7 @@
 This module contains the rules that exposes a plugin api for android studio.
 """
 
+load("@rules_java//java:defs.bzl", "java_import", "java_library")
 load("//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
 
 def _glob(files, dir, extension, recursive = False, exclude = []):
@@ -103,7 +104,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
 
     # TODO: All these targets should be prefixed with ${name}, but for now keeping backwards compatibility.
     kotlin_jars = my_glob(files, "plugins/Kotlin/lib", ".jar")
-    native.java_import(
+    java_import(
         name = "kotlin",
         jars = kotlin_jars,
         tags = ["incomplete-deps"],
@@ -112,7 +113,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
     unpacked += kotlin_jars
 
     terminal_jars = ["android-studio/plugins/terminal/lib/terminal.jar"]
-    native.java_import(
+    java_import(
         name = "terminal",
         jars = terminal_jars,
         tags = ["incomplete-deps"],
@@ -121,7 +122,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
     unpacked += terminal_jars
 
     java_jars = my_glob(files, "plugins/java/lib", ".jar") + ["android-studio/plugins/java/lib/resources/jdkAnnotations.jar"]
-    native.java_import(
+    java_import(
         name = "java",
         jars = java_jars,
         tags = ["incomplete-deps"],
@@ -130,7 +131,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
     unpacked += java_jars
 
     platform_images_jars = my_glob(files, "plugins/platform-images/lib", ".jar")
-    native.java_import(
+    java_import(
         name = "platform_images",
         jars = platform_images_jars,
         tags = ["incomplete-deps"],
@@ -139,7 +140,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
     unpacked += platform_images_jars
 
     devkit_jars = my_glob(files, "plugins/devkit/lib", ".jar")
-    native.java_import(
+    java_import(
         name = "devkit",
         jars = devkit_jars,
         tags = ["incomplete-deps"],
@@ -148,7 +149,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
     unpacked += devkit_jars
 
     hg4idea_jars = my_glob(files, "plugins/vcs-hg/lib", ".jar")
-    native.java_import(
+    java_import(
         name = "hg4idea",
         jars = hg4idea_jars,
         tags = ["incomplete-deps"],
@@ -166,7 +167,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
         my_glob(files, "plugins/android-ndk/lib", ".jar") +
         my_glob(files, "plugins/sdk-updates/lib", ".jar")
     )
-    native.java_import(
+    java_import(
         name = "android",
         jars = android_jars,
         tags = ["incomplete-deps"],
@@ -193,7 +194,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
         my_glob(files, "plugins/webp/lib", ".jar")
     )
     bundled_plugins_data = my_glob(files, "plugins/design-tools/resources/layoutlib", "", recursive = True)
-    native.java_import(
+    java_import(
         name = "bundled_plugins",
         testonly = 1,
         data = bundled_plugins_data,
@@ -207,7 +208,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
     unpacked += bundled_plugins_jars + bundled_plugins_data
 
     test_recorder_jars = my_glob(files, "plugins/test-recorder/lib", ".jar")
-    native.java_import(
+    java_import(
         name = "test_recorder",
         jars = test_recorder_jars,
         tags = ["incomplete-deps"],
@@ -216,7 +217,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
     unpacked += test_recorder_jars
 
     coverage_jars = my_glob(files, "plugins/java-coverage/lib", ".jar")
-    native.java_import(
+    java_import(
         name = "coverage",
         jars = coverage_jars,
         tags = ["incomplete-deps"],
@@ -225,7 +226,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
     unpacked += coverage_jars
 
     junit_jars = my_glob(files, "plugins/junit/lib", ".jar")
-    native.java_import(
+    java_import(
         name = "junit",
         jars = junit_jars,
         tags = ["incomplete-deps"],
@@ -237,8 +238,9 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
         "lib/junit4.jar",  # Plugin code shouldn't need junit, and plugin tests may be driven by a different version.
         "lib/junit.jar",  # Exclude to avoid warnings: "Multiple versions of JUnit detected on classpath".
         "lib/testFramework.jar",
+        "lib/bouncy-castle.jar",
     ])  # b/183925215: mockito-extensions needs to be removed from these jars.
-    native.java_import(
+    java_import(
         name = "sdk_import",
         jars = sdk_import_jars,
         tags = [
@@ -262,8 +264,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
         cidr_plugins_jars += my_glob(files, "plugins/c-clangd-plugin/lib", ".jar")  # required for NDK debugging
     else:
         cidr_plugins_jars += my_glob(files, "plugins/c-clangd/lib", ".jar")  # required for NDK debugging
-
-    native.java_import(
+    java_import(
         name = "cidr_plugins",
         jars = cidr_plugins_jars,
         tags = ["incomplete-deps"],
@@ -275,7 +276,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
         guava_jars = ["android-studio/lib/lib.jar"]
     else:
         guava_jars = ["android-studio/lib/3rd-party-rt.jar"]
-    native.java_import(
+    java_import(
         name = "guava",
         jars = guava_jars,
         tags = ["incomplete-deps"],
@@ -283,7 +284,7 @@ def _android_studio(name, files, major, minor, revision, my_glob, **kwargs):
     )
     # unpacked += guava_jars # Already extracted in sdk_import
 
-    native.java_library(
+    java_library(
         name = "sdk",
         exports = [
             ":jars_without_mockito_extensions",

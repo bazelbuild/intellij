@@ -21,6 +21,7 @@ import static com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder.AllowPackag
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder.AllowPackagePrefixes;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.Library;
@@ -46,8 +47,7 @@ public class SrcJarProjectUpdater {
     this.resolver = resolver;
     // Require empty package prefixes for srcjar inner paths, since the ultimate consumer of these
     // paths does not support setting a package prefix (see `Library.ModifiableModel.addRoot`).
-    srcJarInnerPathFinder =
-        new SrcJarInnerPathFinder(new PackageStatementParser(), EMPTY_PACKAGE_PREFIXES_ONLY);
+    srcJarInnerPathFinder = new SrcJarInnerPathFinder(new PackageStatementParser());
   }
 
   private int findDepsLib(List<Library> libs) {
@@ -66,7 +66,8 @@ public class SrcJarProjectUpdater {
       return project;
     }
 
-    ImmutableList<ProjectPath> srcJars = resolveSrcJarInnerPaths(this.srcJars);
+    ImmutableList<ProjectPath> srcJars =
+        resolveSrcJarInnerPaths(this.srcJars, EMPTY_PACKAGE_PREFIXES_ONLY);
 
     ImmutableSet<ProjectPath> existingSrcjars =
         project.getLibrary(depLibPos).getSourcesList().stream()
@@ -101,11 +102,12 @@ public class SrcJarProjectUpdater {
    * <p>For each of {@code srcJars}, sets the {@link ProjectPath#innerJarPath()} to the java source
    * root within that jar file, if necessary.
    */
-  private ImmutableList<ProjectPath> resolveSrcJarInnerPaths(Collection<ProjectPath> srcJars) {
+  private ImmutableList<ProjectPath> resolveSrcJarInnerPaths(
+      Collection<ProjectPath> srcJars, AllowPackagePrefixes allowPackagePrefixes) {
     ImmutableList.Builder<ProjectPath> newSrcJars = ImmutableList.builder();
     for (ProjectPath srcJar : srcJars) {
       Path jarFile = resolver.resolve(srcJar);
-      srcJarInnerPathFinder.findInnerJarPaths(jarFile.toFile()).stream()
+      srcJarInnerPathFinder.findInnerJarPaths(jarFile.toFile(), allowPackagePrefixes).stream()
           .map(p -> p.path)
           .map(srcJar::withInnerJarPath)
           .forEach(newSrcJars::add);

@@ -63,7 +63,10 @@ public class FastBuildChangedFilesServiceTest extends BlazeIntegrationTestCase {
               "blaze-genfiles", BLAZE_EXECROOT + "/blaze-genfiles",
               "blaze-testlogs", BLAZE_TESTLOGS,
               "execution_root", BLAZE_EXECROOT,
-              "output_base", "/blaze/output-base"));
+              "output_base", "/blaze/output-base",
+              "output_path", "/blaze/output-base/output-path",
+              "java-home", "/tmp/java"
+          ));
 
   private FastBuildChangedFilesService changedFilesService;
   private ArtifactLocationDecoder artifactLocationDecoder;

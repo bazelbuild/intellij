@@ -8,6 +8,8 @@ java_library(
     srcs = glob(["*.java"]),
     deps = [
         ":cc_compilation_info_java_proto",
+        "//querysync/java/com/google/idea/blaze/qsync/artifacts",
+        "//querysync/java/com/google/idea/blaze/qsync/deps",
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//querysync/java/com/google/idea/blaze/qsync/project:language_class_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
@@ -23,6 +25,7 @@ proto_library(
     srcs = ["cc_compilation_info.proto"],
     visibility = [
         "//proto:__pkg__",
+        "//querysync/java/com/google/idea/blaze/qsync/deps:__pkg__",
     ],
 )
 

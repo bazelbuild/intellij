@@ -33,7 +33,7 @@ java_library(
 
 optional_plugin_xml(
     name = "optional_xml",
-    module = "org.intellij.scala",
+    module = ["org.intellij.scala"],
     plugin_xml = "src/META-INF/scala-contents.xml",
 )
 
@@ -103,5 +103,6 @@ intellij_integration_test_suite(
         "//third_party/scala:scala_for_tests",
         "@com_google_guava_guava//jar",
         "@junit//jar",
+        "@org_opentest4j_opentest4j//jar",
     ],
 )

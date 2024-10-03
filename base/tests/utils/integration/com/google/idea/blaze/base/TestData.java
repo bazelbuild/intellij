@@ -25,13 +25,16 @@ public class TestData extends ExternalResource {
   private Runfiles runfiles;
   public Path root;
 
+  private static final String WORKSPACE_NAME = "_main";
+
   @Override
   protected void before() throws IOException {
     runfiles = Runfiles.preload().unmapped();
     root =
         Path.of(
             runfiles.rlocation(
-                "google3/base/tests/utils/testdata/java"));
+                WORKSPACE_NAME
+                    + "/base/tests/utils/testdata/java"));
   }
 
   public String get(String path) {

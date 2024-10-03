@@ -98,6 +98,10 @@
     <android.ApkBuildStepProvider implementation="com.google.idea.blaze.android.run.BazelApkBuildStepProvider" />
   </extensions>
 
+  <extensions defaultExtensionNs="com.google.idea.blaze.cpp">
+    <CppSupportChecker implementation="com.google.idea.blaze.android.cppimpl.NdkCppSupportChecker" />
+  </extensions>
+
   <extensions defaultExtensionNs="com.android.ide">
     <sdkEventListener implementation="com.google.idea.blaze.android.sdk.AndroidSdkListener"/>
   </extensions>
@@ -117,6 +121,10 @@
 
   <extensions defaultExtensionNs="com.android.tools.idea.run.editor">
     <androidDebuggerInfoProvider implementation="com.google.idea.blaze.android.run.BlazeCommandAndroidDebuggerInfoProvider" />
+  </extensions>
+
+  <extensions defaultExtensionNs="com.google.idea.blaze.base.qsync">
+    <ProjectProtoTransformProvider implementation="com.google.idea.blaze.android.qsync.AndroidProjectProtoTransform$Provider" />
   </extensions>
 
 </idea-plugin>

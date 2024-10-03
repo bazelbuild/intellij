@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.wizard2.ui;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.project.ExtendableBazelProjectCreator;
 import com.google.idea.blaze.base.wizard2.BlazeNewProjectBuilder;
 import com.google.idea.blaze.base.wizard2.BlazeProjectCommitException;
 import com.google.idea.blaze.base.wizard2.BlazeSelectWorkspaceOption;
@@ -25,6 +26,7 @@ import com.google.idea.blaze.base.wizard2.BlazeWizardUserSettings;
 import com.google.idea.blaze.base.wizard2.TopLevelSelectWorkspaceOption;
 import com.google.idea.blaze.base.wizard2.WorkspaceTypeList;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.options.CancelledConfigurationException;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.ui.IdeBorderFactory.PlainSmallWithoutIndent;
 import com.intellij.ui.components.JBScrollPane;
@@ -152,6 +154,11 @@ public class BlazeSelectWorkspaceControl {
   }
 
   public void validateAndUpdateBuilder() throws ConfigurationException {
+    if (!ExtendableBazelProjectCreator.getInstance()
+        .canCreateProject(getSelectedOption().getWorkspaceData().buildSystem())) {
+      throw new CancelledConfigurationException();
+    }
+
     getSelectedOption().validateAndUpdateBuilder(builder);
   }
 

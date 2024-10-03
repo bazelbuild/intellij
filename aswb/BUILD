@@ -7,6 +7,7 @@ load(
     "ASWB_PACKAGES_VISIBILITY",
     "ASWB_PLUGIN_PACKAGES_VISIBILITY",
     "ASWB_SUBPACKAGES_VISIBILITY",
+    "DEFAULT_TEST_VISIBILITY",
     "TEST_ASWB_SUBPACKAGES_VISIBILITY",
 )
 load("//:version.bzl", "VERSION")
@@ -34,11 +35,9 @@ load(
     "select_for_plugin_api",
 )
 
-licenses(["notice"])
-
 optional_plugin_xml(
     name = "optional_ndk_xml",
-    module = "com.android.tools.ndk",
+    module = ["com.android.tools.ndk"],
     plugin_xml = "src/META-INF/ndk_contents.xml",
 )
 
@@ -77,7 +76,7 @@ java_library(
             "tests/utils/sdkcompat/as232/com/android/ide/common/repository/GoogleMavenArtifactIdCompat.java",
         ],
     }),
-    visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
+    visibility = combine_visibilities(TEST_ASWB_SUBPACKAGES_VISIBILITY, DEFAULT_TEST_VISIBILITY),
     deps = [
         ":aswb_lib",
         "//base",
@@ -122,6 +121,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api_for_tests",  # unuseddeps: keep
         "//intellij_platform_sdk:test_libs",
         "//java",
+        "//shared:artifact",
         "//testing:lib",
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
@@ -152,6 +152,7 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
+        "//cpp",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:kotlin",
         "//intellij_platform_sdk:plugin_api",
@@ -159,6 +160,7 @@ java_library(
         "//proto:proto_deps",
         "//querysync",
         "//shared",
+        "//shared:artifact",
         "//third_party/auto_value",
         "@gson//jar",
     ],
@@ -177,6 +179,7 @@ intellij_unit_test_suite(
         "android-studio-2023.2": glob(["tests/unittests/sdkcompat/as232/**/*.java"]),
     }),
     test_package_root = "com.google.idea.blaze.android",
+    visibility = DEFAULT_TEST_VISIBILITY,
     deps = [
         ":aswb_lib",
         ":unit_test_utils",
@@ -190,6 +193,7 @@ intellij_unit_test_suite(
         "//java",
         "//proto:proto_deps",
         "//shared",
+        "//shared:artifact",
         "//testing:lib",
         "@com_google_guava_guava//jar",
         "@junit//jar",
@@ -202,6 +206,7 @@ test_suite(
         #b/139825934 ":NdkDependenciesTest",
         ":normal_integration_tests",
     ],
+    visibility = DEFAULT_TEST_VISIBILITY,
 )
 
 intellij_integration_test_suite(
@@ -221,7 +226,6 @@ intellij_integration_test_suite(
         "default": [],
     }),
     additional_class_rules = select_for_plugin_api({
-        "android-studio-2022.2": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "android-studio-2022.3": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "android-studio-2023.1": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "android-studio-2023.2": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
@@ -254,6 +258,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//proto:proto_deps",
+        "//shared:artifact",
         "@com_google_guava_guava//jar",
         "@gson//jar",
         "@junit//jar",
@@ -296,7 +301,9 @@ intellij_plugin(
         "//java:plugin_library",
         "//kotlin:plugin_library",
         "//plugin_dev:plugin_library",
+        # BEGIN-EXTERNAL
         "//python:plugin_library",
+        # END-EXTERNAL
         "//skylark:plugin_library",
         "//terminal:plugin_library",
     ],
@@ -314,6 +321,7 @@ repackaged_files(
     prefix = "aswb/aspect",
     strip_prefix = "/aspect",
     visibility = ASWB_PACKAGES_VISIBILITY,
+    java_copts = ["-source", "8", "-target", "8"],
 )
 
 repackaged_files(
@@ -321,6 +329,7 @@ repackaged_files(
     srcs = ["//java:fast_build_javac"],
     prefix = "aswb/lib",
     visibility = ASWB_PACKAGES_VISIBILITY,
+    java_copts = ["-source", "8", "-target", "8"],
 )
 
 intellij_plugin_debug_target(

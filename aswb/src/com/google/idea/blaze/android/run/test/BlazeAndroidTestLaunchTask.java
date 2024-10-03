@@ -157,7 +157,8 @@ public class BlazeAndroidTestLaunchTask implements BlazeLaunchTask {
                                   Blaze.getBuildSystemProvider(project)
                                       .getBuildSystem()
                                       .getBuildInvoker(project, context),
-                                  BlazeCommandName.TEST)
+                                  BlazeCommandName.TEST,
+                                  project)
                               .addTargets(target);
                       // Build flags must match BlazeBeforeRunTask.
                       commandBuilder.addBlazeFlags(buildFlags);

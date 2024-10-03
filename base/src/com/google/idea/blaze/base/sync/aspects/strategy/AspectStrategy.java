@@ -25,9 +25,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.command.BlazeCommand;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.protobuf.TextFormat;
 import java.io.IOException;
@@ -36,6 +36,7 @@ import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Predicate;
@@ -88,7 +89,9 @@ public abstract class AspectStrategy {
 
   public abstract String getName();
 
-  protected abstract List<String> getAspectFlags();
+  protected abstract Optional<String> getAspectFlag();
+
+  protected abstract Boolean supportsAspectsParameters();
 
   /**
    * Add the aspect to the build and request the given {@code OutputGroup}s. This method should only
@@ -107,7 +110,7 @@ public abstract class AspectStrategy {
             .flatMap(g -> getOutputGroups(g, activeLanguages, directDepsOnly).stream())
             .collect(toImmutableList());
     builder
-        .addBlazeFlags(getAspectFlags())
+        .addBlazeFlags(getAspectFlag().map(List::of).orElse(List.of()))
         .addBlazeFlags("--output_groups=" + Joiner.on(',').join(groups));
   }
 

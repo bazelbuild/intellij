@@ -16,7 +16,6 @@
 package com.google.idea.blaze.qsync;
 
 import com.google.idea.blaze.common.vcs.VcsState;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
@@ -34,12 +33,15 @@ public class NoopProjectRefresh implements RefreshOperation {
 
   private final Supplier<BlazeProjectSnapshot> latestProjectSnapshotSupplier;
   private final Optional<VcsState> currentVcsState;
+  private final Optional<String> bazelVersion;
 
   public NoopProjectRefresh(
       Supplier<BlazeProjectSnapshot> latestProjectSnapshotSupplier,
-      Optional<VcsState> currentVcsState) {
+      Optional<VcsState> currentVcsState,
+      Optional<String> bazelVersion) {
     this.latestProjectSnapshotSupplier = latestProjectSnapshotSupplier;
     this.currentVcsState = currentVcsState;
+    this.bazelVersion = bazelVersion;
   }
 
   @Override
@@ -51,6 +53,7 @@ public class NoopProjectRefresh implements RefreshOperation {
   public PostQuerySyncData createPostQuerySyncData(QuerySummary output) {
     return latestProjectSnapshotSupplier.get().queryData().toBuilder()
         .setVcsState(currentVcsState)
+        .setBazelVersion(bazelVersion)
         .build();
   }
 }

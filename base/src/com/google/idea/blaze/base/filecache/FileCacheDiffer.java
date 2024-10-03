@@ -18,11 +18,12 @@ package com.google.idea.blaze.base.filecache;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
+import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.io.ModifiedTimeScanner;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.google.idea.blaze.common.artifact.ArtifactState;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Map;

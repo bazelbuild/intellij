@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.collect.MoreCollectors.onlyElement;
@@ -49,34 +48,37 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.ArtifactTrackerState;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.CachedArtifacts;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStats;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.qsync.AppInspectorArtifactTracker;
 import com.google.idea.blaze.base.qsync.AppInspectorInfo;
-import com.google.idea.blaze.base.qsync.ArtifactTracker;
-import com.google.idea.blaze.base.qsync.ArtifactTrackerUpdateResult;
-import com.google.idea.blaze.base.qsync.OutputGroup;
-import com.google.idea.blaze.base.qsync.OutputInfo;
+import com.google.idea.blaze.base.qsync.FileRefresher;
 import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.RenderJarArtifactTracker;
 import com.google.idea.blaze.base.qsync.RenderJarInfo;
-import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher.ArtifactDestination;
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestination;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestinationAndLayout;
+import com.google.idea.blaze.base.qsync.cc.CcProjectProtoTransform;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.DownloadTrackingScope;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.artifact.ArtifactFetcher;
+import com.google.idea.blaze.common.artifact.ArtifactFetcher.ArtifactDestination;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
+import com.google.idea.blaze.common.proto.ProtoStringInterner;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.TestSourceGlobMatcher;
+import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
 import com.google.idea.blaze.qsync.cc.CcDependenciesInfo;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
+import com.google.idea.blaze.qsync.deps.JavaArtifactInfo;
+import com.google.idea.blaze.qsync.deps.OutputGroup;
+import com.google.idea.blaze.qsync.deps.OutputInfo;
 import com.google.idea.blaze.qsync.java.AndroidResPackagesProjectUpdater;
 import com.google.idea.blaze.qsync.java.GeneratedSourceProjectUpdater;
 import com.google.idea.blaze.qsync.java.GeneratedSourceProjectUpdater.GeneratedSourceJar;
-import com.google.idea.blaze.qsync.java.JavaArtifactInfo;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaTargetArtifacts;
 import com.google.idea.blaze.qsync.java.SrcJarProjectUpdater;
@@ -85,7 +87,8 @@ import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
-import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.blaze.qsync.project.ProjectProtoTransform;
+import com.google.idea.blaze.qsync.project.TestSourceGlobMatcher;
 import com.google.protobuf.ExtensionRegistry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -120,43 +123,9 @@ import java.util.zip.GZIPOutputStream;
  * <p>This class maps all the targets that have been built to their artifacts.
  */
 public class ArtifactTrackerImpl
-    implements ArtifactTracker, RenderJarArtifactTracker, AppInspectorArtifactTracker {
-
-  private static final BoolExperiment ATTACH_DEP_SRCJARS =
-      new BoolExperiment("querysync.attach.dep.srcjars", true);
-
-  /**
-   * Adds source folders for extracted generated source archives.
-   *
-   * <p>Previously, source jars were extracted and placed in dedicated subdirectories of the
-   * generated sources director.
-   *
-   * <p>E.g.:
-   *
-   * <pre>
-   *   generated/
-   *     classes.srcjar/
-   *       com/
-   *         example/
-   *           Class.java
-   *     more_classes.srcjar/
-   *       com/
-   *         ...
-   * </pre>
-   *
-   * <p>Now, sources jars are all placed in the java_srcjars directory without extraction E.g.:
-   *
-   * <pre>
-   *   generated/
-   *     java_srcjars/
-   *       classes.srcjar
-   *       more_classes.srcjar
-   * </pre>
-   *
-   * <p>This experiment can be removed when projects have updated to the new model (b/311661541)
-   */
-  private static final BoolExperiment LEGACY_EXTRACTED_SRCJAR_FOLDERS =
-      new BoolExperiment("querysync.legacy.srcjar.folders", true);
+    implements ArtifactTracker<BlazeContext>,
+        RenderJarArtifactTracker,
+        AppInspectorArtifactTracker {
 
   public static final String DIGESTS_DIRECTORY_NAME = ".digests";
   public static final int STORAGE_VERSION = 3;
@@ -173,6 +142,8 @@ public class ArtifactTrackerImpl
   private final ArtifactFetcher<OutputArtifact> artifactFetcher;
   private final ProjectPath.Resolver projectPathResolver;
   private final ProjectDefinition projectDefinition;
+  private final FileRefresher fileRefresher;
+
   @VisibleForTesting public final CacheDirectoryManager cacheDirectoryManager;
   private final Path jarCacheDirectory;
   private final FileCache jarCache;
@@ -196,11 +167,14 @@ public class ArtifactTrackerImpl
       Path ideProjectBasePath,
       ArtifactFetcher<OutputArtifact> artifactFetcher,
       ProjectPath.Resolver projectPathResolver,
-      ProjectDefinition projectDefinition) {
+      ProjectDefinition projectDefinition,
+      ProjectProtoTransform.Registry transformRegistry,
+      FileRefresher fileRefresher) {
     this.ideProjectBasePath = ideProjectBasePath;
     this.artifactFetcher = artifactFetcher;
     this.projectPathResolver = projectPathResolver;
     this.projectDefinition = projectDefinition;
+    this.fileRefresher = fileRefresher;
 
     FileCacheCreator fileCacheCreator = new FileCacheCreator();
     jarCacheDirectory = projectDirectory.resolve(LIBRARY_DIRECTORY);
@@ -243,6 +217,8 @@ public class ArtifactTrackerImpl
             projectDirectory.resolve(DIGESTS_DIRECTORY_NAME),
             fileCacheCreator.getCacheDirectories());
     persistentFile = projectDirectory.resolve("artifact_tracker_state");
+    transformRegistry.add(this::updateProjectProto);
+    transformRegistry.add(new CcProjectProtoTransform(this::getCcDependenciesInfo));
   }
 
   private static class FileCacheCreator {
@@ -298,7 +274,8 @@ public class ArtifactTrackerImpl
     cachePathToArtifactKeyMap.clear();
     try (InputStream stream = new GZIPInputStream(Files.newInputStream(persistentFile))) {
       ArtifactTrackerState saved =
-          ArtifactTrackerState.parseFrom(stream, ExtensionRegistry.getEmptyRegistry());
+          ProtoStringInterner.intern(
+              ArtifactTrackerState.parseFrom(stream, ExtensionRegistry.getEmptyRegistry()));
       if (saved.getVersion() != STORAGE_VERSION) {
         return;
       }
@@ -307,10 +284,11 @@ public class ArtifactTrackerImpl
               .collect(toImmutableMap(e -> Path.of(e.getKey()), e -> Path.of(e.getValue()))));
       javaArtifacts.putAll(
           saved.getArtifactInfo().getArtifactsList().stream()
-              .map(JavaArtifactInfo::create)
+              .map(p -> JavaArtifactInfo.create(p, BuildArtifact.NO_DIGESTS))
               .collect(toImmutableMap(JavaArtifactInfo::label, Function.identity())));
       for (JavaTargetArtifacts targetArtifact : saved.getArtifactInfo().getArtifactsList()) {
-        JavaArtifactInfo javaArtifactInfo = JavaArtifactInfo.create(targetArtifact);
+        JavaArtifactInfo javaArtifactInfo =
+            JavaArtifactInfo.create(targetArtifact, BuildArtifact.NO_DIGESTS);
         javaArtifacts.put(javaArtifactInfo.label(), javaArtifactInfo);
       }
       ccDepencenciesInfo = CcDependenciesInfo.create(saved.getCcCompilationInfo());
@@ -403,7 +381,7 @@ public class ArtifactTrackerImpl
                 },
                 String.format("Store %d artifact digests", artifactToDestinationPathMap.size()),
                 Duration.ofSeconds(1)),
-        ArtifactFetcher.EXECUTOR);
+        ArtifactFetchers.EXECUTOR);
   }
 
   /**
@@ -447,7 +425,7 @@ public class ArtifactTrackerImpl
 
   /** Fetches, caches and sets up new render jar artifacts. */
   @Override
-  public ArtifactTrackerUpdateResult update(
+  public ImmutableSet<Path> update(
       Set<Label> targets, RenderJarInfo renderJarInfo, BlazeContext outerContext)
       throws BuildException {
     ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap;
@@ -459,7 +437,7 @@ public class ArtifactTrackerImpl
     try (BlazeContext context = BlazeContext.create(outerContext)) {
       ImmutableMap<Path, Path> updated = cache(context, artifactMap);
       saveState();
-      return ArtifactTrackerUpdateResult.create(updated.keySet(), ImmutableSet.of());
+      return updated.keySet();
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
     }
@@ -492,8 +470,8 @@ public class ArtifactTrackerImpl
 
   /** Fetches, caches and sets up new artifacts. */
   @Override
-  public ArtifactTrackerUpdateResult update(
-      Set<Label> targets, OutputInfo outputInfo, BlazeContext outerContext) throws BuildException {
+  public void update(Set<Label> targets, OutputInfo outputInfo, BlazeContext outerContext)
+      throws BuildException {
     ImmutableMap<OutputArtifact, OutputArtifactDestinationAndLayout> artifactMap;
     try {
       artifactMap = outputInfoToArtifactMap(outputInfo);
@@ -512,7 +490,9 @@ public class ArtifactTrackerImpl
       ccDepencenciesInfo = ccDepsBuilder.build();
 
       saveState();
-      return ArtifactTrackerUpdateResult.create(updated.keySet(), ImmutableSet.of());
+
+      fileRefresher.refreshFiles(context, updated.keySet());
+
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
     }
@@ -637,7 +617,8 @@ public class ArtifactTrackerImpl
    */
   private void updateMaps(Set<Label> targets, JavaArtifacts newArtifacts) {
     for (JavaTargetArtifacts targetArtifacts : newArtifacts.getArtifactsList()) {
-      JavaArtifactInfo javaArtifactInfo = JavaArtifactInfo.create(targetArtifacts);
+      JavaArtifactInfo javaArtifactInfo =
+          JavaArtifactInfo.create(targetArtifacts, BuildArtifact.NO_DIGESTS);
       javaArtifacts.put(javaArtifactInfo.label(), javaArtifactInfo);
     }
     for (Label label : targets) {
@@ -656,7 +637,12 @@ public class ArtifactTrackerImpl
     return JAR_ZIP_EXTENSIONS.contains(FileUtilRt.getExtension(p.toString()));
   }
 
-  @Override
+  /**
+   * Makes the project snapshot reflect the current state of tracked artifacts.
+   *
+   * <p>When additional artifacts are brought into the IDE they may require additional configuration
+   * to be applied to the IDE project.
+   */
   public ProjectProto.Project updateProjectProto(
       ProjectProto.Project projectProto, BuildGraphData graph, Context<?> context)
       throws BuildException {
@@ -677,31 +663,23 @@ public class ArtifactTrackerImpl
       generatedJavaSrcRoots.add(javaSrcRoot);
     }
 
-    if (LEGACY_EXTRACTED_SRCJAR_FOLDERS.getValue()) {
-      int previousSize = generatedJavaSrcRoots.size();
-      generatedJavaSrcRoots.addAll(getGenSrcSubfolders());
-      if (generatedJavaSrcRoots.size() > previousSize) {
-        logger.info("Adding source folder for extracted srcjar");
-      }
-    }
-
     TestSourceGlobMatcher testSourceMatcher = TestSourceGlobMatcher.create(projectDefinition);
     ImmutableSet.Builder<GeneratedSourceJar> generatedProjectSrcJars = ImmutableSet.builder();
     for (JavaArtifactInfo ai : javaArtifacts.values()) {
       if (!projectDefinition.isIncluded(ai.label())) {
         continue;
       }
-      for (Path blazeOutRelativePath : ai.genSrcs()) {
+      for (BuildArtifact artifact : ai.genSrcs()) {
         // TODO(mathewi) depending on `JAVA_ARCHIVE_EXTENSIONS` here exposes a design problem, we
         //  shouldn't have to depend on such implementation details. Figure out a better design
         //  for the dance between this class and the cache.
         if (!JavaSourcesArchiveCacheLayout.JAVA_ARCHIVE_EXTENSIONS.contains(
-            FileUtilRt.getExtension(blazeOutRelativePath.toString()))) {
+            artifact.getExtension())) {
           continue;
         }
-        Optional<Path> artifactPath = generatedSrcFileCache.getCacheFile(blazeOutRelativePath);
+        Optional<Path> artifactPath = generatedSrcFileCache.getCacheFile(artifact.path());
         if (artifactPath.isEmpty()) {
-          logger.warn("No cached artifact found for source jar " + blazeOutRelativePath);
+          logger.warn("No cached artifact found for source jar " + artifact.path());
           continue;
         }
         generatedProjectSrcJars.add(
@@ -732,6 +710,7 @@ public class ArtifactTrackerImpl
             .filter(not(ai -> projectDefinition.isIncluded(ai.label())))
             .map(JavaArtifactInfo::genSrcs)
             .flatMap(List::stream)
+            .map(BuildArtifact::path)
             .filter(ArtifactTrackerImpl::hasJarOrZipExtension)
             .map(generatedExternalSrcFileCache::getCacheFile)
             .filter(Optional::isPresent)
@@ -740,7 +719,7 @@ public class ArtifactTrackerImpl
             .map(ProjectPath::projectRelative)
             .collect(ImmutableSet.toImmutableSet());
 
-    if (ATTACH_DEP_SRCJARS.getValue()) {
+    if (QuerySync.ATTACH_DEP_SRCJARS.getValue()) {
       SrcJarProjectUpdater srcJarUpdater =
           new SrcJarProjectUpdater(
               projectProto,
@@ -760,25 +739,9 @@ public class ArtifactTrackerImpl
     return projectProto;
   }
 
-  /**
-   * Returns all subfolders in the generated source directory, except "java_srcjars". Only used for
-   * legacy layouts {@link ArtifactTrackerImpl#LEGACY_EXTRACTED_SRCJAR_FOLDERS}.
-   */
-  private ImmutableList<ProjectPath> getGenSrcSubfolders() throws BuildException {
-    try (Stream<Path> pathStream = Files.list(generatedSrcFileCacheDirectory)) {
-      return pathStream
-          .filter(
-              p ->
-                  p.toFile().isDirectory()
-                      && !p.getFileName()
-                          .toString()
-                          .equals(JavaSourcesArchiveCacheLayout.ROOT_DIRECTORY_NAME))
-          .map(ideProjectBasePath::relativize)
-          .map(ProjectPath::projectRelative)
-          .collect(toImmutableList());
-    } catch (IOException e) {
-      throw new BuildException(e);
-    }
+  @Override
+  public ArtifactTracker.State getStateSnapshot() {
+    return State.EMPTY;
   }
 
   @Override
@@ -791,7 +754,10 @@ public class ArtifactTrackerImpl
     return aarCacheDirectory;
   }
 
-  @Override
+  /**
+   * Returns the CC target info from the cache. This is the compilation info created by the aspect
+   * when dependencies are build for a CC targets.
+   */
   public CcDependenciesInfo getCcDependenciesInfo() {
     return ccDepencenciesInfo;
   }

@@ -39,6 +39,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -79,18 +80,7 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
       module = moduleModel.newModule(imlFile.getPath(), moduleType.getId());
       module.setOption(EXTERNAL_SYSTEM_ID_KEY, EXTERNAL_SYSTEM_ID_VALUE);
     }
-    // setOption(..) can be slow on existing modules when the new project model is used. From
-    // 2021.2.1 on, setOption(..) will first check whether the option already has the passed value
-    // before continuing with the remaining operations
-    // (see https://youtrack.jetbrains.com/issue/IDEA-274168#focus=Comments-27-5086318.0-0). Until
-    // then, we explicitly do the check ourselves. This should help to avoid the slowness as most of
-    // the existing modules should already be configured to have the right type.
-    // #api211 Verify that 2021.2 contains the necessary fix. If so, remove the additional check.
-    String currentTypeId = module.getOptionValue(Module.ELEMENT_TYPE);
-    if (!moduleType.getId().equals(currentTypeId)) {
-      module.setOption(Module.ELEMENT_TYPE, moduleType.getId());
-    }
-
+    module.setOption(Module.ELEMENT_TYPE, moduleType.getId());
     ModifiableRootModel modifiableModel = modelsProvider.getModifiableRootModel(module);
     modules.put(module.getName(), modifiableModel);
     modifiableModel.clear();
@@ -118,8 +108,9 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
   public void commitWithGc(BlazeContext context) {
     List<Module> orphanModules = Lists.newArrayList();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (!modules.containsKey(module.getName())) {
-        orphanModules.add(module);
+      if (!modules.containsKey(module.getName())
+              && !ExternalModuleProvider.EP_NAME.getExtensionList().stream().anyMatch(n -> n.isOwnedByExternalPlugin(module))) {
+          orphanModules.add(module);
       }
     }
     if (orphanModules.size() > 0) {

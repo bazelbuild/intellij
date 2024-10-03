@@ -37,6 +37,7 @@ filegroup(
         "intellij_info_bundled.bzl",
         "intellij_info_impl_bundled.bzl",
         "java_classpath.bzl",
+        "java_info.bzl",
         "make_variables.bzl",
         ":BUILD.bazel",
         "//aspect/tools:CreateAar",
@@ -81,7 +82,8 @@ genrule(
     srcs = ["intellij_info_impl.bzl"],
     outs = ["intellij_info_impl_bundled.bzl"],
     cmd = "cat $(SRCS) >$@ && " +
-          "sed -i -e '/BUNDLED-IGNORE-BEGIN/,/BUNDLED-IGNORE-END/d' $@",
+          "sed -i -e '/BUNDLED-IGNORE-BEGIN/,/BUNDLED-IGNORE-END/d' $@ && " +
+          "sed -i -e 's,load(\".*/rules_java/,load(\"@rules_java//', $@",
 )
 
 # Makes bundled fast_build_info.bzl use bundled intellij_info_impl.bzl
@@ -91,6 +93,13 @@ genrule(
     outs = ["fast_build_info_bundled.bzl"],
     cmd = "cat $(SRCS) >$@ && " +
           "sed -i -e 's,:intellij_info_impl.bzl,:intellij_info_impl_bundled.bzl,g' $@",
+)
+
+genrule(
+    name = "create_workspace_file",
+    outs = ["WORKSPACE"],
+    srcs = [],
+    cmd = r"""echo 'workspace(name = "intellij_aspect")' > $@"""
 )
 
 define_flag_hack()

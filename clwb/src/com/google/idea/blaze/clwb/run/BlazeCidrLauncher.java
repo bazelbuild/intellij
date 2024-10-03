@@ -46,6 +46,7 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.google.idea.blaze.cpp.CppBlazeRules;
+import com.google.idea.sdkcompat.clion.CidrDebugProcessCreator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.CommandLineState;
@@ -58,16 +59,17 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.xdebugger.XDebugSession;
-import com.jetbrains.cidr.cpp.toolchains.CPPDebugger.Kind;
 import com.jetbrains.cidr.execution.CidrConsoleBuilder;
 import com.jetbrains.cidr.execution.CidrLauncher;
 import com.jetbrains.cidr.execution.TrivialInstaller;
 import com.jetbrains.cidr.execution.TrivialRunParameters;
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
 import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess;
+import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemoteDebugParameters;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemotePathMapping;
 import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestConsoleProperties;
@@ -134,32 +136,35 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         Preconditions.checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet());
 
     if (shouldDisplayBazelTestFilterWarning()) {
-      String messageContents =
-          "<html>The Google Test framework did not apply test filtering correctly before "
-              + "git commit <a href='https://github.com/google/googletest/commit/"
-              + "ba96d0b1161f540656efdaed035b3c062b60e006"
-              + "'>ba96d0b<a>.<br/>"
-              + "Please ensure you are past this commit if you are using it.<br/><br/>"
-              + "More information on the bazel <a href='https://github.com/bazelbuild/bazel/issues/"
-              + "4411'>issue</a></html>";
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        String messageContents =
+                "<html>The Google Test framework did not apply test filtering correctly before "
+                        + "git commit <a href='https://github.com/google/googletest/commit/"
+                        + "ba96d0b1161f540656efdaed035b3c062b60e006"
+                        + "'>ba96d0b<a>.<br/>"
+                        + "Please ensure you are past this commit if you are using it.<br/><br/>"
+                        + "More information on the bazel <a href='https://github.com/bazelbuild/bazel/issues/"
+                        + "4411'>issue</a></html>";
 
-      int selectedOption =
-          Messages.showDialog(
-              getProject(),
-              messageContents,
-              "Please update 'Google Test' past ba96d0b...",
-              new String[] {"Close", "Don't show again"},
-              0, // Default to "Close"
-              Messages.getWarningIcon());
-      if (selectedOption == 1) {
-        PropertiesComponent.getInstance().setValue(DISABLE_BAZEL_GOOGLETEST_FILTER_WARNING, "true");
-      }
+        int selectedOption =
+                Messages.showDialog(
+                        getProject(),
+                        messageContents,
+                        "Please update 'Google Test' past ba96d0b...",
+                        new String[] {"Close", "Don't show again"},
+                        0, // Default to "Close"
+                        Messages.getWarningIcon());
+        if (selectedOption == 1) {
+          PropertiesComponent.getInstance().setValue(DISABLE_BAZEL_GOOGLETEST_FILTER_WARNING, "true");
+        }
+      });
     }
 
     BlazeCommand.Builder commandBuilder =
         BlazeCommand.builder(
                 Blaze.getBuildSystemProvider(project).getBinaryPath(project),
-                handlerState.getCommandState().getCommand())
+                handlerState.getCommandState().getCommand(),
+                project)
             .addTargets(configuration.getTargets())
             .addBlazeFlags(extraBlazeFlags)
             .addBlazeFlags(
@@ -226,7 +231,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     File workspaceRootDirectory = workspaceRoot.directory();
 
-    if (!BlazeGDBServerProvider.shouldUseGdbserver()) {
+    final var debuggerKind = RunConfigurationUtils.getDebuggerKind(configuration);
+    if (debuggerKind != BlazeDebuggerKind.GDB_SERVER) {
 
       File workingDir =
           new File(runner.executableToDebug + ".runfiles", workspaceRootDirectory.getName());
@@ -245,18 +251,19 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         convertBlazeTestFilterToExecutableFlag().ifPresent(commandLine::addParameters);
       }
 
-      TrivialInstaller installer = new TrivialInstaller(commandLine);
-      ImmutableList<String> startupCommands = getGdbStartupCommands(workspaceRootDirectory);
-      TrivialRunParameters parameters =
-          new TrivialRunParameters(
-              ToolchainUtils.getToolchain().getDebuggerKind() == Kind.BUNDLED_LLDB
-                  ? new BlazeLLDBDriverConfiguration(project, workspaceRoot.directory().toPath())
-                  : new BlazeGDBDriverConfiguration(project, startupCommands, workspaceRoot),
-              installer);
+      final DebuggerDriverConfiguration debuggerDriver;
+      if (debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB) {
+        debuggerDriver = new BlazeLLDBDriverConfiguration(project, workspaceRoot.directory().toPath());
+      } else {
+        final var startupCommands = getGdbStartupCommands(workspaceRootDirectory);
+        debuggerDriver = new BlazeGDBDriverConfiguration(project, startupCommands, workspaceRoot);
+      }
+
+      final var parameters = new TrivialRunParameters(debuggerDriver, new TrivialInstaller(commandLine));
 
       state.setConsoleBuilder(createConsoleBuilder(null));
       state.addConsoleFilters(getConsoleFilters().toArray(new Filter[0]));
-      return new CidrLocalDebugProcess(parameters, session, state.getConsoleBuilder());
+      return CidrDebugProcessCreator.create(() -> new CidrLocalDebugProcess(parameters, session, state.getConsoleBuilder()));
     }
     List<String> extraDebugFlags = BlazeGDBServerProvider.getFlagsForDebugging(handlerState);
 
@@ -279,8 +286,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     BlazeCLionGDBDriverConfiguration debuggerDriverConfiguration =
         new BlazeCLionGDBDriverConfiguration(project);
 
-    return new BlazeCidrRemoteDebugProcess(
-        targetProcess, debuggerDriverConfiguration, parameters, session, state.getConsoleBuilder());
+    return CidrDebugProcessCreator.create(() -> new BlazeCidrRemoteDebugProcess(
+        targetProcess, debuggerDriverConfiguration, parameters, session, state.getConsoleBuilder()));
   }
 
   /** Get the correct test prefix for blaze/bazel */

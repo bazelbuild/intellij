@@ -27,10 +27,22 @@ import java.io.Serializable;
  */
 public abstract class Section<T> implements Serializable {
   private static final long serialVersionUID = 2L;
+
+  private int firstLineIndex;
+
   private final String sectionName;
 
-  protected Section(SectionKey<T, ?> key) {
+  public int getFirstLineIndex() {
+    return firstLineIndex;
+  }
+
+  public void setFirstLineIndex(int firstLineIndex) {
+    this.firstLineIndex = firstLineIndex;
+  }
+
+  protected Section(SectionKey<T, ?> key, int firstLineIndex) {
     this.sectionName = key.getName();
+    this.firstLineIndex = firstLineIndex;
   }
 
   public boolean isSectionType(SectionKey<?, ?> key) {

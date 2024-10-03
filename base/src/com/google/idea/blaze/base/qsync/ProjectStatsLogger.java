@@ -24,7 +24,8 @@ import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
 import com.google.idea.blaze.base.projectview.section.sections.TryImportSection;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.qsync.BlazeProjectListener;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import java.util.Optional;
 
 /** Updates project info according to the newly generated build graph. */
@@ -39,10 +40,10 @@ public class ProjectStatsLogger implements BlazeProjectListener {
     }
   }
 
-  private ArtifactTracker artifactTracker;
+  private ArtifactTracker<?> artifactTracker;
   private ProjectViewSet projectViewSet;
 
-  public ProjectStatsLogger(ArtifactTracker artifactTracker, ProjectViewSet projectViewSet) {
+  public ProjectStatsLogger(ArtifactTracker<?> artifactTracker, ProjectViewSet projectViewSet) {
     this.artifactTracker = artifactTracker;
     this.projectViewSet = projectViewSet;
   }
@@ -58,7 +59,9 @@ public class ProjectStatsLogger implements BlazeProjectListener {
                   .setBlazeProjectFiles(
                       projectViewSet.listScalarItems(ImportSection.KEY, TryImportSection.KEY).stream()
                           .map(WorkspacePath::asPath)
-                          .collect(toImmutableSet()));
+                          .collect(toImmutableSet()))
+                  .setProjectTargetCount(instance.graph().allTargets().size())
+                  .setExternalDependencyCount(instance.graph().projectDeps().size());
               scope
                   .getDependenciesInfoStatsBuilder()
                   .setTargetMapSize(instance.graph().targetMap().size())

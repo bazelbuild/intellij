@@ -25,8 +25,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.base.async.FutureUtil;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
+import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.filecache.FileCacheDiffer;
@@ -49,6 +48,7 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.artifact.BlazeArtifact;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -176,7 +176,8 @@ public class UnpackedAars {
           RemoteArtifactPrefetcher.getInstance()
               .downloadArtifacts(
                   /* projectName= */ project.getName(),
-                  /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(artifactsToDownload));
+                  /* outputArtifacts= */ RemoteOutputArtifact.getRemoteArtifacts(
+                      artifactsToDownload));
 
       FutureUtil.waitForFuture(context, downloadArtifactsFuture)
           .timed("FetchAars", EventType.Prefetching)

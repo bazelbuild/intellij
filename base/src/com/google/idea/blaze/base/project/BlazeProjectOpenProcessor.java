@@ -17,7 +17,8 @@ package com.google.idea.blaze.base.project;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
-import com.google.idea.sdkcompat.general.BaseSdkCompat;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,6 +27,7 @@ import icons.BlazeIcons;
 
 import javax.annotation.Nullable;
 import javax.swing.Icon;
+import java.nio.file.Paths;
 
 /** Allows directly opening a project with project data directory embedded within the project. */
 public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
@@ -86,6 +88,7 @@ public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
       return null;
     }
     VirtualFile projectSubdirectory = ideaSubdirectory.getParent();
-    return BaseSdkCompat.openProject(projectSubdirectory,projectToClose, forceOpenInNewFrame);
+    OpenProjectTask options = OpenProjectTask.build().withForceOpenInNewFrame(forceOpenInNewFrame).withProjectToClose(projectToClose);
+    return ProjectUtil.openProject(Paths.get(projectSubdirectory.getPath()),options);
   }
 }

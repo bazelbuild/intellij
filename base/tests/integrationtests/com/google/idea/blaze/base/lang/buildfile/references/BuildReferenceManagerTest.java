@@ -45,7 +45,7 @@ public class BuildReferenceManagerTest extends BuildFileIntegrationTestCase {
         Arrays.stream(manager.resolvePackageLookupElements(nonLocalLookupData))
             .map(BuildLookupElement::getLookupString)
             .toList();
-    assertThat(results).containsAllIn(new String[] {"//src/go"});
+    assertThat(results).containsAtLeastElementsIn(new String[] {"//src/go"});
     assertThat(results).containsNoneIn(new String[] {".ijwb"});
 
     String originalLabel = "//:";
@@ -66,7 +66,7 @@ public class BuildReferenceManagerTest extends BuildFileIntegrationTestCase {
         Arrays.stream(manager.resolvePackageLookupElements(localLookupData))
             .map(BuildLookupElement::getLookupString)
             .toList();
-    assertThat(otherResults).containsAllIn(new String[] {"//:src"});
+    assertThat(otherResults).containsAtLeastElementsIn(new String[] {"//:src"});
     assertThat(otherResults).containsNoneIn(new String[] {":.ijwb"});
   }
 

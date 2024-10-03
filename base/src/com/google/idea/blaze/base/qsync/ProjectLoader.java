@@ -23,15 +23,14 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.Glob;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
-import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher;
+import com.google.idea.blaze.base.qsync.artifacts.ProjectArtifactStore;
+import com.google.idea.blaze.base.qsync.cache.ArtifactFetchers;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTrackerImpl;
-import com.google.idea.blaze.base.qsync.cc.CcProjectProtoTransform;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -43,16 +42,23 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
+import com.google.idea.blaze.common.artifact.ArtifactFetcher;
+import com.google.idea.blaze.common.artifact.BuildArtifactCache;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder.ProjectProtoTransform;
+import com.google.idea.blaze.qsync.DependenciesProjectProtoUpdater;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.VcsStateDiffer;
+import com.google.idea.blaze.qsync.deps.ArtifactTracker;
+import com.google.idea.blaze.qsync.deps.NewArtifactTracker;
 import com.google.idea.blaze.qsync.java.PackageStatementParser;
 import com.google.idea.blaze.qsync.java.ParallelPackageReader;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
+import com.google.idea.blaze.qsync.project.ProjectProtoTransform;
+import com.google.idea.blaze.qsync.project.ProjectProtoTransform.Registry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -121,8 +127,11 @@ public class ProjectLoader {
     Path snapshotFilePath = getSnapshotFilePath(importSettings);
 
     ImmutableSet<String> handledRules = getHandledRuleKinds();
+    Optional<BlazeVcsHandler> vcsHandler =
+        Optional.ofNullable(BlazeVcsHandlerProvider.vcsHandlerForProject(project));
     DependencyBuilder dependencyBuilder =
-        createDependencyBuilder(workspaceRoot, latestProjectDef, buildSystem, handledRules);
+        createDependencyBuilder(
+            workspaceRoot, latestProjectDef, buildSystem, vcsHandler, handledRules);
     RenderJarBuilder renderJarBuilder = createRenderJarBuilder(buildSystem);
     AppInspectorBuilder appInspectorBuilder = createAppInspectorBuilder(buildSystem);
 
@@ -130,25 +139,57 @@ public class ProjectLoader {
     ProjectPath.Resolver projectPathResolver =
         ProjectPath.Resolver.create(workspaceRoot.path(), ideProjectBasePath);
 
+    ProjectProtoTransform.Registry projectTransformRegistry = new Registry();
     BlazeProject graph = new BlazeProject();
     graph.addListener((c, i) -> projectModificationTracker.incModificationCount());
     ArtifactFetcher<OutputArtifact> artifactFetcher = createArtifactFetcher();
-    ArtifactTrackerImpl artifactTracker =
-        new ArtifactTrackerImpl(
-            BlazeDataStorage.getProjectDataDir(importSettings).toPath(),
-            ideProjectBasePath,
-            artifactFetcher,
-            projectPathResolver,
-            latestProjectDef);
-    artifactTracker.initialize();
-    DependencyTracker dependencyTracker =
-        new DependencyTrackerImpl(project, graph, dependencyBuilder, artifactTracker);
+    FileRefresher fileRefresher = new FileRefresher(project);
+    BuildArtifactCache artifactCache =
+        BuildArtifactCache.create(
+            ideProjectBasePath.resolve("buildcache"), artifactFetcher, executor);
+
+    ArtifactTracker<BlazeContext> artifactTracker;
+    RenderJarArtifactTracker renderJarArtifactTracker;
+    AppInspectorArtifactTracker appInspectorArtifactTracker;
+    if (QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT) {
+      NewArtifactTracker<BlazeContext> tracker =
+          new NewArtifactTracker<>(
+              BlazeDataStorage.getProjectDataDir(importSettings).toPath(), artifactCache);
+      projectTransformRegistry.add(
+          new DependenciesProjectProtoUpdater(
+              tracker,
+              latestProjectDef,
+              artifactCache,
+              projectPathResolver,
+              QuerySync.ATTACH_DEP_SRCJARS::getValue));
+
+      artifactTracker = tracker;
+      renderJarArtifactTracker = new RenderJarArtifactTrackerImpl();
+      appInspectorArtifactTracker = new AppInspectorArtifactTrackerImpl();
+    } else {
+      ArtifactTrackerImpl impl =
+          new ArtifactTrackerImpl(
+              BlazeDataStorage.getProjectDataDir(importSettings).toPath(),
+              ideProjectBasePath,
+              artifactFetcher,
+              projectPathResolver,
+              latestProjectDef,
+              projectTransformRegistry,
+              fileRefresher);
+      impl.initialize();
+      artifactTracker = impl;
+      renderJarArtifactTracker = impl;
+      appInspectorArtifactTracker = impl;
+    }
     RenderJarTracker renderJarTracker =
-        new RenderJarTrackerImpl(graph, renderJarBuilder, artifactTracker);
+        new RenderJarTrackerImpl(graph, renderJarBuilder, renderJarArtifactTracker);
     AppInspectorTracker appInspectorTracker =
-        new AppInspectorTrackerImpl(appInspectorBuilder, artifactTracker);
-    Optional<BlazeVcsHandler> vcsHandler =
-        Optional.ofNullable(BlazeVcsHandlerProvider.vcsHandlerForProject(project));
+        new AppInspectorTrackerImpl(appInspectorBuilder, appInspectorArtifactTracker);
+    ProjectArtifactStore artifactStore =
+        new ProjectArtifactStore(
+            ideProjectBasePath, workspaceRoot.path(), artifactCache, fileRefresher);
+    DependencyTracker dependencyTracker =
+        new DependencyTrackerImpl(graph, dependencyBuilder, artifactTracker);
     ProjectRefresher projectRefresher =
         new ProjectRefresher(
             vcsHandler.map(BlazeVcsHandler::getVcsStateDiffer).orElse(VcsStateDiffer.NONE),
@@ -160,12 +201,16 @@ public class ProjectLoader {
             createWorkspaceRelativePackageReader(),
             workspaceRoot.path(),
             handledRules,
-            ProjectProtoTransform.compose(
-                artifactTracker::updateProjectProto, new CcProjectProtoTransform(artifactTracker)),
             QuerySync.USE_NEW_RES_DIR_LOGIC::getValue,
-            () -> !QuerySync.EXTRACT_RES_PACKAGES_AT_BUILD_TIME.getValue());
+            () -> !QuerySync.EXTRACT_RES_PACKAGES_AT_BUILD_TIME.getValue(),
+            QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT);
     QueryRunner queryRunner = createQueryRunner(buildSystem);
-    ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner, vcsHandler);
+    ProjectQuerier projectQuerier =
+        createProjectQuerier(
+            projectRefresher,
+            queryRunner,
+            vcsHandler,
+            new BazelVersionHandler(buildSystem, buildSystem.getBuildInvoker(project, context)));
     QuerySyncSourceToTargetMap sourceToTargetMap =
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
 
@@ -177,8 +222,10 @@ public class ProjectLoader {
             importSettings,
             workspaceRoot,
             artifactTracker,
-            artifactTracker,
-            artifactTracker,
+            artifactCache,
+            artifactStore,
+            renderJarArtifactTracker,
+            appInspectorArtifactTracker,
             dependencyTracker,
             renderJarTracker,
             appInspectorTracker,
@@ -191,8 +238,10 @@ public class ProjectLoader {
             workspaceLanguageSettings,
             sourceToTargetMap,
             projectViewManager,
-            buildSystem);
+            buildSystem,
+            projectTransformRegistry);
     BlazeProjectListenerProvider.registerListenersFor(querySyncProject);
+    projectTransformRegistry.addAll(ProjectProtoTransformProvider.getAll(querySyncProject));
 
     return querySyncProject;
   }
@@ -204,8 +253,9 @@ public class ProjectLoader {
   private ProjectQuerierImpl createProjectQuerier(
       ProjectRefresher projectRefresher,
       QueryRunner queryRunner,
-      Optional<BlazeVcsHandler> vcsHandler) {
-    return new ProjectQuerierImpl(queryRunner, projectRefresher, vcsHandler);
+      Optional<BlazeVcsHandler> vcsHandler,
+      BazelVersionHandler bazelVersionProvider) {
+    return new ProjectQuerierImpl(queryRunner, projectRefresher, vcsHandler, bazelVersionProvider);
   }
 
   protected QueryRunner createQueryRunner(BuildSystem buildSystem) {
@@ -216,9 +266,10 @@ public class ProjectLoader {
       WorkspaceRoot workspaceRoot,
       ProjectDefinition projectDefinition,
       BuildSystem buildSystem,
+      Optional<BlazeVcsHandler> vcsHandler,
       ImmutableSet<String> handledRuleKinds) {
     return new BazelDependencyBuilder(
-        project, buildSystem, projectDefinition, workspaceRoot, handledRuleKinds);
+        project, buildSystem, projectDefinition, workspaceRoot, vcsHandler, handledRuleKinds);
   }
 
   protected RenderJarBuilder createRenderJarBuilder(BuildSystem buildSystem) {
@@ -235,7 +286,7 @@ public class ProjectLoader {
 
   private ArtifactFetcher<OutputArtifact> createArtifactFetcher() {
     return new DynamicallyDispatchingArtifactFetcher(
-        ImmutableList.copyOf(ArtifactFetcher.EP_NAME.getExtensions()));
+        ImmutableList.copyOf(ArtifactFetchers.EP_NAME.getExtensions()));
   }
 
   /**

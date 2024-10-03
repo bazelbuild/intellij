@@ -22,6 +22,17 @@ See the [documentation entry](https://ij.bazel.build/docs/bazel-support.html)
 on the plugin support across JetBrains products, languages, and operating
 systems.
 
+## Master branch vs Google branch
+The Bazel IntelliJ plugin has two main branches ([master](https://github.com/bazelbuild/intellij) and [google](https://github.com/bazelbuild/intellij/tree/google)).
+
+The Bazel plugins for IntelliJ and CLion are built and released from the [master branch](https://github.com/bazelbuild/intellij). An external team of maintainers addresses IntelliJ and CLion plugin issues and pull requests. The Bazel plugin for Android Studio is built and released from the [google branch](https://github.com/bazelbuild/intellij/tree/google). Internal Google teams review Android Studio plugin issues and pull requests on a case-by-case basis.
+
+These two branches are now diverging from each other.
+
+- Changes for IntelliJ and CLion plugins are *only* merged into the master branch. Few fixes that are also needed for the Android Studio plugin can be merged into the google branch after the internal teams’ approval.
+- Changes made by the internal Google teams are automatically exported to the google branch. Only relevant commits (security and selected bug fixes, and feature requests) are cherry-picked from the google branch to the master branch.
+- The master branch is not intended to be used to build the Android Studio with Bazel plugin; failures of the Android Studio plugin built from the master branch will not be addressed.
+
 ## Installation
 
 You can find our plugin in the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/8609-bazel)
@@ -38,12 +49,28 @@ Beta versions are usually uploaded to the Beta channel 2 weeks before they becom
   - Android Studio -> `https://plugins.jetbrains.com/plugins/beta/9185`
 
 ## Usage
+We recommend watching [this video](https://www.youtube.com/watch?v=GV_KwWK3Qy8) to familiarize yourself with the plugin's features.
 
 To import an existing Bazel project, choose `Import Bazel Project`,
 and follow the instructions in the project import wizard.
 
 Detailed docs are available [here](http://ij.bazel.build).
 
+## Known issues
+
+### Python debugging
+Please read this comment https://github.com/bazelbuild/intellij/issues/4745#issue-1668398619
+
+### Mixed Python & Java projects
+In order to get correct python highlighting, please try to open "Project Structure" window and set "Python facet" there
+
+### Remote Development
+To properly set up Remote Development (https://www.jetbrains.com/remote-development/), follow these steps:
+1. Create an empty project on the remote machine (this can be just an empty directory).
+2. Import the project using Remote Development.
+3. Install the Bazel Plugin on the host machine.
+4. Close the project.
+5. Open the initially intended project.
 
 ## Building the plugin
 

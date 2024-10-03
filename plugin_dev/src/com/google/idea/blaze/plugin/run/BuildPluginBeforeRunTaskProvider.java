@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.plugin.run;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
@@ -203,7 +204,7 @@ public final class BuildPluginBeforeRunTaskProvider
                           .getBuildInvoker(project, context);
                   try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
                     BlazeCommand.Builder command =
-                        BlazeCommand.builder(invoker, BlazeCommandName.BUILD)
+                        BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project)
                             .addTargets(config.getTargets())
                             .addBlazeFlags(
                                 BlazeFlags.blazeFlags(
@@ -227,7 +228,7 @@ public final class BuildPluginBeforeRunTaskProvider
                     BlazeBuildOutputs outputs =
                         invoker
                             .getCommandRunner()
-                            .run(project, command, buildResultHelper, context);
+                            .run(project, command, buildResultHelper, context, ImmutableMap.of());
                     if (!outputs.buildResult.equals(BuildResult.SUCCESS)) {
                       context.setHasError();
                     }

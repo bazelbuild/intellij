@@ -35,6 +35,7 @@ import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -48,7 +49,10 @@ import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException;
 import com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider.XcodeCompilerSettingsException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.pom.NavigatableAdapter;
+
 import java.io.File;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
@@ -210,6 +214,46 @@ public final class BlazeConfigurationToolchainResolver {
         });
   }
 
+  private static @Nullable File resolveCompilerExecutable(
+      BlazeContext context,
+      ExecutionRootPathResolver executionRootPathResolver,
+      ExecutionRootPath compilerPath
+  ) {
+    File compilerFile = executionRootPathResolver.resolveExecutionRootPath(compilerPath);
+
+    if (compilerFile == null) {
+      IssueOutput.error("Unable to find compiler executable: " + compilerPath).submit(context);
+      return null;
+    }
+
+    if (!compilerFile.exists() && SystemInfo.isWindows) {
+      // bazel reports the compiler executable without the exe suffix
+      compilerFile = new File(compilerFile.getAbsolutePath() + ".exe");
+    }
+
+    return compilerFile;
+  }
+
+  private static @Nullable String mergeCompilerVersions(
+      BlazeContext context,
+      @Nullable String cVersion,
+      @Nullable String cppVersion) {
+    if (cVersion == null) {
+      return cppVersion;
+    }
+    if (cppVersion == null) {
+      return cVersion;
+    }
+    if (cVersion.equals(cppVersion)) {
+      return cppVersion;
+    }
+
+    IssueOutput.warn("C and Cpp compiler version mismatch. Defaulting to Cpp compiler version.")
+        .submit(context);
+
+    return cppVersion;
+  }
+
   private static ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> doBuildCompilerSettingsMap(
       BlazeContext context,
       Project project,
@@ -224,20 +268,28 @@ public final class BlazeConfigurationToolchainResolver {
       compilerSettingsFutures.add(
           submit(
               () -> {
-                File cppExecutable =
-                    executionRootPathResolver.resolveExecutionRootPath(
-                        toolchain.getCppExecutable());
-                if (cppExecutable == null) {
-                  IssueOutput.error(
-                          "Unable to find compiler executable: " + toolchain.getCppExecutable())
-                      .submit(context);
+                File cCompiler = resolveCompilerExecutable(context, executionRootPathResolver,
+                    toolchain.getCCompiler());
+                if (cCompiler == null) {
                   return null;
                 }
-                String compilerVersion =
-                    getCompilerVersion(project, context, executionRootPathResolver, xcodeCompilerSettings, cppExecutable);
+                File cppCompiler = resolveCompilerExecutable(context, executionRootPathResolver,
+                    toolchain.getCppCompiler());
+                if (cppCompiler == null) {
+                  return null;
+                }
+
+                String cCompilerVersion = getCompilerVersion(project, context,
+                    executionRootPathResolver, xcodeCompilerSettings, cCompiler);
+                String cppCompilerVersion = getCompilerVersion(project, context,
+                    executionRootPathResolver, xcodeCompilerSettings, cppCompiler);
+
+                String compilerVersion = mergeCompilerVersions(context, cCompilerVersion,
+                    cppCompilerVersion);
                 if (compilerVersion == null) {
                   return null;
                 }
+
                 BlazeCompilerSettings oldSettings = oldCompilerSettings.get(toolchain);
                 if (oldSettings != null
                     && oldSettings.getCompilerVersion().equals(compilerVersion)) {
@@ -245,15 +297,15 @@ public final class BlazeConfigurationToolchainResolver {
                 }
                 BlazeCompilerSettings settings =
                     createBlazeCompilerSettings(
+                        context,
                         project,
                         toolchain,
                         xcodeCompilerSettings,
                         executionRootPathResolver.getExecutionRoot(),
-                        cppExecutable,
+                        cCompiler,
+                        cppCompiler,
                         compilerVersion);
                 if (settings == null) {
-                  IssueOutput.error("Unable to create compiler wrapper for: " + cppExecutable)
-                      .submit(context);
                   return null;
                 }
                 return new SimpleImmutableEntry<>(toolchain, settings);
@@ -284,12 +336,12 @@ public final class BlazeConfigurationToolchainResolver {
       BlazeContext context,
       ExecutionRootPathResolver executionRootPathResolver,
       Optional<XcodeCompilerSettings> xcodeCompilerSettings,
-      File cppExecutable) {
+      File executable) {
     File executionRoot = executionRootPathResolver.getExecutionRoot();
     ImmutableMap<String, String> compilerEnvFlags = XcodeCompilerSettingsProvider.getInstance(project).asEnvironmentVariables(xcodeCompilerSettings);
     try {
       return CompilerVersionChecker.getInstance()
-          .checkCompilerVersion(executionRoot, cppExecutable, compilerEnvFlags);
+          .checkCompilerVersion(executionRoot, executable, compilerEnvFlags);
     } catch (VersionCheckException e) {
       switch (e.kind) {
         case MISSING_EXEC_ROOT:
@@ -314,7 +366,7 @@ public final class BlazeConfigurationToolchainResolver {
                   String.format(
                       "Unable to access compiler executable \"%s\".\n"
                           + "Check if it is accessible from the cmdline.",
-                      cppExecutable.getAbsolutePath()))
+                      executable.getAbsolutePath()))
               .submit(context);
           return null;
         case GENERIC_FAILURE:
@@ -322,7 +374,7 @@ public final class BlazeConfigurationToolchainResolver {
                   String.format(
                       "Unable to check compiler version for \"%s\".\n%s\n"
                           + "Check if running the compiler with --version works on the cmdline.",
-                      cppExecutable.getAbsolutePath(), e.getMessage()))
+                      executable.getAbsolutePath(), e.getMessage()))
               .submit(context);
           return null;
       }
@@ -332,22 +384,34 @@ public final class BlazeConfigurationToolchainResolver {
 
   @Nullable
   private static BlazeCompilerSettings createBlazeCompilerSettings(
+      BlazeContext context,
       Project project,
       CToolchainIdeInfo toolchainIdeInfo,
       Optional<XcodeCompilerSettings> xcodeCompilerSettings,
       File executionRoot,
-      File cppExecutable,
+      File cCompiler,
+      File cppCompiler,
       String compilerVersion) {
     ImmutableMap<String, String> compilerWrapperEnvVars =
         XcodeCompilerSettingsProvider.getInstance(project).asEnvironmentVariables(xcodeCompilerSettings);
-    File compilerWrapper =
+    File cCompilerWrapper =
         CompilerWrapperProvider.getInstance()
-            .createCompilerExecutableWrapper(executionRoot, cppExecutable, compilerWrapperEnvVars);
-    if (compilerWrapper == null) {
+            .createCompilerExecutableWrapper(executionRoot, cCompiler, compilerWrapperEnvVars);
+    if (cCompilerWrapper == null) {
+      IssueOutput.error("Unable to create compiler wrapper for: " + cCompiler)
+          .submit(context);
+      return null;
+    }
+    File cppCompilerWrapper =
+        CompilerWrapperProvider.getInstance()
+            .createCompilerExecutableWrapper(executionRoot, cppCompiler, compilerWrapperEnvVars);
+    if (cppCompilerWrapper == null) {
+      IssueOutput.error("Unable to create compiler wrapper for: " + cppCompiler)
+          .submit(context);
       return null;
     }
     ImmutableList.Builder<String> cFlagsBuilder = ImmutableList.builder();
-    cFlagsBuilder.addAll(toolchainIdeInfo.getcCompilerOptions());
+    cFlagsBuilder.addAll(toolchainIdeInfo.getCCompilerOptions());
 
     ImmutableList.Builder<String> cppFlagsBuilder = ImmutableList.builder();
     cppFlagsBuilder.addAll(toolchainIdeInfo.getCppCompilerOptions());
@@ -356,8 +420,8 @@ public final class BlazeConfigurationToolchainResolver {
     compilerEnv.putAll(compilerWrapperEnvVars);
     return new BlazeCompilerSettings(
         project,
-        compilerWrapper,
-        compilerWrapper,
+        cCompilerWrapper,
+        cppCompilerWrapper,
         cFlagsBuilder.build(),
         cppFlagsBuilder.build(),
         compilerVersion,

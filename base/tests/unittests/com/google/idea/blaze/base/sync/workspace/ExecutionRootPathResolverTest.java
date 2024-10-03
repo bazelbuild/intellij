@@ -53,10 +53,16 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
   private static final List<WorkspacePath> WORKSPACE_PATHS = createWorkspacePaths();
 
   private static final TargetName SIMPLE_TARGET = TargetName.create("simple_target");
+  private static final TargetName SIMPLE_TARGET_TRAILING_SLASH = TargetName.create("simple_target_trailing_slash");
   private static final TargetName ADVANCED_TARGET = TargetName.create("advanced_target");
   private static final TargetName TARGET_WITH_INCLUDE_PREFIX = TargetName.create("include_prefix");
-  private static final List<TargetName> TARGET_NAMES = List.of(SIMPLE_TARGET, ADVANCED_TARGET);
+  private static final List<TargetName> TARGET_NAMES = List.of(SIMPLE_TARGET, SIMPLE_TARGET_TRAILING_SLASH, ADVANCED_TARGET);
   private static final String INCLUDE_PREFIX = "generated-include-prefix";
+
+  private static final TargetName TARGET_WITH_ABSOLUTE_STRIP_PREFIX = TargetName.create("absolute_strip_prefix");
+  private static final WorkspacePath ABSOLUTE_STRIP_PREFIX_WORKSPACE_PATH = new WorkspacePath("foo/bar");
+  private static final String ABSOLUTE_STRIP_PREFIX_PATH = "foo";
+  private static final String ABSOLUTE_STRIP_PREFIX = "//" + ABSOLUTE_STRIP_PREFIX_PATH;
 
   private ExecutionRootPathResolver pathResolver;
 
@@ -75,11 +81,16 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
 
     if (targetName.equals(SIMPLE_TARGET)) {
       return simpleStripPrefix;
+    } else if (targetName.equals(SIMPLE_TARGET_TRAILING_SLASH)) {
+      return simpleStripPrefix + "/";
     } else if (targetName.equals(ADVANCED_TARGET)) {
       return advancedStripPrefix;
     } else if (targetName.equals(TARGET_WITH_INCLUDE_PREFIX)) {
       return simpleStripPrefix;
-    } else {
+    } else if (targetName.equals(TARGET_WITH_ABSOLUTE_STRIP_PREFIX)) {
+      return ABSOLUTE_STRIP_PREFIX;
+    }
+    else {
       throw new IllegalArgumentException("Unexpected targetName");
     }
   }
@@ -109,6 +120,11 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
               getTargetIdeInfo(targetName));
         }
       }
+
+      builder.put(
+          TargetKey.forPlainTarget(
+              Label.create(workspaceName, ABSOLUTE_STRIP_PREFIX_WORKSPACE_PATH, TARGET_WITH_ABSOLUTE_STRIP_PREFIX)),
+          getTargetIdeInfo(TARGET_WITH_ABSOLUTE_STRIP_PREFIX));
     }
 
     builder.put(
@@ -122,6 +138,7 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
     Registry.get("bazel.sync.resolve.virtual.includes").setValue(true);
+    Registry.get("bazel.sync.collect.virtual.includes.hints").setValue(false);
 
     pathResolver =
         new ExecutionRootPathResolver(
@@ -191,9 +208,13 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
           ImmutableList<File> files =
               pathResolver.resolveToIncludeDirectories(generatedPath);
 
+          String stripPrefix = getStripPrefix(targetName);
+          if (stripPrefix.endsWith("/")) {
+            stripPrefix = stripPrefix.substring(0, stripPrefix.length() - 1);
+          }
           String expectedPath = Path.of(workspaceNameString,
               workspacePath.toString(),
-              getStripPrefix(targetName)).toString();
+              stripPrefix).toString();
 
           if (workspaceName != null) {
             // check external workspace
@@ -206,6 +227,38 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
                 WORKSPACE_ROOT.fileForPath(new WorkspacePath(expectedPath)));
           }
         }
+      }
+    }
+  }
+
+  @Test
+  public void testVirtualIncludesWithAbsoluteStripPrefix() {
+    for (String workspaceName : WORKSPACES) {
+      String workspaceNameString = workspaceName != null ? workspaceName : "";
+
+      ExecutionRootPath generatedPath = new ExecutionRootPath(Path.of(
+          "bazel-out/k8-fastbuild/bin",
+          (workspaceName == null ? "" : ExecutionRootPathResolver.externalPath.getPath()),
+          workspaceNameString,
+          ABSOLUTE_STRIP_PREFIX_WORKSPACE_PATH.toString(),
+          VirtualIncludesHandler.VIRTUAL_INCLUDES_DIRECTORY.toString(),
+          TARGET_WITH_ABSOLUTE_STRIP_PREFIX.toString()).toFile());
+
+      ImmutableList<File> files =
+          pathResolver.resolveToIncludeDirectories(generatedPath);
+
+      String expectedPath = Path.of(workspaceNameString,
+          ABSOLUTE_STRIP_PREFIX_PATH).toString();
+
+      if (workspaceName != null) {
+        // check external workspace
+        assertThat(files).containsExactly(
+            Path.of(OUTPUT_BASE, ExecutionRootPathResolver.externalPath.getPath(), expectedPath)
+                .toFile());
+      } else {
+        // check local
+        assertThat(files).containsExactly(
+            WORKSPACE_ROOT.fileForPath(new WorkspacePath(expectedPath)));
       }
     }
   }
@@ -228,6 +281,7 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
     assertThat(files).containsExactly(
         new File(EXECUTION_ROOT, fileToBeResolved.toString()));
   }
+
 
   @Test
   public void testExternalWorkspaceSymlinkToProject() throws IOException {

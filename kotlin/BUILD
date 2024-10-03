@@ -1,4 +1,10 @@
 load(
+    "//:build-visibility.bzl",
+    "ASWB_SUBPACKAGES_VISIBILITY",
+    "KOTLIN_PACKAGE_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
+load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
     "intellij_plugin_library",
@@ -6,19 +12,13 @@ load(
     "stamped_plugin_xml",
 )
 load(
-    "//intellij_platform_sdk:build_defs.bzl",
-    "combine_visibilities",
-)
-load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
 load(
-    "//:build-visibility.bzl",
-    "ASWB_SUBPACKAGES_VISIBILITY",
-    "KOTLIN_PACKAGE_VISIBILITY",
-    "PLUGIN_PACKAGES_VISIBILITY",
+    "//intellij_platform_sdk:build_defs.bzl",
+    "combine_visibilities",
 )
 
 licenses(["notice"])
@@ -43,7 +43,7 @@ java_library(
 
 optional_plugin_xml(
     name = "optional_xml",
-    module = "org.jetbrains.kotlin",
+    module = ["org.jetbrains.kotlin"],
     plugin_xml = "src/META-INF/kotlin-contents.xml",
 )
 
@@ -117,5 +117,6 @@ intellij_integration_test_suite(
         "//third_party/auto_value",
         "@com_google_guava_guava//jar",
         "@junit//jar",
+        "@org_opentest4j_opentest4j//jar",
     ],
 )

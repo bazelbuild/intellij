@@ -15,7 +15,8 @@
  */
 package com.google.idea.blaze.qsync.project;
 
-import static com.google.common.truth.Truth8.assertThat;
+import static com.google.common.truth.Truth.assertThat;
+
 
 import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import com.google.protobuf.Descriptors.EnumValueDescriptor;

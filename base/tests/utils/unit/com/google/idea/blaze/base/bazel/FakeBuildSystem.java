@@ -80,6 +80,13 @@ public abstract class FakeBuildSystem implements BuildSystem {
   public void populateBlazeVersionData(
       WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo, BlazeVersionData.Builder builder) {}
 
+  abstract Optional<String> getBazelVersionString();
+
+  @Override
+  public Optional<String> getBazelVersionString(BlazeInfo blazeInfo) {
+    return getBazelVersionString();
+  }
+
   @Override
   public BazelQueryRunner createQueryRunner(Project project) {
     return null;
@@ -101,6 +108,8 @@ public abstract class FakeBuildSystem implements BuildSystem {
     public abstract Builder setParallelBuildInvoker(Optional<BuildInvoker> value);
 
     public abstract Builder setLocalBuildInvoker(Optional<BuildInvoker> value);
+
+    public abstract Builder setBazelVersionString(Optional<String> value);
 
     public abstract Builder setSyncStrategy(SyncStrategy value);
   }

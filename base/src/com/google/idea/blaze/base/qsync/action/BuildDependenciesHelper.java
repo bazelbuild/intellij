@@ -24,12 +24,12 @@ import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsSc
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
-import com.google.idea.blaze.base.qsync.TargetsToBuild;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.project.TargetsToBuild;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
@@ -54,7 +54,7 @@ public class BuildDependenciesHelper {
     /** Build dependencies of the specified target(s) */
     SELF,
     /** Build dependencies of the reverse dependencies of the specified target(s) */
-    REVERSE_DEPS
+    REVERSE_DEPS,
   }
 
   private final Project project;

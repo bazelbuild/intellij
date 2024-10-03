@@ -18,8 +18,7 @@ package com.google.idea.blaze.qsync;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.common.Context;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
-import java.io.IOException;
+import com.google.idea.blaze.exception.BuildException;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -40,7 +39,8 @@ public class BlazeProject {
     }
   }
 
-  public void setCurrent(Context<?> context, BlazeProjectSnapshot newInstance) throws IOException {
+  public void setCurrent(Context<?> context, BlazeProjectSnapshot newInstance)
+      throws BuildException {
     ImmutableList<BlazeProjectListener> listeners;
     synchronized (lock) {
       if (currentInstance == newInstance) {

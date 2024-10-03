@@ -34,11 +34,10 @@ public class NoIdeTest extends BazelIntellijAspectTest {
     assertThat(findTarget(testFixture, ":baz")).isNull();
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("foo.java-manifest"), testRelative(intellijInfoFileName("foo")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
         .containsExactly(
-            testRelative("libfoo.jar"),
             testRelative("libfoo-hjar.jar"),
             testRelative("libfoo-src.jar"),
             testRelative("libfoo.jdeps"));

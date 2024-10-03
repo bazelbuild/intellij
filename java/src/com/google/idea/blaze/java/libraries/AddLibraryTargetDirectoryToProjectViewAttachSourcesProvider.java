@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.sdkcompat.java.AttachSourcesProviderAdapter;
+import com.intellij.codeInsight.AttachSourcesProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
@@ -35,10 +35,9 @@ import java.util.List;
 
 /** */
 public class AddLibraryTargetDirectoryToProjectViewAttachSourcesProvider
-    extends AttachSourcesProviderAdapter {
+    implements AttachSourcesProvider {
 
   @NotNull
-  @Override
   public Collection<AttachSourcesAction> getAdapterActions(
       List<? extends LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
     Project project = psiFile.getProject();
@@ -69,7 +68,7 @@ public class AddLibraryTargetDirectoryToProjectViewAttachSourcesProvider
     }
 
     return ImmutableList.of(
-        new AttachSourcesActionAdapter() {
+        new BlazeAttachSourceProvider.AttachSourcesActionAdapter() {
           @Override
           public String getName() {
             return "Add Source Directories To Project View";
@@ -88,4 +87,11 @@ public class AddLibraryTargetDirectoryToProjectViewAttachSourcesProvider
           }
         });
   }
+
+    @NotNull
+    @Override
+    public Collection<AttachSourcesAction> getActions(
+        List<? extends LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
+        return getAdapterActions(orderEntries, psiFile);
+    }
 }

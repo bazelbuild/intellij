@@ -66,9 +66,12 @@ public class ImportSection {
           if (projectViewImportsMandatory || projectViewFile.exists()) {
             parser.parseProjectView(projectViewFile);
           } else {
-            IssueOutput.warn(
-                            String.format("Could not load project view file: '%s'", projectViewFile.getPath()))
-                    .submit(parseContext.getContext());
+            String warningMessage = String.format("Could not load project view file: '%s'", projectViewFile.getPath());
+            if (parseContext.getContext() != null) {
+              IssueOutput.warn(warningMessage).submit(parseContext.getContext());
+            } else {
+              parseContext.addWarning(warningMessage);
+            }
           }
         } else {
           parseContext.addError("Could not resolve import: " + workspacePath);

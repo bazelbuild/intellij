@@ -18,6 +18,7 @@ package com.google.idea.blaze.java.run;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
@@ -164,6 +165,53 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
   }
 
   @Test
+  public void envVarsAppearAsTestEnvWhenCommandIsTest() {
+    configuration.setTargetInfo(
+            TargetInfo.builder(Label.create("//label:rule"), "java_test").build());
+    BlazeCommandRunConfigurationCommonState handlerState =
+            (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
+
+    handlerState.getCommandState().setCommand(BlazeCommandName.TEST);
+    handlerState.getUserEnvVarsState().setEnvVars(ImmutableMap.of("HELLO", "world"));
+
+    // Regular Run
+    assertThat(BlazeJavaRunProfileState
+              .getBlazeCommandBuilder(
+                      project,
+                      configuration,
+                      ImmutableList.of(),
+                      ExecutorType.RUN,
+                      null)
+              .build().toList())
+            .containsExactly(
+                    "/usr/bin/blaze",
+                    "test",
+                    BlazeFlags.getToolTagFlag(),
+                    "--test_env", "HELLO=world",
+                    "--",
+                    "//label:rule"
+            ).inOrder();
+
+    // Fast build
+    assertThat(BlazeJavaRunProfileState
+            .getBlazeCommandBuilder(
+                    project,
+                    configuration,
+                    ImmutableList.of(),
+                    ExecutorType.FAST_BUILD_RUN,
+                    null)
+            .build().toList())
+            .containsExactly(
+                    "/usr/bin/blaze",
+                    "test",
+                    BlazeFlags.getToolTagFlag(),
+                    "--test_env", "HELLO=world",
+                    "--",
+                    "//label:rule"
+            ).inOrder();
+  }
+
+  @Test
   public void debugFlagShouldBeIncludedForJavaTest() {
     configuration.setTargetInfo(
         TargetInfo.builder(Label.create("//label:rule"), "java_test").build());
@@ -265,7 +313,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
   @Test
   public void getBashCommandsToRunScript() throws Exception {
     BlazeCommand.Builder commandBuilder =
-        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD)
+        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD, getProject())
             .addTargets(Label.create("//label:java_binary_rule"));
     List<String> command =
         HotSwapCommandBuilder.getBashCommandsToRunScript(getProject(), commandBuilder);

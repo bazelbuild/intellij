@@ -24,10 +24,10 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -186,7 +186,7 @@ class GenerateDeployableJarTaskProvider
       }
 
       List<File> outputs =
-          BlazeArtifact.getLocalFiles(
+          LocalFileArtifact.getLocalFiles(
               buildResultHelper.getBuildArtifactsForTarget(
                   target.withTargetName(target.targetName() + "_deploy.jar"), file -> true));
       if (outputs.isEmpty()) {
@@ -243,7 +243,7 @@ class GenerateDeployableJarTaskProvider
 
                 context.output(new StatusOutput(title));
                 BlazeCommand command =
-                    BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
+                    BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD, project)
                         .addTargets(target.withTargetName(target.targetName() + "_deploy.jar"))
                         .addBlazeFlags(
                             BlazeFlags.blazeFlags(

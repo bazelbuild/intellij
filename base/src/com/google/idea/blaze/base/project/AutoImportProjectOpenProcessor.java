@@ -18,8 +18,8 @@ import com.google.idea.blaze.base.wizard2.BlazeProjectCommitException;
 import com.google.idea.blaze.base.wizard2.BlazeProjectImportBuilder;
 import com.google.idea.blaze.base.wizard2.CreateFromScratchProjectViewOption;
 import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
-import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.Optional;
 import javax.swing.Icon;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +96,8 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
   private boolean isBazelWorkspace(VirtualFile virtualFile) {
     return virtualFile.findChild("WORKSPACE") != null
-        || virtualFile.findChild("WORKSPACE.bazel") != null;
+        || virtualFile.findChild("WORKSPACE.bazel") != null
+        || virtualFile.findChild("MODULE.bazel") != null;
   }
 
   @Override
@@ -112,7 +114,9 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
     }
 
     Project newProject = createProject(virtualFile);
-    Objects.requireNonNull(newProject);
+    if (newProject == null) {
+      return null;
+    }
 
     newProject.putUserData(PROJECT_AUTO_IMPORTED, true);
 
@@ -122,7 +126,7 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
     ProjectManagerEx.getInstanceEx()
             .openProject(
                     projectFilePath,
-                    BaseSdkCompat.createOpenProjectTask(newProject)
+                    OpenProjectTask.build().withProject(newProject)
             );
     SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject);
     return newProject;
@@ -169,12 +173,13 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
       LOG.error("Failed to commit project import builder", e);
     }
 
-    Project newProject = builder.createProject(name, projectFilePath);
-    if (newProject == null) {
-      LOG.error("Failed to Bazel create project");
+    Optional<Project> returnedValue = ExtendableBazelProjectCreator.getInstance()
+        .createProject(builder, name, projectFilePath);
+    if (returnedValue.isEmpty()) {
       return null;
     }
-
+	
+    Project newProject = returnedValue.get();
     newProject.save();
 
     if (!builder.validate(null, newProject)) {
@@ -197,18 +202,24 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
   private ProjectView defaultEmptyProjectView() {
     Builder projectViewBuilder = ProjectView.builder();
     projectViewBuilder.add(TextBlockSection.of(TextBlock.of(
+            1,
             "# This is a projectview file generated automatically during bazel project auto-import ",
             "# For more documentation, please visit https://ij.bazel.build/docs/project-views.html",
             "# If your repository contains predefined .projectview files, you use 'import' directive to include them.",
             "# Otherwise, please specify 'directories' and 'targets' you want to be imported",
+            " ",
+            "# By default, we keep the 'directories' section empty, so nothing is imported.",
+            "# Specify the source directories you wish to include in the 'directories' section.",
             "# ",
-            "# By default we keep your 'directories' and 'targets' sections empty, so nothing is imported.",
-            "# Please uncomment them and put the correct data there, and then run 'Sync' again" ,
+            "# After that, please look at the `derive_targets_from_directories` section and then:",
+            "#   - either keep it set to `true` to import ALL targets in the directories section",
+            "#   - or set it to `false` and add `targets` section to choose the targets selectively",
             "",
             "# directories: ",
-            "#  <your directory here>",
-            "# targets: ",
-            "#  <your directory here>",
+            "#   Specify the source directories to be imported here",
+            "",
+            "view_project_root: true",
+            "derive_targets_from_directories: true",
             ""
     )));
 

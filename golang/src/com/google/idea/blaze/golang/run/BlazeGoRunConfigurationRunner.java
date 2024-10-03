@@ -31,10 +31,10 @@ import com.google.common.io.MoreFiles;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -60,6 +60,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
@@ -171,6 +172,11 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
       // GoBuildingRunningState$ProcessHandler#processTerminated
       nativeConfig.setOutputDirectory(executable.binary.getParent());
       nativeConfig.setParams(ParametersListUtil.join(getParameters(executable)));
+
+      EnvironmentVariablesData envVarsState = state.getUserEnvVarsState().getData();
+      nativeConfig.setCustomEnvironment(envVarsState.getEnvs());
+      nativeConfig.setPassParentEnvironment(envVarsState.isPassParentEnvs());
+
       nativeConfig.setWorkingDirectory(executable.workingDir.getPath());
 
       Map<String, String> customEnvironment = new HashMap<>(nativeConfig.getCustomEnvironment());
@@ -352,7 +358,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
         List<File> candidateFiles;
         try {
           candidateFiles =
-              BlazeArtifact.getLocalFiles(
+              LocalFileArtifact.getLocalFiles(
                       buildResultHelper.getBuildArtifactsForTarget(label, file -> true))
                   .stream()
                   .filter(File::canExecute)
@@ -403,6 +409,8 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
   private static final Pattern TEST_SRCDIR = Pattern.compile("TEST_SRCDIR=([^ ]+)");
   // Matches RUNFILES_<NAME>=<value>
   private static final Pattern RUNFILES_VAR = Pattern.compile("RUNFILES_([A-Z_]+)=([^ ]+)");
+  // Matches TEST_TARGET=//<package_path>:<target>
+  private static final Pattern TEST_TARGET = Pattern.compile("TEST_TARGET=//([^:]*):([^\\s]+)");
   // Matches a space-delimited arg list. Supports wrapping arg in single quotes.
   private static final Pattern ARGS = Pattern.compile("([^\']\\S*|\'.+?\')\\s*");
 
@@ -437,7 +445,6 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
       while (runfilesVars.find()) {
         envVars.put(String.format("RUNFILES_%s", runfilesVars.group(1)), runfilesVars.group(2));
       }
-      workingDir = workspaceRoot.directory();
       String workspaceName = execRoot.getName();
       binary =
           Paths.get(
@@ -446,6 +453,21 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
                   workspaceName,
                   args.get(1))
               .toFile();
+
+      Matcher testTarget = TEST_TARGET.matcher(text);
+      if (testTarget.find()) {
+        String packagePath = testTarget.group(1);
+        workingDir = 
+            Paths.get(
+                    workspaceRoot.directory().getPath(),
+                    testScrDir.group(1),
+                    workspaceName,
+                    packagePath)
+                .toFile();
+      } else {
+        workingDir = workspaceRoot.directory();
+      }
+
       // Remove everything except the args.
       args = args.subList(2, args.size() - 1);
     } else {

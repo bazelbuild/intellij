@@ -23,6 +23,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import com.intellij.mock.MockProject;
+import org.mockito.MockedStatic;
+
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
@@ -82,6 +85,7 @@ import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
 /** Tests for {@link BlazeConfigurationResolver}. */
 @RunWith(JUnit4.class)
@@ -292,7 +296,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   public void withCcToolchainSuite_testSingleSourceCcBinaryTarget() {
     ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
     CToolchainIdeInfo.Builder cToolchainIdeInfoBuilder =
-        CToolchainIdeInfo.builder().setCppExecutable(new ExecutionRootPath("cc"));
+        CToolchainIdeInfo.builder().setCCppCompiler(new ExecutionRootPath("cc"));
     TargetIdeInfo ccTarget =
         createCcTarget(
                 "//foo/bar:binary",
@@ -315,7 +319,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   public void withCcToolchainSuite_testSingleSourceCcLibraryTarget() {
     ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:library"));
     CToolchainIdeInfo.Builder cToolchainIdeInfoBuilder =
-        CToolchainIdeInfo.builder().setCppExecutable(new ExecutionRootPath("cc"));
+        CToolchainIdeInfo.builder().setCCppCompiler(new ExecutionRootPath("cc"));
     TargetIdeInfo ccTarget =
         createCcTarget(
                 "//foo/bar:library",
@@ -343,10 +347,10 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     // identical, but we differentiate them here to verify that the CToolchainIdeInfo from
     // cc_toolchain_alias target is used to build the toolchainLookupMap.
     CToolchainIdeInfo.Builder cToolchainIdeInfoBuilderSuite =
-        CToolchainIdeInfo.builder().setCppExecutable(new ExecutionRootPath("cc"));
+        CToolchainIdeInfo.builder().setCCppCompiler(new ExecutionRootPath("cc"));
     CToolchainIdeInfo.Builder cToolchainIdeInfoBuilderAlias =
         CToolchainIdeInfo.builder()
-            .setCppExecutable(new ExecutionRootPath("cc"))
+            .setCCppCompiler(new ExecutionRootPath("cc"))
             .setTargetName("toolchain_alias");
     TargetIdeInfo ccTarget =
         createCcTarget(
@@ -379,7 +383,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   public void withCcToolchainAlias_testSingleSourceTarget_missingCcToolChainAliasTarget() {
     ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:library"));
     CToolchainIdeInfo.Builder cToolchainIdeInfoBuilder =
-        CToolchainIdeInfo.builder().setCppExecutable(new ExecutionRootPath("cc"));
+        CToolchainIdeInfo.builder().setCCppCompiler(new ExecutionRootPath("cc"));
     TargetIdeInfo ccTarget =
         createCcTarget(
                 "//foo/bar:library",
@@ -750,7 +754,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     CToolchainIdeInfo.Builder aarch32Toolchain =
         CToolchainIdeInfo.builder()
             .setTargetName("arm-linux-androideabi")
-            .setCppExecutable(new ExecutionRootPath("bin/arm-linux-androideabi-gcc"));
+            .setCCppCompiler(new ExecutionRootPath("bin/arm-linux-androideabi-gcc"));
     TargetIdeInfo.Builder aarch32ToolchainTarget =
         TargetIdeInfo.builder()
             .setLabel("//toolchains:armv7a")
@@ -759,7 +763,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     CToolchainIdeInfo.Builder aarch64Toolchain =
         CToolchainIdeInfo.builder()
             .setTargetName("aarch64-linux-android")
-            .setCppExecutable(new ExecutionRootPath("bin/aarch64-linux-android-gcc"));
+            .setCCppCompiler(new ExecutionRootPath("bin/aarch64-linux-android-gcc"));
     TargetIdeInfo.Builder aarch64ToolchainTarget =
         TargetIdeInfo.builder()
             .setLabel("//toolchains:aarch64")
@@ -822,7 +826,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .build();
 
     File externalRoot = WorkspaceHelper.getExternalSourceRoot(
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData());
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData()).toFile();
 
     File spyExternalDependencyRoot = spy(new File(externalRoot, "external_dependency"));
     doReturn(true).when(spyExternalDependencyRoot).isDirectory();
@@ -838,14 +842,18 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     when(mockExternalSourceRootFile.listFiles()).thenReturn(
         List.of(spyExternalDependencyRoot).toArray(File[]::new));
 
-    doReturn(mockExternalSourceRootFile.listFiles()).when(spyFileOperationProvider)
-        .listFiles(externalRoot);
+   try (MockedStatic<WorkspaceHelper> mockedStatic = Mockito.mockStatic(WorkspaceHelper.class)) {
+     mockedStatic.when(
+         () -> WorkspaceHelper.getExternalWorkspace(Mockito.any(MockProject.class),
+             Mockito.any(String.class))).thenReturn(new WorkspaceRoot(spyExternalDependencyRoot));
 
-    assertThatResolving(projectView,targetMap).producesConfigurationsFor("//test:target and 1 other target(s)");
-    assertThat(resolverResult.getAllConfigurations().get(0).getTargets().stream()
-        .map(targetKey -> targetKey.getLabel().toString())
-        .collect(Collectors.toList())).containsAllOf("//test:target",
-        "@external_dependency//foo:bar");
+     assertThatResolving(projectView, targetMap).producesConfigurationsFor(
+         "//test:target and 1 other target(s)");
+     assertThat(resolverResult.getAllConfigurations().get(0).getTargets().stream()
+         .map(targetKey -> targetKey.getLabel().toString())
+         .collect(Collectors.toList())).containsAtLeast("//test:target",
+         "@external_dependency//foo:bar");
+   }
   }
 
   @Test
@@ -891,7 +899,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
         .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
         .setCToolchainInfo(
             CToolchainIdeInfo.builder()
-                .setCppExecutable(new ExecutionRootPath("cc"))
+                .setCCppCompiler(new ExecutionRootPath("cc"))
                 .setTargetName("toolchain"));
   }
 

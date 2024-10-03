@@ -1,3 +1,7 @@
+load("//:build-visibility.bzl", "DEFAULT_TEST_VISIBILITY")
+
+package(default_visibility = DEFAULT_TEST_VISIBILITY)
+
 java_test(
     name = "BuildGraphDataTest",
     srcs = ["BuildGraphDataTest.java"],
@@ -29,18 +33,6 @@ java_test(
 )
 
 java_test(
-    name = "TargetTreeTest",
-    size = "small",
-    srcs = ["TargetTreeTest.java"],
-    deps = [
-        "//querysync/java/com/google/idea/blaze/qsync/project",
-        "//shared",
-        "@junit//jar",
-        "@truth//jar",
-    ],
-)
-
-java_test(
     name = "ProjectDefinitionTest",
     size = "small",
     srcs = ["ProjectDefinitionTest.java"],
@@ -60,6 +52,18 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//querysync/java/com/google/idea/blaze/qsync/project:language_class_java_proto",
         "@com_google_protobuf//:protobuf_java",
+        "@junit//jar",
+        "@truth//jar",
+    ],
+)
+
+java_test(
+    name = "TestSourceGlobMatcherTest",
+    size = "small",
+    srcs = ["TestSourceGlobMatcherTest.java"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync/project",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
         "@truth//jar",
     ],

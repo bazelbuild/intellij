@@ -17,6 +17,7 @@ package com.google.idea.blaze.qsync.project;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import java.nio.file.Path;
 
@@ -41,6 +42,11 @@ public abstract class ProjectPath {
 
   public ProjectPath withInnerJarPath(Path inner) {
     return create(rootType(), relativePath(), inner);
+  }
+
+  public ProjectPath resolveChild(Path child) {
+    Preconditions.checkState(!child.isAbsolute(), child);
+    return create(rootType(), relativePath().resolve(child));
   }
 
   public ProjectProto.ProjectPath toProto() {

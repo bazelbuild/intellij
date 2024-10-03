@@ -15,7 +15,9 @@
  */
 package com.google.idea.blaze.base.filecache;
 
+import com.google.common.base.Preconditions;
 import com.google.devtools.intellij.model.ProjectData.LocalFileOrOutputArtifact;
+import com.google.idea.blaze.common.artifact.ArtifactState;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import javax.annotation.Nullable;
 
@@ -44,5 +46,10 @@ public interface ArtifactStateProtoConverter {
       }
     }
     return null;
+  }
+
+  static LocalFileOrOutputArtifact toProto(ArtifactState artifactState) {
+    Preconditions.checkState(artifactState instanceof SerializableArtifactState);
+    return ((SerializableArtifactState) artifactState).serializeToProto();
   }
 }

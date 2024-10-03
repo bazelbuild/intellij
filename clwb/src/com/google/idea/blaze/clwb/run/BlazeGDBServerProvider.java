@@ -24,6 +24,7 @@ import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.cpp.toolchains.CPPDebugger;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
@@ -50,9 +51,6 @@ public class BlazeGDBServerProvider {
         }
       };
 
-  private static final BoolExperiment useRemoteDebugging =
-      new BoolExperiment("cc.remote.debugging", true);
-
   private static final BoolExperiment useRemoteDebuggingWrapper =
       new BoolExperiment("cc.remote.debugging.wrapper", true);
 
@@ -60,7 +58,7 @@ public class BlazeGDBServerProvider {
   // is enabled (cc.remote.debugging)
   private static final ImmutableList<String> EXTRA_FLAGS_FOR_DEBUG_RUN =
       ImmutableList.of(
-          "--compilation_mode=dbg", "--strip=never", "--dynamic_mode=off", "--fission=yes");
+          "--compilation_mode=dbg", "--strip=never", "--dynamic_mode=off");
 
   // These flags are used when debugging cc_test targets when remote debugging
   // is enabled (cc.remote.debugging)
@@ -69,20 +67,19 @@ public class BlazeGDBServerProvider {
           "--compilation_mode=dbg",
           "--strip=never",
           "--dynamic_mode=off",
-          "--fission=yes",
           "--test_timeout=3600",
           BlazeFlags.NO_CACHE_TEST_RESULTS,
           BlazeFlags.EXCLUSIVE_TEST_EXECUTION,
           BlazeFlags.DISABLE_TEST_SHARDING);
 
-  static boolean shouldUseGdbserver() {
-    // Only provide support for Linux for now:
-    // - Mac does not have gdbserver, so use the old gdb method for debugging
-    // - Windows does not support the gdbwrapper script
-    if (!SystemInfo.isLinux) {
-      return false;
+  // Allows the fission flag to be disabled as workaround for
+  // https://github.com/bazelbuild/intellij/issues/5604
+  static ImmutableList<String> getOptionalFissionArguments() {
+    if(Registry.is("bazel.clwb.debug.fission.disabled")) {
+      return ImmutableList.of();
+    } else {
+      return ImmutableList.of("--fission=yes");
     }
-    return useRemoteDebugging.getValue();
   }
 
   static ImmutableList<String> getFlagsForDebugging(RunConfigurationState state) {
@@ -118,10 +115,12 @@ public class BlazeGDBServerProvider {
     }
     if (BlazeCommandName.RUN.equals(commandName)) {
       builder.addAll(EXTRA_FLAGS_FOR_DEBUG_RUN);
+      builder.addAll(getOptionalFissionArguments());
       return builder.build();
     }
     if (BlazeCommandName.TEST.equals(commandName)) {
       builder.addAll(EXTRA_FLAGS_FOR_DEBUG_TEST);
+      builder.addAll(getOptionalFissionArguments());
       return builder.build();
     }
     return ImmutableList.of();
@@ -131,12 +130,7 @@ public class BlazeGDBServerProvider {
   private static String getGDBServerPath(CPPToolchains.Toolchain toolchain) {
     String gdbPath;
 
-    if (!shouldUseGdbserver()) {
-      logger.error(
-          "Trying to resolve gdbserver executable for " + SystemInfo.getOsNameAndVersion());
-      return null;
-    }
-
+    // TODO: this still depends on the default toolchain
     CPPDebugger.Kind debuggerKind = toolchain.getDebuggerKind();
     switch (debuggerKind) {
       case CUSTOM_GDB:

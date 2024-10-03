@@ -26,14 +26,25 @@ import java.util.function.Supplier;
 /** Holder class for basic information about querysync, e.g. is it enabled? */
 public class QuerySync {
 
+  public static final String BUILD_DEPENDENCIES_ACTION_NAME = "Enable analysis";
+
   private static final FeatureRolloutExperiment ENABLED =
       new FeatureRolloutExperiment("query.sync");
+
+  public static final BoolExperiment ENABLE_QUERY_SYNC_BY_PROJECT_VIEW =
+      new BoolExperiment("query.sync.projectview", true);
 
   public static final BoolExperiment USE_NEW_RES_DIR_LOGIC =
       new BoolExperiment("query.sync.new.resdir.logic", true);
 
   public static final BoolExperiment EXTRACT_RES_PACKAGES_AT_BUILD_TIME =
       new BoolExperiment("query.sync.respackages.at.build.time", true);
+
+  public static final BoolExperiment ATTACH_DEP_SRCJARS =
+      new BoolExperiment("querysync.attach.dep.srcjars", true);
+
+  public static final boolean USE_NEW_BUILD_ARTIFACT_MANAGEMENT =
+      new BoolExperiment("query.sync.new.artifact.management", false).getValue();
 
   /**
    * Previously, query sync was enabled by an experiment. Some users still have that experiment set

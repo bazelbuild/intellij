@@ -51,7 +51,7 @@ public abstract class ScalarSectionParser<T> extends SectionParser {
     String rest = line.text.substring(name.length() + 1).trim();
     parseContext.consume();
     T item = parseItem(parser, parseContext, rest);
-    return item != null ? new ScalarSection<>(key, item) : null;
+    return item != null ? new ScalarSection<>(key, item, parseContext.getCurrentLineIndex()) : null;
   }
 
   @SuppressWarnings("unchecked")

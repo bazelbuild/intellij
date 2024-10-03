@@ -1,10 +1,6 @@
 name: Feature Request
 description: Suggest a new feature
 labels: ["type: feature request", "awaiting-maintainer"]
-assignees:
-  - rakshitasingh05
-  - sgowroji
-  - iancha1992
 body:
   - type: markdown
     attributes:
@@ -17,6 +13,18 @@ body:
     attributes:
       label: >
         Description of the feature request:
+  - type: dropdown
+    id: subteam
+    attributes:
+      label: Which category does this issue belong to?
+      description: Help us triage this issue faster and more accurately to the relevant team(s).
+      multiple: true
+      options:
+        - Intellij
+        - GoLand
+        - CLion
+        - PyCharm
+        - Android Studio
   - type: textarea
     id: problem
     attributes:

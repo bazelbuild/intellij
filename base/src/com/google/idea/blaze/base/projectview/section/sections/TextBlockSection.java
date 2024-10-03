@@ -33,7 +33,7 @@ public final class TextBlockSection extends Section<TextBlock> {
   private final TextBlock textBlock;
 
   public TextBlockSection(TextBlock textBlock) {
-    super(KEY);
+    super(KEY, textBlock.firstLineIndex);
     this.textBlock = textBlock;
   }
 
@@ -104,6 +104,7 @@ public final class TextBlockSection extends Section<TextBlock> {
 
     @Nullable
     private static TextBlock parseTextBlock(ParseContext parseContext, Pattern regex) {
+      int firstBlockLineNumber = parseContext.getCurrentLineIndex();
       ImmutableList.Builder<String> lines = null;
       int indent = -1;
       while (!parseContext.atEnd()) {
@@ -124,7 +125,7 @@ public final class TextBlockSection extends Section<TextBlock> {
       if (lines == null) {
         return null;
       }
-      return new TextBlock(lines.build());
+      return new TextBlock(lines.build(), firstBlockLineNumber);
     }
 
     @Override

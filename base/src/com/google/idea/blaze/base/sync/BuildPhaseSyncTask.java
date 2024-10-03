@@ -16,11 +16,13 @@
 package com.google.idea.blaze.base.sync;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.idea.blaze.base.issueparser.BlazeIssueParser.targetDetectionQueryParsers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
@@ -44,9 +46,11 @@ import com.google.idea.blaze.base.scope.output.SummaryOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput.Prefix;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
+import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.SyncProjectTargetsHelper.ProjectTargets;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
@@ -61,6 +65,7 @@ import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedT
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.sharding.SuggestBuildShardingNotification;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
+import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
@@ -70,6 +75,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /** Runs the 'blaze build' phase of sync. */
 public final class BuildPhaseSyncTask {
@@ -91,7 +97,7 @@ public final class BuildPhaseSyncTask {
       int buildId,
       BlazeContext context,
       BuildSystem buildSystem)
-      throws SyncCanceledException, SyncFailedException {
+      throws SyncCanceledException, SyncFailedException, ExecutionException, InterruptedException {
     BuildPhaseSyncTask task =
         new BuildPhaseSyncTask(project, syncParams, projectState, buildId, buildSystem);
     return task.run(context);
@@ -125,7 +131,7 @@ public final class BuildPhaseSyncTask {
   }
 
   private BlazeSyncBuildResult run(BlazeContext parentContext)
-      throws SyncCanceledException, SyncFailedException {
+      throws SyncCanceledException, SyncFailedException, ExecutionException, InterruptedException {
     // run under a child context to capture all timing information before finalizing the stats
     try (BlazeContext context = BlazeContext.create(parentContext)) {
       TimingScope timingScope = new TimingScope("Build phase", EventType.Other);
@@ -144,7 +150,7 @@ public final class BuildPhaseSyncTask {
         .forEach(l -> l.buildStarted(project, context, fullProjectSync, buildId, targets));
   }
 
-  private void doRun(BlazeContext context) throws SyncFailedException, SyncCanceledException {
+  private void doRun(BlazeContext context) throws SyncFailedException, SyncCanceledException, ExecutionException, InterruptedException {
     List<TargetExpression> targets = Lists.newArrayList();
     ProjectViewSet viewSet = projectState.getProjectViewSet();
     if (syncParams.addWorkingSet() && projectState.getWorkingSet() != null) {
@@ -324,7 +330,7 @@ public final class BuildPhaseSyncTask {
       new BoolExperiment("query.working.set.targets", true);
 
   private Collection<TargetExpression> getWorkingSetTargets(BlazeContext context)
-      throws SyncCanceledException, SyncFailedException {
+      throws SyncCanceledException, SyncFailedException, ExecutionException, InterruptedException {
     WorkingSet workingSet = projectState.getWorkingSet();
     if (workingSet == null) {
       return ImmutableList.of();
@@ -359,7 +365,7 @@ public final class BuildPhaseSyncTask {
    */
   private ImmutableList<TargetExpression> findTargetsBuildingSourceFiles(
       Collection<WorkspacePath> sources, BlazeContext context)
-      throws SyncCanceledException, SyncFailedException {
+      throws SyncCanceledException, SyncFailedException, ExecutionException, InterruptedException {
     ImportRoots importRoots = getImportRoots();
     ImmutableList.Builder<TargetExpression> targets = ImmutableList.builder();
     ImmutableList.Builder<WorkspacePath> pathsToQuery = ImmutableList.builder();
@@ -377,17 +383,30 @@ public final class BuildPhaseSyncTask {
       }
       pathsToQuery.add(source);
     }
+    String title = "Query targets building source files";
     List<TargetInfo> result =
-        Scope.push(
-            context,
-            childContext -> {
-              childContext.push(new TimingScope("QuerySourceTargets", EventType.BlazeInvocation));
-              childContext.output(new StatusOutput("Querying targets building source files..."));
-              // We don't want blaze build errors to fail the whole sync
-              childContext.setPropagatesErrors(false);
-              return BlazeQuerySourceToTargetProvider.getTargetsBuildingSourceFiles(
-                  project, pathsToQuery.build(), childContext, ContextType.Sync);
-            });
+        ProgressiveTaskWithProgressIndicator.builder(project, title).submitTaskWithResult(
+            indicator -> Scope.push(
+                context,
+                childContext -> {
+                  childContext.push(new TimingScope("QuerySourceTargets", EventType.BlazeInvocation));
+                  childContext.output(new StatusOutput("Querying targets building source files..."));
+                  var scope = childContext.getScope(ToolWindowScope.class);
+                  if(scope != null) { // If ToolWindowScope doesn't already exist, it means the output is not supposed to be printed to toolwindow (for example in tests)
+                    var task = new Task(project, title, Task.Type.SYNC, scope.getTask());
+                    var newScope = new ToolWindowScope.Builder(project, task)
+                        .setProgressIndicator(indicator)
+                        .setPopupBehavior(BlazeUserSettings.FocusBehavior.ON_ERROR)
+                        .setIssueParsers(targetDetectionQueryParsers(project, WorkspaceRoot.fromProject(project)))
+                        .build();
+                    childContext.push(newScope);
+                  }
+
+                  // We don't want blaze build errors to fail the whole sync
+                  childContext.setPropagatesErrors(false);
+                  return BlazeQuerySourceToTargetProvider.getTargetsBuildingSourceFiles(
+                      project, pathsToQuery.build(), childContext, ContextType.Sync);
+                })).get(); // We still call no-timeout waitFor in ExternalTask.run()
     if (context.isCancelled()) {
       throw new SyncCanceledException();
     }

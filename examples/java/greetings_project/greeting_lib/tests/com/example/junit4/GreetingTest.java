@@ -10,18 +10,19 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 public class GreetingTest {
-   @Test
+
+    @Test
     public void testGreetNoNames() {
        List<String> got = Greeting.getGreetings("greetings", Collections.emptyList());
        assertEquals(0, got.size());
-   }
+    }
 
     @Test
     public void testGreetOneName() {
         List<String> got = Greeting.getGreetings("greetings", Collections.singletonList("name"));
         assertEquals(1, got.size());
         assertEquals("greetings name!", got.get(0));
-   }
+    }
 
     @Test
     public void testGreetMultipleNames() {

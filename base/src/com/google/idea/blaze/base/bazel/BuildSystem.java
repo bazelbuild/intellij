@@ -46,6 +46,8 @@ public interface BuildSystem {
   enum SyncStrategy {
     /** Never parallelize sync builds. */
     SERIAL,
+    /* Never parallelize and expand builds */
+    SERIAL_NOT_EXPAND,
     /** Parallelize sync builds if it's deemed likely that doing so will be faster. */
     DECIDE_AUTOMATICALLY,
     /** Always parallelize sync builds. */
@@ -130,6 +132,9 @@ public interface BuildSystem {
   /** Populates the passed builder with version data. */
   void populateBlazeVersionData(
       WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo, BlazeVersionData.Builder builder);
+
+  /** Get bazel only version. Returns empty if it's not bazel project. */
+  Optional<String> getBazelVersionString(BlazeInfo blazeInfo);
 
   /**
    * Returns the parallel invoker if the sync strategy is PARALLEL and the system supports it;

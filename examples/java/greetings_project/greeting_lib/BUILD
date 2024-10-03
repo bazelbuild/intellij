@@ -54,3 +54,12 @@ java_junit5_test(
         ":greeting_lib",
     ] + JUNIT5_DEPS,
 )
+
+java_test(
+    name = "env_vars_test",
+    srcs = ["tests/com/example/EnvVarsTest.java"],
+    test_class = "com.example.EnvVarsTest",
+    deps = [
+        "@junit//jar",
+    ],
+)

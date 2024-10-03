@@ -16,18 +16,24 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Set;
 
-/** A local cache of built render jarss. */
+/** A local cache of built render jars. */
 public interface RenderJarArtifactTracker {
 
-  /** Fetches, caches and sets up new render jar artifacts. */
-  ArtifactTrackerUpdateResult update(
-      Set<Label> targets, RenderJarInfo renderJarInfo, BlazeContext context) throws BuildException;
+  /**
+   * Fetches, caches and sets up new render jar artifacts.
+   *
+   * @return The set of files that were updated.
+   */
+  ImmutableSet<Path> update(Set<Label> targets, RenderJarInfo renderJarInfo, BlazeContext context)
+      throws BuildException;
 
   /** Returns the list of render jars */
   ImmutableList<File> getRenderJars();

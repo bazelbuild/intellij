@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsSc
 import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.intellij.icons.AllIcons.Actions;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -76,6 +77,11 @@ public class ComposePreviewQuerySyncInspectionWidgetActionProvider
               psiFile,
               QuerySyncActionStatsScope.createForFile(getClass(), e, psiFile.getVirtualFile()),
               TaskOrigin.USER_ACTION);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

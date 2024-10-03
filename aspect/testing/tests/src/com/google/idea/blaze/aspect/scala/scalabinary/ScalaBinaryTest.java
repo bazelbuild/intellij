@@ -44,13 +44,15 @@ public class ScalaBinaryTest extends BazelIntellijAspectTest {
     assertThat(binaryInfo.getJavaIdeInfo().getMainClass()).isEqualTo("com.google.MyMainClass");
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative(intellijInfoFileName("foolib")),
             testRelative(intellijInfoFileName("foo")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
-        .containsAllOf(testRelative("foolib.jar"), testRelative("foo.jar"));
+        .contains(testRelative("foo.jar"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
+            .doesNotContain(testRelative("libfoo.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
-        .containsAllOf(testRelative("foolib.jar"), testRelative("foo.jar"));
+        .containsAtLeast(testRelative("foolib.jar"), testRelative("foo.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
   }
 }

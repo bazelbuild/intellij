@@ -15,45 +15,51 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.idea.blaze.base.qsync.QuerySyncManager.OperationType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.intellij.openapi.project.Project;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** Class that keeps track of query sync operations. */
 public class QuerySyncStatus {
 
   private final Project project;
-  private final AtomicBoolean syncInProgress = new AtomicBoolean(false);
+  private final AtomicReference<OperationType> currentOperation = new AtomicReference<>(null);
 
   public QuerySyncStatus(Project project) {
     this.project = project;
   }
 
-  public boolean syncInProgress() {
-    return syncInProgress.get();
+  public boolean operationInProgress() {
+    return currentOperation.get() != null;
   }
 
-  public void syncStarted() {
-    syncInProgress.set(true);
+  public void operationStarted(OperationType operationType) {
+    currentOperation.set(operationType);
     BlazeSyncStatus.getInstance(project).syncStarted();
   }
 
-  public void syncCancelled() {
-    syncEnded(SyncResult.CANCELLED);
+  public void operationCancelled() {
+    operationEnded(SyncResult.CANCELLED);
   }
 
-  public void syncFailed() {
-    syncEnded(SyncResult.FAILURE);
+  public void operationFailed() {
+    operationEnded(SyncResult.FAILURE);
   }
 
-  public void syncEnded() {
-    syncEnded(SyncResult.SUCCESS);
+  public void operationEnded() {
+    operationEnded(SyncResult.SUCCESS);
   }
 
-  private void syncEnded(SyncResult result) {
-    syncInProgress.set(false);
+  private void operationEnded(SyncResult result) {
+    currentOperation.set(null);
     BlazeSyncStatus.getInstance(project).syncEnded(SyncMode.FULL, result);
+  }
+
+  public Optional<OperationType> currentOperation() {
+    return Optional.ofNullable(currentOperation.get());
   }
 }

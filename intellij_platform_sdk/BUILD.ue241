@@ -74,7 +74,7 @@ java_import(
 
 java_import(
     name = "javascript",
-    jars = glob(["plugins/javascript-impl/lib/*.jar"]),
+    jars = glob(["plugins/javascript-plugin/lib/*.jar"]),
 )
 
 java_import(
@@ -153,6 +153,11 @@ java_import(
         "plugins/properties/lib/*.jar",
     ]),
     tags = ["intellij-provided-by-sdk"],
+)
+
+java_import(
+    name = "json",
+    jars = glob(["plugins/json/lib/*.jar"])
 )
 
 filegroup(

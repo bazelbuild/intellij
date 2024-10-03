@@ -20,11 +20,10 @@ licenses(["notice"])
 
 java_library(
     name = "v241",
-    srcs = ["com/google/idea/sdkcompat/refactoring/rename/DelegatingRenamePsiElementProcessorBase.java"] + glob([
+    srcs = glob([
         "com/google/idea/sdkcompat/editor/**",
         "com/google/idea/sdkcompat/general/**",
         "com/google/idea/sdkcompat/fig/**",
-        "com/google/idea/sdkcompat/logging/**",
         "com/google/idea/sdkcompat/platform/**",
         "com/google/idea/sdkcompat/psi/**",
         "com/google/idea/sdkcompat/python/**",

@@ -34,10 +34,10 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
@@ -273,33 +273,34 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
       Label label,
       FastBuildParameters buildParameters,
       BuildResultHelper resultHelper) {
+    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+    BlazeInfo blazeInfo = getBlazeInfo(context, buildParameters);
+
+    BlazeVersionData blazeVersionData =
+        BlazeVersionData.build(
+            Blaze.getBuildSystemProvider(project).getBuildSystem(), workspaceRoot, blazeInfo);
+
     FastBuildDeployJarStrategy deployJarStrategy =
         FastBuildDeployJarStrategy.getInstance(Blaze.getBuildSystemName(project));
-    Label deployJarLabel = deployJarStrategy.createDeployJarLabel(label);
+    Label deployJarLabel = deployJarStrategy.createDeployJarLabel(label, blazeVersionData);
     context.output(
         new StatusOutput(
             "Building base deploy jar for fast builds: " + deployJarLabel.targetName()));
 
-    BlazeInfo blazeInfo = getBlazeInfo(context, buildParameters);
     FastBuildAspectStrategy aspectStrategy =
         FastBuildAspectStrategy.getInstance(Blaze.getBuildSystemName(project));
 
     Stopwatch timer = Stopwatch.createStarted();
 
     BlazeCommand.Builder command =
-        BlazeCommand.builder(buildParameters.blazeBinary(), BlazeCommandName.BUILD)
-            .addTargets(deployJarStrategy.getBuildTargets(label))
-            .addBlazeFlags(deployJarStrategy.getBuildFlags())
+        BlazeCommand.builder(buildParameters.blazeBinary(), BlazeCommandName.BUILD, project)
+            .addTargets(deployJarStrategy.getBuildTargets(label, blazeVersionData))
+            .addBlazeFlags(deployJarStrategy.getBuildFlags(blazeVersionData))
             .addBlazeFlags(buildParameters.buildFlags())
             .addBlazeFlags(resultHelper.getBuildFlags());
 
-    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-
     aspectStrategy.addAspectAndOutputGroups(
-        command,
-        BlazeVersionData.build(
-            Blaze.getBuildSystemProvider(project).getBuildSystem(), workspaceRoot, blazeInfo),
-        /* additionalOutputGroups...= */ "default");
+        command, blazeVersionData, /* additionalOutputGroups...= */ "default");
 
     int exitCode =
         ExternalTask.builder(workspaceRoot)
@@ -320,16 +321,16 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     Predicate<String> jarPredicate = file -> file.endsWith(deployJarLabel.targetName().toString());
     try {
       ImmutableList<File> deployJarArtifacts =
-          BlazeArtifact.getLocalFiles(
+          LocalFileArtifact.getLocalFiles(
               resultHelper.getBuildArtifactsForTarget(
-                  deployJarStrategy.deployJarOwnerLabel(label), jarPredicate));
+                  deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData), jarPredicate));
       checkState(deployJarArtifacts.size() == 1);
       File deployJar = deployJarArtifacts.get(0);
 
       Predicate<String> filePredicate =
           file -> aspectStrategy.getAspectOutputFilePredicate().test(file);
       ImmutableList<File> ideInfoFiles =
-          BlazeArtifact.getLocalFiles(
+          LocalFileArtifact.getLocalFiles(
               resultHelper.getArtifactsForOutputGroup(
                   aspectStrategy.getAspectOutputGroup(), filePredicate));
 

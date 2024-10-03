@@ -16,13 +16,13 @@
 package com.google.idea.blaze.qsync.project;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth8.assertThat;
 import static com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation.ADD;
 import static com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation.DELETE;
 import static com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation.MODIFY;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.truth.Truth8;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
 import com.google.idea.blaze.qsync.query.QuerySummaryTestUtil;
@@ -33,6 +33,8 @@ import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+
 
 @RunWith(JUnit4.class)
 public class SnapshotSerializationTest {
@@ -65,7 +67,7 @@ public class SnapshotSerializationTest {
             .readFrom(new ByteArrayInputStream(serialized), NOOP_CONTEXT)
             .get()
             .getSyncData();
-    assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
+    Truth8.assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
     assertThat(deserialized).isEqualTo(original);
   }
 
@@ -91,7 +93,7 @@ public class SnapshotSerializationTest {
             .readFrom(new ByteArrayInputStream(serialized), NOOP_CONTEXT)
             .get()
             .getSyncData();
-    assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
+    Truth8.assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
     assertThat(deserialized).isEqualTo(original);
   }
 
@@ -114,7 +116,7 @@ public class SnapshotSerializationTest {
             .readFrom(new ByteArrayInputStream(serialized), NOOP_CONTEXT)
             .get()
             .getSyncData();
-    assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
+    Truth8.assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
     assertThat(deserialized).isEqualTo(original);
   }
 
@@ -132,7 +134,7 @@ public class SnapshotSerializationTest {
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//project/path:path"))
             .build();
     byte[] serialized = new SnapshotSerializer(-1).visit(original).toProto().toByteArray();
-    assertThat(
+    Truth8.assertThat(
             new SnapshotDeserializer().readFrom(new ByteArrayInputStream(serialized), NOOP_CONTEXT))
         .isEmpty();
   }

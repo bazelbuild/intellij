@@ -32,7 +32,7 @@ licenses(["notice"])
 
 optional_plugin_xml(
     name = "optional_java",
-    module = "com.intellij.java",
+    module = ["com.intellij.java"],
     plugin_xml = "src/META-INF/java-contents.xml",
 )
 
@@ -110,6 +110,7 @@ repackaged_files(
     prefix = "ijwb/aspect",
     strip_prefix = "/aspect",
     visibility = IJWB_PACKAGES_VISIBILIY,
+    java_copts = ["-source", "8", "-target", "8"],
 )
 
 repackaged_files(
@@ -117,6 +118,7 @@ repackaged_files(
     srcs = ["//java:fast_build_javac"],
     prefix = "ijwb/lib",
     visibility = IJWB_PACKAGES_VISIBILIY,
+    java_copts = ["-source", "8", "-target", "8"],
 )
 
 intellij_plugin_debug_target(
@@ -174,5 +176,6 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "@com_google_guava_guava//jar",
         "@junit//jar",
+        "@org_opentest4j_opentest4j//jar",
     ],
 )

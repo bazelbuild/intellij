@@ -17,11 +17,13 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -29,13 +31,15 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import com.intellij.openapi.diagnostic.Logger;
+
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
+
 import org.jetbrains.annotations.Nullable;
 
 /** Implementation of {@link BlazeProjectData} specific to querysync. */
@@ -145,18 +149,21 @@ public class QuerySyncProjectData implements BlazeProjectData {
     //  assumes that the base VCS revision is a decimal integer, which may not be true.
     logger.warn("Usage of legacy getBlazeVersionData");
     BlazeVersionData.Builder data = BlazeVersionData.builder();
-    String baseRev =
-        blazeProject
-            .flatMap(p -> p.queryData().vcsState())
-            .map(q -> q.upstreamRevision)
-            .orElse(null);
-    if (baseRev != null) {
-      try {
-        data.setClientCl(Long.parseLong(baseRev));
-      } catch (NumberFormatException e) {
-        logger.warn(e);
-      }
-    }
+    blazeProject
+        .flatMap(p -> p.queryData().vcsState())
+        .map(q -> q.upstreamRevision)
+        .ifPresent(
+            revision -> {
+              try {
+                data.setClientCl(Long.parseLong(revision));
+              } catch (NumberFormatException e) {
+                logger.warn(e);
+              }
+            });
+    blazeProject
+        .flatMap(p -> p.queryData().bazelVersion())
+        .ifPresent(version -> data.setBazelVersion(BazelVersion.parseVersion(version)));
+
     return data.build();
   }
 
@@ -168,6 +175,11 @@ public class QuerySyncProjectData implements BlazeProjectData {
   @Override
   public RemoteOutputArtifacts getRemoteOutputs() {
     throw new NotSupportedWithQuerySyncException("getRemoteOutputs");
+  }
+
+  @Override
+  public ExternalWorkspaceData getExternalWorkspaceData() {
+    throw new NotSupportedWithQuerySyncException("getExternalWorkspaceData");
   }
 
   @Override

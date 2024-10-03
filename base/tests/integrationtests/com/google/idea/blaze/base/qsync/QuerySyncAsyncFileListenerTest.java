@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.common.truth.Truth.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
@@ -22,12 +23,14 @@ import static org.mockito.Mockito.verify;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.qsync.QuerySyncAsyncFileListener.SyncRequester;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4;
+import com.intellij.testFramework.PlatformTestUtil;
 import java.nio.file.Path;
 import org.junit.Rule;
 import org.junit.Test;
@@ -64,6 +67,8 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
         .addFileToProject(
             INCLUDED_DIRECTORY.resolve("java/com/example/Class1.java").toString(),
             "package com.example;public class Class1{}");
+    ApplicationManager.getApplication()
+        .invokeAndWait(PlatformTestUtil::dispatchAllEventsInIdeEventQueue);
     verify(mockSyncRequester, atLeastOnce()).requestSync();
   }
 
@@ -80,6 +85,8 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
         .addFileToProject(
             INCLUDED_DIRECTORY.resolve("java/com/example/Class1.java").toString(),
             "package com.example;public class Class1{}");
+    ApplicationManager.getApplication()
+        .invokeAndWait(PlatformTestUtil::dispatchAllEventsInIdeEventQueue);
     verify(mockSyncRequester, never()).requestSync();
   }
 
@@ -96,6 +103,8 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
     getFixture()
         .addFileToProject(
             "some/other/path/Class1.java", "package some.other.path;public class Class1{}");
+    ApplicationManager.getApplication()
+        .invokeAndWait(PlatformTestUtil::dispatchAllEventsInIdeEventQueue);
     verify(mockSyncRequester, never()).requestSync();
   }
 
@@ -123,6 +132,8 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
                 .moveFile(
                     INCLUDED_DIRECTORY.resolve("java/com/example/Class1.java").toString(),
                     INCLUDED_DIRECTORY.resolve("submodule/java/com/example").toString()));
+    ApplicationManager.getApplication()
+        .invokeAndWait(PlatformTestUtil::dispatchAllEventsInIdeEventQueue);
     verify(mockSyncRequester, atLeastOnce()).requestSync();
   }
 
@@ -133,7 +144,7 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
             INCLUDED_DIRECTORY.resolve("java/com/example/Class1.java").toString(),
             "package com.example;public class Class1 {}");
 
-    QuerySyncAsyncFileListener fileListener =
+    TestListener fileListener =
         new TestListener(getFixture().getProject(), mockSyncRequester)
             .setProjectInclude(projectRootPath().resolve(INCLUDED_DIRECTORY))
             .setAutoSync(true);
@@ -149,8 +160,11 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
         () ->
             vf.setBinaryContent(
                 "/**LICENSE-TEXT*/package com.example;public class Class1{}".getBytes(UTF_8)));
+    ApplicationManager.getApplication()
+        .invokeAndWait(PlatformTestUtil::dispatchAllEventsInIdeEventQueue);
 
     verify(mockSyncRequester, never()).requestSync();
+    assertThat(fileListener.hasModifiedBuildFiles()).isFalse();
   }
 
   @Test
@@ -159,7 +173,7 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
         .addFileToProject(
             INCLUDED_DIRECTORY.resolve("BUILD").toString(), "java_library(name=\"java\",srcs=[])");
 
-    QuerySyncAsyncFileListener fileListener =
+    TestListener fileListener =
         new TestListener(getFixture().getProject(), mockSyncRequester)
             .setProjectInclude(projectRootPath().resolve(INCLUDED_DIRECTORY))
             .setAutoSync(true);
@@ -172,8 +186,11 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
         () ->
             vf.setBinaryContent(
                 "/**LICENSE-TEXT*/java_library(name=\"javalib\",srcs=[])".getBytes(UTF_8)));
+    ApplicationManager.getApplication()
+        .invokeAndWait(PlatformTestUtil::dispatchAllEventsInIdeEventQueue);
 
     verify(mockSyncRequester, atLeastOnce()).requestSync();
+    assertThat(fileListener.hasModifiedBuildFiles()).isTrue();
   }
 
   /**

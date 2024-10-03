@@ -563,7 +563,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
         .setLabel("//:toolchain")
         .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
         .setCToolchainInfo(
-            CToolchainIdeInfo.builder().setCppExecutable(new ExecutionRootPath("cc")));
+            CToolchainIdeInfo.builder().setCCppCompiler(new ExecutionRootPath("cc")));
   }
 
   private static ListSection<DirectoryEntry> directories(String... directories) {

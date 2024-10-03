@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,8 @@ import javax.swing.Icon;
 
 /** The data relevant to finding file lookups. */
 public class FileLookupData {
-  private static final ImmutableSet<String> BUILDFILE_NAMES = ImmutableSet.of("BUILD", "BUILD.bazel");
+  private static final ImmutableSet<String> BUILDFILE_NAMES =
+      ImmutableSet.of("BUILD", "BUILD.bazel");
 
   /** The type of path string format */
   public enum PathFormat {
@@ -70,7 +71,9 @@ public class FileLookupData {
       return null;
     }
     // handle the single '/' case by calling twice.
-    String relativePath = StringUtil.trimStart(StringUtil.trimStart(originalLabel, "/"), "/");
+    String relativePath =
+        StringUtil.trimStart(
+            StringUtil.trimStart(LabelUtils.getPackagePathComponent(originalLabel), "/"), "/");
     if (relativePath.startsWith("/")) {
       return null;
     }
@@ -119,6 +122,7 @@ public class FileLookupData {
   private final BuildFile containingFile;
   @Nullable private final String containingPackage;
   public final String filePathFragment;
+  @Nullable public final String externalWorkspace;
   public final PathFormat pathFormat;
   private final QuoteType quoteType;
   @Nullable private final VirtualFileFilter fileFilter;
@@ -139,6 +143,7 @@ public class FileLookupData {
     this.filePathFragment = filePathFragment;
     this.pathFormat = pathFormat;
     this.quoteType = quoteType;
+    this.externalWorkspace = LabelUtils.getExternalWorkspaceComponent(originalLabel);
 
     assert (pathFormat != PathFormat.PackageLocal
         || (containingPackage != null && containingFile != null));
@@ -187,6 +192,9 @@ public class FileLookupData {
     if (pathFormat != PathFormat.PackageLocal) {
       if (pathFormat == PathFormat.NonLocal) {
         relativePath = "//" + relativePath;
+        if (externalWorkspace != null) {
+          relativePath = "@" + externalWorkspace + relativePath;
+        }
       }
       return relativePath;
     }

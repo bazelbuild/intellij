@@ -16,9 +16,9 @@
 package com.google.idea.blaze.common;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth8.assertThat;
 import static org.junit.Assert.assertThrows;
 
+import com.google.common.truth.Truth8;
 import java.nio.file.Path;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,89 +29,91 @@ public class LabelTest {
 
   @Test
   public void testGetPackage_nonEmpty() {
-    assertThat(new Label("//package/path:rule").getPackage()).isEqualTo(Path.of("package/path"));
+    Truth8.assertThat(Label.of("//package/path:rule").getPackage())
+        .isEqualTo(Path.of("package/path"));
   }
 
   @Test
   public void testGetPackage_withWorkspace() {
-    assertThat(new Label("@myws//package/path:rule").getPackage())
+    Truth8.assertThat(Label.of("@myws//package/path:rule").getPackage())
         .isEqualTo(Path.of("package/path"));
   }
 
   @Test
   public void testGetName_simple() {
-    assertThat(new Label("//package/path:rule").getName()).isEqualTo(Path.of("rule"));
+    Truth8.assertThat(Label.of("//package/path:rule").getName()).isEqualTo(Path.of("rule"));
   }
 
   @Test
   public void testGetName_withWorkspace() {
-    assertThat(new Label("@someworkspace//package/path:rule").getName()).isEqualTo(Path.of("rule"));
+    Truth8.assertThat(Label.of("@someworkspace//package/path:rule").getName())
+        .isEqualTo(Path.of("rule"));
   }
 
   @Test
   public void testGetPackage_empty() {
-    assertThat(new Label("//:rule").getPackage()).isEqualTo(Path.of(""));
+    Truth8.assertThat(Label.of("//:rule").getPackage()).isEqualTo(Path.of(""));
   }
 
   @Test
   public void testGetPackage_empty_withWorkspace() {
-    assertThat(new Label("@workspace//:rule").getPackage()).isEqualTo(Path.of(""));
+    Truth8.assertThat(Label.of("@workspace//:rule").getPackage()).isEqualTo(Path.of(""));
   }
 
   @Test
   public void testGetName_withDirectory() {
-    assertThat(new Label("//package/path:source/Class.java").getName())
+    Truth8.assertThat(Label.of("//package/path:source/Class.java").getName())
         .isEqualTo(Path.of("source/Class.java"));
   }
 
   @Test
   public void testGetName_emptyPackage() {
-    assertThat(new Label("//:rule").getName()).isEqualTo(Path.of("rule"));
+    Truth8.assertThat(Label.of("//:rule").getName()).isEqualTo(Path.of("rule"));
   }
 
   @Test
   public void testGetName_emptyPackage_withWorkspace() {
-    assertThat(new Label("@foo//:rule").getName()).isEqualTo(Path.of("rule"));
+    Truth8.assertThat(Label.of("@foo//:rule").getName()).isEqualTo(Path.of("rule"));
   }
 
   @Test
   public void testNew_badPackage() {
-    assertThrows(IllegalArgumentException.class, () -> new Label("package/path:rule"));
+    assertThrows(IllegalArgumentException.class, () -> Label.of("package/path:rule"));
   }
 
   @Test
   public void testNew_noName() {
-    assertThrows(IllegalArgumentException.class, () -> new Label("//package/path"));
+    assertThrows(IllegalArgumentException.class, () -> Label.of("//package/path"));
   }
 
   @Test
   public void testToFilePath() {
-    assertThat(new Label("//package/path:BUILD").toFilePath())
+    Truth8.assertThat(Label.of("//package/path:BUILD").toFilePath())
         .isEqualTo(Path.of("package/path/BUILD"));
   }
 
   @Test
   public void testGetWorkspace_empty() {
-    assertThat(new Label("//package:rule").getWorkspaceName()).isEmpty();
+    assertThat(Label.of("//package:rule").getWorkspaceName()).isEmpty();
   }
 
   @Test
   public void testGetWorkspace_nonEmpty() {
-    assertThat(new Label("@myworkspace//package:rule").getWorkspaceName()).isEqualTo("myworkspace");
+    assertThat(Label.of("@myworkspace//package:rule").getWorkspaceName()).isEqualTo("myworkspace");
   }
 
   @Test
   public void testGetWorkspace_doubleAt() {
-    assertThat(new Label("@@myws//package:rule").getWorkspaceName()).isEqualTo("myws");
+    assertThat(Label.of("@@myws//package:rule").getWorkspaceName()).isEqualTo("myws");
   }
 
   @Test
   public void testNew_badWorkspace() {
-    assertThrows(IllegalArgumentException.class, () -> new Label("@work:space//package/path"));
+    assertThrows(IllegalArgumentException.class, () -> Label.of("@work:space//package/path"));
   }
 
   @Test
   public void doubleAtNormalization() {
-    assertThat(new Label("@abc//:def")).isEqualTo(new Label("@@abc//:def"));
+    assertThat(Label.of("@abc//:def")).isEqualTo(Label.of("@@abc//:def"));
   }
 }

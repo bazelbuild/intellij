@@ -1,5 +1,6 @@
 load(
     "//:build-visibility.bzl",
+    "DEFAULT_TEST_VISIBILITY",
     "G3PLUGINS_VISIBILITY",
     "INTELLIJ_PLUGINS_VISIBILITY",
     "PLUGIN_PACKAGES_VISIBILITY",
@@ -10,14 +11,12 @@ load(
     "intellij_plugin_library",
     "stamped_plugin_xml",
 )
+load("//intellij_platform_sdk:build_defs.bzl", "java_version_flags", "select_for_plugin_api")
 load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "java_version_flags")
-
-licenses(["notice"])
 
 java_library(
     name = "base",
@@ -34,23 +33,46 @@ java_library(
         "//common/util:platform",
         "//common/util:process",
         "//common/util:transactions",
-        "//ext:intellijext",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//querysync",
         "//sdkcompat",
         "//shared",
+        "//shared:artifact",
         "//shared:exception",
+        "//shared:proto",
         "//shared:vcs",
         "//third_party/auto_value",
         "@error_prone_annotations//jar",
+        "@gson//jar"
     ],
 )
 
 intellij_plugin_library(
     name = "plugin_library",
-    plugin_xmls = ["src/META-INF/blaze-base.xml"],
+    plugin_xmls = ["src/META-INF/blaze-base.xml"] +  #api241
+                  select_for_plugin_api({
+                      "android-studio-2022.3": [],
+                      "android-studio-2023.1": [],
+                      "android-studio-2023.2": [],
+                      "intellij-2022.3": [],
+                      "intellij-ue-2022.3": [],
+                      "intellij-2023.1": [],
+                      "intellij-ue-2023.1": [],
+                      "intellij-2023.2": [],
+                      "intellij-ue-2023.2": [],
+                      "intellij-2023.3": [],
+                      "intellij-ue-2023.3": [],
+                      "intellij-2024.1": [],
+                      "intellij-ue-2024.1": [],
+                      "clion-2022.3": [],
+                      "clion-2023.1": [],
+                      "clion-2023.2": [],
+                      "clion-2023.3": [],
+                      "clion-2024.1": [],
+                      "default": ["src/META-INF/dependency-on-lvcs-impl.xml"],
+                  }),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":base"],
 )
@@ -359,10 +381,7 @@ java_library(
     testonly = 1,
     srcs = [
         "src/com/google/idea/blaze/base/async/FutureUtil.java",
-        "src/com/google/idea/blaze/base/command/buildresult/BlazeArtifact.java",
-        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifact.java",
         "src/com/google/idea/blaze/base/command/buildresult/OutputArtifactParser.java",
-        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifactWithoutDigest.java",
         "src/com/google/idea/blaze/base/command/buildresult/RemoteOutputArtifact.java",
         "src/com/google/idea/blaze/base/ideinfo/ProtoWrapper.java",
         "src/com/google/idea/blaze/base/prefetch/DefaultPrefetcher.java",
@@ -375,6 +394,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//shared:artifact",
     ],
 )
 
@@ -407,6 +427,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//shared:artifact",
     ],
 )
 
@@ -415,9 +436,7 @@ java_library(
     srcs = [
         "src/com/google/idea/blaze/base/command/buildresult/LocalFileOutputArtifact.java",
         "src/com/google/idea/blaze/base/command/buildresult/LocalFileOutputArtifactWithoutDigest.java",
-        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifact.java",
-        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifactWithoutDigest.java",
-        "src/com/google/idea/blaze/base/qsync/cache/ArtifactFetcher.java",
+        "src/com/google/idea/blaze/base/qsync/cache/ArtifactFetchers.java",
         "src/com/google/idea/blaze/base/qsync/cache/FileApiArtifactFetcher.java",
         "src/com/google/idea/blaze/base/settings/BuildBinaryType.java",
     ],
@@ -428,6 +447,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//shared",
+        "//shared:artifact",
     ],
 )
 
@@ -444,6 +464,26 @@ java_library(
 )
 
 java_library(
+    name = "qsync-extensions",
+    srcs = ["src/com/google/idea/blaze/base/qsync/HandledRulesProvider.java"],
+    neverlink = 1,
+    visibility = ["//java/com/google/devtools/intellij/protobuf:__subpackages__"],
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+java_library(
+    name = "qsync-extensions-for-tests",
+    testonly = 1,
+    srcs = ["src/com/google/idea/blaze/base/qsync/HandledRulesProvider.java"],
+    visibility = ["//javatests/com/google/devtools/intellij/protobuf:__subpackages__"],
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+java_library(
     name = "unit_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/unit/**/*.java"]),
@@ -453,6 +493,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "//shared:artifact",
         "//shared:exception",
         "//testing:lib",
         "//third_party/auto_value",
@@ -473,6 +514,7 @@ java_library(
         "//base/tests/utils/testdata/java/com/test2",
         "//base/tests/utils/testdata/java/com/test2:test2_srcs",
     ],
+    javacopts = java_version_flags(),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":base",
@@ -482,13 +524,13 @@ java_library(
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
         "//sdkcompat",
+        "//shared:artifact",
         "//shared:vcs",
         "//testing:lib",
         "@bazel_tools//tools/java/runfiles",
         "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
-    javacopts = java_version_flags()
 )
 
 stamped_plugin_xml(
@@ -511,6 +553,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze.base",
+    visibility = DEFAULT_TEST_VISIBILITY,
     deps = [
         ":base",
         ":unit_test_utils",
@@ -525,6 +568,9 @@ intellij_unit_test_suite(
         "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//shared",
+        "//shared:artifact",
+        "//shared/javatests/com/google/idea/blaze/common:test_utils",
+        "//shared/javatests/com/google/idea/blaze/common/artifact:test_utils",
         "//testing:lib",
         "//third_party/auto_value",
         "@com_google_guava_guava//jar",
@@ -537,6 +583,7 @@ intellij_integration_test_suite(
     srcs = glob(["tests/integrationtests/**/*.java"]),
     required_plugins = "com.google.idea.blaze.base",
     test_package_root = "com.google.idea.blaze.base",
+    visibility = DEFAULT_TEST_VISIBILITY,
     runtime_deps = [
         ":base_integration_test_plugin",
     ],
@@ -551,5 +598,6 @@ intellij_integration_test_suite(
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
         "@junit//jar",
+        "@org_opentest4j_opentest4j//jar",
     ],
 )

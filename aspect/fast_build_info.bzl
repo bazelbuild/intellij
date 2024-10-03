@@ -10,8 +10,16 @@ load(
     ":intellij_info_impl.bzl",
     "stringify_label",
 )
+load(":java_info.bzl", "get_java_info")
 
 _DEP_ATTRS = ["deps", "exports", "runtime_deps", "_java_toolchain"]
+
+def _get_android_ide_info(target):
+    if hasattr(android_common, "AndroidIdeInfo") and android_common.AndroidIdeInfo in target:
+        return target[android_common.AndroidIdeInfo]
+    if hasattr(target, "android"):
+        return target.android
+    return None
 
 def _fast_build_info_impl(target, ctx):
     dep_targets = _get_all_dep_targets(target, ctx)
@@ -59,7 +67,8 @@ def _fast_build_info_impl(target, ctx):
             source_version = toolchain.source_version,
             target_version = toolchain.target_version,
         )
-    if JavaInfo in target:
+    java_info = get_java_info(target)
+    if java_info:
         write_output = True
         launcher = None
         if hasattr(ctx.rule.attr, "use_launcher") and not ctx.rule.attr.use_launcher:
@@ -88,11 +97,16 @@ def _fast_build_info_impl(target, ctx):
                 for t in annotation_processing.processor_classpath.to_list()
             ]
         info["java_info"] = struct_omit_none(**java_info)
-    if hasattr(target, "android"):
+
+    android_ide_info = _get_android_ide_info(target)
+    if android_ide_info:
         write_output = True
         android_info = struct_omit_none(
-            aar = artifact_location(target.android.aar),
-            merged_manifest = artifact_location(target.android.merged_manifest),
+            aar = artifact_location(android_ide_info.aar),
+            merged_manifest = artifact_location(
+                getattr(android_ide_info, "generated_manifest", None) or
+                getattr(android_ide_info, "merged_manifest", None),
+            ),
         )
         info["android_info"] = android_info
 

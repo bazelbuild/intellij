@@ -1,0 +1,34 @@
+workspace(name = "intellij_with_bazel")
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# LICENSE: The Apache Software License, Version 2.0
+rules_scala_version = "8f255cd1fecfe4d43934b161b3edda58bdb2e8f4"
+
+http_archive(
+    name = "io_bazel_rules_scala",
+    sha256 = "14797e907c5614387452c42412d755ad7e343ea12540a53da1430be3301c8b4b",
+    strip_prefix = "rules_scala-%s" % rules_scala_version,
+    type = "zip",
+    url = "https://github.com/bazelbuild/rules_scala/archive/%s.zip" % rules_scala_version,
+)
+
+load("@io_bazel_rules_scala//:scala_config.bzl", "scala_config")
+
+scala_config()
+
+load("@io_bazel_rules_scala//scala:scala.bzl", "scala_repositories")
+
+scala_repositories()
+
+load("@io_bazel_rules_scala//scala:toolchains.bzl", "scala_register_toolchains")
+
+scala_register_toolchains()
+
+load("@io_bazel_rules_scala//testing:scalatest.bzl", "scalatest_repositories", "scalatest_toolchain")
+
+scalatest_repositories()
+
+scalatest_toolchain()
+
+

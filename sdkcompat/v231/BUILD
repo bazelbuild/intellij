@@ -9,7 +9,6 @@ java_library(
     srcs = glob([
         "com/google/idea/sdkcompat/editor/**",
         "com/google/idea/sdkcompat/general/**",
-        "com/google/idea/sdkcompat/logging/**",
         "com/google/idea/sdkcompat/platform/**",
         "com/google/idea/sdkcompat/python/**",
         "com/google/idea/sdkcompat/ui/icons/**",
@@ -23,7 +22,7 @@ java_library(
             "com/google/idea/sdkcompat/psi/**",
             "com/google/idea/sdkcompat/vcs/**",
         ]),
-        clion = ["com/google/idea/sdkcompat/refactoring/rename/DelegatingRenamePsiElementProcessorBase.java"] + glob([
+        clion = glob([
             "com/google/idea/sdkcompat/cpp/**",
             "com/google/idea/sdkcompat/clion/**", # For classes incompatible with Android Studio
             "com/google/idea/sdkcompat/javascript/**", #api223

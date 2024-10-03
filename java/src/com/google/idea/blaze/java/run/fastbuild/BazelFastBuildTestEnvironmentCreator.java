@@ -17,15 +17,19 @@ package com.google.idea.blaze.java.run.fastbuild;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.project.Project;
-import java.io.File;
 import javax.annotation.Nullable;
+import java.io.File;
 
 final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmentCreator {
 
   // Bazel adds the Java launcher to the runfiles path when building a Java test target.
   private static final File STANDARD_JAVA_BINARY = new File("../local_jdk/bin/java");
+
+  // TODO: b/295221112 - remove LAUNCHER_ALIAS once label_flag is used
+  private static final String LAUNCHER_ALIAS = "@@bazel_tools//tools/jdk:launcher_flag_alias";
 
   @Override
   String getTestClassProperty() {
@@ -44,11 +48,18 @@ final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmen
       @Nullable Label javaLauncher,
       boolean swigdeps,
       String runfilesPath) {
-    if (javaLauncher == null) {
+    if (javaLauncher == null || isDefaultLauncher(javaLauncher)) {
       return getStandardJavaBinary(runfilesPath);
     } else {
       return new File(getTestBinary(label) + "_nativedeps");
     }
+  }
+
+  private static boolean isDefaultLauncher(Label label) {
+    // Use com.google.idea.blaze.common.Label to handle both cases of `@` and `@@` correctly
+    com.google.idea.blaze.common.Label canonicalLabel =
+        com.google.idea.blaze.common.Label.of(label.toString());
+    return canonicalLabel.toString().equals(LAUNCHER_ALIAS);
   }
 
   /**
@@ -57,6 +68,8 @@ final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmen
    * <p>Bazel adds the Java launcher to the runfiles path when building a Java test target. If
    * `bzlmod` is enabled, the directory name is formatted as
    * 'rules_java~{RULES_JAVA_VERSION}~toolchains~local_jdk' otherwise it is `local_jdk`.
+   * If the user setting `java.runfiles.binary.path` is specified it will take precedence
+   * over `local_jdk`.
    */
   private static File getStandardJavaBinary(String runfilesPath) {
     for (File file :
@@ -66,6 +79,12 @@ final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmen
         return file.toPath().resolve("bin/java").toFile();
       }
     }
+
+    String javaBinaryPath = BlazeUserSettings.getInstance().getFastBuildJavaBinaryPathInRunFiles();
+    if (javaBinaryPath != null && !javaBinaryPath.isBlank()) {
+      return new File("../").toPath().resolve(javaBinaryPath).toFile();
+    }
+
     return STANDARD_JAVA_BINARY;
   }
 

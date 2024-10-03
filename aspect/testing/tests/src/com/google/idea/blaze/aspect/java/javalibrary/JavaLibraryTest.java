@@ -37,13 +37,13 @@ public class JavaLibraryTest extends BazelIntellijAspectTest {
 
     // transitive exports should be rolled up into direct deps
     assertThat(target.getDepsList())
-        .containsAllOf(
+        .containsAtLeast(
             dep(":exports_direct"), dep(":direct"), dep(":exports_indirect"), dep(":indirect"));
     assertThat(target.getDepsList()).doesNotContain(dep(":distant"));
 
     // intellij-info groups
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("foo_exports.java-manifest"),
             testRelative(intellijInfoFileName("foo_exports")),
             testRelative(intellijInfoFileName("exports_direct")),
@@ -61,7 +61,7 @@ public class JavaLibraryTest extends BazelIntellijAspectTest {
             testRelative(intellijInfoFileName("foo_exports")));
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-direct-deps"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("foo_exports.java-manifest"),
             testRelative(intellijInfoFileName("foo_exports")),
             testRelative(intellijInfoFileName("exports_direct")),
@@ -100,7 +100,7 @@ public class JavaLibraryTest extends BazelIntellijAspectTest {
 
     // intellij-info groups
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("foo.java-manifest"), testRelative(intellijInfoFileName("foo")),
             testRelative("direct.java-manifest"), testRelative(intellijInfoFileName("direct")),
             testRelative("indirect.java-manifest"), testRelative(intellijInfoFileName("indirect")),
@@ -111,7 +111,7 @@ public class JavaLibraryTest extends BazelIntellijAspectTest {
             testRelative("foo.java-manifest"), testRelative(intellijInfoFileName("foo")));
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-direct-deps"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("foo.java-manifest"), testRelative(intellijInfoFileName("foo")),
             testRelative("direct.java-manifest"), testRelative(intellijInfoFileName("direct")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-direct-deps"))
@@ -123,40 +123,33 @@ public class JavaLibraryTest extends BazelIntellijAspectTest {
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
         .containsExactly(
             // foo
-            testRelative("libfoo.jar"),
             testRelative("libfoo-hjar.jar"),
             testRelative("libfoo-src.jar"),
             testRelative("libfoo.jdeps"),
             // direct
-            testRelative("libdirect.jar"),
             testRelative("libdirect-hjar.jar"),
             testRelative("libdirect-src.jar"),
             testRelative("libdirect.jdeps"),
             // indirect
-            testRelative("libindirect.jar"),
             testRelative("libindirect-hjar.jar"),
             testRelative("libindirect-src.jar"),
             testRelative("libindirect.jdeps"),
             // distant
-            testRelative("libdistant.jar"),
             testRelative("libdistant-hjar.jar"),
             testRelative("libdistant-src.jar"),
             testRelative("libdistant.jdeps"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java-outputs"))
         .containsExactly(
-            testRelative("libfoo.jar"),
             testRelative("libfoo-hjar.jar"),
             testRelative("libfoo-src.jar"),
             testRelative("libfoo.jdeps"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java-direct-deps"))
         .containsExactly(
             // foo
-            testRelative("libfoo.jar"),
             testRelative("libfoo-hjar.jar"),
             testRelative("libfoo-src.jar"),
             testRelative("libfoo.jdeps"),
             // direct
-            testRelative("libdirect.jar"),
             testRelative("libdirect-hjar.jar"),
             testRelative("libdirect-src.jar"),
             testRelative("libdirect.jdeps"),

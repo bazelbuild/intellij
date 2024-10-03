@@ -67,7 +67,7 @@ public class BazelVersion implements ProtoWrapper<ProjectData.BazelVersion> {
   }
 
   @VisibleForTesting
-  static BazelVersion parseVersion(@Nullable String string) {
+  public static BazelVersion parseVersion(@Nullable String string) {
     // treat all unknown / development versions as the very latest version
     if (string == null) {
       return DEVELOPMENT;
@@ -102,7 +102,7 @@ public class BazelVersion implements ProtoWrapper<ProjectData.BazelVersion> {
   }
 
   static BazelVersion parseVersion(BlazeInfo blazeInfo) {
-    return parseVersion(blazeInfo.get(BlazeInfo.RELEASE));
+    return parseVersion(blazeInfo.getRelease());
   }
 
   @Override
