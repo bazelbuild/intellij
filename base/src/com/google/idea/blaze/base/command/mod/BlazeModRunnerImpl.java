@@ -42,6 +42,13 @@ public class BlazeModRunnerImpl extends BlazeModRunner {
   private static final String DEPS = "deps";
   private static final String ROOT_WORKSPACE = "";
 
+
+  /**
+   * For some reason, dump_repo_mapping reqiures "", while deps requires "<root>".
+   * Probably a bazel bug
+   */
+  private static final String ROOT_WORKSPACE_EXPLICIT = "<root>";
+
   /**
    * {@code bazel mod dump_repo_mapping} takes a canonical repository name and will dump a map from
    * repoName -> canonicalName of all the external repositories available to that repository The
@@ -91,12 +98,9 @@ public class BlazeModRunnerImpl extends BlazeModRunner {
             BuildSystemName buildSystemName,
             List<String> flags) {
 
-        // TODO: when 8.0.0 is released add this only if it's disabled explicitly for the repo
-        flags.add("--noenable_workspace");
-
         return Futures.transform(
                 runBlazeModGetBytes(
-                        project, invoker, context, ImmutableList.of(DEPS, ROOT_WORKSPACE, "--output=json"), flags),
+                        project, invoker, context, ImmutableList.of(DEPS, ROOT_WORKSPACE_EXPLICIT, "--output=json"), flags),
                 bytes -> new String(bytes, StandardCharsets.UTF_8),
                 BlazeExecutor.getInstance().getExecutor()
         );
