@@ -158,6 +158,8 @@ public abstract class FastBuildBlazeData {
 
     public abstract ImmutableList<String> jvmFlags();
 
+    public abstract Optional<String> mainClass();
+
     public static JavaInfo fromProto(FastBuildInfo.JavaInfo proto) {
       Set<ArtifactLocation> sources =
           proto.getSourcesList().stream().map(ArtifactLocation::fromProto).collect(toSet());
@@ -175,6 +177,7 @@ public abstract class FastBuildBlazeData {
           .setAnnotationProcessorClassNames(proto.getAnnotationProcessorClassNamesList())
           .setAnnotationProcessorClasspath(annotationProcessorClasspath)
           .setJvmFlags(proto.getJvmFlagsList())
+          .setMainClass(proto.getMainClass())
           .build();
     }
 
@@ -208,6 +211,8 @@ public abstract class FastBuildBlazeData {
           Collection<ArtifactLocation> annotationProcessorClasspath);
 
       public abstract Builder setJvmFlags(Collection<String> jvmFlags);
+
+      public abstract Builder setMainClass(@Nullable String mainClass);
 
       public abstract JavaInfo build();
     }
