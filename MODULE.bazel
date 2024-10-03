@@ -370,6 +370,17 @@ http_archive(
     url = CLION_242_URL,
 )
 
+CLION_243_SHA = "b2b61d44c5a501e3209577b9164d56e6148020133ce4709f79c0be3a3cd17032"
+
+CLION_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/243.16718.30-EAP-SNAPSHOT/clion-243.16718.30-EAP-SNAPSHOT.zip"
+
+http_archive(
+    name = "clion_2024_3",
+    build_file = "@//intellij_platform_sdk:BUILD.clion243",
+    sha256 = CLION_243_SHA,
+    url = CLION_243_URL,
+)
+
 DEVKIT_BUILD_FILE = """
 java_import(
     name = "devkit",

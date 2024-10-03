@@ -12,9 +12,11 @@ ADD_OPENS = [
     for x in [
         # keep sorted
         "java.base/java.io",
+        "java.base/java.nio",
         "java.base/java.lang",
         "java.base/java.util",
         "java.base/java.util.concurrent",
+        "java.base/jdk.internal.vm",
         "java.base/sun.nio.fs",
         "java.desktop/java.awt",
         "java.desktop/java.awt.event",
