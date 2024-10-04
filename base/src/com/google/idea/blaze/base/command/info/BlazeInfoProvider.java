@@ -91,7 +91,7 @@ public class BlazeInfoProvider {
             blazeInfo = BlazeInfoRunner.getInstance().runBlazeInfo(
                     project,
                     buildInvoker,
-                    BlazeContext.create(),
+                    context,
                     importSettings.getBuildSystem(),
                     blazeFlags
             ).get();
