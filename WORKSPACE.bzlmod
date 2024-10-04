@@ -33,5 +33,5 @@ scalatest_toolchain()
 
 local_repository(
     name = "intellij_aspect_template",
-    path = "aspect-template",
+    path = "aspect_template",
 )
