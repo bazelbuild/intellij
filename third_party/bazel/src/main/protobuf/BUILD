@@ -6,7 +6,6 @@ package(default_visibility = ["//visibility:public"])
 
 FILES = [
     "action_cache",
-    "android_deploy_info",
     "bazel_flags",
     "builtin",
     "crash_debugging",
@@ -300,7 +299,10 @@ cc_proto_library(
 
 filegroup(
     name = "srcs",
-    srcs = glob(["**"]),
+    srcs = glob(
+        ["**"],
+        exclude = ["android_deploy_info.proto"],
+    ),
 )
 
 filegroup(
