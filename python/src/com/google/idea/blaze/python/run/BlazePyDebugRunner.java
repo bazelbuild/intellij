@@ -78,10 +78,11 @@ public class BlazePyDebugRunner extends PyDebugRunner {
   protected @NotNull Promise<@Nullable RunContentDescriptor> execute(
           @NotNull ExecutionEnvironment environment,
           @NotNull RunProfileState state) throws ExecutionException {
-    EventLoggingService.getInstance().logEvent(getClass(), "debugging-python");
     if (!(state instanceof BlazePyDummyRunProfileState)) {
       return Promises.resolvedPromise();
     }
+    EventLoggingService.getInstance().logEvent(getClass(), "debugging-python");
+
     return super.execute(environment, ((BlazePyDummyRunProfileState) state).toNativeState(environment));
   }
 }
