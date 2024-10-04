@@ -46,6 +46,7 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectRepositoryProvider;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.SyncDirectoriesWarning;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
@@ -61,6 +62,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.text.StringUtil;
+
 import java.util.Collection;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -209,6 +211,7 @@ public class BlazeSyncManager {
   private static void executeTask(Project project, BlazeSyncParams params, BlazeContext context) {
     Future<?> querySyncPromoFuture = new QuerySyncPromo(project).getPromoShowFuture();
     try {
+      AspectRepositoryProvider.copyAspectsIfNotExists(project);
       SyncPhaseCoordinator.getInstance(project).syncProject(params, context).get();
     } catch (InterruptedException e) {
       context.output(new PrintOutput("Sync interrupted: " + e.getMessage()));

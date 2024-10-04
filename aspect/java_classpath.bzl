@@ -1,6 +1,6 @@
 """An aspect which extracts the runtime classpath from a java target."""
 
-load(":java_info.bzl", "get_java_info", "java_info_in_target")
+load("@intellij_aspect_template//:java_info.bzl", "get_java_info", "java_info_in_target")
 
 def _runtime_classpath_impl(target, ctx):
     """The top level aspect implementation function.

@@ -13,7 +13,7 @@ load(
     "struct_omit_none",
     "to_artifact_location",
 )
-load(":java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
+load("@intellij_aspect_template//:java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
 load(
     ":make_variables.bzl",
     "expand_make_variables",

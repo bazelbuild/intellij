@@ -112,7 +112,9 @@ public final class BlazeCommand {
       // Tell forge what tool we used to call blaze so we can track usage.
       addBlazeFlags(BlazeFlags.getToolTagFlag());
 
-      AspectRepositoryProvider.getOverrideFlag(project).ifPresent(this::addBlazeFlags);
+      Arrays.stream(AspectRepositoryProvider.getOverrideFlag(project)).filter(Optional::isPresent)
+        .map(Optional::get)
+        .forEach(this::addBlazeFlags);
     }
 
     private ImmutableList<String> getArguments() {
