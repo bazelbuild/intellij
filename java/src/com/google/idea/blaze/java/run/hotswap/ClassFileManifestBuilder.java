@@ -109,7 +109,7 @@ public class ClassFileManifestBuilder {
               BlazeCommandName.BUILD,
               configuration,
               buildResultHelper,
-              aspectStrategy.getBuildFlags(versionData),
+              aspectStrategy.getBuildFlags(versionData, project),
               ImmutableList.of(),
               BlazeInvocationContext.runConfigContext(
                   ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),

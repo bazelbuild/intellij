@@ -112,7 +112,7 @@ public final class BlazeCommand {
       // Tell forge what tool we used to call blaze so we can track usage.
       addBlazeFlags(BlazeFlags.getToolTagFlag());
 
-      Arrays.stream(AspectRepositoryProvider.getOverrideFlag(project)).filter(Optional::isPresent)
+      Arrays.stream(AspectRepositoryProvider.getOverrideFlags(project)).filter(Optional::isPresent)
         .map(Optional::get)
         .forEach(this::addBlazeFlags);
     }

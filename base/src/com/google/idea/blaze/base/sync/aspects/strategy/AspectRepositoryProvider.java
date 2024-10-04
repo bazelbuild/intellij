@@ -44,7 +44,7 @@ public interface AspectRepositoryProvider {
             .orElse(Optional.empty());
   }
 
-  static Optional<String>[] getOverrideFlag(Project project) {
+  static Optional<String>[] getOverrideFlags(Project project) {
     return new Optional[] {
       getOverrideFlagForAspectDirectory(),
       getOverrideFlagForProjectAspectDirectory(project),
