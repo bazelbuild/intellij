@@ -57,10 +57,12 @@ import com.google.idea.blaze.base.wizard2.BlazeSelectProjectViewOption;
 import com.google.idea.blaze.base.wizard2.ProjectDataDirectoryValidator;
 import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.icons.AllIcons;
 import com.intellij.icons.AllIcons.General;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -465,9 +467,12 @@ public final class BlazeEditProjectViewControl {
       return BlazeValidationResult.failure(
           new BlazeValidationError("Project data directory is not valid"));
     }
-    if (projectDataDir.exists()) {
-      return BlazeValidationResult.failure(
-          new BlazeValidationError(projectDataDir + " already exists"));
+    if (projectDataDir.exists() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      int result = Messages.showOkCancelDialog("This folder has already been imported by the Bazel plugin. Reimporting it can cause data loss.", "Possible Loss of Project Data", "OK", "Cancel", AllIcons.General.ShowWarning);
+
+      if (result == Messages.CANCEL) {
+        return BlazeValidationResult.cancelled();
+      }
     }
     for (ProjectDataDirectoryValidator validator :
         ProjectDataDirectoryValidator.EP_NAME.getExtensions()) {
