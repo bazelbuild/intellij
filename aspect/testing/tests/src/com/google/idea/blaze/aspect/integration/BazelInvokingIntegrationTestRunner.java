@@ -57,7 +57,13 @@ public class BazelInvokingIntegrationTestRunner {
                 "%s=%s/%s/aspect",
                 AspectRepositoryProvider.OVERRIDE_REPOSITORY_FLAG,
                 System.getenv("TEST_SRCDIR"),
-                System.getenv("TEST_WORKSPACE")));
+                System.getenv("TEST_WORKSPACE")),
+            String.format(
+              "%s=%s/%s/aspect_template",
+              AspectRepositoryProvider.OVERRIDE_REPOSITORY_TEMPLATE_FLAG,
+              System.getenv("TEST_SRCDIR"),
+              System.getenv("TEST_WORKSPACE"))
+        );
 
     if (bazelVersion.isAtLeast(6, 0, 0)
         && !aspectFlags.contains(

@@ -10,6 +10,7 @@ java_binary(
     srcs = ["BazelInvokingIntegrationTestRunner.java"],
     data = [
         "//aspect:aspect_files",
+        "//aspect_template:aspect_files",
     ],
     main_class = "com.google.idea.blaze.aspect.integration.BazelInvokingIntegrationTestRunner",
     deps = [
