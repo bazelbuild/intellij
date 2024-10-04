@@ -3,7 +3,7 @@
 #
 
 load(
-    ":intellij_info_impl.bzl",
+    ":flag_hack.bzl",
     "define_flag_hack",
 )
 
@@ -33,6 +33,7 @@ filegroup(
         "artifacts.bzl",
         "build_dependencies.bzl",
         "fast_build_info_bundled.bzl",
+        "flag_hack.bzl",
         "intellij_info.bzl",
         "intellij_info_bundled.bzl",
         "intellij_info_impl_bundled.bzl",
