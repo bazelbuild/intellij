@@ -1,3 +1,7 @@
+v2024.08.27.0.3
+===============
+* Fixes for query sync, can be enabled by `use_query_sync: true`
+
 v2024.08.27.0.2
 ===============
 * Fix debugging for AS Iguana #6803
