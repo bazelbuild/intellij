@@ -440,12 +440,14 @@ public class QuerySyncProject {
         projectViewSet.listItems(TestSourceSection.KEY).stream()
             .map(Glob::toString)
             .collect(ImmutableSet.toImmutableSet());
+
     ProjectDefinition projectDefinition =
         ProjectDefinition.create(
             importRoots.rootPaths(),
             importRoots.excludePaths(),
             LanguageClasses.toQuerySync(workspaceLanguageSettings.getActiveLanguages()),
-            testSourceGlobs);
+            testSourceGlobs,
+            importRoots.systemExcludes());
 
     return this.projectDefinition.equals(projectDefinition);
   }

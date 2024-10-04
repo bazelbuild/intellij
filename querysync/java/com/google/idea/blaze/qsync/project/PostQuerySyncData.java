@@ -42,7 +42,8 @@ public abstract class PostQuerySyncData {
                   /* includes= */ ImmutableSet.of(),
                   /* excludes= */ ImmutableSet.of(),
                   /* languageClasses= */ ImmutableSet.of(),
-                  /* testSources= */ ImmutableSet.of()))
+                  /* testSources= */ ImmutableSet.of(),
+                  /* systemExcludes = */ ImmutableSet.of()))
           .setVcsState(Optional.empty())
           .setBazelVersion(Optional.empty())
           .setQuerySummary(QuerySummary.EMPTY)
