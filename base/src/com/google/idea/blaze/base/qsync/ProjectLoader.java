@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -34,6 +35,7 @@ import com.google.idea.blaze.base.qsync.cache.ArtifactTrackerImpl;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
@@ -122,7 +124,8 @@ public class ProjectLoader {
             importRoots.rootPaths(),
             importRoots.excludePaths(),
             LanguageClasses.toQuerySync(workspaceLanguageSettings.getActiveLanguages()),
-            testSourceGlobs);
+            testSourceGlobs,
+            importRoots.systemExcludes());
 
     Path snapshotFilePath = getSnapshotFilePath(importSettings);
 
