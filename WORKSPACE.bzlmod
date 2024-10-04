@@ -30,8 +30,3 @@ load("@io_bazel_rules_scala//testing:scalatest.bzl", "scalatest_repositories", "
 scalatest_repositories()
 
 scalatest_toolchain()
-
-local_repository(
-    name = "intellij_aspect_template",
-    path = "aspect_template",
-)
