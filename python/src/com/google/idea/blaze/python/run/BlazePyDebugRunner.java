@@ -32,7 +32,6 @@ import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.run.PythonCommandLineState;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -75,7 +74,7 @@ public class BlazePyDebugRunner extends PyDebugRunner {
   }
 
   @Override
-  protected @NotNull Promise<@Nullable RunContentDescriptor> execute(
+  protected @NotNull Promise<RunContentDescriptor> execute(
           @NotNull ExecutionEnvironment environment,
           @NotNull RunProfileState state) throws ExecutionException {
     if (!(state instanceof BlazePyDummyRunProfileState)) {
