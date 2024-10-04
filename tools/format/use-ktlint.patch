@@ -1,0 +1,23 @@
+diff --git a/format/private/formatter_binary.bzl b/format/private/formatter_binary.bzl
+index aad6e01..4d0e878 100644
+--- a/format/private/formatter_binary.bzl
++++ b/format/private/formatter_binary.bzl
+@@ -45,7 +45,7 @@ CHECK_FLAGS = {
+     "ruff": "format --check --force-exclude",
+     "shfmt": "--diff --apply-ignore",
+     "java-format": "--set-exit-if-changed --dry-run",
+-    "ktfmt": "--set-exit-if-changed --dry-run",
++    "ktfmt": "--baseline=ktlint-baseline.xml",
+     "gofmt": "-l",
+     "buf": "format -d --exit-code",
+     "terraform-fmt": "fmt -check -diff",
+@@ -68,7 +68,7 @@ FIX_FLAGS = {
+     # NB: apply-ignore added in https://github.com/mvdan/sh/issues/1037
+     "shfmt": "-w --apply-ignore",
+     "java-format": "--replace",
+-    "ktfmt": "",
++    "ktfmt": "-F --baseline=ktlint-baseline.xml",
+     "gofmt": "-w",
+     "buf": "format -w",
+     "terraform-fmt": "fmt",
+--
