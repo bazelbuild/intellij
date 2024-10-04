@@ -4,7 +4,6 @@ load(
     "@bazel_tools//tools/build_defs/cc:action_names.bzl",
     "ACTION_NAMES",
 )
-load("@intellij_aspect_variadic//:java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
 load(
     ":artifacts.bzl",
     "artifact_location",
@@ -15,6 +14,7 @@ load(
     "to_artifact_location",
 )
 load(":flag_hack.bzl", "FlagHackInfo")
+load(":java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
 load(
     ":make_variables.bzl",
     "expand_make_variables",
