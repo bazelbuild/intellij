@@ -31,6 +31,12 @@ import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.run.PythonScriptCommandLineState;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
+
 import java.net.ServerSocket;
 
 /** Blaze plugin specific {@link PyDebugRunner}. */
@@ -57,11 +63,11 @@ public class BlazePyDebugRunner extends PyDebugRunner {
   }
 
   @Override
-  protected PyDebugProcess createDebugProcess(
-      XDebugSession xDebugSession,
-      ServerSocket serverSocket,
-      ExecutionResult executionResult,
-      PythonCommandLineState pythonCommandLineState) {
+  protected @NotNull PyDebugProcess createDebugProcess(
+          @NotNull XDebugSession xDebugSession,
+          ServerSocket serverSocket,
+          ExecutionResult executionResult,
+          PythonCommandLineState pythonCommandLineState) {
     PyDebugProcess process =
         super.createDebugProcess(
             xDebugSession, serverSocket, executionResult, pythonCommandLineState);
@@ -70,19 +76,10 @@ public class BlazePyDebugRunner extends PyDebugRunner {
   }
 
   @Override
-  protected RunContentDescriptor doExecute(RunProfileState state, ExecutionEnvironment environment)
-      throws ExecutionException {
+  protected @NotNull Promise<@Nullable RunContentDescriptor> execute(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state) throws ExecutionException {
     if (!(state instanceof BlazePyDummyRunProfileState)) {
-      return null;
+      return Promises.resolvedPromise();
     }
-    EventLoggingService.getInstance().logEvent(getClass(), "debugging-python");
-    try {
-      state = ((BlazePyDummyRunProfileState) state).toNativeState(environment);
-      return super.doExecute(state, environment);
-    } catch (ExecutionException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new ExecutionException(e);
-    }
+    return super.execute(environment, ((BlazePyDummyRunProfileState) state).toNativeState(environment));
   }
 }
