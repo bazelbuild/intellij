@@ -24,7 +24,7 @@ load(
 load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 load(
     "//:build-visibility.bzl",
-    "IJWB_PACKAGES_VISIBILIY",
+    "IJWB_PACKAGES_VISIBILITY",
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 
@@ -60,7 +60,7 @@ stamped_plugin_xml(
 java_library(
     name = "ijwb_lib",
     srcs = glob(["src/**/*.java"]),
-    visibility = IJWB_PACKAGES_VISIBILIY,
+    visibility = IJWB_PACKAGES_VISIBILITY,
     deps = [
         "//base",
         "//intellij_platform_sdk:jsr305",
@@ -109,7 +109,7 @@ repackaged_files(
     srcs = ["//aspect:aspect_files"],
     prefix = "ijwb/aspect",
     strip_prefix = "/aspect",
-    visibility = IJWB_PACKAGES_VISIBILIY,
+    visibility = IJWB_PACKAGES_VISIBILITY,
     java_copts = ["-source", "8", "-target", "8"],
 )
 
@@ -118,7 +118,7 @@ repackaged_files(
     srcs = ["//aspect_template:aspect_files"],
     prefix = "ijwb/aspect_template",
     strip_prefix = "/aspect_template",
-    visibility = IJWB_PACKAGES_VISIBILIY,
+    visibility = IJWB_PACKAGES_VISIBILITY,
     java_copts = ["-source", "8", "-target", "8"],
 )
 
@@ -126,7 +126,7 @@ repackaged_files(
     name = "fast_build_javac",
     srcs = ["//java:fast_build_javac"],
     prefix = "ijwb/lib",
-    visibility = IJWB_PACKAGES_VISIBILIY,
+    visibility = IJWB_PACKAGES_VISIBILITY,
     java_copts = ["-source", "8", "-target", "8"],
 )
 
