@@ -1,3 +1,4 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(
     "//:build-visibility.bzl",
     "DEFAULT_TEST_VISIBILITY",
@@ -18,10 +19,9 @@ load(
     "intellij_unit_test_suite",
 )
 
-java_library(
+kt_jvm_library(
     name = "base",
-    srcs = glob(["src/**/*.java"]),
-    javacopts = ["-Xep:FutureReturnValueIgnored:OFF"],
+    srcs = glob(["src/**/*.java", "src/**/*.kt"]),
     resources = glob(["src/resources/**/*"]),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
