@@ -465,6 +465,38 @@
    <formattingService implementation="com.google.idea.blaze.base.buildmodifier.BuildifierFormattingService"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType
+            name="Bazelrc"
+            implementationClass="com.google.idea.blaze.base.lang.bazelrc.BazelrcFileType"
+            fieldName="INSTANCE"
+            language="Bazelrc"
+            fileNames=".bazelrc"
+            extensions="bazelrc"
+    />
+
+    <lang.syntaxHighlighterFactory
+            language="Bazelrc"
+            implementationClass="com.google.idea.blaze.base.lang.bazelrc.highlighting.BazelrcSyntaxHighlighterFactory"/>
+
+    <lang.parserDefinition
+            language="Bazelrc"
+            implementationClass="com.google.idea.blaze.base.lang.bazelrc.parser.BazelrcParserDefinition"/>
+
+    <lang.commenter
+            language="Bazelrc"
+            implementationClass="com.google.idea.blaze.base.lang.bazelrc.commenter.BazelrcCommenter"/>
+
+    <lang.quoteHandler
+            language="Bazelrc"
+            implementationClass="com.google.idea.blaze.base.lang.bazelrc.matching.BazelrcQuoteHandler"/>
+
+    <completion.contributor
+            language="Bazelrc"
+            implementationClass="com.google.idea.blaze.base.lang.bazelrc.completion.BazelrcCompletionContributor"/>
+
+  </extensions>
+
   <extensions defaultExtensionNs="com.intellij.lang">
     <syntaxHighlighterFactory language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.highlighting.BuildSyntaxHighlighterFactory"/>
     <parserDefinition language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.parser.BuildParserDefinition"/>

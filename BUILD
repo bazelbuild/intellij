@@ -7,10 +7,18 @@ load(
     "DEFAULT_TEST_VISIBILITY",
     "create_plugin_packages_group",
 )
+load("@rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
 
 licenses(["notice"])
 
 create_plugin_packages_group()
+
+define_kt_toolchain(
+    name = "kotlin_toolchain",
+    api_version = "2.0",
+    jvm_target = "17",
+    language_version = "2.0",
+)
 
 # Changelog file
 filegroup(
