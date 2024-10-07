@@ -38,7 +38,7 @@ tasks:
       - //:ijwb_ce_tests
     soft_fail:
       - exit_status: 1
-  IntelliJ-CE-OSS-under-dev:
+  IntelliJ-CE-OSS-under-dev-windows:
     name: IntelliJ CE OSS Under Development
     platform: windows
     build_flags:
