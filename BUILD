@@ -98,3 +98,8 @@ test_suite(
     ],
     visibility = DEFAULT_TEST_VISIBILITY,
 )
+
+alias(
+    name = "format",
+    actual = "//tools/format",
+)
