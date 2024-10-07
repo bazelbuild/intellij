@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationProvider
+import com.jetbrains.cidr.lang.daemon.OCFileScopeProvider.Companion.getProjectSourceLocationKind
 import com.jetbrains.cidr.project.ui.convertStatus
 import com.jetbrains.cidr.project.ui.isProjectAwareFile
 import com.jetbrains.cidr.project.ui.notifications.EditorNotificationWarningProvider
@@ -32,21 +33,67 @@ import com.jetbrains.cidr.project.ui.notifications.ProjectNotification
 import com.jetbrains.cidr.project.ui.popup.ProjectFixesProvider
 import com.jetbrains.cidr.project.ui.widget.*
 
+private var providerRegistered: Boolean = false
+
+private fun unregisterGenericProvider(project: Project) {
+  val extensionPoint = EditorNotificationProvider.EP_NAME.getPoint(project)
+
+  // Note: We need to remove the default style of showing project status and fixes used in
+  // Android Studio and IDEA to introduce CLion's PSW style.
+  for (extension in extensionPoint.extensions) {
+    if (extension is BazelNotificationProvider) {
+      extensionPoint.unregisterExtension(extension)
+    }
+  }
+}
+
+private fun registerSpecificProvider() {
+  val projectFixes = ProjectFixesProvider.Companion.EP_NAME.point
+  projectFixes.registerExtension(CLionNotificationProvider())
+
+  val projectNotifications = EditorNotificationWarningProvider.EP_NAME.point
+  projectNotifications.registerExtension(CLionNotificationProvider())
+
+  val widgetStatus = WidgetStatusProvider.EP_NAME.point
+  widgetStatus.registerExtension(CLionNotificationProvider())
+}
+
+private fun isBazelAwareFile(project: Project, file: VirtualFile): Boolean {
+  if (Blaze.isBlazeProject(project)) {
+    return false
+  }
+
+  if (!isProjectAwareFile(file, project) && file.fileType !== BuildFileType.INSTANCE) {
+    return false
+  }
+
+  if (getProjectSourceLocationKind(project, file).isInProject()) {
+    return false
+  }
+
+  if (!BazelImportCurrentProjectAction.projectCouldBeImported(project)) {
+    return false
+  }
+
+  return project.basePath != null
+}
+
 // #api241
 class CLionNotificationProvider : ProjectFixesProvider, WidgetStatusProvider, EditorNotificationWarningProvider {
+  companion object {
+    @JvmStatic
+    fun register(project: Project) {
+      unregisterGenericProvider(project)
+
+      if (!providerRegistered) {
+        registerSpecificProvider();
+      }
+      providerRegistered = true;
+    }
+  }
+
   override suspend fun collectFixes(project: Project, file: VirtualFile?, dataContext: DataContext): List<AnAction> {
-    if (file == null) {
-      return emptyList()
-    }
-
-    if (Blaze.isBlazeProject(project)) {
-      return emptyList()
-    }
-
-    if (!isProjectAwareFile(file, project) && file.fileType != BuildFileType.INSTANCE) {
-      return emptyList()
-    }
-    if (!BazelImportCurrentProjectAction.projectCouldBeImported(project)) {
+    if (file == null || !isBazelAwareFile(project, file)) {
       return emptyList()
     }
 
@@ -64,53 +111,14 @@ class CLionNotificationProvider : ProjectFixesProvider, WidgetStatusProvider, Ed
   }
 
   override fun getWidgetStatus(project: Project, file: VirtualFile?): WidgetStatus? {
-     if (Blaze.isBlazeProject(project)) {
-       return DefaultWidgetStatus(Status.OK, Scope.Project, "Project is configured")
-     }
+    if (Blaze.isBlazeProject(project)) {
+      return DefaultWidgetStatus(Status.OK, Scope.Project, "Project is configured")
+    }
 
-     if (file == null) {
-       return null
-     }
-
-     if (!isProjectAwareFile(file, project) && file.getFileType() !== BuildFileType.INSTANCE) {
-       return null
-     }
-     if (!BazelImportCurrentProjectAction.projectCouldBeImported(project)) {
-       return null
-     }
-
-     if (project.basePath == null) {
-       return null
-     }
+    if (file == null || !isBazelAwareFile(project, file)) {
+      return null
+    }
 
     return DefaultWidgetStatus(Status.Warning, Scope.Project, "Project is not configured")
-  }
-
-  companion object {
-    private fun unregisterGenericProvider(project: Project) {
-      val extensionPoint = EditorNotificationProvider.EP_NAME.getPoint(project)
-
-      // Note: We need to remove the default style of showing project status and fixes used in
-      // Android Studio and IDEA to introduce CLion's PSW style.
-      for (extension in extensionPoint.extensions) {
-        if (extension is BazelNotificationProvider) {
-          extensionPoint.unregisterExtension(extension)
-        }
-      }
-    }
-
-    @JvmStatic
-    fun register(project: Project) {
-      unregisterGenericProvider(project)
-
-      val projectFixes = ProjectFixesProvider.Companion.EP_NAME.point
-      projectFixes.registerExtension(CLionNotificationProvider())
-
-      val projectNotifications = EditorNotificationWarningProvider.Companion.EP_NAME.point
-      projectNotifications.registerExtension(CLionNotificationProvider())
-
-      val widgetStatus = WidgetStatusProvider.Companion.EP_NAME.point
-      widgetStatus.registerExtension(CLionNotificationProvider())
-    }
   }
 }
