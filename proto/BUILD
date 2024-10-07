@@ -125,10 +125,10 @@ java_library(
         ":project_data_java_proto",
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_java_proto",
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/starlarkdebug/proto:starlark_debugging_java_proto",
-        "//third_party/bazel/src/main/protobuf:android_deploy_info_java_proto",
         "//third_party/bazel/src/main/protobuf:build_java_proto",
         "//third_party/bazel/src/main/protobuf:command_line_java_proto",
         "//third_party/bazel/src/main/protobuf:deps_java_proto",
         "@com_google_protobuf//:protobuf_java",
+        "@rules_android//src/tools/deploy_info/proto:android_deploy_info_java_proto",
     ],
 )

@@ -1,8 +1,7 @@
 package test.lib
 
-import main.lib.Greeting
-
 import com.google.common.truth.Truth.assertThat
+import main.lib.Greeting
 import org.junit.Test
 
 internal class GreetingTest {
@@ -15,8 +14,8 @@ internal class GreetingTest {
 
   @Test
   fun testGetSingleGreeting() {
-    val actual = Greeting.getGreetings(arrayOf("User"))
-    assertThat(actual).asList().containsExactly("Hello User!")
+    val actual = Greeting.getGreetings(arrayOf("Usersss"))
+    assertThat(actual).asList().containsExactly("Hello Usersss!")
   }
 
   @Test
