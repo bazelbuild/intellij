@@ -9,6 +9,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
 import com.google.idea.blaze.base.sync.aspects.BuildResult
+import com.google.protobuf.CodedInputStream
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
@@ -18,20 +19,19 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.util.io.LimitedInputStream
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import java.io.FileInputStream
-import java.io.IOException
 import kotlin.io.path.pathString
+
+private val LOG: Logger = Logger.getInstance(BazelService::class.java)
 
 @Service(Service.Level.PROJECT)
 class BazelService(private val project: Project) : Disposable {
   companion object {
-    private val LOG: Logger = thisLogger()
-
     @JvmStatic
     fun instance(project: Project): BazelService = project.service()
   }
@@ -97,19 +97,34 @@ class BazelService(private val project: Project) : Disposable {
   private fun CoroutineScope.parseEvents(ctx: BlazeContext, helper: BuildResultHelper): Job {
     val handler = CoroutineExceptionHandler { _, e -> LOG.error("error in event parser", e) }
 
-    return launch(handler + CoroutineName("EventParser")) {
+    return launch(handler + CoroutineName("EventParser") + SupervisorJob()) {
       // wait for bazel to create the output file
       while (!helper.outputFile.exists()) delay(10)
 
       FileInputStream(helper.outputFile).buffered().use { stream ->
-
-        // keep reading events while the coroutine is active i.e. bazel is still running
+        // keep reading events while the coroutine is active, i.e. bazel is still running,
         // or while the stream has data available (to ensure that all events are processed)
         while (isActive || stream.available() > 0) {
+
+          // make sure that there are at least four bytes already available
+          while (stream.available() < 4) delay(10)
+
+          // protobuf messages are delimited by size (encoded as varint32),
+          // read size manually to ensure the entire message is already available
+          val size = CodedInputStream.readRawVarint32(stream.read(), stream)
+          while (stream.available() < size) delay(10)
+
+          val eventStream = LimitedInputStream(stream, size)
           val event = try {
-            BuildEvent.parseDelimitedFrom(stream)
-          } catch (e: IOException) {
+            BuildEvent.parseFrom(eventStream)
+          } catch (e: Exception) {
             LOG.error("could not parse event", e)
+
+            // if the message could not be parsed, make sure to skip it
+            if (eventStream.bytesRead < size) {
+              stream.skip(size.toLong() - eventStream.bytesRead)
+            }
+
             continue
           }
 
