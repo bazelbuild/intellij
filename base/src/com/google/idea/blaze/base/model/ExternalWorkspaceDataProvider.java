@@ -105,13 +105,11 @@ public class ExternalWorkspaceDataProvider {
               .getBuildSystem()
               .getDefaultInvoker(project, context);
 
-      deps = BlazeModRunner.getInstance().getDeps(project, buildInvoker, context, importSettings.getBuildSystem(), blazeFlags);
       externalWorkspaceData =
           BlazeModRunner.getInstance()
               .dumpRepoMapping(
                   project, buildInvoker, context, importSettings.getBuildSystem(), blazeFlags)
               .get();
-      deps.get();
     } catch (InterruptedException | ExecutionException e) {
       context.handleExceptionAsWarning(
           "Failed to run `blaze mod dump_repo_mapping` (completion of labels from module provided repos will be unavailable)",
