@@ -1,7 +1,7 @@
 ---
 tasks:
-  CLion-OSS-oldest-stable:
-    name: CLion OSS Oldest Stable
+  CLion-Linux-OSS-oldest-stable:
+    name: CLion Linux OSS Oldest Stable
     platform: ubuntu2204
     build_flags:
       - --define=ij_product=clion-oss-oldest-stable
@@ -12,9 +12,57 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:clwb_tests
-  CLion-OSS-latest-stable:
-    name: CLion OSS Latest Stable
+  CLion-Linux-OSS-latest-stable:
+    name: CLion Linux OSS Latest Stable
     platform: ubuntu2204
+    build_flags:
+      - --define=ij_product=clion-oss-latest-stable
+    build_targets:
+      - //clwb/...
+    test_flags:
+      - --define=ij_product=clion-oss-latest-stable
+      - --test_output=errors
+    test_targets:
+      - //:clwb_tests
+  CLion-Windows-OSS-oldest-stable:
+    name: CLion Windows OSS Oldest Stable
+    platform: windows
+    build_flags:
+      - --define=ij_product=clion-oss-oldest-stable
+    build_targets:
+      - //clwb/...
+    test_flags:
+      - --define=ij_product=clion-oss-oldest-stable
+      - --test_output=errors
+    test_targets:
+      - //clwb:integration_tests
+  CLion-Windows-OSS-latest-stable:
+    name: CLion Windows OSS Latest Stable
+    platform: windows
+    build_flags:
+      - --define=ij_product=clion-oss-latest-stable
+    build_targets:
+      - //clwb/...
+    test_flags:
+      - --define=ij_product=clion-oss-latest-stable
+      - --test_output=errors
+    test_targets:
+      - //clwb:integration_tests
+  CLion-MacOS-OSS-oldest-stable:
+    name: CLion MacOS OSS Oldest Stable
+    platform: macos_arm64
+    build_flags:
+      - --define=ij_product=clion-oss-oldest-stable
+    build_targets:
+      - //clwb/...
+    test_flags:
+      - --define=ij_product=clion-oss-oldest-stable
+      - --test_output=errors
+    test_targets:
+      - //:clwb_tests
+  CLion-MacOS-OSS-latest-stable:
+    name: CLion MacOS OSS Latest Stable
+    platform: macos_arm64
     build_flags:
       - --define=ij_product=clion-oss-latest-stable
     build_targets:
