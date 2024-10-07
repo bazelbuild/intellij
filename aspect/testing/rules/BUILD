@@ -30,7 +30,7 @@ java_binary(
         ":intellij_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",
         "//proto:intellij_ide_info_java_proto",
-        "@com_google_protobuf//:protobuf_java",
+        "@protobuf//:protobuf_java",
     ],
 )
 
@@ -72,7 +72,7 @@ java_binary(
         ":fast_build_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",
         "//proto:fast_build_info_java_proto",
-        "@com_google_protobuf//:protobuf_java",
+        "@protobuf//:protobuf_java",
     ],
 )
 
