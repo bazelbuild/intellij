@@ -14,7 +14,16 @@ load(
     "to_artifact_location",
 )
 load(":flag_hack.bzl", "FlagHackInfo")
+
+# BUNDLED-IGNORE-BEGIN
 load(":java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
+# BUNDLED-IGNORE-END
+
+# BUNDLED-INCLUDE-BEGIN
+##load(":java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
+### load("@intellij_aspect_template//:java_info.bzl", "get_java_info")
+# BUNDLED-INCLUDE-END
+
 load(
     ":make_variables.bzl",
     "expand_make_variables",
