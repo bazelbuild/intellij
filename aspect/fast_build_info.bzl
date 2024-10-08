@@ -1,5 +1,6 @@
 """An aspect to gather info needed by the FastBuildService."""
 
+load("@intellij_aspect_variadic//:java_info.bzl", "get_java_info")
 load(
     ":artifacts.bzl",
     "artifact_location",
@@ -10,7 +11,6 @@ load(
     ":intellij_info_impl.bzl",
     "stringify_label",
 )
-load(":java_info.bzl", "get_java_info")
 
 _DEP_ATTRS = ["deps", "exports", "runtime_deps", "_java_toolchain"]
 

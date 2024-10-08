@@ -16,13 +16,17 @@
 package com.google.idea.blaze.base.sync.aspects.strategy;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.idea.blaze.base.command.info.BlazeInfoProvider;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -36,8 +40,8 @@ public class AspectStrategyBazel extends AspectStrategy {
     @Nullable
     public AspectStrategy getStrategy(BlazeVersionData versionData) {
       return versionData.buildSystem() == BuildSystemName.Bazel
-          ? new AspectStrategyBazel(versionData)
-          : null;
+              ? new AspectStrategyBazel(versionData)
+              : null;
     }
   }
 
@@ -45,9 +49,34 @@ public class AspectStrategyBazel extends AspectStrategy {
     @Override
     public Optional<File> aspectDirectory(Project project) {
       return Optional.ofNullable(PluginManager.getPluginByClass(AspectStrategy.class))
-          .map((it) -> new File(it.getPath(), "aspect"));
+              .map((it) -> new File(it.getPath(), "aspect"));
+    }
+
+    @Override
+    public Optional<File> variadicAspectDirectory(Project project) {
+      try {
+        var aspectDirectory = aspectDirectory(project);
+        var basePath = project.getBasePath();
+        var variadicPath = Paths.get(basePath, "aspect");
+        if (!Files.exists(variadicPath)) {
+          Files.createDirectory(variadicPath);
+        }
+        var destFile = variadicPath.resolve("java_info.bzl").toFile();
+        var sourceFile = aspectDirectory.map(d -> new File(d, "java_info.bzl"));
+        if(!FileUtils.contentEquals(destFile, sourceFile.get())){
+          FileUtils.copyFile(sourceFile.get(), destFile);
+        }
+        var moduleFile = variadicPath.resolve("MODULE.bazel").toFile().createNewFile();  //#todo workspace
+        var buildFile = variadicPath.resolve("BUILD.bazel").toFile().createNewFile();  //#todo workspace
+        System.out.println(destFile);
+        return Optional.of(variadicPath.toFile());
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+
     }
   }
+
 
   @VisibleForTesting
   public AspectStrategyBazel(BlazeVersionData versionData) {
