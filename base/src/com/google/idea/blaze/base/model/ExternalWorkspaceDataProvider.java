@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
-import com.google.idea.blaze.base.command.mod.BlazeModException;
 import com.google.idea.blaze.base.command.mod.BlazeModRunner;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
@@ -33,8 +32,8 @@ import com.google.idea.blaze.base.sync.SyncMode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -47,6 +46,7 @@ public class ExternalWorkspaceDataProvider {
   private final Project project;
 
   private volatile ExternalWorkspaceData externalWorkspaceData;
+  private ListenableFuture<String> deps;
 
   public ExternalWorkspaceDataProvider(Project project) {
     this.project = project;
@@ -69,8 +69,7 @@ public class ExternalWorkspaceDataProvider {
       BlazeContext context,
       List<String> blazeFlags,
       BlazeVersionData blazeVersionData,
-      BlazeInfo blazeInfo
-  ) {
+      BlazeInfo blazeInfo) {
     // check minimum bazel version
     if (!isEnabled(blazeVersionData)) {
       return Futures.immediateFuture(ExternalWorkspaceData.EMPTY);
@@ -79,63 +78,61 @@ public class ExternalWorkspaceDataProvider {
     // validate that bzlmod is enabled (technically this validates that the --enable_bzlmod is not
     // changed from the default `true` aka set to false)
     String starLarkSemantics = blazeInfo.getStarlarkSemantics();
-    if (starLarkSemantics == null || starLarkSemantics.isEmpty() || starLarkSemantics.contains("enable_bzlmod=false")) {
+    if (starLarkSemantics == null
+        || starLarkSemantics.isEmpty()
+        || starLarkSemantics.contains("enable_bzlmod=false")) {
       return Futures.immediateFuture(ExternalWorkspaceData.EMPTY);
     }
 
-    return BlazeExecutor.getInstance().submit(() -> {
-      ExternalWorkspaceData mapping = getCachedExternalWorkspaceData(context, blazeFlags);
-      if (mapping == null) {
-        throw new BlazeModException("Unable to get module mapping");
-      }
-      return mapping;
-    });
+    return BlazeExecutor.getInstance()
+        .submit(() -> getCachedExternalWorkspaceData(context, blazeFlags));
   }
 
-  private @Nullable ExternalWorkspaceData getCachedExternalWorkspaceData(
-      BlazeContext context,
-      List<String> blazeFlags) {
+  private @Nonnull ExternalWorkspaceData getCachedExternalWorkspaceData(
+      BlazeContext context, List<String> blazeFlags) {
     if (externalWorkspaceData != null) {
       logger.info("Using cached External Repository Mapping");
       return externalWorkspaceData;
     }
     try {
-      BlazeImportSettings importSettings = BlazeImportSettingsManager.getInstance(project).getImportSettings();
+      BlazeImportSettings importSettings =
+          BlazeImportSettingsManager.getInstance(project).getImportSettings();
       if (importSettings == null) {
-        return null;
+        return ExternalWorkspaceData.EMPTY;
       }
       BuildSystem.BuildInvoker buildInvoker =
           Blaze.getBuildSystemProvider(project)
               .getBuildSystem()
               .getDefaultInvoker(project, context);
 
-      externalWorkspaceData = BlazeModRunner.getInstance()
-                                  .dumpRepoMapping(
-                                      project,
-                                      buildInvoker,
-                                      context,
-                                      importSettings.getBuildSystem(),
-                                      blazeFlags
-                                  ).get();
-      return externalWorkspaceData;
+      deps = BlazeModRunner.getInstance().getDeps(project, buildInvoker, context, importSettings.getBuildSystem(), blazeFlags);
+      externalWorkspaceData =
+          BlazeModRunner.getInstance()
+              .dumpRepoMapping(
+                  project, buildInvoker, context, importSettings.getBuildSystem(), blazeFlags)
+              .get();
+      deps.get();
     } catch (InterruptedException | ExecutionException e) {
-      logger.warn("Unable to run blaze mod dump_repo_mapping", e);
-      return null;
+      context.handleExceptionAsWarning(
+          "Failed to run `blaze mod dump_repo_mapping` (completion of labels from module provided repos will be unavailable)",
+          e);
+      externalWorkspaceData = ExternalWorkspaceData.EMPTY;
     }
+
+    return externalWorkspaceData;
   }
 
   public void invalidate(BlazeContext context, SyncMode syncMode) {
     logger.info("Invalidating External Repository Mapping info");
-    context.output(new StatusOutput(String.format("Invalidating External Repository Mapping info (%s)", syncMode)));
+    context.output(
+        new StatusOutput(
+            String.format("Invalidating External Repository Mapping info (%s)", syncMode)));
     externalWorkspaceData = null;
   }
 
   public static final class Invalidator implements SyncListener {
     @Override
-    public void onSyncStart(
-        Project project,
-        BlazeContext context,
-        SyncMode syncMode) {
+    public void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) {
       if (syncMode == SyncMode.FULL) {
         ExternalWorkspaceDataProvider provider = ExternalWorkspaceDataProvider.getInstance(project);
         if (provider != null) {

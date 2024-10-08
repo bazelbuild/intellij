@@ -97,12 +97,22 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
 
   private static PsiMethod getTestMethod(ConfigurationContext context, Ref<PsiElement> sourceElement) {
     PsiElement psi = chooseTestElement(context, sourceElement.get());
-    if (psi instanceof PsiMethod
-        && AnnotationUtil.isAnnotated((PsiMethod) psi, JUnitUtil.TEST_ANNOTATION, false)) {
-      return (PsiMethod) psi;
+    if (psi instanceof PsiMethod){
+      PsiMethod method = (PsiMethod) psi;
+      if (isJUnit4AnnotatedMethod(method) || isJUnit5AnnotatedMethod(method)) {
+        return (PsiMethod) psi;
+      }
     }
     List<PsiMethod> selectedMethods = TestMethodSelectionUtil.getSelectedMethods(context);
     return selectedMethods != null && selectedMethods.size() == 1 ? selectedMethods.get(0) : null;
+  }
+
+  private static boolean isJUnit4AnnotatedMethod(PsiMethod psiMethod) {
+    return AnnotationUtil.isAnnotated(psiMethod, JUnitUtil.TEST_ANNOTATION, false);
+  }
+
+  private static boolean isJUnit5AnnotatedMethod(PsiMethod psiMethod) {
+    return AnnotationUtil.isAnnotated(psiMethod, JUnitUtil.TEST5_ANNOTATION, false);
   }
 
   private static boolean hasTestSubclasses(@Nullable PsiClass psiClass) {

@@ -69,7 +69,7 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
 
   @Override
   public ImmutableList<String> possibleWorkspaceFileNames() {
-    return ImmutableList.of("WORKSPACE", "WORKSPACE.bazel");
+    return ImmutableList.of("WORKSPACE", "WORKSPACE.bazel", "WORKSPACE.bzlmod");
   }
 
   @Override

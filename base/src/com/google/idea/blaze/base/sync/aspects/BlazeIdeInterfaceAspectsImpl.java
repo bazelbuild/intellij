@@ -752,7 +752,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
     Path targetPatternFile = prepareTargetPatternFile(project, targets);
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
-      BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.BUILD);
+      BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project);
       builder
           .setInvokeParallel(invokeParallel)
           .addBlazeFlags(BlazeFlags.TARGET_PATTERN_FILE, targetPatternFile.toString())

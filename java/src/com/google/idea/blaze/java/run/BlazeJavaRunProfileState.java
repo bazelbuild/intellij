@@ -247,7 +247,7 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
       blazeCommand = BlazeCommandName.COVERAGE;
     }
     BlazeCommand.Builder command =
-        BlazeCommand.builder(binaryPath, blazeCommand)
+        BlazeCommand.builder(binaryPath, blazeCommand, project)
             .addTargets(configuration.getTargets())
             .addBlazeFlags(
                 BlazeFlags.blazeFlags(

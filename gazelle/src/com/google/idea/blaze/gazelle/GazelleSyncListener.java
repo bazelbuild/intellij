@@ -89,7 +89,8 @@ public class GazelleSyncListener implements SyncListener {
             blazeFlags,
             gazelleBinary,
             importantDirectories,
-            issueParsers);
+            issueParsers,
+            project);
   }
 
   private ImmutableList<BlazeIssueParser.Parser> gazelleIssueParsers(

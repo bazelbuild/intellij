@@ -2,7 +2,7 @@
 tasks:
   IntelliJ-CE-internal-stable:
     name: IntelliJ CE Internal Stable
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=intellij-latest
     build_targets:
@@ -14,7 +14,7 @@ tasks:
       - //:ijwb_ce_tests
   IntelliJ-CE-internal-beta:
     name: IntelliJ CE Internal Beta
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=intellij-beta
     build_targets:
@@ -26,7 +26,7 @@ tasks:
       - //:ijwb_ce_tests
   IntelliJ-CE-internal-under-dev:
     name: IntelliJ CE Internal Under Development
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=intellij-under-dev
     build_targets:
@@ -40,7 +40,7 @@ tasks:
       - exit_status: 1
   IntelliJ-CE-OSS-oldest-stable:
     name: IntelliJ CE OSS Oldest Stable
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=intellij-oss-oldest-stable
     build_targets:
@@ -52,7 +52,7 @@ tasks:
       - //:ijwb_ce_tests
   IntelliJ-CE-OSS-latest-stable:
     name: IntelliJ CE OSS Latest Stable
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=intellij-oss-latest-stable
     build_targets:
@@ -64,7 +64,7 @@ tasks:
       - //:ijwb_ce_tests
   IntelliJ-CE-OSS-under-dev:
     name: IntelliJ CE OSS Under Development
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=intellij-oss-under-dev
     build_targets:

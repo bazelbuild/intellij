@@ -42,7 +42,7 @@ import java.util.concurrent.ExecutionException;
 public class BlazeInfoProvider {
     private static final Logger logger = Logger.getInstance(BlazeInfoProvider.class);
     private static final BoolExperiment enabled =
-            new BoolExperiment("blaze.info.provider.enabled", false);
+            new BoolExperiment("blaze.info.provider.enabled", true);
 
     private final Project project;
     private volatile BlazeInfo blazeInfo;
@@ -91,7 +91,7 @@ public class BlazeInfoProvider {
             blazeInfo = BlazeInfoRunner.getInstance().runBlazeInfo(
                     project,
                     buildInvoker,
-                    BlazeContext.create(),
+                    context,
                     importSettings.getBuildSystem(),
                     blazeFlags
             ).get();

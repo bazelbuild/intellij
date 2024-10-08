@@ -74,7 +74,8 @@ public class SnapshotDeserializer {
             proto.getIncludePathsList().stream().map(Path::of).collect(toImmutableSet()),
             proto.getExcludePathsList().stream().map(Path::of).collect(toImmutableSet()),
             QuerySyncLanguage.fromProtoList(proto.getLanguageClassesList()),
-            ImmutableSet.copyOf(proto.getTestSourcesList())));
+            ImmutableSet.copyOf(proto.getTestSourcesList()),
+            ImmutableSet.copyOf(proto.getSystemExcludesList())));
   }
 
   private void visitVcsState(SnapshotProto.VcsState proto) {

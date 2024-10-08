@@ -413,7 +413,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
         command = BlazeCommandName.COVERAGE;
       }
 
-      return BlazeCommand.builder(invoker, command)
+      return BlazeCommand.builder(invoker, command, project)
           .addTargets(configuration.getTargets())
           .addBlazeFlags(
               BlazeFlags.blazeFlags(

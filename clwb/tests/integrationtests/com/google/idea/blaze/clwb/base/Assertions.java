@@ -25,25 +25,19 @@ public class Assertions {
 
   private static void assertContainsHeader(String fileName, boolean shouldContain, List<HeadersSearchRoot> roots) {
     final var found = new Ref<VirtualFile>();
-    final var foundIn = new Ref<PsiFileSystemItem>();
+    final var foundIn = new Ref<HeadersSearchRoot>();
 
     for (final var root : roots) {
-      root.processChildren(new HeadersSearchRootProcessor() {
-        @Override
-        public boolean process(@NotNull VirtualFile file) {
-          if (file.isDirectory() || !FileUtil.namesEqual(file.getName(), fileName)) {
-            return true;
-          }
+      final var rootFile = root.getVirtualFile();
+      if (rootFile == null) continue;
 
-          found.set(file);
-          foundIn.set(root);
-          return false;
-        }
-      });
+      final var headerFile = rootFile.findFileByRelativePath(fileName);
+      if (headerFile == null || !headerFile.exists()) continue;
 
-      if (!found.isNull()) {
-        break;
-      }
+      found.set(headerFile);
+      foundIn.set(root);
+
+      break;
     }
 
     if (shouldContain) {

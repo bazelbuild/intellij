@@ -155,7 +155,7 @@ public class MobileInstallBuildStep implements ApkBuildStep {
         Blaze.getBuildSystemProvider(project)
             .getBuildSystem()
             .getBuildInvoker(project, context, BlazeCommandName.MOBILE_INSTALL);
-    BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.MOBILE_INSTALL);
+    BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.MOBILE_INSTALL, project);
 
     if (passAdbArgWithSerialToMi.getValue()) {
       // Redundant, but we need this to get around bug in bazel.

@@ -39,6 +39,7 @@ import java.util.List;
 public class BlazeModRunnerImpl extends BlazeModRunner {
 
   private static final String DUMP_REPO_MAPPING = "dump_repo_mapping";
+  private static final String DEPS = "deps";
   private static final String ROOT_WORKSPACE = "";
 
   /**
@@ -82,6 +83,22 @@ public class BlazeModRunnerImpl extends BlazeModRunner {
         BlazeExecutor.getInstance().getExecutor());
   }
 
+    @Override
+    public ListenableFuture<String> getDeps(
+            Project project,
+            BuildSystem.BuildInvoker invoker,
+            BlazeContext context,
+            BuildSystemName buildSystemName,
+            List<String> flags) {
+        return Futures.transform(
+                runBlazeModGetBytes(
+                        project, invoker, context, ImmutableList.of(DEPS, ROOT_WORKSPACE, "--output=json"), flags),
+                bytes -> new String(bytes, StandardCharsets.UTF_8),
+                BlazeExecutor.getInstance().getExecutor()
+        );
+
+    }
+
   @Override
   protected ListenableFuture<byte[]> runBlazeModGetBytes(
       Project project,
@@ -93,7 +110,7 @@ public class BlazeModRunnerImpl extends BlazeModRunner {
         .submit(
             () -> {
               BlazeCommand.Builder builder =
-                  BlazeCommand.builder(invoker, BlazeCommandName.MOD).addBlazeFlags(flags);
+                  BlazeCommand.builder(invoker, BlazeCommandName.MOD, project).addBlazeFlags(flags);
 
               if (args != null) {
                 builder.addBlazeFlags(args);

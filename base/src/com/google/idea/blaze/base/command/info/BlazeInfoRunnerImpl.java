@@ -42,7 +42,7 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
     return BlazeExecutor.getInstance()
         .submit(
             () -> {
-              BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.INFO);
+              BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.INFO, project);
               builder.addBlazeFlags(blazeFlags);
               if (keys != null) {
                 builder.addBlazeFlags(keys);
@@ -92,7 +92,8 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
             BlazeInfo.OUTPUT_PATH_KEY,
             BlazeInfo.OUTPUT_BASE_KEY,
             BlazeInfo.RELEASE,
-            BlazeInfo.STARLARK_SEMANTICS),
+            BlazeInfo.STARLARK_SEMANTICS,
+            BlazeInfo.JAVA_HOME),
         bytes ->
             BlazeInfo.create(
                 buildSystemName,

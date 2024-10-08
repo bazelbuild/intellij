@@ -15,6 +15,16 @@ PROTO_RULE_KINDS = [
     "kt_proto_library_helper",
 ]
 
+def java_info_in_target(target):
+    return JavaInfo in target
+
+def get_java_info(target):
+    if JavaInfo in target:
+        return target[JavaInfo]
+
+def java_info_reference():
+    return [JavaInfo]
+
 def _package_dependencies_impl(target, ctx):
     java_info_file = _write_java_target_info(target, ctx)
     cc_info_file = _write_cc_target_info(target, ctx)
@@ -273,11 +283,12 @@ def _collect_own_java_artifacts(
         # This is done primarily for rules like proto, whose toolchain classes
         # are collected via attribute traversal, but still requires jars for any
         # proto deps of the underlying proto_library.
-        if JavaInfo in target:
+        java_info = get_java_info(target)
+        if java_info:
             if can_follow_dependencies:
-                own_jar_depsets.append(target[JavaInfo].compile_jars)
+                own_jar_depsets.append(java_info.compile_jars)
             else:
-                own_jar_depsets.append(target[JavaInfo].transitive_compile_time_jars)
+                own_jar_depsets.append(java_info.transitive_compile_time_jars)
 
         if declares_android_resources(target, ctx):
             ide_aar = _get_ide_aar_file(target, ctx)
@@ -313,8 +324,9 @@ def _collect_own_java_artifacts(
 
         # Add generated java_outputs (e.g. from annotation processing)
         generated_class_jars = []
-        if JavaInfo in target:
-            for java_output in target[JavaInfo].java_outputs:
+        java_info = get_java_info(target)
+        if java_info:
+            for java_output in java_info.java_outputs:
                 # Prefer source jars if they exist:
                 if use_generated_srcjars and java_output.generated_source_jar:
                     own_gensrc_files.append(java_output.generated_source_jar)

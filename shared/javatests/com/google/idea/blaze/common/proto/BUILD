@@ -1,3 +1,4 @@
+load("@rules_java//java:defs.bzl", "java_test")
 load("//:build-visibility.bzl", "DEFAULT_TEST_VISIBILITY")
 
 package(

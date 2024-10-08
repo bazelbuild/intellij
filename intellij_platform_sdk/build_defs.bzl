@@ -37,7 +37,7 @@ INDIRECT_IJ_PRODUCTS = {
     "android-studio-oss-under-dev": "android-studio-2023.2",
     "clion-oss-oldest-stable": "clion-2024.1",
     "clion-oss-latest-stable": "clion-2024.2",
-    "clion-oss-under-dev": "clion-2024.2",
+    "clion-oss-under-dev": "clion-2024.3",
     # Indirect ij_product mapping for Cloud Code Plugin OSS
     "intellij-cc-oldest-stable": "intellij-2022.3",
     "intellij-cc-latest-stable": "intellij-2022.3",

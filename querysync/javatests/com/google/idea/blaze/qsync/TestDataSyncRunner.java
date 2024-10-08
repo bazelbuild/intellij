@@ -56,7 +56,9 @@ public class TestDataSyncRunner {
             /* includes= */ ImmutableSet.copyOf(testProject.getRelativeSourcePaths()),
             /* excludes= */ ImmutableSet.of(),
             /* languageClasses= */ ImmutableSet.of(),
-            /* testSources= */ ImmutableSet.of());
+            /* testSources= */ ImmutableSet.of(),
+            /* systemExcludes = */ ImmutableSet.of()
+);
     QuerySummary querySummary = getQuerySummary(testProject);
     PostQuerySyncData pqsd =
         PostQuerySyncData.builder()

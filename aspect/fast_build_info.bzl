@@ -10,6 +10,7 @@ load(
     ":intellij_info_impl.bzl",
     "stringify_label",
 )
+load(":java_info.bzl", "get_java_info")
 
 _DEP_ATTRS = ["deps", "exports", "runtime_deps", "_java_toolchain"]
 
@@ -66,7 +67,8 @@ def _fast_build_info_impl(target, ctx):
             source_version = toolchain.source_version,
             target_version = toolchain.target_version,
         )
-    if JavaInfo in target:
+    java_info = get_java_info(target)
+    if java_info:
         write_output = True
         launcher = None
         if hasattr(ctx.rule.attr, "use_launcher") and not ctx.rule.attr.use_launcher:
@@ -85,6 +87,7 @@ def _fast_build_info_impl(target, ctx):
             "launcher": launcher,
             "swigdeps": getattr(ctx.rule.attr, "swigdeps", True),
             "jvm_flags": getattr(ctx.rule.attr, "jvm_flags", []),
+            "main_class": getattr(ctx.rule.attr, "main_class", None),
         }
         annotation_processing = target[JavaInfo].annotation_processing
         if annotation_processing:

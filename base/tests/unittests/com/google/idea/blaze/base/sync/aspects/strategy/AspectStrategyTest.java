@@ -187,8 +187,8 @@ public class AspectStrategyTest extends BlazeTestCase {
         .containsExactly("intellij-info-generic", "intellij-info-java", "intellij-resolve-java");
   }
 
-  private static BlazeCommand.Builder emptyBuilder() {
-    return BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD);
+  private BlazeCommand.Builder emptyBuilder() {
+    return BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD, getProject());
   }
 
   private static ImmutableList<String> getBlazeFlags(BlazeCommand.Builder builder) {

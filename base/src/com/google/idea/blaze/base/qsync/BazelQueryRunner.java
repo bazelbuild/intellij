@@ -69,7 +69,7 @@ public class BazelQueryRunner implements QueryRunner {
             "Running `%.200s` using invoker %s, runner %s",
             query, invoker.getClass().getSimpleName(), commandRunner.getClass().getSimpleName()));
 
-    BlazeCommand.Builder commandBuilder = BlazeCommand.builder(invoker, BlazeCommandName.QUERY);
+    BlazeCommand.Builder commandBuilder = BlazeCommand.builder(invoker, BlazeCommandName.QUERY, project);
     commandBuilder.addBlazeFlags(query.getQueryFlags());
     commandBuilder.addBlazeFlags("--keep_going");
     String queryExp = query.getQueryExpression();
