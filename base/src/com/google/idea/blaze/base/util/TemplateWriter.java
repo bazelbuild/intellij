@@ -3,20 +3,17 @@ package com.google.idea.blaze.base.util;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 
-import java.io.IOException;
 import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Properties;
 
-public class TemplateUtil {
+public class TemplateWriter {
 
     private final Path resourcePath;
     private final VelocityEngine velocityEngine;
 
-    public TemplateUtil(Path resourcePath) {
+    public TemplateWriter(Path resourcePath) {
         this.resourcePath = resourcePath;
         this.velocityEngine = new VelocityEngine();
         this.velocityEngine.init(getProperties());

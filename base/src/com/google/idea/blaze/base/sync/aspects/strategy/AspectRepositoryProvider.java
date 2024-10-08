@@ -23,7 +23,7 @@ public interface AspectRepositoryProvider {
     return Optional.empty();
   }
 
-  private static Optional<File> getProjectAspectDirectory(Project project) {
+  public static Optional<File> getProjectAspectDirectory(Project project) {
     String basePath = project.getBasePath();
     return basePath == null ? Optional.empty() : Optional.of(Paths.get(basePath).resolve("aspect").toFile());
   }

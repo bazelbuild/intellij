@@ -4,8 +4,18 @@ filegroup(
         "WORKSPACE",
         "BUILD.bazel",
         "java_info.bzl",
+        "java_info.template.bzl",
     ],
     visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "generate_java_info_template",
+    outs = ["java_info.template.bzl"],
+    srcs = ["java_info.bzl"],
+    cmd = "cat $(SRCS) >$@ && " +
+        "sed -i -e '/TEMPLATE-IGNORE-BEGIN/,/TEMPLATE-IGNORE-END/d' $@ && " +
+        "sed -i -e '/TEMPLATE-INCLUDE-BEGIN/,/TEMPLATE-INCLUDE-END/{s/^[#][#]//;}' $@",
 )
 
 genrule(

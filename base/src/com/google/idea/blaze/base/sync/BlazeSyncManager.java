@@ -52,6 +52,7 @@ import com.google.idea.blaze.base.sync.projectview.SyncDirectoriesWarning;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.base.util.TemplateWriter;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.PrintOutput.OutputType;
@@ -64,6 +65,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -75,6 +77,10 @@ public class BlazeSyncManager {
 
   private final Project project;
   private static final Logger logger = Logger.getInstance(BlazeSyncManager.class);
+  private final Map<LanguageClass, String> supportedLanguageAspectTemplate = Map.of(
+    LanguageClass.JAVA, "java_info.template.bzl",
+    LanguageClass.GENERIC, "java_info.template.bzl"
+  );
 
   public BlazeSyncManager(Project project) {
     this.project = project;
@@ -97,6 +103,14 @@ public class BlazeSyncManager {
       return;
     }
     SaveUtil.saveAllFiles();
+
+    try {
+      AspectRepositoryProvider.copyAspectsIfNotExists(project);
+    } catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+
+    prepareProjectAspect();
 
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
@@ -179,6 +193,33 @@ public class BlazeSyncManager {
             });
   }
 
+  private void prepareProjectAspect() {
+    var manager =
+      BlazeProjectDataManager.getInstance(project);
+
+    if (manager == null) return;
+
+    var projectData = manager.getBlazeProjectData();
+    if (projectData == null) return;
+    var optionalAspectTemplateDir = AspectRepositoryProvider.getProjectAspectDirectory(project);
+    if (optionalAspectTemplateDir.isEmpty()) return;
+    var aspectTemplateDir = optionalAspectTemplateDir.get().toPath();
+    var templateWriter = new TemplateWriter(aspectTemplateDir);
+    var activeLanguages = projectData.getWorkspaceLanguageSettings().getActiveLanguages();
+    var supportedLanguages = activeLanguages.stream().filter(supportedLanguageAspectTemplate::containsKey);
+    var isAtLeastBazel8 = projectData.getBlazeVersionData().bazelIsAtLeastVersion(8, 0, 0);
+    var templateVariableMap = Map.of(
+      "bazel8OrAbove", isAtLeastBazel8 ? "true" : "false",
+      "isJavaEnabled", activeLanguages.contains(LanguageClass.JAVA) || activeLanguages.contains(LanguageClass.GENERIC) ? "true" : "false"
+    );
+    supportedLanguages.forEach(language -> {
+      var templateFileName = supportedLanguageAspectTemplate.get(language);
+      var realizedFileName = templateFileName.replace(".template.bzl", ".bzl");
+      var realizedFile = aspectTemplateDir.resolve(realizedFileName);
+      templateWriter.writeToFile(templateFileName, realizedFile, templateVariableMap);
+    });
+  }
+
   @VisibleForTesting
   boolean shouldForceFullSync(
       BlazeProjectData oldProjectData,
@@ -211,7 +252,6 @@ public class BlazeSyncManager {
   private static void executeTask(Project project, BlazeSyncParams params, BlazeContext context) {
     Future<?> querySyncPromoFuture = new QuerySyncPromo(project).getPromoShowFuture();
     try {
-      AspectRepositoryProvider.copyAspectsIfNotExists(project);
       SyncPhaseCoordinator.getInstance(project).syncProject(params, context).get();
     } catch (InterruptedException e) {
       context.output(new PrintOutput("Sync interrupted: " + e.getMessage()));
