@@ -46,7 +46,6 @@ public class ExternalWorkspaceDataProvider {
   private final Project project;
 
   private volatile ExternalWorkspaceData externalWorkspaceData;
-  private ListenableFuture<String> deps;
 
   public ExternalWorkspaceDataProvider(Project project) {
     this.project = project;
