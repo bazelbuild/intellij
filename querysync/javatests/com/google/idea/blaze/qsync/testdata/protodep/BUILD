@@ -1,3 +1,5 @@
+load("@rules_java//java:defs.bzl", "java_library")
+
 proto_library(
     name = "proto",
     srcs = ["testproto.proto"],

@@ -2,6 +2,7 @@
 # Description: Builds ASwB for blaze and bazel
 #
 
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
     "ASWB_PACKAGES_VISIBILITY",

@@ -1,5 +1,6 @@
 # Testing infrastructure for the plugin's Skylark aspect
 
+load("@rules_java//java:defs.bzl", "java_binary", "java_library")
 load(
     "//:build-visibility.bzl",
     "ASPECT_TEST_RULES_VISIBILITY_TO_ALL",
