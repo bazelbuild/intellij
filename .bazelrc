@@ -12,4 +12,4 @@ common --android_sdk=@androidsdk//:sdk
 # Required for CLion integration tests on windows
 startup --windows_enable_symlinks
 build --enable_runfiles
-common --incompatible_use_plus_in_repo_names
+# common --incompatible_use_plus_in_repo_names # reenable after this is fixed https://github.com/protocolbuffers/protobuf/issues/18546
