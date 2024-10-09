@@ -10,7 +10,7 @@ load(
     ":intellij_info_impl.bzl",
     "stringify_label",
 )
-load(":java_info.bzl", "get_java_info")
+load("@intellij_aspect_template//:java_info.bzl", "get_java_info")
 
 _DEP_ATTRS = ["deps", "exports", "runtime_deps", "_java_toolchain"]
 

@@ -15,39 +15,38 @@
  */
 package com.google.idea.blaze.java.fastbuild;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
-import java.io.File;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectRepositoryProvider;
+import com.intellij.openapi.project.Project;
+
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 final class BazelFastBuildAspectStrategy extends FastBuildAspectStrategy {
 
   @Override
-  protected List<String> getAspectFlags(BlazeVersionData versionData) {
+  protected List<String> getAspectFlags(BlazeVersionData versionData, Project project) {
+    String intellijAspectFile;
     if (versionData.bazelIsAtLeastVersion(6, 0, 0)) {
-      return ImmutableList.of(
-          "--aspects=@@intellij_aspect//:fast_build_info_bundled.bzl%fast_build_info_aspect",
-          getAspectRepositoryOverrideFlag());
+      intellijAspectFile = "--aspects=@@intellij_aspect//:fast_build_info_bundled.bzl%fast_build_info_aspect";
+    } else {
+      intellijAspectFile = "--aspects=@intellij_aspect//:fast_build_info_bundled.bzl%fast_build_info_aspect";
     }
-    return ImmutableList.of(
-        "--aspects=@intellij_aspect//:fast_build_info_bundled.bzl%fast_build_info_aspect",
-        getAspectRepositoryOverrideFlag());
+    return Stream.concat(
+        getAspectRepositoryOverrideFlags(project).stream(),
+        Stream.of(intellijAspectFile)
+      )
+      .collect(Collectors.toList());
   }
 
-  private static File findAspectDirectory() {
-    IdeaPluginDescriptor plugin =
-        PluginManager.getPlugin(PluginManager.getPluginByClassName(AspectStrategy.class.getName()));
-    return new File(plugin.getPath(), "aspect");
-  }
-
-  private static String getAspectRepositoryOverrideFlag() {
-    return String.format(
-        "--override_repository=intellij_aspect=%s", findAspectDirectory().getPath());
+  private static List<String> getAspectRepositoryOverrideFlags(Project project) {
+    return Arrays.stream(AspectRepositoryProvider.getOverrideFlags(project)).filter(Optional::isPresent)
+      .map(Optional::get).toList();
   }
 
   @Override
