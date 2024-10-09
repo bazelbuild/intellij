@@ -26,7 +26,10 @@ def clwb_integration_test(name, project, srcs, deps = []):
         srcs = srcs + native.glob(["tests/integrationtests/com/google/idea/blaze/clwb/base/*.java"]),
         test_package_root = "com.google.idea.blaze.clwb",
         runtime_deps = [":clwb_bazel"],
-        data = ["//aspect:aspect_files"],
+        data = [
+            "//aspect:aspect_files",
+            "//aspect_template:aspect_files",
+        ],
         jvm_flags = [
             # disables the default bazel security manager, causes tests to fail on windows
             "-Dcom.google.testing.junit.runner.shouldInstallTestSecurityManager=false",
