@@ -29,7 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-class SyncAspectTemplateProvider implements SyncListener {
+public class SyncAspectTemplateProvider implements SyncListener {
   private final Map<LanguageClass, String> supportedLanguageAspectTemplate = Map.of(
       LanguageClass.JAVA, "java_info.template.bzl",
       LanguageClass.GENERIC, "java_info.template.bzl"
