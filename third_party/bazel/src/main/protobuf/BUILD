@@ -299,10 +299,7 @@ cc_proto_library(
 
 filegroup(
     name = "srcs",
-    srcs = glob(
-        ["**"],
-        exclude = ["android_deploy_info.proto"],
-    ),
+    srcs = glob(["**"]),
 )
 
 filegroup(
