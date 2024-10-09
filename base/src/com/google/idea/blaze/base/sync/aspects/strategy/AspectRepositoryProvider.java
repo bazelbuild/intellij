@@ -36,7 +36,7 @@ public interface AspectRepositoryProvider {
         .orElse(Optional.empty());
   }
 
-  private static Optional<File> findAspectTemplateDirectory() {
+  public static Optional<File> findAspectTemplateDirectory() {
     return EP_NAME.getExtensionsIfPointIsRegistered().stream()
             .map(AspectRepositoryProvider::aspectTemplateDirectory)
             .filter(Optional::isPresent)
@@ -51,7 +51,7 @@ public interface AspectRepositoryProvider {
     };
   }
 
-  private static Optional<String> getOverrideFlagForAspectDirectory() {
+  public static Optional<String> getOverrideFlagForAspectDirectory() {
     return findAspectDirectory().map(it -> OVERRIDE_REPOSITORY_FLAG + "=" + it.getPath());
   }
 

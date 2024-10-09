@@ -15,8 +15,19 @@ public class TestAspectRepositoryProvider implements AspectRepositoryProvider {
     return Optional.of(Runfiles.runfilesPath("aspect")).map(Path::toFile);
   }
 
-    @Override
-    public Optional<File> aspectTemplateDirectory() {
-      return Optional.of(Runfiles.runfilesPath("aspect_template")).map(Path::toFile);
-    }
+  static Optional<String>[] getOverrideFlags(Project project) {
+    return new Optional[] {
+      AspectRepositoryProvider.getOverrideFlagForAspectDirectory(),
+      getOverrideFlagForAspectTemplateDirectory(project),
+    };
+  }
+
+  private static Optional<String> getOverrideFlagForAspectTemplateDirectory(Project project) {
+    return AspectRepositoryProvider.findAspectTemplateDirectory().map(it -> OVERRIDE_REPOSITORY_TEMPLATE_FLAG + "=" + it.getPath());
+  }
+
+  @Override
+  public Optional<File> aspectTemplateDirectory() {
+    return Optional.of(Runfiles.runfilesPath("aspect_template")).map(Path::toFile);
+  }
 }
