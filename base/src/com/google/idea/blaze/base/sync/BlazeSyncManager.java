@@ -105,7 +105,7 @@ public class BlazeSyncManager {
     SaveUtil.saveAllFiles();
 
     try {
-      AspectRepositoryProvider.copyAspectsIfNotExists(project);
+      AspectRepositoryProvider.copyAspectTemplatesIfNotExists(project);
     } catch (ExecutionException e) {
       throw new RuntimeException(e);
     }

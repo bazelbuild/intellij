@@ -59,22 +59,21 @@ public interface AspectRepositoryProvider {
     return getProjectAspectDirectory(project).map(it -> OVERRIDE_REPOSITORY_TEMPLATE_FLAG + "=" + it.getPath());
   }
 
-  static void copyAspectsIfNotExists(Project project) throws ExecutionException {
+  static void copyAspectTemplatesIfNotExists(Project project) throws ExecutionException {
     Path destinationAspectsPath = getProjectAspectDirectory(project).map(File::toPath).orElse(null);
     if (destinationAspectsPath == null) {
       throw new IllegalStateException("Missing project aspect directory");
     }
     if (!destinationAspectsPath.toFile().exists()) {
       try {
-        copyAspectsFromResources(destinationAspectsPath);
+        copyAspectTemplatesFromResources(destinationAspectsPath);
       } catch (IOException e) {
         throw new ExecutionException(e);
       }
-
     }
   }
 
-  private static void copyAspectsFromResources(Path destinationPath) throws IOException {
+  private static void copyAspectTemplatesFromResources(Path destinationPath) throws IOException {
     Path aspectPath = findAspectTemplateDirectory().map(File::toPath).orElse(null);
     if (aspectPath != null && Files.isDirectory(aspectPath)) {
         copyFileTree(aspectPath, destinationPath);
@@ -95,8 +94,10 @@ public interface AspectRepositoryProvider {
   }
 
   private static void copyUsingRelativePath(Path sourcePrefix, Path source, Path destination) throws IOException {
-      String sourceRelativePath = sourcePrefix.relativize(source).toString();
-      Path destinationAbsolutePath = Paths.get(destination.toString(), sourceRelativePath);
-      Files.copy(source, destinationAbsolutePath);
+    // only interested in bzl files that are templates
+    if (source.endsWith(".bzl") && !source.endsWith("template.bzl")) return;
+    String sourceRelativePath = sourcePrefix.relativize(source).toString();
+    Path destinationAbsolutePath = Paths.get(destination.toString(), sourceRelativePath);
+    Files.copy(source, destinationAbsolutePath);
   }
 }
