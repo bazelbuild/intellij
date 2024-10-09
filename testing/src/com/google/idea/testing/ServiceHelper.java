@@ -58,6 +58,19 @@ public class ServiceHelper {
     ep.registerExtension(instance, parentDisposable);
   }
 
+  public static <T> void unregisterExtension(
+      ExtensionPointName<T> name, Class<? extends T> clazz, Disposable parentDisposable) {
+    final var ep = name.getPoint();
+    for (final var extension : name.getExtensions()) {
+      if (!extension.getClass().equals(clazz)) {
+        continue;
+      }
+
+      ep.unregisterExtension(extension);
+      Disposer.register(parentDisposable, () -> ep.registerExtension(extension));
+    }
+  }
+
   public static <T> void registerProjectExtension(
       Project project, ExtensionPointName<T> name, T instance, Disposable parentDisposable) {
     ExtensionPoint<T> ep = project.getExtensionArea().getExtensionPoint(name);

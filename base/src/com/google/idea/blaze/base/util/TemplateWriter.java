@@ -1,5 +1,6 @@
 package com.google.idea.blaze.base.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 
@@ -9,6 +10,7 @@ import java.util.Map;
 import java.util.Properties;
 
 public class TemplateWriter {
+    private static final Logger LOG = Logger.getInstance(TemplateWriter.class);
 
     private final Path resourcePath;
     private final VelocityEngine velocityEngine;
@@ -26,7 +28,7 @@ public class TemplateWriter {
         return props;
     }
 
-    public void writeToFile(String templateFilePath, Path outputFile, Map<String, String> variableMap) {
+    public boolean writeToFile(String templateFilePath, Path outputFile, Map<String, String> variableMap) {
         try {
             org.apache.velocity.Template template = velocityEngine.getTemplate(templateFilePath);
             VelocityContext context = new VelocityContext();
@@ -36,9 +38,11 @@ public class TemplateWriter {
             StringWriter writer = new StringWriter();
             template.merge(context, writer);
             FileUtil.writeIfDifferent(outputFile, writer.toString());
+
+            return true;
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error writing template to file", e);
+            LOG.error("Error writing template to file", e);
+            return false;
         }
     }
 }
