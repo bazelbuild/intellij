@@ -129,6 +129,6 @@ java_library(
         "//third_party/bazel/src/main/protobuf:build_java_proto",
         "//third_party/bazel/src/main/protobuf:command_line_java_proto",
         "//third_party/bazel/src/main/protobuf:deps_java_proto",
-        "@com_google_protobuf//:protobuf_java",
+        "@protobuf//:protobuf_java",
     ],
 )
