@@ -38,7 +38,6 @@ filegroup(
         "intellij_info_bundled.bzl",
         "intellij_info_impl_bundled.bzl",
         "java_classpath.bzl",
-        "java_info.bzl",
         "make_variables.bzl",
         ":BUILD.bazel",
         "//aspect/tools:CreateAar",
@@ -84,6 +83,7 @@ genrule(
     outs = ["intellij_info_impl_bundled.bzl"],
     cmd = "cat $(SRCS) >$@ && " +
           "sed -i -e '/BUNDLED-IGNORE-BEGIN/,/BUNDLED-IGNORE-END/d' $@ && " +
+          "sed -i -e '/BUNDLED-INCLUDE-BEGIN/,/BUNDLED-INCLUDE-END/{s/^[#][#]//;}' $@ &&" +
           "sed -i -e 's,load(\".*/rules_java/,load(\"@rules_java//', $@",
 )
 

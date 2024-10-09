@@ -1,3 +1,13 @@
+v2024.10.08
+===========
+Bug Fixes
+* CLion Virtual Include Fixes #6759
+* Fixes for Query Sync (ready to use): #6833, #6834, #6835, #6841
+* [fix] Confirm if user wants to reimport instead of disallowing it #6839
+Features
+* Implement JUnit5 support and parameterize tests #4473
+* [feature] Recognize WORKSPACE.bzlmod files #6853
+
 v2024.09.24
 ===========
 Bug Fixes

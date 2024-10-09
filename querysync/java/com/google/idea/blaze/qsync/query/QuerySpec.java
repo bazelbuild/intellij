@@ -42,7 +42,7 @@ public abstract class QuerySpec implements Formattable {
   // LINT.IfChanges
   @Memoized
   public ImmutableList<String> getQueryFlags() {
-    return ImmutableList.of("--output=streamed_proto", "--relative_locations=true");
+    return ImmutableList.of("--output=streamed_proto", "--relative_locations=true", "--consistent_labels=true");
   }
 
   @Memoized

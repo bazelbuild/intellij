@@ -106,6 +106,15 @@ repackaged_files(
 )
 
 repackaged_files(
+    name = "aspect_template_directory",
+    srcs = ["//aspect_template:aspect_files"],
+    prefix = "clwb/aspect_template",
+    strip_prefix = "/aspect_template",
+    visibility = CLWB_PACKAGES_VISIBILITY,
+    java_copts = ["-source", "8", "-target", "8"],
+)
+
+repackaged_files(
     name = "clwb_bazel_gdbserver_wrapper",
     srcs = ["//clwb:gdbserver_wrapper"],
     prefix = "clwb/gdb",
@@ -116,6 +125,7 @@ intellij_plugin_debug_target(
     name = "clwb_bazel_dev",
     deps = [
         ":aspect_directory",
+        ":aspect_template_directory",
         ":clwb_bazel_gdbserver_wrapper",
         ":plugin_jar",
     ],
@@ -125,6 +135,7 @@ plugin_deploy_zip(
     name = "clwb_bazel_zip",
     srcs = [
         ":aspect_directory",
+        ":aspect_template_directory",
         ":clwb_bazel_gdbserver_wrapper",
         ":plugin_jar",
     ],
