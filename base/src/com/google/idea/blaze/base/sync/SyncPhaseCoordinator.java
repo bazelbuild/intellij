@@ -878,7 +878,7 @@ public final class SyncPhaseCoordinator {
       }
       cause = cause.getCause();
     }
-    logger.error(e);
     IssueOutput.error("Internal error: " + e.getMessage()).submit(context);
+    logger.error(e);
   }
 }
