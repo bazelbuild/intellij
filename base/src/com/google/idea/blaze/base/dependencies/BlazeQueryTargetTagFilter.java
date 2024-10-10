@@ -108,7 +108,7 @@ public class BlazeQueryTargetTagFilter implements TargetTagFilter {
 
     BlazeCommand.Builder command =
         BlazeCommand.builder(
-                buildSystem.getDefaultInvoker(project, context), BlazeCommandName.QUERY)
+                buildSystem.getDefaultInvoker(project, context), BlazeCommandName.QUERY, project)
             .addBlazeFlags("--output=label")
             .addBlazeFlags(BlazeFlags.KEEP_GOING)
             .addBlazeFlags(query);
