@@ -1,43 +1,5 @@
 ---
 tasks:
-  CLion-internal-stable:
-    name: CLion Internal Stable
-    platform: ubuntu2204
-    build_flags:
-      - --define=ij_product=clion-latest
-    build_targets:
-      - //clwb/...
-    test_flags:
-      - --define=ij_product=clion-latest
-      - --test_output=errors
-    test_targets:
-      - //:clwb_tests
-  CLion-internal-beta:
-    name: CLion Internal Beta
-    platform: ubuntu2204
-    build_flags:
-      - --define=ij_product=clion-beta
-    build_targets:
-      - //clwb/...
-    test_flags:
-      - --define=ij_product=clion-beta
-      - --test_output=errors
-    test_targets:
-      - //:clwb_tests
-  CLion-internal-under-dev:
-    name: CLion Internal Under Development
-    platform: ubuntu2204
-    build_flags:
-      - --define=ij_product=clion-under-dev
-    build_targets:
-      - //clwb/...
-    test_flags:
-      - --define=ij_product=clion-under-dev
-      - --test_output=errors
-    test_targets:
-      - //:clwb_tests
-    soft_fail:
-      - exit_status: 1
   CLion-OSS-oldest-stable:
     name: CLion OSS Oldest Stable
     platform: ubuntu2204
