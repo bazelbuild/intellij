@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.aspects.strategy;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.SyncListener;
@@ -23,13 +24,12 @@ import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.TemplateWriter;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Optional;
 
 public class SyncAspectTemplateProvider implements SyncListener {
   private final Map<LanguageClass, String> supportedLanguageAspectTemplate = Map.of(
@@ -45,8 +45,6 @@ public class SyncAspectTemplateProvider implements SyncListener {
   private void prepareProjectAspect(Project project) throws SyncFailedException {
     var manager = BlazeProjectDataManager.getInstance(project);
     if (manager == null) return;
-    var projectData = manager.getBlazeProjectData();
-    if (projectData == null) return;
     var realizedAspectsPath = AspectRepositoryProvider.getProjectAspectDirectory(project).get().toPath();
     try {
       Files.createDirectories(realizedAspectsPath);
@@ -56,19 +54,23 @@ public class SyncAspectTemplateProvider implements SyncListener {
       throw new SyncFailedException("Couldn't create realized aspects", e);
     }
 
-
     final var templateAspects = AspectRepositoryProvider.findAspectTemplateDirectory().orElse(null);
     var javaTemplate = "java_info.template.bzl";
-    var templateWriter = new TemplateWriter(templateAspects.toPath());
-    var activeLanguages = projectData.getWorkspaceLanguageSettings().getActiveLanguages();
-    var isAtLeastBazel8 = projectData.getBlazeVersionData().bazelIsAtLeastVersion(8, 0, 0);
-    var templateVariableMap = Map.of(
-            "bazel8OrAbove", isAtLeastBazel8 ? "true" : "false",
-            "isJavaEnabled", activeLanguages.contains(LanguageClass.JAVA) || activeLanguages.contains(LanguageClass.GENERIC) ? "true" : "false"
-    );
     var realizedFile = realizedAspectsPath.resolve("java_info.bzl");
+    var templateWriter = new TemplateWriter(templateAspects.toPath());
+    var templateVariableMap = getStringStringMap(manager);
     if (!templateWriter.writeToFile(javaTemplate, realizedFile, templateVariableMap)) {
       throw new SyncFailedException("Could not create template for: ");
     }
+  }
+
+  private static @NotNull Map<String, String> getStringStringMap(BlazeProjectDataManager manager) {
+    var projectData = Optional.ofNullable(manager.getBlazeProjectData()); // It can be empty in cases like //clwb:simple_integration
+    var activeLanguages = projectData.map(it -> it.getWorkspaceLanguageSettings().getActiveLanguages()).orElse(ImmutableSet.of());
+    var isAtLeastBazel8 = projectData.map(it -> it.getBlazeVersionData().bazelIsAtLeastVersion(8, 0, 0)).orElse(false);
+      return Map.of(
+              "bazel8OrAbove", isAtLeastBazel8 ? "true" : "false",
+              "isJavaEnabled", activeLanguages.contains(LanguageClass.JAVA) || activeLanguages.contains(LanguageClass.GENERIC) ? "true" : "false"
+      );
   }
 }
