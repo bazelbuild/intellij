@@ -18,21 +18,22 @@ package com.google.idea.blaze.base.model.primitives;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
+import com.google.idea.blaze.base.ideinfo.Tags;
 import javax.annotation.Nullable;
 
 /** Language classes. */
 public enum LanguageClass implements ProtoWrapper<String> {
-  GENERIC("generic", ImmutableSet.of()),
-  C("c", ImmutableSet.of("c", "cc", "cpp", "h", "hh", "hpp")),
-  JAVA("java", ImmutableSet.of("java")),
-  ANDROID("android", ImmutableSet.of("aidl")),
-  JAVASCRIPT("javascript", ImmutableSet.of("js", "applejs")),
-  TYPESCRIPT("typescript", ImmutableSet.of("ts", "ats")),
-  DART("dart", ImmutableSet.of("dart")),
-  GO("go", ImmutableSet.of("go")),
-  PYTHON("python", ImmutableSet.of("py", "pyw")),
-  SCALA("scala", ImmutableSet.of("scala")),
-  KOTLIN("kotlin", ImmutableSet.of("kt")),
+  GENERIC("generic", ImmutableSet.of(), null),
+  C("c", ImmutableSet.of("c", "cc", "cpp", "h", "hh", "hpp"), null),
+  JAVA("java", ImmutableSet.of("java"), null),
+  ANDROID("android", ImmutableSet.of("aidl"), null),
+  JAVASCRIPT("javascript", ImmutableSet.of("js", "applejs"), null),
+  TYPESCRIPT("typescript", ImmutableSet.of("ts", "ats"), null),
+  DART("dart", ImmutableSet.of("dart"), null),
+  GO("go", ImmutableSet.of("go"), null),
+  PYTHON("python", ImmutableSet.of("py", "pyw"), Tags.TARGET_TAG_PY_CODE_GENERATOR),
+  SCALA("scala", ImmutableSet.of("scala"), null),
+  KOTLIN("kotlin", ImmutableSet.of("kt"), null),
   ;
 
   private static final ImmutableMap<String, LanguageClass> RECOGNIZED_EXTENSIONS =
@@ -51,13 +52,29 @@ public enum LanguageClass implements ProtoWrapper<String> {
   private final String name;
   private final ImmutableSet<String> recognizedFilenameExtensions;
 
-  LanguageClass(String name, ImmutableSet<String> recognizedFilenameExtensions) {
+  /**
+   * The {@code codeGeneratorTag} is a tag that may be applied to a Bazel Rule's {@code tag}
+   * attribute to signal to the IDE that the Rule's Actions will generate source code. Each
+   * language has its own tag for this purpose.
+   * @see com.google.idea.blaze.base.sync.SyncProjectTargetsHelper
+   */
+  private final String codeGeneratorTag;
+
+  LanguageClass(
+      String name,
+      ImmutableSet<String> recognizedFilenameExtensions,
+      String codeGeneratorTag) {
     this.name = name;
     this.recognizedFilenameExtensions = recognizedFilenameExtensions;
+    this.codeGeneratorTag = codeGeneratorTag;
   }
 
   public String getName() {
     return name;
+  }
+
+  public String getCodeGeneratorTag() {
+    return codeGeneratorTag;
   }
 
   public static LanguageClass fromString(String name) {

@@ -15,8 +15,10 @@
  */
 package com.google.idea.blaze.python.resolve.provider;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -28,6 +30,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.python.resolve.BlazePyResolverUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,6 +50,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -54,6 +58,19 @@ import javax.annotation.Nullable;
  * import strings are resolved to python packages and modules.
  */
 public abstract class AbstractPyImportResolverStrategy implements PyImportResolverStrategy {
+
+  /**
+   * This is a list of files, where the presence of one of these files represents either a
+   * Bazel Project or Bazel Repo.
+   */
+  private final static Set<String> BOUNDARY_MARKER_FILES = ImmutableSet.of(
+      "BUILD.bazel",
+      "BUILD",
+      "REPO.bazel",
+      "WORKSPACE.bazel",
+      "WORKSPACE",
+      "MODULE.bazel"
+  );
 
   private final static Path PATH_CURRENT_DIR = Path.of(".");
 
@@ -125,7 +142,7 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
     ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
     for (TargetIdeInfo target : projectData.getTargetMap().targets()) {
       List<QualifiedName> importRoots = assembleImportRoots(target);
-      for (ArtifactLocation source : getPySources(target)) {
+      for (ArtifactLocation source : getPySources(projectData.getWorkspacePathResolver(), target)) {
         List<QualifiedName> sourceImports = assembleSourceImportsFromImportRoots(importRoots,
             toImportString(source));
         for (QualifiedName sourceImport : sourceImports) {
@@ -144,14 +161,113 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
     return new PySourcesIndex(shortNames.build(), ImmutableMap.copyOf(map));
   }
 
-  private static Collection<ArtifactLocation> getPySources(TargetIdeInfo target) {
+  /**
+   * This method will extract sources from the supplied target. If any of the sources
+   * are a directory rather than a file then it will descend through the directory
+   * transitively looking for any Python files. It is sometimes the case that
+   * generated code will supply source in a directory rather than as individual files.
+   */
+
+  private static Collection<ArtifactLocation> getPySources(
+      WorkspacePathResolver workspacePathResolver,
+      TargetIdeInfo target) {
+    Preconditions.checkArgument(null != workspacePathResolver);
+    Preconditions.checkArgument(null != target);
+
     if (target.getPyIdeInfo() != null) {
-      return target.getPyIdeInfo().getSources();
+      return getPySources(workspacePathResolver, target.getPyIdeInfo().getSources());
     }
     if (target.getKind().hasLanguage(LanguageClass.PYTHON)) {
-      return target.getSources();
+      return getPySources(workspacePathResolver, target.getSources());
     }
     return ImmutableList.of();
+  }
+
+  private static List<ArtifactLocation> getPySources(
+      WorkspacePathResolver workspacePathResolver,
+      Collection<ArtifactLocation> sources) {
+    ImmutableList.Builder<ArtifactLocation> assembly = ImmutableList.builder();
+    marshallPySources(workspacePathResolver, sources, assembly);
+    return assembly.build();
+  }
+
+  private static void marshallPySources(
+      WorkspacePathResolver workspacePathResolver,
+      Collection<ArtifactLocation> sources,
+      ImmutableList.Builder<ArtifactLocation> assembly) {
+    for (ArtifactLocation source : sources) {
+      marshallPySources(workspacePathResolver, source, assembly);
+    }
+  }
+
+  /**
+   * Inspects the supplied {@code source}. If it is a Python file then it is added to the
+   * {@code assembly} If not then it will be then further processed as a {@link File};
+   * likely a directory that may then potentially contain Python source files.
+   */
+
+  private static void marshallPySources(
+      WorkspacePathResolver workspacePathResolver,
+      ArtifactLocation source,
+      ImmutableList.Builder<ArtifactLocation> assembly) {
+    if (source.getRelativePath().endsWith(".py")) {
+      assembly.add(source);
+    } else {
+      if (!source.isSource()) {
+        marshallPySources(
+            source,
+            workspacePathResolver.resolveToFile(source.getExecutionRootRelativePath()),
+            0,
+            assembly);
+      }
+    }
+  }
+
+  /**
+   * <p>Assembles Python source files as instances of {@code ArtifactLocation} by inspecting
+   * the supplied {@code sourceFileOrDirectory}. The outputs are written to the
+   * {@code assembly}. This method is recursive.</p>
+   *
+   * <p>If the logic should encounter a Bazel boundary file such as {@code BUILD.bazel} then
+   * it will stop walking the directory tree.</p>
+   *
+   * @param depth indicates how far down the directory tree the traversal is.
+   */
+
+  private static void marshallPySources(
+      ArtifactLocation source,
+      File sourceFileOrDirectory,
+      int depth,
+      ImmutableList.Builder<ArtifactLocation> assembly) {
+
+    if (sourceFileOrDirectory.isFile()) {
+      if (sourceFileOrDirectory.getName().endsWith(".py")) {
+        assembly.add(source);
+      }
+    }
+
+    if (sourceFileOrDirectory.isDirectory()
+        && (0 == depth || !containsBoundaryMarkerFile(sourceFileOrDirectory))) {
+      String[] subFilenames = sourceFileOrDirectory.list();
+
+      if (null != subFilenames) {
+        for (String subFilename : subFilenames) {
+          Path subSourcePath = Path.of(source.getRelativePath(), subFilename);
+          marshallPySources(
+              ArtifactLocation.Builder.copy(source).setRelativePath(subSourcePath.toString())
+                  .build(),
+              new File(sourceFileOrDirectory, subFilename),
+              depth + 1,
+              assembly);
+        }
+      }
+    }
+  }
+
+  private static boolean containsBoundaryMarkerFile(File directory) {
+    return BOUNDARY_MARKER_FILES.stream()
+        .map(filename -> new File(directory, filename))
+        .anyMatch(File::exists);
   }
 
   /**
@@ -221,11 +337,9 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
     Path buildPath = Path.of(target.getBuildFile().getExecutionRootRelativePath());
     Path buildParentPath = buildPath.getParent();
 
-    // In the case of an external repo the build path could be `/BUILD`
-    // which is problematic because the basedir is `/` which makes sense
-    // in the context of a Bazel repo but not in the context of the overall
-    // file-system. For this reason, the special case of `/BUILD` is taken
-    // to have a basedir of `.`.
+    // In the case of an external repo the build path could be `/BUILD.bazel`
+    // which has a basedir of `/`. In this case we translate this to `.` so
+    // that it works in the sub file-system.
 
     if (null == buildParentPath || 0 == buildParentPath.getNameCount()) {
       buildParentPath = PATH_CURRENT_DIR;

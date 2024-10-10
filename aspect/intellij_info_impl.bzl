@@ -81,6 +81,8 @@ PY2 = 1
 
 PY3 = 2
 
+TARGET_TAG_PY_CODE_GENERATOR = "intellij-py-code-generator"
+
 # PythonCompatVersion enum; must match PyIdeInfo.PythonSrcsVersion
 SRC_PY2 = 1
 
@@ -339,6 +341,60 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     data_deps = getattr(ctx.rule.attr, "data", [])
     args = _do_starlark_string_expansion(ctx, "args", args, data_deps)
     imports = getattr(ctx.rule.attr, "imports", [])
+
+    # If there are apparently no sources found from `srcs` and the target has the tag
+    # for code-generation then use the run-files as the sources and take the imports
+    # from the PyInfo.
+
+    if 0 == len(sources) and TARGET_TAG_PY_CODE_GENERATOR in getattr(ctx.rule.attr, "tags", []):
+        def provider_import_to_attr_import(provider_import):
+            """\
+            Remaps the imports from PyInfo
+
+            The imports that are supplied on the `PyInfo` are relative to the runfiles and so are
+            not the same as those which might be supplied on an attribute of `py_library`. This
+            function will remap those back so they look as if they were `imports` attributes on
+            the rule. The form of the runfiles import is `<workspace_name>/<package_dir>/<import>`.
+            The actual `workspace_name` is not interesting such that the first part can be simply
+            stripped. Next the package to the Label is stripped leaving a path that would have been
+            supplied on an `imports` attribute to a Rule.
+            """
+
+            # Other code in this file appears to assume *NIX path component separators?
+
+            provider_import_parts = [p for p in provider_import.split("/")]
+            package_parts = [p for p in ctx.label.package.split("/")]
+
+            if 0 == len(provider_import_parts):
+                return None
+
+            scratch_parts = provider_import_parts[1:]  # remove the workspace name or _main
+
+            for p in package_parts:
+                if 0 != len(provider_import_parts) and scratch_parts[0] == p:
+                    scratch_parts = scratch_parts[1:]
+                else:
+                    return None
+
+            return "/".join(scratch_parts)
+
+        def provider_imports_to_attr_imports():
+            result = []
+
+            for provider_import in target[PyInfo].imports.to_list():
+                attr_import = provider_import_to_attr_import(provider_import)
+                if attr_import:
+                    result.append(attr_import)
+
+            return result
+
+        if target[PyInfo].imports:
+            imports.extend(provider_imports_to_attr_imports())
+
+        runfiles = target[DefaultInfo].default_runfiles
+
+        if runfiles and runfiles.files:
+            sources.extend([artifact_location(f) for f in runfiles.files.to_list()])
 
     ide_info["py_ide_info"] = struct_omit_none(
         launcher = py_launcher,

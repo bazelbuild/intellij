@@ -1,0 +1,33 @@
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+load("//example:rules.bzl", "test_codegen_directory_py", "test_codegen_files_py")
+
+test_codegen_directory_py(
+    name = "generated_directory_lib",
+    tags = ["intellij-py-code-generator"],
+    visibility = ["//visibility:private"],
+)
+
+test_codegen_files_py(
+    name = "generated_files_lib",
+    tags = ["intellij-py-code-generator"],
+    visibility = ["//visibility:private"],
+)
+
+py_library(
+    name = "static_lib",
+    srcs = ["things/places/rivers.py"],
+    imports = ["things"],
+    visibility = ["//visibility:private"],
+)
+
+py_binary(
+    name = "bin",
+    srcs = ["main.py"],
+    main = "main.py",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//example:generated_directory_lib",
+        "//example:generated_files_lib",
+        "//example:static_lib",
+    ],
+)

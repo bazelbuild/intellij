@@ -46,7 +46,7 @@ java_library(
         "//shared:vcs",
         "//third_party/auto_value",
         "@error_prone_annotations//jar",
-        "@gson//jar"
+        "@gson//jar",
     ],
 )
 
@@ -125,6 +125,7 @@ java_library(
     name = "label_api",
     srcs = [
         "src/com/google/idea/blaze/base/ideinfo/ArtifactLocation.java",
+        "src/com/google/idea/blaze/base/ideinfo/Tags.java",
         "src/com/google/idea/blaze/base/model/primitives/InvalidTargetException.java",
         "src/com/google/idea/blaze/base/model/primitives/Kind.java",
         "src/com/google/idea/blaze/base/model/primitives/Label.java",
@@ -246,6 +247,7 @@ java_library(
 java_library(
     name = "workspace_language_checker_api",
     srcs = [
+        "src/com/google/idea/blaze/base/ideinfo/Tags.java",
         "src/com/google/idea/blaze/base/model/primitives/LanguageClass.java",
         "src/com/google/idea/blaze/base/sync/projectview/WorkspaceLanguageChecker.java",
     ],
