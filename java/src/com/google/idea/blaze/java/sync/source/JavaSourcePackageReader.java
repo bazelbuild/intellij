@@ -70,7 +70,7 @@ public class JavaSourcePackageReader extends JavaPackageReader {
         }
       }
       IssueOutput.warn("No package name string found in java source file: " + sourceFile)
-          .inFile(sourceFile)
+          .withFile(sourceFile)
           .submit(context);
       return null;
     } catch (FileNotFoundException e) {

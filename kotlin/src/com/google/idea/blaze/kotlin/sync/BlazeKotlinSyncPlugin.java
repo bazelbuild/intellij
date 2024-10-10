@@ -20,6 +20,7 @@ import static com.google.idea.blaze.kotlin.sync.KotlinUtils.findToolchain;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.async.executor.ProgressIndicatorStub;
 import com.google.idea.blaze.base.ideinfo.KotlinToolchainIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -44,6 +45,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
@@ -326,31 +328,33 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
           KotlinJavaModuleConfigurator.Companion.getInstance();
       NotificationMessageCollector collector =
           new NotificationMessageCollector(project, "Configuring Kotlin", "Configuring Kotlin");
-      Application application = ApplicationManager.getApplication();
 
-      application.invokeAndWait(
-          () -> {
-            configurator.getOrCreateKotlinLibrary(project, collector);
-          });
-
-      List<Function0<Unit>> writeActions = new ArrayList<>();
-      application.runReadAction(
-          () -> {
-            configurator.configureModule(workspaceModule, collector, writeActions);
-          });
-
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        // do not invoke it later since serviceContainer may be disposed before it get completed
+      ProgressManager.getInstance().runProcess(() -> {
+        Application application = ApplicationManager.getApplication();
         application.invokeAndWait(
             () -> {
-              writeActions.stream().forEach(Function0::invoke);
+              configurator.getOrCreateKotlinLibrary(project, collector);
             });
-      } else {
-        application.invokeLater(
+
+        List<Function0<Unit>> writeActions = new ArrayList<>();
+        application.runReadAction(
             () -> {
-              writeActions.stream().forEach(Function0::invoke);
+              configurator.configureModule(workspaceModule, collector, writeActions);
             });
-      }
+
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          // do not invoke it later since serviceContainer may be disposed before it get completed
+          application.invokeAndWait(
+              () -> {
+                writeActions.stream().forEach(Function0::invoke);
+              });
+        } else {
+          application.invokeLater(
+              () -> {
+                writeActions.stream().forEach(Function0::invoke);
+              });
+        }
+      }, ProgressIndicatorStub.INSTANCE);
     }
   }
 }

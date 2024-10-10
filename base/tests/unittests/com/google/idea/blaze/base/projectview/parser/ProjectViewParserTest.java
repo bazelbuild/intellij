@@ -49,9 +49,14 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileManagerListener;
+import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
+import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -105,6 +110,9 @@ public class ProjectViewParserTest extends BlazeTestCase {
     applicationServices.register(ProjectViewStorageManager.class, projectViewStorageManager);
     applicationServices.register(ExperimentService.class, new MockExperimentService());
     registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
+
+    registerExtensionPointByName("com.intellij.virtualFileManagerListener", VirtualFileManagerListener.class);
+    applicationServices.register(VirtualFileManager.class, new VirtualFileManagerImpl(List.of(new CoreLocalFileSystem())));
   }
 
   @Test

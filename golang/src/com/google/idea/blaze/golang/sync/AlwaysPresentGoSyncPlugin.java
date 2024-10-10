@@ -86,7 +86,7 @@ public class AlwaysPresentGoSyncPlugin implements BlazeSyncPlugin {
                   + "Click here to install the new JetBrains Go plugin and restart.",
               Blaze.defaultBuildSystemName());
       IssueOutput.error(error)
-          .navigatable(
+          .withNavigatable(
               new NavigatableAdapter() {
                 @Override
                 public void navigate(boolean requestFocus) {
@@ -100,7 +100,7 @@ public class AlwaysPresentGoSyncPlugin implements BlazeSyncPlugin {
     IssueOutput.error(
             "Go support requires the Go plugin. Click here to install/enable the JetBrains Go "
                 + "plugin, then restart the IDE")
-        .navigatable(PluginUtils.installOrEnablePluginNavigable(GO_PLUGIN_ID))
+        .withNavigatable(PluginUtils.installOrEnablePluginNavigable(GO_PLUGIN_ID))
         .submit(context);
     return true;
   }
@@ -137,7 +137,7 @@ public class AlwaysPresentGoSyncPlugin implements BlazeSyncPlugin {
     BlazeSyncManager.printAndLogError(msg, context);
     msg += fixable ? ". Click here to fix your .blazeproject and resync." : ", then resync.";
     IssueOutput.error(msg)
-        .navigatable(
+        .withNavigatable(
             !fixable
                 ? null
                 : new NavigatableAdapter() {

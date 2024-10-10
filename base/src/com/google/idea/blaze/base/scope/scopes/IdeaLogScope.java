@@ -30,7 +30,7 @@ public class IdeaLogScope implements BlazeScope {
 
   private static final OutputSink<IssueOutput> issueSink =
       (output) -> {
-        logger.warn(output.toString());
+        logger.warn(output.getTitle());
         return OutputSink.Propagation.Continue;
       };
 

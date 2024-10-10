@@ -22,20 +22,21 @@ import com.google.idea.blaze.base.projectview.section.sections.ShardBlazeBuildsS
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.settings.ui.OpenProjectViewAction;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
+import com.intellij.build.issue.BuildIssueQuickFix;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.NavigatableAdapter;
 import com.intellij.util.Consumer;
 import com.intellij.xml.util.XmlStringUtil;
+import java.util.concurrent.CompletableFuture;
 import javax.swing.event.HyperlinkEvent;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * If blaze runs out of memory during sync, suggest that the user enables build sharding, or tweaks
@@ -53,41 +54,40 @@ public class SuggestBuildShardingNotification {
   }
 
   private static void suggestIncreasingServerMemory(Project project, BlazeContext context) {
-    BuildSystemName buildSystemName = Blaze.getBuildSystemName(project);
-    String message =
-        String.format(
-            "The %s server ran out of memory during sync. You can work around this by "
-                + "allocating more memory to the %s server, for example by adding this line to "
-                + "your %s:<br>"
-                + "startup --host_jvm_args=-Xmx15g --host_jvm_args=-Xms15g",
-            buildSystemName.getName(),
-            buildSystemName.getName(),
-            buildSystemName == BuildSystemName.Bazel ? ".bazelrc" : "~/.blazerc");
+    final var title = "The Bazel server ran out of memory during sync";
+    final var description = "You can work around this by allocating more memory to the Bazel server, "
+        + "for example by adding this line to your .bazelrc file:\nstartup --host_jvm_args=-Xmx15g --host_jvm_args=-Xms15g";
 
-    IssueOutput.error(StringUtil.stripHtml(message, true)).submit(context);
-
-    showNotification(project, message, p -> {});
+    IssueOutput.error(title).withDescription(description).submit(context);
+    showNotification(project, String.format("%s. %s", title, description), p -> {});
   }
 
   private static void suggestSharding(Project project, BlazeContext context) {
-    String buildSystem = Blaze.buildSystemName(project);
-    String message =
-        String.format(
-            "The %1$s server ran out of memory during sync. This can occur for large projects. You "
-                + "can work around this by sharding the %1$s build during sync "
-                + "<a href='fix'>(click here)</a>, "
-                + "or alternatively allocate more memory to %1$s",
-            buildSystem);
-    IssueOutput.error(StringUtil.stripHtml(message, true) + ". Click here to set up sync sharding.")
-        .navigatable(
-            new NavigatableAdapter() {
-              @Override
-              public void navigate(boolean requestFocus) {
-                enableShardingAndResync(project);
-              }
-            })
+    final var title = "The Bazel server ran out of memory during sync";
+    final var description = "This can occur for large projects. You can work around this by sharding the Bazel build "
+        + "during sync or alternatively allocate more memory to Bazel.";
+
+    final var fix = new BuildIssueQuickFix() {
+      @NotNull
+      @Override
+      public String getId() {
+        return "bazel.sync.enable.sharding";
+      }
+
+      @NotNull
+      @Override
+      public CompletableFuture<?> runQuickFix(@NotNull Project project, @NotNull DataContext dataContext) {
+        enableShardingAndResync(project);
+        return CompletableFuture.completedFuture(null);
+      }
+    };
+
+    IssueOutput.error(title)
+        .withDescription(description)
+        .withFix("Enable sharding and retry sync", fix)
         .submit(context);
 
+    final var message = String.format("%s. %s  Click <a href='fix'>here</a> to set up sync sharding.", title, description);
     showNotification(project, message, SuggestBuildShardingNotification::enableShardingAndResync);
   }
 

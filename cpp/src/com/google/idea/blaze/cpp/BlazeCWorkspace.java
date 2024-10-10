@@ -500,7 +500,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
             "Issues collecting info from C++ compiler. Showing first few out of %d:\n%s",
             issues.size(), Iterables.limit(issues, 25)));
     IssueOutput.warn("Issues collecting info from C++ compiler (click to see logs)")
-        .navigatable(
+        .withNavigatable(
             new Navigatable() {
               @Override
               public void navigate(boolean b) {

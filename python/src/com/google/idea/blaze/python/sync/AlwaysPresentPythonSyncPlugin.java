@@ -76,7 +76,7 @@ public class AlwaysPresentPythonSyncPlugin implements BlazeSyncPlugin {
       IssueOutput.warn(
               "Your project appears to contain Python targets. To enable Python support, "
                   + "install/enable the JetBrains python plugin, then restart the IDE")
-          .navigatable(PluginUtils.installOrEnablePluginNavigable(pluginId))
+          .withNavigatable(PluginUtils.installOrEnablePluginNavigable(pluginId))
           .submit(context);
       return false;
     }

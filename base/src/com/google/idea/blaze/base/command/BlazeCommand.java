@@ -56,6 +56,10 @@ public final class BlazeCommand {
     return name;
   }
 
+  public String getBinaryPath() {
+    return binaryPath;
+  }
+
   public ImmutableList<String> toArgumentList() {
     return ImmutableList.<String>builder()
         .addAll(blazeStartupFlags)
@@ -115,6 +119,10 @@ public final class BlazeCommand {
       Arrays.stream(AspectRepositoryProvider.getOverrideFlags(project)).filter(Optional::isPresent)
         .map(Optional::get)
         .forEach(this::addBlazeFlags);
+    }
+
+    public BlazeCommandName getName() {
+      return name;
     }
 
     private ImmutableList<String> getArguments() {

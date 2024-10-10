@@ -20,13 +20,13 @@ import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
+import com.intellij.build.events.MessageEvent.Kind;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.GroupingElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -156,21 +156,16 @@ public class BlazeProblemsView {
       issue =
           IssueOutput.warn("Too many problems found. Only showing the first " + MAX_ISSUES).build();
     }
-    VirtualFile file = issue.getFile() != null ? resolveVirtualFile(issue.getFile()) : null;
-    Navigatable navigatable = issue.getNavigatable();
-    if (navigatable == null && file != null) {
-      navigatable =
-          new OpenFileDescriptor(project, file, issue.getLine() - 1, issue.getColumn() - 1);
-    }
-    IssueOutput.Category category = issue.getCategory();
-    int type = translateCategory(category);
+    Navigatable navigatable = issue.getNavigatable(project);
+    final var kind = issue.getKind();
+    int type = translateCategory(kind);
     String[] text = convertMessage(issue);
-    String groupName = file != null ? file.getPresentableUrl() : category.name();
+    String groupName =  kind.name();
     addMessage(
         type,
         text,
         groupName,
-        file,
+        null,
         navigatable,
         openInConsole,
         getExportTextPrefix(issue),
@@ -182,7 +177,7 @@ public class BlazeProblemsView {
     }
     boolean focus =
         focusBehavior == FocusBehavior.ALWAYS
-            || (focusBehavior == FocusBehavior.ON_ERROR && category == IssueOutput.Category.ERROR);
+            || (focusBehavior == FocusBehavior.ON_ERROR && kind == Kind.ERROR);
     if (focus) {
       didFocusProblemsView = true;
       focusProblemsView();
@@ -208,17 +203,17 @@ public class BlazeProblemsView {
     return resolved != null ? resolved : file;
   }
 
-  private static int translateCategory(IssueOutput.Category category) {
+  private static int translateCategory(Kind category) {
     switch (category) {
       case ERROR:
         return MessageCategory.ERROR;
       case WARNING:
         return MessageCategory.WARNING;
-      case NOTE:
+      case SIMPLE:
         return MessageCategory.NOTE;
       case STATISTICS:
         return MessageCategory.STATISTICS;
-      case INFORMATION:
+      case INFO:
         return MessageCategory.INFORMATION;
       default:
         logger.error("Unknown message category: " + category);
@@ -240,18 +235,10 @@ public class BlazeProblemsView {
   }
 
   private static String getExportTextPrefix(IssueOutput issue) {
-    int line = issue.getLine();
-    if (line >= 0) {
-      return String.format("line: %d", line);
-    }
     return "";
   }
 
   private static String getRenderTextPrefix(IssueOutput issue) {
-    int line = issue.getLine();
-    if (line >= 0) {
-      return String.format("(%d, %d)", line, issue.getColumn());
-    }
     return "";
   }
 

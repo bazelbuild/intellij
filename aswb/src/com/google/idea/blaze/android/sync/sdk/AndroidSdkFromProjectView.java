@@ -51,7 +51,7 @@ public final class AndroidSdkFromProjectView {
     if (sdks.isEmpty()) {
       String msg = "No Android SDK configured. Please use the SDK manager to configure.";
       IssueOutput.error(msg)
-          .navigatable(
+          .withNavigatable(
               new Navigatable() {
                 @Override
                 public void navigate(boolean b) {
@@ -87,7 +87,7 @@ public final class AndroidSdkFromProjectView {
               + getAvailableTargetHashesAsList(sdks)
               + ". To install more android SDKs, use the SDK manager.";
       IssueOutput.error(msg)
-          .inFile(projectViewFile != null ? projectViewFile.projectViewFile : null)
+          .withFile(projectViewFile != null ? projectViewFile.projectViewFile : null)
           .submit(context);
       BlazeSyncManager.printAndLogError(msg, context);
       return null;
@@ -98,7 +98,7 @@ public final class AndroidSdkFromProjectView {
       ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();
       String msg = String.format(NO_SDK_ERROR_TEMPLATE, androidSdk, getAllAvailableTargetHashes());
       IssueOutput.error(msg)
-          .inFile(projectViewFile != null ? projectViewFile.projectViewFile : null)
+          .withFile(projectViewFile != null ? projectViewFile.projectViewFile : null)
           .submit(context);
       BlazeSyncManager.printAndLogError(msg, context);
       return null;
