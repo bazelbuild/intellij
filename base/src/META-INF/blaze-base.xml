@@ -381,7 +381,7 @@
         language="BUILD"
         implementationClass="com.google.idea.blaze.base.run.producers.BuildFileRunLineMarkerContributor"/>
     <actionConfigurationCustomizer implementation="com.google.idea.blaze.base.plugin.BlazeHideMakeActions"/>
-    <notificationGroup displayType="BALLOON" id="BuildifierBinaryMissing"/>
+    <notificationGroup displayType="BALLOON" id="Buildifier"/>
     <notificationGroup displayType="BALLOON" id="AddToProject" />
     <notificationGroup displayType="STICKY_BALLOON" id="QuerySyncPromo" />
     <notificationGroup displayType="BALLOON" id="QuerySyncBuild" />
