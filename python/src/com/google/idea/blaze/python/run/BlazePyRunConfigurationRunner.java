@@ -70,6 +70,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
+import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
@@ -125,7 +126,9 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       if (sdk == null) {
         throw new ExecutionException("Can't find a Python SDK when debugging a python target.");
       }
-      nativeConfig.setModule(null);
+
+      var modules = AbstractPythonRunConfiguration.getValidModules(env.getProject());
+      nativeConfig.setModule(modules.get(0));
       nativeConfig.setSdkHome(sdk.getHomePath());
 
       BlazePyRunConfigState handlerState =
