@@ -23,6 +23,8 @@ import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.TemplateWriter;
 import com.intellij.openapi.project.Project;
+
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,76 +39,36 @@ public class SyncAspectTemplateProvider implements SyncListener {
 
   @Override
   public void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) throws SyncFailedException {
-    copyProjectAspects(project);
     prepareProjectAspect(project);
-  }
-
-  private void copyProjectAspects(Project project) throws SyncFailedException {
-    final var projectAspects = AspectRepositoryProvider.getProjectAspectDirectory(project).orElse(null);
-    if (projectAspects == null) {
-      throw new SyncFailedException("Missing project aspect directory");
-    }
-
-    // only copy project aspect once, TODO: do we need versioning here?
-    if (projectAspects.exists()) return;
-
-    final var templateAspects = AspectRepositoryProvider.findAspectTemplateDirectory().orElse(null);
-    if (templateAspects == null || !templateAspects.isDirectory()) {
-      throw new SyncFailedException("Missing aspect template directory");
-    }
-
-    try {
-      copyFileTree(templateAspects.toPath(), projectAspects.toPath());
-    } catch (IOException e) {
-      throw new SyncFailedException("Could not copy aspect templates", e);
-    }
-  }
-
-  private void copyFileTree(Path source, Path destination) throws IOException {
-    try (final var fileStream = Files.walk(source)) {
-      final var fileIterator = fileStream.iterator();
-      while (fileIterator.hasNext()) {
-        copyUsingRelativePath(source, fileIterator.next(), destination);
-      }
-    }
-  }
-
-  private void copyUsingRelativePath(Path sourcePrefix, Path source, Path destination) throws IOException {
-    // only interested in bzl files that are templates
-    if (source.endsWith(".bzl") && !source.endsWith("template.bzl")) return;
-
-    final var sourceRelativePath = sourcePrefix.relativize(source).toString();
-    final var destinationAbsolutePath = Paths.get(destination.toString(), sourceRelativePath);
-    Files.copy(source, destinationAbsolutePath);
   }
 
   private void prepareProjectAspect(Project project) throws SyncFailedException {
     var manager = BlazeProjectDataManager.getInstance(project);
     if (manager == null) return;
-
     var projectData = manager.getBlazeProjectData();
     if (projectData == null) return;
-    var optionalAspectTemplateDir = AspectRepositoryProvider.getProjectAspectDirectory(project);
-    if (optionalAspectTemplateDir.isEmpty()) return;
-    var aspectTemplateDir = optionalAspectTemplateDir.get().toPath();
-    var templateWriter = new TemplateWriter(aspectTemplateDir);
+    var realizedAspectsPath = AspectRepositoryProvider.getProjectAspectDirectory(project).get().toPath();
+    try {
+      Files.createDirectories(realizedAspectsPath);
+      Files.writeString(realizedAspectsPath.resolve("WORKSPACE"), "");
+      Files.writeString(realizedAspectsPath.resolve("BUILD"), "");
+    } catch (IOException e) {
+      throw new SyncFailedException("Couldn't create realized aspects", e);
+    }
+
+
+    final var templateAspects = AspectRepositoryProvider.findAspectTemplateDirectory().orElse(null);
+    var javaTemplate = "java_info.template.bzl";
+    var templateWriter = new TemplateWriter(templateAspects.toPath());
     var activeLanguages = projectData.getWorkspaceLanguageSettings().getActiveLanguages();
     var isAtLeastBazel8 = projectData.getBlazeVersionData().bazelIsAtLeastVersion(8, 0, 0);
     var templateVariableMap = Map.of(
-        "bazel8OrAbove", isAtLeastBazel8 ? "true" : "false",
-        "isJavaEnabled", activeLanguages.contains(LanguageClass.JAVA) || activeLanguages.contains(LanguageClass.GENERIC) ? "true" : "false"
+            "bazel8OrAbove", isAtLeastBazel8 ? "true" : "false",
+            "isJavaEnabled", activeLanguages.contains(LanguageClass.JAVA) || activeLanguages.contains(LanguageClass.GENERIC) ? "true" : "false"
     );
-
-    for (final var language : activeLanguages) {
-      var templateFileName = supportedLanguageAspectTemplate.get(language);
-      if (templateFileName == null) continue;
-
-      var realizedFileName = templateFileName.replace(".template.bzl", ".bzl");
-      var realizedFile = aspectTemplateDir.resolve(realizedFileName);
-
-      if (!templateWriter.writeToFile(templateFileName, realizedFile, templateVariableMap)) {
-        throw new SyncFailedException("Could not create template for: " + language);
-      }
+    var realizedFile = realizedAspectsPath.resolve("java_info.bzl");
+    if (!templateWriter.writeToFile(javaTemplate, realizedFile, templateVariableMap)) {
+      throw new SyncFailedException("Could not create template for: ");
     }
   }
 }
