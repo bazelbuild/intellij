@@ -59,7 +59,8 @@ public class SyncAspectTemplateProvider implements SyncListener {
       throw new SyncFailedException("Couldn't create realized aspects", e);
     }
 
-    final var templateAspects = AspectRepositoryProvider.findAspectTemplateDirectory().orElse(null);
+    final var templateAspects = AspectRepositoryProvider.findAspectTemplateDirectory()
+            .orElseThrow(() -> new SyncFailedException("Couldn't find aspect template directory"));
     var javaTemplate = "java_info.template.bzl";
     var realizedFile = realizedAspectsPath.resolve("java_info.bzl");
     var templateWriter = new TemplateWriter(templateAspects.toPath());
