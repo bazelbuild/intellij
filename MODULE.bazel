@@ -217,9 +217,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2024_2. This is required to build IJwB and run integration tests.
-IC_243_SHA = "e3b0f1404cbc80e903324a24341bb6840a6114c607fb11450be3c1a19a283627"
+IC_243_SHA = "8d3494eb534182b9202e74d5cf4e0a90a2ab5c4128d836bdca4262b376ec7616"
 
-IC_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/243.18137.10-EAP-SNAPSHOT/ideaIC-243.18137.10-EAP-SNAPSHOT.zip"
+IC_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/243.19420.21-EAP-SNAPSHOT/ideaIC-243.19420.21-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ce_2024_3",
@@ -293,9 +293,9 @@ http_archive(
     url = IU_242_URL,
 )
 
-IU_243_SHA = "66f6043ca1a8329637f80e9afea5bf9a5a7d30a32261ae40c2e63b68fa7f316d"
+IU_243_SHA = "15a399e7a342ca7710b14e41fd6370d59976bdf92fc12162c039f6f0456d651d"
 
-IU_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/243.18137.10-EAP-SNAPSHOT/ideaIU-243.18137.10-EAP-SNAPSHOT.zip"
+IU_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/243.19420.21-EAP-SNAPSHOT/ideaIU-243.19420.21-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ue_2024_3",
@@ -410,9 +410,9 @@ http_archive(
     url = DEVKIT_241_URL,
 )
 
-DEVKIT_243_SHA = "29a17a540f1064b5569e92380ec50c080184a78dfda5d08cea84f8573affe161"
+DEVKIT_243_SHA = "c81e3f218058245802bfe8402ab5d0fefb6ff5a7a9d2f3592d5320f6ab74a51b"
 
-DEVKIT_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/243.18137.10/DevKit-243.18137.10.zip"
+DEVKIT_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/243.19420.21/DevKit-243.19420.21.zip"
 
 http_archive(
     name = "devkit_2024_3",
@@ -421,9 +421,9 @@ http_archive(
     url = DEVKIT_243_URL,
 )
 
-DEVKIT_242_SHA = "4a277913eac450d2936e1b0352138b02dfee575c07a58f7097e44db759b6d385"
+DEVKIT_242_SHA = "a0dc3ab51811fd01b04fca6d8e2713c0d4d52c53c957207889aa6be7905e4b42"
 
-DEVKIT_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/242.22855.128/DevKit-242.22855.128.zip"
+DEVKIT_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/242.23726.16/DevKit-242.23726.16.zip"
 
 http_archive(
     name = "devkit_2024_2",
@@ -518,9 +518,9 @@ filegroup(
 )
 """
 
-PYTHON_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/242.23339.11/PythonCore-242.23339.11.zip"
+PYTHON_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/242.23726.16/PythonCore-242.23726.16.zip"
 
-PYTHON_PLUGIN_242_SHA = "d8f91e9945dbbf60aa04f95f849c8c7be42eb7e67dde3331ddc9a1d2aee7dc6c"
+PYTHON_PLUGIN_242_SHA = "7680e21b0462f392d2953db541b74edec3c7688aa432633f8c088882c706cbbc"
 
 http_archive(
     name = "python_2024_2",
@@ -529,9 +529,9 @@ http_archive(
     url = PYTHON_PLUGIN_242_URL,
 )
 
-PYTHON_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/243.18137.10/PythonCore-243.18137.10.zip"
+PYTHON_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/243.19420.21/PythonCore-243.19420.21.zip"
 
-PYTHON_PLUGIN_243_SHA = "8804d1ebd215492d74fb2e71af8e526d69593a6cff913983300e36ebce3ac178"
+PYTHON_PLUGIN_243_SHA = "a62e1a845b3de74d104e9fedc1cb88826b711061016cd313cb1f76f7afee4b2c"
 
 http_archive(
     name = "python_2024_3",
@@ -607,9 +607,9 @@ java_import(
 )
 """
 
-GO_PLUGIN_242_SHA = "3c945a9512f84a368fc162b555098c538c2ff8d652dd8681a655847ad215ca41"
+GO_PLUGIN_242_SHA = "b65091c9189576b549698675c4e29f9a006660b9830c0d66c5169ee53a5e610d"
 
-GO_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/242.23339.11/org.jetbrains.plugins.go-242.23339.11.zip"
+GO_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/242.23726.16/org.jetbrains.plugins.go-242.23726.16.zip"
 
 http_archive(
     name = "go_2024_2",
@@ -618,9 +618,9 @@ http_archive(
     url = GO_PLUGIN_242_URL,
 )
 
-GO_PLUGIN_243_SHA = "0c6c15f17b9c0320816a0d55d87fd991a1951072eda1e4ca2223936bf3777695"
+GO_PLUGIN_243_SHA = "98d70e34df0ceda37090d2931eb251a5ab61e394c4155192a7affc91eb299a2a"
 
-GO_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/243.18137.10/org.jetbrains.plugins.go-243.18137.10.zip"
+GO_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/243.19420.21/org.jetbrains.plugins.go-243.19420.21.zip"
 
 http_archive(
     name = "go_2024_3",
@@ -744,9 +744,9 @@ http_archive(
     url = TOML_PLUGIN_242_URL,
 )
 
-TOML_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/243.18137.23/org.toml.lang-243.18137.23.zip"
+TOML_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/243.19420.27/org.toml.lang-243.19420.27.zip"
 
-TOML_PLUGIN_243_SHA = "059c855ecee105b6cbcbfb4e4824db1379a2e84fc8ff22674b16877ae4123c4a"
+TOML_PLUGIN_243_SHA = "188e4a64763bceb02f3512859f5cb8686a7c2634ae9450e70ada559441b452a8"
 
 http_archive(
     name = "toml_2024_3",
