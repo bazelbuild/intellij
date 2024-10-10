@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.util.TemplateWriter;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Map;
@@ -45,7 +46,11 @@ public class SyncAspectTemplateProvider implements SyncListener {
   private void prepareProjectAspect(Project project) throws SyncFailedException {
     var manager = BlazeProjectDataManager.getInstance(project);
     if (manager == null) return;
-    var realizedAspectsPath = AspectRepositoryProvider.getProjectAspectDirectory(project).get().toPath();
+    var realizedAspectsPath = AspectRepositoryProvider
+            .getProjectAspectDirectory(project)
+            .map(File::toPath)
+            .orElseThrow(() -> new SyncFailedException("Couldn't find project aspect directory"));
+
     try {
       Files.createDirectories(realizedAspectsPath);
       Files.writeString(realizedAspectsPath.resolve("WORKSPACE"), "");
@@ -65,7 +70,7 @@ public class SyncAspectTemplateProvider implements SyncListener {
   }
 
   private static @NotNull Map<String, String> getStringStringMap(BlazeProjectDataManager manager) {
-    var projectData = Optional.ofNullable(manager.getBlazeProjectData()); // It can be empty in cases like //clwb:simple_integration
+    var projectData = Optional.ofNullable(manager.getBlazeProjectData()); // It can be empty on intial sync. Fall back to no lauguage support
     var activeLanguages = projectData.map(it -> it.getWorkspaceLanguageSettings().getActiveLanguages()).orElse(ImmutableSet.of());
     var isAtLeastBazel8 = projectData.map(it -> it.getBlazeVersionData().bazelIsAtLeastVersion(8, 0, 0)).orElse(false);
       return Map.of(
