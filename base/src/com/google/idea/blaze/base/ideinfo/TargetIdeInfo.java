@@ -25,6 +25,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.intellij.openapi.project.Project;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -104,13 +105,13 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   }
 
   @Nullable
-  public static TargetIdeInfo fromProto(IntellijIdeInfo.TargetIdeInfo proto) {
-    return fromProto(proto, /* syncTimeOverride= */ null);
+  public static TargetIdeInfo fromProto(IntellijIdeInfo.TargetIdeInfo proto, Project project) {
+    return fromProto(proto, /* syncTimeOverride= */ null, project);
   }
 
   @Nullable
   public static TargetIdeInfo fromProto(
-      IntellijIdeInfo.TargetIdeInfo proto, @Nullable Instant syncTimeOverride) {
+      IntellijIdeInfo.TargetIdeInfo proto, @Nullable Instant syncTimeOverride, Project project) {
     TargetKey key = proto.hasKey() ? TargetKey.fromProto(proto.getKey()) : null;
     Kind kind = Kind.fromProto(proto);
     if (key == null || kind == null) {
@@ -173,7 +174,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
             ? CToolchainIdeInfo.fromProto(proto.getCToolchainIdeInfo())
             : null,
         javaIdeInfo,
-        proto.hasAndroidIdeInfo() ? AndroidIdeInfo.fromProto(proto.getAndroidIdeInfo()) : null,
+        proto.hasAndroidIdeInfo() ? AndroidIdeInfo.fromProto(proto.getAndroidIdeInfo(), project) : null,
         proto.hasAndroidSdkIdeInfo()
             ? AndroidSdkIdeInfo.fromProto(proto.getAndroidSdkIdeInfo())
             : null,

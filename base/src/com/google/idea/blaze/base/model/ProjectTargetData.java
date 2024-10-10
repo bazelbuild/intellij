@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceState;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.intellij.openapi.project.Project;
 import java.util.Objects;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
@@ -48,8 +49,8 @@ public final class ProjectTargetData implements ProtoWrapper<ProjectData.TargetD
     return targetMap;
   }
 
-  public static ProjectTargetData fromProto(ProjectData.TargetData proto) {
-    TargetMap targetMap = TargetMap.fromProto(proto.getTargetMap());
+  public static ProjectTargetData fromProto(ProjectData.TargetData proto, Project project) {
+    TargetMap targetMap = TargetMap.fromProto(proto.getTargetMap(), project);
     BlazeIdeInterfaceState ideInterfaceState =
         proto.hasIdeInterfaceState()
             ? BlazeIdeInterfaceState.fromProto(proto.getIdeInterfaceState())

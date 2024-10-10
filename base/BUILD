@@ -533,6 +533,7 @@ java_library(
         "@bazel_tools//tools/java/runfiles",
         "@com_google_guava_guava//jar",
         "@junit//jar",
+        "@maven//:org_mockito_mockito_core",
     ],
 )
 
@@ -578,6 +579,7 @@ intellij_unit_test_suite(
         "//third_party/auto_value",
         "@com_google_guava_guava//jar",
         "@junit//jar",
+        "@maven//:org_mockito_mockito_core",
     ],
 )
 
