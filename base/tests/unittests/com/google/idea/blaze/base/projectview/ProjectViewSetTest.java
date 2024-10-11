@@ -38,6 +38,7 @@ import com.google.idea.blaze.base.projectview.section.sections.BuildConfigSectio
 import com.google.idea.blaze.base.projectview.section.sections.BuildFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
+import com.google.idea.blaze.base.projectview.section.sections.EnablePythonCodegenSupport;
 import com.google.idea.blaze.base.projectview.section.sections.ExcludeTargetSection;
 import com.google.idea.blaze.base.projectview.section.sections.ExcludedSourceSection;
 import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
@@ -122,6 +123,7 @@ public class ProjectViewSetTest extends BlazeTestCase {
                             .set(new WorkspacePath("test")))
                     .add(ScalarSection.builder(UseExclusionPatternsSection.KEY).set(false))
                     .add(ScalarSection.builder(ViewProjectRootSection.KEY).set(false))
+                    .add(ScalarSection.builder(EnablePythonCodegenSupport.KEY).set(false))
                     .build())
             .build();
 
