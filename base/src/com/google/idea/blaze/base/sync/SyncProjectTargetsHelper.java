@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection;
+import com.google.idea.blaze.base.projectview.section.sections.EnablePythonCodegenSupport;
 import com.google.idea.blaze.base.projectview.section.sections.SyncManualTargetsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -194,7 +195,7 @@ public final class SyncProjectTargetsHelper {
           .filter(Objects::nonNull)
           .collect(Collectors.toSet());
 
-      if (!activeLanguageCodeGeneratorTags.isEmpty()) {
+      if (!activeLanguageCodeGeneratorTags.isEmpty() && projectViewSet.getScalarValue(EnablePythonCodegenSupport.KEY).orElse(false)) {
         retainedByCodeGen = TargetTagFilter.filterCodeGen(
             project,
             context,
