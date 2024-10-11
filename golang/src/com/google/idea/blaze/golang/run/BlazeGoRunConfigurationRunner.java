@@ -440,10 +440,13 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
       if (args.size() < 3) {
         throw new ExecutionException("Failed to parse args in script_path: " + scriptPath);
       }
-      envVars.put("TEST_SRCDIR", testScrDir.group(1));
+      // Make paths used for runfiles discovery absolute as the working directory is changed below.
+      envVars.put("TEST_SRCDIR", workspaceRoot.absolutePathFor(testScrDir.group(1)).toString());
       Matcher runfilesVars = RUNFILES_VAR.matcher(text);
       while (runfilesVars.find()) {
-        envVars.put(String.format("RUNFILES_%s", runfilesVars.group(1)), runfilesVars.group(2));
+        envVars.put(
+            String.format("RUNFILES_%s", runfilesVars.group(1)),
+            workspaceRoot.absolutePathFor(runfilesVars.group(2)).toString());
       }
       String workspaceName = execRoot.getName();
       binary =
