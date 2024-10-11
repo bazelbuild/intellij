@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2016-2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,19 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.sync.codegenerator.CodeGeneratorRuleNameHelper;
 import com.google.idea.blaze.common.artifact.BlazeArtifact;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.protobuf.TextFormat;
+import com.intellij.openapi.diagnostic.Logger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -40,10 +44,21 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Aspect strategy for Skylark. */
 public abstract class AspectStrategy {
+
+  private static final Logger logger = Logger.getInstance(AspectStrategy.class);
+
+  /**
+   * This template is for an Aspect attr name that is used to provide to the aspect a list
+   * of Bazel rule names that are code-generators for a specific language.
+   */
+
+  private final static String FORMAT_CODE_GENERATOR_RULE_NAMES_ATTR_NAME
+      = "%s_code_generator_rule_names";
 
   public static final Predicate<String> ASPECT_OUTPUT_FILE_PREDICATE =
       str -> str.endsWith(".intellij-info.txt");
@@ -104,7 +119,9 @@ public abstract class AspectStrategy {
       BlazeCommand.Builder builder,
       Collection<OutputGroup> outputGroups,
       Set<LanguageClass> activeLanguages,
-      boolean directDepsOnly) {
+      boolean directDepsOnly,
+      ProjectViewSet viewSet) {
+
     List<String> groups =
         outputGroups.stream()
             .flatMap(g -> getOutputGroups(g, activeLanguages, directDepsOnly).stream())
@@ -112,6 +129,59 @@ public abstract class AspectStrategy {
     builder
         .addBlazeFlags(getAspectFlag().map(List::of).orElse(List.of()))
         .addBlazeFlags("--output_groups=" + Joiner.on(',').join(groups));
+
+    List<AspectParameter> codeGeneratorAspectParameters = activeLanguages.stream()
+        .map(l -> tryDeriveActionEnvForCodeGeneratorTargetNames(viewSet, l))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(Collectors.toUnmodifiableList());
+
+    if (!codeGeneratorAspectParameters.isEmpty()) {
+      if (supportsAspectsParameters()) {
+        codeGeneratorAspectParameters.stream()
+            .map(AspectParameter::toFlag)
+            .forEach(builder::addBlazeFlags);
+      } else {
+        logger.warn("code generator aspect parameters are required but not supported");
+      }
+    }
+  }
+
+  /**
+   * <p>For the given language, this method will retrieve the configured set of Rule
+   * names that represent code-generators for the language. It will then turn this
+   * into a key-value pair that can be provided to the Bazel aspect so that the
+   * aspect knows the set of rule names to assume are code-generators.</p>
+   *
+   * <p>The key will be something like
+   * <code>python_code_generator_rule_names</code> and the value would be
+   * something like <code>my_rule_a,my_rule_b</code>.</p>
+   */
+
+  private static Optional<AspectParameter> tryDeriveActionEnvForCodeGeneratorTargetNames(
+      ProjectViewSet viewSet,
+      LanguageClass languageClass) {
+
+    Collection<String> ruleNames = CodeGeneratorRuleNameHelper.deriveRuleNames(viewSet, languageClass);
+
+    if (ruleNames.isEmpty()) {
+      return Optional.empty();
+    }
+
+    // Do a check here to make sure that no invalid rule names have entered the system. This should
+    // have been checked at the point of supply (see PythonCodeGeneratorRuleNamesSectionParser) but
+    // to be sure in case the code flows change later.
+
+    for (String ruleName : ruleNames) {
+      if (!CodeGeneratorRuleNameHelper.isValidRuleName(ruleName)) {
+        throw new IllegalStateException("the rule name [" + ruleName + "] is invalid");
+      }
+    }
+
+    return Optional.of(new AspectParameter(
+        String.format(FORMAT_CODE_GENERATOR_RULE_NAMES_ATTR_NAME, languageClass.getName().toLowerCase()),
+        String.join(",", ruleNames)
+    ));
   }
 
   /**
@@ -198,4 +268,39 @@ public abstract class AspectStrategy {
         && language != LanguageClass.C
         && language != LanguageClass.GO;
   }
+
+  /**
+   * This class models a Bazel aspect `attr` parameter value. It is passed to Bazel as a command
+   * line parameter.
+   */
+
+  private final static class AspectParameter {
+    private final String name;
+    private final String value;
+
+    public AspectParameter(String name, String value) {
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "name is required");
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(value), "value is required");
+      this.name = name;
+      this.value = value;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getValue() {
+      return value;
+    }
+
+    public String toFlag() {
+      return String.format("--aspects_parameters=%s=%s", name, value);
+    }
+
+    @Override
+    public String toString() {
+      return toFlag();
+    }
+  }
+
 }
