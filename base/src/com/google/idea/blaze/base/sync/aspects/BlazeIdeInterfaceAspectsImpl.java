@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2016-2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,7 @@ import com.google.idea.blaze.base.sync.SyncProjectState;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
+import com.google.idea.blaze.base.sync.codegenerator.CodeGeneratorRuleNameHelper;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -287,6 +288,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     TargetMapAndInterfaceState state =
         updateState(
             project,
+            projectState.getProjectViewSet(),
             context,
             prevState,
             diff,
@@ -316,6 +318,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   @Nullable
   private static TargetMapAndInterfaceState updateState(
       Project project,
+      ProjectViewSet viewSet,
       BlazeContext parentContext,
       @Nullable BlazeIdeInterfaceState prevState,
       ArtifactsDiff fileState,
@@ -482,6 +485,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       Set<LanguageClass> ignoredLanguages) {
     Kind kind = target.getKind();
     if (kind.getLanguageClasses().stream().anyMatch(languageSettings::isLanguageActive)) {
+      return false;
+    }
+    if (null != target.getPyIdeInfo() && target.getPyIdeInfo().isCodeGenerator()) {
       return false;
     }
     if (importRoots.importAsSource(target.getKey().getLabel())) {
@@ -769,7 +775,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       }
 
       aspectStrategy.addAspectAndOutputGroups(
-          builder, outputGroups, activeLanguages, onlyDirectDeps);
+          builder, outputGroups, activeLanguages, onlyDirectDeps, viewSet);
 
       return BazelExecService.instance(project).build(context, builder);
     } finally {

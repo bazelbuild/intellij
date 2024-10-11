@@ -23,10 +23,14 @@ import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.projectview.ProjectView;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -42,6 +46,7 @@ public class AspectStrategyTest extends BlazeTestCase {
 
   private static final MockAspectStrategy strategy = new MockAspectStrategy();
   private MockExperimentService experiments;
+  private final ProjectViewSet viewSet = createTestViewSet();
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
@@ -50,18 +55,47 @@ public class AspectStrategyTest extends BlazeTestCase {
     registerExtensionPoint(OutputGroupsProvider.EP_NAME, OutputGroupsProvider.class);
   }
 
+  /**
+   * This test checks that when a {@link BlazeSyncPlugin} is supplied which is able to provide some
+   * code-generator rule names then those names are provided to the aspect through aspect
+   * parameters.
+   */
+  @Test
+  public void testAddAspectAndOutputGroupsWithCodeGenerator() {
+    registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class)
+        .registerExtension(new MockBlazeSyncPlugin());
+
+    Set<LanguageClass> activeLanguages = ImmutableSet.of(LanguageClass.PYTHON);
+    ProjectViewSet viewSet = createTestViewSet();
+
+    BlazeCommand.Builder builder = emptyBuilder();
+    strategy.addAspectAndOutputGroups(
+        builder,
+        ImmutableList.of(OutputGroup.INFO),
+        activeLanguages, /* directDepsOnly= */ false,
+        viewSet);
+
+    List<String> args = builder.build().toArgumentList();
+    assertThat(args).contains("--aspects_parameters=python_code_generator_rule_names=my_rule");
+  }
+
   @Test
   public void testGenericOutputGroupAlwaysPresent() {
+    registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
     Set<LanguageClass> activeLanguages = ImmutableSet.of();
 
     BlazeCommand.Builder builder = emptyBuilder();
     strategy.addAspectAndOutputGroups(
-        builder, ImmutableList.of(OutputGroup.INFO), activeLanguages, /* directDepsOnly= */ false);
+        builder,
+        ImmutableList.of(OutputGroup.INFO),
+        activeLanguages, /* directDepsOnly= */ false,
+        viewSet);
     assertThat(getOutputGroups(builder)).containsExactly("intellij-info-generic");
   }
 
   @Test
   public void testNoGenericOutputGroupInResolveOrCompile() {
+    registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
     Set<LanguageClass> activeLanguages = ImmutableSet.of(LanguageClass.JAVA);
 
     BlazeCommand.Builder builder = emptyBuilder();
@@ -69,7 +103,8 @@ public class AspectStrategyTest extends BlazeTestCase {
         builder,
         ImmutableList.of(OutputGroup.RESOLVE),
         activeLanguages,
-        /* directDepsOnly= */ false);
+        /* directDepsOnly= */ false,
+        viewSet);
     assertThat(getOutputGroups(builder)).containsExactly("intellij-resolve-java");
 
     builder = emptyBuilder();
@@ -77,12 +112,14 @@ public class AspectStrategyTest extends BlazeTestCase {
         builder,
         ImmutableList.of(OutputGroup.COMPILE),
         activeLanguages,
-        /* directDepsOnly= */ false);
+        /* directDepsOnly= */ false,
+        viewSet);
     assertThat(getOutputGroups(builder)).containsExactly("intellij-compile-java");
   }
 
   @Test
   public void testAllPerLanguageOutputGroupsRecognized() {
+    registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
     Set<LanguageClass> activeLanguages =
         Arrays.stream(LanguageOutputGroup.values())
             .map(lang -> lang.languageClass)
@@ -90,7 +127,10 @@ public class AspectStrategyTest extends BlazeTestCase {
 
     BlazeCommand.Builder builder = emptyBuilder();
     strategy.addAspectAndOutputGroups(
-        builder, ImmutableList.of(OutputGroup.INFO), activeLanguages, /* directDepsOnly= */ false);
+        builder,
+        ImmutableList.of(OutputGroup.INFO),
+        activeLanguages, /* directDepsOnly= */ false,
+        viewSet);
     assertThat(getOutputGroups(builder))
         .containsExactly(
             "intellij-info-generic",
@@ -109,7 +149,8 @@ public class AspectStrategyTest extends BlazeTestCase {
         builder,
         ImmutableList.of(OutputGroup.RESOLVE),
         activeLanguages,
-        /* directDepsOnly= */ false);
+        /* directDepsOnly= */ false,
+        viewSet);
     assertThat(getOutputGroups(builder))
         .containsExactly(
             "intellij-resolve-java",
@@ -127,7 +168,8 @@ public class AspectStrategyTest extends BlazeTestCase {
         builder,
         ImmutableList.of(OutputGroup.COMPILE),
         activeLanguages,
-        /* directDepsOnly= */ false);
+        /* directDepsOnly= */ false,
+        viewSet);
     assertThat(getOutputGroups(builder))
         .containsExactly(
             "intellij-compile-java",
@@ -143,13 +185,15 @@ public class AspectStrategyTest extends BlazeTestCase {
 
   @Test
   public void testDirectDepsOutputGroupsEnabledForJava() {
+    registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
     BlazeCommand.Builder builder = emptyBuilder();
 
     strategy.addAspectAndOutputGroups(
         builder,
         ImmutableList.of(OutputGroup.INFO, OutputGroup.RESOLVE),
         ImmutableSet.of(LanguageClass.JAVA),
-        /* directDepsOnly= */ true);
+        /* directDepsOnly= */ true,
+        viewSet);
 
     assertThat(getOutputGroups(builder))
         .containsExactly(
@@ -160,13 +204,15 @@ public class AspectStrategyTest extends BlazeTestCase {
 
   @Test
   public void testDirectDepsOutputGroupsDisabledForCpp() {
+    registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
     BlazeCommand.Builder builder = emptyBuilder();
 
     strategy.addAspectAndOutputGroups(
         builder,
         ImmutableList.of(OutputGroup.INFO, OutputGroup.RESOLVE),
         ImmutableSet.of(LanguageClass.C),
-        /* directDepsOnly= */ true);
+        /* directDepsOnly= */ true,
+        viewSet);
 
     assertThat(getOutputGroups(builder))
         .containsExactly("intellij-info-generic", "intellij-info-cpp", "intellij-resolve-cpp");
@@ -174,6 +220,7 @@ public class AspectStrategyTest extends BlazeTestCase {
 
   @Test
   public void testDirectDepsExperimentRespected() {
+    registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
     experiments.setExperimentRaw("sync.allow.requesting.direct.deps", false);
     BlazeCommand.Builder builder = emptyBuilder();
 
@@ -181,10 +228,17 @@ public class AspectStrategyTest extends BlazeTestCase {
         builder,
         ImmutableList.of(OutputGroup.INFO, OutputGroup.RESOLVE),
         ImmutableSet.of(LanguageClass.JAVA),
-        /* directDepsOnly= */ true);
+        /* directDepsOnly= */ true,
+        viewSet);
 
     assertThat(getOutputGroups(builder))
         .containsExactly("intellij-info-generic", "intellij-info-java", "intellij-resolve-java");
+  }
+
+  private ProjectViewSet createTestViewSet() {
+    return ProjectViewSet.builder()
+            .add(ProjectView.builder().build())
+            .build();
   }
 
   private BlazeCommand.Builder emptyBuilder() {
@@ -223,4 +277,15 @@ public class AspectStrategyTest extends BlazeTestCase {
       return true;
     }
   }
+
+  private static class MockBlazeSyncPlugin implements BlazeSyncPlugin {
+
+    @Override
+    public Collection<String> getCodeGeneratorRuleNames(
+        ProjectViewSet viewSet,
+        LanguageClass languageClass) {
+      return ImmutableList.of("my_rule");
+    }
+  }
+
 }

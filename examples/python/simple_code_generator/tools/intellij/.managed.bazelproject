@@ -6,4 +6,6 @@ derive_targets_from_directories: true
 additional_languages:
   python
 
-enable_python_codegen_support: true
+python_code_generator_rule_names:
+  test_codegen_files_py
+  test_codegen_directory_py

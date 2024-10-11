@@ -82,7 +82,7 @@ PY2 = 1
 
 PY3 = 2
 
-TARGET_TAG_PY_CODE_GENERATOR = "intellij-py-code-generator"
+CODE_GENERATOR_RULE_NAME_ASPECT_ATTR_NAME_TEMPLATE = "{language_name}_code_generator_rule_names"
 
 # PythonCompatVersion enum; must match PyIdeInfo.PythonSrcsVersion
 SRC_PY2 = 1
@@ -96,6 +96,31 @@ SRC_PY2ONLY = 4
 SRC_PY3ONLY = 5
 
 ##### Helpers
+
+def create_code_generator_rule_name_aspect_attr_name(language_name):
+    """Creates an `attr` name for conveying code-generator Rule names"""
+    if not language_name:
+        fail("the `language_name` must be provided")
+    return CODE_GENERATOR_RULE_NAME_ASPECT_ATTR_NAME_TEMPLATE.format(language_name = language_name.lower())
+
+def get_code_generator_rule_names(ctx, language_name):
+    """Supplies a list of Rule names for code generation for the language specified
+
+    For some languages, it is possible to specify Rules' names that are interpreted as
+    code-generators for the language. These Rules' names are specified as attrs and are provided to
+    the aspect using the `AspectStrategy#AspectParameter` in the plugin logic.
+    """
+
+    if not language_name:
+        fail("the `language_name` must be provided")
+
+    aspect_parameter_key = create_code_generator_rule_name_aspect_attr_name(language_name)
+    aspect_parameter_value = getattr(ctx.attr, aspect_parameter_key, "")
+
+    if aspect_parameter_value:
+        return aspect_parameter_value.split(",")
+
+    return []
 
 def get_registry_flag(ctx, name):
     """Registry flags are passed to aspects using defines. See CppAspectArgsProvider."""
@@ -342,12 +367,13 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     data_deps = getattr(ctx.rule.attr, "data", [])
     args = _do_starlark_string_expansion(ctx, "args", args, data_deps)
     imports = getattr(ctx.rule.attr, "imports", [])
+    is_code_generator = False
 
-    # If there are apparently no sources found from `srcs` and the target has the tag
-    # for code-generation then use the run-files as the sources and take the imports
-    # from the PyInfo.
+    # If there are apparently no sources found from `srcs` and the target has a rule name which is
+    # one of the ones pre-specified to the aspect as being a code-generator for Python then
+    # interpret the outputs of the target specified in the PyInfo as being sources.
 
-    if 0 == len(sources) and TARGET_TAG_PY_CODE_GENERATOR in getattr(ctx.rule.attr, "tags", []):
+    if 0 == len(sources) and ctx.rule.kind in get_code_generator_rule_names(ctx, "python"):
         def provider_import_to_attr_import(provider_import):
             """\
             Remaps the imports from PyInfo
@@ -397,6 +423,8 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         if runfiles and runfiles.files:
             sources.extend([artifact_location(f) for f in runfiles.files.to_list()])
 
+        is_code_generator = True
+
     ide_info["py_ide_info"] = struct_omit_none(
         launcher = py_launcher,
         python_version = _get_python_version(ctx),
@@ -404,6 +432,7 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         srcs_version = _get_python_srcs_version(ctx),
         args = args,
         imports = imports,
+        is_code_generator = is_code_generator,
     )
 
     update_sync_output_groups(output_groups, "intellij-info-py", depset([ide_info_file]))

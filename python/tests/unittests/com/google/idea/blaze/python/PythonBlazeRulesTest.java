@@ -17,6 +17,8 @@
 package com.google.idea.blaze.python;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PyIdeInfo;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -37,7 +39,7 @@ public class PythonBlazeRulesTest {
   public void testTargetKindHeuristicsForCodeGenerator() {
     Function<TargetIdeInfo, Kind> heuristics = rules.getTargetKindHeuristics();
     TargetIdeInfo targetInfo = TargetIdeInfo.newBuilder()
-        .addAllTags(ImmutableSet.of("intellij-py-code-generator"))
+        .setPyIdeInfo(PyIdeInfo.newBuilder().setIsCodeGenerator(true).build())
         .build();
 
     // code under test
