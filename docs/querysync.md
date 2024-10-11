@@ -39,7 +39,7 @@ Before enabling Query Sync, please ensure you're using the Bazel Plugin from the
 2. Navigate to **Settings** > **Plugins**.
 3. Search for the **Bazel Plugin**.
 4. Click on the plugin and select **Manage Plugin Repositories**.
-5. Add the beta channel repository if not already present.
+5. Add the [beta](https://github.com/bazelbuild/intellij?tab=readme-ov-file#beta-versions) channel repository if not already present.
 6. Update the plugin to the latest beta version.
 7. Restart IntelliJ IDEA to apply changes.
 
