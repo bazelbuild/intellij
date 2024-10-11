@@ -73,7 +73,7 @@ def _test_codegen_directory_py_impl(ctx):
     # manually assuming a *NIX style system to reduce the complexity of the example.
     imports_path = "/".join([
         ctx.label.repo_name or ctx.workspace_name,
-        "example",
+        "generated",
         "materials",
     ])
 
@@ -111,7 +111,7 @@ def _test_codegen_files_py_impl(ctx):
     # manually assuming a *NIX style system to reduce the complexity of the example.
     imports_path = "/".join([
         ctx.label.repo_name or ctx.workspace_name,
-        "example",
+        "generated",
         "infrastructure",
     ])
 
