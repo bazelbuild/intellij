@@ -26,7 +26,7 @@ public class EnablePythonCodegenSupport {
           KEY,
                   """
                   If set to true, enables Python codegen support.
-                  More info <a href=https://github.com/bazelbuild/intellij/blob/master/docs/python/code-generators.md> here</a>
+                  More info <a href=https://github.com/bazelbuild/intellij/blob/master/docs/python/code-generators.md>here</a>
                   """
   );
 }
