@@ -29,7 +29,9 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//querysync",
         "//sdkcompat",
+        "//shared",
         "//third_party/python",
     ],
 )
@@ -85,6 +87,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "//querysync",
         "//third_party/python:python_for_tests",
         "//third_party/toml:toml_for_tests",
         "@com_google_guava_guava//jar",
