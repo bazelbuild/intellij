@@ -196,7 +196,7 @@ public final class SyncProjectTargetsHelper {
           .collect(Collectors.toSet());
 
       if (!activeLanguageCodeGeneratorTags.isEmpty() && projectViewSet.getScalarValue(EnablePythonCodegenSupport.KEY).orElse(false)) {
-        retainedByCodeGen = TargetTagFilter.filterCodeGen(
+        retainedByCodeGen = TargetTagFilter.filter(
             project,
             context,
             rejectedByKind,
