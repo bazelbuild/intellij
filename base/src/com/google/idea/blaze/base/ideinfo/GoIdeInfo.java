@@ -32,14 +32,17 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
   private final ImmutableList<ArtifactLocation> sources;
   @Nullable private final String importPath;
   private final ImmutableList<Label> libraryLabels; // only valid for tests
+  private final boolean cgo;
 
   private GoIdeInfo(
       ImmutableList<ArtifactLocation> sources,
       @Nullable String importPath,
-      ImmutableList<Label> libraryLabels) {
+      ImmutableList<Label> libraryLabels,
+      boolean cgo) {
     this.sources = sources;
     this.importPath = importPath;
     this.libraryLabels = libraryLabels;
+    this.cgo = cgo;
   }
 
   public static GoIdeInfo fromProto(
@@ -48,7 +51,8 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
         ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto),
         ImportPathReplacer.fixImportPath(
             Strings.emptyToNull(proto.getImportPath()), targetLabel, targetKind),
-        extractLibraryLabels(targetKind, proto.getLibraryLabelsList()));
+        extractLibraryLabels(targetKind, proto.getLibraryLabelsList()),
+            proto.getCgo());
   }
 
   private static ImmutableList<Label> extractLibraryLabels(Kind kind, List<String> libraryLabels) {
@@ -66,6 +70,7 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
         IntellijIdeInfo.GoIdeInfo.newBuilder().addAllSources(ProtoWrapper.mapToProtos(sources));
     ProtoWrapper.setIfNotNull(builder::setImportPath, importPath);
     builder.addAllLibraryLabels(ProtoWrapper.map(libraryLabels, Label::toProto));
+    builder.setCgo(cgo);
     return builder.build();
   }
 
@@ -82,6 +87,10 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
     return libraryLabels;
   }
 
+  public boolean getCgo() {
+    return cgo;
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -91,6 +100,7 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
     private final ImmutableList.Builder<ArtifactLocation> sources = ImmutableList.builder();
     @Nullable private String importPath = null;
     private final ImmutableList.Builder<Label> libraryLabels = ImmutableList.builder();
+    private boolean cgo = false;
 
     @CanIgnoreReturnValue
     public Builder addSource(ArtifactLocation source) {
@@ -110,8 +120,14 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
       return this;
     }
 
+    @CanIgnoreReturnValue
+    public Builder setIsCgo(boolean cgo) {
+      this.cgo = cgo;
+      return this;
+    }
+
     public GoIdeInfo build() {
-      return new GoIdeInfo(sources.build(), importPath, libraryLabels.build());
+      return new GoIdeInfo(sources.build(), importPath, libraryLabels.build(), cgo);
     }
   }
 
@@ -128,6 +144,8 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
         + "  libraryLabels="
         + getLibraryLabels()
         + "\n"
+        + "  cgo="
+        + getCgo()
         + '}';
   }
 
@@ -142,11 +160,12 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
     GoIdeInfo goIdeInfo = (GoIdeInfo) o;
     return Objects.equals(sources, goIdeInfo.sources)
         && Objects.equals(importPath, goIdeInfo.importPath)
-        && Objects.equals(libraryLabels, goIdeInfo.libraryLabels);
+        && Objects.equals(libraryLabels, goIdeInfo.libraryLabels)
+        && cgo == goIdeInfo.cgo;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sources, importPath, libraryLabels);
+    return Objects.hash(sources, importPath, libraryLabels, cgo);
   }
 }
