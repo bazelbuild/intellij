@@ -32,6 +32,7 @@ import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos.P
 import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos.SetBreakpointsRequest;
 import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos.StartDebuggingRequest;
 import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos.Stepping;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -269,7 +270,7 @@ public class SkylarkDebugProcess extends XDebugProcess {
     // TODO(brendandouglas): handle local changes?
     return Location.newBuilder()
         .setLineNumber(breakpoint.getLine() + 1)
-        .setPath(breakpoint.getPresentableFilePath())
+        .setPath(WorkspaceRoot.fromProject(project).absolutePathFor(breakpoint.getPresentableFilePath()).toString())
         .build();
   }
 
