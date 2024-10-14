@@ -20,7 +20,6 @@ import static com.google.idea.blaze.kotlin.sync.KotlinUtils.findToolchain;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.async.executor.ProgressIndicatorStub;
 import com.google.idea.blaze.base.ideinfo.KotlinToolchainIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -42,9 +41,11 @@ import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -354,7 +355,7 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
                 writeActions.stream().forEach(Function0::invoke);
               });
         }
-      }, ProgressIndicatorStub.INSTANCE);
+      }, new EmptyProgressIndicator(ModalityState.NON_MODAL));
     }
   }
 }

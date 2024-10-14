@@ -408,9 +408,6 @@
     <registryKey defaultValue="true"
                  description="Causes the plugin to read external workspace data, enabling features such as code completion for external targets. This may incur the cost of an additional 'bazel mod' call, which could cause issues with older versions or setups."
                  key="bazel.read.external.workspace.data"/>
-    <registryKey defaultValue="true"
-                 description="Enables the new sync view"
-                 key="bazel.new.sync.view"/>
     <editorNotificationProvider implementation="com.google.idea.blaze.base.wizard2.BazelNotificationProvider"/>
   </extensions>
 

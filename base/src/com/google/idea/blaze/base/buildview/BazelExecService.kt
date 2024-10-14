@@ -28,13 +28,13 @@ import java.io.BufferedInputStream
 import java.io.FileInputStream
 import kotlin.io.path.pathString
 
-private val LOG: Logger = Logger.getInstance(BazelService::class.java)
+private val LOG: Logger = Logger.getInstance(BazelExecService::class.java)
 
 @Service(Service.Level.PROJECT)
-class BazelService(private val project: Project) : Disposable {
+class BazelExecService(private val project: Project) : Disposable {
   companion object {
     @JvmStatic
-    fun instance(project: Project): BazelService = project.service()
+    fun instance(project: Project): BazelExecService = project.service()
   }
 
   // #api223 use the injected scope
@@ -67,27 +67,34 @@ class BazelService(private val project: Project) : Disposable {
   private suspend fun execute(ctx: BlazeContext, cmd: BlazeCommand): Int {
     val root = cmd.effectiveWorkspaceRoot.orElseGet { WorkspaceRoot.fromProject(project).path() }
 
-    val handler = GeneralCommandLine()
+    val cmdLine = GeneralCommandLine()
       .withExePath(cmd.binaryPath)
       .withParameters(cmd.toArgumentList())
       .apply { setWorkDirectory(root.pathString) } // required for backwards compatability
       .withRedirectErrorStream(true)
-      .let(::OSProcessHandler)
 
-    handler.addProcessListener(object : ProcessListener {
-      override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-        ctx.println(event.text.trimEnd())
+    var handler: OSProcessHandler? = null
+    val exitCode = try {
+      handler = withContext(Dispatchers.IO) {
+        OSProcessHandler(cmdLine)
       }
-    })
-    handler.startNotify()
 
-    try {
-      while (!handler.isProcessTerminated) delay(100)
+      handler.addProcessListener(object : ProcessListener {
+        override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+          ctx.println(event.text.trimEnd())
+        }
+      })
+      handler.startNotify()
+
+      while (!handler.isProcessTerminated) {
+        delay(100)
+      }
+
+      handler.exitCode ?: 1
     } finally {
-      handler.destroyProcess()
+      handler?.destroyProcess()
     }
 
-    val exitCode = handler.exitCode ?: 1
     if (exitCode != 0) {
       ctx.setHasError()
     }
@@ -97,12 +104,17 @@ class BazelService(private val project: Project) : Disposable {
 
   private suspend fun parseEvent(ctx: BlazeContext, stream: BufferedInputStream) {
     // make sure that there are at least four bytes already available
-    while (stream.available() < 4) delay(10)
+    while (stream.available() < 4) {
+      delay(10)
+    }
 
     // protobuf messages are delimited by size (encoded as varint32),
     // read size manually to ensure the entire message is already available
     val size = CodedInputStream.readRawVarint32(stream.read(), stream)
-    while (stream.available() < size) delay(10)
+
+    while (stream.available() < size) {
+      delay(10)
+    }
 
     val eventStream = LimitedInputStream(stream, size)
     val event = try {
@@ -118,18 +130,16 @@ class BazelService(private val project: Project) : Disposable {
       return
     }
 
-    if (event == null) {
-      delay(10)
-    } else {
-      BuildEventParser.parse(event)?.let(ctx::output)
-    }
+    BuildEventParser.parse(event)?.let(ctx::output)
   }
 
   private fun CoroutineScope.parseEvents(ctx: BlazeContext, helper: BuildResultHelper): Job {
-    return launch(CoroutineName("EventParser")) {
+    return launch(Dispatchers.IO + CoroutineName("EventParser")) {
       try {
         // wait for bazel to create the output file
-        while (!helper.outputFile.exists()) delay(10)
+        while (!helper.outputFile.exists()) {
+          delay(10)
+        }
 
         FileInputStream(helper.outputFile).buffered().use { stream ->
           // keep reading events while the coroutine is active, i.e. bazel is still running,
@@ -138,11 +148,9 @@ class BazelService(private val project: Project) : Disposable {
             parseEvent(ctx, stream)
           }
         }
-      }
-      catch (e: CancellationException) {
+      } catch (e: CancellationException) {
         throw e
-      }
-      catch (e: Exception) {
+      } catch (e: Exception) {
         LOG.error("error in event parser", e)
       }
     }

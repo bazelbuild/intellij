@@ -73,6 +73,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private boolean expandSyncToWorkingSet = true;
   private boolean showPerformanceWarnings = false;
   private boolean collapseProjectView = true;
+  private boolean useNewSyncView = false;
 
   private boolean javascriptTestrunnersEnabled = false;
 
@@ -207,6 +208,14 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
     this.collapseProjectView = collapseProjectView;
   }
 
+  public boolean getUseNewSyncView() {
+    return useNewSyncView;
+  }
+
+  public void setUseNewSyncView(boolean useNewSyncView) {
+    this.useNewSyncView = useNewSyncView;
+  }
+
   public boolean isJavascriptTestrunnersEnabled() {
     return javascriptTestrunnersEnabled;
   }
@@ -269,6 +278,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
       builder.put("blazeBinaryPath", settings.blazeBinaryPath);
       builder.put("bazelBinaryPath", settings.bazelBinaryPath);
       builder.put("buildifierBinaryPath", settings.buildifierBinaryPath);
+      builder.put("useNewSyncView", Boolean.toString(settings.useNewSyncView));
       return builder.build();
     }
   }

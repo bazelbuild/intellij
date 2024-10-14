@@ -20,9 +20,11 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Progressive;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressWindow;
@@ -106,7 +108,7 @@ public class ProgressiveTaskWithProgressIndicator {
    */
   public <T> ListenableFuture<T> submitTaskWithResult(ProgressiveWithResult<T> progressive) {
     if (modality == Modality.BUILD_VIEW) {
-      return executor.submit(() -> progressive.compute(ProgressIndicatorStub.INSTANCE));
+      return executor.submit(() -> progressive.compute(new EmptyProgressIndicator(ModalityState.NON_MODAL)));
     }
 
     // The progress indicator must be created on the UI thread.

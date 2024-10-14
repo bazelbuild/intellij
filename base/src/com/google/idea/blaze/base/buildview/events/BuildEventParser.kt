@@ -2,10 +2,10 @@ package com.google.idea.blaze.base.buildview.events
 
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent
 import com.google.idea.blaze.base.scope.output.IssueOutput
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 
-internal val LOG = Logger.getInstance(BuildEventParser::class.java)
+internal val LOG = logger<BuildEventParser>()
 
 interface BuildEventParser {
   companion object {
