@@ -2,11 +2,12 @@ package com.google.idea.blaze.base.buildview
 
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator
 import com.google.idea.blaze.base.scope.BlazeContext
-import com.intellij.openapi.util.registry.Registry
+import com.google.idea.blaze.base.settings.BlazeUserSettings
 
 object BuildViewMigration {
   @JvmStatic
-  val enabled get(): Boolean = Registry.`is`("bazel.new.sync.view")
+  val enabled
+    get(): Boolean = BlazeUserSettings.getInstance().useNewSyncView
 
   @JvmStatic
   fun present(ctx: BlazeContext): Boolean {

@@ -5,7 +5,6 @@ import com.google.idea.blaze.common.PrintOutput
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 
 fun BlazeContext.println(msg: String) {
@@ -17,7 +16,7 @@ fun <T> BlazeContext.pushJob(
   name: String = "BazelContext",
   block: suspend CoroutineScope.() -> T,
 ): T {
-  val deferred = scope.async(Dispatchers.IO + CoroutineName(name)) { block() }
+  val deferred = scope.async(CoroutineName(name)) { block() }
 
   addCancellationHandler { deferred.cancel() }
 

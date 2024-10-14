@@ -64,7 +64,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.Collection;
@@ -123,7 +122,7 @@ public class BlazeSyncManager {
                           indicator ->
                               Scope.root(
                                   context -> {
-                                    if (Registry.is("bazel.new.sync.view")) {
+                                    if (BuildViewMigration.getEnabled()) {
                                       context.push(new BuildViewScope(project,
                                           getRootInvocationTitle(syncParams)));
                                     }

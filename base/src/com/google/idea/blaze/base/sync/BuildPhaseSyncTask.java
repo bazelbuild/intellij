@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.sync;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.idea.blaze.base.issueparser.BlazeIssueParser.targetDetectionQueryParsers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -398,6 +399,7 @@ public final class BuildPhaseSyncTask {
                         var newScope = new ToolWindowScope.Builder(project, task)
                             .setProgressIndicator(indicator)
                             .setPopupBehavior(BlazeUserSettings.FocusBehavior.ON_ERROR)
+                            .setIssueParsers(targetDetectionQueryParsers(project, WorkspaceRoot.fromProject(project)))
                             .build();
                         childContext.push(newScope);
                       }
