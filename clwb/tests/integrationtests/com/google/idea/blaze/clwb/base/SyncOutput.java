@@ -14,10 +14,11 @@ import com.google.idea.blaze.common.PrintOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SyncOutput {
+  private @Nullable Boolean hasErrors = null;
+
   private final List<IssueOutput> issues = new ArrayList<>();
   private final List<String> messages = new ArrayList<>();
 
@@ -26,6 +27,10 @@ public class SyncOutput {
     addOutputSink(context, PrintOutput.class, (it) -> messages.add(it.getText()));
     addOutputSink(context, StatusOutput.class, (it) -> messages.add(it.getStatus()));
     addOutputSink(context, SummaryOutput.class, (it) -> messages.add(it.getText()));
+  }
+
+  void setHasErrors(boolean hasErrors) {
+    this.hasErrors = hasErrors;
   }
 
   private <T extends Output> void addOutputSink(BlazeContext context, Class<T> clazz, Consumer<T> consumer) {
@@ -59,6 +64,7 @@ public class SyncOutput {
         collectLog()
     );
 
-    assertThat(issues).isEmpty();
+    assertWithMessage(message).that(issues).isEmpty();
+    assertWithMessage(message).that(hasErrors).isFalse();
   }
 }
