@@ -1,9 +1,7 @@
-package com.google.idea.blaze.clwb.base;
+package com.google.idea.blaze.base;
 
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectRepositoryProvider;
 import com.google.idea.testing.runfiles.Runfiles;
-import com.intellij.openapi.project.Project;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;

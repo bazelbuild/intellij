@@ -1,10 +1,8 @@
-package com.google.idea.blaze.clwb.base;
+package com.google.idea.blaze.base;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.scope.OutputSink.Propagation;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
@@ -14,8 +12,6 @@ import com.google.idea.blaze.common.PrintOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import org.jetbrains.annotations.NotNull;
 
 public class SyncOutput {
   private final List<IssueOutput> issues = new ArrayList<>();
