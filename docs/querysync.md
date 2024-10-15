@@ -49,9 +49,12 @@ Before enabling Query Sync, please ensure you're using the Bazel Plugin from the
 2. Go to **File** > **Import Project...** or **File** > **New** > **Project from Existing Sources...** to start the **Project Import Wizard**.
 3. Select your project's root directory and click **OK**.
 4. In the **Import Project from Bazel** dialog, proceed with the import process.
-5. When you reach the **Project View** setup step, enable **Query Sync** by setting the attrbute `use_query_sync` to `true`.
-6. Complete the wizard to generate.
-7. Your project is now configured to use Query Sync.
+5. When you reach the **Project View** setup step, enable **Query Sync** by setting the attribute `use_query_sync` to `true`.
+   ```
+   use_query_sync: true
+   ```
+7. Complete the wizard to generate.
+8. Your project is now configured to use Query Sync.
 
 ### Demo
 https://github.com/user-attachments/assets/b7600841-2c1c-4ecd-acb6-e1dde044e7b1
