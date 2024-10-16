@@ -15,6 +15,14 @@ To enable Fast Build, you must add specific VM options to your IntelliJ configur
 --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
 ```
 
+## rules_java
+Please use rules_java 8.1.0 or newer
+
 ## How to Use
 
 To use Fast Build, locate your test or executable in the editor. Click the gutter icon and select either **Fast Run** or **Fast Test**.
+
+## Demo
+
+https://github.com/user-attachments/assets/73b4ffbb-043a-4b96-81f8-de5fb2a2a1eb
+
