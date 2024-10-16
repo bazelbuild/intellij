@@ -20,7 +20,7 @@
   <depends>org.jetbrains.android</depends>
   <depends>com.google.gct.test.recorder</depends>
   <depends>com.intellij.modules.java</depends>
-
+  <depends optional="true">com.android.tools.design</depends>
   <extensions defaultExtensionNs="com.intellij">
     <programRunner implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryProgramRunner" order="first"/>
     <programRunner implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestProgramRunner" order="first"/>
@@ -70,6 +70,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
+    <MavenArtifactLocator implementation="com.google.idea.blaze.android.projectsystem.DefaultMavenArtifactLocator"/>
     <LintCollector implementation="com.google.idea.blaze.android.libraries.AndroidLintCollector"/>
     <SyncPlugin implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncPlugin"/>
     <QuerySyncPlugin implementation="com.google.idea.blaze.android.qsync.BlazeAndroidQuerySyncPlugin"/>
@@ -92,6 +93,7 @@
     <BlazeHighlightStatsCollector implementation="com.google.idea.blaze.android.editor.UnresolvedResourceStatsCollector"/>
     <SyncListener implementation="com.google.idea.blaze.android.editor.ProjectUnresolvedResourceStatsCollector$CollectorSyncListener"/>
     <SyncListener implementation="com.google.idea.blaze.android.targetmaps.TargetToBinaryMapImpl$Adapter"/>
+    <SyncListener implementation="com.google.idea.blaze.android.projectsystem.ClassContentCache$Listener"/>
     <OutputGroupsProvider implementation="com.google.idea.blaze.android.sync.aspects.strategy.RenderResolveOutputGroupProvider"/>
     <ComposeStatusProvider implementation="com.google.idea.blaze.android.compose.ExperimentComposeStatusProvider"/>
     <BlazeBuildListener implementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemBuildManager$BuildCallbackPublisher"/>

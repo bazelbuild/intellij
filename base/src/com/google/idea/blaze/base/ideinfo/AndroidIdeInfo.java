@@ -46,6 +46,7 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
   @Nullable private final Label legacyResources;
   @Nullable private final Label instruments;
   @Nullable private final ArtifactLocation renderResolveJar;
+  private final ImmutableList<ArtifactLocation> assetsFolders;
 
   private AndroidIdeInfo(
       List<AndroidResFolder> resources,
@@ -58,7 +59,8 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
       boolean hasIdlSources,
       @Nullable Label legacyResources,
       @Nullable Label instruments,
-      @Nullable ArtifactLocation renderResolveJar) {
+      @Nullable ArtifactLocation renderResolveJar,
+      List<ArtifactLocation> assetsFolders) {
     this.resources = ImmutableList.copyOf(resources);
     this.resourceJavaPackage = resourceJavaPackage;
     this.generateResourceClass = generateResourceClass;
@@ -70,6 +72,7 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
     this.legacyResources = legacyResources;
     this.instruments = instruments;
     this.renderResolveJar = renderResolveJar;
+    this.assetsFolders = ImmutableList.copyOf(assetsFolders);
   }
 
   static AndroidIdeInfo fromProto(IntellijIdeInfo.AndroidIdeInfo proto) {
@@ -92,7 +95,8 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
             : null,
         proto.hasRenderResolveJar()
             ? ArtifactLocation.fromProto(proto.getRenderResolveJar())
-            : null);
+            : null,
+        ProtoWrapper.map(proto.getAssetsFoldersList(), ArtifactLocation::fromProto));
   }
 
   @Override
@@ -102,7 +106,8 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
             .putAllManifestValues(manifestValues)
             .addAllResFolders(ProtoWrapper.mapToProtos(resources))
             .setGenerateResourceClass(generateResourceClass)
-            .setHasIdlSources(hasIdlSources);
+            .setHasIdlSources(hasIdlSources)
+            .addAllAssetsFolders(ProtoWrapper.mapToProtos(assetsFolders));
     ProtoWrapper.setIfNotNull(builder::setJavaPackage, resourceJavaPackage);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setManifest, manifest);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setIdlJar, idlJar);
@@ -164,6 +169,10 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
     return renderResolveJar;
   }
 
+  public ImmutableList<ArtifactLocation> getAssetsFolders() {
+    return assetsFolders;
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -181,6 +190,7 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
     private Label legacyResources;
     private Label instruments;
     private ArtifactLocation renderResolveJar;
+    private List<ArtifactLocation> assetsFolders = Lists.newArrayList();
 
     @CanIgnoreReturnValue
     public Builder setManifestFile(ArtifactLocation artifactLocation) {
@@ -253,6 +263,12 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
       return this;
     }
 
+    @CanIgnoreReturnValue
+    public Builder addAssetsFolder(ArtifactLocation assetFolder) {
+      this.assetsFolders.add(assetFolder);
+      return this;
+    }
+
     public AndroidIdeInfo build() {
       if (!resources.isEmpty() || manifest != null) {
         if (!generateResourceClass) {
@@ -272,7 +288,9 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
           hasIdlSources,
           legacyResources,
           instruments,
-          renderResolveJar);
+          renderResolveJar,
+          ImmutableList.copyOf(assetsFolders)
+      );
     }
   }
 
@@ -294,7 +312,8 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
         && Objects.equals(resourceJar, that.resourceJar)
         && Objects.equals(resourceJavaPackage, that.resourceJavaPackage)
         && Objects.equals(legacyResources, that.legacyResources)
-        && Objects.equals(instruments, that.instruments);
+        && Objects.equals(instruments, that.instruments)
+        && Objects.equals(assetsFolders, that.assetsFolders);
   }
 
   @Override
@@ -309,6 +328,7 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
         resourceJavaPackage,
         generateResourceClass,
         legacyResources,
-        instruments);
+        instruments,
+        assetsFolders);
   }
 }
