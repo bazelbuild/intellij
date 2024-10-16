@@ -5,7 +5,7 @@ The IntelliJ plugin for Bazel includes the **Fast Build** feature, allowing you 
 ## Requirements
 
 To enable Fast Build, you must add specific VM options to your IntelliJ configuration.
-The flags are required to run Java compilation inside the IntelliJ process, so there's
+The flags are required to run Java compilation inside the IntelliJ process, so that there's
 no need to spawn a separate `javac` process.
 Follow these steps:
 
