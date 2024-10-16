@@ -74,7 +74,7 @@ final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmen
   private static File getStandardJavaBinary(String runfilesPath) {
     for (File file :
         new File(runfilesPath)
-            .listFiles(fn -> fn.getName().matches("rules_java~.*~toolchains~local_jdk"))) {
+            .listFiles(fn -> fn.getName().matches("rules_java[+~].*[+~]toolchains[+~]local_jdk"))) {
       if (file.isDirectory()) {
         return file.toPath().resolve("bin/java").toFile();
       }
