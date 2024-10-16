@@ -11,7 +11,7 @@ The Bazel Plugin for IntelliJ IDEA supports JVM hotswapping, allowing you to mod
    - Make changes to your source files while the application is running.
 
 3. **Compile and Reload**
-   - Go to **Run** > **Debugging actinos** > **Compile and Reload Modified Files**.
+   - Go to **Run** > **Debugging actions** > **Compile and Reload Modified Files**.
 
 ## Notes
 
