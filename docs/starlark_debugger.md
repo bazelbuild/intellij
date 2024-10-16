@@ -20,5 +20,5 @@ To debug Starlark, you need to create a `build` run configuration. You can do th
 **Important:** Before starting the debugger, ensure you have modified something in the Starlark file. If no changes are made, Bazel will use the analysis cache and skip executing the Starlark code.
 
 ## Demo: Showing Both Methods
-https://github.com/user-attachments/assets/8511bd9f-6d47-4627-b617-0c90edd9f30b
+https://github.com/user-attachments/assets/959b3d53-f79b-4329-bd3b-74d328af761a
 
