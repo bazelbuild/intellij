@@ -53,8 +53,8 @@ Before enabling Query Sync, please ensure you're using the Bazel Plugin from the
    ```
    use_query_sync: true
    ```
-7. Complete the wizard to generate.
-8. Your project is now configured to use Query Sync.
+6. Complete the wizard to generate.
+7. Your project is now configured to use Query Sync.
 
 ### Demo
 https://github.com/user-attachments/assets/b7600841-2c1c-4ecd-acb6-e1dde044e7b1
