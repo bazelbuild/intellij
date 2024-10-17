@@ -41,5 +41,6 @@
     <stepsBeforeRunProvider
         implementation="com.google.idea.blaze.scala.run.producers.GenerateDeployableJarTaskProvider"/>
     <postStartupActivity implementation="com.google.idea.blaze.scala.run.producers.NonBlazeProducerSuppressor"/>
+    <attachSourcesProvider implementation="com.google.idea.blaze.scala.libraries.BlazeScalaAttachSourceProvider"/>
   </extensions>
 </idea-plugin>
