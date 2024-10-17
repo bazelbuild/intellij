@@ -92,7 +92,7 @@ class CLionNotificationProvider : ProjectFixesProvider, WidgetStatusProvider, Ed
     }
   }
 
-  override suspend fun collectFixes(project: Project, file: VirtualFile?, dataContext: DataContext): List<AnAction> {
+  override fun collectFixes(project: Project, file: VirtualFile?, dataContext: DataContext): List<AnAction> {
     if (file == null || !isBazelAwareFile(project, file)) {
       return emptyList()
     }
