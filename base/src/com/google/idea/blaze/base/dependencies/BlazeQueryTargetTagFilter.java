@@ -64,7 +64,7 @@ public class BlazeQueryTargetTagFilter implements TargetTagFilter {
 
   @Nullable
   @Override
-  public List<TargetExpression> doFilterCodeGen(
+  public List<TargetExpression> doFilter(
       Project project,
       BlazeContext context,
       List<TargetExpression> targets,
