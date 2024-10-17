@@ -18,7 +18,7 @@ how to join the discussion can be found in the [SIG charter](https://github.com/
 
 ## Support
 
-See the [documentation entry](https://ij.bazel.build/docs/bazel-support.html)
+See the [documentation entry](https://github.com/bazelbuild/intellij/blob/master/docs/index.md)
 on the plugin support across JetBrains products, languages, and operating
 systems.
 
@@ -54,7 +54,7 @@ We recommend watching [this video](https://www.youtube.com/watch?v=GV_KwWK3Qy8) 
 To import an existing Bazel project, choose `Import Bazel Project`,
 and follow the instructions in the project import wizard.
 
-Detailed docs are available [here](http://ij.bazel.build).
+Detailed docs are available [here](https://github.com/bazelbuild/intellij/blob/master/docs/index.md).
 
 ## Known issues
 
