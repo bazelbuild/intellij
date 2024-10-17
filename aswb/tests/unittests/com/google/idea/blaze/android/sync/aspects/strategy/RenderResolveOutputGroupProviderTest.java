@@ -23,6 +23,8 @@ import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.projectview.ProjectView;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.aspects.strategy.OutputGroupsProvider;
@@ -45,6 +47,9 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
 
   private final FakeAspectStrategy aspectStrategy = new FakeAspectStrategy();
   private MockExperimentService experimentService;
+  private final ProjectViewSet testProjectViewSet = ProjectViewSet.builder()
+      .add(ProjectView.builder().build())
+      .build();
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
@@ -67,7 +72,8 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
     ImmutableSet<OutputGroup> outputGroups = ImmutableSet.of(OutputGroup.RESOLVE);
     BlazeCommand.Builder builder = emptyBuilder();
 
-    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, false);
+    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, false,
+        testProjectViewSet);
     assertThat(getOutputGroups(builder)).contains("intellij-render-resolve-android");
   }
 
@@ -81,7 +87,8 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
     ImmutableSet<OutputGroup> outputGroups = ImmutableSet.of(OutputGroup.COMPILE);
     BlazeCommand.Builder builder = emptyBuilder();
 
-    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, false);
+    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, false,
+        testProjectViewSet);
     assertThat(getOutputGroups(builder)).contains("intellij-render-resolve-android");
   }
 
@@ -93,7 +100,8 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
         ImmutableSet.of(OutputGroup.INFO, OutputGroup.COMPILE, OutputGroup.RESOLVE);
     BlazeCommand.Builder builder = emptyBuilder();
 
-    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, false);
+    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, false,
+        testProjectViewSet);
     assertThat(getOutputGroups(builder)).doesNotContain("intellij-render-resolve-android");
   }
 
@@ -107,7 +115,8 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
     ImmutableSet<OutputGroup> outputGroups = ImmutableSet.of(OutputGroup.INFO);
     BlazeCommand.Builder builder = emptyBuilder();
 
-    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, false);
+    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, false,
+        testProjectViewSet);
     assertThat(getOutputGroups(builder)).doesNotContain("intellij-render-resolve-android");
   }
 
