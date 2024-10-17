@@ -19,7 +19,7 @@ Follow these steps:
 ```
 
 ## rules_java
-Please use rules_java 8.1.0 or newer
+Please use rules_java 7.12.2 or newer
 
 ## How to Use
 
