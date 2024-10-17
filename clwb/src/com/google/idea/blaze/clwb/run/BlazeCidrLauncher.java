@@ -74,9 +74,12 @@ import com.jetbrains.cidr.execution.debugger.remote.CidrRemoteDebugParameters;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemotePathMapping;
 import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestConsoleProperties;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Handles running/debugging cc_test and cc_binary targets in CLion. Sets up gdb when debugging, and
@@ -100,6 +103,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     this.handlerState = (BlazeCidrRunConfigState) configuration.getHandler().getState();
     this.runner = runner;
     this.env = env;
+
     this.project = configuration.getProject();
   }
 
@@ -216,6 +220,23 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         });
   }
 
+  @NotNull
+  private File selectWorkingDir(@Nonnull Optional<Path> runConfigWorkingDir,
+      File workspaceRootDirectory) {
+    if (runConfigWorkingDir.isPresent()) {
+      return runConfigWorkingDir.get().toFile();
+    }
+
+    File workingDir =
+        new File(runner.executableToDebug + ".runfiles", workspaceRootDirectory.getName());
+
+    if (workingDir.exists()) {
+      return workingDir;
+    }
+
+    return workspaceRootDirectory;
+  }
+
   @Override
   public CidrDebugProcess createDebugProcess(CommandLineState state, XDebugSession session)
       throws ExecutionException {
@@ -229,17 +250,12 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     EventLoggingService.getInstance().logEvent(getClass(), "debugging-cpp");
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    File workspaceRootDirectory = workspaceRoot.directory();
 
     final var debuggerKind = RunConfigurationUtils.getDebuggerKind(configuration);
     if (debuggerKind != BlazeDebuggerKind.GDB_SERVER) {
 
-      File workingDir =
-          new File(runner.executableToDebug + ".runfiles", workspaceRootDirectory.getName());
-
-      if (!workingDir.exists()) {
-        workingDir = workspaceRootDirectory;
-      }
+      Optional<Path> runConfigWorkingDir = handlerState.getWorkingDirState().getWorkingDirectory();
+      File workingDir = selectWorkingDir(runConfigWorkingDir, workspaceRoot.directory());
 
       GeneralCommandLine commandLine =
           new GeneralCommandLine(runner.executableToDebug.getPath()).withWorkDirectory(workingDir);
@@ -253,9 +269,9 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
       final DebuggerDriverConfiguration debuggerDriver;
       if (debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB) {
-        debuggerDriver = new BlazeLLDBDriverConfiguration(project, workspaceRoot.directory().toPath());
+        debuggerDriver = new BlazeLLDBDriverConfiguration(project, workspaceRoot);
       } else {
-        final var startupCommands = getGdbStartupCommands(workspaceRootDirectory);
+        final var startupCommands = getGdbStartupCommands(workspaceRoot.directory());
         debuggerDriver = new BlazeGDBDriverConfiguration(project, startupCommands, workspaceRoot);
       }
 
@@ -281,7 +297,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
             runner.executableToDebug.getPath(),
             "target:",
             ImmutableList.of(
-                new CidrRemotePathMapping("/proc/self/cwd", workspaceRootDirectory.getParent())));
+                new CidrRemotePathMapping("/proc/self/cwd", workspaceRoot.directory().getParent())));
 
     BlazeCLionGDBDriverConfiguration debuggerDriverConfiguration =
         new BlazeCLionGDBDriverConfiguration(project);
