@@ -26,7 +26,8 @@ import java.util.Optional;
 public enum QuerySyncLanguage {
   JAVA(LanguageClass.LANGUAGE_CLASS_JAVA, DependencyTrackingBehavior.EXTERNAL_DEPENDENCIES),
   KOTLIN(LanguageClass.LANGUAGE_CLASS_KOTLIN, DependencyTrackingBehavior.EXTERNAL_DEPENDENCIES),
-  CC(LanguageClass.LANGUAGE_CLASS_CC, DependencyTrackingBehavior.SELF);
+  CC(LanguageClass.LANGUAGE_CLASS_CC, DependencyTrackingBehavior.SELF),
+  PYTHON(LanguageClass.LANGUAGE_CLASS_PYTHON, DependencyTrackingBehavior.EXTERNAL_DEPENDENCIES);
 
   QuerySyncLanguage(
       LanguageClassProto.LanguageClass protoValue,
