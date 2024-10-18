@@ -220,6 +220,9 @@ derive_targets_from_directories: true
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
 
+    output.setHasErrors(context.hasErrors());
+    output.setHasWarnings(context.hasWarnings());
+
     context.close();
     LOG.info(String.format("PROJECT SYNC LOG:%n%s", output.collectLog()));
 
