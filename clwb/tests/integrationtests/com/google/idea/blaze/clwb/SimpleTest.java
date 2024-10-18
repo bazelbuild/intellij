@@ -34,9 +34,6 @@ public class SimpleTest extends ClwbIntegrationTestCase {
       assertThat(compilerSettings.getCompilerKind()).isEqualTo(MSVCCompilerKind.INSTANCE);
     }
 
-    final var headersSearchRoots = compilerSettings.getHeadersSearchRoots().getAllRoots();
-    assertThat(headersSearchRoots).isNotEmpty();
-
-    assertContainsHeader("iostream", headersSearchRoots);
+    assertContainsHeader("iostream", compilerSettings);
   }
 }

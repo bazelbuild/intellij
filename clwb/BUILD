@@ -174,9 +174,16 @@ clwb_integration_test(
     srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/VirtualIncludesTest.java"],
 )
 
+clwb_integration_test(
+    name = "llvm_toolchain_integration_test",
+    project = "llvm_toolchain",
+    srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/LlvmToolchainTest.java"],
+)
+
 test_suite(
     name = "integration_tests",
     tests = [
+        ":llvm_toolchain_integration_test",
         ":simple_integration_test",
         ":virtual_includes_integration_test",
     ],
