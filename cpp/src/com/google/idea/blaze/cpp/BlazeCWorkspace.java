@@ -382,23 +382,15 @@ public final class BlazeCWorkspace implements ProjectComponent {
     for (Map.Entry<OCLanguageKind, PerLanguageCompilerOpts> languageEntry :
         configLanguages.entrySet()) {
       PerLanguageCompilerOpts configForLanguage = languageEntry.getValue();
-      if (CppSupportChecker.isSupportedCppConfiguration(
-          configForLanguage.switches, directory.toPath())) {
-        OCCompilerSettings.ModifiableModel langSettings =
-            config.getLanguageCompilerSettings(languageEntry.getKey());
-        langSettings.setCompiler(configForLanguage.kind, configForLanguage.compiler, directory);
-        langSettings.setCompilerSwitches(configForLanguage.switches);
-      }
+      OCCompilerSettings.ModifiableModel langSettings = config.getLanguageCompilerSettings(languageEntry.getKey());
+      langSettings.setCompiler(configForLanguage.kind, configForLanguage.compiler, directory);
+      langSettings.setCompilerSwitches(configForLanguage.switches);
     }
 
     for (Map.Entry<VirtualFile, PerFileCompilerOpts> fileEntry : configSourceFiles.entrySet()) {
       PerFileCompilerOpts compilerOpts = fileEntry.getValue();
-      if (CppSupportChecker.isSupportedCppConfiguration(
-          compilerOpts.switches, directory.toPath())) {
-        OCCompilerSettings.ModifiableModel fileCompilerSettings =
-            config.addSource(fileEntry.getKey(), compilerOpts.kind);
-        fileCompilerSettings.setCompilerSwitches(compilerOpts.switches);
-      }
+      OCCompilerSettings.ModifiableModel fileCompilerSettings = config.addSource(fileEntry.getKey(), compilerOpts.kind);
+      fileCompilerSettings.setCompilerSwitches(compilerOpts.switches);
     }
 
     return config;
