@@ -190,8 +190,10 @@ public abstract class QuerySummary {
 
             if (a.getName().equals("test_app")) {
               rule.setTestApp(a.getStringValue());
-            } else if (a.getName().equals("instruments")) {
+            } if (a.getName().equals("instruments")) {
               rule.setInstruments(a.getStringValue());
+            } else if (a.getName().equals("imports")) {
+              rule.addAllImports(a.getStringListValueList());
             }
           }
           ruleMap.put(Label.of(target.getRule().getName()).toString(), rule.build());

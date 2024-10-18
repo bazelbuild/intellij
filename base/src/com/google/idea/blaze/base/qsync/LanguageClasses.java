@@ -32,7 +32,9 @@ public class LanguageClasses {
           ImmutableBiMap.of(
               QuerySyncLanguage.JAVA, LanguageClass.JAVA,
               QuerySyncLanguage.KOTLIN, LanguageClass.KOTLIN,
-              QuerySyncLanguage.CC, LanguageClass.C);
+              QuerySyncLanguage.CC, LanguageClass.C,
+              QuerySyncLanguage.PYTHON, LanguageClass.PYTHON
+             );
 
   private LanguageClasses() {}
 

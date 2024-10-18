@@ -38,4 +38,5 @@ message Rule {
   repeated string copts = 13;
   repeated string tags = 14;
   string main_class = 15;
+  repeated string imports = 16;
 }
