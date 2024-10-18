@@ -49,13 +49,13 @@ public interface TargetTagFilter {
    * @param targets is a list of Bazel targets to filter.
    * @return a subset of the supplied targets that include one of the supplied {code tags}.
    */
-  static List<TargetExpression> filterCodeGen(
+  static List<TargetExpression> filter(
       Project project,
       BlazeContext context,
       List<TargetExpression> targets,
       Set<String> tags) {
     return Arrays.stream(EP_NAME.getExtensions())
-        .map(p -> p.doFilterCodeGen(project, context, targets, tags))
+        .map(p -> p.doFilter(project, context, targets, tags))
         .filter(Objects::nonNull)
         .findFirst()
         .orElse(ImmutableList.of());
@@ -65,7 +65,7 @@ public interface TargetTagFilter {
    * {@see #filterCodeGen}
    */
   @Nullable
-  List<TargetExpression> doFilterCodeGen(
+  List<TargetExpression> doFilter(
       Project project,
       BlazeContext context,
       List<TargetExpression> targets,
