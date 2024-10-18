@@ -26,7 +26,7 @@ load(
     "//testing:test_defs.bzl",
     "intellij_unit_test_suite",
 )
-load(":test_defs.bzl", "clwb_integration_test")
+load("//base/tests/utils/heavy:defs.bzl", "clwb_integration_test")
 
 licenses(["notice"])
 
@@ -162,16 +162,31 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+java_library(
+    name = "lib_integration_test",
+    testonly = True,
+    srcs = glob(["tests/integrationtests/com/google/idea/blaze/clwb/base/*.java"]),
+    deps = [
+        "//base",
+        "//base/tests/utils/heavy:lib",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
+        ":clwb_lib"
+    ]
+)
+
 clwb_integration_test(
     name = "simple_integration_test",
     project = "simple",
     srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/SimpleTest.java"],
+    deps = [":lib_integration_test"],
 )
 
 clwb_integration_test(
     name = "virtual_includes_integration_test",
     project = "virtual_includes",
     srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/VirtualIncludesTest.java"],
+    deps = [":lib_integration_test"],
 )
 
 test_suite(

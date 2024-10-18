@@ -18,14 +18,14 @@ version_specific_args = {
      },
 }
 
-def clwb_integration_test(name, project, srcs, deps = []):
+def _integration_test(name, project, srcs, deps, test_package_root, runtime_deps):
     runner = name + "_runner"
 
     intellij_integration_test_suite(
         name = runner,
-        srcs = srcs + native.glob(["tests/integrationtests/com/google/idea/blaze/clwb/base/*.java"]),
-        test_package_root = "com.google.idea.blaze.clwb",
-        runtime_deps = [":clwb_bazel"],
+        srcs = srcs,
+        test_package_root = test_package_root,
+        runtime_deps = runtime_deps,
         data = [
             "//aspect:aspect_files",
             "//aspect_template:aspect_files",
@@ -34,11 +34,11 @@ def clwb_integration_test(name, project, srcs, deps = []):
             # disables the default bazel security manager, causes tests to fail on windows
             "-Dcom.google.testing.junit.runner.shouldInstallTestSecurityManager=false",
             # fixes preferences not writable on mac
-            "-Djava.util.prefs.PreferencesFactory=com.google.idea.blaze.clwb.base.InMemoryPreferencesFactory",
+            "-Djava.util.prefs.PreferencesFactory=com.google.idea.blaze.base.InMemoryPreferencesFactory",
         ],
         deps = deps + [
-            ":clwb_lib",
             "//base",
+            "//base/tests/utils/heavy:lib",
             "//shared",
             "//common/util:process",
             "//intellij_platform_sdk:jsr305",
@@ -72,4 +72,24 @@ def clwb_integration_test(name, project, srcs, deps = []):
             name,
             bazel_binaries.versions.all,
         ),
+    )
+
+def clwb_integration_test(name, project, srcs, deps = []):
+    _integration_test(
+        name,
+        project,
+        srcs,
+        deps + ["//clwb:clwb_lib"],
+        test_package_root = "com.google.idea.blaze.clwb",
+        runtime_deps = ["//clwb:clwb_bazel"],
+    )
+
+def ijwb_integration_test(name, project, srcs, deps = []):
+    _integration_test(
+        name,
+        project,
+        srcs,
+        deps + ["//ijwb:ijwb_lib"],
+        test_package_root = "com.google.idea.blaze.ijwb",
+        runtime_deps = ["//ijwb:ijwb_bazel"],
     )

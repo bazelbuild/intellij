@@ -1,4 +1,4 @@
-package com.google.idea.blaze.clwb.base;
+package com.google.idea.blaze.base;
 
 import java.util.HashMap;
 import java.util.Map;

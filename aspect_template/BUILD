@@ -31,3 +31,10 @@ genrule(
     srcs = [],
     cmd = r"""echo 'workspace(name = "intellij_aspect_template")' > $@"""
 )
+
+genrule(
+    name = "create_module_file",
+    outs = ["MODULE.bazel"],
+    srcs = [],
+    cmd = r"""echo '' > $@"""
+)
