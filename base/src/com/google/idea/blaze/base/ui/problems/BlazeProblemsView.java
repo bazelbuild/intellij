@@ -216,8 +216,6 @@ public class BlazeProblemsView {
         return MessageCategory.WARNING;
       case NOTE:
         return MessageCategory.NOTE;
-      case STATISTICS:
-        return MessageCategory.STATISTICS;
       case INFORMATION:
         return MessageCategory.INFORMATION;
       default:
