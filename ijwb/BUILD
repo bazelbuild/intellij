@@ -28,6 +28,7 @@ load(
     "IJWB_PACKAGES_VISIBILITY",
     "PLUGIN_PACKAGES_VISIBILITY",
 )
+load("//base/tests/utils/heavy:defs.bzl", "ijwb_integration_test")
 
 licenses(["notice"])
 
@@ -171,8 +172,8 @@ intellij_unit_test_suite(
 )
 
 intellij_integration_test_suite(
-    name = "integration_tests",
-    srcs = glob(["tests/integrationtests/**/*.java"]),
+    name = "light_integration_tests",
+    srcs = glob(["tests/light_integrationtests/**/*.java"]),
     required_plugins = "com.google.idea.bazel.ijwb",
     test_package_root = "com.google.idea.blaze.ijwb",
     runtime_deps = [
@@ -189,5 +190,33 @@ intellij_integration_test_suite(
         "@com_google_guava_guava//jar",
         "@junit//jar",
         "@org_opentest4j_opentest4j//jar",
+    ],
+)
+
+java_library(
+    name = "lib_heavy_integration_test",
+    testonly = True,
+    srcs = glob(["tests/heavy_integrationtests/com/google/idea/blaze/ijwb/base/*.java"]),
+    deps = [
+        "//base",
+        "//base/tests/utils/heavy:lib",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
+        ":ijwb_lib"
+    ]
+)
+
+ijwb_integration_test(
+    name = "simple_integration_test",
+    project = "simple",
+    srcs = ["tests/heavy_integrationtests/com/google/idea/blaze/ijwb/SimpleTest.java"],
+    deps = [":lib_heavy_integration_test"],
+)
+
+test_suite(
+    name = "integration_tests",
+    tests = [
+        ":light_integration_tests",
+        ":simple_integration_test",
     ],
 )
