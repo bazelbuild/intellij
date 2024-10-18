@@ -34,7 +34,7 @@ public final class LocalBuildEventProtocolTestFinderStrategy
 
   @Override
   public BlazeTestResults findTestResults() throws GetArtifactsException {
-    return buildResultHelper.getTestResults(Optional.empty());
+    return buildResultHelper.getTestResults();
   }
 
   @Override

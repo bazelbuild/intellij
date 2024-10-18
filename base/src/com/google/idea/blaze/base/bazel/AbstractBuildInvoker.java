@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
@@ -95,7 +94,7 @@ public abstract class AbstractBuildInvoker implements BuildInvoker {
   @Override
   @MustBeClosed
   public BuildResultHelper createBuildResultHelper() {
-    return new BuildResultHelperBep();
+    return new BuildResultHelper();
   }
 
   @Override

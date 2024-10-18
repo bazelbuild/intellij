@@ -212,7 +212,6 @@ public class BazelDependencyBuilder implements DependencyBuilder {
       buildDepsStatsBuilder.ifPresent(
           stats -> {
             stats.setBuildIds(outputs.getBuildIds());
-            stats.setBepByteConsumed(outputs.bepBytesConsumed);
           });
 
       BazelExitCodeException.throwIfFailed(

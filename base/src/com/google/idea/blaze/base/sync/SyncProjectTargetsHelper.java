@@ -20,6 +20,7 @@ import static com.google.idea.blaze.base.issueparser.BlazeIssueParser.targetDete
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
+import com.google.idea.blaze.base.buildview.BuildViewMigration;
 import com.google.idea.blaze.base.dependencies.DirectoryToTargetProvider;
 import com.google.idea.blaze.base.dependencies.SourceToTargetFilteringStrategy;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -130,28 +131,30 @@ public final class SyncProjectTargetsHelper {
     }
     String title = "Query targets in project directories";
     List<TargetInfo> targets =
-        ProgressiveTaskWithProgressIndicator.builder(project, title).submitTaskWithResult(indicator ->
-            Scope.push(
-                context,
-                childContext -> {
-                  childContext.push(
-                      new TimingScope("QueryDirectoryTargets", EventType.BlazeInvocation));
-                  childContext.output(new StatusOutput("Querying targets in project directories..."));
-                  var scope = childContext.getScope(ToolWindowScope.class);
-                  if (scope != null) { // If ToolWindowScope doesn't already exist, it means the output is not supposed to be printed to toolwindow (for example in tests)
-                    var task = new Task(project, "Query targets in project directories", Task.Type.SYNC, scope.getTask());
-                    var newScope = new ToolWindowScope.Builder(project, task)
-                        .setProgressIndicator(indicator)
-                        .setPopupBehavior(BlazeUserSettings.FocusBehavior.ON_ERROR)
-                        .setIssueParsers(targetDetectionQueryParsers(project, WorkspaceRoot.fromProject(project)))
-                        .build();
-                    childContext.push(newScope);
-                  }
-                  // We don't want blaze build errors to fail the whole sync
-                  childContext.setPropagatesErrors(false);
-                  return DirectoryToTargetProvider.expandDirectoryTargets(
-                      project, shouldSyncManualTargets(projectViewSet), importRoots, pathResolver, childContext);
-                })).get(); // We still call no-timeout waitFor in ExternalTask.run()
+        ProgressiveTaskWithProgressIndicator.builder(project, title)
+            .setModality(BuildViewMigration.progressModality())
+            .submitTaskWithResult(indicator ->
+                Scope.push(
+                    context,
+                    childContext -> {
+                      childContext.push(
+                          new TimingScope("QueryDirectoryTargets", EventType.BlazeInvocation));
+                      childContext.output(new StatusOutput("Querying targets in project directories..."));
+                      var scope = childContext.getScope(ToolWindowScope.class);
+                      if (scope != null) { // If ToolWindowScope doesn't already exist, it means the output is not supposed to be printed to toolwindow (for example in tests)
+                        var task = new Task(project, "Query targets in project directories", Task.Type.SYNC, scope.getTask());
+                        var newScope = new ToolWindowScope.Builder(project, task)
+                            .setProgressIndicator(indicator)
+                            .setPopupBehavior(BlazeUserSettings.FocusBehavior.ON_ERROR)
+                            .setIssueParsers(targetDetectionQueryParsers(project, WorkspaceRoot.fromProject(project)))
+                            .build();
+                        childContext.push(newScope);
+                      }
+                      // We don't want blaze build errors to fail the whole sync
+                      childContext.setPropagatesErrors(false);
+                      return DirectoryToTargetProvider.expandDirectoryTargets(
+                          project, shouldSyncManualTargets(projectViewSet), importRoots, pathResolver, childContext);
+                    })).get(); // We still call no-timeout waitFor in ExternalTask.run()
 
     if (context.isCancelled()) {
       throw new SyncCanceledException();

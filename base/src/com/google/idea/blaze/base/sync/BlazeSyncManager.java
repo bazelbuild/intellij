@@ -22,6 +22,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
+import com.google.idea.blaze.base.buildview.BuildViewMigration;
+import com.google.idea.blaze.base.buildview.BuildViewScope;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
@@ -115,10 +117,16 @@ public class BlazeSyncManager {
             () -> {
               Future<Void> unusedFuture =
                   ProgressiveTaskWithProgressIndicator.builder(project, "Initiating project sync")
+                      .setModality(BuildViewMigration.progressModality())
                       .submitTask(
                           indicator ->
                               Scope.root(
                                   context -> {
+                                    if (BuildViewMigration.getEnabled()) {
+                                      context.push(new BuildViewScope(project,
+                                          getRootInvocationTitle(syncParams)));
+                                    }
+
                                     context
                                         .push(new ProgressIndicatorScope(indicator))
                                         .push(buildToolWindowScope(syncParams, indicator))
@@ -127,6 +135,7 @@ public class BlazeSyncManager {
                                                 project,
                                                 BlazeUserSettings.getInstance()
                                                     .getShowProblemsViewOnSync()));
+
                                     if (!runInitialDirectoryOnlySync(syncParams)) {
                                       executeTask(project, syncParams, context);
                                       return;
@@ -228,20 +237,22 @@ public class BlazeSyncManager {
     }
   }
 
-  private Task getRootInvocationTask(BlazeSyncParams params) {
-    String taskTitle;
+  private String getRootInvocationTitle(BlazeSyncParams params) {
     if (params.syncMode() == SyncMode.STARTUP) {
-      taskTitle = "Startup Sync";
+      return "Startup Sync";
     } else if (params.syncOrigin().equals(BlazeSyncStartupActivity.SYNC_REASON)) {
-      taskTitle = "Importing " + project.getName();
+      return "Importing " + project.getName();
     } else if (params.syncMode() == SyncMode.PARTIAL) {
-      taskTitle = "Partial Sync";
+      return "Partial Sync";
     } else if (params.syncMode() == SyncMode.FULL) {
-      taskTitle = "Non-Incremental Sync";
+      return "Non-Incremental Sync";
     } else {
-      taskTitle = "Incremental Sync";
+      return "Incremental Sync";
     }
-    return new Task(project, taskTitle, Task.Type.SYNC);
+  }
+
+  private Task getRootInvocationTask(BlazeSyncParams params) {
+    return new Task(project, getRootInvocationTitle(params), Task.Type.SYNC);
   }
 
   private BlazeScope buildToolWindowScope(BlazeSyncParams syncParams, ProgressIndicator indicator) {

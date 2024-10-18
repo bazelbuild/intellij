@@ -54,6 +54,10 @@ import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileManagerListener;
+import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
+import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -110,6 +114,9 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
 
     registerExtensionPoint(JavaLikeLanguage.EP_NAME, JavaLikeLanguage.class)
         .registerExtension(new JavaLikeLanguage.Java());
+
+    registerExtensionPointByName("com.intellij.virtualFileManagerListener", VirtualFileManagerListener.class);
+    applicationServices.register(VirtualFileManager.class, new VirtualFileManagerImpl(List.of(new CoreLocalFileSystem())));
   }
 
   @Test

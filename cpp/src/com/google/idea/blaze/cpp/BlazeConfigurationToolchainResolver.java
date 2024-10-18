@@ -350,7 +350,7 @@ public final class BlazeConfigurationToolchainResolver {
                       "Missing execution root %s (checking compiler).\n"
                           + "Double-click to run sync and create the execution root.",
                       executionRoot.getAbsolutePath()))
-              .navigatable(
+              .withNavigatable(
                   new NavigatableAdapter() {
                     @Override
                     public void navigate(boolean requestFocus) {

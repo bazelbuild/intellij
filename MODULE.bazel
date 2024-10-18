@@ -3,6 +3,8 @@ module(
     repo_name = "intellij_with_bazel",
 )
 
+register_toolchains("//third_party/kotlin:toolchain")
+
 bazel_dep(
     name = "platforms",
     version = "0.0.10",

@@ -26,8 +26,6 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.ideinfo.AndroidInstrumentationInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -195,7 +193,7 @@ public class BlazeAndroidTestLaunchTask implements BlazeLaunchTask {
                           String.format("Starting %s test...\n", Blaze.buildSystemName(project)));
 
                       int retVal;
-                      try (BuildResultHelper buildResultHelper = new BuildResultHelperBep()) {
+                      try (final var buildResultHelper = new BuildResultHelper()) {
                         commandBuilder.addBlazeFlags(buildResultHelper.getBuildFlags());
                         BlazeCommand command = commandBuilder.build();
                         ExecutionUtils.println(console, command + "\n");
@@ -212,16 +210,13 @@ public class BlazeAndroidTestLaunchTask implements BlazeLaunchTask {
                         if (retVal != 0) {
                           context.setHasError();
                         } else {
-                          testResultsHolder.setTestResults(
-                              buildResultHelper.getTestResults(Optional.empty()));
+                          testResultsHolder.setTestResults(buildResultHelper.getTestResults());
                         }
                         ListenableFuture<Void> unusedFuture =
                             FileCaches.refresh(
                                 project,
                                 context,
                                 BlazeBuildOutputs.noOutputs(BuildResult.fromExitCode(retVal)));
-                      } catch (GetArtifactsException e) {
-                        LOG.error(e.getMessage());
                       }
                       return !context.hasErrors();
                     }));
