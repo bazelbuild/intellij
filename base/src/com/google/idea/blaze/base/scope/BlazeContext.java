@@ -26,6 +26,7 @@ import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Output;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import java.util.Collections;
@@ -262,6 +263,7 @@ public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
         break;
       }
     }
+
     if (continuePropagation && parentContext != null) {
       parentContext.output(output);
     }
