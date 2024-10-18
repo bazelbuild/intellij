@@ -1,6 +1,7 @@
 package com.google.idea.blaze.base;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.OutputSink.Propagation;
@@ -12,8 +13,12 @@ import com.google.idea.blaze.common.PrintOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import org.jetbrains.annotations.Nullable;
 
 public class SyncOutput {
+  private @Nullable Boolean hasErrors = null;
+  private @Nullable Boolean hasWarnings = null;
+
   private final List<IssueOutput> issues = new ArrayList<>();
   private final List<String> messages = new ArrayList<>();
 
@@ -22,6 +27,24 @@ public class SyncOutput {
     addOutputSink(context, PrintOutput.class, (it) -> messages.add(it.getText()));
     addOutputSink(context, StatusOutput.class, (it) -> messages.add(it.getStatus()));
     addOutputSink(context, SummaryOutput.class, (it) -> messages.add(it.getText()));
+  }
+
+  void setHasErrors(boolean hasErrors) {
+    this.hasErrors = hasErrors;
+  }
+
+  public boolean getHasErrors() {
+    assertThat(hasErrors).isNotNull();
+    return hasErrors;
+  }
+
+  void setHasWarnings(boolean hasWarnings) {
+    this.hasWarnings = hasWarnings;
+  }
+
+  public boolean getHasWarnings() {
+    assertThat(hasWarnings).isNotNull();
+    return hasWarnings;
   }
 
   private <T extends Output> void addOutputSink(BlazeContext context, Class<T> clazz, Consumer<T> consumer) {
@@ -55,6 +78,8 @@ public class SyncOutput {
         collectLog()
     );
 
-    assertThat(issues).isEmpty();
+    assertWithMessage(message).that(issues).isEmpty();
+    assertWithMessage(message).that(hasErrors).isFalse();
+    assertWithMessage(message).that(hasWarnings).isFalse();
   }
 }
