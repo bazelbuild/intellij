@@ -357,7 +357,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
           workspaceModifiable,
           id,
           id,
-          workspaceRoot.directory(),
+          blazeProjectData.getBlazeInfo().getExecutionRoot(),
           configLanguages,
           configSourceFiles);
 
