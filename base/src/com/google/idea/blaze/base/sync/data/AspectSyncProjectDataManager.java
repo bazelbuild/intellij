@@ -67,7 +67,7 @@ public class AspectSyncProjectDataManager implements BlazeProjectDataManager {
     }
     try {
       File file = getCacheFile(project, importSettings);
-      projectData = AspectSyncProjectData.loadFromDisk(importSettings.getBuildSystem(), file);
+      projectData = AspectSyncProjectData.loadFromDisk(importSettings.getBuildSystem(), file, project);
       return projectData;
     } catch (Throwable e) {
       if (!(e instanceof FileNotFoundException)) {
