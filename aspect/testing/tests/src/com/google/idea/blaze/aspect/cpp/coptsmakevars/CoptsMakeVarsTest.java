@@ -42,7 +42,7 @@ public class CoptsMakeVarsTest extends BazelIntellijAspectTest {
     assertThat(cTargetIdeInfo.getTargetCoptList()).hasSize(2);
     // These predefined variables' values are dependent on build system and configuration.
     assertThat(cTargetIdeInfo.getTargetCoptList().get(0))
-        .containsMatch("^-DPREFINED_BINDIR=(blaze|bazel)-out/[-0-9a-z]+/bin$");
+        .containsMatch("^-DPREFINED_BINDIR=(blaze|bazel)-out/[0-9a-z_-]+/bin$");
     assertThat(cTargetIdeInfo.getTargetCoptList().get(1)).isEqualTo("-DPREFINED_BINDIR2=$(BINDIR)");
   }
 }
