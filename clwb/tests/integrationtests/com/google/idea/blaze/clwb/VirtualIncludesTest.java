@@ -23,6 +23,15 @@ public class VirtualIncludesTest extends ClwbIntegrationTestCase {
     checkImplDeps();
   }
 
+  @Override
+  protected String projectViewText() {
+    // required for bazel 5
+    return super.projectViewText() + """
+build_flags:
+  --experimental_cc_implementation_deps
+    """;
+  }
+
   private @Nullable VirtualFile findHeader(String fileName, OCCompilerSettings settings) {
     final var roots = settings.getHeadersSearchRoots().getAllRoots();
 
