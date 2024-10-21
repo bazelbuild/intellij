@@ -229,6 +229,7 @@
     <postStartupActivity implementation="com.google.idea.blaze.base.formatter.ExternalFormatterCodeStyleManager$Installer"/>
     <postStartupActivity implementation="com.google.idea.blaze.base.prefetch.PrefetchProjectInitializer" />
     <postStartupActivity implementation="com.google.idea.blaze.base.project.OpenProjectViewStartupActivity"/>
+    <moduleRendererFactory implementation="com.google.idea.blaze.base.ui.BlazeModuleRendererFactory" order="first"/>
 
 
     <toolWindow id="Blaze"

@@ -55,6 +55,7 @@ class AbortedParser : BuildEventParser {
       id.hasTargetCompleted() -> id.targetCompleted.label
       id.hasUnconfiguredLabel() -> id.unconfiguredLabel.label
       id.hasConfiguredLabel() -> id.configuredLabel.label
+      id.hasPattern() -> id.pattern.patternList.firstOrNull()
       id.hasUnstructuredCommandLine() -> null
       else -> reportMissingImplementation(id)
     }
