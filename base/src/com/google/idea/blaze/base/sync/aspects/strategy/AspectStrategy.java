@@ -153,7 +153,7 @@ public abstract class AspectStrategy {
    * aspect knows the set of rule names to assume are code-generators.</p>
    *
    * <p>The key will be something like
-   * <code>python_code_generator_rule_names</code> and the value would be
+   * <code>INTELLIJ_PYTHON_CODE_GENERATOR_RULE_NAMES</code> and the value would be
    * something like <code>my_rule_a,my_rule_b</code>.</p>
    */
 
@@ -269,7 +269,7 @@ public abstract class AspectStrategy {
   }
 
   /**
-   * This class models a Bazel aspect `attr` parameter value. It is passed to Bazel as a command
+   * This class models a Bazel "Action env" key-value pair. It is passed to Bazel as a command
    * line parameter.
    */
 
