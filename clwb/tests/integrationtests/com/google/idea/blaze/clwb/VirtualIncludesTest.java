@@ -25,6 +25,7 @@ public class VirtualIncludesTest extends ClwbIntegrationTestCase {
     errors.assertNoErrors();
 
     checkIncludes();
+    checkImplDeps();
   }
 
   private @Nullable VirtualFile findHeader(String fileName, List<HeadersSearchRoot> roots) {
@@ -50,11 +51,24 @@ public class VirtualIncludesTest extends ClwbIntegrationTestCase {
     assertContainsHeader("strip_absolut/strip_absolut.h", headersSearchRoots);
     assertContainsHeader("strip_absolut/generated.h", headersSearchRoots);
     assertContainsHeader("strip_relative.h", headersSearchRoots);
+    assertContainsHeader("lib/impl_deps/impl.h", headersSearchRoots);
 
     assertThat(findProjectFile("lib/strip_absolut/strip_absolut.h"))
         .isEqualTo(findHeader("strip_absolut/strip_absolut.h", headersSearchRoots));
 
     assertThat(findProjectFile("lib/strip_relative/include/strip_relative.h"))
         .isEqualTo(findHeader("strip_relative.h", headersSearchRoots));
+
+    assertThat(findProjectFile("lib/impl_deps/impl.h"))
+        .isEqualTo(findHeader("lib/impl_deps/impl.h", headersSearchRoots));
+  }
+
+  private void checkImplDeps() {
+    final var compilerSettings = findFileCompilerSettings("lib/impl_deps/impl.cc");
+
+    final var headersSearchRoots = compilerSettings.getHeadersSearchRoots().getAllRoots();
+    assertThat(headersSearchRoots).isNotEmpty();
+
+    assertContainsHeader("strip_relative.h", headersSearchRoots);
   }
 }
