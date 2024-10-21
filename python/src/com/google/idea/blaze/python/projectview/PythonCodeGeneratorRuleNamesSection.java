@@ -8,7 +8,6 @@ import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.codegenerator.CodeGeneratorRuleNameHelper;
-import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
