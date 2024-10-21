@@ -5,6 +5,7 @@ Bug Fixes
 * Fixes for Query Sync (ready to use): #6833, #6834, #6835, #6841
 * [fix] Confirm if user wants to reimport instead of disallowing it #6839
 * fix: pass absolute paths to the Starlark Debugger #6888
+* Set runfiles vars to absolute paths when debugging Go tests #6883
 Features
 * Implement JUnit5 support and parameterize tests #4473
 * [feature] Recognize WORKSPACE.bzlmod files #6853
