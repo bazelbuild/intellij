@@ -17,7 +17,6 @@
 package com.google.idea.blaze.python;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PyIdeInfo;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;

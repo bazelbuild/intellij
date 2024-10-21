@@ -76,7 +76,7 @@ public class AspectStrategyTest extends BlazeTestCase {
         viewSet);
 
     List<String> args = builder.build().toArgumentList();
-    assertThat(args).contains("--aspects_parameters=python_code_generator_rule_names=my_rule");
+    assertThat(args).contains("--action_env=INTELLIJ_PYTHON_CODE_GENERATOR_RULE_NAMES=my_rule");
   }
 
   @Test

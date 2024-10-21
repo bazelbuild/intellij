@@ -2,7 +2,6 @@
 
 load(
     ":intellij_info_impl.bzl",
-    "create_code_generator_rule_name_aspect_attr_name",
     "intellij_info_aspect_impl",
     "make_intellij_info_aspect",
 )
@@ -49,29 +48,6 @@ def get_py_launcher(target, ctx):
         return str(attr._launcher.label)
     return None
 
-def create_code_generator_rule_name_aspect_attrs(language_names):
-    """Create attrs defining rule names that are code-generator for a language
-
-    The Aspect may allow for one or more languages to specify Rules' names that indicate that the
-    rule output is source for that language; these Rules should be considered to be code-generators.
-    This function will produce a `dict` of attributes that can be configured on the aspect to
-    allow the rule names to be configured. See the plugin class `AspectStrategy` to understand this
-    from the plugin side.
-    """
-
-    def create_attr(language_name):
-        return attr.string(
-            default = "",
-            doc = """This is a set of rule names that are interpreted as being code-generators for the
-                 {language_name} language. The string should be a comma-separated list of rule names
-                 with no spaces.""".format(language_name = language_name),
-        )
-
-    return {
-        create_code_generator_rule_name_aspect_attr_name(ln): create_attr(ln)
-        for ln in language_names
-    }
-
 semantics = struct(
     tool_label = tool_label,
     extra_deps = EXTRA_DEPS,
@@ -85,7 +61,6 @@ semantics = struct(
         get_launcher = get_py_launcher,
     ),
     flag_hack_label = "//aspect:flag_hack",
-    attrs = create_code_generator_rule_name_aspect_attrs(["python"]),
 )
 
 def _aspect_impl(target, ctx):
