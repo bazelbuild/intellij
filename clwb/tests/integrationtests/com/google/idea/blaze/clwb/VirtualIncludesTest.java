@@ -20,6 +20,7 @@ public class VirtualIncludesTest extends ClwbIntegrationTestCase {
     errors.assertNoErrors();
 
     checkIncludes();
+    checkImplDeps();
   }
 
   private @Nullable VirtualFile findHeader(String fileName, OCCompilerSettings settings) {
@@ -50,5 +51,17 @@ public class VirtualIncludesTest extends ClwbIntegrationTestCase {
 
     assertThat(findProjectFile("lib/strip_relative/include/strip_relative.h"))
         .isEqualTo(findHeader("strip_relative.h", compilerSettings));
+
+    assertThat(findProjectFile("lib/impl_deps/impl.h"))
+        .isEqualTo(findHeader("lib/impl_deps/impl.h", compilerSettings));
+  }
+
+  private void checkImplDeps() {
+    final var compilerSettings = findFileCompilerSettings("lib/impl_deps/impl.cc");
+
+    final var headersSearchRoots = compilerSettings.getHeadersSearchRoots().getAllRoots();
+    assertThat(headersSearchRoots).isNotEmpty();
+
+    assertContainsHeader("strip_relative.h", compilerSettings);
   }
 }
