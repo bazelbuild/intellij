@@ -4,11 +4,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 
 import com.google.idea.blaze.clwb.base.ClwbIntegrationTestCase;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
-import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind;
-import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +22,15 @@ public class VirtualIncludesTest extends ClwbIntegrationTestCase {
 
     checkIncludes();
     checkImplDeps();
+  }
+
+  @Override
+  protected String projectViewText() {
+    // required for bazel 5
+    return super.projectViewText() + """
+build_flags:
+  --experimental_cc_implementation_deps
+    """;
   }
 
   private @Nullable VirtualFile findHeader(String fileName, List<HeadersSearchRoot> roots) {
