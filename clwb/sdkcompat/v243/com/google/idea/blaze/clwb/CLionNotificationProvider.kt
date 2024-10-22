@@ -22,6 +22,8 @@ import com.google.idea.blaze.base.wizard2.BazelNotificationProvider
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationProvider
@@ -93,7 +95,12 @@ class CLionNotificationProvider : ProjectFixesProvider, WidgetStatusProvider, Ed
   }
 
   override suspend fun collectFixes(project: Project, file: VirtualFile?, dataContext: DataContext): List<AnAction> {
-    if (file == null || !isBazelAwareFile(project, file)) {
+    if (file == null) {
+      return emptyList()
+    }
+
+    val isBazelFile = readAction { isBazelAwareFile(project, file) }
+    if (!isBazelFile) {
       return emptyList()
     }
 
