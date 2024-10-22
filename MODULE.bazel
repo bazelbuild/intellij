@@ -45,7 +45,10 @@ bazel_dep(
     name = "rules_kotlin",
     version = "2.0.0",
 )
-
+bazel_dep(
+    name = "rules_android",
+    version = "0.5.1"
+)
 
 remote_android_extensions = use_extension("@bazel_tools//tools/android:android_extensions.bzl", "remote_android_tools_extensions")
 use_repo(remote_android_extensions, "android_gmaven_r8", "android_tools")
