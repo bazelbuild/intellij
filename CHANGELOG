@@ -1,7 +1,19 @@
 v2024.10.22
 ===========
-
-
+Bug Fixes
+* [fix] Fix python debugging #6847
+* Set runfiles vars to absolute paths when debugging Go tests #6883
+* Fix starlark debugger #6888
+* fix(querysync): affected packages calculator was broken when 'directories' contained '.' #6885
+* fix: fast test not working when main class is not set #6903
+* fix: fast sync with bazel 8 or when --incompatible_use_plus_in_repo_names is on #6901
+* BEP parse unknown targets in aborted event #6910
+Features
+* Download Buildifier Binary #6625
+* Support for Python Rules that are Code Generators #6726
+* Decorate tabs for BUILD files with package name #6900
+* New Sync View #6813
+* feat: More descriptive location labels (instead of just .workspace) #6916
 
 v2024.10.08
 ===========
