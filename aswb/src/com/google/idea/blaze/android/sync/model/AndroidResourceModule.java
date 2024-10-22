@@ -45,6 +45,8 @@ public final class AndroidResourceModule
   // If merging AndroidResourceModules is off, then this only contains `targetKey`. Otherwise
   // contains the list of targets merged to make this module.
   public final ImmutableList<TargetKey> sourceTargetKeys;
+  public final ImmutableList<ArtifactLocation> assetsFolders;
+  public final ImmutableList<ArtifactLocation> transitiveAssetsFolders;
 
   private AndroidResourceModule(
       TargetKey targetKey,
@@ -52,13 +54,17 @@ public final class AndroidResourceModule
       ImmutableList<ArtifactLocation> transitiveResources,
       ImmutableList<String> resourceLibraryKeys,
       ImmutableList<TargetKey> transitiveResourceDependencies,
-      ImmutableList<TargetKey> sourceTargetKeys) {
+      ImmutableList<TargetKey> sourceTargetKeys,
+      ImmutableList<ArtifactLocation> assetsFolders,
+      ImmutableList<ArtifactLocation> transitiveAssetsFolders) {
     this.targetKey = targetKey;
     this.resources = resources;
     this.transitiveResources = transitiveResources;
     this.resourceLibraryKeys = resourceLibraryKeys;
     this.transitiveResourceDependencies = transitiveResourceDependencies;
     this.sourceTargetKeys = sourceTargetKeys;
+    this.assetsFolders = assetsFolders;
+    this.transitiveAssetsFolders = transitiveAssetsFolders;
   }
 
   static AndroidResourceModule fromProto(ProjectData.AndroidResourceModule proto) {
@@ -68,7 +74,10 @@ public final class AndroidResourceModule
         ProtoWrapper.map(proto.getTransitiveResourcesList(), ArtifactLocation::fromProto),
         ImmutableList.copyOf(proto.getResourceLibraryKeysList()),
         ProtoWrapper.map(proto.getTransitiveResourceDependenciesList(), TargetKey::fromProto),
-        ProtoWrapper.map(proto.getSourceTargetKeysList(), TargetKey::fromProto));
+        ProtoWrapper.map(proto.getSourceTargetKeysList(), TargetKey::fromProto),
+        ProtoWrapper.map(proto.getAssetsFoldersList(), ArtifactLocation::fromProto),
+        ProtoWrapper.map(proto.getTransitiveAssetsFoldersList(), ArtifactLocation::fromProto)
+    );
   }
 
   @Override
@@ -81,6 +90,8 @@ public final class AndroidResourceModule
         .addAllTransitiveResourceDependencies(
             ProtoWrapper.mapToProtos(transitiveResourceDependencies))
         .addAllSourceTargetKeys(ProtoWrapper.mapToProtos(sourceTargetKeys))
+        .addAllAssetsFolders(ProtoWrapper.mapToProtos(assetsFolders))
+        .addAllTransitiveAssetsFolders(ProtoWrapper.mapToProtos(transitiveAssetsFolders))
         .build();
   }
 
@@ -93,7 +104,9 @@ public final class AndroidResourceModule
           && Objects.equal(this.transitiveResources, that.transitiveResources)
           && Objects.equal(this.resourceLibraryKeys, that.resourceLibraryKeys)
           && Objects.equal(this.transitiveResourceDependencies, that.transitiveResourceDependencies)
-          && Objects.equal(this.sourceTargetKeys, that.sourceTargetKeys);
+          && Objects.equal(this.sourceTargetKeys, that.sourceTargetKeys)
+          && Objects.equal(this.assetsFolders, that.assetsFolders)
+          && Objects.equal(this.transitiveAssetsFolders, that.transitiveAssetsFolders);
     }
     return false;
   }
@@ -106,7 +119,9 @@ public final class AndroidResourceModule
         this.transitiveResources,
         this.resourceLibraryKeys,
         this.transitiveResourceDependencies,
-        this.sourceTargetKeys);
+        this.sourceTargetKeys,
+        this.assetsFolders,
+        this.transitiveAssetsFolders);
   }
 
   @Override
@@ -128,8 +143,14 @@ public final class AndroidResourceModule
         + "  transitiveResourceDependencies: "
         + transitiveResourceDependencies
         + "\n"
-        + "sourceTargetKeys: "
+        + "  sourceTargetKeys: "
         + sourceTargetKeys
+        + "\n"
+        + "  assetsFolders: "
+        + assetsFolders
+        + "\n"
+        + "  transitiveAssetsFolders: "
+        + transitiveAssetsFolders
         + "\n"
         + '}';
   }
@@ -150,6 +171,8 @@ public final class AndroidResourceModule
     private final Set<String> resourceLibraryKeys = Sets.newHashSet();
     private final Set<TargetKey> transitiveResourceDependencies = Sets.newHashSet();
     private final Set<TargetKey> sourceTargetKeys = Sets.newHashSet();
+    private final Set<ArtifactLocation> assetsFolders = Sets.newHashSet();
+    private final Set<ArtifactLocation> transitiveAssetsFolders = Sets.newHashSet();
 
     public Builder(TargetKey targetKey) {
       this.targetKey = targetKey;
@@ -250,6 +273,39 @@ public final class AndroidResourceModule
       return this.transitiveResourceDependencies;
     }
 
+    public Set<ArtifactLocation> getTransitiveAssetsFolders() {
+      return this.transitiveAssetsFolders;
+    }
+
+    public Set<ArtifactLocation> getAssetsFolders() {
+      return this.assetsFolders;
+    }
+
+
+    @CanIgnoreReturnValue
+    public Builder addAssetsFolder(ArtifactLocation assetFolder) {
+      this.assetsFolders.add(assetFolder);
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public Builder addAssetsFolders(Collection<ArtifactLocation> assetFolders) {
+      this.assetsFolders.addAll(assetFolders);
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public Builder addTransitiveAssetsFolder(ArtifactLocation assetFolder) {
+      this.transitiveAssetsFolders.add(assetFolder);
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public Builder addTransitiveAssetsFolders(Collection<ArtifactLocation> assetFolders) {
+      this.transitiveAssetsFolders.addAll(assetFolders);
+      return this;
+    }
+
     @NotNull
     public AndroidResourceModule build() {
       return new AndroidResourceModule(
@@ -258,7 +314,9 @@ public final class AndroidResourceModule
           ImmutableList.sortedCopyOf(transitiveResources),
           ImmutableList.sortedCopyOf(resourceLibraryKeys),
           ImmutableList.sortedCopyOf(transitiveResourceDependencies),
-          ImmutableList.sortedCopyOf(sourceTargetKeys));
+          ImmutableList.sortedCopyOf(sourceTargetKeys),
+          ImmutableList.sortedCopyOf(assetsFolders),
+          ImmutableList.sortedCopyOf(transitiveAssetsFolders));
     }
   }
 }
