@@ -2,8 +2,8 @@ build --java_language_version=17 --java_runtime_version=17
 
 # Delete test data packages, needed for bazel integration tests. Update by running the following command:
 # bazel run @rules_bazel_integration_test//tools:update_deleted_packages
-build --deleted_packages=aspect/testing/tests/src/com/google/idea/blaze/aspect/integration/testdata,clwb/tests/projects/simple/main,clwb/tests/projects/virtual_includes/lib/strip_absolut,clwb/tests/projects/virtual_includes/lib/strip_relative,clwb/tests/projects/virtual_includes/main,ijwb/tests/projects/simple
-query --deleted_packages=aspect/testing/tests/src/com/google/idea/blaze/aspect/integration/testdata,clwb/tests/projects/simple/main,clwb/tests/projects/virtual_includes/lib/strip_absolut,clwb/tests/projects/virtual_includes/lib/strip_relative,clwb/tests/projects/virtual_includes/main,ijwb/tests/projects/simple
+build --deleted_packages=aspect/testing/tests/src/com/google/idea/blaze/aspect/integration/testdata,clwb/tests/projects/simple/main,clwb/tests/projects/virtual_includes/.clwb/aspect,clwb/tests/projects/virtual_includes/lib/strip_absolut,clwb/tests/projects/virtual_includes/lib/strip_relative,clwb/tests/projects/virtual_includes/main,ijwb/tests/projects/simple
+query --deleted_packages=aspect/testing/tests/src/com/google/idea/blaze/aspect/integration/testdata,clwb/tests/projects/simple/main,clwb/tests/projects/virtual_includes/.clwb/aspect,clwb/tests/projects/virtual_includes/lib/strip_absolut,clwb/tests/projects/virtual_includes/lib/strip_relative,clwb/tests/projects/virtual_includes/main,ijwb/tests/projects/simple
 
 common --enable_bzlmod
 common --enable_workspace # to load rules_scala from WORKSPACE.bzlmod

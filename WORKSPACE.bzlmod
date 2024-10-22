@@ -31,9 +31,10 @@ scalatest_repositories()
 
 scalatest_toolchain()
 
-load("@bazel_tools//tools/build_defs/repo:local.bzl", "local_repository")
+load("@bazel_tools//tools/build_defs/repo:local.bzl", "new_local_repository")
 
-local_repository(
+new_local_repository(
     name = "intellij_aspect_template",
-    path = "aspect_template"
+    path = "aspect_template",
+    build_file =  "//aspect_template:BUILD",
 )
