@@ -21,6 +21,7 @@ public class SimpleTest extends ClwbIntegrationTestCase {
     errors.assertNoErrors();
 
     checkCompiler();
+    checkTest();
   }
 
   private void checkCompiler() {
@@ -35,5 +36,12 @@ public class SimpleTest extends ClwbIntegrationTestCase {
     }
 
     assertContainsHeader("iostream", compilerSettings);
+  }
+
+  private void checkTest() {
+    final var compilerSettings = findFileCompilerSettings("main/test.cc");
+
+    assertContainsHeader("iostream", compilerSettings);
+    assertContainsHeader("catch2/catch_test_macros.hpp", compilerSettings);
   }
 }
