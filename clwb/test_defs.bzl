@@ -57,12 +57,16 @@ def clwb_integration_test(name, project, srcs, deps = []):
             bazel_version = version,
             test_runner = ":" + runner,
             workspace_path = "tests/projects/" + project,
-            # disables automatic conversion of bazel target names to absolut windows paths by msys
-            env = {"MSYS_NO_PATHCONV": "true"},
+            env = {
+                # disables automatic conversion of bazel target names to absolut windows paths by msys
+                "MSYS_NO_PATHCONV": "true",
+                # pass the bazel version to the test for RuleBazelVersion
+                "BIT_BAZEL_VERSION": version,
+            },
             # inherit bash shell and visual studio path from host for windows
             additional_env_inherit = ["BAZEL_SH", "BAZEL_VC"],
             # add version specific arguments, since some older versions cannot handle newer flags
-            **version_specific_args.get(version, {}),
+            **version_specific_args.get(version, {})
         )
 
     native.test_suite(
