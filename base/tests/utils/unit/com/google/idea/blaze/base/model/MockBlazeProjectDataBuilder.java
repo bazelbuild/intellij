@@ -128,10 +128,10 @@ public class MockBlazeProjectDataBuilder {
       blazeInfo =
           BlazeInfo.createMockBlazeInfo(
               outputBase,
-              outputBase + "/execroot",
-              outputBase + "/execroot/bin",
-              outputBase + "/execroot/gen",
-              outputBase + "/execroot/testlogs");
+              outputBase + "/execroot/_main",
+              outputBase + "/execroot/_main/bin",
+              outputBase + "/execroot/_main/gen",
+              outputBase + "/execroot/_main/testlogs");
     }
     BlazeVersionData blazeVersionData =
         this.blazeVersionData != null ? this.blazeVersionData : BlazeVersionData.builder().build();
