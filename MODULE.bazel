@@ -3,17 +3,19 @@ module(
     repo_name = "intellij_with_bazel",
 )
 
+register_toolchains("//third_party/kotlin:toolchain")
+
 bazel_dep(
     name = "platforms",
     version = "0.0.10",
 )
 bazel_dep(
     name = "rules_java",
-    version = "7.12.1",
+    version = "7.12.2",
 )
 bazel_dep(
     name = "rules_python",
-    version = "0.36.0",
+    version = "0.37.0",
 )
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
@@ -50,7 +52,7 @@ use_repo(remote_android_extensions, "android_gmaven_r8", "android_tools")
 
 bazel_dep(
     name = "rules_bazel_integration_test",
-    version = "0.25.0",
+    version = "0.26.0",
     dev_dependency = True,
 )
 

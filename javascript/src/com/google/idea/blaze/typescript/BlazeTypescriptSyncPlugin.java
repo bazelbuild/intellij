@@ -226,7 +226,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
       IssueOutput.error(
               "The JavaScript plugin is required for TypeScript support. "
                   + "Click here to install/enable the plugin and restart")
-          .navigatable(PluginUtils.installOrEnablePluginNavigable(TYPESCRIPT_PLUGIN_ID))
+          .withNavigatable(PluginUtils.installOrEnablePluginNavigable(TYPESCRIPT_PLUGIN_ID))
           .submit(context);
       return false;
     }
@@ -281,7 +281,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
             }
           };
     }
-    IssueOutput.error(errorNote).navigatable(navigatable).submit(context);
+    IssueOutput.error(errorNote).withNavigatable(navigatable).submit(context);
   }
 
   private static Set<Label> getTsConfigTargets(ProjectViewSet projectViewSet) {

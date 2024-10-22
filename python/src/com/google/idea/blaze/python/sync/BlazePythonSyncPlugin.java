@@ -458,7 +458,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
               ? "Click here to remove it, retaining python support"
               : "Please remove it and resync.";
       IssueOutput.error(msg)
-          .navigatable(
+          .withNavigatable(
               project == null || !fixable
                   ? null
                   : new NavigatableAdapter() {

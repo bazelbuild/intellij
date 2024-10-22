@@ -52,10 +52,10 @@ option java_package = "com.google.devtools.build.lib.skyframe.serialization.prot
 // `FileInvalidationData` of its parent is the parent's MTSV, which is included
 // as `parent_mtsv`.
 //
-// In the common case, `FileInvalidationData` only contains `parent_mtsv` and
-// that's sufficient information to derive all the paths, assuming that the
-// parent lookups are transitively performed. The `FileStateKey.argument`
-// matches the path present in the key.
+// In the common case, `FileInvalidationData` is empty and that's sufficient
+// information to derive all the paths, assuming that the parent lookups are
+// transitively performed. The `FileStateKey.argument` matches the path present
+// in the key.
 //
 // In the presence of symlinks, special logic applies to produce the resolved
 // paths. A `symlinks` entry will be present. To unpack the symlink entry, we
@@ -80,42 +80,19 @@ message FileInvalidationData {
   // Resolution means creating a key from this MTSV and the parent directory of
   // the key of this entry, looking up the value and interpreting it.
   //
-  // Optional. Only unset when the path has no parent, i.e. contains no '/'
-  // separators.
+  // Optional. Unset in the following two cases.
+  // 1. When the path has no parent, i.e. contains no '/' separators
+  // 2. It is a directory and has the common sentinel value, -1.
   int64 parent_mtsv = 2;
 
   // This field is repeated, with one entry for each symbolic link encountered
   // while resolving the path.
   repeated Symlink symlinks = 3;
-
-  // Type of the fully resolved entry.
-  //
-  // Symbolic links are not included in the DirentType enum below. They are
-  // exclusively represented using the symlinks field.
-  enum DirentType {
-    // Required by internal best practices.
-    // Not expected to occur.
-    UNDEFINED = 0;
-    // A regular file.
-    FILE = 1;
-    // A directory.
-    DIRECTORY = 2;
-    // Explicit marker for a non-existing file.
-    //
-    // Nonexistence of specific files is meaningful to Bazel, (e.g., BUILD
-    // files).
-    NON_EXISTENT = 3;
-  }
-
-  // Type of the final resolved file.
-  //
-  // Required.
-  DirentType type = 4;
 }
 
 // Invalidation information for a
 // `com.google.devtools.build.lib.skyframe.DirectoryListingValue`. Note
-// that this is designed for certain repository deltas have no directory
+// that this is designed for certain repository deltas having no directory
 // awareness. This means when a file within the directory changes, there's no
 // change notification to the directory itself. The consumer is responsible for
 // invalidating this entry when its children change in ways that would affect
@@ -136,6 +113,8 @@ message DirectoryListingInvalidationData {
   string overflow_key = 1;
 
   // MTSV required to resolve the real directory path.
+  //
+  // Optional. Only set if this is not the common, sentinel value, -1.
   int64 file_mtsv = 2;
 }
 
@@ -162,7 +141,8 @@ message Symlink {
   //
   // This field is optional. It is only set if the resolved path formed by
   // combining the `contents` with the parent directory results in a *different*
-  // parent directory than the one used to resolve the symlink itself.
+  // parent directory than the one used to resolve the symlink itself and that
+  // value is not the common sentinel, -1.
   //
   // Optional.
   int64 parent_mtsv = 2;

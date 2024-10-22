@@ -37,7 +37,7 @@ intellij_plugin(
 
 """
 
-load("@rules_java//java:defs.bzl", "java_binary", "java_import")
+load("@rules_java//java:defs.bzl", "JavaInfo", "java_binary", "java_common", "java_import")
 load(
     "//build_defs:restrictions.bzl",
     "RestrictedInfo",

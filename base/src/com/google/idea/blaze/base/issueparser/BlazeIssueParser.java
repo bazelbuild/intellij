@@ -16,9 +16,6 @@
 package com.google.idea.blaze.base.issueparser;
 
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.idea.blaze.base.scope.output.IssueOutput.Category.ERROR;
-import static com.google.idea.blaze.base.scope.output.IssueOutput.Category.NOTE;
-import static com.google.idea.blaze.base.scope.output.IssueOutput.Category.WARNING;
 
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
@@ -35,6 +32,7 @@ import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.run.filter.FileResolver;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.intellij.build.events.MessageEvent.Kind;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 
@@ -224,11 +222,8 @@ public class BlazeIssueParser {
     @Override
     protected IssueOutput createIssue(Matcher matcher) {
       final File file = FileResolver.resolveToFile(project, matcher.group(1));
-      return IssueOutput.issue(ERROR, matcher.group(3))
-          .inFile(file)
-          .onLine(Integer.parseInt(matcher.group(2)))
-          .consoleHyperlinkRange(
-              union(fileHighlightRange(matcher, 1), matchedTextRange(matcher, 0, 2)))
+      return IssueOutput.error(matcher.group(3))
+          .withFile(file, Integer.parseInt(matcher.group(2)), 0)
           .build();
     }
   }
@@ -254,35 +249,31 @@ public class BlazeIssueParser {
     @Override
     protected IssueOutput createIssue(Matcher matcher) {
       final File file = FileResolver.resolveToFile(project, matcher.group(1));
-      IssueOutput.Category category = messageCategory(matcher.group(4));
-      return IssueOutput.issue(category, matcher.group(5))
-          .inFile(file)
-          .onLine(Integer.parseInt(matcher.group(2)))
-          .inColumn(parseOptionalInt(matcher.group(3)))
-          .consoleHyperlinkRange(
-              union(fileHighlightRange(matcher, 1), matchedTextRange(matcher, 2, 3)))
+      final var kind = messageKind(matcher.group(4));
+      return IssueOutput.issue(kind, matcher.group(5))
+          .withFile(file, Integer.parseInt(matcher.group(2)), parseOptionalInt(matcher.group(3)))
           .build();
     }
 
-    private static IssueOutput.Category messageCategory(@Nullable String messageType) {
+    private static Kind messageKind(@Nullable String messageType) {
       if (messageType == null) {
-        return ERROR;
+        return Kind.ERROR;
       }
       switch (Ascii.toLowerCase(messageType)) {
         case "warning":
-          return WARNING;
+          return Kind.WARNING;
         case "note":
         case "message":
         case "context":
         case "info":
-          return NOTE;
+          return Kind.INFO;
         case "error":
         case "fatal error":
         case "internal problem":
-          return ERROR;
+          return Kind.ERROR;
         default: // fall out
       }
-      return ERROR;
+      return Kind.ERROR;
     }
   }
 
@@ -314,9 +305,7 @@ public class BlazeIssueParser {
         message.append(System.lineSeparator()).append(currentLine);
         return ParseResult.output(
             IssueOutput.error(message.toString())
-                .inFile(new File(matcher.group(2)))
-                .onLine(Integer.parseInt(matcher.group(3)))
-                .inColumn(parseOptionalInt(matcher.group(4)))
+                .withFile(new File(matcher.group(2)), Integer.parseInt(matcher.group(3)), parseOptionalInt(matcher.group(4)))
                 .build());
       }
     }
@@ -337,11 +326,7 @@ public class BlazeIssueParser {
       }
       File file = fileFromAbsolutePath(matcher.group(1));
       return IssueOutput.error(matcher.group(4))
-          .inFile(file)
-          .onLine(Integer.parseInt(matcher.group(2)))
-          .inColumn(parseOptionalInt(matcher.group(3)))
-          .consoleHyperlinkRange(
-              union(fileHighlightRange(matcher, 1), matchedTextRange(matcher, 2, 3)))
+          .withFile(file, Integer.parseInt(matcher.group(2)), parseOptionalInt(matcher.group(3)))
           .build();
     }
   }
@@ -355,11 +340,7 @@ public class BlazeIssueParser {
     protected IssueOutput createIssue(Matcher matcher) {
       File file = fileFromAbsolutePath(matcher.group(1));
       return IssueOutput.error(matcher.group(4))
-          .inFile(file)
-          .onLine(Integer.parseInt(matcher.group(2)))
-          .inColumn(parseOptionalInt(matcher.group(3)))
-          .consoleHyperlinkRange(
-              union(fileHighlightRange(matcher, 1), matchedTextRange(matcher, 2, 3)))
+          .withFile(file, Integer.parseInt(matcher.group(2)), parseOptionalInt(matcher.group(3)))
           .build();
     }
   }
@@ -372,8 +353,7 @@ public class BlazeIssueParser {
     @Override
     protected IssueOutput createIssue(Matcher matcher) {
       return IssueOutput.error(matcher.group(2))
-          .inFile(new File(matcher.group(1)))
-          .consoleHyperlinkRange(fileHighlightRange(matcher, 1))
+          .withFile(new File(matcher.group(1)))
           .build();
     }
   }
@@ -390,8 +370,7 @@ public class BlazeIssueParser {
     protected IssueOutput createIssue(Matcher matcher) {
       File file = fileFromTarget(workspaceRoot, matcher.group(1));
       return IssueOutput.error(matcher.group(2))
-          .inFile(file)
-          .consoleHyperlinkRange(fileHighlightRange(matcher, 1))
+          .withFile(file)
           .build();
     }
   }
@@ -421,8 +400,7 @@ public class BlazeIssueParser {
       }
 
       return IssueOutput.error(matcher.group(0))
-          .inFile(file)
-          .consoleHyperlinkRange(fileHighlightRange(matcher, 1))
+          .withFile(file)
           .build();
     }
   }
@@ -451,7 +429,7 @@ public class BlazeIssueParser {
                 return false;
               });
 
-      return IssueOutput.error(matcher.group(0)).inFile(file).build();
+      return IssueOutput.error(matcher.group(0)).withFile(file).build();
     }
   }
 

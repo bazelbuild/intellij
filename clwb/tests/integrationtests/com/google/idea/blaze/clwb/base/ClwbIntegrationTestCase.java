@@ -47,6 +47,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import org.intellij.lang.annotations.Language;
 
 public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
@@ -227,6 +228,14 @@ derive_targets_from_directories: true
 
     context.close();
     LOG.info(String.format("PROJECT SYNC LOG:%n%s", output.collectLog()));
+
+    try {
+      future.get();
+    } catch (ExecutionException e) {
+      fail("sync failed " + e.getMessage());
+    } catch (InterruptedException e) {
+      fail("sync was interrupted");
+    }
 
     return output;
   }

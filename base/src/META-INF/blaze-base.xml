@@ -229,6 +229,7 @@
     <postStartupActivity implementation="com.google.idea.blaze.base.formatter.ExternalFormatterCodeStyleManager$Installer"/>
     <postStartupActivity implementation="com.google.idea.blaze.base.prefetch.PrefetchProjectInitializer" />
     <postStartupActivity implementation="com.google.idea.blaze.base.project.OpenProjectViewStartupActivity"/>
+    <moduleRendererFactory implementation="com.google.idea.blaze.base.ui.BlazeModuleRendererFactory" order="first"/>
 
 
     <toolWindow id="Blaze"
@@ -462,6 +463,7 @@
     <completion.confidence language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.BuildFileCompletionConfidence"/>
     <spellchecker.support language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.BuildSpellcheckingStrategy"/>
     <highlightVisitor implementation="com.google.idea.blaze.base.editor.HighlightingStatsCollector"/>
+    <editorTabTitleProvider implementation="com.google.idea.blaze.base.editor.BazelEditorTabTitleProvider"/>
    <formattingService implementation="com.google.idea.blaze.base.buildmodifier.BuildifierFormattingService"/>
   </extensions>
 
@@ -588,6 +590,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.OutputGroupsProvider" interface="com.google.idea.blaze.base.sync.aspects.strategy.OutputGroupsProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.ExperimentLoader" interface="com.google.idea.common.experiments.ExperimentLoader"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.EmptyLibraryFilterSettings" interface="com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyLibraryFilterSettings" />
+    <extensionPoint qualifiedName="com.google.idea.blaze.BuildEventParser" interface="com.google.idea.blaze.base.buildview.events.BuildEventParser" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -614,7 +617,6 @@
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.FallbackBlazeVcsHandlerProvider" order="last" id="fallback"/>
     <BuildSystemProvider implementation="com.google.idea.blaze.base.bazel.BazelBuildSystemProvider" id="BazelBuildSystemProvider" order="last"/>
     <BuildifierBinaryProvider implementation="com.google.idea.blaze.base.buildmodifier.DefaultBuildifierBinaryProvider"/>
-    <BuildResultHelperProvider order="last" implementation="com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep$Provider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.PendingTargetRunConfigurationHandlerProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandlerProvider" order="last"/>
     <AttributeSpecificStringLiteralReferenceProvider implementation="com.google.idea.blaze.base.lang.buildfile.references.VisibilityReferenceProvider"/>
@@ -683,7 +685,9 @@
     <ExperimentLoader implementation="com.google.idea.common.experiments.SystemPropertyExperimentLoader" order="first" id="SystemPropertyExperimentLoader"/>
     <ExperimentLoader implementation="com.google.idea.common.experiments.UserOverridesExperimentLoader" order="after SystemPropertyExperimentLoader" id="UserOverridesExperimentLoader"/>
     <ExperimentLoader implementation="com.google.idea.common.experiments.DefaultValuesExperimentLoader" order="last" id="DefaultValuesExperimentLoader"/>
-    <BlazeGuard implementation="com.google.idea.blaze.base.execution.TrustedProjectGuard"/> 
+    <BlazeGuard implementation="com.google.idea.blaze.base.execution.TrustedProjectGuard"/>
+    <BuildEventParser implementation="com.google.idea.blaze.base.buildview.events.AbortedParser"/>
+    <BuildEventParser implementation="com.google.idea.blaze.base.buildview.events.ActionCompletedParser"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze.qsync">

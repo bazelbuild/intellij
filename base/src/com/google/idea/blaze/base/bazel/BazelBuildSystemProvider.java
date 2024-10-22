@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 /** Provides the bazel build system name string. */
 public class BazelBuildSystemProvider implements BuildSystemProvider {
 
-  private static final String BAZEL_DOC_SITE = "https://ij.bazel.build/docs";
+  private static final String BAZEL_DOC_SITE = "https://github.com/bazelbuild/intellij/blob/master/docs/index.md";
 
   private static final ImmutableList<String> BUILD_FILE_NAMES =
       ImmutableList.of("BUILD.bazel", "BUILD");
