@@ -180,11 +180,18 @@ clwb_integration_test(
     srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/LlvmToolchainTest.java"],
 )
 
+clwb_integration_test(
+    name = "external_includes_integration_test",
+    project = "external_includes",
+    srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/ExternalIncludesTest.java"],
+)
+
 test_suite(
     name = "integration_tests",
     tests = [
         ":llvm_toolchain_integration_test",
         ":simple_integration_test",
         ":virtual_includes_integration_test",
+        ":external_includes_integration_test",
     ],
 )
