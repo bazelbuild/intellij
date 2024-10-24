@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2016-2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -484,6 +484,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     if (kind.getLanguageClasses().stream().anyMatch(languageSettings::isLanguageActive)) {
       return false;
     }
+    if (null != target.getPyIdeInfo() && target.getPyIdeInfo().isCodeGenerator()) {
+      return false;
+    }
     if (importRoots.importAsSource(target.getKey().getLabel())) {
       ignoredLanguages.addAll(kind.getLanguageClasses());
     }
@@ -769,7 +772,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       }
 
       aspectStrategy.addAspectAndOutputGroups(
-          builder, outputGroups, activeLanguages, onlyDirectDeps);
+          builder, outputGroups, activeLanguages, onlyDirectDeps, viewSet);
 
       return BazelExecService.instance(project).build(context, builder);
     } finally {
