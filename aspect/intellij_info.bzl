@@ -8,6 +8,8 @@ load(
 
 EXTRA_DEPS = [
     "embed",  # From go rules (bazel only)
+    "_cc_toolchain",  # From rules_cc (bazel only)
+    "_kt_toolchain",  # From rules_kotlin (bazel only)
 ]
 
 def tool_label(tool_name):

@@ -429,12 +429,15 @@ def _collect_own_and_dependency_java_artifacts(
         depset(own_files.gensrcs, transitive = own_and_transitive_gensrc_depsets),
     )
 
+def _get_dependency_info_for_cc_toolchain_type(rule):
+    return None
+
 def _get_followed_cc_dependency_info(rule):
     if hasattr(rule.attr, "_cc_toolchain"):
         cc_toolchain_target = getattr(rule.attr, "_cc_toolchain")
         if DependenciesInfo in cc_toolchain_target:
             return cc_toolchain_target[DependenciesInfo]
-    return None
+    return _get_dependency_info_for_cc_toolchain_type(rule)
 
 def _collect_own_and_dependency_cc_info(target, dependency_info, test_mode):
     compilation_context = target[CcInfo].compilation_context
