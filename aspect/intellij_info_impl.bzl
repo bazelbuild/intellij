@@ -48,6 +48,7 @@ DEPS = [
     "_cc_toolchain",  # From cc rules
     "_stl",  # From cc rules
     "malloc",  # From cc_binary rules
+    "implementation_deps",  # From cc_library rules
     "_java_toolchain",  # From java rules
     "deps",
     "jars",  # from java_import rules
@@ -516,6 +517,14 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
     target_copts = _do_starlark_string_expansion(ctx, "copt", target_copts, extra_targets)
 
     compilation_context = target[CcInfo].compilation_context
+
+    # Merge current compilation context with context of implementation dependencies.
+    if hasattr(ctx.rule.attr, "implementation_deps"):
+        implementation_deps = ctx.rule.attr.implementation_deps
+        compilation_context = cc_common.merge_compilation_contexts(
+            compilation_contexts =
+                [compilation_context] + [impl[CcInfo].compilation_context for impl in implementation_deps],
+        )
 
     c_info = struct_omit_none(
         header = headers,
