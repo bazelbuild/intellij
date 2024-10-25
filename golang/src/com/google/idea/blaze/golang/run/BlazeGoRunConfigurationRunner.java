@@ -93,6 +93,17 @@ import javax.annotation.Nullable;
 /** Go-specific run configuration runner. */
 public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
 
+  // The actual Bazel shell script uses "1", which is considered as true.
+  // For robustness, we include other common representations of true.
+  private static final List<String> TRUTHY_ENV_VALUES_LOWER = List.of("true", "1", "yes", "on");
+  private static final String POP_UP_MESSAGE_ENABLE_SYMLINKS = """
+          Please enable symlink support. Add the following lines to your .bazelrc file:
+          startup --windows_enable_symlinks
+          build --enable_runfiles
+          
+          Refer to the online documentation for Using Bazel on Windows: \
+          https://bazel.build/configure/windows.""";
+
   private static class ExecutableInfo {
     final File binary;
     final File workingDir;
@@ -404,9 +415,9 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
   }
 
   // Matches TEST_SRCDIR=<dir>
-  private static final Pattern TEST_SRCDIR = Pattern.compile("TEST_SRCDIR=([^ ]+)");
+  private static final Pattern TEST_SRCDIR = Pattern.compile("TEST_SRCDIR=([^\\s]+)");
   // Matches RUNFILES_<NAME>=<value>
-  private static final Pattern RUNFILES_VAR = Pattern.compile("RUNFILES_([A-Z_]+)=([^ ]+)");
+  private static final Pattern RUNFILES_VAR = Pattern.compile("RUNFILES_([A-Z_]+)=([^\\s]+)");
   // Matches TEST_TARGET=//<package_path>:<target>
   private static final Pattern TEST_TARGET = Pattern.compile("TEST_TARGET=//([^:]*):([^\\s]+)");
   // Matches a space-delimited arg list. Supports wrapping arg in single quotes.
@@ -442,9 +453,13 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
       envVars.put("TEST_SRCDIR", workspaceRoot.absolutePathFor(testScrDir.group(1)).toString());
       Matcher runfilesVars = RUNFILES_VAR.matcher(text);
       while (runfilesVars.find()) {
-        envVars.put(
-            String.format("RUNFILES_%s", runfilesVars.group(1)),
-            workspaceRoot.absolutePathFor(runfilesVars.group(2)).toString());
+        String envKey = String.format("RUNFILES_%s", runfilesVars.group(1));
+        String envVal = runfilesVars.group(2);
+        if ("RUNFILES_MANIFEST_ONLY".equals(envKey)
+                && envVal != null && TRUTHY_ENV_VALUES_LOWER.contains(envVal.trim().toLowerCase())) {
+          throw new ExecutionException(POP_UP_MESSAGE_ENABLE_SYMLINKS);
+        }
+        envVars.put(envKey, workspaceRoot.absolutePathFor(envVal).toString());
       }
       String workspaceName = execRoot.getName();
       binary =
