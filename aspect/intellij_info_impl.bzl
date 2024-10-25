@@ -422,6 +422,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     """Updates Go-specific output groups, returns false if not a recognized Go target."""
     sources = []
     generated = []
+    cgo = False
 
     # currently there's no Go Skylark API, with the only exception being proto_library targets
     if ctx.rule.kind in [
@@ -435,6 +436,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     ]:
         sources = [f for src in getattr(ctx.rule.attr, "srcs", []) for f in src.files.to_list()]
         generated = [f for f in sources if not f.is_source]
+        cgo = getattr(ctx.rule.attr, "cgo", False)
     elif ctx.rule.kind == "go_wrap_cc":
         genfiles = target.files.to_list()
         go_genfiles = [f for f in genfiles if f.basename.endswith(".go")]
@@ -473,6 +475,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         import_path = import_path,
         library_labels = library_labels,
         sources = [artifact_location(f) for f in sources],
+        cgo = cgo,
     )
 
     compile_files = target[OutputGroupInfo].compilation_outputs if hasattr(target[OutputGroupInfo], "compilation_outputs") else depset([])
