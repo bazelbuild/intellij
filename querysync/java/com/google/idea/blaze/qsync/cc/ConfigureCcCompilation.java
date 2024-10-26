@@ -148,7 +148,8 @@ public class ConfigureCcCompilation {
       return;
     }
     CcToolchain toolchain =
-        Preconditions.checkNotNull(artifactState.ccToolchainMap().get(ccInfo.toolchainId()));
+        Preconditions.checkNotNull(
+            artifactState.ccToolchainMap().get(ccInfo.toolchainId()), ccInfo.toolchainId());
 
     ImmutableList<CcCompilerFlag> targetFlags =
         ImmutableList.<CcCompilerFlag>builder()

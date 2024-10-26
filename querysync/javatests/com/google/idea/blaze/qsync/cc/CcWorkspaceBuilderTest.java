@@ -18,6 +18,7 @@ package com.google.idea.blaze.qsync.cc;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.qsync.artifacts.AspectProtos.fileArtifacts;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth8;
@@ -88,7 +89,7 @@ public class CcWorkspaceBuilderTest {
                     .addFrameworkIncludeDirectories("build-out/framework/include/directory")
                     .addFrameworkIncludeDirectories("src/framework/include/directory")
                     .addAllGenHdrs(
-                        ImmutableList.of(
+                        fileArtifacts(
                             "build-out/include/directory/include_header.h",
                             "build-out/quote/include/directory/quote_include_header.h",
                             "build-out/system/include/directory/system_include_header.h",
@@ -176,8 +177,8 @@ public class CcWorkspaceBuilderTest {
     Path pkgPath = getOnlyElement(TestData.CC_MULTISRC_QUERY.getRelativeSourcePaths());
     ImmutableList<Label> labels =
         ImmutableList.of(
-            Label.fromPackageAndName(pkgPath, "testclass"),
-            Label.fromPackageAndName(pkgPath, "testclass2"));
+            Label.fromWorkspacePackageAndName(Label.ROOT_WORKSPACE, pkgPath, "testclass"),
+            Label.fromWorkspacePackageAndName(Label.ROOT_WORKSPACE, pkgPath, "testclass2"));
 
     CcCompilationInfo ccCi =
         CcCompilationInfo.newBuilder()

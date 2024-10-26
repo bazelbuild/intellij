@@ -263,7 +263,8 @@ public final class BuildPhaseSyncTask {
     buildStats
         .setBuildResult(blazeBuildResult.buildResult)
         .setBuildIds(blazeBuildResult.getBuildIds())
-        .setBuildBinaryType(syncBuildInvoker.getType());
+        .setBuildBinaryType(syncBuildInvoker.getType())
+        .setBepBytesConsumed(blazeBuildResult.bepBytesConsumed);
 
     if (context.isCancelled()) {
       throw new SyncCanceledException();
@@ -416,7 +417,7 @@ public final class BuildPhaseSyncTask {
       String fileBugSuggestion =
           Blaze.getBuildSystemName(project) == BuildSystemName.Bazel
               ? ""
-              : " Please run 'Blaze > File a Bug'";
+              : " Please run 'Help > File a Bug'";
       IssueOutput.error(
               "Querying blaze targets building project source files failed." + fileBugSuggestion)
           .submit(context);

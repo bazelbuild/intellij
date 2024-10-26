@@ -70,8 +70,7 @@ public class NbCcToolchain extends NbBaseTargetBuilder {
   }
 
   public NbCcToolchain cpp_executable(String pathToExecutable) {
-    cToolchainIdeInfoBuilder.setCCompiler(new ExecutionRootPath(pathToExecutable));
-    cToolchainIdeInfoBuilder.setCppCompiler(new ExecutionRootPath(pathToExecutable));
+    cToolchainIdeInfoBuilder.setCppExecutable(new ExecutionRootPath(pathToExecutable));
     return this;
   }
 

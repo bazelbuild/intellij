@@ -27,7 +27,8 @@ import com.google.common.io.ByteSource;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.NoopContext;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.common.artifact.MockArtifact;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.QuerySyncTestUtils;
 import com.google.idea.blaze.qsync.TestDataSyncRunner;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
@@ -62,22 +63,21 @@ public class AddProjectGenSrcJarsTest {
   @Mock public BuildArtifactCache cache;
 
   private final TestDataSyncRunner syncer =
-      new TestDataSyncRunner(
-          new NoopContext(), QuerySyncTestUtils.PATH_INFERRING_PACKAGE_READER, true);
+      new TestDataSyncRunner(new NoopContext(), QuerySyncTestUtils.PATH_INFERRING_PACKAGE_READER);
 
   @Test
   public void external_srcjar_ignored() throws Exception {
-    BlazeProjectSnapshot original = syncer.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
+    QuerySyncProjectSnapshot original = syncer.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
 
     TargetBuildInfo builtDep =
         TargetBuildInfo.forJavaTarget(
-            JavaArtifactInfo.empty(Label.of("@com_google_guava_guava//jar:jar")).toBuilder()
+            JavaArtifactInfo.empty(Label.of("//java/com/google/common/collect:collect")).toBuilder()
                 .setGenSrcs(
                     ImmutableList.of(
                         BuildArtifact.create(
                             "srcjardigest",
                             Path.of("output/path/to/external.srcjar"),
-                            Label.of("@com_google_guava_guava//jar:jar"))))
+                            Label.of("//java/com/google/common/collect:collect"))))
                 .build(),
             DependencyBuildContext.create("abc-def", Instant.now(), Optional.empty()));
 
@@ -101,7 +101,7 @@ public class AddProjectGenSrcJarsTest {
   @Test
   public void project_srcjar_ignored() throws Exception {
     TestData testData = TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY;
-    BlazeProjectSnapshot original = syncer.sync(testData);
+    QuerySyncProjectSnapshot original = syncer.sync(testData);
 
     ByteArrayOutputStream zipFile = new ByteArrayOutputStream();
     try (ZipOutputStream zos = new ZipOutputStream(zipFile)) {
@@ -109,7 +109,8 @@ public class AddProjectGenSrcJarsTest {
       zos.write("package com.org;\npublic class Class{}".getBytes(UTF_8));
     }
     when(cache.get("srcjardigest"))
-        .thenReturn(Optional.of(immediateFuture(ByteSource.wrap(zipFile.toByteArray()))));
+        .thenReturn(
+            Optional.of(immediateFuture(new MockArtifact(ByteSource.wrap(zipFile.toByteArray())))));
 
     TargetBuildInfo builtDep =
         TargetBuildInfo.forJavaTarget(

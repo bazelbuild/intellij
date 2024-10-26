@@ -43,8 +43,10 @@ import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.artifact.BuildArtifactCache;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
+import com.google.idea.blaze.qsync.SnapshotHolder;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -73,8 +75,8 @@ import javax.annotation.Nullable;
  * <p>This class manages sync'ing the intelliJ project state to the state of the Bazel project in
  * the workspace, as well as building dependencies of the project.
  *
- * <p>The sync'd state of a project is represented by {@link BlazeProjectSnapshot}. During the sync
- * process, different parts of that are available at different phases:
+ * <p>The sync'd state of a project is represented by {@link QuerySyncProjectSnapshot}. During the
+ * sync process, different parts of that are available at different phases:
  *
  * <ul>
  *   <li>{@link ProjectDefinition}: the input to the sync process that can be created from the
@@ -82,7 +84,7 @@ import javax.annotation.Nullable;
  *   <li>{@link PostQuerySyncData}: the state after the query invocation has been made, or after a
  *       delta has been applied to that. This class is the input and output to the partial update
  *       operation, and also contains the data that will be persisted to disk over an IDE restart.
- *   <li>{@link BlazeProjectSnapshot}: the full project state, created in the last phase of sync
+ *   <li>{@link QuerySyncProjectSnapshot}: the full project state, created in the last phase of sync
  *       from {@link PostQuerySyncData}.
  * </ul>
  */
@@ -102,6 +104,8 @@ public class QuerySyncManager implements Disposable {
   private final QuerySyncStatus syncStatus;
   private final QuerySyncAsyncFileListener fileListener;
 
+  private final CacheCleaner cacheCleaner;
+
   private static final BoolExperiment showWindowOnAutomaticSyncErrors =
       new BoolExperiment("querysync.autosync.show.console.on.error", true);
 
@@ -119,7 +123,8 @@ public class QuerySyncManager implements Disposable {
   /** An enum represent the kinds of operations initiated by the sync manager */
   public enum OperationType {
     SYNC,
-    BUILD_DEPS
+    BUILD_DEPS,
+    OTHER,
   }
 
   interface ThrowingScopedOperation {
@@ -141,6 +146,7 @@ public class QuerySyncManager implements Disposable {
     this.loader = loader != null ? loader : createProjectLoader(executor, project);
     this.syncStatus = new QuerySyncStatus(project);
     this.fileListener = QuerySyncAsyncFileListener.createAndListen(project, this);
+    this.cacheCleaner = new CacheCleaner(project, this);
   }
 
   /**
@@ -185,6 +191,12 @@ public class QuerySyncManager implements Disposable {
 
   public Optional<QuerySyncProject> getLoadedProject() {
     return Optional.ofNullable(loadedProject);
+  }
+
+  public Optional<QuerySyncProjectSnapshot> getCurrentSnapshot() {
+    return getLoadedProject()
+        .map(QuerySyncProject::getSnapshotHolder)
+        .flatMap(SnapshotHolder::getCurrent);
   }
 
   public boolean isProjectLoaded() {
@@ -450,6 +462,18 @@ public class QuerySyncManager implements Disposable {
         taskOrigin);
   }
 
+  @CanIgnoreReturnValue
+  public ListenableFuture<Boolean> clearAllDependencies(
+      QuerySyncActionStatsScope querySyncActionStats, TaskOrigin taskOrigin) {
+    return run(
+        "Clearing dependencies",
+        "Removing all built dependencies",
+        querySyncActionStats,
+        loadedProject::cleanDependencies,
+        taskOrigin,
+        OperationType.OTHER);
+  }
+
   public boolean canEnableAnalysisFor(Path workspaceRelativePath) {
     if (loadedProject == null) {
       return false;
@@ -480,7 +504,9 @@ public class QuerySyncManager implements Disposable {
         "Building Render jar for Compose preview",
         "Building...",
         querySyncActionStats,
-        context -> loadedProject.enableRenderJar(context, psiFile),
+        context ->
+            loadedProject.enableRenderJar(
+                context, psiFile, getTargetsToBuild(psiFile.getVirtualFile()).targets()),
         taskOrigin);
   }
 
@@ -516,6 +542,27 @@ public class QuerySyncManager implements Disposable {
   private void notifyInternal(String title, String content, NotificationType notificationType) {
     Notifications.Bus.notify(
         new Notification(NOTIFICATION_GROUP, title, content, notificationType), project);
+  }
+
+  /**
+   * Called by the build artifact cache to request that it is cleaned at some point in the future.
+   */
+  BuildArtifactCache.CleanRequest cacheCleanRequest() {
+    return cacheCleaner;
+  }
+
+  public void cleanCacheNow() {
+    cacheCleaner.cleanNow();
+  }
+
+  public void purgeBuildCache(QuerySyncActionStatsScope actionScope) {
+    run(
+        "Purging build cache",
+        "Deleting all cached build artifacts",
+        actionScope,
+        c -> getLoadedProject().orElseThrow().getBuildArtifactCache().purge(),
+        TaskOrigin.USER_ACTION,
+        OperationType.OTHER);
   }
 
   @Override

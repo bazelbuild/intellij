@@ -4,7 +4,7 @@ import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.Bui
 import com.google.idea.blaze.base.buildview.events.BuildEventParser
 import com.google.idea.blaze.base.command.BlazeCommand
 import com.google.idea.blaze.base.command.BlazeCommandName
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
@@ -57,10 +57,10 @@ class BazelExecService(private val project: Project) : Disposable {
 
   private fun <T> executionScope(
     ctx: BlazeContext,
-    block: suspend CoroutineScope.(BuildResultHelper) -> T
+    block: suspend CoroutineScope.(BuildResultHelperBep) -> T
   ): T {
     return ctx.pushJob(scope) {
-      BuildResultHelper().use { block(it) }
+      BuildResultHelperBep().use { block(it) }
     }
   }
 
@@ -133,7 +133,7 @@ class BazelExecService(private val project: Project) : Disposable {
     BuildEventParser.parse(event)?.let(ctx::output)
   }
 
-  private fun CoroutineScope.parseEvents(ctx: BlazeContext, helper: BuildResultHelper): Job {
+  private fun CoroutineScope.parseEvents(ctx: BlazeContext, helper: BuildResultHelperBep): Job {
     return launch(Dispatchers.IO + CoroutineName("EventParser")) {
       try {
         // wait for bazel to create the output file

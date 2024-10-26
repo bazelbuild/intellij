@@ -114,7 +114,7 @@ public final class SyncProjectTargetsHelper {
     String fileBugSuggestion =
         Blaze.getBuildSystemName(project) == BuildSystemName.Bazel
             ? ""
-            : " Please run 'Blaze > File a Bug'";
+            : " Please run 'Help > File a Bug'";
     if (!DirectoryToTargetProvider.hasProvider()) {
       IssueOutput.error(
               "Can't derive targets from project directories: no query provider available."

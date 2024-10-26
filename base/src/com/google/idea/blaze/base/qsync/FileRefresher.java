@@ -100,6 +100,9 @@ public class FileRefresher {
   }
 
   private static void refreshFilesRecursively(ImmutableList<VirtualFile> virtualFiles) {
+    if (virtualFiles.isEmpty()) {
+      return;
+    }
     SettableFuture<Boolean> done = SettableFuture.create();
     try {
       RefreshSession refreshSession =

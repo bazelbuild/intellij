@@ -43,7 +43,7 @@ public class AddCompiledJavaDepsTest {
   @Test
   public void no_deps_built() throws Exception {
     ProjectProto.Project original =
-        ProjectProtos.forTestProjectWithNewArtifactLogic(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
+        ProjectProtos.forTestProject(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
 
     AddCompiledJavaDeps javaDeps = new AddCompiledJavaDeps(ImmutableList::of);
 
@@ -56,28 +56,28 @@ public class AddCompiledJavaDepsTest {
     assertThat(newProject.getArtifactDirectories().getDirectoriesMap().keySet())
         .containsExactly(".bazel/javadeps");
     assertThat(
-            newProject
-                .getArtifactDirectories()
-                .getDirectoriesMap()
-                .get(".bazel/javadeps")
-                .getContentsMap())
+        newProject
+            .getArtifactDirectories()
+            .getDirectoriesMap()
+            .get(".bazel/javadeps")
+            .getContentsMap())
         .isEmpty();
   }
 
   @Test
   public void dep_built() throws Exception {
     ProjectProto.Project original =
-        ProjectProtos.forTestProjectWithNewArtifactLogic(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
+        ProjectProtos.forTestProject(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
 
     TargetBuildInfo builtDep =
         TargetBuildInfo.forJavaTarget(
-            JavaArtifactInfo.empty(Label.of("@com_google_guava_guava//jar:jar")).toBuilder()
+            JavaArtifactInfo.empty(Label.of("//java/com/google/common/collect:collect")).toBuilder()
                 .setJars(
                     ImmutableList.of(
                         BuildArtifact.create(
                             "jardigest",
                             Path.of("build-out/java/com/google/common/collect/libcollect.jar"),
-                            Label.of("@com_google_guava_guava//jar:jar"))))
+                            Label.of("//java/com/google/common/collect:collect"))))
                 .build(),
             DependencyBuildContext.create("abc-def", Instant.now(), Optional.empty()));
 
@@ -98,17 +98,17 @@ public class AddCompiledJavaDepsTest {
     assertThat(newProject.getArtifactDirectories().getDirectoriesMap().keySet())
         .containsExactly(".bazel/javadeps");
     assertThat(
-            newProject
-                .getArtifactDirectories()
-                .getDirectoriesMap()
-                .get(".bazel/javadeps")
-                .getContentsMap())
+        newProject
+            .getArtifactDirectories()
+            .getDirectoriesMap()
+            .get(".bazel/javadeps")
+            .getContentsMap())
         .containsExactly(
             "build-out/java/com/google/common/collect/libcollect.jar",
             ProjectProto.ProjectArtifact.newBuilder()
                 .setBuildArtifact(ProjectProto.BuildArtifact.newBuilder().setDigest("jardigest"))
                 .setTransform(ArtifactTransform.COPY)
-                .setTarget("@com_google_guava_guava//jar:jar")
+                .setTarget("//java/com/google/common/collect:collect")
                 .build());
   }
 }

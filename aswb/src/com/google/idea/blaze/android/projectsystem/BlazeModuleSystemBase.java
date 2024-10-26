@@ -52,7 +52,6 @@ import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
-import com.google.idea.blaze.android.sync.qsync.AndroidExternalLibraryManager;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.AndroidAarIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -65,8 +64,6 @@ import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
-import com.google.idea.blaze.base.qsync.DependencyTracker;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.qsync.QuerySyncProject;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -81,9 +78,8 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.google.idea.blaze.common.Label;
-import com.google.idea.blaze.qsync.BlazeProject;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
-import com.google.idea.blaze.qsync.deps.ArtifactTracker;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
+import com.google.idea.blaze.qsync.SnapshotHolder;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.common.experiments.BoolExperiment;
@@ -100,8 +96,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
@@ -133,7 +127,6 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
   SampleDataDirectoryProvider sampleDataDirectoryProvider;
   RenderJarClassFileFinder classFileFinder;
   final boolean isWorkspaceModule;
-  private AndroidExternalLibraryManager androidExternalLibraryManager = null;
 
   BlazeModuleSystemBase(Module module) {
     this.module = module;
@@ -148,31 +141,6 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
     classFileFinder = new RenderJarClassFileFinder(module);
     sampleDataDirectoryProvider = new BlazeSampleDataDirectoryProvider(module);
     isWorkspaceModule = module.getName().equals(BlazeDataStorage.WORKSPACE_MODULE_NAME);
-    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC
-        && !QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT) {
-      androidExternalLibraryManager =
-          new AndroidExternalLibraryManager(
-              () -> {
-                if (!QuerySyncManager.getInstance(project).isProjectLoaded()) {
-                  return ImmutableList.of();
-                }
-                ArtifactTracker artifactTracker =
-                    QuerySyncManager.getInstance(project).getArtifactTracker();
-                Path aarDirectory = artifactTracker.getExternalAarDirectory();
-                // This can be called by the IDE as the user navigates the project and so might be
-                // called before a sync has been completed and the project structure has been set
-                // up.
-                if (!aarDirectory.toFile().exists()) {
-                  logger.warn("Aar library directory not created yet");
-                  return ImmutableList.of();
-                }
-                try (Stream<Path> stream = Files.list(aarDirectory)) {
-                  return stream.collect(toImmutableList());
-                } catch (IOException ioe) {
-                  throw new UncheckedIOException("Could not list aars", ioe);
-                }
-              });
-    }
   }
 
   @Override
@@ -372,9 +340,8 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
    * @param buildDeps whether run blaze build to build aar before get it.
    */
   private Optional<Path> getCachedAarForLabel(Label label, boolean buildDeps) {
-    DependencyTracker dependencyTracker =
-        QuerySyncManager.getInstance(project).getDependencyTracker();
-    if (dependencyTracker == null) {
+    QuerySyncManager qsm = QuerySyncManager.getInstance(project);
+    if (!qsm.isProjectLoaded()) {
       return Optional.empty();
     }
 
@@ -382,13 +349,13 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
       BlazeContext tmpContext = BlazeContext.create();
       try {
         boolean unused =
-            dependencyTracker.buildDependenciesForTargets(tmpContext, singleTarget(label));
+            qsm.getDependencyTracker().buildDependenciesForTargets(tmpContext, singleTarget(label));
       } catch (Exception e) {
         tmpContext.handleException("Failed to build dependencies", e);
       }
     }
 
-    Optional<ImmutableSet<Path>> paths = dependencyTracker.getCachedArtifacts(label);
+    Optional<ImmutableSet<Path>> paths = qsm.getArtifactTracker().getCachedFiles(label);
     if (paths.isEmpty()) {
       return Optional.empty();
     }
@@ -581,30 +548,26 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
 
   public Collection<ExternalAndroidLibrary> getDependentLibraries() {
     if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
-      if (QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT) {
-        ProjectProto.Project projectProto =
-            QuerySyncManager.getInstance(project)
-                .getLoadedProject()
-                .map(QuerySyncProject::getSnapshotHolder)
-                .flatMap(BlazeProject::getCurrent)
-                .map(BlazeProjectSnapshot::project)
-                .orElse(null);
-        if (projectProto == null) {
-          return ImmutableList.of();
-        }
-        ImmutableList<ProjectProto.Module> matchingModules =
-            projectProto.getModulesList().stream()
-                .filter(m -> m.getName().equals(module.getName()))
-                .collect(ImmutableList.toImmutableList());
-        if (matchingModules.isEmpty()) {
-          return ImmutableList.of();
-        }
-        return Iterables.getOnlyElement(matchingModules).getAndroidExternalLibrariesList().stream()
-            .map(this::fromProto)
-            .collect(toImmutableList());
-      } else {
-        return androidExternalLibraryManager.getExternalLibraries();
+      ProjectProto.Project projectProto =
+          QuerySyncManager.getInstance(project)
+              .getLoadedProject()
+              .map(QuerySyncProject::getSnapshotHolder)
+              .flatMap(SnapshotHolder::getCurrent)
+              .map(QuerySyncProjectSnapshot::project)
+              .orElse(null);
+      if (projectProto == null) {
+        return ImmutableList.of();
       }
+      ImmutableList<ProjectProto.Module> matchingModules =
+          projectProto.getModulesList().stream()
+              .filter(m -> m.getName().equals(module.getName()))
+              .collect(ImmutableList.toImmutableList());
+      if (matchingModules.isEmpty()) {
+        return ImmutableList.of();
+      }
+      return Iterables.getOnlyElement(matchingModules).getAndroidExternalLibrariesList().stream()
+          .map(this::fromProto)
+          .collect(toImmutableList());
     }
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
@@ -649,12 +612,16 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
   }
 
   private ExternalAndroidLibrary fromProto(ProjectProto.ExternalAndroidLibrary proto) {
-    return new ExternalLibraryImpl(proto.getName())
-        .withLocation(toPathString(proto.getLocation()))
-        .withManifestFile(toPathString(proto.getManifestFile()))
-        .withResFolder(new SelectiveResourceFolder(toPathString(proto.getResFolder()), null))
-        .withSymbolFile(toPathString(proto.getSymbolFile()))
-        .withPackageName(proto.getPackageName());
+    ExternalLibraryImpl lib =
+        new ExternalLibraryImpl(proto.getName())
+            .withLocation(toPathString(proto.getLocation()))
+            .withManifestFile(toPathString(proto.getManifestFile()))
+            .withResFolder(new SelectiveResourceFolder(toPathString(proto.getResFolder()), null))
+            .withSymbolFile(toPathString(proto.getSymbolFile()));
+    if (!proto.getPackageName().isEmpty()) {
+      lib = lib.withPackageName(proto.getPackageName());
+    }
+    return lib;
   }
 
   private PathString toPathString(ProjectProto.ProjectPath projectPath) {

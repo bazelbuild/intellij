@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync.settings;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.qsync.QuerySync;
 import com.intellij.openapi.options.BoundSearchableConfigurable;
 import com.intellij.openapi.options.Configurable;
@@ -25,9 +26,12 @@ import com.intellij.ui.dsl.builder.ButtonKt;
 import com.intellij.ui.dsl.builder.Cell;
 import com.intellij.ui.dsl.builder.HyperlinkEventAction;
 import com.intellij.ui.dsl.builder.MutableProperty;
+import com.intellij.ui.dsl.builder.Panel;
 import com.intellij.ui.dsl.builder.Row;
 import com.intellij.ui.dsl.builder.RowsRange;
 import com.intellij.ui.dsl.builder.UtilsKt;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javax.swing.AbstractButton;
 import javax.swing.JLabel;
 import kotlin.Unit;
@@ -42,6 +46,36 @@ class QuerySyncConfigurable extends BoundSearchableConfigurable implements Confi
 
   public QuerySyncConfigurable() {
     super(/* displayName= */ "Query Sync", /* helpTopic= */ "", /* _id= */ "query.sync");
+  }
+
+  @CanIgnoreReturnValue
+  private Row addCheckBox(
+      Panel ip, String label, Supplier<Boolean> getter, Consumer<Boolean> setter) {
+    return ip.row(
+        /* label= */ ((JLabel) null),
+        /* init= */ r -> {
+          Cell<JBCheckBox> unusedCheckbox =
+              r.checkBox(label)
+                  .bind(
+                      /* componentGet= */ AbstractButton::isSelected,
+                      /* componentSet= */ (jbCheckBox, selected) -> {
+                        jbCheckBox.setSelected(selected);
+                        return Unit.INSTANCE;
+                      },
+                      /* prop= */ new MutableProperty<Boolean>() {
+                        @Override
+                        public Boolean get() {
+                          return getter.get();
+                        }
+
+                        @Override
+                        public void set(Boolean selected) {
+                          setter.accept(selected);
+                        }
+                      })
+                  .enabledIf(ButtonKt.getSelected(enableQuerySyncCheckBoxCell));
+          return Unit.INSTANCE;
+        });
   }
 
   @Override
@@ -97,90 +131,21 @@ class QuerySyncConfigurable extends BoundSearchableConfigurable implements Confi
           RowsRange unusedRowRange =
               p.indent(
                   ip -> {
-                    Row unusedDisplayDetailsOptionRow =
-                        ip.row(
-                            /* label= */ ((JLabel) null),
-                            /* init= */ r -> {
-                              Cell<JBCheckBox> unusedDisplayDetailsCheckBox =
-                                  r.checkBox("Display detailed dependency text in the editor")
-                                      .bind(
-                                          /* componentGet= */ AbstractButton::isSelected,
-                                          /* componentSet= */ (jbCheckBox, selected) -> {
-                                            jbCheckBox.setSelected(selected);
-                                            return Unit.INSTANCE;
-                                          },
-                                          /* prop= */ new MutableProperty<Boolean>() {
-                                            @Override
-                                            public Boolean get() {
-                                              return settings.showDetailedInformationInEditor();
-                                            }
-
-                                            @Override
-                                            public void set(Boolean selected) {
-                                              settings.enableShowDetailedInformationInEditor(
-                                                  selected);
-                                            }
-                                          })
-                                      .enabledIf(ButtonKt.getSelected(enableQuerySyncCheckBoxCell));
-                              return Unit.INSTANCE;
-                            });
-                    Row unusedBuildWorkingSetRow =
-                        ip.row(
-                            /* label= */ ((JLabel) null),
-                            /* init= */ r -> {
-                              Cell<JBCheckBox> buildWorkingSetCheckBox =
-                                  r.checkBox("Include working set when building dependencies")
-                                      .bind(
-                                          AbstractButton::isSelected,
-                                          (jbCheckBox, selected) -> {
-                                            jbCheckBox.setSelected(selected);
-                                            return Unit.INSTANCE;
-                                          },
-                                          new MutableProperty<>() {
-                                            @Override
-                                            public Boolean get() {
-                                              return settings.buildWorkingSet();
-                                            }
-
-                                            @Override
-                                            public void set(Boolean selected) {
-                                              settings.enableBuildWorkingSet(selected);
-                                            }
-                                          });
-                              buildWorkingSetCheckBox =
-                                  buildWorkingSetCheckBox.enabledIf(
-                                      ButtonKt.getSelected(enableQuerySyncCheckBoxCell));
-                              return Unit.INSTANCE;
-                            });
-                    Row unusedSyncOnFileChangeRow =
-                        ip.row(
-                            /* label= */ ((JLabel) null),
-                            /* init= */ r -> {
-                              Cell<JBCheckBox> syncOnFileChangeCheckBox =
-                                  r.checkBox("Automatically sync project on file changes")
-                                      .bind(
-                                          AbstractButton::isSelected,
-                                          (jbCheckBox, selected) -> {
-                                            jbCheckBox.setSelected(selected);
-                                            return Unit.INSTANCE;
-                                          },
-                                          new MutableProperty<>() {
-                                            @Override
-                                            public Boolean get() {
-                                              return settings.syncOnFileChanges();
-                                            }
-
-                                            @Override
-                                            public void set(Boolean selected) {
-                                              settings.enableSyncOnFileChanges(selected);
-                                            }
-                                          });
-                              syncOnFileChangeCheckBox =
-                                  syncOnFileChangeCheckBox.enabledIf(
-                                      ButtonKt.getSelected(enableQuerySyncCheckBoxCell));
-                              return Unit.INSTANCE;
-                            });
-
+                    addCheckBox(
+                        ip,
+                        "Display detailed dependency text in the editor",
+                        settings::showDetailedInformationInEditor,
+                        settings::enableShowDetailedInformationInEditor);
+                    addCheckBox(
+                        ip,
+                        "Include working set when building dependencies",
+                        settings::buildWorkingSet,
+                        settings::enableBuildWorkingSet);
+                    addCheckBox(
+                        ip,
+                        "Automatically sync project on file changes",
+                        settings::syncOnFileChanges,
+                        settings::enableSyncOnFileChanges);
                     return Unit.INSTANCE;
                   });
           return Unit.INSTANCE;

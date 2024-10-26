@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.qsync.artifacts.AspectProtos.fileArtifacts;
 
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
@@ -26,8 +27,9 @@ import com.google.common.truth.Truth8;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.NoopContext;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.TestDataSyncRunner;
+import com.google.idea.blaze.qsync.artifacts.DigestMap;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker.State;
 import com.google.idea.blaze.qsync.deps.CcToolchain;
@@ -50,7 +52,6 @@ import com.google.idea.blaze.qsync.project.ProjectProto.ProjectPath.Base;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.function.Function;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -60,10 +61,10 @@ public class ConfigureCcCompilationTest {
 
   private final Context<?> context = new NoopContext();
   private final TestDataSyncRunner syncRunner =
-      new TestDataSyncRunner(context, new PackageStatementParser(), true);
+      new TestDataSyncRunner(context, new PackageStatementParser());
 
   private static State toArtifactState(CcCompilationInfo proto) {
-    Function<Path, String> digestMap = p -> Integer.toHexString(p.hashCode());
+    DigestMap digestMap = DigestMap.ofFunction(p -> Integer.toHexString(p.hashCode()));
     return ArtifactTracker.State.create(
         proto.getTargetsList().stream()
             .map(t -> com.google.idea.blaze.qsync.deps.CcCompilationInfo.create(t, digestMap))
@@ -78,7 +79,7 @@ public class ConfigureCcCompilationTest {
 
   @Test
   public void empty() throws Exception {
-    BlazeProjectSnapshot original = syncRunner.sync(TestData.CC_LIBRARY_QUERY);
+    QuerySyncProjectSnapshot original = syncRunner.sync(TestData.CC_LIBRARY_QUERY);
     ProjectProtoUpdate update =
         new ProjectProtoUpdate(original.project(), original.graph(), context);
     ConfigureCcCompilation ccConfig =
@@ -90,7 +91,7 @@ public class ConfigureCcCompilationTest {
 
   @Test
   public void basics() throws Exception {
-    BlazeProjectSnapshot original = syncRunner.sync(TestData.CC_LIBRARY_QUERY);
+    QuerySyncProjectSnapshot original = syncRunner.sync(TestData.CC_LIBRARY_QUERY);
     ProjectProtoUpdate update =
         new ProjectProtoUpdate(original.project(), original.graph(), context);
 
@@ -123,7 +124,7 @@ public class ConfigureCcCompilationTest {
                     .addFrameworkIncludeDirectories("bazel-out/framework/include/directory")
                     .addFrameworkIncludeDirectories("src/framework/include/directory")
                     .addAllGenHdrs(
-                        ImmutableList.of(
+                        fileArtifacts(
                             "bazel-out/include/directory/include_header.h",
                             "bazel-out/quote/include/directory/quote_include_header.h",
                             "bazel-out/system/include/directory/system_include_header.h",
@@ -219,14 +220,14 @@ public class ConfigureCcCompilationTest {
 
   @Test
   public void multi_srcs_share_flagset() throws Exception {
-    BlazeProjectSnapshot original = syncRunner.sync(TestData.CC_MULTISRC_QUERY);
+    QuerySyncProjectSnapshot original = syncRunner.sync(TestData.CC_MULTISRC_QUERY);
     ProjectProtoUpdate update =
         new ProjectProtoUpdate(original.project(), original.graph(), context);
     Path pkgPath = getOnlyElement(TestData.CC_MULTISRC_QUERY.getRelativeSourcePaths());
     ImmutableList<Label> labels =
         ImmutableList.of(
-            Label.fromPackageAndName(pkgPath, "testclass"),
-            Label.fromPackageAndName(pkgPath, "testclass2"));
+            Label.fromWorkspacePackageAndName(Label.ROOT_WORKSPACE, pkgPath, "testclass"),
+            Label.fromWorkspacePackageAndName(Label.ROOT_WORKSPACE, pkgPath, "testclass2"));
 
     CcCompilationInfo ccCi =
         CcCompilationInfo.newBuilder()

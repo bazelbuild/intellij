@@ -10,6 +10,10 @@ from making it into the plugin that runs on
 a different context (IntelliJ and not google3)
 """
 
+# BEGIN-REPO
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+# END-REPO
+
 # intellij_plugin will validate that all dependencies from these pacakages are self contained
 _project = [
 ]
@@ -233,3 +237,19 @@ _validate_test_dependencies = rule(
         "data": attr.label(),
     },
 )
+
+# BEGIN-REPO
+def validate_test_dependencies(name, deps, **kwargs):
+    _validate_test_dependencies(
+        name = name + "_check",
+        deps = deps,
+        testonly = 1,
+        **kwargs
+    )
+    build_test(
+        name = name,
+        testonly = 1,
+        targets = deps + [":" + name + "_check"],
+    )
+
+# END-REPO

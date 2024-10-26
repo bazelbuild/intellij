@@ -17,18 +17,17 @@ package com.google.idea.blaze.qsync.java;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.common.io.ByteSource;
-import java.io.BufferedInputStream;
+import com.google.idea.blaze.common.artifact.CachedArtifact;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Enumeration;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.zip.ZipFile;
 
 /** Utility for finding inner paths of a source jar corresponding to package roots */
 public class SrcJarInnerPathFinder {
@@ -45,15 +44,7 @@ public class SrcJarInnerPathFinder {
   }
 
   /** Represents a path within a srcjar file, and a package prefix to use for that path. */
-  public static class JarPath {
-    public final Path path;
-    public final String packagePrefix;
-
-    JarPath(Path path, String packagePrefix) {
-      this.path = path;
-      this.packagePrefix = packagePrefix;
-    }
-
+  public record JarPath(Path path, String packagePrefix) {
     static JarPath create(String path, String packagePrefix) {
       return new JarPath(Path.of(path), packagePrefix);
     }
@@ -71,35 +62,37 @@ public class SrcJarInnerPathFinder {
   }
 
   public ImmutableSet<JarPath> findInnerJarPaths(
-      File jarFile, AllowPackagePrefixes allowPackagePrefixes) {
-    try (InputStream in = new FileInputStream(jarFile)) {
-      return findInnerJarPaths(in, allowPackagePrefixes);
+      File jarFile, AllowPackagePrefixes allowPackagePrefixes, String fileNameForLogs) {
+    try (ZipFile zip = new ZipFile(jarFile)) {
+      return findInnerJarPaths(zip, allowPackagePrefixes, fileNameForLogs);
     } catch (IOException ioe) {
-      logger.log(Level.WARNING, "Failed to examine " + jarFile, ioe);
+      logger.log(Level.WARNING, "Failed to examine " + jarFile + ": " + ioe);
       // return the jar file root to ensure we don't ignore it.
       return ImmutableSet.of(JarPath.create("", ""));
     }
   }
 
   public ImmutableSet<JarPath> findInnerJarPaths(
-      ByteSource artifact, AllowPackagePrefixes allowPackagePrefixes) {
-    try (InputStream in = artifact.openBufferedStream()) {
-      return findInnerJarPaths(in, allowPackagePrefixes);
+      CachedArtifact artifact, AllowPackagePrefixes allowPackagePrefixes, String fileNameForLogs) {
+    try (ZipFile zip = artifact.openAsZipFile()) {
+      return findInnerJarPaths(zip, allowPackagePrefixes, fileNameForLogs);
     } catch (IOException ioe) {
-      logger.log(Level.WARNING, "Failed to examine " + artifact, ioe);
+      logger.log(
+          Level.WARNING,
+          "Failed to examine " + fileNameForLogs + "; artifact: " + artifact + ": " + ioe);
       // return the jar file root to ensure we don't ignore it.
       return ImmutableSet.of(JarPath.create("", ""));
     }
   }
 
   private ImmutableSet<JarPath> findInnerJarPaths(
-      InputStream jarFile, AllowPackagePrefixes allowPackagePrefixes) throws IOException {
+      ZipFile zip, AllowPackagePrefixes allowPackagePrefixes, String fileNameForLogs)
+      throws IOException {
     Set<JarPath> paths = Sets.newHashSet();
-    ZipInputStream zis = new ZipInputStream(new BufferedInputStream(jarFile));
-
-    ZipEntry e;
     Set<Path> topLevelPaths = Sets.newHashSet();
-    while ((e = zis.getNextEntry()) != null) {
+    Enumeration<? extends ZipEntry> entries = zip.entries();
+    while (entries.hasMoreElements()) {
+      ZipEntry e = entries.nextElement();
       if (e.isDirectory()) {
         continue;
       }
@@ -111,7 +104,10 @@ public class SrcJarInnerPathFinder {
       if (!topLevelPaths.add(zipfilePath.getName(0))) {
         continue;
       }
-      String pname = packageStatementParser.readPackage(zis);
+      String pname;
+      try (InputStream in = zip.getInputStream(e)) {
+        pname = packageStatementParser.readPackage(in);
+      }
       Path packageAsPath = Path.of(pname.replace('.', '/'));
       Path zipPath = zipfilePath.getParent();
       if (zipPath == null) {
@@ -130,10 +126,14 @@ public class SrcJarInnerPathFinder {
         } else {
           logger.log(
               Level.WARNING,
-              "Java package name " + pname + " does not match srcjar path " + zipfilePath);
+              "Java package name "
+                  + pname
+                  + " does not match srcjar path "
+                  + zipfilePath
+                  + " in "
+                  + fileNameForLogs);
         }
       }
-      zis.closeEntry();
     }
     if (paths.isEmpty()) {
       // we didn't find any java/kt sources. Add the jar file root to ensure we don't ignore it.

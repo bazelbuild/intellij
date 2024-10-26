@@ -22,11 +22,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.common.Interners;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
+import com.google.idea.blaze.qsync.artifacts.DigestMap;
 import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcTargetInfo;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
+import java.util.Optional;
 
 /**
  * C/C++ compilation information. This stores information required to compile C or C++ targets. The
@@ -67,18 +69,28 @@ public abstract class CcCompilationInfo {
    * To workaround this, we strip the {@code bazel-out} prefix when looking up generated headers in
    * the digest map to ensure we can find them.
    */
-  static Function<Path, String> stripBazelOutPrefix(Function<Path, String> digestMap) {
-    return digestMap.compose(
-        p -> {
-          if (p.startsWith("bazel-out") || p.startsWith("blaze-out")) {
-            return p.getName(0).relativize(p);
-          }
-          return p;
-        });
+  static DigestMap stripBazelOutPrefix(DigestMap digestMap) {
+    return new DigestMap() {
+      @Override
+      public Optional<String> digestForArtifactPath(Path path, Label fromTarget) {
+        return digestMap.digestForArtifactPath(stripBazelOutPrefix(path), fromTarget);
+      }
+
+      @Override
+      public Iterator<Path> directoryContents(Path directory) {
+        return digestMap.directoryContents(stripBazelOutPrefix(directory));
+      }
+    };
   }
 
-  public static CcCompilationInfo create(
-      CcTargetInfo targetInfo, Function<Path, String> digestMap) {
+  static Path stripBazelOutPrefix(Path path) {
+    if (path.startsWith("bazel-out") || path.startsWith("blaze-out")) {
+      return Interners.PATH.intern(path.getName(0).relativize(path));
+    }
+    return path;
+  }
+
+  public static CcCompilationInfo create(CcTargetInfo targetInfo, DigestMap digestMap) {
     Label target = Label.of(targetInfo.getLabel());
     return builder()
         .target(target)
@@ -100,18 +112,10 @@ public abstract class CcCompilationInfo {
                 .map(ArtifactDirectories::forCcInclude)
                 .collect(toImmutableList()))
         .genHeaders(
-            toArtifacts(targetInfo.getGenHdrsList(), stripBazelOutPrefix(digestMap), target))
+            BuildArtifact.fromProtos(
+                targetInfo.getGenHdrsList(), stripBazelOutPrefix(digestMap), target))
         .toolchainId(targetInfo.getToolchainId())
         .build();
-  }
-
-  // TODO share this with the java class from where it was copied.
-  private static ImmutableList<BuildArtifact> toArtifacts(
-      List<String> paths, Function<Path, String> digestMap, Label target) {
-    return paths.stream()
-        .map(Interners::pathOf)
-        .map(p -> BuildArtifact.create(p, target, digestMap))
-        .collect(toImmutableList());
   }
 
   /** Builder for {@link CcCompilationInfo}. */

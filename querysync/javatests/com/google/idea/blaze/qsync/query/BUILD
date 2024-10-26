@@ -15,6 +15,7 @@ java_library(
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//shared",
         "@com_google_guava_guava//jar",
+        "@error_prone_annotations//jar",
     ],
 )
 

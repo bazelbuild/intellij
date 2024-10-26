@@ -117,7 +117,7 @@ public final class BlazeFlags {
     String platformPrefix = PlatformUtils.getPlatformPrefix();
 
     // IDEA Community Edition is "Idea", whereas IDEA Ultimate Edition is "idea".
-    // That's dumb. Let's make them more useful.
+    // That's confusing. Let's make them more useful.
     if (PlatformUtils.isIdeaCommunity()) {
       platformPrefix = "IDEA:community";
     } else if (PlatformUtils.isIdeaUltimate()) {

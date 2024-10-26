@@ -19,7 +19,6 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ComparisonChain;
 import com.google.devtools.intellij.aspect.Common;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-
 import java.nio.file.Paths;
 
 /** Represents a blaze-produced artifact. */

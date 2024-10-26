@@ -56,7 +56,7 @@ DEPS = [
     "exports",
     "java_lib",  # From old proto_library rules
     "_android_sdk",  # from android rules
-    "_aidl_lib",  # from android_library
+    "aidl_lib",  # from android_sdk
     "_scala_toolchain",  # From scala rules
     "test_app",  # android_instrumentation_test
     "instruments",  # android_instrumentation_test
@@ -220,6 +220,10 @@ def collect_targets_from_attrs(rule_attrs, attrs):
     for attr_name in attrs:
         _collect_target_from_attr(rule_attrs, attr_name, result)
     return [target for target in result if is_valid_aspect_target(target)]
+
+def targets_to_labels(targets):
+    """Returns a set of label strings for the given targets."""
+    return depset([str(target.label) for target in targets])
 
 def list_omit_none(value):
     """Returns a list of the value, or the empty list if None."""
@@ -843,6 +847,8 @@ def _build_filtered_gen_jar(ctx, target, java_outputs, gen_java_sources, srcjars
     for jar in java_outputs:
         if jar.ijar:
             jar_artifacts.append(jar.ijar)
+        elif jar.class_jar:
+            jar_artifacts.append(jar.class_jar)
         if hasattr(jar, "source_jars") and jar.source_jars:
             source_jar_artifacts.extend(_list_or_depset_to_list(jar.source_jars))
         elif hasattr(jar, "source_jar") and jar.source_jar:
@@ -915,28 +921,6 @@ def collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output
         update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
     return handled
 
-def _get_android_ide_info(target):
-    """Returns the AndroidIdeInfo provider for the given target."""
-
-    if hasattr(android_common, "AndroidIdeInfo"):
-        return target[android_common.AndroidIdeInfo]
-
-    # Backwards compatibility: supports android struct provider
-    legacy_android = getattr(target, "android")
-
-    # Transform into AndroidIdeInfo form
-    return struct(
-        java_package = legacy_android.java_package,
-        manifest = legacy_android.manifest,
-        idl_source_jar = getattr(legacy_android.idl.output, "source_jar", None),
-        idl_class_jar = getattr(legacy_android.idl.output, "class_jar", None),
-        defines_android_resources = legacy_android.defines_resources,
-        idl_import_root = getattr(legacy_android.idl, "import_root", None),
-        resource_jar = legacy_android.resource_jar,
-        signed_apk = legacy_android.apk,
-        apks_under_test = legacy_android.apks_under_test,
-    )
-
 def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Populates ide_info proto and intellij_resolve_android output group
 
@@ -951,7 +935,24 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
     android_semantics = semantics.android if hasattr(semantics, "android") else None
     extra_ide_info = android_semantics.extra_ide_info(target, ctx) if android_semantics else {}
 
-    android = _get_android_ide_info(target)
+    if hasattr(android_common, "AndroidIdeInfo"):
+        android = target[android_common.AndroidIdeInfo]
+    else:
+        # Backwards compatibility: supports android struct provider
+        legacy_android = getattr(target, "android")
+
+        # Transform into AndroidIdeInfo form
+        android = struct(
+            java_package = legacy_android.java_package,
+            manifest = legacy_android.manifest,
+            idl_source_jar = getattr(legacy_android.idl.output, "source_jar", None),
+            idl_class_jar = getattr(legacy_android.idl.output, "class_jar", None),
+            defines_android_resources = legacy_android.defines_resources,
+            idl_import_root = getattr(legacy_android.idl, "import_root", None),
+            resource_jar = legacy_android.resource_jar,
+            signed_apk = legacy_android.apk,
+            apks_under_test = legacy_android.apks_under_test,
+        )
 
     output_jar = struct(
         class_jar = android.idl_class_jar,
@@ -1114,15 +1115,13 @@ def collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups):
 def artifact_to_path(artifact):
     return artifact.root_execution_path_fragment + "/" + artifact.relative_path
 
-def collect_kotlin_toolchain_info(target, ctx, ide_info, ide_info_file, output_groups):
+def collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups):
     """Updates kotlin_toolchain-relevant output groups, returns false if not a kotlin_toolchain target."""
-    if ctx.rule.kind == "_kt_toolchain" and platform_common.ToolchainInfo in target:
-        kt = target[platform_common.ToolchainInfo]
-    elif hasattr(target, "kt") and hasattr(target.kt, "language_version"):
-        kt = target.kt  # Legacy struct provider mechanism
-    else:
+    if not hasattr(target, "kt"):
         return False
-
+    kt = target.kt
+    if not hasattr(kt, "language_version"):
+        return False
     ide_info["kt_toolchain_ide_info"] = struct(
         language_version = kt.language_version,
     )
@@ -1292,7 +1291,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
     handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
-    handled = collect_kotlin_toolchain_info(target, ctx, ide_info, ide_info_file, output_groups) or handled
+    handled = collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
 
     # Any extra ide info
     if hasattr(semantics, "extra_ide_info"):

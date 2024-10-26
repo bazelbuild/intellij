@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
@@ -156,7 +157,8 @@ class GenerateDeployableJarTaskProvider
       RunConfiguration configuration, ExecutionEnvironment env, Label target)
       throws ExecutionException {
     Project project = env.getProject();
-    try (final var buildResultHelper = new BuildResultHelper()) {
+    try (BuildResultHelper buildResultHelper =
+        BuildResultHelperProvider.createForLocalBuild(project)) {
 
       SaveUtil.saveAllFiles();
 

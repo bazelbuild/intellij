@@ -61,7 +61,7 @@ message Node {
   // A node index that this is a retry of. For example, the second attempt of
   // a flaky test would point to the first attempt, and the third attempt would
   // point to the second.
-  optional int32 retry_of = 9;
+  int32 retry_of = 9;
 }
 
 // Metrics contains all the timing metrics about a Node.

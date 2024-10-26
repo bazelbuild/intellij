@@ -64,7 +64,7 @@ public class QuerySummaryTestBuilder {
     Set<Label> sourceFiles =
         packages.stream()
             .map(Label::getPackage)
-            .map(p -> Label.fromPackageAndName(p, Path.of("BUILD")))
+            .map(p -> Label.fromWorkspacePackageAndName(Label.ROOT_WORKSPACE, p, Path.of("BUILD")))
             .collect(toCollection(HashSet::new));
     includes.keySet().stream().map(Label::of).forEach(sourceFiles::add);
 

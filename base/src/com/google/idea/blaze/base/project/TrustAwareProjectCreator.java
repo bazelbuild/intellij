@@ -51,7 +51,6 @@ public class TrustAwareProjectCreator implements ExtendableBazelProjectCreator {
     if (TrustedProjects.isTrustedCheckDisabled()) {
       return true;
     }
-
     var trustText = IdeBundle.message("untrusted.project.dialog.trust.button");
     var dontOpenText = IdeBundle.message("untrusted.project.open.dialog.cancel.button");
 

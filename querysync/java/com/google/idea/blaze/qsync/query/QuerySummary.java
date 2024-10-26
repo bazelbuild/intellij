@@ -73,7 +73,7 @@ public abstract class QuerySummary {
    * <p>Whenever changing the logic in this class such that the Query.Summary proto contents will be
    * different for the same input, this version should be incremented.
    */
-  @VisibleForTesting public static final int PROTO_VERSION = 9;
+  @VisibleForTesting public static final int PROTO_VERSION = 10;
 
   public static final QuerySummary EMPTY =
       create(Query.Summary.newBuilder().setVersion(PROTO_VERSION).build());
@@ -112,6 +112,11 @@ public abstract class QuerySummary {
           "instruments",
           // From android_instrumentation_test rules
           "test_app");
+
+  // Source attributes.
+  private static final ImmutableSet<String> SRCS_ATTRIBUTES =
+      ImmutableSet.of(
+          "srcs", "java_srcs", "kotlin_srcs", "java_test_srcs", "kotlin_test_srcs", "common_srcs");
 
   public abstract Query.Summary proto();
 
@@ -156,7 +161,7 @@ public abstract class QuerySummary {
           Query.Rule.Builder rule =
               Query.Rule.newBuilder().setRuleClass(target.getRule().getRuleClass());
           for (Build.Attribute a : target.getRule().getAttributeList()) {
-            if (a.getName().equals("srcs")) {
+            if (SRCS_ATTRIBUTES.contains(a.getName())) {
               rule.addAllSources(a.getStringListValueList());
             } else if (a.getName().equals("hdrs")) {
               rule.addAllHdrs(a.getStringListValueList());
@@ -331,7 +336,8 @@ public abstract class QuerySummary {
 
     public Builder putAllPackagesWithErrors(Set<Path> packagesWithErrors) {
       packagesWithErrors.stream()
-          .map(p -> Label.fromPackageAndName(p, "BUILD"))
+          // TODO: b/334110669 - Consider multi workspace-builds.
+          .map(p -> Label.fromWorkspacePackageAndName(Label.ROOT_WORKSPACE, p, "BUILD"))
           .map(Label::toString)
           .forEach(builder::addPackagesWithErrors);
       return this;

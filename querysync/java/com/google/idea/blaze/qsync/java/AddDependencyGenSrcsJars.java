@@ -27,6 +27,7 @@ import com.google.idea.blaze.qsync.deps.JavaArtifactInfo;
 import com.google.idea.blaze.qsync.deps.ProjectProtoUpdate;
 import com.google.idea.blaze.qsync.deps.ProjectProtoUpdateOperation;
 import com.google.idea.blaze.qsync.deps.TargetBuildInfo;
+import com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder.JarPath;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto.LibrarySource;
@@ -77,9 +78,12 @@ public class AddDependencyGenSrcsJars implements ProjectProtoUpdateOperation {
 
         if (projectArtifact != null) {
           srcJarInnerPathFinder
-              .findInnerJarPaths(genSrc.blockingGetFrom(buildCache), EMPTY_PACKAGE_PREFIXES_ONLY)
+              .findInnerJarPaths(
+                  genSrc.blockingGetFrom(buildCache),
+                  EMPTY_PACKAGE_PREFIXES_ONLY,
+                  genSrc.path().toString())
               .stream()
-              .map(p -> p.path)
+              .map(JarPath::path)
               .map(projectArtifact::withInnerJarPath)
               .map(ProjectPath::toProto)
               .map(LibrarySource.newBuilder()::setSrcjar)

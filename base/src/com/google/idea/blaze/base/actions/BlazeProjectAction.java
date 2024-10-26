@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
-import org.jetbrains.annotations.NotNull;
 
 /** Base class action that hides for non-blaze projects. */
 public abstract class BlazeProjectAction extends AnAction {

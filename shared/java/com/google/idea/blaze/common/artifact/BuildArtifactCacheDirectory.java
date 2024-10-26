@@ -20,21 +20,18 @@ import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
-import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
-import com.google.common.io.ByteSource;
+import com.google.common.collect.Sets;
 import com.google.common.io.MoreFiles;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.artifact.ArtifactFetcher.ArtifactDestination;
 import com.google.idea.blaze.exception.BuildException;
@@ -50,10 +47,11 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Supplier;
+import java.util.concurrent.locks.StampedLock;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
 
@@ -67,9 +65,20 @@ import javax.annotation.Nullable;
  * Context)}, provides access to their contents as a local file via {@link #get(String)}.
  *
  * <p>Access times are updated when artifacts downloads are requested, and when the contents are
- * requested, to enable unused cache entries to be cleaned up later on (not implemented yet).
+ * requested, to enable unused cache entries to be cleaned up later on.
  *
  * <p>An instance of this class is expected to be the sole user of the provided cache directory.
+ *
+ * <p>When artifacts are added to the cache, a request to clean the cache is made via {@link
+ * CleanRequest#request()}. That should result in a call back to {@link #clean(long, Duration)} at
+ * an appropriate point (e.g. when the IDE is idle and after a minimum delay of 1 minute.
+ *
+ * <p>A clean request may be cancelled via a call to {@link CleanRequest#cancel()}, the
+ * implementation should ensure that {@link #clean(long, Duration)} is not then called until a new
+ * request is made.
+ *
+ * <p>This class will ensure that a clean request is never active while we are fetching new
+ * artifacts into the cache.
  */
 class BuildArtifactCacheDirectory implements BuildArtifactCache {
 
@@ -79,22 +88,32 @@ class BuildArtifactCacheDirectory implements BuildArtifactCache {
   private final Path cacheDir;
   private final ListeningExecutorService executor;
   private final ArtifactFetcher<OutputArtifact> fetcher;
+  private final CleanRequest cleanRequest;
+  volatile boolean needClean = false;
 
   private final Map<String, ListenableFuture<?>> activeFetches;
 
   /**
    * Read-write lock where the "read" is also used to adding items to the cache. The write is only
-   * acquired for cleaning the cache whcih allows all other functionality to assume that cache items
+   * acquired for cleaning the cache which allows all other functionality to assume that cache items
    * are never deleted.
+   *
+   * <p>Note, we use a {@link StampedLock} to allow the lock to be released from a different thread
+   * from that it wac acquired by. This is necessary as the fetch operation uses a future and we use
+   * a future callback to ensure that the lock is released when it is done, see {@link #startFetch}.
    */
-  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+  private final StampedLock lock = new StampedLock();
 
   public BuildArtifactCacheDirectory(
-      Path cacheDir, ArtifactFetcher<OutputArtifact> fetcher, ListeningExecutorService executor)
+      Path cacheDir,
+      ArtifactFetcher<OutputArtifact> fetcher,
+      ListeningExecutorService executor,
+      CleanRequest cleanRequest)
       throws BuildException {
     this.cacheDir = cacheDir;
     this.fetcher = fetcher;
     this.executor = executor;
+    this.cleanRequest = cleanRequest;
     this.activeFetches = Maps.newHashMap();
 
     if (!Files.exists(cacheDir)) {
@@ -111,12 +130,12 @@ class BuildArtifactCacheDirectory implements BuildArtifactCache {
 
   @VisibleForTesting
   int readLockCount() {
-    return lock.getReadHoldCount();
+    return lock.getReadLockCount();
   }
 
   @VisibleForTesting
   int writeLockCount() {
-    return lock.getWriteHoldCount();
+    return lock.isWriteLocked() ? 1 : 0;
   }
 
   @VisibleForTesting
@@ -151,16 +170,27 @@ class BuildArtifactCacheDirectory implements BuildArtifactCache {
    * java.util.concurrent.ExecutorService#submit(Callable)}. }
    */
   private Void updateMetadata(String digest, Instant lastAccess) throws IOException {
-    // note, when we pass null in here, the existing timestamps are left unchanged:
-    Files.getFileAttributeView(artifactPath(digest), BasicFileAttributeView.class)
-        .setTimes(
-            /* lastModifiedTime */ null,
-            /* lastAccessTime */ FileTime.from(lastAccess),
-            /* createTime */ null);
-    return null;
+    long stamp = lock.readLock();
+    try {
+      // note, when we pass null in here, the existing timestamps are left unchanged:
+      Files.getFileAttributeView(artifactPath(digest), BasicFileAttributeView.class)
+          .setTimes(
+              /* lastModifiedTime */ null,
+              /* lastAccessTime */ FileTime.from(lastAccess),
+              /* createTime */ null);
+      return null;
+    } finally {
+      lock.unlockRead(stamp);
+    }
   }
 
-  /** Updates the metadata for many files concurrently. */
+  /**
+   * Updates metadata for a set of artifacts.
+   *
+   * @param artifacts The affected artifacts.
+   * @param lastAccess The last access time to set.
+   * @return A future of the update operation.
+   */
   private ListenableFuture<?> updateMetadata(
       ImmutableCollection<OutputArtifact> artifacts, Instant lastAccess) {
     return Futures.allAsList(
@@ -170,90 +200,44 @@ class BuildArtifactCacheDirectory implements BuildArtifactCache {
   }
 
   /**
-   * Marks a set of artifacts as being actively fetched while an asynchronous process is running.
-   *
-   * @param artifacts The affected artifacts
-   * @param done The fetch future. Once this future completes, and artifacts will be un-marked as
-   *     being actively fetched.
-   * @return The passed future, for convenience.
-   */
-  @CanIgnoreReturnValue
-  private ListenableFuture<?> markActiveUntilComplete(
-      ImmutableCollection<OutputArtifact> artifacts, ListenableFuture<?> done) {
-    ImmutableSet<String> digests =
-        artifacts.stream().map(OutputArtifact::getDigest).collect(toImmutableSet());
-    synchronized (activeFetches) {
-      // mark the  artifacts as being actively fetched. If they are requested in the meantime,
-      // the future will be used to wait until the fetch is complete.
-      digests.forEach(d -> activeFetches.put(d, done));
-      // and when that's done, un-mark them as active fetches:
-      done.addListener(
-          () -> {
-            synchronized (activeFetches) {
-              activeFetches.keySet().removeAll(digests);
-            }
-          },
-          executor);
-    }
-    return done;
-  }
-
-  /**
-   * Updates metadata for a set of artifacts, marking that as active while this takes place, to
-   * avoid any potential race conditions.
-   *
-   * @param artifacts The affected artifacts.
-   * @param lastAccess The last access time to set.
-   * @return A future of the update operation.
-   */
-  private ListenableFuture<?> safeUpdateMetadata(
-      ImmutableCollection<OutputArtifact> artifacts, Instant lastAccess) {
-    ListenableFuture<?> update = updateMetadata(artifacts, lastAccess);
-    return markActiveUntilComplete(artifacts, update);
-  }
-
-  /**
    * Kicks off an artifacts fetch, marking the artifacts as active while it's running.
    *
-   * @param artifacts Artifatcs to fetch.
+   * @param artifacts Artifacts to fetch.
    * @param accessTime The time that the artifacts were requested.
    * @param context Context
    * @return A future for the fetch operation.
    */
   private ListenableFuture<?> startFetch(
       ImmutableCollection<OutputArtifact> artifacts, Instant accessTime, Context<?> context) {
-
-    // kick off the copy process for new artifacts:
-    ListenableFuture<?> newFetch =
-        fetcher.copy(
-            artifacts.stream()
-                .distinct()
-                .collect(toImmutableMap(Functions.identity(), this::artifactDestination)),
-            context);
-    // when that's done, set their metadata:
-    ListenableFuture<?> done =
-        Futures.transformAsync(newFetch, unused -> updateMetadata(artifacts, accessTime), executor);
-
-    return markActiveUntilComplete(artifacts, done);
-  }
-
-  private <T> Optional<ListenableFuture<T>> performWithReadLock(
-      Supplier<Optional<ListenableFuture<T>>> method) {
-    Lock readLock = lock.readLock();
-    readLock.lock();
+    // we re-acquire the lock (it is also acquired by our caller) to ensure that we continue holding
+    // it until the fetch is done.
+    long stamp = lock.readLock();
+    ListenableFuture<?> done = null;
     try {
-      Optional<ListenableFuture<T>> future = method.get();
-      if (future.isEmpty()) {
-        return future;
-      }
-      future.get().addListener(readLock::unlock, directExecutor());
-      readLock = null;
-      return future;
+      ListenableFuture<?> newFetch =
+          fetcher.copy(
+              artifacts.stream()
+                  .distinct()
+                  .collect(toImmutableMap(Functions.identity(), this::artifactDestination)),
+              context);
+      // when that's done, update their metadata:
+      done =
+          Futures.transformAsync(
+              newFetch, unused -> updateMetadata(artifacts, accessTime), executor);
+      done.addListener(() -> lock.unlockRead(stamp), directExecutor());
     } finally {
-      if (readLock != null) {
-        readLock.unlock();
+      // failsafe to ensure we always release the lock:
+      if (done == null) {
+        lock.unlockRead(stamp);
       }
     }
+    return done;
+  }
+
+  /** Helper function to filter a stream based on uniqueness of a property. */
+  private static <T, K> Predicate<T> distinctBy(Function<? super T, K> keyExtractor) {
+    Set<K> seen = Sets.newConcurrentHashSet();
+    return t -> seen.add(keyExtractor.apply(t));
   }
 
   /**
@@ -266,42 +250,82 @@ class BuildArtifactCacheDirectory implements BuildArtifactCache {
   @Override
   public ListenableFuture<?> addAll(
       ImmutableCollection<OutputArtifact> artifacts, Context<?> context) {
-    return performWithReadLock(() -> Optional.of(performAdd(artifacts, context))).get();
+    // acquire the read lock to ensure that no clean is ongoing:
+    long stamp = lock.readLock();
+    try {
+      synchronized (activeFetches) {
+        Instant accessTime = Instant.now();
+        // filter out any duplicate artifacts, and those for which there is already a fetch pending:
+        ImmutableList<OutputArtifact> allArtifacts =
+            artifacts.stream()
+                .filter(distinctBy(OutputArtifact::getDigest))
+                .filter(a -> !activeFetches.containsKey(a.getDigest()))
+                .collect(toImmutableList());
+
+        // group them based on whether the artifact is already cached
+        ImmutableListMultimap<Boolean, OutputArtifact> artifactsByPresence =
+            Multimaps.index(allArtifacts, this::contains);
+
+        // Fetch absent artifacts
+        ListenableFuture<?> fetch = startFetch(artifactsByPresence.get(false), accessTime, context);
+        fetch.addListener(() -> unmarkAsActive(artifactsByPresence.get(false)), directExecutor());
+        context.addCancellationHandler(() -> fetch.cancel(false));
+
+        // mark the  artifacts as being actively fetched. If they are requested in the meantime,
+        // the future will be used to wait until the fetch is complete.
+        // They are unmarked by the future listener above.
+        markAsActive(artifactsByPresence.get(false), fetch);
+
+        // Update metadata for present artifacts
+        ListenableFuture<?> metadataUpdate =
+            Futures.allAsList(
+                artifactsByPresence.get(true).stream()
+                    .map(OutputArtifact::getDigest)
+                    .map(digest -> executor.submit(() -> updateMetadata(digest, accessTime)))
+                    .collect(toImmutableList()));
+        context.addCancellationHandler(() -> metadataUpdate.cancel(false));
+
+        needClean = true;
+        return fetch;
+      }
+    } finally {
+      lock.unlockRead(stamp);
+    }
   }
 
-  private ListenableFuture<?> performAdd(
-      ImmutableCollection<OutputArtifact> artifacts, Context<?> context) {
+  private void markAsActive(Iterable<OutputArtifact> artifacts, ListenableFuture<?> future) {
     synchronized (activeFetches) {
-      Instant accessTime = Instant.now();
-      // filter out any artifacts for which there is already a fetch pending:
-      ImmutableList<OutputArtifact> allArtifacts =
-          artifacts.stream()
-              .filter(a -> !activeFetches.containsKey(a.getDigest()))
-              .collect(toImmutableList());
+      cleanRequest.cancel();
+      artifacts.forEach(a -> activeFetches.put(a.getDigest(), future));
+    }
+  }
 
-      // group them based on whether the artifact is already cached
-      ImmutableListMultimap<Boolean, OutputArtifact> artifactsByPresence =
-          Multimaps.index(allArtifacts, this::contains);
-
-      // Fetch absent artifacts
-      ListenableFuture<?> fetch = startFetch(artifactsByPresence.get(false), accessTime, context);
-
-      // Update the metadata of present artifacts
-      ListenableFuture<?> metadataUpdate =
-          safeUpdateMetadata(artifactsByPresence.get(true), accessTime);
-
-      return Futures.allAsList(fetch, metadataUpdate);
+  private void unmarkAsActive(ImmutableCollection<OutputArtifact> artifacts) {
+    boolean empty;
+    synchronized (activeFetches) {
+      activeFetches
+          .keySet()
+          .removeAll(artifacts.stream().map(OutputArtifact::getDigest).collect(toImmutableSet()));
+      empty = activeFetches.isEmpty();
+    }
+    if (empty && needClean) {
+      cleanRequest.request();
     }
   }
 
   @Nullable
-  private Path getArtifactIfPresent(String digest) {
-    Path artifactPath = artifactPath(digest);
-    if (!Files.exists(artifactPath)) {
-      return null;
+  private Path getArtifactIfPresent(String digest) throws IOException {
+    long stamp = lock.readLock();
+    try {
+      Path artifactPath = artifactPath(digest);
+      if (!Files.exists(artifactPath)) {
+        return null;
+      }
+      updateMetadata(digest, Instant.now());
+      return artifactPath;
+    } finally {
+      lock.unlockRead(stamp);
     }
-    ListenableFuture<?> unused = executor.submit(() -> updateMetadata(digest, Instant.now()));
-    return artifactPath;
   }
 
   /**
@@ -312,25 +336,24 @@ class BuildArtifactCacheDirectory implements BuildArtifactCache {
    *     deleted since then.
    */
   @Override
-  public Optional<ListenableFuture<ByteSource>> get(String digest) {
-    return performWithReadLock(() -> performGet(digest));
-  }
-
-  public Optional<ListenableFuture<ByteSource>> performGet(String digest) {
+  public Optional<ListenableFuture<CachedArtifact>> get(String digest) {
     ListenableFuture<?> activeFetch;
     synchronized (activeFetches) {
       activeFetch = activeFetches.get(digest);
     }
-    Path artifactPath = artifactPath(digest);
     if (activeFetch == null) {
-      return Optional.ofNullable(getArtifactIfPresent(digest))
-          .map(MoreFiles::asByteSource)
-          .map(Futures::immediateFuture);
+      try {
+        return Optional.ofNullable(getArtifactIfPresent(digest))
+            .map(CachedArtifact::new)
+            .map(Futures::immediateFuture);
+      } catch (IOException e) {
+        return Optional.of(Futures.immediateFailedFuture(e));
+      }
     } else {
-      ListenableFuture<?> unused = executor.submit(() -> updateMetadata(digest, Instant.now()));
+      Path artifactPath = artifactPath(digest);
       return Optional.of(
           Futures.transform(
-              activeFetch, unused2 -> MoreFiles.asByteSource(artifactPath), directExecutor()));
+              activeFetch, unused2 -> new CachedArtifact(artifactPath), directExecutor()));
     }
   }
 
@@ -341,18 +364,7 @@ class BuildArtifactCacheDirectory implements BuildArtifactCache {
     updateMetadata(digest, lastAccessTime);
   }
 
-  @AutoValue
-  abstract static class Entry {
-    abstract Path path();
-
-    abstract FileTime lastAccessTime();
-
-    abstract long size();
-
-    static Entry create(Path p, FileTime lastAccessTime, long size) {
-      return new AutoValue_BuildArtifactCacheDirectory_Entry(p, lastAccessTime, size);
-    }
-  }
+  private record Entry(Path path, FileTime lastAccessTime, long size) {}
 
   private ImmutableList<Path> list() throws IOException {
     return MoreFiles.listFiles(cacheDir);
@@ -368,21 +380,23 @@ class BuildArtifactCacheDirectory implements BuildArtifactCache {
     return readAccessTime(artifactPath(digest));
   }
 
-  FileTime readAccessTime(Path entry) throws IOException {
+  private FileTime readAccessTime(Path entry) throws IOException {
     return Files.getFileAttributeView(entry, BasicFileAttributeView.class)
         .readAttributes()
         .lastAccessTime();
   }
 
   @Override
-  public void clean() throws IOException {
-    Lock writeLock = lock.writeLock();
-    writeLock.lock();
+  public void clean(long maxTargetSizeBytes, Duration minKeepDuration) throws BuildException {
+    // Ensure that no artifacts are added or read from the cache while we're cleaning:
+    long stamp = lock.writeLock();
     try {
-      // We keep 1GB of artifacts, or any accessed in the last 24 hours if this is more:
-      clean(1024L * 1024L * 1024L, Instant.now().minus(Duration.ofHours(24)));
+      needClean = false;
+      clean(maxTargetSizeBytes, Instant.now().minus(minKeepDuration));
+    } catch (IOException e) {
+      throw new BuildException("Failed to clean the build cache at " + cacheDir, e);
     } finally {
-      writeLock.unlock();
+      lock.unlockWrite(stamp);
     }
   }
 
@@ -394,7 +408,7 @@ class BuildArtifactCacheDirectory implements BuildArtifactCache {
     PriorityQueue<Entry> queue = new PriorityQueue<>(Comparator.comparing(Entry::lastAccessTime));
     for (Path p : entries) {
       try {
-        Entry e = Entry.create(p, readAccessTime(p), Files.size(p));
+        Entry e = new Entry(p, readAccessTime(p), Files.size(p));
         queue.add(e);
         totalSize += e.size();
       } catch (IOException e) {
@@ -406,6 +420,7 @@ class BuildArtifactCacheDirectory implements BuildArtifactCache {
     if (failed > 0) {
       logger.warning("Failed to read attributes from " + failed + " cache files when cleaning");
     }
+    logger.info("Cleaning cache " + cacheDir + "; current size = " + totalSize);
     long remainingSize = totalSize;
     while (!queue.isEmpty()) {
       if (remainingSize <= maxTargetSize) {
@@ -427,6 +442,18 @@ class BuildArtifactCacheDirectory implements BuildArtifactCache {
       Entry toDelete = queue.poll();
       remainingSize -= toDelete.size();
       Files.delete(toDelete.path());
+    }
+  }
+
+  public void purge() throws BuildException {
+    // Ensure that no artifacts are added or read from the cache while we're cleaning:
+    long stamp = lock.writeLock();
+    try {
+      MoreFiles.deleteDirectoryContents(cacheDir);
+    } catch (IOException e) {
+      throw new BuildException("Failed to purge the build artifact cache", e);
+    } finally {
+      lock.unlockWrite(stamp);
     }
   }
 }

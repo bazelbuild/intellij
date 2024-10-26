@@ -16,16 +16,20 @@ java_library(
     srcs = glob(["src/**/*.java"]),
     visibility = COMMON_PLUGINS_VISIBILITY,
     deps = [
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
 intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
+    tags = ["noci:studio-win"],
     test_package_root = "com.google.idea.common.ui.properties",
     visibility = DEFAULT_TEST_VISIBILITY,
+    runtime_deps = [
+        "//intellij_platform_sdk:guava",
+    ],
     deps = [
         ":properties",
         "//intellij_platform_sdk:test_libs",

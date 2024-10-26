@@ -29,7 +29,8 @@ import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.NoopContext;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.common.artifact.MockArtifact;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.QuerySyncTestUtils;
 import com.google.idea.blaze.qsync.TestDataSyncRunner;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
@@ -63,19 +64,19 @@ public class AddProjectGenSrcsTest {
   @Mock Context<?> context;
 
   private final TestDataSyncRunner syncer =
-      new TestDataSyncRunner(
-          new NoopContext(), QuerySyncTestUtils.PATH_INFERRING_PACKAGE_READER, true);
+      new TestDataSyncRunner(new NoopContext(), QuerySyncTestUtils.PATH_INFERRING_PACKAGE_READER);
 
   @Test
   public void generated_source_added() throws Exception {
     TestData testData = TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY;
-    BlazeProjectSnapshot original = syncer.sync(testData);
+    QuerySyncProjectSnapshot original = syncer.sync(testData);
 
     when(cache.get("gensrcdigest"))
         .thenReturn(
             Optional.of(
                 immediateFuture(
-                    ByteSource.wrap("package com.org;\nclass Class {}".getBytes(UTF_8)))));
+                    new MockArtifact(
+                        ByteSource.wrap("package com.org;\nclass Class {}".getBytes(UTF_8))))));
 
     TargetBuildInfo builtDep =
         TargetBuildInfo.forJavaTarget(
@@ -110,20 +111,20 @@ public class AddProjectGenSrcsTest {
                 Joiner.on("\n")
                     .join(
                         "root {",
-                        "      path: \"gensrc/java\"",
+                        "      path: \".bazel/gensrc/java\"",
                         "      base: PROJECT",
                         "    }",
                         "    sources {",
                         "      is_generated: true",
                         "      project_path {",
-                        "        path: \"gensrc/java\"",
+                        "        path: \".bazel/gensrc/java\"",
                         "        base: PROJECT",
                         "      }",
                         "    }"),
                 ContentEntry.class));
     assertThat(newProject.getArtifactDirectories().getDirectoriesMap())
         .containsEntry(
-            "gensrc/java",
+            ".bazel/gensrc/java",
             TextFormat.parse(
                 Joiner.on("\n")
                     .join(
@@ -144,18 +145,20 @@ public class AddProjectGenSrcsTest {
   @Test
   public void conflict_last_build_taken() throws Exception {
     TestData testData = TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY;
-    BlazeProjectSnapshot original = syncer.sync(testData);
+    QuerySyncProjectSnapshot original = syncer.sync(testData);
 
     when(cache.get("gensrc1"))
         .thenReturn(
             Optional.of(
                 immediateFuture(
-                    ByteSource.wrap("package com.org;\nclass Class {}".getBytes(UTF_8)))));
+                    new MockArtifact(
+                        ByteSource.wrap("package com.org;\nclass Class {}".getBytes(UTF_8))))));
     when(cache.get("gensrc2"))
         .thenReturn(
             Optional.of(
                 immediateFuture(
-                    ByteSource.wrap("package com.org;\nclass Class {}".getBytes(UTF_8)))));
+                    new MockArtifact(
+                        ByteSource.wrap("package com.org;\nclass Class {}".getBytes(UTF_8))))));
 
     Label testLabel = testData.getAssumedOnlyLabel();
 
@@ -207,20 +210,20 @@ public class AddProjectGenSrcsTest {
                 Joiner.on("\n")
                     .join(
                         "root {",
-                        "      path: \"gensrc/java\"",
+                        "      path: \".bazel/gensrc/java\"",
                         "      base: PROJECT",
                         "    }",
                         "    sources {",
                         "      is_generated: true",
                         "      project_path {",
-                        "        path: \"gensrc/java\"",
+                        "        path: \".bazel/gensrc/java\"",
                         "        base: PROJECT",
                         "      }",
                         "    }"),
                 ContentEntry.class));
     assertThat(newProject.getArtifactDirectories().getDirectoriesMap())
         .containsEntry(
-            "gensrc/java",
+            ".bazel/gensrc/java",
             TextFormat.parse(
                 Joiner.on("\n")
                     .join(
@@ -236,5 +239,57 @@ public class AddProjectGenSrcsTest {
                         "    }"),
                 ArtifactDirectoryContents.class));
     verify(context).setHasWarnings();
+  }
+
+  @Test
+  public void conflict_same_digest_ignored() throws Exception {
+    TestData testData = TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY;
+    QuerySyncProjectSnapshot original = syncer.sync(testData);
+    Label testLabel = testData.getAssumedOnlyLabel();
+
+    when(cache.get("samedigest"))
+        .thenReturn(
+            Optional.of(
+                immediateFuture(
+                    new MockArtifact(
+                        ByteSource.wrap("package com.org;\nclass Class {}".getBytes(UTF_8))))));
+
+    TargetBuildInfo genSrc1 =
+        TargetBuildInfo.forJavaTarget(
+            JavaArtifactInfo.empty(testLabel.siblingWithName("genSrc1")).toBuilder()
+                .setGenSrcs(
+                    ImmutableList.of(
+                        BuildArtifact.create(
+                            "samedigest",
+                            Path.of("output/path/com/org/Class.java"),
+                            testLabel.siblingWithName("genSrc1"))))
+                .build(),
+            DependencyBuildContext.create(
+                "abc-def", Instant.now().minusSeconds(60), Optional.empty()));
+
+    Label genSrc2Label = testData.getAssumedOnlyLabel().siblingWithName("genSrc2");
+    TargetBuildInfo genSrc2 =
+        TargetBuildInfo.forJavaTarget(
+            JavaArtifactInfo.empty(testLabel.siblingWithName("genSrc2")).toBuilder()
+                .setGenSrcs(
+                    ImmutableList.of(
+                        BuildArtifact.create(
+                            "samedigest",
+                            Path.of("output/otherpath/com/org/Class.java"),
+                            genSrc2Label)))
+                .build(),
+            DependencyBuildContext.create("abc-def", Instant.now(), Optional.empty()));
+
+    AddProjectGenSrcs addGenSrcs =
+        new AddProjectGenSrcs(
+            () -> ImmutableList.of(genSrc1, genSrc2),
+            original.queryData().projectDefinition(),
+            cache,
+            new PackageStatementParser());
+
+    ProjectProtoUpdate update =
+        new ProjectProtoUpdate(original.project(), original.graph(), context);
+    addGenSrcs.update(update);
+    verify(context, never()).setHasWarnings();
   }
 }

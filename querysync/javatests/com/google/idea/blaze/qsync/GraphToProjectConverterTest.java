@@ -34,6 +34,7 @@ import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.testdata.BuildGraphs;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.nio.file.Path;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -602,13 +603,13 @@ public class GraphToProjectConverterTest {
         .isEqualTo(
             ProjectPath.newBuilder()
                 .setBase(Base.WORKSPACE)
-                .setPath(
-                    "querysync/javatests/com/google/idea/blaze/qsync/testdata/nodeps")
+                .setPath(TestData.ROOT.resolve("nodeps").toString())
                 .build());
     assertThat(sourceFolder.getIsTest()).isTrue();
   }
 
   @Test
+  @Ignore("b/336967556")
   public void testCreateProject_protoInStandaloneFolder_createsSourceFolder() throws Exception {
     ImmutableMap<Path, String> sourcePackages = ImmutableMap.of();
 
@@ -678,6 +679,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
+  @Ignore("b/336967556")
   public void testProtoSourceFolders_whenSubfolderOfJavaRoot_notCreated() throws Exception {
 
     ImmutableMap<Path, String> sourcePackages =
@@ -710,6 +712,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
+  @Ignore("b/336967556")
   public void testNonJavaSourceFolders_whenSubfolderOfJavaRootAtContentEntry_notCreated()
       throws Exception {
 
@@ -767,5 +770,22 @@ public class GraphToProjectConverterTest {
     ProjectProto.Project project = converter.createProject(buildGraphData);
 
     assertThat(project.getActiveLanguagesList()).contains(LanguageClass.LANGUAGE_CLASS_JAVA);
+  }
+
+  @Test
+  public void testActiveLanguages_cc() throws Exception {
+    Path workspaceImportDirectory = TestData.ROOT.resolve("cc");
+    GraphToProjectConverter converter =
+        GraphToProjectConverters.builder()
+            .setProjectIncludes(ImmutableSet.of(workspaceImportDirectory))
+            .build();
+
+    BuildGraphData buildGraphData =
+        new BlazeQueryParser(
+                getQuerySummary(TestData.CC_LIBRARY_QUERY), NOOP_CONTEXT, ImmutableSet.of())
+            .parse();
+    ProjectProto.Project project = converter.createProject(buildGraphData);
+
+    assertThat(project.getActiveLanguagesList()).contains(LanguageClass.LANGUAGE_CLASS_CC);
   }
 }

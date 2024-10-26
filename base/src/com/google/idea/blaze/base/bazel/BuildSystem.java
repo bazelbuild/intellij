@@ -46,8 +46,6 @@ public interface BuildSystem {
   enum SyncStrategy {
     /** Never parallelize sync builds. */
     SERIAL,
-    /* Never parallelize and expand builds */
-    SERIAL_NOT_EXPAND,
     /** Parallelize sync builds if it's deemed likely that doing so will be faster. */
     DECIDE_AUTOMATICALLY,
     /** Always parallelize sync builds. */
@@ -97,6 +95,7 @@ public interface BuildSystem {
 
   /** Get a Blaze invoker. */
   BuildInvoker getBuildInvoker(Project project, BlazeContext context);
+
   /** Get a Blaze invoker specific to executor type and run config. */
   default BuildInvoker getBuildInvoker(
       Project project, BlazeContext context, ExecutorType executorType, Kind targetKind) {

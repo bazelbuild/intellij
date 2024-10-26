@@ -16,13 +16,12 @@
 package com.google.idea.blaze.common.artifact;
 
 import com.google.common.collect.ImmutableCollection;
-import com.google.common.io.ByteSource;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.exception.BuildException;
-import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Optional;
 
 /**
@@ -39,18 +38,46 @@ import java.util.Optional;
  */
 public interface BuildArtifactCache {
 
+  /**
+   * Interface used to request cleaning when the IDE is idle.
+   *
+   * <p>The cache itself will make a request to be cleaned, and IDE integration code implements it.
+   */
+  interface CleanRequest {
+
+    /**
+     * Request that {@link BuildArtifactCache#clean(long, Duration)} is called when the IDE is idle
+     * and after a delay. Any existing unfilled request if replaced by this more recent one.
+     */
+    void request();
+
+    /**
+     * Cancels any previous request to {@link #request()}.
+     *
+     * <p>This will be called if there is new cache activity (e.g. adding more items) while a clean
+     * request is active, to help ensure that a clean operation does not block a user operation such
+     * as a dependencies build.
+     *
+     * <p>The implementer should ensure that no call to {@link #clean(long, Duration)} is made after
+     * this method is called, until the next call to {@link #request()}.
+     */
+    void cancel();
+  }
+
   static BuildArtifactCache create(
-      Path cacheDir, ArtifactFetcher<OutputArtifact> fetcher, ListeningExecutorService executor)
+      Path cacheDir,
+      ArtifactFetcher<OutputArtifact> fetcher,
+      ListeningExecutorService executor,
+      CleanRequest cleanRequest)
       throws BuildException {
-    return new BuildArtifactCacheDirectory(cacheDir, fetcher, executor);
+    return new BuildArtifactCacheDirectory(cacheDir, fetcher, executor, cleanRequest);
   }
 
   /**
    * Requests that the given artifacts are added to the cache.
    *
-   * @return A future map of (digest)->(absolute path of the artifact) that will complete once all
-   *     artifacts have been added to the cache. The future will fail if we fail to add any artifact
-   *     to the cache.
+   * @return A future that will complete once all artifacts have been added to the cache. The future
+   *     will fail if we fail to add any artifact to the cache.
    */
   ListenableFuture<?> addAll(ImmutableCollection<OutputArtifact> artifacts, Context<?> context);
 
@@ -61,8 +88,20 @@ public interface BuildArtifactCache {
    *     being requested. Empty if the artifact has never been added to the cache, or has been
    *     deleted since then.
    */
-  Optional<ListenableFuture<ByteSource>> get(String digest);
+  Optional<ListenableFuture<CachedArtifact>> get(String digest);
 
-  /** Synchronously clean the cache. */
-  void clean() throws IOException;
+  /**
+   * Synchronously clean the cache.
+   *
+   * @param maxTargetSizeBytes The maximum target size of the cache. Nothing will be deleted if the
+   *     total cache size is smaller than this.
+   * @param minKeepDuration The minimum duration that artifacts should be kept in the cache. This
+   *     constraint may result in {@code maxTargetSizeBytes} being exceeded. The age of an artifact
+   *     is determined by the time passed since it was added or last accessed via {@link
+   *     #get(String)}.
+   */
+  void clean(long maxTargetSizeBytes, Duration minKeepDuration) throws BuildException;
+
+  /** Remove all items from the cache. */
+  void purge() throws BuildException;
 }

@@ -77,6 +77,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
         "  src/main/kotlin/com/google",
         "targets:",
         "  //src/main/kotlin/com/google:lib",
+        "workspace_type: java",
         "additional_languages:",
         "  kotlin");
 
@@ -153,6 +154,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
         "  src/main/kotlin/com/google",
         "targets:",
         "  //src/main/kotlin/com/google:lib",
+        "workspace_type: java",
         "additional_languages:",
         "  kotlin");
 
@@ -216,6 +218,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
         "  src/main/kotlin/com/google",
         "targets:",
         "  //src/main/kotlin/com/google:lib",
+        "workspace_type: java",
         "additional_languages:",
         "  kotlin");
 
@@ -238,6 +241,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel("//kotlinsdk:stdlib")
+                    .setKind("java_import")
                     .setJavaInfo(
                         JavaIdeInfo.builder()
                             .addJar(

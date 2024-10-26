@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.google.idea.blaze.base.lang.buildfile.findusages;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -25,15 +24,9 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import java.io.File;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import org.junit.Test;

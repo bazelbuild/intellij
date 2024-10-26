@@ -1,3 +1,7 @@
+#
+# Description:
+# Proto dependencies from bazel.
+#
 load("@protobuf//bazel:java_proto_library.bzl", "java_proto_library")
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_java//java:defs.bzl", "java_library")
@@ -7,11 +11,6 @@ load(
     "PLUGIN_PACKAGES_VISIBILITY",
     "create_proto_visibility_group",
 )
-
-#
-# Description:
-# Proto dependencies from bazel.
-#
 load(
     "//intellij_platform_sdk:build_defs.bzl",
     "combine_visibilities",
@@ -86,24 +85,6 @@ java_proto_library(
 )
 
 proto_library(
-    name = "artifact_tracker_data_proto",
-    srcs = ["artifact_tracker_data.proto"],
-    deps = [
-        "//querysync/java/com/google/idea/blaze/qsync/cc:cc_compilation_info_proto",
-        "//querysync/java/com/google/idea/blaze/qsync/java:java_target_info",
-    ],
-)
-
-java_proto_library(
-    name = "artifact_tracker_data_java_proto",
-    visibility = combine_visibilities(
-        ASPECT_PROTO_VISIBILITY,
-        PLUGIN_PACKAGES_VISIBILITY,
-    ),
-    deps = [":artifact_tracker_data_proto"],
-)
-
-proto_library(
     name = "intellij_plugin_target_deploy_info_proto",
     srcs = ["intellij_plugin_target_deploy_info.proto"],
 )
@@ -119,7 +100,8 @@ java_library(
     name = "proto_deps",
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     exports = [
-        ":artifact_tracker_data_java_proto",
+        # do not sort: to get a consistent version of the protobuf-java library across all proto users
+        "@protobuf//:protobuf_java",
         ":common_java_proto",
         ":fast_build_info_java_proto",
         ":intellij_ide_info_java_proto",
@@ -131,6 +113,5 @@ java_library(
         "//third_party/bazel/src/main/protobuf:build_java_proto",
         "//third_party/bazel/src/main/protobuf:command_line_java_proto",
         "//third_party/bazel/src/main/protobuf:deps_java_proto",
-        "@protobuf//:protobuf_java",
     ],
 )

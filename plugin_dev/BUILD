@@ -24,13 +24,13 @@ java_library(
         "//base",
         "//common/experiments",
         "//common/util:transactions",
-        "//intellij_platform_sdk:devkit",  #api232
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//java",
         "//proto:proto_deps",
         "//shared",
         "//shared:artifact",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:devkit",  #api232
+        "//intellij_platform_sdk:jsr305",
         "//third_party/devkit",
     ],
 )

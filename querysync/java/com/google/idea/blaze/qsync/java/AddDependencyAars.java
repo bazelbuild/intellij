@@ -32,8 +32,9 @@ import com.google.idea.blaze.qsync.project.ProjectProto.ExternalAndroidLibrary;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectArtifact.ArtifactTransform;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.zip.ZipFile;
 
 /**
  * Adds external {@code .aar} files to the project proto as {@link ExternalAndroidLibrary}s. This
@@ -72,35 +73,32 @@ public class AddDependencyAars implements ProjectProtoUpdateOperation {
         if (aarDir == null) {
           aarDir = update.artifactDirectory(ArtifactDirectories.DEFAULT);
         }
-        String packageName = readPackageFromAarManifest(aar);
+        Optional<String> packageName = readPackageFromAarManifest(aar);
         ProjectPath dest =
             aarDir
                 .addIfNewer(aar.path(), aar, target.buildContext(), ArtifactTransform.UNZIP)
                 .orElse(null);
         if (dest != null) {
-          update
-              .workspaceModule()
-              .addAndroidExternalLibraries(
-                  ExternalAndroidLibrary.newBuilder()
-                      .setName(aar.path().toString().replace('/', '_'))
-                      .setLocation(dest.toProto())
-                      .setManifestFile(dest.resolveChild(Path.of("AndroidManifest.xml")).toProto())
-                      .setResFolder(dest.resolveChild(Path.of("res")).toProto())
-                      .setSymbolFile(dest.resolveChild(Path.of("R.txt")).toProto())
-                      .setPackageName(packageName));
+          ExternalAndroidLibrary.Builder lib =
+              ExternalAndroidLibrary.newBuilder()
+                  .setName(aar.path().toString().replace('/', '_'))
+                  .setLocation(dest.toProto())
+                  .setManifestFile(dest.resolveChild(Path.of("AndroidManifest.xml")).toProto())
+                  .setResFolder(dest.resolveChild(Path.of("res")).toProto())
+                  .setSymbolFile(dest.resolveChild(Path.of("R.txt")).toProto());
+          packageName.ifPresent(lib::setPackageName);
+          update.workspaceModule().addAndroidExternalLibraries(lib);
         }
       }
     }
   }
 
-  public String readPackageFromAarManifest(BuildArtifact aar) throws BuildException {
-    try (ZipInputStream zis =
-        new ZipInputStream(aar.blockingGetFrom(buildCache).openBufferedStream())) {
-      ZipEntry entry;
-      while ((entry = zis.getNextEntry()) != null) {
-        if (entry.getName().equals("AndroidManifest.xml")) {
-          return manifestParser.readPackageNameFrom(zis);
-        }
+  public Optional<String> readPackageFromAarManifest(BuildArtifact aar) throws BuildException {
+    try (ZipFile zip = aar.blockingGetFrom(buildCache).openAsZipFile()) {
+
+      ZipEntry entry = zip.getEntry("AndroidManifest.xml");
+      if (entry != null) {
+        return Optional.ofNullable(manifestParser.readPackageNameFrom(zip.getInputStream(entry)));
       }
     } catch (IOException e) {
       throw new BuildException(

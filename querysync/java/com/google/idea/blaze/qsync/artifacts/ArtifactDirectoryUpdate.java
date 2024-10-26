@@ -20,15 +20,16 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.io.ByteSource;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
+import com.google.idea.blaze.common.artifact.CachedArtifact;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.ArtifactDirectoryContents;
 import com.google.idea.blaze.qsync.query.PackageSet;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.google.protobuf.ExtensionRegistryLite;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,15 +38,12 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import javax.annotation.Nullable;
 
 /**
@@ -56,22 +54,28 @@ import javax.annotation.Nullable;
  */
 public class ArtifactDirectoryUpdate {
 
+  public static final BoolExperiment buildGeneratedSrcJars =
+    new BoolExperiment("qsync.build.generated.src.jars", false);
+
   private final BuildArtifactCache artifactCache;
   private final Path workspaceRoot;
   private final Path root;
   private final ArtifactDirectoryContents contents;
   private final Set<Path> updatedPaths;
+  private final FileTransform stripGeneratedSourcesTransform;
 
   public ArtifactDirectoryUpdate(
       BuildArtifactCache artifactCache,
       Path workspaceRoot,
       Path root,
-      ArtifactDirectoryContents contents) {
+      ArtifactDirectoryContents contents,
+      FileTransform stripGeneratedSourcesTransform) {
     this.artifactCache = artifactCache;
     this.workspaceRoot = workspaceRoot;
     this.root = root;
     this.contents = contents;
     updatedPaths = Sets.newHashSet();
+    this.stripGeneratedSourcesTransform = stripGeneratedSourcesTransform;
   }
 
   public void update() throws IOException {
@@ -117,15 +121,21 @@ public class ArtifactDirectoryUpdate {
       exceptions.add(e);
     }
 
-    try (OutputStream out = Files.newOutputStream(contentsProtoPath, StandardOpenOption.CREATE)) {
-      contents.writeTo(out);
-    } catch (IOException e) {
-      exceptions.add(e);
-    }
-    if (!exceptions.isEmpty()) {
-      IOException e = new IOException("Directory update for " + root + " failed");
-      exceptions.forEach(e::addSuppressed);
-      throw e;
+    if (contents.getContentsCount() == 0) {
+      // The directory is empty. Delete it.
+      Files.deleteIfExists(contentsProtoPath);
+      Files.deleteIfExists(root);
+    } else {
+      try (OutputStream out = Files.newOutputStream(contentsProtoPath, StandardOpenOption.CREATE)) {
+        contents.writeTo(out);
+      } catch (IOException e) {
+        exceptions.add(e);
+      }
+      if (!exceptions.isEmpty()) {
+        IOException e = new IOException("Directory update for " + root + " failed");
+        exceptions.forEach(e::addSuppressed);
+        throw e;
+      }
     }
   }
 
@@ -169,14 +179,20 @@ public class ArtifactDirectoryUpdate {
     }
     if (!Files.exists(dest)) {
       Files.createDirectories(dest.getParent());
-      ByteSource src = asByteSource(srcArtifact);
+      CachedArtifact src = getCachedArtifact(srcArtifact);
       switch (srcArtifact.getTransform()) {
         case COPY:
-          src.copyTo(MoreFiles.asByteSink(dest));
-          updatedPaths.add(dest);
+          updatedPaths.addAll(FileTransform.COPY.copyWithTransform(src, dest));
           break;
         case UNZIP:
-          unzip(src, dest);
+          updatedPaths.addAll(FileTransform.UNZIP.copyWithTransform(src, dest));
+          break;
+        case STRIP_SUPPORTED_GENERATED_SOURCES:
+          if (buildGeneratedSrcJars.getValue()) {
+            updatedPaths.addAll(stripGeneratedSourcesTransform.copyWithTransform(src, dest));
+          } else {
+            updatedPaths.addAll(FileTransform.COPY.copyWithTransform(src, dest));
+          }
           break;
         default:
           throw new IllegalArgumentException(
@@ -185,7 +201,8 @@ public class ArtifactDirectoryUpdate {
     }
   }
 
-  private ByteSource asByteSource(ProjectProto.ProjectArtifact artifact) throws BuildException {
+  private CachedArtifact getCachedArtifact(ProjectProto.ProjectArtifact artifact)
+      throws BuildException {
     if (artifact.hasBuildArtifact()) {
       try {
         // TODO(mathewi): Instead of throwing here, we should instead mark the associated target as
@@ -210,27 +227,9 @@ public class ArtifactDirectoryUpdate {
       if (!Files.exists(srcFile)) {
         throw new BuildException("Source file with digest " + srcFile + " not found");
       }
-      return MoreFiles.asByteSource(srcFile);
+      return new CachedArtifact(srcFile);
     } else {
       throw new IllegalArgumentException("Invalid artifact: " + artifact);
-    }
-  }
-
-  private void unzip(ByteSource src, Path destination) throws IOException {
-    Files.createDirectory(destination);
-    try (ZipInputStream zis = new ZipInputStream(src.openBufferedStream())) {
-      ZipEntry entry;
-      while ((entry = zis.getNextEntry()) != null) {
-        if (entry.isDirectory()) {
-          Files.createDirectories(destination.resolve(entry.getName()));
-        } else {
-          // Srcjars do not contain separate directory entries
-          Files.createDirectories(destination.resolve(entry.getName()).getParent());
-          Files.copy(
-              zis, destination.resolve(entry.getName()), StandardCopyOption.REPLACE_EXISTING);
-          updatedPaths.add(destination.resolve(entry.getName()));
-        }
-      }
     }
   }
 

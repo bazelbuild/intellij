@@ -15,35 +15,27 @@
  */
 package com.google.idea.blaze.android.run;
 
-import com.android.ddmlib.Client;
-import com.android.ddmlib.ClientData;
 import com.android.tools.idea.projectsystem.ApplicationProjectContext;
 import com.android.tools.idea.projectsystem.ApplicationProjectContextProvider;
+import com.google.idea.blaze.android.projectsystem.BlazeProjectSystem;
 import com.google.idea.blaze.android.projectsystem.BlazeToken;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 
 /** An implementation of {@link ApplicationProjectContextProvider} for the Blaze project system. */
 public class BazelApplicationProjectContextProvider
-    implements ApplicationProjectContextProvider, BlazeToken {
-
-  private final Project project;
-
-  public BazelApplicationProjectContextProvider(Project project) {
-    this.project = project;
-  }
+    implements ApplicationProjectContextProvider<BlazeProjectSystem>, BlazeToken {
 
   @Nullable
   @Override
-  public ApplicationProjectContext getApplicationProjectContextProvider(Client client) {
-    ClientData clientData = client.getClientData();
-    if (clientData == null) {
+  public ApplicationProjectContext computeApplicationProjectContext(
+    BlazeProjectSystem projectSystem,
+    ApplicationProjectContextProvider.RunningApplicationIdentity identity
+  ) {
+    String applicationId = identity.getHeuristicApplicationId();
+    if (applicationId == null) {
       return null;
     }
-    String androidPackageName = clientData.getPackageName();
-    if (androidPackageName == null) {
-      return null;
-    }
-    return new BazelApplicationProjectContext(project, androidPackageName);
+    return new BazelApplicationProjectContext(projectSystem.getProject(), applicationId);
   }
 }

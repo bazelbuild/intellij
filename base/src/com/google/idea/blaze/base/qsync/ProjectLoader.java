@@ -23,19 +23,17 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.Glob;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
+import com.google.idea.blaze.base.qsync.artifacts.GeneratedSourcesStripper;
 import com.google.idea.blaze.base.qsync.artifacts.ProjectArtifactStore;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetchers;
-import com.google.idea.blaze.base.qsync.cache.ArtifactTrackerImpl;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
@@ -48,10 +46,10 @@ import com.google.idea.blaze.common.artifact.ArtifactFetcher;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.BlazeProject;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshotBuilder;
 import com.google.idea.blaze.qsync.DependenciesProjectProtoUpdater;
 import com.google.idea.blaze.qsync.ProjectRefresher;
+import com.google.idea.blaze.qsync.SnapshotBuilder;
+import com.google.idea.blaze.qsync.SnapshotHolder;
 import com.google.idea.blaze.qsync.VcsStateDiffer;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.deps.NewArtifactTracker;
@@ -135,7 +133,7 @@ public class ProjectLoader {
     DependencyBuilder dependencyBuilder =
         createDependencyBuilder(
             workspaceRoot, latestProjectDef, buildSystem, vcsHandler, handledRules);
-    RenderJarBuilder renderJarBuilder = createRenderJarBuilder(buildSystem);
+    RenderJarBuilder renderJarBuilder = createRenderJarBuilder(workspaceRoot, buildSystem);
     AppInspectorBuilder appInspectorBuilder = createAppInspectorBuilder(buildSystem);
 
     Path ideProjectBasePath = Paths.get(checkNotNull(project.getBasePath()));
@@ -143,54 +141,43 @@ public class ProjectLoader {
         ProjectPath.Resolver.create(workspaceRoot.path(), ideProjectBasePath);
 
     ProjectProtoTransform.Registry projectTransformRegistry = new Registry();
-    BlazeProject graph = new BlazeProject();
+    SnapshotHolder graph = new SnapshotHolder();
     graph.addListener((c, i) -> projectModificationTracker.incModificationCount());
-    ArtifactFetcher<OutputArtifact> artifactFetcher = createArtifactFetcher();
-    FileRefresher fileRefresher = new FileRefresher(project);
     BuildArtifactCache artifactCache =
         BuildArtifactCache.create(
-            ideProjectBasePath.resolve("buildcache"), artifactFetcher, executor);
+            ideProjectBasePath.resolve(".buildcache"),
+            createArtifactFetcher(),
+            executor,
+            QuerySyncManager.getInstance(project).cacheCleanRequest());
 
     ArtifactTracker<BlazeContext> artifactTracker;
     RenderJarArtifactTracker renderJarArtifactTracker;
     AppInspectorArtifactTracker appInspectorArtifactTracker;
-    if (QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT) {
-      NewArtifactTracker<BlazeContext> tracker =
-          new NewArtifactTracker<>(
-              BlazeDataStorage.getProjectDataDir(importSettings).toPath(), artifactCache);
-      projectTransformRegistry.add(
-          new DependenciesProjectProtoUpdater(
-              tracker,
-              latestProjectDef,
-              artifactCache,
-              projectPathResolver,
-              QuerySync.ATTACH_DEP_SRCJARS::getValue));
+    NewArtifactTracker<BlazeContext> tracker =
+        new NewArtifactTracker<>(
+            BlazeDataStorage.getProjectDataDir(importSettings).toPath(), artifactCache);
+    projectTransformRegistry.add(
+        new DependenciesProjectProtoUpdater(
+            tracker,
+            latestProjectDef,
+            artifactCache,
+            projectPathResolver,
+            QuerySync.ATTACH_DEP_SRCJARS::getValue));
 
-      artifactTracker = tracker;
-      renderJarArtifactTracker = new RenderJarArtifactTrackerImpl();
-      appInspectorArtifactTracker = new AppInspectorArtifactTrackerImpl();
-    } else {
-      ArtifactTrackerImpl impl =
-          new ArtifactTrackerImpl(
-              BlazeDataStorage.getProjectDataDir(importSettings).toPath(),
-              ideProjectBasePath,
-              artifactFetcher,
-              projectPathResolver,
-              latestProjectDef,
-              projectTransformRegistry,
-              fileRefresher);
-      impl.initialize();
-      artifactTracker = impl;
-      renderJarArtifactTracker = impl;
-      appInspectorArtifactTracker = impl;
-    }
+    artifactTracker = tracker;
+    renderJarArtifactTracker = new RenderJarArtifactTrackerImpl();
+    appInspectorArtifactTracker = new AppInspectorArtifactTrackerImpl();
     RenderJarTracker renderJarTracker =
         new RenderJarTrackerImpl(graph, renderJarBuilder, renderJarArtifactTracker);
     AppInspectorTracker appInspectorTracker =
         new AppInspectorTrackerImpl(appInspectorBuilder, appInspectorArtifactTracker);
     ProjectArtifactStore artifactStore =
         new ProjectArtifactStore(
-            ideProjectBasePath, workspaceRoot.path(), artifactCache, fileRefresher);
+            ideProjectBasePath,
+            workspaceRoot.path(),
+            artifactCache,
+            new FileRefresher(project),
+            new GeneratedSourcesStripper(project));
     DependencyTracker dependencyTracker =
         new DependencyTrackerImpl(graph, dependencyBuilder, artifactTracker);
     ProjectRefresher projectRefresher =
@@ -198,15 +185,14 @@ public class ProjectLoader {
             vcsHandler.map(BlazeVcsHandler::getVcsStateDiffer).orElse(VcsStateDiffer.NONE),
             workspaceRoot.path(),
             graph::getCurrent);
-    BlazeProjectSnapshotBuilder blazeProjectSnapshotBuilder =
-        new BlazeProjectSnapshotBuilder(
+    SnapshotBuilder snapshotBuilder =
+        new SnapshotBuilder(
             executor,
             createWorkspaceRelativePackageReader(),
             workspaceRoot.path(),
             handledRules,
             QuerySync.USE_NEW_RES_DIR_LOGIC::getValue,
-            () -> !QuerySync.EXTRACT_RES_PACKAGES_AT_BUILD_TIME.getValue(),
-            QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT);
+            () -> !QuerySync.EXTRACT_RES_PACKAGES_AT_BUILD_TIME.getValue());
     QueryRunner queryRunner = createQueryRunner(buildSystem);
     ProjectQuerier projectQuerier =
         createProjectQuerier(
@@ -233,7 +219,7 @@ public class ProjectLoader {
             renderJarTracker,
             appInspectorTracker,
             projectQuerier,
-            blazeProjectSnapshotBuilder,
+            snapshotBuilder,
             latestProjectDef,
             projectViewSet,
             workspacePathResolver,
@@ -243,7 +229,7 @@ public class ProjectLoader {
             projectViewManager,
             buildSystem,
             projectTransformRegistry);
-    BlazeProjectListenerProvider.registerListenersFor(querySyncProject);
+    QuerySyncProjectListenerProvider.registerListenersFor(querySyncProject);
     projectTransformRegistry.addAll(ProjectProtoTransformProvider.getAll(querySyncProject));
 
     return querySyncProject;
@@ -275,8 +261,9 @@ public class ProjectLoader {
         project, buildSystem, projectDefinition, workspaceRoot, vcsHandler, handledRuleKinds);
   }
 
-  protected RenderJarBuilder createRenderJarBuilder(BuildSystem buildSystem) {
-    return new BazelRenderJarBuilder(project, buildSystem);
+  protected RenderJarBuilder createRenderJarBuilder(
+      WorkspaceRoot workspaceRoot, BuildSystem buildSystem) {
+    return new BazelRenderJarBuilder(project, buildSystem, workspaceRoot);
   }
 
   protected AppInspectorBuilder createAppInspectorBuilder(BuildSystem buildSystem) {

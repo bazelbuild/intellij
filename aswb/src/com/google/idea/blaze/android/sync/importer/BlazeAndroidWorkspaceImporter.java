@@ -41,10 +41,10 @@ import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.common.Output;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.build.events.MessageEvent.Kind;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
 import java.util.Collections;
@@ -327,7 +327,7 @@ public class BlazeAndroidWorkspaceImporter {
         if (mergeResourcesEnabled.getValue()) {
           messageBuilder.append("  ").append("Merging Resources...").append("\n");
           String message = messageBuilder.toString();
-          context.accept(IssueOutput.issue(Kind.INFO, message).build());
+          context.accept(IssueOutput.issue(Category.INFORMATION, message).build());
 
           result.add(mergeAndroidResourceModules(androidResourceModulesWithJavaPackage));
         } else {

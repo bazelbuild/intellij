@@ -35,6 +35,7 @@ import com.intellij.psi.PsiFile;
 import java.io.File;
 import java.util.Collection;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

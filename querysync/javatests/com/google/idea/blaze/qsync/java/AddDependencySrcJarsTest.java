@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.NoopContext;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.QuerySyncTestUtils;
 import com.google.idea.blaze.qsync.TestDataSyncRunner;
 import com.google.idea.blaze.qsync.deps.DependencyBuildContext;
@@ -58,7 +58,7 @@ public class AddDependencySrcJarsTest {
 
   private final TestDataSyncRunner syncer =
       new TestDataSyncRunner(
-          new NoopContext(), QuerySyncTestUtils.PATH_INFERRING_PACKAGE_READER, true);
+          new NoopContext(), QuerySyncTestUtils.PATH_INFERRING_PACKAGE_READER);
 
   @Before
   public void createDirs() throws IOException {
@@ -69,7 +69,7 @@ public class AddDependencySrcJarsTest {
 
   @Test
   public void no_deps_built() throws Exception {
-    BlazeProjectSnapshot original = syncer.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
+    QuerySyncProjectSnapshot original = syncer.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
 
     AddDependencySrcJars addSrcJars =
         new AddDependencySrcJars(
@@ -92,7 +92,7 @@ public class AddDependencySrcJarsTest {
 
   @Test
   public void external_srcjar_added() throws Exception {
-    BlazeProjectSnapshot original = syncer.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
+    QuerySyncProjectSnapshot original = syncer.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
 
     try (ZipOutputStream zos =
         new ZipOutputStream(
@@ -106,7 +106,7 @@ public class AddDependencySrcJarsTest {
 
     TargetBuildInfo builtDep =
         TargetBuildInfo.forJavaTarget(
-            JavaArtifactInfo.empty(Label.of("@com_google_guava_guava//jar:jar")).toBuilder()
+            JavaArtifactInfo.empty(Label.of("//java/com/google/common/collect:collect")).toBuilder()
                 .setSrcJars(ImmutableSet.of(Path.of("source/path/external.srcjar")))
                 .build(),
             DependencyBuildContext.create("abc-def", Instant.now(), Optional.empty()));

@@ -27,7 +27,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.NoopContext;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.common.artifact.MockArtifact;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.QuerySyncTestUtils;
 import com.google.idea.blaze.qsync.TestDataSyncRunner;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
@@ -63,13 +64,12 @@ public class AddDependencyGenSrcsJarsTest {
   @Mock public BuildArtifactCache cache;
 
   private final TestDataSyncRunner syncer =
-      new TestDataSyncRunner(
-          new NoopContext(), QuerySyncTestUtils.PATH_INFERRING_PACKAGE_READER, true);
+      new TestDataSyncRunner(new NoopContext(), QuerySyncTestUtils.PATH_INFERRING_PACKAGE_READER);
 
   @Test
   public void no_deps_built() throws Exception {
 
-    BlazeProjectSnapshot original = syncer.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
+    QuerySyncProjectSnapshot original = syncer.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
 
     AddDependencyGenSrcsJars addGenSrcJars =
         new AddDependencyGenSrcsJars(
@@ -95,7 +95,7 @@ public class AddDependencyGenSrcsJarsTest {
 
     TestData testProject = TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY;
 
-    BlazeProjectSnapshot original = syncer.sync(testProject);
+    QuerySyncProjectSnapshot original = syncer.sync(testProject);
 
     TargetBuildInfo builtDep =
         TargetBuildInfo.forJavaTarget(
@@ -130,7 +130,7 @@ public class AddDependencyGenSrcsJarsTest {
 
   @Test
   public void external_gensrcs_added() throws Exception {
-    BlazeProjectSnapshot original = syncer.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
+    QuerySyncProjectSnapshot original = syncer.sync(TestData.JAVA_LIBRARY_EXTERNAL_DEP_QUERY);
 
     ByteArrayOutputStream zipFile = new ByteArrayOutputStream();
     try (ZipOutputStream zos = new ZipOutputStream(zipFile)) {
@@ -139,17 +139,19 @@ public class AddDependencyGenSrcsJarsTest {
     }
 
     when(cache.get("srcjardigest"))
-        .thenReturn(Optional.of(Futures.immediateFuture(ByteSource.wrap(zipFile.toByteArray()))));
+        .thenReturn(
+            Optional.of(
+                Futures.immediateFuture(new MockArtifact(ByteSource.wrap(zipFile.toByteArray())))));
 
     TargetBuildInfo builtDep =
         TargetBuildInfo.forJavaTarget(
-            JavaArtifactInfo.empty(Label.of("@com_google_guava_guava//jar:jar")).toBuilder()
+            JavaArtifactInfo.empty(Label.of("//java/com/google/common/collect:collect")).toBuilder()
                 .setGenSrcs(
                     ImmutableList.of(
                         BuildArtifact.create(
                             "srcjardigest",
                             Path.of("output/path/to/external.srcjar"),
-                            Label.of("@com_google_guava_guava//jar:jar"))))
+                            Label.of("//java/com/google/common/collect:collect"))))
                 .build(),
             DependencyBuildContext.create("abc-def", Instant.now(), Optional.empty()));
 

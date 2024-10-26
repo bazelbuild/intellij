@@ -23,8 +23,8 @@ import com.google.common.collect.Maps;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
 import com.google.idea.blaze.qsync.project.ProjectPath;
-import com.google.idea.blaze.qsync.project.ProjectPath.Root;
 import com.google.idea.blaze.qsync.project.ProjectProto;
+import com.google.idea.blaze.qsync.project.ProjectProto.ArtifactDirectoryContents;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectArtifact.ArtifactTransform;
 import java.nio.file.Path;
 import java.util.Map;
@@ -113,21 +113,26 @@ public class ArtifactDirectoryBuilder {
     }
     Entry e = Entry.create(relativePath, source, fromBuild, transform);
     contents.put(relativePath, e);
-    return Optional.of(ProjectPath.create(Root.PROJECT, path.resolve(relativePath)));
+    return Optional.of(ProjectPath.projectRelative(path.resolve(relativePath)));
   }
 
   public boolean isEmpty() {
     return contents.isEmpty();
   }
 
-  public ProjectProto.ArtifactDirectoryContents toProto() {
-    return ProjectProto.ArtifactDirectoryContents.newBuilder()
+  private ProjectProto.ArtifactDirectoryContents addToProto(
+      ProjectProto.ArtifactDirectoryContents existing) {
+    return existing.toBuilder()
         .putAllContents(
             contents.values().stream().collect(toImmutableMap(Entry::destination, Entry::toProto)))
         .build();
   }
 
   public void addTo(ProjectProto.ArtifactDirectories.Builder directories) {
-    directories.putDirectories(path.toString(), toProto());
+    directories.putDirectories(
+        path.toString(),
+        addToProto(
+            directories.getDirectoriesOrDefault(
+                path.toString(), ArtifactDirectoryContents.getDefaultInstance())));
   }
 }

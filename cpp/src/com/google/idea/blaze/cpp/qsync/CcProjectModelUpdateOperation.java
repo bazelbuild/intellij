@@ -27,7 +27,6 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.cpp.CppSupportChecker;
 import com.google.idea.blaze.qsync.cc.FlagResolver;
 import com.google.idea.blaze.qsync.project.ProjectPath;
-import com.google.idea.blaze.qsync.project.ProjectPath.Root;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcCompilationContext;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcCompilerFlagSet;
@@ -140,7 +139,7 @@ public class CcProjectModelUpdateOperation implements Disposable {
     Path srcPath = Path.of(source.getWorkspacePath());
     CLanguageKind language =
         getLanguageKind(source.getLanguage(), "Source file " + source.getWorkspacePath());
-    srcPath = pathResolver.resolve(ProjectPath.create(Root.WORKSPACE, srcPath));
+    srcPath = pathResolver.resolve(ProjectPath.workspaceRelative(srcPath));
     if (!Files.exists(srcPath)) {
       logger.warn("Src file not found: " + srcPath);
     }

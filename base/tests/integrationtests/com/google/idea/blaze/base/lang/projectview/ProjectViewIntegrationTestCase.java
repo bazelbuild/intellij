@@ -17,8 +17,10 @@ package com.google.idea.blaze.base.lang.projectview;
 
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.EditorTestHelper;
+import com.google.idea.blaze.base.MockProjectViewManager;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import org.junit.Before;
 
@@ -31,6 +33,7 @@ public abstract class ProjectViewIntegrationTestCase extends BlazeIntegrationTes
     BlazeProjectDataManager mockProjectDataManager =
         new MockBlazeProjectDataManager(MockBlazeProjectDataBuilder.builder(workspaceRoot).build());
     registerProjectService(BlazeProjectDataManager.class, mockProjectDataManager);
+    registerProjectService(ProjectViewManager.class, new MockProjectViewManager());
     editorTest = new EditorTestHelper(getProject(), testFixture);
   }
 }

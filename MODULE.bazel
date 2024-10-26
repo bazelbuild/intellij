@@ -96,9 +96,9 @@ maven.install(
         "com.google.code.findbugs:jsr305:3.0.2",
         "com.google.code.gson:gson:2.10.1",
         "com.google.errorprone:error_prone_annotations:2.20.0",
-        "com.google.guava:guava:33.0.0-jre",  # changed to jre
-        "com.google.truth:truth:1.1.5",
-        "com.google.truth.extensions:truth-java8-extension:1.1.5",
+        "com.google.guava:guava:33.3.1-jre",  # changed to jre
+        "com.google.truth:truth:1.4.4",
+        "com.google.truth.extensions:truth-java8-extension:1.4.4",
         "com.google.j2objc:j2objc-annotations:2.8",
         "com.google.guava:failureaccess:1.0.2",
     ],
