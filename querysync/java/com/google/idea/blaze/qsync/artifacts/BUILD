@@ -8,6 +8,8 @@ java_library(
         "//querysync:__subpackages__",
     ],
     deps = [
+        ":build_artifact_java_proto",
+        "//common/experiments",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//shared",
@@ -18,4 +20,24 @@ java_library(
         "@jsr305_annotations//jar",
         "@protobuf//:protobuf_java",
     ],
+)
+
+proto_library(
+    name = "build_artifact_proto",
+    srcs = ["build_artifact.proto"],
+    visibility = [
+        "//querysync/java/com/google/idea/blaze/qsync/cc:__pkg__",
+        "//querysync/java/com/google/idea/blaze/qsync/java:__pkg__",
+    ],
+)
+
+java_proto_library(
+    name = "build_artifact_java_proto",
+    visibility = [
+        "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
+        "//querysync/java/com/google/idea/blaze/qsync/cc:__pkg__",
+        "//querysync/java/com/google/idea/blaze/qsync/java:__pkg__",
+        "//querysync/javatests:__subpackages__",
+    ],
+    deps = [":build_artifact_proto"],
 )

@@ -2,6 +2,7 @@
 """
 
 load("@rules_java//java:defs.bzl", "java_test")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(
     "//build_defs:build_defs.bzl",
     "api_version_txt",
@@ -94,6 +95,7 @@ def intellij_unit_test_suite(
         test_package_root,
         class_rules = [],
         size = "medium",
+        tags = [],
         **kwargs):
     """Creates a java_test rule composed of all valid test classes in the specified srcs.
 
@@ -131,6 +133,7 @@ def intellij_unit_test_suite(
         srcs = srcs,
         test_package_root = test_package_root,
         class_rules = class_rules,
+        tags = tags,
     )
     java_test(
         name = name,
@@ -139,6 +142,7 @@ def intellij_unit_test_suite(
         data = data,
         jvm_flags = jvm_flags,
         test_class = suite_class,
+        tags = tags,
         **kwargs
     )
 
@@ -166,7 +170,8 @@ def intellij_integration_test_suite(
     hence, intellij_unit_test_suite should be preferred.
 
     Notes:
-      Only classes ending in "Test.java" will be recognized.
+      Only test files ending in "Test.java" or "Test.kt" will be recognized. For
+      the Kotlin files, the test classes must match the file name.
       All test classes must be located in the blaze package calling this function.
 
     Args:
@@ -183,6 +188,7 @@ def intellij_integration_test_suite(
     """
     suite_class_name = name + "TestSuite"
     suite_class = test_package_root + "." + suite_class_name
+
     _generate_test_suite(
         name = suite_class_name,
         srcs = srcs,
@@ -236,24 +242,41 @@ def intellij_integration_test_suite(
     args = kwargs.pop("args", [])
     args.append("--main_advice_classpath=./%s/%s_protoeditor_resource_fix" % (native.package_name(), name))
     data.append(name + "_protoeditor_resource_fix")
+
+    target_compatible_with = kwargs.get("target_compatible_with", None)
+    kt_jvm_library(
+        name = name + ".testlib",
+        srcs = srcs + [suite_class_name],
+        deps = deps,
+        target_compatible_with = target_compatible_with,
+        testonly = 1,
+        #        stdlib = "//testing:lib",
+    )
+
+    # NOTE: Do not replace with `kotlin_test` as it orders classpath in a way
+    #       that puts test dependencies first. Integration tests need plugin
+    #       `'jars` coming first.
     java_test(
         name = name,
         size = size,
-        srcs = srcs + [suite_class_name],
         data = data,
         tags = tags,
         args = args,
         jvm_flags = jvm_flags,
         test_class = suite_class,
-        runtime_deps = runtime_deps,
-        deps = deps,
+        runtime_deps = runtime_deps + [name + ".testlib"],
         **kwargs
     )
 
 def _get_test_class(test_src, test_package_root):
     """Returns the package string of the test class, beginning with the given root."""
     test_path = test_src.short_path
-    temp = test_path[:-len(".java")]
+    if test_path.endswith(".java"):
+        temp = test_path[:-len(".java")]
+    elif test_path.endswith(".kt"):
+        temp = test_path[:-len(".kt")]
+    else:
+        fail("Test source '%s' must be a Java or a Kotlin file")
     temp = temp.replace("/", ".")
     i = temp.rfind(test_package_root)
     if i < 0:
@@ -262,8 +285,8 @@ def _get_test_class(test_src, test_package_root):
     return test_class
 
 def _get_test_srcs(targets):
-    """Returns all files of the given targets that end with Test.java."""
+    """Returns all files of the given targets that end with Test.(java|kt)."""
     files = depset()
     for target in targets:
         files = depset(transitive = [files, target.files])
-    return [f for f in files.to_list() if f.basename.endswith("Test.java")]
+    return [f for f in files.to_list() if (f.basename.endswith("Test.java") or f.basename.endswith("Test.kt"))]

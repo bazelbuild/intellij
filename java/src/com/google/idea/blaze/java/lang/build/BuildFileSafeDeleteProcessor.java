@@ -49,10 +49,10 @@ public class BuildFileSafeDeleteProcessor extends JavaSafeDeleteProcessorCompat 
   @Nullable
   @Override
   public NonCodeUsageSearchInfo doFindUsages(
-          PsiElement element,
-          PsiElement[] allElementsToDelete,
-          List<? super UsageInfo> result,
-          NonCodeUsageSearchInfo superResult) {
+      PsiElement element,
+      PsiElement[] allElementsToDelete,
+      List<? super UsageInfo> result,
+      NonCodeUsageSearchInfo superResult) {
     result.removeIf(BuildFileSafeDeleteProcessor::ignoreUsage);
     return superResult;
   }
@@ -76,7 +76,7 @@ public class BuildFileSafeDeleteProcessor extends JavaSafeDeleteProcessorCompat 
         return false;
       }
       return !((GlobReference) usage.getReference())
-              .matchesDirectly(relativePath, file.isDirectory());
+          .matchesDirectly(relativePath, file.isDirectory());
     }
     return false;
   }
@@ -96,7 +96,7 @@ public class BuildFileSafeDeleteProcessor extends JavaSafeDeleteProcessorCompat 
   @Nullable
   @Override
   public Collection<String> findConflicts(
-          @NotNull PsiElement element, @NotNull PsiElement[] allElementsToDelete) {
+      @NotNull PsiElement element, @NotNull PsiElement[] allElementsToDelete) {
     return super.findConflicts(element, allElementsToDelete);
   }
 

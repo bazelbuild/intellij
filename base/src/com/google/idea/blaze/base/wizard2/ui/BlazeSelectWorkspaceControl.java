@@ -158,7 +158,6 @@ public class BlazeSelectWorkspaceControl {
         .canCreateProject(getSelectedOption().getWorkspaceData().buildSystem())) {
       throw new CancelledConfigurationException();
     }
-
     getSelectedOption().validateAndUpdateBuilder(builder);
   }
 

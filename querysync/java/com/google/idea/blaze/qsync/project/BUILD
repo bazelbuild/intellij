@@ -61,6 +61,7 @@ java_library(
         ":language_class_java_proto",
         ":project_java_proto",
         ":snapshot_java_proto",
+        "//intellij_platform_sdk:plugin_api",
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//shared",

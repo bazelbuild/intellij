@@ -88,19 +88,18 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     public BuildDependencies(@NotNull Editor editor) {
       super("");
       this.editor = editor;
-      buildDepsHelper =
-          new BuildDependenciesHelper(editor.getProject(), getClass(), DepsBuildType.SELF);
+      buildDepsHelper = new BuildDependenciesHelper(editor.getProject(), DepsBuildType.SELF);
+    }
+
+    @Override
+    public ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       buildDepsHelper.enableAnalysis(
-          e, PopupPositioner.showUnderneathClickedComponentOrCentered(e));
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+          getClass(), e, PopupPositioner.showUnderneathClickedComponentOrCentered(e));
     }
 
     @Override

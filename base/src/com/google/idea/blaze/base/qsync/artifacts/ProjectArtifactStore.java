@@ -15,18 +15,23 @@
  */
 package com.google.idea.blaze.base.qsync.artifacts;
 
+
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.qsync.FileRefresher;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.artifacts.ArtifactDirectoryUpdate;
 import com.google.idea.blaze.qsync.project.ProjectProto.ArtifactDirectories;
 import com.google.idea.blaze.qsync.project.ProjectProto.ArtifactDirectoryContents;
+import com.intellij.openapi.diagnostic.Logger;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -40,36 +45,71 @@ import java.util.Map;
  */
 public class ProjectArtifactStore {
 
+  private static final Logger logger = Logger.getInstance(ProjectArtifactStore.class);
+
   private final Path projectDir;
   private final Path workspacePath;
   private final BuildArtifactCache artifactCache;
   private final FileRefresher fileRefresher;
+  private final GeneratedSourcesStripper sourcesStripper;
+  private final Path projectDirectoriesFile;
 
   public ProjectArtifactStore(
       Path projectDir,
       Path workspacePath,
       BuildArtifactCache artifactCache,
-      FileRefresher fileRefresher) {
+      FileRefresher fileRefresher,
+      GeneratedSourcesStripper sourcesStripper) {
     this.projectDir = projectDir;
     this.workspacePath = workspacePath;
     this.artifactCache = artifactCache;
     this.fileRefresher = fileRefresher;
+    this.sourcesStripper = sourcesStripper;
+    this.projectDirectoriesFile = projectDir.resolve(".project-artifact-dirs");
   }
 
-  public void update(Context<?> context, BlazeProjectSnapshot graph) throws BuildException {
+  private ImmutableSet<String> readPreviousProjectDirectories() {
+    if (!Files.exists(projectDirectoriesFile)) {
+      return ImmutableSet.of();
+    }
+    try {
+      return ImmutableSet.copyOf(Files.readAllLines(projectDirectoriesFile));
+    } catch (IOException ioe) {
+      logger.warn("Cannot read " + projectDirectoriesFile, ioe);
+      return ImmutableSet.of();
+    }
+  }
+
+  private void writeProjectDirectories(Collection<String> paths) throws IOException {
+    Files.write(projectDirectoriesFile, paths);
+  }
+
+  public void update(Context<?> context, QuerySyncProjectSnapshot graph) throws BuildException {
     List<IOException> exceptions = Lists.newArrayList();
     ImmutableSet.Builder<Path> updatedPaths = ImmutableSet.builder();
-    for (Map.Entry<String, ArtifactDirectoryContents> entry :
-        graph.project().getArtifactDirectories().getDirectoriesMap().entrySet()) {
+    Map<String, ArtifactDirectoryContents> toUpdate = Maps.newHashMap();
+    toUpdate.putAll(graph.project().getArtifactDirectories().getDirectoriesMap());
+    // add empty contents for any dirs that are no longer present, to ensure they're cleaned up:
+    readPreviousProjectDirectories()
+        .forEach(dir -> toUpdate.putIfAbsent(dir, ArtifactDirectoryContents.getDefaultInstance()));
+
+    for (Map.Entry<String, ArtifactDirectoryContents> entry : toUpdate.entrySet()) {
       Path root = projectDir.resolve(entry.getKey());
       ArtifactDirectoryUpdate dirUpdate =
-          new ArtifactDirectoryUpdate(artifactCache, workspacePath, root, entry.getValue());
+          new ArtifactDirectoryUpdate(
+              artifactCache, workspacePath, root, entry.getValue(), sourcesStripper);
       try {
         dirUpdate.update();
       } catch (IOException e) {
         exceptions.add(e);
       }
       updatedPaths.addAll(dirUpdate.getUpdatedPaths());
+    }
+    try {
+      writeProjectDirectories(
+          graph.project().getArtifactDirectories().getDirectoriesMap().keySet());
+    } catch (IOException e) {
+      exceptions.add(e);
     }
     fileRefresher.refreshFiles(context, updatedPaths.build());
     if (!exceptions.isEmpty()) {

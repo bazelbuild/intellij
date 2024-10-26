@@ -31,6 +31,7 @@ public abstract class ProjectPath {
   public enum Root {
     WORKSPACE,
     PROJECT,
+    ABSOLUTE,
   }
 
   public abstract Root rootType();
@@ -58,6 +59,9 @@ public abstract class ProjectPath {
       case PROJECT:
         proto.setBase(Base.PROJECT);
         break;
+      case ABSOLUTE:
+        proto.setBase(Base.ABSOLUTE);
+        break;
     }
     return proto.setPath(relativePath().toString()).setInnerPath(innerJarPath().toString()).build();
   }
@@ -78,12 +82,23 @@ public abstract class ProjectPath {
     return projectRelative(Path.of(path));
   }
 
+  public static ProjectPath absolute(Path path) {
+    Preconditions.checkArgument(path.isAbsolute(), path);
+    return create(Root.ABSOLUTE, path);
+  }
+
+  public static ProjectPath absolute(String path) {
+    return absolute(Path.of(path));
+  }
+
   static Root convertContentRootBase(ProjectProto.ProjectPath.Base base) {
     switch (base) {
       case PROJECT:
         return Root.PROJECT;
       case WORKSPACE:
         return Root.WORKSPACE;
+      case ABSOLUTE:
+        return Root.ABSOLUTE;
       default:
         throw new IllegalArgumentException(base.name());
     }
@@ -96,11 +111,11 @@ public abstract class ProjectPath {
         Path.of(path.getInnerPath()));
   }
 
-  public static ProjectPath create(Root rootType, Path relativePath) {
+  private static ProjectPath create(Root rootType, Path relativePath) {
     return new AutoValue_ProjectPath(rootType, relativePath, Path.of(""));
   }
 
-  public static ProjectPath create(Root rootType, Path relativePath, Path innerJarPath) {
+  private static ProjectPath create(Root rootType, Path relativePath, Path innerJarPath) {
     return new AutoValue_ProjectPath(rootType, relativePath, innerJarPath);
   }
 
@@ -125,6 +140,8 @@ public abstract class ProjectPath {
           return workspaceRoot().resolve(path.relativePath());
         case PROJECT:
           return projectRoot().resolve(path.relativePath());
+        case ABSOLUTE:
+          return path.relativePath();
       }
       throw new IllegalStateException(path.rootType().name());
     }

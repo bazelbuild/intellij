@@ -137,5 +137,4 @@ public class BlazeJavaTestMethodConfigurationProducerTest
     setUpRepositoryAndTarget();
     return PsiUtils.findFirstChildOfClassRecursive(javaFile, PsiMethod.class);
   }
-
 }

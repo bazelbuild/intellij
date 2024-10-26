@@ -25,7 +25,6 @@ import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
 import com.google.idea.blaze.qsync.java.ArtifactTrackerProto.ArtifactTrackerState;
 import com.google.idea.blaze.qsync.project.ProjectPath;
-import com.google.idea.blaze.qsync.project.ProjectPath.Root;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Map;
@@ -115,20 +114,21 @@ public class ArtifactTrackerStateSerializationTest {
                     .defines(ImmutableList.of("-D", "-w"))
                     .includeDirectories(
                         ImmutableList.of(
-                            ProjectPath.create(Root.PROJECT, Path.of("buildout/include")),
-                            ProjectPath.create(Root.WORKSPACE, Path.of("src/include"))))
+                            ProjectPath.projectRelative("buildout/include"),
+                            ProjectPath.workspaceRelative("src/include"),
+                            ProjectPath.absolute("/usr/local/include")))
                     .quoteIncludeDirectories(
                         ImmutableList.of(
-                            ProjectPath.create(Root.PROJECT, Path.of("buildout/qinclude")),
-                            ProjectPath.create(Root.WORKSPACE, Path.of("src/qinclude"))))
+                            ProjectPath.projectRelative("buildout/qinclude"),
+                            ProjectPath.workspaceRelative("src/qinclude")))
                     .systemIncludeDirectories(
                         ImmutableList.of(
-                            ProjectPath.create(Root.PROJECT, Path.of("buildout/sysinclude")),
-                            ProjectPath.create(Root.WORKSPACE, Path.of("src/sysinclude"))))
+                            ProjectPath.projectRelative("buildout/sysinclude"),
+                            ProjectPath.workspaceRelative("src/sysinclude")))
                     .frameworkIncludeDirectories(
                         ImmutableList.of(
-                            ProjectPath.create(Root.PROJECT, Path.of("buildout/fwinclude")),
-                            ProjectPath.create(Root.WORKSPACE, Path.of("src/fwinclude"))))
+                            ProjectPath.projectRelative("buildout/fwinclude"),
+                            ProjectPath.workspaceRelative("src/fwinclude")))
                     .genHeaders(
                         ImmutableList.of(
                             BuildArtifact.create(
@@ -150,8 +150,8 @@ public class ArtifactTrackerStateSerializationTest {
                 .targetGnuSystemName("gnu-linux-armv8")
                 .builtInIncludeDirectories(
                     ImmutableList.of(
-                        ProjectPath.create(Root.PROJECT, Path.of("buildout/builtininclude")),
-                        ProjectPath.create(Root.WORKSPACE, Path.of("src/builtininclude"))))
+                        ProjectPath.projectRelative("buildout/builtininclude"),
+                        ProjectPath.workspaceRelative("src/builtininclude")))
                 .cOptions(ImmutableList.of("--copt1"))
                 .cppOptions(ImmutableList.of("--ccopt1"))
                 .build());

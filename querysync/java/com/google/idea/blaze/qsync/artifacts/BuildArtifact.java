@@ -15,35 +15,34 @@
  */
 package com.google.idea.blaze.qsync.artifacts;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Preconditions;
-import com.google.common.io.ByteSource;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Streams;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.idea.blaze.common.Interners;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
+import com.google.idea.blaze.common.artifact.CachedArtifact;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.java.artifacts.AspectProto.OutputArtifact;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 
 /**
  * An artifact produced by a build.
  *
  * <p>This includes the digest of the artifact as indicated by bazel, its output path and the target
  * that produced it.
- *
- * <p>Note, for the old {@link com.google.idea.blaze.base.qsync.cache.ArtifactTrackerImpl} codepaths
- * the digest will not be populated.
  */
 @AutoValue
 public abstract class BuildArtifact {
-
-  /**
-   * Special case to support legacy codepaths that don't use digests in here
-   *
-   * <p>TODO(b/323346056) remove this when the old codepaths are deleted.
-   */
-  public static final Function<Path, String> NO_DIGESTS = p -> "";
 
   public abstract String digest();
 
@@ -55,21 +54,12 @@ public abstract class BuildArtifact {
     return new AutoValue_BuildArtifact(digest, path, target);
   }
 
-  public static BuildArtifact create(Path path, Label target, Function<Path, String> digestMap) {
-    String digest =
-        Preconditions.checkNotNull(digestMap.apply(path), "No digest for %s from %s", path, target);
-    if (digestMap != NO_DIGESTS) {
-      Preconditions.checkState(!digest.isEmpty(), "Empty digest for %s from %s", path, target);
-    }
-    return create(digest, path, target);
-  }
-
-  public ByteSource blockingGetFrom(BuildArtifactCache cache) throws BuildException {
+  public CachedArtifact blockingGetFrom(BuildArtifactCache cache) throws BuildException {
     try {
       return Uninterruptibles.getUninterruptibly(
           cache
               .get(digest())
-              .orElseThrow(() -> new BuildException("Artifact %s missing from the cache" + this)));
+              .orElseThrow(() -> new BuildException("Artifact missing from the cache: " + this)));
     } catch (ExecutionException e) {
       throw new BuildException("Failed to get artifact " + this, e);
     }
@@ -82,5 +72,30 @@ public abstract class BuildArtifact {
       return "";
     }
     return fileName.substring(lastDot + 1);
+  }
+
+  public static ImmutableList<BuildArtifact> fromProtos(
+      List<OutputArtifact> paths, DigestMap digestMap, Label target) {
+    return paths.stream()
+        .map(p -> createFromProto(p, digestMap, target))
+        .flatMap(Collection::stream)
+        .collect(toImmutableList());
+  }
+
+  private static Collection<BuildArtifact> createFromProto(
+      OutputArtifact artifact, DigestMap digestMap, Label target) {
+    return switch (artifact.getPathCase()) {
+      case DIRECTORY ->
+          Streams.stream(digestMap.directoryContents(Interners.pathOf(artifact.getDirectory())))
+              .map(p -> digestMap.createBuildArtifact(p, target))
+              .flatMap(Optional::stream)
+              .collect(toImmutableSet());
+      case FILE ->
+          digestMap
+              .createBuildArtifact(Interners.pathOf(artifact.getFile()), target)
+              .map(Collections::singleton)
+              .orElse(Collections.emptySet());
+      case PATH_NOT_SET -> Collections.emptySet();
+    };
   }
 }

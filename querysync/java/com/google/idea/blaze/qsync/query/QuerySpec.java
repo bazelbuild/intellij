@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Formattable;
 import java.util.Formatter;
+import java.util.Optional;
 
 /** Represents arguments to a {@code query} invocation. */
 @AutoValue
@@ -39,24 +40,27 @@ public abstract class QuerySpec implements Formattable {
   /** The set of package patterns to include. */
   abstract ImmutableList<String> excludes();
 
-  // LINT.IfChanges
+  // LINT.IfChange
   @Memoized
   public ImmutableList<String> getQueryFlags() {
-    return ImmutableList.of("--output=streamed_proto", "--relative_locations=true", "--consistent_labels=true");
+    return ImmutableList.of("--output=streamed_proto", "--relative_locations=true");
   }
 
   @Memoized
-  public String getQueryExpression() {
+  public Optional<String> getQueryExpression() {
     // This is the main query, note the use of :* that means that the query output has
     // all the files in that directory too. So we can identify all that is reachable.
-    return "("
-        + includes().stream().map(s -> String.format("%s:*", s)).collect(joining(" + "))
-        + excludes().stream().map(s -> String.format(" - %s:*", s)).collect(joining())
-        + ")";
+    if (includes().isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(
+        "("
+            + includes().stream().map(s -> String.format("%s:*", s)).collect(joining(" + "))
+            + excludes().stream().map(s -> String.format(" - %s:*", s)).collect(joining())
+            + ")");
   }
-  // LINT.ThenChange(
-  //   //depot/google3/aswb/testdata/projects/test_projects.bzl
-  // )
+
+  // LINT.ThenChange(/aswb/testdata/projects/test_projects.bzl)
 
   @Override
   public final String toString() {
@@ -65,7 +69,7 @@ public abstract class QuerySpec implements Formattable {
             ImmutableList.builder()
                 .add("query")
                 .addAll(getQueryFlags())
-                .add(getQueryExpression())
+                .add(getQueryExpression().orElse("<empty>"))
                 .build());
   }
 

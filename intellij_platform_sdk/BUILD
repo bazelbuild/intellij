@@ -700,7 +700,6 @@ java_library(
 # The version of guava bundled with the IntelliJ plugin API.
 java_library(
     name = "guava",
-    testonly = True,
     exports = select_from_plugin_api_directory(
         android_studio = [":guava"],
         clion = [":guava"],

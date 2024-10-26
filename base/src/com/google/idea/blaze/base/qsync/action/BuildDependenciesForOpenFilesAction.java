@@ -55,8 +55,7 @@ public class BuildDependenciesForOpenFilesAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent event) {
-    BuildDependenciesHelper helper =
-        new BuildDependenciesHelper(project, getClass(), DepsBuildType.SELF);
+    BuildDependenciesHelper helper = new BuildDependenciesHelper(project, DepsBuildType.SELF);
     if (!helper.canEnableAnalysisNow()) {
       return;
     }

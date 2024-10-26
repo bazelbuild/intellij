@@ -52,7 +52,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -68,7 +67,6 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
 import javax.swing.LayoutFocusTraversalPolicy;
-import org.jetbrains.annotations.NotNull;
 
 /** ConsoleView handles how the output of a single task is displayed in the tool-window. */
 final class ConsoleView implements Disposable {

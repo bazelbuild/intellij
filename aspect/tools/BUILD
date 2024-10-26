@@ -9,16 +9,23 @@ package(default_visibility = ["//aspect:__pkg__"])
 
 licenses(["notice"])
 
+# To prevent versioning conflicts when developing internally, we always use the same
+# guava version bundled with the IntelliJ plugin API.
+java_library(
+    name = "guava",
+    visibility = ["//visibility:private"],
+    exports = ["//intellij_platform_sdk:guava"],
+)
+
 java_library(
     name = "lib",
     srcs = glob(["src/**/*.java"]),
     javacopts = ["-source 8 -target 8"],
     deps = [
-        "//proto:proto_deps",
+        ":guava",
         "//third_party/bazel/src/main/protobuf:worker_protocol_java_proto",
-        "@com_google_guava_failureaccess//jar",
-        "@com_google_guava_guava//jar",
         "@jsr305_annotations//jar",
+        "//proto:proto_deps",
     ],
 )
 
@@ -56,9 +63,9 @@ java_library(
     exports = [
         ":guava",
         ":lib",
+        "//proto:proto_deps",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:truth",
-        "//proto:proto_deps",
         "@junit//jar",
     ],
 )
@@ -78,6 +85,7 @@ java_test(
     test_class = "com.google.idea.blaze.aspect.PackageParserTest",
     deps = [
         ":test_lib",
+        "//intellij_platform_sdk:plugin_api",
         "@error_prone_annotations//jar",
     ],
 )

@@ -25,10 +25,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import java.io.IOException;
-import org.jetbrains.annotations.NotNull;
 
 class BlazeImportProjectAction extends AnAction implements DumbAware {
   private static final Logger logger = Logger.getInstance(BlazeImportProjectAction.class);
+
+  public BlazeImportProjectAction() {
+    super();
+    setRunInApplicationScope();
+  }
+
+  /** Explicitly set to run action in the application context (vs. project context) */
+  private void setRunInApplicationScope() {
+    getTemplatePresentation().setApplicationScope(true);
+  }
 
   @Override
   public void actionPerformed(AnActionEvent e) {

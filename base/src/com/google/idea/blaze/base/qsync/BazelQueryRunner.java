@@ -72,7 +72,11 @@ public class BazelQueryRunner implements QueryRunner {
     BlazeCommand.Builder commandBuilder = BlazeCommand.builder(invoker, BlazeCommandName.QUERY, project);
     commandBuilder.addBlazeFlags(query.getQueryFlags());
     commandBuilder.addBlazeFlags("--keep_going");
-    String queryExp = query.getQueryExpression();
+    String queryExp = query.getQueryExpression().orElse(null);
+    if (queryExp == null) {
+      context.output(PrintOutput.output("Project is empty, not running a query"));
+      return QuerySummary.EMPTY;
+    }
     if (commandRunner.getMaxCommandLineLength().map(max -> queryExp.length() > max).orElse(false)) {
       // Query is too long, write it to a file.
       Path tmpFile =

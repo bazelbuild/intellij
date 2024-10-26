@@ -52,8 +52,8 @@ abstract class GraphToProjectConverters {
         .setLanguageClasses(ImmutableSet.of())
         .setProjectIncludes(ImmutableSet.of())
         .setProjectExcludes(ImmutableSet.of())
-        .setSystemExcludes(ImmutableSet.of())
-        .setTestSources(ImmutableSet.of());
+        .setTestSources(ImmutableSet.of())
+        .setSystemExcludes(ImmutableSet.of());
   }
 
   @AutoValue.Builder
@@ -86,8 +86,7 @@ abstract class GraphToProjectConverters {
               info.languageClasses(),
               info.testSources(),
               info.systemExcludes()),
-          newDirectExecutorService(),
-          false);
+          newDirectExecutorService());
     }
   }
 }

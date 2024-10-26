@@ -20,9 +20,9 @@ import com.android.tools.idea.sdk.IdeSdksCompat;
 import com.google.idea.blaze.base.WorkspaceFileSystem;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.MockSdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
@@ -142,17 +142,26 @@ public class MockSdkUtil {
     }
     String sdkHomeDir = workspace.createDirectory(SDK_DIR).getPath();
     AndroidSdkDataCompat.getSdkData(new File(sdkHomeDir), true);
-    MockSdk sdk =
-        new MockSdk(
-            sdkName,
-            sdkHomeDir,
-            String.format("%s.%s.0", major, minor),
-            roots,
-            AndroidSdkType.getInstance());
+
+    Sdk sdk = ProjectJdkTable.getInstance().createSdk(sdkName, AndroidSdkType.getInstance());
+
+    var sdkModificator = sdk.getSdkModificator();
+    sdkModificator.setHomePath(sdkHomeDir);
+    sdkModificator.setVersionString(String.format("%s.%s.0", major, minor));
+    for (var entry : roots.entrySet()) {
+        var rootType = entry.getKey();
+        for (var root : entry.getValue()) {
+            sdkModificator.addRoot(root, rootType);
+        }
+    }
+
     AndroidSdkAdditionalData data = new AndroidSdkAdditionalData(sdk);
     createFakeAndroidAnnotation();
     data.setBuildTargetHashString(targetHash);
-    sdk.setSdkAdditionalData(data);
+    sdkModificator.setSdkAdditionalData(data);
+
+    WriteAction.run(sdkModificator::commitChanges);
+
     EdtTestUtil.runInEdtAndWait(
         () ->
             ApplicationManager.getApplication()

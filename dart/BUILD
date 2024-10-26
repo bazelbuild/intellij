@@ -1,4 +1,3 @@
-load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
     "DEFAULT_TEST_VISIBILITY",
@@ -13,9 +12,9 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -29,6 +28,7 @@ intellij_plugin_library(
 intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
+    tags = ["noci:studio-win"],
     test_package_root = "com.google.idea.blaze.dart",
     visibility = DEFAULT_TEST_VISIBILITY,
     deps = [
@@ -39,7 +39,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "@com_google_guava_guava//jar",
         "@junit//jar",
+        "@com_google_guava_guava//jar",
     ],
 )

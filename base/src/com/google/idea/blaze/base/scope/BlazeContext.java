@@ -30,7 +30,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
@@ -152,6 +154,7 @@ public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
     return isEnding;
   }
 
+  @Override
   public boolean isCancelled() {
     return isCancelled.get();
   }
@@ -306,6 +309,7 @@ public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
   }
 
   /** Registers a function to be called if the context is cancelled */
+  @Override
   public void addCancellationHandler(Runnable handler) {
     this.cancellationHandlers.add(handler);
   }
@@ -350,6 +354,19 @@ public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
     }
   }
 
+  private static Optional<String> getCauseString(Throwable t) {
+    if (t instanceof ExecutionException) {
+      // Since we're showing a cause summary to the user, exclude ExecutionException since they
+      // don't add any useful information.
+      return Optional.empty();
+    }
+    if (t.getMessage() != null) {
+      return Optional.of(t.getMessage() + " (" + t.getClass().getName() + ")");
+    } else {
+      return Optional.of(t.getClass().getName());
+    }
+  }
+
   private boolean handleExceptionInternal(String description, Throwable t) {
     if (t instanceof CancellationException
         || t instanceof ProcessCanceledException
@@ -360,12 +377,17 @@ public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
       return false;
     } else if (isExceptionError(t)) {
       logger.error(description, t);
-      output(PrintOutput.error(description + ": " + t.getClass().getSimpleName()));
+      output(PrintOutput.error(description));
+      for (Throwable cause = t; cause != null; cause = cause.getCause()) {
+        getCauseString(cause)
+            .ifPresent(message -> output(PrintOutput.error("  because: " + message)));
+      }
+
     } else {
       logger.info(description, t);
-    }
-    if (t.getMessage() != null) {
-      output(PrintOutput.error(t.getMessage()));
+      if (t.getMessage() != null) {
+        output(PrintOutput.error(t.getMessage()));
+      }
     }
     return true;
   }

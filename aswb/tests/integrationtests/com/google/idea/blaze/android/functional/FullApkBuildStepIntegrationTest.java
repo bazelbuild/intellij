@@ -126,7 +126,12 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     // Perform
     FullApkBuildStep buildStep =
         new FullApkBuildStep(
-            getProject(), buildTarget, blazeFlags, /* nativeDebuggingEnabled= */ false, helper);
+            getProject(),
+            buildTarget,
+            blazeFlags,
+            /* nativeDebuggingEnabled= */ false,
+            helper,
+            ImmutableList.of());
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -134,7 +139,7 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     assertThat(buildStep.getDeployInfo().getApksToDeploy()).containsExactly(apkFile);
     assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
     assertThat(externalTaskInterceptor.command).contains("--output_groups=+android_deploy_info");
-    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(blazeFlags);
+    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
   }
 
   @Test
@@ -162,7 +167,12 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     // Perform (with native debugging disabled).
     FullApkBuildStep buildStep =
         new FullApkBuildStep(
-            getProject(), buildTarget, blazeFlags, /* nativeDebuggingEnabled= */ false, helper);
+            getProject(),
+            buildTarget,
+            blazeFlags,
+            /* nativeDebuggingEnabled= */ false,
+            helper,
+            ImmutableList.of());
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -173,7 +183,7 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     assertThat(buildStep.getDeployInfo().getSymbolFiles()).isEmpty();
     assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
     assertThat(externalTaskInterceptor.command).contains("--output_groups=+android_deploy_info");
-    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(blazeFlags);
+    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
     verify(mockDownloader, times(1)).download(any(), any());
   }
 
@@ -206,7 +216,12 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     // Perform
     FullApkBuildStep buildStep =
         new FullApkBuildStep(
-            getProject(), buildTarget, blazeFlags, /* nativeDebuggingEnabled= */ false, helper);
+            getProject(),
+            buildTarget,
+            blazeFlags,
+            /* nativeDebuggingEnabled= */ false,
+            helper,
+            ImmutableList.of());
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -214,7 +229,7 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     assertThat(buildStep.getDeployInfo().getApksToDeploy()).containsExactly(apkFile);
     assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
     assertThat(externalTaskInterceptor.command).contains("--output_groups=+android_deploy_info");
-    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(blazeFlags);
+    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
     verify(mockDownloader, times(0)).download(any(), any());
   }
 
@@ -227,7 +242,6 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     File altLib = new File("/path/to/alt/symbol");
     ImmutableList<File> symbolFiles = ImmutableList.of(lib, altLib);
     when(mockSymbolFinder.getNativeSymbolsForBuild(any(), any(), any())).thenReturn(symbolFiles);
-    registerExtension(NativeSymbolFinder.EP_NAME, mockSymbolFinder);
 
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     File apkFile = new File("/path/to/apk");
@@ -245,7 +259,13 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
 
     // Perform
     FullApkBuildStep buildStep =
-        new FullApkBuildStep(getProject(), buildTarget, blazeFlags, true, helper);
+        new FullApkBuildStep(
+            getProject(),
+            buildTarget,
+            blazeFlags,
+            true,
+            helper,
+            ImmutableList.of(mockSymbolFinder));
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -255,7 +275,7 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
     assertThat(externalTaskInterceptor.command)
         .contains("--output_groups=+android_deploy_info,+ndk_symbolization");
-    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(blazeFlags);
+    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
   }
 
   @Test
@@ -285,7 +305,8 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
 
     // Perform
     FullApkBuildStep buildStep =
-        new FullApkBuildStep(getProject(), buildTarget, blazeFlags, true, helper);
+        new FullApkBuildStep(
+            getProject(), buildTarget, blazeFlags, true, helper, ImmutableList.of());
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -294,7 +315,7 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     assertThat(buildStep.getDeployInfo().getSymbolFiles()).isEqualTo(symbolFiles);
     assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
     assertThat(externalTaskInterceptor.command).contains("--output_groups=+android_deploy_info");
-    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(blazeFlags);
+    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
   }
 
   @Test
@@ -311,7 +332,6 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     File altLib = new File("/path/to/alt/symbol");
     ImmutableList<File> symbolFiles = ImmutableList.of(lib, altLib);
     when(mockSymbolFinder.getNativeSymbolsForBuild(any(), any(), any())).thenReturn(symbolFiles);
-    registerExtension(NativeSymbolFinder.EP_NAME, mockSymbolFinder);
 
     // Return fake deploy info proto and mocked deploy info data object.
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
@@ -330,7 +350,12 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     // Perform
     FullApkBuildStep buildStep =
         new FullApkBuildStep(
-            getProject(), buildTarget, blazeFlags, /* nativeDebuggingEnabled= */ true, helper);
+            getProject(),
+            buildTarget,
+            blazeFlags,
+            /* nativeDebuggingEnabled= */ true,
+            helper,
+            ImmutableList.of(mockSymbolFinder));
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -343,7 +368,7 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     assertThat(buildStep.getDeployInfo().getSymbolFiles().get(1).getPath()).contains("localcopy");
     assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
     assertThat(externalTaskInterceptor.command).contains("--output_groups=+android_deploy_info");
-    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(blazeFlags);
+    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
     verify(mockDownloader, times(3)).download(any(), any());
   }
 
@@ -364,7 +389,8 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
             buildTarget,
             ImmutableList.of(),
             /* nativeDebuggingEnabled= */ false,
-            helper);
+            helper,
+            ImmutableList.of());
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -396,7 +422,8 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
             buildTarget,
             ImmutableList.of(),
             /* nativeDebuggingEnabled= */ false,
-            helper);
+            helper,
+            ImmutableList.of());
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -425,7 +452,12 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     // Perform
     FullApkBuildStep buildStep =
         new FullApkBuildStep(
-            getProject(), buildTarget, blazeFlags, /* nativeDebuggingEnabled= */ false, helper);
+            getProject(),
+            buildTarget,
+            blazeFlags,
+            /* nativeDebuggingEnabled= */ false,
+            helper,
+            ImmutableList.of());
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify

@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2024 The Bazel Authors. All rights reserved.
  *
@@ -14,7 +15,6 @@
  * limitations under the License.
  */
 package com.google.idea.blaze.base.projectview.section.sections;
-
 import com.google.idea.blaze.base.projectview.parser.ParseContext;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.intellij.openapi.diagnostic.Logger;
 import javax.annotation.Nullable;
-
 /**
  * A section to specify use query sync for new project or not. It will only take effect when
  * importing a project.
@@ -33,12 +32,10 @@ public final class UseQuerySyncSection {
   public static final SectionKey<Boolean, ScalarSection<Boolean>> KEY =
       SectionKey.of("use_query_sync");
   public static final SectionParser PARSER = new UseQuerySyncSectionParser();
-
   private static class UseQuerySyncSectionParser extends ScalarSectionParser<Boolean> {
     UseQuerySyncSectionParser() {
       super(KEY, ':');
     }
-
     @Override
     @Nullable
     protected Boolean parseItem(ProjectViewParser parser, ParseContext parseContext, String text) {
@@ -52,22 +49,19 @@ public final class UseQuerySyncSection {
       logger.info("use_query_sync is not set.");
       return null;
     }
-
     @Override
     protected void printItem(StringBuilder sb, Boolean item) {
       sb.append(item);
     }
-
     @Override
     public ItemType getItemType() {
       return ItemType.Other;
     }
-
     @Override
     public String quickDocs() {
       return "Enables query sync for your project.";
     }
   }
-
   private UseQuerySyncSection() {}
 }
+

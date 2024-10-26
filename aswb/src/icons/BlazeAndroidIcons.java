@@ -32,6 +32,6 @@ public class BlazeAndroidIcons {
       load("aswb/resources/icons/crowToolWindow.png"); // 13x13
 
   private static Icon load(String path) {
-    return IconLoader.getIcon(BASE + path, BlazeAndroidIcons.class);
+    return IconLoader.findIcon(BASE + path, BlazeAndroidIcons.class);
   }
 }

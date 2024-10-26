@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.testFramework.MapDataContext;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

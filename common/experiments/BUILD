@@ -1,4 +1,3 @@
-load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
     "COMMON_PLUGINS_VISIBILITY",
@@ -21,8 +20,8 @@ java_library(
     visibility = COMMON_PLUGINS_VISIBILITY,
     deps = [
         "//common/util:platform",
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
         "//third_party/auto_value",
     ],
 )
@@ -51,23 +50,24 @@ java_library(
     visibility = COMMON_PLUGINS_VISIBILITY,
     deps = [
         ":experiments",
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
 intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
+    tags = ["noci:studio-win"],
     test_package_root = "com.google.idea.common.experiments",
     visibility = DEFAULT_TEST_VISIBILITY,
     deps = [
         ":experiments",
         ":unit_test_utils",
+        "//testing:lib",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "//testing:lib",
-        "@com_google_guava_guava//jar",
         "@junit//jar",
+        "@com_google_guava_guava//jar",
     ],
 )

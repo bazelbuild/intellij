@@ -26,15 +26,16 @@ public final class RuleKinds {
       ImmutableSet.of(
           "java_library",
           "java_binary",
-          "kt_jvm_library_helper",
-          "kt_jvm_binary",
           "kt_jvm_library",
+          "kt_jvm_library_helper",
           "java_test",
           "java_proto_library",
           "java_lite_proto_library",
           "java_mutable_proto_library",
           "_java_grpc_library",
-          "_java_lite_grpc_library");
+          "_kotlin_library",
+          "_java_lite_grpc_library",
+          "_iml_module_");
 
   /** Android rule kinds */
   private static final ImmutableSet<String> ANDROID_RULE_KINDS =

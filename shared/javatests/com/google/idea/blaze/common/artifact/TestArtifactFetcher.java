@@ -18,6 +18,7 @@ package com.google.idea.blaze.common.artifact;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.util.concurrent.MoreExecutors.newDirectExecutorService;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -31,6 +32,7 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Writes fake artifacts on demands, fabricating their contents.
@@ -41,8 +43,25 @@ import java.util.Set;
  */
 public class TestArtifactFetcher implements ArtifactFetcher<OutputArtifact> {
 
-  private final List<Runnable> pendingTasks = Lists.newArrayList();
-  private final Set<String> requestedDigests = Sets.newHashSet();
+  class Task<T> {
+    public final SettableFuture<T> done = SettableFuture.create();
+    private final Callable<T> workload;
+
+    Task(Callable<T> workload) {
+      this.workload = workload;
+    }
+
+    void run() {
+      done.setFuture(executor.submit(workload));
+    }
+
+    void fail() {
+      done.setException(new Exception("failed"));
+    }
+  }
+
+  private final List<Task> pendingTasks = Lists.newArrayList();
+  private final List<String> requestedDigests = Lists.newArrayList();
   private final Set<String> completedDigests = Sets.newHashSet();
   private final ListeningExecutorService executor = newDirectExecutorService();
 
@@ -52,23 +71,21 @@ public class TestArtifactFetcher implements ArtifactFetcher<OutputArtifact> {
       Context<?> context) {
     requestedDigests.addAll(
         artifactToDest.keySet().stream().map(OutputArtifact::getDigest).collect(toImmutableList()));
-    SettableFuture<?> done = SettableFuture.create();
-    pendingTasks.add(
-        () ->
-            done.setFuture(
-                executor.submit(
-                    () -> {
-                      for (Entry<? extends OutputArtifact, ArtifactDestination> entry :
-                          artifactToDest.entrySet()) {
-                        Files.writeString(
-                            entry.getValue().path,
-                            getExpectedArtifactContents(entry.getKey().getDigest()),
-                            StandardCharsets.UTF_8);
-                        completedDigests.add(entry.getKey().getDigest());
-                      }
-                      return null;
-                    })));
-    return done;
+    Task t =
+        new Task(
+            () -> {
+              for (Entry<? extends OutputArtifact, ArtifactDestination> entry :
+                  artifactToDest.entrySet()) {
+                Files.writeString(
+                    entry.getValue().path,
+                    getExpectedArtifactContents(entry.getKey().getDigest()),
+                    StandardCharsets.UTF_8);
+                completedDigests.add(entry.getKey().getDigest());
+              }
+              return null;
+            });
+    pendingTasks.add(t);
+    return t.done;
   }
 
   public String getExpectedArtifactContents(String digest) {
@@ -76,7 +93,7 @@ public class TestArtifactFetcher implements ArtifactFetcher<OutputArtifact> {
   }
 
   public void executePendingTasks() {
-    pendingTasks.forEach(Runnable::run);
+    pendingTasks.forEach(Task::run);
     pendingTasks.clear();
   }
 
@@ -84,20 +101,28 @@ public class TestArtifactFetcher implements ArtifactFetcher<OutputArtifact> {
     pendingTasks.remove(pendingTasks.size() - 1).run();
   }
 
+  public void failNewestTask() {
+    pendingTasks.remove(pendingTasks.size() - 1).fail();
+  }
+
   public void executeOldestTask() {
     pendingTasks.remove(0).run();
+  }
+
+  public void failOldestTask() {
+    pendingTasks.remove(0).fail();
+  }
+
+  public ImmutableList<String> takeRequestedDigests() {
+    ImmutableList<String> requested = ImmutableList.copyOf(requestedDigests);
+    requestedDigests.clear();
+    return requested;
   }
 
   public void flushTasks() {
     while (!pendingTasks.isEmpty()) {
       executeOldestTask();
     }
-  }
-
-  public ImmutableSet<String> takeRequestedDigests() {
-    ImmutableSet<String> requested = ImmutableSet.copyOf(requestedDigests);
-    requestedDigests.clear();
-    return requested;
   }
 
   public ImmutableSet<String> getCompletedDigests() {

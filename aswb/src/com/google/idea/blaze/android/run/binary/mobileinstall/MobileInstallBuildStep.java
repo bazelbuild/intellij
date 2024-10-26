@@ -65,6 +65,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CancellationException;
 import javax.annotation.Nullable;
@@ -155,7 +156,7 @@ public class MobileInstallBuildStep implements ApkBuildStep {
         Blaze.getBuildSystemProvider(project)
             .getBuildSystem()
             .getBuildInvoker(project, context, BlazeCommandName.MOBILE_INSTALL);
-    BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.MOBILE_INSTALL, project);
+    BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.MOBILE_INSTALL);
 
     if (passAdbArgWithSerialToMi.getValue()) {
       // Redundant, but we need this to get around bug in bazel.
@@ -279,17 +280,18 @@ public class MobileInstallBuildStep implements ApkBuildStep {
   }
 
   private static AdbTunnelConfigurator getTunnelConfigurator(BlazeContext context) {
-    try {
-      AdbTunnelConfigurator configurator =
-          Iterables.getOnlyElement(AdbTunnelConfiguratorProvider.EP_NAME.getExtensionList())
-              .createConfigurator(context);
+    List<AdbTunnelConfiguratorProvider> extensions =
+        AdbTunnelConfiguratorProvider.EP_NAME.getExtensionList();
+    if (extensions.size() > 1) {
+      // This is fine in tests.
+      log.warn("More than one provider registered; Using the first one!\n" + extensions);
+    }
+    // Fail quietly when there's no configurable registered.
+    if (!extensions.isEmpty()) {
+      AdbTunnelConfigurator configurator = extensions.get(0).createConfigurator(context);
       if (configurator != null) {
         return configurator;
       }
-    } catch (NoSuchElementException ex) {
-      // Fail quietly when there's no configurable registered.
-    } catch (IllegalArgumentException ex) {
-      log.warn("More than one provider registered; there should only be one!");
     }
     return new AdbTunnelConfigurator() {
       @Override

@@ -28,6 +28,7 @@ java_library(
     deps = [
         "//shared/java/com/google/idea/blaze/common",
         "@flogger//jar",
+        "@flogger_system_backend//jar",
     ],
 )
 
@@ -35,6 +36,17 @@ java_test(
     name = "TargetTreeTest",
     size = "small",
     srcs = ["TargetTreeTest.java"],
+    deps = [
+        "//shared",
+        "@junit//jar",
+        "@truth//jar",
+    ],
+)
+
+java_test(
+    name = "AtomicFileWriterTest",
+    size = "small",
+    srcs = ["AtomicFileWriterTest.java"],
     deps = [
         "//shared",
         "@junit//jar",

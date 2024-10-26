@@ -33,12 +33,12 @@ public class ProjectRefresher {
 
   private final VcsStateDiffer vcsDiffer;
   private final Path workspaceRoot;
-  private final Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier;
+  private final Supplier<Optional<QuerySyncProjectSnapshot>> latestProjectSnapshotSupplier;
 
   public ProjectRefresher(
       VcsStateDiffer vcsDiffer,
       Path workspaceRoot,
-      Supplier<Optional<BlazeProjectSnapshot>> latestProjectSnapshotSupplier) {
+      Supplier<Optional<QuerySyncProjectSnapshot>> latestProjectSnapshotSupplier) {
     this.vcsDiffer = vcsDiffer;
     this.workspaceRoot = workspaceRoot;
     this.latestProjectSnapshotSupplier = latestProjectSnapshotSupplier;

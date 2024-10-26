@@ -130,7 +130,15 @@ public class AddProjectGenSrcs implements ProjectProtoUpdateOperation {
     for (var entry : srcsByJavaPath.asMap().entrySet()) {
       Path finalDest = entry.getKey();
       Collection<ArtifactWithOrigin> candidates = entry.getValue();
-      if (candidates.size() > 1) {
+      // before warning, check that the conflicting sources do actually differ. If they're the
+      // same artifact underneath, there's no actual conflict.
+      long uniqueDigests =
+          candidates.stream()
+              .map(ArtifactWithOrigin::artifact)
+              .map(BuildArtifact::digest)
+              .distinct()
+              .count();
+      if (uniqueDigests > 1) {
         update
             .context()
             .output(
@@ -193,7 +201,7 @@ public class AddProjectGenSrcs implements ProjectProtoUpdateOperation {
 
   /** Parses the java package statement from a build artifact. */
   private String readJavaPackage(BuildArtifact genSrc) throws BuildException {
-    try (InputStream javaSrcStream = genSrc.blockingGetFrom(buildCache).openStream()) {
+    try (InputStream javaSrcStream = genSrc.blockingGetFrom(buildCache).byteSource().openStream()) {
       return packageReader.readPackage(javaSrcStream);
     } catch (IOException e) {
       throw new BuildException("Failed to read package name for " + genSrc, e);

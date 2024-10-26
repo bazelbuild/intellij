@@ -71,6 +71,7 @@ public final class ParsedBepOutput {
           ImmutableSetMultimap.of(),
           0,
           BuildResult.SUCCESS,
+          0,
           ImmutableSet.of());
 
   private static final String WORKSPACE_ITEM_KEY_SOURCE_URI = "SOURCE_URI";
@@ -199,6 +200,7 @@ public final class ParsedBepOutput {
         targetToFileSets.build(),
         startTimeMillis,
         buildResult,
+        stream.getBytesConsumed(),
         targetsWithErrors.build());
   }
 
@@ -258,6 +260,7 @@ public final class ParsedBepOutput {
   final long syncStartTimeMillis;
 
   private final BuildResult buildResult;
+  private final long bepBytesConsumed;
   private final ImmutableSet<Label> targetsWithErrors;
 
   private ParsedBepOutput(
@@ -268,6 +271,7 @@ public final class ParsedBepOutput {
       ImmutableSetMultimap<String, String> targetFileSets,
       long syncStartTimeMillis,
       BuildResult buildResult,
+      long bepBytesConsumed,
       ImmutableSet<Label> targetsWithErrors) {
     this.buildId = buildId;
     this.localExecRoot = localExecRoot;
@@ -276,6 +280,7 @@ public final class ParsedBepOutput {
     this.targetFileSets = targetFileSets;
     this.syncStartTimeMillis = syncStartTimeMillis;
     this.buildResult = buildResult;
+    this.bepBytesConsumed = bepBytesConsumed;
     this.targetsWithErrors = targetsWithErrors;
   }
 
@@ -297,6 +302,10 @@ public final class ParsedBepOutput {
   /** Returns the build result. */
   public BuildResult getBuildResult() {
     return buildResult;
+  }
+
+  public long getBepBytesConsumed() {
+    return bepBytesConsumed;
   }
 
   /** Returns all output artifacts of the build. */

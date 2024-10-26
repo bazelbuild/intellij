@@ -100,6 +100,13 @@ public class CcWorkspaceBuilder {
         ccDependenciesInfo.targetInfoMap().values().stream()
             .map(CcTargetInfo::getGenHdrsList)
             .flatMap(List::stream)
+            .map(
+                a ->
+                    switch (a.getPathCase()) {
+                      case DIRECTORY -> a.getDirectory();
+                      case FILE -> a.getFile();
+                      case PATH_NOT_SET -> "";
+                    })
             .map(Path::of)
             .map(p -> p.getName(0))
             .collect(toImmutableSet());

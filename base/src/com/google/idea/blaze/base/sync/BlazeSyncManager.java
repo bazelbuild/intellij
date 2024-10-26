@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.NotSupportedWithQuerySyncException;
 import com.google.idea.blaze.base.qsync.QuerySyncPromo;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
@@ -43,6 +44,7 @@ import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
@@ -95,6 +97,9 @@ public class BlazeSyncManager {
 
   /** Requests a project sync with Blaze. */
   public void requestProjectSync(BlazeSyncParams syncParams) {
+    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
+      throw new NotSupportedWithQuerySyncException("legacy sync requested");
+    }
     if (syncParams.syncMode() == SyncMode.NO_BUILD
         && !syncParams.backgroundSync()
         && !SyncDirectoriesWarning.warn(project)) {

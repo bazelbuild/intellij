@@ -16,13 +16,12 @@
 package com.google.idea.blaze.qsync.deps;
 
 import com.google.idea.blaze.qsync.project.ProjectPath;
-import com.google.idea.blaze.qsync.project.ProjectPath.Root;
 import java.nio.file.Path;
 
 /** Static helpers for managing directories in the project artifact store. */
 public class ArtifactDirectories {
 
-  private static final ProjectPath ROOT = ProjectPath.create(Root.PROJECT, Path.of(".bazel"));
+  private static final ProjectPath ROOT = ProjectPath.projectRelative(".bazel");
 
   /**
    * By default, all project artifacts go in this directory, at a path matching their bazel output
@@ -55,6 +54,8 @@ public class ArtifactDirectories {
     // in the project artifact store.
     if (includePath.startsWith("blaze-out") || includePath.startsWith("bazel-out")) {
       return GEN_CC_HEADERS.resolveChild(includePath);
+    } else if (includePath.isAbsolute()) {
+      return ProjectPath.absolute(includePath);
     } else {
       return ProjectPath.WORKSPACE_ROOT.resolveChild(includePath);
     }

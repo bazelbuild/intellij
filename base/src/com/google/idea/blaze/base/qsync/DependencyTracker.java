@@ -32,30 +32,11 @@ import javax.annotation.Nullable;
 public interface DependencyTracker {
 
   /**
-   * For a given project targets, returns all the targets outside the project that its source files
-   * need to be edited fully. This method return the dependencies for the target with fewest pending
-   * so that if dependencies have been built for one, the empty set will be returned even if others
-   * have pending dependencies.
-   */
-  @Nullable
-  Set<Label> getPendingExternalDeps(Set<Label> projectTargets);
-
-  /** Recursively get all the transitive deps outside the project */
-  @Nullable
-  Set<Label> getPendingTargets(Path workspaceRelativePath);
-
-  /**
    * Builds the external dependencies of the given target(s), putting the resultant libraries in the
    * shared library directory so that they are picked up by the IDE.
    */
   boolean buildDependenciesForTargets(BlazeContext context, DependencyBuildRequest request)
       throws IOException, BuildException;
-
-  /**
-   * Returns a list of local cache files that build by target provided. Returns Optional.empty() if
-   * the target has not yet been built.
-   */
-  Optional<ImmutableSet<Path>> getCachedArtifacts(Label target);
 
   /** Request to {@link #buildDependenciesForTargets(BlazeContext, DependencyBuildRequest)}. */
   class DependencyBuildRequest {

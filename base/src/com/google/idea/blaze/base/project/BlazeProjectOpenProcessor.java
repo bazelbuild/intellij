@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
@@ -83,6 +84,11 @@ public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
   @Override
   public Project doOpenProject(
       VirtualFile file, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
+    ProjectManager pm = ProjectManager.getInstance();
+    if (projectToClose != null) {
+      pm.closeProject(projectToClose);
+    }
+
     VirtualFile ideaSubdirectory = getIdeaSubdirectory(file);
     if (ideaSubdirectory == null) {
       return null;

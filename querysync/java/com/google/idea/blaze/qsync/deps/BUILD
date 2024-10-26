@@ -6,8 +6,8 @@ java_library(
     name = "deps",
     srcs = glob(["*.java"]),
     visibility = [
-        "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
         "//querysync:__subpackages__",
+        "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
     ],
     deps = [
         ":artifact_tracker_state_java_proto",

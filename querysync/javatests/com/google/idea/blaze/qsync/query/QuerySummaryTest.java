@@ -74,16 +74,6 @@ public class QuerySummaryTest {
   }
 
   @Test
-  public void testCreate_androidLibrary_manifest() throws IOException {
-    QuerySummary qs = QuerySummary.create(TestData.ANDROID_LIB_QUERY.getQueryOutputPath().toFile());
-    Label android = Label.of(TestData.ROOT_PACKAGE + "/android:android");
-    assertThat(qs.getRulesMap().keySet()).contains(android);
-    Query.Rule rule = qs.getRulesMap().get(android);
-    assertThat(rule.getManifest())
-        .isEqualTo(android.siblingWithName("AndroidManifest.xml").toString());
-  }
-
-  @Test
   public void testGetPackages_singleRule() {
     QuerySummary summary = QuerySummary.create(createProtoForPackages("//my/build/package:rule"));
     assertThat(summary.getPackages().asPathSet()).containsExactly(Path.of("my/build/package"));
@@ -143,9 +133,9 @@ public class QuerySummaryTest {
     assertThat(qs.getSourceFilesMap()).containsKey(buildLabel);
     SourceFile buildSrc = qs.getSourceFilesMap().get(buildLabel);
     assertThat(buildSrc.getSubincludeList())
-        .contains(TestData.ROOT_PACKAGE + "/buildincludes:includes.bzl");
+        .containsExactly(TestData.ROOT_PACKAGE + "/buildincludes:includes.bzl");
     assertThat(qs.getReverseSubincludeMap())
-        .containsAtLeast(
+        .containsExactly(
             TestData.ROOT.resolve("buildincludes/includes.bzl"),
             TestData.ROOT.resolve("buildincludes/BUILD"));
   }

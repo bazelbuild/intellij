@@ -15,15 +15,14 @@ PROTO_RULE_KINDS = [
     "kt_proto_library_helper",
 ]
 
-def java_info_in_target(target):
-    return JavaInfo in target
-
-def get_java_info(target):
-    if JavaInfo in target:
-        return target[JavaInfo]
-
-def java_info_reference():
-    return [JavaInfo]
+SRC_ATTRS = [
+    "srcs",
+    "java_srcs",
+    "kotlin_srcs",
+    "java_test_srcs",
+    "kotlin_test_srcs",
+    "common_srcs",
+]
 
 def _package_dependencies_impl(target, ctx):
     java_info_file = _write_java_target_info(target, ctx)
@@ -39,6 +38,10 @@ def _package_dependencies_impl(target, ctx):
     )]
 
 def _write_java_target_info(target, ctx):
+    """Write java target info to a file in proto format.
+
+    The proto format used is defined by proto bazel.intellij.JavaArtifacts.
+    """
     if not target[DependenciesInfo].target_to_artifacts:
         return []
     file_name = target.label.name + ".java-info.txt"
@@ -50,6 +53,10 @@ def _write_java_target_info(target, ctx):
     return [artifact_info_file]
 
 def _write_cc_target_info(target, ctx):
+    """Write CC target info to a file in proto format.
+
+    The proto format used defined by proto bazel.intellij.CcCompilationInfo.
+    """
     if not target[DependenciesInfo].cc_info:
         return []
     cc_info_file_name = target.label.name + ".cc-info.txt"
@@ -101,21 +108,67 @@ def create_dependencies_info(
         test_mode_cc_src_deps = test_mode_cc_src_deps,
     )
 
+def merge_dependencies_info(dep_infos):
+    """Merge multiple DependenciesInfo providers into one.
+
+    Depsets and dicts are merged. For members such as `cc_info`, we require that at most one of the
+    DependenciesInfo's defines this which should always be the case.
+    """
+    if len(dep_infos) == 0:
+        return []
+    merged = create_dependencies_info()
+    for dep_info in dep_infos:
+        merged = create_dependencies_info(
+            compile_time_jars = depset(transitive = [merged.compile_time_jars, dep_info.compile_time_jars]),
+            target_to_artifacts = dict(merged.target_to_artifacts, **dep_info.target_to_artifacts),
+            aars = depset(transitive = [merged.aars, dep_info.aars]),
+            gensrcs = depset(transitive = [merged.gensrcs, dep_info.gensrcs]),
+            expand_sources = merged.expand_sources or dep_info.expand_sources,
+            cc_info = one_of(merged.cc_info, dep_info.cc_info),
+            cc_headers = depset(transitive = [merged.cc_headers, dep_info.cc_headers]),
+            cc_toolchain_info = one_of(merged.cc_toolchain_info, dep_info.cc_toolchain_info),
+            test_mode_own_files = one_of(merged.test_mode_own_files, dep_info.test_mode_own_files),
+            test_mode_cc_src_deps = depset(transitive = [merged.test_mode_cc_src_deps, dep_info.test_mode_cc_src_deps]),
+        )
+    return [merged]
+
+def one_of(a, b):
+    """Returns whichever of a or b is not None, None if both are, or fails if neither are."""
+    if a == None:
+        return b
+    if b == None:
+        return a
+    fail("Expected at most one, but got both", a, b)
+
 def _encode_target_info_proto(target_to_artifacts):
     contents = []
     for label, target_info in target_to_artifacts.items():
         contents.append(
             struct(
                 target = label,
-                jars = target_info["jars"],
-                ide_aars = target_info["ide_aars"],
-                gen_srcs = target_info["gen_srcs"],
+                jars = _encode_file_list(target_info["jars"]),
+                ide_aars = _encode_file_list(target_info["ide_aars"]),
+                gen_srcs = _encode_file_list(target_info["gen_srcs"]),
                 srcs = target_info["srcs"],
                 srcjars = target_info["srcjars"],
                 android_resources_package = target_info["android_resources_package"],
             ),
         )
     return proto.encode_text(struct(artifacts = contents))
+
+def _encode_file_list(files):
+    """Encodes a list of files as a struct.
+
+    Returns:
+      A list fo structs matching the bazel.intellij.OutputArtifact proto message.
+    """
+    r = []
+    for f in files:
+        if f.is_directory:
+            r.append(struct(directory = _output_relative_path(f.path)))
+        else:
+            r.append(struct(file = _output_relative_path(f.path)))
+    return r
 
 def _encode_cc_info_proto(label, cc_info):
     return proto.encode_text(
@@ -127,7 +180,7 @@ def _encode_cc_info_proto(label, cc_info):
                 quote_include_directories = cc_info.transitive_quote_include_directory,
                 system_include_directories = cc_info.transitive_system_include_directory,
                 framework_include_directories = cc_info.framework_include_directory,
-                gen_hdrs = cc_info.gen_headers,
+                gen_hdrs = _encode_file_list(cc_info.gen_headers),
                 toolchain_id = cc_info.toolchain_id,
             ),
         ]),
@@ -213,24 +266,35 @@ def _collect_all_dependencies_for_tests_impl(target, ctx):
         exclude = None,
         always_build_rules = ALWAYS_BUILD_RULES,
         generate_aidl_classes = None,
-        use_generated_srcjars = False,
+        use_generated_srcjars = True,
         test_mode = True,
     )
 
+def _package_prefix_match(package, prefix):
+    if (package == prefix):
+        return True
+    if package.startswith(prefix) and package[len(prefix)] == "/":
+        return True
+    return False
+
+def _get_repo_name(label):
+    # The API to get the repo name changed between bazel versions. Use whichever exists:
+    return label.repo_name if "repo_name" in dir(label) else label.workspace_name
+
 def _target_within_project_scope(label, include, exclude):
+    repo = _get_repo_name(label)
+    package = label.package
     result = False
     if include:
-        for inc in include.split(","):
-            if label.startswith(inc):
-                if label[len(inc)] in [":", "/"]:
-                    result = True
-                    break
+        for inc in [Label(i) for i in include.split(",")]:
+            if _get_repo_name(inc) == repo and _package_prefix_match(package, inc.package):
+                result = True
+                break
     if result and len(exclude) > 0:
-        for exc in exclude.split(","):
-            if label.startswith(exc):
-                if label[len(exc)] in [":", "/"]:
-                    result = False
-                    break
+        for exc in [Label(i) for i in exclude.split(",")]:
+            if _get_repo_name(exc) == repo and _package_prefix_match(package, exc.package):
+                result = False
+                break
     return result
 
 def _get_followed_java_dependency_infos(rule):
@@ -283,19 +347,24 @@ def _collect_own_java_artifacts(
         # This is done primarily for rules like proto, whose toolchain classes
         # are collected via attribute traversal, but still requires jars for any
         # proto deps of the underlying proto_library.
-        java_info = get_java_info(target)
-        if java_info:
+        if JavaInfo in target:
             if can_follow_dependencies:
-                own_jar_depsets.append(java_info.compile_jars)
+                own_jar_depsets.append(target[JavaInfo].compile_jars)
             else:
-                own_jar_depsets.append(java_info.transitive_compile_time_jars)
+                own_jar_depsets.append(target[JavaInfo].transitive_compile_time_jars)
 
         if declares_android_resources(target, ctx):
             ide_aar = _get_ide_aar_file(target, ctx)
             if ide_aar:
-                own_ide_aar_files.append(ide_aar)
+                # TODO(mathewi) - handle source aars
+                if not ide_aar.is_source:
+                    own_ide_aar_files.append(ide_aar)
         elif declares_aar_import(ctx):
-            own_ide_aar_files.append(rule.attr.aar.files.to_list()[0])
+            ide_aar = rule.attr.aar.files.to_list()[0]
+
+            # TODO(mathewi) - handle source aars
+            if not ide_aar.is_source:
+                own_ide_aar_files.append(ide_aar)
 
     else:
         android = _get_android_provider(target)
@@ -315,19 +384,15 @@ def _collect_own_java_artifacts(
                     add_base_idl_jar = True
 
                 # An AIDL base jar needed for resolving base classes for aidl generated stubs.
-                if add_base_idl_jar:
-                    if hasattr(rule.attr, "_aidl_lib"):
-                        own_jar_depsets.append(rule.attr._aidl_lib.files)
-                    elif hasattr(rule.attr, "_android_sdk") and hasattr(android_common, "AndroidSdkInfo"):
-                        android_sdk_info = getattr(rule.attr, "_android_sdk")[android_common.AndroidSdkInfo]
-                        own_jar_depsets.append(android_sdk_info.aidl_lib.files)
+                if add_base_idl_jar and hasattr(rule.attr, "_android_sdk") and hasattr(android_common, "AndroidSdkInfo"):
+                    android_sdk_info = getattr(rule.attr, "_android_sdk")[android_common.AndroidSdkInfo]
+                    own_jar_depsets.append(android_sdk_info.aidl_lib.files)
 
         # Add generated java_outputs (e.g. from annotation processing)
         generated_class_jars = []
-        java_info = get_java_info(target)
-        if java_info:
-            for java_output in java_info.java_outputs:
-                # Prefer source jars if they exist:
+        if JavaInfo in target:
+            for java_output in target[JavaInfo].java_outputs:
+                # Prefer source jars if they exist and are requested:
                 if use_generated_srcjars and java_output.generated_source_jar:
                     own_gensrc_files.append(java_output.generated_source_jar)
                 elif java_output.generated_class_jar:
@@ -337,30 +402,32 @@ def _collect_own_java_artifacts(
             own_jar_files += generated_class_jars
 
         # Add generated sources for included targets
-        if hasattr(rule.attr, "srcs"):
-            for src in rule.attr.srcs:
-                for file in src.files.to_list():
-                    if not file.is_source:
-                        expand_sources = False
-                        if str(file.owner) in dependency_infos:
-                            src_depinfo = dependency_infos[str(file.owner)]
-                            expand_sources = src_depinfo.expand_sources
+        for src_attr in SRC_ATTRS:
+            if hasattr(rule.attr, src_attr):
+                for src in getattr(rule.attr, src_attr):
+                    for file in src.files.to_list():
+                        if not file.is_source:
+                            expand_sources = False
+                            if str(file.owner) in dependency_infos:
+                                src_depinfo = dependency_infos[str(file.owner)]
+                                expand_sources = src_depinfo.expand_sources
 
-                        # If the target that generates this source specifies that
-                        # the sources should be expanded, we ignore the generated
-                        # sources - the IDE will substitute the target sources
-                        # themselves instead.
-                        if not expand_sources:
-                            own_gensrc_files.append(file)
+                            # If the target that generates this source specifies that
+                            # the sources should be expanded, we ignore the generated
+                            # sources - the IDE will substitute the target sources
+                            # themselves instead.
+                            if not expand_sources:
+                                own_gensrc_files.append(file)
 
     if not target_is_within_project_scope:
-        if hasattr(rule.attr, "srcs"):
-            for src in rule.attr.srcs:
-                for file in src.files.to_list():
-                    if file.is_source:
-                        own_src_files.append(file.path)
-                    else:
-                        own_gensrc_files.append(file)
+        for src_attr in SRC_ATTRS:
+            if hasattr(rule.attr, src_attr):
+                for src in getattr(rule.attr, src_attr):
+                    for file in src.files.to_list():
+                        if file.is_source:
+                            own_src_files.append(file.path)
+                        else:
+                            own_gensrc_files.append(file)
         if hasattr(rule.attr, "srcjar"):
             if rule.attr.srcjar and type(rule.attr.srcjar) == "Target":
                 for file in rule.attr.srcjar.files.to_list():
@@ -415,9 +482,9 @@ def _collect_own_and_dependency_java_artifacts(
         ide_aars = depset(own_files.ide_aars).to_list()
         gen_srcs = depset(own_files.gensrcs).to_list()
         target_to_artifacts[str(target.label)] = {
-            "jars": [_output_relative_path(file.path) for file in jars],
-            "ide_aars": [_output_relative_path(file.path) for file in ide_aars],
-            "gen_srcs": [_output_relative_path(file.path) for file in gen_srcs],
+            "jars": jars,
+            "ide_aars": ide_aars,
+            "gen_srcs": gen_srcs,
             "srcs": own_files.srcs,
             "srcjars": own_files.srcjars,
             "android_resources_package": own_files.android_resources_package,
@@ -471,9 +538,14 @@ def _collect_own_and_dependency_cc_info(target, dependency_info, test_mode):
             transitive_defines = compilation_context.defines.to_list(),
             transitive_include_directory = compilation_context.includes.to_list(),
             transitive_quote_include_directory = compilation_context.quote_includes.to_list(),
-            transitive_system_include_directory = compilation_context.system_includes.to_list() + compilation_context.external_includes.to_list(),
+            transitive_system_include_directory = (
+                compilation_context.system_includes.to_list() + (
+                    # external_includes was added in newer versions of bazel
+                    compilation_context.external_includes.to_list() if hasattr(compilation_context, "external_includes") else []
+                )
+            ),
             framework_include_directory = compilation_context.framework_includes.to_list(),
-            gen_headers = [f.path for f in gen_headers.to_list()],
+            gen_headers = gen_headers.to_list(),
             toolchain_id = cc_toolchain_info.id if cc_toolchain_info else None,
         )
     return struct(
@@ -506,7 +578,7 @@ def _collect_dependencies_core_impl(
         dep_infos.append(_collect_cc_dependencies_core_impl(target, ctx, test_mode))
     if cc_common.CcToolchainInfo in target:
         dep_infos.append(_collect_cc_toolchain_info(target, ctx))
-    return dep_infos
+    return merge_dependencies_info(dep_infos)
 
 def _collect_java_dependencies_core_impl(
         target,
@@ -517,7 +589,7 @@ def _collect_java_dependencies_core_impl(
         generate_aidl_classes,
         use_generated_srcjars,
         test_mode):
-    target_is_within_project_scope = _target_within_project_scope(str(target.label), include, exclude) and not test_mode
+    target_is_within_project_scope = _target_within_project_scope(target.label, include, exclude) and not test_mode
     dependency_infos = _get_followed_java_dependency_infos(ctx.rule)
 
     target_to_artifacts, compile_jars, aars, gensrcs = _collect_own_and_dependency_java_artifacts(
@@ -783,7 +855,7 @@ collect_dependencies = aspect(
             allow_files = True,
             cfg = "exec",
             executable = True,
-            default = "@@bazel_tools//tools/zip:zipper",
+            default = "@bazel_tools//tools/zip:zipper",
         ),
     },
     fragments = ["cpp"],
@@ -806,7 +878,7 @@ collect_all_dependencies_for_tests = aspect(
             allow_files = True,
             cfg = "exec",
             executable = True,
-            default = "@@bazel_tools//tools/zip:zipper",
+            default = "@bazel_tools//tools/zip:zipper",
         ),
     },
     fragments = ["cpp"],

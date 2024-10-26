@@ -106,7 +106,7 @@ public class RemoteOutputsCacheTest {
             "android-armeabi-v7a-fastbuild-ST-537378632435/bin/java/com/google/android/apps/gmm/navigation/ui/common/_migrated/_min_sdk_bumped/common/AndroidManifest.xml");
     when(artifact2.getRelativePath())
         .thenReturn(
-            "android-armeabi-v7a-fastbuild-ST-537378632435/bin/java/com/google/android/apps/gmm/features/place/timeline/common/_migrated/_min_sdk_bumped/ImpressionLoggingPropertyNode/AndroidManifest.xml");
+            "android-armeabi-v7a-fastbuild-ST-537378632435/bin/java/com/google/android/apps/gmm/place/timeline/common/_migrated/_min_sdk_bumped/ImpressionLoggingPropertyNode/AndroidManifest.xml");
     assertThat(RemoteOutputsCache.getCacheKey(artifact1))
         .isNotEqualTo(RemoteOutputsCache.getCacheKey(artifact2));
   }

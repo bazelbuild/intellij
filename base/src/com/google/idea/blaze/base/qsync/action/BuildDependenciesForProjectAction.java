@@ -19,7 +19,7 @@ import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,7 +55,7 @@ public class BuildDependenciesForProjectAction extends BlazeProjectAction {
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     QuerySyncManager syncMan = QuerySyncManager.getInstance(project);
-    BlazeProjectSnapshot snapshot =
+    QuerySyncProjectSnapshot snapshot =
         syncMan
             .getLoadedProject()
             .flatMap(qsp -> qsp.getSnapshotHolder().getCurrent())

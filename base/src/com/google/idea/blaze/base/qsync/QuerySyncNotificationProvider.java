@@ -46,7 +46,7 @@ public class QuerySyncNotificationProvider implements EditorNotificationProvider
                 return null;
             }
 
-            BuildDependenciesHelper buildDepsHelper = new BuildDependenciesHelper(project, QuerySyncInspectionWidgetActionProvider.BuildDependencies.class, DepsBuildType.SELF);
+            BuildDependenciesHelper buildDepsHelper = new BuildDependenciesHelper(project, DepsBuildType.SELF);
             TargetsToBuild toBuild = buildDepsHelper.getTargetsToEnableAnalysisFor(file);
 
             if (toBuild.isEmpty()) {

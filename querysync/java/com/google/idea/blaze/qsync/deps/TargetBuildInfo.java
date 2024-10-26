@@ -21,6 +21,9 @@ import java.util.Optional;
 /** Information about a target that was extracted from the build at dependencies build time. */
 @AutoValue
 public abstract class TargetBuildInfo {
+  public static final TargetBuildInfo EMPTY =
+      builder().buildContext(DependencyBuildContext.NONE).build();
+
   public abstract Optional<JavaArtifactInfo> javaInfo();
 
   public abstract Optional<CcCompilationInfo> ccInfo();

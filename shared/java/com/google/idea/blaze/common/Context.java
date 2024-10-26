@@ -46,4 +46,9 @@ public interface Context<C extends Context<C>> {
   void setHasError();
 
   void setHasWarnings();
+
+  boolean isCancelled();
+
+  /** Add a runnable to be invoked when the context is cancelled. */
+  void addCancellationHandler(Runnable runOnCancel);
 }

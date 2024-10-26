@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.project.Project;
-
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -77,7 +76,6 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
       BlazeContext context,
       BuildSystemName buildSystemName,
       List<String> blazeFlags) {
-
     return Futures.transform(
         runBlazeInfoGetBytes(
             project,

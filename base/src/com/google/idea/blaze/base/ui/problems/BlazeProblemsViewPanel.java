@@ -52,7 +52,6 @@ import java.awt.Component;
 import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
-import org.jetbrains.annotations.NotNull;
 
 /** A custom error tree view panel for Blaze invocation errors. */
 class BlazeProblemsViewPanel extends NewErrorTreeViewPanelAdapter {

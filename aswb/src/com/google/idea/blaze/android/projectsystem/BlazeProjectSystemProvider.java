@@ -34,14 +34,9 @@ import com.intellij.openapi.project.Project;
  */
 public class BlazeProjectSystemProvider implements AndroidProjectSystemProvider {
   public static final String ID = "com.google.idea.blaze.BlazeProjectSystem";
-  private Project project;
-
-  public BlazeProjectSystemProvider(Project project) {
-    this.project = project;
-  }
 
   @Override
-  public boolean isApplicable() {
+  public boolean isApplicable(Project project) {
     return Blaze.isBlazeProject(project);
   }
 
@@ -51,7 +46,7 @@ public class BlazeProjectSystemProvider implements AndroidProjectSystemProvider 
   }
 
   @Override
-  public AndroidProjectSystem getProjectSystem() {
+  public AndroidProjectSystem projectSystemFactory(Project project) {
     return new BlazeProjectSystem(project);
   }
 }

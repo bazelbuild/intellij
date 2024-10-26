@@ -23,16 +23,16 @@ import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.qsync.BlazeProjectListenerProvider;
 import com.google.idea.blaze.base.qsync.QuerySyncProject;
+import com.google.idea.blaze.base.qsync.QuerySyncProjectListenerProvider;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.common.Context;
-import com.google.idea.blaze.qsync.BlazeProjectListener;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.QuerySyncProjectListener;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -42,7 +42,7 @@ import com.jetbrains.cidr.lang.workspace.OCWorkspaceEventImpl;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceModificationTrackersImpl;
 import java.util.Set;
 
-final class BlazeNdkSupportEnabler implements SyncListener, BlazeProjectListenerProvider {
+final class BlazeNdkSupportEnabler implements SyncListener, QuerySyncProjectListenerProvider {
 
   @Override
   public void onSyncComplete(
@@ -60,10 +60,10 @@ final class BlazeNdkSupportEnabler implements SyncListener, BlazeProjectListener
   }
 
   @Override
-  public BlazeProjectListener createListener(QuerySyncProject project) {
-    return new BlazeProjectListener() {
+  public QuerySyncProjectListener createListener(QuerySyncProject project) {
+    return new QuerySyncProjectListener() {
       @Override
-      public void onNewProjectSnapshot(Context<?> context, BlazeProjectSnapshot instance) {
+      public void onNewProjectSnapshot(Context<?> context, QuerySyncProjectSnapshot instance) {
 
         Set<QuerySyncLanguage> allLanguages =
             Sets.union(

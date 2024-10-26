@@ -17,8 +17,6 @@ package com.google.idea.blaze.base.projectview.section.sections;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
-
 import java.io.Serializable;
 
 /**

@@ -24,6 +24,7 @@ import com.google.idea.blaze.qsync.deps.JavaArtifactInfo;
 import com.google.idea.blaze.qsync.deps.ProjectProtoUpdate;
 import com.google.idea.blaze.qsync.deps.ProjectProtoUpdateOperation;
 import com.google.idea.blaze.qsync.deps.TargetBuildInfo;
+import com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder.JarPath;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto.LibrarySource;
@@ -65,9 +66,12 @@ public class AddDependencySrcJars implements ProjectProtoUpdateOperation {
         // these are workspace relative srcjar paths.
         ProjectPath jarPath = ProjectPath.workspaceRelative(srcJar);
         srcJarInnerPathFinder
-            .findInnerJarPaths(pathResolver.resolve(jarPath).toFile(), EMPTY_PACKAGE_PREFIXES_ONLY)
+            .findInnerJarPaths(
+                pathResolver.resolve(jarPath).toFile(),
+                EMPTY_PACKAGE_PREFIXES_ONLY,
+                srcJar.toString())
             .stream()
-            .map(p -> p.path)
+            .map(JarPath::path)
             .map(jarPath::withInnerJarPath)
             .map(ProjectPath::toProto)
             .map(LibrarySource.newBuilder()::setSrcjar)

@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.model.primitives;
 
+import com.google.common.primitives.Chars;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 import java.util.regex.Pattern;
@@ -29,8 +30,10 @@ public final class TargetName {
 
   // Rule names must be alpha-numeric or consist of the following allowed chars:
   // (note, rule names can also contain '/'; we handle that case separately)
+  // The string is taken from https://bazel.build/concepts/labels#target-names with "/" removed and
+  // " " added (space appears to be valid, but not mentioned in the docs).
   private static final ImmutableSet<Character> ALLOWED_META =
-      ImmutableSet.of('+', '_', ',', '=', '-', '.', '@', '~', '#', ' ', '(', ')', '$', '!');
+      ImmutableSet.copyOf(Chars.asList("!%-@^_\"#$&'()*-+,;<=>?[]{|}~. ".toCharArray()));
 
   private final String name;
 

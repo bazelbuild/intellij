@@ -28,8 +28,6 @@ java_library(
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
         "//third_party/auto_value",
         "@com_google_guava_guava//jar",
-        "@flogger_system_backend//jar",
-        "@truth//jar",
     ],
 )
 
@@ -55,9 +53,9 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata:build_graphs",
-        "@com_google_guava_guava//jar",
         "@junit//jar",
         "@truth//jar",
+        "@com_google_guava_guava//jar",
     ],
 )
 
@@ -71,9 +69,9 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/javatests/com/google/idea/blaze/qsync/query:QuerySummaryTestUtil",
         "//shared:vcs",
-        "@com_google_guava_guava//jar",
         "@junit//jar",
         "@truth//jar",
+        "@com_google_guava_guava//jar",
     ],
 )
 
@@ -89,9 +87,9 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//querysync/javatests/com/google/idea/blaze/qsync/query:QuerySummaryTestUtil",
         "//shared:vcs",
-        "@com_google_guava_guava//jar",
         "@junit//jar",
         "@truth//jar",
+        "@com_google_guava_guava//jar",
     ],
 )
 
@@ -106,8 +104,8 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//shared",
-        "@com_google_guava_guava//jar",
         "@junit//jar",
         "@truth//jar",
+        "@com_google_guava_guava//jar",
     ],
 )

@@ -21,11 +21,10 @@ import static java.util.Arrays.stream;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.qsync.QuerySyncProject;
-import com.google.idea.blaze.qsync.BlazeProject;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
+import com.google.idea.blaze.qsync.SnapshotHolder;
 import com.google.idea.blaze.qsync.deps.JavaArtifactInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -145,31 +144,27 @@ public class ClassFileJavaSourceFinder {
       // Not a jar file - ignore it
       return ImmutableSet.of();
     }
-    if (QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT) {
-      Path jarPath = jar.toNioPath();
-      if (!jarPath.startsWith(projectPath)) {
-        return ImmutableSet.of();
-      }
-      jarPath = projectPath.relativize(jarPath);
-
-      BlazeProjectSnapshot snapshot =
-          querySyncManager
-              .getLoadedProject()
-              .map(QuerySyncProject::getSnapshotHolder)
-              .flatMap(BlazeProject::getCurrent)
-              .orElse(null);
-      if (snapshot == null) {
-        return ImmutableSet.of();
-      }
-
-      return snapshot
-          .getArtifactIndex()
-          .getInfoForArtifact(jarPath)
-          .map(JavaArtifactInfo::sources)
-          .orElse(ImmutableSet.of());
-    } else {
-      return querySyncManager.getArtifactTracker().getTargetSources(jar.toNioPath());
+    Path jarPath = jar.toNioPath();
+    if (!jarPath.startsWith(projectPath)) {
+      return ImmutableSet.of();
     }
+    jarPath = projectPath.relativize(jarPath);
+
+    QuerySyncProjectSnapshot snapshot =
+        querySyncManager
+            .getLoadedProject()
+            .map(QuerySyncProject::getSnapshotHolder)
+            .flatMap(SnapshotHolder::getCurrent)
+            .orElse(null);
+    if (snapshot == null) {
+      return ImmutableSet.of();
+    }
+
+    return snapshot
+        .getArtifactIndex()
+        .getInfoForArtifact(jarPath)
+        .map(JavaArtifactInfo::sources)
+        .orElse(ImmutableSet.of());
   }
 
   // private ImmutableSet<PsiFile> filterByExpectedQualified

@@ -17,30 +17,6 @@ def scopeForJavaPackage(blaze_package):
         "//" + label.package + ":lib" + label.name + "-src.jar",
     ]
 
-def scopeForAndroidPackage(blaze_package):
-    label = Label(blaze_package)
-    return scopeForJavaPackage(blaze_package) + [
-        "//" + label.package + ":" + label.name + ".aar",
-    ]
-
-def scopeForAndroidPackageWithResources(blaze_package):
-    label = Label(blaze_package)
-    return scopeForAndroidPackage(blaze_package) + [
-        "//" + label.package + ":" + label.name + ".aar",
-        "//" + label.package + ":" + label.name + ".srcjar",
-        "//" + label.package + ":" + label.name + "_resources.jar",
-        "//" + label.package + ":" + label.name + "_symbols/R.txt",
-    ]
-
-def scopeForAndroidBinary(blaze_package):
-    label = Label(blaze_package)
-    return [
-        label,
-        "//" + label.package + ":" + label.name + ".apk",
-        "//" + label.package + ":" + label.name + "_deploy.jar",
-        "//" + label.package + ":" + label.name + "_unsigned.apk",
-    ]
-
 def scopeForCcPackage(blaze_package):
     label = Label(blaze_package)
     return [

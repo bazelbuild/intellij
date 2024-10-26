@@ -323,7 +323,19 @@ _intellij_plugin_jar = rule(
     },
 )
 
-def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name = None, extra_runtime_deps = [], plugin_icons = [], restrict_deps = False, **kwargs):
+def intellij_plugin(
+        name,
+        deps,
+        plugin_xml,
+        optional_plugin_xmls = [],
+        jar_name = None,
+        extra_runtime_deps = [],
+        plugin_icons = [],
+        restrict_deps = False,
+        tags = [],
+        target_compatible_with = [],
+        testonly = 0,
+        **kwargs):
     """Creates an intellij plugin from the given deps and plugin.xml.
 
     Args:
@@ -334,6 +346,9 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
       jar_name: The name of the final plugin jar, or <name>.jar if None
       extra_runtime_deps: runtime_deps added to java_binary or java_test calls
       plugin_icons: Plugin logo files to be placed in META-INF. Follow https://plugins.jetbrains.com/docs/intellij/plugin-icon-file.html#plugin-logo-requirements
+      tags: Tags to add to generated rules
+      target_compatible_with: To be passed through to generated rules
+      testonly: testonly setting for generated rules.
       **kwargs: Any further arguments to be passed to the final target
     """
     java_deps_name = name + "_java_deps"
@@ -342,14 +357,18 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
     _intellij_plugin_java_deps(
         name = java_deps_name,
         deps = deps,
+        testonly = testonly,
     )
     java_binary(
         name = binary_name,
         runtime_deps = [":" + java_deps_name] + extra_runtime_deps,
         create_executable = 0,
+        tags = tags,
+        target_compatible_with = target_compatible_with,
+        testonly = testonly,
     )
 
-    if not ("testonly" in kwargs and kwargs["testonly"]):
+    if not testonly:
         DELETE_ENTRIES = [
             # TODO(b/255334320) Remove these 2 (and hopefully the entire zip -d invocation)
             "com/google/common/util/concurrent/ListenableFuture.class",
@@ -375,21 +394,22 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
         deploy_jar = deploy_jar,
         jar_name = jar_name or (name + ".jar"),
         deps = deps,
-        restrict_deps =
-            select({
-                "//intellij_platform_sdk:android-studio-intellij-ext": restrict_deps,
-                "//conditions:default": False,
-            }),
+        restrict_deps = restrict_deps,
         restricted_deps = deps if restrict_deps else [],
         plugin_xml = plugin_xml,
         optional_plugin_xmls = optional_plugin_xmls,
         plugin_icons = plugin_icons,
+        tags = tags,
+        target_compatible_with = target_compatible_with,
+        testonly = testonly,
     )
 
     # included (with tag) as a hack so that IJwB can recognize this is an intellij plugin
     java_import(
         name = name,
         jars = [jar_target_name],
-        tags = ["intellij-plugin"] + kwargs.pop("tags", []),
+        tags = ["intellij-plugin"] + tags,
+        target_compatible_with = target_compatible_with,
+        testonly = testonly,
         **kwargs
     )

@@ -7,9 +7,9 @@ java_library(
     srcs = glob(["*.java"]),
     visibility = ["//shared:__subpackages__"],
     deps = [
+        "@jsr305_annotations//jar",
         "//third_party/auto_value",
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
-        "@jsr305_annotations//jar",
     ],
 )

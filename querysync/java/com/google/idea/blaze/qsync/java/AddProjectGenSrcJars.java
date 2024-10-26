@@ -31,6 +31,7 @@ import com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder.JarPath;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
+import com.google.idea.blaze.qsync.project.ProjectProto.ProjectArtifact.ArtifactTransform;
 import com.google.idea.blaze.qsync.project.TestSourceGlobMatcher;
 
 /**
@@ -73,21 +74,27 @@ public class AddProjectGenSrcJars implements ProjectProtoUpdateOperation {
           ProjectPath added =
               update
                   .artifactDirectory(ArtifactDirectories.DEFAULT)
-                  .addIfNewer(genSrc.path(), genSrc, target.buildContext())
+                  .addIfNewer(
+                      genSrc.path(),
+                      genSrc,
+                      target.buildContext(),
+                      ArtifactTransform.STRIP_SUPPORTED_GENERATED_SOURCES)
                   .orElse(null);
           if (added != null) {
             ProjectProto.ContentEntry.Builder genSrcJarContentEntry =
                 ProjectProto.ContentEntry.newBuilder().setRoot(added.toProto());
             for (JarPath innerPath :
                 srcJarInnerPathFinder.findInnerJarPaths(
-                    genSrc.blockingGetFrom(buildCache), ALLOW_NON_EMPTY_PACKAGE_PREFIXES)) {
+                    genSrc.blockingGetFrom(buildCache),
+                    ALLOW_NON_EMPTY_PACKAGE_PREFIXES,
+                    genSrc.path().toString())) {
 
               genSrcJarContentEntry.addSources(
                   ProjectProto.SourceFolder.newBuilder()
-                      .setProjectPath(added.withInnerJarPath(innerPath.path).toProto())
+                      .setProjectPath(added.withInnerJarPath(innerPath.path()).toProto())
                       .setIsGenerated(true)
                       .setIsTest(testSourceMatcher.matches(genSrc.target().getPackage()))
-                      .setPackagePrefix(innerPath.packagePrefix)
+                      .setPackagePrefix(innerPath.packagePrefix())
                       .build());
             }
             update.workspaceModule().addContentEntries(genSrcJarContentEntry.build());

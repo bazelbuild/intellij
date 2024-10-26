@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
-import org.jetbrains.annotations.NotNull;
 
 /** Base class toggle action that hides for non-blaze projects. */
 public abstract class BlazeProjectToggleAction extends ToggleAction {

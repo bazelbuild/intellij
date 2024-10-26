@@ -28,13 +28,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Expect;
 import com.google.idea.blaze.base.TestData;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.qsync.QuerySyncProject;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
-import com.google.idea.blaze.qsync.BlazeProject;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
+import com.google.idea.blaze.qsync.SnapshotHolder;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.deps.JavaArtifactInfo;
 import com.google.idea.blaze.qsync.project.ProjectProto;
@@ -65,7 +64,7 @@ public class ClassFileJavaSourceFinderTest extends LightJavaCodeInsightFixtureTe
   @Rule public final TestData testData = new TestData();
   @Mock public QuerySyncManager querySyncManager;
   @Mock public ArtifactTracker<?> artifactTracker;
-  private final BlazeProject snapshotHolder = new BlazeProject();
+  private final SnapshotHolder snapshotHolder = new SnapshotHolder();
 
   @Before
   public void initArtifactTracker() {
@@ -105,8 +104,6 @@ public class ClassFileJavaSourceFinderTest extends LightJavaCodeInsightFixtureTe
     ClassFileJavaSourceFinder djsf =
         new ClassFileJavaSourceFinder(
             getFixture().getProject(), querySyncManager, testData.root, Path.of("/"), psiClassFile);
-    when(artifactTracker.getTargetSources(testData.getPath("com/test/libtest.jar")))
-        .thenReturn(ImmutableSet.of());
     expect.that(djsf.findSourceFile()).isNull();
   }
 
@@ -123,44 +120,37 @@ public class ClassFileJavaSourceFinderTest extends LightJavaCodeInsightFixtureTe
             testData.root,
             testData.root,
             psiClassFile);
-    if (QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT) {
-      ArtifactTracker.State artifactState =
-          ArtifactTracker.State.forJavaArtifacts(
-              ImmutableList.of(
-                  JavaArtifactInfo.empty(Label.of("//com/test:test")).toBuilder()
-                      .setSources(
-                          ImmutableSet.of(
-                              Path.of("com/test/Test.java"), Path.of("com/test/AnotherClass.java")))
-                      .build()));
-      snapshotHolder.setCurrent(
-          mock(Context.class),
-          BlazeProjectSnapshot.EMPTY.toBuilder()
-              .project(
-                  TextFormat.parse(
-                      Joiner.on("\n")
-                          .join(
-                              "artifact_directories {",
-                              "  directories {",
-                              "    key: \"\"",
-                              "    value {",
-                              "      contents {",
-                              "        key: \"com/test/libtest.jar\"",
-                              "        value {",
-                              "          target: \"//com/test:test\"",
-                              "        }",
-                              "      }",
-                              "    }",
-                              "  }",
-                              "}"),
-                      ProjectProto.Project.class))
-              .artifactState(artifactState)
-              .build());
-    } else {
-      when(artifactTracker.getTargetSources(testData.getPath("com/test/libtest.jar")))
-          .thenReturn(
-              ImmutableSet.of(
-                  Path.of("com/test/Test.java"), Path.of("com/test/AnotherClass.java")));
-    }
+    ArtifactTracker.State artifactState =
+        ArtifactTracker.State.forJavaArtifacts(
+            ImmutableList.of(
+                JavaArtifactInfo.empty(Label.of("//com/test:test")).toBuilder()
+                    .setSources(
+                        ImmutableSet.of(
+                            Path.of("com/test/Test.java"), Path.of("com/test/AnotherClass.java")))
+                    .build()));
+    snapshotHolder.setCurrent(
+        mock(Context.class),
+        QuerySyncProjectSnapshot.EMPTY.toBuilder()
+            .project(
+                TextFormat.parse(
+                    Joiner.on("\n")
+                        .join(
+                            "artifact_directories {",
+                            "  directories {",
+                            "    key: \"\"",
+                            "    value {",
+                            "      contents {",
+                            "        key: \"com/test/libtest.jar\"",
+                            "        value {",
+                            "          target: \"//com/test:test\"",
+                            "        }",
+                            "      }",
+                            "    }",
+                            "  }",
+                            "}"),
+                    ProjectProto.Project.class))
+            .artifactState(artifactState)
+            .build());
 
     PsiElement navElement = djsf.findSourceFile();
     assertThat(navElement).isNotNull();
@@ -183,49 +173,39 @@ public class ClassFileJavaSourceFinderTest extends LightJavaCodeInsightFixtureTe
             testData.root,
             testData.root,
             psiClassFile);
-    if (QuerySync.USE_NEW_BUILD_ARTIFACT_MANAGEMENT) {
-      ArtifactTracker.State artifactState =
-          ArtifactTracker.State.forJavaArtifacts(
-              ImmutableList.of(
-                  JavaArtifactInfo.empty(Label.of("//com/test:test")).toBuilder()
-                      .setSources(
-                          ImmutableSet.of(
-                              Path.of("com/test/Test.java"),
-                              Path.of("com/test/AnotherClass.java"),
-                              Path.of("com/test2/Test.java")))
-                      .build()));
-      snapshotHolder.setCurrent(
-          mock(Context.class),
-          BlazeProjectSnapshot.EMPTY.toBuilder()
-              .project(
-                  TextFormat.parse(
-                      Joiner.on("\n")
-                          .join(
-                              "artifact_directories {",
-                              "  directories {",
-                              "    key: \"\"",
-                              "    value {",
-                              "      contents {",
-                              "        key: \"com/test/libtest.jar\"",
-                              "        value {",
-                              "          target: \"//com/test:test\"",
-                              "        }",
-                              "      }",
-                              "    }",
-                              "  }",
-                              "}"),
-                      ProjectProto.Project.class))
-              .artifactState(artifactState)
-              .build());
-    } else {
-      // This is for the old artifact tracker only:
-      when(artifactTracker.getTargetSources(testData.getPath("com/test/libtest.jar")))
-          .thenReturn(
-              ImmutableSet.of(
-                  Path.of("com/test/Test.java"),
-                  Path.of("com/test/AnotherClass.java"),
-                  Path.of("com/test2/Test.java")));
-    }
+    ArtifactTracker.State artifactState =
+        ArtifactTracker.State.forJavaArtifacts(
+            ImmutableList.of(
+                JavaArtifactInfo.empty(Label.of("//com/test:test")).toBuilder()
+                    .setSources(
+                        ImmutableSet.of(
+                            Path.of("com/test/Test.java"),
+                            Path.of("com/test/AnotherClass.java"),
+                            Path.of("com/test2/Test.java")))
+                    .build()));
+    snapshotHolder.setCurrent(
+        mock(Context.class),
+        QuerySyncProjectSnapshot.EMPTY.toBuilder()
+            .project(
+                TextFormat.parse(
+                    Joiner.on("\n")
+                        .join(
+                            "artifact_directories {",
+                            "  directories {",
+                            "    key: \"\"",
+                            "    value {",
+                            "      contents {",
+                            "        key: \"com/test/libtest.jar\"",
+                            "        value {",
+                            "          target: \"//com/test:test\"",
+                            "        }",
+                            "      }",
+                            "    }",
+                            "  }",
+                            "}"),
+                    ProjectProto.Project.class))
+            .artifactState(artifactState)
+            .build());
 
     PsiElement navElement = djsf.findSourceFile();
     assertThat(navElement).isNotNull();
@@ -244,9 +224,6 @@ public class ClassFileJavaSourceFinderTest extends LightJavaCodeInsightFixtureTe
     ClassFileJavaSourceFinder djsf =
         new ClassFileJavaSourceFinder(
             getFixture().getProject(), querySyncManager, testData.root, Path.of("/"), psiClassFile);
-    when(artifactTracker.getTargetSources(testData.getPath("com/test/libtest.jar")))
-        .thenReturn(
-            ImmutableSet.of(Path.of("com/test/AnotherClass.java"), Path.of("com/test2/Test.java")));
     PsiElement navElement = djsf.findSourceFile();
     assertThat(navElement).isNull();
   }

@@ -34,8 +34,8 @@ import com.google.idea.blaze.base.util.UrlUtil;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.BlazeProjectListener;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.QuerySyncProjectListener;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.LibrarySource;
@@ -67,12 +67,12 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
 /** An object that monitors the build graph and applies the changes to the project structure. */
-public class ProjectUpdater implements BlazeProjectListener {
+public class ProjectUpdater implements QuerySyncProjectListener {
 
   /** Entry point for instantiating {@link ProjectUpdater}. */
-  public static class Provider implements BlazeProjectListenerProvider {
+  public static class Provider implements QuerySyncProjectListenerProvider {
     @Override
-    public BlazeProjectListener createListener(QuerySyncProject querySyncProject) {
+    public QuerySyncProjectListener createListener(QuerySyncProject querySyncProject) {
       return new ProjectUpdater(
           querySyncProject.getIdeProject(),
           querySyncProject.getImportSettings(),
@@ -116,7 +116,7 @@ public class ProjectUpdater implements BlazeProjectListener {
   }
 
   @Override
-  public void onNewProjectSnapshot(Context<?> context, BlazeProjectSnapshot graph)
+  public void onNewProjectSnapshot(Context<?> context, QuerySyncProjectSnapshot graph)
       throws BuildException {
     artifactStore.update(context, graph);
     updateProjectModel(graph.project(), context);

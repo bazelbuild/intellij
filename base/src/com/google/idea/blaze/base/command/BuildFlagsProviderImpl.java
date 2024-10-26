@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.command;
 
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import java.util.List;
 
@@ -30,7 +31,10 @@ public class BuildFlagsProviderImpl implements BuildFlagsProvider {
       BlazeInvocationContext invocationContext,
       List<String> flags) {
     flags.add("--curses=no");
-    flags.add("--color=yes");
+    // Colorer output is not readable in test logs.
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      flags.add("--color=yes");
+    }
     flags.add("--progress_in_terminal_title=no");
   }
 }

@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguag
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import javax.annotation.Nullable;

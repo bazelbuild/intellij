@@ -28,9 +28,10 @@ import com.google.errorprone.annotations.concurrent.GuardedBy;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
-import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.blaze.common.proto.ProtoStringInterner;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.artifacts.DigestMap;
+import com.google.idea.blaze.qsync.artifacts.DigestMapImpl;
 import com.google.idea.blaze.qsync.java.ArtifactTrackerProto;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaTargetArtifacts;
@@ -43,6 +44,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -101,8 +103,6 @@ public class NewArtifactTracker<C extends Context<C>> implements ArtifactTracker
 
   @Override
   public void clear() throws IOException {
-    // TODO(b/323346056) the caller also expects the artifacts that the IDE consumes to be cleared
-    //   but we don't own those here.
     synchronized (stateLock) {
       builtDeps.clear();
     }
@@ -114,14 +114,18 @@ public class NewArtifactTracker<C extends Context<C>> implements ArtifactTracker
     ListenableFuture<?> artifactsCached =
         artifactCache.addAll(outputInfo.getOutputGroups().values(), context);
 
-    ImmutableMap<Path, String> digestMap =
-        outputInfo.getOutputGroups().values().stream()
-            .collect(toImmutableMap(a -> Path.of(a.getRelativePath()), OutputArtifact::getDigest));
+    DigestMap digestMap =
+        new DigestMapImpl(
+            outputInfo.getOutputGroups().values().stream()
+                .map(a -> new SimpleEntry<>(Path.of(a.getRelativePath()), a.getDigest()))
+                .distinct()
+                .collect(toImmutableMap(Map.Entry::getKey, Map.Entry::getValue)),
+            outputInfo.getTargetsWithErrors());
 
     synchronized (stateLock) {
       for (JavaArtifacts javaArtifacts : outputInfo.getArtifactInfo()) {
         for (JavaTargetArtifacts javaTarget : javaArtifacts.getArtifactsList()) {
-          JavaArtifactInfo artifactInfo = JavaArtifactInfo.create(javaTarget, digestMap::get);
+          JavaArtifactInfo artifactInfo = JavaArtifactInfo.create(javaTarget, digestMap);
           TargetBuildInfo targetInfo =
               TargetBuildInfo.forJavaTarget(artifactInfo, outputInfo.getBuildContext());
           builtDeps.put(artifactInfo.label(), targetInfo);
@@ -131,7 +135,7 @@ public class NewArtifactTracker<C extends Context<C>> implements ArtifactTracker
       for (CcCompilationInfoOuterClass.CcCompilationInfo ccInfo :
           outputInfo.getCcCompilationInfo()) {
         for (CcTargetInfo ccTarget : ccInfo.getTargetsList()) {
-          CcCompilationInfo artifactInfo = CcCompilationInfo.create(ccTarget, digestMap::get);
+          CcCompilationInfo artifactInfo = CcCompilationInfo.create(ccTarget, digestMap);
           builtDeps.put(
               Label.of(ccTarget.getLabel()),
               TargetBuildInfo.forCcTarget(artifactInfo, outputInfo.getBuildContext()));
@@ -173,33 +177,8 @@ public class NewArtifactTracker<C extends Context<C>> implements ArtifactTracker
   }
 
   @Override
-  public ImmutableSet<Path> getTargetSources(Path cachedArtifact) {
-    // TODO(b/323346056) Implement this.
-    return ImmutableSet.of();
-  }
-
-  @Override
-  public Set<Label> getLiveCachedTargets() {
-    synchronized (stateLock) {
-      return builtDeps.keySet();
-    }
-  }
-
-  @Override
-  public Path getExternalAarDirectory() {
-    // TODO(b/323346056) Implement this.
-    return Path.of("/nosuchdir");
-  }
-
-  @Override
-  public Integer getJarsCount() {
-    // TODO(b/323346056) figure out where this functionality should live now.
-    return 0;
-  }
-
-  @Override
   public Iterable<Path> getBugreportFiles() {
-    return ImmutableList.of();
+    return ImmutableList.of(stateFile);
   }
 
   private void saveState() throws IOException {

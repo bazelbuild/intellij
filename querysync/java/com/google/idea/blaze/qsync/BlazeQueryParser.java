@@ -32,13 +32,9 @@ import com.google.idea.blaze.qsync.project.BuildGraphData.Location;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.project.ProjectTarget.SourceType;
 import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
-import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.Query.Rule;
 import com.google.idea.blaze.qsync.query.QuerySummary;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +69,6 @@ public class BlazeQueryParser {
   private final QuerySummary query;
 
   private final BuildGraphData.Builder graphBuilder = BuildGraphData.builder();
-  private final PackageSet.Builder packages = new PackageSet.Builder();
 
   private final Set<Label> projectDeps = Sets.newHashSet();
   // All the project targets the aspect needs to build
@@ -93,24 +88,20 @@ public class BlazeQueryParser {
 
     long now = System.nanoTime();
 
-    // Counts of all kinds of rules
-    Map<String, Integer> ruleCount = new HashMap<>();
     for (Map.Entry<Label, Query.SourceFile> sourceFileEntry :
         query.getSourceFilesMap().entrySet()) {
-      Location l = new Location(sourceFileEntry.getValue().getLocation());
-      if (l.file.endsWith(Path.of("BUILD")) || l.file.endsWith(Path.of("BUILD.bazel"))){
-        if(l.file.getParent() == null){
-          packages.add(Paths.get(""));
-        } else{
-          packages.add(l.file.getParent());
-        }
+      if (sourceFileEntry.getKey().getWorkspaceName().isEmpty()) {
+        graphBuilder
+            .locationsBuilder()
+            .put(sourceFileEntry.getKey(), new Location(sourceFileEntry.getValue().getLocation()));
+      } else {
+        context.output(
+            new PrintOutput(
+                "Skipping unsupported non-root workspace source: " + sourceFileEntry.getValue()));
       }
-      graphBuilder.locationsBuilder().put(sourceFileEntry.getKey(), l);
-      graphBuilder.fileToTargetBuilder().put(l.file, sourceFileEntry.getKey());
     }
     for (Map.Entry<Label, Query.Rule> ruleEntry : query.getRulesMap().entrySet()) {
       String ruleClass = ruleEntry.getValue().getRuleClass();
-      ruleCount.compute(ruleClass, (k, v) -> (v == null ? 0 : v) + 1);
 
       ProjectTarget.Builder targetBuilder = ProjectTarget.builder();
 
@@ -166,7 +157,7 @@ public class BlazeQueryParser {
     long elapsedMs = (System.nanoTime() - now) / 1000000L;
     context.output(PrintOutput.log("%-10d Targets (%d ms):", nTargets, elapsedMs));
 
-    BuildGraphData graph = graphBuilder.projectDeps(projectDeps).packages(packages.build()).build();
+    BuildGraphData graph = graphBuilder.projectDeps(projectDeps).build();
 
     context.output(PrintOutput.log("%-10d Source files", graph.locations().size()));
     context.output(PrintOutput.log("%-10d Java sources", graph.javaSources().size()));
@@ -196,6 +187,9 @@ public class BlazeQueryParser {
     targetBuilder
         .sourceLabelsBuilder()
         .putAll(SourceType.REGULAR, expandFileGroupValues(rule.getSourcesList()));
+
+    Set<Label> thisDeps = Sets.newHashSet(toLabelList(rule.getDepsList()));
+    targetBuilder.depsBuilder().addAll(thisDeps);
   }
 
   private void visitJavaRule(Label label, Query.Rule rule, ProjectTarget.Builder targetBuilder) {

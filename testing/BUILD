@@ -149,8 +149,8 @@ java_library(
         "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
-        "@com_google_guava_guava//jar",
         "@junit//jar",
+        "@com_google_guava_guava//jar",
     ],
 )
 

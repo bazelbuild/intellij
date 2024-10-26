@@ -36,13 +36,6 @@ public abstract class CcDependenciesInfo {
 
   public abstract ImmutableMap<String, CcToolchainInfo> toolchainInfoMap();
 
-  public CcCompilationInfo toProto() {
-    return CcCompilationInfo.newBuilder()
-        .addAllTargets(targetInfoMap().values())
-        .addAllToolchains(toolchainInfoMap().values())
-        .build();
-  }
-
   public Builder toBuilder() {
     Builder b = new Builder();
     b.targetInfoMap.putAll(targetInfoMap());

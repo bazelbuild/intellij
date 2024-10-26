@@ -61,6 +61,7 @@ import com.google.idea.blaze.common.proto.ProtoStringInterner;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
+import com.google.idea.blaze.qsync.artifacts.ArtifactDirectoryUpdate;
 import com.google.idea.blaze.qsync.deps.DependencyBuildContext;
 import com.google.idea.blaze.qsync.deps.OutputGroup;
 import com.google.idea.blaze.qsync.deps.OutputInfo;
@@ -93,9 +94,6 @@ public class BazelDependencyBuilder implements DependencyBuilder {
 
   public static final BoolExperiment fetchArtifactInfoInParallel =
       new BoolExperiment("qsync.parallel.artifact.info.fetch", true);
-
-  public static final BoolExperiment buildGeneratedSrcJars =
-      new BoolExperiment("qsync.build.generated.src.jars", false);
 
   /**
    * Logs message if the number of artifact info files fetched is greater than
@@ -198,7 +196,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
               .addBlazeFlags(
                   String.format(
                       "--aspects_parameters=use_generated_srcjars=%s",
-                      buildGeneratedSrcJars.getValue() ? "True" : "False"))
+                      ArtifactDirectoryUpdate.buildGeneratedSrcJars.getValue() ? "True" : "False"))
               .addBlazeFlags("--noexperimental_run_validations")
               .addBlazeFlags("--keep_going");
       outputGroups.stream()
@@ -212,6 +210,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
       buildDepsStatsBuilder.ifPresent(
           stats -> {
             stats.setBuildIds(outputs.getBuildIds());
+            stats.setBepByteConsumed(outputs.bepBytesConsumed);
           });
 
       BazelExitCodeException.throwIfFailed(
@@ -229,6 +228,10 @@ public class BazelDependencyBuilder implements DependencyBuilder {
   }
 
   protected Path getBundledAspectPath() {
+    String aspectPath = System.getProperty("blaze.idea.build_dependencies.bzl.file");
+    if (aspectPath != null) {
+      return Path.of(aspectPath);
+    }
     PluginDescriptor plugin = checkNotNull(PluginManager.getPluginByClass(getClass()));
     return Paths.get(plugin.getPluginPath().toString(), "aspect", "build_dependencies.bzl");
   }
@@ -241,14 +244,9 @@ public class BazelDependencyBuilder implements DependencyBuilder {
    */
   protected String prepareAspect(BlazeContext context) throws IOException, BuildException {
     Label generatedAspectLabel = getGeneratedAspectLabel();
-    Path generatedAspect =
-        workspaceRoot
-            .path()
-            .resolve(generatedAspectLabel.getPackage())
-            .resolve(generatedAspectLabel.getName());
-    if (!Files.exists(generatedAspect.getParent())) {
-      Files.createDirectories(generatedAspect.getParent());
-    }
+    Path generatedAspectDir = workspaceRoot.path().resolve(generatedAspectLabel.getPackage());
+    Files.createDirectories(generatedAspectDir);
+    Path generatedAspect = generatedAspectDir.resolve(generatedAspectLabel.getName());
     Files.writeString(generatedAspect, getAspect().read());
     // bazel asks BUILD file exists with the .bzl file. It's ok that BUILD file contains nothing.
     Path buildPath = generatedAspect.resolveSibling("BUILD");
@@ -322,7 +320,11 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     }
     Optional<VcsState> vcsState = Optional.empty();
     if (blazeBuildOutputs.sourceUri.isPresent() && vcsHandler.isPresent()) {
-      vcsState = vcsHandler.get().vcsStateForSourceUri(blazeBuildOutputs.sourceUri.get());
+      try {
+        vcsState = vcsHandler.get().vcsStateForSourceUri(blazeBuildOutputs.sourceUri.get());
+      } catch (BuildException e) {
+        context.handleExceptionAsWarning("Failed to get VCS state", e);
+      }
     }
     DependencyBuildContext buildContext =
         DependencyBuildContext.create(

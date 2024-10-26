@@ -21,8 +21,6 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcToolchainInfo;
 import com.google.idea.blaze.qsync.project.ProjectPath;
-import com.google.idea.blaze.qsync.project.ProjectPath.Root;
-import java.nio.file.Path;
 
 /**
  * Information about a C/C++ toolchain. The information is extracted from the build at build deps
@@ -72,8 +70,7 @@ public abstract class CcToolchain {
     return builder()
         .id(proto.getId())
         .compiler(proto.getCompiler())
-        .compilerExecutable(
-            ProjectPath.create(Root.WORKSPACE, Path.of(proto.getCompilerExecutable())))
+        .compilerExecutable(ProjectPath.workspaceRelative(proto.getCompilerExecutable()))
         .cpu(proto.getCpu())
         .targetGnuSystemName(proto.getTargetName())
         .builtInIncludeDirectories(

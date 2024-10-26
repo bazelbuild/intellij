@@ -31,9 +31,6 @@ public class QuerySync {
   private static final FeatureRolloutExperiment ENABLED =
       new FeatureRolloutExperiment("query.sync");
 
-  public static final BoolExperiment ENABLE_QUERY_SYNC_BY_PROJECT_VIEW =
-      new BoolExperiment("query.sync.projectview", true);
-
   public static final BoolExperiment USE_NEW_RES_DIR_LOGIC =
       new BoolExperiment("query.sync.new.resdir.logic", true);
 
@@ -42,9 +39,6 @@ public class QuerySync {
 
   public static final BoolExperiment ATTACH_DEP_SRCJARS =
       new BoolExperiment("querysync.attach.dep.srcjars", true);
-
-  public static final boolean USE_NEW_BUILD_ARTIFACT_MANAGEMENT =
-      new BoolExperiment("query.sync.new.artifact.management", false).getValue();
 
   /**
    * Previously, query sync was enabled by an experiment. Some users still have that experiment set
@@ -55,10 +49,6 @@ public class QuerySync {
   private static final BoolExperiment LEGACY_EXPERIMENT =
       new BoolExperiment("use.query.sync", false);
 
-  /** Enable compose preview for Query Sync. */
-  private static final Supplier<Boolean> COMPOSE_ENABLED =
-      Suppliers.memoize(new BoolExperiment("aswb.query.sync.enable.compose", false)::getValue);
-
   private QuerySync() {}
 
   public static boolean useByDefault() {
@@ -67,9 +57,5 @@ public class QuerySync {
 
   public static boolean isLegacyExperimentEnabled() {
     return LEGACY_EXPERIMENT.getValue();
-  }
-
-  public static boolean isComposeEnabled(Project project) {
-    return Blaze.getProjectType(project) == ProjectType.QUERY_SYNC && COMPOSE_ENABLED.get();
   }
 }

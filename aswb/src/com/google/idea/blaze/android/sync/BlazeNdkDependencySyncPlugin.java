@@ -80,7 +80,7 @@ public final class BlazeNdkDependencySyncPlugin implements BlazeSyncPlugin {
                 + "Click here to install/enable it, then restart the IDE",
             plugin.name);
     IssueOutput.error(msg)
-        .withNavigatable(PluginUtils.installOrEnablePluginNavigable(plugin.id))
+        .navigatable(PluginUtils.installOrEnablePluginNavigable(plugin.id))
         .submit(context);
   }
 }

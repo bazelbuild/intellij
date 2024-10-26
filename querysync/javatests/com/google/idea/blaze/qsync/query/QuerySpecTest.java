@@ -32,7 +32,13 @@ public class QuerySpecTest {
             .workspaceRoot(Path.of("/workspace/"))
             .includePath(Path.of("some/included/path"))
             .build();
-    assertThat(qs.getQueryExpression()).isEqualTo("(//some/included/path/...:*)");
+    assertThat(qs.getQueryExpression()).hasValue("(//some/included/path/...:*)");
+  }
+
+  @Test
+  public void testGetQueryExpression_empty_query() {
+    QuerySpec qs = QuerySpec.builder().workspaceRoot(Path.of("/workspace/")).build();
+    assertThat(qs.getQueryExpression()).isEmpty();
   }
 
   @Test
@@ -44,7 +50,7 @@ public class QuerySpecTest {
             .includePath(Path.of("another/included/path"))
             .build();
     assertThat(qs.getQueryExpression())
-        .isEqualTo("(//some/included/path/...:* + //another/included/path/...:*)");
+        .hasValue("(//some/included/path/...:* + //another/included/path/...:*)");
   }
 
   @Test
@@ -58,7 +64,7 @@ public class QuerySpecTest {
             .excludePath(Path.of("another/included/path/excluded"))
             .build();
     assertThat(qs.getQueryExpression())
-        .isEqualTo(
+        .hasValue(
             "(//some/included/path/...:* + //another/included/path/...:* -"
                 + " //some/included/path/excluded/...:* - //another/included/path/excluded/...:*)");
   }
