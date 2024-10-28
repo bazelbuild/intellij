@@ -62,6 +62,10 @@ _intellij_aspect_test_fixture = rule(
             executable = True,
             allow_files = True,
         ),
+        # Explicit attributes restrict the aspect to only be used with rules that have attributes of the same name,
+        # type, and valid values according to the restriction.
+        # source: https://bazel.build/rules/lib/globals/bzl#aspect
+        "intellij_python_code_generator_rule_names": attr.string(values = [""]),
     },
 )
 

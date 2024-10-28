@@ -336,6 +336,8 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     else:
         py_launcher = None
 
+    codegen_rule_kinds = ctx.attr.intellij_python_code_generator_rule_names
+    print(codegen_rule_kinds)
     sources = sources_from_target(ctx)
     to_build = target[PyInfo].transitive_sources
     args = getattr(ctx.rule.attr, "args", [])
@@ -1322,6 +1324,12 @@ def make_intellij_info_aspect(aspect_impl, semantics):
             cfg = "exec",
             executable = True,
             allow_files = True,
+        ),
+        "intellij_python_code_generator_rule_names": attr.string(
+            default = "",
+            # BUNDLED-IGNORE-BEGIN
+            values = [""],
+            # BUNDLED-IGNORE-END
         ),
     }
 
