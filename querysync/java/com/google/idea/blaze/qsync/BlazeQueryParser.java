@@ -137,6 +137,9 @@ public class BlazeQueryParser {
       if (RuleKinds.isProtoSource(ruleClass)) {
         visitProtoRule(ruleEntry.getValue(), targetBuilder);
       }
+      if (RuleKinds.isPythonSource(ruleClass)) {
+        visitPythonRule(ruleEntry.getKey(), ruleEntry.getValue(), targetBuilder);
+      }
       if (alwaysBuildRuleKinds.contains(ruleClass)) {
         projectTargetsToBuild.add(ruleEntry.getKey());
       }
@@ -172,6 +175,21 @@ public class BlazeQueryParser {
     context.output(PrintOutput.log("%-10d External dependencies", graph.projectDeps().size()));
 
     return graph;
+  }
+
+  private void visitPythonRule(Label label, Rule rule, ProjectTarget.Builder targetBuilder) {
+    graphBuilder.allTargetsBuilder().add(label);
+    targetBuilder.languagesBuilder().add(QuerySyncLanguage.PYTHON);
+    targetBuilder
+            .sourceLabelsBuilder()
+            .putAll(SourceType.REGULAR, expandFileGroupValues(rule.getSourcesList()));
+
+
+    Set<Label> thisDeps = Sets.newHashSet(toLabelList(rule.getDepsList()));
+    targetBuilder.depsBuilder().addAll(thisDeps);
+
+    targetBuilder.runtimeDepsBuilder().addAll(toLabelList(rule.getRuntimeDepsList()));
+    javaDeps.addAll(thisDeps);
   }
 
   private void visitProtoRule(Query.Rule rule, ProjectTarget.Builder targetBuilder) {

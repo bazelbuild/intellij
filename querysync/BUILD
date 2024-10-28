@@ -9,6 +9,7 @@ package(default_visibility = [
     "//java/com/google/devtools/intellij/blaze/plugin/base:__subpackages__",
     "//java/com/google/devtools/intellij/blaze/plugin/cpp:__subpackages__",
     "//java/com/google/devtools/intellij/blaze/plugin/querysync:__subpackages__",
+    "//python:__subpackages__",
     "//querysync/javatests:__subpackages__",
 ])
 
