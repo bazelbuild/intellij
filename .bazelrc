@@ -8,3 +8,4 @@ query --deleted_packages=//aspect/testing/tests/src/com/google/idea/blaze/aspect
 common --noenable_bzlmod
 common --enable_workspace
 common --experimental_google_legacy_api
+common --noincompatible_disallow_empty_glob
