@@ -29,7 +29,7 @@ public class QuerySyncHighlightingFilter implements HighlightInfoFilter {
 
   @Override
   public boolean accept(@NotNull HighlightInfo highlightInfo, @Nullable PsiFile psiFile) {
-    if(Registry.is("bazel.qsync.enable.basic.highlighting.when.analysis.disabled")) {
+    if(Registry.is("bazel.qsync.enable.basic.highlighting.in.non.analysis.mode")) {
       return true;
     }
     if (psiFile == null) {
