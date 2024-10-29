@@ -160,6 +160,7 @@ message GoIdeInfo {
   string library_label = 3 [deprecated = true];
   string library_kind = 4 [deprecated = true];
   repeated string library_labels = 5;
+  bool cgo = 6;
 }
 
 message JsIdeInfo {

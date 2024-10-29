@@ -20,6 +20,8 @@ import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.project.Project;
@@ -51,6 +53,9 @@ public class BlazePyResolverUtils {
   private static Optional<File> resolveGenfilesPath(Project project, String relativePath) {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (Blaze.getProjectType(project) == BlazeImportSettings.ProjectType.QUERY_SYNC) {
+      return Optional.empty();
+    }
     if (projectData == null) {
       return Optional.empty();
     }

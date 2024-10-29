@@ -26,12 +26,17 @@ import com.google.idea.blaze.base.ideinfo.PyIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.python.resolve.BlazePyResolverUtils;
+import com.google.idea.blaze.qsync.project.ProjectTarget;
+import com.google.idea.blaze.qsync.query.Query;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -50,6 +55,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -129,7 +135,7 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
   @Nullable
   private PySourcesIndex getSourcesIndex(Project project) {
     if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
-      return null;
+      return SyncCache.getInstance(project).get(getClass(), this::buildSourcesIndexQuerySync);
     }
     return SyncCache.getInstance(project).get(getClass(), this::buildSourcesIndex);
   }
@@ -152,6 +158,45 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
                 .map(project, decoder, source);
             map.put(sourceImport, psiProvider);
             if (includeParentDirectory(source)) {
+              map.put(sourceImport.removeTail(1), PsiElementProvider.getParent(psiProvider));
+            }
+          }
+        }
+      }
+    }
+    return new PySourcesIndex(shortNames.build(), ImmutableMap.copyOf(map));
+  }
+
+  // exposed package-private for testing
+  @SuppressWarnings("unused")
+  PySourcesIndex buildSourcesIndexQuerySync(Project project, BlazeProjectData projectData) {
+    ImmutableSetMultimap.Builder<String, QualifiedName> shortNames = ImmutableSetMultimap.builder();
+    Map<QualifiedName, PsiElementProvider> map = new HashMap<>();
+
+    var currentSnapshot = QuerySyncManager.getInstance(project)
+            .getLoadedProject()
+            .flatMap(it -> it.getSnapshotHolder().getCurrent())
+            .orElse(null);
+    if (currentSnapshot == null) {
+      return null;
+    }
+    var workspaceRoot = WorkspaceRoot.fromProjectSafe(project);
+    if (workspaceRoot == null) {
+      return null;
+    }
+
+    for (var target : currentSnapshot.getTargetMap().entrySet()) {
+      List<QualifiedName> importRoots = assembleImportRootsQuerySync(target.getKey(), project);
+      for (var source : target.getValue().sourceLabels().get(ProjectTarget.SourceType.REGULAR)) {
+        List<QualifiedName> sourceImports = assembleSourceImportsFromImportRoots(importRoots,
+                fromRelativePath(source.toFilePath().toString()));
+        var file = workspaceRoot.path().resolve(source.toFilePath());
+        for (QualifiedName sourceImport : sourceImports) {
+          if (null != sourceImport.getLastComponent()) {
+            shortNames.put(sourceImport.getLastComponent(), sourceImport);
+            PsiElementProvider psiProvider = mapToPsiProviderQuerySync(file.toFile());
+            map.put(sourceImport, psiProvider);
+            if (includeParentDirectory(file.toFile())) {
               map.put(sourceImport.removeTail(1), PsiElementProvider.getParent(psiProvider));
             }
           }
@@ -280,6 +325,10 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
     return source.getRelativePath().endsWith(".py");
   }
 
+  private static boolean includeParentDirectory(File source) {
+    return source.getName().endsWith(".py");
+  }
+
   static QualifiedName fromRelativePath(String relativePath) {
     relativePath = StringUtil.trimEnd(relativePath, File.separator + PyNames.INIT_DOT_PY);
     relativePath = StringUtil.trimExtensions(relativePath);
@@ -359,6 +408,41 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
     }
 
     return resultBuilder.build();
+  }
+
+  private static List<QualifiedName> assembleImportRootsQuerySync(Label label, Project project) {
+    ImmutableList.Builder<QualifiedName> resultBuilder = ImmutableList.builder();
+
+    // In query sync, when analysis is disabled, we rely on  the `imports` attribute
+    // of the rules. Once it's enabled we should switch to what we got from providers
+    var imports = QuerySyncManager.getInstance(project).getLoadedProject()
+            .flatMap(it -> it.getSnapshotHolder().getCurrent())
+            .map(it -> it.queryData().querySummary().getRulesMap())
+            .flatMap(it -> Optional.ofNullable(it.get(label)))
+            .map(Query.Rule::getImportsList)
+            .map(it -> it.stream().toList())
+            .orElse(ImmutableList.of());
+
+    var buildParentPath = label.getPackage();
+    for (String imp : imports) {
+      Path impPath = buildParentPath.resolve(imp).normalize();
+      String[] impPathParts = new String[impPath.getNameCount()];
+      for (int i = impPath.getNameCount() - 1; i >= 0; i--) {
+        impPathParts[i] = impPath.getName(i).toString();
+      }
+      resultBuilder.add(QualifiedName.fromComponents(impPathParts));
+    }
+    return resultBuilder.build();
+  }
+
+  private PsiElementProvider mapToPsiProviderQuerySync(File file) {
+    return (manager) -> {
+      if (PyNames.INIT_DOT_PY.equals(file.getName())) {
+        return BlazePyResolverUtils.resolveFile(manager, file.getParentFile());
+      } else {
+        return BlazePyResolverUtils.resolveFile(manager, file);
+      }
+    };
   }
 
   /**

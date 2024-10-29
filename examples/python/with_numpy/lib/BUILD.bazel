@@ -1,0 +1,5 @@
+py_library(
+    name = "symbols",
+    srcs = glob(["*.py"]),
+    imports = ["."],
+)

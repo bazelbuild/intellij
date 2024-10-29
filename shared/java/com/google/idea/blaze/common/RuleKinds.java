@@ -53,6 +53,9 @@ public final class RuleKinds {
   private static final ImmutableSet<String> PROTO_SOURCE_RULE_KINDS =
       ImmutableSet.of("proto_library");
 
+  private static final ImmutableSet<String> PYTHON_RULE_KINDS =
+          ImmutableSet.of("py_library", "py_binary", "py_test");
+
   public static boolean isJava(String ruleClass) {
     return JAVA_RULE_KINDS.contains(ruleClass) || ANDROID_RULE_KINDS.contains(ruleClass);
   }
@@ -67,5 +70,9 @@ public final class RuleKinds {
 
   public static boolean isProtoSource(String ruleClass) {
     return PROTO_SOURCE_RULE_KINDS.contains(ruleClass);
+  }
+
+  public static boolean isPythonSource(String ruleClass) {
+    return PYTHON_RULE_KINDS.contains(ruleClass);
   }
 }
