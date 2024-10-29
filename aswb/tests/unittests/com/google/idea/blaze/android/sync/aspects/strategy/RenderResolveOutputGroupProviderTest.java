@@ -23,16 +23,12 @@ import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.projectview.ProjectView;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.aspects.strategy.OutputGroupsProvider;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -49,9 +45,6 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
 
   private final FakeAspectStrategy aspectStrategy = new FakeAspectStrategy();
   private MockExperimentService experimentService;
-  private final ProjectViewSet testProjectViewSet = ProjectViewSet.builder()
-      .add(ProjectView.builder().build())
-      .build();
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
@@ -61,9 +54,6 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
 
     experimentService = new MockExperimentService();
     applicationServices.register(ExperimentService.class, experimentService);
-
-    registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class)
-        .registerExtension(new MockBlazeSyncPlugin());
   }
 
   /**
@@ -77,8 +67,7 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
     ImmutableSet<OutputGroup> outputGroups = ImmutableSet.of(OutputGroup.RESOLVE);
     BlazeCommand.Builder builder = emptyBuilder();
 
-    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, false,
-        testProjectViewSet);
+    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, false);
     assertThat(getOutputGroups(builder)).contains("intellij-render-resolve-android");
   }
 
@@ -92,8 +81,7 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
     ImmutableSet<OutputGroup> outputGroups = ImmutableSet.of(OutputGroup.COMPILE);
     BlazeCommand.Builder builder = emptyBuilder();
 
-    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, false,
-        testProjectViewSet);
+    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, false);
     assertThat(getOutputGroups(builder)).contains("intellij-render-resolve-android");
   }
 
@@ -105,8 +93,7 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
         ImmutableSet.of(OutputGroup.INFO, OutputGroup.COMPILE, OutputGroup.RESOLVE);
     BlazeCommand.Builder builder = emptyBuilder();
 
-    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, false,
-        testProjectViewSet);
+    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, false);
     assertThat(getOutputGroups(builder)).doesNotContain("intellij-render-resolve-android");
   }
 
@@ -120,8 +107,7 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
     ImmutableSet<OutputGroup> outputGroups = ImmutableSet.of(OutputGroup.INFO);
     BlazeCommand.Builder builder = emptyBuilder();
 
-    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, false,
-        testProjectViewSet);
+    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, false);
     assertThat(getOutputGroups(builder)).doesNotContain("intellij-render-resolve-android");
   }
 
@@ -160,8 +146,5 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
     protected Boolean supportsAspectsParameters() {
       return true;
     }
-  }
-
-  private static class MockBlazeSyncPlugin implements BlazeSyncPlugin {
   }
 }
