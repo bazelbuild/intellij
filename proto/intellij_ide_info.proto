@@ -152,6 +152,7 @@ message PyIdeInfo {
   PythonSrcsVersion srcs_version = 4;
   repeated string args = 5;
   repeated string imports = 6;
+  bool is_code_generator = 7;
 }
 
 message GoIdeInfo {

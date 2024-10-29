@@ -31,8 +31,4 @@ public final class Tags {
   /** Ignores the target. */
   public static final String TARGET_TAG_EXCLUDE_TARGET = "intellij-exclude-target";
 
-  /**
-   * Signals to the IDE that a rule produces Python code rather than has code as input.
-   */
-  public static final String TARGET_TAG_PY_CODE_GENERATOR = "intellij-py-code-generator";
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2016-2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -200,6 +200,14 @@ public interface BlazeSyncPlugin {
 
   /** Returns any custom sections that this plugin supports. */
   default Collection<SectionParser> getSections() {
+    return ImmutableList.of();
+  }
+
+  /**
+   * Returns a list of Bazel/Blaze rule names that are able to generate code for the
+   * language specified.
+   */
+  default Collection<String> getCodeGeneratorRuleNames(ProjectViewSet viewSet, LanguageClass languageClass) {
     return ImmutableList.of();
   }
 

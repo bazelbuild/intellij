@@ -1,21 +1,33 @@
 filegroup(
     name = "aspect_files",
     srcs = [
-        "WORKSPACE",
         "BUILD.bazel",
+        "WORKSPACE",
+        "code_generator_info.bzl",
+        "code_generator_info.template.bzl",
         "java_info.bzl",
         "java_info.template.bzl",
     ],
     visibility = ["//visibility:public"],
 )
 
+STRIP_TEMPLATE_SCRIPT = """cat $(SRCS) >$@ &&
+sed -i -e '/TEMPLATE-IGNORE-BEGIN/,/TEMPLATE-IGNORE-END/d' $@ &&
+sed -i -e '/TEMPLATE-INCLUDE-BEGIN/,/TEMPLATE-INCLUDE-END/{s/^[#][#]//;}' $@
+"""
+
 genrule(
     name = "generate_java_info_template",
-    outs = ["java_info.template.bzl"],
     srcs = ["java_info.bzl"],
-    cmd = "cat $(SRCS) >$@ && " +
-        "sed -i -e '/TEMPLATE-IGNORE-BEGIN/,/TEMPLATE-IGNORE-END/d' $@ && " +
-        "sed -i -e '/TEMPLATE-INCLUDE-BEGIN/,/TEMPLATE-INCLUDE-END/{s/^[#][#]//;}' $@",
+    outs = ["java_info.template.bzl"],
+    cmd = STRIP_TEMPLATE_SCRIPT,
+)
+
+genrule(
+    name = "generate_code_generator_info_template",
+    srcs = ["code_generator_info.bzl"],
+    outs = ["code_generator_info.template.bzl"],
+    cmd = STRIP_TEMPLATE_SCRIPT,
 )
 
 genrule(
