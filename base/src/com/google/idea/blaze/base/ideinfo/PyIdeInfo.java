@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2016-2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
   private final PythonSrcsVersion srcsVersion;
   private final ImmutableList<String> args;
   private final ImmutableList<String> imports;
+  private final boolean isCodeGenerator;
 
   private PyIdeInfo(
       ImmutableList<ArtifactLocation> sources,
@@ -43,13 +44,15 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
       PythonVersion version,
       PythonSrcsVersion srcsVersion,
       ImmutableList<String> args,
-      ImmutableList<String> imports) {
+      ImmutableList<String> imports,
+      boolean isCodeGenerator) {
     this.sources = sources;
     this.launcher = launcher;
     this.version = version;
     this.srcsVersion = srcsVersion;
     this.args = args;
     this.imports = imports;
+    this.isCodeGenerator = isCodeGenerator;
   }
 
   static PyIdeInfo fromProto(IntellijIdeInfo.PyIdeInfo proto) {
@@ -64,7 +67,8 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
         proto.getPythonVersion(),
         proto.getSrcsVersion(),
         parseArgs(proto.getArgsList()),
-        ImmutableList.copyOf(proto.getImportsList()));
+        ImmutableList.copyOf(proto.getImportsList()),
+        proto.getIsCodeGenerator());
   }
 
   /** Blaze has a layer of bash-like parsing to args - apply that here. */
@@ -120,6 +124,10 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
     return imports;
   }
 
+  public boolean isCodeGenerator() {
+    return isCodeGenerator;
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -132,6 +140,7 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
     private PythonSrcsVersion srcsVersion;
     private final ImmutableList.Builder<String> args = ImmutableList.builder();
     private final ImmutableList.Builder<String> imports = ImmutableList.builder();
+    private boolean isCodeGenerator = false;
 
     @CanIgnoreReturnValue
     public Builder addSources(Iterable<ArtifactLocation> sources) {
@@ -169,8 +178,14 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
       return this;
     }
 
+    @CanIgnoreReturnValue
+    public Builder isCodeGenerator(boolean value) {
+      this.isCodeGenerator = value;
+      return this;
+    }
+
     public PyIdeInfo build() {
-      return new PyIdeInfo(sources.build(), launcher, version, srcsVersion, args.build(), imports.build());
+      return new PyIdeInfo(sources.build(), launcher, version, srcsVersion, args.build(), imports.build(), isCodeGenerator);
     }
   }
 
