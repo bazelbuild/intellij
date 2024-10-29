@@ -17,6 +17,8 @@ load(":flag_hack.bzl", "FlagHackInfo")
 
 load("@intellij_aspect_template//:java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
 
+load("@intellij_aspect_template//:code_generator_info.bzl", "CODE_GENERATOR_RULE_NAMES")
+
 load(
     ":make_variables.bzl",
     "expand_make_variables",
@@ -82,8 +84,6 @@ PY2 = 1
 
 PY3 = 2
 
-CODE_GENERATOR_RULE_NAME_ASPECT_ATTR_NAME_TEMPLATE = "{language_name}_code_generator_rule_names"
-
 # PythonCompatVersion enum; must match PyIdeInfo.PythonSrcsVersion
 SRC_PY2 = 1
 
@@ -97,12 +97,6 @@ SRC_PY3ONLY = 5
 
 ##### Helpers
 
-def create_code_generator_rule_name_aspect_attr_name(language_name):
-    """Creates an `attr` name for conveying code-generator Rule names"""
-    if not language_name:
-        fail("the `language_name` must be provided")
-    return CODE_GENERATOR_RULE_NAME_ASPECT_ATTR_NAME_TEMPLATE.format(language_name = language_name.lower())
-
 def get_code_generator_rule_names(ctx, language_name):
     """Supplies a list of Rule names for code generation for the language specified
 
@@ -114,11 +108,8 @@ def get_code_generator_rule_names(ctx, language_name):
     if not language_name:
         fail("the `language_name` must be provided")
 
-    aspect_parameter_key = create_code_generator_rule_name_aspect_attr_name(language_name)
-    aspect_parameter_value = getattr(ctx.attr, aspect_parameter_key, "")
-
-    if aspect_parameter_value:
-        return aspect_parameter_value.split(",")
+    if hasattr(CODE_GENERATOR_RULE_NAMES, language_name):
+        return getattr(CODE_GENERATOR_RULE_NAMES, language_name)
 
     return []
 
