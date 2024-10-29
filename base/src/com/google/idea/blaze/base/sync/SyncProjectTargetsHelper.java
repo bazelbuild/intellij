@@ -24,13 +24,10 @@ import com.google.idea.blaze.base.buildview.BuildViewMigration;
 import com.google.idea.blaze.base.dependencies.DirectoryToTargetProvider;
 import com.google.idea.blaze.base.dependencies.SourceToTargetFilteringStrategy;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
-import com.google.idea.blaze.base.dependencies.TargetTagFilter;
-import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection;
-import com.google.idea.blaze.base.projectview.section.sections.EnablePythonCodegenSupport;
 import com.google.idea.blaze.base.projectview.section.sections.SyncManualTargetsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -45,6 +42,7 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
+import com.google.idea.blaze.base.sync.codegenerator.CodeGeneratorRuleNameHelper;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
@@ -52,7 +50,6 @@ import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.openapi.project.Project;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -169,7 +166,7 @@ public final class SyncProjectTargetsHelper {
     // retainedByKind will contain the targets which are to be kept because their Kind matches
     // one of the languages actively in use in the IDE.
 
-    ImmutableList<TargetExpression> retainedByKind =
+    ImmutableList<TargetExpression> retainedLabelsByKind =
         SourceToTargetFilteringStrategy.filterTargets(targets).stream()
             .filter(
                 t ->
@@ -184,32 +181,28 @@ public final class SyncProjectTargetsHelper {
     // should include those as well. In such cases the rule name might be something like
     // `my_code_gen` which will not be detected as a library for example.
 
-    List<TargetExpression> rejectedByKind = targets.stream()
-        .map(TargetInfo::getLabel)
-        .filter(label -> !retainedByKind.contains(label))
+    List<TargetInfo> rejectedTargetInfosByKind = targets.stream()
+        .filter(ti -> !retainedLabelsByKind.contains(ti.label))
         .collect(Collectors.toUnmodifiableList());
 
-    List<TargetExpression> retainedByCodeGen = ImmutableList.of();
+    List<TargetExpression> retainedLabelsByCodeGen = ImmutableList.of();
 
-    if (!rejectedByKind.isEmpty() && TargetTagFilter.hasProvider()) {
-      Set<String> activeLanguageCodeGeneratorTags = languageSettings.getActiveLanguages()
-          .stream()
-          .map(LanguageClass::getCodeGeneratorTag)
-          .filter(Objects::nonNull)
-          .collect(Collectors.toSet());
+    if (!rejectedTargetInfosByKind.isEmpty()) {
+      Set<String> ruleNamesForCodeGenerators = languageSettings.getActiveLanguages().stream()
+          .flatMap(l -> CodeGeneratorRuleNameHelper.deriveRuleNames(projectViewSet, l).stream())
+          .collect(Collectors.toUnmodifiableSet());
 
-      if (!activeLanguageCodeGeneratorTags.isEmpty() && projectViewSet.getScalarValue(EnablePythonCodegenSupport.KEY).orElse(false)) {
-        retainedByCodeGen = TargetTagFilter.filter(
-            project,
-            context,
-            rejectedByKind,
-            activeLanguageCodeGeneratorTags);
+      if (!ruleNamesForCodeGenerators.isEmpty()) {
+        retainedLabelsByCodeGen = rejectedTargetInfosByKind.stream()
+            .filter(ti -> ruleNamesForCodeGenerators.contains(ti.kindString))
+            .map(ti -> ti.label)
+            .collect(Collectors.toUnmodifiableList());
       }
     }
 
     ImmutableList<TargetExpression> retained = ImmutableList.<TargetExpression>builder()
-        .addAll(retainedByKind)
-        .addAll(retainedByCodeGen)
+        .addAll(retainedLabelsByKind)
+        .addAll(retainedLabelsByCodeGen)
         .build();
 
     context.output(

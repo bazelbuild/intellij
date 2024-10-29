@@ -40,7 +40,6 @@ public class Sections {
           SyncFlagsSection.PARSER,
           TestFlagsSection.PARSER,
           ImportTargetOutputSection.PARSER,
-          EnablePythonCodegenSupport.PARSER,
           ExcludeTargetSection.PARSER,
           ExcludedSourceSection.PARSER,
           RunConfigurationsSection.PARSER,

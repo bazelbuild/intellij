@@ -28,11 +28,11 @@ public class TemplateWriter {
         return props;
     }
 
-    public boolean writeToFile(String templateFilePath, Path outputFile, Map<String, String> variableMap) {
+    public boolean writeToFile(String templateFilePath, Path outputFile, Map<String, ?> variableMap) {
         try {
             org.apache.velocity.Template template = velocityEngine.getTemplate(templateFilePath);
             VelocityContext context = new VelocityContext();
-            for (Map.Entry<String, String> entry : variableMap.entrySet()) {
+            for (Map.Entry<String, ?> entry : variableMap.entrySet()) {
                 context.put(entry.getKey(), entry.getValue());
             }
             StringWriter writer = new StringWriter();
