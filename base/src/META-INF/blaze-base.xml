@@ -412,7 +412,7 @@
                  key="bazel.read.external.workspace.data"/>
     <registryKey defaultValue="true"
                  description="Enable basic syntax highliting in Query Sync's 'Analysis Disabled' mode"
-                 key="bazel.qsync.enable.basic.highlighting.in.non.analysis.mode"
+                 key="bazel.qsync.enable.basic.highlighting.in.non.analysis.mode"/>
     <editorNotificationProvider implementation="com.google.idea.blaze.base.wizard2.BazelNotificationProvider"/>
   </extensions>
 
