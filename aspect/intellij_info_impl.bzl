@@ -4,7 +4,6 @@ load(
     "@bazel_tools//tools/build_defs/cc:action_names.bzl",
     "ACTION_NAMES",
 )
-load("@intellij_aspect_template//:java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
 load(
     ":artifacts.bzl",
     "artifact_location",
@@ -15,6 +14,9 @@ load(
     "to_artifact_location",
 )
 load(":flag_hack.bzl", "FlagHackInfo")
+
+load("@intellij_aspect_template//:java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
+
 load(
     ":make_variables.bzl",
     "expand_make_variables",
@@ -80,7 +82,7 @@ PY2 = 1
 
 PY3 = 2
 
-CODE_GENERATOR_RULE_NAME_ENV_VAR_NAME_TEMPLATE = "INTELLIJ_{language_name}_CODE_GENERATOR_RULE_NAMES"
+CODE_GENERATOR_RULE_NAME_ASPECT_ATTR_NAME_TEMPLATE = "{language_name}_code_generator_rule_names"
 
 # PythonCompatVersion enum; must match PyIdeInfo.PythonSrcsVersion
 SRC_PY2 = 1
@@ -95,11 +97,11 @@ SRC_PY3ONLY = 5
 
 ##### Helpers
 
-def create_code_generator_rule_name_env_var_name(language_name):
-    """Creates an env-var name for conveying code-generator Rule names"""
+def create_code_generator_rule_name_aspect_attr_name(language_name):
+    """Creates an `attr` name for conveying code-generator Rule names"""
     if not language_name:
         fail("the `language_name` must be provided")
-    return CODE_GENERATOR_RULE_NAME_ENV_VAR_NAME_TEMPLATE.format(language_name = language_name.upper())
+    return CODE_GENERATOR_RULE_NAME_ASPECT_ATTR_NAME_TEMPLATE.format(language_name = language_name.lower())
 
 def get_code_generator_rule_names(ctx, language_name):
     """Supplies a list of Rule names for code generation for the language specified
@@ -112,16 +114,11 @@ def get_code_generator_rule_names(ctx, language_name):
     if not language_name:
         fail("the `language_name` must be provided")
 
-    def get_value():
-        env_var_name = create_code_generator_rule_name_env_var_name(language_name)
-        if env_var_name in ctx.configuration.default_shell_env:
-            return ctx.configuration.default_shell_env[env_var_name]
-        return None
+    aspect_parameter_key = create_code_generator_rule_name_aspect_attr_name(language_name)
+    aspect_parameter_value = getattr(ctx.attr, aspect_parameter_key, "")
 
-    env_var_value = get_value()
-
-    if env_var_value:
-        return env_var_value.split(",")
+    if aspect_parameter_value:
+        return aspect_parameter_value.split(",")
 
     return []
 

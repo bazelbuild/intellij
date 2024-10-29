@@ -50,13 +50,15 @@ import javax.annotation.Nullable;
 /** Aspect strategy for Skylark. */
 public abstract class AspectStrategy {
 
+  private static final Logger logger = Logger.getInstance(AspectStrategy.class);
+
   /**
-   * This template is for an env-var name that is used to provide to the aspect a list
+   * This template is for an Aspect attr name that is used to provide to the aspect a list
    * of Bazel rule names that are code-generators for a specific language.
    */
 
-  private final static String FORMAT_CODE_GENERATOR_RULE_NAMES_ENV_VAR_NAME
-      = "INTELLIJ_%s_CODE_GENERATOR_RULE_NAMES";
+  private final static String FORMAT_CODE_GENERATOR_RULE_NAMES_ATTR_NAME
+      = "%s_code_generator_rule_names";
 
   public static final Predicate<String> ASPECT_OUTPUT_FILE_PREDICATE =
       str -> str.endsWith(".intellij-info.txt");
@@ -128,7 +130,7 @@ public abstract class AspectStrategy {
         .addBlazeFlags(getAspectFlag().map(List::of).orElse(List.of()))
         .addBlazeFlags("--output_groups=" + Joiner.on(',').join(groups));
 
-    List<ActionEnv> codeGeneratorAspectParameters = activeLanguages.stream()
+    List<AspectParameter> codeGeneratorAspectParameters = activeLanguages.stream()
         .map(l -> tryDeriveActionEnvForCodeGeneratorTargetNames(viewSet, l))
         .filter(Optional::isPresent)
         .map(Optional::get)
@@ -137,11 +139,10 @@ public abstract class AspectStrategy {
     if (!codeGeneratorAspectParameters.isEmpty()) {
       if (supportsAspectsParameters()) {
         codeGeneratorAspectParameters.stream()
-            .map(ActionEnv::toFlag)
+            .map(AspectParameter::toFlag)
             .forEach(builder::addBlazeFlags);
       } else {
-        // TODO (andponlin-canva) ideally would log here.
-        //logger.warn("code generator aspect parameters are required but not supported");
+        logger.warn("code generator aspect parameters are required but not supported");
       }
     }
   }
@@ -157,7 +158,7 @@ public abstract class AspectStrategy {
    * something like <code>my_rule_a,my_rule_b</code>.</p>
    */
 
-  private static Optional<ActionEnv> tryDeriveActionEnvForCodeGeneratorTargetNames(
+  private static Optional<AspectParameter> tryDeriveActionEnvForCodeGeneratorTargetNames(
       ProjectViewSet viewSet,
       LanguageClass languageClass) {
 
@@ -177,8 +178,8 @@ public abstract class AspectStrategy {
       }
     }
 
-    return Optional.of(new ActionEnv(
-        String.format(FORMAT_CODE_GENERATOR_RULE_NAMES_ENV_VAR_NAME, languageClass.getName().toUpperCase()),
+    return Optional.of(new AspectParameter(
+        String.format(FORMAT_CODE_GENERATOR_RULE_NAMES_ATTR_NAME, languageClass.getName().toLowerCase()),
         String.join(",", ruleNames)
     ));
   }
@@ -273,19 +274,27 @@ public abstract class AspectStrategy {
    * line parameter.
    */
 
-  private final static class ActionEnv {
+  private final static class AspectParameter {
     private final String name;
     private final String value;
 
-    public ActionEnv(String name, String value) {
+    public AspectParameter(String name, String value) {
       Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "name is required");
       Preconditions.checkArgument(!Strings.isNullOrEmpty(value), "value is required");
       this.name = name;
       this.value = value;
     }
 
+    public String getName() {
+      return name;
+    }
+
+    public String getValue() {
+      return value;
+    }
+
     public String toFlag() {
-      return String.format("--action_env=%s=%s", name, value);
+      return String.format("--aspects_parameters=%s=%s", name, value);
     }
 
     @Override
