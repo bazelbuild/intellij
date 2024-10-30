@@ -48,6 +48,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
@@ -125,7 +126,7 @@ final class ProjectStateSyncTask {
         createBazelInfoFuture(context, syncFlags, params.syncMode());
 
     ListenableFuture<WorkingSet> workingSetFuture;
-    if (params.addWorkingSet() || params.syncMode() == SyncMode.FULL) {
+    if (params.addWorkingSet() || (BlazeUserSettings.getInstance().getExpandSyncToWorkingSet() && params.syncMode() == SyncMode.FULL)) {
       workingSetFuture = vcsHandler.getWorkingSet(context, executor);
     } else {
       workingSetFuture = Futures.immediateFuture(null);
