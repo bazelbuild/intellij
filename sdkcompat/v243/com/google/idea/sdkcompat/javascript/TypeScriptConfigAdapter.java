@@ -26,6 +26,7 @@ import com.intellij.lang.javascript.config.JSModuleResolution;
 import com.intellij.lang.javascript.config.JSModuleTarget;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class TypeScriptConfigAdapter implements TypeScriptConfig {
 
@@ -65,5 +66,10 @@ public abstract class TypeScriptConfigAdapter implements TypeScriptConfig {
     @Override
     public @NotNull JSModulePathMappings<JSModulePathSubstitution> getPathMappings() {
         return JSModulePathMappings.build(getPaths());
+    }
+
+    @Override
+    public @Nullable String getDeclarationDir() {
+        return null;
     }
 }

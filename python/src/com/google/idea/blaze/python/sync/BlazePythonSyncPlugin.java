@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Bazel Authors. All rights reserved.
+ * Copyright 2017-2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.ProjectViewSet.ProjectViewFile;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
+import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguagesSection;
 import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -41,6 +42,7 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.GenericSourceFolderProvider;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.python.projectview.PythonCodeGeneratorRuleNamesSection;
 import com.google.idea.common.util.Transactions;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
@@ -64,6 +66,7 @@ import com.jetbrains.python.sdk.PythonSdkUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -508,5 +511,18 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
         existingSection,
         ListSection.update(AdditionalLanguagesSection.KEY, existingSection)
             .removeAll(LanguageClass.PYTHON));
+  }
+
+  @Override
+  public Collection<SectionParser> getSections() {
+    return ImmutableList.of(PythonCodeGeneratorRuleNamesSection.PARSER);
+  }
+
+  @Override
+  public Collection<String> getCodeGeneratorRuleNames(ProjectViewSet viewSet, LanguageClass languageClass) {
+    if (languageClass == LanguageClass.PYTHON) {
+      return viewSet.listItems(PythonCodeGeneratorRuleNamesSection.KEY);
+    }
+    return ImmutableList.of();
   }
 }

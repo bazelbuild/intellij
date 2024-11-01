@@ -377,6 +377,7 @@
     <codeInsight.lineMarkerProvider
         language="BUILD"
         implementationClass="com.google.idea.blaze.base.query.MacroLineMarkerProvider"/>
+    <defaultHighlightingSettingProvider implementation="com.google.idea.blaze.base.qsync.QuerySyncHighlightingSettingProvider" order="first"/>
     <lookup.charFilter implementation="com.google.idea.blaze.base.lang.buildfile.completion.BuildLabelCharFilter"/>
     <runLineMarkerContributor
         language="BUILD"
@@ -409,6 +410,9 @@
     <registryKey defaultValue="true"
                  description="Causes the plugin to read external workspace data, enabling features such as code completion for external targets. This may incur the cost of an additional 'bazel mod' call, which could cause issues with older versions or setups."
                  key="bazel.read.external.workspace.data"/>
+    <registryKey defaultValue="true"
+                 description="Enable basic syntax highliting in Query Sync's 'Analysis Disabled' mode"
+                 key="bazel.qsync.enable.basic.highlighting.in.non.analysis.mode"/>
     <editorNotificationProvider implementation="com.google.idea.blaze.base.wizard2.BazelNotificationProvider"/>
   </extensions>
 
@@ -565,7 +569,6 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildSystemVersionChecker" interface="com.google.idea.blaze.base.plugin.BuildSystemVersionChecker"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeIssueParserProvider" interface="com.google.idea.blaze.base.issueparser.BlazeIssueParserProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.DirectoryToTargetProvider" interface="com.google.idea.blaze.base.dependencies.DirectoryToTargetProvider"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.TargetTagFilter" interface="com.google.idea.blaze.base.dependencies.TargetTagFilter"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SourceToTargetProvider" interface="com.google.idea.blaze.base.dependencies.SourceToTargetProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SourceToTargetFilteringStrategy" interface="com.google.idea.blaze.base.dependencies.SourceToTargetFilteringStrategy"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.MacroTargetProvider"
@@ -641,7 +644,6 @@
     <TargetFinder implementation="com.google.idea.blaze.base.run.targetfinder.ProjectTargetFinder"/>
     <SourceToTargetFinder implementation="com.google.idea.blaze.base.run.testmap.ProjectSourceToTargetFinder"/>
     <DirectoryToTargetProvider implementation="com.google.idea.blaze.base.dependencies.BlazeQueryDirectoryToTargetProvider" order="last"/>
-    <TargetTagFilter implementation="com.google.idea.blaze.base.dependencies.BlazeQueryTargetTagFilter" order="last"/>
     <SourceToTargetProvider implementation="com.google.idea.blaze.base.dependencies.BlazeQuerySourceToTargetProvider" order="last"/>
     <SourceToTargetFilteringStrategy implementation="com.google.idea.blaze.base.dependencies.SourceToTargetFilteringStrategy$IgnoredRules"/>
     <SourceToTargetFilteringStrategy implementation="com.google.idea.blaze.base.dependencies.SourceToTargetFilteringStrategy$SupportedLanguages"/>

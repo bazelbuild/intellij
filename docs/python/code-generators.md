@@ -14,7 +14,12 @@ See the Python example [simple_code_generator](/examples/python/simple_code_gene
 
 ## Intelli-J
 
-The Bazel Intelli-J plugin is able to work with generated Python code in this situation. You need to ensure that your code generator has no `srcs` attribute and that it has a tag `intellij-py-code-generator`. This tag signals to the plugin that the Rule's output is generated code.
+The Bazel Intelli-J plugin is able to work with generated Python code in this situation. You need to ensure that your code generator Bazel Rule has no `srcs` attribute and that it is configured in your `.bazelproject` file as follows...
 
+```
+python_code_generator_rule_names:
+  test_codegen_files_py
+  test_codegen_directory_py
+```
 
-
+...where `test_codegen_files_py` and `test_codegen_directory_py` are Rule names.

@@ -17,7 +17,6 @@ package com.google.idea.blaze.python;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.Tags;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
@@ -41,15 +40,12 @@ public final class PythonBlazeRules implements Kind.Provider {
   @Override
   public Function<TargetIdeInfo, Kind> getTargetKindHeuristics() {
     return (tii) -> {
-
-      // If the target has tagged itself for code-generation then we can consider that it would be
-      // treated as if it were a `py_library`.
-
-      if (tii.getTagsList().contains(Tags.TARGET_TAG_PY_CODE_GENERATOR)) {
+      if (tii.hasPyIdeInfo() && tii.getPyIdeInfo().getIsCodeGenerator()) {
         return PY_LIBRARY;
       }
 
       return null;
     };
   }
+
 }
