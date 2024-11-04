@@ -62,7 +62,6 @@ java_library(
         ":project_java_proto",
         ":snapshot_java_proto",
         "@jsr305_annotations//jar",
-        "//common/experiments",
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//shared",
