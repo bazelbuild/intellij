@@ -3,45 +3,11 @@
 We are excited to introduce **Query Sync**, a new mode in the Bazel Plugin for IntelliJ, designed to significantly enhance your development experience. 
 Currently it is enabled for Java, Kotlin and C++
 
-## Key Features
+Bazel users working on large projects often need to limit their scope because even high-performance devices can't handle the full project view. Previously, the solution was to create fine-grained project view files that imported only necessary components, expanding them dynamically when browsing code.
 
-1. **Instant Project Import**
-
-   - Projects are imported almost immediately — no builds are required at the start.
-
-2. **Per-File Analysis**
-
-   - Each file displays an **"Enable Analysis"** button.
-   - Builds and loads dependencies for that specific target when clicked.
-
-3. **Reversed Dependency Analysis**
-
-   - Option to **"Enable Analysis for Reversed Deps"**.
-   - Enhances features like **"Find Usages"** to function smoothly across your codebase.
-
-4. **Transitive Dependency Loading**
-
-   - Resolves the issue of "shallow dependencies."
-   - When analysis is enabled, all transitive dependencies are loaded.
-
-5. **Direct Workspace Navigation**
-
-   - Eliminates navigation to `srcjars` when debugging or using **"Go to Definition"**.
-   - Always directs you to workspace files, even for targets not present in the project view file.
+The new approach allows you to import a much larger scope from the beginning, enabling more advanced IDE features as you navigate the code. This doesn't have to be on a per-file basis—it can be per-directory or any other granularity. It's smart: if you enable analysis for one file, it's automatically enabled for all others that share the same dependencies. This way, you gain advanced features in your focus areas while still seeing the bigger picture and benefiting from navigation and code completions across a broader scope.
 
 ## How to Enable Query Sync
-
-Before enabling Query Sync, please ensure you're using the Bazel Plugin from the **beta channel**.
-
-### Steps to Switch to the Beta Channel
-
-1. Open **IntelliJ IDEA**.
-2. Navigate to **Settings** > **Plugins**.
-3. Search for the **Bazel Plugin**.
-4. Click on the plugin and select **Manage Plugin Repositories**.
-5. Add the [beta](https://github.com/bazelbuild/intellij?tab=readme-ov-file#beta-versions) channel repository if not already present.
-6. Update the plugin to the latest beta version.
-7. Restart IntelliJ IDEA to apply changes.
 
 ### Enabling Query Sync via the Project View Wizard
 
