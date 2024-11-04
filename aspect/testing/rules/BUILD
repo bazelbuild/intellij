@@ -6,6 +6,8 @@ load(
     "ASPECT_TEST_RULES_VISIBILITY_TO_ALL",
     "ASPECT_TEST_RULES_VISIBILITY_TO_TESTS",
 )
+load("//third_party/protobuf/bazel:java_proto_library.bzl", "java_proto_library")
+load("//third_party/protobuf/bazel:proto_library.bzl", "proto_library")
 
 licenses(["notice"])
 
