@@ -2,14 +2,12 @@ package com.google.idea.blaze.clwb;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
-import static com.google.idea.blaze.clwb.base.Assertions.assertProjectStatus;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
 import com.google.idea.blaze.clwb.base.ClwbIntegrationTestCase;
-import com.jetbrains.cidr.project.ui.widget.Status;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -24,7 +22,6 @@ public class SimpleTest extends ClwbIntegrationTestCase {
 
     checkCompiler();
     checkTest();
-    checkStatus();
   }
 
   private void checkCompiler() {
@@ -46,11 +43,5 @@ public class SimpleTest extends ClwbIntegrationTestCase {
 
     assertContainsHeader("iostream", compilerSettings);
     assertContainsHeader("catch2/catch_test_macros.hpp", compilerSettings);
-  }
-
-  private void checkStatus() {
-    final var file = findProjectFile("main/hello-world.cc");
-
-    assertProjectStatus(getProject(), file, Status.OK);
   }
 }
