@@ -20,7 +20,7 @@ java_library(
         "//shared:artifact",
         "//shared:proto",
         "//shared:vcs",
-        "//third_party/auto_value",
+        "//third_party/java/auto_value",
         "@com_google_guava_guava//jar",
         "@protobuf//:protobuf_java",
         "@error_prone_annotations//jar",

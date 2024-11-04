@@ -26,7 +26,7 @@ java_library(
         "//shared",
         "//shared:proto",
         "//third_party/bazel/src/main/protobuf:build_java_proto",
-        "//third_party/auto_value",
+        "//third_party/java/auto_value",
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
     ],

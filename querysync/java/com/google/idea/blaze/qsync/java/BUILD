@@ -33,7 +33,7 @@ java_library(
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//shared",
         "//shared:artifact",
-        "//third_party/auto_value",
+        "//third_party/java/auto_value",
         "@com_google_guava_guava//jar",
         "@jsr305_annotations//jar",
         "@error_prone_annotations//jar",

@@ -54,10 +54,10 @@ java_library(
         "//sdkcompat",
         "//shared",
         "//shared:artifact",
+        "//third_party/java/auto_value",
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:junit",
-        "//third_party/auto_value",
         "@error_prone_annotations//jar",
     ],
 )
@@ -152,13 +152,13 @@ intellij_unit_test_suite(
 java_binary(
     name = "auto_value_lib",
     main_class = "None",
-    runtime_deps = ["//third_party/auto_value"],
+    runtime_deps = ["//third_party/java/auto_value"],
 )
 
 java_binary(
     name = "auto_value_plugin_lib",
     main_class = "None",
-    runtime_deps = ["//third_party/auto_value"],
+    runtime_deps = ["//third_party/java/auto_value"],
 )
 
 java_binary(

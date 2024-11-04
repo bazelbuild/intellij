@@ -13,13 +13,13 @@ java_library(
 java_library(
     name = "has_plugin",
     srcs = ["Foo.java"],
-    plugins = ["//third_party/auto_value:auto_value_plugin"],
+    plugins = ["//third_party/java/auto_value:autovalue-plugin"],
 )
 
 java_library(
     name = "has_plugin_deps",
     srcs = ["Foo.java"],
-    deps = ["//third_party/auto_value"],
+    deps = ["//third_party/java/auto_value"],
 )
 
 intellij_aspect_test_fixture(
