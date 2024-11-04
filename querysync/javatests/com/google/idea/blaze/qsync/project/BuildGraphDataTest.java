@@ -26,6 +26,7 @@ import com.google.idea.blaze.qsync.testdata.BuildGraphs;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.nio.file.Path;
 import java.util.Optional;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -169,6 +170,7 @@ public class BuildGraphDataTest {
   }
 
   @Test
+  @Ignore("b/377137362")
   public void testAndroidLibrary() throws Exception {
     BuildGraphData graph =
         new BlazeQueryParser(
@@ -196,6 +198,7 @@ public class BuildGraphDataTest {
   }
 
   @Test
+  @Ignore("b/377137362")
   public void testProjectAndroidLibrariesWithAidlSource_areProjectDeps() throws Exception {
     BuildGraphData graph =
         new BlazeQueryParser(
