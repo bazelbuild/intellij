@@ -5,6 +5,8 @@ load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
 )
+load("//third_party/protobuf/bazel:java_proto_library.bzl", "java_proto_library")
+load("//third_party/protobuf/bazel:proto_library.bzl", "proto_library")
 
 proto_library(
     name = "foo_proto",

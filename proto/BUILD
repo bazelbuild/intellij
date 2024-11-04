@@ -14,6 +14,8 @@ load(
     "//intellij_platform_sdk:build_defs.bzl",
     "combine_visibilities",
 )
+load("//third_party/protobuf/bazel:java_proto_library.bzl", "java_proto_library")
+load("//third_party/protobuf/bazel:proto_library.bzl", "proto_library")
 
 licenses(["notice"])
 
