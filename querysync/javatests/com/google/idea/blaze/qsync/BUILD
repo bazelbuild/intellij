@@ -109,3 +109,18 @@ java_test(
         "@com_google_guava_guava//jar",
     ],
 )
+
+java_test(
+    name = "AspectUnitTest",
+    srcs = ["AspectUnitTest.java"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync/artifacts:build_artifact_java_proto",
+        "//querysync/java/com/google/idea/blaze/qsync/java:java_target_info_java_proto",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata:java_info",
+        "//shared",
+        "@junit//jar",
+        "@truth//jar",
+        "@com_google_guava_guava//jar",
+    ],
+)
