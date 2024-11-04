@@ -546,6 +546,9 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
                 [compilation_context] + [impl[CcInfo].compilation_context for impl in implementation_deps],
         )
 
+    # external_includes available since bazel 7
+    external_includes = getattr(compilation_context, "external_includes", depset()).to_list()
+
     c_info = struct_omit_none(
         header = headers,
         source = sources,
@@ -554,7 +557,8 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
         transitive_define = compilation_context.defines.to_list(),
         transitive_include_directory = compilation_context.includes.to_list(),
         transitive_quote_include_directory = compilation_context.quote_includes.to_list(),
-        transitive_system_include_directory = compilation_context.system_includes.to_list(),
+        # both system and external includes are add using `-isystem`
+        transitive_system_include_directory = compilation_context.system_includes.to_list() + external_includes,
         include_prefix = getattr(ctx.rule.attr, "include_prefix", None),
         strip_include_prefix = getattr(ctx.rule.attr, "strip_include_prefix", None),
     )
