@@ -114,6 +114,11 @@ java_import(
     jars = glob(["plugins/cwm-plugin/lib/*.jar"]),
 )
 
+java_import(
+    name = "json",
+    jars = glob(["plugins/json/lib/*.jar"])
+)
+
 # The plugins required by IJwB. We need to include them
 # when running integration tests.
 java_import(
