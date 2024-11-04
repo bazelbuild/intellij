@@ -76,7 +76,10 @@ intellij_plugin_library(
                       "default": ["src/META-INF/dependency-on-lvcs-impl.xml"],
                   }),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
-    deps = [":base"],
+    deps = [
+        ":base",
+        "//base/src/com/google/idea/blaze/base/project/indexing",
+    ],
 )
 
 java_library(
