@@ -164,7 +164,6 @@ public class ProjectLoader {
     projectTransformRegistry.add(
         new DependenciesProjectProtoUpdater(
             latestProjectDef,
-            artifactCache,
             projectPathResolver,
             QuerySync.ATTACH_DEP_SRCJARS::getValue));
     projectTransformRegistry.add(new CcProjectProtoTransform());
