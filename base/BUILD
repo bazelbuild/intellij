@@ -43,9 +43,9 @@ kt_jvm_library(
         "//shared:exception",
         "//shared:proto",
         "//shared:vcs",
+        "//third_party/java/auto_value",
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
-        "//third_party/auto_value",
         "@error_prone_annotations//jar",
         "@gson//jar",
     ],
@@ -147,9 +147,9 @@ java_library(
         ":proto_wrapper",
         "//proto:proto_deps",
         "//shared",
+        "//third_party/java/auto_value",
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
-        "//third_party/auto_value",
         "@error_prone_annotations//jar",
     ],
 )
@@ -277,9 +277,9 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         "//common/experiments",
+        "//third_party/java/auto_value",
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
-        "//third_party/auto_value",
     ],
 )
 
@@ -353,9 +353,9 @@ java_library(
     ],
     deps = [
         ":base",
+        "//third_party/java/auto_value",
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
-        "//third_party/auto_value",
         "@error_prone_annotations//jar",
     ],
 )
@@ -487,10 +487,10 @@ java_library(
         "//shared:exception",
         "//testing:lib",
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_java_proto",
+        "//third_party/java/auto_value",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "//third_party/auto_value",
         "@junit//jar",
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
@@ -547,10 +547,10 @@ intellij_unit_test_suite(
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
         "//shared/javatests/com/google/idea/blaze/common/artifact:test_utils",
         "//testing:lib",
+        "//third_party/java/auto_value",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "//third_party/auto_value",
         "@junit//jar",
         "@com_google_guava_guava//jar",
     ],

@@ -123,10 +123,10 @@ java_library(
         "//querysync",
         "//shared",
         "//shared:artifact",
+        "//third_party/java/auto_value",
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:kotlin",
-        "//third_party/auto_value",
     ],
 )
 

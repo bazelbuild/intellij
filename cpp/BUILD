@@ -38,9 +38,9 @@ java_library(
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//sdkcompat",
         "//shared",
+        "//third_party/java/auto_value",
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
-        "//third_party/auto_value",
         "@error_prone_annotations//jar",
     ],
 )

@@ -34,7 +34,7 @@ java_library(
         "//shared/java/com/google/idea/blaze/common",
         "//shared/java/com/google/idea/blaze/common/artifact",
         "//shared/java/com/google/idea/blaze/exception",
-        "//third_party/auto_value",
+        "//third_party/java/auto_value",
         "@com_google_guava_guava//jar",
     ],
 )

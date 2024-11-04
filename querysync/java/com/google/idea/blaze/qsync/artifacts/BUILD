@@ -15,7 +15,7 @@ java_library(
         "//shared",
         "//shared:artifact",
         "//shared:exception",
-        "//third_party/auto_value",
+        "//third_party/java/auto_value",
         "@com_google_guava_guava//jar",
         "@jsr305_annotations//jar",
         "@protobuf//:protobuf_java",

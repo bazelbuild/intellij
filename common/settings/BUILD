@@ -11,9 +11,9 @@ java_library(
     srcs = glob(["src/**/*.java"]),
     visibility = COMMON_PLUGINS_VISIBILITY,
     deps = [
+        "//third_party/java/auto_value",
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
-        "//third_party/auto_value",
         "@error_prone_annotations//jar",
     ],
 )

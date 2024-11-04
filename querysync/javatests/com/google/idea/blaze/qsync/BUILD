@@ -26,7 +26,7 @@ java_library(
         "//shared",
         "//shared:vcs",
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
-        "//third_party/auto_value",
+        "//third_party/java/auto_value",
         "@com_google_guava_guava//jar",
     ],
 )

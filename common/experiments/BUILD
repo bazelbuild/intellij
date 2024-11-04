@@ -20,9 +20,9 @@ java_library(
     visibility = COMMON_PLUGINS_VISIBILITY,
     deps = [
         "//common/util:platform",
+        "//third_party/java/auto_value",
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
-        "//third_party/auto_value",
     ],
 )
 
