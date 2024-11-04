@@ -16,20 +16,20 @@
 package com.google.idea.blaze.plugin;
 
 import com.google.idea.blaze.clwb.CLionNotificationProvider;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /** Runs on project startup, and customizes CLion UI. */
-public class ClwbProjectSpecificInitializer implements ProjectComponent {
-
-  private final Project project;
-
-  public ClwbProjectSpecificInitializer(Project project) {
-    this.project = project;
+public class ClwbProjectSpecificInitializer implements StartupActivity.DumbAware {
+  @Override
+  public void runActivity(@NotNull Project project) {
+    runStartupActivity(project);
   }
 
-  @Override
-  public void projectOpened() {
+  @VisibleForTesting
+  public static void runStartupActivity(Project project) {
     CLionNotificationProvider.register(project);
   }
 }

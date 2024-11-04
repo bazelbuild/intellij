@@ -28,6 +28,8 @@
 
     <programRunner implementation="com.google.idea.blaze.clwb.run.BlazeCppRunner"/>
 
+    <postStartupActivity implementation="com.google.idea.blaze.plugin.ClwbProjectSpecificInitializer"/>
+
     <editorNotificationProvider implementation="com.google.idea.blaze.clwb.BazelCNotificationProvider"/>
     <moduleType id="BLAZE_CPP_MODULE" implementationClass="com.google.idea.blaze.clwb.BlazeCppModuleType"/>
     <postStartupActivity implementation="com.google.idea.blaze.clwb.run.producers.NonBlazeProducerSuppressor"/>
@@ -48,10 +50,4 @@
     <CppSupportChecker implementation="com.google.idea.blaze.clwb.ClwbSupportsCpp" />
     <CppEnvironmentProvider implementation="com.google.idea.blaze.clwb.MSVCEnvironmentProvider" />
   </extensions>
-
-  <project-components>
-    <component>
-      <implementation-class>com.google.idea.blaze.plugin.ClwbProjectSpecificInitializer</implementation-class>
-    </component>
-  </project-components>
 </idea-plugin>

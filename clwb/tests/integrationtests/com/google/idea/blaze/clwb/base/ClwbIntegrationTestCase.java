@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.wizard2.BlazeProjectCommitException;
 import com.google.idea.blaze.base.wizard2.BlazeProjectImportBuilder;
 import com.google.idea.blaze.base.wizard2.CreateFromScratchProjectViewOption;
 import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
+import com.google.idea.blaze.plugin.ClwbProjectSpecificInitializer;
 import com.google.idea.testing.ServiceHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -201,6 +202,9 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
     }
 
     builder.builder().commitToProject(myProject);
+
+    // run startup activities, needs to be done manually
+    ClwbProjectSpecificInitializer.runStartupActivity(myProject);
   }
 
   protected @Language("projectview") String projectViewText() {

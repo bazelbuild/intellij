@@ -4,14 +4,20 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.common.truth.StringSubject;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
+import com.jetbrains.cidr.project.ui.widget.Status;
+import com.jetbrains.cidr.project.ui.widget.WidgetStatus;
+import com.jetbrains.cidr.project.ui.widget.WidgetStatusProvider;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class Assertions {
+
   private final static Pattern defineRx = Pattern.compile("#define ([^ ]+) ?(.*)");
 
   public static void assertContainsHeader(String fileName, OCCompilerSettings settings) {
@@ -73,5 +79,16 @@ public class Assertions {
     }
 
     return assertWithMessage("symbol is not defined: " + symbol).that((String) null);
+  }
+
+  public static void assertProjectStatus(Project project, VirtualFile file, Status expected) {
+    final var actual = WidgetStatusProvider.Companion.getEP_NAME().getExtensionList().stream()
+        .map((it) -> it.getWidgetStatus(project, file))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .map(WidgetStatus::getStatus)
+        .orElse(null);
+
+    assertThat(actual).isEqualTo(expected);
   }
 }
