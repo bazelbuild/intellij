@@ -67,7 +67,6 @@ java_library(
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//shared",
         "//shared:vcs",
-        "//intellij_platform_sdk:plugin_api",
         "//third_party/auto_value",
         "@com_google_guava_guava//jar",
         "@protobuf//:protobuf_java",
