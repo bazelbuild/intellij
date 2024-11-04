@@ -3,8 +3,8 @@ load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_java//java:defs.bzl", "java_library")
 
 package(default_visibility = [
-    "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
     "//querysync:__subpackages__",
+    "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
 ])
 
 proto_library(
@@ -17,8 +17,8 @@ java_proto_library(
     visibility = [
         "//base:__subpackages__",
         "//cpp:__subpackages__",
-        "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__subpackages__",
         "//querysync:__subpackages__",
+        "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__subpackages__",
     ],
     deps = [":language_class_proto"],
 )
@@ -61,15 +61,16 @@ java_library(
         ":language_class_java_proto",
         ":project_java_proto",
         ":snapshot_java_proto",
-        "//intellij_platform_sdk:plugin_api",
+        "@jsr305_annotations//jar",
+        "//common/experiments",
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//shared",
         "//shared:vcs",
+        "//intellij_platform_sdk:plugin_api",
         "//third_party/auto_value",
         "@com_google_guava_guava//jar",
-        "@error_prone_annotations//jar",
-        "@jsr305_annotations//jar",
         "@protobuf//:protobuf_java",
+        "@error_prone_annotations//jar",
     ],
 )
