@@ -29,8 +29,9 @@ import org.jetbrains.annotations.NotNull;
 
 /** An internal action to reload the querysync project. */
 public class ReloadProject extends AnAction {
+
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
+  public ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
   }
 
