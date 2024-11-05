@@ -326,15 +326,29 @@ def _target_within_project_scope(label, include, exclude):
     package = label.package
     result = False
     if include:
-        for inc in [Label(i) for i in include.split(",")]:
+        for inc in include.split(","):
+            # This is not a valid label, but can be passed to aspect when `directories: .` is set in the projectview
+            if (inc == "//"):
+                result = True
+                break
+
+            inc = Label(inc)
             if _get_repo_name(inc) == repo and _package_prefix_match(package, inc.package):
                 result = True
                 break
+
     if result and len(exclude) > 0:
-        for exc in [Label(i) for i in exclude.split(",")]:
+        for exc in exclude.split(","):
+            # Same as for includes
+            if (exc == "//"):
+                result = False
+                break
+
+            exc = Label(exc)
             if _get_repo_name(exc) == repo and _package_prefix_match(package, exc.package):
                 result = False
                 break
+
     return result
 
 def _get_followed_java_dependency_infos(rule):
