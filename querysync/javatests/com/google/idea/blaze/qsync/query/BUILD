@@ -40,6 +40,7 @@ java_test(
     size = "small",
     srcs = ["QuerySpecTest.java"],
     deps = [
+        "//querysync/java/com/google/idea/blaze/qsync",
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//third_party/java/junit",
         "//third_party/java/truth",
