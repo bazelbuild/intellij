@@ -31,6 +31,7 @@ java_test(
         "//shared",
         "//third_party/java/junit",
         "//third_party/java/truth",
+        "@com_google_guava_guava//jar",
     ],
 )
 
