@@ -48,7 +48,8 @@ public class BlazeKotlinQuerySyncPlugin implements BlazeQuerySyncPlugin {
   private static void setProjectJvmTarget(Project project, LanguageLevel javaLanguageLevel) {
     K2JVMCompilerArguments k2JVMCompilerArguments =
         (K2JVMCompilerArguments)
-                FreezableKt.unfrozen(Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project).getSettings());
+          FreezableKt.unfrozen(
+              Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project).getSettings());
 
     String javaVersion = javaLanguageLevel.toJavaVersion().toString();
     k2JVMCompilerArguments.setJvmTarget(javaVersion);
