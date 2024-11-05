@@ -10,6 +10,8 @@ java_test(
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/artifacts",
         "//querysync/java/com/google/idea/blaze/qsync/deps",
+        "//querysync/java/com/google/idea/blaze/qsync/deps:artifact_tracker_state_java_proto",
+        "//querysync/java/com/google/idea/blaze/qsync/java",
         "//querysync/java/com/google/idea/blaze/qsync/java:java_target_info_java_proto",
         "//querysync/javatests/com/google/idea/blaze/qsync/artifacts:aspect_protos",
         "//shared",
@@ -31,6 +33,7 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/artifacts",
         "//querysync/java/com/google/idea/blaze/qsync/deps",
         "//querysync/java/com/google/idea/blaze/qsync/deps:artifact_tracker_state_java_proto",
+        "//querysync/java/com/google/idea/blaze/qsync/java",
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//shared",
         "//shared:vcs",
