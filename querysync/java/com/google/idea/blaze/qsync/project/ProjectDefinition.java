@@ -172,7 +172,9 @@ public abstract class ProjectDefinition {
    */
   public Optional<Path> getIncludingContentRoot(Path workspacePath) {
     Optional<Path> contentRoot =
-        projectIncludes().stream().filter(workspacePath::startsWith).findAny();
+            projectIncludes().stream()
+                    .filter(projectInclude -> projectInclude.toString().isEmpty() || workspacePath.startsWith(projectInclude))
+                    .findAny();
 
     if (contentRoot.isEmpty()) {
       return contentRoot;
