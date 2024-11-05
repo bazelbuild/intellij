@@ -224,12 +224,12 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
         GotItTooltip gotIt =
             new GotItTooltip(
                     "query.sync.got.it",
-                    "ASwB no longer builds your entire project during sync. Now you decide whether"
+                    "The Bazel Plugin no longer builds your entire project during sync. Now you decide whether"
                         + " to build file dependencies for advanced code editing features or not."
                         + " Without building dependencies, you can still navigate your codebase and"
                         + " make light code edits. For analysis and deeper code editing, click the"
                         + " hammer icon to build this file's dependencies. To learn more about"
-                        + " these changes: go/query-sync",
+                        + " these changes: https://github.com/bazelbuild/intellij/blob/master/docs/querysync.md",
                     project)
                 .withHeader("Welcome to query sync");
         // Ideally we would attach the balloon to the button, however the balloon disappears when
