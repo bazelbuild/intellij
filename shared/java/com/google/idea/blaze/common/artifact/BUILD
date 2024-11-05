@@ -9,7 +9,6 @@ java_library(
     deps = [
         "@jsr305_annotations//jar",
         "//shared",
-        "//intellij_platform_sdk:plugin_api",
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
     ],
