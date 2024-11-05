@@ -178,7 +178,6 @@ public class ServiceHelper {
       Disposer.register(parentDisposable, (Disposable) implementation);
     }
     Disposer.register(
-        parentDisposable,
-        () -> ((ComponentManagerImpl) componentManager).unregisterComponent(key));
+        parentDisposable, () -> ((ComponentManagerImpl) componentManager).unregisterComponent(key));
   }
 }

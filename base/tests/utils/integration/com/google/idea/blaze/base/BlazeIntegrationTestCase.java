@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base;
 
-import static com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents;
 
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.io.FileOperationProvider;
