@@ -419,7 +419,7 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
             .flatMap(it -> it.getSnapshotHolder().getCurrent())
             .map(it -> it.queryData().querySummary().getRulesMap())
             .flatMap(it -> Optional.ofNullable(it.get(label)))
-            .map(Query.Rule::getImportsList)
+            .map(it -> it.imports())
             .map(it -> it.stream().toList())
             .orElse(ImmutableList.of());
 

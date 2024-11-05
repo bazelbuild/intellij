@@ -208,13 +208,13 @@ public class BlazeQueryParser {
     targetBuilder.languagesBuilder().add(QuerySyncLanguage.PYTHON);
     targetBuilder
             .sourceLabelsBuilder()
-            .putAll(SourceType.REGULAR, expandFileGroupValues(rule.getSourcesList()));
+            .putAll(SourceType.REGULAR, expandFileGroupValues(rule.sources()));
 
 
-    Set<Label> thisDeps = Sets.newHashSet(toLabelList(rule.getDepsList()));
+    Set<Label> thisDeps = Sets.newHashSet(toLabelList(rule.deps()));
     targetBuilder.depsBuilder().addAll(thisDeps);
 
-    targetBuilder.runtimeDepsBuilder().addAll(toLabelList(rule.getRuntimeDepsList()));
+    targetBuilder.runtimeDepsBuilder().addAll(toLabelList(rule.runtimeDeps()));
     javaDeps.addAll(thisDeps);
   }
 
