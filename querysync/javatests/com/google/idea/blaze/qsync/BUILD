@@ -36,8 +36,8 @@ java_test(
     srcs = ["QuerySyncTestUtilsTest.java"],
     deps = [
         ":TestUtils",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
     ],
 )
 
@@ -53,8 +53,8 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata:build_graphs",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -69,8 +69,8 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/javatests/com/google/idea/blaze/qsync/query:QuerySummaryTestUtil",
         "//shared:vcs",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -87,8 +87,8 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//querysync/javatests/com/google/idea/blaze/qsync/query:QuerySummaryTestUtil",
         "//shared:vcs",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -104,8 +104,8 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//shared",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -119,8 +119,8 @@ java_test(
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata:java_info",
         "//shared",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )

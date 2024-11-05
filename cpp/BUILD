@@ -70,9 +70,9 @@ java_library(
     srcs = ["tests/utils/com/google/idea/blaze/cpp/ClionUnitTestSystemPropertiesRule.java"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
+        "//third_party/java/junit",
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
-        "@junit//jar",
     ],
 )
 
@@ -126,11 +126,11 @@ intellij_unit_test_suite(
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "@maven//:org_mockito_mockito_core",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
     ] + select_for_ide(
         clion = [":clion_sysprop_rule"],
         default = [],
@@ -167,9 +167,9 @@ java_library(
         "//base:unit_test_utils",
         "//sdkcompat",
         "//testing:lib",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "@junit//jar",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -196,10 +196,10 @@ intellij_integration_test_suite(
         "//base:integration_test_utils",
         "//base:unit_test_utils",
         "//sdkcompat",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "@junit//jar",
         "@com_google_guava_guava//jar",
     ],
 )

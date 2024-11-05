@@ -54,12 +54,12 @@ java_test(
     test_class = "com.google.idea.common.async.process.CommandLineTaskTest",
     deps = [
         ":process",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//intellij_platform_sdk:truth",
-        "@junit//jar",
     ],
 )
 

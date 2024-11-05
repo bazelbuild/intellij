@@ -36,10 +36,10 @@ intellij_unit_test_suite(
         "//base",
         "//base:unit_test_utils",
         "//common/experiments",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "@junit//jar",
         "@com_google_guava_guava//jar",
     ],
 )

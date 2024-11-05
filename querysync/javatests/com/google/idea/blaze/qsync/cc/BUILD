@@ -19,8 +19,8 @@ java_test(
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata:build_graphs",
         "//shared",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -44,8 +44,8 @@ java_test(
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//shared",
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )

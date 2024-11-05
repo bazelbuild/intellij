@@ -16,8 +16,8 @@ java_test(
         ":test_utils",
         "//shared/java/com/google/idea/blaze/common/artifact",
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )

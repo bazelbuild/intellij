@@ -32,7 +32,7 @@ intellij_unit_test_suite(
     ],
     deps = [
         ":properties",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:test_libs",
-        "@junit//jar",
     ],
 )

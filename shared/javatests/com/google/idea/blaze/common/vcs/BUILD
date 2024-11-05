@@ -17,8 +17,8 @@ java_test(
     srcs = ["VcsStateTest.java"],
     deps = [
         "//shared/java/com/google/idea/blaze/common/vcs",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )

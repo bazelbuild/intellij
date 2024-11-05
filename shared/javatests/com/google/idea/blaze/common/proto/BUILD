@@ -24,9 +24,9 @@ java_test(
     deps = [
         ":test_java_proto",
         "//shared/java/com/google/idea/blaze/common/proto",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
         "@protobuf//:protobuf_java",
-        "@truth//jar",
     ],
 )

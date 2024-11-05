@@ -153,7 +153,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "@junit//jar",
+        "//third_party/java/junit",
     ],
 )
 

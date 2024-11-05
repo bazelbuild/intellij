@@ -843,17 +843,16 @@
     "@@rules_bazel_integration_test~//:extensions.bzl%bazel_binaries": {
       "general": {
         "bzlTransitiveDigest": "ruMfvWwZzwPPkk+exdpYAe94RD+4erzc4ePrZ08MuKc=",
-        "usagesDigest": "NOmZNyUfHK4TOR2tGFP4OfRYOHmgVVZiVibKj0w/wws=",
+        "usagesDigest": "Bza4kzE3khAS7/tTZCxkdEtfe4yCTUM9EmFpONsGN84=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
         "generatedRepoSpecs": {
-          "build_bazel_bazel_7_2_1": {
+          "bazel_binaries_bazelisk": {
             "bzlFile": "@@rules_bazel_integration_test~//bazel_integration_test/private:bazel_binaries.bzl",
-            "ruleClassName": "bazel_binary",
+            "ruleClassName": "bazelisk_binary",
             "attributes": {
-              "version": "7.2.1",
-              "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
+              "version": "1.18.0"
             }
           },
           "build_bazel_bazel_5_4_1": {
@@ -872,11 +871,12 @@
               "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
             }
           },
-          "bazel_binaries_bazelisk": {
+          "build_bazel_bazel_7_4_0": {
             "bzlFile": "@@rules_bazel_integration_test~//bazel_integration_test/private:bazel_binaries.bzl",
-            "ruleClassName": "bazelisk_binary",
+            "ruleClassName": "bazel_binary",
             "attributes": {
-              "version": "1.18.0"
+              "version": "7.4.0",
+              "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
             }
           },
           "bazel_binaries": {
@@ -886,9 +886,9 @@
               "version_to_repo": {
                 "5.4.1": "build_bazel_bazel_5_4_1",
                 "6.5.0": "build_bazel_bazel_6_5_0",
-                "7.2.1": "build_bazel_bazel_7_2_1"
+                "7.4.0": "build_bazel_bazel_7_4_0"
               },
-              "current_version": "7.2.1"
+              "current_version": "7.4.0"
             }
           }
         },
@@ -898,7 +898,7 @@
             "bazel_binaries_bazelisk",
             "build_bazel_bazel_5_4_1",
             "build_bazel_bazel_6_5_0",
-            "build_bazel_bazel_7_2_1",
+            "build_bazel_bazel_7_4_0",
             "bazel_binaries"
           ],
           "useAllRepos": "NO",
