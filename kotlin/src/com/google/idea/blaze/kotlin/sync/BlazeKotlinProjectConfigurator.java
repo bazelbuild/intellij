@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.psi.PsiElement;
+import java.util.Collection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.config.ApiVersion;
@@ -31,15 +32,8 @@ import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor;
 import org.jetbrains.kotlin.platform.TargetPlatform;
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms;
 
-import java.util.Collection;
-
 /** A kotlin project configurator to suppress "Configure Kotlin" banner. */
 public class BlazeKotlinProjectConfigurator implements KotlinProjectConfigurator {
-
-  @NotNull
-  public ConfigureKotlinStatus getStatus(@NotNull Module module) {
-    return ConfigureKotlinStatus.CONFIGURED;
-  }
 
   @NotNull
   @Override
@@ -90,4 +84,9 @@ public class BlazeKotlinProjectConfigurator implements KotlinProjectConfigurator
       @Nullable String s1,
       @NotNull ApiVersion apiVersion,
       boolean b) {}
+
+  @NotNull
+  public ConfigureKotlinStatus getStatus(@NotNull Module module) {
+    return ConfigureKotlinStatus.CONFIGURED;
+  }
 }

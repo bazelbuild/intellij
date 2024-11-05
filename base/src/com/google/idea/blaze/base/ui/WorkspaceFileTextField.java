@@ -89,7 +89,7 @@ public final class WorkspaceFileTextField extends FileTextFieldImpl {
       Path path = Paths.get(normalize(filePath));
       VirtualFile vFile = LocalFileSystem.getInstance().findFileByNioFile(path);
       if (vFile != null) {
-        return new VfsFile(vFile);
+        return new LocalFsFinder.VfsFile(vFile);
       } else if (path.isAbsolute()) {
         return new LocalFsFinder.IoFile(path);
       }
