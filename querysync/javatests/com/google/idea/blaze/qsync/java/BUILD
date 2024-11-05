@@ -126,18 +126,3 @@ java_test(
         "@truth//jar",
     ],
 )
-
-java_test(
-    name = "SourceJarInnerPathsAndPackagePrefixesTest",
-    size = "small",
-    srcs = ["SourceJarInnerPathsAndPackagePrefixesTest.java"],
-    deps = [
-        "//querysync/java/com/google/idea/blaze/qsync/java",
-        "//shared:artifact",
-        "//shared:exception",
-        "@junit//jar",
-        "@truth//jar",
-        "@com_google_guava_guava//jar",
-        "@mockito//jar",
-    ],
-)

@@ -29,6 +29,7 @@ java_library(
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/artifacts",
         "//querysync/java/com/google/idea/blaze/qsync/deps",
+        "//querysync/java/com/google/idea/blaze/qsync/deps:artifact_tracker_state_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//shared",
