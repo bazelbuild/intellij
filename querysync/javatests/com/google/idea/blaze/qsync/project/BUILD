@@ -6,6 +6,9 @@ package(default_visibility = DEFAULT_TEST_VISIBILITY)
 java_test(
     name = "BuildGraphDataTest",
     srcs = ["BuildGraphDataTest.java"],
+    tags = [
+        "no_tap",
+    ],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync",
         "//querysync/java/com/google/idea/blaze/qsync/project",
