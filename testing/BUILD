@@ -152,6 +152,9 @@ java_library(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "@com_google_guava_guava//jar",
     ],
+    runtime_deps = [
+        "@org_opentest4j_opentest4j//jar",  # Needed by the IntelliJ test framework.
+    ],
 )
 
 java_library(
