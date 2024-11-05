@@ -9,9 +9,9 @@ java_test(
     srcs = ["PackageStatementParserTest.java"],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/java",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
-        "@truth//jar",
     ],
 )
 
@@ -29,9 +29,9 @@ java_test(
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata:project_protos",
         "//shared",
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
-        "@truth//jar",
     ],
 )
 
@@ -51,10 +51,10 @@ java_test(
         "//shared:artifact",
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
         "//shared/javatests/com/google/idea/blaze/common/artifact:test_utils",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
         "@mockito//jar",
-        "@truth//jar",
     ],
 )
 
@@ -73,9 +73,9 @@ java_test(
         "//shared",
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
         "//shared/javatests/com/google/idea/blaze/common/artifact:test_utils",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
-        "@truth//jar",
     ],
 )
 
@@ -95,11 +95,11 @@ java_test(
         "//shared:artifact",
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
         "//shared/javatests/com/google/idea/blaze/common/artifact:test_utils",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
-        "@mockito//jar",
         "@protobuf//:protobuf_java",
-        "@truth//jar",
+        "@mockito//jar",
     ],
 )
 
@@ -119,10 +119,10 @@ java_test(
         "//shared:artifact",
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
         "//shared/javatests/com/google/idea/blaze/common/artifact:test_utils",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
-        "@mockito//jar",
         "@protobuf//:protobuf_java",
-        "@truth//jar",
+        "@mockito//jar",
     ],
 )

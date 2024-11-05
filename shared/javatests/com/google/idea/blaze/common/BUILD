@@ -14,8 +14,8 @@ java_test(
     srcs = ["LabelTest.java"],
     deps = [
         "//shared/java/com/google/idea/blaze/common",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
     ],
 )
 
@@ -27,8 +27,7 @@ java_library(
     ],
     deps = [
         "//shared/java/com/google/idea/blaze/common",
-        "@flogger//jar",
-        "@flogger_system_backend//jar",
+        "//third_party/java/flogger",
     ],
 )
 
@@ -38,8 +37,8 @@ java_test(
     srcs = ["TargetTreeTest.java"],
     deps = [
         "//shared",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
     ],
 )
 
@@ -49,7 +48,7 @@ java_test(
     srcs = ["AtomicFileWriterTest.java"],
     deps = [
         "//shared",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
     ],
 )

@@ -92,11 +92,11 @@ java_library(
         "//java",
         "//shared:artifact",
         "//testing:lib",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",  # unuseddeps: keep
         "//intellij_platform_sdk:test_libs",
-        "@junit//jar",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -153,10 +153,10 @@ intellij_unit_test_suite(
         "//shared",
         "//shared:artifact",
         "//testing:lib",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "@junit//jar",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -208,11 +208,11 @@ intellij_integration_test_suite(
         "//java",
         "//proto:proto_deps",
         "//shared:artifact",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "@junit//jar",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -234,9 +234,9 @@ intellij_integration_test_suite(
         "//base:integration_test_utils",
         "//base:unit_test_utils",
         "//proto:proto_deps",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "@junit//jar",
     ],
 )
 

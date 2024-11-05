@@ -16,8 +16,8 @@ java_test(
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata:build_graphs",
         "//shared",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -30,8 +30,8 @@ java_test(
         "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
         "//querysync/javatests/com/google/idea/blaze/qsync/query:QuerySummaryTestUtil",
         "//shared:vcs",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -42,8 +42,8 @@ java_test(
     srcs = ["ProjectDefinitionTest.java"],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/project",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -55,9 +55,8 @@ java_test(
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//querysync/java/com/google/idea/blaze/qsync/project:language_class_java_proto",
-        "@junit//jar",
-        "@protobuf//:protobuf_java",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@protobuf//:protobuf_java",
     ],
 )
@@ -68,8 +67,8 @@ java_test(
     srcs = ["TestSourceGlobMatcherTest.java"],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/project",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -80,8 +79,8 @@ java_test(
     srcs = ["DepsGraphTest.java"],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/project",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -92,8 +91,8 @@ java_test(
     srcs = ["ExternalTransitiveClosureTest.java"],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/project",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -104,8 +103,8 @@ java_test(
     srcs = ["PendingExternalDepsTest.java"],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/project",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )

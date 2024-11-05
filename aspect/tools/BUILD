@@ -64,9 +64,9 @@ java_library(
         ":guava",
         ":lib",
         "//proto:proto_deps",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:truth",
-        "@junit//jar",
     ],
 )
 

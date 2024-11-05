@@ -147,9 +147,9 @@ java_library(
     deps = [
         "//common/experiments",
         "//common/experiments:unit_test_utils",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
-        "@junit//jar",
         "@com_google_guava_guava//jar",
     ],
 )

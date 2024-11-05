@@ -13,8 +13,8 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//shared",
         "//shared:artifact",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
     ],
 )

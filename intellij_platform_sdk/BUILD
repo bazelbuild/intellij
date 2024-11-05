@@ -689,7 +689,7 @@ java_library(
     testonly = 1,
     visibility = [":test_libs_visibility"],
     exports = [
-        "//third_party:truth",
+        "//third_party/java/truth",
         "@bytebuddy_agent//jar",
         "@bytebuddy//jar",
         "@mockito//jar",
@@ -716,7 +716,10 @@ java_library(
 java_library(
     name = "truth",
     testonly = 1,
-    exports = ["//third_party:truth"],
+    exports = [
+        "@diffutils//jar",
+        "//third_party/java/truth"
+        ],
 )
 
 # IntelliJ Coverage plugin

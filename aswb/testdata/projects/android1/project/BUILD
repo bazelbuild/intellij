@@ -81,6 +81,6 @@ android_library(
 #        "//third_party/android/androidx_test/ext/junit",
 #        "//third_party/java/android/android_sdk_linux/extras/android/compatibility/v4",
 #        "//third_party/java/androidx/appcompat",
-#        "@junit//jar:junit-android",
+#        "//third_party/java/junit:junit-android",
 #    ],
 #)
