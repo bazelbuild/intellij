@@ -7,7 +7,6 @@ java_library(
     ],
     deps = [
         "@jsr305_annotations//jar",
-        "//common/experiments",
         "//querysync/java/com/google/idea/blaze/qsync/artifacts",
         "//querysync/java/com/google/idea/blaze/qsync/cc",
         "//querysync/java/com/google/idea/blaze/qsync/deps",
