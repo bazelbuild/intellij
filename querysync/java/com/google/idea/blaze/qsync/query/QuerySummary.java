@@ -183,6 +183,7 @@ public abstract class QuerySummary {
               .addAllCopts(index(r.copts()))
               .addAllTags(index(r.tags()))
               .setMainClass(index(r.mainClass()))
+              .addAllImports(index(r.imports()))
               .build();
       return value;
     }
@@ -231,6 +232,7 @@ public abstract class QuerySummary {
           .copts(lookup(r.getCoptsList()))
           .tags(lookup(r.getTagsList()))
           .mainClass(lookup(r.getMainClass()))
+          .imports(lookup(r.getImportsList()))
           .build();
     }
 
@@ -315,7 +317,7 @@ public abstract class QuerySummary {
             } else if (attributeName.equals("instruments")) {
               rule.setInstruments(indexer.index(a.getStringValue()));
             } else if (attributeName.equals("imports")) {
-              rule.addAllImports(a.getStringListValueList());
+              rule.addAllImports(indexer.index(a.getStringListValueList()));
             }
           }
           ruleMap.put(indexer.index(Label.of(target.getRule().getName()).toString()), rule.build());

@@ -39,7 +39,8 @@ public class QueryData {
       ImmutableList<String> hdrs,
       ImmutableList<String> copts,
       ImmutableList<String> tags,
-      String mainClass) {
+      String mainClass,
+      ImmutableList<String> imports) {
 
     public static final Rule EMPTY =
         new AutoBuilder_QueryData_Rule_Builder()
@@ -57,6 +58,7 @@ public class QueryData {
             .copts(ImmutableList.of())
             .tags(ImmutableList.of())
             .mainClass("")
+            .imports(ImmutableList.of())
             .build();
 
     public Builder toBuilder() {
@@ -97,6 +99,8 @@ public class QueryData {
       Builder tags(ImmutableList<String> sources);
 
       Builder mainClass(String value);
+
+      Builder imports(ImmutableList<String> sources);
 
       Rule build();
     }
