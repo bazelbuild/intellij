@@ -45,3 +45,15 @@ java_test(
         "//third_party/java/truth",
     ],
 )
+
+java_test(
+    name = "TruncatingFormattableTest",
+    size = "small",
+    srcs = ["TruncatingFormattableTest.java"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync/query",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+        "@com_google_guava_guava//jar",
+    ],
+)
