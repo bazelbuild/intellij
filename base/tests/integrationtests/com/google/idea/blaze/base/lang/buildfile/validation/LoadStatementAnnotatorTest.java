@@ -107,8 +107,9 @@ public class LoadStatementAnnotatorTest extends BuildFileIntegrationTestCase {
   }
 
   private List<Annotation> validateFile(BuildFile file) {
-      PsiElement[] elements = PsiUtils.findAllChildrenOfClassRecursive(file, BuildElement.class)
-          .toArray(BuildElement[]::new);
-      return CodeInsightTestUtil.testAnnotator(new LoadStatementAnnotator(), elements);
+    return CodeInsightTestUtil.testAnnotator(
+        new LoadStatementAnnotator(),
+        PsiUtils.findAllChildrenOfClassRecursive(file, BuildElement.class)
+            .toArray(BuildElement[]::new));
   }
 }

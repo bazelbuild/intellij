@@ -265,9 +265,10 @@ public class GlobValidationTest extends BuildFileIntegrationTestCase {
   }
 
   private List<Annotation> validateFile(BuildFile file) {
-      PsiElement[] elements = PsiUtils.findAllChildrenOfClassRecursive(file, GlobExpression.class)
-          .toArray(GlobExpression[]::new);
-      return CodeInsightTestUtil.testAnnotator(new GlobErrorAnnotator(), elements);
+    return CodeInsightTestUtil.testAnnotator(
+        new GlobErrorAnnotator(),
+        PsiUtils.findAllChildrenOfClassRecursive(file, GlobExpression.class)
+            .toArray(GlobExpression[]::new));
   }
 
 }
