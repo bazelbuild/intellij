@@ -589,6 +589,8 @@ public class QuerySyncProject {
         .put(snapshotFilePath.getFileName().toString(), MoreFiles.asByteSource(snapshotFilePath))
         .putAll(artifactTracker.getBugreportFiles())
         .putAll(snapshotHolder.getBugreportFiles())
+        .putAll(artifactStore.getBugreportFiles())
+        .putAll(buildArtifactCache.getBugreportFiles())
         .build();
   }
 }
