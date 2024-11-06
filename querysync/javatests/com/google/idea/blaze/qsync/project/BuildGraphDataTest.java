@@ -186,13 +186,8 @@ public class BuildGraphDataTest {
     assertThat(graph.getTargetOwners(TESTDATA_ROOT.resolve("android/TestAndroidClass.java")))
         .containsExactly(Label.of("//" + TESTDATA_ROOT + "/android:android"));
     assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("android/TestAndroidClass.java")))
-        .containsExactly(
-            Label.of(
-                "//third_party/bazel_rules/rules_kotlin/toolchains/kotlin_jvm:kt_jvm_toolchain_impl-linux-k8"));
-    assertThat(graph.projectDeps())
-        .containsExactly(
-            Label.of(
-                "//third_party/bazel_rules/rules_kotlin/toolchains/kotlin_jvm:kt_jvm_toolchain_impl-linux-k8"));
+        .isEmpty();
+    assertThat(graph.projectDeps()).isEmpty();
   }
 
   @Test
@@ -212,16 +207,9 @@ public class BuildGraphDataTest {
         .containsExactly(TESTDATA_ROOT.resolve("aidl/TestAndroidAidlClass.java"));
     assertThat(graph.getAndroidSourceFiles())
         .containsExactly(TESTDATA_ROOT.resolve("aidl/TestAndroidAidlClass.java"));
-    assertThat(graph.projectDeps())
-        .containsExactly(
-            Label.of(
-                "//third_party/bazel_rules/rules_kotlin/toolchains/kotlin_jvm:kt_jvm_toolchain_impl-linux-k8"),
-            Label.of("//" + TESTDATA_ROOT + "/aidl:aidl"));
+    assertThat(graph.projectDeps()).containsExactly(Label.of("//" + TESTDATA_ROOT + "/aidl:aidl"));
     assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("aidl/TestAndroidAidlClass.java")))
-        .containsExactly(
-            Label.of(
-                "//third_party/bazel_rules/rules_kotlin/toolchains/kotlin_jvm:kt_jvm_toolchain_impl-linux-k8"),
-            Label.of("//" + TESTDATA_ROOT + "/aidl:aidl"));
+        .containsExactly(Label.of("//" + TESTDATA_ROOT + "/aidl:aidl"));
   }
 
   @Test
