@@ -1,7 +1,7 @@
+load("@protobuf//bazel:java_proto_library.bzl", "java_proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_java//java:defs.bzl", "java_test")
 load("//:build-visibility.bzl", "DEFAULT_TEST_VISIBILITY")
-load("//third_party/protobuf/bazel:java_proto_library.bzl", "java_proto_library")
-load("//third_party/protobuf/bazel:proto_library.bzl", "proto_library")
 
 package(
     default_visibility = DEFAULT_TEST_VISIBILITY,
@@ -25,8 +25,8 @@ java_test(
         ":test_java_proto",
         "//shared/java/com/google/idea/blaze/common/proto",
         "@com_google_guava_guava//jar",
-        "@com_google_protobuf//:protobuf_java",
         "@junit//jar",
+        "@protobuf//:protobuf_java",
         "@truth//jar",
     ],
 )
