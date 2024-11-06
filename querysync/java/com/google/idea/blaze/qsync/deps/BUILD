@@ -1,6 +1,6 @@
+load("@protobuf//bazel:java_proto_library.bzl", "java_proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_java//java:defs.bzl", "java_library")
-load("//third_party/protobuf/bazel:java_proto_library.bzl", "java_proto_library")
-load("//third_party/protobuf/bazel:proto_library.bzl", "proto_library")
 
 java_library(
     name = "deps",
@@ -22,8 +22,8 @@ java_library(
         "//shared:vcs",
         "//third_party/auto_value",
         "@com_google_guava_guava//jar",
-        "@com_google_protobuf//:protobuf_java",
         "@error_prone_annotations//jar",
+        "@protobuf//:protobuf_java",
     ],
 )
 

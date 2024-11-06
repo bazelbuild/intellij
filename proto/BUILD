@@ -1,3 +1,5 @@
+load("@protobuf//bazel:java_proto_library.bzl", "java_proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
@@ -14,8 +16,6 @@ load(
     "//intellij_platform_sdk:build_defs.bzl",
     "combine_visibilities",
 )
-load("//third_party/protobuf/bazel:java_proto_library.bzl", "java_proto_library")
-load("//third_party/protobuf/bazel:proto_library.bzl", "proto_library")
 
 licenses(["notice"])
 
@@ -130,7 +130,7 @@ java_library(
         "//third_party/bazel/src/main/protobuf:build_java_proto",
         "//third_party/bazel/src/main/protobuf:command_line_java_proto",
         "//third_party/bazel/src/main/protobuf:deps_java_proto",
-        "@com_google_protobuf//:protobuf_java",
+        "@protobuf//:protobuf_java",
         "@rules_android//src/tools/deploy_info/proto:android_deploy_info_java_proto",
     ],
 )

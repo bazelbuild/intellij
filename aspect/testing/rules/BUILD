@@ -1,13 +1,13 @@
 # Testing infrastructure for the plugin's Skylark aspect
 
+load("@protobuf//bazel:java_proto_library.bzl", "java_proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_java//java:defs.bzl", "java_binary", "java_library")
 load(
     "//:build-visibility.bzl",
     "ASPECT_TEST_RULES_VISIBILITY_TO_ALL",
     "ASPECT_TEST_RULES_VISIBILITY_TO_TESTS",
 )
-load("//third_party/protobuf/bazel:java_proto_library.bzl", "java_proto_library")
-load("//third_party/protobuf/bazel:proto_library.bzl", "proto_library")
 
 licenses(["notice"])
 
@@ -32,7 +32,7 @@ java_binary(
         ":intellij_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",
         "//proto:intellij_ide_info_java_proto",
-        "@com_google_protobuf//:protobuf_java",
+        "@protobuf//:protobuf_java",
     ],
 )
 
@@ -74,7 +74,7 @@ java_binary(
         ":fast_build_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",
         "//proto:fast_build_info_java_proto",
-        "@com_google_protobuf//:protobuf_java",
+        "@protobuf//:protobuf_java",
     ],
 )
 

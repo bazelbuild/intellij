@@ -55,8 +55,8 @@ java_test(
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//querysync/java/com/google/idea/blaze/qsync/project:language_class_java_proto",
-        "@com_google_protobuf//:protobuf_java",
         "@junit//jar",
+        "@protobuf//:protobuf_java",
         "@truth//jar",
     ],
 )

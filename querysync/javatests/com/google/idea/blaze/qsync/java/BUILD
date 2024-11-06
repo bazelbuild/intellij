@@ -127,9 +127,9 @@ java_test(
         "//shared:artifact",
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
         "@com_google_guava_guava//jar",
-        "@com_google_protobuf//:protobuf_java",
         "@junit//jar",
         "@mockito//jar",
+        "@protobuf//:protobuf_java",
         "@truth//jar",
     ],
 )
@@ -150,9 +150,9 @@ java_test(
         "//shared:artifact",
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
         "@com_google_guava_guava//jar",
-        "@com_google_protobuf//:protobuf_java",
         "@junit//jar",
         "@mockito//jar",
+        "@protobuf//:protobuf_java",
         "@truth//jar",
     ],
 )
