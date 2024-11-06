@@ -1,7 +1,19 @@
 v2024.11.05
 ===========
-
-
+Features:
+* C++: Use execroot for compiler working directory #6911
+* C++: CLion support for cc_library implementation deps #6919
+* C++: External includes support #6922
+* GoLand: cgo support #6891
+* GoLand: gotest support on Windows #6938
+* Query Sync: better syntax highlithting when analysis disabled #6941
+Fixes:
+* Do not decorate tabs for BUILD files in non-bazel projects #6925
+* fix: NPE in location provider #6960
+* Query Sync: Use git info only when Expand to Working Set is enabled #6944
+* Query Sync: fix(qsync): IJ incorrectly recognizes files as external and asks to a… #6964
+* Query Sync: fix(qsync): Unhandled exception when trying to resolve external works… #6962
+* Query Sync: fix(qsync): NPE in "Add to project" panel action #6967
 
 v2024.10.22
 ===========
