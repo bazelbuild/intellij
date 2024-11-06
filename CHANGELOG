@@ -9,6 +9,7 @@ Bug Fixes
 * fix: fast sync with bazel 8 or when --incompatible_use_plus_in_repo_names is on #6901
 * BEP parse unknown targets in aborted event #6910
 * Supply code-gen rule names via settings #6889
+* fix: NPE in location provider #6960
 Features
 * Download Buildifier Binary #6625
 * Support for Python Rules that are Code Generators #6726
