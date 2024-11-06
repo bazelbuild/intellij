@@ -7,7 +7,7 @@ java_test(
     name = "BuildGraphDataTest",
     srcs = ["BuildGraphDataTest.java"],
     tags = [
-        "no_tap",
+        "notap",
     ],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync",
