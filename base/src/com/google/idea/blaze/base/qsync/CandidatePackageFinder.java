@@ -90,6 +90,8 @@ public class CandidatePackageFinder {
     // - at least two paths with any packages in
     // this is to offer the user some choice, and ensure we don't add paths with no packages in
     // (which would cause the query to fail later on).
+    // However, sometimes there might be a case where there's only one valid package.
+    // in such a case, we return it, but we don't add it unconditionally.
     do {
       cancellationCheck.run();
       packages = runQuery(forPath);
@@ -97,7 +99,7 @@ public class CandidatePackageFinder {
         candidates.add(new CandidatePackage(forPath, packages.size()));
       }
       forPath = forPath.getParent();
-    } while (candidates.size() < 2 && packages.size() < 2);
+    } while (candidates.size() < 2 && packages.size() < 2 && forPath != null);
     return ImmutableList.copyOf(candidates);
   }
 
