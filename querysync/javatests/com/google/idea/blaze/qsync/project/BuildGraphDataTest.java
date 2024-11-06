@@ -215,6 +215,51 @@ public class BuildGraphDataTest {
   }
 
   @Test
+  public void testAndroidLibrary() throws Exception {
+    BuildGraphData graph =
+        new BlazeQueryParser(
+                getQuerySummary(TestData.ANDROID_LIB_QUERY), NOOP_CONTEXT, ImmutableSet.of())
+            .parse();
+    assertThat(graph.getAllSourceFiles())
+        .containsExactly(
+            TESTDATA_ROOT.resolve("android/TestAndroidClass.java"),
+            TESTDATA_ROOT.resolve("android/BUILD"),
+            TESTDATA_ROOT.resolve("android/AndroidManifest.xml"));
+    assertThat(graph.getJavaSourceFiles())
+        .containsExactly(TESTDATA_ROOT.resolve("android/TestAndroidClass.java"));
+    assertThat(graph.getAndroidSourceFiles())
+        .containsExactly(TESTDATA_ROOT.resolve("android/TestAndroidClass.java"));
+    assertThat(graph.getTargetOwners(TESTDATA_ROOT.resolve("android/TestAndroidClass.java")))
+        .containsExactly(Label.of("//" + TESTDATA_ROOT + "/android:android"));
+    assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("android/TestAndroidClass.java")))
+        .isEmpty();
+    assertThat(graph.projectDeps()).isEmpty();
+  }
+
+  @Test
+  public void testProjectAndroidLibrariesWithAidlSource_areProjectDeps() throws Exception {
+    BuildGraphData graph =
+        new BlazeQueryParser(
+                getQuerySummary(TestData.ANDROID_AIDL_SOURCE_QUERY),
+                NOOP_CONTEXT,
+                ImmutableSet.of())
+            .parse();
+    assertThat(graph.getAllSourceFiles())
+        .containsExactly(
+            TESTDATA_ROOT.resolve("aidl/TestAndroidAidlClass.java"),
+            TESTDATA_ROOT.resolve("aidl/TestAidlService.aidl"),
+            TESTDATA_ROOT.resolve("aidl/BUILD"));
+    assertThat(graph.getJavaSourceFiles())
+        .containsExactly(TESTDATA_ROOT.resolve("aidl/TestAndroidAidlClass.java"));
+    assertThat(graph.getAndroidSourceFiles())
+        .containsExactly(TESTDATA_ROOT.resolve("aidl/TestAndroidAidlClass.java"));
+    assertThat(graph.projectDeps()).containsExactly(Label.of("//" + TESTDATA_ROOT + "/aidl:aidl"));
+    assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("aidl/TestAndroidAidlClass.java")))
+        .containsExactly(Label.of("//" + TESTDATA_ROOT + "/aidl:aidl"));
+>>>>>>> 5b9edbf04 (Remove kotlin toolchain as dep for android kotlin rules)
+  }
+
+  @Test
   public void testFileGroupSource() throws Exception {
     BuildGraphData graph =
         new BlazeQueryParser(
