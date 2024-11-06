@@ -41,8 +41,6 @@ tasks:
       - --notrim_test_configuration
     test_targets:
       - //aspect/testing/...
-    soft_fail:
-      - exit_status: 1
     skip_use_bazel_version_for_test: true
   Aspect-oss-oldest-stable:
     name: Aspect Tests for IJ OSS Oldest Stable
@@ -85,6 +83,4 @@ tasks:
       - --notrim_test_configuration
     test_targets:
       - //aspect/testing/...
-    soft_fail:
-      - exit_status: 1
     skip_use_bazel_version_for_test: true
