@@ -1,16 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <style>
-    .regular{fill:#43A047;} .dark-left{fill:#00701A;} .dark-right{fill:#004300;} .light{fill:#76D275;}
-  </style>
-
-  <path class="light"      d="M144 32 l112 112 -112 112 l-112 -112z"/>
-  <path class="regular"    d="M32 144 v112 l112 112 v-112z"/>
-
-  <path class="light"      d="M368 32  l112 112 -112 112 -112 -112z"/>
-  <path class="regular"    d="M480 144 v112 l-112 112 v-112z"/>
-
-  <path class="regular"    d="M256 144 l112 112 -112 112 -112 -112z"/>
-  <path class="dark-left"  d="M256 368 v112 l-112 -112  v-112z"/>
-  <path class="dark-right" d="M256 368 l112 -112 v112 l-112 112z"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="40" height="40" viewBox="0 0 40 40">
+<path fill-rule="nonzero" fill="rgb(46.27451%, 82.352941%, 45.882353%)" fill-opacity="1" d="M 11.25 2.5 L 20 11.25 L 11.25 20 L 2.5 11.25 Z M 11.25 2.5 "/>
+<path fill-rule="nonzero" fill="rgb(26.27451%, 62.745098%, 27.843137%)" fill-opacity="1" d="M 2.5 11.25 L 2.5 20 L 11.25 28.75 L 11.25 20 Z M 2.5 11.25 "/>
+<path fill-rule="nonzero" fill="rgb(46.27451%, 82.352941%, 45.882353%)" fill-opacity="1" d="M 28.75 2.5 L 37.5 11.25 L 28.75 20 L 20 11.25 Z M 28.75 2.5 "/>
+<path fill-rule="nonzero" fill="rgb(26.27451%, 62.745098%, 27.843137%)" fill-opacity="1" d="M 37.5 11.25 L 37.5 20 L 28.75 28.75 L 28.75 20 Z M 37.5 11.25 "/>
+<path fill-rule="nonzero" fill="rgb(26.27451%, 62.745098%, 27.843137%)" fill-opacity="1" d="M 20 11.25 L 28.75 20 L 20 28.75 L 11.25 20 Z M 20 11.25 "/>
+<path fill-rule="nonzero" fill="rgb(0%, 43.921569%, 10.196078%)" fill-opacity="1" d="M 20 28.75 L 20 37.5 L 11.25 28.75 L 11.25 20 Z M 20 28.75 "/>
+<path fill-rule="nonzero" fill="rgb(0%, 26.27451%, 0%)" fill-opacity="1" d="M 20 28.75 L 28.75 20 L 28.75 28.75 L 20 37.5 Z M 20 28.75 "/>
 </svg>
-
