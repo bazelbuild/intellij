@@ -1,10 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="40" height="40" viewBox="0 0 40 40">
-<path fill-rule="nonzero" fill="rgb(46.27451%, 82.352941%, 45.882353%)" fill-opacity="1" d="M 11.25 2.5 L 20 11.25 L 11.25 20 L 2.5 11.25 Z M 11.25 2.5 "/>
-<path fill-rule="nonzero" fill="rgb(26.27451%, 62.745098%, 27.843137%)" fill-opacity="1" d="M 2.5 11.25 L 2.5 20 L 11.25 28.75 L 11.25 20 Z M 2.5 11.25 "/>
-<path fill-rule="nonzero" fill="rgb(46.27451%, 82.352941%, 45.882353%)" fill-opacity="1" d="M 28.75 2.5 L 37.5 11.25 L 28.75 20 L 20 11.25 Z M 28.75 2.5 "/>
-<path fill-rule="nonzero" fill="rgb(26.27451%, 62.745098%, 27.843137%)" fill-opacity="1" d="M 37.5 11.25 L 37.5 20 L 28.75 28.75 L 28.75 20 Z M 37.5 11.25 "/>
-<path fill-rule="nonzero" fill="rgb(26.27451%, 62.745098%, 27.843137%)" fill-opacity="1" d="M 20 11.25 L 28.75 20 L 20 28.75 L 11.25 20 Z M 20 11.25 "/>
-<path fill-rule="nonzero" fill="rgb(0%, 43.921569%, 10.196078%)" fill-opacity="1" d="M 20 28.75 L 20 37.5 L 11.25 28.75 L 11.25 20 Z M 20 28.75 "/>
-<path fill-rule="nonzero" fill="rgb(0%, 26.27451%, 0%)" fill-opacity="1" d="M 20 28.75 L 28.75 20 L 28.75 28.75 L 20 37.5 Z M 20 28.75 "/>
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M11 2L20 11L11 20L2 11L11 2Z" fill="#76D275"/>
+<path d="M2 11V20L11 29V20L2 11Z" fill="#43A047"/>
+<path d="M29 2L38 11L29 20L20 11L29 2Z" fill="#76D275"/>
+<path d="M38 11V20L29 29V20L38 11Z" fill="#43A047"/>
+<path d="M20 11L29 20L20 29L11 20L20 11Z" fill="#43A047"/>
+<path d="M20 29V38L11 29V20L20 29Z" fill="#00701A"/>
+<path d="M20 29L29 20V29L20 38V29Z" fill="#004300"/>
 </svg>
