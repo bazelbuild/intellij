@@ -1,0 +1,1 @@
+bazel_dep(name = "catch2", version = "3.7.1")

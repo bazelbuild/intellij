@@ -52,7 +52,7 @@ use_repo(remote_android_extensions, "android_gmaven_r8", "android_tools")
 
 bazel_dep(
     name = "rules_bazel_integration_test",
-    version = "0.26.0",
+    version = "0.26.1",
     dev_dependency = True,
 )
 
@@ -73,7 +73,7 @@ use_repo(
     "build_bazel_bazel_7_4_0",
 )
 
-bazel_dep(name = "rules_jvm_external", version = "6.4")
+bazel_dep(name = "rules_jvm_external", version = "6.5")
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
@@ -219,9 +219,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2024_2. This is required to build IJwB and run integration tests.
-IC_243_SHA = "944be2ceeeaa56a81ed1930e5fc82d195a0aee34dd963fceca85e96ca9bd3158"
+IC_243_SHA = "8e10b5dea6f4cb4588fadccd94215cee69c31e7575c855b6d677c3996bbb5f31"
 
-IC_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/243.21155.17-EAP-SNAPSHOT/ideaIC-243.21155.17-EAP-SNAPSHOT.zip"
+IC_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/243.21565.23-EAP-SNAPSHOT/ideaIC-243.21565.23-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ce_2024_3",
@@ -295,9 +295,9 @@ http_archive(
     url = IU_242_URL,
 )
 
-IU_243_SHA = "05bc55986e358f54642d48ffdbb79d5356800062669a1ca328d8e410c933a990"
+IU_243_SHA = "83ad99522d35db6ca72bfa44903f358e8e11355e73d9ad61485ba4199856c100"
 
-IU_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/243.21155.17-EAP-SNAPSHOT/ideaIU-243.21155.17-EAP-SNAPSHOT.zip"
+IU_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/243.21565.23-EAP-SNAPSHOT/ideaIU-243.21565.23-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ue_2024_3",
@@ -360,9 +360,9 @@ http_archive(
     url = CLION_241_URL,
 )
 
-CLION_242_SHA = "0de30d4a2c59c46805906792128f17041ff24203757693cbdec45eba8f2f1c84"
+CLION_242_SHA = "568dddc58743729ac322641ab84d7089e6a65ee86ec0e495ed521205b3e49624"
 
-CLION_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2024.2.2/clion-2024.2.2.zip"
+CLION_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2024.2.3/clion-2024.2.3.zip"
 
 http_archive(
     name = "clion_2024_2",
@@ -371,9 +371,9 @@ http_archive(
     url = CLION_242_URL,
 )
 
-CLION_243_SHA = "b23a2e50b1e4e2e9ead4c6089cfb78cf3e14c891c6be39cdf655b287dd862d5f"
+CLION_243_SHA = "0c9f2c9912a90b55683a61dd7443633b58259796f820d608a4602b4a3526724e"
 
-CLION_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/243.20847.43-EAP-SNAPSHOT/clion-243.20847.43-EAP-SNAPSHOT.zip"
+CLION_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/243.21565.87-EAP-SNAPSHOT/clion-243.21565.87-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "clion_2024_3",
@@ -412,9 +412,9 @@ http_archive(
     url = DEVKIT_241_URL,
 )
 
-DEVKIT_243_SHA = "0ed918f8d207e4276be1922a846e79e7e6f8a0d38ef0b83baa1b8510820dc72d"
+DEVKIT_243_SHA = "1401c1151bd3b73aabb197cb5e45d127a0290a742e1f6436ca905ea2e0de3d32"
 
-DEVKIT_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/243.21155.17/DevKit-243.21155.17.zip"
+DEVKIT_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/243.21565.23/DevKit-243.21565.23.zip"
 
 http_archive(
     name = "devkit_2024_3",
@@ -531,9 +531,9 @@ http_archive(
     url = PYTHON_PLUGIN_242_URL,
 )
 
-PYTHON_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/243.21155.17/PythonCore-243.21155.17.zip"
+PYTHON_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/243.21565.23/PythonCore-243.21565.23.zip"
 
-PYTHON_PLUGIN_243_SHA = "f15dcb1c9d5c6943ee99efc1a37b6e9a62ac7ba82cbef1e74ce05f742f4bc775"
+PYTHON_PLUGIN_243_SHA = "341ef41104e9ac7cdab1cfb228c78b1b17cb1bdcb3de64b7a7f9463f6ad8b5b8"
 
 http_archive(
     name = "python_2024_3",
@@ -620,9 +620,9 @@ http_archive(
     url = GO_PLUGIN_242_URL,
 )
 
-GO_PLUGIN_243_SHA = "8537d8978bda5f23db7657f027ef87fc31e5ad132ef2c92b13618ad2c0dfe440"
+GO_PLUGIN_243_SHA = "c35c81315bfe24fed6c6df757589a5dbebacd3a739d63eb7611b687935ad3712"
 
-GO_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/243.21155.17/org.jetbrains.plugins.go-243.21155.17.zip"
+GO_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/243.21565.23/org.jetbrains.plugins.go-243.21565.23.zip"
 
 http_archive(
     name = "go_2024_3",
@@ -631,11 +631,10 @@ http_archive(
     url = GO_PLUGIN_243_URL,
 )
 
-
 _SCALA_BUILD_FILE = """
 java_import(
     name = "scala",
-    jars = glob(["Scala/lib/*.jar"]),
+    jars = glob(["Scala/lib/*.jar", "Scala/lib/modules/*.jar"]),
     visibility = ["//visibility:public"],
 )
 """
@@ -702,9 +701,9 @@ http_archive(
     url = SCALA_PLUGIN_242_URL,
 )
 
-SCALA_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.3.10/org.intellij.scala-2024.3.10.zip"
+SCALA_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.3.12/org.intellij.scala-2024.3.12.zip"
 
-SCALA_PLUGIN_243_SHA = "e8f197eb8f8d4bb47a3fe2e023fd0cebd0a8caac47308360cab4fa288a604ac8"
+SCALA_PLUGIN_243_SHA = "7d5e5bf1c05ba6bd2c1855609e38591f8f820a83b229a48aa2089ba34cae92b8"
 
 http_archive(
     name = "scala_2024_3",
@@ -746,9 +745,9 @@ http_archive(
     url = TOML_PLUGIN_242_URL,
 )
 
-TOML_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/243.21155.26/org.toml.lang-243.21155.26.zip"
+TOML_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/243.21565.34/org.toml.lang-243.21565.34.zip"
 
-TOML_PLUGIN_243_SHA = "134efa3e199fd3b64d1be608d8fc21d7df2f7d8b953d2a48ec0fbe0f36f891cc"
+TOML_PLUGIN_243_SHA = "cf5e2b2304468e28e880f9f5b806810475cfff7e061ac943643a740b5b42592c"
 
 http_archive(
     name = "toml_2024_3",

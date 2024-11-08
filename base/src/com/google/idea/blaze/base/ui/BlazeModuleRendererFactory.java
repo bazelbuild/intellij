@@ -42,6 +42,9 @@ public class BlazeModuleRendererFactory extends ModuleRendererFactory {
                 return null;
             }
             var sourceRoot = index.getSourceRootForFile(file);
+            if (sourceRoot == null) {
+                return null;
+            }
             var relativeSourceRoot = WorkspaceRoot.fromProject(project).relativize(sourceRoot);
             if (relativeSourceRoot == null) {
                 return null;

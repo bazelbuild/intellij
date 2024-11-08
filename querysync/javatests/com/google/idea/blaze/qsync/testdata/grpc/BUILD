@@ -1,3 +1,5 @@
+load("@protobuf//bazel:java_lite_proto_library.bzl", "java_lite_proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_java//java:defs.bzl", "java_library")
 load("//third_party/java/grpc:build_defs.bzl", "java_grpc_library")
 

@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -194,7 +195,7 @@ public class WorkspaceHelper {
   @Nullable
   private static synchronized WorkspaceRoot resolveExternalWorkspaceRoot(
       Project project, String workspaceName, @Nullable BuildFile buildFile) {
-    if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze) {
+    if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze || Blaze.getProjectType(project) == BlazeImportSettings.ProjectType.QUERY_SYNC) {
       return null;
     }
 

@@ -25,7 +25,7 @@ load(
 )
 
 IntelliJInfo = provider(
-    doc = "Collected infromation about the targets visited by the aspect.",
+    doc = "Collected information about the targets visited by the aspect.",
     fields = [
         "export_deps",
         "kind",
@@ -47,7 +47,6 @@ UNSUPPORTED_FEATURES = [
 
 # Compile-time dependency attributes, grouped by type.
 DEPS = [
-    "_cc_toolchain",  # From cc rules
     "_stl",  # From cc rules
     "malloc",  # From cc_binary rules
     "implementation_deps",  # From cc_library rules
@@ -64,7 +63,6 @@ DEPS = [
     "tests",  # From test_suite
     "compilers",  # From go_proto_library
     "associates",  # From kotlin rules
-    "_kt_toolchain",  # From rules_kotlin
 ]
 
 # Run-time dependency attributes, grouped by type.
@@ -546,6 +544,9 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
                 [compilation_context] + [impl[CcInfo].compilation_context for impl in implementation_deps],
         )
 
+    # external_includes available since bazel 7
+    external_includes = getattr(compilation_context, "external_includes", depset()).to_list()
+
     c_info = struct_omit_none(
         header = headers,
         source = sources,
@@ -554,7 +555,8 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
         transitive_define = compilation_context.defines.to_list(),
         transitive_include_directory = compilation_context.includes.to_list(),
         transitive_quote_include_directory = compilation_context.quote_includes.to_list(),
-        transitive_system_include_directory = compilation_context.system_includes.to_list(),
+        # both system and external includes are add using `-isystem`
+        transitive_system_include_directory = compilation_context.system_includes.to_list() + external_includes,
         include_prefix = getattr(ctx.rule.attr, "include_prefix", None),
         strip_include_prefix = getattr(ctx.rule.attr, "strip_include_prefix", None),
     )
@@ -1173,6 +1175,16 @@ def intellij_info_aspect_impl(target, ctx, semantics):
         rule_attrs,
         semantics_extra_deps(DEPS, semantics, "extra_deps"),
     )
+
+    # Collect direct toolchain type-based dependencies
+    if hasattr(semantics, "toolchains_propagation"):
+        direct_dep_targets.extend(
+            semantics.toolchains_propagation.collect_toolchain_deps(
+                ctx,
+                semantics.toolchains_propagation.toolchain_types,
+            ),
+        )
+
     direct_deps = make_deps(direct_dep_targets, COMPILE_TIME)
 
     # Add exports from direct dependencies
@@ -1311,7 +1323,7 @@ def semantics_extra_deps(base, semantics, name):
     extra_deps = getattr(semantics, name)
     return base + extra_deps
 
-def make_intellij_info_aspect(aspect_impl, semantics):
+def make_intellij_info_aspect(aspect_impl, semantics, **kwargs):
     """Creates the aspect given the semantics."""
     tool_label = semantics.tool_label
     flag_hack_label = semantics.flag_hack_label
@@ -1355,4 +1367,5 @@ def make_intellij_info_aspect(aspect_impl, semantics):
         fragments = ["cpp"],
         required_aspect_providers = [java_info_reference(), [CcInfo]] + semantics.extra_required_aspect_providers,
         implementation = aspect_impl,
+        **kwargs
     )
