@@ -11,11 +11,11 @@ bazel_dep(
 )
 bazel_dep(
     name = "rules_java",
-    version = "8.3.0",
+    version = "8.3.1",
 )
 bazel_dep(
     name = "rules_python",
-    version = "0.37.2",
+    version = "0.38.0",
 )
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
