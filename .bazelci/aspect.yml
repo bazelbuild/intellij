@@ -1,50 +1,6 @@
 ---
 tasks:
-  Aspect-internal-stable:
-    name: Aspect Tests for IJ Internal Stable
-    platform: ubuntu2204
-    build_flags:
-      - --define=ij_product=intellij-latest
-    build_targets:
-      - //aspect:aspect_files
-    test_flags:
-      - --define=ij_product=intellij-latest
-      - --test_output=errors
-      - --notrim_test_configuration
-    test_targets:
-      - //aspect/testing/...
-    skip_use_bazel_version_for_test: true
-  Aspect-internal-beta:
-    name: Aspect Tests for IJ Internal Beta
-    platform: ubuntu2204
-    build_flags:
-      - --define=ij_product=intellij-beta
-    build_targets:
-      - //aspect:aspect_files
-    test_flags:
-      - --define=ij_product=intellij-beta
-      - --test_output=errors
-      - --notrim_test_configuration
-    test_targets:
-      - //aspect/testing/...
-    skip_use_bazel_version_for_test: true
-  Aspect-internal-under-dev:
-    name: Aspect Tests for IJ Internal Under Development
-    platform: ubuntu2204
-    build_flags:
-      - --define=ij_product=intellij-under-dev
-    build_targets:
-      - //aspect:aspect_files
-    test_flags:
-      - --define=ij_product=intellij-under-dev
-      - --test_output=errors
-      - --notrim_test_configuration
-    test_targets:
-      - //aspect/testing/...
-    soft_fail:
-      - exit_status: 1
-    skip_use_bazel_version_for_test: true
-  Aspect-oss-oldest-stable:
+  Aspect-OSS-oldest-stable:
     name: Aspect Tests for IJ OSS Oldest Stable
     platform: ubuntu2204
     build_flags:
@@ -58,7 +14,7 @@ tasks:
     test_targets:
       - //aspect/testing/...
     skip_use_bazel_version_for_test: true
-  Aspect-oss-latest-stable:
+  Aspect-OSS-latest-stable:
     name: Aspect Tests for IJ OSS Latest Stable
     platform: ubuntu2204
     build_flags:
@@ -72,7 +28,7 @@ tasks:
     test_targets:
       - //aspect/testing/...
     skip_use_bazel_version_for_test: true
-  Aspect-oss-under-dev:
+  Aspect-OSS-under-dev:
     name: Aspect Tests for IJ OSS Under Development
     platform: ubuntu2204
     build_flags:
