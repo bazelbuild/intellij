@@ -30,6 +30,7 @@ import com.google.idea.blaze.common.artifact.BuildArtifactCache;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.artifacts.ArtifactDirectoryUpdate;
+import com.google.idea.blaze.qsync.artifacts.FileTransform;
 import com.google.idea.blaze.qsync.project.ProjectProto.ArtifactDirectories;
 import com.google.idea.blaze.qsync.project.ProjectProto.ArtifactDirectoryContents;
 import com.intellij.openapi.diagnostic.Logger;
@@ -56,7 +57,7 @@ public class ProjectArtifactStore {
   private final Path workspacePath;
   private final BuildArtifactCache artifactCache;
   private final FileRefresher fileRefresher;
-  private final GeneratedSourcesStripper sourcesStripper;
+  private final FileTransform sourcesStripper;
   private final Path projectDirectoriesFile;
 
   public ProjectArtifactStore(
@@ -64,7 +65,7 @@ public class ProjectArtifactStore {
       Path workspacePath,
       BuildArtifactCache artifactCache,
       FileRefresher fileRefresher,
-      GeneratedSourcesStripper sourcesStripper) {
+      FileTransform sourcesStripper) {
     this.projectDir = projectDir;
     this.workspacePath = workspacePath;
     this.artifactCache = artifactCache;

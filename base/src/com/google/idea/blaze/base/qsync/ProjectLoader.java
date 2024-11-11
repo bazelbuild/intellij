@@ -28,7 +28,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.Glob;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
-import com.google.idea.blaze.base.qsync.artifacts.GeneratedSourcesStripper;
+import com.google.idea.blaze.base.qsync.artifacts.GeneratedSourcesStripperProvider;
 import com.google.idea.blaze.base.qsync.artifacts.ProjectArtifactStore;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetchers;
 import com.google.idea.blaze.base.qsync.cc.CcProjectProtoTransform;
@@ -191,7 +191,7 @@ public class ProjectLoader {
             workspaceRoot.path(),
             artifactCache,
             new FileRefresher(project),
-            new GeneratedSourcesStripper(project));
+            GeneratedSourcesStripperProvider.get(project));
     DependencyTracker dependencyTracker =
         new DependencyTrackerImpl(graph, dependencyBuilder, artifactTracker);
     ProjectRefresher projectRefresher =

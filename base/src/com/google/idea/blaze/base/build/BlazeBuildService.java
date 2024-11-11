@@ -75,7 +75,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import javax.annotation.Nullable;
-import org.jetbrains.kotlin.idea.KotlinLanguage;
 
 /** Utility to build various collections of targets. */
 public class BlazeBuildService {
