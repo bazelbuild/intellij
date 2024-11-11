@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.qsync.artifacts;
+package com.google.idea.blaze.java.qsync;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteSource;
 import com.google.idea.blaze.base.qsync.AnnotationProcessorOverride;
+import com.google.idea.blaze.base.qsync.artifacts.GeneratedSourcesStripperProvider;
 import com.google.idea.blaze.common.artifact.CachedArtifact;
 import com.google.idea.blaze.qsync.artifacts.FileTransform;
 import com.intellij.lang.java.JavaLanguage;
@@ -57,9 +58,17 @@ import javax.annotation.Nullable;
  */
 public class GeneratedSourcesStripper implements FileTransform {
 
-  private static final String GENERATED_ANNOTATION_FQCN = "javax.annotation.processing.Generated";
+  static class Provider implements GeneratedSourcesStripperProvider {
 
-  private final Project project;
+    @Override
+    public FileTransform createTransformer(Project project) {
+      return new GeneratedSourcesStripper(project);
+    }
+  }
+
+  static final String GENERATED_ANNOTATION_FQCN = "javax.annotation.processing.Generated";
+
+  final Project project;
 
   public GeneratedSourcesStripper(Project project) {
     this.project = project;

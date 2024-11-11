@@ -1,4 +1,4 @@
-package com.google.idea.blaze.base.qsync.artifacts;
+package com.google.idea.blaze.java.qsync;
 
 import static com.google.common.truth.Truth.assertThat;
 

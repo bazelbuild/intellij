@@ -523,6 +523,8 @@
                     interface="com.google.idea.blaze.base.sync.projectstructure.ExternalModuleProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.qsync.AnnotationProcessorOverride"
       interface="com.google.idea.blaze.base.qsync.AnnotationProcessorOverride"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.base.qsync.GeneratedSourcesStripperProvider"
+      interface="com.google.idea.blaze.base.qsync.artifacts.GeneratedSourcesStripperProvider"/>
 
   </extensionPoints>
 
