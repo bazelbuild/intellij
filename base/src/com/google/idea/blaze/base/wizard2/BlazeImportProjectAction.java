@@ -22,11 +22,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import java.io.IOException;
 import org.jetbrains.annotations.NotNull;
 
-class BlazeImportProjectAction extends AnAction {
+class BlazeImportProjectAction extends AnAction implements DumbAware {
   private static final Logger logger = Logger.getInstance(BlazeImportProjectAction.class);
 
   @Override
