@@ -13,7 +13,7 @@ java_library(
 java_library(
     name = "has_plugin",
     srcs = ["Foo.java"],
-    plugins = ["//third_party/java/auto_value:autovalue-plugin"],
+    deps = ["//third_party/java/auto_value"],
 )
 
 java_library(
