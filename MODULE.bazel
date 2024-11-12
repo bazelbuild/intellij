@@ -27,7 +27,7 @@ use_repo(python, "python_3_12", "python_versions")
 
 bazel_dep(
     name = "rules_proto",
-    version = "6.0.2",
+    version = "7.0.2",
 )
 bazel_dep(
     name = "protobuf",
