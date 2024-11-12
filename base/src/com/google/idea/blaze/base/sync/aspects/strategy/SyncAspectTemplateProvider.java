@@ -123,7 +123,7 @@ public class SyncAspectTemplateProvider implements SyncListener {
     var isAtLeastBazel8 = projectData.map(it -> it.getBlazeVersionData().bazelIsAtLeastVersion(8, 0, 0)).orElse(false);
       return Map.of(
               "bazel8OrAbove", isAtLeastBazel8 ? "true" : "false",
-              "isJavaEnabled", activeLanguages.contains(LanguageClass.JAVA) || activeLanguages.contains(LanguageClass.GENERIC) ? "true" : "false"
+              "isJavaEnabled", activeLanguages.contains(LanguageClass.JAVA) ? "true" : "false"
       );
   }
 
