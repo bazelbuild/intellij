@@ -57,14 +57,11 @@ public interface AspectRepositoryProvider {
 
   static Optional<String>[] getOverrideFlags(Project project) {
 
-    BlazeProjectData projectData =
-            BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if(projectData == null) {
-      throw new RuntimeException("Not synced yet; please sync project");
-    }
-
-    BlazeVersionData versionData = projectData.getBlazeVersionData();
-    var useInjectedRepository = versionData.blazeVersionIsKnown() && versionData.bazelIsAtLeastVersion(8, 0 ,0);
+    Optional<BlazeProjectData> projectData = Optional.ofNullable(
+            BlazeProjectDataManager.getInstance(project).getBlazeProjectData());
+    boolean useInjectedRepository = projectData
+            .map(it -> it.getBlazeVersionData().bazelIsAtLeastVersion(8,0,0))
+            .orElse(false); //fall back to false, as override_repository is available for all bazel versions
     return new Optional[] {
       getOverrideFlagForAspectDirectory(useInjectedRepository),
       getOverrideFlagForProjectAspectDirectory(project, useInjectedRepository),
