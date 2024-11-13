@@ -57,12 +57,13 @@ public interface AspectRepositoryProvider {
 
   static Optional<String>[] getOverrideFlags(Project project) {
 
-    Optional<BlazeProjectData> projectData = Optional.ofNullable(
-            BlazeProjectDataManager.getInstance(project).getBlazeProjectData());
+    Optional<BlazeProjectData> projectData =
+            Optional.ofNullable(BlazeProjectDataManager.getInstance(project))
+                    .flatMap(it -> Optional.ofNullable(it.getBlazeProjectData()));
     boolean useInjectedRepository = projectData
-            .map(it -> it.getBlazeVersionData().bazelIsAtLeastVersion(8,0,0))
+            .map(it -> it.getBlazeVersionData().bazelIsAtLeastVersion(8, 0, 0))
             .orElse(false); //fall back to false, as override_repository is available for all bazel versions
-    return new Optional[] {
+    return new Optional[]{
       getOverrideFlagForAspectDirectory(useInjectedRepository),
       getOverrideFlagForProjectAspectDirectory(project, useInjectedRepository),
     };
