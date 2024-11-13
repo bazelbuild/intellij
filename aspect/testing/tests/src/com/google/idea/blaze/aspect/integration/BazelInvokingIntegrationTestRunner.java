@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyBazel;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectRepositoryProvider;
+import com.google.idea.blaze.base.sync.aspects.strategy.OverrideFlags;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -55,12 +55,12 @@ public class BazelInvokingIntegrationTestRunner {
             aspectStrategyBazel.getAspectFlag().get(),
             String.format(
                 "%s=%s/%s/aspect",
-                AspectRepositoryProvider.overrideRepositoryFlag(false),
+                OverrideFlags.overrideRepositoryFlag(false),
                 System.getenv("TEST_SRCDIR"),
                 System.getenv("TEST_WORKSPACE")),
             String.format(
               "%s=%s/%s/aspect_template",
-              AspectRepositoryProvider.overrideRepositoryTemplateFlag(false),
+              OverrideFlags.overrideRepositoryTemplateFlag(false),
               System.getenv("TEST_SRCDIR"),
               System.getenv("TEST_WORKSPACE"))
         );

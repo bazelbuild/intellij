@@ -1,7 +1,6 @@
 package com.google.idea.blaze.base.sync.aspects.strategy;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -14,20 +13,6 @@ public interface AspectRepositoryProvider {
   ExtensionPointName<AspectRepositoryProvider> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.AspectRepositoryProvider");
 
-  static String newRepositoryFlag(boolean useInjectedRepository) {
-      if (useInjectedRepository) {
-        return "--inject_repository";
-      } else {
-        return "--override_repository";
-      }
-  }
-
-  static String overrideRepositoryFlag(boolean useInjectedRepository) {
-    return String.format("%s=intellij_aspect", newRepositoryFlag(useInjectedRepository));
-  }
-  static String overrideRepositoryTemplateFlag(boolean useInjectedRepository) {
-    return String.format("%s=intellij_aspect_template", newRepositoryFlag(useInjectedRepository));
-  }
 
   Optional<File> aspectDirectory();
 
@@ -70,10 +55,10 @@ public interface AspectRepositoryProvider {
   }
 
   private static Optional<String> getOverrideFlagForAspectDirectory(boolean useInjectedRepository) {
-    return findAspectDirectory().map(it -> overrideRepositoryFlag(useInjectedRepository) + "=" + it.getPath());
+    return findAspectDirectory().map(it -> OverrideFlags.overrideRepositoryFlag(useInjectedRepository) + "=" + it.getPath());
   }
 
   private static Optional<String> getOverrideFlagForProjectAspectDirectory(Project project, boolean useInjectedRepository) {
-    return getProjectAspectDirectory(project).map(it -> overrideRepositoryTemplateFlag(useInjectedRepository) + "=" + it.getPath());
+    return getProjectAspectDirectory(project).map(it -> OverrideFlags.overrideRepositoryTemplateFlag(useInjectedRepository) + "=" + it.getPath());
   }
 }
