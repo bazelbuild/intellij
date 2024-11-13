@@ -55,12 +55,12 @@ public class BazelInvokingIntegrationTestRunner {
             aspectStrategyBazel.getAspectFlag().get(),
             String.format(
                 "%s=%s/%s/aspect",
-                AspectRepositoryProvider.OVERRIDE_REPOSITORY_FLAG,
+                AspectRepositoryProvider.overrideRepositoryFlag(false),
                 System.getenv("TEST_SRCDIR"),
                 System.getenv("TEST_WORKSPACE")),
             String.format(
               "%s=%s/%s/aspect_template",
-              AspectRepositoryProvider.OVERRIDE_REPOSITORY_TEMPLATE_FLAG,
+              AspectRepositoryProvider.overrideRepositoryTemplateFlag(false),
               System.getenv("TEST_SRCDIR"),
               System.getenv("TEST_WORKSPACE"))
         );

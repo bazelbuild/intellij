@@ -32,7 +32,10 @@ final class BazelFastBuildAspectStrategy extends FastBuildAspectStrategy {
   @Override
   protected List<String> getAspectFlags(BlazeVersionData versionData, Project project) {
     String intellijAspectFile;
-    if (versionData.bazelIsAtLeastVersion(6, 0, 0)) {
+    boolean useInjectedRepository = versionData.bazelIsAtLeastVersion(8, 0, 0);
+    if(useInjectedRepository) {
+      intellijAspectFile = "--aspects=@intellij_aspect//:fast_build_info_bundled.bzl%fast_build_info_aspect";
+    } else if (versionData.bazelIsAtLeastVersion(6, 0, 0)) {
       intellijAspectFile = "--aspects=@@intellij_aspect//:fast_build_info_bundled.bzl%fast_build_info_aspect";
     } else {
       intellijAspectFile = "--aspects=@intellij_aspect//:fast_build_info_bundled.bzl%fast_build_info_aspect";

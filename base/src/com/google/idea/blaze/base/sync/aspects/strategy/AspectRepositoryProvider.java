@@ -1,5 +1,8 @@
 package com.google.idea.blaze.base.sync.aspects.strategy;
 
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 
@@ -11,8 +14,20 @@ public interface AspectRepositoryProvider {
   ExtensionPointName<AspectRepositoryProvider> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.AspectRepositoryProvider");
 
-  String OVERRIDE_REPOSITORY_FLAG = "--override_repository=intellij_aspect";
-  String OVERRIDE_REPOSITORY_TEMPLATE_FLAG = "--override_repository=intellij_aspect_template";
+  static String newRepositoryFlag(boolean useInjectedRepository) {
+      if (useInjectedRepository) {
+        return "--inject_repository";
+      } else {
+        return "--override_repository";
+      }
+  }
+
+  static String overrideRepositoryFlag(boolean useInjectedRepository) {
+    return String.format("%s=intellij_aspect", newRepositoryFlag(useInjectedRepository));
+  }
+  static String overrideRepositoryTemplateFlag(boolean useInjectedRepository) {
+    return String.format("%s=intellij_aspect_template", newRepositoryFlag(useInjectedRepository));
+  }
 
   Optional<File> aspectDirectory();
 
@@ -41,17 +56,26 @@ public interface AspectRepositoryProvider {
   }
 
   static Optional<String>[] getOverrideFlags(Project project) {
+
+    BlazeProjectData projectData =
+            BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if(projectData == null) {
+      throw new RuntimeException("Not synced yet; please sync project");
+    }
+
+    BlazeVersionData versionData = projectData.getBlazeVersionData();
+    var useInjectedRepository = versionData.bazelIsAtLeastVersion(8, 0 ,0);
     return new Optional[] {
-      getOverrideFlagForAspectDirectory(),
-      getOverrideFlagForProjectAspectDirectory(project),
+      getOverrideFlagForAspectDirectory(useInjectedRepository),
+      getOverrideFlagForProjectAspectDirectory(project, useInjectedRepository),
     };
   }
 
-  private static Optional<String> getOverrideFlagForAspectDirectory() {
-    return findAspectDirectory().map(it -> OVERRIDE_REPOSITORY_FLAG + "=" + it.getPath());
+  private static Optional<String> getOverrideFlagForAspectDirectory(boolean useInjectedRepository) {
+    return findAspectDirectory().map(it -> overrideRepositoryFlag(useInjectedRepository) + "=" + it.getPath());
   }
 
-  private static Optional<String> getOverrideFlagForProjectAspectDirectory(Project project) {
-    return getProjectAspectDirectory(project).map(it -> OVERRIDE_REPOSITORY_TEMPLATE_FLAG + "=" + it.getPath());
+  private static Optional<String> getOverrideFlagForProjectAspectDirectory(Project project, boolean useInjectedRepository) {
+    return getProjectAspectDirectory(project).map(it -> overrideRepositoryTemplateFlag(useInjectedRepository) + "=" + it.getPath());
   }
 }
