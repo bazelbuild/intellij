@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -61,9 +60,12 @@ public interface JavaClasspathAspectStrategy {
     @Override
     public ImmutableList<String> getBuildFlags(BlazeVersionData versionData, Project project) {
       String intellijAspect;
-      if (versionData.bazelIsAtLeastVersion(6, 0, 0)) {
+      boolean useInjectedRepository = versionData.bazelIsAtLeastVersion(8, 0, 0);
+      if (useInjectedRepository) {
+        intellijAspect = "--aspects=@intellij_aspect//:java_classpath.bzl%java_classpath_aspect";
+      } else if (versionData.bazelIsAtLeastVersion(6, 0, 0)) {
         intellijAspect = "--aspects=@@intellij_aspect//:java_classpath.bzl%java_classpath_aspect";
-      } else {
+      } else { // #bazel5 we are going to drop bazel 5 support in Feb 2025
         intellijAspect = "--aspects=@intellij_aspect//:java_classpath.bzl%java_classpath_aspect";
       }
 
