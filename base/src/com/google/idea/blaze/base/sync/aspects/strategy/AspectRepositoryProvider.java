@@ -64,7 +64,7 @@ public interface AspectRepositoryProvider {
     }
 
     BlazeVersionData versionData = projectData.getBlazeVersionData();
-    var useInjectedRepository = versionData.bazelIsAtLeastVersion(8, 0 ,0);
+    var useInjectedRepository = versionData.blazeVersionIsKnown() && versionData.bazelIsAtLeastVersion(8, 0 ,0);
     return new Optional[] {
       getOverrideFlagForAspectDirectory(useInjectedRepository),
       getOverrideFlagForProjectAspectDirectory(project, useInjectedRepository),
