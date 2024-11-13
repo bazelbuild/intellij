@@ -407,7 +407,7 @@ public abstract class BuildGraphData {
    *     the set of all targets defined in all build packages within the directory (recursively).
    */
   public TargetsToBuild getProjectTargets(Context<?> context, Path workspaceRelativePath) {
-    if (workspaceRelativePath.endsWith("BUILD")) {
+    if (workspaceRelativePath.endsWith("BUILD") || workspaceRelativePath.endsWith("BUILD.bazel")) {
       Path packagePath = workspaceRelativePath.getParent();
       return TargetsToBuild.targetGroup(allTargets().get(packagePath));
     } else {

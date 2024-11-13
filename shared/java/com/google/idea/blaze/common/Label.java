@@ -47,7 +47,7 @@ public class Label {
   }
 
   public static Label fromPackageAndName(Path packagePath, Path name) {
-    return of(String.format("//%s:%s", packagePath, name));
+    return of(String.format("@@//%s:%s", packagePath, name));
   }
 
   public static Label fromPackageAndName(Path packagePath, String name) {
