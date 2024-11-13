@@ -133,7 +133,7 @@ use_repo(
 )
 
 bazel_dep(name = "rules_go", version = "0.50.1", repo_name = "io_bazel_rules_go")
-bazel_dep(name = "gazelle", version = "0.39.1", repo_name = "bazel_gazelle")
+bazel_dep(name = "gazelle", version = "0.40.0", repo_name = "bazel_gazelle")
 
 go_repository = use_repo_rule("@bazel_gazelle//:deps.bzl", "go_repository")
 # gRPC is used to generate Go from proto in the aspect tests, in
