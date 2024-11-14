@@ -1,7 +1,5 @@
 package com.google.idea.blaze.base.sync.aspects.strategy;
 
-import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 
@@ -13,6 +11,8 @@ public interface AspectRepositoryProvider {
   ExtensionPointName<AspectRepositoryProvider> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.AspectRepositoryProvider");
 
+  String OVERRIDE_REPOSITORY_FLAG = "--override_repository=intellij_aspect";
+  String OVERRIDE_REPOSITORY_TEMPLATE_FLAG = "--override_repository=intellij_aspect_template";
 
   Optional<File> aspectDirectory();
 
@@ -41,24 +41,17 @@ public interface AspectRepositoryProvider {
   }
 
   static Optional<String>[] getOverrideFlags(Project project) {
-
-    Optional<BlazeProjectData> projectData =
-            Optional.ofNullable(BlazeProjectDataManager.getInstance(project))
-                    .flatMap(it -> Optional.ofNullable(it.getBlazeProjectData()));
-    boolean useInjectedRepository = projectData
-            .map(it -> it.getBlazeVersionData().bazelIsAtLeastVersion(8, 0, 0))
-            .orElse(false); //fall back to false, as override_repository is available for all bazel versions
-    return new Optional[]{
-      getOverrideFlagForAspectDirectory(useInjectedRepository),
-      getOverrideFlagForProjectAspectDirectory(project, useInjectedRepository),
+    return new Optional[] {
+      getOverrideFlagForAspectDirectory(),
+      getOverrideFlagForProjectAspectDirectory(project),
     };
   }
 
-  private static Optional<String> getOverrideFlagForAspectDirectory(boolean useInjectedRepository) {
-    return findAspectDirectory().map(it -> OverrideFlags.overrideRepositoryFlag(useInjectedRepository) + "=" + it.getPath());
+  private static Optional<String> getOverrideFlagForAspectDirectory() {
+    return findAspectDirectory().map(it -> OVERRIDE_REPOSITORY_FLAG + "=" + it.getPath());
   }
 
-  private static Optional<String> getOverrideFlagForProjectAspectDirectory(Project project, boolean useInjectedRepository) {
-    return getProjectAspectDirectory(project).map(it -> OverrideFlags.overrideRepositoryTemplateFlag(useInjectedRepository) + "=" + it.getPath());
+  private static Optional<String> getOverrideFlagForProjectAspectDirectory(Project project) {
+    return getProjectAspectDirectory(project).map(it -> OVERRIDE_REPOSITORY_TEMPLATE_FLAG + "=" + it.getPath());
   }
 }
