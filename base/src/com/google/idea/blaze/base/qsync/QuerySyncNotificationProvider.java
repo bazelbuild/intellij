@@ -35,7 +35,7 @@ public class QuerySyncNotificationProvider implements EditorNotificationProvider
 
     @Override
     @Nullable
-    public Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project, @NotNull VirtualFile file) {
+    public Function<? super FileEditor, ? extends JComponent> collectNotificationData(@NotNull Project project, @NotNull VirtualFile file) {
 
         return fileEditor -> {
             if (Blaze.getProjectType(project) != ProjectType.QUERY_SYNC) {
