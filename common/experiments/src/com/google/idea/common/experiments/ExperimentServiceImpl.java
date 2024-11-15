@@ -77,8 +77,7 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
     services = ImmutableList.copyOf(loaders);
     this.channelSupplier = channelSupplier;
     // Bypass unregistered application service AlarmSharedCoroutineScopeHolder. It's a private service which hard to mock
-    this.alarm = new Alarm(ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication(), null,
-        scope);
+    this.alarm = new Alarm(ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication()); // #api242 revert this commit
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       refreshExperiments();
     }
