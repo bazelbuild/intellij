@@ -82,6 +82,7 @@ import org.jetbrains.annotations.Nullable;
 public class ProjectLoader {
 
   public final static BoolExperiment enableExperimentalQuery = new BoolExperiment("query.sync.experimental.query", false);
+  public final static BoolExperiment runQueryInWorkspace = new BoolExperiment("query.sync.run.query.in.workspace", true);
 
   private final ListeningExecutorService executor;
   private final SimpleModificationTracker projectModificationTracker;
@@ -199,7 +200,8 @@ public class ProjectLoader {
             vcsHandler.map(BlazeVcsHandler::getVcsStateDiffer).orElse(VcsStateDiffer.NONE),
             workspaceRoot.path(),
             enableExperimentalQuery.getValue() ? QueryStrategy.FILTERING_TO_KNOWN_AND_USED_TARGETS : QueryStrategy.PLAIN,
-            graph::getCurrent);
+            graph::getCurrent,
+            runQueryInWorkspace::getValue);
     SnapshotBuilder snapshotBuilder =
         new SnapshotBuilder(
             executor,
