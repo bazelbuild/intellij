@@ -47,4 +47,15 @@ tasks:
       - //ijwb/...
     soft_fail:
       - exit_status: 1
-
+  Querysync:
+    name: Querysync Library
+    platform: ubuntu2204
+    build_flags:
+      - --define=ij_product=intellij-ue-oss-under-dev
+    build_targets:
+      - //querysync/...
+    test_flags:
+      - --define=ij_product=intellij-ue-oss-under-dev
+      - --test_output=errors
+    test_targets:
+      - //querysync/...
