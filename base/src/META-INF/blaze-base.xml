@@ -152,6 +152,8 @@
         class="com.google.idea.blaze.base.qsync.action.AddToProjectAction"
         text="Add to project"
         icon="AllIcons.General.Add" />
+    <action id="Blaze.ResetQuerySync" class="com.google.idea.blaze.base.qsync.action.ResetQuerySyncAction" text="Reset Sync and Code Analysis State" />
+
     <action id="Bazel.DisableImportNotification"
       class="com.google.idea.blaze.base.wizard2.BazelDisableImportNotification$Action"
       text="Dismiss import notification"/>
@@ -188,6 +190,7 @@
       <group id="Blaze.MenuGroupsBookmark"/>
       <separator/>
       <reference id="Blaze.ExportRunConfigurations"/>
+      <reference id="Blaze.ResetQuerySync" />
       <reference id="Blaze.FileGitHubIssueAction"/>
       <!--Add single menu items anchored after this bookmark-->
       <group id="Blaze.MenuFooter"/>
