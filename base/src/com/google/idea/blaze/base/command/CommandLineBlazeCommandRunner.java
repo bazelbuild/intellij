@@ -48,6 +48,7 @@ import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtilRt;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -93,6 +94,8 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
           Optional.ofNullable(context.getScope(SharedStringPoolScope.class))
               .map(SharedStringPoolScope::getStringInterner)
               .orElse(null);
+      ParsedBepOutput buildOutput = buildResultHelper.getBuildOutput(stringInterner);
+      context.output(PrintOutput.log("BEP outputs retrieved (%s).", StringUtilRt.formatFileSize(buildOutput.getBepBytesConsumed())));
       return BlazeBuildOutputs.fromParsedBepOutput(
           buildResult, buildResultHelper.getBuildOutput(stringInterner));
     } catch (GetArtifactsException e) {
