@@ -19,6 +19,7 @@ import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.model.ProjectData;
+import com.intellij.openapi.project.Project;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -30,10 +31,10 @@ public final class TargetMap implements ProtoWrapper<ProjectData.TargetMap> {
     this.targetMap = targetMap;
   }
 
-  public static TargetMap fromProto(ProjectData.TargetMap proto) {
+  public static TargetMap fromProto(ProjectData.TargetMap proto, Project project) {
     return new TargetMap(
         proto.getTargetsList().stream()
-            .map(TargetIdeInfo::fromProto)
+            .map(protoTarget -> TargetIdeInfo.fromProto(protoTarget, project))
             .filter(Objects::nonNull)
             .collect(ImmutableMap.toImmutableMap(TargetIdeInfo::getKey, Functions.identity())));
   }
