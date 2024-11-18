@@ -79,7 +79,7 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     return new BuildDependencies(editor);
   }
 
-  private static class BuildDependencies extends AnAction
+  public static class BuildDependencies extends AnAction
       implements CustomComponentAction, DumbAware {
 
     private final Editor editor;
