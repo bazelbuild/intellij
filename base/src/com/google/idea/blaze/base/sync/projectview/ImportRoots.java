@@ -192,12 +192,13 @@ public final class ImportRoots {
     }
 
     private @NotNull List<WorkspacePath> selectExcludes(ImmutableCollection<WorkspacePath> rootDirectories) {
+      var userDeclaredRootDirectories = rootDirectories.stream().filter(rootDirectory -> !rootDirectory.isWorkspaceRoot()).collect(toImmutableSet());
       Queue<File> files = new LinkedList<>(Collections.singletonList(workspaceRoot.directory()));
       var result = new ArrayList<File>();
       while (!files.isEmpty()) {
         File file = files.poll();
         if (rootDirectories.stream().anyMatch(d -> FileUtil.isAncestor(file, workspaceRoot.fileForPath(d), /*strict=*/ true)) &&
-            rootDirectories.stream().noneMatch(d -> FileUtil.filesEqual(file, workspaceRoot.fileForPath(d)))
+                userDeclaredRootDirectories.stream().noneMatch(d -> FileUtil.filesEqual(file, workspaceRoot.fileForPath(d)))
         ) {
           var children = file.listFiles(File::isDirectory);
           if (children != null) {
