@@ -77,7 +77,7 @@ public class BuildFileRunLineMarkerContributor extends RunLineMarkerContributor 
       return false;
     }
     BuildTarget data = BlazeBuildFileRunConfigurationProducer.getBuildTarget(rule);
-    if (data == null || data.ruleType == RuleType.LIBRARY) {
+    if (data == null) {
       return false;
     }
     if (HANDLED_RULE_TYPES.contains(data.ruleType)) {

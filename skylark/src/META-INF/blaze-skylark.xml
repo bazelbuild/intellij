@@ -18,6 +18,7 @@
     <xdebugger.breakpointType implementation="com.google.idea.blaze.skylark.debugger.impl.SkylarkLineBreakpointType"/>
     <programRunner implementation="com.google.idea.blaze.skylark.debugger.run.SkylarkDebugRunner" id="SkylarkDebugRunner"/>
     <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.skylark.debugger.impl.DebuggerCompletionContributor"/>
+    <executor implementation="com.google.idea.blaze.skylark.debugger.run.SkylarkDebugExecutor"/>
   </extensions>
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <BuildFlagsProvider implementation="com.google.idea.blaze.skylark.debugger.run.SkylarkDebugBuildFlagsProvider"/>

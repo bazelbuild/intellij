@@ -54,7 +54,7 @@ class SkylarkDebugRunner extends GenericProgramRunner<RunnerSettings> {
 
   @Override
   public boolean canRun(String executorId, RunProfile profile) {
-    if (!DefaultDebugExecutor.EXECUTOR_ID.equals(executorId)) {
+    if (!SkylarkDebugExecutor.ID.equals(executorId)) {
       return false;
     }
     BlazeCommandRunConfiguration config =
