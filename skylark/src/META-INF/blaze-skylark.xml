@@ -23,4 +23,10 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <BuildFlagsProvider implementation="com.google.idea.blaze.skylark.debugger.run.SkylarkDebugBuildFlagsProvider"/>
   </extensions>
+
+  <actions>
+    <action class="com.google.idea.blaze.skylark.debugger.run.SkylarkDebugAction" id="RunDashboard.SkylarkDebugAction">
+      <add-to-group  group-id="RunDashboardContentToolbar" anchor="after" relative-to-action="RunDashboard.Debug"/>
+    </action>
+  </actions>
 </idea-plugin>

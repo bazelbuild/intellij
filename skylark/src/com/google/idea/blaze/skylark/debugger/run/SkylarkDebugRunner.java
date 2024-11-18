@@ -53,7 +53,7 @@ class SkylarkDebugRunner extends GenericDebuggerRunner {
 
   @Override
   public boolean canRun(String executorId, RunProfile profile) {
-    if (!isSupportedExecutor(executorId)) {
+    if (!(SkylarkDebugExecutor.ID.equals(executorId)) {
       return false;
     }
     BlazeCommandRunConfiguration config =
@@ -68,15 +68,12 @@ class SkylarkDebugRunner extends GenericDebuggerRunner {
     return BlazeCommandName.BUILD.equals(command);
   }
 
-  public static boolean isSupportedExecutor(String executorId) {
-    return SkylarkDebugExecutor.ID.equals(executorId) || DefaultDebugExecutor.EXECUTOR_ID.equals(executorId);
-  }
-
   @Nullable
   @Override
   protected RunContentDescriptor doExecute(RunProfileState state, ExecutionEnvironment env)
       throws ExecutionException {
-    if (!isSupportedExecutor(env.getExecutor().getId())) {
+    String executorId = env.getExecutor().getId();
+    if (!(SkylarkDebugExecutor.ID.equals(executorId)) {
       logger.error("Unexpected executor id: " + env.getExecutor().getId());
       return null;
     }
