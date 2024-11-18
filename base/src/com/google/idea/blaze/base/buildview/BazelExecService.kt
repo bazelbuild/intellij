@@ -9,8 +9,9 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
 import com.google.idea.blaze.base.sync.aspects.BuildResult
+import com.google.idea.blaze.common.PrintOutput
 import com.google.protobuf.CodedInputStream
-import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
@@ -64,10 +65,13 @@ class BazelExecService(private val project: Project) : Disposable {
     }
   }
 
-  private suspend fun execute(ctx: BlazeContext, cmd: BlazeCommand): Int {
+  private suspend fun execute(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): Int {
+    val cmd = cmdBuilder.apply { addBlazeFlags("--curses=yes") }.build()
     val root = cmd.effectiveWorkspaceRoot.orElseGet { WorkspaceRoot.fromProject(project).path() }
 
-    val cmdLine = GeneralCommandLine()
+    val cmdLine = PtyCommandLine()
+      .withInitialColumns(PtyOptions.COLUMNS)
+      .withInitialRows(PtyOptions.ROWS)
       .withExePath(cmd.binaryPath)
       .withParameters(cmd.toArgumentList())
       .apply { setWorkDirectory(root.pathString) } // required for backwards compatability
@@ -81,7 +85,7 @@ class BazelExecService(private val project: Project) : Disposable {
 
       handler.addProcessListener(object : ProcessListener {
         override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-          ctx.println(event.text.trimEnd())
+          ctx.output(PrintOutput.process(event.text))
         }
       })
       handler.startNotify()
@@ -165,7 +169,7 @@ class BazelExecService(private val project: Project) : Disposable {
 
       val parseJob = parseEvents(ctx, provider)
 
-      val exitCode = execute(ctx, cmdBuilder.build())
+      val exitCode = execute(ctx, cmdBuilder)
       val result = BuildResult.fromExitCode(exitCode)
 
       parseJob.cancelAndJoin()
