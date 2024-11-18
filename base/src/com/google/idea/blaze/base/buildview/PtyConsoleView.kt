@@ -4,6 +4,7 @@ import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.AppendableTerminalDataStream
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
@@ -27,7 +28,7 @@ class PtyConsoleView(project: Project) : ExecutionConsole {
   private val terminal = Terminal(project, this, stream)
 
   init {
-    terminal.start(Connector())
+    terminal.start(Connector(this))
   }
 
   override fun getComponent(): JComponent = terminal.component
@@ -93,7 +94,13 @@ private class Terminal(
   }
 }
 
-private class Connector : TtyConnector {
+private class Connector(parent: Disposable) : TtyConnector, Disposable {
+
+  init {
+    Disposer.register(parent, this)
+  }
+
+  private var connected = true
 
   override fun read(buf: CharArray, offset: Int, length: Int): Int = 0
 
@@ -101,7 +108,7 @@ private class Connector : TtyConnector {
 
   override fun write(string: String?) = Unit
 
-  override fun isConnected(): Boolean = true
+  override fun isConnected(): Boolean =  connected
 
   override fun waitFor(): Int = 0
 
@@ -112,4 +119,8 @@ private class Connector : TtyConnector {
   override fun close() = Unit
 
   override fun resize(size: TermSize) = Unit
+
+  override fun dispose() {
+    connected = false
+  }
 }
