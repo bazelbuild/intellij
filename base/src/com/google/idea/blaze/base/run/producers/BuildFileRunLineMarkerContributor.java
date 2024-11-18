@@ -80,25 +80,7 @@ public class BuildFileRunLineMarkerContributor extends RunLineMarkerContributor 
     if (data == null) {
       return false;
     }
-    if (HANDLED_RULE_TYPES.contains(data.ruleType)) {
-      return true;
-    }
-    // finally, run a slower check for the underlying target type (useful for macros)
-    // TODO(brendandouglas): do this asynchronously? Hard to do with RunLineMarkerProvider. Ideas:
-    // - custom LineMarkerFactory delegating to LineMarkerPass
-    // - dirty file status somehow?
-    // - override RunLineMarkerProvider, supporting collectSlowLineMarkers
-    ListenableFuture<TargetInfo> future =
-        TargetFinder.findTargetInfoFuture(element.getProject(), data.label);
-    try {
-      TargetInfo target = future.get(2, SECONDS);
-      return target != null && HANDLED_RULE_TYPES.contains(target.getRuleType());
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    } catch (TimeoutException | ExecutionException e) {
-      // ignore
-    }
-    return false;
+    return true; // We want to put a gutter icon next to each target to provide a starlark debugger action
   }
 
   private static FuncallExpression getRuleFuncallExpression(PsiElement element) {

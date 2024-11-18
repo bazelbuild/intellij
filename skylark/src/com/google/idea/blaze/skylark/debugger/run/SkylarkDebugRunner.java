@@ -23,14 +23,13 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.skylark.debugger.SkylarkDebuggingUtils;
 import com.google.idea.blaze.skylark.debugger.impl.SkylarkDebugProcess;
+import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.GenericProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -41,7 +40,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import javax.annotation.Nullable;
 
 /** Activates the 'debug' button, and delegates debugging to {@link SkylarkDebugProcess}. */
-class SkylarkDebugRunner extends GenericProgramRunner<RunnerSettings> {
+class SkylarkDebugRunner extends GenericDebuggerRunner {
 
   private static final Logger logger = Logger.getInstance(SkylarkDebugRunner.class);
 
@@ -54,7 +53,7 @@ class SkylarkDebugRunner extends GenericProgramRunner<RunnerSettings> {
 
   @Override
   public boolean canRun(String executorId, RunProfile profile) {
-    if (!SkylarkDebugExecutor.ID.equals(executorId)) {
+    if (!isSupportedExecutor(executorId)) {
       return false;
     }
     BlazeCommandRunConfiguration config =
@@ -69,11 +68,15 @@ class SkylarkDebugRunner extends GenericProgramRunner<RunnerSettings> {
     return BlazeCommandName.BUILD.equals(command);
   }
 
+  public static boolean isSupportedExecutor(String executorId) {
+    return SkylarkDebugExecutor.ID.equals(executorId) || DefaultDebugExecutor.EXECUTOR_ID.equals(executorId);
+  }
+
   @Nullable
   @Override
   protected RunContentDescriptor doExecute(RunProfileState state, ExecutionEnvironment env)
       throws ExecutionException {
-    if (!DefaultDebugExecutor.EXECUTOR_ID.equals(env.getExecutor().getId())) {
+    if (!isSupportedExecutor(env.getExecutor().getId())) {
       logger.error("Unexpected executor id: " + env.getExecutor().getId());
       return null;
     }

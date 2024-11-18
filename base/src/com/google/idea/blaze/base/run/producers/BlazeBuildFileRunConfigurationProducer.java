@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import java.util.Objects;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Creates run configurations from a BUILD file targets. */
@@ -87,7 +88,7 @@ public class BlazeBuildFileRunConfigurationProducer
     }
     sourceElement.set(target.rule);
     setupConfiguration(configuration.getProject(), blazeProjectData, configuration, target);
-    return true;
+    return configuration.getHandler().getCommandName() != null;
   }
 
   @Override
@@ -184,19 +185,22 @@ public class BlazeBuildFileRunConfigurationProducer
     BlazeCommandRunConfigurationCommonState state =
         config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (state != null) {
-      state.getCommandState().setCommand(commandForRuleType(target.ruleType));
+      Optional<BlazeCommandName> blazeCommandName = commandForRuleType(target.ruleType);
+      blazeCommandName.ifPresent(command ->
+              state.getCommandState().setCommand(command)
+      );
     }
     config.setGeneratedName();
   }
 
-  static BlazeCommandName commandForRuleType(RuleType ruleType) {
+  static Optional<BlazeCommandName> commandForRuleType(RuleType ruleType) {
     switch (ruleType) {
       case BINARY:
-        return BlazeCommandName.RUN;
+        return Optional.of(BlazeCommandName.RUN);
       case TEST:
-        return BlazeCommandName.TEST;
+        return Optional.of(BlazeCommandName.TEST);
       default:
-        return BlazeCommandName.BUILD;
+        return Optional.empty();
     }
   }
 }

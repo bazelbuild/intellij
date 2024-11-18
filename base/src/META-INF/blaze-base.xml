@@ -353,7 +353,7 @@
         implementation="com.google.idea.blaze.base.run.producers.BinaryContextRunConfigurationProducer"
         order="first"/>
     <runConfigurationProducer
-            implementation="com.google.idea.blaze.base.run.producers.BlazeDebugStarlarkRunConfigurationProducer"
+            implementation="com.google.idea.blaze.base.run.producers.BlazeBuildTargetRunConfigurationProducer"
             order="first"/>
     <stepsBeforeRunProvider implementation="com.google.idea.blaze.base.run.BlazeBeforeRunTaskProvider"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.help.BlazeHelpHandler"
