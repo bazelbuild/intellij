@@ -22,15 +22,16 @@ See the [documentation entry](https://github.com/bazelbuild/intellij/blob/master
 on the plugin support across JetBrains products, languages, and operating
 systems.
 
-## Master branch vs Google branch
-The Bazel IntelliJ plugin has two main branches ([master](https://github.com/bazelbuild/intellij) and [google](https://github.com/bazelbuild/intellij/tree/google)).
+## Source Code Locations
 
-The Bazel plugins for IntelliJ and CLion are built and released from the [master branch](https://github.com/bazelbuild/intellij). An external team of maintainers addresses IntelliJ and CLion plugin issues and pull requests. The Bazel plugin for Android Studio is built and released from the [google branch](https://github.com/bazelbuild/intellij/tree/google). Internal Google teams review Android Studio plugin issues and pull requests on a case-by-case basis.
+The Bazel plugins for IntelliJ and CLion are built and released from the [master branch](https://github.com/bazelbuild/intellij) of this repository. An external team of maintainers addresses IntelliJ and CLion plugin issues and pull requests. 
 
-These two branches are now diverging from each other.
+The Bazel plugin for Android Studio is built and released from  [AOSP](https://android.googlesource.com/platform/tools/adt/idea/+/refs/heads/mirror-goog-studio-main/aswb/). The [google branch](https://github.com/bazelbuild/intellij/tree/google) is now deprecated.
 
-- Changes for IntelliJ and CLion plugins are *only* merged into the master branch. Few fixes that are also needed for the Android Studio plugin can be merged into the google branch after the internal teams’ approval.
-- Changes made by the internal Google teams are automatically exported to the google branch. Only relevant commits (security and selected bug fixes, and feature requests) are cherry-picked from the google branch to the master branch.
+Although the code in this repository and in AOSP share the same structure and core components, they have diverged from each other. 
+
+- Changes for IntelliJ and CLion plugins are *only* merged into the master branch of this repository. Few fixes that are also needed for the Android Studio plugin can be merged into the AOSP project after the internal teams’ approval.
+- Changes made by the internal Google teams are automatically exported to AOSP. Only relevant commits (security and selected bug fixes, and feature requests) are cherry-picked to the master branch.
 - The master branch is not intended to be used to build the Android Studio with Bazel plugin; failures of the Android Studio plugin built from the master branch will not be addressed.
 
 ## Installation
