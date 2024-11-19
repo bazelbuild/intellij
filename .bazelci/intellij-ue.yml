@@ -36,8 +36,6 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:ijwb_ue_tests
-    soft_fail:
-      - exit_status: 1
   IntelliJ-UE-OSS-under-dev-windows:
     name: IntelliJ UE OSS Under Development
     platform: windows
@@ -45,6 +43,4 @@ tasks:
       - --define=ij_product=intellij-ue-oss-under-dev
     build_targets:
       - //ijwb/...
-    soft_fail:
-      - exit_status: 1
 

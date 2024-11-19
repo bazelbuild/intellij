@@ -84,8 +84,6 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:clwb_tests
-    soft_fail:
-      - exit_status: 1
   CLion-Windows-OSS-under-dev:
     name: CLion Windows OSS Under Development
     platform: windows
@@ -98,8 +96,6 @@ tasks:
       - --test_output=errors
     test_targets:
       - //clwb:integration_tests
-    soft_fail:
-      - exit_status: 1
   CLion-MacOS-OSS-under-dev:
     name: CLion MacOS OSS Under Development
     platform: macos_arm64
@@ -112,5 +108,3 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:clwb_tests
-    soft_fail:
-      - exit_status: 1
