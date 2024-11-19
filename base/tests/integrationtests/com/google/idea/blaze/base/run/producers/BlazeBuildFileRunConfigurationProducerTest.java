@@ -53,7 +53,7 @@ public class BlazeBuildFileRunConfigurationProducerTest
 
     ConfigurationContext context = createContextFromPsi(target);
     List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
-    assertThat(configurations).hasSize(1);
+    assertThat(configurations).hasSize(2);
 
     ConfigurationFromContext fromContext = configurations.get(0);
     assertThat(fromContext.isProducedBy(BlazeBuildFileRunConfigurationProducer.class)).isTrue();
@@ -64,6 +64,16 @@ public class BlazeBuildFileRunConfigurationProducerTest
     assertThat(config.getTargets())
         .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:unit_tests"));
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
+
+    ConfigurationFromContext fromContext1 = configurations.get(1);
+    assertThat(fromContext1.isProducedBy(BlazeBuildTargetRunConfigurationProducer.class)).isTrue();
+    assertThat(fromContext1.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
+
+    BlazeCommandRunConfiguration config1 =
+            (BlazeCommandRunConfiguration) fromContext1.getConfiguration();
+    assertThat(config1.getTargets())
+            .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:unit_tests"));
+    assertThat(getCommandType(config1)).isEqualTo(BlazeCommandName.BUILD);
   }
 
   @Test
@@ -77,7 +87,7 @@ public class BlazeBuildFileRunConfigurationProducerTest
         PsiUtils.findFirstChildOfClassRecursive(buildFile, FuncallExpression.class);
     ConfigurationContext context = createContextFromPsi(target);
     List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
-    assertThat(configurations).hasSize(1);
+    assertThat(configurations).hasSize(2);
 
     ConfigurationFromContext fromContext = configurations.get(0);
     assertThat(fromContext.isProducedBy(BlazeBuildFileRunConfigurationProducer.class)).isTrue();
@@ -88,6 +98,16 @@ public class BlazeBuildFileRunConfigurationProducerTest
     assertThat(config.getTargets())
         .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:gen_tests"));
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
+
+    ConfigurationFromContext fromContext1 = configurations.get(1);
+    assertThat(fromContext1.isProducedBy(BlazeBuildTargetRunConfigurationProducer.class)).isTrue();
+    assertThat(fromContext1.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
+
+    BlazeCommandRunConfiguration config1 =
+            (BlazeCommandRunConfiguration) fromContext1.getConfiguration();
+    assertThat(config1.getTargets())
+            .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:gen_tests"));
+    assertThat(getCommandType(config1)).isEqualTo(BlazeCommandName.BUILD);
   }
 
   @Test
@@ -102,7 +122,7 @@ public class BlazeBuildFileRunConfigurationProducerTest
 
     ConfigurationContext context = createContextFromPsi(nameString);
     List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
-    assertThat(configurations).hasSize(1);
+    assertThat(configurations).hasSize(2);
 
     ConfigurationFromContext fromContext = configurations.get(0);
     assertThat(fromContext.isProducedBy(BlazeBuildFileRunConfigurationProducer.class)).isTrue();
@@ -113,6 +133,16 @@ public class BlazeBuildFileRunConfigurationProducerTest
     assertThat(config.getTargets())
         .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:unit_tests"));
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
+
+    ConfigurationFromContext fromContext1 = configurations.get(1);
+    assertThat(fromContext1.isProducedBy(BlazeBuildTargetRunConfigurationProducer.class)).isTrue();
+    assertThat(fromContext1.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
+
+    BlazeCommandRunConfiguration config1 =
+            (BlazeCommandRunConfiguration) fromContext.getConfiguration();
+    assertThat(config1.getTargets())
+            .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:unit_tests"));
+    assertThat(getCommandType(config1)).isEqualTo(BlazeCommandName.TEST);
   }
 
   @Test
