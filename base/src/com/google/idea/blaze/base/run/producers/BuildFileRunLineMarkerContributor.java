@@ -15,18 +15,12 @@
  */
 package com.google.idea.blaze.base.run.producers;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression;
 import com.google.idea.blaze.base.model.primitives.RuleType;
-import com.google.idea.blaze.base.run.producers.BlazeBuildFileRunConfigurationProducer.BuildTarget;
-import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
@@ -39,8 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+
 import javax.annotation.Nullable;
 
 /** Generates run/debug gutter icons for BUILD files. */
@@ -77,28 +70,10 @@ public class BuildFileRunLineMarkerContributor extends RunLineMarkerContributor 
       return false;
     }
     BuildTarget data = BlazeBuildFileRunConfigurationProducer.getBuildTarget(rule);
-    if (data == null || data.ruleType == RuleType.LIBRARY) {
+    if (data == null) {
       return false;
     }
-    if (HANDLED_RULE_TYPES.contains(data.ruleType)) {
-      return true;
-    }
-    // finally, run a slower check for the underlying target type (useful for macros)
-    // TODO(brendandouglas): do this asynchronously? Hard to do with RunLineMarkerProvider. Ideas:
-    // - custom LineMarkerFactory delegating to LineMarkerPass
-    // - dirty file status somehow?
-    // - override RunLineMarkerProvider, supporting collectSlowLineMarkers
-    ListenableFuture<TargetInfo> future =
-        TargetFinder.findTargetInfoFuture(element.getProject(), data.label);
-    try {
-      TargetInfo target = future.get(2, SECONDS);
-      return target != null && HANDLED_RULE_TYPES.contains(target.getRuleType());
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    } catch (TimeoutException | ExecutionException e) {
-      // ignore
-    }
-    return false;
+    return true; // We want to put a gutter icon next to each target to provide a starlark debugger action
   }
 
   private static FuncallExpression getRuleFuncallExpression(PsiElement element) {
