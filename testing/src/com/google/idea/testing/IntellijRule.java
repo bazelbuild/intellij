@@ -17,7 +17,6 @@ package com.google.idea.testing;
 
 import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockProject;
-import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -26,7 +25,6 @@ import com.intellij.openapi.util.Disposer;
 import org.junit.Assert;
 import org.junit.rules.ExternalResource;
 import org.picocontainer.MutablePicoContainer;
-
 
 /**
  * A lightweight IntelliJ test rule.
@@ -38,11 +36,20 @@ public final class IntellijRule extends ExternalResource {
   private MockProject project;
   private MockApplication application;
   private Disposable testDisposable;
+  private final boolean forceInvokeLater;
+
+  public IntellijRule(boolean forceInvokeLater) {
+    this.forceInvokeLater = forceInvokeLater;
+  }
+
+  public IntellijRule() {
+    this(false);
+  }
 
   @Override
   protected void before() {
     testDisposable = Disposer.newDisposable();
-    application = TestUtils.createMockApplication(testDisposable);
+    application = TestUtils.createMockApplication(testDisposable, forceInvokeLater);
     Assert.assertSame(application, ApplicationManager.getApplication());
     Assert.assertSame(
         application.getPicoContainer(), ((MockApplication) ApplicationManager.getApplication()).getPicoContainer());

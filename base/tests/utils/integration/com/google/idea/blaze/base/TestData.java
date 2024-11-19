@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base;
 
+import static java.util.Objects.requireNonNull;
+
 import com.google.devtools.build.runfiles.Runfiles;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -30,6 +32,7 @@ public class TestData extends ExternalResource {
   @Override
   protected void before() throws IOException {
     runfiles = Runfiles.preload().unmapped();
+    String workspace = requireNonNull(System.getenv("TEST_WORKSPACE"));
     root =
         Path.of(
             runfiles.rlocation(

@@ -27,6 +27,7 @@ public enum ExecutorType {
   DEBUG,
   FAST_BUILD_DEBUG,
   COVERAGE,
+  DEBUG_STARLARK,
   UNKNOWN;
 
   public static ExecutorType fromExecutor(Executor executor) {
@@ -51,6 +52,10 @@ public enum ExecutorType {
     // hard-code string to avoid plugin dependency (coverage plugin not yet available in CLion)
     if (executorId.equals("Coverage")) {
       return COVERAGE;
+    }
+
+    if (executorId.equals("SkylarkDebugExecutor")) {
+      return DEBUG_STARLARK;
     }
     return UNKNOWN;
   }

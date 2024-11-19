@@ -15,8 +15,11 @@
  */
 package com.google.idea.blaze.base.bazel;
 
+import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.CommandLineBlazeCommandRunner;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.Kind;
@@ -48,6 +51,12 @@ class BazelBuildSystem implements BuildSystem {
           false,
           BazelBuildSystem.this,
           new CommandLineBlazeCommandRunner());
+    }
+
+    @Override
+    @MustBeClosed
+    public BuildResultHelper createBuildResultHelper() {
+      return new BuildResultHelperBep();
     }
   }
 

@@ -689,7 +689,7 @@ java_library(
     testonly = 1,
     visibility = [":test_libs_visibility"],
     exports = [
-        "//third_party:truth",
+        "//third_party/java/truth",
         "@bytebuddy_agent//jar",
         "@bytebuddy//jar",
         "@mockito//jar",
@@ -700,7 +700,6 @@ java_library(
 # The version of guava bundled with the IntelliJ plugin API.
 java_library(
     name = "guava",
-    testonly = True,
     exports = select_from_plugin_api_directory(
         android_studio = [":guava"],
         clion = [":guava"],
@@ -717,7 +716,10 @@ java_library(
 java_library(
     name = "truth",
     testonly = 1,
-    exports = ["//third_party:truth"],
+    exports = [
+        "@diffutils//jar",
+        "//third_party/java/truth"
+        ],
 )
 
 # IntelliJ Coverage plugin

@@ -37,28 +37,14 @@ import java.util.List;
  */
 public class Label {
 
+  public final static String ROOT_WORKSPACE = "";
+
   private static final Interner<Label> interner =
       com.google.common.collect.Interners.newWeakInterner();
 
   private final String label;
 
   public static Label of(String label) {
-    return interner.intern(new Label(label));
-  }
-
-  public static Label fromPackageAndName(Path packagePath, Path name) {
-    return of(String.format("//%s:%s", packagePath, name));
-  }
-
-  public static Label fromPackageAndName(Path packagePath, String name) {
-    return fromPackageAndName(packagePath, Path.of(name));
-  }
-
-  public static ImmutableList<Label> toLabelList(List<String> labels) {
-    return labels.stream().map(Label::of).collect(toImmutableList());
-  }
-
-  protected Label(String label) {
     if (label.startsWith("@")) {
       int doubleSlash = label.indexOf("//");
       Preconditions.checkArgument(doubleSlash > 0, label);
@@ -68,11 +54,35 @@ public class Label {
         // Normalize `label` to either start with double-at or start with double-slash.
         label = '@' + label;
       }
+      if (label.startsWith("@@//")) {
+        label = label.substring(2);
+      }
     } else {
       Preconditions.checkArgument(label.startsWith("//"), label);
       Preconditions.checkArgument(label.contains(":"), label);
     }
-    this.label = Interners.STRING.intern(label);
+    return new Label(Interners.STRING.intern(label));
+  }
+
+  public static Label createLabelWithoutValidation(String label) {
+    return new Label(label);
+  }
+
+  public static Label fromWorkspacePackageAndName(String workspace, Path packagePath, Path name) {
+    return workspace.isEmpty() ? Label.of(String.format("//%s:%s", packagePath, name))
+        : Label.of(String.format("@@%s//%s:%s", workspace, packagePath, name));
+  }
+
+  public static Label fromWorkspacePackageAndName(String workspace, Path packagePath, String name) {
+    return fromWorkspacePackageAndName(workspace, packagePath, Path.of(name));
+  }
+
+  public static ImmutableList<Label> toLabelList(List<String> labels) {
+    return labels.stream().map(Label::of).collect(toImmutableList());
+  }
+
+  private Label(String label) {
+    this.label = label;
   }
 
   public Path getPackage() {
@@ -94,13 +104,14 @@ public class Label {
   }
 
   public Label siblingWithName(String name) {
-    return fromPackageAndName(getPackage(), name);
+    return fromWorkspacePackageAndName(getWorkspaceName(), getPackage(), name);
   }
 
   public Label siblingWithPathAndName(String pathAndName) {
     int colonPos = pathAndName.indexOf(':');
     Preconditions.checkArgument(colonPos > 0, pathAndName);
-    return fromPackageAndName(
+    return fromWorkspacePackageAndName(
+        getWorkspaceName(),
         getPackage().resolve(pathAndName.substring(0, colonPos)),
         pathAndName.substring(colonPos + 1));
   }

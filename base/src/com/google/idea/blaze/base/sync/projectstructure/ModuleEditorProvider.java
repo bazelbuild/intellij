@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.sync.projectstructure;
 
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -26,7 +26,7 @@ import com.intellij.openapi.project.Project;
 public interface ModuleEditorProvider {
 
   static ModuleEditorProvider getInstance() {
-    return ServiceManager.getService(ModuleEditorProvider.class);
+    return ApplicationManager.getApplication().getService(ModuleEditorProvider.class);
   }
 
   ModuleEditorImpl getModuleEditor(Project project, BlazeImportSettings importSettings);

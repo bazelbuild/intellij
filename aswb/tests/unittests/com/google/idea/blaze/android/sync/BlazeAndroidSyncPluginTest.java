@@ -58,6 +58,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -236,17 +237,22 @@ public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
 
     @Override
     public void makeRootsChange(
-        @NotNull Runnable runnable, @NotNull RootsChangeRescanningInfo rootsChangeRescanningInfo) {}
-  
+      @NotNull Runnable runnable, @NotNull RootsChangeRescanningInfo rootsChangeRescanningInfo) {}
+
     @Override
     public @NotNull AutoCloseable withRootsChange(
-        @NotNull RootsChangeRescanningInfo rootsChangeRescanningInfo) {
+      @NotNull RootsChangeRescanningInfo rootsChangeRescanningInfo) {
       return new AutoCloseable() {
         @Override
         public void close() throws Exception {}
       };
-    }    
-  
+    }
+
+    @Override
+    public List<VirtualFile> markRootsForRefresh() {
+      return new ArrayList<>();
+    }
+
     @Nullable
     @Override
     public Sdk getProjectSdk() {
@@ -267,9 +273,6 @@ public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
 
     @Override
     public void makeRootsChange(@NotNull Runnable runnable, boolean b, boolean b1) {}
-
-    @Override
-    public void markRootsForRefresh() {}
 
     @Override
     public void mergeRootsChangesDuring(@NotNull Runnable runnable) {}

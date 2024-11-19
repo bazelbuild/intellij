@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.bazel.BazelExitCodeException;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException.ThrowOption;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
 import com.google.idea.blaze.base.command.mod.BlazeModException;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
@@ -44,9 +45,10 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-
+import com.intellij.openapi.util.text.StringUtilRt;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -88,13 +90,14 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
     }
     context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, "Build command finished. Retrieving BEP outputs ..."));
     try {
-      context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, "Parsing BEP outputs..."));
-      ParsedBepOutput buildOutput = buildResultHelper.getBuildOutput();
-      context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, "Handling parsed BEP outputs..."));
-      BlazeBuildOutputs blazeBuildOutputs = BlazeBuildOutputs.fromParsedBepOutput(
-          buildResult, buildOutput);
-      context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, "BEP outputs have been processed."));
-      return blazeBuildOutputs;
+      Interner<String> stringInterner =
+          Optional.ofNullable(context.getScope(SharedStringPoolScope.class))
+              .map(SharedStringPoolScope::getStringInterner)
+              .orElse(null);
+      ParsedBepOutput buildOutput = buildResultHelper.getBuildOutput(stringInterner);
+      context.output(PrintOutput.log("BEP outputs retrieved (%s).", StringUtilRt.formatFileSize(buildOutput.getBepBytesConsumed())));
+      return BlazeBuildOutputs.fromParsedBepOutput(
+          buildResult, buildResultHelper.getBuildOutput(stringInterner));
     } catch (GetArtifactsException e) {
       context.output(PrintOutput.log("Failed to get build outputs: " + e.getMessage()));
       context.setHasError();
@@ -126,7 +129,13 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       return BlazeTestResults.NO_RESULTS;
     }
     context.output(PrintOutput.log("Build command finished. Retrieving BEP outputs..."));
-    return buildResultHelper.getTestResults();
+    try {
+      return buildResultHelper.getTestResults(Optional.empty());
+    } catch (GetArtifactsException e) {
+      context.output(PrintOutput.log("Failed to get build outputs: " + e.getMessage()));
+      context.setHasError();
+      return BlazeTestResults.NO_RESULTS;
+    }
   }
 
   @Override
@@ -148,7 +157,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
       Function<String, String> rootReplacement =
           WorkspaceRootReplacement.create(workspaceRoot.path(), command);
-
+      boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
       int retVal =
           ExternalTask.builder(workspaceRoot)
               .addBlazeCommand(command)
@@ -159,6 +168,10 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
                       line -> {
                         line = rootReplacement.apply(line);
                         // errors are expected, so limit logging to info level
+                        if (isUnitTestMode) {
+                          // This is essential output in bazel-in-bazel tests if they fail.
+                          System.out.println(line.stripTrailing());
+                        }
                         Logger.getInstance(this.getClass()).info(line.stripTrailing());
                         context.output(PrintOutput.output(line.stripTrailing()));
                         return true;

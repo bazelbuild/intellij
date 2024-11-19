@@ -29,6 +29,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.IndexingTestUtil;
 import java.io.IOException;
 import org.junit.Before;
 import org.junit.Test;
@@ -102,5 +103,9 @@ public class BlazeSampleDataDirectoryProviderTest extends BlazeAndroidIntegratio
     assertThat(sampleDataDir).isNotNull();
     assertThat(sampleDataDir.getParent()).isEqualTo(resDir.getParent());
     assertThat(sampleDataDir.exists()).isTrue();
+
+    // Workaround for https://youtrack.jetbrains.com/issue/IJPL-149706:
+    // and flaky "already disposed" exceptions during tear-down.
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 }

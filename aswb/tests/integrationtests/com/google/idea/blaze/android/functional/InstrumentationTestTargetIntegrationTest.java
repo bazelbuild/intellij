@@ -74,7 +74,7 @@ public class InstrumentationTestTargetIntegrationTest extends BlazeAndroidIntegr
             .instruments("//java/com/foo/app:app"),
         android_instrumentation_test("//java/com/foo/app:instrumentation_test")
             .test_app("//java/com/foo/app:test_app")
-            .target_device("//tools/mobile/devices/android/generic_phone:android_17_x86"));
+            .target_device("//tools/android/emulated_devices/generic_phone:android_17_x86"));
     runFullBlazeSyncWithNoIssues();
   }
 
@@ -93,7 +93,7 @@ public class InstrumentationTestTargetIntegrationTest extends BlazeAndroidIntegr
     Label instrumentorLabel = Label.create("//java/com/foo/app:test_app");
     Label appLabel = Label.create("//java/com/foo/app:app");
     Label targetDeviceLabel =
-        Label.create("//tools/mobile/devices/android/generic_phone:android_17_x86");
+        Label.create("//tools/android/emulated_devices/generic_phone:android_17_x86");
 
     TargetMap targetMap = projectData.getTargetMap();
     TargetIdeInfo testTarget = targetMap.get(TargetKey.forPlainTarget(testLabel));

@@ -19,7 +19,7 @@ intellij_aspect_test_fixture(
 java_library(
     name = "has_plugin",
     srcs = ["Foo.java"],
-    deps = ["//third_party/auto_value"],
+    deps = ["//third_party/java/auto_value"],
 )
 
 intellij_aspect_test_fixture(
@@ -41,6 +41,6 @@ java_test(
         "//aspect/testing/rules:intellij_aspect_test_fixture_java_proto",
         "//intellij_platform_sdk:test_libs",
         "//proto:intellij_ide_info_java_proto",
-        "@junit//jar",
+        "//third_party/java/junit",
     ],
 )

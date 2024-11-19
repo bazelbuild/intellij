@@ -29,9 +29,21 @@ filegroup(
 filegroup(
     name = "aspect_files",
     srcs = [
+        ":aspect_files_only",
+        ":aspect_tools",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# Separate different targets as they are put into different directories
+filegroup(
+    name = "aspect_files_only",
+    srcs = [
         "WORKSPACE",
         "artifacts.bzl",
+        "build_compose_dependencies.bzl",
         "build_dependencies.bzl",
+        "build_dependencies_deps.bzl",
         "fast_build_info_bundled.bzl",
         "flag_hack.bzl",
         "intellij_info.bzl",
@@ -40,6 +52,13 @@ filegroup(
         "java_classpath.bzl",
         "make_variables.bzl",
         ":BUILD.bazel",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "aspect_tools",
+    srcs = [
         "//aspect/tools:CreateAar",
         "//aspect/tools:JarFilter_deploy.jar",
         "//aspect/tools:PackageParser_deploy.jar",

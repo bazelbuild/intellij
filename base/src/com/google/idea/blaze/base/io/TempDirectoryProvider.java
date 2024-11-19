@@ -15,14 +15,14 @@
  */
 package com.google.idea.blaze.base.io;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import java.nio.file.Path;
 
 /** Provides an appropriate temporary directory on the current platform. */
 public interface TempDirectoryProvider {
 
   static TempDirectoryProvider getInstance() {
-    return ServiceManager.getService(TempDirectoryProvider.class);
+    return ApplicationManager.getApplication().getService(TempDirectoryProvider.class);
   }
 
   Path getTempDirectory();

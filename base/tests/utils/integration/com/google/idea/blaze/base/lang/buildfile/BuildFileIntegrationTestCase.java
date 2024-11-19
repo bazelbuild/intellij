@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.lang.buildfile;
 import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.EditorTestHelper;
+import com.google.idea.blaze.base.MockProjectViewManager;
 import com.google.idea.blaze.base.ExternalWorkspaceFixture;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -26,6 +27,7 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.ExternalWorkspace;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,6 +53,7 @@ public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestC
                 .setExternalWorkspaceData(mockExternalWorkspaceData())
                 .build());
     registerProjectService(BlazeProjectDataManager.class, mockProjectDataManager);
+    registerProjectService(ProjectViewManager.class, new MockProjectViewManager());
     editorTest = new EditorTestHelper(getProject(), testFixture);
   }
 

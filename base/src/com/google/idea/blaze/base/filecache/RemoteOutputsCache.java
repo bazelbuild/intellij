@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
 import com.google.common.base.Functions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -57,7 +58,6 @@ import com.intellij.util.PathUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -224,7 +224,7 @@ public final class RemoteOutputsCache {
    */
   @VisibleForTesting
   static String getCacheKey(RemoteOutputArtifact output) {
-    String key = output.getRelativePath();
+    String key = output.getBazelOutRelativePath();
     String fileName = PathUtil.getFileName(key);
     List<String> components = Splitter.on('.').limit(2).splitToList(fileName);
     StringBuilder builder =
@@ -241,7 +241,7 @@ public final class RemoteOutputsCache {
       return key.hashCode();
     }
     Hasher hasher = Hashing.sha256().newHasher();
-    hasher.putString(key, StandardCharsets.UTF_8);
+    hasher.putString(key, Charsets.UTF_8);
     return hasher.hash().asInt();
   }
 

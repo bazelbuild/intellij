@@ -115,10 +115,6 @@ public final class BlazeCommand {
       this.invokeParallel = false;
       // Tell forge what tool we used to call blaze so we can track usage.
       addBlazeFlags(BlazeFlags.getToolTagFlag());
-
-      Arrays.stream(AspectRepositoryProvider.getOverrideFlags(project)).filter(Optional::isPresent)
-        .map(Optional::get)
-        .forEach(this::addBlazeFlags);
     }
 
     public BlazeCommandName getName() {

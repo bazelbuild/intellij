@@ -79,7 +79,7 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     return new BuildDependencies(editor);
   }
 
-  private static class BuildDependencies extends AnAction
+  public static class BuildDependencies extends AnAction
       implements CustomComponentAction, DumbAware {
 
     private final Editor editor;
@@ -88,19 +88,18 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     public BuildDependencies(@NotNull Editor editor) {
       super("");
       this.editor = editor;
-      buildDepsHelper =
-          new BuildDependenciesHelper(editor.getProject(), getClass(), DepsBuildType.SELF);
+      buildDepsHelper = new BuildDependenciesHelper(editor.getProject(), DepsBuildType.SELF);
+    }
+
+    @Override
+    public ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       buildDepsHelper.enableAnalysis(
-          e, PopupPositioner.showUnderneathClickedComponentOrCentered(e));
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+          getClass(), e, PopupPositioner.showUnderneathClickedComponentOrCentered(e));
     }
 
     @Override
@@ -221,6 +220,11 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     private void createGotItTooltip(ActionButtonWithText button) {
       Project project = editor.getProject();
       if (project != null) {
+        QuerySyncManager querySyncManager = QuerySyncManager.getInstance(project);
+        String learnMore =
+            querySyncManager.getQuerySyncUrl()
+            .map(l -> " To learn more about these changes: " + l)
+            .orElse("");
         GotItTooltip gotIt =
             new GotItTooltip(
                     "query.sync.got.it",
@@ -228,8 +232,8 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
                         + " to build file dependencies for advanced code editing features or not."
                         + " Without building dependencies, you can still navigate your codebase and"
                         + " make light code edits. For analysis and deeper code editing, click the"
-                        + " hammer icon to build this file's dependencies. To learn more about"
-                        + " these changes: go/query-sync",
+                        + " hammer icon to build this file's dependencies."
+                        + learnMore,
                     project)
                 .withHeader("Welcome to query sync");
         // Ideally we would attach the balloon to the button, however the balloon disappears when

@@ -34,8 +34,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-
-
 @RunWith(JUnit4.class)
 public class SnapshotSerializationTest {
 
@@ -48,7 +46,8 @@ public class SnapshotSerializationTest {
                     ImmutableSet.of(Path.of("project/path")),
                     ImmutableSet.of(Path.of("project/path/excluded")),
                     ImmutableSet.of(QuerySyncLanguage.JAVA),
-                    ImmutableSet.of("javatests/*")))
+                    ImmutableSet.of("javatests/*"),
+                    ImmutableSet.of()))
             .setVcsState(
                 Optional.of(
                     new VcsState(
@@ -77,7 +76,7 @@ public class SnapshotSerializationTest {
         PostQuerySyncData.builder()
             .setProjectDefinition(
                 ProjectDefinition.create(
-                    ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of()))
+                    ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of()))
             .setVcsState(
                 Optional.of(
                     new VcsState(
@@ -106,7 +105,8 @@ public class SnapshotSerializationTest {
                     ImmutableSet.of(Path.of("project/path")),
                     ImmutableSet.of(Path.of("project/path/excluded")),
                     ImmutableSet.of(QuerySyncLanguage.JAVA),
-                    ImmutableSet.of("javatests/*")))
+                    ImmutableSet.of("javatests/*"),
+                    ImmutableSet.of()))
             .setVcsState(Optional.empty())
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//project/path:path"))
             .build();
@@ -129,7 +129,8 @@ public class SnapshotSerializationTest {
                     ImmutableSet.of(Path.of("project/path")),
                     ImmutableSet.of(Path.of("project/path/excluded")),
                     ImmutableSet.of(QuerySyncLanguage.JAVA),
-                    ImmutableSet.of("javatests/*")))
+                    ImmutableSet.of("javatests/*"),
+                    ImmutableSet.of()))
             .setVcsState(Optional.empty())
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//project/path:path"))
             .build();

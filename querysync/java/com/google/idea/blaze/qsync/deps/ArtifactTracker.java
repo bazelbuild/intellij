@@ -22,13 +22,15 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteSource;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Optional;
+import java.util.Collection;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 /** A local cache of project dependencies. */
 public interface ArtifactTracker<ContextT extends Context<?>> {
@@ -49,10 +51,6 @@ public interface ArtifactTracker<ContextT extends Context<?>> {
       return new AutoValue_ArtifactTracker_State(map, ccToolchainMap);
     }
 
-    public Optional<JavaArtifactInfo> getJavaInfo(Label label) {
-      return Optional.ofNullable(depsMap().get(label)).flatMap(TargetBuildInfo::javaInfo);
-    }
-
     @VisibleForTesting
     public static State forJavaArtifacts(ImmutableCollection<JavaArtifactInfo> infos) {
       return create(
@@ -63,9 +61,39 @@ public interface ArtifactTracker<ContextT extends Context<?>> {
                       j -> TargetBuildInfo.forJavaTarget(j, DependencyBuildContext.NONE))),
           ImmutableMap.of());
     }
+
+    @VisibleForTesting
+    public static State forJavaArtifacts(JavaArtifactInfo... infos) {
+      return create(
+          Stream.of(infos)
+              .collect(
+                  toImmutableMap(
+                      JavaArtifactInfo::label,
+                      j -> TargetBuildInfo.forJavaTarget(j, DependencyBuildContext.NONE))),
+          ImmutableMap.of());
+    }
+
+    @VisibleForTesting
+    public static State forTargets(TargetBuildInfo... targets) {
+      return create(
+          Stream.of(targets).collect(toImmutableMap(TargetBuildInfo::label, Function.identity())),
+          ImmutableMap.of());
+    }
+
+    @VisibleForTesting
+    public static State forJavaLabels(Label... labels) {
+      return forJavaArtifacts(
+          Stream.of(labels).map(JavaArtifactInfo::empty).collect(ImmutableSet.toImmutableSet()));
+    }
+
+    @VisibleForTesting
+    public static State forJavaLabels(Collection<Label> labels) {
+      return forJavaArtifacts(
+          labels.stream().map(JavaArtifactInfo::empty).collect(ImmutableSet.toImmutableSet()));
+    }
   }
 
-  /** Drops all artifacts and clears caches. */
+  /** Drops all artifacts. */
   void clear() throws IOException;
 
   /** Fetches, caches and sets up new artifacts. */
@@ -73,37 +101,5 @@ public interface ArtifactTracker<ContextT extends Context<?>> {
 
   State getStateSnapshot();
 
-  /**
-   * Returns a list of local cache files that build by target provided. Returns Optional.empty() if
-   * the target has not yet been built.
-   */
-  Optional<ImmutableSet<Path>> getCachedFiles(Label target);
-
-  /**
-   * Returns the sources corresponding to an artifact in the cache.
-   *
-   * @param cachedArtifact A cached jar file.
-   * @return The list of workspace relative source files from the target that {@code libJar} was
-   *     derived from.
-   */
-  ImmutableSet<Path> getTargetSources(Path cachedArtifact);
-
-  /**
-   * Returns the set of targets that artifacts are set up for.
-   *
-   * <p>Note, the returned set is a live set which is updated as a result of {@link #update} and
-   * {@link #clear} invocation.
-   */
-  Set<Label> getLiveCachedTargets();
-
-  /**
-   * Returns the location of the directory containing unpacked Android libraries (i.e. resources and
-   * manifests) in the layout expected by the IDE.
-   */
-  Path getExternalAarDirectory();
-
-  /** Returns the count of .jar files. */
-  Integer getJarsCount();
-
-  public Iterable<Path> getBugreportFiles();
+  ImmutableMap<String, ByteSource> getBugreportFiles();
 }

@@ -55,10 +55,17 @@ public interface BuildEventStreamProvider {
       public BuildEvent getNext() throws BuildEventStreamException {
         return parseNextEventFromStream(countingStream);
       }
+
+      @Override
+      public long getBytesConsumed() {
+        return countingStream.getCount();
+      }
     };
   }
 
   /** Returns the next build event in the stream, or null if there are none remaining. */
   @Nullable
   BuildEventStreamProtos.BuildEvent getNext() throws BuildEventStreamException;
+
+  long getBytesConsumed();
 }

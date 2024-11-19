@@ -147,10 +147,13 @@ java_library(
     deps = [
         "//common/experiments",
         "//common/experiments:unit_test_utils",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+    ],
+    runtime_deps = [
+        "@org_opentest4j_opentest4j//jar",  # Needed by the IntelliJ test framework.
     ],
 )
 

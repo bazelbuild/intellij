@@ -21,6 +21,7 @@ import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
 import com.google.idea.blaze.qsync.java.PackageReader;
@@ -31,35 +32,34 @@ import com.google.idea.blaze.qsync.project.ProjectProto.Project;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
- * Builds a {@link BlazeProjectSnapshot} for a test project by running the logic from the various
- * sync stages on the testdata query output.
+ * Builds a {@link QuerySyncProjectSnapshot} for a test project by running the logic from the
+ * various sync stages on the testdata query output.
  */
 public class TestDataSyncRunner {
 
   private final Context<?> context;
   private final PackageReader packageReader;
-  private final boolean useNewArtifactLogic;
 
   public TestDataSyncRunner(
-      Context<?> context, PackageReader packageReader, boolean useNewArtifactLogic) {
+      Context<?> context, PackageReader packageReader) {
     this.context = context;
     this.packageReader = packageReader;
-    this.useNewArtifactLogic = useNewArtifactLogic;
   }
 
-  public BlazeProjectSnapshot sync(TestData testProject) throws IOException, BuildException {
+  public QuerySyncProjectSnapshot sync(TestData testProject) throws IOException, BuildException {
     ProjectDefinition projectDefinition =
         ProjectDefinition.create(
             /* includes= */ ImmutableSet.copyOf(testProject.getRelativeSourcePaths()),
             /* excludes= */ ImmutableSet.of(),
             /* languageClasses= */ ImmutableSet.of(),
             /* testSources= */ ImmutableSet.of(),
-            /* systemExcludes = */ ImmutableSet.of()
-);
-    QuerySummary querySummary = getQuerySummary(testProject);
+            /* systemExcludes= */ ImmutableSet.of());
+    QuerySummary querySummary = adaptQuerySummaryDueToABazelBug(getQuerySummary(testProject));
     PostQuerySyncData pqsd =
         PostQuerySyncData.builder()
             .setProjectDefinition(projectDefinition)
@@ -75,14 +75,32 @@ public class TestDataSyncRunner {
             Predicates.alwaysTrue(),
             context,
             projectDefinition,
-            newDirectExecutorService(),
-            useNewArtifactLogic);
+            newDirectExecutorService());
     Project project = converter.createProject(buildGraphData);
-    return BlazeProjectSnapshot.builder()
+    return QuerySyncProjectSnapshot.builder()
         .queryData(pqsd)
         .graph(new BlazeQueryParser(querySummary, context, ImmutableSet.of()).parse())
         .artifactState(ArtifactTracker.State.EMPTY)
         .project(project)
         .build();
   }
+
+    /**
+     * We should add --consistent_labels flag to this target and all similar ones
+     * //querysync/javatests/com/google/idea/blaze/qsync/testdata:java_library_external_dep_query
+     * Unfortunately, due to a bug in bazel it doesn't work, so we have to adjust the rule names in code
+     * The bug is reported here. The method should be cleared and inlined after the
+     * bug <a href="https://github.com/bazelbuild/bazel/issues/24325">#24325</a> is fixed.
+     */
+    private static QuerySummary adaptQuerySummaryDueToABazelBug(QuerySummary querySummary) {
+        var newRulesMap = querySummary.getRulesMap().entrySet().stream()
+                .collect(Collectors.toMap(
+                        it -> Label.of(it.getKey().toString().replaceFirst("^//", "@@//")),
+                        Map.Entry::getValue));
+        return QuerySummary.newBuilder()
+                .putAllPackagesWithErrors(querySummary.getPackagesWithErrors())
+                .putAllSourceFiles(querySummary.getSourceFilesMap())
+                .putAllRules(newRulesMap)
+                .build();
+    }
 }

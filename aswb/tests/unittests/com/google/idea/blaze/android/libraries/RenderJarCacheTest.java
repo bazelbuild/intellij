@@ -26,8 +26,6 @@ import com.google.idea.blaze.android.sync.aspects.strategy.RenderResolveOutputGr
 import com.google.idea.blaze.base.MockProjectViewManager;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
-import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
-import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifactWithoutDigest;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
@@ -155,8 +153,6 @@ public class RenderJarCacheTest {
 
     intellijRule.registerApplicationService(BlazeExecutor.class, new MockBlazeExecutor());
 
-    intellijRule.registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
-    intellijRule.registerExtension(BuildSystemProvider.EP_NAME, new BazelBuildSystemProvider());
     setupProjectData();
     setProjectView(
         "directories:",
@@ -194,9 +190,9 @@ public class RenderJarCacheTest {
         .putAll(artifactsCaptor.capture(), contextCaptor.capture(), removeCaptor.capture());
 
     Collection<OutputArtifactWithoutDigest> passedArtifact = artifactsCaptor.getValue();
-    assertThat(passedArtifact.stream().map(OutputArtifactWithoutDigest::getRelativePath))
+    assertThat(passedArtifact.stream().map(OutputArtifactWithoutDigest::getBazelOutRelativePath))
         .containsExactly(
-            "com/foo/bar/baz/baz_render_jar.jar", "com/foo/bar/qux/qux_render_jar.jar");
+            "k8-fast/bin/com/foo/bar/baz/baz_render_jar.jar", "k8-fast/bin/com/foo/bar/qux/qux_render_jar.jar");
   }
 
   /**
@@ -270,7 +266,7 @@ public class RenderJarCacheTest {
   /** Utility method to create an {@link ArtifactLocation} for the given relative path */
   private ArtifactLocation getArtifactLocation(String relativePath) {
     return ArtifactLocation.builder()
-        .setRootExecutionPathFragment(workspaceRoot.directory().getAbsolutePath())
+        .setRootExecutionPathFragment("bazel-out/k8-fast/bin")
         .setRelativePath(relativePath)
         .setIsSource(false)
         .build();

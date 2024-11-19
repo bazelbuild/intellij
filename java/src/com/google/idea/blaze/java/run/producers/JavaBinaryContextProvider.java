@@ -36,7 +36,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.java.run.RunUtil;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.intellij.execution.JavaExecutionUtil;
@@ -123,7 +123,7 @@ public class JavaBinaryContextProvider implements BinaryContextProvider {
         querySyncProject
             .getSnapshotHolder()
             .getCurrent()
-            .map(BlazeProjectSnapshot::graph)
+            .map(QuerySyncProjectSnapshot::graph)
             .orElse(null);
     if (buildGraphData == null) {
       return null;

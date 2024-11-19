@@ -17,17 +17,21 @@ package com.google.idea.blaze.qsync.artifacts;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.io.ByteSource;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
+import com.google.idea.blaze.common.artifact.CachedArtifact;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.ArtifactDirectoryContents;
+import com.google.idea.blaze.qsync.project.ProjectProto.ProjectArtifact;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.protobuf.ExtensionRegistryLite;
 import java.io.IOException;
@@ -37,15 +41,13 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import javax.annotation.Nullable;
 
 /**
@@ -61,22 +63,48 @@ public class ArtifactDirectoryUpdate {
   private final Path root;
   private final ArtifactDirectoryContents contents;
   private final Set<Path> updatedPaths;
+  private final FileTransform stripGeneratedSourcesTransform;
+  private final Supplier<Boolean> buildGeneratedSrcJars;
 
   public ArtifactDirectoryUpdate(
       BuildArtifactCache artifactCache,
       Path workspaceRoot,
       Path root,
-      ArtifactDirectoryContents contents) {
+      ArtifactDirectoryContents contents,
+      FileTransform stripGeneratedSourcesTransform,
+      Supplier<Boolean> buildGeneratedSrcJars) {
     this.artifactCache = artifactCache;
     this.workspaceRoot = workspaceRoot;
     this.root = root;
     this.contents = contents;
     updatedPaths = Sets.newHashSet();
+    this.stripGeneratedSourcesTransform = stripGeneratedSourcesTransform;
+    this.buildGeneratedSrcJars = buildGeneratedSrcJars;
   }
 
-  public void update() throws IOException {
+  public ArtifactDirectoryUpdate(
+      BuildArtifactCache artifactCache,
+      Path workspaceRoot,
+      Path root,
+      ArtifactDirectoryContents contents,
+      FileTransform stripGeneratedSourcesTransform,
+      Boolean buildGeneratedSrcJarsVal) {
+    this(
+        artifactCache,
+        workspaceRoot,
+        root,
+        contents,
+        stripGeneratedSourcesTransform,
+        () -> buildGeneratedSrcJarsVal);
+  }
+
+  public static Path getContentsFile(Path artifactDir) {
+    return artifactDir.resolveSibling(artifactDir.getFileName() + ".contents");
+  }
+
+  public ImmutableSet<Label> update() throws IOException {
     Files.createDirectories(root);
-    Path contentsProtoPath = root.resolveSibling(root.getFileName() + ".contents");
+    Path contentsProtoPath = getContentsFile(root);
 
     // Any exceptions that occur when updating individual entries are caught and added here.
     // If any entry fails, we will throw an exception at the end with all such failures added as
@@ -97,13 +125,18 @@ public class ArtifactDirectoryUpdate {
       existingContents = ArtifactDirectoryContents.getDefaultInstance();
     }
 
+    ImmutableSet.Builder<Label> incompleteTargets = ImmutableSet.builder();
+
     for (Map.Entry<String, ProjectProto.ProjectArtifact> destAndArtifact :
         contents.getContentsMap().entrySet()) {
       try {
-        updateOneFile(
+        ProjectArtifact artifact = destAndArtifact.getValue();
+        if (!updateOneFile(
             root.resolve(Path.of(destAndArtifact.getKey())),
             existingContents.getContentsMap().get(destAndArtifact.getKey()),
-            destAndArtifact.getValue());
+            artifact)) {
+          incompleteTargets.add(Label.of(artifact.getTarget()));
+        }
       } catch (BuildException | IOException e) {
         exceptions.add(e);
       }
@@ -117,15 +150,23 @@ public class ArtifactDirectoryUpdate {
       exceptions.add(e);
     }
 
-    try (OutputStream out = Files.newOutputStream(contentsProtoPath, StandardOpenOption.CREATE)) {
-      contents.writeTo(out);
-    } catch (IOException e) {
-      exceptions.add(e);
-    }
-    if (!exceptions.isEmpty()) {
-      IOException e = new IOException("Directory update for " + root + " failed");
-      exceptions.forEach(e::addSuppressed);
-      throw e;
+    if (contents.getContentsCount() == 0) {
+      // The directory is empty. Delete it.
+      Files.deleteIfExists(contentsProtoPath);
+      Files.deleteIfExists(root);
+      return ImmutableSet.of();
+    } else {
+      try (OutputStream out = Files.newOutputStream(contentsProtoPath, StandardOpenOption.CREATE)) {
+        contents.writeTo(out);
+      } catch (IOException e) {
+        exceptions.add(e);
+      }
+      if (!exceptions.isEmpty()) {
+        IOException e = new IOException("Directory update for " + root + " failed");
+        exceptions.forEach(e::addSuppressed);
+        throw e;
+      }
+      return incompleteTargets.build();
     }
   }
 
@@ -157,7 +198,12 @@ public class ArtifactDirectoryUpdate {
     return false;
   }
 
-  private void updateOneFile(
+  /**
+   * Updates a single file.
+   *
+   * @return {@code false} if the artifact was not present (e.g. expired from the cache).
+   */
+  private boolean updateOneFile(
       Path dest,
       @Nullable ProjectProto.ProjectArtifact existing,
       ProjectProto.ProjectArtifact srcArtifact)
@@ -169,36 +215,44 @@ public class ArtifactDirectoryUpdate {
     }
     if (!Files.exists(dest)) {
       Files.createDirectories(dest.getParent());
-      ByteSource src = asByteSource(srcArtifact);
+      Optional<CachedArtifact> src = getCachedArtifact(srcArtifact);
+      if (src.isEmpty()) {
+        return false;
+      }
       switch (srcArtifact.getTransform()) {
         case COPY:
-          src.copyTo(MoreFiles.asByteSink(dest));
-          updatedPaths.add(dest);
+          updatedPaths.addAll(FileTransform.COPY.copyWithTransform(src.get(), dest));
           break;
         case UNZIP:
-          unzip(src, dest);
+          updatedPaths.addAll(FileTransform.UNZIP.copyWithTransform(src.get(), dest));
+          break;
+        case STRIP_SUPPORTED_GENERATED_SOURCES:
+          if (buildGeneratedSrcJars.get()) {
+            updatedPaths.addAll(stripGeneratedSourcesTransform.copyWithTransform(src.get(), dest));
+          } else {
+            updatedPaths.addAll(FileTransform.COPY.copyWithTransform(src.get(), dest));
+          }
           break;
         default:
           throw new IllegalArgumentException(
               "Invalid transform " + srcArtifact.getTransform() + " in " + srcArtifact);
       }
     }
+    return true;
   }
 
-  private ByteSource asByteSource(ProjectProto.ProjectArtifact artifact) throws BuildException {
+  private Optional<CachedArtifact> getCachedArtifact(ProjectProto.ProjectArtifact artifact)
+      throws BuildException {
     if (artifact.hasBuildArtifact()) {
+      // TODO(mathewi) It would probably be better to parallelize this so get better performance
+      //   in the case that not all artifacts are ready in the cache.
+      Optional<ListenableFuture<CachedArtifact>> artifactFuture =
+          artifactCache.get(artifact.getBuildArtifact().getDigest());
+      if (artifactFuture.isEmpty()) {
+        return Optional.empty();
+      }
       try {
-        // TODO(mathewi): Instead of throwing here, we should instead mark the associated target as
-        //   unbuilt. This will require adding more data to the ProjectArtifact proto so we can map
-        //   it back to the original target.
-        // TODO(mathewi) It would probably be better to parallelize this so get better performance
-        //   in the case that not all artifacts are ready in the cache.
-        return Uninterruptibles.getUninterruptibly(
-            artifactCache
-                .get(artifact.getBuildArtifact().getDigest())
-                .orElseThrow(
-                    () ->
-                        new BuildException("Artifact " + artifact + " not present in the cache")));
+        return Optional.of(Uninterruptibles.getUninterruptibly(artifactFuture.get()));
       } catch (ExecutionException e) {
         throw new BuildException("Failed to fetch artifact " + artifact, e);
       }
@@ -208,29 +262,11 @@ public class ArtifactDirectoryUpdate {
       //    VCS supports that, and probably also fail gracefully (emit a warning?) in this case.
       Path srcFile = workspaceRoot.resolve(artifact.getWorkspaceRelativePath());
       if (!Files.exists(srcFile)) {
-        throw new BuildException("Source file with digest " + srcFile + " not found");
+        return Optional.empty();
       }
-      return MoreFiles.asByteSource(srcFile);
+      return Optional.of(new CachedArtifact(srcFile));
     } else {
       throw new IllegalArgumentException("Invalid artifact: " + artifact);
-    }
-  }
-
-  private void unzip(ByteSource src, Path destination) throws IOException {
-    Files.createDirectory(destination);
-    try (ZipInputStream zis = new ZipInputStream(src.openBufferedStream())) {
-      ZipEntry entry;
-      while ((entry = zis.getNextEntry()) != null) {
-        if (entry.isDirectory()) {
-          Files.createDirectories(destination.resolve(entry.getName()));
-        } else {
-          // Srcjars do not contain separate directory entries
-          Files.createDirectories(destination.resolve(entry.getName()).getParent());
-          Files.copy(
-              zis, destination.resolve(entry.getName()), StandardCopyOption.REPLACE_EXISTING);
-          updatedPaths.add(destination.resolve(entry.getName()));
-        }
-      }
     }
   }
 

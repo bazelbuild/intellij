@@ -57,7 +57,7 @@ public class SnapshotDeserializer {
     if (proto.hasVcsState()) {
       visitVcsState(proto.getVcsState());
     }
-    if (proto.hasBazelVersion()) {
+    if (!proto.getBazelVersion().isEmpty()) {
       snapshot.setBazelVersion(Optional.of(proto.getBazelVersion()));
     }
     visitQuerySummay(proto.getQuerySummary());

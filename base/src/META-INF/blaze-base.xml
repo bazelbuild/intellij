@@ -152,6 +152,8 @@
         class="com.google.idea.blaze.base.qsync.action.AddToProjectAction"
         text="Add to project"
         icon="AllIcons.General.Add" />
+    <action id="Blaze.ResetQuerySync" class="com.google.idea.blaze.base.qsync.action.ResetQuerySyncAction" text="Reset Sync and Code Analysis State" />
+
     <action id="Bazel.DisableImportNotification"
       class="com.google.idea.blaze.base.wizard2.BazelDisableImportNotification$Action"
       text="Dismiss import notification"/>
@@ -188,6 +190,7 @@
       <group id="Blaze.MenuGroupsBookmark"/>
       <separator/>
       <reference id="Blaze.ExportRunConfigurations"/>
+      <reference id="Blaze.ResetQuerySync" />
       <reference id="Blaze.FileGitHubIssueAction"/>
       <!--Add single menu items anchored after this bookmark-->
       <group id="Blaze.MenuFooter"/>
@@ -216,8 +219,11 @@
       <reference ref="Blaze.CopyBlazeTargetPathAction"/>
     </group>
     <group id="Internal.Blaze" text="Blaze" popup="true" internal="true">
-      <action internal="true" id="Blaze.QSync.CleanDependencies" class="com.google.idea.blaze.base.qsync.action.CleanDependencies" text="QSync - Clean Dependencies" />
+      <action internal="true" id="Blaze.QSync.CleanDependencies" class="com.google.idea.blaze.base.qsync.action.ClearDependencies" text="QSync - Clear Dependencies" />
       <action internal="true" id="Blaze.QSync.ReloadProject" class="com.google.idea.blaze.base.qsync.action.ReloadProject" text="QSync - Reload project" />
+      <action internal="true" id="Blaze.QSync.CleanBuildCache" class="com.google.idea.blaze.base.qsync.action.CleanBuildCacheAction" text="QSync - Clean Build Cache" />
+      <action internal="true" id="Blaze.QSync.PurgeBuildCache" class="com.google.idea.blaze.base.qsync.action.PurgeBuildCacheAction" text="QSync - Purge Build Cache" />
+      <action internal="true" id="Blaze.QSync.DumpProject" class="com.google.idea.blaze.base.qsync.action.DumpProjectProtoAction" text = "QSync - Dump Project Proto" />
       <action internal="true" id="Blaze.QSync.ShowPromo" class="com.google.idea.blaze.base.qsync.action.ShowPromoAction" text="Show qsync promo" />
       <add-to-group group-id="Internal"/>
     </group>
@@ -257,8 +263,9 @@
     <applicationService serviceImplementation="com.google.idea.blaze.base.qsync.settings.QuerySyncSettings" id="QuerySyncSettings"/>
     <psi.referenceContributor language="BUILD" implementation="com.google.idea.blaze.base.lang.buildfile.references.VisibilityReferenceContributor"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.qsync.QuerySyncManager"/>
-    <iw.actionProvider implementation="com.google.idea.blaze.base.qsync.QuerySyncInspectionWidgetActionProvider"/>
-    <iw.actionProvider implementation="com.google.idea.blaze.base.qsync.ComposePreviewQuerySyncInspectionWidgetActionProvider"/>
+    <editorNotificationProvider implementation="com.google.idea.blaze.base.qsync.QuerySyncNotificationProvider"/>
+    <!--    Disabled until a fix is introduced in the platform to make InspectionWidgetActionProvider work with remote dev -->
+<!--    <iw.actionProvider implementation="com.google.idea.blaze.base.qsync.QuerySyncInspectionWidgetActionProvider"/>-->
     <daemon.highlightInfoFilter implementation="com.google.idea.blaze.base.qsync.QuerySyncHighlightingFilter"/>
     <trafficLightRendererContributor implementation="com.google.idea.blaze.base.qsync.QuerySyncTrafficLightRendererContributor"/>
     <editorNotificationProvider implementation="com.google.idea.blaze.base.qsync.UnsyncedFileEditorNotificationProvider" />
@@ -322,7 +329,7 @@
     <applicationService serviceInterface="com.google.idea.blaze.base.wizard2.BlazeWizardOptionProvider"
                         serviceImplementation="com.google.idea.blaze.base.wizard2.BazelWizardOptionProvider"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.project.ExtendableBazelProjectCreator"
-      serviceImplementation="com.google.idea.blaze.base.project.TrustAwareProjectCreator"/>
+                        serviceImplementation="com.google.idea.blaze.base.project.TrustAwareProjectCreator"/>
     <projectService serviceInterface="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider"
                     serviceImplementation="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProviderImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.sync.projectview.WorkspaceFileFinder$Provider"
@@ -350,6 +357,9 @@
     <runConfigurationProducer
         implementation="com.google.idea.blaze.base.run.producers.BinaryContextRunConfigurationProducer"
         order="first"/>
+    <runConfigurationProducer
+            implementation="com.google.idea.blaze.base.run.producers.BlazeBuildTargetRunConfigurationProducer"
+            order="first"/>
     <stepsBeforeRunProvider implementation="com.google.idea.blaze.base.run.BlazeBeforeRunTaskProvider"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.help.BlazeHelpHandler"
                         serviceImplementation="com.google.idea.blaze.base.help.BlazeHelpHandlerImpl"/>
@@ -508,12 +518,16 @@
                     interface="com.google.idea.blaze.common.artifact.ArtifactFetcher"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.base.qsync.HandledRulesProvider"
       interface="com.google.idea.blaze.base.qsync.HandledRulesProvider" />
-    <extensionPoint qualifiedName="com.google.idea.blaze.qsync.BlazeProjectListenerProvider"
-      interface="com.google.idea.blaze.base.qsync.BlazeProjectListenerProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.qsync.QuerySyncListenerProvider"
+      interface="com.google.idea.blaze.base.qsync.QuerySyncProjectListenerProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.base.qsync.ProjectProtoTransformProvider"
       interface="com.google.idea.blaze.base.qsync.ProjectProtoTransformProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.base.sync.projectstructure.ExternalModuleProvider"
                     interface="com.google.idea.blaze.base.sync.projectstructure.ExternalModuleProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.qsync.AnnotationProcessorOverride"
+      interface="com.google.idea.blaze.base.qsync.AnnotationProcessorOverride"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.base.qsync.GeneratedSourcesStripperProvider"
+      interface="com.google.idea.blaze.base.qsync.artifacts.GeneratedSourcesStripperProvider"/>
 
   </extensionPoints>
 
@@ -615,11 +629,13 @@
     <SyncPlugin implementation="com.google.idea.blaze.base.lang.buildfile.sync.BuildLangSyncPlugin"/>
     <SyncPlugin implementation="com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager$SyncPlugin"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.command.BuildFlagsProviderImpl"/>
+    <BuildFlagsProvider implementation="com.google.idea.blaze.base.sync.aspects.AspactBuildFlagsProvider"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.run.coverage.CoverageBuildFlagsProvider"/>
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.git.GitBlazeVcsHandlerProvider"/>
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.FallbackBlazeVcsHandlerProvider" order="last" id="fallback"/>
     <BuildSystemProvider implementation="com.google.idea.blaze.base.bazel.BazelBuildSystemProvider" id="BazelBuildSystemProvider" order="last"/>
     <BuildifierBinaryProvider implementation="com.google.idea.blaze.base.buildmodifier.DefaultBuildifierBinaryProvider"/>
+    <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.PendingTargetRunConfigurationHandlerProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.PendingTargetRunConfigurationHandlerProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandlerProvider" order="last"/>
     <AttributeSpecificStringLiteralReferenceProvider implementation="com.google.idea.blaze.base.lang.buildfile.references.VisibilityReferenceProvider"/>
@@ -694,7 +710,19 @@
 
   <extensions defaultExtensionNs="com.google.idea.blaze.qsync">
     <ArtifactFetcher implementation="com.google.idea.blaze.base.qsync.cache.FileApiArtifactFetcher"/>
-    <BlazeProjectListenerProvider implementation="com.google.idea.blaze.base.qsync.ProjectUpdater$Provider" />
-    <BlazeProjectListenerProvider implementation="com.google.idea.blaze.base.qsync.ProjectStatsLogger$Provider" />
+    <QuerySyncListenerProvider implementation="com.google.idea.blaze.base.qsync.ProjectUpdater$Provider" />
+    <QuerySyncListenerProvider implementation="com.google.idea.blaze.base.qsync.ProjectStatsLogger$Provider" />
   </extensions>
+
+  <projectListeners>
+    <listener
+      class="com.google.idea.blaze.base.actions.ProjectFrameUpdater"
+      activeInHeadlessMode="false" activeInTestMode="false"
+      topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </projectListeners>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <indexedRootsProvider implementation="com.google.idea.blaze.base.project.indexing.WarmUpTriggeringIndexableSetContributor" />
+  </extensions>
+
 </idea-plugin>

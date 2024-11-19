@@ -26,6 +26,8 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.ideinfo.AndroidInstrumentationInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -155,8 +157,7 @@ public class BlazeAndroidTestLaunchTask implements BlazeLaunchTask {
                                   Blaze.getBuildSystemProvider(project)
                                       .getBuildSystem()
                                       .getBuildInvoker(project, context),
-                                  BlazeCommandName.TEST,
-                                  project)
+                                  BlazeCommandName.TEST)
                               .addTargets(target);
                       // Build flags must match BlazeBeforeRunTask.
                       commandBuilder.addBlazeFlags(buildFlags);
@@ -193,7 +194,7 @@ public class BlazeAndroidTestLaunchTask implements BlazeLaunchTask {
                           String.format("Starting %s test...\n", Blaze.buildSystemName(project)));
 
                       int retVal;
-                      try (final var buildResultHelper = new BuildResultHelper()) {
+                      try (BuildResultHelper buildResultHelper = new BuildResultHelperBep()) {
                         commandBuilder.addBlazeFlags(buildResultHelper.getBuildFlags());
                         BlazeCommand command = commandBuilder.build();
                         ExecutionUtils.println(console, command + "\n");
@@ -210,13 +211,16 @@ public class BlazeAndroidTestLaunchTask implements BlazeLaunchTask {
                         if (retVal != 0) {
                           context.setHasError();
                         } else {
-                          testResultsHolder.setTestResults(buildResultHelper.getTestResults());
+                          testResultsHolder.setTestResults(
+                              buildResultHelper.getTestResults(Optional.empty()));
                         }
                         ListenableFuture<Void> unusedFuture =
                             FileCaches.refresh(
                                 project,
                                 context,
                                 BlazeBuildOutputs.noOutputs(BuildResult.fromExitCode(retVal)));
+                      } catch (GetArtifactsException e) {
+                        LOG.error(e.getMessage());
                       }
                       return !context.hasErrors();
                     }));

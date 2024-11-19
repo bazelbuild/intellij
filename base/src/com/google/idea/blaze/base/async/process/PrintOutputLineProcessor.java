@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.async.process;
 
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.PrintOutput;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
 /** Simple adapter between stdout and context print output. */
@@ -29,6 +30,10 @@ public class PrintOutputLineProcessor implements LineProcessingOutputStream.Line
 
   @Override
   public boolean processLine(@NotNull String line) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // This is essential output to troubleshoot bazel-in-bazel test.
+      System.out.println(line);
+    }
     context.output(PrintOutput.output(line));
     return true;
   }

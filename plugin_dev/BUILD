@@ -24,13 +24,13 @@ java_library(
         "//base",
         "//common/experiments",
         "//common/util:transactions",
-        "//intellij_platform_sdk:devkit",  #api232
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//java",
         "//proto:proto_deps",
         "//shared",
         "//shared:artifact",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:devkit",  #api232
+        "//intellij_platform_sdk:jsr305",
         "//third_party/devkit",
     ],
 )
@@ -89,7 +89,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//third_party/devkit:devkit_for_tests",
-        "@junit//jar",
+        "//third_party/java/junit",
         "@org_opentest4j_opentest4j//jar",
     ],
 )

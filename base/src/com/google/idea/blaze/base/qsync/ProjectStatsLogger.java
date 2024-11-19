@@ -23,18 +23,21 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
 import com.google.idea.blaze.base.projectview.section.sections.TryImportSection;
 import com.google.idea.blaze.common.Context;
-import com.google.idea.blaze.qsync.BlazeProjectListener;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.QuerySyncProjectListener;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.deps.ArtifactTracker;
+import com.google.idea.blaze.qsync.deps.JavaArtifactInfo;
+import com.google.idea.blaze.qsync.deps.TargetBuildInfo;
+import java.util.Collection;
 import java.util.Optional;
 
 /** Updates project info according to the newly generated build graph. */
-public class ProjectStatsLogger implements BlazeProjectListener {
+public class ProjectStatsLogger implements QuerySyncProjectListener {
 
   /** Entry point for instantiating {@link ProjectStatsLogger}. */
-  public static class Provider implements BlazeProjectListenerProvider {
+  public static class Provider implements QuerySyncProjectListenerProvider {
     @Override
-    public BlazeProjectListener createListener(QuerySyncProject querySyncProject) {
+    public QuerySyncProjectListener createListener(QuerySyncProject querySyncProject) {
       return new ProjectStatsLogger(
           querySyncProject.getArtifactTracker(), querySyncProject.getProjectViewSet());
     }
@@ -49,7 +52,7 @@ public class ProjectStatsLogger implements BlazeProjectListener {
   }
 
   @Override
-  public void onNewProjectSnapshot(Context<?> context, BlazeProjectSnapshot instance) {
+  public void onNewProjectSnapshot(Context<?> context, QuerySyncProjectSnapshot instance) {
     Optional.ofNullable(context.getScope(QuerySyncActionStatsScope.class))
         .ifPresent(
             scope -> {
@@ -66,7 +69,14 @@ public class ProjectStatsLogger implements BlazeProjectListener {
                   .getDependenciesInfoStatsBuilder()
                   .setTargetMapSize(instance.graph().targetMap().size())
                   .setLibraryCount(instance.project().getLibraryCount())
-                  .setJarCount(artifactTracker.getJarsCount());
+                  .setJarCount(
+                      instance.artifactState().depsMap().values().stream()
+                          .map(TargetBuildInfo::javaInfo)
+                          .flatMap(Optional::stream)
+                          .map(JavaArtifactInfo::jars)
+                          .mapToInt(Collection::size)
+                          .sum());
             });
+    ;
   }
 }

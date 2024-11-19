@@ -49,7 +49,7 @@ public abstract class BuildDepsStats implements QuerySyncOperationStats {
 
   public abstract ImmutableSet<Label> buildTargets();
 
-  public abstract Optional<Integer> updatedFilesCount();
+  public abstract Optional<Long> bepByteConsumed();
 
   public abstract Optional<Long> artifactBytesConsumed();
 
@@ -90,7 +90,7 @@ public abstract class BuildDepsStats implements QuerySyncOperationStats {
 
     public abstract Builder setBuildIds(ImmutableList<String> value);
 
-    public abstract Builder setUpdatedFilesCount(@Nullable Integer value);
+    public abstract Builder setBepByteConsumed(@Nullable Long value);
 
     public abstract Builder setArtifactBytesConsumed(@Nullable Long value);
 

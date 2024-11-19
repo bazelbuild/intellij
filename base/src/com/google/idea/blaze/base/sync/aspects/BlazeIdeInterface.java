@@ -29,7 +29,7 @@ import com.google.idea.blaze.base.sync.SyncProjectState;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 
@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
 public interface BlazeIdeInterface {
 
   static BlazeIdeInterface getInstance() {
-    return ServiceManager.getService(BlazeIdeInterface.class);
+    return ApplicationManager.getApplication().getService(BlazeIdeInterface.class);
   }
 
   /**

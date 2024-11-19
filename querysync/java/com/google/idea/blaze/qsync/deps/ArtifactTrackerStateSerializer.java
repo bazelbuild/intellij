@@ -17,10 +17,12 @@ package com.google.idea.blaze.qsync.deps;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.artifacts.ArtifactMetadata;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
 import com.google.idea.blaze.qsync.java.ArtifactTrackerProto;
 import com.google.idea.blaze.qsync.java.ArtifactTrackerProto.Artifact;
@@ -35,7 +37,7 @@ import java.util.Set;
 /** Serializes {@link NewArtifactTracker} state to a proto. */
 public class ArtifactTrackerStateSerializer {
 
-  public static final int VERSION = 1;
+  public static final int VERSION = 3;
 
   private final ArtifactTrackerProto.ArtifactTrackerState.Builder proto =
       ArtifactTrackerProto.ArtifactTrackerState.newBuilder().setVersion(VERSION);
@@ -93,13 +95,17 @@ public class ArtifactTrackerStateSerializer {
         .setAndroidResourcesPackage(javaInfo.androidResourcesPackage());
   }
 
-  private ImmutableList<Artifact> toProtos(ImmutableList<BuildArtifact> artifacts) {
+  private ImmutableList<Artifact> toProtos(ImmutableCollection<BuildArtifact> artifacts) {
     return artifacts.stream()
         .map(
             artifact ->
                 ArtifactTrackerProto.Artifact.newBuilder()
                     .setDigest(artifact.digest())
-                    .setPath(artifact.path().toString())
+                    .setArtifactPath(artifact.artifactPath().toString())
+                    .addAllMetadata(
+                        artifact.metadata().values().stream()
+                            .map(ArtifactMetadata::toProto)
+                            .toList())
                     .build())
         .collect(toImmutableList());
   }

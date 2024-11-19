@@ -183,6 +183,11 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
               .splitToStream(vmoptionsText)
               .filter(opt -> !opt.startsWith("#"))
               .collect(toCollection(ArrayList::new));
+
+      String vmoptionsFile = System.getProperty("jb.vmOptionsFile");
+      if (vmoptionsFile != null) {
+        vmoptions.add("-Djb.vmOptionsFile=" + vmoptionsFile);
+      }
       vmoptions.add("-Didea.is.internal=true");
 
       return ParametersListUtil.join(vmoptions);

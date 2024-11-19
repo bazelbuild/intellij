@@ -36,6 +36,7 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
@@ -259,7 +260,8 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
               protected BuildOutput execute(BlazeContext context1) {
                 // Explicitly depend on local build helper because the deploy jar is expected to
                 // be available locally
-                try (final var buildResultHelper = new BuildResultHelper()) {
+                try (BuildResultHelper buildResultHelper =
+                    BuildResultHelperProvider.createForLocalBuild(project)) {
                   return buildDeployJar(context1, label, buildParameters, buildResultHelper);
                 }
               }

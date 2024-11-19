@@ -19,35 +19,22 @@ import static com.google.common.truth.Truth.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.createDirectory;
 
-import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.io.ByteSource;
 import com.google.common.io.Closer;
-import com.google.common.io.MoreFiles;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.google.idea.blaze.common.Context;
-import com.google.idea.blaze.common.artifact.BuildArtifactCache;
-import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.blaze.qsync.project.ProjectProto.ArtifactDirectoryContents;
 import com.google.idea.blaze.qsync.project.ProjectProto.BuildArtifact;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectArtifact;
 import com.google.idea.blaze.qsync.project.ProjectProto.ProjectArtifact.ArtifactTransform;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.junit.Before;
@@ -90,7 +77,9 @@ public class ArtifactDirectoryUpdateTest {
                         .setTransform(ArtifactTransform.COPY)
                         .setBuildArtifact(BuildArtifact.newBuilder().setDigest("abcde"))
                         .build())
-                .build());
+                .build(),
+            FileTransform.COPY,
+            false);
     update.update();
 
     assertThat(readContents()).containsExactly(Path.of("somefile.txt"));
@@ -114,7 +103,9 @@ public class ArtifactDirectoryUpdateTest {
                         .setTransform(ArtifactTransform.COPY)
                         .setWorkspaceRelativePath("workspace/path/to/file.txt")
                         .build())
-                .build());
+                .build(),
+            FileTransform.COPY,
+            false);
     update.update();
 
     assertThat(readContents()).containsExactly(Path.of("anotherfile.txt"));
@@ -142,7 +133,9 @@ public class ArtifactDirectoryUpdateTest {
                         .setTransform(ArtifactTransform.UNZIP)
                         .setBuildArtifact(BuildArtifact.newBuilder().setDigest("zipdigest"))
                         .build())
-                .build());
+                .build(),
+            FileTransform.COPY,
+            false);
     update.update();
 
     assertThat(readContents())
@@ -165,11 +158,54 @@ public class ArtifactDirectoryUpdateTest {
 
     ArtifactDirectoryUpdate update =
         new ArtifactDirectoryUpdate(
-            cache, workspaceRoot, root, ArtifactDirectoryContents.getDefaultInstance());
+            cache,
+            workspaceRoot,
+            root,
+            ArtifactDirectoryContents.getDefaultInstance(),
+            FileTransform.COPY,
+            false);
     update.update();
 
-    assertThat(readContents()).isEmpty();
+    assertThat(Files.exists(root)).isFalse();
     assertThat(update.getUpdatedPaths()).isEmpty();
+  }
+
+  @Test
+  public void empty_proto_existing_deleted() throws IOException {
+    // first, populate the dir
+    ArtifactDirectoryUpdate update =
+        new ArtifactDirectoryUpdate(
+            cache,
+            workspaceRoot,
+            root,
+            ArtifactDirectoryContents.newBuilder()
+                .putContents(
+                    "somefile.txt",
+                    ProjectArtifact.newBuilder()
+                        .setTransform(ArtifactTransform.COPY)
+                        .setBuildArtifact(BuildArtifact.newBuilder().setDigest("abcde"))
+                        .build())
+                .build(),
+            FileTransform.COPY,
+            false);
+    update.update();
+
+    Path contentsProtoPath = root.resolveSibling(root.getFileName() + ".contents");
+
+    assertThat(Files.exists(contentsProtoPath)).isTrue();
+
+    update =
+        new ArtifactDirectoryUpdate(
+            cache,
+            workspaceRoot,
+            root,
+            ArtifactDirectoryContents.getDefaultInstance(),
+            FileTransform.COPY,
+            false);
+    update.update();
+
+    assertThat(Files.exists(root)).isFalse();
+    assertThat(Files.exists(contentsProtoPath)).isFalse();
   }
 
   @Test
@@ -192,7 +228,9 @@ public class ArtifactDirectoryUpdateTest {
                         .setTransform(ArtifactTransform.UNZIP)
                         .setBuildArtifact(BuildArtifact.newBuilder().setDigest("zipdigest"))
                         .build())
-                .build());
+                .build(),
+            FileTransform.COPY,
+            false);
     update.update();
 
     assertThat(readContents())
@@ -218,7 +256,9 @@ public class ArtifactDirectoryUpdateTest {
                             .setTransform(ArtifactTransform.UNZIP)
                             .setBuildArtifact(BuildArtifact.newBuilder().setDigest("zipdigest"))
                             .build()))
-                .build());
+                .build(),
+            FileTransform.COPY,
+            false);
     update.update();
 
     assertThat(readContents()).containsExactly(Path.of("dir/file1.txt"));
@@ -241,7 +281,9 @@ public class ArtifactDirectoryUpdateTest {
                             .setTransform(ArtifactTransform.COPY)
                             .setBuildArtifact(BuildArtifact.newBuilder().setDigest("abcde"))
                             .build()))
-                .build());
+                .build(),
+            FileTransform.COPY,
+            false);
     update.update();
 
     assertThat(readContents()).containsExactly(Path.of("dir"));
@@ -270,7 +312,9 @@ public class ArtifactDirectoryUpdateTest {
                         .setTransform(ArtifactTransform.COPY)
                         .setBuildArtifact(BuildArtifact.newBuilder().setDigest("abcdf"))
                         .build())
-                .build());
+                .build(),
+            FileTransform.COPY,
+            false);
     update.update();
 
     assertThat(readContents())
@@ -299,7 +343,9 @@ public class ArtifactDirectoryUpdateTest {
                         .setTransform(ArtifactTransform.COPY)
                         .setBuildArtifact(BuildArtifact.newBuilder().setDigest("file2digest"))
                         .build())
-                .build());
+                .build(),
+            FileTransform.COPY,
+            false);
     populate.update();
     cache.takeRequestedDigests();
 
@@ -322,7 +368,9 @@ public class ArtifactDirectoryUpdateTest {
                         .setTransform(ArtifactTransform.COPY)
                         .setBuildArtifact(BuildArtifact.newBuilder().setDigest("file2digest"))
                         .build())
-                .build());
+                .build(),
+            FileTransform.COPY,
+            false);
     update.update();
     assertThat(update.getUpdatedPaths()).isEmpty();
     assertThat(cache.takeRequestedDigests()).isEmpty();
@@ -348,7 +396,9 @@ public class ArtifactDirectoryUpdateTest {
                         .setTransform(ArtifactTransform.COPY)
                         .setBuildArtifact(BuildArtifact.newBuilder().setDigest("defg"))
                         .build())
-                .build());
+                .build(),
+            FileTransform.COPY,
+            false);
     populate.update();
     cache.takeRequestedDigests();
 
@@ -371,7 +421,9 @@ public class ArtifactDirectoryUpdateTest {
                         .setTransform(ArtifactTransform.COPY)
                         .setBuildArtifact(BuildArtifact.newBuilder().setDigest("efgh"))
                         .build())
-                .build());
+                .build(),
+            FileTransform.COPY,
+            false);
     update.update();
     assertThat(update.getUpdatedPaths()).containsExactly(root.resolve("file2.txt"));
     assertThat(cache.takeRequestedDigests()).containsExactly("efgh");
@@ -396,7 +448,9 @@ public class ArtifactDirectoryUpdateTest {
                         .setTransform(ArtifactTransform.COPY)
                         .setWorkspaceRelativePath("workspacefile")
                         .build())
-                .build());
+                .build(),
+            FileTransform.COPY,
+            false);
     populate.update();
 
     Files.writeString(
@@ -416,7 +470,9 @@ public class ArtifactDirectoryUpdateTest {
                         .setTransform(ArtifactTransform.COPY)
                         .setWorkspaceRelativePath("workspacefile")
                         .build())
-                .build());
+                .build(),
+            FileTransform.COPY,
+            false);
     update.update();
     assertThat(update.getUpdatedPaths()).containsExactly(root.resolve("file1.txt"));
     assertThat(Files.readAllLines(root.resolve("file1.txt")))
@@ -459,41 +515,4 @@ public class ArtifactDirectoryUpdateTest {
     }
   }
 
-  static class MockArtifactCache implements BuildArtifactCache {
-
-    private final Path cacheDir;
-    private final List<String> requestedDigests = Lists.newArrayList();
-
-    MockArtifactCache(Path cacheDir) throws IOException {
-      this.cacheDir = cacheDir;
-      Files.createDirectories(cacheDir);
-    }
-
-    @CanIgnoreReturnValue
-    public ImmutableList<String> takeRequestedDigests() {
-      ImmutableList<String> requested = ImmutableList.copyOf(requestedDigests);
-      requestedDigests.clear();
-      return requested;
-    }
-
-    @Override
-    public ListenableFuture<ImmutableMap<String, Path>> addAll(
-        ImmutableCollection<OutputArtifact> artifacts, Context<?> context) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Optional<ListenableFuture<ByteSource>> get(String digest) {
-      requestedDigests.add(digest);
-      Path artifact = cacheDir.resolve(digest);
-      try {
-        if (!Files.exists(artifact)) {
-          Files.write(artifact, ImmutableList.of(digest));
-        }
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-      return Optional.of(Futures.immediateFuture(MoreFiles.asByteSource(artifact)));
-    }
-  }
 }

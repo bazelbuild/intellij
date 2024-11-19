@@ -49,15 +49,15 @@ java_library(
         "//common/util:concurrency",
         "//common/util:platform",
         "//common/util:transactions",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:junit",
-        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//querysync",
         "//sdkcompat",
         "//shared",
         "//shared:artifact",
-        "//third_party/auto_value",
+        "//third_party/java/auto_value",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:junit",
         "@error_prone_annotations//jar",
     ],
 )
@@ -73,12 +73,6 @@ java_library(
         "--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED",
     ],
     visibility = FAST_BUILD_JAVAC_VISIBILITY,
-)
-
-stamped_plugin_xml(
-    name = "java_plugin_xml",
-    plugin_id = "com.google.idea.blaze.java",
-    plugin_name = "com.google.idea.blaze.java",
 )
 
 optional_plugin_xml(
@@ -111,19 +105,6 @@ intellij_plugin_library(
     deps = [":java"],
 )
 
-intellij_plugin(
-    name = "java_integration_test_plugin",
-    testonly = 1,
-    plugin_xml = ":java_plugin_xml",
-    tags = [
-        "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
-    ],
-    deps = [
-        ":plugin_library",
-        "//base:plugin_library",
-    ],
-)
-
 intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
@@ -145,6 +126,7 @@ intellij_unit_test_suite(
         "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
         "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
     ],
+    tags = ["noci:studio-win"],
     test_package_root = "com.google.idea.blaze.java",
     visibility = DEFAULT_TEST_VISIBILITY,
     deps = [
@@ -153,16 +135,16 @@ intellij_unit_test_suite(
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
+        "//proto:proto_deps",
+        "//shared",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:coverage_for_tests",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//intellij_platform_sdk:truth",
-        "//proto:proto_deps",
-        "//shared",
-        "//testing:lib",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+        "//testing:lib",
         "@org_opentest4j_opentest4j//jar",
     ],
 )
@@ -170,13 +152,13 @@ intellij_unit_test_suite(
 java_binary(
     name = "auto_value_lib",
     main_class = "None",
-    runtime_deps = ["//third_party/auto_value"],
+    runtime_deps = ["//third_party/java/auto_value"],
 )
 
 java_binary(
     name = "auto_value_plugin_lib",
     main_class = "None",
-    runtime_deps = ["//third_party/auto_value:auto_value_processor"],
+    runtime_deps = ["//third_party/java/auto_value"],
 )
 
 java_binary(
@@ -184,9 +166,7 @@ java_binary(
     testonly = True,
     main_class = "None",
     runtime_deps = [
-        # BEGIN-EXTERNAL
         "//intellij_platform_sdk:guava",
-        # END-EXTERNAL
     ],
 )
 
@@ -195,53 +175,57 @@ java_binary(
     testonly = 1,
     main_class = "None",
     runtime_deps = [
-        # BEGIN-EXTERNAL
         "//intellij_platform_sdk:truth",
-        # END-EXTERNAL
     ],
 )
 
-# TODO(b/323346056) Get rid of this comprehension when the old artifact tracker is deleted.
-[
-    intellij_integration_test_suite(
-        name = "integration_tests" + test_case["suffix"],
-        srcs = glob(
-            ["tests/integrationtests/**/*.java"],
-        ),
-        jvm_flags = test_case["jvm_flags"],
-        required_plugins = "com.google.idea.blaze.java",
-        test_package_root = "com.google.idea.blaze.java",
-        visibility = DEFAULT_TEST_VISIBILITY,
-        runtime_deps = [
-            ":java_integration_test_plugin",
-        ],
-        deps = [
-            ":java",
-            "//base",
-            "//base:integration_test_utils",
-            "//base:unit_test_utils",
-            "//common/experiments",
-            "//common/experiments:unit_test_utils",
-            "//intellij_platform_sdk:jsr305",
-            "//intellij_platform_sdk:plugin_api_for_tests",
-            "//intellij_platform_sdk:test_libs",
-            "//proto:proto_deps",
-            "//querysync",
-            "//shared",
-            "@com_google_guava_guava//jar",
-            "@junit//jar",
-            "@org_opentest4j_opentest4j//jar",
-            "@truth//jar",
-        ],
-    )
-    for test_case in [
-        {
-            "suffix": "",
-            "jvm_flags": [],
-        },
-        {
-            "suffix": "_new_artifact_tracker",
-            "jvm_flags": ["-Dblaze.experiment.query.sync.new.artifact.management=1"],
-        },
-    ]
-]
+stamped_plugin_xml(
+    name = "java_plugin_xml",
+    testonly = 1,
+    plugin_id = "com.google.idea.blaze.java",
+    plugin_name = "com.google.idea.blaze.java",
+)
+
+intellij_plugin(
+    name = "java_integration_test_plugin",
+    testonly = 1,
+    plugin_xml = ":java_plugin_xml",
+    deps = [
+        ":plugin_library",
+        "//base:plugin_library",
+    ],
+)
+
+intellij_integration_test_suite(
+    name = "integration_tests",
+    srcs = glob(
+        ["tests/integrationtests/**/*.java"],
+    ),
+    runtime_deps = [
+        ":java_integration_test_plugin",
+    ],
+    required_plugins = "com.google.idea.blaze.java",
+    tags = [
+        "noci:studio-win",
+    ],
+    test_package_root = "com.google.idea.blaze.java",
+    visibility = DEFAULT_TEST_VISIBILITY,
+    deps = [
+        ":java",
+        "//base",
+        "//base:integration_test_utils",
+        "//base:unit_test_utils",
+        "//common/experiments",
+        "//common/experiments:unit_test_utils",
+        "//proto:proto_deps",
+        "//querysync",
+        "//shared",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
+        "@org_opentest4j_opentest4j//jar",
+        "@com_google_guava_guava//jar",
+    ],
+)

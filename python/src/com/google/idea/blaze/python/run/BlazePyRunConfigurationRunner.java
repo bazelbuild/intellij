@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.ideinfo.PyIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -312,7 +313,8 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     SaveUtil.saveAllFiles();
     // Explicitly depend on local build helper because the debuggable binary is expected to be
     // present locally
-    try (final var buildResultHelper = new BuildResultHelper()) {
+    try (BuildResultHelper buildResultHelper =
+        BuildResultHelperProvider.createForLocalBuild(project)) {
 
       ListenableFuture<BuildResult> buildOperation =
           BlazeBeforeRunCommandHelper.runBlazeCommand(

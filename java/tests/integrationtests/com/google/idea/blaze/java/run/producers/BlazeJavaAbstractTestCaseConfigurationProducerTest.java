@@ -39,6 +39,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import java.util.List;
+import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -285,6 +287,8 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
             "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
             "public class TestClass extends AbstractTestCase {}");
 
+    setUpRepositoryAndTarget();
+
     PsiClass javaClass = ((PsiClassOwner) abstractClassFile).getClasses()[0];
     PsiMethod method = PsiUtils.findFirstChildOfClassRecursive(javaClass, PsiMethod.class);
     assertThat(method).isNotNull();
@@ -306,18 +310,6 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     assertThat(blazeConfig.getTargets()).isEmpty();
     assertThat(blazeConfig.getName()).isEqualTo("Choose subclass for AbstractTestCase.testMethod");
 
-    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
-    builder.setTargetMap(
-            TargetMapBuilder.builder()
-                    .addTarget(
-                            TargetIdeInfo.builder()
-                                    .setKind("java_test")
-                                    .setLabel("//java/com/google/test:TestClass")
-                                    .addSource(sourceRoot("java/com/google/test/TestClass.java"))
-                                    .build())
-                    .build());
-    registerProjectService(
-            BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
 
     BlazeJavaAbstractTestCaseConfigurationProducer.chooseSubclass(
             fromContext, context, EmptyRunnable.INSTANCE);

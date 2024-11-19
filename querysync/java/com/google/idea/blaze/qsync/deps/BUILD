@@ -6,8 +6,8 @@ java_library(
     name = "deps",
     srcs = glob(["*.java"]),
     visibility = [
-        "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
         "//querysync:__subpackages__",
+        "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
     ],
     deps = [
         ":artifact_tracker_state_java_proto",
@@ -20,10 +20,11 @@ java_library(
         "//shared:artifact",
         "//shared:proto",
         "//shared:vcs",
-        "//third_party/auto_value",
+        "//third_party/java/auto_value",
         "@com_google_guava_guava//jar",
-        "@error_prone_annotations//jar",
         "@protobuf//:protobuf_java",
+        "@error_prone_annotations//jar",
+        "@jsr305_annotations//jar",
     ],
 )
 

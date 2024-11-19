@@ -16,7 +16,7 @@
 
 #include "TestClass.h"
 
-#include "third_party/absl/strings/match.h"
+#include "absl/strings/match.h"
 
 TestClass::TestClass() {
   testString = "test";

@@ -71,6 +71,7 @@ message ProjectPath {
     UNSPECIFIED = 0;
     WORKSPACE = 1;
     PROJECT = 2;
+    ABSOLUTE = 3;
   }
 
   // path to the content root, relative to base.
@@ -269,5 +270,8 @@ message ProjectArtifact {
     // Unzip the artifact. The destination is a directory into which the file
     // will be unzipped.
     UNZIP = 2;
+    // Strip generated sources from a .srcjar file that we don't need due to an
+    // IDE plugin that makes the redundant.
+    STRIP_SUPPORTED_GENERATED_SOURCES = 3;
   }
 }

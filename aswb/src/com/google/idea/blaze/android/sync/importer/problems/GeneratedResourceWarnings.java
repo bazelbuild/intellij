@@ -71,7 +71,9 @@ public class GeneratedResourceWarnings {
                             + "Double-click to add to project view if needed to resolve"
                             + " references.",
                         interestingDirectories.size()))
-                .withFile(projectViewFile)
+                .inFile(projectViewFile)
+                .onLine(1)
+                .inColumn(1)
                 .build());
         for (Map.Entry<ArtifactLocation, Integer> entry : interestingDirectories.entrySet()) {
           context.accept(
@@ -79,7 +81,10 @@ public class GeneratedResourceWarnings {
                       String.format(
                           "Dropping generated resource directory '%s' w/ %d subdirs",
                           entry.getKey(), entry.getValue()))
-                  .withFile(projectViewFile)
+                  .inFile(projectViewFile)
+                  .navigatable(
+                      new AddGeneratedResourceDirectoryNavigatable(
+                          project, projectViewFile, entry.getKey()))
                   .build());
         }
       }
@@ -93,7 +98,7 @@ public class GeneratedResourceWarnings {
                       unusedAllowlistEntries.size(),
                       GeneratedAndroidResourcesSection.KEY.getName(),
                       String.join("\n  ", unusedAllowlistEntries)))
-              .withFile(projectViewFile)
+              .inFile(projectViewFile)
               .build());
     }
   }

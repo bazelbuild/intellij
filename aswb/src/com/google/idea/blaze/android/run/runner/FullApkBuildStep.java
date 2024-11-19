@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.run.runner;
 
 import static java.util.stream.Collectors.joining;
 
+import com.android.annotations.Nullable;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -72,6 +73,7 @@ public class FullApkBuildStep implements ApkBuildStep {
   private final BlazeApkDeployInfoProtoHelper deployInfoHelper;
   private final boolean nativeDebuggingEnabled;
   private BlazeAndroidDeployInfo deployInfo = null;
+  @Nullable private final List<NativeSymbolFinder> defaultNativeSymbolFinderList;
 
   @VisibleForTesting
   public FullApkBuildStep(
@@ -79,12 +81,14 @@ public class FullApkBuildStep implements ApkBuildStep {
       Label label,
       ImmutableList<String> buildFlags,
       boolean nativeDebuggingEnabled,
-      BlazeApkDeployInfoProtoHelper deployInfoHelper) {
+      BlazeApkDeployInfoProtoHelper deployInfoHelper,
+      List<NativeSymbolFinder> defaultNativeSymbolFinderList) {
     this.project = project;
     this.label = label;
     this.buildFlags = buildFlags;
     this.deployInfoHelper = deployInfoHelper;
     this.nativeDebuggingEnabled = nativeDebuggingEnabled;
+    this.defaultNativeSymbolFinderList = defaultNativeSymbolFinderList;
   }
 
   public FullApkBuildStep(
@@ -92,7 +96,13 @@ public class FullApkBuildStep implements ApkBuildStep {
       Label label,
       ImmutableList<String> buildFlags,
       boolean nativeDebuggingEnabled) {
-    this(project, label, buildFlags, nativeDebuggingEnabled, new BlazeApkDeployInfoProtoHelper());
+    this(
+        project,
+        label,
+        buildFlags,
+        nativeDebuggingEnabled,
+        new BlazeApkDeployInfoProtoHelper(),
+        null);
   }
 
   private static boolean apksRequireDownload(BlazeAndroidDeployInfo deployInfo) {
@@ -146,6 +156,13 @@ public class FullApkBuildStep implements ApkBuildStep {
     return lib;
   }
 
+  private List<NativeSymbolFinder> getNativeSymbolFinderList() {
+    if (defaultNativeSymbolFinderList != null) {
+      return defaultNativeSymbolFinderList;
+    }
+    return NativeSymbolFinder.EP_NAME.getExtensionList();
+  }
+
   @Override
   public void build(BlazeContext context, BlazeAndroidDeviceSelector.DeviceSession deviceSession) {
     BlazeProjectData projectData =
@@ -158,12 +175,11 @@ public class FullApkBuildStep implements ApkBuildStep {
 
     BuildInvoker invoker =
         Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
-    BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project);
+    BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.BUILD);
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
-      List<NativeSymbolFinder> nativeSymbolFinderList =
-          NativeSymbolFinder.EP_NAME.getExtensionList();
+      List<NativeSymbolFinder> nativeSymbolFinderList = getNativeSymbolFinderList();
       command.addTargets(label).addBlazeFlags("--output_groups=+android_deploy_info");
 
       if (!nativeSymbolFinderList.isEmpty()) {

@@ -63,10 +63,10 @@ public class BuildDependenciesForDirectReverseDepsAction extends BlazeProjectAct
     if (relativePath.isEmpty()) {
       return;
     }
-    helper.enableAnalysis(e, PopupPositioner.showAtMousePointerOrCentered(e));
+    helper.enableAnalysis(getClass(), e, PopupPositioner.showAtMousePointerOrCentered(e));
   }
 
   private BuildDependenciesHelper createHelper(Project project) {
-    return new BuildDependenciesHelper(project, getClass(), DepsBuildType.REVERSE_DEPS);
+    return new BuildDependenciesHelper(project, DepsBuildType.REVERSE_DEPS);
   }
 }

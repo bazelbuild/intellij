@@ -26,11 +26,11 @@ java_library(
         "//base",
         "//common/experiments",
         "//common/util:transactions",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//querysync",
         "//sdkcompat",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
         "//shared",
         "//third_party/python",
     ],
@@ -52,6 +52,7 @@ intellij_plugin_library(
 
 stamped_plugin_xml(
     name = "python_plugin_xml",
+    testonly = 1,
     plugin_id = "com.google.idea.blaze.python",
     plugin_name = "com.google.idea.blaze.python",
 )
@@ -60,9 +61,6 @@ intellij_plugin(
     name = "python_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":python_plugin_xml",
-    tags = [
-        "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
-    ],
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -73,6 +71,9 @@ intellij_integration_test_suite(
     name = "integration_tests",
     srcs = glob(["tests/integrationtests/**/*.java"]),
     required_plugins = "com.google.idea.blaze.python",
+    tags = [
+        "noci:studio-win",
+    ],
     test_package_root = "com.google.idea.blaze.python",
     visibility = DEFAULT_TEST_VISIBILITY,
     runtime_deps = [
@@ -92,7 +93,7 @@ intellij_integration_test_suite(
         "//third_party/python:python_for_tests",
         "//third_party/toml:toml_for_tests",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+        "//third_party/java/junit",
         "@org_opentest4j_opentest4j//jar",
     ],
 )
@@ -100,6 +101,7 @@ intellij_integration_test_suite(
 intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
+    tags = ["noci:studio-win"],
     test_package_root = "com.google.idea.blaze.python",
     visibility = DEFAULT_TEST_VISIBILITY,
     deps = [
@@ -108,13 +110,13 @@ intellij_unit_test_suite(
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
+        "//proto:proto_deps",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "//proto:proto_deps",
         "//third_party/python:python_for_tests",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
     ],
 )
 
@@ -127,11 +129,11 @@ java_library(
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//third_party/python:python_for_tests",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
     ],
 )

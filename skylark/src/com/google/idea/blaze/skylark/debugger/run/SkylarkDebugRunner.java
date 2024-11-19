@@ -28,7 +28,6 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.GenericProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -54,7 +53,7 @@ class SkylarkDebugRunner extends GenericProgramRunner<RunnerSettings> {
 
   @Override
   public boolean canRun(String executorId, RunProfile profile) {
-    if (!DefaultDebugExecutor.EXECUTOR_ID.equals(executorId)) {
+    if (!SkylarkDebugExecutor.ID.equals(executorId)) {
       return false;
     }
     BlazeCommandRunConfiguration config =
@@ -73,7 +72,8 @@ class SkylarkDebugRunner extends GenericProgramRunner<RunnerSettings> {
   @Override
   protected RunContentDescriptor doExecute(RunProfileState state, ExecutionEnvironment env)
       throws ExecutionException {
-    if (!DefaultDebugExecutor.EXECUTOR_ID.equals(env.getExecutor().getId())) {
+    String executorId = env.getExecutor().getId();
+    if (!SkylarkDebugExecutor.ID.equals(executorId)) {
       logger.error("Unexpected executor id: " + env.getExecutor().getId());
       return null;
     }

@@ -70,6 +70,6 @@
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerWrapperProviderImpl"/>
   </extensions>
   <extensions defaultExtensionNs="com.google.idea.blaze.qsync">
-    <BlazeProjectListenerProvider implementation="com.google.idea.blaze.clwb.CcProjectModelUpdater$Provider" />
+    <QuerySyncListenerProvider implementation="com.google.idea.blaze.cpp.qsync.CcProjectModelUpdater$Provider" />
   </extensions>
 </idea-plugin>

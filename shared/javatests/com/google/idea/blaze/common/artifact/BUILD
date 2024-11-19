@@ -16,24 +16,25 @@ java_test(
         ":test_utils",
         "//shared/java/com/google/idea/blaze/common/artifact",
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
-        "@truth//jar",
     ],
 )
 
 java_library(
     name = "test_utils",
     srcs = [
+        "MockArtifact.java",
         "TestArtifactFetcher.java",
         "TestOutputArtifact.java",
     ],
     deps = [
+        "@jsr305_annotations//jar",
         "//shared/java/com/google/idea/blaze/common",
         "//shared/java/com/google/idea/blaze/common/artifact",
-        "//third_party/auto_value",
-        "@com_google_guava_failureaccess//jar",
+        "//shared/java/com/google/idea/blaze/exception",
+        "//third_party/java/auto_value",
         "@com_google_guava_guava//jar",
-        "@jsr305_annotations//jar",
     ],
 )

@@ -5,12 +5,14 @@ licenses(["notice"])
 java_library(
     name = "artifact",
     srcs = glob(["*.java"]),
-    visibility = ["//shared:__subpackages__"],
+    visibility = [
+        "//shared:__subpackages__",
+        "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__subpackages__",
+    ],
     deps = [
+        "@jsr305_annotations//jar",
         "//shared",
-        "//third_party/auto_value",
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
-        "@jsr305_annotations//jar",
     ],
 )

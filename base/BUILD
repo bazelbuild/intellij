@@ -35,8 +35,6 @@ kt_jvm_library(
         "//common/util:platform",
         "//common/util:process",
         "//common/util:transactions",
-        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
-        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//querysync",
         "//sdkcompat",
@@ -45,7 +43,9 @@ kt_jvm_library(
         "//shared:exception",
         "//shared:proto",
         "//shared:vcs",
-        "//third_party/auto_value",
+        "//third_party/java/auto_value",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "@error_prone_annotations//jar",
         "@gson//jar",
     ],
@@ -76,7 +76,10 @@ intellij_plugin_library(
                       "default": ["src/META-INF/dependency-on-lvcs-impl.xml"],
                   }),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
-    deps = [":base"],
+    deps = [
+        ":base",
+        "//base/src/com/google/idea/blaze/base/project/indexing",
+    ],
 )
 
 java_library(
@@ -90,9 +93,9 @@ java_library(
     deps = [
         ":base",
         "//common/experiments",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -103,9 +106,9 @@ java_library(
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -116,8 +119,8 @@ java_library(
     srcs = glob(["src/com/google/idea/blaze/base/formatter/*.java"]),
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
-        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep (b/146560321)
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep (b/146560321)
     ],
 )
 
@@ -142,11 +145,12 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":proto_wrapper",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//shared",
-        "//third_party/auto_value",
+        "//third_party/java/auto_value",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
+        "@error_prone_annotations//jar",
     ],
 )
 
@@ -188,8 +192,8 @@ java_library(
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -203,8 +207,8 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":vfs_api",
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -224,9 +228,9 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":proto_wrapper",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -239,8 +243,8 @@ java_library(
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -256,8 +260,8 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":proto_wrapper",
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -273,9 +277,9 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         "//common/experiments",
-        "//intellij_platform_sdk:jsr305",
+        "//third_party/java/auto_value",
         "//intellij_platform_sdk:plugin_api",
-        "//third_party/auto_value",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -291,8 +295,8 @@ java_library(
     deps = [
         ":label_api",
         ":proto_wrapper",
-        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Immutable
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Immutable
     ],
 )
 
@@ -305,8 +309,8 @@ java_library(
     neverlink = 1,
     deps = [
         ":logging_api",
-        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
     ],
 )
 
@@ -326,10 +330,11 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":base",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//shared",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
+        "@error_prone_annotations//jar",
     ],
 )
 
@@ -348,9 +353,10 @@ java_library(
     ],
     deps = [
         ":base",
-        "//intellij_platform_sdk:jsr305",
+        "//third_party/java/auto_value",
         "//intellij_platform_sdk:plugin_api",
-        "//third_party/auto_value",
+        "//intellij_platform_sdk:jsr305",
+        "@error_prone_annotations//jar",
     ],
 )
 
@@ -374,8 +380,8 @@ java_library(
     ],
     neverlink = 1,
     deps = [
-        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
     ],
 )
 
@@ -395,10 +401,11 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":base",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//shared:artifact",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
+        "@error_prone_annotations//jar",
     ],
 )
 
@@ -428,10 +435,11 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":base",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//shared:artifact",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
+        "@error_prone_annotations//jar",
     ],
 )
 
@@ -448,10 +456,11 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":base",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//shared",
         "//shared:artifact",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
+        "@error_prone_annotations//jar",
     ],
 )
 
@@ -468,43 +477,23 @@ java_library(
 )
 
 java_library(
-    name = "qsync-extensions",
-    srcs = ["src/com/google/idea/blaze/base/qsync/HandledRulesProvider.java"],
-    neverlink = 1,
-    visibility = ["//java/com/google/devtools/intellij/protobuf:__subpackages__"],
-    deps = [
-        "//intellij_platform_sdk:plugin_api",
-    ],
-)
-
-java_library(
-    name = "qsync-extensions-for-tests",
-    testonly = 1,
-    srcs = ["src/com/google/idea/blaze/base/qsync/HandledRulesProvider.java"],
-    visibility = ["//javatests/com/google/devtools/intellij/protobuf:__subpackages__"],
-    deps = [
-        "//intellij_platform_sdk:plugin_api",
-    ],
-)
-
-java_library(
     name = "unit_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/unit/**/*.java"]),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":base",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api_for_tests",
-        "//intellij_platform_sdk:test_libs",
         "//shared:artifact",
         "//shared:exception",
         "//testing:lib",
-        "//third_party/auto_value",
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_java_proto",
+        "//third_party/java/auto_value",
+        "//third_party/java/junit",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
-        "@junit//jar",
     ],
 )
 
@@ -523,39 +512,24 @@ java_library(
     deps = [
         ":base",
         ":unit_test_utils",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api_for_tests",
-        "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
         "//sdkcompat",
         "//shared:artifact",
         "//shared:vcs",
         "//testing:lib",
+        "//third_party/java/junit",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "@bazel_tools//tools/java/runfiles",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
     ],
-)
-
-stamped_plugin_xml(
-    name = "base_plugin_xml",
-    plugin_id = "com.google.idea.blaze.base",
-    plugin_name = "com.google.idea.blaze.base",
-)
-
-intellij_plugin(
-    name = "base_integration_test_plugin",
-    testonly = 1,
-    plugin_xml = ":base_plugin_xml",
-    tags = [
-        "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
-    ],
-    deps = [":plugin_library"],
 )
 
 intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
+    tags = ["noci:studio-win"],
     test_package_root = "com.google.idea.blaze.base",
     visibility = DEFAULT_TEST_VISIBILITY,
     deps = [
@@ -564,9 +538,6 @@ intellij_unit_test_suite(
         "//common/experiments",
         "//common/experiments:unit_test_utils",
         "//common/util:process",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api_for_tests",
-        "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
         "//querysync",
         "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
@@ -576,16 +547,35 @@ intellij_unit_test_suite(
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
         "//shared/javatests/com/google/idea/blaze/common/artifact:test_utils",
         "//testing:lib",
-        "//third_party/auto_value",
+        "//third_party/java/auto_value",
+        "//third_party/java/junit",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
     ],
+)
+
+stamped_plugin_xml(
+    name = "base_plugin_xml",
+    testonly = 1,
+    plugin_id = "com.google.idea.blaze.base",
+    plugin_name = "com.google.idea.blaze.base",
+)
+
+intellij_plugin(
+    name = "base_integration_test_plugin",
+    testonly = 1,
+    plugin_xml = ":base_plugin_xml",
+    deps = [":plugin_library"],
 )
 
 intellij_integration_test_suite(
     name = "integration_tests",
     srcs = glob(["tests/integrationtests/**/*.java"]),
+    plugins = [":com.google.idea.blaze.base"],
     required_plugins = "com.google.idea.blaze.base",
+    tags = ["noci:studio-win"],
     test_package_root = "com.google.idea.blaze.base",
     visibility = DEFAULT_TEST_VISIBILITY,
     runtime_deps = [
@@ -595,13 +585,18 @@ intellij_integration_test_suite(
         ":base",
         ":integration_test_utils",
         ":unit_test_utils",
+        "//proto:proto_deps",
+        "//querysync",
+        "//querysync/javatests/com/google/idea/blaze/qsync/artifacts:mock_artifact_cache",
+        "//shared:exception",
+        "//shared/javatests/com/google/idea/blaze/common:test_utils",
+        "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",  # unuseddeps: keep
         "//intellij_platform_sdk:test_libs",
-        "//proto:proto_deps",
+        "//third_party/java/junit",
+        "@org_opentest4j_opentest4j//jar",
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
-        "@junit//jar",
-        "@org_opentest4j_opentest4j//jar",
     ],
 )

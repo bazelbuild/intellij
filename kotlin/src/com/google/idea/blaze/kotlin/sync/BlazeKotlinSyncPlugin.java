@@ -50,7 +50,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -60,7 +59,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.kotlin.android.synthetic.AndroidCommandLineProcessor;
@@ -135,7 +133,8 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     String versionString = languageLevel.getVersionString();
     CommonCompilerArguments settings =
         (CommonCompilerArguments)
-                FreezableKt.unfrozen(KotlinCommonCompilerArgumentsHolder.Companion.getInstance(project).getSettings());
+            FreezableKt.unfrozen(
+                KotlinCommonCompilerArgumentsHolder.Companion.getInstance(project).getSettings());
     boolean updated = false;
     String apiVersion = settings.getApiVersion();
     String languageVersion = settings.getLanguageVersion();
@@ -154,7 +153,8 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     if (setCompilerFlagsExperiment.getValue()) {
       CompilerSettings compilerSettings =
           (CompilerSettings)
-                  FreezableKt.unfrozen(KotlinCompilerSettings.Companion.getInstance(project).getSettings());
+              FreezableKt.unfrozen(
+                  KotlinCompilerSettings.Companion.getInstance(project).getSettings());
       // Order matters since we have parameter like -jvm-target 1.8 where two parameters must be
       // aligned in order.
       // Currently, we list all common compiler flags in settings even though it may be duplicated

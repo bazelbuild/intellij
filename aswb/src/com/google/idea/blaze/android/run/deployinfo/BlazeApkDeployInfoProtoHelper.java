@@ -17,7 +17,6 @@ package com.google.idea.blaze.android.run.deployinfo;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.AndroidDeployInfo;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.Artifact;
 import com.google.idea.blaze.android.manifest.ManifestParser.ParsedManifest;
@@ -30,7 +29,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,7 +45,7 @@ public class BlazeApkDeployInfoProtoHelper {
   public AndroidDeployInfo readDeployInfoProtoForTarget(
       Label target, BuildResultHelper buildResultHelper, Predicate<String> pathFilter)
       throws GetDeployInfoException {
-    ImmutableSet<OutputArtifact> outputArtifacts;
+    ImmutableList<OutputArtifact> outputArtifacts;
     try {
       outputArtifacts = buildResultHelper.getBuildArtifactsForTarget(target, pathFilter);
     } catch (GetArtifactsException e) {
@@ -61,10 +59,10 @@ public class BlazeApkDeployInfoProtoHelper {
         log.warn("Local execroot: " + bepOutput.getLocalExecRoot());
         log.warn("All output artifacts:");
         for (OutputArtifact outputArtifact : bepOutput.getAllOutputArtifacts(path -> true)) {
-          log.warn(outputArtifact.getRelativePath() + " -> " + outputArtifact.getRelativePath());
+          log.warn(outputArtifact.getBazelOutRelativePath() + " -> " + outputArtifact.getBazelOutRelativePath());
         }
         log.warn("All local artifacts for " + target + ":");
-        ImmutableSet<OutputArtifact> allBuildArtifacts =
+        List<OutputArtifact> allBuildArtifacts =
             buildResultHelper.getBuildArtifactsForTarget(target, path -> true);
         List<File> allLocalFiles = LocalFileArtifact.getLocalFiles(allBuildArtifacts);
         for (File file : allLocalFiles) {
@@ -85,11 +83,11 @@ public class BlazeApkDeployInfoProtoHelper {
       throw new GetDeployInfoException(
           "More than one deploy info proto artifact found: "
               + outputArtifacts.stream()
-                  .map(OutputArtifact::getRelativePath)
+                  .map(OutputArtifact::getBazelOutRelativePath)
                   .collect(Collectors.joining(", ", "[", "]")));
     }
 
-    try (InputStream inputStream = ContainerUtil.getFirstItem(outputArtifacts).getInputStream()) {
+    try (InputStream inputStream = outputArtifacts.get(0).getInputStream()) {
       return AndroidDeployInfo.parseFrom(inputStream);
     } catch (IOException e) {
       throw new GetDeployInfoException(e.getMessage());

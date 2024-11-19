@@ -58,6 +58,6 @@ class SkylarkDebugBuildFlagsProvider implements BuildFlagsProvider {
     }
     RunConfigurationContext runConfigContext = (RunConfigurationContext) context;
     return runConfigContext.configurationType instanceof BlazeCommandRunConfigurationType
-        && runConfigContext.executorType == ExecutorType.DEBUG;
+        && (runConfigContext.executorType == ExecutorType.DEBUG_STARLARK);
   }
 }

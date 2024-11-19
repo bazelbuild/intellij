@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.command.buildresult;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static java.util.stream.Collectors.groupingBy;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -71,6 +72,7 @@ public final class ParsedBepOutput {
           ImmutableSetMultimap.of(),
           0,
           BuildResult.SUCCESS,
+          0,
           ImmutableSet.of());
 
   private static final String WORKSPACE_ITEM_KEY_SOURCE_URI = "SOURCE_URI";
@@ -199,6 +201,7 @@ public final class ParsedBepOutput {
         targetToFileSets.build(),
         startTimeMillis,
         buildResult,
+        stream.getBytesConsumed(),
         targetsWithErrors.build());
   }
 
@@ -258,6 +261,7 @@ public final class ParsedBepOutput {
   final long syncStartTimeMillis;
 
   private final BuildResult buildResult;
+  private final long bepBytesConsumed;
   private final ImmutableSet<Label> targetsWithErrors;
 
   private ParsedBepOutput(
@@ -268,6 +272,7 @@ public final class ParsedBepOutput {
       ImmutableSetMultimap<String, String> targetFileSets,
       long syncStartTimeMillis,
       BuildResult buildResult,
+      long bepBytesConsumed,
       ImmutableSet<Label> targetsWithErrors) {
     this.buildId = buildId;
     this.localExecRoot = localExecRoot;
@@ -276,6 +281,7 @@ public final class ParsedBepOutput {
     this.targetFileSets = targetFileSets;
     this.syncStartTimeMillis = syncStartTimeMillis;
     this.buildResult = buildResult;
+    this.bepBytesConsumed = bepBytesConsumed;
     this.targetsWithErrors = targetsWithErrors;
   }
 
@@ -299,12 +305,16 @@ public final class ParsedBepOutput {
     return buildResult;
   }
 
+  public long getBepBytesConsumed() {
+    return bepBytesConsumed;
+  }
+
   /** Returns all output artifacts of the build. */
   public ImmutableSet<OutputArtifact> getAllOutputArtifacts(Predicate<String> pathFilter) {
     return fileSets.values().stream()
         .map(s -> s.parsedOutputs)
         .flatMap(List::stream)
-        .filter(o -> pathFilter.test(o.getRelativePath()))
+        .filter(o -> pathFilter.test(o.getBazelOutRelativePath()))
         .collect(toImmutableSet());
   }
 
@@ -314,7 +324,7 @@ public final class ParsedBepOutput {
     return targetFileSets.get(label.toString()).stream()
         .map(s -> fileSets.get(s).parsedOutputs)
         .flatMap(List::stream)
-        .filter(o -> pathFilter.test(o.getRelativePath()))
+        .filter(o -> pathFilter.test(o.getBazelOutRelativePath()))
         .collect(toImmutableSet());
   }
 
@@ -324,7 +334,7 @@ public final class ParsedBepOutput {
         .filter(f -> f.outputGroups.contains(outputGroup))
         .map(f -> f.parsedOutputs)
         .flatMap(List::stream)
-        .filter(o -> pathFilter.test(o.getRelativePath()))
+        .filter(o -> pathFilter.test(o.getBazelOutRelativePath()))
         .distinct()
         .collect(toImmutableList());
   }
@@ -338,10 +348,12 @@ public final class ParsedBepOutput {
    * the build.
    */
   public ImmutableMap<String, BepArtifactData> getFullArtifactData() {
-    return fileSets.values().stream()
-        .flatMap(FileSet::toPerArtifactData)
-        .collect(
-            toImmutableMap(d -> d.artifact.getRelativePath(), d -> d, BepArtifactData::update));
+    return ImmutableMap.copyOf(
+      Maps.transformValues(
+        fileSets.values().stream()
+          .flatMap(FileSet::toPerArtifactData)
+          .collect(groupingBy(d -> d.artifact.getBazelOutRelativePath(), toImmutableSet())),
+        BepArtifactData::combine));
   }
 
   /** Returns the set of build targets that had an error. */

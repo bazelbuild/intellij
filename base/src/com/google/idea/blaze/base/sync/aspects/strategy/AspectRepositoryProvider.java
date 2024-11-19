@@ -21,7 +21,7 @@ public interface AspectRepositoryProvider {
   }
 
   static Optional<File> getProjectAspectDirectory(Project project) {
-    return Optional.ofNullable(project.getBasePath()).map((it) -> Paths.get(it).resolve("aspect").toFile());
+    return Optional.ofNullable(project.getProjectFilePath()).map((it) -> Paths.get(it).getParent().resolve("aspect").toFile());
   }
 
   private static Optional<File> findAspectDirectory() {

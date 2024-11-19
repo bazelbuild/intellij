@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.qsync.project;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.collect.ImmutableSetMultimap.toImmutableSetMultimap;
 import static java.util.Arrays.stream;
@@ -25,16 +24,18 @@ import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Streams;
+import com.google.common.graph.Graph;
+import com.google.common.graph.Graphs;
+import com.google.common.graph.Traverser;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
@@ -48,7 +49,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -56,6 +56,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -68,38 +69,71 @@ import javax.annotation.Nullable;
 public abstract class BuildGraphData {
 
   /** A map from target to file on disk for all source files */
-  public abstract ImmutableMap<Label, Location> locations();
+  public abstract ImmutableBiMap<Label, Location> locations();
 
   /** A set of all the BUILD files */
-  public abstract PackageSet packages();
+  @Memoized
+  public PackageSet packages() {
+    PackageSet.Builder packages = new PackageSet.Builder();
+    for (Location location : locations().values()) {
+      if (location.file.endsWith(Path.of("BUILD")) || location.file.endsWith(Path.of("BUILD.bazel"))) {
+        if (location.file.getParent() == null) {
+          // to support the `directories: .` case
+          packages.add(Path.of(""));
+        } else {
+          packages.add(location.file.getParent());
+        }
+      }
+    }
+    return packages.build();
+  }
 
   /** A map from a file path to its target */
-  abstract ImmutableMap<Path, Label> fileToTarget();
+  @Memoized
+  ImmutableMap<Path, Label> fileToTarget() {
+    return ImmutableBiMap.copyOf(Maps.transformValues(locations(), l -> l.file)).inverse();
+  }
 
-  /** All dependencies external to this project */
+  /**
+   * All dependencies external to this project.
+   *
+   * <p>This includes in-project targets that we must build, due to generated sources or being of a
+   * {@link com.google.idea.blaze.qsync.BlazeQueryParser#ALWAYS_BUILD_RULE_KINDS always build kind}.
+   */
   public abstract ImmutableSet<Label> projectDeps();
 
+  /**
+   * All supported targets.
+   *
+   * <p>This is a subset of the keys of {@link #targetMap()} containing only rules that we support
+   * enabling analysis for, i.e. that are for a language we support.
+   */
   public abstract TargetTree allTargets();
 
-  /** Mapping of in-project targets to {@link ProjectTarget}s */
+  /**
+   * Mapping of in-project targets to {@link ProjectTarget}s. This includes all build targets,
+   * regardless of if they are supported by querysync.
+   */
   public abstract ImmutableMap<Label, ProjectTarget> targetMap();
 
   /**
-   * All in-project targets with a direct compile or runtime dependency on a specified target, which
-   * may be external.
+   * An immutable directed graph of all project dependencies.
+   *
+   * <p>This graph include both in-project targets, and direct out-of-project dependencies.
+   *
+   * <p>To find the reverse dependencies of a target, you can use {@link Graph#predecessors} or
+   * {@link Graphs#transpose(Graph)} with this method.
    */
   @Memoized
-  ImmutableMultimap<Label, Label> reverseDeps() {
-    ImmutableMultimap.Builder<Label, Label> map = ImmutableMultimap.builder();
-    for (ProjectTarget t : targetMap().values()) {
-      for (Label dep : t.deps()) {
-        map.put(dep, t.label());
-      }
-      for (Label runtimeDep : t.runtimeDeps()) {
-        map.put(runtimeDep, t.label());
-      }
-    }
-    return map.build();
+  public DepsGraph<Label> depsGraph() {
+    DepsGraph.Builder<Label> builder = new DepsGraph.Builder<>();
+    targetMap().values().stream().forEach(target -> builder.add(target.label(), target.deps()));
+    return builder.build();
+  }
+
+  @Memoized
+  public ExternalTransitiveClosure<Label> transitiveExternalDeps() {
+    return new ExternalTransitiveClosure(depsGraph(), projectDeps());
   }
 
   /**
@@ -107,7 +141,6 @@ public abstract class BuildGraphData {
    * themselves).
    */
   public ImmutableSet<Label> getSameLanguageTargetsDependingOn(Set<Label> targets) {
-    ImmutableMultimap<Label, Label> rdeps = reverseDeps();
     ImmutableSet.Builder<Label> directRdeps = ImmutableSet.builder();
     directRdeps.addAll(targets);
     for (Label target : targets) {
@@ -115,11 +148,43 @@ public abstract class BuildGraphData {
       // filter the rdeps based on the languages, removing those that don't have a common
       // language. This ensures we don't follow reverse deps of (e.g.) a java target depending on
       // a cc target.
-      rdeps.get(target).stream()
+      depsGraph().rdeps(target).stream()
           .filter(d -> !Collections.disjoint(targetMap().get(d).languages(), targetLanguages))
           .forEach(directRdeps::add);
     }
     return directRdeps.build();
+  }
+
+  /**
+   * Calculates the first targets of a given set of rule types along any given dependency path for a
+   * given source.
+   */
+  public Collection<ProjectTarget> getFirstReverseDepsOfType(
+      Path sourcePath, Set<String> ruleKinds) {
+    ImmutableSet<Label> targetOwners = getTargetOwners(sourcePath);
+
+    if (targetOwners == null || targetOwners.isEmpty()) {
+      return ImmutableList.of();
+    }
+
+    List<ProjectTarget> result = new ArrayList<>();
+
+    Queue<Label> toVisit = Queues.newArrayDeque(targetOwners);
+    Set<Label> visited = Sets.newHashSet();
+
+    while (!toVisit.isEmpty()) {
+      Label next = toVisit.remove();
+      if (visited.add(next)) {
+        ProjectTarget target = targetMap().get(next);
+        if (target != null && ruleKinds.contains(target.kind())) {
+          result.add(target);
+        } else {
+          toVisit.addAll(depsGraph().rdeps(next));
+        }
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -137,21 +202,71 @@ public abstract class BuildGraphData {
       return ImmutableList.of();
     }
 
-    Queue<Label> toVisit = Queues.newArrayDeque(targetOwners);
-    Set<Label> visited = Sets.newHashSet();
+    return Streams.stream(Traverser.forGraph(depsGraph()::rdeps).breadthFirst(targetOwners))
+        .map(label -> targetMap().get(label))
+        .filter(Objects::nonNull)
+        .collect(toImmutableSet());
+  }
+
+  /**
+   * Checks whether a given dependency path contains any of a specified set of rule kinds.
+   *
+   * <p>All dependency paths are considered starting at any target containing {@param sourcePath}
+   * and going to any target containing {@param consumingSourcePath}. If any rule on one of these
+   * paths is of a kind contained in {@param ruleKinds}, the method will return true.
+   */
+  public boolean doesDependencyPathContainRules(
+      Path sourcePath, Path consumingSourcePath, Set<String> ruleKinds) {
+    ImmutableSet<Label> sourceTargets = getTargetOwners(sourcePath);
+    if (sourceTargets == null || sourceTargets.isEmpty()) {
+      return false;
+    }
+
+    ImmutableSet<Label> consumingTargetLabels = getTargetOwners(consumingSourcePath);
+    if (consumingTargetLabels == null || consumingTargetLabels.isEmpty()) {
+      return false;
+    }
+
+    ImmutableMap<Label, ProjectTarget> targetMap = targetMap();
+
+    // Do a BFS up the dependency graph, looking both at the labels and the set of rule kinds
+    // we've found so far at any given point.
+    Queue<TargetSearchNode> toVisit =
+        Queues.newArrayDeque(
+            sourceTargets.stream()
+                .map((sourceTarget) -> new TargetSearchNode(sourceTarget, false))
+                .collect(Collectors.toList()));
+    Set<TargetSearchNode> visited = Sets.newHashSet();
 
     while (!toVisit.isEmpty()) {
-      Label next = toVisit.remove();
-      if (visited.add(next)) {
-        toVisit.addAll(reverseDeps().get(next));
+      TargetSearchNode current = toVisit.remove();
+      if (visited.add(current)) {
+        Label currentLabel = current.targetLabel;
+        String currentLabelKind = targetMap.get(currentLabel).kind();
+
+        boolean hasDesiredRule = current.hasDesiredRule || ruleKinds.contains(currentLabelKind);
+
+        if (hasDesiredRule && consumingTargetLabels.contains(currentLabel)) {
+          // We've found one of the consuming targets and the path here contained one of
+          // the desired rule types, so we can terminate.
+          return true;
+        } else {
+          // Continue searching. Even if this is one of the consuming target labels, it's
+          // possible that further up the dependency graph we'll run into a different one
+          // of the consuming targets - and potentially have found one of the rules we
+          // need along the way.
+          for (Label nextTargetLabel : depsGraph().rdeps(currentLabel)) {
+            toVisit.add(new TargetSearchNode(nextTargetLabel, hasDesiredRule));
+          }
+        }
       }
     }
 
-    return visited.stream()
-        .map(label -> targetMap().get(label))
-        .filter(Objects::nonNull)
-        .collect(toImmutableList());
+    // We never found any of the desired rules.
+    return false;
   }
+
+  private record TargetSearchNode(Label targetLabel, boolean hasDesiredRule) {}
 
   public ImmutableSet<Path> getTargetSources(Label target, SourceType... types) {
     return Optional.ofNullable(targetMap().get(target)).stream()
@@ -182,24 +297,19 @@ public abstract class BuildGraphData {
   }
 
   @VisibleForTesting
-  public static final BuildGraphData EMPTY =
-      builder().projectDeps(ImmutableSet.of()).packages(PackageSet.EMPTY).build();
+  public static final BuildGraphData EMPTY = builder().projectDeps(ImmutableSet.of()).build();
 
   /** Builder for {@link BuildGraphData}. */
   @AutoValue.Builder
   public abstract static class Builder {
 
-    public abstract ImmutableMap.Builder<Label, Location> locationsBuilder();
-
-    public abstract ImmutableMap.Builder<Path, Label> fileToTargetBuilder();
+    public abstract ImmutableBiMap.Builder<Label, Location> locationsBuilder();
 
     public abstract ImmutableMap.Builder<Label, ProjectTarget> targetMapBuilder();
 
     public abstract Builder projectDeps(Set<Label> value);
 
     public abstract TargetTree.Builder allTargetsBuilder();
-
-    public abstract Builder packages(PackageSet value);
 
     abstract BuildGraphData autoBuild();
 
@@ -208,7 +318,6 @@ public abstract class BuildGraphData {
       // these are memoized, but we choose to pay the cost of building it now so that it's done at
       // sync time rather than later on.
       ImmutableSetMultimap<Label, Label> unused = result.sourceOwners();
-      ImmutableMultimap<Label, Label> unused2 = result.reverseDeps();
       return result;
     }
   }
@@ -238,39 +347,6 @@ public abstract class BuildGraphData {
     }
   }
 
-  private final LoadingCache<Label, ImmutableSet<Label>> transitiveDeps =
-      CacheBuilder.newBuilder()
-          .build(CacheLoader.from(this::calculateTransitiveExternalDependencies));
-
-  public ImmutableSet<Label> getTransitiveExternalDependencies(Label target) {
-    return transitiveDeps.getUnchecked(target);
-  }
-
-  private ImmutableSet<Label> calculateTransitiveExternalDependencies(Label target) {
-    ImmutableSet.Builder<Label> builder = ImmutableSet.builder();
-
-    // Targets with cyclic dependencies will not build, but the query does not check for cycles
-    Set<Label> visited = Sets.newHashSet();
-    Deque<Label> toVisit = Queues.newArrayDeque();
-    toVisit.add(target);
-
-    while (!toVisit.isEmpty()) {
-      Label nextLabel = toVisit.poll();
-      if (visited.add(nextLabel)) {
-        // targetMap only contains in-project target labels.
-        if (!targetMap().containsKey(nextLabel)) {
-          builder.add(nextLabel);
-        } else {
-          if (projectDeps().contains(nextLabel)) {
-            builder.add(nextLabel);
-          }
-          toVisit.addAll(targetMap().get(nextLabel).deps());
-        }
-      }
-    }
-    return Sets.intersection(builder.build(), projectDeps()).immutableCopy();
-  }
-
   @Memoized
   public ImmutableSetMultimap<Label, Label> sourceOwners() {
     return targetMap().values().stream()
@@ -279,7 +355,10 @@ public abstract class BuildGraphData {
         .collect(toImmutableSetMultimap(e -> e.getKey(), e -> e.getValue()));
   }
 
-  @Nullable
+  public ImmutableSet<Label> getTransitiveExternalDependencies(Label target) {
+    return transitiveExternalDeps().get(target);
+  }
+
   public ImmutableSet<Label> getTargetOwners(Path path) {
     Label syncTarget = fileToTarget().get(path);
     return sourceOwners().get(syncTarget);
@@ -300,7 +379,7 @@ public abstract class BuildGraphData {
 
   @VisibleForTesting
   @Nullable
-  ImmutableSet<Label> getFileDependencies(Path path) {
+  Set<Label> getFileDependencies(Path path) {
     ImmutableSet<Label> targets = getTargetOwners(path);
     if (targets == null) {
       return null;
@@ -407,14 +486,14 @@ public abstract class BuildGraphData {
    *     the set of all targets defined in all build packages within the directory (recursively).
    */
   public TargetsToBuild getProjectTargets(Context<?> context, Path workspaceRelativePath) {
-    if (workspaceRelativePath.endsWith("BUILD")) {
+    if (workspaceRelativePath.endsWith("BUILD") || workspaceRelativePath.endsWith("BUILD.bazel")) {
       Path packagePath = workspaceRelativePath.getParent();
       return TargetsToBuild.targetGroup(allTargets().get(packagePath));
     } else {
       TargetTree targets = allTargets().getSubpackages(workspaceRelativePath);
       if (!targets.isEmpty()) {
         // this will only be non-empty for directories
-        return TargetsToBuild.targetGroup(targets.toLabelSet());
+        return TargetsToBuild.targetGroup(targets);
       }
     }
     // Now a build file or a directory containing packages.
@@ -432,36 +511,6 @@ public abstract class BuildGraphData {
       context.setHasWarnings();
     }
     return TargetsToBuild.NONE;
-  }
-
-  /**
-   * Returns the set of targets that would need to be built in order to enable analysis for a
-   * project target.
-   *
-   * @param projectTarget A project target.
-   * @return The set of targets that need to be built. For a {@link
-   *     DependencyTrackingBehavior#EXTERNAL_DEPENDENCIES} target this will be the set of external
-   *     dependenceis; for a {@link DependencyTrackingBehavior#SELF} target this will be the target
-   *     itself.
-   */
-  public ImmutableSet<Label> getExternalDepsToBuildFor(Label projectTarget) {
-    ImmutableSet<DependencyTrackingBehavior> depTracking =
-        getDependencyTrackingBehaviors(projectTarget);
-
-    ImmutableSet.Builder<Label> deps = ImmutableSet.builder();
-    for (DependencyTrackingBehavior behavior : depTracking) {
-      switch (behavior) {
-        case EXTERNAL_DEPENDENCIES:
-          deps.addAll(getTransitiveExternalDependencies(projectTarget));
-          break;
-        case SELF:
-          // For C/C++, we don't need to build external deps, but we do need to extract
-          // compilation information for the target itself.
-          deps.add(projectTarget);
-          break;
-      }
-    }
-    return deps.build();
   }
 
   /**
@@ -483,16 +532,17 @@ public abstract class BuildGraphData {
    *     given; the {@link RequestedTargets#expectedDependencyTargets} will be determined by the
    *     {@link #getDependencyTrackingBehaviors(Label)} of the targets given.
    */
-  public Optional<RequestedTargets> computeRequestedTargets(Set<Label> projectTargets) {
+  public Optional<RequestedTargets> computeRequestedTargets(ImmutableSet<Label> projectTargets) {
     ImmutableSet<Label> externalDeps =
         projectTargets.stream()
             .filter(
                 t ->
                     getDependencyTrackingBehaviors(t).stream()
                         .anyMatch(b -> b.shouldIncludeExternalDependencies))
-            .flatMap(t -> getTransitiveExternalDependencies(t).stream())
+            .map(this::getTransitiveExternalDependencies)
+            .flatMap(Set::stream)
             .collect(toImmutableSet());
 
-    return Optional.of(new RequestedTargets(ImmutableSet.copyOf(projectTargets), externalDeps));
+    return Optional.of(new RequestedTargets(projectTargets, externalDeps));
   }
 }

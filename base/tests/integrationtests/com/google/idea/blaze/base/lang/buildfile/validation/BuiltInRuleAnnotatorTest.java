@@ -341,8 +341,9 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
   }
 
   private List<Annotation> validateFile(BuildFile file) {
-      PsiElement[] elements = PsiUtils.findAllChildrenOfClassRecursive(file, FuncallExpression.class)
-          .toArray(FuncallExpression[]::new);
-      return CodeInsightTestUtil.testAnnotator(new BuiltInRuleAnnotator(), elements);
+    return CodeInsightTestUtil.testAnnotator(
+        new BuiltInRuleAnnotator(),
+        PsiUtils.findAllChildrenOfClassRecursive(file, FuncallExpression.class)
+            .toArray(FuncallExpression[]::new));
   }
 }

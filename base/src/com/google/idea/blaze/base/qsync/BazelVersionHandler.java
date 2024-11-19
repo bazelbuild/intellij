@@ -38,8 +38,7 @@ public class BazelVersionHandler {
     try {
       return buildSystem.getBazelVersionString(buildInvoker.getBlazeInfo());
     } catch (SyncFailedException e) {
-      throw new BuildException(
-          "Could not get bazel version, incorrect aspect file may be used. ", e);
+      throw new BuildException("Could not get bazel version", e);
     }
   }
 }

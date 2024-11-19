@@ -17,8 +17,8 @@ package com.google.idea.blaze.base.sync.autosync;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.logging.LoggedSettingsProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -33,7 +33,7 @@ public class AutoSyncSettings implements PersistentStateComponent<AutoSyncSettin
   public boolean autoSyncOnVcsSync = false;
 
   public static AutoSyncSettings getInstance() {
-    return ServiceManager.getService(AutoSyncSettings.class);
+    return ApplicationManager.getApplication().getService(AutoSyncSettings.class);
   }
 
   @Override

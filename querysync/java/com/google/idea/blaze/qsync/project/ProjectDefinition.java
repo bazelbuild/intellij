@@ -82,8 +82,8 @@ public abstract class ProjectDefinition {
    * Constructs a query spec from a sync spec. Filters the import roots to those that can be safely
    * queried.
    */
-  public QuerySpec deriveQuerySpec(Context<?> context, Path workspaceRoot) throws IOException {
-    QuerySpec.Builder result = QuerySpec.builder().workspaceRoot(workspaceRoot);
+  public QuerySpec.Builder deriveQuerySpec(Context<?> context, QuerySpec.QueryStrategy queryStrategy, Path workspaceRoot) throws IOException {
+    QuerySpec.Builder result = QuerySpec.builder(queryStrategy).workspaceRoot(workspaceRoot);
     for (Path include : projectIncludes()) {
       if (isValidPathForQuery(context, workspaceRoot.resolve(include))) {
         result.includePath(include);
@@ -99,7 +99,7 @@ public abstract class ProjectDefinition {
         result.excludePath(exclude);
       }
     }
-    return result.build();
+    return result;
   }
 
   /**
@@ -110,7 +110,8 @@ public abstract class ProjectDefinition {
    */
   private static boolean isValidPathForQuery(Context<?> context, Path candidate)
       throws IOException {
-    if (Files.exists(candidate.resolve("BUILD")) || Files.exists(candidate.resolve("BUILD.bazel"))) {
+    if (Files.exists(candidate.resolve("BUILD")) ||
+            Files.exists(candidate.resolve("BUILD.bazel"))) {
       return true;
     }
     if (!Files.isDirectory(candidate)) {

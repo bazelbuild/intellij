@@ -26,35 +26,54 @@ import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolOutputRe
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.io.TempFile;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
+import com.google.idea.blaze.base.io.InputStreamProvider;
+import com.google.idea.blaze.base.io.MockInputStreamProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
 /** Unit tests for {@link LocalBuildEventProtocolTestFinderStrategy}. */
 @RunWith(JUnit4.class)
 public class LocalBuildEventProtocolTestFinderStrategyTest extends BlazeTestCase {
 
+  private MockInputStreamProvider inputStreamProvider;
+  private final Set<File> deletedFiles = new HashSet<>();
+
+  @After
+  public void clearState() {
+    deletedFiles.clear();
+  }
+
+  @Override
+  protected void initTest(Container applicationServices, Container projectServices) {
+    inputStreamProvider = new MockInputStreamProvider();
+    applicationServices.register(InputStreamProvider.class, inputStreamProvider);
+  }
+
   @Test
   public void testFinder_fileDeletedAfterCleanup() throws GetArtifactsException {
-    File file = TempFile.create();
+    File file = createMockFile("/tmp/bep_output.txt", new byte[0]);
 
     LocalBuildEventProtocolTestFinderStrategy testFinder =
-        new LocalBuildEventProtocolTestFinderStrategy(new BuildResultHelper(file));
+        new LocalBuildEventProtocolTestFinderStrategy(new BuildResultHelperBep(file));
     try {
       BlazeTestResults unused = testFinder.findTestResults();
     } finally {
       testFinder.deleteTemporaryOutputFiles();
     }
 
-    assertThat(file.exists()).isFalse();
+    assertThat(deletedFiles).contains(file);
   }
 
   @Test
@@ -70,16 +89,30 @@ public class LocalBuildEventProtocolTestFinderStrategyTest extends BlazeTestCase
             "//java/com/google:Test2",
             BuildEventStreamProtos.TestStatus.INCOMPLETE,
             ImmutableList.of("/usr/local/tmp/_cache/second_result.xml"));
-    File bepOutputFile = TempFile.create(asByteArray(ImmutableList.of(test1, test2)));
+    File bepOutputFile =
+        createMockFile("/tmp/bep_output.txt", asByteArray(ImmutableList.of(test1, test2)));
     LocalBuildEventProtocolTestFinderStrategy strategy =
-        new LocalBuildEventProtocolTestFinderStrategy(new BuildResultHelper(bepOutputFile));
+        new LocalBuildEventProtocolTestFinderStrategy(new BuildResultHelperBep(bepOutputFile));
 
-    InputStream inputStream = new FileInputStream(bepOutputFile);
+    InputStream inputStream = inputStreamProvider.forFile(bepOutputFile);
     BlazeTestResults results = BuildEventProtocolOutputReader.parseTestResults(inputStream);
     BlazeTestResults finderStrategyResults = strategy.findTestResults();
 
     assertThat(finderStrategyResults.perTargetResults.entries())
         .containsExactlyElementsIn(results.perTargetResults.entries());
+  }
+
+  private File createMockFile(String path, byte[] contents) {
+    File org = new File(path);
+    File spy = Mockito.spy(org);
+    inputStreamProvider.addFile(path, contents);
+    Mockito.when(spy.delete())
+        .then(
+            invocationOnMock -> {
+              deletedFiles.add(spy);
+              return true;
+            });
+    return spy;
   }
 
   private static byte[] asByteArray(Iterable<BuildEventStreamProtos.BuildEvent.Builder> events)

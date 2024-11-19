@@ -15,7 +15,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "rules_python",
-    version = "0.38.0",
+    version = "0.40.0",
 )
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
@@ -31,7 +31,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "protobuf",
-    version = "29.0-rc2",
+    version = "29.0-rc3",
 )
 bazel_dep(
     name = "bazel_skylib",
@@ -96,11 +96,12 @@ maven.install(
         "com.google.code.findbugs:jsr305:3.0.2",
         "com.google.code.gson:gson:2.10.1",
         "com.google.errorprone:error_prone_annotations:2.20.0",
-        "com.google.guava:guava:33.0.0-jre",  # changed to jre
-        "com.google.truth:truth:1.1.5",
-        "com.google.truth.extensions:truth-java8-extension:1.1.5",
+        "com.google.guava:guava:33.3.1-jre",  # changed to jre
+        "com.google.truth:truth:1.4.4",
+        "com.google.truth.extensions:truth-java8-extension:1.4.4",
         "com.google.j2objc:j2objc-annotations:2.8",
         "com.google.guava:failureaccess:1.0.2",
+        "org.hamcrest:hamcrest-core:3.0",
     ],
     fail_if_repin_required = True,
     generate_compat_repositories = True,
@@ -130,10 +131,11 @@ use_repo(
     objenesis = "org_objenesis_objenesis",
     truth = "com_google_truth_truth",
     truth8 = "com_google_truth_extensions_truth_java8_extension",
+    hamcrest = "org_hamcrest_hamcrest_core",
 )
 
 bazel_dep(name = "rules_go", version = "0.50.1", repo_name = "io_bazel_rules_go")
-bazel_dep(name = "gazelle", version = "0.39.1", repo_name = "bazel_gazelle")
+bazel_dep(name = "gazelle", version = "0.40.0", repo_name = "bazel_gazelle")
 
 go_repository = use_repo_rule("@bazel_gazelle//:deps.bzl", "go_repository")
 # gRPC is used to generate Go from proto in the aspect tests, in
@@ -219,9 +221,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2024_2. This is required to build IJwB and run integration tests.
-IC_243_SHA = "c735416f254a0fdbda507e19c44554f142e8d69f467df9f2bea2e65a75924f05"
+IC_243_SHA = "fecd26f2c9b2c23c51edc06f30e1aacd73bfcc614f7bca96aae7eea291a194cd"
 
-IC_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/243.21565.129-EAP-SNAPSHOT/ideaIC-243.21565.129-EAP-SNAPSHOT.zip"
+IC_243_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2024.3/ideaIC-2024.3.zip"
 
 http_archive(
     name = "intellij_ce_2024_3",
@@ -295,9 +297,9 @@ http_archive(
     url = IU_242_URL,
 )
 
-IU_243_SHA = "529de2df74f97bf0830d0d52a73c9747ebef048e1e43032db54bd3ffe6bcbe97"
+IU_243_SHA = "a40de5b0adff84e48b14d6c538942b5a3f453a554a68d76f175aa47ed2b82983"
 
-IU_243_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/243.21565.129-EAP-SNAPSHOT/ideaIU-243.21565.129-EAP-SNAPSHOT.zip"
+IU_243_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2024.3/ideaIU-2024.3.zip"
 
 http_archive(
     name = "intellij_ue_2024_3",
@@ -531,9 +533,9 @@ http_archive(
     url = PYTHON_PLUGIN_242_URL,
 )
 
-PYTHON_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/243.21565.129/PythonCore-243.21565.129.zip"
+PYTHON_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/243.21565.193/PythonCore-243.21565.193.zip"
 
-PYTHON_PLUGIN_243_SHA = "7eb646732380d9f8cf7ec9476a68d49bcc4d195da34741baddbbd08686ab1b10"
+PYTHON_PLUGIN_243_SHA = "b989ea5d155ad2e13d70aa0f88cb056b8dc0926fd2b3ab8f0de320ba2eda629c"
 
 http_archive(
     name = "python_2024_3",
@@ -701,9 +703,9 @@ http_archive(
     url = SCALA_PLUGIN_242_URL,
 )
 
-SCALA_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.3.12/org.intellij.scala-2024.3.12.zip"
+SCALA_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.3.18/org.intellij.scala-2024.3.18.zip"
 
-SCALA_PLUGIN_243_SHA = "7d5e5bf1c05ba6bd2c1855609e38591f8f820a83b229a48aa2089ba34cae92b8"
+SCALA_PLUGIN_243_SHA = "24503bb65fc605b31c6a4691cd2511880a3929f48ca7104b7d2f0ded469add49"
 
 http_archive(
     name = "scala_2024_3",

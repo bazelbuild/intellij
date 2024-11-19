@@ -17,7 +17,6 @@ package com.google.idea.blaze.qsync.project;
 
 import static com.google.common.truth.Truth.assertThat;
 
-
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.Path;
 import org.junit.Test;
@@ -34,6 +33,7 @@ public class ProjectDefinitionTest {
             ImmutableSet.of(Path.of("contentroot1"), Path.of("contentroot2")),
             ImmutableSet.of(),
             ImmutableSet.of(),
+            ImmutableSet.of(),
             ImmutableSet.of());
     assertThat(projectDefinition.getIncludingContentRoot(Path.of("contentroot1/some/path")))
         .hasValue(Path.of("contentroot1"));
@@ -48,6 +48,7 @@ public class ProjectDefinitionTest {
             ImmutableSet.of(Path.of("contentroot1"), Path.of("contentroot2")),
             ImmutableSet.of(),
             ImmutableSet.of(),
+            ImmutableSet.of(),
             ImmutableSet.of());
     assertThat(projectDefinition.getIncludingContentRoot(Path.of("anotherRoot/some/path")))
         .isEmpty();
@@ -59,6 +60,7 @@ public class ProjectDefinitionTest {
         ProjectDefinition.create(
             ImmutableSet.of(Path.of("contentroot1"), Path.of("contentroot2")),
             ImmutableSet.of(Path.of("contentroot1/excluded")),
+            ImmutableSet.of(),
             ImmutableSet.of(),
             ImmutableSet.of());
     assertThat(projectDefinition.getIncludingContentRoot(Path.of("contentroot1/excluded/path")))

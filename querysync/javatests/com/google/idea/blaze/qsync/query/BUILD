@@ -15,6 +15,7 @@ java_library(
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//shared",
         "@com_google_guava_guava//jar",
+        "@error_prone_annotations//jar",
     ],
 )
 
@@ -28,8 +29,9 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//shared",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+        "@com_google_guava_guava//jar",
     ],
 )
 
@@ -38,8 +40,21 @@ java_test(
     size = "small",
     srcs = ["QuerySpecTest.java"],
     deps = [
+        "//querysync/java/com/google/idea/blaze/qsync",
         "//querysync/java/com/google/idea/blaze/qsync/query",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)
+
+java_test(
+    name = "TruncatingFormattableTest",
+    size = "small",
+    srcs = ["TruncatingFormattableTest.java"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync/query",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+        "@com_google_guava_guava//jar",
     ],
 )

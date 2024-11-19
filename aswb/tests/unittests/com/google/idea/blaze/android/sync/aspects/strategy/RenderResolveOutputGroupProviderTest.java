@@ -30,7 +30,6 @@ import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -111,8 +110,8 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
     assertThat(getOutputGroups(builder)).doesNotContain("intellij-render-resolve-android");
   }
 
-  private BlazeCommand.Builder emptyBuilder() {
-    return BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD, getProject());
+  private static BlazeCommand.Builder emptyBuilder() {
+    return BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD);
   }
 
   private static ImmutableList<String> getOutputGroups(BlazeCommand.Builder builder) {
@@ -138,13 +137,8 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
     }
 
     @Override
-    protected Optional<String> getAspectFlag() {
-      return Optional.empty();
-    }
-
-    @Override
-    protected Boolean supportsAspectsParameters() {
-      return true;
+    protected List<String> getAspectFlags() {
+      return ImmutableList.of();
     }
   }
 }

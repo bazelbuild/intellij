@@ -81,7 +81,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.facet.AndroidFacetProperties;
 
 /** Updates the IDE's project structure. */
 public class BlazeAndroidProjectStructureSyncer {
@@ -112,7 +111,7 @@ public class BlazeAndroidProjectStructureSyncer {
     if (!isAndroidWorkspace) {
       AndroidFacetModuleCustomizer.removeAndroidFacet(workspaceModule);
       // Workspace type should always be ANDROID as long as the blaze android plugin is present.
-      log.error(
+      log.warn(
           "No android workspace found for project \""
               + project.getName()
               + "\". Removing AndroidFacet from workspace module.");
@@ -274,15 +273,13 @@ public class BlazeAndroidProjectStructureSyncer {
     if (androidSdkPlatform == null) {
       return;
     }
-    boolean configAndroidJava8Libs = hasConfigAndroidJava8Libs(projectViewSet);
-
     updateWorkspaceModuleFacetInMemoryState(
         project,
         context,
         workspaceRoot,
         workspaceModule,
-        androidSdkPlatform,
-        configAndroidJava8Libs);
+        androidSdkPlatform
+    );
 
     ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
     ModuleFinder moduleFinder = ModuleFinder.getInstance(project);
@@ -354,19 +351,13 @@ public class BlazeAndroidProjectStructureSyncer {
           moduleDirectory,
           manifestFile,
           modulePackage,
-          resources,
-          configAndroidJava8Libs);
+          resources
+      );
       rClassBuilder.addRClass(modulePackage, module);
       sourcePackages.remove(modulePackage);
     }
 
     rClassBuilder.addWorkspacePackages(sourcePackages);
-  }
-
-  @VisibleForTesting
-  static boolean hasConfigAndroidJava8Libs(ProjectViewSet projectViewSet) {
-    return projectViewSet.listItems(BuildFlagsSection.KEY).stream()
-        .anyMatch(f -> "--config=android_java8_libs".equals(f));
   }
 
   private static File moduleDirectoryForAndroidTarget(
@@ -436,8 +427,7 @@ public class BlazeAndroidProjectStructureSyncer {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       Module workspaceModule,
-      AndroidSdkPlatform androidSdkPlatform,
-      boolean configAndroidJava8Libs) {
+      AndroidSdkPlatform androidSdkPlatform) {
     File moduleDirectory = workspaceRoot.directory();
     String resourceJavaPackage = ":workspace";
     updateModuleFacetInMemoryState(
@@ -448,8 +438,8 @@ public class BlazeAndroidProjectStructureSyncer {
         moduleDirectory,
         null,
         resourceJavaPackage,
-        ImmutableList.of(),
-        configAndroidJava8Libs);
+        ImmutableList.of()
+    );
   }
 
   private static void updateModuleFacetInMemoryState(
@@ -460,8 +450,7 @@ public class BlazeAndroidProjectStructureSyncer {
       File moduleDirectory,
       @Nullable File manifestFile,
       String resourceJavaPackage,
-      Collection<File> resources,
-      boolean configAndroidJava8Libs) {
+      Collection<File> resources) {
     String name = module.getName();
     File manifest = manifestFile != null ? manifestFile : new File("MissingManifest.xml");
     NamedIdeaSourceProvider sourceProvider =
@@ -487,8 +476,7 @@ public class BlazeAndroidProjectStructureSyncer {
             moduleDirectory,
             sourceProvider,
             applicationId,
-            androidSdkPlatform.androidMinSdkLevel,
-            configAndroidJava8Libs);
+            androidSdkPlatform.androidMinSdkLevel);
     AndroidFacet facet = AndroidFacet.getInstance(module);
     if (facet != null) {
       updateAndroidFacetWithSourceAndModel(facet, sourceProvider, androidModel);
@@ -497,11 +485,6 @@ public class BlazeAndroidProjectStructureSyncer {
 
   private static void updateAndroidFacetWithSourceAndModel(
       AndroidFacet facet, NamedIdeaSourceProvider sourceProvider, BlazeAndroidModel androidModel) {
-    facet.getProperties().RES_FOLDERS_RELATIVE_PATH =
-        String.join(
-            AndroidFacetProperties.PATH_LIST_SEPARATOR_IN_FACET_CONFIGURATION,
-            sourceProvider.getResDirectoryUrls());
-    facet.getProperties().TEST_RES_FOLDERS_RELATIVE_PATH = "";
     AndroidModel.set(facet, androidModel);
   }
 }

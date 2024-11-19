@@ -32,12 +32,15 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
+import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedFunction;
 import com.google.idea.blaze.base.scope.ScopedTask;
@@ -65,6 +68,9 @@ import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -116,8 +122,7 @@ public class BlazeBuildService {
         new NotificationScope(
             project, "Make", title, title + " completed successfully", title + " failed"),
         title,
-        buildSystem,
-        SyncStrategy.SERIAL);
+        buildSystem);
   }
 
 
@@ -144,8 +149,7 @@ public class BlazeBuildService {
                     "Make" + folderName + "/...:all completed successfully",
                     "Make" + folderName + "/...:all failed"),
             "Make " + folderName + "/...:all",
-            buildSystem,
-            SyncStrategy.SERIAL_NOT_EXPAND);
+            buildSystem);
   }
 
   public void buildProject() {
@@ -190,8 +194,7 @@ public class BlazeBuildService {
             "Make project completed successfully",
             "Make project failed"),
         "Make project",
-        buildSystem,
-        SyncStrategy.SERIAL);
+        buildSystem);
 
     // In case the user touched a file, but didn't change its content. The user will get a false
     // positive for class file out of date. We need a way for the user to suppress the false
@@ -206,8 +209,7 @@ public class BlazeBuildService {
       ScopedFunction<List<TargetExpression>> targetsFunction,
       NotificationScope notificationScope,
       String taskName,
-      BuildSystem buildSystem,
-      SyncStrategy syncStrategy) {
+      BuildSystem buildSystem) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // a gross hack to avoid breaking change detector tests. We had a few tests which relied on
       // this never being called *and* relied on PROJECT_LAST_BUILD_TIMESTAMP_KEY being set
@@ -257,7 +259,7 @@ public class BlazeBuildService {
                             projectData.getWorkspacePathResolver(),
                             targets,
                             buildInvoker,
-                            syncStrategy);
+                            SyncStrategy.SERIAL);
                     if (shardedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
                       return null;
                     }
@@ -316,3 +318,4 @@ public class BlazeBuildService {
         MoreExecutors.directExecutor());
   }
 }
+
