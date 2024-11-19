@@ -3,16 +3,19 @@
 # The final form of the BUILD file accessed at runtime as an external WORKSPACE.
 #
 
-licenses(["notice"])  # Apache 2.0
+load("@rules_java//java:defs.bzl", "java_binary", "java_import")
+load(
+    ":intellij_info_impl_bundled.bzl",
+    "define_flag_hack",
+)
 
-load(":intellij_info_impl_bundled.bzl",
-     "define_flag_hack")
+licenses(["notice"])  # Apache 2.0
 
 java_binary(
     name = "JarFilter_bin",
     main_class = "com.google.idea.blaze.aspect.JarFilter",
-    runtime_deps = [":jar_filter_lib"],
     visibility = ["//visibility:public"],
+    runtime_deps = [":jar_filter_lib"],
 )
 
 java_import(
@@ -23,8 +26,8 @@ java_import(
 java_binary(
     name = "PackageParser_bin",
     main_class = "com.google.idea.blaze.aspect.PackageParser",
-    runtime_deps = [":package_parser_lib"],
     visibility = ["//visibility:public"],
+    runtime_deps = [":package_parser_lib"],
 )
 
 java_import(
@@ -35,10 +38,9 @@ java_import(
 java_binary(
     name = "CreateAar_bin",
     main_class = "com.google.idea.blaze.aspect.CreateAar",
-    runtime_deps = [":jar_filter_lib"],
     visibility = ["//visibility:public"],
+    runtime_deps = [":jar_filter_lib"],
 )
-
 
 java_import(
     name = "create_aar_lib",
