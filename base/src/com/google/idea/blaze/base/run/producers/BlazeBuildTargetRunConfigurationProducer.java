@@ -22,7 +22,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
@@ -42,18 +41,6 @@ import javax.annotation.Nullable;
  * */
 public class BlazeBuildTargetRunConfigurationProducer
         extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
-
-  record BuildTarget(FuncallExpression rule, RuleType ruleType, Label label) {
-    @Nullable
-      TargetInfo guessTargetInfo() {
-        String ruleName = rule.getFunctionName();
-        if (ruleName == null) {
-          return null;
-        }
-        Kind kind = Kind.fromRuleName(ruleName);
-        return kind != null ? TargetInfo.builder(label, kind.getKindString()).build() : null;
-      }
-    }
 
   public BlazeBuildTargetRunConfigurationProducer() {
     super(BlazeCommandRunConfigurationType.getInstance());
@@ -75,7 +62,7 @@ public class BlazeBuildTargetRunConfigurationProducer
     if (target == null) {
       return false;
     }
-    sourceElement.set(target.rule);
+    sourceElement.set(target.rule());
     setupConfiguration(configuration.getProject(), blazeProjectData, configuration, target);
     return true;
   }
@@ -87,7 +74,7 @@ public class BlazeBuildTargetRunConfigurationProducer
     if (target == null) {
       return false;
     }
-    return Objects.equals(configuration.getTargets(), ImmutableList.of(target.label));
+    return Objects.equals(configuration.getTargets(), ImmutableList.of(target.label()));
   }
 
   @Nullable
@@ -118,7 +105,7 @@ public class BlazeBuildTargetRunConfigurationProducer
     if (info != null) {
       configuration.setTargetInfo(info);
     } else {
-      configuration.setTarget(target.label);
+      configuration.setTarget(target.label());
     }
     BlazeCommandRunConfigurationCommonState state =
             configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
@@ -127,5 +114,4 @@ public class BlazeBuildTargetRunConfigurationProducer
     }
     configuration.setGeneratedName();
   }
-
 }

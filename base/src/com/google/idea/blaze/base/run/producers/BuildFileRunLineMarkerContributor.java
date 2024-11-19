@@ -15,18 +15,12 @@
  */
 package com.google.idea.blaze.base.run.producers;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression;
 import com.google.idea.blaze.base.model.primitives.RuleType;
-import com.google.idea.blaze.base.run.producers.BlazeBuildFileRunConfigurationProducer.BuildTarget;
-import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
@@ -39,8 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+
 import javax.annotation.Nullable;
 
 /** Generates run/debug gutter icons for BUILD files. */
