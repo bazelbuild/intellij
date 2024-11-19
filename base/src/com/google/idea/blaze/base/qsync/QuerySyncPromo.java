@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 public class QuerySyncPromo {
 
   private static final IntExperiment PROMO_DISPLAY_DELAY_MINUTES =
-      new IntExperiment("query.sync.promo.delay.minutes", 10);
+      new IntExperiment("query.sync.promo.delay.minutes", 5);
 
   private final Project project;
   private final QuerySyncManager querySyncManager;
@@ -57,9 +57,6 @@ public class QuerySyncPromo {
   }
 
   public void show() {
-    if (!MorePlatformUtils.isAndroidStudio()) {
-      return;
-    }
     querySyncManager.getQuerySyncUrl().ifPresent(this::displayPopupWithUrl);
   }
 

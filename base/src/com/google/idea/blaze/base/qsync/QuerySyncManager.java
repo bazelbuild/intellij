@@ -148,7 +148,7 @@ public class QuerySyncManager implements Disposable {
    * available.
    */
   public Optional<String> getQuerySyncUrl() {
-    return Optional.empty();
+    return Optional.of("https://github.com/bazelbuild/intellij/blob/master/docs/querysync.md");
   }
 
   protected ProjectLoader createProjectLoader(ListeningExecutorService executor, Project project) {
