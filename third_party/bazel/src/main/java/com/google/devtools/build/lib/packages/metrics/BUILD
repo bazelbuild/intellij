@@ -1,5 +1,5 @@
-load("@protobuf//bazel:java_proto_library.bzl", "java_proto_library")
-load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("@com_google_protobuf//bazel:java_proto_library.bzl", "java_proto_library")
+load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_java//java:defs.bzl", "java_library")
 
 package(default_visibility = ["//visibility:public"])
@@ -37,7 +37,7 @@ proto_library(
     name = "package_metrics_proto",
     srcs = ["package_metrics.proto"],
     deps = [
-        "@protobuf//:duration_proto",
+        "@com_google_protobuf//:duration_proto",
     ],
 )
 
@@ -52,7 +52,7 @@ proto_library(
     name = "package_load_metrics_proto",
     srcs = ["package_load_metrics.proto"],
     deps = [
-        "@protobuf//:duration_proto",
+        "@com_google_protobuf//:duration_proto",
     ],
 )
 
