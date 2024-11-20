@@ -56,7 +56,7 @@ class FileSystemWarmUpService(val project: Project, val coroutineScope: Coroutin
   private val logger = thisLogger()
 
   companion object {
-    private val fileSystemWarmUpExperimentEnabled = BoolExperiment("file.system.warm.up.enabled", true)
+    private val fileSystemWarmUpExperimentEnabled = BoolExperiment("file.system.warm.up.enabled", false)
     private val fileSystemWarmUpExperimentThreads = IntExperiment("file.system.warm.up.threads", 50)
   }
 
