@@ -17,6 +17,8 @@ load(":flag_hack.bzl", "FlagHackInfo")
 
 load("@intellij_aspect_template//:java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
 
+load("@intellij_aspect_template//:python_info.bzl", "get_py_info", "py_info_in_target")
+
 load("@intellij_aspect_template//:code_generator_info.bzl", "CODE_GENERATOR_RULE_NAMES")
 
 load(
@@ -345,7 +347,7 @@ def _do_starlark_string_expansion(ctx, name, strings, extra_targets = []):
 
 def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates Python-specific output groups, returns false if not a Python target."""
-    if not PyInfo in target or _is_language_specific_proto_library(ctx, target, semantics):
+    if not py_info_in_target(target) or _is_language_specific_proto_library(ctx, target, semantics):
         return False
 
     py_semantics = getattr(semantics, "py", None)
@@ -355,7 +357,7 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         py_launcher = None
 
     sources = sources_from_target(ctx)
-    to_build = target[PyInfo].transitive_sources
+    to_build = get_py_info(target).transitive_sources
     args = getattr(ctx.rule.attr, "args", [])
     data_deps = getattr(ctx.rule.attr, "data", [])
     args = _do_starlark_string_expansion(ctx, "args", args, data_deps)
@@ -401,14 +403,14 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         def provider_imports_to_attr_imports():
             result = []
 
-            for provider_import in target[PyInfo].imports.to_list():
+            for provider_import in get_py_info(target).imports.to_list():
                 attr_import = provider_import_to_attr_import(provider_import)
                 if attr_import:
                     result.append(attr_import)
 
             return result
 
-        if target[PyInfo].imports:
+        if get_py_info(target).imports:
             imports.extend(provider_imports_to_attr_imports())
 
         runfiles = target[DefaultInfo].default_runfiles

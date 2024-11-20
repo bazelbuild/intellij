@@ -46,6 +46,8 @@ public class SyncAspectTemplateProvider implements SyncListener {
 
   private final static String TEMPLATE_JAVA = "java_info.template.bzl";
   private final static String REALIZED_JAVA = "java_info.bzl";
+  private final static String TEMPLATE_PYTHON = "python_info.template.bzl";
+  private final static String REALIZED_PYTHON = "python_info.bzl";
   private final static String TEMPLATE_CODE_GENERATOR = "code_generator_info.template.bzl";
   private final static String REALIZED_CODE_GENERATOR = "code_generator_info.bzl";
 
@@ -77,7 +79,7 @@ public class SyncAspectTemplateProvider implements SyncListener {
     final var templateAspects = AspectRepositoryProvider.findAspectTemplateDirectory()
             .orElseThrow(() -> new SyncFailedException("Couldn't find aspect template directory"));
 
-    writeJavaInfo(manager, realizedAspectsPath, templateAspects, project);
+    writeLanguageInfos(manager, realizedAspectsPath, templateAspects, project);
     writeCodeGeneratorInfo(manager, project, realizedAspectsPath, templateAspects);
   }
 
@@ -105,29 +107,45 @@ public class SyncAspectTemplateProvider implements SyncListener {
     }
   }
 
-  private void writeJavaInfo(
+  private void writeLanguageInfos(
           BlazeProjectDataManager manager,
           Path realizedAspectsPath,
-          File templateAspects, Project project) throws SyncFailedException {
-    var realizedFile = realizedAspectsPath.resolve(REALIZED_JAVA);
+          File templateAspects,
+          Project project) throws SyncFailedException {
+    var templateLanguageStringMap = getLanguageStringMap(manager, project);
+    writeLanguageInfo(manager, realizedAspectsPath, templateAspects, TEMPLATE_JAVA, REALIZED_JAVA, templateLanguageStringMap);
+    writeLanguageInfo(manager, realizedAspectsPath, templateAspects, TEMPLATE_PYTHON, REALIZED_PYTHON, templateLanguageStringMap);
+  }
+
+  private void writeLanguageInfo(
+          BlazeProjectDataManager manager,
+          Path realizedAspectsPath,
+          File templateAspects,
+          String templateFileName,
+          String realizedFileName,
+          Map<String, String> templateLanguageStringMap) throws SyncFailedException {
+    var realizedFile = realizedAspectsPath.resolve(realizedFileName);
     var templateWriter = new TemplateWriter(templateAspects.toPath());
-    var templateVariableMap = getJavaStringStringMap(manager, project);
-    if (!templateWriter.writeToFile(TEMPLATE_JAVA, realizedFile, templateVariableMap)) {
-      throw new SyncFailedException("Could not create template for: " + REALIZED_JAVA);
+    if (!templateWriter.writeToFile(templateFileName, realizedFile, templateLanguageStringMap)) {
+      throw new SyncFailedException("Could not create template for: " + realizedFileName);
     }
   }
 
-  private static @NotNull Map<String, String> getJavaStringStringMap(BlazeProjectDataManager manager, Project project) throws SyncFailedException {
+  private static @NotNull Map<String, String> getLanguageStringMap(BlazeProjectDataManager manager, Project project) {
     var projectData = Optional.ofNullable(manager.getBlazeProjectData()); // It can be empty on intial sync. Fall back to no lauguage support
     var blazeProjectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     var activeLanguages = projectData.map(it -> it.getWorkspaceLanguageSettings().getActiveLanguages()).orElse(ImmutableSet.of());
     var isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA)
             && blazeProjectData != null
             && blazeProjectData.getExternalWorkspaceData().getByRepoName("rules_java") != null;
+    var isPythonEnabled = activeLanguages.contains(LanguageClass.PYTHON)
+            && blazeProjectData != null
+            && blazeProjectData.getExternalWorkspaceData().getByRepoName("rules_python") != null;
     var isAtLeastBazel8 = projectData.map(it -> it.getBlazeVersionData().bazelIsAtLeastVersion(8, 0, 0)).orElse(false);
     return Map.of(
             "bazel8OrAbove", isAtLeastBazel8 ? "true" : "false",
-            "isJavaEnabled", isJavaEnabled ? "true" : "false"
+            "isJavaEnabled", isJavaEnabled ? "true" : "false",
+            "isPythonEnabled", isPythonEnabled ? "true" : "false"
     );
   }
 
