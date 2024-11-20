@@ -36,7 +36,6 @@ public class QuerySyncNotificationProvider implements EditorNotificationProvider
     @Override
     @Nullable
     public Function<? super FileEditor, ? extends JComponent> collectNotificationData(@NotNull Project project, @NotNull VirtualFile file) {
-
         return fileEditor -> {
             if (Blaze.getProjectType(project) != ProjectType.QUERY_SYNC) {
                 return null;
@@ -44,6 +43,14 @@ public class QuerySyncNotificationProvider implements EditorNotificationProvider
 
             if (!(fileEditor instanceof TextEditor)) {
                 return null;
+            }
+            Optional<OperationType> currentOperation = QuerySyncManager.getInstance(project).currentOperation();
+            if (currentOperation.isPresent()) {
+                var notificationText =
+                        currentOperation.get() == OperationType.SYNC
+                                ? "Syncing project..."
+                                : "Building dependencies...";
+                return new QuerySyncNotificationPanel(fileEditor, project, notificationText, "");
             }
 
             BuildDependenciesHelper buildDepsHelper = new BuildDependenciesHelper(project, DepsBuildType.SELF);
@@ -53,37 +60,32 @@ public class QuerySyncNotificationProvider implements EditorNotificationProvider
                 return null;
             }
 
-            Optional<OperationType> currentOperation = QuerySyncManager.getInstance(project).currentOperation();
-
-            if (currentOperation.isPresent()) {
-                return null;
-            }
-
-            if (toBuild.type() != TargetsToBuild.Type.SOURCE_FILE) {
-                return null;
-            }
-
             int missing = buildDepsHelper.getSourceFileMissingDepsCount(toBuild);
+            String notificationText;
+            String actionText;
             if (missing > 0) {
                 String dependency = StringUtil.pluralize("dependency", missing);
-                String notificationText = String.format("Analysis disabled - missing %d %s ", missing, dependency);
-                return new QuerySyncNotificationPanel(fileEditor, project, notificationText);
+                notificationText = String.format("Analysis disabled - missing %d %s ", missing, dependency);
+                actionText = QuerySync.BUILD_DEPENDENCIES_ACTION_NAME;
             } else {
-                return null;
+                notificationText = "Query Sync";
+                actionText = "Rebuild dependencies";
             }
+            return new QuerySyncNotificationPanel(fileEditor, project, notificationText, actionText);
         };
     }
 
     private class QuerySyncNotificationPanel extends EditorNotificationPanel {
-
-        QuerySyncNotificationPanel(FileEditor editor, Project project, String notificationText) {
-            super(editor, Status.Warning);
-
+        QuerySyncNotificationPanel(FileEditor editor, Project project, String notificationText, String actionText) {
+            super(editor, Status.Info);
             setText(notificationText);
 
             String actionId = "Blaze.BuildDependencies";
-            createActionLabel("Build dependencies", () -> executeAction(actionId))
-                    .addHyperlinkListener(event -> EditorNotifications.getInstance(project).updateAllNotifications());
+            var actionLabel = createActionLabel(actionText, () -> executeAction(actionId));
+            actionLabel.addHyperlinkListener(event -> EditorNotifications.getInstance(project).updateAllNotifications());
+
+            var tooltip = actionLabel.createToolTip();
+            tooltip.setTipText("Builds the external dependencies needed for this file and enables analysis");
         }
     }
 }
