@@ -388,6 +388,8 @@ def _target_within_project_scope(label, include, exclude):
     repo = _get_repo_name(label)
     package = label.package
     result = False
+    if repo != "":
+        return False # We don't support external includes, so all external repos are outside the project scope
     if include:
         for inc in include.split(","):
             # This is not a valid label, but can be passed to aspect when `directories: .` is set in the projectview
