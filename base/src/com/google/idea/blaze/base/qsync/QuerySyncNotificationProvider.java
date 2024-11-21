@@ -59,7 +59,7 @@ public class QuerySyncNotificationProvider implements EditorNotificationProvider
             if (toBuild.isEmpty()) {
                 return null;
             }
-            if(toBuild.type() != TargetsToBuild.Type.SOURCE_FILE) {
+            if (toBuild.type() != TargetsToBuild.Type.SOURCE_FILE) {
                 return null;
             }
 
