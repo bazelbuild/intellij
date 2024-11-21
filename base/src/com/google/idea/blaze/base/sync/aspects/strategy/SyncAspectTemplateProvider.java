@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.sync.aspects.strategy;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.ExternalWorkspaceDataManager;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -140,17 +141,15 @@ public class SyncAspectTemplateProvider implements SyncListener {
     }
   }
 
-  private static @NotNull Map<String, String> getLanguageStringMap(BlazeProjectDataManager manager) {
+  private static @NotNull Map<String, String> getLanguageStringMap(BlazeProjectDataManager manager, Project project) {
     var projectData = Optional.ofNullable(manager.getBlazeProjectData()); // It can be empty on intial sync. Fall back to no language support
     var activeLanguages = projectData.map(it -> it.getWorkspaceLanguageSettings().getActiveLanguages()).orElse(ImmutableSet.of());
-    // TODO: adapt the logic to query sync
-    boolean isQuerySync = projectData.map(BlazeProjectData::isQuerySync).orElse(false);
-    var externalWorkspaceData = isQuerySync ? null : projectData.map(BlazeProjectData::getExternalWorkspaceData).orElse(null);
+    var externalWorkspaceData = ExternalWorkspaceDataManager.getInstance(project).getData();
     var isAtLeastBazel8 = projectData.map(it -> it.getBlazeVersionData().bazelIsAtLeastVersion(8, 0, 0)).orElse(false);
     var isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA) &&
-            (isQuerySync || (externalWorkspaceData != null && (!isAtLeastBazel8 || externalWorkspaceData.getByRepoName("rules_java") != null)));
+            ((externalWorkspaceData != null && (!isAtLeastBazel8 || externalWorkspaceData.getByRepoName("rules_java") != null)));
     var isPythonEnabled = activeLanguages.contains(LanguageClass.PYTHON) &&
-            (isQuerySync || (externalWorkspaceData != null && (!isAtLeastBazel8 || externalWorkspaceData.getByRepoName("rules_python") != null)));
+            ((externalWorkspaceData != null && (!isAtLeastBazel8 || externalWorkspaceData.getByRepoName("rules_python") != null)));
     return Map.of(
             "bazel8OrAbove", isAtLeastBazel8 ? "true" : "false",
             "isJavaEnabled", isJavaEnabled ? "true" : "false",
