@@ -38,6 +38,7 @@ public class FullProjectUpdate implements RefreshOperation {
   private final ProjectDefinition projectDefinition;
   private final Optional<VcsState> vcsState;
   private final Optional<String> bazelVersion;
+  private final Optional<String> outputBase;
   private final QuerySpec.QueryStrategy queryStrategy;
 
   public FullProjectUpdate(
@@ -46,12 +47,14 @@ public class FullProjectUpdate implements RefreshOperation {
     ProjectDefinition definition,
     Optional<VcsState> vcsState,
     Optional<String> bazelVersion,
+    Optional<String> outputBase,
     QuerySpec.QueryStrategy queryStrategy) {
     this.context = context;
     this.effectiveWorkspaceRoot = effectiveWorkspaceRoot;
     this.projectDefinition = definition;
     this.vcsState = vcsState;
     this.bazelVersion = bazelVersion;
+    this.outputBase = outputBase;
     this.queryStrategy = queryStrategy;
   }
 
@@ -71,6 +74,7 @@ public class FullProjectUpdate implements RefreshOperation {
       .setVcsState(vcsState)
       .setBazelVersion(bazelVersion)
       .setQuerySummary(output)
+      .setOutputBase(outputBase)
       .build();
   }
 }

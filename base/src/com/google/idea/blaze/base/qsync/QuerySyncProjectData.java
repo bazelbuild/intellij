@@ -178,11 +178,6 @@ public class QuerySyncProjectData implements BlazeProjectData {
   }
 
   @Override
-  public ExternalWorkspaceData getExternalWorkspaceData() {
-    throw new NotSupportedWithQuerySyncException("getExternalWorkspaceData");
-  }
-
-  @Override
   public SyncState getSyncState() {
     throw new NotSupportedWithQuerySyncException("getSyncState");
   }

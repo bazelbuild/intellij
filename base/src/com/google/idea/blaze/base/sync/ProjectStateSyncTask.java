@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
+import com.google.idea.blaze.base.model.ExternalWorkspaceDataManager;
 import com.google.idea.blaze.base.model.ExternalWorkspaceDataProvider;
 import com.google.idea.blaze.base.execution.ExecutionDeniedException;
 import com.google.idea.blaze.base.io.FileOperationProvider;
@@ -163,6 +164,8 @@ final class ProjectStateSyncTask {
 
     ExternalWorkspaceData externalWorkspaceData =
         getExternalWorkspaceData(context, projectViewSet, blazeVersionData, blazeInfo, params.syncMode());
+
+    ExternalWorkspaceDataManager.getInstance(project).setData(externalWorkspaceData);
 
     WorkspacePathResolver workspacePathResolver =
         workspacePathResolverAndProjectView.workspacePathResolver;

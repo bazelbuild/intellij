@@ -39,6 +39,7 @@ public class RefreshParameters {
   final PostQuerySyncData currentProject;
   final Optional<VcsState> latestVcsState;
   final Optional<String> latestBazelVersion;
+  final Optional<String> latestOutputBase;
   final ProjectDefinition latestProjectDefinition;
   final VcsStateDiffer vcsDiffer;
 
@@ -46,11 +47,13 @@ public class RefreshParameters {
       PostQuerySyncData currentProject,
       Optional<VcsState> latestVcsState,
       Optional<String> latestBazelVersion,
+      Optional<String> latestOutputBase,
       ProjectDefinition latestProjectDefinition,
       VcsStateDiffer vcsDiffer) {
     this.currentProject = currentProject;
     this.latestVcsState = latestVcsState;
     this.latestBazelVersion = latestBazelVersion;
+    this.latestOutputBase = latestOutputBase;
     this.latestProjectDefinition = latestProjectDefinition;
     this.vcsDiffer = vcsDiffer;
   }

@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStats;
 import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -46,18 +47,21 @@ public class ProjectQuerierImpl implements ProjectQuerier {
   private final ProjectRefresher projectRefresher;
   private final Optional<BlazeVcsHandler> vcsHandler;
   private final BazelVersionHandler bazelVersionProvider;
+  private final BazelInfoHandler bazelInfoHandler;
 
-  @VisibleForTesting
+    @VisibleForTesting
   public ProjectQuerierImpl(
-      QueryRunner queryRunner,
-      ProjectRefresher projectRefresher,
-      Optional<BlazeVcsHandler> vcsHandler,
-      BazelVersionHandler bazelVersionProvider) {
+          QueryRunner queryRunner,
+          ProjectRefresher projectRefresher,
+          Optional<BlazeVcsHandler> vcsHandler,
+          BazelVersionHandler bazelVersionProvider,
+          BazelInfoHandler bazelInfoHandler) {
     this.queryRunner = queryRunner;
     this.projectRefresher = projectRefresher;
     this.vcsHandler = vcsHandler;
     this.bazelVersionProvider = bazelVersionProvider;
-  }
+    this.bazelInfoHandler = bazelInfoHandler;
+    }
 
   /**
    * Performs a full query for the project, starting from scratch.
@@ -78,9 +82,13 @@ public class ProjectQuerierImpl implements ProjectQuerier {
             vcsState.map(s -> s.upstreamRevision).orElse("<unknown>"),
             vcsState.flatMap(s -> s.workspaceSnapshotPath).map(Object::toString).orElse("<none>")));
 
+    var bazelInfo = bazelInfoHandler.getBazelInfo();
+    var bazelVersion = Optional.of(BazelVersion.parseVersion(bazelInfo.getRelease()).toString());
+    var outputBase = Optional.of(bazelInfo.getOutputBase().toString());
+
     RefreshOperation fullQuery =
         projectRefresher.startFullUpdate(
-            context, projectDef, vcsState, bazelVersionProvider.getBazelVersion());
+            context, projectDef, vcsState, bazelVersion, outputBase);
 
     QuerySpec querySpec = fullQuery.getQuerySpec().get();
     return fullQuery.createPostQuerySyncData(queryRunner.runQuery(querySpec, context));
@@ -133,15 +141,19 @@ public class ProjectQuerierImpl implements ProjectQuerier {
     }
 
     Optional<String> bazelVersion = Optional.empty();
+    Optional<String> outputBase = Optional.empty();
+
     try {
-      bazelVersion = bazelVersionProvider.getBazelVersion();
+      var bazelInfo = bazelInfoHandler.getBazelInfo();
+      bazelVersion = Optional.of(BazelVersion.parseVersion(bazelInfo.getRelease()).toString());
+      outputBase = Optional.of(bazelInfo.getOutputBase().toString());
     } catch (BuildException e) {
       context.handleExceptionAsWarning("Could not get bazel version", e);
     }
 
     RefreshOperation refresh =
         projectRefresher.startPartialRefresh(
-            context, previousState, vcsState, bazelVersion, currentProjectDef);
+            context, previousState, vcsState, bazelVersion, outputBase, currentProjectDef);
 
     Optional<QuerySpec> spec = refresh.getQuerySpec();
     QuerySummary querySummary;

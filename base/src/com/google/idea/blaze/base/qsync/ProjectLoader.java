@@ -213,12 +213,14 @@ public class ProjectLoader {
             QuerySync.USE_NEW_RES_DIR_LOGIC::getValue,
             () -> !QuerySync.EXTRACT_RES_PACKAGES_AT_BUILD_TIME.getValue());
     QueryRunner queryRunner = createQueryRunner(buildSystem);
+    BuildSystem.BuildInvoker buildInvoker = buildSystem.getBuildInvoker(project, context);
     ProjectQuerier projectQuerier =
         createProjectQuerier(
             projectRefresher,
             queryRunner,
             vcsHandler,
-            new BazelVersionHandler(buildSystem, buildSystem.getBuildInvoker(project, context)));
+            new BazelVersionHandler(buildSystem, buildInvoker),
+            new BazelInfoHandler(buildInvoker));
     QuerySyncSourceToTargetMap sourceToTargetMap =
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
 
@@ -259,11 +261,11 @@ public class ProjectLoader {
   }
 
   private ProjectQuerierImpl createProjectQuerier(
-      ProjectRefresher projectRefresher,
-      QueryRunner queryRunner,
-      Optional<BlazeVcsHandler> vcsHandler,
-      BazelVersionHandler bazelVersionProvider) {
-    return new ProjectQuerierImpl(queryRunner, projectRefresher, vcsHandler, bazelVersionProvider);
+          ProjectRefresher projectRefresher,
+          QueryRunner queryRunner,
+          Optional<BlazeVcsHandler> vcsHandler,
+          BazelVersionHandler bazelVersionProvider, BazelInfoHandler bazelInfoHandler) {
+    return new ProjectQuerierImpl(queryRunner, projectRefresher, vcsHandler, bazelVersionProvider, bazelInfoHandler);
   }
 
   protected QueryRunner createQueryRunner(BuildSystem buildSystem) {

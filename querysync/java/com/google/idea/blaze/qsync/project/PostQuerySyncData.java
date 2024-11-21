@@ -40,6 +40,7 @@ public abstract class PostQuerySyncData {
           .setProjectDefinition(ProjectDefinition.EMPTY)
           .setVcsState(Optional.empty())
           .setBazelVersion(Optional.empty())
+          .setOutputBase(Optional.empty())
           .setQuerySummary(QuerySummary.EMPTY)
           .build();
 
@@ -51,6 +52,9 @@ public abstract class PostQuerySyncData {
 
   /** The version of bazel that the query was run. */
   public abstract Optional<String> bazelVersion();
+
+  /** result of bazel info output_base */
+  public abstract Optional<String> outputBase();
 
   /** The summarised output from the query. */
   public abstract QuerySummary querySummary();
@@ -71,6 +75,8 @@ public abstract class PostQuerySyncData {
     public abstract Builder setVcsState(Optional<VcsState> value);
 
     public abstract Builder setBazelVersion(Optional<String> value);
+
+    public abstract Builder setOutputBase(Optional<String> value);
 
     public abstract Builder setQuerySummary(QuerySummary value);
 
