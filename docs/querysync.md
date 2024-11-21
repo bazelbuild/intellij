@@ -8,6 +8,7 @@ Bazel users working on large projects often need to limit their scope because ev
 The new approach allows you to import a much larger scope from the beginning, enabling more advanced IDE features as you navigate the code. This doesn't have to be on a per-file basis—it can be per-directory or any other granularity. It's smart: if you enable analysis for one file, it's automatically enabled for all others that share the same dependencies. This way, you gain advanced features in your focus areas while still seeing the bigger picture and benefiting from navigation and code completions across a broader scope.
 
 ## Enabling Query Sync
+There are two ways to enable the Query Sync mode:
 
 ### In Settings
 
