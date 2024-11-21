@@ -14,16 +14,16 @@ The new approach allows you to import a much larger scope from the beginning, en
 1. Open **IntelliJ IDEA**.
 2. Go to Settings -> Other Settings -> Query Sync
 3. Check "Enable Query Sync for new projects"
-4. Clean your project's old import files (`.ijwb` or `.aswb` directory
+4. Clean your project's old import files (`.ijwb` or `.aswb` directory)
 5. Import your project in the same way you were doing before
 
 ### In the Project View file
 1. Open **IntelliJ IDEA**.
-2. Go to Settings -> Other Settings -> Query Sync
-3. Check "Enable Query Sync for new projects"
-4. Clean your project's old import files (`.ijwb` or `.aswb` directory
-5. Import your project in the same way you were doing before
-
+2. Clean your project's old import files (`.ijwb` or `.aswb` directory)
+3. Go to **File** > **Import Project...** or **File** > **New** > **Project from Existing Sources...** to start the **Project Import Wizard**.
+4. Select your project's root directory and click **OK**.
+5. In the **Import Project from Bazel** dialog, proceed with the import process.
+6. When you reach the **Project View** setup step, enable **Query Sync** by setting the attribute `use_query_sync` to `true`.
 ## Demos
 
 ### Setup, Import & Enable Analysis
