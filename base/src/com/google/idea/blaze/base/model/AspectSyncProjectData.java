@@ -193,11 +193,6 @@ public final class AspectSyncProjectData implements BlazeProjectData {
   }
 
   @Override
-  public ExternalWorkspaceData getExternalWorkspaceData() {
-    return externalWorkspaceData;
-  }
-
-  @Override
   public SyncState getSyncState() {
     return syncState;
   }
