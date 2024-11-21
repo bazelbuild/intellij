@@ -9,6 +9,15 @@ The new approach allows you to import a much larger scope from the beginning, en
 
 ## Enabling Query Sync
 
+### In Settings
+
+1. Open **IntelliJ IDEA**.
+2. Go to Settings -> Other Settings -> Query Sync
+3. Check "Enable Query Sync for new projects"
+4. Clean your project's old import files (`.ijwb` or `.aswb` directory
+5. Import your project in the same way you were doing before
+
+### In the Project View file
 1. Open **IntelliJ IDEA**.
 2. Go to Settings -> Other Settings -> Query Sync
 3. Check "Enable Query Sync for new projects"
