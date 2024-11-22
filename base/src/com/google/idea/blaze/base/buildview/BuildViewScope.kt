@@ -101,6 +101,8 @@ private class ProgressDescriptor(
   private val descriptor = DefaultBuildDescriptor(Any(), title, "", System.currentTimeMillis())
     .withRestartAction(RestartAction(ctx))
     .withContentDescriptor(this::getContentDescriptor)
+    .apply { isActivateToolWindowWhenAdded = false }
+    .apply { isActivateToolWindowWhenFailed = true }
     .apply { isNavigateToError = ThreeState.NO }
 
   override fun getTitle(): String = title
@@ -109,6 +111,7 @@ private class ProgressDescriptor(
 
   private fun getContentDescriptor(): RunContentDescriptor {
     return RunContentDescriptor(console, null, console.component, title)
+      .apply { isActivateToolWindowWhenAdded = false }
   }
 }
 
