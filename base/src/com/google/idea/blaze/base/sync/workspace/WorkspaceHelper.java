@@ -124,6 +124,9 @@ public class WorkspaceHelper {
     }
 
     BlazeProjectData blazeProjectData = getBlazeProjectData(project);
+    if (blazeProjectData == null) {
+      return null; // Project not imported yet
+    }
     Path bazelRootPath = getExternalSourceRoot(blazeProjectData);
 
     logger.debug("the bazelRootPath is " + bazelRootPath);
