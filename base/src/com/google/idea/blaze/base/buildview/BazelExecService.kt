@@ -68,10 +68,11 @@ class BazelExecService(private val project: Project) : Disposable {
   private suspend fun execute(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): Int {
     val cmd = cmdBuilder.apply { addBlazeFlags("--curses=yes") }.build()
     val root = cmd.effectiveWorkspaceRoot.orElseGet { WorkspaceRoot.fromProject(project).path() }
+    val size = BuildViewScope.of(ctx)?.consoleSize ?: PtyConsoleView.DEFAULT_SIZE
 
     val cmdLine = PtyCommandLine()
-      .withInitialColumns(PtyOptions.COLUMNS)
-      .withInitialRows(PtyOptions.ROWS)
+      .withInitialColumns(size.columns)
+      .withInitialRows(size.rows)
       .withExePath(cmd.binaryPath)
       .withParameters(cmd.toArgumentList())
       .apply { setWorkDirectory(root.pathString) } // required for backwards compatability

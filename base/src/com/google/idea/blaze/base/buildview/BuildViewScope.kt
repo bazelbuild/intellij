@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import com.intellij.util.ThreeState
+import com.jediterm.core.util.TermSize
 import java.util.function.Consumer
 
 class BuildViewScope(project: Project, private val title: String) : BlazeScope {
@@ -36,6 +37,8 @@ class BuildViewScope(project: Project, private val title: String) : BlazeScope {
   private var progress = SyncViewManager.createBuildProgress(project)
   private var console = PtyConsoleView(project)
   private var indicator = BackgroundableProcessIndicator(project, title, "Cancel", "Cancel", true)
+
+  val consoleSize: TermSize? get() = console.size
 
   override fun onScopeBegin(ctx: BlazeContext) {
     progress.start(ProgressDescriptor(title, console, ctx))

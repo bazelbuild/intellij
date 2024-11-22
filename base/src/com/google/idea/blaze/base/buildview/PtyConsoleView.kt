@@ -24,8 +24,14 @@ private const val ANSI_RESET = "\u001b[0m"
 
 class PtyConsoleView(project: Project) : ExecutionConsole {
 
+  companion object {
+    val DEFAULT_SIZE = TermSize(80, 24)
+  }
+
   private val stream = AppendableTerminalDataStream()
   private val terminal = Terminal(project, this, stream)
+
+  val size: TermSize? get() = terminal.terminalPanel.terminalSizeFromComponent
 
   init {
     terminal.start(Connector(this))
@@ -72,16 +78,11 @@ class PtyConsoleView(project: Project) : ExecutionConsole {
   override fun dispose() = Unit
 }
 
-object PtyOptions {
-  const val COLUMNS = 80
-  const val ROWS = 24
-}
-
 private class Terminal(
   project: Project,
   parent: Disposable,
   private val stream: AppendableTerminalDataStream,
-) : JBTerminalWidget(project, PtyOptions.COLUMNS, PtyOptions.ROWS, JBTerminalSystemSettingsProviderBase(), null, parent) {
+) : JBTerminalWidget(project, JBTerminalSystemSettingsProviderBase(), parent) {
 
   override fun createTerminalStarter(terminal: JediTerminal, connector: TtyConnector): TerminalStarter? {
     return TerminalStarter(
@@ -118,6 +119,7 @@ private class Connector(parent: Disposable) : TtyConnector, Disposable {
 
   override fun close() = Unit
 
+  // The terminal size for bazel is final. No use propagating resize events to the process.
   override fun resize(size: TermSize) = Unit
 
   override fun dispose() {
