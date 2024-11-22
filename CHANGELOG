@@ -1,3 +1,19 @@
+v2024.11.19
+===========
+Features:
+* Bazel Icon for Plugin Logo #6973
+* Query Sync: "Enable analysis" widget for Remote Development #6996
+* Starlark Debuger: Gutter icons to start debugging #6999
+Fixes:
+* C++: Do not collide with CMake #6770
+* Make the BlazeImportProjectAction dumb aware #6985
+* Query Sync: Fix NPE when enabling analysis for a directory #6992
+* Bazel 8 support for Java (#6987 and #7006)
+* Exception in the new QuerySyncNotificationProvider #7009
+* fix(qsync): Fix build_dependencies after AOSP merge #7027
+* disable warmup service #7029
+* fix(qsync): NPE in QuerySyncNotificationProvider #7032
+
 v2024.11.05
 ===========
 Features:
