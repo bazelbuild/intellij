@@ -9,6 +9,10 @@ Fixes:
 * Make the BlazeImportProjectAction dumb aware #6985
 * Query Sync: Fix NPE when enabling analysis for a directory #6992
 * Bazel 8 support for Java (#6987 and #7006)
+* Exception in the new QuerySyncNotificationProvider #7009
+* fix(qsync): Fix build_dependencies after AOSP merge #7027
+* disable warmup service #7029
+* fix(qsync): NPE in QuerySyncNotificationProvider #7032
 
 v2024.11.05
 ===========
