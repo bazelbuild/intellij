@@ -81,7 +81,8 @@ public class BuildFile extends PsiFileBase implements BuildElement, DocStringOwn
     if (fileName.startsWith("WORKSPACE")) {
       return BlazeFileType.Workspace;
     }
-    if (fileName.equals("MODULE.bazel")) {
+    // Files included in a MODULE.bazel must end with '.MODULE.bazel'
+    if (fileName.equals("MODULE.bazel") || fileName.endsWith(".MODULE.bazel") {
       return BlazeFileType.MODULE;
     }
     return BlazeFileType.SkylarkExtension;
