@@ -47,13 +47,13 @@ class PtyConsoleView(project: Project) : ExecutionConsole {
    */
   fun write(text: String) {
     // trim redundant whitespace at the end
-    var text = text.trimEnd()
+    var adjustedText = text.trimEnd()
     // fix line separators for the pty terminal
-    text = StringUtil.convertLineSeparators(text, CLRF)
+    adjustedText = StringUtil.convertLineSeparators(adjustedText, CLRF)
     // add newline to terminate last line
-    text = text + CLRF
+    adjustedText = adjustedText + CLRF
 
-    append(text)
+    append(adjustedText)
   }
 
   /**
