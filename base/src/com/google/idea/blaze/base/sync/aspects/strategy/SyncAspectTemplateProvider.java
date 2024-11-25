@@ -56,6 +56,15 @@ public class SyncAspectTemplateProvider implements SyncListener {
     prepareProjectAspect(project);
   }
 
+  @Override
+  public void onQuerySyncStart(Project project, BlazeContext context) {
+      try {
+          prepareProjectAspect(project);
+      } catch (SyncFailedException e) {
+          throw new RuntimeException(e);
+      }
+  }
+
   private void prepareProjectAspect(Project project) throws SyncFailedException {
     var manager = BlazeProjectDataManager.getInstance(project);
 
@@ -112,7 +121,7 @@ public class SyncAspectTemplateProvider implements SyncListener {
           Path realizedAspectsPath,
           File templateAspects,
           Project project) throws SyncFailedException {
-    var templateLanguageStringMap = getLanguageStringMap(manager, project);
+    var templateLanguageStringMap = getLanguageStringMap(manager);
     writeLanguageInfo(manager, realizedAspectsPath, templateAspects, TEMPLATE_JAVA, REALIZED_JAVA, templateLanguageStringMap);
     writeLanguageInfo(manager, realizedAspectsPath, templateAspects, TEMPLATE_PYTHON, REALIZED_PYTHON, templateLanguageStringMap);
   }
@@ -131,16 +140,18 @@ public class SyncAspectTemplateProvider implements SyncListener {
     }
   }
 
-  private static @NotNull Map<String, String> getLanguageStringMap(BlazeProjectDataManager manager, Project project) {
-    var projectData = Optional.ofNullable(manager.getBlazeProjectData()); // It can be empty on intial sync. Fall back to no lauguage support
-    var blazeProjectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+  private static @NotNull Map<String, String> getLanguageStringMap(BlazeProjectDataManager manager) {
+    var projectData = Optional.ofNullable(manager.getBlazeProjectData()); // It can be empty on intial sync. Fall back to no language support
     var activeLanguages = projectData.map(it -> it.getWorkspaceLanguageSettings().getActiveLanguages()).orElse(ImmutableSet.of());
-    var isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA)
-            && blazeProjectData != null
-            && blazeProjectData.getExternalWorkspaceData().getByRepoName("rules_java") != null;
-    var isPythonEnabled = activeLanguages.contains(LanguageClass.PYTHON)
-            && blazeProjectData != null
-            && blazeProjectData.getExternalWorkspaceData().getByRepoName("rules_python") != null;
+//    var externalWorkspaceData = projectData.map(BlazeProjectData::getExternalWorkspaceData).orElse(null);
+    var isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA);
+    // TODO: need to cater for QS mode, where [getExternalWorkspaceData] is not available before uncommenting this part
+//            && externalWorkspaceData != null
+//            && externalWorkspaceData.getByRepoName("rules_java") != null;
+    var isPythonEnabled = activeLanguages.contains(LanguageClass.PYTHON);
+    // TODO: need to cater for QS mode, where [getExternalWorkspaceData] is not available before uncommenting this part
+//            && externalWorkspaceData != null
+//            && externalWorkspaceData.getByRepoName("rules_python") != null;
     var isAtLeastBazel8 = projectData.map(it -> it.getBlazeVersionData().bazelIsAtLeastVersion(8, 0, 0)).orElse(false);
     return Map.of(
             "bazel8OrAbove", isAtLeastBazel8 ? "true" : "false",
