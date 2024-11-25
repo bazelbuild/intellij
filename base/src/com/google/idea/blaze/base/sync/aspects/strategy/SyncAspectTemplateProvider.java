@@ -146,11 +146,11 @@ public class SyncAspectTemplateProvider implements SyncListener {
     // TODO: adapt the logic to query sync
     boolean isQuerySync = projectData.map(BlazeProjectData::isQuerySync).orElse(false);
     var externalWorkspaceData = isQuerySync ? null : projectData.map(BlazeProjectData::getExternalWorkspaceData).orElse(null);
-    var isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA) &&
-            (isQuerySync || (externalWorkspaceData != null && externalWorkspaceData.getByRepoName("rules_java") != null));
-    var isPythonEnabled = activeLanguages.contains(LanguageClass.PYTHON) &&
-            (isQuerySync || (externalWorkspaceData != null && externalWorkspaceData.getByRepoName("rules_python") != null));
     var isAtLeastBazel8 = projectData.map(it -> it.getBlazeVersionData().bazelIsAtLeastVersion(8, 0, 0)).orElse(false);
+    var isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA) &&
+            (isQuerySync || (externalWorkspaceData != null && (!isAtLeastBazel8 || externalWorkspaceData.getByRepoName("rules_java") != null)));
+    var isPythonEnabled = activeLanguages.contains(LanguageClass.PYTHON) &&
+            (isQuerySync || (externalWorkspaceData != null && (!isAtLeastBazel8 || externalWorkspaceData.getByRepoName("rules_python") != null)));
     return Map.of(
             "bazel8OrAbove", isAtLeastBazel8 ? "true" : "false",
             "isJavaEnabled", isJavaEnabled ? "true" : "false",
