@@ -545,6 +545,8 @@ def _collect_own_java_artifacts(
                     if not (DependenciesInfo in src and src[DependenciesInfo].expand_sources):
                         for file in src.files.to_list():
                             if not file.is_source:
+                                own_jars = [jo.class_jar for jo in target[JavaInfo].java_outputs]
+                                own_jar_files.extend(own_jars)
                                 own_gensrc_files.append(file)
 
     if not target_is_within_project_scope:
