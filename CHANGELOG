@@ -1,5 +1,5 @@
-v2024.11.05.1
-===========
+v2024.11.05.0.2
+===============
 Fixes:
 * Don't require rules_java and rules_python for bazel 7 and older (#7052)
 * Fix issues with aspect templates not available in query sync mode (#7048)
