@@ -14,4 +14,3 @@ common --noincompatible_disallow_empty_glob
 # Required for CLion integration tests on windows
 startup --windows_enable_symlinks
 build --enable_runfiles
-# common --incompatible_use_plus_in_repo_names # reenable after this is fixed https://github.com/protocolbuffers/protobuf/issues/18546
