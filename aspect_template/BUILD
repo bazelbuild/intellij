@@ -7,6 +7,8 @@ filegroup(
         "code_generator_info.template.bzl",
         "java_info.bzl",
         "java_info.template.bzl",
+        "python_info.bzl",
+        "python_info.template.bzl"
     ],
     visibility = ["//visibility:public"],
 )
@@ -20,6 +22,13 @@ genrule(
     name = "generate_java_info_template",
     srcs = ["java_info.bzl"],
     outs = ["java_info.template.bzl"],
+    cmd = STRIP_TEMPLATE_SCRIPT,
+)
+
+genrule(
+    name = "generate_py_info_template",
+    srcs = ["python_info.bzl"],
+    outs = ["python_info.template.bzl"],
     cmd = STRIP_TEMPLATE_SCRIPT,
 )
 

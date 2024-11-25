@@ -46,12 +46,23 @@ public class SyncAspectTemplateProvider implements SyncListener {
 
   private final static String TEMPLATE_JAVA = "java_info.template.bzl";
   private final static String REALIZED_JAVA = "java_info.bzl";
+  private final static String TEMPLATE_PYTHON = "python_info.template.bzl";
+  private final static String REALIZED_PYTHON = "python_info.bzl";
   private final static String TEMPLATE_CODE_GENERATOR = "code_generator_info.template.bzl";
   private final static String REALIZED_CODE_GENERATOR = "code_generator_info.bzl";
 
   @Override
   public void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) throws SyncFailedException {
     prepareProjectAspect(project);
+  }
+
+  @Override
+  public void onQuerySyncStart(Project project, BlazeContext context) {
+      try {
+          prepareProjectAspect(project);
+      } catch (SyncFailedException e) {
+          throw new RuntimeException(e);
+      }
   }
 
   private void prepareProjectAspect(Project project) throws SyncFailedException {
@@ -77,7 +88,7 @@ public class SyncAspectTemplateProvider implements SyncListener {
     final var templateAspects = AspectRepositoryProvider.findAspectTemplateDirectory()
             .orElseThrow(() -> new SyncFailedException("Couldn't find aspect template directory"));
 
-    writeJavaInfo(manager, realizedAspectsPath, templateAspects);
+    writeLanguageInfos(manager, realizedAspectsPath, templateAspects, project);
     writeCodeGeneratorInfo(manager, project, realizedAspectsPath, templateAspects);
   }
 
@@ -105,26 +116,46 @@ public class SyncAspectTemplateProvider implements SyncListener {
     }
   }
 
-  private void writeJavaInfo(
-      BlazeProjectDataManager manager,
-      Path realizedAspectsPath,
-      File templateAspects) throws SyncFailedException {
-    var realizedFile = realizedAspectsPath.resolve(REALIZED_JAVA);
+  private void writeLanguageInfos(
+          BlazeProjectDataManager manager,
+          Path realizedAspectsPath,
+          File templateAspects,
+          Project project) throws SyncFailedException {
+    var templateLanguageStringMap = getLanguageStringMap(manager);
+    writeLanguageInfo(manager, realizedAspectsPath, templateAspects, TEMPLATE_JAVA, REALIZED_JAVA, templateLanguageStringMap);
+    writeLanguageInfo(manager, realizedAspectsPath, templateAspects, TEMPLATE_PYTHON, REALIZED_PYTHON, templateLanguageStringMap);
+  }
+
+  private void writeLanguageInfo(
+          BlazeProjectDataManager manager,
+          Path realizedAspectsPath,
+          File templateAspects,
+          String templateFileName,
+          String realizedFileName,
+          Map<String, String> templateLanguageStringMap) throws SyncFailedException {
+    var realizedFile = realizedAspectsPath.resolve(realizedFileName);
     var templateWriter = new TemplateWriter(templateAspects.toPath());
-    var templateVariableMap = getJavaStringStringMap(manager);
-    if (!templateWriter.writeToFile(TEMPLATE_JAVA, realizedFile, templateVariableMap)) {
-      throw new SyncFailedException("Could not create template for: " + REALIZED_JAVA);
+    if (!templateWriter.writeToFile(templateFileName, realizedFile, templateLanguageStringMap)) {
+      throw new SyncFailedException("Could not create template for: " + realizedFileName);
     }
   }
 
-  private static @NotNull Map<String, String> getJavaStringStringMap(BlazeProjectDataManager manager) {
-    var projectData = Optional.ofNullable(manager.getBlazeProjectData()); // It can be empty on intial sync. Fall back to no lauguage support
+  private static @NotNull Map<String, String> getLanguageStringMap(BlazeProjectDataManager manager) {
+    var projectData = Optional.ofNullable(manager.getBlazeProjectData()); // It can be empty on intial sync. Fall back to no language support
     var activeLanguages = projectData.map(it -> it.getWorkspaceLanguageSettings().getActiveLanguages()).orElse(ImmutableSet.of());
+    // TODO: adapt the logic to query sync
+    boolean isQuerySync = projectData.map(BlazeProjectData::isQuerySync).orElse(false);
+    var externalWorkspaceData = isQuerySync ? null : projectData.map(BlazeProjectData::getExternalWorkspaceData).orElse(null);
     var isAtLeastBazel8 = projectData.map(it -> it.getBlazeVersionData().bazelIsAtLeastVersion(8, 0, 0)).orElse(false);
-      return Map.of(
-              "bazel8OrAbove", isAtLeastBazel8 ? "true" : "false",
-              "isJavaEnabled", activeLanguages.contains(LanguageClass.JAVA) || activeLanguages.contains(LanguageClass.GENERIC) ? "true" : "false"
-      );
+    var isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA) &&
+            (isQuerySync || (externalWorkspaceData != null && (!isAtLeastBazel8 || externalWorkspaceData.getByRepoName("rules_java") != null)));
+    var isPythonEnabled = activeLanguages.contains(LanguageClass.PYTHON) &&
+            (isQuerySync || (externalWorkspaceData != null && (!isAtLeastBazel8 || externalWorkspaceData.getByRepoName("rules_python") != null)));
+    return Map.of(
+            "bazel8OrAbove", isAtLeastBazel8 ? "true" : "false",
+            "isJavaEnabled", isJavaEnabled ? "true" : "false",
+            "isPythonEnabled", isPythonEnabled ? "true" : "false"
+    );
   }
 
   private static List<String> ruleNamesForLanguageClass(LanguageClass languageClass, ProjectViewSet viewSet) {
