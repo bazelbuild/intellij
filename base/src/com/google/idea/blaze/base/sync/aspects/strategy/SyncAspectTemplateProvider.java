@@ -143,15 +143,13 @@ public class SyncAspectTemplateProvider implements SyncListener {
   private static @NotNull Map<String, String> getLanguageStringMap(BlazeProjectDataManager manager) {
     var projectData = Optional.ofNullable(manager.getBlazeProjectData()); // It can be empty on intial sync. Fall back to no language support
     var activeLanguages = projectData.map(it -> it.getWorkspaceLanguageSettings().getActiveLanguages()).orElse(ImmutableSet.of());
-//    var externalWorkspaceData = projectData.map(BlazeProjectData::getExternalWorkspaceData).orElse(null);
-    var isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA);
-    // TODO: need to cater for QS mode, where [getExternalWorkspaceData] is not available before uncommenting this part
-//            && externalWorkspaceData != null
-//            && externalWorkspaceData.getByRepoName("rules_java") != null;
-    var isPythonEnabled = activeLanguages.contains(LanguageClass.PYTHON);
-    // TODO: need to cater for QS mode, where [getExternalWorkspaceData] is not available before uncommenting this part
-//            && externalWorkspaceData != null
-//            && externalWorkspaceData.getByRepoName("rules_python") != null;
+    // TODO: adapt the logic to query sync
+    boolean isQuerySync = projectData.map(BlazeProjectData::isQuerySync).orElse(false);
+    var externalWorkspaceData = isQuerySync ? null : projectData.map(BlazeProjectData::getExternalWorkspaceData).orElse(null);
+    var isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA) &&
+            (isQuerySync || (externalWorkspaceData != null && externalWorkspaceData.getByRepoName("rules_java") != null));
+    var isPythonEnabled = activeLanguages.contains(LanguageClass.PYTHON) &&
+            (isQuerySync || (externalWorkspaceData != null && externalWorkspaceData.getByRepoName("rules_python") != null));
     var isAtLeastBazel8 = projectData.map(it -> it.getBlazeVersionData().bazelIsAtLeastVersion(8, 0, 0)).orElse(false);
     return Map.of(
             "bazel8OrAbove", isAtLeastBazel8 ? "true" : "false",
