@@ -32,10 +32,16 @@ licenses(["notice"])
 
 intellij_plugin_library(
     name = "plugin_library",
-    optional_plugin_xmls = ["optional_clwb_oclang"],
+    optional_plugin_xmls = [
+        "optional_clwb_oclang",
+        "//clwb/src/com/google/idea/blaze/clwb/radler:plugin_xml",
+    ],
     plugin_xmls = ["src/META-INF/clwb.xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
-    deps = [":clwb_lib"],
+    deps = [
+        ":clwb_lib",
+        "//clwb/src/com/google/idea/blaze/clwb/radler:lib",
+    ],
 )
 
 optional_plugin_xml(
@@ -60,6 +66,7 @@ stamped_plugin_xml(
 java_library(
     name = "clwb_lib",
     srcs = glob(["src/**/*.java"]),
+    visibility = ["//clwb:__subpackages__"],
     deps = [
         "//base",
         "//common/actions",
