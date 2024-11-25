@@ -119,6 +119,16 @@ genquery(
 )
 
 genquery(
+    name = "workspacerootincluded_query",
+    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/workspacerootincluded:*",
+    opts = ["--output=streamed_proto"],
+    scope =
+        scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/workspacerootincluded:workspacerootincluded") + [
+            "//querysync/javatests/com/google/idea/blaze/qsync/testdata/workspacerootincluded:java_info",
+        ],
+)
+
+genquery(
     name = "filegroup_query",
     expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/filegroup:*",
     opts = ["--output=streamed_proto"],
@@ -186,6 +196,7 @@ java_library(
         ":java_library_transitive_dep_query",
         ":java_library_transitive_internal_dep_query",
         ":tags_query",
+        ":workspacerootincluded_query",
     ],
     deps = [
         "//shared",
@@ -230,6 +241,7 @@ java_library(
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata/externaldep:java_info",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata/externalexports:java_info",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata/internaldep:java_info",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata/workspacerootincluded:java_info",
     ],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/java:java_target_info_java_proto",
