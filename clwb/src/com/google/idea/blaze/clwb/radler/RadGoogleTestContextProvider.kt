@@ -29,6 +29,7 @@ import com.google.idea.blaze.cpp.CppBlazeRules.RuleTypes
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.util.asSafely
 import com.jetbrains.cidr.radler.testing.RadTestPsiElement
+import com.jetbrains.rider.model.RadTestElementModel
 import com.jetbrains.rider.model.RadTestFramework
 import org.jetbrains.ide.PooledThreadExecutor
 import java.io.File
@@ -48,6 +49,7 @@ class RadGoogleTestContextProvider : TestContextProvider {
 
     return TestContext.builder(psiElement, ExecutorType.DEBUG_SUPPORTED_TYPES)
       .setTarget(target)
+      .setTestFilter(createTestFilter(psiElement.test))
       .build()
   }
 }
@@ -75,4 +77,11 @@ private fun chooseTargetForFile(context: ConfigurationContext, targets: Collecti
     ccTargets,
     null,
   )
+}
+
+private fun createTestFilter(test: RadTestElementModel): String? {
+  val suite = test.suites?.firstOrNull() ?: "*"
+  val name = test.test ?: "*"
+
+  return "$suite.$name"
 }
