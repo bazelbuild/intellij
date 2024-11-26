@@ -53,6 +53,7 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata:build_graphs",
+        "//shared/java/com/google/idea/blaze/common",
         "//third_party/java/junit",
         "//third_party/java/truth",
         "@com_google_guava_guava//jar",

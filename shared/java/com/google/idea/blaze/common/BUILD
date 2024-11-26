@@ -5,7 +5,10 @@ licenses(["notice"])
 java_library(
     name = "common",
     srcs = glob(["*.java"]),
-    visibility = ["//shared:__subpackages__"],
+    visibility = [
+        "//querysync/javatests/com/google/idea/blaze/qsync:__subpackages__",
+        "//shared:__subpackages__",
+    ],
     deps = [
         "@jsr305_annotations//jar",
         "//third_party/java/auto_value",

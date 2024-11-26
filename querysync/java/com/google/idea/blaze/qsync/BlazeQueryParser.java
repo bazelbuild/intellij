@@ -139,8 +139,7 @@ public class BlazeQueryParser {
         query.getSourceFilesMap().entrySet()) {
       if (sourceFileEntry.getKey().getWorkspaceName().isEmpty()) {
         graphBuilder
-            .locationsBuilder()
-            .put(sourceFileEntry.getKey(), new Location(sourceFileEntry.getValue().getLocation()));
+            .sourceFileLabelsBuilder().add(sourceFileEntry.getKey());
       } else {
         context.output(
             new PrintOutput(
@@ -194,7 +193,7 @@ public class BlazeQueryParser {
 
     BuildGraphData graph = graphBuilder.projectDeps(projectDeps).build();
 
-    context.output(PrintOutput.log("%-10d Source files", graph.locations().size()));
+    context.output(PrintOutput.log("%-10d Source files", graph.sourceFileLabels().size()));
     context.output(PrintOutput.log("%-10d Java sources", graph.javaSources().size()));
     context.output(PrintOutput.log("%-10d Packages", graph.packages().size()));
     context.output(PrintOutput.log("%-10d Dependencies", javaDeps.size()));
