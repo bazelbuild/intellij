@@ -32,8 +32,10 @@ config_setting(
 
 config_setting(
     name = "intellij-latest-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=intellij-latest",
     },
 )
@@ -47,8 +49,10 @@ config_setting(
 
 config_setting(
     name = "intellij-ue-latest-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=intellij-ue-latest",
     },
 )
@@ -132,8 +136,10 @@ config_setting(
 
 config_setting(
     name = "intellij-2021.3-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=intellij-2021.3",
     },
 )
@@ -147,8 +153,10 @@ config_setting(
 
 config_setting(
     name = "intellij-2022.1-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=intellij-2022.1",
     },
 )
@@ -162,8 +170,10 @@ config_setting(
 
 config_setting(
     name = "intellij-2022.2-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=intellij-2022.2",
     },
 )
@@ -177,8 +187,10 @@ config_setting(
 
 config_setting(
     name = "intellij-2022.3-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=intellij-2022.3",
     },
 )
@@ -192,8 +204,10 @@ config_setting(
 
 config_setting(
     name = "intellij-ue-2021.3-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=intellij-ue-2021.3",
     },
 )
@@ -207,8 +221,10 @@ config_setting(
 
 config_setting(
     name = "intellij-ue-2022.1-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=intellij-ue-2022.1",
     },
 )
@@ -222,8 +238,10 @@ config_setting(
 
 config_setting(
     name = "intellij-ue-2022.2-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=intellij-ue-2022.2",
     },
 )
@@ -237,8 +255,10 @@ config_setting(
 
 config_setting(
     name = "intellij-ue-2022.3-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=intellij-ue-2022.3",
     },
 )
@@ -252,8 +272,10 @@ config_setting(
 
 config_setting(
     name = "android-studio-latest-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-latest",
     },
 )
@@ -267,8 +289,10 @@ config_setting(
 
 config_setting(
     name = "android-studio-beta-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-beta",
     },
 )
@@ -289,8 +313,10 @@ config_setting(
 
 config_setting(
     name = "android-studio-canary-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-canary",
     },
 )
@@ -325,8 +351,10 @@ config_setting(
 
 config_setting(
     name = "android-studio-2022.2-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-2022.2",
     },
 )
@@ -340,8 +368,10 @@ config_setting(
 
 config_setting(
     name = "android-studio-2022.3-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-2022.3",
     },
 )
@@ -355,8 +385,10 @@ config_setting(
 
 config_setting(
     name = "android-studio-2023.1-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-2023.1",
     },
 )
@@ -377,16 +409,20 @@ config_setting(
 
 config_setting(
     name = "android-studio-2023.2-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-2023.2",
     },
 )
 
 config_setting(
     name = "android-studio-2023.3-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-2023.3",
     },
 )
@@ -421,8 +457,10 @@ config_setting(
 
 config_setting(
     name = "clion-latest-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=clion-latest",
     },
 )
@@ -450,8 +488,10 @@ config_setting(
 
 config_setting(
     name = "clion-2021.3-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=clion-2021.3",
     },
 )
@@ -465,8 +505,10 @@ config_setting(
 
 config_setting(
     name = "clion-2022.1-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=clion-2022.1",
     },
 )
@@ -480,8 +522,10 @@ config_setting(
 
 config_setting(
     name = "clion-2022.2-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=clion-2022.2",
     },
 )
@@ -495,8 +539,10 @@ config_setting(
 
 config_setting(
     name = "clion-2022.3-mac",
+    constraint_values = [
+        "@platforms//os:macos",
+    ],
     values = {
-        "cpu": "darwin_x86_64",
         "define": "ij_product=clion-2022.3",
     },
 )
