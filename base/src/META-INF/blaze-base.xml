@@ -236,6 +236,7 @@
     <postStartupActivity implementation="com.google.idea.blaze.base.prefetch.PrefetchProjectInitializer" />
     <postStartupActivity implementation="com.google.idea.blaze.base.project.OpenProjectViewStartupActivity"/>
     <moduleRendererFactory implementation="com.google.idea.blaze.base.ui.BlazeModuleRendererFactory" order="first"/>
+    <pluginReplacement implementation="com.google.idea.blaze.base.plugin.NewBazelPluginReplacement"/>
 
 
     <toolWindow id="Blaze"
