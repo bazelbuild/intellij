@@ -6,7 +6,8 @@ tasks:
     build_flags:
       - --define=ij_product=clion-oss-oldest-stable
     build_targets:
-      - //clwb/...
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
     test_flags:
       - --define=ij_product=clion-oss-oldest-stable
       - --test_output=errors
@@ -18,7 +19,8 @@ tasks:
     build_flags:
       - --define=ij_product=clion-oss-latest-stable
     build_targets:
-      - //clwb/...
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
     test_flags:
       - --define=ij_product=clion-oss-latest-stable
       - --test_output=errors
@@ -30,7 +32,8 @@ tasks:
     build_flags:
       - --define=ij_product=clion-oss-oldest-stable
     build_targets:
-      - //clwb/...
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
     test_flags:
       - --define=ij_product=clion-oss-oldest-stable
       - --test_output=errors
@@ -42,7 +45,8 @@ tasks:
     build_flags:
       - --define=ij_product=clion-oss-latest-stable
     build_targets:
-      - //clwb/...
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
     test_flags:
       - --define=ij_product=clion-oss-latest-stable
       - --test_output=errors
@@ -54,7 +58,8 @@ tasks:
     build_flags:
       - --define=ij_product=clion-oss-oldest-stable
     build_targets:
-      - //clwb/...
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
     test_flags:
       - --define=ij_product=clion-oss-oldest-stable
       - --test_output=errors
@@ -66,7 +71,8 @@ tasks:
     build_flags:
       - --define=ij_product=clion-oss-latest-stable
     build_targets:
-      - //clwb/...
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
     test_flags:
       - --define=ij_product=clion-oss-latest-stable
       - --test_output=errors
@@ -78,7 +84,8 @@ tasks:
     build_flags:
       - --define=ij_product=clion-oss-under-dev
     build_targets:
-      - //clwb/...
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
     test_flags:
       - --define=ij_product=clion-oss-under-dev
       - --test_output=errors
@@ -92,7 +99,8 @@ tasks:
     build_flags:
       - --define=ij_product=clion-oss-under-dev
     build_targets:
-      - //clwb/...
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
     test_flags:
       - --define=ij_product=clion-oss-under-dev
       - --test_output=errors
@@ -106,7 +114,8 @@ tasks:
     build_flags:
       - --define=ij_product=clion-oss-under-dev
     build_targets:
-      - //clwb/...
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
     test_flags:
       - --define=ij_product=clion-oss-under-dev
       - --test_output=errors
