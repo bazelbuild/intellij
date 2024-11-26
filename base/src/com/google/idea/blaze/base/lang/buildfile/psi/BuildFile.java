@@ -82,7 +82,7 @@ public class BuildFile extends PsiFileBase implements BuildElement, DocStringOwn
       return BlazeFileType.Workspace;
     }
     // Files included in a MODULE.bazel must end with '.MODULE.bazel'
-    if (fileName.equals("MODULE.bazel") || fileName.endsWith(".MODULE.bazel") {
+    if ((fileName.equals("MODULE.bazel") || fileName.endsWith(".MODULE.bazel")) {
       return BlazeFileType.MODULE;
     }
     return BlazeFileType.SkylarkExtension;
