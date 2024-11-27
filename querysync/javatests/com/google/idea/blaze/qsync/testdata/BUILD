@@ -191,6 +191,7 @@ genquery(
 
 java_library(
     name = "testdata",
+    testonly = 1,
     srcs = ["TestData.java"],
     data = [
         ":android_aidl_source_query",
