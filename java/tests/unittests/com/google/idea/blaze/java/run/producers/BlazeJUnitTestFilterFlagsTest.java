@@ -44,7 +44,7 @@ public class BlazeJUnitTestFilterFlagsTest extends BlazeTestCase {
     assertThat(
         BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(
             "com.google.idea.ClassName", JUnitVersion.JUNIT_5, ImmutableList.of(), null))
-        .isEqualTo("com.google.idea.ClassName#");
+        .isEqualTo("com.google.idea.ClassName");
   }
 
   @Test
@@ -82,7 +82,7 @@ public class BlazeJUnitTestFilterFlagsTest extends BlazeTestCase {
                     JUnitVersion.JUNIT_5,
                     ImmutableList.of(),
                     ParameterizedTestInfo.create("ignored", "-ignored")))
-            .isEqualTo("com.google.idea.ClassName#");
+            .isEqualTo("com.google.idea.ClassName");
   }
 
   @Test
