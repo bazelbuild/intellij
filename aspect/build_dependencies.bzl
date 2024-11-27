@@ -530,6 +530,17 @@ def _collect_own_java_artifacts(
                     own_gensrc_files.append(java_output.generated_source_jar)
                 elif java_output.generated_class_jar:
                     generated_class_jars.append(java_output.generated_class_jar)
+                else:
+                    for src_attr in JVM_SRC_ATTRS:
+                        # unfortunately, in cases where we have non-cource
+                        # src attribute, we had to add full output jar
+                        # to avoid red code
+                        # We would need jar filtering to handle it well
+                        if hasattr(rule.attr, src_attr):
+                            for src in getattr(rule.attr, src_attr):
+                                for file in src.files.to_list():
+                                    if not file.is_source:
+                                        generated_class_jars.append(java_output.class_jar)
 
         if generated_class_jars:
             own_jar_files += generated_class_jars
