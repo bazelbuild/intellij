@@ -1,5 +1,5 @@
-load("@bazel_tools//tools/build_defs/repo:jvm.bzl", "jvm_maven_import_external")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:jvm.bzl", "jvm_maven_import_external")
 
 jvm_maven_import_external(
     name = "junit",
@@ -16,9 +16,9 @@ load("//:junit5_deps.bzl", "instantiate_junit5_deps")
 instantiate_junit5_deps()
 
 # `contrib_rules_jvm` gives us access to `java_test_suite` and the JUnit5 runner.
-CONTRIB_RULES_JVM_VERSION = "0.9.0"
+CONTRIB_RULES_JVM_VERSION = "0.27.0"
 
-CONTRIB_RULES_JVM_SHA = "548f0583192ff79c317789b03b882a7be9b1325eb5d3da5d7fdcc4b7ca69d543"
+CONTRIB_RULES_JVM_SHA = "e6cd8f54b7491fb3caea1e78c2c740b88c73c7a43150ec8a826ae347cc332fc7"
 
 http_archive(
     name = "contrib_rules_jvm",
