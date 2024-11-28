@@ -1,3 +1,8 @@
+v2024.11.05.0.3
+===============
+Fixes:
+* fix: Disable Query Sync promo for now (#7075)
+
 v2024.11.05.0.2
 ===============
 Fixes:
