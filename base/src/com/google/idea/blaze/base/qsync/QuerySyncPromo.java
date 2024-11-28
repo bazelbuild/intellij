@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 public class QuerySyncPromo {
 
   private static final IntExperiment PROMO_DISPLAY_DELAY_MINUTES =
-      new IntExperiment("query.sync.promo.delay.minutes", 5);
+      new IntExperiment("query.sync.promo.delay.minutes", 0);
 
   private final Project project;
   private final QuerySyncManager querySyncManager;
