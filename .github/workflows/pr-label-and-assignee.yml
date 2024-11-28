@@ -38,10 +38,10 @@ jobs:
             const assignees = [];
             const labelsToAssignees = {
               'product: CLion': ['ujohnny'],
-              'product: IntelliJ': ['mai93'],
-              'product: GoLand': ['tpasternak'],
+              'product: IntelliJ': ['agluszak'],
+              'product: GoLand': ['alievilshat'],
               'product: Android Studio': ['mai93'],
-              'product: PyCharm': ['mai93']
+              'product: PyCharm': ['agluszak']
             };
             for (const label of labels) {
               if (label in labelsToAssignees) {
