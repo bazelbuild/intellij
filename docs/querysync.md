@@ -1,4 +1,4 @@
-# Speeding up Project Import and Re-Sync with Query Sync
+# (experimental) Speeding up Project Import and Re-Sync with Query Sync
 
 We are excited to introduce **Query Sync**, a new mode in the Bazel Plugin for IntelliJ, designed to significantly enhance your development experience. 
 Currently it is enabled for Java, Kotlin and C++
