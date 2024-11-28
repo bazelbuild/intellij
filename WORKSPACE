@@ -349,6 +349,14 @@ http_archive(
     url = "https://dl.google.com/dl/android/studio/ide-zips/2022.3.1.19/android-studio-2022.3.1.19-linux.tar.gz",
 )
 
+http_archive(
+    name = "rules_java",
+    urls = [
+        "https://github.com/bazelbuild/rules_java/releases/download/8.5.1/rules_java-8.5.1.tar.gz",
+    ],
+    sha256 = "1389206b2208c5f33a05dd96e51715b0855c480c082b7bb4889a8e07fcff536c",
+)
+
 _protobuf_version = "29.0-rc1"
 
 _protobuf_sha256 = "32247eed6fa8c9792d2667b9fb306e8403736097226b478711d7f3bfece6fbda"
@@ -360,18 +368,13 @@ http_archive(
     urls = ["https://github.com/protocolbuffers/protobuf/archive/v%s.tar.gz" % _protobuf_version],
 )
 
+load("@rules_java//java:rules_java_deps.bzl", "rules_java_dependencies")
+rules_java_dependencies()
+
 load("@protobuf//:protobuf_deps.bzl", "protobuf_deps")
 protobuf_deps()
 
-http_archive(
-    name = "rules_java",
-    urls = [
-        "https://github.com/bazelbuild/rules_java/releases/download/7.10.0/rules_java-7.10.0.tar.gz",
-    ],
-    sha256 = "eb5447f019734b0c4284eaa5f8248415084da5445ba8201c935a211ab8af43a0",
-)
-load("@rules_java//java:repositories.bzl", "rules_java_dependencies", "rules_java_toolchains")
-rules_java_dependencies()
+load("@rules_java//java:repositories.bzl", "rules_java_toolchains")
 rules_java_toolchains()
 
 # LICENSE: Common Public License 1.0
