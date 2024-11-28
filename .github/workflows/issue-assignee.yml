@@ -37,10 +37,10 @@ jobs:
               })).data.map(label => label.name);
             const labelToAssignees = {
               'product: CLion': ['ujohnny'],
-              'product: IntelliJ': ['mai93'],
-              'product: GoLand': ['tpasternak'],
+              'product: IntelliJ': ['agluszak'],
+              'product: GoLand': ['iliakondratev'],
               'product: Android Studio': ['mai93'],
-              'product: PyCharm': ['mai93']
+              'product: PyCharm': ['agluszak']
               };
             const assignees = labels.some(label => label.startsWith('product:'))
               ? labels.reduce((acc, label) => {
