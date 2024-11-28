@@ -7,6 +7,6 @@ java_library(
     deps = [
         "//shared/java/com/google/idea/blaze/common",
         "@com_google_guava_guava//jar",
-        "@protobuf//:protobuf_java",
+        "@com_google_protobuf//:protobuf_java",
     ],
 )

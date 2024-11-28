@@ -16,7 +16,7 @@ java_binary(
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//shared",
         "@com_google_guava_guava//jar",
-        "@protobuf//:protobuf_java",
+        "@com_google_protobuf//:protobuf_java",
     ],
 )
 
