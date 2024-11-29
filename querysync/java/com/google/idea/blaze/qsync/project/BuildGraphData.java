@@ -148,7 +148,7 @@ public abstract class BuildGraphData {
   @Memoized
   public DepsGraph<Label> depsGraph() {
     DepsGraph.Builder<Label> builder = new DepsGraph.Builder<>();
-    targetMap().values().stream().forEach(target -> builder.add(target.label(), target.deps()));
+    targetMap().values().stream().forEach(target -> builder.add(target.label(),ImmutableSet.<Label>builder().addAll(target.deps()).addAll(target.runtimeDeps()).build()));
     return builder.build();
   }
 

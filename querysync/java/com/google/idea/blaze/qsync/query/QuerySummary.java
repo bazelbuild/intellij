@@ -115,6 +115,7 @@ public abstract class QuerySummary {
   // Runtime dependency attributes
   private static final ImmutableSet<String> RUNTIME_DEP_ATTRIBUTES =
       ImmutableSet.of(
+          "runtime_deps",
           // From android_binary rules used in android_instrumentation_tests
           "instruments",
           // From android_instrumentation_test rules
