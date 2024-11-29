@@ -25,13 +25,16 @@ import com.google.idea.blaze.base.run.TestTargetHeuristic
 import com.google.idea.blaze.base.run.producers.RunConfigurationContext
 import com.google.idea.blaze.base.run.producers.TestContext
 import com.google.idea.blaze.base.run.producers.TestContextProvider
+import com.google.idea.blaze.base.util.pluginProjectScope
 import com.google.idea.blaze.cpp.CppBlazeRules.RuleTypes
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.util.asSafely
 import com.jetbrains.cidr.radler.testing.RadTestPsiElement
 import com.jetbrains.rider.model.RadTestElementModel
 import com.jetbrains.rider.model.RadTestFramework
-import org.jetbrains.ide.PooledThreadExecutor
+import kotlinx.coroutines.async
+import kotlinx.coroutines.guava.await
+import kotlinx.coroutines.guava.asListenableFuture
 import java.io.File
 import java.util.*
 
@@ -44,8 +47,9 @@ class RadGoogleTestContextProvider : TestContextProvider {
       return null
     }
 
-    val targets = findTargets(context)
-    val target = Futures.transform(targets, { chooseTargetForFile(context, it) }, PooledThreadExecutor.INSTANCE)
+    val target = pluginProjectScope(context.project).async {
+      chooseTargetForFile(context, findTargets(context).await())
+    }.asListenableFuture()
 
     return TestContext.builder(psiElement, ExecutorType.DEBUG_SUPPORTED_TYPES)
       .setTarget(target)
