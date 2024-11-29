@@ -8,7 +8,7 @@ package(default_visibility = ["//clwb:__subpackages__"])
 optional_plugin_xml(
     name = "plugin_xml",
     module = ["org.jetbrains.plugins.clion.radler"],
-    plugin_xml = "plugin.xml",
+    plugin_xml = "optional-plugin.xml",
 )
 
 kt_jvm_library(
