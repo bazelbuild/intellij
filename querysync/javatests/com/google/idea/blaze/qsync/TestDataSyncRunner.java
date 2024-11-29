@@ -100,7 +100,7 @@ public class TestDataSyncRunner {
         return QuerySummary.newBuilder()
                 .putAllPackagesWithErrors(querySummary.getPackagesWithErrors())
                 .putAllSourceFiles(querySummary.getSourceFilesMap())
-                .putAllRules(newRulesMap)
+                .putAllRules(newRulesMap.values())
                 .build();
     }
 }
