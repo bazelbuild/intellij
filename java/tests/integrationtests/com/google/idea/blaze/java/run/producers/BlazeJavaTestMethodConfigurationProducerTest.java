@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags.JUnitVersion;
 import com.google.idea.blaze.base.run.producers.TestContextRunConfigurationProducer;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.java.utils.BlazeJUnitRunConfigurationProducerTestCase;
@@ -62,8 +63,9 @@ public class BlazeJavaTestMethodConfigurationProducerTest
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
     assertThat(config.getTargets())
         .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
+    String junit4Dollar = (jUnitVersionUnderTest == JUnitVersion.JUNIT_4 ? "$" : "");
     assertThat(getTestFilterContents(config))
-        .isEqualTo("--test_filter=com.google.test.TestClass#testMethod1$");
+        .isEqualTo("--test_filter=com.google.test.TestClass#testMethod1" + junit4Dollar);
     assertThat(config.getName()).isEqualTo("Bazel test TestClass.testMethod1");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
 
