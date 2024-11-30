@@ -30,7 +30,6 @@ public class BuildFlagsProviderImpl implements BuildFlagsProvider {
       BlazeCommandName command,
       BlazeInvocationContext invocationContext,
       List<String> flags) {
-    flags.add("--curses=no");
     // Colorer output is not readable in test logs.
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       flags.add("--color=yes");
