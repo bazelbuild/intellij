@@ -97,7 +97,7 @@ public class BlazeSyncManager {
 
   /** Requests a project sync with Blaze. */
   public void requestProjectSync(BlazeSyncParams syncParams) {
-    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
+    if (Blaze.getProjectTypeBeforeSync(project) == ProjectType.QUERY_SYNC) {
       throw new NotSupportedWithQuerySyncException("legacy sync requested");
     }
     if (syncParams.syncMode() == SyncMode.NO_BUILD
