@@ -24,6 +24,8 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
+import com.google.idea.blaze.base.buildview.BuildViewMigration;
+import com.google.idea.blaze.base.buildview.BuildViewScope;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
@@ -57,6 +59,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -359,30 +362,18 @@ public class QuerySyncManager implements Disposable {
     querySyncActionStatsScope.getBuilder().setTaskOrigin(taskOrigin);
     BlazeUserSettings userSettings = BlazeUserSettings.getInstance();
     return ProgressiveTaskWithProgressIndicator.builder(project, title)
+        .setModality(BuildViewMigration.progressModality())
         .submitTaskWithResult(
             indicator ->
                 Scope.root(
                     context -> {
-                      Task task = new Task(project, subTitle, Task.Type.SYNC);
-                      BlazeScope scope =
-                          new ToolWindowScope.Builder(project, task)
-                              .setProgressIndicator(indicator)
-                              .showSummaryOutput()
-                              .setPopupBehavior(
-                                  taskOrigin == TaskOrigin.AUTOMATIC
-                                      ? showWindowOnAutomaticSyncErrors.getValue()
-                                          ? FocusBehavior.ON_ERROR
-                                          : FocusBehavior.NEVER
-                                      : userSettings.getShowBlazeConsoleOnSync())
-                              .setIssueParsers(
-                                  BlazeIssueParser.defaultIssueParsers(
-                                      project,
-                                      WorkspaceRoot.fromProject(project),
-                                      ContextType.Sync))
-                              .build();
+                      if (BuildViewMigration.getEnabled()) {
+                        context.push(new BuildViewScope(project, title));
+                      }
+
                       context
                           .push(new ProgressIndicatorScope(indicator))
-                          .push(scope)
+                          .push(buildToolWindowsScope(subTitle, indicator, taskOrigin))
                           .push(querySyncActionStatsScope)
                           .push(
                               new ProblemsViewScope(
@@ -395,6 +386,27 @@ public class QuerySyncManager implements Disposable {
                       }
                       return !context.hasErrors();
                     }));
+  }
+
+  private BlazeScope buildToolWindowsScope(String subTitle, ProgressIndicator indicator, TaskOrigin taskOrigin) {
+    Task task = new Task(project, subTitle, Task.Type.SYNC);
+    BlazeUserSettings userSettings = BlazeUserSettings.getInstance();
+
+    return new ToolWindowScope.Builder(project, task)
+        .setProgressIndicator(indicator)
+        .showSummaryOutput()
+        .setPopupBehavior(
+            taskOrigin == TaskOrigin.AUTOMATIC
+                ? showWindowOnAutomaticSyncErrors.getValue()
+                ? FocusBehavior.ON_ERROR
+                : FocusBehavior.NEVER
+                : userSettings.getShowBlazeConsoleOnSync())
+        .setIssueParsers(
+            BlazeIssueParser.defaultIssueParsers(
+                project,
+                WorkspaceRoot.fromProject(project),
+                ContextType.Sync))
+        .build();
   }
 
   @Nullable
