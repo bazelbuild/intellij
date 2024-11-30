@@ -23,34 +23,28 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.intellij.openapi.project.Project;
+
 import javax.annotation.Nullable;
 
 /** Stores a cache of blaze project data and issues any side effects when that data is updated. */
 public class DelegatingBlazeProjectDataManager implements BlazeProjectDataManager {
 
-  private final Supplier<BlazeProjectDataManager> delegate;
+  private final Project project;
+  private Supplier<BlazeProjectDataManager> delegate;
+  private ProjectType projectType;
 
   public DelegatingBlazeProjectDataManager(Project project) {
-    delegate =
-        Suppliers.memoize(
-            () -> {
-              ProjectType projectType = Blaze.getProjectType(project);
-              switch (projectType) {
-                case UNKNOWN:
-                  return new EmptyBlazeProjectDataManager();
-                case QUERY_SYNC:
-                  return new QuerySyncProjectDataManager(project);
-                case ASPECT_SYNC:
-                  return new AspectSyncProjectDataManager(project);
-              }
-              throw new AssertionError(projectType);
-            });
+    this.project = project;
+    initBlazeProjectDataDelegate(project);
   }
 
   @Override
   @Nullable
   public BlazeProjectData getBlazeProjectData() {
-    return delegate.get().getBlazeProjectData();
+      if (projectType != Blaze.getProjectType(project)) {
+        initBlazeProjectDataDelegate(project);
+      }
+      return delegate.get().getBlazeProjectData();
   }
 
   @Nullable
@@ -61,6 +55,27 @@ public class DelegatingBlazeProjectDataManager implements BlazeProjectDataManage
 
   @Override
   public void saveProject(BlazeImportSettings importSettings, BlazeProjectData projectData) {
+    if (projectType != Blaze.getProjectType(project)) {
+      initBlazeProjectDataDelegate(project);
+    }
     delegate.get().saveProject(importSettings, projectData);
   }
+
+  private void initBlazeProjectDataDelegate(Project project) {
+    this.projectType = Blaze.getProjectType(project);
+    this.delegate =
+            Suppliers.memoize(
+                    () -> {
+                      switch (projectType) {
+                        case UNKNOWN:
+                          return new EmptyBlazeProjectDataManager();
+                        case QUERY_SYNC:
+                          return new QuerySyncProjectDataManager(project);
+                        case ASPECT_SYNC:
+                          return new AspectSyncProjectDataManager(project);
+                      }
+                      throw new AssertionError(projectType);
+                    });
+  }
+
 }
