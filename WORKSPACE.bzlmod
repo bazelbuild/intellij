@@ -17,7 +17,7 @@ load("@io_bazel_rules_scala//:scala_config.bzl", "scala_config")
 
 scala_config()
 
-load("@io_bazel_rules_scala//scala:scala.bzl", "scala_repositories")
+load("@io_bazel_rules_scala//scala/private:macros/scala_repositories.bzl", "scala_repositories")
 
 scala_repositories()
 
