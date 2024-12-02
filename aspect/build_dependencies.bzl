@@ -213,12 +213,16 @@ def merge_dependencies_info(target, ctx, java_dep_info, cc_dep_info, cc_toolchai
 
     if cc_dep_info and cc_toolchain_dep_info:
         test_mode_cc_src_deps = depset(transitive = [cc_dep_info.test_mode_cc_src_deps, cc_toolchain_dep_info.test_mode_cc_src_deps])
+        cc_toolchain_info = cc_toolchain_dep_info.cc_toolchain_info
     elif cc_dep_info:
         test_mode_cc_src_deps = cc_dep_info.test_mode_cc_src_deps
+        cc_toolchain_info = cc_dep_info.cc_toolchain_info
     elif cc_toolchain_dep_info:
         test_mode_cc_src_deps = cc_toolchain_dep_info.test_mode_cc_src_deps
+        cc_toolchain_info = cc_toolchain_dep_info.cc_toolchain_info
     else:
         test_mode_cc_src_deps = None
+        cc_toolchain_info = None
 
     merged = create_dependencies_info(
         label = target.label,
@@ -229,7 +233,7 @@ def merge_dependencies_info(target, ctx, java_dep_info, cc_dep_info, cc_toolchai
         expand_sources = java_dep_info.expand_sources if java_dep_info else None,
         cc_compilation_info = cc_dep_info.cc_compilation_info if cc_dep_info else None,
         cc_headers = cc_dep_info.cc_headers if cc_dep_info else None,
-        cc_toolchain_info = cc_toolchain_dep_info.cc_toolchain_info if cc_toolchain_dep_info else None,
+        cc_toolchain_info = cc_toolchain_info,
         test_mode_own_files = java_dep_info.test_mode_own_files if java_dep_info else None,
         test_mode_cc_src_deps = test_mode_cc_src_deps,
     )
