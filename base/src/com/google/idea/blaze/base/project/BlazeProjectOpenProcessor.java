@@ -35,7 +35,7 @@ import java.nio.file.Paths;
 public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
   @Override
   public @NotNull String getName() {
-    return "Bazel (OG)";
+    return "Bazel";
   }
 
   @Nullable
