@@ -34,7 +34,7 @@ public class FullSyncProjectAction extends BlazeProjectSyncAction {
 
   @Override
   protected void runSync(Project project, AnActionEvent e) {
-    if (Blaze.getProjectTypeBeforeSync(project) == ProjectType.QUERY_SYNC) {
+    if (Blaze.getUpToDateProjectTypeBeforeSync(project) == ProjectType.QUERY_SYNC) {
       QuerySyncManager.getInstance(project)
           .fullSync(QuerySyncActionStatsScope.create(getClass(), e), TaskOrigin.USER_ACTION);
     } else {

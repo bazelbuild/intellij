@@ -48,17 +48,31 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
   }
 
   public static void doIncrementalSync(Class<?> klass, Project project, @Nullable AnActionEvent e) {
-    if (Blaze.getProjectTypeBeforeSync(project) == ProjectType.QUERY_SYNC) {
+    // This is a project type before we refreshed project view
+    ProjectType currentProjectType = Blaze.getProjectType(project);
+    // This is a project type after we reloaded project view and actualized it in BlazeImportSettings
+    ProjectType refreshedProjectType = Blaze.getUpToDateProjectTypeBeforeSync(project);
+    boolean projectTypeChanged = currentProjectType != refreshedProjectType;
+    if (refreshedProjectType == ProjectType.QUERY_SYNC) {
       QuerySyncManager qsm = QuerySyncManager.getInstance(project);
       QuerySyncActionStatsScope scope = QuerySyncActionStatsScope.create(klass, e);
       if (!qsm.isProjectLoaded()) {
         qsm.onStartup(scope);
       } else {
-        qsm.deltaSync(scope, TaskOrigin.USER_ACTION);
+        if (projectTypeChanged) {
+          qsm.fullSync(scope, TaskOrigin.USER_ACTION);
+        } else {
+          qsm.deltaSync(scope, TaskOrigin.USER_ACTION);
+        }
       }
     } else {
-      BlazeSyncManager.getInstance(project)
-          .incrementalProjectSync(/* reason= */ "IncrementalSyncProjectAction");
+      if (projectTypeChanged) {
+        BlazeSyncManager.getInstance(project)
+                .fullProjectSync(/* reason= */ "FullSyncProjectAction");
+      } else {
+        BlazeSyncManager.getInstance(project)
+                .incrementalProjectSync(/* reason= */ "IncrementalSyncProjectAction");
+      }
     }
   }
 
