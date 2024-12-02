@@ -122,7 +122,7 @@ public class SyncAspectTemplateProvider implements SyncListener {
           Path realizedAspectsPath,
           File templateAspects,
           Project project) throws SyncFailedException {
-    var templateLanguageStringMap = getLanguageStringMap(manager);
+    var templateLanguageStringMap = getLanguageStringMap(manager, project);
     writeLanguageInfo(manager, realizedAspectsPath, templateAspects, TEMPLATE_JAVA, REALIZED_JAVA, templateLanguageStringMap);
     writeLanguageInfo(manager, realizedAspectsPath, templateAspects, TEMPLATE_PYTHON, REALIZED_PYTHON, templateLanguageStringMap);
   }
