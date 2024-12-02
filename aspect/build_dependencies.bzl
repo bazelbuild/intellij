@@ -84,7 +84,7 @@ def _package_dependencies_impl(target, ctx):
         qsync_aars = dep_info.aars.to_list() if dep_info.aars else [],
         qsync_gensrcs = dep_info.gensrcs.to_list() if dep_info.gensrcs else [],
         cc_headers = dep_info.cc_headers.to_list() if dep_info.cc_headers else [],
-        cc_info_file = cc_info_file + [dep_info.cc_toolchain_info.file] if dep_info.cc_toolchain_info else [],
+        cc_info_file = cc_info_file + ([dep_info.cc_toolchain_info.file] if dep_info.cc_toolchain_info else []),
     )]
 
 def _write_java_target_info(target, ctx, custom_prefix = ""):
