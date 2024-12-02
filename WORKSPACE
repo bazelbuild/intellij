@@ -357,21 +357,35 @@ http_archive(
     sha256 = "1389206b2208c5f33a05dd96e51715b0855c480c082b7bb4889a8e07fcff536c",
 )
 
-_protobuf_version = "29.0-rc1"
+_protobuf_version = "29.0"
 
-_protobuf_sha256 = "32247eed6fa8c9792d2667b9fb306e8403736097226b478711d7f3bfece6fbda"
+_protobuf_sha256 = "10a0d58f39a1a909e95e00e8ba0b5b1dc64d02997f741151953a2b3659f6e78c"
 
 http_archive(
-    name = "protobuf",
+    name = "com_google_protobuf",
     sha256 = _protobuf_sha256,
     strip_prefix = "protobuf-%s" % _protobuf_version,
     urls = ["https://github.com/protocolbuffers/protobuf/archive/v%s.tar.gz" % _protobuf_version],
 )
 
+http_archive(
+    name = "rules_python",
+    sha256 = "690e0141724abb568267e003c7b6d9a54925df40c275a870a4d934161dc9dd53",
+    strip_prefix = "rules_python-0.40.0",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.40.0/rules_python-0.40.0.tar.gz",
+)
+
+http_archive(
+    name = "rules_proto",
+    sha256 = "0e5c64a2599a6e26c6a03d6162242d231ecc0de219534c38cb4402171def21e8",
+    strip_prefix = "rules_proto-7.0.2",
+    url = "https://github.com/bazelbuild/rules_proto/releases/download/7.0.2/rules_proto-7.0.2.tar.gz",
+)
+
 load("@rules_java//java:rules_java_deps.bzl", "rules_java_dependencies")
 rules_java_dependencies()
 
-load("@protobuf//:protobuf_deps.bzl", "protobuf_deps")
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 protobuf_deps()
 
 load("@rules_java//java:repositories.bzl", "rules_java_toolchains")
@@ -563,13 +577,6 @@ new_git_repository(
     commit = "38ff702d10baec78f30d5f57485ae452f0fe33b5",
     remote = "https://github.com/google/jarjar",
     shallow_since = "1518210648 -0800",
-)
-
-http_archive(
-    name = "rules_python",
-    sha256 = "ffc7b877c95413c82bfd5482c017edcf759a6250d8b24e82f41f3c8b8d9e287e",
-    strip_prefix = "rules_python-0.19.0",
-    url = "https://github.com/bazelbuild/rules_python/releases/download/0.19.0/rules_python-0.19.0.tar.gz",
 )
 
 load("@rules_python//python:repositories.bzl", "py_repositories")
