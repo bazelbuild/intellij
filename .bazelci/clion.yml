@@ -81,6 +81,8 @@ tasks:
     platform: ubuntu2204
     build_flags:
       - --define=ij_product=clion-oss-under-dev
+      - --verbose_failures
+      - --sandbox_debug
     build_targets:
       - //clwb/...
     test_flags:

@@ -92,7 +92,7 @@ public class BlazeSyncManager {
     logger.error(errorMessage);
   }
 
-  /** Requests a project sync with Blaze. */
+  /** Requests a project sync with Bazel. */
   public void requestProjectSync(BlazeSyncParams syncParams) {
     if (Blaze.getUpToDateProjectTypeBeforeSync(project) == ProjectType.QUERY_SYNC) {
       throw new NotSupportedWithQuerySyncException("legacy sync requested");
