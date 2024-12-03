@@ -11,6 +11,9 @@ common --enable_workspace # to load rules_scala from WORKSPACE.bzlmod
 common --android_sdk=@androidsdk//:sdk
 common --noincompatible_disallow_empty_glob
 
+# Enabled by default in bazel 8
+common --incompatible_use_plus_in_repo_names
+
 # Required for CLion integration tests on windows
 startup --windows_enable_symlinks
 build --enable_runfiles
