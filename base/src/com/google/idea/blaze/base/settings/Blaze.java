@@ -84,7 +84,7 @@ public class Blaze {
    * so we cannot reload project view from for every of such call.
    * This is why we have this special case to make sure that Sync respects project view selection if there is any.
    */
-  public static ProjectType getUpToDateProjectTypeBeforeSyncFake(@Nonnull Project project) {
+  public static ProjectType getUpToDateProjectTypeBeforeSyncFakeOneMoreTime(@Nonnull Project project) {
     BlazeImportSettingsManager blazeImportSettingsManager =
             BlazeImportSettingsManager.getInstance(project);
     if (blazeImportSettingsManager == null) {

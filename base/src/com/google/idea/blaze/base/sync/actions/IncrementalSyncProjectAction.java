@@ -51,7 +51,7 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
     // This is a project type before we refreshed project view
     ProjectType currentProjectType = Blaze.getProjectType(project);
     // This is a project type after we reloaded project view and actualized it in BlazeImportSettings
-    ProjectType refreshedProjectType = Blaze.getUpToDateProjectTypeBeforeSyncFake(project);
+    ProjectType refreshedProjectType = Blaze.getUpToDateProjectTypeBeforeSyncFakeOneMoreTime(project);
     boolean projectTypeChanged = currentProjectType != refreshedProjectType;
     if (refreshedProjectType == ProjectType.QUERY_SYNC) {
       QuerySyncManager qsm = QuerySyncManager.getInstance(project);
