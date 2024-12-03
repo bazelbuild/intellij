@@ -67,7 +67,7 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
   public @NotNull
   @Nls
   String getName() {
-    return Blaze.defaultBuildSystemName() + " Project";
+    return "Bazel";
   }
 
   @javax.annotation.Nullable
@@ -78,7 +78,7 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Override
   public boolean isStrongProjectInfoHolder() {
-    return true;
+    return false;
   }
 
   @Override

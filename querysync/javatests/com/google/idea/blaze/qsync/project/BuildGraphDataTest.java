@@ -191,7 +191,7 @@ public class BuildGraphDataTest {
         .containsExactly(
             Label.of("//" + TESTDATA_ROOT + "/protodep:proto_java_proto"),
             Label.of("//" + TESTDATA_ROOT + "/protodep:indirect_proto_java_proto"),
-            Label.of("@@protobuf+//:java_toolchain"));
+            Label.of("@@bazel_tools//tools/proto:java_toolchain"));
 
     Path protoSourceFilePath = TESTDATA_ROOT.resolve("protodep/testproto.proto");
     assertThat(graph.getProtoSourceFiles()).containsExactly(protoSourceFilePath);
