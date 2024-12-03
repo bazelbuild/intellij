@@ -38,7 +38,7 @@ public class BlazeSyncStartupActivity implements StartupActivity.DumbAware {
     if (importSettings == null) {
       return;
     }
-    if (Blaze.getUpToDateProjectTypeBeforeSync(project) == ProjectType.QUERY_SYNC) {
+    if (Blaze.getUpToDateProjectTypeBeforeSyncFake(project) == ProjectType.QUERY_SYNC) {
       // When query sync is not enabled hasProjectData triggers the load
       QuerySyncManager.getInstance(project)
           .onStartup(QuerySyncActionStatsScope.create(getClass(), null));
