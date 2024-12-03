@@ -60,7 +60,12 @@ intellij_plugin_library(
     plugin_xmls = [
         "src/META-INF/dependency-on-lvcs-impl.xml",
         "src/META-INF/blaze-base.xml",
-    ],
+    ] + select_for_plugin_api({
+        "intellij-2024.3": ["src/META-INF/blaze-base-243.xml"],
+        "intellij-ue-2024.3": ["src/META-INF/blaze-base-243.xml"],
+        "clion-2024.3": ["src/META-INF/blaze-base-243.xml"],
+        "default": [],
+    }),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":base",
