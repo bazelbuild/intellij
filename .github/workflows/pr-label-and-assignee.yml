@@ -39,7 +39,7 @@ jobs:
             const labelsToAssignees = {
               'product: CLion': ['ujohnny'],
               'product: IntelliJ': ['sellophane'],
-              'product: GoLand': ['alievilshat'],
+              'product: GoLand': ['iliakondratev'],
               'product: Android Studio': ['mai93'],
               'product: PyCharm': ['agluszak']
             };
