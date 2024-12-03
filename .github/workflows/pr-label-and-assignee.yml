@@ -38,7 +38,7 @@ jobs:
             const assignees = [];
             const labelsToAssignees = {
               'product: CLion': ['ujohnny'],
-              'product: IntelliJ': ['agluszak'],
+              'product: IntelliJ': ['sellophane'],
               'product: GoLand': ['alievilshat'],
               'product: Android Studio': ['mai93'],
               'product: PyCharm': ['agluszak']
