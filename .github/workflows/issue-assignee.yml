@@ -37,7 +37,7 @@ jobs:
               })).data.map(label => label.name);
             const labelToAssignees = {
               'product: CLion': ['ujohnny'],
-              'product: IntelliJ': ['agluszak'],
+              'product: IntelliJ': ['sellophane'],
               'product: GoLand': ['iliakondratev'],
               'product: Android Studio': ['mai93'],
               'product: PyCharm': ['agluszak']
