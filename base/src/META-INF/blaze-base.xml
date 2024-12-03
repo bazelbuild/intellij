@@ -712,6 +712,7 @@
     <ArtifactFetcher implementation="com.google.idea.blaze.base.qsync.cache.FileApiArtifactFetcher"/>
     <QuerySyncListenerProvider implementation="com.google.idea.blaze.base.qsync.ProjectUpdater$Provider" />
     <QuerySyncListenerProvider implementation="com.google.idea.blaze.base.qsync.ProjectStatsLogger$Provider" />
+    <QuerySyncListenerProvider implementation="com.google.idea.blaze.base.qsync.QuerySyncHighlightingResetListener$Provider"/>
   </extensions>
 
   <projectListeners>
