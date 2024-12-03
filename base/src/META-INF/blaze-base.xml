@@ -22,6 +22,7 @@
         <add-to-group group-id="FileOpenGroup" anchor="first"/>
         <add-to-group group-id="WelcomeScreen.QuickStart" anchor="before"
             relative-to-action="Vcs.VcsClone"/>
+        <add-to-group group-id="ProjectWidget.Actions" anchor="last"/>
       </action>
     <action id="MakeBlazeProject"
       class="com.google.idea.blaze.base.actions.BlazeMakeProjectAction"
