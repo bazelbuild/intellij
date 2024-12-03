@@ -17,6 +17,8 @@ public class SimpleTest extends ClwbIntegrationTestCase {
 
   @Test
   public void testClwb() {
+    assertThat(false).isTrue();
+
     final var errors = runSync(defaultSyncParams().build());
     errors.assertNoErrors();
 
