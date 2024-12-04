@@ -5,6 +5,8 @@ import com.google.idea.blaze.qsync.QuerySyncProjectListener;
 import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSettingListener;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,13 +23,18 @@ public class QuerySyncHighlightingResetListener implements QuerySyncProjectListe
     @Override
     public void onNewProjectSnapshot(Context<?> context, QuerySyncProjectSnapshot instance) {
         for (VirtualFile virtualFile : FileEditorManager.getInstance(project).getOpenFiles()) {
-            var psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-            if (psiFile != null) {
-                var newHighlighting = HighlightingSettingsPerFile.getInstance(project).getHighlightingSettingForRoot(psiFile);
-                project.getMessageBus()
-                        .syncPublisher(FileHighlightingSettingListener.SETTING_CHANGE)
-                        .settingChanged(psiFile, newHighlighting);
-            }
+            ApplicationManager.getApplication().invokeLater(() -> WriteAction.run(() -> {
+                        var psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+                        if (psiFile != null) {
+                            var newHighlighting = HighlightingSettingsPerFile
+                                    .getInstance(project)
+                                    .getHighlightingSettingForRoot(psiFile);
+                            project.getMessageBus()
+                                    .syncPublisher(FileHighlightingSettingListener.SETTING_CHANGE)
+                                    .settingChanged(psiFile, newHighlighting);
+                        }
+                    }
+            ));
         }
     }
 
