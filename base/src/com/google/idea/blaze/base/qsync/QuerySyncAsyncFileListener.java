@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.ui.EditorNotifications;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -119,7 +120,8 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
                     }
 
                     if (syncOnFileChanges()) {
-                      syncRequester.requestSync();
+                      syncRequester.requestSync(eventsRequiringSync.stream()
+                              .map(VFileEvent::getFile).toList());
                     }
                     EditorNotifications.getInstance(project).updateAllNotifications();
                   });
@@ -154,7 +156,7 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
 
   /** Interface for requesting project syncs. */
   public interface SyncRequester {
-    void requestSync();
+    void requestSync(Collection<VirtualFile> files);
   }
 
   /**
@@ -192,7 +194,8 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
     }
 
     @Override
-    public void requestSync() {
+    public void requestSync(Collection<VirtualFile> files) {
+      // FIXME use the files arg
       if (changePending.compareAndSet(false, true)) {
         if (!BlazeSyncStatus.getInstance(project).syncInProgress()) {
           requestSyncInternal();
@@ -204,6 +207,7 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
       QuerySyncManager.getInstance(project)
           .deltaSync(
               QuerySyncActionStatsScope.create(QuerySyncAsyncFileListener.class, null),
+              //QuerySyncActionStatsScope.createForFiles()
               TaskOrigin.AUTOMATIC);
       changePending.set(false);
     }
