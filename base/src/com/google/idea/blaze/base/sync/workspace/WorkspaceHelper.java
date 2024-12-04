@@ -17,19 +17,21 @@ package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.ExternalWorkspaceDataManager;
 import com.google.idea.blaze.base.model.primitives.ExternalWorkspace;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -127,7 +129,7 @@ public class WorkspaceHelper {
     if (blazeProjectData == null) {
       return null; // Project not imported yet
     }
-    Path bazelRootPath = getExternalSourceRoot(blazeProjectData);
+    Path bazelRootPath = getExternalSourceRoot(project, blazeProjectData);
 
     logger.debug("the bazelRootPath is " + bazelRootPath);
     Path path = Paths.get(absoluteFile.getAbsolutePath()).normalize();
@@ -185,18 +187,15 @@ public class WorkspaceHelper {
   }
 
   @VisibleForTesting
-  public static Path getExternalSourceRoot(BlazeProjectData projectData) {
-    return Paths.get(projectData.getBlazeInfo().getOutputBase().getAbsolutePath(), "external").normalize();
+  public static Path getExternalSourceRoot(Project project, BlazeProjectData projectData) {
+    return getExternalBase(project, projectData).toPath().normalize();
   }
 
   /** resolve workspace root for a named external repository. needs context since the same name can mean something different in different workspaces. */
   @Nullable
   private static synchronized WorkspaceRoot resolveExternalWorkspaceRoot(
       Project project, String workspaceName, @Nullable BuildFile buildFile) {
-    if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze || Blaze.getProjectType(project) == BlazeImportSettings.ProjectType.QUERY_SYNC) {
-      return null;
-    }
-    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
+    if (Blaze.getBuildSystemName(project) != BuildSystemName.Bazel) {
       return null;
     }
 
@@ -220,10 +219,14 @@ public class WorkspaceHelper {
 
     BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData != null) {
-      File externalBase = new File(blazeProjectData.getBlazeInfo().getOutputBase(), "external");
+
+
+      File externalBase = null;
+      externalBase = getExternalBase(project, blazeProjectData);
+      if (externalBase == null) return null;
 
       File workspaceDir = new File(externalBase, workspaceName);
-      ExternalWorkspace workspace = blazeProjectData.getExternalWorkspaceData().getByRepoName(workspaceName);
+      ExternalWorkspace workspace = ExternalWorkspaceDataManager.getInstance(project).getData().getByRepoName(workspaceName);
       if (workspace != null) {
         workspaceDir = new File(externalBase, workspace.name());
       }
@@ -236,6 +239,21 @@ public class WorkspaceHelper {
     }
 
     return null;
+  }
+
+  private static @Nullable File getExternalBase(Project project, BlazeProjectData blazeProjectData) {
+    File externalBase;
+    if(blazeProjectData.isQuerySync()) {
+      QuerySyncProjectSnapshot snapshot =
+              QuerySyncManager.getInstance(project).getCurrentSnapshot().orElse(null);
+      if(snapshot == null) return null;
+      externalBase = snapshot.queryData().outputBase()
+              .map(pathname -> new File(pathname, "external")).orElse(null);
+    } else {
+      BlazeInfo blazeInfo = blazeProjectData.getBlazeInfo();
+      externalBase = new File(blazeInfo.getOutputBase(), "external");
+    }
+    return externalBase;
   }
 
   //The unit test use the TempFileSystem to create VirtualFile which does not exist on disk.
