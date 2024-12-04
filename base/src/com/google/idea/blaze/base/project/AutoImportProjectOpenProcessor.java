@@ -67,7 +67,7 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
   public @NotNull
   @Nls
   String getName() {
-    return "Bazel1";
+    return "Bazel2";
   }
 
   @javax.annotation.Nullable
