@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,6 +51,8 @@ import javax.annotation.Nullable;
 
 /** {@link AsyncFileListener} for monitoring project changes requiring a re-sync */
 public class QuerySyncAsyncFileListener implements AsyncFileListener {
+
+  private static final Logger logger = Logger.getInstance(QuerySyncAsyncFileListener.class);
 
   private final Project project;
   private final SyncRequester syncRequester;
@@ -200,6 +203,7 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
 
     @Override
     public void requestSync(@NotNull Collection<VirtualFile> files) {
+      logger.info(String.format("Putting %d files into sync queue", files.size()));
       unprocessedChanges.addAll(files);
       if (changePending.compareAndSet(false, true)) {
         if (!BlazeSyncStatus.getInstance(project).syncInProgress()) {
@@ -213,6 +217,7 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
     }
 
     private void requestSyncInternal(ImmutableCollection<VirtualFile> files) {
+      logger.info(String.format("Requesting sync of %d files", files.size()));
       QuerySyncManager.getInstance(project)
           .deltaSync(
               QuerySyncActionStatsScope.createForFiles(QuerySyncAsyncFileListener.class, null, files),
