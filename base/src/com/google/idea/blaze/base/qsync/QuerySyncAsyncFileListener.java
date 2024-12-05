@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.qsync;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
@@ -37,10 +38,13 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.ui.EditorNotifications;
+import org.jetbrains.annotations.NotNull;
+
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
@@ -156,7 +160,7 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
 
   /** Interface for requesting project syncs. */
   public interface SyncRequester {
-    void requestSync(Collection<VirtualFile> files);
+    void requestSync(@NotNull Collection<VirtualFile> files);
   }
 
   /**
@@ -167,6 +171,7 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
     private final Project project;
 
     private final AtomicBoolean changePending = new AtomicBoolean(false);
+    private final ConcurrentLinkedQueue<VirtualFile> unprocessedChanges = new ConcurrentLinkedQueue<>();
 
     public QueueingSyncRequester(Project project) {
       this.project = project;
@@ -185,7 +190,7 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
                     return;
                   }
                   if (requester.changePending.get()) {
-                    requester.requestSyncInternal();
+                    requester.requestSyncInternal(ImmutableList.of());
                   }
                 }
               },
@@ -194,20 +199,23 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
     }
 
     @Override
-    public void requestSync(Collection<VirtualFile> files) {
-      // FIXME use the files arg
+    public void requestSync(@NotNull Collection<VirtualFile> files) {
+      unprocessedChanges.addAll(files);
       if (changePending.compareAndSet(false, true)) {
         if (!BlazeSyncStatus.getInstance(project).syncInProgress()) {
-          requestSyncInternal();
+          var changesToProcess = ImmutableList.copyOf(unprocessedChanges);
+          if(!changesToProcess.isEmpty()) {
+            unprocessedChanges.clear();
+            requestSyncInternal(changesToProcess);
+          }
         }
       }
     }
 
-    private void requestSyncInternal() {
+    private void requestSyncInternal(ImmutableCollection<VirtualFile> files) {
       QuerySyncManager.getInstance(project)
           .deltaSync(
-              QuerySyncActionStatsScope.create(QuerySyncAsyncFileListener.class, null),
-              //QuerySyncActionStatsScope.createForFiles()
+              QuerySyncActionStatsScope.createForFiles(QuerySyncAsyncFileListener.class, null, files),
               TaskOrigin.AUTOMATIC);
       changePending.set(false);
     }
