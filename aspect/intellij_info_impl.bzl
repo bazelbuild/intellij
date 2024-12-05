@@ -1127,7 +1127,7 @@ def collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups
     ide_info["kt_toolchain_ide_info"] = struct(
         language_version = kt.language_version,
     )
-    update_sync_output_groups(output_groups, "intellij-info-kotlin", depset([ide_info_file]))
+    update_sync_output_groups(output_groups, "intellij-info-kt", depset([ide_info_file]))
     return True
 
 def _is_proto_library_wrapper(target, ctx):
