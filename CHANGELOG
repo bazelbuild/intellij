@@ -1,3 +1,10 @@
+v2024.11.19-hotfix
+==================
+Fixes:
+* fix: Kotlin toolchain detection (#7122)
+* fix: reading of _kt_toolchain attribute (#7115)
+* fix: Sync failure after non-fatal bazel failure (#7119)
+
 v2024.11.19.0.3
 ===============
 Fixes:
