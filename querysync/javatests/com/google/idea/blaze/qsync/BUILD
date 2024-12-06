@@ -70,6 +70,7 @@ java_test(
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/javatests/com/google/idea/blaze/qsync/query:QuerySummaryTestUtil",
         "//shared:vcs",
+        "//shared/java/com/google/idea/blaze/common",
         "//third_party/java/junit",
         "//third_party/java/truth",
         "@com_google_guava_guava//jar",

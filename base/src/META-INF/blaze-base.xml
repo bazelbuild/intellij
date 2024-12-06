@@ -22,6 +22,7 @@
         <add-to-group group-id="FileOpenGroup" anchor="first"/>
         <add-to-group group-id="WelcomeScreen.QuickStart" anchor="before"
             relative-to-action="Vcs.VcsClone"/>
+        <add-to-group group-id="ProjectWidget.Actions" anchor="last"/>
       </action>
     <action id="MakeBlazeProject"
       class="com.google.idea.blaze.base.actions.BlazeMakeProjectAction"
@@ -712,6 +713,7 @@
     <ArtifactFetcher implementation="com.google.idea.blaze.base.qsync.cache.FileApiArtifactFetcher"/>
     <QuerySyncListenerProvider implementation="com.google.idea.blaze.base.qsync.ProjectUpdater$Provider" />
     <QuerySyncListenerProvider implementation="com.google.idea.blaze.base.qsync.ProjectStatsLogger$Provider" />
+    <QuerySyncListenerProvider implementation="com.google.idea.blaze.base.qsync.QuerySyncHighlightingResetListener$Provider"/>
   </extensions>
 
   <projectListeners>

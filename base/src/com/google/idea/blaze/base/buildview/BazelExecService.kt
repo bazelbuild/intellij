@@ -175,7 +175,7 @@ class BazelExecService(private val project: Project) : Disposable {
 
       parseJob.cancelAndJoin()
 
-      if (result.status != BuildResult.Status.SUCCESS) {
+      if (result.status == BuildResult.Status.FATAL_ERROR) {
         BlazeBuildOutputs.noOutputs(result)
       } else {
         BlazeBuildOutputs.fromParsedBepOutput(result, provider.getBuildOutput())

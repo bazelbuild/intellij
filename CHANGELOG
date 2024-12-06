@@ -1,3 +1,22 @@
+v2024.12.03
+===========
+Fixes:
+* fix: NPE in WorkspaceHelper when project is not loaded yet #7036
+* fix issues with aspect templates not available in query sync mode #7048
+* fix: Don't require rules_java and rules_python for bazel 7 and older #7052
+* Reapply "fix: Support bazel 8 and --noenable_workspace mode (#6990)… #7045
+* Handle included MODULE.bazel files as well #7057
+* Fix indexing problem with Fix getPackageName which didn't respect "build ignore" #7034
+* Stop adding a trailing # when filtering tests for JUnit 5 #7060
+* fix(qsync): Include runtime_deps in the target graph #7081
+* Fix over-including when view_project_root is set. #7002
+* fix: remove strongInfoHolder flag, so users can choose which plugin t… #7092
+* Reload project view, and make sure that BazelImportSettings respect p… #7088
+* fix(qsync): Hightlighting level is always updated after 'enable analy… #7101
+Features:
+* PTY enabled terminal for the new sync view #7001
+* Enable the new sync view for query sync #7037
+
 v2024.11.19
 ===========
 Features:
