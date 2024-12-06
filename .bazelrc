@@ -11,6 +11,9 @@ common --enable_workspace # to load rules_scala from WORKSPACE.bzlmod
 common --android_sdk=@androidsdk//:sdk
 common --noincompatible_disallow_empty_glob
 
+# Disabled by default in bazel 8, https://github.com/bazelbuild/bazel/issues/24578
+test --zip_undeclared_test_outputs
+
 # Enabled by default in bazel 8
 common --incompatible_use_plus_in_repo_names
 
