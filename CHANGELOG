@@ -1,4 +1,4 @@
-v2024.12.03.0.1
+v2024.12.03.0.2
 ===============
 Fixes:
 * fix: Kotlin toolchain detection (#7122)
