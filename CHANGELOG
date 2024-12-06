@@ -1,5 +1,5 @@
-v2024.12.03-hotfix
-===========
+v2024.12.03.0.1
+===============
 Fixes:
 * fix: Kotlin toolchain detection (#7122)
 * fix: reading of _kt_toolchain attribute (#7115)
