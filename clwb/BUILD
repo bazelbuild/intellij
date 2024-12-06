@@ -26,16 +26,29 @@ load(
     "//testing:test_defs.bzl",
     "intellij_unit_test_suite",
 )
+load(":build_defs.bzl", "select_since")
 load(":test_defs.bzl", "clwb_integration_test")
 
 licenses(["notice"])
 
 intellij_plugin_library(
     name = "plugin_library",
-    optional_plugin_xmls = ["optional_clwb_oclang"],
+    optional_plugin_xmls = [
+        "optional_clwb_oclang",
+    ] + select_since(
+        "2024.3",
+        ["//clwb/src/com/google/idea/blaze/clwb/radler:plugin_xml"],
+        default = [],
+    ),
     plugin_xmls = ["src/META-INF/clwb.xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
-    deps = [":clwb_lib"],
+    deps = [
+        ":clwb_lib",
+    ] + select_since(
+        "2024.3",
+        ["//clwb/src/com/google/idea/blaze/clwb/radler:lib"],
+        default = [],
+    ),
 )
 
 optional_plugin_xml(
@@ -60,6 +73,7 @@ stamped_plugin_xml(
 java_library(
     name = "clwb_lib",
     srcs = glob(["src/**/*.java"]),
+    visibility = ["//clwb:__subpackages__"],
     deps = [
         "//base",
         "//common/actions",
