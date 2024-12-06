@@ -35,6 +35,9 @@ def clwb_integration_test(name, project, srcs, deps = []):
             "-Dcom.google.testing.junit.runner.shouldInstallTestSecurityManager=false",
             # fixes preferences not writable on mac
             "-Djava.util.prefs.PreferencesFactory=com.google.idea.blaze.clwb.base.InMemoryPreferencesFactory",
+            # define the path to the query sync aspects
+            "-Dblaze.idea.build_dependencies.bzl.file=aspect/build_dependencies.bzl",
+            "-Dblaze.idea.build_dependencies_deps.bzl.file=aspect/build_dependencies_deps.bzl",
         ],
         deps = deps + [
             ":clwb_lib",

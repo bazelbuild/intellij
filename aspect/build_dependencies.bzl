@@ -84,7 +84,7 @@ def _package_dependencies_impl(target, ctx):
         qsync_aars = dep_info.aars.to_list() if dep_info.aars else [],
         qsync_gensrcs = dep_info.gensrcs.to_list() if dep_info.gensrcs else [],
         cc_headers = dep_info.cc_headers.to_list() if dep_info.cc_headers else [],
-        cc_info_file = cc_info_file + [dep_info.cc_toolchain_info.file] if dep_info.cc_toolchain_info else [],
+        cc_info_file = cc_info_file + ([dep_info.cc_toolchain_info.file] if dep_info.cc_toolchain_info else []),
     )]
 
 def _write_java_target_info(target, ctx, custom_prefix = ""):
@@ -213,12 +213,16 @@ def merge_dependencies_info(target, ctx, java_dep_info, cc_dep_info, cc_toolchai
 
     if cc_dep_info and cc_toolchain_dep_info:
         test_mode_cc_src_deps = depset(transitive = [cc_dep_info.test_mode_cc_src_deps, cc_toolchain_dep_info.test_mode_cc_src_deps])
+        cc_toolchain_info = cc_toolchain_dep_info.cc_toolchain_info
     elif cc_dep_info:
         test_mode_cc_src_deps = cc_dep_info.test_mode_cc_src_deps
+        cc_toolchain_info = cc_dep_info.cc_toolchain_info
     elif cc_toolchain_dep_info:
         test_mode_cc_src_deps = cc_toolchain_dep_info.test_mode_cc_src_deps
+        cc_toolchain_info = cc_toolchain_dep_info.cc_toolchain_info
     else:
         test_mode_cc_src_deps = None
+        cc_toolchain_info = None
 
     merged = create_dependencies_info(
         label = target.label,
@@ -229,7 +233,7 @@ def merge_dependencies_info(target, ctx, java_dep_info, cc_dep_info, cc_toolchai
         expand_sources = java_dep_info.expand_sources if java_dep_info else None,
         cc_compilation_info = cc_dep_info.cc_compilation_info if cc_dep_info else None,
         cc_headers = cc_dep_info.cc_headers if cc_dep_info else None,
-        cc_toolchain_info = cc_toolchain_dep_info.cc_toolchain_info if cc_toolchain_dep_info else None,
+        cc_toolchain_info = cc_toolchain_info,
         test_mode_own_files = java_dep_info.test_mode_own_files if java_dep_info else None,
         test_mode_cc_src_deps = test_mode_cc_src_deps,
     )

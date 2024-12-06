@@ -3,6 +3,7 @@ package com.google.idea.blaze.clwb.base;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.async.process.ExternalTask;
+import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.project.AutoImportProjectOpenProcessor;
 import com.google.idea.blaze.base.project.ExtendableBazelProjectCreator;
@@ -10,6 +11,8 @@ import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
@@ -246,6 +249,47 @@ derive_targets_from_directories: true
         .setSyncMode(SyncMode.FULL)
         .setSyncOrigin("test")
         .setAddProjectViewTargets(true);
+  }
+
+  protected boolean runQuerySync() {
+    final var future = QuerySyncManager.getInstance(myProject).onStartup(QuerySyncActionStatsScope.create(getClass(), null));
+
+    while (!future.isDone()) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    }
+
+    try {
+      return future.get();
+    } catch (ExecutionException e) {
+      fail("query sync failed " + e.getMessage());
+    } catch (InterruptedException e) {
+      fail("query sync was interrupted");
+    }
+
+    return false;
+  }
+
+  protected boolean enableAnalysisFor(VirtualFile file) throws ExecutionException {
+    final var manager = QuerySyncManager.getInstance(myProject);
+    final var targets = manager.getTargetsToBuild(file).targets();
+
+    final var future = manager.enableAnalysis(
+        targets,
+        QuerySyncActionStatsScope.createForFile(getClass(), null, file),
+        TaskOrigin.USER_ACTION
+    );
+
+    while (!future.isDone()) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    }
+
+    try {
+      return future.get();
+    } catch (InterruptedException e) {
+      fail("enable analysis was interrupted");
+    }
+
+    return false;
   }
 
   protected VirtualFile findProjectFile(String relativePath) {
