@@ -114,9 +114,11 @@ public class JavaProtoLibraryTest extends BazelIntellijAspectTest {
             // bar_proto
             testRelative("libbar_proto-speed-hjar.jar"),
             testRelative("bar_proto-speed-src.jar"),
+            testRelative("libbar_proto-speed.jdeps"),
             // foo_proto
             testRelative("libfoo_proto-speed-hjar.jar"),
-            testRelative("foo_proto-speed-src.jar"));
+            testRelative("foo_proto-speed-src.jar"),
+            testRelative("libfoo_proto-speed.jdeps"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java-outputs"))
         .containsExactly(
             testRelative("liblib-hjar.jar"),
