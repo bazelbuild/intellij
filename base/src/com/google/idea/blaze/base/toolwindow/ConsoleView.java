@@ -237,6 +237,10 @@ final class ConsoleView implements Disposable {
   }
 
   private void println(String text, OutputType outputType) {
+    if (outputType == OutputType.PROCESS) {
+      text = text.stripTrailing();
+    }
+
     ansiEscapeDecoder.escapeText(
         text,
         outputType == OutputType.ERROR ? ProcessOutputTypes.STDERR : ProcessOutputTypes.STDOUT,
