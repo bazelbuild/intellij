@@ -19,6 +19,10 @@
     <TargetKindProvider implementation="com.google.idea.blaze.kotlin.KotlinBlazeRules"/>
   </extensions>
 
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <supportsKotlinPluginMode supportsK2="true" />
+  </extensions>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.google.idea.blaze.KotlinPluginOptionsProvider" interface="com.google.idea.blaze.kotlin.sync.KotlinPluginOptionsProvider"/>
   </extensionPoints>
