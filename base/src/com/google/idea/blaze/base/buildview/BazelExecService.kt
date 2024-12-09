@@ -69,6 +69,8 @@ class BazelExecService(private val project: Project) : Disposable {
     // the old sync view does not use a PTY based terminal
     if (BuildViewMigration.present(ctx)) {
       cmdBuilder.addBlazeFlags("--curses=yes")
+    } else {
+      cmdBuilder.addBlazeFlags("--curses=no")
     }
 
     val cmd = cmdBuilder.build()
