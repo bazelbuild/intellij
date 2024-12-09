@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.ExternalWorkspaceFixture;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.ExternalWorkspaceData;
+import com.google.idea.blaze.base.model.ExternalWorkspaceDataManager;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.ExternalWorkspace;
@@ -50,8 +51,9 @@ public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestC
         new MockBlazeProjectDataManager(
             MockBlazeProjectDataBuilder.builder(workspaceRoot)
                 .setOutputBase(fileSystem.getRootDir() + "/output_base")
-                .setExternalWorkspaceData(mockExternalWorkspaceData())
+//                .setExternalWorkspaceData(mockExternalWorkspaceData())
                 .build());
+    ExternalWorkspaceDataManager.getInstance(getProject()).setData(mockExternalWorkspaceData());
     registerProjectService(BlazeProjectDataManager.class, mockProjectDataManager);
     registerProjectService(ProjectViewManager.class, new MockProjectViewManager());
     editorTest = new EditorTestHelper(getProject(), testFixture);
