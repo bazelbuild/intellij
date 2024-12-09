@@ -80,10 +80,11 @@ public class BlazeJUnitTestFilterFlagsIntegrationTest extends BlazeIntegrationTe
     Location<?> location2 =
         new PsiMemberParameterizedLocation(getProject(), method2, javaClass, "[3]");
 
+    String junit4Dollar = (jUnitVersionUnderTest == JUnitVersion.JUNIT_4 ? "$" : "");
     assertThat(
             BlazeJUnitTestFilterFlags.testFilterForClassesAndMethods(
                 ImmutableMap.of(javaClass, ImmutableList.of(location1, location2))))
-        .isEqualTo("com.google.test.TestClass#(testMethod1\\[param\\]|testMethod2\\[3\\])$");
+        .isEqualTo("com.google.test.TestClass#(testMethod1\\[param\\]|testMethod2\\[3\\])" + junit4Dollar);
   }
 
   @Test
@@ -127,6 +128,7 @@ public class BlazeJUnitTestFilterFlagsIntegrationTest extends BlazeIntegrationTe
     PsiClass javaClass2 = ((PsiClassOwner) javaFile2).getClasses()[0];
     PsiMethod class2Method = javaClass2.findMethodsByName("testMethod", false)[0];
 
+    String junit4Dollar = (jUnitVersionUnderTest == JUnitVersion.JUNIT_4 ? "$" : "");
     assertThat(
             BlazeJUnitTestFilterFlags.testFilterForClassesAndMethods(
                 ImmutableMap.of(
@@ -137,8 +139,8 @@ public class BlazeJUnitTestFilterFlagsIntegrationTest extends BlazeIntegrationTe
         .isEqualTo(
             Joiner.on('|')
                 .join(
-                    "com.google.test.OtherTestClass#testMethod$",
-                    "com.google.test.TestClass#(testMethod1\\[param\\]|testMethod2\\[3\\])$"
+                    "com.google.test.OtherTestClass#testMethod" + junit4Dollar,
+                    "com.google.test.TestClass#(testMethod1\\[param\\]|testMethod2\\[3\\])" + junit4Dollar
                 ));
   }
 }
