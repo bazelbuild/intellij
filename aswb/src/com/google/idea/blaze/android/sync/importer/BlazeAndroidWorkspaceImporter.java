@@ -195,6 +195,8 @@ public class BlazeAndroidWorkspaceImporter {
           depTargetResourceModule.getTransitiveResourceDependencies().stream()
               .filter(key -> !targetKey.equals(key))
               .collect(Collectors.toList()));
+      targetResourceModule.addTransitiveAssetsFolders(
+          depTargetResourceModule.getTransitiveAssetsFolders());
       if (containsProjectRelevantResources(depIdeInfo.getAndroidIdeInfo())
           && !depKey.equals(targetKey)) {
         targetResourceModule.addTransitiveResourceDependency(depKey);
@@ -266,6 +268,13 @@ public class BlazeAndroidWorkspaceImporter {
           }
           androidResourceModule.addTransitiveResource(artifactLocation);
         }
+      }
+    }
+
+    for (ArtifactLocation asset : androidIdeInfo.getAssetsFolders()) {
+      if (isSourceOrAllowedGenPath(asset, allowlistFilter) && isOutsideProjectViewFilter.test(asset)) {
+          androidResourceModule.addAssetsFolder(asset);
+          androidResourceModule.addTransitiveAssetsFolder(asset);
       }
     }
     return androidResourceModule;
@@ -437,7 +446,9 @@ public class BlazeAndroidWorkspaceImporter {
                 .addResources(m.resources)
                 .addTransitiveResources(m.transitiveResources)
                 .addResourceLibraryKeys(m.resourceLibraryKeys)
-                .addTransitiveResourceDependencies(m.transitiveResourceDependencies));
+                .addTransitiveResourceDependencies(m.transitiveResourceDependencies)
+                .addAssetsFolders(m.assetsFolders)
+                .addTransitiveAssetsFolders(m.transitiveAssetsFolders));
     return moduleBuilder.build();
   }
 
