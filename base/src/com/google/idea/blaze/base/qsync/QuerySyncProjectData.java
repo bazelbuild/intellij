@@ -35,6 +35,7 @@ import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import com.intellij.openapi.diagnostic.Logger;
+import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
@@ -155,7 +156,15 @@ public class QuerySyncProjectData implements BlazeProjectData {
               try {
                 data.setClientCl(Long.parseLong(revision));
               } catch (NumberFormatException e) {
-                logger.warn(e);
+                // Most likely this is a Git commit hash (40 hex digits)
+                logger.warn(String.format("setClientCl(%s)", revision.substring(0, 16)));
+                try {
+                  var prefix = revision.substring(0, 16);
+                  data.setClientCl(new BigInteger(prefix, 16).longValue());
+                } catch (NumberFormatException ignored) {
+                  // If the fallback also fails, report the original exception
+                  logger.warn(e);
+                }
               }
             });
     blazeProject
