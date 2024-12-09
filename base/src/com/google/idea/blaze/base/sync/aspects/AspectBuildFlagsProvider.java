@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public class AspactBuildFlagsProvider implements BuildFlagsProvider {
+public class AspectBuildFlagsProvider implements BuildFlagsProvider {
 
   @Override
   public void addBuildFlags(
@@ -20,7 +20,9 @@ public class AspactBuildFlagsProvider implements BuildFlagsProvider {
       BlazeCommandName command,
       BlazeInvocationContext invocationContext,
       List<String> flags) {
-    // aspects are only required during sync
+    Arrays.stream(AspectRepositoryProvider.getOverrideFlags(project)).filter(Optional::isPresent)
+            .map(Optional::get)
+            .forEach(flags::add);
   }
 
   @Override
