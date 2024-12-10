@@ -27,7 +27,9 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
 import com.intellij.lang.jvm.annotation.JvmAnnotationConstantValue;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -139,8 +141,16 @@ public class GeneratedSourcesStripper implements FileTransform {
   @VisibleForTesting
   String getGeneratedValue(String fileName, ByteSource content) throws IOException {
     return ApplicationManager.getApplication()
-        .runReadAction(
-            (ThrowableComputable<String, IOException>) () -> getInReadAction(fileName, content));
+            .runReadAction(
+                    (ThrowableComputable<String, IOException>) () ->
+                            DumbService.getInstance(project).tryRunReadActionInSmartMode(
+                                    () -> {
+                                      try {
+                                        return getInReadAction(fileName, content);
+                                      } catch (IOException e) {
+                                        throw new RuntimeException(e);
+                                      }
+                                    }, "%s waiting for Smart Mode".formatted(GeneratedSourcesStripper.class.getSimpleName())));
   }
 
   /**
