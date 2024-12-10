@@ -204,15 +204,18 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
     @Override
     public void requestSync(@NotNull Collection<VirtualFile> files) {
       logger.info(String.format("Putting %d files into sync queue", files.size()));
-      unprocessedChanges.addAll(files);
-      if (changePending.compareAndSet(false, true)) {
-        if (!BlazeSyncStatus.getInstance(project).syncInProgress()) {
-          var changesToProcess = ImmutableList.copyOf(unprocessedChanges);
-          if(!changesToProcess.isEmpty()) {
+      ImmutableList<VirtualFile> changesToProcess = ImmutableList.of();
+      synchronized (unprocessedChanges) {
+        unprocessedChanges.addAll(files);
+        if (changePending.compareAndSet(false, true)) {
+          if (!BlazeSyncStatus.getInstance(project).syncInProgress()) {
+            changesToProcess = ImmutableList.copyOf(unprocessedChanges);
             unprocessedChanges.clear();
-            requestSyncInternal(changesToProcess);
           }
         }
+      }
+      if(!changesToProcess.isEmpty()) {
+        requestSyncInternal(changesToProcess);
       }
     }
 
