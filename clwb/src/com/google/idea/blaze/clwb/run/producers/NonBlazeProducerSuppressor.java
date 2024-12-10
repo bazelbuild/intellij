@@ -33,10 +33,7 @@ public class NonBlazeProducerSuppressor implements StartupActivity.DumbAware {
 
           // Gutter icons in CMake files.
           "com.jetbrains.cidr.cpp.execution.CMakeTargetRunConfigurationProducer",
-          "com.jetbrains.cidr.cpp.execution.debugger.CMakeRunConfigurationProducer",
-
-          // Gutter icons that sometimes appear in `cpp` files with a `main` function.
-          "com.jetbrains.cidr.cpp.runfile.CppFileTargetRunConfigurationProducer"
+          "com.jetbrains.cidr.cpp.execution.debugger.CMakeRunConfigurationProducer"
       );
 
   @Override
