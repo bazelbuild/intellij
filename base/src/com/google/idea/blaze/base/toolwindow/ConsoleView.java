@@ -237,19 +237,17 @@ final class ConsoleView implements Disposable {
   }
 
   private void println(String text, OutputType outputType) {
-    if (outputType == OutputType.PROCESS) {
-      text = text.stripTrailing();
-    }
-
     ansiEscapeDecoder.escapeText(
         text,
         outputType == OutputType.ERROR ? ProcessOutputTypes.STDERR : ProcessOutputTypes.STDOUT,
         (t, k) -> consoleView.print(t, ConsoleViewContentType.getConsoleViewType(k)));
-    consoleView.print(
-        "\n",
-        outputType == OutputType.ERROR
-            ? ConsoleViewContentType.ERROR_OUTPUT
-            : ConsoleViewContentType.NORMAL_OUTPUT);
+    if (outputType != OutputType.PROCESS) {
+      consoleView.print(
+              "\n",
+              outputType == OutputType.ERROR
+                      ? ConsoleViewContentType.ERROR_OUTPUT
+                      : ConsoleViewContentType.NORMAL_OUTPUT);
+    }
   }
 
   public void printHyperlink(String text, HyperlinkInfo hyperlinkInfo) {
