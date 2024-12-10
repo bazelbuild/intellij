@@ -97,6 +97,8 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -1085,6 +1087,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
+  @Ignore // We disabled empty library exclusion and it is unclear if we will ever reenable it
   public void testEmptyLibraryExcluded() {
     ProjectView projectView =
         ProjectView.builder()
