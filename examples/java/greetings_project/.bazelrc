@@ -1,0 +1,2 @@
+common --enable_workspace  # for contrib_rules_jvm needed for Junit5 tests
+common --java_runtime_version=21
