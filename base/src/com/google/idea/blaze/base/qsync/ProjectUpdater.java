@@ -37,6 +37,7 @@ import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.LibrarySource;
+import com.google.idea.common.util.Transactions;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.module.Module;
@@ -115,7 +116,7 @@ public class ProjectUpdater implements QuerySyncProjectListener {
 
   private void updateProjectModel(ProjectProto.Project spec, Context<?> context) {
     File imlDirectory = new File(BlazeDataStorage.getProjectDataDir(importSettings), "modules");
-    ProjectUpdaterThreadingUtils.Companion.readWriteAction(
+    Transactions.submitWriteActionTransactionAndWait(
         () -> {
           IdeModifiableModelsProvider models =
               ProjectDataManager.getInstance().createModifiableModelsProvider(project);
@@ -216,10 +217,9 @@ public class ProjectUpdater implements QuerySyncProjectListener {
                       .build(),
                   workspaceLanguageSettings);
             }
-
+            models.commit();
           }
-          return models;
-        }, models -> models.commit());
+        });
   }
 
   private Library getOrCreateLibrary(

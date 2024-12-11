@@ -424,9 +424,6 @@
     <registryKey defaultValue="true"
                  description="Enable basic syntax highliting in Query Sync's 'Analysis Disabled' mode"
                  key="bazel.qsync.enable.basic.highlighting.in.non.analysis.mode"/>
-    <registryKey defaultValue="true"
-                 description="Use coroutine-based ProjectUpdater implementation. It it is supposed to reduce the freeze that happens during sync"
-                 key="bazel.qsync.enable.coroutine.project.updater"/>
     <editorNotificationProvider implementation="com.google.idea.blaze.base.wizard2.BazelNotificationProvider"/>
   </extensions>
 
