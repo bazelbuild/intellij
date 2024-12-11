@@ -51,16 +51,12 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Optional;
+import java.util.*;
+
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -96,8 +92,15 @@ final class BlazeConfigurationResolver {
         BlazeConfigurationToolchainResolver.buildToolchainLookupMap(
             context, blazeProjectData.getTargetMap());
 
-    Optional<XcodeCompilerSettings> xcodeSettings =
-            BlazeConfigurationToolchainResolver.resolveXcodeCompilerSettings(context, project);
+    Set<CToolchainIdeInfo> projectToolchains = new HashSet<>(toolchainLookupMap.values());
+
+    Optional<XcodeCompilerSettings> xcodeSettings;
+    if (projectToolchains.stream().anyMatch(cToolchainIdeInfo -> cToolchainIdeInfo.getTargetName().equals("local"))) {
+      xcodeSettings = BlazeConfigurationToolchainResolver.resolveXcodeCompilerSettings(context, project);
+    }
+    else {
+      xcodeSettings = Optional.empty();
+    }
 
     ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings =
         BlazeConfigurationToolchainResolver.buildCompilerSettingsMap(
