@@ -139,10 +139,10 @@ public class GeneratedSourcesStripper implements FileTransform {
 
   @Nullable
   @VisibleForTesting
-  String getGeneratedValue(String fileName, ByteSource content) throws IOException {
+  String getGeneratedValue(String fileName, ByteSource content) {
     return ApplicationManager.getApplication()
             .runReadAction(
-                    (ThrowableComputable<String, IOException>) () ->
+                    (Computable<String>) () ->
                             DumbService.getInstance(project).tryRunReadActionInSmartMode(
                                     () -> {
                                       try {
