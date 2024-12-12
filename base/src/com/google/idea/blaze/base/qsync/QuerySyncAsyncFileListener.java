@@ -205,7 +205,7 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
     }
 
     private void requestSyncInternal() {
-      var files = ImmutableSet.copyOf(changePending.getAndSet(ImmutableSet.of()));
+      var files = changePending.getAndSet(ImmutableSet.of());
       if (!files.isEmpty()) {
         QuerySyncManager.getInstance(project)
             .deltaSync(
