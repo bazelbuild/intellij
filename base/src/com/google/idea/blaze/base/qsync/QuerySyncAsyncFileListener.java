@@ -169,7 +169,7 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
   private static class QueueingSyncRequester implements SyncRequester {
     private final Project project;
 
-    private final AtomicReference<ImmutableSet<VirtualFile>> changePending = new AtomicReference<>();
+    private final AtomicReference<ImmutableSet<VirtualFile>> changePending = new AtomicReference<>(ImmutableSet.of());
 
     public QueueingSyncRequester(Project project) {
       this.project = project;
