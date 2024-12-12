@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.base.run.state.DebugPortState;
 import com.google.idea.blaze.base.run.state.EnvironmentVariablesState;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
+import com.google.idea.blaze.base.run.state.WorkingDirectoryState;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 
 /** A version of the common state allowing environment variables to be set when debugging. */
@@ -27,6 +28,8 @@ final class BlazeCidrRunConfigState extends BlazeCommandRunConfigurationCommonSt
   private static final int DEFAULT_DEBUG_PORT = 5006;
 
   private final EnvironmentVariablesState envVars = new EnvironmentVariablesState();
+
+  private final WorkingDirectoryState workingDir = new WorkingDirectoryState();
   private final DebugPortState debugPortState = new DebugPortState(DEFAULT_DEBUG_PORT);
 
   BlazeCidrRunConfigState(BuildSystemName buildSystemName) {
@@ -35,11 +38,15 @@ final class BlazeCidrRunConfigState extends BlazeCommandRunConfigurationCommonSt
 
   @Override
   protected ImmutableList<RunConfigurationState> initializeStates() {
-    return ImmutableList.of(command, blazeFlags, exeFlags, envVars, debugPortState, blazeBinary);
+    return ImmutableList.of(command, blazeFlags, exeFlags, envVars, workingDir, debugPortState, blazeBinary);
   }
 
   EnvironmentVariablesState getEnvVarsState() {
     return envVars;
+  }
+
+  public WorkingDirectoryState getWorkingDirState() {
+    return workingDir;
   }
 
   DebugPortState getDebugPortState() {
