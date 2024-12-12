@@ -10,7 +10,8 @@ import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 import javax.xml.parsers.DocumentBuilderFactory
 
-fun main(args: Array<String>) { // run with WORKSPACE file path as the first arg
+// Usage: bazel run //maintenance -- $PWD/MODULE.bazel && cp MODULE.bazel.out MODULE.bazel
+fun main(args: Array<String>) { 
     val out = Paths.get("${args[0]}.out")
     Files.copy(Paths.get(args[0]), out, StandardCopyOption.REPLACE_EXISTING)
     bumpRelease("2023.1", "231", out)
