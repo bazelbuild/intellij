@@ -73,6 +73,7 @@ public class ProjectRefresherTest {
                 project,
                 project.vcsState(),
                 project.bazelVersion(),
+                project.outputBase(),
                 project.projectDefinition());
     assertThat(update).isInstanceOf(FullProjectUpdate.class);
   }
@@ -99,6 +100,7 @@ public class ProjectRefresherTest {
                 project,
                 project.vcsState(),
                 project.bazelVersion(),
+                project.outputBase(),
                 project.projectDefinition());
     assertThat(update).isInstanceOf(NoopProjectRefresh.class);
     assertThat(update.createPostQuerySyncData(QuerySummary.EMPTY))
@@ -127,6 +129,7 @@ public class ProjectRefresherTest {
                 project,
                 project.vcsState(),
                 project.bazelVersion(),
+                project.outputBase(),
                 project.projectDefinition());
     assertThat(update).isInstanceOf(PartialProjectRefresh.class);
   }
@@ -146,6 +149,7 @@ public class ProjectRefresherTest {
                 project,
                 Optional.of(new VcsState("workspace2", "1", ImmutableSet.of(), Optional.empty())),
                 project.bazelVersion(),
+                project.outputBase(),
                 project.projectDefinition());
     assertThat(update).isInstanceOf(FullProjectUpdate.class);
   }
@@ -165,6 +169,7 @@ public class ProjectRefresherTest {
                 project,
                 Optional.of(new VcsState("workspaceId", "2", ImmutableSet.of(), Optional.empty())),
                 project.bazelVersion(),
+                project.outputBase(),
                 project.projectDefinition());
     assertThat(update).isInstanceOf(FullProjectUpdate.class);
   }
@@ -200,6 +205,7 @@ public class ProjectRefresherTest {
                 project,
                 project.vcsState(),
                 Optional.of("2.0.0"),
+                project.outputBase(),
                 project.projectDefinition());
 
     assertThat(update).isInstanceOf(FullProjectUpdate.class);
@@ -234,6 +240,7 @@ public class ProjectRefresherTest {
                 project,
                 Optional.of(new VcsState("workspaceId", "1", ImmutableSet.of(), Optional.empty())),
                 project.bazelVersion(),
+                project.outputBase(),
                 project.projectDefinition());
 
     assertThat(update).isInstanceOf(PartialProjectRefresh.class);
@@ -271,6 +278,7 @@ public class ProjectRefresherTest {
                 project,
                 Optional.of(new VcsState("workspaceId", "1", ImmutableSet.of(), Optional.empty())),
                 project.bazelVersion(),
+                project.outputBase(),
                 project.projectDefinition());
 
     assertThat(update).isInstanceOf(PartialProjectRefresh.class);
@@ -304,6 +312,7 @@ public class ProjectRefresherTest {
                 project,
                 Optional.of(new VcsState("workspaceId", "1", workingSet, Optional.empty())),
                 project.bazelVersion(),
+                project.outputBase(),
                 project.projectDefinition());
 
     assertThat(update).isInstanceOf(PartialProjectRefresh.class);
@@ -339,6 +348,7 @@ public class ProjectRefresherTest {
                 project,
                 Optional.of(new VcsState("workspaceId", "1", workingSet, Optional.empty())),
                 project.bazelVersion(),
+                project.outputBase(),
                 project.projectDefinition());
 
     assertThat(update).isInstanceOf(NoopProjectRefresh.class);
@@ -374,6 +384,7 @@ public class ProjectRefresherTest {
                 project,
                 Optional.of(new VcsState("workspaceId", "1", ImmutableSet.of(), Optional.empty())),
                 project.bazelVersion(),
+                project.outputBase(),
                 project.projectDefinition());
 
     assertThat(update).isInstanceOf(PartialProjectRefresh.class);
