@@ -825,7 +825,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//:toolchain"))
             .build();
 
-    File externalRoot = WorkspaceHelper.getExternalSourceRoot(
+    File externalRoot = WorkspaceHelper.getExternalSourceRoot(project,
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData()).toFile();
 
     File spyExternalDependencyRoot = spy(new File(externalRoot, "external_dependency"));
