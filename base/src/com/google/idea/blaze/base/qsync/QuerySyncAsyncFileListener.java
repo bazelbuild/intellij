@@ -173,7 +173,6 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
   private static class QueueingSyncRequester implements SyncRequester {
     private final Project project;
 
-    private final AtomicBoolean changePending = new AtomicBoolean(false);
     private final ConcurrentLinkedQueue<VirtualFile> unprocessedChanges = new ConcurrentLinkedQueue<>();
 
     public QueueingSyncRequester(Project project) {
@@ -192,9 +191,7 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
                   if (!requester.project.equals(project)) {
                     return;
                   }
-                  if (requester.changePending.get()) {
-                    requester.requestSyncInternal(ImmutableList.of());
-                  }
+                  requester.requestSync(ImmutableList.of());
                 }
               },
               parentDisposable);
@@ -206,8 +203,9 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
       logger.info(String.format("Putting %d files into sync queue", files.size()));
       ImmutableList<VirtualFile> changesToProcess = ImmutableList.of();
       synchronized (unprocessedChanges) {
+        // TODO aggregate multiple events into one sync request
         unprocessedChanges.addAll(files);
-        if (changePending.compareAndSet(false, true)) {
+        if (!unprocessedChanges.isEmpty()) {
           if (!BlazeSyncStatus.getInstance(project).syncInProgress()) {
             changesToProcess = ImmutableList.copyOf(unprocessedChanges);
             unprocessedChanges.clear();
@@ -220,12 +218,11 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
     }
 
     private void requestSyncInternal(ImmutableCollection<VirtualFile> files) {
-      logger.info(String.format("Requesting sync of %d files", files.size()));
+      logger.info(String.format("Requesting sync of files: %s", files));
       QuerySyncManager.getInstance(project)
           .deltaSync(
               QuerySyncActionStatsScope.createForFiles(QuerySyncAsyncFileListener.class, null, files),
               TaskOrigin.AUTOMATIC);
-      changePending.set(false);
     }
   }
 
