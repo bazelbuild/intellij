@@ -11,7 +11,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "rules_java",
-    version = "8.3.1",
+    version = "8.6.1",
 )
 bazel_dep(
     name = "rules_python",
@@ -46,7 +46,6 @@ bazel_dep(
     version = "2.0.0",
 )
 
-
 remote_android_extensions = use_extension("@bazel_tools//tools/android:android_extensions.bzl", "remote_android_tools_extensions")
 use_repo(remote_android_extensions, "android_gmaven_r8", "android_tools")
 
@@ -61,16 +60,19 @@ bazel_binaries = use_extension(
     "bazel_binaries",
     dev_dependency = True,
 )
-bazel_binaries.download(version = "5.4.1")
 bazel_binaries.download(version = "6.5.0")
-bazel_binaries.download(version = "7.4.0", current = True)
+bazel_binaries.download(version = "7.4.1")
+bazel_binaries.download(
+    current = True,
+    version = "8.0.0",
+)
 use_repo(
     bazel_binaries,
     "bazel_binaries",
     "bazel_binaries_bazelisk",
-    "build_bazel_bazel_5_4_1",
     "build_bazel_bazel_6_5_0",
-    "build_bazel_bazel_7_4_0",
+    "build_bazel_bazel_7_4_1",
+    "build_bazel_bazel_8_0_0",
 )
 
 bazel_dep(name = "rules_jvm_external", version = "6.6")
@@ -124,6 +126,7 @@ use_repo(
     flogger = "com_google_flogger_flogger",
     flogger_system_backend = "com_google_flogger_flogger_system_backend",
     gson = "com_google_code_gson_gson",
+    hamcrest = "org_hamcrest_hamcrest_core",
     jna = "net_java_dev_jna_jna",
     jsr305_annotations = "com_google_code_findbugs_jsr305",
     junit = "junit_junit",
@@ -131,13 +134,13 @@ use_repo(
     objenesis = "org_objenesis_objenesis",
     truth = "com_google_truth_truth",
     truth8 = "com_google_truth_extensions_truth_java8_extension",
-    hamcrest = "org_hamcrest_hamcrest_core",
 )
 
 bazel_dep(name = "rules_go", version = "0.50.1", repo_name = "io_bazel_rules_go")
 bazel_dep(name = "gazelle", version = "0.40.0", repo_name = "bazel_gazelle")
 
 go_repository = use_repo_rule("@bazel_gazelle//:deps.bzl", "go_repository")
+
 # gRPC is used to generate Go from proto in the aspect tests, in
 # //aspect/testing/tests/src/com/google/idea/blaze/aspect/go/...
 go_repository(
@@ -714,7 +717,6 @@ http_archive(
     url = SCALA_PLUGIN_243_URL,
 )
 
-
 _TOML_BUILD_FILE = """
 java_import(
     name = "toml",
@@ -757,7 +759,6 @@ http_archive(
     sha256 = TOML_PLUGIN_243_SHA,
     url = TOML_PLUGIN_243_URL,
 )
-
 
 # The plugin api for android_studio_dev android_studio. This is required to build ASwB and run integration tests
 http_archive(
@@ -833,6 +834,7 @@ genrule(
 """
 
 new_git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
+
 new_git_repository(
     name = "jarjar",
     build_file_content = _JARJAR_BUILD_FILE,
@@ -840,4 +842,3 @@ new_git_repository(
     remote = "https://github.com/google/jarjar",
     shallow_since = "1518210648 -0800",
 )
-
