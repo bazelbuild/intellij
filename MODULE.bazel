@@ -46,7 +46,6 @@ bazel_dep(
     version = "2.0.0",
 )
 
-
 remote_android_extensions = use_extension("@bazel_tools//tools/android:android_extensions.bzl", "remote_android_tools_extensions")
 use_repo(remote_android_extensions, "android_gmaven_r8", "android_tools")
 
@@ -63,7 +62,10 @@ bazel_binaries = use_extension(
 )
 bazel_binaries.download(version = "5.4.1")
 bazel_binaries.download(version = "6.5.0")
-bazel_binaries.download(version = "7.4.0", current = True)
+bazel_binaries.download(
+    current = True,
+    version = "7.4.0",
+)
 use_repo(
     bazel_binaries,
     "bazel_binaries",
@@ -124,6 +126,7 @@ use_repo(
     flogger = "com_google_flogger_flogger",
     flogger_system_backend = "com_google_flogger_flogger_system_backend",
     gson = "com_google_code_gson_gson",
+    hamcrest = "org_hamcrest_hamcrest_core",
     jna = "net_java_dev_jna_jna",
     jsr305_annotations = "com_google_code_findbugs_jsr305",
     junit = "junit_junit",
@@ -131,13 +134,13 @@ use_repo(
     objenesis = "org_objenesis_objenesis",
     truth = "com_google_truth_truth",
     truth8 = "com_google_truth_extensions_truth_java8_extension",
-    hamcrest = "org_hamcrest_hamcrest_core",
 )
 
 bazel_dep(name = "rules_go", version = "0.50.1", repo_name = "io_bazel_rules_go")
 bazel_dep(name = "gazelle", version = "0.40.0", repo_name = "bazel_gazelle")
 
 go_repository = use_repo_rule("@bazel_gazelle//:deps.bzl", "go_repository")
+
 # gRPC is used to generate Go from proto in the aspect tests, in
 # //aspect/testing/tests/src/com/google/idea/blaze/aspect/go/...
 go_repository(
@@ -209,9 +212,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2024_2. This is required to build IJwB and run integration tests.
-IC_242_SHA = "4a64ee8c563d46dc03b1aec0d8ac32197632264e1d412ccd0c6fbf637191c7d3"
+IC_242_SHA = "67dc633ff20fadd702eae6d5b8e875c510791445a96e5f5a41ef902ab570966a"
 
-IC_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2024.2.4/ideaIC-2024.2.4.zip"
+IC_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2024.2.5/ideaIC-2024.2.5.zip"
 
 http_archive(
     name = "intellij_ce_2024_2",
@@ -221,9 +224,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2024_2. This is required to build IJwB and run integration tests.
-IC_243_SHA = "fecd26f2c9b2c23c51edc06f30e1aacd73bfcc614f7bca96aae7eea291a194cd"
+IC_243_SHA = "89087fb3c43f284b67d945945db4a60968c04e909eef849f36bc8ffc19e39aba"
 
-IC_243_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2024.3/ideaIC-2024.3.zip"
+IC_243_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2024.3.1/ideaIC-2024.3.1.zip"
 
 http_archive(
     name = "intellij_ce_2024_3",
@@ -286,9 +289,9 @@ http_archive(
     url = IU_241_URL,
 )
 
-IU_242_SHA = "c25f193c82e679521d2b55f39d5a7c94e724091efb9c640691c1db1ae931962b"
+IU_242_SHA = "6374538aeb34376c7501819b19804a30ee4a49547b5bfe3aa4aa80735191324e"
 
-IU_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2024.2.4/ideaIU-2024.2.4.zip"
+IU_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2024.2.5/ideaIU-2024.2.5.zip"
 
 http_archive(
     name = "intellij_ue_2024_2",
@@ -297,9 +300,9 @@ http_archive(
     url = IU_242_URL,
 )
 
-IU_243_SHA = "a40de5b0adff84e48b14d6c538942b5a3f453a554a68d76f175aa47ed2b82983"
+IU_243_SHA = "31a8a3b46f124b9f8a50aa5f4e6ac0b9196321f2995ad6bda7777ef8cd1065d6"
 
-IU_243_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2024.3/ideaIU-2024.3.zip"
+IU_243_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2024.3.1/ideaIU-2024.3.1.zip"
 
 http_archive(
     name = "intellij_ue_2024_3",
@@ -362,9 +365,9 @@ http_archive(
     url = CLION_241_URL,
 )
 
-CLION_242_SHA = "568dddc58743729ac322641ab84d7089e6a65ee86ec0e495ed521205b3e49624"
+CLION_242_SHA = "27029107088193b6ba0d3d888ce67fcdd1aae68f324c4c6ddadfdd4c3c90b87e"
 
-CLION_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2024.2.3/clion-2024.2.3.zip"
+CLION_242_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2024.2.4/clion-2024.2.4.zip"
 
 http_archive(
     name = "clion_2024_2",
@@ -373,9 +376,9 @@ http_archive(
     url = CLION_242_URL,
 )
 
-CLION_243_SHA = "9dd62fecc0530c0a1783505f2c5b5b0cba7f9be0d23583ef3837235974c57d2b"
+CLION_243_SHA = "a25f835858a009abdbcd319ef5db7f73e7505f944fe1a1687a212ec2d8b05e8e"
 
-CLION_243_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2024.3/clion-2024.3.zip"
+CLION_243_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2024.3.1/clion-2024.3.1.zip"
 
 http_archive(
     name = "clion_2024_3",
@@ -414,9 +417,9 @@ http_archive(
     url = DEVKIT_241_URL,
 )
 
-DEVKIT_243_SHA = "21c5a740ebe96ad11ce44c6f09a78ad5d591cdd396f528f9725d525746c4521e"
+DEVKIT_243_SHA = "b3403b6a3c1dadd0eaaaa12cc21c910bc0e9c7264c55a9785a7ece188cba5ec6"
 
-DEVKIT_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/243.21565.129/DevKit-243.21565.129.zip"
+DEVKIT_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/243.22562.145/DevKit-243.22562.145.zip"
 
 http_archive(
     name = "devkit_2024_3",
@@ -522,9 +525,9 @@ filegroup(
 )
 """
 
-PYTHON_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/242.23726.103/PythonCore-242.23726.103.zip"
+PYTHON_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/242.24807.4/PythonCore-242.24807.4.zip"
 
-PYTHON_PLUGIN_242_SHA = "b1bc98804fd09dd73ed2e1bb34f266289e8005729c59e71a4b2b05d470e12787"
+PYTHON_PLUGIN_242_SHA = "ac5ea796655322d5cc0a1579fbcc97ae57e558dde0a4bd6b78a20d10dcd374cf"
 
 http_archive(
     name = "python_2024_2",
@@ -533,9 +536,9 @@ http_archive(
     url = PYTHON_PLUGIN_242_URL,
 )
 
-PYTHON_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/243.21565.193/PythonCore-243.21565.193.zip"
+PYTHON_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/243.22562.145/PythonCore-243.22562.145.zip"
 
-PYTHON_PLUGIN_243_SHA = "b989ea5d155ad2e13d70aa0f88cb056b8dc0926fd2b3ab8f0de320ba2eda629c"
+PYTHON_PLUGIN_243_SHA = "49d2ff442ddbedd40ab063b761ad6452fd0c0caaf4828256d5ce84da9b787e07"
 
 http_archive(
     name = "python_2024_3",
@@ -622,9 +625,9 @@ http_archive(
     url = GO_PLUGIN_242_URL,
 )
 
-GO_PLUGIN_243_SHA = "01ab22f7040914c2c5844d097b955aabfa3d9f25994237abf815c6c679d23fbd"
+GO_PLUGIN_243_SHA = "5b893719694c65c82bae4df6916d94a3961b6390a6aaa8a077a1daf7954041a9"
 
-GO_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/243.21565.129/org.jetbrains.plugins.go-243.21565.129.zip"
+GO_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/243.22562.145/org.jetbrains.plugins.go-243.22562.145.zip"
 
 http_archive(
     name = "go_2024_3",
@@ -692,9 +695,9 @@ http_archive(
     url = SCALA_PLUGIN_241_URL,
 )
 
-SCALA_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.2.29/org.intellij.scala-2024.2.29.zip"
+SCALA_PLUGIN_242_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.2.30/org.intellij.scala-2024.2.30.zip"
 
-SCALA_PLUGIN_242_SHA = "2501f053e3aadcf82e85e123bbe4fc53b9be10ea1c8570b0ea07df70386f26fb"
+SCALA_PLUGIN_242_SHA = "2b3ebb4377a59ef465a1b352d857d2feb4e407dd9fcae405ad0edfef833ae783"
 
 http_archive(
     name = "scala_2024_2",
@@ -703,9 +706,9 @@ http_archive(
     url = SCALA_PLUGIN_242_URL,
 )
 
-SCALA_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.3.18/org.intellij.scala-2024.3.18.zip"
+SCALA_PLUGIN_243_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2024.3.22/org.intellij.scala-2024.3.22.zip"
 
-SCALA_PLUGIN_243_SHA = "24503bb65fc605b31c6a4691cd2511880a3929f48ca7104b7d2f0ded469add49"
+SCALA_PLUGIN_243_SHA = "42fcbaca38919d95f718da620346122bead02e4a14c3c25f3b80a7aac8538c36"
 
 http_archive(
     name = "scala_2024_3",
@@ -713,7 +716,6 @@ http_archive(
     sha256 = SCALA_PLUGIN_243_SHA,
     url = SCALA_PLUGIN_243_URL,
 )
-
 
 _TOML_BUILD_FILE = """
 java_import(
@@ -757,7 +759,6 @@ http_archive(
     sha256 = TOML_PLUGIN_243_SHA,
     url = TOML_PLUGIN_243_URL,
 )
-
 
 # The plugin api for android_studio_dev android_studio. This is required to build ASwB and run integration tests
 http_archive(
@@ -833,6 +834,7 @@ genrule(
 """
 
 new_git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
+
 new_git_repository(
     name = "jarjar",
     build_file_content = _JARJAR_BUILD_FILE,
@@ -840,4 +842,3 @@ new_git_repository(
     remote = "https://github.com/google/jarjar",
     shallow_since = "1518210648 -0800",
 )
-
