@@ -67,7 +67,7 @@ private fun findTargets(context: ConfigurationContext): ListenableFuture<Collect
 
   return SourceToTargetFinder.findTargetInfoFuture(
     context.project,
-    File(virtualFile.path),
+    virtualFile.toNioPath().toFile(),
     Optional.of(RuleType.TEST),
   ) ?: Futures.immediateFuture(emptyList())
 }
@@ -81,7 +81,7 @@ private fun chooseTargetForFile(context: ConfigurationContext, targets: Collecti
   return TestTargetHeuristic.chooseTestTargetForSourceFile(
     context.project,
     psiFile,
-    File(virtualFile.path),
+    virtualFile.toNioPath().toFile(),
     ccTargets,
     null,
   )
