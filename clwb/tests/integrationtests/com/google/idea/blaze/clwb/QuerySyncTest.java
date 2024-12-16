@@ -41,7 +41,7 @@ public class QuerySyncTest extends ClwbIntegrationTestCase {
   private void checkCompiler() {
     final var compilerSettings = findFileCompilerSettings("main/hello-world.cc");
 
-    // TODO: query sync selects the wrong compiler
+    // TODO: query sync always uses clang : https://github.com/bazelbuild/intellij/issues/7177
     // if (SystemInfo.isMac) {
     //   assertThat(compilerSettings.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
     // } else if (SystemInfo.isLinux) {
