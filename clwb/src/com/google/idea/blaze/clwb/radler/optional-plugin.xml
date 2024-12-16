@@ -16,6 +16,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <TestContextProvider implementation="com.google.idea.blaze.clwb.radler.RadGoogleTestContextProvider"/>
+    <TestContextProvider implementation="com.google.idea.blaze.clwb.radler.RadCatchTestContextProvider"/>
     <BinaryContextProvider implementation="com.google.idea.blaze.clwb.radler.RadBinaryContextProvider"/>
   </extensions>
 </idea-plugin>
