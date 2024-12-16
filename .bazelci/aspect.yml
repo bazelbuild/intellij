@@ -2,7 +2,7 @@
 tasks:
   Aspect-internal-stable:
     name: Aspect Tests for IJ Internal Stable
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=intellij-latest
     build_targets:
@@ -16,7 +16,7 @@ tasks:
     skip_use_bazel_version_for_test: true
   Aspect-internal-beta:
     name: Aspect Tests for IJ Internal Beta
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=intellij-beta
     build_targets:
@@ -30,7 +30,7 @@ tasks:
     skip_use_bazel_version_for_test: true
   Aspect-internal-under-dev:
     name: Aspect Tests for IJ Internal Under Development
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=intellij-under-dev
     build_targets:
@@ -46,7 +46,7 @@ tasks:
     skip_use_bazel_version_for_test: true
   Aspect-oss-oldest-stable:
     name: Aspect Tests for IJ OSS Oldest Stable
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=intellij-oss-oldest-stable
     build_targets:
@@ -60,7 +60,7 @@ tasks:
     skip_use_bazel_version_for_test: true
   Aspect-oss-latest-stable:
     name: Aspect Tests for IJ OSS Latest Stable
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=intellij-oss-latest-stable
     build_targets:
@@ -74,7 +74,7 @@ tasks:
     skip_use_bazel_version_for_test: true
   Aspect-oss-under-dev:
     name: Aspect Tests for IJ OSS Under Development
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=intellij-oss-under-dev
     build_targets:
