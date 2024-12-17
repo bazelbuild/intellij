@@ -352,9 +352,9 @@ http_archive(
 http_archive(
     name = "rules_java",
     urls = [
-        "https://github.com/bazelbuild/rules_java/releases/download/8.5.1/rules_java-8.5.1.tar.gz",
+        "https://github.com/bazelbuild/rules_java/releases/download/8.6.2/rules_java-8.6.2.tar.gz",
     ],
-    sha256 = "1389206b2208c5f33a05dd96e51715b0855c480c082b7bb4889a8e07fcff536c",
+    sha256 = "a64ab04616e76a448c2c2d8165d836f0d2fb0906200d0b7c7376f46dd62e59cc",
 )
 
 _protobuf_version = "29.0"
@@ -517,13 +517,11 @@ jvm_maven_import_external(
     ],
 )
 
-RULES_ANDROID_COMMIT = "bcc793e35addb916dd4ac1b858dd9f765083dbe7"
-
 http_archive(
     name = "rules_android",
-    sha256 = "8fad8a90bcc7926f1c1a65284ced2d99503d2574948f265bc4f7d5f8225a6d1b",
-    strip_prefix = "rules_android-" + RULES_ANDROID_COMMIT,
-    urls = ["https://github.com/bazelbuild/rules_android/archive/%s.zip" % RULES_ANDROID_COMMIT],
+    sha256 = "af84b69ab3d16dd1a41056286e6511f147a94ccea995603e13e934c915c1631c",
+    strip_prefix = "rules_android-0.6.0",
+    urls = ["https://github.com/bazelbuild/rules_android/releases/download/v0.6.0/rules_android-v0.6.0.tar.gz"],
 )
 load("@rules_android//:prereqs.bzl", "rules_android_prereqs")
 rules_android_prereqs()
