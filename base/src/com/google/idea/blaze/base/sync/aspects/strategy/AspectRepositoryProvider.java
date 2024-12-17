@@ -24,7 +24,7 @@ public interface AspectRepositoryProvider {
     return Optional.ofNullable(project.getProjectFilePath()).map((it) -> Paths.get(it).getParent().resolve("aspect").toFile());
   }
 
-  private static Optional<File> findAspectDirectory() {
+  static Optional<File> findAspectDirectory() {
     return EP_NAME.getExtensionsIfPointIsRegistered().stream()
         .map(AspectRepositoryProvider::aspectDirectory)
         .filter(Optional::isPresent)
