@@ -95,7 +95,7 @@ final class BlazeConfigurationResolver {
     Set<CToolchainIdeInfo> projectToolchains = new HashSet<>(toolchainLookupMap.values());
 
     Optional<XcodeCompilerSettings> xcodeSettings;
-    if (projectToolchains.stream().anyMatch(cToolchainIdeInfo -> cToolchainIdeInfo.getTargetName().equals("local"))) {
+    if (projectToolchains.stream().anyMatch(cToolchainIdeInfo -> cToolchainIdeInfo.getCCompiler().getAbsoluteOrRelativeFile().toString().contains("local_config_cc"))) {
       xcodeSettings = BlazeConfigurationToolchainResolver.resolveXcodeCompilerSettings(context, project);
     }
     else {
