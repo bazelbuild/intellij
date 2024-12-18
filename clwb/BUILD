@@ -201,6 +201,12 @@ clwb_integration_test(
     srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/ExternalIncludesTest.java"],
 )
 
+clwb_integration_test(
+    name = "query_sync_integration_test",
+    project = "simple",
+    srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/QuerySyncTest.java"],
+)
+
 test_suite(
     name = "integration_tests",
     tests = [
@@ -208,5 +214,6 @@ test_suite(
         ":simple_integration_test",
         ":virtual_includes_integration_test",
         ":external_includes_integration_test",
+        ":query_sync_integration_test",
     ],
 )
