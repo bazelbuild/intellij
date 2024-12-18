@@ -137,6 +137,8 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
+    Registry.markAsLoaded();
+
     Registry.get("bazel.sync.resolve.virtual.includes").setValue(true);
 
     pathResolver =
