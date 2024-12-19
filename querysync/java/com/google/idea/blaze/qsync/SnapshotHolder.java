@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteSource;
+import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.exception.BuildException;
 import java.util.List;
@@ -52,7 +53,10 @@ public class SnapshotHolder {
       listeners = ImmutableList.copyOf(this.listeners);
     }
     for (QuerySyncProjectListener l : listeners) {
-      l.onNewProjectSnapshot(context, newInstance);
+      BlazeExecutor.getInstance().submit(() -> {
+          l.onNewProjectSnapshot(context, newInstance);
+          return null;
+      });
     }
   }
 
