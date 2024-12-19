@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2016-2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,12 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 /**
  * Used to locate tests from source files for things like right-clicks.
@@ -58,7 +60,7 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
       if (projectData == null) {
         return Futures.immediateFuture(ImmutableList.of());
       }
-      ImmutableSet<TargetInfo> targets =
+      List<TargetInfo> targets =
           sourceFiles.stream()
               .map(file -> projectData.getWorkspacePathResolver().getWorkspacePath(file))
               .filter(Objects::nonNull)
@@ -76,7 +78,9 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
                     return kind.getRuleType().equals(ruleType.get());
                   })
               .map(TargetInfo::fromBuildTarget)
-              .collect(toImmutableSet());
+              .distinct()
+              .sorted(new TargetInfoComparator())
+              .collect(Collectors.toList());
       return Futures.immediateFuture(targets);
     }
     FilteredTargetMap targetMap =
@@ -85,11 +89,13 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
     if (targetMap == null) {
       return Futures.immediateFuture(ImmutableList.of());
     }
-    ImmutableSet<TargetInfo> targets =
+    List<TargetInfo> targets =
         targetMap.targetsForSourceFiles(sourceFiles).stream()
             .map(TargetIdeInfo::toTargetInfo)
             .filter(target -> !ruleType.isPresent() || target.getRuleType().equals(ruleType.get()))
-            .collect(toImmutableSet());
+            .distinct()
+            .sorted(new TargetInfoComparator())
+            .collect(Collectors.toList());
     return Futures.immediateFuture(targets);
   }
 
