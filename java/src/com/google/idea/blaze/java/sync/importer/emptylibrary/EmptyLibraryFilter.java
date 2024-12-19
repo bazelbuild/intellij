@@ -67,7 +67,7 @@ public class EmptyLibraryFilter implements Predicate<BlazeArtifact> {
     return Arrays.stream(EmptyLibraryFilterSettings.EP_NAME.getExtensions())
         .findFirst()
         .map(EmptyLibraryFilterSettings::isEnabled)
-        .orElse(true);
+        .orElse(false);
   }
 
   @Override

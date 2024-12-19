@@ -18,14 +18,11 @@ package com.google.idea.blaze.clwb.radler
 import com.jetbrains.rider.model.RadTestElementModel
 import com.jetbrains.rider.model.RadTestFramework
 
-class RadGoogleTestContextProvider : RadTestContextProvider() {
+class RadCatchTestContextProvider : RadTestContextProvider() {
 
-  override val testFramework: RadTestFramework = RadTestFramework.GTest
+  override val testFramework: RadTestFramework = RadTestFramework.Catch
 
-  override fun createTestFilter(test: RadTestElementModel): String {
-    val suite = test.suites?.firstOrNull() ?: "*"
-    val name = test.test ?: "*"
-
-    return "$suite.$name"
+  override fun createTestFilter(test: RadTestElementModel): String? {
+    return test.test
   }
 }

@@ -189,10 +189,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
     final GeneralCommandLine commandLine = new GeneralCommandLine(command.toList());
 
-    EnvironmentVariablesData envState = handlerState.getEnvVarsState().getData();
-    commandLine.withParentEnvironmentType(
-        envState.isPassParentEnvs() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.NONE);
-    commandLine.getEnvironment().putAll(envState.getEnvs());
+    updateCommandlineWithEnvironmentData(commandLine);
 
     return new ScopedBlazeProcessHandler(
         project,
@@ -214,6 +211,13 @@ public final class BlazeCidrLauncher extends CidrLauncher {
             return ImmutableList.of(new LineProcessingProcessAdapter(outputStream));
           }
         });
+  }
+
+  private void updateCommandlineWithEnvironmentData(GeneralCommandLine commandLine) {
+    EnvironmentVariablesData envState = handlerState.getEnvVarsState().getData();
+    commandLine.withParentEnvironmentType(
+        envState.isPassParentEnvs() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.NONE);
+    commandLine.getEnvironment().putAll(envState.getEnvs());
   }
 
   @Override
@@ -246,6 +250,9 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
       commandLine.addParameters(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
       commandLine.addParameters(handlerState.getTestArgs());
+
+      // otherwise is handled in createProcess
+      updateCommandlineWithEnvironmentData(commandLine);
 
       if (CppBlazeRules.RuleTypes.CC_TEST.getKind().equals(configuration.getTargetKind())) {
         convertBlazeTestFilterToExecutableFlag().ifPresent(commandLine::addParameters);

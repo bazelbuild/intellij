@@ -98,6 +98,12 @@ public class Blaze {
             context -> {
               return ProjectViewManager.getInstance(project).reloadProjectView(context);
             });
+
+    if (projectViewSet == null) {
+      // fallback existing type if project view file is not valid
+      return blazeImportSettings.getProjectType();
+    }
+
     Optional<Boolean> querySyncProjectView = projectViewSet.getScalarValue(UseQuerySyncSection.KEY);
     if (querySyncProjectView.isPresent()) {
       if (blazeImportSettings.getProjectType() == ProjectType.QUERY_SYNC && !querySyncProjectView.get()) {
