@@ -78,7 +78,7 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Override
   public boolean isStrongProjectInfoHolder() {
-    return false;
+    return Registry.is("bazel.project.prefer.google.plugin", false);
   }
 
   @Override
