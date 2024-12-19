@@ -43,7 +43,6 @@ public class IssueOutput implements Output {
     ERROR,
     WARNING,
     NOTE,
-    STATISTICS,
     INFORMATION,
   }
 
