@@ -17,6 +17,7 @@ filegroup(
         "intellij_info_impl.bzl",
         "java_classpath.bzl",
         "make_variables.bzl",
+        "xcode_query.bzl",
         ":BUILD.bazel",
         "//aspect/tools:CreateAar",
         "//aspect/tools:JarFilter_deploy.jar",
@@ -51,6 +52,7 @@ filegroup(
         "intellij_info_impl_bundled.bzl",
         "java_classpath.bzl",
         "make_variables.bzl",
+        "xcode_query.bzl",
         ":BUILD.bazel",
     ],
     visibility = ["//visibility:public"],
@@ -117,9 +119,9 @@ genrule(
 
 genrule(
     name = "create_workspace_file",
-    outs = ["WORKSPACE"],
     srcs = [],
-    cmd = r"""echo 'workspace(name = "intellij_aspect")' > $@"""
+    outs = ["WORKSPACE"],
+    cmd = r"""echo 'workspace(name = "intellij_aspect")' > $@""",
 )
 
 define_flag_hack()
