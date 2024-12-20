@@ -117,9 +117,9 @@ repackaged_files(
 
 repackaged_files(
     name = "aspect_template_directory",
-    srcs = ["//aspect_template:aspect_files"],
+    srcs = ["//aspect:aspect_template_files"],
     prefix = "ijwb/aspect_template",
-    strip_prefix = "/aspect_template",
+    strip_prefix = "/aspect",
     visibility = IJWB_PACKAGES_VISIBILITY,
     java_copts = ["-source", "8", "-target", "8"],
 )

@@ -8,14 +8,12 @@ java_binary(
     name = "BazelInvokingIntegrationTestRunner",
     testonly = True,
     srcs = ["BazelInvokingIntegrationTestRunner.java"],
-    data = [
-        "//aspect:aspect_files",
-        "//aspect_template:aspect_files",
-    ],
+    data = ["//aspect/testing:bundled_aspects"],
     main_class = "com.google.idea.blaze.aspect.integration.BazelInvokingIntegrationTestRunner",
     deps = [
         "//aspect/testing:guava",
         "//base",
+        "//testing/src/com/google/idea/testing/runfiles:runfiles",
     ],
 )
 
