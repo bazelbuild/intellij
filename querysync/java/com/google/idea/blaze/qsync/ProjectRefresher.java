@@ -22,6 +22,7 @@ import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.query.QuerySpec;
+
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -52,14 +53,15 @@ public class ProjectRefresher {
   }
 
   public RefreshOperation startFullUpdate(
-      Context<?> context,
-      ProjectDefinition spec,
-      Optional<VcsState> vcsState,
-      Optional<String> bazelVersion) {
+          Context<?> context,
+          ProjectDefinition spec,
+          Optional<VcsState> vcsState,
+          Optional<String> bazelVersion,
+          Optional<String> outputBase) {
     Path effectiveWorkspaceRoot =
       runQueryInWorkspaceExperiment.get() ? workspaceRoot : (
         vcsState.flatMap(s -> s.workspaceSnapshotPath).orElse(workspaceRoot));
-    return new FullProjectUpdate(context, effectiveWorkspaceRoot, spec, vcsState, bazelVersion, queryStrategy);
+    return new FullProjectUpdate(context, effectiveWorkspaceRoot, spec, vcsState, bazelVersion, outputBase, queryStrategy);
   }
 
   public RefreshOperation startPartialRefresh(
@@ -67,11 +69,12 @@ public class ProjectRefresher {
       PostQuerySyncData currentProject,
       Optional<VcsState> latestVcsState,
       Optional<String> latestBazelVersion,
+      Optional<String> latestOutputBase,
       ProjectDefinition latestProjectDefinition)
       throws BuildException {
     return startPartialRefresh(
         new RefreshParameters(
-            currentProject, latestVcsState, latestBazelVersion, latestProjectDefinition, vcsDiffer),
+            currentProject, latestVcsState, latestBazelVersion, latestOutputBase, latestProjectDefinition, vcsDiffer),
         context);
   }
 
@@ -82,7 +85,8 @@ public class ProjectRefresher {
           context,
           params.latestProjectDefinition,
           params.latestVcsState,
-          params.latestBazelVersion);
+          params.latestBazelVersion,
+          params.latestOutputBase);
     }
     AffectedPackages affected = params.calculateAffectedPackages(context);
 

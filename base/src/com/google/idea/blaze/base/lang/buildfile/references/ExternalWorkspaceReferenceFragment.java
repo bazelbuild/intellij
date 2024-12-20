@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.ExternalWorkspaceDataManager;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -112,12 +113,13 @@ public class ExternalWorkspaceReferenceFragment extends PsiReferenceBase<StringL
   @Override
   @Nonnull
   public BuildLookupElement[] getVariants() {
-    BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(myElement.getProject()).getBlazeProjectData();
-    if (blazeProjectData == null) {
+
+    var externalWorkspaceData = ExternalWorkspaceDataManager.getInstance(myElement.getProject()).getData();
+    if(externalWorkspaceData == null) {
       return BuildLookupElement.EMPTY_ARRAY;
     }
 
-    return blazeProjectData.getExternalWorkspaceData().workspaces.values().stream()
+    return externalWorkspaceData.workspaces.values().stream()
         .map(ExternalWorkspaceLookupElement::new)
         .toArray(BuildLookupElement[]::new);
   }
