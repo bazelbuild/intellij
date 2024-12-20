@@ -17,6 +17,10 @@ v2025.01.07
 
 v2024.12.17
 ===========
+* Allow to boost .ijwb over BSP and .idea folder. #7201
+
+v2024.12.17
+===========
 Fixes:
 * Keep bazel from automatically enabling curses with the old sync view #7143
 * Do not use curses with the old sync view #7139
