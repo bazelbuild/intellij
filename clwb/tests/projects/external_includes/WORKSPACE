@@ -1,0 +1,8 @@
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "catch2",
+    sha256 = "c991b247a1a0d7bb9c39aa35faf0fe9e19764213f28ffba3109388e62ee0269c",
+    strip_prefix = "Catch2-3.7.1",
+    url = "https://github.com/catchorg/Catch2/archive/refs/tags/v3.7.1.tar.gz",
+)

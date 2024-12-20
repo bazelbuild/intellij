@@ -3,6 +3,7 @@ package com.google.idea.blaze.clwb.base;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.async.process.ExternalTask;
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.project.AutoImportProjectOpenProcessor;
@@ -18,7 +19,7 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectRepositoryProvider;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.toolwindow.TasksToolWindowFactory;
@@ -42,7 +43,6 @@ import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import com.google.idea.blaze.base.sync.SyncPhaseCoordinator;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageUtils;
-import com.jetbrains.cidr.lang.psi.OCFile;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
@@ -51,7 +51,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import org.intellij.lang.annotations.Language;
 
 public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
   protected VirtualFile myProjectRoot;
@@ -172,7 +171,17 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
             .build()
     );
 
-    final var projectViewLines = projectViewText().split("\n");
+    final var bitBazelVersion = System.getenv("BIT_BAZEL_VERSION");
+    if (bitBazelVersion == null) {
+      fail("Could not find BIT_BAZEL_VERSION");
+    }
+
+    final var bazelVersion = BazelVersion.parseVersion(bitBazelVersion);
+    final var projectViewText = projectView(bazelVersion).build();
+
+    LOG.info(String.format("PROJECT VIEW:%n%s", projectViewText));
+
+    final var projectViewLines = projectViewText.split("\n");
     final var projectViewBuilder = ProjectView.builder();
     projectViewBuilder.add(TextBlockSection.of(TextBlock.of(1, projectViewLines)));
     final var projectView = projectViewBuilder.build();
@@ -206,13 +215,17 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
     builder.builder().commitToProject(myProject);
   }
 
-  protected @Language("projectview") String projectViewText() {
-    return """
-directories:
-  .
+  protected ProjectViewBuilder projectView(BazelVersion version) {
+    final var builder = new ProjectViewBuilder();
 
-derive_targets_from_directories: true
-    """;
+    builder.addDirectory(".");
+    builder.setDeriveTargetsFromDirectories(true);
+
+    if (!version.isAtLeast(8, 0, 0)) {
+      builder.addSyncFlag("--noenable_bzlmod");
+    }
+
+    return builder;
   }
 
   protected SyncOutput runSync(BlazeSyncParams params) {

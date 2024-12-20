@@ -10,11 +10,11 @@ public class TestAspectRepositoryProvider implements AspectRepositoryProvider {
 
   @Override
   public Optional<File> aspectDirectory() {
-    return Optional.of(Runfiles.runfilesPath("aspect")).map(Path::toFile);
+    return Optional.of(Runfiles.runfilesPath("clwb/aspect")).map(Path::toFile);
   }
 
   @Override
   public Optional<File> aspectTemplateDirectory() {
-    return Optional.of(Runfiles.runfilesPath("aspect_template")).map(Path::toFile);
+    return Optional.of(Runfiles.runfilesPath("clwb/aspect_template")).map(Path::toFile);
   }
 }

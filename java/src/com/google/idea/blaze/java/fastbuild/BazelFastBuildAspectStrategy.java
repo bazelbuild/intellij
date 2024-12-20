@@ -18,12 +18,9 @@ package com.google.idea.blaze.java.fastbuild;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider;
 import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService;
 import com.intellij.openapi.project.Project;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 final class BazelFastBuildAspectStrategy extends FastBuildAspectStrategy {
