@@ -155,3 +155,4 @@ genrule(
     outs = ["code_generator_info.template.bzl"],
     cmd = STRIP_TEMPLATE_SCRIPT,
 )
+

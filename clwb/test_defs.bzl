@@ -13,39 +13,8 @@ load(
     "intellij_integration_test_suite",
 )
 
-def _repacked_files_impl(ctx):
-    outputs = []
-
-    for target in ctx.attr.srcs:
-        for file in target.files.to_list():
-            link = ctx.actions.declare_file("%s/%s" % (ctx.attr.prefix, file.basename))
-            outputs.append(link)
-
-            ctx.actions.symlink(output = link, target_file = file)
-
-    return [DefaultInfo(files = depset(outputs))]
-
-repacked_files = rule(
-    implementation = _repacked_files_impl,
-    attrs = {
-        "srcs": attr.label_list(mandatory = True),
-        "prefix": attr.string(mandatory = True),
-    },
-)
 
 def clwb_integration_test(name, project, srcs, deps = []):
-    repacked_files(
-        name = name + "_aspect_files",
-        srcs = ["//aspect:aspect_files"],
-        prefix = "aspect",
-    )
-
-    repacked_files(
-        name = name + "_aspect_template_files",
-        srcs = ["//aspect:aspect_template_files"],
-        prefix = "aspect_template",
-    )
-
     runner = name + "_runner"
 
     intellij_integration_test_suite(
@@ -53,10 +22,7 @@ def clwb_integration_test(name, project, srcs, deps = []):
         srcs = srcs + native.glob(["tests/integrationtests/com/google/idea/blaze/clwb/base/*.java"]),
         test_package_root = "com.google.idea.blaze.clwb",
         runtime_deps = [":clwb_bazel"],
-        data = [
-            name + "_aspect_files",
-            name + "_aspect_template_files",
-        ],
+        data = ["//aspect/testing:aspect_files"],
         jvm_flags = [
             # disables the default bazel security manager, causes tests to fail on windows
             "-Dcom.google.testing.junit.runner.shouldInstallTestSecurityManager=false",
