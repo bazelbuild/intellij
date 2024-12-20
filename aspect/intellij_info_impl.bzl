@@ -15,11 +15,11 @@ load(
 )
 load(":flag_hack.bzl", "FlagHackInfo")
 
-load("@intellij_aspect_template//:java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
+load(":java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
 
-load("@intellij_aspect_template//:python_info.bzl", "get_py_info", "py_info_in_target")
+load(":python_info.bzl", "get_py_info", "py_info_in_target")
 
-load("@intellij_aspect_template//:code_generator_info.bzl", "CODE_GENERATOR_RULE_NAMES")
+load(":code_generator_info.bzl", "CODE_GENERATOR_RULE_NAMES")
 
 load(
     ":make_variables.bzl",

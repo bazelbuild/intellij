@@ -59,6 +59,7 @@ import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder;
@@ -152,6 +153,8 @@ public final class BuildPhaseSyncTask {
   }
 
   private void doRun(BlazeContext context) throws SyncFailedException, SyncCanceledException, ExecutionException, InterruptedException {
+    AspectStorageService.of(project).prepare(context);
+
     List<TargetExpression> targets = Lists.newArrayList();
     ProjectViewSet viewSet = projectState.getProjectViewSet();
     if (syncParams.addWorkingSet() && projectState.getWorkingSet() != null) {
