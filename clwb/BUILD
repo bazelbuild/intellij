@@ -128,7 +128,7 @@ repackaged_files(
 
 repackaged_files(
     name = "aspect_template_directory",
-    srcs = ["//aspect_template:aspect_files"],
+    srcs = ["//aspect:aspect_template_files"],
     java_copts = [
         "-source",
         "8",
@@ -136,7 +136,7 @@ repackaged_files(
         "8",
     ],
     prefix = "clwb/aspect_template",
-    strip_prefix = "/aspect_template",
+    strip_prefix = "/aspect",
     visibility = CLWB_PACKAGES_VISIBILITY,
 )
 

@@ -18,38 +18,22 @@ package com.google.idea.blaze.java.fastbuild;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectRepositoryProvider;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService;
 import com.intellij.openapi.project.Project;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 final class BazelFastBuildAspectStrategy extends FastBuildAspectStrategy {
 
   @Override
   protected List<String> getAspectFlags(BlazeVersionData versionData, Project project) {
-    String intellijAspectFile;
-    boolean useInjectedRepository = versionData.bazelIsAtLeastVersion(8, 0, 0);
-    if(useInjectedRepository) {
-      intellijAspectFile = "--aspects=@intellij_aspect//:fast_build_info_bundled.bzl%fast_build_info_aspect";
-    } else if (versionData.bazelIsAtLeastVersion(6, 0, 0)) {
-      intellijAspectFile = "--aspects=@@intellij_aspect//:fast_build_info_bundled.bzl%fast_build_info_aspect";
-    } else {
-      intellijAspectFile = "--aspects=@intellij_aspect//:fast_build_info_bundled.bzl%fast_build_info_aspect";
-    }
-    return Stream.concat(
-        getAspectRepositoryOverrideFlags(project).stream(),
-        Stream.of(intellijAspectFile)
-      )
-      .collect(Collectors.toList());
-  }
-
-  private static List<String> getAspectRepositoryOverrideFlags(Project project) {
-    return Arrays.stream(AspectRepositoryProvider.getOverrideFlags(project)).filter(Optional::isPresent)
-      .map(Optional::get).toList();
+    return AspectStorageService.of(project).resolve("fast_build_info_bundled.bzl")
+        .map(label -> String.format("--aspects=%s%%fast_build_info_aspect", label))
+        .stream()
+        .collect(Collectors.toList());
   }
 
   @Override

@@ -18,8 +18,9 @@ package com.google.idea.blaze.base.sync.aspects.strategy;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 
 import java.io.File;
@@ -28,7 +29,6 @@ import javax.annotation.Nullable;
 
 /** Aspect strategy for Bazel, where the aspect is situated in an external repository. */
 public class AspectStrategyBazel extends AspectStrategy {
-  private final String aspectFlag;
   Boolean supportsAspectParameters;
 
   static final class Provider implements AspectStrategyProvider {
@@ -51,28 +51,21 @@ public class AspectStrategyBazel extends AspectStrategy {
     @Override
     public Optional<File> aspectTemplateDirectory() {
       return Optional.ofNullable(PluginManager.getPluginByClass(AspectStrategy.class))
-              .map((it) -> new File(it.getPath(), "aspect_template"));
+          .map((it) -> new File(it.getPath(), "aspect_template"));
     }
   }
 
   @VisibleForTesting
   public AspectStrategyBazel(BlazeVersionData versionData) {
     super(/* aspectSupportsDirectDepsTrimming= */ true);
-    boolean useInjectedRepository = versionData.bazelIsAtLeastVersion(8, 0, 0);
-    if (useInjectedRepository) {
-      aspectFlag = "--aspects=@intellij_aspect//:intellij_info_bundled.bzl%intellij_info_aspect";
-    } else if (versionData.bazelIsAtLeastVersion(6, 0, 0)) {
-      aspectFlag = "--aspects=@@intellij_aspect//:intellij_info_bundled.bzl%intellij_info_aspect";
-    } else {
-      aspectFlag = "--aspects=@intellij_aspect//:intellij_info_bundled.bzl%intellij_info_aspect";
-    }
     supportsAspectParameters = versionData.bazelIsAtLeastVersion(6, 0, 0);
   }
 
   @Override
   @VisibleForTesting
-  public Optional<String> getAspectFlag() {
-    return Optional.of(aspectFlag);
+  public Optional<String> getAspectFlag(Project project) {
+    return AspectStorageService.of(project).resolve("intellij_info_bundled.bzl")
+        .map(label -> String.format("--aspects=%s%%intellij_info_aspect", label));
   }
 
   @Override
