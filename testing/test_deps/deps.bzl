@@ -54,9 +54,9 @@ def aswb_test_deps_dependencies():
 
     http_file(
         name = "aswb_test_deps_bazel_central_registry",
-        sha256 = "efd1680b1ce48c1115d533ed76124eb107335da7cd48059f4ddfa780170fe1e1",
+        sha256 = "a7faef7659222fb12a1bc2e0b5add283f21e4303db3170cbb70ba52c28159d92",
         downloaded_file_path = "bazel_central_registry.zip",
-        url = "https://github.com/bazelbuild/bazel-central-registry/archive/f30c64985debcbcd04cffe783047b9cbaee47099.zip",
+        url = "https://github.com/bazelbuild/bazel-central-registry/archive/4997860dca6336aff59cb7f44214094f0d94c4d8.zip",
         visibility = ["//:__subpackages__"],
     )
 
