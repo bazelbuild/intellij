@@ -1,6 +1,6 @@
 # TEMPLATE-INCLUDE-BEGIN
-###if( $isPythonEnabled == "true" && $bazel8OrAbove == "true" )
-##load("@rules_python//python:defs.bzl", "PyInfo")
+###if( $isPythonEnabled == "true" )
+##load("@rules_python//python:defs.bzl", RulesPyInfo = "PyInfo")
 ###end
 # TEMPLATE-INCLUDE-END
 
@@ -10,11 +10,15 @@ def py_info_in_target(target):
 # TEMPLATE-IGNORE-END
 
 # TEMPLATE-INCLUDE-BEGIN
-##  #if( $isPythonEnabled == "true" )
-##  return PyInfo in target
-##  #else
-##  return None
-##  #end
+###if( $isPythonEnabled == "true" )
+##  if RulesPyInfo in target:
+##    return True
+###end
+###if( $bazel8OrAbove != "true")
+##  if PyInfo in target:
+##    return True
+###end
+##  return False
 # TEMPLATE-INCLUDE-END
 
 def get_py_info(target):
@@ -26,12 +30,14 @@ def get_py_info(target):
 # TEMPLATE-IGNORE-END
 
 # TEMPLATE-INCLUDE-BEGIN
-##  #if( $isPythonEnabled == "true" )
+###if( $isPythonEnabled == "true" )
+##  if RulesPyInfo in target:
+##    return target[RulesPyInfo]
+###end
+###if( $bazel8OrAbove != "true")
 ##  if PyInfo in target:
-##      return target[PyInfo]
-##  else:
-##      return None
-##  #else
+##    return target[PyInfo]
+###end
 ##  return None
-##  #end
 # TEMPLATE-INCLUDE-END
+
