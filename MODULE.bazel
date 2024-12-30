@@ -43,7 +43,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "rules_kotlin",
-    version = "2.0.0",
+    version = "2.1.0",
 )
 
 remote_android_extensions = use_extension("@bazel_tools//tools/android:android_extensions.bzl", "remote_android_tools_extensions")
