@@ -161,78 +161,76 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     Optional<BuildDepsStats.Builder> buildDepsStatsBuilder =
         BuildDepsStatsScope.fromContext(context);
     buildDepsStatsBuilder.ifPresent(stats -> stats.setBlazeBinaryType(invoker.getType()));
-    try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
-      String includes =
-          projectDefinition.projectIncludes().stream()
-              .map(path -> "//" + path)
-              .collect(joining(","));
-      String excludes =
-          projectDefinition.projectExcludes().stream()
-              .map(path -> "//" + path)
-              .collect(joining(","));
-      String aspectLocation = prepareAspect(context);
-      Set<String> ruleKindsToBuild =
-          Sets.difference(BlazeQueryParser.ALWAYS_BUILD_RULE_KINDS, handledRuleKinds);
-      String alwaysBuildParam = Joiner.on(",").join(ruleKindsToBuild);
 
-      ImmutableSet<OutputGroup> outputGroups =
-          languages.stream()
-              .map(OUTPUT_GROUPS_BY_LANGUAGE::get)
-              .flatMap(Collection::stream)
-              .collect(ImmutableSet.toImmutableSet());
+    String includes =
+        projectDefinition.projectIncludes().stream()
+            .map(path -> "//" + path)
+            .collect(joining(","));
+    String excludes =
+        projectDefinition.projectExcludes().stream()
+            .map(path -> "//" + path)
+            .collect(joining(","));
+    String aspectLocation = prepareAspect(context);
+    Set<String> ruleKindsToBuild =
+        Sets.difference(BlazeQueryParser.ALWAYS_BUILD_RULE_KINDS, handledRuleKinds);
+    String alwaysBuildParam = Joiner.on(",").join(ruleKindsToBuild);
 
-      ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-      // TODO This is not SYNC_CONTEXT, but also not OTHER_CONTEXT, we need to decide what kind
-      // of flags need to be passed here.
-      List<String> additionalBlazeFlags =
-          BlazeFlags.blazeFlags(
-              project,
-              projectViewSet,
-              BlazeCommandName.BUILD,
-              context,
-              BlazeInvocationContext.OTHER_CONTEXT);
+    ImmutableSet<OutputGroup> outputGroups =
+        languages.stream()
+            .map(OUTPUT_GROUPS_BY_LANGUAGE::get)
+            .flatMap(Collection::stream)
+            .collect(ImmutableSet.toImmutableSet());
 
-      BlazeCommand.Builder builder =
-          BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project)
-              .addBlazeFlags(buildTargets.stream().map(Label::toString).collect(toImmutableList()))
-              .addBlazeFlags(buildResultHelper.getBuildFlags())
-              .addBlazeFlags(additionalBlazeFlags)
-              .addBlazeFlags(
-                  String.format(
-                      "--aspects=%1$s%%collect_dependencies,%1$s%%package_dependencies",
-                      aspectLocation))
-              .addBlazeFlags(String.format("--aspects_parameters=include=%s", includes))
-              .addBlazeFlags(String.format("--aspects_parameters=exclude=%s", excludes))
-              .addBlazeFlags(
-                  String.format("--aspects_parameters=always_build_rules=%s", alwaysBuildParam))
-              .addBlazeFlags("--aspects_parameters=generate_aidl_classes=True")
-              .addBlazeFlags(
-                  String.format(
-                      "--aspects_parameters=use_generated_srcjars=%s",
-                      buildGeneratedSrcJars.getValue() ? "True" : "False"))
-              .addBlazeFlags("--noexperimental_run_validations")
-              .addBlazeFlags("--keep_going");
-      outputGroups.stream()
-          .map(g -> "--output_groups=" + g.outputGroupName())
-          .forEach(builder::addBlazeFlags);
-      buildDepsStatsBuilder.ifPresent(
-          stats -> stats.setBuildFlags(builder.build().toArgumentList()));
-      Instant buildTime = Instant.now();
-      BlazeBuildOutputs outputs = BazelExecService.instance(project).build(context, builder);
-      buildDepsStatsBuilder.ifPresent(
-          stats -> {
-            stats.setBuildIds(outputs.getBuildIds());
-            stats.setBepByteConsumed(outputs.bepBytesConsumed);
-          });
+    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    // TODO This is not SYNC_CONTEXT, but also not OTHER_CONTEXT, we need to decide what kind
+    // of flags need to be passed here.
+    List<String> additionalBlazeFlags =
+        BlazeFlags.blazeFlags(
+            project,
+            projectViewSet,
+            BlazeCommandName.BUILD,
+            context,
+            BlazeInvocationContext.OTHER_CONTEXT);
 
-      BazelExitCodeException.throwIfFailed(
-          builder,
-          outputs.buildResult,
-          ThrowOption.ALLOW_PARTIAL_SUCCESS,
-          ThrowOption.ALLOW_BUILD_FAILURE);
+    BlazeCommand.Builder builder =
+        BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project)
+            .addBlazeFlags(buildTargets.stream().map(Label::toString).collect(toImmutableList()))
+            .addBlazeFlags(additionalBlazeFlags)
+            .addBlazeFlags(
+                String.format(
+                    "--aspects=%1$s%%collect_dependencies,%1$s%%package_dependencies",
+                    aspectLocation))
+            .addBlazeFlags(String.format("--aspects_parameters=include=%s", includes))
+            .addBlazeFlags(String.format("--aspects_parameters=exclude=%s", excludes))
+            .addBlazeFlags(
+                String.format("--aspects_parameters=always_build_rules=%s", alwaysBuildParam))
+            .addBlazeFlags("--aspects_parameters=generate_aidl_classes=True")
+            .addBlazeFlags(
+                String.format(
+                    "--aspects_parameters=use_generated_srcjars=%s",
+                    buildGeneratedSrcJars.getValue() ? "True" : "False"))
+            .addBlazeFlags("--noexperimental_run_validations")
+            .addBlazeFlags("--keep_going");
+    outputGroups.stream()
+        .map(g -> "--output_groups=" + g.outputGroupName())
+        .forEach(builder::addBlazeFlags);
+    buildDepsStatsBuilder.ifPresent(
+        stats -> stats.setBuildFlags(builder.build().toArgumentList()));
+    Instant buildTime = Instant.now();
+    BlazeBuildOutputs outputs = BazelExecService.instance(project).build(context, builder);
+    buildDepsStatsBuilder.ifPresent(
+        stats -> {
+          stats.setBuildIds(outputs.getBuildIds());
+          stats.setBepByteConsumed(outputs.bepBytesConsumed);
+        });
 
-      return createOutputInfo(outputs, outputGroups, buildTime, context);
-    }
+    BazelExitCodeException.throwIfFailed(
+        builder,
+        outputs.buildResult,
+        ThrowOption.ALLOW_PARTIAL_SUCCESS,
+        ThrowOption.ALLOW_BUILD_FAILURE);
+
+    return createOutputInfo(outputs, outputGroups, buildTime, context);
   }
 
   /**

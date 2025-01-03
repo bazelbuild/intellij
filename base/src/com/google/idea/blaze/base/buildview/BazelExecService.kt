@@ -66,7 +66,14 @@ class BazelExecService(private val project: Project) : Disposable {
   }
 
   private suspend fun execute(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): Int {
-    val cmd = cmdBuilder.apply { addBlazeFlags("--curses=yes") }.build()
+    // the old sync view does not use a PTY based terminal
+    if (BuildViewMigration.present(ctx)) {
+      cmdBuilder.addBlazeFlags("--curses=yes")
+    } else {
+      cmdBuilder.addBlazeFlags("--curses=no")
+    }
+
+    val cmd = cmdBuilder.build()
     val root = cmd.effectiveWorkspaceRoot.orElseGet { WorkspaceRoot.fromProject(project).path() }
     val size = BuildViewScope.of(ctx)?.consoleSize ?: PtyConsoleView.DEFAULT_SIZE
 
@@ -183,4 +190,3 @@ class BazelExecService(private val project: Project) : Disposable {
     }
   }
 }
-

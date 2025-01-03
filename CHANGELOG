@@ -1,3 +1,17 @@
+v2024.12.17
+===========
+Fixes:
+* Keep bazel from automatically enabling curses with the old sync view #7143
+* Do not use curses with the old sync view #7139
+* Do not append \n for PROCESS since that output has all of the delim… #7146
+* clion: fix non-passed env vars for gdbserverless debugging #7167
+* handle non-valid project view file on reload #7159
+Features:
+* Adds support for the google test run button in nova #7062
+* Add catch2 test support in CLion #7141
+* Adds support for the run button on main functions in nova  #7100
+* Experimental: Basic qsync support in CLion for linux #7094
+
 v2024.12.03
 ===========
 Fixes:

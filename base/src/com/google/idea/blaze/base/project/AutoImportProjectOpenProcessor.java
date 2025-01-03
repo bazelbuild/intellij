@@ -21,7 +21,9 @@ import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -78,7 +80,8 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Override
   public boolean isStrongProjectInfoHolder() {
-    return false;
+      return !PluginManagerCore.isPluginInstalled(PluginId.getId("org.jetbrains.bazel")) ||
+              Registry.is("bazel.project.prefer.google.plugin");
   }
 
   @Override
