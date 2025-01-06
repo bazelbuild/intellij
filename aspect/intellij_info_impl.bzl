@@ -348,6 +348,7 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         py_launcher = None
 
     sources = sources_from_target(ctx)
+
     to_build = target[PyInfo].transitive_sources
     args = getattr(ctx.rule.attr, "args", [])
     data_deps = getattr(ctx.rule.attr, "data", [])
