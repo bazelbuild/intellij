@@ -27,6 +27,8 @@ kt_jvm_library(
     resource_strip_prefix = "base/src",
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
+        "//aspect:aspect_lib",
+        "//aspect:aspect_template_lib",
         "//common/actions",
         "//common/experiments",
         "//common/settings",

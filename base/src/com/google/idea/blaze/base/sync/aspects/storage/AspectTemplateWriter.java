@@ -27,7 +27,9 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.util.TemplateWriter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -59,57 +61,63 @@ public class AspectTemplateWriter implements AspectWriter {
       throw new SyncFailedException("Couldn't get BlazeProjectDataManager");
     }
 
-    final var templateAspects = AspectRepositoryProvider.findAspectTemplateDirectory()
+    final var templates = AspectRepositoryProvider.aspectTemplateDirectory()
             .orElseThrow(() -> new SyncFailedException("Couldn't find aspect template directory"));
 
-    writeLanguageInfos(manager, dst, templateAspects);
-    writeCodeGeneratorInfo(manager, project, dst, templateAspects);
+    try {
+      writeLanguageInfos(manager, dst, templates);
+      writeCodeGeneratorInfo(manager, project, dst, templates);
+    } catch (IOException e) {
+      throw new SyncFailedException("Failed to evaluate a template", e);
+    }
   }
 
   private void writeCodeGeneratorInfo(
       BlazeProjectDataManager manager,
       Project project,
-      Path realizedAspectsPath,
-      File templateAspects) throws SyncFailedException {
-    ProjectViewSet viewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    Set<LanguageClass> languageClasses = Optional.ofNullable(manager.getBlazeProjectData())
+      Path dst,
+      VirtualFile templates) throws IOException {
+    final var viewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    final var languageClasses = Optional.ofNullable(manager.getBlazeProjectData())
         .map(BlazeProjectData::getWorkspaceLanguageSettings)
         .map(WorkspaceLanguageSettings::getActiveLanguages)
         .orElse(ImmutableSet.of());
 
-    List<LanguageClassRuleNames> languageClassRuleNames = languageClasses.stream()
+    final var languageClassRuleNames = languageClasses.stream()
         .sorted()
         .map(lc -> new LanguageClassRuleNames(lc, ruleNamesForLanguageClass(lc, viewSet)))
         .toList();
 
-    var realizedFile = realizedAspectsPath.resolve(REALIZED_CODE_GENERATOR);
-    var templateWriter = new TemplateWriter(templateAspects.toPath());
-    var templateVariableMap = ImmutableMap.of("languageClassRuleNames", languageClassRuleNames);
-    if (!templateWriter.writeToFile(TEMPLATE_CODE_GENERATOR, realizedFile, templateVariableMap)) {
-      throw new SyncFailedException("Could not create template for: " + REALIZED_CODE_GENERATOR);
-    }
+    TemplateWriter.evaluate(
+        dst,
+        REALIZED_CODE_GENERATOR,
+        templates,
+        TEMPLATE_CODE_GENERATOR,
+        ImmutableMap.of("languageClassRuleNames", languageClassRuleNames)
+    );
   }
 
   private void writeLanguageInfos(
-          BlazeProjectDataManager manager,
-          Path realizedAspectsPath,
-          File templateAspects) throws SyncFailedException {
-    var templateLanguageStringMap = getLanguageStringMap(manager);
-    writeLanguageInfo(realizedAspectsPath, templateAspects, TEMPLATE_JAVA, REALIZED_JAVA, templateLanguageStringMap);
-    writeLanguageInfo(realizedAspectsPath, templateAspects, TEMPLATE_PYTHON, REALIZED_PYTHON, templateLanguageStringMap);
-  }
+      BlazeProjectDataManager manager,
+      Path dst,
+      VirtualFile templates
+  ) throws IOException {
+    final var templateLanguageStringMap = getLanguageStringMap(manager);
 
-  private void writeLanguageInfo(
-          Path realizedAspectsPath,
-          File templateAspects,
-          String templateFileName,
-          String realizedFileName,
-          Map<String, String> templateLanguageStringMap) throws SyncFailedException {
-    var realizedFile = realizedAspectsPath.resolve(realizedFileName);
-    var templateWriter = new TemplateWriter(templateAspects.toPath());
-    if (!templateWriter.writeToFile(templateFileName, realizedFile, templateLanguageStringMap)) {
-      throw new SyncFailedException("Could not create template for: " + realizedFileName);
-    }
+    TemplateWriter.evaluate(
+        dst,
+        REALIZED_JAVA,
+        templates,
+        TEMPLATE_JAVA,
+        templateLanguageStringMap
+    );
+    TemplateWriter.evaluate(
+        dst,
+        REALIZED_PYTHON,
+        templates,
+        TEMPLATE_PYTHON,
+        templateLanguageStringMap
+    );
   }
 
   private static @NotNull Map<String, String> getLanguageStringMap(BlazeProjectDataManager manager) {

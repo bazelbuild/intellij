@@ -107,24 +107,6 @@ repackaged_files(
 )
 
 repackaged_files(
-    name = "aspect_directory",
-    srcs = ["//aspect:aspect_files"],
-    prefix = "ijwb/aspect",
-    strip_prefix = "/aspect",
-    visibility = IJWB_PACKAGES_VISIBILITY,
-    java_copts = ["-source", "8", "-target", "8"],
-)
-
-repackaged_files(
-    name = "aspect_template_directory",
-    srcs = ["//aspect:aspect_template_files"],
-    prefix = "ijwb/aspect_template",
-    strip_prefix = "/aspect",
-    visibility = IJWB_PACKAGES_VISIBILITY,
-    java_copts = ["-source", "8", "-target", "8"],
-)
-
-repackaged_files(
     name = "fast_build_javac",
     srcs = ["//java:fast_build_javac"],
     prefix = "ijwb/lib",
@@ -135,8 +117,6 @@ repackaged_files(
 intellij_plugin_debug_target(
     name = "ijwb_bazel_dev",
     deps = [
-        ":aspect_directory",
-        ":aspect_template_directory",
         ":fast_build_javac",
         ":plugin_jar",
     ],

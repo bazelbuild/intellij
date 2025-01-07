@@ -28,16 +28,17 @@ import com.google.idea.blaze.common.Label
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.CoroutineScope
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Optional
+import java.util.*
 
 private const val ASPECT_TASK_TITLE = "Write Aspects"
 private const val ASPECT_DIRECTORY = "aspects"
 
 @Service(Service.Level.PROJECT)
-class AspectStorageService(private val project: Project) {
+class AspectStorageService(private val project: Project, private val scope: CoroutineScope) {
 
   companion object {
     @JvmStatic
@@ -55,7 +56,7 @@ class AspectStorageService(private val project: Project) {
     val parentScope = parentCtx.getScope(ToolWindowScope::class.java)
 
     Scope.push(parentCtx) { ctx ->
-      
+
       // if there is no parent ToolWindowScope, the output is not supposed to be printed
       if (parentScope != null) {
         val scope = ToolWindowScope.Builder(project, Task(project, ASPECT_TASK_TITLE, Task.Type.SYNC, parentScope.task))

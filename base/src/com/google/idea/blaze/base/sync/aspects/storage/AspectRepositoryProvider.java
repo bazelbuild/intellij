@@ -15,33 +15,34 @@
  */
 package com.google.idea.blaze.base.sync.aspects.storage;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-
-import java.io.File;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import java.util.Optional;
 
-public interface AspectRepositoryProvider {
+public class AspectRepositoryProvider {
 
-  ExtensionPointName<AspectRepositoryProvider> EP_NAME =
-      ExtensionPointName.create("com.google.idea.blaze.AspectRepositoryProvider");
+  private static final String ASPECT_DIRECTORY = "aspect/default";
 
-  Optional<File> aspectDirectory();
+  private static final String ASPECT_TEMPLATE_DIRECTORY = "aspect/template";
 
-  Optional<File> aspectTemplateDirectory();
+  private static Optional<VirtualFile> findAspectDirectory(String directory) {
+    final var classLoader = AspectRepositoryProvider.class.getClassLoader();
 
-  static Optional<File> findAspectDirectory() {
-    return EP_NAME.getExtensionsIfPointIsRegistered().stream()
-        .map(AspectRepositoryProvider::aspectDirectory)
-        .filter(Optional::isPresent)
-        .findFirst()
-        .orElse(Optional.empty());
+    final var file = Optional.ofNullable(classLoader.getResource(directory))
+        .flatMap(it -> Optional.ofNullable(VfsUtil.findFileByURL(it)));
+
+    ThreadingAssertions.assertNoReadAccess();
+    file.ifPresent(it -> it.refresh(false, true));
+
+    return file;
   }
 
-  static Optional<File> findAspectTemplateDirectory() {
-    return EP_NAME.getExtensionsIfPointIsRegistered().stream()
-        .map(AspectRepositoryProvider::aspectTemplateDirectory)
-        .filter(Optional::isPresent)
-        .findFirst()
-        .orElse(Optional.empty());
+  public static Optional<VirtualFile> aspectDirectory() {
+    return findAspectDirectory(ASPECT_DIRECTORY);
+  }
+
+  public static Optional<VirtualFile> aspectTemplateDirectory() {
+    return findAspectDirectory(ASPECT_TEMPLATE_DIRECTORY);
   }
 }

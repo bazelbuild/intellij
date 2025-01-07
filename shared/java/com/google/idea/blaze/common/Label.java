@@ -21,6 +21,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Represents an absolute build target label.
@@ -54,8 +56,15 @@ public record Label(String workspace, String buildPackage, String name) {
   }
 
   public static Label fromWorkspacePackageAndName(String workspace, Path packagePath, Path name) {
-    return workspace.isEmpty() ? Label.of(String.format("//%s:%s", packagePath, name))
-        : Label.of(String.format("@@%s//%s:%s", workspace, packagePath, name));
+    final var systemIndependentPackagePath = StreamSupport.stream(packagePath.spliterator(), false)
+        .map(Path::toString)
+        .collect(Collectors.joining("/"));
+
+    if (workspace.isEmpty()) {
+      return Label.of(String.format("//%s:%s", systemIndependentPackagePath, name));
+    } else {
+      return Label.of(String.format("@@%s//%s:%s", workspace, systemIndependentPackagePath, name));
+    }
   }
 
   public static Label fromWorkspacePackageAndName(String workspace, Path packagePath, String name) {

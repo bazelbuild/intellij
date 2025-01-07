@@ -41,20 +41,6 @@ public class AspectStrategyBazel extends AspectStrategy {
     }
   }
 
-  static final class RepositoryProvider implements AspectRepositoryProvider {
-    @Override
-    public Optional<File> aspectDirectory() {
-      return Optional.ofNullable(PluginManager.getPluginByClass(AspectStrategy.class))
-          .map((it) -> new File(it.getPath(), "aspect"));
-    }
-
-    @Override
-    public Optional<File> aspectTemplateDirectory() {
-      return Optional.ofNullable(PluginManager.getPluginByClass(AspectStrategy.class))
-          .map((it) -> new File(it.getPath(), "aspect_template"));
-    }
-  }
-
   @VisibleForTesting
   public AspectStrategyBazel(BlazeVersionData versionData) {
     super(/* aspectSupportsDirectDepsTrimming= */ true);

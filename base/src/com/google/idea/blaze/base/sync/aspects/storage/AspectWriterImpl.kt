@@ -15,13 +15,14 @@
  */
 package com.google.idea.blaze.base.sync.aspects.storage
 
-import com.google.idea.blaze.base.sync.SyncScope
+import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException
 import com.intellij.openapi.project.Project
-import java.io.File
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.copyToRecursively
+import java.nio.file.StandardOpenOption
 
 class AspectWriterImpl : AspectWriter {
 
@@ -30,15 +31,29 @@ class AspectWriterImpl : AspectWriter {
   }
 
   override fun write(dst: Path, project: Project) {
-    val src = AspectRepositoryProvider.findAspectDirectory()
-      .map(File::toPath)
-      .orElseThrow { SyncScope.SyncFailedException("Couldn't find aspect directory") }
+    val src = AspectRepositoryProvider.aspectDirectory()
+      .orElseThrow { SyncFailedException("Could not find aspect directory") }
 
     try {
-      @OptIn(ExperimentalPathApi::class)
-      src.copyToRecursively(dst, overwrite = true, followLinks = false)
+      // no read lock, is this safe?
+      VfsUtilCore.iterateChildrenRecursively(src, null) { entry ->
+        val path = VfsUtil.getRelativePath(entry, src)?.let(Path::of)
+          ?: throw IOException("Could not determine relative path of ${entry.path}")
+
+        if (entry.isDirectory) {
+          Files.createDirectories(dst.resolve(path))
+        } else {
+          Files.newOutputStream(
+            dst.resolve(path),
+            StandardOpenOption.CREATE,
+            StandardOpenOption.TRUNCATE_EXISTING
+          ).use(entry.inputStream::transferTo)
+        }
+
+        true // continue to iterate
+      }
     } catch (e: IOException) {
-      throw SyncScope.SyncFailedException("Couldn't copy aspects", e)
+      throw SyncFailedException("Could not copy aspects", e)
     }
   }
 }

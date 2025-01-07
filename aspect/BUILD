@@ -2,10 +2,8 @@
 # Description: Bazel aspect bundled with the Bazel IntelliJ plugin.
 #
 
-load(
-    ":flag_hack.bzl",
-    "define_flag_hack",
-)
+load(":flag_hack.bzl", "define_flag_hack")
+load(":build_defs.bzl", "aspect_library")
 
 licenses(["notice"])
 
@@ -26,18 +24,18 @@ filegroup(
 )
 
 # the aspect files that will be bundled with the final plugin zip
-filegroup(
-    name = "aspect_files",
-    srcs = [
-        ":aspect_files_only",
-        ":aspect_tools",
+aspect_library(
+    name = "aspect_lib",
+    deps = [
+       ":aspect_files" ,
+       ":aspect_tools"
     ],
     visibility = ["//visibility:public"],
 )
 
 # Separate different targets as they are put into different directories
-filegroup(
-    name = "aspect_files_only",
+aspect_library(
+    name = "aspect_files",
     srcs = [
         "artifacts.bzl",
         "build_compose_dependencies.bzl",
@@ -52,16 +50,18 @@ filegroup(
         "make_variables.bzl",
         ":BUILD.bazel",
     ],
+    namespace = "aspect/default",
     visibility = ["//visibility:public"],
 )
 
-filegroup(
+aspect_library(
     name = "aspect_tools",
     srcs = [
         "//aspect/tools:CreateAar",
         "//aspect/tools:JarFilter_deploy.jar",
         "//aspect/tools:PackageParser_deploy.jar",
     ],
+    namespace = "aspect/default/tools",
     visibility = ["//visibility:public"],
 )
 
@@ -117,16 +117,17 @@ genrule(
 
 define_flag_hack()
 
-filegroup(
-    name = "aspect_template_files",
+aspect_library(
+    name = "aspect_template_lib",
     srcs = [
         "code_generator_info.bzl",
         "code_generator_info.template.bzl",
         "java_info.bzl",
         "java_info.template.bzl",
         "python_info.bzl",
-        "python_info.template.bzl"
+        "python_info.template.bzl",
     ],
+    namespace = "aspect/template",
     visibility = ["//visibility:public"],
 )
 
