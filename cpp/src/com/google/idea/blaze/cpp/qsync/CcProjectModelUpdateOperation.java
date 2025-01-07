@@ -172,8 +172,8 @@ public class CcProjectModelUpdateOperation implements Disposable {
 
   /** Pre-commits the project update. Should be called from a background thread. */
   public void preCommit() {
-    modifiableOcWorkspace.preCommit();
     processCompilerSettings();
+    modifiableOcWorkspace.preCommit();
   }
 
   /** Commits the project update. Must be called from the write thread. */

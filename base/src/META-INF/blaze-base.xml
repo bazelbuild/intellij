@@ -22,6 +22,7 @@
         <add-to-group group-id="FileOpenGroup" anchor="first"/>
         <add-to-group group-id="WelcomeScreen.QuickStart" anchor="before"
             relative-to-action="Vcs.VcsClone"/>
+        <add-to-group group-id="ProjectWidget.Actions" anchor="last"/>
       </action>
     <action id="MakeBlazeProject"
       class="com.google.idea.blaze.base.actions.BlazeMakeProjectAction"
@@ -412,6 +413,9 @@
                  description="By default Bazel plugin takes control and opens project if .ijwb folder is present. This property can be used to disable this behavior to allow to open .idea or other project models if they are exists."
                  key="bazel.project.auto.open.if.present"/>
     <registryKey defaultValue="false"
+                 description="Google plugin is not exclusive anymore, and we need to give a chance to BSP to chime in. Otherwise neither will import the project if .idea folder is present. This property can be used to give a priority to .ijwb or alike over .idea *and* BSP."
+                 key="bazel.project.prefer.google.plugin"/>
+    <registryKey defaultValue="false"
                  description="The Bazel Plugin sometimes uses the --query_file option to pass the query via a file. By default, the file is deleted immediately after the query execution is finished. Set this flag to true to avoid file deletion"
                  key="bazel.sync.keep.query.files"/>
     <registryKey defaultValue="false"
@@ -421,7 +425,7 @@
                  description="Causes the plugin to read external workspace data, enabling features such as code completion for external targets. This may incur the cost of an additional 'bazel mod' call, which could cause issues with older versions or setups."
                  key="bazel.read.external.workspace.data"/>
     <registryKey defaultValue="true"
-                 description="Enable basic syntax highliting in Query Sync's 'Analysis Disabled' mode"
+                 description="Enable basic syntax highlighting in Query Sync's 'Analysis Disabled' mode"
                  key="bazel.qsync.enable.basic.highlighting.in.non.analysis.mode"/>
     <editorNotificationProvider implementation="com.google.idea.blaze.base.wizard2.BazelNotificationProvider"/>
   </extensions>
@@ -629,7 +633,7 @@
     <SyncPlugin implementation="com.google.idea.blaze.base.lang.buildfile.sync.BuildLangSyncPlugin"/>
     <SyncPlugin implementation="com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager$SyncPlugin"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.command.BuildFlagsProviderImpl"/>
-    <BuildFlagsProvider implementation="com.google.idea.blaze.base.sync.aspects.AspactBuildFlagsProvider"/>
+    <BuildFlagsProvider implementation="com.google.idea.blaze.base.sync.aspects.AspectBuildFlagsProvider"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.run.coverage.CoverageBuildFlagsProvider"/>
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.git.GitBlazeVcsHandlerProvider"/>
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.FallbackBlazeVcsHandlerProvider" order="last" id="fallback"/>

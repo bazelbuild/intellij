@@ -35,6 +35,12 @@ def clwb_integration_test(name, project, srcs, deps = []):
             "-Dcom.google.testing.junit.runner.shouldInstallTestSecurityManager=false",
             # fixes preferences not writable on mac
             "-Djava.util.prefs.PreferencesFactory=com.google.idea.blaze.clwb.base.InMemoryPreferencesFactory",
+            # suppressed plugin sets for classic, radler is currently disabled for tests
+            "-Didea.suppressed.plugins.set.classic=org.jetbrains.plugins.clion.radler,intellij.rider.cpp.debugger,intellij.rider.plugins.clion.radler.cwm",
+            "-Didea.suppressed.plugins.set.selector=classic",
+            # define the path to the query sync aspects
+            "-Dblaze.idea.build_dependencies.bzl.file=aspect/build_dependencies.bzl",
+            "-Dblaze.idea.build_dependencies_deps.bzl.file=aspect/build_dependencies_deps.bzl",
         ],
         deps = deps + [
             ":clwb_lib",
