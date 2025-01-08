@@ -28,76 +28,18 @@ java_library(
                ]),
                default = [],
            ) + select_for_plugin_api({
-        "android-studio-2022.2": glob([
-            "testcompat/v222/com/google/idea/cidr/**/*.java",
-            "testcompat/v222/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v222/com/google/idea/testing/**/*.java",
-        ]),
-        "android-studio-2022.3": glob([
-            "testcompat/v223/com/google/idea/cidr/**/*.java",
-            "testcompat/v223/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v223/com/google/idea/testing/**/*.java",
-        ]),
-        "android-studio-2023.1": glob([
-            "testcompat/v231/com/google/idea/cidr/**/*.java",
-            "testcompat/v231/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v231/com/google/idea/testing/**/*.java",
-        ]),
-        "android-studio-2023.2": glob([
-            "testcompat/v232/com/google/idea/cidr/**/*.java",
-            "testcompat/v232/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v232/com/google/idea/testing/**/*.java",
-        ]),
         "android-studio-2023.3": glob([
             "testcompat/v233/com/google/idea/cidr/**/*.java",
             "testcompat/v233/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v233/com/google/idea/testing/**/*.java",
         ]),
-        "clion-2021.3": glob([
-            "testcompat/v213/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v213/com/google/idea/testing/*.java",
-        ]),
-        "clion-2022.1": glob([
-            "testcompat/v221/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v221_ij/com/google/idea/sdkcompat/**/*.java",
-        ]),
-        "clion-2022.2": glob([
-            "testcompat/v222/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v222/com/google/idea/testing/*.java",
-        ]),
         "clion-2022.3": glob([
             "testcompat/v223/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v223/com/google/idea/testing/*.java",
         ]),
-        "intellij-2021.3": glob([
-            "testcompat/v213/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v213/com/google/idea/testing/java/*.java",
-        ]),
-        "intellij-ue-2021.3": glob([
-            "testcompat/v213/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v213/com/google/idea/testing/java/*.java",
-        ]),
-        "intellij-2022.1": glob([
-            "testcompat/v221/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v221_ij/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v221/com/google/idea/testing/**/*.java",
-        ]),
-        "intellij-ue-2022.1": glob([
-            "testcompat/v221/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v221_ij/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v221/com/google/idea/testing/**/*.java",
-        ]),
-        "intellij-2022.2": glob([
-            "testcompat/v222/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v222/com/google/idea/testing/**/*.java",
-        ]),
         "intellij-2022.3": glob([
             "testcompat/v223/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v223/com/google/idea/testing/**/*.java",
-        ]),
-        "intellij-ue-2022.2": glob([
-            "testcompat/v222/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v222/com/google/idea/testing/**/*.java",
         ]),
         "intellij-ue-2022.3": glob([
             "testcompat/v223/com/google/idea/sdkcompat/**/*.java",
