@@ -38,6 +38,10 @@ public class BuiltInRuleAnnotator extends BuildAnnotator {
     if (spec == null) {
       return;
     }
+    if (node.isMemberFunction()) {
+      // if the function is a member function, it cannot be a rule
+      return;
+    }
     String ruleName = node.getFunctionName();
     RuleDefinition rule = spec.getRule(ruleName);
     if (rule == null) {
