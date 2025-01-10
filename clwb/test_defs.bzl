@@ -59,7 +59,7 @@ def clwb_integration_test(name, project, srcs, deps = []):
     for version in bazel_binaries.versions.all:
         bazel_integration_test(
             name = integration_test_utils.bazel_integration_test_name(name, version),
-            tags = [],
+            tags = ["exclusive"],
             bazel_version = version,
             test_runner = ":" + runner,
             workspace_path = "tests/projects/" + project,
