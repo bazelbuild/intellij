@@ -10,14 +10,6 @@ load(
 )
 load("@bazel_binaries//:defs.bzl", "bazel_binaries")
 
-# version specific flags can be removed if version is dropped in MODULE.bazel
-version_specific_args = {
-    "5.4.1": {
-        # mac CI runners ship invalid flags in system rc file
-        "startup_options": "--nosystem_rc",
-     },
-}
-
 def clwb_integration_test(name, project, srcs, deps = []):
     runner = name + "_runner"
 
@@ -26,10 +18,6 @@ def clwb_integration_test(name, project, srcs, deps = []):
         srcs = srcs + native.glob(["tests/integrationtests/com/google/idea/blaze/clwb/base/*.java"]),
         test_package_root = "com.google.idea.blaze.clwb",
         runtime_deps = [":clwb_bazel"],
-        data = [
-            "//aspect:aspect_files",
-            "//aspect_template:aspect_files",
-        ],
         jvm_flags = [
             # disables the default bazel security manager, causes tests to fail on windows
             "-Dcom.google.testing.junit.runner.shouldInstallTestSecurityManager=false",
@@ -38,9 +26,6 @@ def clwb_integration_test(name, project, srcs, deps = []):
             # suppressed plugin sets for classic, radler is currently disabled for tests
             "-Didea.suppressed.plugins.set.classic=org.jetbrains.plugins.clion.radler,intellij.rider.cpp.debugger,intellij.rider.plugins.clion.radler.cwm",
             "-Didea.suppressed.plugins.set.selector=classic",
-            # define the path to the query sync aspects
-            "-Dqsync.aspect.build_dependencies.bzl.file=aspect/build_dependencies.bzl",
-            "-Dqsync.aspect.build_dependencies_deps.bzl.file=aspect/build_dependencies_deps.bzl",
         ],
         deps = deps + [
             ":clwb_lib",
@@ -71,8 +56,6 @@ def clwb_integration_test(name, project, srcs, deps = []):
             },
             # inherit bash shell and visual studio path from host for windows
             additional_env_inherit = ["BAZEL_SH", "BAZEL_VC"],
-            # add version specific arguments, since some older versions cannot handle newer flags
-            **version_specific_args.get(version, {})
         )
 
     native.test_suite(
