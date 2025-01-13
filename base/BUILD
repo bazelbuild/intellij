@@ -29,6 +29,7 @@ kt_jvm_library(
     deps = [
         "//aspect:aspect_lib",
         "//aspect:aspect_template_lib",
+        "//aspect:aspect_qsync_lib",
         "//common/actions",
         "//common/experiments",
         "//common/settings",

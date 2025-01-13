@@ -125,8 +125,6 @@ intellij_plugin_debug_target(
 plugin_deploy_zip(
     name = "ijwb_bazel_zip",
     srcs = [
-        ":aspect_directory",
-        ":aspect_template_directory",
         ":fast_build_javac",
         ":plugin_jar",
     ],

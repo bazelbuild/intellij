@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.sync.aspects.storage;
 
+import com.google.common.io.ByteSource;
+import com.google.idea.blaze.base.util.VirtualFileByteSource;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -25,6 +27,8 @@ public class AspectRepositoryProvider {
   private static final String ASPECT_DIRECTORY = "aspect/default";
 
   private static final String ASPECT_TEMPLATE_DIRECTORY = "aspect/template";
+
+  private static final String ASPECT_QSYNC_DIRECTORY = "aspect/qsync";
 
   private static Optional<VirtualFile> findAspectDirectory(String directory) {
     final var classLoader = AspectRepositoryProvider.class.getClassLoader();
@@ -44,5 +48,12 @@ public class AspectRepositoryProvider {
 
   public static Optional<VirtualFile> aspectTemplateDirectory() {
     return findAspectDirectory(ASPECT_TEMPLATE_DIRECTORY);
+  }
+
+  public static ByteSource aspectQSyncFile(String fileName) {
+    return findAspectDirectory(ASPECT_QSYNC_DIRECTORY)
+        .flatMap(it -> Optional.ofNullable(it.findChild(fileName)))
+        .<ByteSource>map(VirtualFileByteSource::new)
+        .orElse(ByteSource.empty());
   }
 }

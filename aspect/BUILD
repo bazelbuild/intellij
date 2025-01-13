@@ -38,9 +38,6 @@ aspect_library(
     name = "aspect_files",
     srcs = [
         "artifacts.bzl",
-        "build_compose_dependencies.bzl",
-        "build_dependencies.bzl",
-        "build_dependencies_deps.bzl",
         "fast_build_info_bundled.bzl",
         "flag_hack.bzl",
         "intellij_info.bzl",
@@ -62,6 +59,17 @@ aspect_library(
         "//aspect/tools:PackageParser_deploy.jar",
     ],
     namespace = "aspect/default/tools",
+    visibility = ["//visibility:public"],
+)
+
+aspect_library(
+    name = "aspect_qsync_lib",
+    srcs = [
+        "build_compose_dependencies.bzl",
+        "build_dependencies.bzl",
+        "build_dependencies_deps.bzl",
+    ],
+    namespace = "aspect/qsync",
     visibility = ["//visibility:public"],
 )
 
