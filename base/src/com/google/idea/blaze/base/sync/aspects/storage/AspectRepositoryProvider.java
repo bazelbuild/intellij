@@ -21,14 +21,18 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import java.util.Optional;
+import org.jetbrains.annotations.VisibleForTesting;
 
 public class AspectRepositoryProvider {
 
-  private static final String ASPECT_DIRECTORY = "aspect/default";
+  @VisibleForTesting
+  public static final String ASPECT_DIRECTORY = "aspect/default";
 
-  private static final String ASPECT_TEMPLATE_DIRECTORY = "aspect/template";
+  @VisibleForTesting
+  public static final String ASPECT_TEMPLATE_DIRECTORY = "aspect/template";
 
-  private static final String ASPECT_QSYNC_DIRECTORY = "aspect/qsync";
+  @VisibleForTesting
+  public static final String ASPECT_QSYNC_DIRECTORY = "aspect/qsync";
 
   private static Optional<VirtualFile> findAspectDirectory(String directory) {
     final var classLoader = AspectRepositoryProvider.class.getClassLoader();

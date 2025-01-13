@@ -1,14 +1,8 @@
 load(
     "//testing:test_defs.bzl",
+    "bazel_integration_tests",
     "intellij_integration_test_suite",
 )
-load(
-    "@rules_bazel_integration_test//bazel_integration_test:defs.bzl",
-    "bazel_integration_test",
-    "bazel_integration_tests",
-    "integration_test_utils",
-)
-load("@bazel_binaries//:defs.bzl", "bazel_binaries")
 
 def clwb_integration_test(name, project, srcs, deps = []):
     runner = name + "_runner"
@@ -41,28 +35,14 @@ def clwb_integration_test(name, project, srcs, deps = []):
         ],
     )
 
-    for version in bazel_binaries.versions.all:
-        bazel_integration_test(
-            name = integration_test_utils.bazel_integration_test_name(name, version),
-            tags = ["exclusive"],
-            bazel_version = version,
-            test_runner = ":" + runner,
-            workspace_path = "tests/projects/" + project,
-            env = {
-                # disables automatic conversion of bazel target names to absolut windows paths by msys
-                "MSYS_NO_PATHCONV": "true",
-                # pass the bazel version to the test for RuleBazelVersion
-                "BIT_BAZEL_VERSION": version,
-            },
-            # inherit bash shell and visual studio path from host for windows
-            additional_env_inherit = ["BAZEL_SH", "BAZEL_VC"],
-        )
-
-    native.test_suite(
+    bazel_integration_tests(
         name = name,
-        tags = ["manual"],
-        tests = integration_test_utils.bazel_integration_test_names(
-            name,
-            bazel_binaries.versions.all,
-        ),
+        test_runner = runner,
+        workspace_path = "tests/projects/" + project,
+        env = {
+            # disables automatic conversion of bazel target names to absolut windows paths by msys
+            "MSYS_NO_PATHCONV": "true",
+        },
+        # inherit bash shell and visual studio path from host for windows
+        additional_env_inherit = ["BAZEL_SH", "BAZEL_VC"],
     )
