@@ -47,7 +47,11 @@ class AspectWriterImpl : AspectWriter {
             dst.resolve(path),
             StandardOpenOption.CREATE,
             StandardOpenOption.TRUNCATE_EXISTING
-          ).use(entry.inputStream::transferTo)
+          ).use { output ->
+            entry.inputStream.use { input ->
+              input.transferTo(output)
+            }
+          }
         }
 
         true // continue to iterate
