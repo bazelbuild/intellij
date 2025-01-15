@@ -8,7 +8,6 @@ query --deleted_packages=aspect/testing/tests/src/com/google/idea/blaze/aspect/i
 
 common --enable_bzlmod
 common --enable_workspace # to load rules_scala from WORKSPACE.bzlmod
-common --android_sdk=@androidsdk//:sdk
 common --noincompatible_disallow_empty_glob
 
 # Disabled by default in bazel 8, https://github.com/bazelbuild/bazel/issues/24578
