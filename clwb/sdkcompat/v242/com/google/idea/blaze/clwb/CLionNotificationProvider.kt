@@ -56,7 +56,7 @@ private fun isBazelAwareFile(project: Project, file: VirtualFile): Boolean {
   return project.basePath != null
 }
 
-// #api241
+// #api242
 @Service(Service.Level.APP)
 class CLionNotificationProvider : ProjectFixesProvider, WidgetStatusProvider, EditorNotificationWarningProvider,
   Disposable.Default {
