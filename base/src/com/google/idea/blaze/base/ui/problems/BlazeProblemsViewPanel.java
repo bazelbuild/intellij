@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.ui.problems;
 
-import com.google.idea.sdkcompat.general.NewErrorTreeViewPanelAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -24,6 +23,7 @@ import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.NavigatableMessageElement;
+import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -54,7 +54,7 @@ import javax.annotation.Nullable;
 import javax.swing.JComponent;
 
 /** A custom error tree view panel for Blaze invocation errors. */
-class BlazeProblemsViewPanel extends NewErrorTreeViewPanelAdapter {
+class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
 
   private static final DataKey<Navigatable> BLAZE_CONSOLE_NAVIGATABLE_DATA_KEY =
       DataKey.create("blaze.console.navigatable");
@@ -167,6 +167,10 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanelAdapter {
     return toolWindow != null
         ? toolWindow.getReady(autoScrollToConsoleHandler)
         : ActionCallback.DONE;
+  }
+
+  public Project getProject(){
+    return project;
   }
 
   private class AutoscrollToConsoleAction extends ToggleAction implements DumbAware {

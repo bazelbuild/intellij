@@ -45,14 +45,14 @@ java_library(
             "com/google/idea/sdkcompat/java/**",
             "com/google/idea/sdkcompat/scala/**",
             "com/google/idea/sdkcompat/kotlin/**",
-        ]) + ["com/google/idea/sdkcompat/refactoring/safedelete/JavaSafeDeleteProcessorCompat.java"],
+        ]),
         intellij_ue = glob([
             "com/google/idea/sdkcompat/java/**",
             "com/google/idea/sdkcompat/scala/**",
             "com/google/idea/sdkcompat/kotlin/**",
             "com/google/idea/sdkcompat/javascript/**",  #api223
             "com/google/idea/sdkcompat/go/**",  #api231
-        ]) + ["com/google/idea/sdkcompat/refactoring/safedelete/JavaSafeDeleteProcessorCompat.java"],
+        ]),
     ),
     visibility = ["//sdkcompat:__pkg__"],
 )
