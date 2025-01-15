@@ -6,8 +6,7 @@ java_library(
     name = "common",
     srcs = glob(["*.java"]),
     visibility = [
-        "//querysync/javatests/com/google/idea/blaze/qsync:__subpackages__",
-        "//shared:__subpackages__",
+        "//visibility:public",
     ],
     deps = [
         "@jsr305_annotations//jar",
