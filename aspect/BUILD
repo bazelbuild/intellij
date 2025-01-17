@@ -36,7 +36,7 @@ aspect_library(
 # Separate different targets as they are put into different directories
 aspect_library(
     name = "aspect_files",
-    srcs = [
+    files = [
         "artifacts.bzl",
         "fast_build_info_bundled.bzl",
         "flag_hack.bzl",
@@ -53,8 +53,8 @@ aspect_library(
 
 aspect_library(
     name = "aspect_tools",
-    srcs = [
-        "//aspect/tools:CreateAar",
+    files = ["//aspect/tools:CreateAar"],
+    jars = [
         "//aspect/tools:JarFilter_deploy.jar",
         "//aspect/tools:PackageParser_deploy.jar",
     ],
@@ -64,7 +64,7 @@ aspect_library(
 
 aspect_library(
     name = "aspect_qsync_lib",
-    srcs = [
+    files = [
         "build_compose_dependencies.bzl",
         "build_dependencies.bzl",
         "build_dependencies_deps.bzl",
@@ -127,7 +127,7 @@ define_flag_hack()
 
 aspect_library(
     name = "aspect_template_lib",
-    srcs = [
+    files = [
         "code_generator_info.bzl",
         "code_generator_info.template.bzl",
         "java_info.bzl",
