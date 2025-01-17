@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.common.Interners;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
@@ -46,6 +47,7 @@ import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 
+import java.util.Optional;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.List;
@@ -167,7 +169,8 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
       try {
         candidateFiles =
             LocalFileArtifact.getLocalFiles(
-                    buildResultHelper.getBuildArtifactsForTarget(target, file -> true))
+                    buildResultHelper.getBuildOutput(Optional.empty(), Interners.STRING)
+                        .getDirectArtifactsForTarget(target, file -> true))
                 .stream()
                 .filter(File::canExecute)
                 .collect(Collectors.toList());
