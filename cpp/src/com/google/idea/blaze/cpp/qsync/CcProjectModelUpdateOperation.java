@@ -38,6 +38,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
@@ -221,6 +222,6 @@ public class CcProjectModelUpdateOperation implements Disposable {
 
   @Override
   public void dispose() {
-    OCWorkspaceModifiableModelDisposer.dispose(modifiableOcWorkspace);
+    Disposer.dispose(modifiableOcWorkspace);
   }
 }

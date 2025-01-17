@@ -53,28 +53,10 @@ kt_jvm_library(
 
 intellij_plugin_library(
     name = "plugin_library",
-    plugin_xmls = ["src/META-INF/blaze-base.xml"] +  #api241
-                  select_for_plugin_api({
-                      "android-studio-2022.3": [],
-                      "android-studio-2023.1": [],
-                      "android-studio-2023.2": [],
-                      "intellij-2022.3": [],
-                      "intellij-ue-2022.3": [],
-                      "intellij-2023.1": [],
-                      "intellij-ue-2023.1": [],
-                      "intellij-2023.2": [],
-                      "intellij-ue-2023.2": [],
-                      "intellij-2023.3": [],
-                      "intellij-ue-2023.3": [],
-                      "intellij-2024.1": [],
-                      "intellij-ue-2024.1": [],
-                      "clion-2022.3": [],
-                      "clion-2023.1": [],
-                      "clion-2023.2": [],
-                      "clion-2023.3": [],
-                      "clion-2024.1": [],
-                      "default": ["src/META-INF/dependency-on-lvcs-impl.xml"],
-                  }),
+    plugin_xmls = [
+        "src/META-INF/dependency-on-lvcs-impl.xml",
+        "src/META-INF/blaze-base.xml",
+    ],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":base",

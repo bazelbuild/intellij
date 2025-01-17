@@ -4,8 +4,6 @@ java_library(
     name = "toml_internal",
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
-        "intellij-2024.1": ["@toml_2024_1//:toml"],
-        "intellij-ue-2024.1": ["@toml_2024_1//:toml"],
         "intellij-2024.2": ["@toml_2024_2//:toml"],
         "intellij-ue-2024.2": ["@toml_2024_2//:toml"],
         "intellij-2024.3": ["@toml_2024_3//:toml"],
