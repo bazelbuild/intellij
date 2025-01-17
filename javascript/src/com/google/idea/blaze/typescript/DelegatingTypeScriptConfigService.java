@@ -20,11 +20,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.sdkcompat.javascript.TypeScriptConfigServiceAdapter;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigServiceImpl;
-import com.intellij.lang.typescript.tsconfig.TypeScriptConfigsChangedListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
@@ -38,10 +36,9 @@ import javax.annotation.Nullable;
  * Switches between {@link BlazeTypeScriptConfigServiceImpl} if the project is an applicable blaze
  * project, or {@link TypeScriptConfigServiceImpl} if it isn't.
  */
-class DelegatingTypeScriptConfigService extends TypeScriptConfigServiceAdapter {
+class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
   private final TypeScriptConfigService impl;
 
-  @Override
   public TypeScriptConfigService getImpl() {
     return impl;
   }

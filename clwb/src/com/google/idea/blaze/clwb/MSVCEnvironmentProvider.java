@@ -74,7 +74,7 @@ class MSVCEnvironmentProvider implements CppEnvironmentProvider {
       return null;
     }
 
-    final var version = MSVCCompilerVersionCompat.getCompilerVersion(compiler);
+    final var version = MSVCCompilerVersion.getCompilerVersion(compiler);
     if (version == null) {
       LOG.warn("Could not derive arch and version.");
       return null;
@@ -86,7 +86,7 @@ class MSVCEnvironmentProvider implements CppEnvironmentProvider {
     toolchain.setToolSetPath(toolSetPath);
 
     final var environment = new CPPEnvironment(toolchain);
-    MSVCCompilerVersionCompat.setEnvironmentVersion(environment, version);
+    MSVCCompilerVersion.setEnvironmentVersion(environment, version);
 
     return environment;
   }

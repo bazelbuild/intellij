@@ -21,11 +21,9 @@ import com.intellij.openapi.project.Project;
 // #api242
 // Temporary empty implementation as 243 made this class sealed
 public class TypeScriptConfigLibraryUpdaterAdapter {
-    public TypeScriptConfigLibraryUpdaterAdapter(Project project) {
+  public TypeScriptConfigLibraryUpdaterAdapter(Project project) {
+  }
 
-    }
-
-    public void queueToUpdate() {
-
-    };
+  public void queueToUpdate() {
+  }
 }

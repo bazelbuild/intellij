@@ -29,9 +29,12 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.sdkcompat.javascript.JSModuleResolutionWrapper;
-import com.google.idea.sdkcompat.javascript.JSModuleTargetWrapper;
 import com.google.idea.sdkcompat.javascript.TypeScriptConfigAdapter;
+import com.intellij.lang.javascript.config.JSFileImports;
+import com.intellij.lang.javascript.config.JSFileImportsImpl;
+import com.intellij.lang.javascript.config.JSModuleResolution;
+import com.intellij.lang.javascript.config.JSModuleTarget;
+import com.intellij.lang.javascript.frameworks.modules.JSModulePathMappings;
 import com.intellij.lang.javascript.frameworks.modules.JSModulePathSubstitution;
 import com.intellij.lang.javascript.library.JSLibraryUtil;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
@@ -88,6 +91,7 @@ class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
   private final NotNullLazyValue<TypeScriptConfigIncludeBase> includeChecker;
   private final NotNullLazyValue<TypeScriptImportResolveContext> resolveContext;
   private final NotNullLazyValue<TypeScriptFileImportsResolver> importResolver;
+  private final NotNullLazyValue<JSFileImports> importStructure;
 
   // tsconfig.json default values
   private boolean compileOnSave = false;
@@ -97,8 +101,8 @@ class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
   private final NullableLazyValue<VirtualFile> baseUrlFile;
   private boolean inlineSourceMap = true;
   private String jsxFactory = "React.createElement";
-  private JSModuleTargetWrapper module = JSModuleTargetWrapper.COMMON_JS;
-  private JSModuleResolutionWrapper moduleResolution = JSModuleResolutionWrapper.NODE;
+  private JSModuleTarget module = JSModuleTarget.COMMON_JS;
+  private JSModuleResolution moduleResolution = JSModuleResolution.NODE;
   private boolean noImplicitAny = true;
   private boolean noImplicitThis = true;
   private boolean noLib = true;
@@ -158,7 +162,7 @@ class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
 
     return FileOperationProvider.getInstance().exists(tsconfigEditor)
         ? new BlazeTypeScriptConfig(
-            project, label, configFile, tsconfigEditor, workspacePrefix, workspaceRelativePath)
+        project, label, configFile, tsconfigEditor, workspacePrefix, workspaceRelativePath)
         : null;
   }
 
@@ -168,15 +172,15 @@ class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
    * <p>E.g., the tsconfig file located in
    *
    * <pre>blaze-bin/foo/bar/tsconfig_editor.json</pre>
-   *
+   * <p>
    * referring to the workspace file
    *
    * <pre>foo/bar/foo.ts</pre>
-   *
+   * <p>
    * would look like
    *
    * <pre>../../../foo/bar/foo.ts</pre>
-   *
+   * <p>
    * One set of ".." for each component in the blaze package plus one for blaze-bin directory at the
    * workspace root.
    */
@@ -214,9 +218,9 @@ class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
             () ->
                 baseUrlFile.getValue() != null
                     ? rootDirs.stream()
-                        .map(baseUrlFile.getValue()::findFileByRelativePath)
-                        .filter(Objects::nonNull)
-                        .collect(ImmutableList.toImmutableList())
+                    .map(baseUrlFile.getValue()::findFileByRelativePath)
+                    .filter(Objects::nonNull)
+                    .collect(ImmutableList.toImmutableList())
                     : ImmutableList.of());
     this.rootDirsPsiElements =
         NotNullLazyValue.createValue(
@@ -242,7 +246,7 @@ class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
     this.importResolver =
         NotNullLazyValue.createValue(
             () -> TypeScriptImportsResolverProvider.getResolver(project, this));
-    initImportsStructure(project);
+    this.importStructure = NotNullLazyValue.createValue(() -> new JSFileImportsImpl(project, this));
 
     try {
       parseJson(
@@ -305,26 +309,26 @@ class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
         case "module":
           switch (Ascii.toLowerCase(value.getAsString())) {
             case "commonjs":
-              this.module = JSModuleTargetWrapper.COMMON_JS;
+              this.module = JSModuleTarget.COMMON_JS;
               break;
             case "other":
-              this.module = JSModuleTargetWrapper.OTHER;
+              this.module = JSModuleTarget.OTHER;
               break;
             default:
-              this.module = JSModuleTargetWrapper.UNKNOWN;
+              this.module = JSModuleTarget.UNKNOWN;
               break;
           }
           break;
         case "moduleResolution":
           switch (Ascii.toLowerCase(value.getAsString())) {
             case "node":
-              this.moduleResolution = JSModuleResolutionWrapper.NODE;
+              this.moduleResolution = JSModuleResolution.NODE;
               break;
             case "classic":
-              this.moduleResolution = JSModuleResolutionWrapper.CLASSIC;
+              this.moduleResolution = JSModuleResolution.CLASSIC;
               break;
             default:
-              this.moduleResolution = JSModuleResolutionWrapper.UNKNOWN;
+              this.moduleResolution = JSModuleResolution.UNKNOWN;
               break;
           }
           break;
@@ -535,12 +539,12 @@ class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
   }
 
   @Override
-  public @NotNull JSModuleResolutionWrapper getAdapterResolution() {
+  public @NotNull JSModuleResolution getResolution() {
     return moduleResolution;
   }
 
   @Override
-  public JSModuleResolutionWrapper getAdapterEffectiveResolution() {
+  public JSModuleResolution getEffectiveResolution() {
     return moduleResolution;
   }
 
@@ -550,9 +554,20 @@ class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
   }
 
   @Override
-  public JSModuleTargetWrapper getAdapterModule() {
+  public JSModuleTarget getModule() {
     return module;
   }
+
+  @Override
+  public JSFileImports getConfigImportResolveStructure() {
+    return importStructure.getValue();
+  }
+
+  @Override
+  public @NotNull JSModulePathMappings<JSModulePathSubstitution> getPathMappings() {
+    return JSModulePathMappings.build(getPaths());
+  }
+
 
   @Override
   public boolean isIncludedFile(VirtualFile file, boolean checkExclude) {

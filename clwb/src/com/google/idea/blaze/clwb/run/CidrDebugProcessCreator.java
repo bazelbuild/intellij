@@ -1,11 +1,10 @@
-package com.google.idea.sdkcompat.clion;
+package com.google.idea.blaze.clwb.run;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.jetbrains.cidr.execution.CidrCoroutineHelper;
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
 
-// #api241
 public class CidrDebugProcessCreator {
   public static CidrDebugProcess create(ThrowableComputable<CidrDebugProcess, ExecutionException> creator) throws ExecutionException {
     return CidrCoroutineHelper.runOnEDT(creator);

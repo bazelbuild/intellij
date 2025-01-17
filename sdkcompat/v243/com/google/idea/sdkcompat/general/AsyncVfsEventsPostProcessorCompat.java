@@ -35,7 +35,6 @@ import java.util.function.Consumer;
 // #api242
 public class AsyncVfsEventsPostProcessorCompat {
     private AsyncVfsEventsPostProcessorCompat(){
-
     }
 
     public static void addListener(Consumer<List<? extends VFileEvent>> listener, Disposable disposable, Project project) {

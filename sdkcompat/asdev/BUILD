@@ -18,11 +18,6 @@ java_library(
         "com/google/idea/sdkcompat/ui/icons/**",
         "com/google/idea/sdkcompat/vcs/**",
     ]) + select_for_ide(
-        android_studio = glob([
-            "com/google/idea/sdkcompat/cpp/**",
-            "com/google/idea/sdkcompat/java/**",
-            "com/google/idea/sdkcompat/kotlin/**",
-        ]) + ["com/google/idea/sdkcompat/refactoring/safedelete/JavaSafeDeleteProcessorCompat.java"],
         clion = glob([
             "com/google/idea/sdkcompat/cpp/**",
         ]),

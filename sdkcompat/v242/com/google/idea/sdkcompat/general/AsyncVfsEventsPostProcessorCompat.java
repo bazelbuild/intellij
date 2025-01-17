@@ -24,7 +24,6 @@ import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 // #api242
 public class AsyncVfsEventsPostProcessorCompat {
     private AsyncVfsEventsPostProcessorCompat(){
-
     }
 
     public static void addListener(AsyncVfsEventsListener listener, Disposable disposable, Project project) {
