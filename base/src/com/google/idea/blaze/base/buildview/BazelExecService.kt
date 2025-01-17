@@ -9,6 +9,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
 import com.google.idea.blaze.base.sync.aspects.BuildResult
+import com.google.idea.blaze.common.Interners
 import com.google.idea.blaze.common.PrintOutput
 import com.google.protobuf.CodedInputStream
 import com.intellij.execution.configurations.PtyCommandLine
@@ -27,6 +28,7 @@ import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import java.io.BufferedInputStream
 import java.io.FileInputStream
+import java.util.Optional
 import kotlin.io.path.pathString
 
 private val LOG: Logger = Logger.getInstance(BazelExecService::class.java)
@@ -185,7 +187,10 @@ class BazelExecService(private val project: Project) : Disposable {
       if (result.status == BuildResult.Status.FATAL_ERROR) {
         BlazeBuildOutputs.noOutputs(result)
       } else {
-        BlazeBuildOutputs.fromParsedBepOutput(result, provider.getBuildOutput())
+        BlazeBuildOutputs.fromParsedBepOutput(
+          result,
+          provider.getBuildOutput(Optional.empty(), Interners.STRING),
+        )
       }
     }
   }
