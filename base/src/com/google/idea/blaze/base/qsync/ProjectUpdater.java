@@ -121,12 +121,12 @@ public class ProjectUpdater implements QuerySyncProjectListener {
 
   private void updateProjectModel(ProjectProto.Project spec, Context<?> context) {
     File imlDirectory = new File(BlazeDataStorage.getProjectDataDir(importSettings), "modules");
-    ProjectUpdaterThreadingUtils.Companion.performWriteAction(() -> {
+    ProjectUpdaterThreadingUtils.performWriteAction(() -> {
       for (BlazeQuerySyncPlugin syncPlugin : BlazeQuerySyncPlugin.EP_NAME.getExtensions()) {
         syncPlugin.updateProjectSettingsForQuerySync(project, context, projectViewSet);
       }
     });
-    ProjectUpdaterThreadingUtils.Companion.readWriteAction(
+    ProjectUpdaterThreadingUtils.readWriteAction(
         () -> {
           IdeModifiableModelsProvider models =
               ProjectDataManager.getInstance().createModifiableModelsProvider(project);
