@@ -14,7 +14,7 @@ targets:
 workspace_type: intellij_plugin
 
 build_flags:
-  --define=ij_product=intellij-2024.3
+  --define=ij_product=intellij-ue-2025.1
 
 test_sources:
   */tests/unittests*

@@ -5,14 +5,14 @@ load("@rules_java//java:defs.bzl", "java_import")
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
     "intellij-oss-oldest-stable": "intellij-2024.2",
-    "intellij-oss-latest-stable": "intellij-2024.3",
-    "intellij-oss-under-dev": "intellij-2024.3",
+    "intellij-oss-latest-stable": "intellij-2025.1",
+    "intellij-oss-under-dev": "intellij-2025.1",
     "intellij-ue-oss-oldest-stable": "intellij-ue-2024.2",
-    "intellij-ue-oss-latest-stable": "intellij-ue-2024.3",
-    "intellij-ue-oss-under-dev": "intellij-ue-2024.3",
+    "intellij-ue-oss-latest-stable": "intellij-ue-2025.1",
+    "intellij-ue-oss-under-dev": "intellij-ue-2025.1",
     "clion-oss-oldest-stable": "clion-2024.2",
-    "clion-oss-latest-stable": "clion-2024.3",
-    "clion-oss-under-dev": "clion-2024.3",
+    "clion-oss-latest-stable": "clion-2025.1",
+    "clion-oss-under-dev": "clion-2025.1",
 }
 
 (CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_CANARY, CHANNEL_FREEFORM) = ("stable", "beta", "canary", "freeform")
@@ -61,6 +61,14 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij",
         directory = "intellij_ce_2024_3",
     ),
+    "intellij-2025.1": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2025_1",
+    ),
+    "intellij-2025.1-mac": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2025_1",
+    ),
     "intellij-ue-2024.2": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2024_2",
@@ -77,6 +85,14 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij-ue",
         directory = "intellij_ue_2024_3",
     ),
+    "intellij-ue-2025.1": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2025_1",
+    ),
+    "intellij-ue-2025.1-mac": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2025_1",
+    ),
     "clion-2024.2": struct(
         ide = "clion",
         directory = "clion_2024_2",
@@ -92,6 +108,14 @@ DIRECT_IJ_PRODUCTS = {
     "clion-2024.3-mac": struct(
         ide = "clion",
         directory = "clion_2024_3",
+    ),
+    "clion-2025.1": struct(
+        ide = "clion",
+        directory = "clion_2025_1",
+    ),
+    "clion-2025.1-mac": struct(
+        ide = "clion",
+        directory = "clion_2025_1",
     ),
 }
 

@@ -5,9 +5,10 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 java_library(
-    name = "python_internal",
-    visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
+        "clion-2025.1": ["@python_2025_1//:python"],
+        "intellij-ue-2025.1": ["@python_2025_1//:python"],
+        "intellij-2025.1": ["@python_2025_1//:python"],
         "intellij-2024.2": ["@python_2024_2//:python"],
         "intellij-ue-2024.2": ["@python_2024_2//:python"],
         "intellij-2024.3": ["@python_2024_3//:python"],
@@ -15,11 +16,16 @@ java_library(
         "clion-2024.2": ["@python_2024_2//:python"],
         "clion-2024.3": ["@python_2024_3//:python"],
     }),
+    name = "python_internal",
+    visibility = ["//visibility:private"],
 )
 
 filegroup(
     name = "python_helpers",
     srcs = select_for_plugin_api({
+        "clion-2025.1": ["@python_2025_1//:python_helpers"],
+        "intellij-ue-2025.1": ["@python_2025_1//:python_helpers"],
+        "intellij-2025.1": ["@python_2025_1//:python_helpers"],
         "intellij-2024.2": ["@python_2024_2//:python_helpers"],
         "intellij-ue-2024.2": ["@python_2024_2//:python_helpers"],
         "intellij-2024.3": ["@python_2024_3//:python_helpers"],
@@ -31,14 +37,14 @@ filegroup(
 )
 
 java_library(
-    name = "python_for_tests",
-    testonly = 1,
     data = [":python_helpers"],
     exports = [":python_internal"],
+    name = "python_for_tests",
+    testonly = 1,
 )
 
 java_library(
+    exports = [":python_internal"],
     name = "python",
     neverlink = 1,
-    exports = [":python_internal"],
 )

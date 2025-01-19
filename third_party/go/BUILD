@@ -5,25 +5,27 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 java_library(
-    name = "go_internal",
-    visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
+        "intellij-ue-2025.1": ["@go_2025_1//:go"],
+        "intellij-2025.1": ["@go_2025_1//:go"],
         "intellij-2024.2": ["@go_2024_2//:go"],
         "intellij-ue-2024.2": ["@go_2024_2//:go"],
         "intellij-2024.3": ["@go_2024_3//:go"],
         "intellij-ue-2024.3": ["@go_2024_3//:go"],
         "default": [],
     }),
+    name = "go_internal",
+    visibility = ["//visibility:private"],
 )
 
 java_library(
+    exports = [":go_internal"],
     name = "go_for_tests",
     testonly = 1,
-    exports = [":go_internal"],
 )
 
 java_library(
+    exports = [":go_internal"],
     name = "go",
     neverlink = 1,
-    exports = [":go_internal"],
 )
