@@ -23,11 +23,11 @@ import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 
 // #api242
 public class AsyncVfsEventsPostProcessorCompat {
-    private AsyncVfsEventsPostProcessorCompat(){
+  private AsyncVfsEventsPostProcessorCompat() {
 
-    }
+  }
 
-    public static void addListener(AsyncVfsEventsListener listener, Disposable disposable, Project project) {
-        AsyncVfsEventsPostProcessor.getInstance().addListener(listener, disposable);
-    }
+  public static void addListener(AsyncVfsEventsListener listener, Disposable disposable, Project project) {
+    AsyncVfsEventsPostProcessor.getInstance().addListener(listener, disposable);
+  }
 }
