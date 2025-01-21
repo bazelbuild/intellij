@@ -41,21 +41,9 @@ optional_plugin_xml(
     plugin_xml = "src/META-INF/javascript-contents.xml",
 )
 
-optional_plugin_xml(
-    name = "optional_xml_243",
-    module = ["JavaScript"],
-    plugin_xml = "src/META-INF/javascript-contents-243.xml",
-)
-
 intellij_plugin_library(
     name = "plugin_library",
-    optional_plugin_xmls = [":optional_xml"] + select_for_plugin_api({
-        "intellij-2024.3": [],
-        "intellij-ue-2024.3": [],
-        "intellij-2025.1": [],
-        "intellij-ue-2025.1": [],
-        "default": [":optional_xml_243"],
-    }),
+    optional_plugin_xmls = [":optional_xml"],
     plugin_xmls = ["src/META-INF/blaze-javascript.xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":javascript"],
