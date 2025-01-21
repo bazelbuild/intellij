@@ -9,10 +9,10 @@ java_library(
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
         "intellij-2024.2": ["@go_2024_2//:go"],
-        "intellij-2024.3": ["@go_2024_3//:go"],
-        "intellij-2025.1": ["@go_2025_1//:go"],
         "intellij-ue-2024.2": ["@go_2024_2//:go"],
+        "intellij-2024.3": ["@go_2024_3//:go"],
         "intellij-ue-2024.3": ["@go_2024_3//:go"],
+        "intellij-2025.1": ["@go_2025_1//:go"],
         "intellij-ue-2025.1": ["@go_2025_1//:go"],
         "default": [],
     }),

@@ -9,10 +9,10 @@ java_library(
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
         "intellij-2024.2": ["@python_2024_2//:python"],
-        "intellij-2024.3": ["@python_2024_3//:python"],
-        "intellij-2025.1": ["@python_2025_1//:python"],
         "intellij-ue-2024.2": ["@python_2024_2//:python"],
+        "intellij-2024.3": ["@python_2024_3//:python"],
         "intellij-ue-2024.3": ["@python_2024_3//:python"],
+        "intellij-2025.1": ["@python_2025_1//:python"],
         "intellij-ue-2025.1": ["@python_2025_1//:python"],
         "clion-2024.2": ["@python_2024_2//:python"],
         "clion-2024.3": ["@python_2024_3//:python"],
@@ -23,15 +23,15 @@ java_library(
 filegroup(
     name = "python_helpers",
     srcs = select_for_plugin_api({
-        "clion-2025.1": ["@python_2025_1//:python_helpers"],
-        "intellij-ue-2025.1": ["@python_2025_1//:python_helpers"],
-        "intellij-2025.1": ["@python_2025_1//:python_helpers"],
         "intellij-2024.2": ["@python_2024_2//:python_helpers"],
         "intellij-ue-2024.2": ["@python_2024_2//:python_helpers"],
         "intellij-2024.3": ["@python_2024_3//:python_helpers"],
         "intellij-ue-2024.3": ["@python_2024_3//:python_helpers"],
+        "intellij-2025.1": ["@python_2025_1//:python_helpers"],
+        "intellij-ue-2025.1": ["@python_2025_1//:python_helpers"],
         "clion-2024.2": ["@python_2024_2//:python_helpers"],
         "clion-2024.3": ["@python_2024_3//:python_helpers"],
+        "clion-2025.1": ["@python_2025_1//:python_helpers"],
     }),
     visibility = ["//visibility:private"],
 )
