@@ -463,9 +463,9 @@ http_archive(
     url = TOML_PLUGIN_243_URL,
 )
 
-TOML_PLUGIN_251_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/242.20224.155/org.toml.lang-242.20224.155.zip"
+TOML_PLUGIN_251_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/251.14649.45/org.toml.lang-251.14649.45.zip"
 
-TOML_PLUGIN_251_SHA = "96bd1964b5b4bc7f778c87dddee11b8f7e3d08559a2a72e52909ce4d31be2d9c"
+TOML_PLUGIN_251_SHA = "a5a717340ed02d913902445aa88c472dcd6bccc2a8fa3c3ef871d1b93568cf1a"
 
 http_archive(
     name = "toml_2025_1",
