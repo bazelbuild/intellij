@@ -1,0 +1,27 @@
+directories:
+  .
+  -aswb/testdata
+  -clwb/tests/projects
+  -examples
+
+derive_targets_from_directories: true
+
+use_query_sync: true
+
+workspace_type: intellij_plugin
+
+additional_languages:
+  kotlin
+
+test_sources:
+  */tests/unittests*
+  */tests/integrationtests*
+
+build_flags:
+  # Choose one target ij product:
+  # --define=ij_product=intellij-oss-under-dev
+  # --define=ij_product=intellij-ue-oss-under-dev
+  # --define=ij_product=clion-oss-under-dev
+
+  # Setup disk cache, can improve build times:
+  # --disk_cache=/tmp/bazel_cache
