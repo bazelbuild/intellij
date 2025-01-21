@@ -861,7 +861,12 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
     TargetMap targetMap =
         TargetMapBuilder.builder()
-            .addTarget(createCcToolchain())
+            .addTarget(createCcToolchain("local"))
+            .addTarget(createCcTarget(
+                    "//foo/bar:library",
+                    CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
+                    ImmutableList.of(),
+                    "//:toolchain"))
             .build();
     XcodeCompilerSettings expected = XcodeCompilerSettings.create(Path.of("/tmp/dev_dir"), Path.of("/tmp/dev_dir/sdk"));
     xcodeSettingsProvider.setXcodeSettings(expected);
@@ -894,13 +899,17 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   }
 
   private static TargetIdeInfo.Builder createCcToolchain() {
+    return createCcToolchain("toolchain");
+  }
+
+  private static TargetIdeInfo.Builder createCcToolchain(String targetName) {
     return TargetIdeInfo.builder()
         .setLabel("//:toolchain")
         .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
         .setCToolchainInfo(
             CToolchainIdeInfo.builder()
                 .setCCppCompiler(new ExecutionRootPath("cc"))
-                .setTargetName("toolchain"));
+                .setTargetName(targetName));
   }
 
   private static TargetIdeInfo.Builder createCcToolchainSuite(

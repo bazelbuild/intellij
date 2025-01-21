@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectRepositoryProvider;
 import com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider.XcodeCompilerSettingsException.IssueKind;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -44,17 +45,13 @@ import java.util.Optional;
 
 
 public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsProvider {
-
-  private static final String QUERY_XCODE_VERSION_STARLARK_EXPR = "`{} {}`.format(providers(target)[`XcodeProperties`].xcode_version, providers(target)[`XcodeProperties`].default_macos_sdk_version) if providers(target) and `XcodeProperties` in providers(target) else ``".replace(
-      '`', '"');
-
   // This only exists because it's impossible to escape a `deps()` query expression correctly in a Java string.
   private static final String[] QUERY_XCODE_VERSION_SCRIPT_LINES = new String[]{
       "#!/bin/bash",
       "__BAZEL_BIN__ cquery \\",
       " 'deps(\"@bazel_tools//tools/osx:current_xcode_config\")' \\",
       " --output=starlark \\",
-      " --starlark:expr='" + QUERY_XCODE_VERSION_STARLARK_EXPR + "'",
+      " --starlark:file='" + AspectRepositoryProvider.findAspectDirectory().orElseThrow() + "/xcode_query.bzl" + "'",
   };
 
   @Override
