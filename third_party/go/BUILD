@@ -12,6 +12,8 @@ java_library(
         "intellij-ue-2024.2": ["@go_2024_2//:go"],
         "intellij-2024.3": ["@go_2024_3//:go"],
         "intellij-ue-2024.3": ["@go_2024_3//:go"],
+        "intellij-2025.1": ["@go_2025_1//:go"],
+        "intellij-ue-2025.1": ["@go_2025_1//:go"],
         "default": [],
     }),
 )

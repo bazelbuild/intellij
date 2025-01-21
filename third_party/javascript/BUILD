@@ -11,8 +11,10 @@ java_library(
     exports = select_for_plugin_api({
         "intellij-ue-2024.2": ["@intellij_ue_2024_2//:javascript"],
         "intellij-ue-2024.3": ["@intellij_ue_2024_3//:javascript"],
+        "intellij-ue-2025.1": ["@intellij_ue_2025_1//:javascript"],
         "clion-2024.2": ["@clion_2024_2//:javascript"],
         "clion-2024.3": ["@clion_2024_3//:javascript"],
+        "clion-2025.1": ["@clion_2025_1//:javascript"],
         "default": [],
     }),
 )
@@ -24,8 +26,10 @@ java_library(
     exports = select_for_plugin_api({
         "intellij-ue-2024.2": ["@intellij_ue_2024_2//:css"],
         "intellij-ue-2024.3": ["@intellij_ue_2024_3//:css"],
+        "intellij-ue-2025.1": ["@intellij_ue_2025_1//:css"],
         "clion-2024.2": ["@clion_2024_2//:css"],
         "clion-2024.3": ["@clion_2024_3//:css"],
+        "clion-2025.1": ["@clion_2025_1//:css"],
         "default": [],
     }),
 )
@@ -37,8 +41,10 @@ java_library(
     exports = select_for_plugin_api({
         "intellij-ue-2024.2": ["@intellij_ue_2024_2//:tslint"],
         "intellij-ue-2024.3": ["@intellij_ue_2024_3//:tslint"],
+        "intellij-ue-2025.1": ["@intellij_ue_2025_1//:tslint"],
         "clion-2024.2": ["@clion_2024_2//:tslint"],
         "clion-2024.3": ["@clion_2024_3//:tslint"],
+        "clion-2025.1": ["@clion_2025_1//:tslint"],
         "default": [],
     }),
 )
@@ -50,6 +56,7 @@ java_library(
     exports = select_for_plugin_api({
         "intellij-ue-2024.2": ["@intellij_ue_2024_2//:angular"],
         "intellij-ue-2024.3": ["@intellij_ue_2024_3//:angular"],
+        "intellij-ue-2025.1": ["@intellij_ue_2025_1//:angular"],
         "default": [],
     }),
 )
