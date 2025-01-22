@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage
 import com.google.idea.blaze.base.toolwindow.Task
 import com.google.idea.blaze.common.Label
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -106,7 +107,7 @@ class AspectStorageService(private val project: Project, private val scope: Coro
     val workspacePath = settings.workspaceRoot.takeIf(String::isNotBlank)?.let(Path::of) ?: return null
 
     // if the project data path is contained in the workspace, the aspects can be placed in there
-    if (projectPath.startsWith(workspacePath)) {
+    if (projectPath.startsWith(workspacePath) || ApplicationManager.getApplication().isUnitTestMode) {
       return projectPath.resolve(ASPECT_DIRECTORY)
     }
 
