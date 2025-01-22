@@ -19,6 +19,7 @@ package com.google.idea.blaze.clwb;
 import com.google.idea.blaze.cpp.BlazeCompilerSettings;
 import com.google.idea.blaze.cpp.CompilerVersionUtil;
 import com.google.idea.blaze.cpp.CppEnvironmentProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
@@ -27,6 +28,8 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.cidr.cpp.toolchains.CPPEnvironment;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolSet.Kind;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
+import com.jetbrains.cidr.cpp.toolchains.MSVC;
+import com.jetbrains.cidr.cpp.toolchains.msvc.MSVCCompilerToVersionCacheService;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
 import com.jetbrains.cidr.toolchains.OSType;
@@ -74,7 +77,10 @@ class MSVCEnvironmentProvider implements CppEnvironmentProvider {
       return null;
     }
 
-    final var version = MSVCCompilerVersionCompat.getCompilerVersion(compiler);
+    final var version = ApplicationManager.getApplication()
+        .getService(MSVCCompilerToVersionCacheService.class)
+        .getCompilerVersion(compiler.getAbsolutePath());
+
     if (version == null) {
       LOG.warn("Could not derive arch and version.");
       return null;
@@ -86,7 +92,7 @@ class MSVCEnvironmentProvider implements CppEnvironmentProvider {
     toolchain.setToolSetPath(toolSetPath);
 
     final var environment = new CPPEnvironment(toolchain);
-    MSVCCompilerVersionCompat.setEnvironmentVersion(environment, version);
+    ((MSVC) environment.getToolSet()).setToolsVersion(version);
 
     return environment;
   }

@@ -205,7 +205,7 @@ public final class BlazeJUnitTestFilterFlags {
     }
     String methodNamePattern = concatenateMethodNames(methodFilters, jUnitVersion);
     if (Strings.isNullOrEmpty(methodNamePattern)) {
-      if (jUnitVersion == JUnitVersion.JUNIT_4 || jUnitVersion == JUnitVersion.JUNIT_5) {
+      if (jUnitVersion == JUnitVersion.JUNIT_4) {
         output.append('#');
       }
       return output.toString();

@@ -46,7 +46,6 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.google.idea.blaze.cpp.CppBlazeRules;
-import com.google.idea.sdkcompat.clion.CidrDebugProcessCreator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.CommandLineState;
@@ -64,6 +63,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.cidr.execution.CidrConsoleBuilder;
+import com.jetbrains.cidr.execution.CidrCoroutineHelper;
 import com.jetbrains.cidr.execution.CidrLauncher;
 import com.jetbrains.cidr.execution.TrivialInstaller;
 import com.jetbrains.cidr.execution.TrivialRunParameters;
@@ -189,10 +189,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
     final GeneralCommandLine commandLine = new GeneralCommandLine(command.toList());
 
-    EnvironmentVariablesData envState = handlerState.getEnvVarsState().getData();
-    commandLine.withParentEnvironmentType(
-        envState.isPassParentEnvs() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.NONE);
-    commandLine.getEnvironment().putAll(envState.getEnvs());
+    updateCommandlineWithEnvironmentData(commandLine);
 
     return new ScopedBlazeProcessHandler(
         project,
@@ -214,6 +211,13 @@ public final class BlazeCidrLauncher extends CidrLauncher {
             return ImmutableList.of(new LineProcessingProcessAdapter(outputStream));
           }
         });
+  }
+
+  private void updateCommandlineWithEnvironmentData(GeneralCommandLine commandLine) {
+    EnvironmentVariablesData envState = handlerState.getEnvVarsState().getData();
+    commandLine.withParentEnvironmentType(
+        envState.isPassParentEnvs() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.NONE);
+    commandLine.getEnvironment().putAll(envState.getEnvs());
   }
 
   @Override
@@ -247,6 +251,9 @@ public final class BlazeCidrLauncher extends CidrLauncher {
       commandLine.addParameters(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
       commandLine.addParameters(handlerState.getTestArgs());
 
+      // otherwise is handled in createProcess
+      updateCommandlineWithEnvironmentData(commandLine);
+
       if (CppBlazeRules.RuleTypes.CC_TEST.getKind().equals(configuration.getTargetKind())) {
         convertBlazeTestFilterToExecutableFlag().ifPresent(commandLine::addParameters);
       }
@@ -263,7 +270,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
       state.setConsoleBuilder(createConsoleBuilder(null));
       state.addConsoleFilters(getConsoleFilters().toArray(new Filter[0]));
-      return CidrDebugProcessCreator.create(() -> new CidrLocalDebugProcess(parameters, session, state.getConsoleBuilder()));
+      return CidrCoroutineHelper.runOnEDT(() -> new CidrLocalDebugProcess(parameters, session, state.getConsoleBuilder()));
     }
     List<String> extraDebugFlags = BlazeGDBServerProvider.getFlagsForDebugging(handlerState);
 
@@ -286,7 +293,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     BlazeCLionGDBDriverConfiguration debuggerDriverConfiguration =
         new BlazeCLionGDBDriverConfiguration(project);
 
-    return CidrDebugProcessCreator.create(() -> new BlazeCidrRemoteDebugProcess(
+    return CidrCoroutineHelper.runOnEDT(() -> new BlazeCidrRemoteDebugProcess(
         targetProcess, debuggerDriverConfiguration, parameters, session, state.getConsoleBuilder()));
   }
 

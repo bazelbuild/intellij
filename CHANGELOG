@@ -1,3 +1,56 @@
+v2025.01.07
+===========
+* Allow to boost .ijwb over BSP and .idea folder. #7201
+
+v2024.12.17
+===========
+Fixes:
+* Keep bazel from automatically enabling curses with the old sync view #7143
+* Do not use curses with the old sync view #7139
+* Do not append \n for PROCESS since that output has all of the delim… #7146
+* clion: fix non-passed env vars for gdbserverless debugging #7167
+* handle non-valid project view file on reload #7159
+Features:
+* Adds support for the google test run button in nova #7062
+* Add catch2 test support in CLion #7141
+* Adds support for the run button on main functions in nova  #7100
+* Experimental: Basic qsync support in CLion for linux #7094
+
+v2024.12.03
+===========
+Fixes:
+* fix: NPE in WorkspaceHelper when project is not loaded yet #7036
+* fix issues with aspect templates not available in query sync mode #7048
+* fix: Don't require rules_java and rules_python for bazel 7 and older #7052
+* Reapply "fix: Support bazel 8 and --noenable_workspace mode (#6990)… #7045
+* Handle included MODULE.bazel files as well #7057
+* Fix indexing problem with Fix getPackageName which didn't respect "build ignore" #7034
+* Stop adding a trailing # when filtering tests for JUnit 5 #7060
+* fix(qsync): Include runtime_deps in the target graph #7081
+* Fix over-including when view_project_root is set. #7002
+* fix: remove strongInfoHolder flag, so users can choose which plugin t… #7092
+* Reload project view, and make sure that BazelImportSettings respect p… #7088
+* fix(qsync): Hightlighting level is always updated after 'enable analy… #7101
+Features:
+* PTY enabled terminal for the new sync view #7001
+* Enable the new sync view for query sync #7037
+
+v2024.11.19
+===========
+Features:
+* Bazel Icon for Plugin Logo #6973
+* Query Sync: "Enable analysis" widget for Remote Development #6996
+* Starlark Debuger: Gutter icons to start debugging #6999
+Fixes:
+* C++: Do not collide with CMake #6770
+* Make the BlazeImportProjectAction dumb aware #6985
+* Query Sync: Fix NPE when enabling analysis for a directory #6992
+* Bazel 8 support for Java (#6987 and #7006)
+* Exception in the new QuerySyncNotificationProvider #7009
+* fix(qsync): Fix build_dependencies after AOSP merge #7027
+* disable warmup service #7029
+* fix(qsync): NPE in QuerySyncNotificationProvider #7032
+
 v2024.11.05
 ===========
 Features:
