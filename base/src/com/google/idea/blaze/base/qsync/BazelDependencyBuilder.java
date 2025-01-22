@@ -53,6 +53,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
@@ -241,8 +242,8 @@ public class BazelDependencyBuilder implements DependencyBuilder {
   protected ImmutableMap<Path, ByteSource> getAspectFiles() {
     return ImmutableMap.of(
       Path.of(".aswb/BUILD"), ByteSource.empty(),
-      Path.of(".aswb/build_dependencies.bzl"), MoreFiles.asByteSource(getBundledAspectPath("build_dependencies.bzl")),
-      Path.of(".aswb/build_dependencies_deps.bzl"), MoreFiles.asByteSource(getBundledAspectPath("build_dependencies_deps.bzl"))
+      Path.of(".aswb/build_dependencies.bzl"), getBundledAspect("build_dependencies.bzl"),
+      Path.of(".aswb/build_dependencies_deps.bzl"), getBundledAspect("build_dependencies_deps.bzl")
       );
   }
 
@@ -253,27 +254,8 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     return Label.of("//.aswb:build_dependencies.bzl");
   }
 
-  protected Path getBundledAspectPath(String dir, String filename) {
-    String aspectPath = System.getProperty(String.format("qsync.aspect.%s.file", filename));
-    if (aspectPath != null) {
-      return Path.of(aspectPath);
-    }
-    PluginDescriptor plugin = checkNotNull(PluginManager.getPluginByClass(getClass()));
-    Path rootAspectDirectory;
-    if (Strings.isNotEmpty(aspectLocation.getValue())) {
-      Path workspaceAbsolutePath = workspaceRoot.absolutePathFor("");
-      // NOTE: aspectLocation allows both relative and absolute paths.
-      rootAspectDirectory = workspaceAbsolutePath.resolve(aspectLocation.getValue());
-      logger.info("Using build aspect from: " + rootAspectDirectory);
-    }
-    else{
-      rootAspectDirectory = plugin.getPluginPath();
-    }
-    return rootAspectDirectory.resolve(dir).resolve(filename);
-  }
-
-  protected Path getBundledAspectPath(String filename) {
-    return getBundledAspectPath("aspect", filename);
+  protected ByteSource getBundledAspect(String filename) {
+    return AspectRepositoryProvider.aspectQSyncFile(filename);
   }
 
   /**
