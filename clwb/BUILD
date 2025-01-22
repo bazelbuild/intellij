@@ -83,6 +83,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
         "//clwb/sdkcompat",
+        "//shared",
     ],
 )
 
