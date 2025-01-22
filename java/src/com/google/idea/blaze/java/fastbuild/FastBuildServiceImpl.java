@@ -57,6 +57,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
+import com.google.idea.blaze.common.Interners;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService.ChangedSources;
@@ -70,6 +71,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -322,8 +324,9 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     try {
       ImmutableList<File> deployJarArtifacts =
           LocalFileArtifact.getLocalFiles(
-              resultHelper.getBuildArtifactsForTarget(
-                  deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData), jarPredicate));
+              resultHelper.getBuildOutput(Optional.empty(), Interners.STRING)
+                  .getDirectArtifactsForTarget(
+                      deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData), jarPredicate));
       checkState(deployJarArtifacts.size() == 1);
       File deployJar = deployJarArtifacts.get(0);
 
@@ -331,8 +334,9 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
           file -> aspectStrategy.getAspectOutputFilePredicate().test(file);
       ImmutableList<File> ideInfoFiles =
           LocalFileArtifact.getLocalFiles(
-              resultHelper.getArtifactsForOutputGroup(
-                  aspectStrategy.getAspectOutputGroup(), filePredicate));
+              resultHelper.getBuildOutput(Optional.empty(), Interners.STRING)
+                  .getOutputGroupArtifacts(
+                      aspectStrategy.getAspectOutputGroup(), filePredicate));
 
       // if targets are built with multiple configurations, just take the first one
       // TODO(brendandouglas): choose a consistent configuration instead

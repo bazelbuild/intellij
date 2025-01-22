@@ -5,7 +5,9 @@ licenses(["notice"])
 java_library(
     name = "common",
     srcs = glob(["*.java"]),
-    visibility = ["//shared:__subpackages__"],
+    visibility = [
+        "//visibility:public",
+    ],
     deps = [
         "@jsr305_annotations//jar",
         "//third_party/java/auto_value",

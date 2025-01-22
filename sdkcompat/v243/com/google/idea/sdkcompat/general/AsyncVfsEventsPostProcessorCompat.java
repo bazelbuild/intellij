@@ -34,20 +34,20 @@ import java.util.function.Consumer;
 
 // #api242
 public class AsyncVfsEventsPostProcessorCompat {
-    private AsyncVfsEventsPostProcessorCompat(){
+  private AsyncVfsEventsPostProcessorCompat() {
 
-    }
+  }
 
-    public static void addListener(Consumer<List<? extends VFileEvent>> listener, Disposable disposable, Project project) {
-        AsyncVfsEventsPostProcessor.getInstance().addListener(new AsyncVfsEventsListener() {
-            @Override
-            public @Nullable Object filesChanged(@NotNull List<? extends VFileEvent> list, @NotNull Continuation<? super Unit> continuation) {
-                return JavaCoroutines.suspendJava(javaContinuation -> {
-                            listener.accept(list);
-                            javaContinuation.resume(Unit.INSTANCE);
-                        }
-                        , continuation);
+  public static void addListener(Consumer<List<? extends VFileEvent>> listener, Disposable disposable, Project project) {
+    AsyncVfsEventsPostProcessor.getInstance().addListener(new AsyncVfsEventsListener() {
+      @Override
+      public @Nullable Object filesChanged(@NotNull List<? extends VFileEvent> list, @NotNull Continuation<? super Unit> continuation) {
+        return JavaCoroutines.suspendJava(javaContinuation -> {
+              listener.accept(list);
+              javaContinuation.resume(Unit.INSTANCE);
             }
-        }, ((ComponentManagerEx) project).getCoroutineScope());
-    }
+            , continuation);
+      }
+    }, ((ComponentManagerEx) project).getCoroutineScope());
+  }
 }

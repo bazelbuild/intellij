@@ -109,6 +109,13 @@ public class FuncallExpression extends BuildElementImpl
     return parent == null || parent.getElementType() == BuildElementTypes.BUILD_FILE;
   }
 
+  /** If the function is called as a member on something. */
+  public boolean isMemberFunction() {
+    // if there are more than one reference to something, it is safe to assume that this is a member function
+    return findChildByType(BuildElementTypes.REFERENCE_EXPRESSION) !=
+        findLastChildByType(BuildElementTypes.REFERENCE_EXPRESSION);
+  }
+
   public boolean mightBeBuildRule() {
     return isTopLevel() || getNameArgument() != null;
   }

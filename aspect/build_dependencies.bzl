@@ -7,10 +7,11 @@ load(
     "ANDROID_IDE_INFO",
     "ZIP_TOOL_LABEL",
     _ide_cc_not_validated = "IDE_CC",
+    _ide_java_not_validated = "IDE_JAVA",
     _ide_kotlin_not_validated = "IDE_KOTLIN",
 )
 
-ALWAYS_BUILD_RULES = "java_proto_library,java_lite_proto_library,java_mutable_proto_library,kt_proto_library_helper,_java_grpc_library,_java_lite_grpc_library,kt_grpc_library_helper,java_stubby_library,kt_stubby_library_helper,aar_import,java_import"
+ALWAYS_BUILD_RULES = "java_proto_library,java_lite_proto_library,java_mutable_proto_library,kt_proto_library_helper,_java_grpc_library,_java_lite_grpc_library,kt_grpc_library_helper,java_stubby_library,kt_stubby_library_helper,aar_import,java_import, j2kt_native_import"
 
 PROTO_RULE_KINDS = [
     "java_proto_library",
@@ -19,7 +20,13 @@ PROTO_RULE_KINDS = [
     "kt_proto_library_helper",
 ]
 
-def _rule_function(rule):
+def _rule_function(
+        rule):  # @unused
+    return []
+
+def _target_rule_function(
+        target,  # @unused
+        rule):  # @unused
     return []
 
 def _unique(values):
@@ -33,6 +40,14 @@ def _validate_ide(unvalidated, template):
         elif type(getattr(unvalidated, a)) != type(getattr(template, a)):
             fail("attribute type mismatch: ", a, type(getattr(unvalidated, a)), type(getattr(template, a)))
     return struct(**{a: getattr(unvalidated, a) for a in dir(template) if a not in dir(struct())})
+
+IDE_JAVA = _validate_ide(
+    _ide_java_not_validated,
+    template = struct(
+        srcs_attributes = [],  # Additional srcs like attributes.
+        get_java_info = _target_rule_function,  # A function that takes a rule and returns a JavaInfo like structure (or the provider itself).
+    ),
+)
 
 IDE_KOTLIN = _validate_ide(
     _ide_kotlin_not_validated,
@@ -56,8 +71,7 @@ IDE_CC = _validate_ide(
     ),
 )
 
-JAVA_SRC_ATTRS = ["srcs", "java_srcs", "java_test_srcs"]
-JVM_SRC_ATTRS = _unique(JAVA_SRC_ATTRS + IDE_KOTLIN.srcs_attributes)
+JVM_SRC_ATTRS = _unique(["srcs"] + IDE_JAVA.srcs_attributes + IDE_KOTLIN.srcs_attributes)
 
 def _package_dependencies_impl(target, ctx):
     java_info_file = _write_java_target_info(target, ctx)
@@ -70,7 +84,7 @@ def _package_dependencies_impl(target, ctx):
         qsync_aars = dep_info.aars.to_list() if dep_info.aars else [],
         qsync_gensrcs = dep_info.gensrcs.to_list() if dep_info.gensrcs else [],
         cc_headers = dep_info.cc_headers.to_list() if dep_info.cc_headers else [],
-        cc_info_file = cc_info_file + [dep_info.cc_toolchain_info.file] if dep_info.cc_toolchain_info else [],
+        cc_info_file = cc_info_file + ([dep_info.cc_toolchain_info.file] if dep_info.cc_toolchain_info else []),
     )]
 
 def _write_java_target_info(target, ctx, custom_prefix = ""):
@@ -199,12 +213,16 @@ def merge_dependencies_info(target, ctx, java_dep_info, cc_dep_info, cc_toolchai
 
     if cc_dep_info and cc_toolchain_dep_info:
         test_mode_cc_src_deps = depset(transitive = [cc_dep_info.test_mode_cc_src_deps, cc_toolchain_dep_info.test_mode_cc_src_deps])
+        cc_toolchain_info = cc_toolchain_dep_info.cc_toolchain_info
     elif cc_dep_info:
         test_mode_cc_src_deps = cc_dep_info.test_mode_cc_src_deps
+        cc_toolchain_info = cc_dep_info.cc_toolchain_info
     elif cc_toolchain_dep_info:
         test_mode_cc_src_deps = cc_toolchain_dep_info.test_mode_cc_src_deps
+        cc_toolchain_info = cc_toolchain_dep_info.cc_toolchain_info
     else:
         test_mode_cc_src_deps = None
+        cc_toolchain_info = None
 
     merged = create_dependencies_info(
         label = target.label,
@@ -215,7 +233,7 @@ def merge_dependencies_info(target, ctx, java_dep_info, cc_dep_info, cc_toolchai
         expand_sources = java_dep_info.expand_sources if java_dep_info else None,
         cc_compilation_info = cc_dep_info.cc_compilation_info if cc_dep_info else None,
         cc_headers = cc_dep_info.cc_headers if cc_dep_info else None,
-        cc_toolchain_info = cc_toolchain_dep_info.cc_toolchain_info if cc_toolchain_dep_info else None,
+        cc_toolchain_info = cc_toolchain_info,
         test_mode_own_files = java_dep_info.test_mode_own_files if java_dep_info else None,
         test_mode_cc_src_deps = test_mode_cc_src_deps,
     )
@@ -388,6 +406,8 @@ def _target_within_project_scope(label, include, exclude):
     repo = _get_repo_name(label)
     package = label.package
     result = False
+    if repo != "":
+        return False # We don't support external includes, so all external repos are outside the project scope
     if include:
         for inc in include.split(","):
             # This is not a valid label, but can be passed to aspect when `directories: .` is set in the projectview
@@ -467,6 +487,8 @@ def _collect_own_java_artifacts(
     own_srcjar_files = []
     resource_package = ""
 
+    java_info = IDE_JAVA.get_java_info(target, ctx.rule)
+
     if must_build_main_artifacts:
         # For rules that we do not follow dependencies of (either because they don't
         # have further dependencies with JavaInfo or do so in attributes we don't care)
@@ -475,11 +497,11 @@ def _collect_own_java_artifacts(
         # This is done primarily for rules like proto, whose toolchain classes
         # are collected via attribute traversal, but still requires jars for any
         # proto deps of the underlying proto_library.
-        if JavaInfo in target:
+        if java_info:
             if can_follow_dependencies:
-                own_jar_depsets.append(target[JavaInfo].compile_jars)
+                own_jar_depsets.append(java_info.compile_jars)
             else:
-                own_jar_depsets.append(target[JavaInfo].transitive_compile_time_jars)
+                own_jar_depsets.append(java_info.transitive_compile_time_jars)
 
         if declares_android_resources(target, ctx):
             ide_aar = _get_ide_aar_file(target, ctx)
@@ -521,13 +543,24 @@ def _collect_own_java_artifacts(
 
         # Add generated java_outputs (e.g. from annotation processing)
         generated_class_jars = []
-        if JavaInfo in target:
-            for java_output in target[JavaInfo].java_outputs:
+        if java_info:
+            for java_output in java_info.java_outputs:
                 # Prefer source jars if they exist and are requested:
                 if use_generated_srcjars and java_output.generated_source_jar:
                     own_gensrc_files.append(java_output.generated_source_jar)
                 elif java_output.generated_class_jar:
                     generated_class_jars.append(java_output.generated_class_jar)
+                else:
+                    for src_attr in JVM_SRC_ATTRS:
+                        # unfortunately, in cases where we have non-cource
+                        # src attribute, we had to add full output jar
+                        # to avoid red code
+                        # We would need jar filtering to handle it well
+                        if hasattr(rule.attr, src_attr):
+                            for src in getattr(rule.attr, src_attr):
+                                for file in src.files.to_list():
+                                    if not file.is_source:
+                                        generated_class_jars.append(java_output.class_jar)
 
         if generated_class_jars:
             own_jar_files += generated_class_jars

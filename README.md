@@ -30,8 +30,8 @@ The Bazel plugin for Android Studio is built and released from  [AOSP](https://a
 
 Although the code in this repository and in AOSP share the same structure and core components, they have diverged from each other. 
 
-- Changes for IntelliJ and CLion plugins are *only* merged into the master branch of this repository. Few fixes that are also needed for the Android Studio plugin can be merged into the AOSP project after the internal teams’ approval.
-- Changes made by the internal Google teams are automatically exported to AOSP. Only relevant commits (security and selected bug fixes, and feature requests) are cherry-picked to the master branch.
+- Changes for IntelliJ and CLion plugins are *only* merged into the master branch of this repository. Users can request that certain fixes which are also needed for the Android Studio plugin get merged into the AOSP project. This will require the internal teams’ approval. 
+- Changes made by the internal Google teams are automatically exported to AOSP. These commits will regularly be cherry-picked to the master branch.
 - The master branch is not intended to be used to build the Android Studio with Bazel plugin; failures of the Android Studio plugin built from the master branch will not be addressed.
 
 ## Installation
