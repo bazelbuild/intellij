@@ -15,9 +15,6 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import static com.google.idea.blaze.base.qsync.DependencyTracker.DependencyBuildRequest.multiTarget;
-import static com.google.idea.blaze.base.qsync.DependencyTracker.DependencyBuildRequest.wholeProject;
-
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -28,6 +25,7 @@ import com.google.common.io.MoreFiles;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
+import com.google.idea.blaze.base.model.ExternalWorkspaceQuerySync;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -68,6 +66,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -82,6 +81,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+
+import static com.google.idea.blaze.base.qsync.DependencyTracker.DependencyBuildRequest.multiTarget;
+import static com.google.idea.blaze.base.qsync.DependencyTracker.DependencyBuildRequest.wholeProject;
 
 /**
  * Encapsulates a loaded querysync project and it's dependencies.
@@ -275,7 +277,7 @@ public class QuerySyncProject {
                 artifactTracker.getStateSnapshot(),
                 projectProtoTransforms.getComposedTransform());
         onNewSnapshot(context, newSnapshot);
-
+        ExternalWorkspaceQuerySync.syncExternalWorkspace(project, context, projectViewSet, projectData);
         // TODO: Revisit SyncListeners once we switch fully to qsync
         for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
           // A callback shared between the old and query sync implementations.
@@ -303,12 +305,12 @@ public class QuerySyncProject {
   /**
    * Returns the list of project targets related to the given workspace file.
    *
-   * @param context Context
+   * @param context               Context
    * @param workspaceRelativePath Workspace relative file path to find targets for. This may be a
-   *     source file, directory or BUILD file.
+   *                              source file, directory or BUILD file.
    * @return Corresponding project targets. For a source file, this is the targets that build that
-   *     file. For a BUILD file, it's the set or targets defined in that file. For a directory, it's
-   *     the set of all targets defined in all build packages within the directory (recursively).
+   * file. For a BUILD file, it's the set or targets defined in that file. For a directory, it's
+   * the set of all targets defined in all build packages within the directory (recursively).
    */
   public TargetsToBuild getProjectTargets(BlazeContext context, Path workspaceRelativePath) {
     return snapshotHolder
@@ -317,13 +319,17 @@ public class QuerySyncProject {
         .orElse(TargetsToBuild.NONE);
   }
 
-  /** Returns the set of targets with direct dependencies on {@code targets}. */
+  /**
+   * Returns the set of targets with direct dependencies on {@code targets}.
+   */
   public ImmutableSet<Label> getTargetsDependingOn(Set<Label> targets) {
     QuerySyncProjectSnapshot snapshot = snapshotHolder.getCurrent().orElseThrow();
     return snapshot.graph().getSameLanguageTargetsDependingOn(targets);
   }
 
-  /** Returns workspace-relative paths of modified files, according to the VCS */
+  /**
+   * Returns workspace-relative paths of modified files, according to the VCS
+   */
   public ImmutableSet<Path> getWorkingSet(BlazeContext context) throws BuildException {
     SaveUtil.saveAllFiles();
     VcsState vcsState;
@@ -468,7 +474,7 @@ public class QuerySyncProject {
    * Reloads the project view and checks it against the stored {@link ProjectDefinition}.
    *
    * @return true if the stored {@link ProjectDefinition} matches that derived from the {@link
-   *     ProjectViewSet}
+   * ProjectViewSet}
    */
   public boolean isDefinitionCurrent(BlazeContext context) throws BuildException {
     ProjectViewSet projectViewSet =
@@ -508,7 +514,9 @@ public class QuerySyncProject {
     }
   }
 
-  /** Returns true if {@code absolutePath} is in a project include */
+  /**
+   * Returns true if {@code absolutePath} is in a project include
+   */
   public boolean containsPath(Path absolutePath) {
     if (!workspaceRoot.isInWorkspace(absolutePath.toFile())) {
       return false;
@@ -568,7 +576,9 @@ public class QuerySyncProject {
     return snapshotPath.map(path -> !path.resolve(workspaceRelative).toFile().exists());
   }
 
-  /** Returns all external dependencies of a given label */
+  /**
+   * Returns all external dependencies of a given label
+   */
   public ImmutableSet<Label> externalDependenciesFor(Label label) {
     return snapshotHolder
         .getCurrent()

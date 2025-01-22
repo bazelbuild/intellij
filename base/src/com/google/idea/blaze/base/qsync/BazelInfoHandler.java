@@ -22,17 +22,17 @@ import com.google.idea.blaze.base.sync.SyncScope;
 import com.google.idea.blaze.exception.BuildException;
 
 public class BazelInfoHandler {
-    private final BuildSystem.BuildInvoker buildInvoker;
+  private final BuildSystem.BuildInvoker buildInvoker;
 
-    BazelInfoHandler(BuildSystem.BuildInvoker buildInvoker) {
-        this.buildInvoker = buildInvoker;
-    }
+  BazelInfoHandler(BuildSystem.BuildInvoker buildInvoker) {
+    this.buildInvoker = buildInvoker;
+  }
 
-    BlazeInfo getBazelInfo() throws BuildException {
-        try {
-            return  buildInvoker.getBlazeInfo();
-        } catch (SyncScope.SyncFailedException e) {
-            throw new BuildException(e);
-        }
+  BlazeInfo getBazelInfo() throws BuildException {
+    try {
+      return buildInvoker.getBlazeInfo();
+    } catch (SyncScope.SyncFailedException e) {
+      throw new BuildException(e);
     }
+  }
 }
