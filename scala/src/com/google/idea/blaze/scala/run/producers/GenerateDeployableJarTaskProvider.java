@@ -187,11 +187,14 @@ class GenerateDeployableJarTaskProvider
         throw new ExecutionException(e);
       }
 
-      List<File> outputs =
-          LocalFileArtifact.getLocalFiles(
-              buildResultHelper.getBuildOutput(Optional.empty(), Interners.STRING)
-                  .getDirectArtifactsForTarget(
-                      target.withTargetName(target.targetName() + "_deploy.jar"), file -> true));
+      List<File> outputs;
+      try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
+        outputs = LocalFileArtifact.getLocalFiles(
+            buildResultHelper.getBuildOutput(bepStream, Interners.STRING)
+                .getDirectArtifactsForTarget(
+                    target.withTargetName(target.targetName() + "_deploy.jar"), file -> true));
+      }
+
       if (outputs.isEmpty()) {
         throw new ExecutionException(
             String.format("Failed to find deployable jar when building %s", target));
