@@ -29,12 +29,9 @@ public class ProjectDefinitionTest {
   @Test
   public void testGetIncludingContentRoot_returnsContentRoot() {
     ProjectDefinition projectDefinition =
-        ProjectDefinition.create(
-            ImmutableSet.of(Path.of("contentroot1"), Path.of("contentroot2")),
-            ImmutableSet.of(),
-            ImmutableSet.of(),
-            ImmutableSet.of(),
-            ImmutableSet.of());
+        ProjectDefinition.builder()
+            .setProjectIncludes(ImmutableSet.of(Path.of("contentroot1"), Path.of("contentroot2")))
+            .build();
     assertThat(projectDefinition.getIncludingContentRoot(Path.of("contentroot1/some/path")))
         .hasValue(Path.of("contentroot1"));
     assertThat(projectDefinition.getIncludingContentRoot(Path.of("contentroot2")))
@@ -44,12 +41,9 @@ public class ProjectDefinitionTest {
   @Test
   public void testGetIncludingContentRoot_externalPath_returnsEmpty() {
     ProjectDefinition projectDefinition =
-        ProjectDefinition.create(
-            ImmutableSet.of(Path.of("contentroot1"), Path.of("contentroot2")),
-            ImmutableSet.of(),
-            ImmutableSet.of(),
-            ImmutableSet.of(),
-            ImmutableSet.of());
+        ProjectDefinition.builder()
+            .setProjectIncludes(ImmutableSet.of(Path.of("contentroot1"), Path.of("contentroot2")))
+            .build();
     assertThat(projectDefinition.getIncludingContentRoot(Path.of("anotherRoot/some/path")))
         .isEmpty();
   }
@@ -57,12 +51,10 @@ public class ProjectDefinitionTest {
   @Test
   public void testGetIncludingContentRoot_excludedPath_returnsEmpty() {
     ProjectDefinition projectDefinition =
-        ProjectDefinition.create(
-            ImmutableSet.of(Path.of("contentroot1"), Path.of("contentroot2")),
-            ImmutableSet.of(Path.of("contentroot1/excluded")),
-            ImmutableSet.of(),
-            ImmutableSet.of(),
-            ImmutableSet.of());
+        ProjectDefinition.builder()
+        .setProjectIncludes(ImmutableSet.of(Path.of("contentroot1"), Path.of("contentroot2")))
+        .setProjectExcludes(ImmutableSet.of(Path.of("contentroot1/excluded")))
+        .build();
     assertThat(projectDefinition.getIncludingContentRoot(Path.of("contentroot1/excluded/path")))
         .isEmpty();
   }

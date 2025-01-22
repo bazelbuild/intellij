@@ -184,12 +184,10 @@ public class ProjectRefresherTest {
                                 Operation.MODIFY, Path.of("package/path/BUILD"))),
                         Optional.empty())))
             .setProjectDefinition(
-                ProjectDefinition.create(
-                    ImmutableSet.of(Path.of("package")),
-                    ImmutableSet.of(),
-                    ImmutableSet.of(QuerySyncLanguage.JAVA),
-                    ImmutableSet.of(),
-                    ImmutableSet.of()))
+                ProjectDefinition.builder()
+                    .setProjectIncludes(ImmutableSet.of(Path.of("package")))
+                    .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
+                    .build())
             .setBazelVersion(Optional.of("1.0.0"))
             .build();
 
@@ -219,12 +217,10 @@ public class ProjectRefresherTest {
                             new WorkspaceFileChange(Operation.ADD, Path.of("package/path/BUILD"))),
                         Optional.empty())))
             .setProjectDefinition(
-                ProjectDefinition.create(
-                    ImmutableSet.of(Path.of("package")),
-                    ImmutableSet.of(),
-                    ImmutableSet.of(QuerySyncLanguage.JAVA),
-                    ImmutableSet.of(),
-                    ImmutableSet.of()))
+                ProjectDefinition.builder()
+                    .setProjectIncludes(ImmutableSet.of(Path.of("package")))
+                    .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
+                    .build())
             .build();
 
     RefreshOperation update =
@@ -256,12 +252,10 @@ public class ProjectRefresherTest {
                                 Operation.DELETE, Path.of("package/path/BUILD"))),
                         Optional.empty())))
             .setProjectDefinition(
-                ProjectDefinition.create(
-                    ImmutableSet.of(Path.of("package")),
-                    ImmutableSet.of(),
-                    ImmutableSet.of(QuerySyncLanguage.JAVA),
-                    ImmutableSet.of(),
-                    ImmutableSet.of()))
+                ProjectDefinition.builder()
+                    .setProjectIncludes(ImmutableSet.of(Path.of("package")))
+                    .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
+                    .build())
             .build();
 
     RefreshOperation update =
@@ -289,12 +283,10 @@ public class ProjectRefresherTest {
             .setVcsState(
                 Optional.of(new VcsState("workspaceId", "1", workingSet, Optional.empty())))
             .setProjectDefinition(
-                ProjectDefinition.create(
-                    ImmutableSet.of(Path.of("package")),
-                    ImmutableSet.of(),
-                    ImmutableSet.of(QuerySyncLanguage.JAVA),
-                    ImmutableSet.of(),
-                    ImmutableSet.of()))
+                ProjectDefinition.builder()
+                    .setProjectIncludes(ImmutableSet.of(Path.of("package")))
+                    .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
+                    .build())
             .build();
 
     RefreshOperation update =
@@ -324,12 +316,10 @@ public class ProjectRefresherTest {
             .setVcsState(
                 Optional.of(new VcsState("workspaceId", "1", workingSet, Optional.empty())))
             .setProjectDefinition(
-                ProjectDefinition.create(
-                    ImmutableSet.of(Path.of("package")),
-                    ImmutableSet.of(),
-                    ImmutableSet.of(QuerySyncLanguage.JAVA),
-                    ImmutableSet.of(),
-                    ImmutableSet.of()))
+                ProjectDefinition.builder()
+                    .setProjectIncludes(ImmutableSet.of(Path.of("package")))
+                    .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
+                    .build())
             .build();
 
     RefreshOperation update =
@@ -359,12 +349,10 @@ public class ProjectRefresherTest {
                                 Operation.MODIFY, Path.of("package/path/BUILD"))),
                         Optional.empty())))
             .setProjectDefinition(
-                ProjectDefinition.create(
-                    ImmutableSet.of(Path.of("package")),
-                    ImmutableSet.of(),
-                    ImmutableSet.of(QuerySyncLanguage.JAVA),
-                    ImmutableSet.of(),
-                    ImmutableSet.of()))
+                ProjectDefinition.builder()
+                    .setProjectIncludes(ImmutableSet.of(Path.of("package")))
+                    .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
+                    .build())
             .build();
 
     RefreshOperation update =
