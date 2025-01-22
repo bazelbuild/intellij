@@ -3,7 +3,7 @@ workspace(name = "intellij_with_bazel")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 # LICENSE: The Apache Software License, Version 2.0
-rules_scala_version = "8f255cd1fecfe4d43934b161b3edda58bdb2e8f4"
+rules_scala_version = "6c6ba4e31cb56c038fe9967efd222007d73fd5cf"
 
 load("@rules_java//java:rules_java_deps.bzl", "rules_java_dependencies")
 rules_java_dependencies()
@@ -12,7 +12,7 @@ protobuf_deps()
 
 http_archive(
     name = "io_bazel_rules_scala",
-    sha256 = "14797e907c5614387452c42412d755ad7e343ea12540a53da1430be3301c8b4b",
+    sha256 = "3aad1238ba84d53f1f9471452580835ff0f3e8b6f03567e9e17017e8cc8e3894",
     strip_prefix = "rules_scala-%s" % rules_scala_version,
     type = "zip",
     url = "https://github.com/bazelbuild/rules_scala/archive/%s.zip" % rules_scala_version,

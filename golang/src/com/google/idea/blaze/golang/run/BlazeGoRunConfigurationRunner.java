@@ -54,6 +54,7 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.common.Interners;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -370,7 +371,8 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
         try {
           candidateFiles =
               LocalFileArtifact.getLocalFiles(
-                      buildResultHelper.getBuildArtifactsForTarget(label, file -> true))
+                      buildResultHelper.getBuildOutput(Optional.empty(), Interners.STRING)
+                          .getDirectArtifactsForTarget(label, file -> true))
                   .stream()
                   .filter(File::canExecute)
                   .collect(Collectors.toList());

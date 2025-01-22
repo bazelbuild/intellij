@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtif
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.common.Interners;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -33,6 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,34 +48,31 @@ public class BlazeApkDeployInfoProtoHelper {
       Label target, BuildResultHelper buildResultHelper, Predicate<String> pathFilter)
       throws GetDeployInfoException {
     ImmutableList<OutputArtifact> outputArtifacts;
+    ParsedBepOutput bepOutput;
     try {
-      outputArtifacts = buildResultHelper.getBuildArtifactsForTarget(target, pathFilter);
+      bepOutput = buildResultHelper.getBuildOutput(Optional.empty(), Interners.STRING);
+      outputArtifacts = bepOutput.getDirectArtifactsForTarget(target, pathFilter).asList();
     } catch (GetArtifactsException e) {
       throw new GetDeployInfoException(e.getMessage());
     }
 
     if (outputArtifacts.isEmpty()) {
       Logger log = Logger.getInstance(BlazeApkDeployInfoProtoHelper.class.getName());
-      try {
-        ParsedBepOutput bepOutput = buildResultHelper.getBuildOutput();
-        log.warn("Local execroot: " + bepOutput.getLocalExecRoot());
-        log.warn("All output artifacts:");
-        for (OutputArtifact outputArtifact : bepOutput.getAllOutputArtifacts(path -> true)) {
-          log.warn(outputArtifact.getBazelOutRelativePath() + " -> " + outputArtifact.getBazelOutRelativePath());
+      log.warn("Local execroot: " + bepOutput.getLocalExecRoot());
+      log.warn("All output artifacts:");
+      for (OutputArtifact outputArtifact : bepOutput.getAllOutputArtifacts(path -> true)) {
+        log.warn(outputArtifact.getBazelOutRelativePath() + " -> " + outputArtifact.getBazelOutRelativePath());
+      }
+      log.warn("All local artifacts for " + target + ":");
+      List<OutputArtifact> allBuildArtifacts =
+        bepOutput.getDirectArtifactsForTarget(target, path1 -> true).asList();
+      List<File> allLocalFiles = LocalFileArtifact.getLocalFiles(allBuildArtifacts);
+      for (File file : allLocalFiles) {
+        String path = file.getPath();
+        log.warn(path);
+        if (pathFilter.test(path)) {
+          log.warn("Note: " + path + " passes pathFilter but was not recognized!");
         }
-        log.warn("All local artifacts for " + target + ":");
-        List<OutputArtifact> allBuildArtifacts =
-            buildResultHelper.getBuildArtifactsForTarget(target, path -> true);
-        List<File> allLocalFiles = LocalFileArtifact.getLocalFiles(allBuildArtifacts);
-        for (File file : allLocalFiles) {
-          String path = file.getPath();
-          log.warn(path);
-          if (pathFilter.test(path)) {
-            log.warn("Note: " + path + " passes pathFilter but was not recognized!");
-          }
-        }
-      } catch (GetArtifactsException e) {
-        log.warn("Error occured when gathering logs:", e);
       }
       throw new GetDeployInfoException(
           "No deploy info proto artifact found.  Was android_deploy_info in the output groups?");
