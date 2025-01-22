@@ -111,6 +111,6 @@ class AspectStorageService(private val project: Project, private val scope: Coro
     }
 
     // if this is not the case, fallback to .ijwb_aspects or .clwb_aspects
-    return projectPath.resolve(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY + "_aspects")
+    return workspacePath.resolve(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY + "_aspects")
   }
 }
