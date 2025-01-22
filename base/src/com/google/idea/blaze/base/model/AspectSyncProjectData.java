@@ -52,7 +52,6 @@ public final class AspectSyncProjectData implements BlazeProjectData {
   private final WorkspacePathResolver workspacePathResolver;
   private final ArtifactLocationDecoder artifactLocationDecoder;
   private final WorkspaceLanguageSettings workspaceLanguageSettings;
-  private final ExternalWorkspaceData externalWorkspaceData;
   private final SyncState syncState;
 
   public AspectSyncProjectData(
@@ -62,7 +61,6 @@ public final class AspectSyncProjectData implements BlazeProjectData {
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
       WorkspaceLanguageSettings workspaceLanguageSettings,
-      ExternalWorkspaceData externalWorkspaceData,
       SyncState syncState) {
     this.targetData = targetData;
     this.blazeInfo = blazeInfo;
@@ -70,7 +68,6 @@ public final class AspectSyncProjectData implements BlazeProjectData {
     this.workspacePathResolver = workspacePathResolver;
     this.artifactLocationDecoder = artifactLocationDecoder;
     this.workspaceLanguageSettings = workspaceLanguageSettings;
-    this.externalWorkspaceData = externalWorkspaceData;
     this.syncState = syncState;
   }
 
@@ -88,7 +85,6 @@ public final class AspectSyncProjectData implements BlazeProjectData {
         workspacePathResolver,
         new ArtifactLocationDecoderImpl(blazeInfo, workspacePathResolver, targetData.remoteOutputs),
         WorkspaceLanguageSettings.fromProto(proto.getWorkspaceLanguageSettings()),
-        ExternalWorkspaceData.fromProto(proto.getExternalWorkspaceData()),
         SyncState.fromProto(proto.getSyncState()));
   }
 
@@ -116,7 +112,6 @@ public final class AspectSyncProjectData implements BlazeProjectData {
         .setWorkspacePathResolver(workspacePathResolver.toProto())
         .setWorkspaceLanguageSettings(workspaceLanguageSettings.toProto())
         .setSyncState(syncState.toProto())
-        .setExternalWorkspaceData(externalWorkspaceData.toProto())
         .build();
   }
 
@@ -227,7 +222,6 @@ public final class AspectSyncProjectData implements BlazeProjectData {
     AspectSyncProjectData other = (AspectSyncProjectData) o;
     return Objects.equals(targetData, other.targetData)
         && Objects.equals(blazeInfo, other.blazeInfo)
-        && Objects.equals(externalWorkspaceData, other.externalWorkspaceData)
         && Objects.equals(blazeVersionData, other.blazeVersionData)
         && Objects.equals(workspacePathResolver, other.workspacePathResolver)
         && Objects.equals(artifactLocationDecoder, other.artifactLocationDecoder)
@@ -244,7 +238,6 @@ public final class AspectSyncProjectData implements BlazeProjectData {
         workspaceLanguageSettings,
         artifactLocationDecoder,
         workspaceLanguageSettings,
-        externalWorkspaceData,
         syncState);
   }
 }

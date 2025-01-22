@@ -62,7 +62,7 @@ public class AspectTemplateWriter implements AspectWriter {
     }
 
     try {
-      writeLanguageInfos(manager, dst);
+      writeLanguageInfos(manager, dst, project);
       writeCodeGeneratorInfo(manager, project, dst);
     } catch (IOException e) {
       throw new SyncFailedException("Failed to evaluate a template", e);
@@ -94,8 +94,12 @@ public class AspectTemplateWriter implements AspectWriter {
     );
   }
 
-  private void writeLanguageInfos(BlazeProjectDataManager manager, Path dst) throws IOException {
-    final var templateLanguageStringMap = getLanguageStringMap(manager);
+  private void writeLanguageInfos(
+      BlazeProjectDataManager manager,
+      Path dst,
+      Project project
+  ) throws IOException {
+    final var templateLanguageStringMap = getLanguageStringMap(manager, project);
 
     TemplateWriter.evaluate(
         dst,

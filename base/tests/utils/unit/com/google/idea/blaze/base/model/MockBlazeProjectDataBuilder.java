@@ -46,7 +46,6 @@ public class MockBlazeProjectDataBuilder {
   private WorkspacePathResolver workspacePathResolver;
   private ArtifactLocationDecoder artifactLocationDecoder;
   private WorkspaceLanguageSettings workspaceLanguageSettings;
-  private ExternalWorkspaceData externalWorkspaceData;
   private SyncState syncState;
 
   private MockBlazeProjectDataBuilder(WorkspaceRoot workspaceRoot) {
@@ -107,13 +106,6 @@ public class MockBlazeProjectDataBuilder {
   }
 
   @CanIgnoreReturnValue
-  public MockBlazeProjectDataBuilder setExternalWorkspaceData(
-      ExternalWorkspaceData externalWorkspaceData) {
-    this.externalWorkspaceData = externalWorkspaceData;
-    return this;
-  }
-
-  @CanIgnoreReturnValue
   public MockBlazeProjectDataBuilder setSyncState(SyncState syncState) {
     this.syncState = syncState;
     return this;
@@ -143,7 +135,7 @@ public class MockBlazeProjectDataBuilder {
         this.artifactLocationDecoder != null
             ? this.artifactLocationDecoder
             : new ArtifactLocationDecoderImpl(
-                blazeInfo, workspacePathResolver, RemoteOutputArtifacts.EMPTY);
+            blazeInfo, workspacePathResolver, RemoteOutputArtifacts.EMPTY);
     WorkspaceLanguageSettings workspaceLanguageSettings =
         this.workspaceLanguageSettings != null
             ? this.workspaceLanguageSettings
@@ -151,10 +143,6 @@ public class MockBlazeProjectDataBuilder {
     SyncState syncState =
         this.syncState != null ? this.syncState : new SyncState(ImmutableMap.of());
 
-    ExternalWorkspaceData externalWorkspaceData =
-        this.externalWorkspaceData != null
-            ? this.externalWorkspaceData
-            : ExternalWorkspaceData.EMPTY;
 
     return new AspectSyncProjectData(
         new ProjectTargetData(
@@ -164,7 +152,6 @@ public class MockBlazeProjectDataBuilder {
         workspacePathResolver,
         artifactLocationDecoder,
         workspaceLanguageSettings,
-        externalWorkspaceData,
         syncState);
   }
 }

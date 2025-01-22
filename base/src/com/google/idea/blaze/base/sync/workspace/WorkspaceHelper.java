@@ -33,19 +33,21 @@ import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.annotation.Nullable;
 
-/** External-workspace-aware resolution of workspace paths. */
+/**
+ * External-workspace-aware resolution of workspace paths.
+ */
 public class WorkspaceHelper {
 
   private static BlazeProjectData blazeProjectData;
@@ -75,7 +77,9 @@ public class WorkspaceHelper {
     return resolveExternalWorkspaceRoot(project, workspaceName, null);
   }
 
-  /** Resolves the parent blaze package corresponding to this label. */
+  /**
+   * Resolves the parent blaze package corresponding to this label.
+   */
   @Nullable
   public static File resolveBlazePackage(Project project, Label label) {
     logger.debug("resolveBlazePackage: " + label + " in project " + project.getName());
@@ -95,7 +99,9 @@ public class WorkspaceHelper {
     return workspace != null ? workspace.root.workspacePathForSafe(absoluteFile) : null;
   }
 
-  /** Converts a file to the corresponding BUILD label for this project, if valid. */
+  /**
+   * Converts a file to the corresponding BUILD label for this project, if valid.
+   */
   @Nullable
   public static Label getBuildLabel(Project project, File absoluteFile) {
     logger.debug("getBuildLabel for file " + absoluteFile.getAbsolutePath());
@@ -191,7 +197,9 @@ public class WorkspaceHelper {
     return getExternalBase(project, projectData).toPath().normalize();
   }
 
-  /** resolve workspace root for a named external repository. needs context since the same name can mean something different in different workspaces. */
+  /**
+   * resolve workspace root for a named external repository. needs context since the same name can mean something different in different workspaces.
+   */
   @Nullable
   private static synchronized WorkspaceRoot resolveExternalWorkspaceRoot(
       Project project, String workspaceName, @Nullable BuildFile buildFile) {
@@ -220,9 +228,7 @@ public class WorkspaceHelper {
     BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData != null) {
 
-
-      File externalBase = null;
-      externalBase = getExternalBase(project, blazeProjectData);
+      File externalBase = getExternalBase(project, blazeProjectData);
       if (externalBase == null) return null;
 
       File workspaceDir = new File(externalBase, workspaceName);
@@ -243,12 +249,12 @@ public class WorkspaceHelper {
 
   private static @Nullable File getExternalBase(Project project, BlazeProjectData blazeProjectData) {
     File externalBase;
-    if(blazeProjectData.isQuerySync()) {
+    if (blazeProjectData.isQuerySync()) {
       QuerySyncProjectSnapshot snapshot =
-              QuerySyncManager.getInstance(project).getCurrentSnapshot().orElse(null);
-      if(snapshot == null) return null;
+          QuerySyncManager.getInstance(project).getCurrentSnapshot().orElse(null);
+      if (snapshot == null) return null;
       externalBase = snapshot.queryData().outputBase()
-              .map(pathname -> new File(pathname, "external")).orElse(null);
+          .map(pathname -> new File(pathname, "external")).orElse(null);
     } else {
       BlazeInfo blazeInfo = blazeProjectData.getBlazeInfo();
       externalBase = new File(blazeInfo.getOutputBase(), "external");

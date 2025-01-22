@@ -51,7 +51,6 @@ public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestC
         new MockBlazeProjectDataManager(
             MockBlazeProjectDataBuilder.builder(workspaceRoot)
                 .setOutputBase(fileSystem.getRootDir() + "/output_base")
-//                .setExternalWorkspaceData(mockExternalWorkspaceData())
                 .build());
     ExternalWorkspaceDataManager.getInstance(getProject()).setData(mockExternalWorkspaceData());
     registerProjectService(BlazeProjectDataManager.class, mockProjectDataManager);
