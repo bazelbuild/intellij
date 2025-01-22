@@ -58,7 +58,10 @@ public class AspectStrategyBazel extends AspectStrategy {
   @VisibleForTesting
   public AspectStrategyBazel(BlazeVersionData versionData) {
     super(/* aspectSupportsDirectDepsTrimming= */ true);
-    if (versionData.bazelIsAtLeastVersion(6, 0, 0)) {
+    boolean useInjectedRepository = versionData.bazelIsAtLeastVersion(8, 0, 0);
+    if (useInjectedRepository) {
+      aspectFlag = "--aspects=@intellij_aspect//:intellij_info_bundled.bzl%intellij_info_aspect";
+    } else if (versionData.bazelIsAtLeastVersion(6, 0, 0)) {
       aspectFlag = "--aspects=@@intellij_aspect//:intellij_info_bundled.bzl%intellij_info_aspect";
     } else {
       aspectFlag = "--aspects=@intellij_aspect//:intellij_info_bundled.bzl%intellij_info_aspect";

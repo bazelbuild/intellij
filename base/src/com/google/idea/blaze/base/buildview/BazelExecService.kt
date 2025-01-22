@@ -9,8 +9,10 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
 import com.google.idea.blaze.base.sync.aspects.BuildResult
+import com.google.idea.blaze.common.Interners
+import com.google.idea.blaze.common.PrintOutput
 import com.google.protobuf.CodedInputStream
-import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
@@ -26,6 +28,7 @@ import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import java.io.BufferedInputStream
 import java.io.FileInputStream
+import java.util.Optional
 import kotlin.io.path.pathString
 
 private val LOG: Logger = Logger.getInstance(BazelExecService::class.java)
@@ -64,10 +67,21 @@ class BazelExecService(private val project: Project) : Disposable {
     }
   }
 
-  private suspend fun execute(ctx: BlazeContext, cmd: BlazeCommand): Int {
-    val root = cmd.effectiveWorkspaceRoot.orElseGet { WorkspaceRoot.fromProject(project).path() }
+  private suspend fun execute(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): Int {
+    // the old sync view does not use a PTY based terminal
+    if (BuildViewMigration.present(ctx)) {
+      cmdBuilder.addBlazeFlags("--curses=yes")
+    } else {
+      cmdBuilder.addBlazeFlags("--curses=no")
+    }
 
-    val cmdLine = GeneralCommandLine()
+    val cmd = cmdBuilder.build()
+    val root = cmd.effectiveWorkspaceRoot.orElseGet { WorkspaceRoot.fromProject(project).path() }
+    val size = BuildViewScope.of(ctx)?.consoleSize ?: PtyConsoleView.DEFAULT_SIZE
+
+    val cmdLine = PtyCommandLine()
+      .withInitialColumns(size.columns)
+      .withInitialRows(size.rows)
       .withExePath(cmd.binaryPath)
       .withParameters(cmd.toArgumentList())
       .apply { setWorkDirectory(root.pathString) } // required for backwards compatability
@@ -81,7 +95,7 @@ class BazelExecService(private val project: Project) : Disposable {
 
       handler.addProcessListener(object : ProcessListener {
         override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-          ctx.println(event.text.trimEnd())
+          ctx.output(PrintOutput.process(event.text))
         }
       })
       handler.startNotify()
@@ -165,17 +179,19 @@ class BazelExecService(private val project: Project) : Disposable {
 
       val parseJob = parseEvents(ctx, provider)
 
-      val exitCode = execute(ctx, cmdBuilder.build())
+      val exitCode = execute(ctx, cmdBuilder)
       val result = BuildResult.fromExitCode(exitCode)
 
       parseJob.cancelAndJoin()
 
-      if (result.status != BuildResult.Status.SUCCESS) {
+      if (result.status == BuildResult.Status.FATAL_ERROR) {
         BlazeBuildOutputs.noOutputs(result)
       } else {
-        BlazeBuildOutputs.fromParsedBepOutput(result, provider.getBuildOutput())
+        BlazeBuildOutputs.fromParsedBepOutput(
+          result,
+          provider.getBuildOutput(Optional.empty(), Interners.STRING),
+        )
       }
     }
   }
 }
-

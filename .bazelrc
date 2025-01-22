@@ -1,5 +1,5 @@
-build --java_language_version=17 --java_runtime_version=17
-build --tool_java_language_version=17 --tool_java_runtime_version=17
+build --java_language_version=21 --java_runtime_version=21
+build --tool_java_language_version=21 --tool_java_runtime_version=21
 
 # Delete test data packages, needed for bazel integration tests. Update by running the following command:
 # bazel run @rules_bazel_integration_test//tools:update_deleted_packages
@@ -8,10 +8,14 @@ query --deleted_packages=aspect/testing/tests/src/com/google/idea/blaze/aspect/i
 
 common --enable_bzlmod
 common --enable_workspace # to load rules_scala from WORKSPACE.bzlmod
-common --android_sdk=@androidsdk//:sdk
 common --noincompatible_disallow_empty_glob
+
+# Disabled by default in bazel 8, https://github.com/bazelbuild/bazel/issues/24578
+test --zip_undeclared_test_outputs
+
+# Enabled by default in bazel 8
+common --incompatible_use_plus_in_repo_names
 
 # Required for CLion integration tests on windows
 startup --windows_enable_symlinks
 build --enable_runfiles
-# common --incompatible_use_plus_in_repo_names # reenable after this is fixed https://github.com/protocolbuffers/protobuf/issues/18546

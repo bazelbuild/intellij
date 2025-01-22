@@ -32,7 +32,6 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
-        "//cpp/sdkcompat",
         "//proto:proto_deps",
         "//querysync",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",

@@ -32,6 +32,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
         "//shared",
+        "//shared/java/com/google/idea/blaze/common",
         "//third_party/python",
     ],
 )

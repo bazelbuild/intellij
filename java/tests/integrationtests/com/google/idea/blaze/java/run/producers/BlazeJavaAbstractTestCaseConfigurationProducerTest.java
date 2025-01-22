@@ -196,8 +196,9 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
 
     assertThat(blazeConfig.getTargets())
         .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
+    String junit4Hash = (jUnitVersionUnderTest == JUnitVersion.JUNIT_4 ? "#" : "");
     assertThat(getTestFilterContents(blazeConfig))
-        .isEqualTo(BlazeFlags.TEST_FILTER + "=com.google.test.TestClass#");
+        .isEqualTo(BlazeFlags.TEST_FILTER + "=com.google.test.TestClass" + junit4Hash);
   }
 
   @Test

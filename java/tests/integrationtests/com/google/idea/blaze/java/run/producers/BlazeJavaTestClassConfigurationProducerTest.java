@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags.JUnitVersion;
 import com.google.idea.blaze.base.run.producers.TestContextRunConfigurationProducer;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -69,7 +70,9 @@ public class BlazeJavaTestClassConfigurationProducerTest
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
     assertThat(config.getTargets())
         .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
-    assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=com.google.test.TestClass#");
+    String junit4Hash = (jUnitVersionUnderTest == JUnitVersion.JUNIT_4 ? "#" : "");
+    assertThat(getTestFilterContents(config))
+        .isEqualTo("--test_filter=com.google.test.TestClass" + junit4Hash);
     assertThat(config.getName()).isEqualTo("Bazel test TestClass");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
@@ -94,7 +97,9 @@ public class BlazeJavaTestClassConfigurationProducerTest
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
     assertThat(config.getTargets())
         .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
-    assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=com.google.test.TestClass#");
+    String junit4Hash = (jUnitVersionUnderTest == JUnitVersion.JUNIT_4 ? "#" : "");
+    assertThat(getTestFilterContents(config))
+        .isEqualTo("--test_filter=com.google.test.TestClass" + junit4Hash);
     assertThat(config.getName()).isEqualTo("Bazel test TestClass");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }

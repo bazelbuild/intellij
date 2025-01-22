@@ -44,6 +44,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.common.Interners;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.ExecutionException;
@@ -59,6 +60,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import icons.BlazeIcons;
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
@@ -187,8 +189,9 @@ class GenerateDeployableJarTaskProvider
 
       List<File> outputs =
           LocalFileArtifact.getLocalFiles(
-              buildResultHelper.getBuildArtifactsForTarget(
-                  target.withTargetName(target.targetName() + "_deploy.jar"), file -> true));
+              buildResultHelper.getBuildOutput(Optional.empty(), Interners.STRING)
+                  .getDirectArtifactsForTarget(
+                      target.withTargetName(target.targetName() + "_deploy.jar"), file -> true));
       if (outputs.isEmpty()) {
         throw new ExecutionException(
             String.format("Failed to find deployable jar when building %s", target));

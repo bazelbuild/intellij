@@ -284,8 +284,14 @@ public class MultipleJavaClassesTestContextProviderTest
     // THEN expect config to be correct
     assertThat(config.getTargets())
         .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:allTests"));
+    String junit4Hash = (jUnitVersionUnderTest == JUnitVersion.JUNIT_4 ? "#" : "");
     assertThat(getTestFilterContents(config))
-        .isEqualTo("--test_filter=\"com.google.test.TestClass1#|com.google.test.TestClass2#\"");
+        .isEqualTo(
+            "--test_filter=\"com.google.test.TestClass1"
+                + junit4Hash
+                + "|com.google.test.TestClass2"
+                + junit4Hash
+                + "\"");
     assertThat(config.getName()).isEqualTo("Bazel test TestClass1 and 1 others");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
