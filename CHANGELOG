@@ -1,3 +1,11 @@
+v2025.01.21
+===========
+Fixes:
+* Fix qsync NPE #7222
+* Fix red code in MODULE.bazel #7217
+* Copy aspect files to workspace #7202
+* Fix mac agent native errors #7216
+
 v2025.01.07
 ===========
 * Allow to boost .ijwb over BSP and .idea folder. #7201
