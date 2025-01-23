@@ -63,8 +63,6 @@ public class BuiltInRuleAnnotator extends BuildAnnotator {
       }
       AttributeDefinition attribute = rule.getAttribute(name);
       if (attribute == null) {
-        markError(
-            arg, String.format("Unrecognized attribute '%s' for rule type '%s'", name, ruleName));
         continue;
       }
       missingAttributes.remove(name);
