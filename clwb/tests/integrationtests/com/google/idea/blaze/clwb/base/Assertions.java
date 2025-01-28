@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class Assertions {
@@ -73,5 +74,13 @@ public class Assertions {
     }
 
     return assertWithMessage("symbol is not defined: " + symbol).that((String) null);
+  }
+
+  public static void assertContainsPattern(String regex, List<String> list) {
+    final var pattern = Pattern.compile(regex);
+    final var message = String.format("%s not found in:\n%s", regex, StringUtil.join(list, "\n"));
+    final var match = list.stream().anyMatch(it -> pattern.matcher(it).matches());
+
+    assertWithMessage(message).that(match).isTrue();
   }
 }
