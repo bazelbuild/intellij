@@ -30,7 +30,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectRepositoryProvider;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService;
 import com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider.XcodeCompilerSettingsException.IssueKind;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -45,13 +45,16 @@ import java.util.Optional;
 
 
 public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsProvider {
+  
+  private static final String QUERY_STARLARK_FILE = "xcode_query.bzl";
+  
   // This only exists because it's impossible to escape a `deps()` query expression correctly in a Java string.
   private static final String[] QUERY_XCODE_VERSION_SCRIPT_LINES = new String[]{
       "#!/bin/bash",
       "__BAZEL_BIN__ cquery \\",
       " 'deps(\"@bazel_tools//tools/osx:current_xcode_config\")' \\",
       " --output=starlark \\",
-      " --starlark:file='" + AspectRepositoryProvider.findAspectDirectory().orElseThrow() + "/xcode_query.bzl'",
+      " --starlark:file='__QUERY_FILE__'",
   };
 
   @Override
@@ -62,8 +65,10 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
         Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
 
     Optional<XcodeAndSdkVersions> xcodeAndSdkVersions = XcodeCompilerSettingsProviderImpl.queryXcodeAndSdkVersions(
-        context, invoker,
-        workspaceRoot);
+        context, 
+        invoker,
+        workspaceRoot,
+        project);
 
     if (!xcodeAndSdkVersions.isPresent()) {
       return Optional.empty();
@@ -196,9 +201,19 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
    * The cquery is implemented as a script file because it's impossible to escape a `deps()`
    * expression properly in Java.
    */
-  private static Optional<XcodeAndSdkVersions> queryXcodeAndSdkVersions(BlazeContext context,
-      BuildInvoker invoker, WorkspaceRoot workspaceRoot)
+  private static Optional<XcodeAndSdkVersions> queryXcodeAndSdkVersions(
+      BlazeContext context,
+      BuildInvoker invoker, 
+      WorkspaceRoot workspaceRoot,
+      Project project)
       throws XcodeCompilerSettingsException {
+    // this will not work with query sync, since at the moment aspects are only written as part of the async
+    final var queryFile = AspectStorageService.of(project)
+        .resolve(QUERY_STARLARK_FILE)
+        .orElseThrow(() -> new IllegalStateException("could not resolve query file"))
+        .toFilePath()
+        .toString();
+    
     File blazeCqueryWrapper = null;
     try {
       blazeCqueryWrapper =
@@ -209,7 +224,10 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
       }
       try (PrintWriter pw = new PrintWriter(blazeCqueryWrapper, UTF_8.name())) {
         Arrays.stream(QUERY_XCODE_VERSION_SCRIPT_LINES).forEach(line -> {
-          pw.println(line.replace("__BAZEL_BIN__", invoker.getBinaryPath()));
+          line = line.replace("__BAZEL_BIN__", invoker.getBinaryPath());
+          line = line.replace("__QUERY_FILE__", queryFile);
+
+          pw.println(line);
         });
       }
     } catch (IOException e) {
