@@ -2,10 +2,8 @@
 # Description: Bazel aspect bundled with the Bazel IntelliJ plugin.
 #
 
-load(
-    ":flag_hack.bzl",
-    "define_flag_hack",
-)
+load(":flag_hack.bzl", "define_flag_hack")
+load(":build_defs.bzl", "aspect_library")
 
 licenses(["notice"])
 
@@ -26,24 +24,20 @@ filegroup(
 )
 
 # the aspect files that will be bundled with the final plugin zip
-filegroup(
-    name = "aspect_files",
-    srcs = [
-        ":aspect_files_only",
-        ":aspect_tools",
+aspect_library(
+    name = "aspect_lib",
+    deps = [
+       ":aspect_files" ,
+       ":aspect_tools"
     ],
     visibility = ["//visibility:public"],
 )
 
 # Separate different targets as they are put into different directories
-filegroup(
-    name = "aspect_files_only",
-    srcs = [
-        "WORKSPACE",
+aspect_library(
+    name = "aspect_files",
+    files = [
         "artifacts.bzl",
-        "build_compose_dependencies.bzl",
-        "build_dependencies.bzl",
-        "build_dependencies_deps.bzl",
         "fast_build_info_bundled.bzl",
         "flag_hack.bzl",
         "intellij_info.bzl",
@@ -53,16 +47,29 @@ filegroup(
         "make_variables.bzl",
         ":BUILD.bazel",
     ],
+    namespace = "aspect/default",
     visibility = ["//visibility:public"],
 )
 
-filegroup(
+aspect_library(
     name = "aspect_tools",
-    srcs = [
-        "//aspect/tools:CreateAar",
+    files = ["//aspect/tools:CreateAar"],
+    jars = [
         "//aspect/tools:JarFilter_deploy.jar",
         "//aspect/tools:PackageParser_deploy.jar",
     ],
+    namespace = "aspect/default/tools",
+    visibility = ["//visibility:public"],
+)
+
+aspect_library(
+    name = "aspect_qsync_lib",
+    files = [
+        "build_compose_dependencies.bzl",
+        "build_dependencies.bzl",
+        "build_dependencies_deps.bzl",
+    ],
+    namespace = "aspect/qsync",
     visibility = ["//visibility:public"],
 )
 
@@ -89,8 +96,8 @@ genrule(
     srcs = ["intellij_info.bzl"],
     outs = ["intellij_info_bundled.bzl"],
     cmd = "cat $(SRCS) >$@ && " +
-          "sed -i -e 's,//%s/tools:\" + tool_name,//:\" + tool_name + \"_bin\",g' $@ && " % _dev_aspect_path +
-          "sed -i -e 's,//%s:flag_hack,//:flag_hack,g' $@  && " % _dev_aspect_path +
+          "sed -i -e 's,//%s/tools:\" + tool_name,:\" + tool_name + \"_bin\",g' $@ && " % _dev_aspect_path +
+          "sed -i -e 's,//%s:flag_hack,:flag_hack,g' $@  && " % _dev_aspect_path +
           "sed -i -e 's,:intellij_info_impl.bzl,:intellij_info_impl_bundled.bzl,g' $@",
 )
 
@@ -103,6 +110,7 @@ genrule(
     cmd = "cat $(SRCS) >$@ && " +
           "sed -i -e '/BUNDLED-IGNORE-BEGIN/,/BUNDLED-IGNORE-END/d' $@ && " +
           "sed -i -e '/BUNDLED-INCLUDE-BEGIN/,/BUNDLED-INCLUDE-END/{s/^[#][#]//;}' $@ &&" +
+          "sed -i -e 's,load(\"//aspect_template:,load(\"ASPECT_TEMPLATE_PATH', $@ &&" +
           "sed -i -e 's,load(\".*/rules_java/,load(\"@rules_java//', $@",
 )
 
@@ -115,11 +123,44 @@ genrule(
           "sed -i -e 's,:intellij_info_impl.bzl,:intellij_info_impl_bundled.bzl,g' $@",
 )
 
-genrule(
-    name = "create_workspace_file",
-    outs = ["WORKSPACE"],
-    srcs = [],
-    cmd = r"""echo 'workspace(name = "intellij_aspect")' > $@"""
+define_flag_hack()
+
+aspect_library(
+    name = "aspect_template_lib",
+    files = [
+        "code_generator_info.bzl",
+        "code_generator_info.template.bzl",
+        "java_info.bzl",
+        "java_info.template.bzl",
+        "python_info.bzl",
+        "python_info.template.bzl",
+    ],
+    namespace = "aspect/template",
+    visibility = ["//visibility:public"],
 )
 
-define_flag_hack()
+STRIP_TEMPLATE_SCRIPT = """cat $(SRCS) >$@ &&
+sed -i -e '/TEMPLATE-IGNORE-BEGIN/,/TEMPLATE-IGNORE-END/d' $@ &&
+sed -i -e '/TEMPLATE-INCLUDE-BEGIN/,/TEMPLATE-INCLUDE-END/{s/^[#][#]//;}' $@
+"""
+
+genrule(
+    name = "generate_java_info_template",
+    srcs = ["java_info.bzl"],
+    outs = ["java_info.template.bzl"],
+    cmd = STRIP_TEMPLATE_SCRIPT,
+)
+
+genrule(
+    name = "generate_py_info_template",
+    srcs = ["python_info.bzl"],
+    outs = ["python_info.template.bzl"],
+    cmd = STRIP_TEMPLATE_SCRIPT,
+)
+
+genrule(
+    name = "generate_code_generator_info_template",
+    srcs = ["code_generator_info.bzl"],
+    outs = ["code_generator_info.template.bzl"],
+    cmd = STRIP_TEMPLATE_SCRIPT,
+)

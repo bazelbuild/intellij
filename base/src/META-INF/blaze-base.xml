@@ -573,7 +573,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.TestTargetHeuristic" interface="com.google.idea.blaze.base.run.TestTargetHeuristic"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.ProjectDataDirectoryValidator" interface="com.google.idea.blaze.base.wizard2.ProjectDataDirectoryValidator"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AspectStrategyProvider" interface="com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProvider"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.AspectRepositoryProvider" interface="com.google.idea.blaze.base.sync.aspects.strategy.AspectRepositoryProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.AspectRepositoryProvider" interface="com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FileStringParser" interface="com.google.idea.blaze.base.run.filter.FileResolver"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeGuard" interface="com.google.idea.blaze.base.execution.BazelGuard"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeTestEventsHandler" interface="com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler"/>
@@ -612,6 +612,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.ExperimentLoader" interface="com.google.idea.common.experiments.ExperimentLoader"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.EmptyLibraryFilterSettings" interface="com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyLibraryFilterSettings" />
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildEventParser" interface="com.google.idea.blaze.base.buildview.events.BuildEventParser" />
+    <extensionPoint qualifiedName="com.google.idea.blaze.AspectWriter" interface="com.google.idea.blaze.base.sync.aspects.storage.AspectWriter" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -629,11 +630,9 @@
     <SyncListener implementation="com.google.idea.blaze.base.command.info.BlazeInfoProvider$Invalidator"/>
     <SyncListener implementation="com.google.idea.blaze.base.model.ExternalWorkspaceDataProvider$Invalidator"/>
     <SyncListener implementation="com.google.idea.blaze.base.qsync.QuerySyncAsyncFileListener$QuerySyncListener"/>
-    <SyncListener implementation="com.google.idea.blaze.base.sync.aspects.strategy.SyncAspectTemplateProvider"/>
     <SyncPlugin implementation="com.google.idea.blaze.base.lang.buildfile.sync.BuildLangSyncPlugin"/>
     <SyncPlugin implementation="com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager$SyncPlugin"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.command.BuildFlagsProviderImpl"/>
-    <BuildFlagsProvider implementation="com.google.idea.blaze.base.sync.aspects.AspectBuildFlagsProvider"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.run.coverage.CoverageBuildFlagsProvider"/>
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.git.GitBlazeVcsHandlerProvider"/>
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.FallbackBlazeVcsHandlerProvider" order="last" id="fallback"/>
@@ -710,6 +709,8 @@
     <BlazeGuard implementation="com.google.idea.blaze.base.execution.TrustedProjectGuard"/>
     <BuildEventParser implementation="com.google.idea.blaze.base.buildview.events.AbortedParser"/>
     <BuildEventParser implementation="com.google.idea.blaze.base.buildview.events.ActionCompletedParser"/>
+    <AspectWriter implementation="com.google.idea.blaze.base.sync.aspects.storage.AspectTemplateWriter"/>
+    <AspectWriter implementation="com.google.idea.blaze.base.sync.aspects.storage.AspectWriterImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze.qsync">

@@ -21,7 +21,7 @@ use_repo(maven, "maven")
 
 bazel_dep(
     name = "rules_pkg",
-    version = "0.10.1",
+    version = "1.0.1",
 )
 bazel_dep(
     name = "rules_kotlin",
@@ -37,7 +37,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "platforms",
-    version = "0.0.10",
+    version = "0.0.11",
 )
 bazel_dep(
     name = "rules_proto",
@@ -45,7 +45,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "apple_support",
-    version = "1.15.1",
+    version = "1.17.1",
     repo_name = "build_bazel_apple_support",
 )
 

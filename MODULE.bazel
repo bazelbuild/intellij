@@ -7,7 +7,7 @@ register_toolchains("//third_party/kotlin:toolchain")
 
 bazel_dep(
     name = "platforms",
-    version = "0.0.10",
+    version = "0.0.11",
 )
 bazel_dep(
     name = "rules_java",
@@ -15,7 +15,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "rules_python",
-    version = "1.0.0",
+    version = "1.1.0",
 )
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
@@ -57,19 +57,17 @@ bazel_binaries = use_extension(
     "bazel_binaries",
     dev_dependency = True,
 )
-bazel_binaries.download(version = "5.4.1")
 bazel_binaries.download(version = "6.5.0")
 bazel_binaries.download(
     current = True,
-    version = "7.4.0",
+    version = "7.4.1",
 )
 use_repo(
     bazel_binaries,
     "bazel_binaries",
     "bazel_binaries_bazelisk",
-    "build_bazel_bazel_5_4_1",
     "build_bazel_bazel_6_5_0",
-    "build_bazel_bazel_7_4_0",
+    "build_bazel_bazel_7_4_1",
 )
 
 bazel_dep(name = "rules_jvm_external", version = "6.6")
@@ -133,8 +131,8 @@ use_repo(
     truth8 = "com_google_truth_extensions_truth_java8_extension",
 )
 
-bazel_dep(name = "rules_go", version = "0.51.0", repo_name = "io_bazel_rules_go")
-bazel_dep(name = "gazelle", version = "0.40.0", repo_name = "bazel_gazelle")
+bazel_dep(name = "rules_go", version = "0.52.0", repo_name = "io_bazel_rules_go")
+bazel_dep(name = "gazelle", version = "0.42.0", repo_name = "bazel_gazelle")
 
 go_repository = use_repo_rule("@bazel_gazelle//:deps.bzl", "go_repository")
 

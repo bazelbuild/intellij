@@ -20,3 +20,5 @@ test_sources:
 
 additional_languages:
   kotlin
+
+use_query_sync: false

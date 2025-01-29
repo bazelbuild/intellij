@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.sync.aspects.strategy;
+package com.google.idea.blaze.base.sync.aspects.storage;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -21,18 +21,15 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.sync.SyncListener;
-import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.codegenerator.CodeGeneratorRuleNameHelper;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.util.TemplateWriter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -42,7 +39,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 
-public class SyncAspectTemplateProvider implements SyncListener {
+public class AspectTemplateWriter implements AspectWriter {
 
   private final static String TEMPLATE_JAVA = "java_info.template.bzl";
   private final static String REALIZED_JAVA = "java_info.bzl";
@@ -52,92 +49,75 @@ public class SyncAspectTemplateProvider implements SyncListener {
   private final static String REALIZED_CODE_GENERATOR = "code_generator_info.bzl";
 
   @Override
-  public void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) throws SyncFailedException {
-    prepareProjectAspect(project);
+  public @NotNull String name() {
+    return "Aspect Templates";
   }
 
   @Override
-  public void onQuerySyncStart(Project project, BlazeContext context) {
-      try {
-          prepareProjectAspect(project);
-      } catch (SyncFailedException e) {
-          throw new RuntimeException(e);
-      }
-  }
-
-  private void prepareProjectAspect(Project project) throws SyncFailedException {
+  public void write(@NotNull Path dst, @NotNull Project project) throws SyncFailedException {
     var manager = BlazeProjectDataManager.getInstance(project);
 
     if (manager == null) {
-      return;
+      throw new SyncFailedException("Couldn't get BlazeProjectDataManager");
     }
 
-    var realizedAspectsPath = AspectRepositoryProvider
-            .getProjectAspectDirectory(project)
-            .map(File::toPath)
-            .orElseThrow(() -> new SyncFailedException("Couldn't find project aspect directory"));
-
-    try {
-      Files.createDirectories(realizedAspectsPath);
-      Files.writeString(realizedAspectsPath.resolve("WORKSPACE"), "");
-      Files.writeString(realizedAspectsPath.resolve("BUILD"), "");
-    } catch (IOException e) {
-      throw new SyncFailedException("Couldn't create realized aspects", e);
-    }
-
-    final var templateAspects = AspectRepositoryProvider.findAspectTemplateDirectory()
+    final var templates = AspectRepositoryProvider.aspectTemplateDirectory()
             .orElseThrow(() -> new SyncFailedException("Couldn't find aspect template directory"));
 
-    writeLanguageInfos(manager, realizedAspectsPath, templateAspects, project);
-    writeCodeGeneratorInfo(manager, project, realizedAspectsPath, templateAspects);
+    try {
+      writeLanguageInfos(manager, dst, templates);
+      writeCodeGeneratorInfo(manager, project, dst, templates);
+    } catch (IOException e) {
+      throw new SyncFailedException("Failed to evaluate a template", e);
+    }
   }
 
   private void writeCodeGeneratorInfo(
       BlazeProjectDataManager manager,
       Project project,
-      Path realizedAspectsPath,
-      File templateAspects) throws SyncFailedException {
-    ProjectViewSet viewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    Set<LanguageClass> languageClasses = Optional.ofNullable(manager.getBlazeProjectData())
+      Path dst,
+      VirtualFile templates) throws IOException {
+    final var viewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    final var languageClasses = Optional.ofNullable(manager.getBlazeProjectData())
         .map(BlazeProjectData::getWorkspaceLanguageSettings)
         .map(WorkspaceLanguageSettings::getActiveLanguages)
         .orElse(ImmutableSet.of());
 
-    List<LanguageClassRuleNames> languageClassRuleNames = languageClasses.stream()
+    final var languageClassRuleNames = languageClasses.stream()
         .sorted()
         .map(lc -> new LanguageClassRuleNames(lc, ruleNamesForLanguageClass(lc, viewSet)))
-        .collect(Collectors.toUnmodifiableList());
+        .toList();
 
-    var realizedFile = realizedAspectsPath.resolve(REALIZED_CODE_GENERATOR);
-    var templateWriter = new TemplateWriter(templateAspects.toPath());
-    var templateVariableMap = ImmutableMap.of("languageClassRuleNames", languageClassRuleNames);
-    if (!templateWriter.writeToFile(TEMPLATE_CODE_GENERATOR, realizedFile, templateVariableMap)) {
-      throw new SyncFailedException("Could not create template for: " + REALIZED_CODE_GENERATOR);
-    }
+    TemplateWriter.evaluate(
+        dst,
+        REALIZED_CODE_GENERATOR,
+        templates,
+        TEMPLATE_CODE_GENERATOR,
+        ImmutableMap.of("languageClassRuleNames", languageClassRuleNames)
+    );
   }
 
   private void writeLanguageInfos(
-          BlazeProjectDataManager manager,
-          Path realizedAspectsPath,
-          File templateAspects,
-          Project project) throws SyncFailedException {
-    var templateLanguageStringMap = getLanguageStringMap(manager);
-    writeLanguageInfo(manager, realizedAspectsPath, templateAspects, TEMPLATE_JAVA, REALIZED_JAVA, templateLanguageStringMap);
-    writeLanguageInfo(manager, realizedAspectsPath, templateAspects, TEMPLATE_PYTHON, REALIZED_PYTHON, templateLanguageStringMap);
-  }
+      BlazeProjectDataManager manager,
+      Path dst,
+      VirtualFile templates
+  ) throws IOException {
+    final var templateLanguageStringMap = getLanguageStringMap(manager);
 
-  private void writeLanguageInfo(
-          BlazeProjectDataManager manager,
-          Path realizedAspectsPath,
-          File templateAspects,
-          String templateFileName,
-          String realizedFileName,
-          Map<String, String> templateLanguageStringMap) throws SyncFailedException {
-    var realizedFile = realizedAspectsPath.resolve(realizedFileName);
-    var templateWriter = new TemplateWriter(templateAspects.toPath());
-    if (!templateWriter.writeToFile(templateFileName, realizedFile, templateLanguageStringMap)) {
-      throw new SyncFailedException("Could not create template for: " + realizedFileName);
-    }
+    TemplateWriter.evaluate(
+        dst,
+        REALIZED_JAVA,
+        templates,
+        TEMPLATE_JAVA,
+        templateLanguageStringMap
+    );
+    TemplateWriter.evaluate(
+        dst,
+        REALIZED_PYTHON,
+        templates,
+        TEMPLATE_PYTHON,
+        templateLanguageStringMap
+    );
   }
 
   private static @NotNull Map<String, String> getLanguageStringMap(BlazeProjectDataManager manager) {
@@ -177,7 +157,6 @@ public class SyncAspectTemplateProvider implements SyncListener {
   /**
    * This class models a language class to its code-generator rule names.
    */
-
   public final static class LanguageClassRuleNames {
     private final LanguageClass languageClass;
     private final List<String> ruleNames;
@@ -191,15 +170,9 @@ public class SyncAspectTemplateProvider implements SyncListener {
       return languageClass;
     }
 
-    public List<String> getRuleNames() {
-      return ruleNames;
-    }
-
     @Override
     public String toString() {
       return String.format("[%s] -> [%s]", languageClass, String.join(",", ruleNames));
     }
-
   }
-
 }

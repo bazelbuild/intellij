@@ -772,7 +772,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       }
 
       aspectStrategy.addAspectAndOutputGroups(
-          builder, outputGroups, activeLanguages, onlyDirectDeps);
+          project, builder, outputGroups, activeLanguages, onlyDirectDeps);
 
       return BazelExecService.instance(project).build(context, builder);
     } finally {
