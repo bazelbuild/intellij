@@ -5,6 +5,7 @@ import com.google.idea.blaze.base.buildview.events.BuildEventParser
 import com.google.idea.blaze.base.command.BlazeCommand
 import com.google.idea.blaze.base.command.BlazeCommandName
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep
+import com.google.idea.blaze.base.command.buildresult.BuildResultParser
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
@@ -191,7 +192,7 @@ class BazelExecService(private val project: Project) : Disposable {
       provider.getBepStream(Optional.empty()).use { bepStream ->
         BlazeBuildOutputs.fromParsedBepOutput(
           result,
-          provider.getBuildOutput(bepStream, Interners.STRING),
+          BuildResultParser.getBuildOutput(bepStream, Interners.STRING),
         )
       }
     }

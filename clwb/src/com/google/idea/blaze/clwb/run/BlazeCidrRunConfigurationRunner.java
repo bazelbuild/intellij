@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -169,7 +170,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
       try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
         candidateFiles =
             LocalFileArtifact.getLocalFiles(
-                    buildResultHelper.getBuildOutput(bepStream, Interners.STRING)
+                    BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
                         .getDirectArtifactsForTarget(target, file -> true))
                 .stream()
                 .filter(File::canExecute)
