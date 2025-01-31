@@ -1,3 +1,8 @@
+v2025.01.21.0.2
+===============
+Fixes
+* Fix aspect_template reference in java_classpath aspect #7265
+
 v2025.01.21
 ===========
 Fixes:
