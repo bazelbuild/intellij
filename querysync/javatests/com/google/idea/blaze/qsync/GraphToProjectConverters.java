@@ -43,7 +43,7 @@ abstract class GraphToProjectConverters {
 
   public abstract ImmutableSet<String> testSources();
 
-  public abstract ImmutableSet<String> systemExcludes();
+  public abstract ImmutableSet<Path> systemExcludes();
 
   static Builder builder() {
     return new AutoValue_GraphToProjectConverters.Builder()
@@ -70,7 +70,7 @@ abstract class GraphToProjectConverters {
 
     abstract Builder setTestSources(ImmutableSet<String> value);
 
-    abstract Builder setSystemExcludes(ImmutableSet<String> value);
+    abstract Builder setSystemExcludes(ImmutableSet<Path> value);
 
     abstract GraphToProjectConverters autoBuild();
 
@@ -80,12 +80,13 @@ abstract class GraphToProjectConverters {
           info.packageReader(),
           info.fileExistenceCheck(),
           NOOP_CONTEXT,
-          ProjectDefinition.create(
-              info.projectIncludes(),
-              info.projectExcludes(),
-              info.languageClasses(),
-              info.testSources(),
-              info.systemExcludes()),
+          ProjectDefinition.builder()
+              .setProjectIncludes(info.projectIncludes())
+              .setProjectExcludes(info.projectExcludes())
+              .setLanguageClasses(info.languageClasses())
+              .setTestSources(info.testSources())
+              .setSystemExcludes(info.systemExcludes())
+              .build(),
           newDirectExecutorService());
     }
   }
