@@ -175,7 +175,7 @@ class BazelExecService(private val project: Project) : Disposable {
     LOG.assertTrue(cmdBuilder.name == BlazeCommandName.BUILD)
 
     return executionScope(ctx) { provider ->
-      cmdBuilder.addBlazeFlags(provider.getBuildFlags())
+      cmdBuilder.addBlazeFlags(provider.buildFlags)
 
       val parseJob = parseEvents(ctx, provider)
 
@@ -185,11 +185,13 @@ class BazelExecService(private val project: Project) : Disposable {
       parseJob.cancelAndJoin()
 
       if (result.status == BuildResult.Status.FATAL_ERROR) {
-        BlazeBuildOutputs.noOutputs(result)
-      } else {
+        return@executionScope BlazeBuildOutputs.noOutputs(result)
+      }
+
+      provider.getBepStream(Optional.empty()).use { bepStream ->
         BlazeBuildOutputs.fromParsedBepOutput(
           result,
-          provider.getBuildOutput(Optional.empty(), Interners.STRING),
+          provider.getBuildOutput(bepStream, Interners.STRING),
         )
       }
     }
