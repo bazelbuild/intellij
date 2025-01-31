@@ -53,8 +53,8 @@ class AspectStorageService(private val project: Project, private val scope: Coro
    * Register a [AspectWriter] to provide aspect files.
    */
   @Throws(SyncFailedException::class)
-  fun prepare(parentCtx: BlazeContext) {
-    val parentScope = parentCtx.getScope(ToolWindowScope::class.java)
+  fun prepare(parentCtx: BlazeContext?) {
+    val parentScope = parentCtx?.getScope(ToolWindowScope::class.java)
 
     Scope.push(parentCtx) { ctx ->
 
