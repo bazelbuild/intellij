@@ -61,7 +61,7 @@ public class SimpleTest extends ClwbIntegrationTestCase {
 
     final var scriptLines = Files.readAllLines(compilerSettings.getCompilerExecutable().toPath());
 
-    assertContainsPattern("export DEVELOPER_DIR=/.*/Xcode.app/Contents/Developer", scriptLines);
-    assertContainsPattern("export SDKROOT=/.*/Xcode.app/Contents/Developer/.*", scriptLines);
+    assertContainsPattern("export DEVELOPER_DIR=/.*/Xcode.*.app/Contents/Developer", scriptLines);
+    assertContainsPattern("export SDKROOT=/.*/Xcode.*.app/Contents/Developer/.*", scriptLines);
   }
 }
