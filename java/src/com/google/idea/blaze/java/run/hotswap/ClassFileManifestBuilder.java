@@ -31,7 +31,9 @@ import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
+import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.Interners;
@@ -98,6 +100,12 @@ public class ClassFileManifestBuilder {
         JavaClasspathAspectStrategy.findStrategy(versionData);
     if (aspectStrategy == null) {
       return null;
+    }
+
+    try {
+      AspectStorageService.of(project).prepare(null);
+    } catch (SyncFailedException e) {
+      throw new ExecutionException("could not prepare aspects", e);
     }
 
     SaveUtil.saveAllFiles();
