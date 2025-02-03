@@ -202,8 +202,8 @@ public abstract class QuerySummary {
     public Query.StoredLabel indexLabel(Label l) {
       return Query.StoredLabel.newBuilder()
         .setWorkspace(index(l.getWorkspaceName()))
-        .setBuildPackage(index(l.getPackage().toString()))
-        .setName(index(l.getName().toString()))
+        .setBuildPackage(index(l.buildPackage()))
+        .setName(index(l.name()))
         .build();
     }
 

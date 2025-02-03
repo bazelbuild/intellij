@@ -21,8 +21,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * Represents an absolute build target label.
@@ -42,6 +40,7 @@ public record Label(String workspace, String buildPackage, String name) {
 
   public static Label of(String label) {
     Preconditions.checkArgument(!label.isBlank(), "Empty label");
+    Preconditions.checkArgument(!label.contains("\\"), "Label contains backslashes: " + label);
     final var workspacePosition = label.startsWith("@") ? (label.startsWith("@@") ? 2 : 1) : 0;
     final var workspaceEnd = label.indexOf("//", workspacePosition);
     final var buildPackagePosition =  workspaceEnd + 2;
@@ -57,15 +56,20 @@ public record Label(String workspace, String buildPackage, String name) {
   }
 
   public static Label fromWorkspacePackageAndName(String workspace, Path packagePath, Path name) {
-    final var systemIndependentPackagePath = StreamSupport.stream(packagePath.spliterator(), false)
-        .map(Path::toString)
-        .collect(Collectors.joining("/"));
-
+    String packageWithForwardSlashes = withForwardSlashes(packagePath);
+    String nameWithForwardSlashes = withForwardSlashes(name);
     if (workspace.isEmpty()) {
-      return Label.of(String.format("//%s:%s", systemIndependentPackagePath, name));
+      return Label.of(String.format("//%s:%s", packageWithForwardSlashes, nameWithForwardSlashes));
     } else {
-      return Label.of(String.format("@@%s//%s:%s", workspace, systemIndependentPackagePath, name));
+      return Label.of(String.format("@@%s//%s:%s", workspace, packageWithForwardSlashes, nameWithForwardSlashes));
     }
+  }
+
+  private static String withForwardSlashes(Path p) {
+    StringBuilder res = new StringBuilder();
+    p.iterator().forEachRemaining(part -> res.append(part).append("/"));
+    // Remove the trailing slash
+    return res.substring(0, res.length() - 1);
   }
 
   public static Label fromWorkspacePackageAndName(String workspace, Path packagePath, String name) {
