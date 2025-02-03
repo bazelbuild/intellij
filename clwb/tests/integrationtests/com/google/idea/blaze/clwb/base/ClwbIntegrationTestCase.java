@@ -204,6 +204,10 @@ directories:
   .
 
 derive_targets_from_directories: true
+
+build_flags:
+  # required for Bazel 6
+  --enable_bzlmod
     """;
   }
 
