@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
@@ -190,7 +191,7 @@ class GenerateDeployableJarTaskProvider
       List<File> outputs;
       try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
         outputs = LocalFileArtifact.getLocalFiles(
-            buildResultHelper.getBuildOutput(bepStream, Interners.STRING)
+            BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
                 .getDirectArtifactsForTarget(
                     target.withTargetName(target.targetName() + "_deploy.jar"), file -> true));
       }
