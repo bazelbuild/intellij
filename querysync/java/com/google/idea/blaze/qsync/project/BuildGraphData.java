@@ -94,7 +94,8 @@ public abstract class BuildGraphData {
       final var probe = path != null ? path : Path.of("");
       final var probeNameCount = path != null ? path.getNameCount() : 0;
       if (packages().contains(probe)) {
-        return Optional.of(Label.of("//" + probe.toString() + ":" + file.subpath(probeNameCount, file.getNameCount()).toString()));
+        var label = Label.fromWorkspacePackageAndName("", probe, file.subpath(probeNameCount, file.getNameCount()));
+        return Optional.of(label);
       }
     } while (path != null);
     return Optional.empty();
