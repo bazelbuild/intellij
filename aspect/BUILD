@@ -59,6 +59,7 @@ aspect_library(
     jars = [
         "//aspect/tools:JarFilter_deploy.jar",
         "//aspect/tools:PackageParser_deploy.jar",
+        "//aspect/tools:CreateAar_deploy.jar",
     ],
     namespace = "aspect/default/tools",
     visibility = ["//visibility:public"],
