@@ -15,6 +15,7 @@ filegroup(
         "intellij_info_impl.bzl",
         "java_classpath.bzl",
         "make_variables.bzl",
+        "xcode_query.bzl",
         ":BUILD.bazel",
         "//aspect/tools:CreateAar",
         "//aspect/tools:JarFilter_deploy.jar",
@@ -46,6 +47,7 @@ aspect_library(
         "java_classpath.bzl",
         "make_variables.bzl",
         ":BUILD.bazel",
+        "xcode_query.bzl", # maybe move this to a dedicated library, but let's keep this here for now
     ],
     namespace = "aspect/default",
     visibility = ["//visibility:public"],
