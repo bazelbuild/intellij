@@ -97,6 +97,21 @@ SRC_PY3ONLY = 5
 
 ##### Helpers
 
+def run_jar(ctx, jar, **kwargs):
+    """Runs a jar using the current java runtime used to run this bazel instance.
+
+    Finds the current java runtime and uses the java executable to run the provided jar. The jar
+    file should be a self contained _deploy jar.
+    """
+
+    host_java = ctx.attr._java_runtime[java_common.JavaRuntimeInfo]
+
+    return ctx.actions.run_shell(
+        tools = depset([jar], transitive = [host_java.files]),
+        command = "%s -jar %s $@" % (host_java.java_executable_exec_path, jar.path),
+        **kwargs,
+    )
+
 def get_code_generator_rule_names(ctx, language_name):
     """Supplies a list of Rule names for code generation for the language specified
 
@@ -828,10 +843,11 @@ def build_java_package_manifest(ctx, target, source_files, suffix):
     args.use_param_file("@%s", use_always = True)
     args.set_param_file_format("multiline")
 
-    ctx.actions.run(
+    run_jar(
+        ctx = ctx,
+        jar = ctx.file._package_parser,
         inputs = source_files,
         outputs = [output],
-        executable = ctx.executable._package_parser,
         arguments = [args],
         mnemonic = "JavaPackageManifest",
         progress_message = "Parsing java package strings for " + str(target.label),
@@ -874,10 +890,11 @@ def _build_filtered_gen_jar(ctx, target, java_outputs, gen_java_sources, srcjars
     if srcjars:
         for source_jar in srcjars:
             args += ["--keep_source_jar", source_jar.path]
-    ctx.actions.run(
+    run_jar(
+        ctx = ctx,
+        jar = ctx.file._jar_filter,
         inputs = jar_artifacts + source_jar_artifacts + gen_java_sources + srcjars,
         outputs = [filtered_jar, filtered_source_jar],
-        executable = ctx.executable._jar_filter,
         arguments = args,
         mnemonic = "JarFilter",
         progress_message = "Filtering generated code for " + str(target.label),
@@ -988,11 +1005,12 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
             args.add_joined("--resources", res_files, join_with = ",")
             args.add("--resource_root", root.relative_path if root.is_source else root.root_execution_path_fragment + "/" + root.relative_path)
 
-            ctx.actions.run(
+            run_jar(
+                ctx = ctx,
+                jar = ctx.file._create_aar,
                 outputs = [aar],
                 inputs = [android.manifest] + res_files,
                 arguments = [args],
-                executable = ctx.executable._create_aar,
                 mnemonic = "CreateAar",
                 progress_message = "Generating " + aar_file_name + ".aar for target " + str(target.label),
             )
@@ -1341,24 +1359,21 @@ def make_intellij_info_aspect(aspect_impl, semantics, **kwargs):
     attrs = {
         "_package_parser": attr.label(
             default = tool_label("PackageParser"),
-            cfg = "exec",
-            executable = True,
-            allow_files = True,
+            allow_single_file = True,
         ),
         "_jar_filter": attr.label(
             default = tool_label("JarFilter"),
-            cfg = "exec",
-            executable = True,
-            allow_files = True,
+            allow_single_file = True,
         ),
         "_flag_hack": attr.label(
             default = flag_hack_label,
         ),
         "_create_aar": attr.label(
             default = tool_label("CreateAar"),
-            cfg = "exec",
-            executable = True,
-            allow_files = True,
+            allow_single_file = True,
+        ),
+        "_java_runtime": attr.label(
+            default = "@bazel_tools//tools/jdk:current_java_runtime",
         ),
     }
 
