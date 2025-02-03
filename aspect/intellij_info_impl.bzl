@@ -1358,18 +1358,18 @@ def make_intellij_info_aspect(aspect_impl, semantics, **kwargs):
 
     attrs = {
         "_package_parser": attr.label(
-            default = tool_label("PackageParser"),
+            default = tool_label("PackageParser_deploy.jar"),
             allow_single_file = True,
         ),
         "_jar_filter": attr.label(
-            default = tool_label("JarFilter"),
+            default = tool_label("JarFilter_deploy.jar"),
             allow_single_file = True,
         ),
         "_flag_hack": attr.label(
             default = flag_hack_label,
         ),
         "_create_aar": attr.label(
-            default = tool_label("CreateAar"),
+            default = tool_label("CreateAar_deploy.jar"),
             allow_single_file = True,
         ),
         "_java_runtime": attr.label(
