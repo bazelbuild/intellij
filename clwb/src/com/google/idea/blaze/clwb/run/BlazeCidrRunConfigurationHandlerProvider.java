@@ -26,6 +26,11 @@ public class BlazeCidrRunConfigurationHandlerProvider
     implements BlazeCommandRunConfigurationHandlerProvider {
 
   @Override
+  public String getDisplayLabel() {
+    return "CC Compatible (Binary or Test)";
+  }
+
+  @Override
   public boolean canHandleKind(TargetState state, @Nullable Kind kind) {
     return RunConfigurationUtils.canUseClionHandler(kind);
   }
