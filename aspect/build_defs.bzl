@@ -4,10 +4,7 @@ load("@rules_pkg//pkg:pkg.bzl", "pkg_zip")
 load("@rules_pkg//pkg:providers.bzl", "PackageFilesInfo")
 
 AspectFilesInfo = provider(
-    fields = {
-        "files": "depset of files in the library",
-        "namespace": "namespace of the files",
-    },
+    fields = {"namespace": "namespace of the files"},
 )
 
 def _java_8_transition_impl(settings, attr):
@@ -28,7 +25,7 @@ def _aspect_files_impl(ctx):
 
     return [
         DefaultInfo(files = files),
-        AspectFilesInfo(files = files, namespace = ctx.attr.namespace),
+        AspectFilesInfo(namespace = ctx.attr.namespace),
     ]
 
 aspect_files = rule(
@@ -44,16 +41,14 @@ def _aspect_pkg_impl(ctx):
     dst_to_src = {}
 
     for files in ctx.attr.files:
+        namespace = ""
+
         if AspectFilesInfo in files:
-            info = files[AspectFilesInfo]
+            namespace = files[AspectFilesInfo].namespace
 
-            for file in info.files.to_list():
-                dst = paths.join(info.namespace, file.basename)
-                dst_to_src[dst] = file
-
-        else:
-            for file in files[DefaultInfo].files.to_list():
-                dst_to_src[file.basename] = file
+        for file in files[DefaultInfo].files.to_list():
+            dst = paths.join(namespace, file.basename)
+            dst_to_src[dst] = file
 
     # the manifest contains a list of all files found in the aspect library
     # every path in the manifest should start with /
@@ -71,7 +66,7 @@ def _aspect_pkg_impl(ctx):
 _aspect_pkg = rule(
     implementation = _aspect_pkg_impl,
     attrs = {
-        "files": attr.label_list(mandatory = True, allow_files = True, providers = [[AspectFilesInfo]]),
+        "files": attr.label_list(mandatory = True, allow_files = True, providers = [[DefaultInfo], [AspectFilesInfo]]),
     },
 )
 
