@@ -15,10 +15,17 @@
  */
 package com.google.idea.blaze.base.sync.aspects.storage
 
+import com.google.common.io.ByteSource
 import com.google.idea.blaze.base.sync.SyncScope
+import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider.ASPECT_QSYNC_DIRECTORY
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import java.io.IOException
+import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.Files.createDirectories
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 
 /**
  * Extension point for writing aspect files to the workspace.
@@ -27,6 +34,13 @@ interface AspectWriter {
 
   companion object {
     val EP_NAME = ExtensionPointName.Companion.create<AspectWriter>("com.google.idea.blaze.AspectWriter");
+
+    @JvmStatic
+    @Throws(IOException::class)
+    fun copyAspects(ctx: Class<*>, dst: Path, src: String) = copyAspectsImpl(ctx, dst, src)
+
+    @JvmStatic
+    fun readAspect(ctx: Class<*>, dir: String, file: String): ByteSource = readAspectImpl(ctx, dir, file)
   }
 
   /**
@@ -40,4 +54,40 @@ interface AspectWriter {
    */
   @Throws(SyncScope.SyncFailedException::class)
   fun write(dst: Path, project: Project)
+}
+
+private fun copyAspectsImpl(ctx: Class<*>, dst: Path, src: String) {
+  assert(!src.endsWith('/'))
+
+  val classLoader = ctx.getClassLoader() ?: throw IOException("no classloader for: $ctx")
+
+  val manifest = classLoader.getResourceAsStream("$src/manifest") ?: throw IOException("could not find manifest in $src")
+  val files = manifest.reader().useLines { it.toList() }
+
+  for (file in files) {
+    val dstFile = dst.resolve(file.removePrefix("/"))
+    dstFile.parent?.let(Files::createDirectories)
+
+    val srcStream = classLoader.getResourceAsStream("$src$file") ?: throw IOException("could not find file from manifest: $file")
+
+    srcStream.use { srcStream ->
+      Files.newOutputStream(
+        dstFile,
+        StandardOpenOption.CREATE,
+        StandardOpenOption.TRUNCATE_EXISTING,
+      ).use { dstStream -> srcStream.transferTo(dstStream) }
+    }
+  }
+}
+
+private fun readAspectImpl(ctx: Class<*>, dir: String, file: String): ByteSource {
+  val resource = "$dir/$file"
+
+  return object : ByteSource() {
+
+    override fun openStream(): InputStream {
+      val classLoader = ctx.getClassLoader() ?: throw IOException("no classloader for: $ctx")
+      return classLoader.getResourceAsStream(resource) ?: throw IOException("aspect file not found: $resource")
+    }
+  }
 }

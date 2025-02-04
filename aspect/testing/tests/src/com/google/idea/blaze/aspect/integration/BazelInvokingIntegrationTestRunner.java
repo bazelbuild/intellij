@@ -17,10 +17,12 @@ package com.google.idea.blaze.aspect.integration;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Resources;
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectWriter;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyBazel;
 import java.io.IOException;
@@ -47,8 +49,8 @@ public class BazelInvokingIntegrationTestRunner {
 
     final var aspectDst = projectRoot.resolve(ASPECT_DIRECTORY);
 
-    copyAspects(aspectDst, AspectRepositoryProvider.ASPECT_DIRECTORY);
-    copyAspects(aspectDst, AspectRepositoryProvider.ASPECT_TEMPLATE_DIRECTORY);
+    AspectWriter.copyAspects(BazelInvokingIntegrationTestRunner.class, aspectDst, AspectRepositoryProvider.ASPECT_DIRECTORY);
+    AspectWriter.copyAspects(BazelInvokingIntegrationTestRunner.class, aspectDst, AspectRepositoryProvider.ASPECT_TEMPLATE_DIRECTORY);
 
     ImmutableList.Builder<String> args = ImmutableList.builder();
     args.add(System.getenv("BIT_BAZEL_BINARY"));
@@ -135,34 +137,5 @@ public class BazelInvokingIntegrationTestRunner {
     }
 
     return root;
-  }
-
-  private static void copyAspects(Path dst, String src) throws Exception {
-    final var classLoader = BazelInvokingIntegrationTestRunner.class.getClassLoader();
-
-    final var srcURL = classLoader.getResource(src);
-    if (srcURL == null) {
-      throw new IOException("Cannot resolve source");
-    }
-
-    final var srcURI = srcURL.toURI();
-
-    // file system needs to be created manually in this case, VFS cannot be used here :(
-    try (final var fs = FileSystems.newFileSystem(srcURI, Map.of())) {
-      final var srcRoot = Path.of(srcURI);
-
-      try (final var stream = Files.walk(srcRoot)) {
-        for (final var iterator = stream.iterator(); iterator.hasNext(); ) {
-          final var srcFile = iterator.next();
-          final var dstFile = dst.resolve(srcRoot.relativize(srcFile).toString());
-
-          if (Files.isDirectory(srcFile)) {
-            Files.createDirectories(dstFile);
-          } else {
-            Files.write(dstFile, Files.readAllBytes(srcFile), StandardOpenOption.CREATE);
-          }
-        }
-      }
-    }
   }
 }

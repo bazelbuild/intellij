@@ -3,7 +3,7 @@
 #
 
 load(":flag_hack.bzl", "define_flag_hack")
-load(":build_defs.bzl", "aspect_library")
+load(":build_defs.bzl", "aspect_library", "aspect_files")
 
 licenses(["notice"])
 
@@ -27,15 +27,16 @@ filegroup(
 # the aspect files that will be bundled with the final plugin zip
 aspect_library(
     name = "aspect_lib",
-    deps = [
-       ":aspect_files" ,
-       ":aspect_tools"
+    files = [
+       ":aspect_files",
+       ":aspect_tools",
     ],
     visibility = ["//visibility:public"],
+    namespace = "aspect/default"
 )
 
 # Separate different targets as they are put into different directories
-aspect_library(
+aspect_files(
     name = "aspect_files",
     files = [
         "artifacts.bzl",
@@ -49,19 +50,16 @@ aspect_library(
         ":BUILD.bazel",
         "xcode_query.bzl", # maybe move this to a dedicated library, but let's keep this here for now
     ],
-    namespace = "aspect/default",
-    visibility = ["//visibility:public"],
 )
 
-aspect_library(
+aspect_files(
     name = "aspect_tools",
     jars = [
         "//aspect/tools:JarFilter_deploy.jar",
         "//aspect/tools:PackageParser_deploy.jar",
         "//aspect/tools:CreateAar_deploy.jar",
     ],
-    namespace = "aspect/default/tools",
-    visibility = ["//visibility:public"],
+    namespace = "tools",
 )
 
 aspect_library(
