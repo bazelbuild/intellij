@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.wizard2.BlazeProjectCommitException;
 import com.google.idea.blaze.base.wizard2.BlazeProjectImportBuilder;
 import com.google.idea.blaze.base.wizard2.CreateFromScratchProjectViewOption;
 import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
-import com.google.idea.testing.ServiceHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -42,7 +41,6 @@ import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import com.google.idea.blaze.base.sync.SyncPhaseCoordinator;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageUtils;
-import com.jetbrains.cidr.lang.psi.OCFile;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
@@ -51,7 +49,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import org.intellij.lang.annotations.Language;
 
 public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
   protected VirtualFile myProjectRoot;
@@ -165,7 +162,7 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
             .build()
     );
 
-    final var projectViewLines = projectViewText().split("\n");
+    final var projectViewLines = projectViewText().toString().split("\n");
     final var projectViewBuilder = ProjectView.builder();
     projectViewBuilder.add(TextBlockSection.of(TextBlock.of(1, projectViewLines)));
     final var projectView = projectViewBuilder.build();
@@ -199,17 +196,16 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
     builder.builder().commitToProject(myProject);
   }
 
-  protected @Language("projectview") String projectViewText() {
-    return """
-directories:
-  .
+  protected ProjectViewBuilder projectViewText() {
+    final var builder = new ProjectViewBuilder();
 
-derive_targets_from_directories: true
+    builder.addRootDirectory();
+    builder.setDeriveTargetsFromDirectories(true);
 
-build_flags:
-  # required for Bazel 6
-  --enable_bzlmod
-    """;
+    // required for Bazel 6 integration tests
+    builder.addBuildFlag("--enable_bzlmod");
+
+    return builder;
   }
 
   protected SyncOutput runSync(BlazeSyncParams params) {

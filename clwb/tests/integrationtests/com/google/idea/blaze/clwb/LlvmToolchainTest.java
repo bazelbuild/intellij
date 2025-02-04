@@ -5,6 +5,7 @@ import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 import static com.google.idea.blaze.clwb.base.Assertions.assertDefine;
 
 import com.google.idea.blaze.clwb.base.BazelVersionRule;
+import com.google.idea.blaze.clwb.base.ProjectViewBuilder;
 import com.google.idea.blaze.clwb.base.ClwbIntegrationTestCase;
 import com.google.idea.blaze.clwb.base.OSRule;
 import com.intellij.util.system.OS;
@@ -26,19 +27,9 @@ public class LlvmToolchainTest extends ClwbIntegrationTestCase {
   public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
 
   @Override
-  protected String projectViewText() {
-    return """
-directories:
-  .
-
-derive_targets_from_directories: true
-
-build_flags:
-  # required for Bazel 6
-  --enable_bzlmod
-  # required because this test targets wasm
-  --platforms=@toolchains_llvm//platforms:wasm32
-    """;
+  protected ProjectViewBuilder projectViewText() {
+    // required because this test targets wasm
+    return super.projectViewText().addBuildFlag("--platforms=@toolchains_llvm//platforms:wasm32");
   }
 
   @Test
