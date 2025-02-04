@@ -1,3 +1,10 @@
+v2025.02.04
+===========
+Fixes:
+* Followup: query xcode parameters from provider based on attributes #7266
+* make label parsing more resilient #7257
+* Fix aspect_template reference in java_classpath aspect #7265
+
 v2025.01.21
 ===========
 Fixes:
