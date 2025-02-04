@@ -23,9 +23,9 @@ java_library(
     srcs = glob(["*.java"]),
     deps = [
         ":querysummary_java_proto",
+        "//proto:proto_deps",
         "//shared",
         "//shared:proto",
-        "//third_party/bazel/src/main/protobuf:build_java_proto",
         "//third_party/java/auto_value",
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
