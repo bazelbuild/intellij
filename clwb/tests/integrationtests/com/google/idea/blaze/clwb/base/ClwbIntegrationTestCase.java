@@ -1,6 +1,7 @@
 package com.google.idea.blaze.clwb.base;
 
 import static com.google.common.truth.Truth.assertThat;
+import static junit.framework.Assert.fail;
 
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
@@ -231,9 +232,9 @@ build_flags:
     try {
       future.get();
     } catch (ExecutionException e) {
-      fail("sync failed " + e.getMessage());
+      LOG.error("sync failed", e);
     } catch (InterruptedException e) {
-      fail("sync was interrupted");
+      LOG.error("sync was interrupted", e);
     }
 
     return output;
@@ -257,9 +258,9 @@ build_flags:
     try {
       return future.get();
     } catch (ExecutionException e) {
-      fail("query sync failed " + e.getMessage());
+      LOG.error("query sync failed", e);
     } catch (InterruptedException e) {
-      fail("query sync was interrupted");
+      LOG.error("query sync was interrupted", e);
     }
 
     return false;

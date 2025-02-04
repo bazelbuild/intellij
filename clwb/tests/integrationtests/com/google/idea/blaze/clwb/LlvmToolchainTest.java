@@ -25,6 +25,22 @@ public class LlvmToolchainTest extends ClwbIntegrationTestCase {
   @Rule
   public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
 
+  @Override
+  protected String projectViewText() {
+    return """
+directories:
+  .
+
+derive_targets_from_directories: true
+
+build_flags:
+  # required for Bazel 6
+  --enable_bzlmod
+  # required because this test targets wasm
+  --platforms=@toolchains_llvm//platforms:wasm32
+    """;
+  }
+
   @Test
   public void testClwb() {
     final var errors = runSync(defaultSyncParams().build());
@@ -41,5 +57,6 @@ public class LlvmToolchainTest extends ClwbIntegrationTestCase {
     assertDefine("__VERSION__", compilerSettings).startsWith("\"Clang 19.1.0");
 
     assertContainsHeader("iostream", compilerSettings);
+    assertContainsHeader("wasi/wasip2.h", compilerSettings);
   }
 }
