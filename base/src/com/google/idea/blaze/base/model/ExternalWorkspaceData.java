@@ -53,4 +53,8 @@ public final class ExternalWorkspaceData implements ProtoWrapper<ProjectData.Ext
   public ExternalWorkspace getByRepoName(String name) {
     return workspaces.get(name);
   }
+
+  public boolean hasRepoName(String name) {
+    return workspaces.containsKey(name);
+  }
 }

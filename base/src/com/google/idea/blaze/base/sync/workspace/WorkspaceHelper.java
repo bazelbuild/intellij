@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.ExternalWorkspaceDataManager;
 import com.google.idea.blaze.base.model.primitives.ExternalWorkspace;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -43,6 +44,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -231,11 +233,10 @@ public class WorkspaceHelper {
       File externalBase = getExternalBase(project, blazeProjectData);
       if (externalBase == null) return null;
 
-      File workspaceDir = new File(externalBase, workspaceName);
-      ExternalWorkspace workspace = ExternalWorkspaceDataManager.getInstance(project).getData().getByRepoName(workspaceName);
-      if (workspace != null) {
-        workspaceDir = new File(externalBase, workspace.name());
-      }
+      File workspaceDir = ExternalWorkspaceDataManager.getInstance(project).getData()
+          .map(data -> data.getByRepoName(workspaceName))
+          .map(workspace -> new File(externalBase, workspace.name()))
+          .orElse( new File(externalBase, workspaceName));
 
       if (workspaceDir.exists() || isInTestMode()) {
         WorkspaceRoot root = new WorkspaceRoot(workspaceDir);

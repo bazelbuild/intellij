@@ -22,12 +22,10 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.ExternalWorkspaceDataManager;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
@@ -41,7 +39,9 @@ import com.intellij.util.ObjectUtils;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-/** The external workspace component of a label (between '@' and '//') */
+/**
+ * The external workspace component of a label (between '@' and '//')
+ */
 public class ExternalWorkspaceReferenceFragment extends PsiReferenceBase<StringLiteral> {
 
   public ExternalWorkspaceReferenceFragment(LabelReference labelReference) {
@@ -82,7 +82,8 @@ public class ExternalWorkspaceReferenceFragment extends PsiReferenceBase<StringL
       if (expression != null) {
         return expression;
       }
-    };
+    }
+    ;
 
     WorkspaceRoot workspaceRoot = WorkspaceHelper.getExternalWorkspace(myElement.getProject(), name);
     if (workspaceRoot != null) {
@@ -115,13 +116,13 @@ public class ExternalWorkspaceReferenceFragment extends PsiReferenceBase<StringL
   public BuildLookupElement[] getVariants() {
 
     var externalWorkspaceData = ExternalWorkspaceDataManager.getInstance(myElement.getProject()).getData();
-    if(externalWorkspaceData == null) {
-      return BuildLookupElement.EMPTY_ARRAY;
-    }
 
-    return externalWorkspaceData.workspaces.values().stream()
+    return externalWorkspaceData.map(data ->
+        data.workspaces.values()
+        .stream()
         .map(ExternalWorkspaceLookupElement::new)
-        .toArray(BuildLookupElement[]::new);
+        .toArray(BuildLookupElement[]::new)
+    ).orElse(BuildLookupElement.EMPTY_ARRAY);
   }
 
   @Override

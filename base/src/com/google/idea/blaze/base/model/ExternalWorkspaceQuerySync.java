@@ -23,15 +23,11 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
-import com.google.idea.blaze.base.execution.ExecutionDeniedException;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.sync.SyncScope;
-import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.project.Project;
@@ -40,7 +36,7 @@ import java.util.List;
 
 public class ExternalWorkspaceQuerySync {
 
-  public static void syncExternalWorkspace(Project project, BlazeContext context, ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
+  public static void syncExternalWorkspace(Project project, BlazeContext context, ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) throws BuildException {
     if (Blaze.getProjectType(project) != BlazeImportSettings.ProjectType.QUERY_SYNC) {
       return;
     }
@@ -56,8 +52,8 @@ public class ExternalWorkspaceQuerySync {
           invoker.getBlazeInfo()
       );
       ExternalWorkspaceDataManager.getInstance(project).setData(data);
-    } catch (SyncCanceledException | SyncFailedException e) {
-      throw new RuntimeException(e);
+    } catch (SyncFailedException e) {
+      throw new BuildException(e);
     }
 
   }
@@ -68,7 +64,7 @@ public class ExternalWorkspaceQuerySync {
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
       BlazeInfo blazeInfo)
-      throws SyncScope.SyncCanceledException, SyncScope.SyncFailedException {
+      throws BuildException {
 
     List<String> blazeModFlags =
         BlazeFlags.blazeFlags(
@@ -93,13 +89,9 @@ public class ExternalWorkspaceQuerySync {
     if (externalWorkspaceData == null) {
       Exception exception = externalWorkspaceDataResult.exception();
       if (exception != null) {
-        Throwable cause = exception.getCause();
-        if (cause instanceof BuildException
-            && cause.getCause() instanceof ExecutionDeniedException) {
-          throw new SyncCanceledException();
-        }
+        throw new BuildException(exception);
       }
-      throw new SyncFailedException();
+      throw new BuildException("Sync failed: no external workspace data returned");
     }
 
     return externalWorkspaceData;

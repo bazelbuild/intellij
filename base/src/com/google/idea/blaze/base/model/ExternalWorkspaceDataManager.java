@@ -17,19 +17,21 @@ package com.google.idea.blaze.base.model;
 
 import com.intellij.openapi.project.Project;
 
+import java.util.Optional;
+
 
 public class ExternalWorkspaceDataManager {
-    private ExternalWorkspaceData data;
+  private ExternalWorkspaceData data;
 
-    public static ExternalWorkspaceDataManager getInstance(Project project) {
-        return project.getService(ExternalWorkspaceDataManager.class);
-    }
+  public static ExternalWorkspaceDataManager getInstance(Project project) {
+    return project.getService(ExternalWorkspaceDataManager.class);
+  }
 
-    public ExternalWorkspaceData getData(){
-        return data;
-    }
+  public Optional<ExternalWorkspaceData> getData() {
+    return Optional.ofNullable(data);
+  }
 
-    public void setData(ExternalWorkspaceData data) {
-        this.data = data;
-    }
+  public void setData(ExternalWorkspaceData data) {
+    this.data = data;
+  }
 }

@@ -123,9 +123,9 @@ public class AspectTemplateWriter implements AspectWriter {
     var externalWorkspaceData = ExternalWorkspaceDataManager.getInstance(project).getData();
     var isAtLeastBazel8 = projectData.map(it -> it.getBlazeVersionData().bazelIsAtLeastVersion(8, 0, 0)).orElse(false);
     var isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA) &&
-            ((externalWorkspaceData != null && (!isAtLeastBazel8 || externalWorkspaceData.getByRepoName("rules_java") != null)));
+            (isAtLeastBazel8 || externalWorkspaceData.map(data -> data.hasRepoName("rules_java")).orElse(false));
     var isPythonEnabled = activeLanguages.contains(LanguageClass.PYTHON) &&
-            ((externalWorkspaceData != null && (!isAtLeastBazel8 || externalWorkspaceData.getByRepoName("rules_python") != null)));
+            (!isAtLeastBazel8 || externalWorkspaceData.map(data -> data.hasRepoName("rules_python")).orElse(false));
     return Map.of(
             "bazel8OrAbove", isAtLeastBazel8 ? "true" : "false",
             "isJavaEnabled", isJavaEnabled ? "true" : "false",
