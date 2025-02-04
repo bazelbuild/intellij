@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.sync.aspects.storage;
 
+import static com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider.ASPECT_TEMPLATE_DIRECTORY;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -27,15 +29,12 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.util.TemplateWriter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,12 +60,9 @@ public class AspectTemplateWriter implements AspectWriter {
       throw new SyncFailedException("Couldn't get BlazeProjectDataManager");
     }
 
-    final var templates = AspectRepositoryProvider.aspectTemplateDirectory()
-            .orElseThrow(() -> new SyncFailedException("Couldn't find aspect template directory"));
-
     try {
-      writeLanguageInfos(manager, dst, templates);
-      writeCodeGeneratorInfo(manager, project, dst, templates);
+      writeLanguageInfos(manager, dst);
+      writeCodeGeneratorInfo(manager, project, dst);
     } catch (IOException e) {
       throw new SyncFailedException("Failed to evaluate a template", e);
     }
@@ -75,8 +71,8 @@ public class AspectTemplateWriter implements AspectWriter {
   private void writeCodeGeneratorInfo(
       BlazeProjectDataManager manager,
       Project project,
-      Path dst,
-      VirtualFile templates) throws IOException {
+      Path dst
+  ) throws IOException {
     final var viewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
     final var languageClasses = Optional.ofNullable(manager.getBlazeProjectData())
         .map(BlazeProjectData::getWorkspaceLanguageSettings)
@@ -91,30 +87,26 @@ public class AspectTemplateWriter implements AspectWriter {
     TemplateWriter.evaluate(
         dst,
         REALIZED_CODE_GENERATOR,
-        templates,
+        ASPECT_TEMPLATE_DIRECTORY,
         TEMPLATE_CODE_GENERATOR,
         ImmutableMap.of("languageClassRuleNames", languageClassRuleNames)
     );
   }
 
-  private void writeLanguageInfos(
-      BlazeProjectDataManager manager,
-      Path dst,
-      VirtualFile templates
-  ) throws IOException {
+  private void writeLanguageInfos(BlazeProjectDataManager manager, Path dst) throws IOException {
     final var templateLanguageStringMap = getLanguageStringMap(manager);
 
     TemplateWriter.evaluate(
         dst,
         REALIZED_JAVA,
-        templates,
+        ASPECT_TEMPLATE_DIRECTORY,
         TEMPLATE_JAVA,
         templateLanguageStringMap
     );
     TemplateWriter.evaluate(
         dst,
         REALIZED_PYTHON,
-        templates,
+        ASPECT_TEMPLATE_DIRECTORY,
         TEMPLATE_PYTHON,
         templateLanguageStringMap
     );

@@ -73,6 +73,7 @@ import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
@@ -442,6 +443,11 @@ public final class SyncPhaseCoordinator {
             SyncStats.builder());
         return;
       }
+
+      if (params.syncMode().involvesBlazeBuild()) {
+        AspectStorageService.of(project).prepare(context);
+      }
+
       SyncProjectState projectState = ProjectStateSyncTask.collectProjectState(project, context, params);
       BlazeSyncBuildResult buildResult =
           BuildPhaseSyncTask.runBuildPhase(

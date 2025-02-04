@@ -23,6 +23,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import kotlin.jvm.Throws
 
 class AspectWriterImpl : AspectWriter {
 
@@ -31,31 +32,8 @@ class AspectWriterImpl : AspectWriter {
   }
 
   override fun write(dst: Path, project: Project) {
-    val src = AspectRepositoryProvider.aspectDirectory()
-      .orElseThrow { SyncFailedException("Could not find aspect directory") }
-
     try {
-      // no read lock, is this safe?
-      VfsUtilCore.iterateChildrenRecursively(src, null) { entry ->
-        val path = VfsUtil.getRelativePath(entry, src)?.let(Path::of)
-          ?: throw IOException("Could not determine relative path of ${entry.path}")
-
-        if (entry.isDirectory) {
-          Files.createDirectories(dst.resolve(path))
-        } else {
-          Files.newOutputStream(
-            dst.resolve(path),
-            StandardOpenOption.CREATE,
-            StandardOpenOption.TRUNCATE_EXISTING
-          ).use { output ->
-            entry.inputStream.use { input ->
-              input.transferTo(output)
-            }
-          }
-        }
-
-        true // continue to iterate
-      }
+      AspectWriter.copyAspects(AspectWriterImpl::class.java, dst, AspectRepositoryProvider.ASPECT_DIRECTORY);
     } catch (e: IOException) {
       throw SyncFailedException("Could not copy aspects", e)
     }
