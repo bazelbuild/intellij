@@ -96,6 +96,7 @@ class BazelExecService(private val project: Project) : Disposable {
       handler.addProcessListener(object : ProcessListener {
         override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
           ctx.output(PrintOutput.process(event.text))
+          LOG.debug("BUILD OUTPUT: " + event.text)
         }
       })
       handler.startNotify()
