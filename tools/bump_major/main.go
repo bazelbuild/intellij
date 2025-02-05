@@ -23,11 +23,11 @@ import (
 	"strings"
 )
 
-var old = "2024.1"
-var new = "2024.2"
-var old_api = "241"
-var new_api = "242"
-var new_label = "2024_2"
+var old = "2024.3"
+var new = "2025.1"
+var old_api = "243"
+var new_api = "251"
+var new_label = "2025_1"
 
 var overrideJson = `
 {
@@ -35,11 +35,11 @@ var overrideJson = `
 	  "exports":false,
 	  "srcs":false
     }
-    
 }
 `
 
 func main() {
+
 	runBuildozer(fmt.Sprintf("new config_setting intellij-%s after intellij-%s", new, old), "//intellij_platform_sdk:__pkg__")
 	runBuildozer("set values {}", fmt.Sprintf("//intellij_platform_sdk:intellij-%s", new))
 	runBuildozer(fmt.Sprintf("dict_add values define:ij_product=intellij-%s", new), "//intellij_platform_sdk:intellij-"+new)
@@ -72,6 +72,8 @@ func main() {
 	insertIntoSelect("srcs", "//third_party/python:python_helpers", fmt.Sprintf(`"intellij-ue-%s":["@python_%s//:python_helpers"],`, new, new_label))
 	insertIntoSelect("srcs", "//third_party/python:python_helpers", fmt.Sprintf(`"clion-%s":["@python_%s//:python_helpers"],`, new, new_label))
 
+	insertIntoSelect("srcs", "//clwb/sdkcompat", fmt.Sprintf("\"clion-%s\":[\"//clwb/sdkcompat/v%s\"],", new, new_api))
+
 	insertIntoSelect("exports", "//third_party/python:python_internal", fmt.Sprintf(`"intellij-%s":["@python_%s//:python"],`, new, new_label))
 	insertIntoSelect("exports", "//third_party/python:python_internal", fmt.Sprintf(`"intellij-ue-%s":["@python_%s//:python"],`, new, new_label))
 	insertIntoSelect("exports", "//third_party/python:python_internal", fmt.Sprintf(`"clion-%s":["@python_%s//:python"],`, new, new_label))
@@ -99,9 +101,12 @@ func main() {
 	getOutput([]string{"cp", "-R", "intellij_platform_sdk/BUILD.ue" + old_api, "intellij_platform_sdk/BUILD.ue" + new_api})
 	getOutput([]string{"cp", "-R", "intellij_platform_sdk/BUILD.clion" + old_api, "intellij_platform_sdk/BUILD.clion" + new_api})
 
+	getOutput([]string{"cp", "-R", "clwb/sdkcompat/v" + old_api + "/", "clwb/sdkcompat/v" + new_api})
+
 	getOutput([]string{"cp", "-R", "testing/testcompat/v" + old_api + "/", "testing/testcompat/v" + new_api})
 
 	runBuildozer("set name v"+new_api, "//sdkcompat/v"+new_api+":v"+old_api)
+	runBuildozer("set name v"+new_api, "//clwb/sdkcompat/v"+new_api+":v"+old_api)
 
 	// MISSING: DIRECT_IJ_PRODUCTS in build_defs.bzl
 	// MISSING: //intellij_platform_sdk:jsr305

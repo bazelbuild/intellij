@@ -97,6 +97,19 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-2025.1",
+    values = {"define": "ij_product=intellij-2025.1"},
+)
+
+config_setting(
+    name = "intellij-2025.1-mac",
+    values = {
+        "define": "ij_product=intellij-2025.1",
+        "cpu": "darwin_x86_64",
+    },
+)
+
+config_setting(
     name = "intellij-2024.3-mac",
     values = {
         "define": "ij_product=intellij-2024.3",
@@ -120,6 +133,19 @@ config_setting(
 config_setting(
     name = "intellij-ue-2024.3",
     values = {"define": "ij_product=intellij-ue-2024.3"},
+)
+
+config_setting(
+    name = "intellij-ue-2025.1",
+    values = {"define": "ij_product=intellij-ue-2025.1"},
+)
+
+config_setting(
+    name = "intellij-ue-2025.1-mac",
+    values = {
+        "define": "ij_product=intellij-ue-2025.1",
+        "cpu": "darwin_x86_64",
+    },
 )
 
 config_setting(
@@ -170,6 +196,19 @@ config_setting(
 )
 
 config_setting(
+    name = "clion-2025.1",
+    values = {"define": "ij_product=clion-2025.1"},
+)
+
+config_setting(
+    name = "clion-2025.1-mac",
+    values = {
+        "define": "ij_product=clion-2025.1",
+        "cpu": "darwin_x86_64",
+    },
+)
+
+config_setting(
     name = "clion-2024.3-mac",
     values = {
         "define": "ij_product=clion-2024.3",
@@ -181,8 +220,6 @@ config_setting(
 # complexity from users of this api.
 # There will be additional versions added in the future
 java_library(
-    name = "plugin_api_internal",
-    visibility = ["//visibility:private"],
     exports = select_from_plugin_api_directory(
         clion = [
             ":sdk",
@@ -195,19 +232,19 @@ java_library(
             ":platform_images",
         ],
     ),
+    name = "plugin_api_internal",
+    visibility = ["//visibility:private"],
 )
 
 # The outward facing plugin api
 java_library(
+    exports = [":plugin_api_internal"],
     name = "plugin_api",
     neverlink = 1,
-    exports = [":plugin_api_internal"],
 )
 
 # For tests, we need the IJ API at runtime, so we can't use the neverlink rule.
 java_library(
-    name = "plugin_api_for_tests",
-    testonly = 1,
     data = select_from_plugin_api_directory(
         clion = [],
         # From 2022.1 forward, the version of kotlinc will be obtained
@@ -216,361 +253,363 @@ java_library(
         intellij = [":kotlinc_version"],
     ),
     exports = [":plugin_api_internal"],
+    name = "plugin_api_for_tests",
+    testonly = 1,
 )
 
 # These libraries should only be used by open-source plugins.
 # Otherwise, prefer using the google3 versions of these libraries. Note that
 # //third_party/java/truth must be repackaged, because it pulls in Guava.
 java_library(
-    name = "test_libs",
-    testonly = 1,
-    visibility = [":test_libs_visibility"],
     exports = [
         "//third_party/java/truth",
         "@bytebuddy_agent//jar",
         "@bytebuddy//jar",
         "@mockito//jar",
-        "@objenesis//jar"
+        "@objenesis//jar",
     ],
+    name = "test_libs",
+    testonly = 1,
+    visibility = [":test_libs_visibility"],
 )
 
 # The version of guava bundled with the IntelliJ plugin API.
 java_library(
-    name = "guava",
     exports = select_from_plugin_api_directory(
         clion = [":guava"],
         intellij = [":guava"],
     ),
+    name = "guava",
 )
 
 java_library(
-    name = "jsr305",
     exports = ["@jsr305_annotations//jar"],
+    name = "jsr305",
 )
 
 # The version of truth bundled with the IntelliJ plugin API.
 java_library(
-    name = "truth",
-    testonly = 1,
     exports = [
         "@diffutils//jar",
-        "//third_party/java/truth"
+        "//third_party/java/truth",
     ],
+    name = "truth",
+    testonly = 1,
 )
 
 # IntelliJ Coverage plugin
 java_library(
+    exports = select_from_plugin_api_directory(
+        clion = [],
+        intellij = [":coverage"],
+    ),
     name = "coverage",
     neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":coverage"],
-    ),
 )
 
 # IntelliJ Coverage plugin
 java_library(
-    name = "coverage_for_tests",
-    testonly = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":coverage"],
     ),
+    name = "coverage_for_tests",
+    testonly = 1,
 )
 
 # Used to support IntelliJ plugin development in our plugin
 java_library(
-    name = "devkit",
-    neverlink = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":devkit"],
     ),
+    name = "devkit",
+    neverlink = 1,
 )
 
 # IntelliJ Mercurial plugin
 java_library(
-    name = "hg4idea",
-    neverlink = 1,
     exports = select_from_plugin_api_directory(
         clion = [":hg4idea"],
         intellij = [":hg4idea"],
     ),
+    name = "hg4idea",
+    neverlink = 1,
 )
 
 # IntelliJ IntelliLang plugin
 java_library(
-    name = "intellilang_for_tests",
-    testonly = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":intellilang"],
     ),
+    name = "intellilang_for_tests",
+    testonly = 1,
 )
 
 # IntelliJ Kotlin plugin
 java_library(
+    exports = select_from_plugin_api_directory(
+        clion = [],
+        intellij = [":kotlin"],
+    ),
     name = "kotlin",
     neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":kotlin"],
-    ),
 )
 
 # IntelliJ Kotlin plugin
 java_library(
-    name = "kotlin_for_tests",
-    testonly = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":kotlin"],
     ),
+    name = "kotlin_for_tests",
+    testonly = 1,
 )
 
 # IntelliJ JUnit plugin
 java_library(
-    name = "junit",
-    neverlink = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":junit"],
     ),
+    name = "junit",
+    neverlink = 1,
 )
 
 # terminal plugin
 java_library(
-    name = "terminal",
-    neverlink = 1,
     exports = select_from_plugin_api_directory(
         clion = [":terminal"],
         intellij = [":terminal"],
     ),
+    name = "terminal",
+    neverlink = 1,
 )
 
 java_library(
-    name = "terminal_for_tests",
-    testonly = 1,
     exports = select_from_plugin_api_directory(
         clion = [":terminal"],
         intellij = [":terminal"],
     ),
+    name = "terminal_for_tests",
+    testonly = 1,
 )
 
 # Bundled plugins required by integration tests
 java_library(
     name = "bundled_plugins",
-    testonly = 1,
     runtime_deps = select_from_plugin_api_directory(
         clion = [":bundled_plugins"],
         intellij = [":bundled_plugins"],
     ),
+    testonly = 1,
 )
 
 # IntelliJ Shared Indexes plugin
 java_library(
+    exports = select_from_plugin_api_directory(
+        clion = [],
+        intellij = [":shared_indexes"],
+        intellij_ue = [":shared_indexes"],
+    ),
     name = "shared_indexes",
     neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":shared_indexes"],
-        intellij_ue = [":shared_indexes"],
-    ),
 )
 
 # IntelliJ Shared Indexes plugin
 java_library(
-    name = "shared_indexes_for_tests",
-    testonly = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":shared_indexes"],
         intellij_ue = [":shared_indexes"],
     ),
+    name = "shared_indexes_for_tests",
+    testonly = 1,
 )
 
 # IntelliJ Git4Idea plugin
 java_library(
-    name = "git4idea",
-    neverlink = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":git4idea"],
     ),
+    name = "git4idea",
+    neverlink = 1,
 )
 
 java_library(
-    name = "git4idea_for_tests",
-    testonly = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":git4idea"],
     ),
+    name = "git4idea_for_tests",
+    testonly = 1,
 )
 
 # JetBrains com.jetbrains.codeWithMe plugin
 java_library(
-    name = "cwm",
-    neverlink = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":cwm"],
     ),
+    name = "cwm",
+    neverlink = 1,
 )
 
 java_library(
-    name = "cwm_for_tests",
-    testonly = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":cwm"],
     ),
+    name = "cwm_for_tests",
+    testonly = 1,
 )
 
 # IntelliJ maven plugin
 java_library(
-    name = "maven",
-    neverlink = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":maven"],
     ),
+    name = "maven",
+    neverlink = 1,
 )
 
 java_library(
-    name = "maven_for_tests",
-    testonly = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":maven_bundled_plugins"],
     ),
+    name = "maven_for_tests",
+    testonly = 1,
 )
 
 # IntelliJ maven model plugin
 java_library(
-    name = "maven_model",
-    neverlink = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":maven_model"],
     ),
+    name = "maven_model",
+    neverlink = 1,
 )
 
 java_library(
-    name = "maven_model_for_tests",
-    testonly = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":maven_model"],
     ),
+    name = "maven_model_for_tests",
+    testonly = 1,
 )
 
 # IntelliJ yaml plugin
 java_library(
-    name = "yaml",
-    neverlink = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":yaml"],
     ),
+    name = "yaml",
+    neverlink = 1,
 )
 
 java_library(
-    name = "yaml_for_tests",
-    testonly = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":yaml"],
     ),
+    name = "yaml_for_tests",
+    testonly = 1,
 )
 
 # IntelliJ gradle plugin
 java_library(
-    name = "gradle",
-    neverlink = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":gradle"],
     ),
+    name = "gradle",
+    neverlink = 1,
 )
 
 java_library(
-    name = "gradle_for_tests",
-    testonly = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":gradle"],
     ),
+    name = "gradle_for_tests",
+    testonly = 1,
 )
 
 # IntelliJ DatabaseTools plugin
 java_library(
-    name = "database_tools",
-    neverlink = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [],
         intellij_ue = [":database_tools"],
     ),
+    name = "database_tools",
+    neverlink = 1,
 )
 
 java_library(
-    name = "database_tools_for_tests",
-    testonly = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [],
         intellij_ue = [":database_tools"],
     ),
+    name = "database_tools_for_tests",
+    testonly = 1,
 )
 
 # IntelliJ JavaEE plugin
 java_library(
-    name = "javaee",
-    neverlink = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [],
         intellij_ue = [":javaee"],
     ),
+    name = "javaee",
+    neverlink = 1,
 )
 
 java_library(
-    name = "javaee_for_tests",
-    testonly = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [],
         intellij_ue = [":javaee"],
     ),
+    name = "javaee_for_tests",
+    testonly = 1,
 )
 
 # IntelliJ Markdown plugin
 java_library(
+    exports = select_from_plugin_api_directory(
+        clion = [],
+        intellij = [":markdown"],
+    ),
     name = "markdown",
     neverlink = 1,
+)
+
+java_library(
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":markdown"],
     ),
-)
-
-java_library(
     name = "markdown_for_tests",
     testonly = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":markdown"],
-    ),
 )
 
 java_library(
-    name = "json_for_tests",
-    testonly = 1,
     exports = select_from_plugin_api_directory(
         clion = [],
         intellij = [":json"],
     ),
+    name = "json_for_tests",
+    testonly = 1,
 )
 
 filegroup(

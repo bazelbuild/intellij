@@ -37,6 +37,7 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
@@ -57,6 +58,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
+import com.google.idea.blaze.common.Interners;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService.ChangedSources;
@@ -70,6 +72,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -319,31 +322,39 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
       throw new FastBuildTunnelException(new BlazeBuildError("Blaze failure building deploy jar"));
     }
     Predicate<String> jarPredicate = file -> file.endsWith(deployJarLabel.targetName().toString());
-    try {
+
+    File deployJar;
+    try (final var bepStream = resultHelper.getBepStream(Optional.empty())) {
       ImmutableList<File> deployJarArtifacts =
           LocalFileArtifact.getLocalFiles(
-              resultHelper.getBuildArtifactsForTarget(
-                  deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData), jarPredicate));
+              BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
+                  .getDirectArtifactsForTarget(
+                      deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData), jarPredicate));
       checkState(deployJarArtifacts.size() == 1);
-      File deployJar = deployJarArtifacts.get(0);
-
-      Predicate<String> filePredicate =
-          file -> aspectStrategy.getAspectOutputFilePredicate().test(file);
-      ImmutableList<File> ideInfoFiles =
-          LocalFileArtifact.getLocalFiles(
-              resultHelper.getArtifactsForOutputGroup(
-                  aspectStrategy.getAspectOutputGroup(), filePredicate));
-
-      // if targets are built with multiple configurations, just take the first one
-      // TODO(brendandouglas): choose a consistent configuration instead
-      ImmutableMap<Label, FastBuildBlazeData> blazeData =
-          ideInfoFiles.stream()
-              .map(aspectStrategy::readFastBuildBlazeData)
-              .collect(toImmutableMap(FastBuildBlazeData::label, i -> i, (i, j) -> i));
-      return BuildOutput.create(deployJar, blazeData, blazeInfo);
+      deployJar = deployJarArtifacts.get(0);
     } catch (GetArtifactsException e) {
       throw new RuntimeException("Blaze failure building deploy jar: " + e.getMessage());
     }
+
+    ImmutableList<File> ideInfoFiles;
+    try (final var bepStream = resultHelper.getBepStream(Optional.empty())) {
+      Predicate<String> filePredicate =
+          file -> aspectStrategy.getAspectOutputFilePredicate().test(file);
+      ideInfoFiles = LocalFileArtifact.getLocalFiles(
+          BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
+              .getOutputGroupArtifacts(
+                  aspectStrategy.getAspectOutputGroup(), filePredicate));
+    } catch (GetArtifactsException e) {
+      throw new RuntimeException("Blaze failure building ide info files: " + e.getMessage());
+    }
+
+    // if targets are built with multiple configurations, just take the first one
+    // TODO(brendandouglas): choose a consistent configuration instead
+    ImmutableMap<Label, FastBuildBlazeData> blazeData =
+        ideInfoFiles.stream()
+            .map(aspectStrategy::readFastBuildBlazeData)
+            .collect(toImmutableMap(FastBuildBlazeData::label, i -> i, (i, j) -> i));
+    return BuildOutput.create(deployJar, blazeData, blazeInfo);
   }
 
   private BlazeInfo getBlazeInfo(BlazeContext context, FastBuildParameters buildParameters) {

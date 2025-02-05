@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
@@ -54,6 +55,7 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.common.Interners;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -367,10 +369,11 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
         return parseScriptPathFile(workspaceRoot, blazeInfo.getExecutionRoot(), scriptPath.get());
       } else {
         List<File> candidateFiles;
-        try {
+        try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
           candidateFiles =
               LocalFileArtifact.getLocalFiles(
-                      buildResultHelper.getBuildArtifactsForTarget(label, file -> true))
+                      BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
+                          .getDirectArtifactsForTarget(label, file -> true))
                   .stream()
                   .filter(File::canExecute)
                   .collect(Collectors.toList());

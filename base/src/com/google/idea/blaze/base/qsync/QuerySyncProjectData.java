@@ -37,6 +37,7 @@ import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,7 +103,8 @@ public class QuerySyncProjectData implements BlazeProjectData {
   public ImmutableList<TargetInfo> targets() {
     if (blazeProject.isPresent()) {
       return blazeProject.get().getTargetMap().values().stream()
-          .map(TargetInfo::fromBuildTarget)
+          .map(TargetInfo::tryFromBuildTarget)
+          .filter(Objects::nonNull)
           .collect(ImmutableList.toImmutableList());
     }
     return ImmutableList.of();

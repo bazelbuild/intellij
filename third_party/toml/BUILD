@@ -8,6 +8,8 @@ java_library(
         "intellij-ue-2024.2": ["@toml_2024_2//:toml"],
         "intellij-2024.3": ["@toml_2024_3//:toml"],
         "intellij-ue-2024.3": ["@toml_2024_3//:toml"],
+        "intellij-2025.1": ["@toml_2025_1//:toml"],
+        "intellij-ue-2025.1": ["@toml_2025_1//:toml"],
         "default": [],
     }),
 )

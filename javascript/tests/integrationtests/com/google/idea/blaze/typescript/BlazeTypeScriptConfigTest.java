@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ListSection;
+import com.google.idea.sdkcompat.javascript.JSModulePathSubstitutionAdapter;
 import com.intellij.lang.javascript.frameworks.modules.JSModulePathSubstitution;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigServiceImpl;
@@ -257,7 +258,8 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
     assertThat(paths).hasSize(2);
     JSModulePathSubstitution projectPath = paths.get(0);
     assertThat(projectPath.getMappedName()).isEqualTo("workspace");
-    assertThat(projectPath.getMappings())
+    JSModulePathSubstitutionAdapter projectPathAdapter = (JSModulePathSubstitutionAdapter) projectPath;
+    assertThat(projectPathAdapter.getMappingsAsStrings())
         .containsExactly(
             "../../../../../workspace/*",
             "../../../../../workspace/bazel-bin/*",
@@ -268,8 +270,9 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
         .inOrder();
 
     JSModulePathSubstitution projectFooPath = paths.get(1);
+    JSModulePathSubstitutionAdapter pprojectFooPathAdapter = (JSModulePathSubstitutionAdapter) projectFooPath;
     assertThat(projectFooPath.getMappedName()).isEqualTo("workspace/project/foo");
-    assertThat(projectFooPath.getMappings())
+    assertThat(pprojectFooPathAdapter.getMappingsAsStrings())
         .containsExactly(
             "../../../../../workspace/project/foo/*",
             "../../../../../workspace/bazel-bin/project/foo/*",

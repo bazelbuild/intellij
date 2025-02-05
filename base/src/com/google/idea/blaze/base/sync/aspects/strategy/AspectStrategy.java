@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.common.artifact.BlazeArtifact;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.protobuf.TextFormat;
+import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -89,7 +90,7 @@ public abstract class AspectStrategy {
 
   public abstract String getName();
 
-  protected abstract Optional<String> getAspectFlag();
+  protected abstract Optional<String> getAspectFlag(Project project);
 
   protected abstract Boolean supportsAspectsParameters();
 
@@ -101,6 +102,7 @@ public abstract class AspectStrategy {
    *     direct deps of the top-level targets.
    */
   public final void addAspectAndOutputGroups(
+      Project project,
       BlazeCommand.Builder builder,
       Collection<OutputGroup> outputGroups,
       Set<LanguageClass> activeLanguages,
@@ -110,7 +112,7 @@ public abstract class AspectStrategy {
             .flatMap(g -> getOutputGroups(g, activeLanguages, directDepsOnly).stream())
             .collect(toImmutableList());
     builder
-        .addBlazeFlags(getAspectFlag().map(List::of).orElse(List.of()))
+        .addBlazeFlags(getAspectFlag(project).map(List::of).orElse(List.of()))
         .addBlazeFlags("--output_groups=" + Joiner.on(',').join(groups));
   }
 

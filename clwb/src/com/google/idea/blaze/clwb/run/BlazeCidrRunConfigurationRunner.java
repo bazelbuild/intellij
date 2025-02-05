@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -32,6 +33,7 @@ import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.common.Interners;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
@@ -46,6 +48,7 @@ import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 
+import java.util.Optional;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.List;
@@ -164,10 +167,11 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
         throw new ExecutionException(e);
       }
       List<File> candidateFiles;
-      try {
+      try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
         candidateFiles =
             LocalFileArtifact.getLocalFiles(
-                    buildResultHelper.getBuildArtifactsForTarget(target, file -> true))
+                    BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
+                        .getDirectArtifactsForTarget(target, file -> true))
                 .stream()
                 .filter(File::canExecute)
                 .collect(Collectors.toList());

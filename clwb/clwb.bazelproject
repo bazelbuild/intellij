@@ -12,7 +12,7 @@ targets:
 workspace_type: intellij_plugin
 
 build_flags:
-  --define=ij_product=clion-latest
+  --define=ij_product=clion-oss-under-dev
 
 test_sources:
   */tests/unittests*
@@ -20,3 +20,5 @@ test_sources:
 
 additional_languages:
   kotlin
+
+use_query_sync: false

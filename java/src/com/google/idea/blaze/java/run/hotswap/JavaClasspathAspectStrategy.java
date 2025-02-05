@@ -18,14 +18,10 @@ package com.google.idea.blaze.java.run.hotswap;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectRepositoryProvider;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-
 import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /** A strategy for attaching the java_classpath aspect during a build invocation. */
@@ -59,28 +55,13 @@ public interface JavaClasspathAspectStrategy {
 
     @Override
     public ImmutableList<String> getBuildFlags(BlazeVersionData versionData, Project project) {
-      String intellijAspect;
-      boolean useInjectedRepository = versionData.bazelIsAtLeastVersion(8, 0, 0);
-      if (useInjectedRepository) {
-        intellijAspect = "--aspects=@intellij_aspect//:java_classpath.bzl%java_classpath_aspect";
-      } else if (versionData.bazelIsAtLeastVersion(6, 0, 0)) {
-        intellijAspect = "--aspects=@@intellij_aspect//:java_classpath.bzl%java_classpath_aspect";
-      } else { // #bazel5 we are going to drop bazel 5 support in Feb 2025
-        intellijAspect = "--aspects=@intellij_aspect//:java_classpath.bzl%java_classpath_aspect";
-      }
-
-      return Stream.concat(
-        Stream.of(
-          intellijAspect,
-          "--output_groups=" + OUTPUT_GROUP
-        ),
-        getAspectRepositoryOverrideFlags(project).stream()
-      ).collect(ImmutableList.toImmutableList());
-    }
-
-    private static List<String> getAspectRepositoryOverrideFlags(Project project) {
-      return Arrays.stream(AspectRepositoryProvider.getOverrideFlags(project)).filter(Optional::isPresent)
-        .map(Optional::get).toList();
+      return AspectStorageService.of(project).resolve("java_classpath.bzl")
+          .map(label ->
+              ImmutableList.of(
+                  String.format("--aspects=%s%%java_classpath_aspect", label),
+                  "--output_groups=" + OUTPUT_GROUP
+              )
+          ).orElseGet(ImmutableList::of);
     }
   }
 }

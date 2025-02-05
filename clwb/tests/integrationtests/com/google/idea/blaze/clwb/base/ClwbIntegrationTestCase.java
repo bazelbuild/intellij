@@ -18,7 +18,6 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectRepositoryProvider;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.toolwindow.TasksToolWindowFactory;
@@ -126,13 +125,6 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
     final var windowManager = (ToolWindowHeadlessManagerImpl) ToolWindowManager.getInstance(myProject);
     windowManager.doRegisterToolWindow(TasksToolWindowFactory.ID);
 
-    // override aspect repository, because they are in a different place during testing
-    ServiceHelper.registerExtensionFirst(
-        AspectRepositoryProvider.EP_NAME,
-        new TestAspectRepositoryProvider(),
-        getTestRootDisposable()
-    );
-
     // create the temp directory, because CLion expected it to be present but bazel does not create it
     final var tmpDir = new File(FileUtil.getTempDirectory());
     tmpDir.mkdirs();
@@ -212,6 +204,10 @@ directories:
   .
 
 derive_targets_from_directories: true
+
+build_flags:
+  # required for Bazel 6
+  --enable_bzlmod
     """;
   }
 

@@ -28,6 +28,7 @@ java_library(
         "//java",
         "//proto:proto_deps",
         "//sdkcompat",
+        "//shared",
         "//third_party/scala",
     ],
 )

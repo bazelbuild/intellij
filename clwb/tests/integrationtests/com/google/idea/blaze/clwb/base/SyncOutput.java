@@ -50,6 +50,15 @@ public class SyncOutput {
     }
 
     builder.append(separator);
+    for (int i = 0; i < issues.size(); i++) {
+      final var issue = issues.get(i) ;
+      builder.append(String.format("%s: %s%n%s%n", issue.getKind(), issue.getTitle(), issue.getDescription()));
+    }
+    if (issues.isEmpty()) {
+      builder.append("No issues during sync\n");
+    }
+
+    builder.append(separator);
     return builder.toString();
   }
 

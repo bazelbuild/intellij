@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.sdkcompat.javascript.JSModulePathSubstitutionAdapter;
 import com.google.idea.sdkcompat.javascript.TypeScriptConfigAdapter;
 import com.intellij.lang.javascript.config.JSFileImports;
 import com.intellij.lang.javascript.config.JSFileImportsImpl;
@@ -163,7 +164,7 @@ class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
 
     return FileOperationProvider.getInstance().exists(tsconfigEditor)
         ? new BlazeTypeScriptConfig(
-            project, label, configFile, tsconfigEditor, workspacePrefix, workspaceRelativePath)
+        project, label, configFile, tsconfigEditor, workspacePrefix, workspaceRelativePath)
         : null;
   }
 
@@ -219,9 +220,9 @@ class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
             () ->
                 baseUrlFile.getValue() != null
                     ? rootDirs.stream()
-                        .map(baseUrlFile.getValue()::findFileByRelativePath)
-                        .filter(Objects::nonNull)
-                        .collect(ImmutableList.toImmutableList())
+                    .map(baseUrlFile.getValue()::findFileByRelativePath)
+                    .filter(Objects::nonNull)
+                    .collect(ImmutableList.toImmutableList())
                     : ImmutableList.of());
     this.rootDirsPsiElements =
         NotNullLazyValue.createValue(
@@ -731,7 +732,7 @@ class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
     return false;
   }
 
-  static class PathSubstitution implements JSModulePathSubstitution {
+  static class PathSubstitution extends JSModulePathSubstitutionAdapter {
     private final String pattern;
     private final ImmutableList<String> mappings;
 
@@ -755,7 +756,7 @@ class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
     }
 
     @Override
-    public Collection<String> getMappings() {
+    public Collection<String> getMappingsAsStrings() {
       return mappings;
     }
 

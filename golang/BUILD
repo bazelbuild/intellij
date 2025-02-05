@@ -31,6 +31,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//sdkcompat",
+        "//shared",
         "//third_party/go",
     ],
 )

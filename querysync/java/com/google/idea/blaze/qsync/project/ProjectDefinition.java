@@ -38,12 +38,13 @@ import java.util.stream.Stream;
 public abstract class ProjectDefinition {
 
   public static final ProjectDefinition EMPTY =
-      create(
-          /* includes= */ ImmutableSet.of(),
-          /* excludes= */ ImmutableSet.of(),
-          /* languageClasses= */ ImmutableSet.of(),
-          /* testSources= */ ImmutableSet.of(),
-          /* systemExcludes = */ ImmutableSet.of());
+      new AutoValue_ProjectDefinition.Builder()
+          .setProjectIncludes(ImmutableSet.of())
+          .setProjectExcludes(ImmutableSet.of())
+          .setLanguageClasses(ImmutableSet.of())
+          .setTestSources(ImmutableSet.of())
+          .setSystemExcludes(ImmutableSet.of())
+          .build();
 
   /**
    * Project includes, also know as root directories. Taken from the users {@code .blazeproject}
@@ -66,23 +67,41 @@ public abstract class ProjectDefinition {
    */
   public abstract ImmutableSet<String> testSources();
 
-  public abstract ImmutableSet<String> systemExcludes();
+  /**
+   * System Excludes. Only available for Bazel projects to avoid scanning the system directories
+   * like bazel-bin, bazel-out, ... for BUILD files before ignoring them in the query invocation.
+   */
+  public abstract ImmutableSet<Path> systemExcludes();
 
-  public static ProjectDefinition create(
-      ImmutableSet<Path> includes,
-      ImmutableSet<Path> excludes,
-      ImmutableSet<QuerySyncLanguage> languageClasses,
-      ImmutableSet<String> testSources,
-      ImmutableSet<String> systemExcludes
-  ) {
-    return new AutoValue_ProjectDefinition(includes, excludes, languageClasses, testSources, systemExcludes);
+  public static Builder builder() {
+    return EMPTY.toBuilder();
+  }
+
+  public abstract Builder toBuilder();
+
+  /** Builder for {@link ProjectDefinition}. */
+  @AutoValue.Builder
+  public abstract static class Builder {
+    public abstract Builder setProjectIncludes(ImmutableSet<Path> projectIncludes);
+
+    public abstract Builder setProjectExcludes(ImmutableSet<Path> projectExcludes);
+
+    public abstract Builder setLanguageClasses(ImmutableSet<QuerySyncLanguage> languageClasses);
+
+    public abstract Builder setTestSources(ImmutableSet<String> testSources);
+
+    public abstract Builder setSystemExcludes(ImmutableSet<Path> systemExcludes);
+
+    public abstract ProjectDefinition build();
   }
 
   /**
    * Constructs a query spec from a sync spec. Filters the import roots to those that can be safely
    * queried.
    */
-  public QuerySpec.Builder deriveQuerySpec(Context<?> context, QuerySpec.QueryStrategy queryStrategy, Path workspaceRoot) throws IOException {
+  public QuerySpec.Builder deriveQuerySpec(
+      Context<?> context, QuerySpec.QueryStrategy queryStrategy, Path workspaceRoot)
+      throws IOException {
     QuerySpec.Builder result = QuerySpec.builder(queryStrategy).workspaceRoot(workspaceRoot);
     for (Path include : projectIncludes()) {
       if (isValidPathForQuery(context, workspaceRoot.resolve(include))) {
@@ -90,11 +109,10 @@ public abstract class ProjectDefinition {
       }
     }
     for (Path exclude : projectExcludes()) {
-     if(systemExcludes().contains(exclude.toString())){
-       // We don't have to check if these dirs are valid for queries, because they also don't fall into //... wildcard
-       continue;
-     }
-
+      if (systemExcludes().contains(exclude)) {
+        // We don't have to check if these directories are valid for queries
+        continue;
+      }
       if (isValidPathForQuery(context, workspaceRoot.resolve(exclude))) {
         result.excludePath(exclude);
       }

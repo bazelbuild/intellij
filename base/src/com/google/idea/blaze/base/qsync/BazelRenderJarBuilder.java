@@ -15,14 +15,11 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.CharSource;
-import com.google.common.io.MoreFiles;
+import com.google.common.io.ByteSource;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -43,16 +40,16 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.blaze.exception.BuildException;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -108,10 +105,6 @@ public class BazelRenderJarBuilder implements RenderJarBuilder {
     }
   }
 
-  protected CharSource getAspect() throws IOException {
-    return MoreFiles.asCharSource(getBundledAspectPath(), UTF_8);
-  }
-
   private void runFullSyncAndNotifyListeners(BlazeBuildOutputs buildOutputs) {
     // TODO(b/336622303): Send an event instead of null to stats
     ListenableFuture<Boolean> syncFuture = QuerySyncManager.getInstance(project)
@@ -141,9 +134,8 @@ public class BazelRenderJarBuilder implements RenderJarBuilder {
         MoreExecutors.directExecutor());
   }
 
-  protected Path getBundledAspectPath() {
-    PluginDescriptor plugin = checkNotNull(PluginManager.getPluginByClass(getClass()));
-    return Paths.get(plugin.getPluginPath().toString(), "aspect", "build_compose_dependencies.bzl");
+  protected ByteSource getBundledAspect() {
+    return AspectRepositoryProvider.aspectQSyncFile("build_compose_dependencies.bzl");
   }
 
   protected Label getGeneratedAspectLabel() {
@@ -168,7 +160,13 @@ public class BazelRenderJarBuilder implements RenderJarBuilder {
     if (!Files.exists(generatedAspect.getParent())) {
       Files.createDirectories(generatedAspect.getParent());
     }
-    Files.writeString(generatedAspect, getAspect().read());
+    try (OutputStream generatedAspectStream = Files.newOutputStream(
+        generatedAspect,
+        StandardOpenOption.CREATE,
+        StandardOpenOption.TRUNCATE_EXISTING
+    )) {
+      getBundledAspect().copyTo(generatedAspectStream);
+    }
     // bazel asks BUILD file exists with the .bzl file. It's ok that BUILD file contains nothing.
     Path buildPath = generatedAspect.resolveSibling("BUILD");
     if (!Files.exists(buildPath)) {

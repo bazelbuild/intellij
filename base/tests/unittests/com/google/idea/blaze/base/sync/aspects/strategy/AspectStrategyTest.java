@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
+import com.intellij.openapi.project.Project;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -56,7 +57,7 @@ public class AspectStrategyTest extends BlazeTestCase {
 
     BlazeCommand.Builder builder = emptyBuilder();
     strategy.addAspectAndOutputGroups(
-        builder, ImmutableList.of(OutputGroup.INFO), activeLanguages, /* directDepsOnly= */ false);
+        project, builder, ImmutableList.of(OutputGroup.INFO), activeLanguages, /* directDepsOnly= */ false);
     assertThat(getOutputGroups(builder)).containsExactly("intellij-info-generic");
   }
 
@@ -66,6 +67,7 @@ public class AspectStrategyTest extends BlazeTestCase {
 
     BlazeCommand.Builder builder = emptyBuilder();
     strategy.addAspectAndOutputGroups(
+        project,
         builder,
         ImmutableList.of(OutputGroup.RESOLVE),
         activeLanguages,
@@ -74,6 +76,7 @@ public class AspectStrategyTest extends BlazeTestCase {
 
     builder = emptyBuilder();
     strategy.addAspectAndOutputGroups(
+        project,
         builder,
         ImmutableList.of(OutputGroup.COMPILE),
         activeLanguages,
@@ -90,7 +93,7 @@ public class AspectStrategyTest extends BlazeTestCase {
 
     BlazeCommand.Builder builder = emptyBuilder();
     strategy.addAspectAndOutputGroups(
-        builder, ImmutableList.of(OutputGroup.INFO), activeLanguages, /* directDepsOnly= */ false);
+        project, builder, ImmutableList.of(OutputGroup.INFO), activeLanguages, /* directDepsOnly= */ false);
     assertThat(getOutputGroups(builder))
         .containsExactly(
             "intellij-info-generic",
@@ -106,6 +109,7 @@ public class AspectStrategyTest extends BlazeTestCase {
 
     builder = emptyBuilder();
     strategy.addAspectAndOutputGroups(
+        project,
         builder,
         ImmutableList.of(OutputGroup.RESOLVE),
         activeLanguages,
@@ -124,6 +128,7 @@ public class AspectStrategyTest extends BlazeTestCase {
 
     builder = emptyBuilder();
     strategy.addAspectAndOutputGroups(
+        project,
         builder,
         ImmutableList.of(OutputGroup.COMPILE),
         activeLanguages,
@@ -146,6 +151,7 @@ public class AspectStrategyTest extends BlazeTestCase {
     BlazeCommand.Builder builder = emptyBuilder();
 
     strategy.addAspectAndOutputGroups(
+        project,
         builder,
         ImmutableList.of(OutputGroup.INFO, OutputGroup.RESOLVE),
         ImmutableSet.of(LanguageClass.JAVA),
@@ -163,6 +169,7 @@ public class AspectStrategyTest extends BlazeTestCase {
     BlazeCommand.Builder builder = emptyBuilder();
 
     strategy.addAspectAndOutputGroups(
+        project,
         builder,
         ImmutableList.of(OutputGroup.INFO, OutputGroup.RESOLVE),
         ImmutableSet.of(LanguageClass.C),
@@ -178,6 +185,7 @@ public class AspectStrategyTest extends BlazeTestCase {
     BlazeCommand.Builder builder = emptyBuilder();
 
     strategy.addAspectAndOutputGroups(
+        project,
         builder,
         ImmutableList.of(OutputGroup.INFO, OutputGroup.RESOLVE),
         ImmutableSet.of(LanguageClass.JAVA),
@@ -214,7 +222,7 @@ public class AspectStrategyTest extends BlazeTestCase {
     }
 
     @Override
-    protected Optional<String> getAspectFlag() {
+    protected Optional<String> getAspectFlag(Project project) {
       return Optional.empty();
     }
 

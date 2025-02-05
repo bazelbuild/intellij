@@ -12,17 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(
     "//intellij_platform_sdk:build_defs.bzl",
     "select_for_plugin_api",
 )
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
     name = "sdkcompat",
     srcs = select_for_plugin_api({
         "clion-2024.2": ["//clwb/sdkcompat/v242"],
         "clion-2024.3": ["//clwb/sdkcompat/v243"],
+        "clion-2025.1": ["//clwb/sdkcompat/v251"],
     }),
     visibility = ["//clwb:__pkg__"],
     deps = [

@@ -76,20 +76,21 @@ java_library(
     visibility = ["//clwb:__subpackages__"],
     deps = [
         "//base",
+        "//clwb/sdkcompat",
         "//common/actions",
         "//common/experiments",
         "//cpp",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
-        "//clwb/sdkcompat",
+        "//shared",
     ],
 )
 
 intellij_plugin(
     name = "clwb_bazel",
-    plugin_xml = ":stamped_plugin_xml",
     plugin_icons = ["//common:pluginIcon.svg"],
+    plugin_xml = ":stamped_plugin_xml",
     tags = [
         "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
     ],
@@ -112,24 +113,6 @@ repackaged_files(
 )
 
 repackaged_files(
-    name = "aspect_directory",
-    srcs = ["//aspect:aspect_files"],
-    prefix = "clwb/aspect",
-    strip_prefix = "/aspect",
-    visibility = CLWB_PACKAGES_VISIBILITY,
-    java_copts = ["-source", "8", "-target", "8"],
-)
-
-repackaged_files(
-    name = "aspect_template_directory",
-    srcs = ["//aspect_template:aspect_files"],
-    prefix = "clwb/aspect_template",
-    strip_prefix = "/aspect_template",
-    visibility = CLWB_PACKAGES_VISIBILITY,
-    java_copts = ["-source", "8", "-target", "8"],
-)
-
-repackaged_files(
     name = "clwb_bazel_gdbserver_wrapper",
     srcs = ["//clwb:gdbserver_wrapper"],
     prefix = "clwb/gdb",
@@ -139,8 +122,6 @@ repackaged_files(
 intellij_plugin_debug_target(
     name = "clwb_bazel_dev",
     deps = [
-        ":aspect_directory",
-        ":aspect_template_directory",
         ":clwb_bazel_gdbserver_wrapper",
         ":plugin_jar",
     ],
@@ -149,8 +130,6 @@ intellij_plugin_debug_target(
 plugin_deploy_zip(
     name = "clwb_bazel_zip",
     srcs = [
-        ":aspect_directory",
-        ":aspect_template_directory",
         ":clwb_bazel_gdbserver_wrapper",
         ":plugin_jar",
     ],
@@ -179,41 +158,41 @@ filegroup(
 
 clwb_integration_test(
     name = "simple_integration_test",
-    project = "simple",
     srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/SimpleTest.java"],
+    project = "simple",
 )
 
 clwb_integration_test(
     name = "virtual_includes_integration_test",
-    project = "virtual_includes",
     srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/VirtualIncludesTest.java"],
+    project = "virtual_includes",
 )
 
 clwb_integration_test(
     name = "llvm_toolchain_integration_test",
-    project = "llvm_toolchain",
     srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/LlvmToolchainTest.java"],
+    project = "llvm_toolchain",
 )
 
 clwb_integration_test(
     name = "external_includes_integration_test",
-    project = "external_includes",
     srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/ExternalIncludesTest.java"],
+    project = "external_includes",
 )
 
 clwb_integration_test(
     name = "query_sync_integration_test",
-    project = "simple",
     srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/QuerySyncTest.java"],
+    project = "simple",
 )
 
 test_suite(
     name = "integration_tests",
     tests = [
+        ":external_includes_integration_test",
         ":llvm_toolchain_integration_test",
+        ":query_sync_integration_test",
         ":simple_integration_test",
         ":virtual_includes_integration_test",
-        ":external_includes_integration_test",
-        ":query_sync_integration_test",
     ],
 )

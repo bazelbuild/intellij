@@ -8,6 +8,8 @@ java_library(
         "intellij-ue-2024.2": ["@devkit_2024_2//:devkit"],
         "intellij-2024.3": ["@devkit_2024_3//:devkit"],
         "intellij-ue-2024.3": ["@devkit_2024_3//:devkit"],
+        "intellij-2025.1": ["@devkit_2025_1//:devkit"],
+        "intellij-ue-2025.1": ["@devkit_2025_1//:devkit"],
         "default": [],
     }),
 )

@@ -41,19 +41,9 @@ optional_plugin_xml(
     plugin_xml = "src/META-INF/javascript-contents.xml",
 )
 
-optional_plugin_xml(
-    name = "optional_xml_243",
-    module = ["JavaScript"],
-    plugin_xml = "src/META-INF/javascript-contents-243.xml",
-)
-
 intellij_plugin_library(
     name = "plugin_library",
-    optional_plugin_xmls = [":optional_xml"] + select_for_plugin_api({
-        "intellij-2024.3": [],
-        "intellij-ue-2024.3": [],
-        "default": [":optional_xml_243"],
-    }),
+    optional_plugin_xmls = [":optional_xml"],
     plugin_xmls = ["src/META-INF/blaze-javascript.xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":javascript"],
@@ -93,8 +83,8 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "@com_google_guava_guava//jar",
         "//third_party/java/junit",
+        "@com_google_guava_guava//jar",
     ],
 )
 
@@ -113,9 +103,9 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "//third_party/java/junit",
         "//third_party/javascript:javascript_for_tests",
         "@com_google_guava_guava//jar",
-        "//third_party/java/junit",
         "@org_opentest4j_opentest4j//jar",
     ],
 )
