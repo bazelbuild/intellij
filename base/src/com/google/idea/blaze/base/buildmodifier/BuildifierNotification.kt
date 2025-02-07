@@ -13,136 +13,149 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.buildmodifier;
+package com.google.idea.blaze.base.buildmodifier
 
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationGroupManager;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.NotNull;
+import com.google.idea.blaze.base.settings.BlazeUserSettings
+import com.google.idea.blaze.base.util.pluginApplicationScope
+import com.intellij.ide.BrowserUtil
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.notification.*
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-public final class BuildifierNotification {
+object BuildifierNotification {
+  private const val GITHUB_URL = "https://github.com/bazelbuild/buildtools/"
 
-  private static final String GITHUB_URL = "https://github.com/bazelbuild/buildtools/";
+  private const val NOTIFICATION_GROUP_ID = "Buildifier"
+  private const val NOTIFICATION_DOWNLOAD_TITLE = "Download Buildifier"
+  private const val NOTIFICATION_DOWNLOAD_QUESTION = "Would you like to download the buildifier formatter?"
+  private const val NOTIFICATION_DOWNLOAD_SUCCESS = "Buildifier download was successful."
+  private const val NOTIFICATION_DOWNLOAD_FAILURE = "Buildifier download failed. Please install it manually."
+  private const val NOTIFICATION_NOTFOUND_FAILURE = "Could not find buildifier binary. Please install it manually."
 
-  private static final String NOTIFICATION_GROUP_ID = "Buildifier";
-  private static final String NOTIFICATION_DOWNLOAD_TITLE = "Download Buildifier";
-  private static final String NOTIFICATION_DOWNLOAD_QUESTION = "Would you like to download the buildifier formatter?";
-  private static final String NOTIFICATION_DOWNLOAD_SUCCESS = "Buildifier download was successful.";
-  private static final String NOTIFICATION_DOWNLOAD_FAILURE = "Buildifier download failed. Please install it manually.";
-  private static final String NOTIFICATION_NOTFOUND_FAILURE = "Could not find buildifier binary. Please install it manually.";
+  private val NOTIFICATION_DOWNLOAD_SHOWN_KEY = Key<Boolean>("buildifier.notification.download")
+  private val NOTIFICATION_NOTFOUND_SHOWN_KEY = Key<Boolean>("buildifier.notification.notfound")
 
-  private static final Key<Boolean> NOTIFICATION_DOWNLOAD_SHOWN_KEY = new Key<>("buildifier.notification.download");
-  private static final Key<Boolean> NOTIFICATION_NOTFOUND_SHOWN_KEY = new Key<>("buildifier.notification.notfound");
+  private val NOTIFICATION_GROUP: NotificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(
+    NOTIFICATION_GROUP_ID
+  )
 
-  private static final NotificationGroup NOTIFICATION_GROUP =
-      NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID);
+  private val OPEN_GITHUB_ACTION = NotificationAction.createSimple("Open GitHub Page") {
+    BrowserUtil.open(GITHUB_URL)
+  }
 
-  public static void showDownloadNotification() {
+  @JvmStatic
+  fun showDownloadNotification() {
     if (!shouldShowNotification(NOTIFICATION_DOWNLOAD_SHOWN_KEY)) {
-      return;
+      return
     }
 
-    final var notification = NOTIFICATION_GROUP.createNotification(
-        NOTIFICATION_DOWNLOAD_TITLE,
-        NOTIFICATION_DOWNLOAD_QUESTION,
-        NotificationType.INFORMATION
-    ).setSuggestionType(true);
+    val notification = NOTIFICATION_GROUP.createNotification(
+      NOTIFICATION_DOWNLOAD_TITLE,
+      NOTIFICATION_DOWNLOAD_QUESTION,
+      NotificationType.INFORMATION
+    ).setSuggestionType(true)
 
     notification.addAction(
-        new NotificationAction("Download") {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-            notification.expire();
-            install(e.getProject());
-          }
+      object : NotificationAction("Download") {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          notification.expire()
+          install()
         }
-    );
+      }
+    )
 
-    notification.addAction(
-        NotificationAction.createSimple("Dismiss", () -> {
-              notification.expire();
-              dismissNotification(NOTIFICATION_DOWNLOAD_SHOWN_KEY);
-            }
-        )
-    );
+    notification.addDismissAction(NOTIFICATION_DOWNLOAD_SHOWN_KEY)
 
-    Notifications.Bus.notify(notification);
+    Notifications.Bus.notify(notification)
   }
 
-  public static void showNotFoundNotification() {
+  @JvmStatic
+  fun showNotFoundNotification() {
     if (!shouldShowNotification(NOTIFICATION_NOTFOUND_SHOWN_KEY)) {
-      return;
+      return
     }
 
-    final var notification = NOTIFICATION_GROUP.createNotification(
-        NOTIFICATION_NOTFOUND_FAILURE,
-        NotificationType.ERROR
-    );
+    val notification = NOTIFICATION_GROUP.createNotification(
+      NOTIFICATION_NOTFOUND_FAILURE,
+      NotificationType.ERROR
+    )
 
-    notification.addAction(
-        NotificationAction.createSimple("Open GitHub Page", () -> BrowserUtil.open(GITHUB_URL))
-    );
+    notification.addAction(OPEN_GITHUB_ACTION)
+    notification.addDismissAction(NOTIFICATION_NOTFOUND_SHOWN_KEY)
 
-    notification.addAction(
-        NotificationAction.createSimple("Dismiss", () -> {
-              notification.expire();
-              dismissNotification(NOTIFICATION_NOTFOUND_SHOWN_KEY);
-            }
-        )
-    );
-
-    Notifications.Bus.notify(notification);
+    Notifications.Bus.notify(notification)
   }
 
-  private static void install(Project project) {
-    final var file = BuildifierDownloader.downloadWithProgress(project);
+  private fun install() {
+    val scope = pluginApplicationScope()
 
-    if (file == null) {
-      NOTIFICATION_GROUP.createNotification(
-          NOTIFICATION_DOWNLOAD_TITLE,
-          NOTIFICATION_DOWNLOAD_FAILURE,
-          NotificationType.ERROR
-      ).addAction(
-          NotificationAction.createSimple("Open GitHub Page", () -> BrowserUtil.open(GITHUB_URL))
-      ).notify(project);
-    } else {
-      NOTIFICATION_GROUP.createNotification(
-          NOTIFICATION_DOWNLOAD_TITLE,
-          NOTIFICATION_DOWNLOAD_SUCCESS,
-          NotificationType.INFORMATION
-      ).notify(project);
+    scope.launch {
+      val file = withContext(Dispatchers.IO) {
+        BuildifierDownloader.downloadWithProgress()
+      }
 
-      BlazeUserSettings.getInstance().setBuildifierBinaryPath(file.getAbsolutePath());
+      if (file == null) {
+        showFailureNotification()
+        return@launch
+      }
+
+      showSuccessNotification()
+
+      withContext(Dispatchers.EDT) {
+        BlazeUserSettings.getInstance().buildifierBinaryPath = file.absolutePath
+      }
     }
   }
 
-  private static boolean shouldShowNotification(Key<Boolean> key) {
+  private fun showFailureNotification() {
+    val notification = NOTIFICATION_GROUP.createNotification(
+      NOTIFICATION_DOWNLOAD_TITLE,
+      NOTIFICATION_DOWNLOAD_FAILURE,
+      NotificationType.ERROR
+    )
+
+    notification.addAction(OPEN_GITHUB_ACTION)
+
+    Notifications.Bus.notify(notification)
+  }
+
+  private fun showSuccessNotification() {
+    val notification = NOTIFICATION_GROUP.createNotification(
+      NOTIFICATION_DOWNLOAD_TITLE,
+      NOTIFICATION_DOWNLOAD_SUCCESS,
+      NotificationType.INFORMATION
+    )
+
+    Notifications.Bus.notify(notification)
+  }
+
+  private fun shouldShowNotification(key: Key<Boolean>): Boolean {
     // dismiss is a persisted property
     if (PropertiesComponent.getInstance().getBoolean(key.toString(), false)) {
-      return false;
+      return false
     }
 
     // show the notification only once per application start
-    final var application = ApplicationManager.getApplication();
-    if (key.get(application, false)) {
-      return false;
+    val application = ApplicationManager.getApplication()
+    if (key[application, false]) {
+      return false
     }
 
-    application.putUserData(key, true);
-    return true;
+    application.putUserData(key, true)
+    return true
   }
 
-  private static void dismissNotification(Key<Boolean> key) {
-    PropertiesComponent.getInstance().setValue(key.toString(), true);
+  private fun Notification.addDismissAction(key: Key<Boolean>) {
+    NotificationAction.createSimple("Dismiss") {
+      this.expire()
+      PropertiesComponent.getInstance().setValue(key.toString(), true)
+    }
   }
 }

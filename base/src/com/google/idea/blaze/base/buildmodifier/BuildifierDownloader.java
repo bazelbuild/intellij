@@ -65,12 +65,12 @@ public final class BuildifierDownloader {
     return getDownloadUrl() != null;
   }
 
-  public static @Nullable File downloadWithProgress(Project project) {
+  public static @Nullable File downloadWithProgress() {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(
         BuildifierDownloader::downloadSync,
         "Downloading: " + getFileName(),
         true,
-        project
+        null
     );
   }
 
