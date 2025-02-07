@@ -59,7 +59,10 @@ bazel_binaries = use_extension(
 )
 bazel_binaries.download(version = "6.5.0")
 bazel_binaries.download(version = "7.4.1")
-bazel_binaries.download(version = "8.0.1", current = True)
+bazel_binaries.download(
+    current = True,
+    version = "8.0.1",
+)
 use_repo(
     bazel_binaries,
     "bazel_binaries",
@@ -70,6 +73,24 @@ use_repo(
 )
 
 bazel_dep(name = "rules_jvm_external", version = "6.6")
+
+# bzlmod-compatible version of rules_scala, required for Bazel 9+ compatibility
+git_override(
+    module_name = "rules_scala",
+    #branch = "bzlmod-bazel-8",
+    commit = "21e4be9557645885ba2aabab7922c457ffdf03ee",
+    remote = "https://github.com/mbland/rules_scala.git",
+)
+
+bazel_dep(name = "rules_scala", repo_name = "io_bazel_rules_scala")
+
+scala_dev_deps = use_extension(
+    "@io_bazel_rules_scala//scala/extensions:deps.bzl",
+    "scala_deps",
+)
+scala_dev_deps.toolchains(
+    scalatest = True,
+)
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
