@@ -1,7 +1,8 @@
 v2025.01.21.0.2
 ===============
 Fixes
-* Fix aspect_template reference in java_classpath aspect #7265
+* Fix dependency on rules_java in aspect/BUILD #7270
+* Fix query xcode parameters from provider based on attributes #7266
 
 v2025.01.21
 ===========
@@ -10,6 +11,7 @@ Fixes:
 * Fix red code in MODULE.bazel #7217
 * Copy aspect files to workspace #7202
 * Fix mac agent native errors #7216
+* Fix aspect_template reference in java_classpath aspect #7265
 
 v2025.01.07
 ===========

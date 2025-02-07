@@ -15,6 +15,7 @@ filegroup(
         "intellij_info_impl.bzl",
         "java_classpath.bzl",
         "make_variables.bzl",
+        "xcode_query.bzl",
         ":BUILD.bazel",
         "//aspect/tools:CreateAar",
         "//aspect/tools:JarFilter_deploy.jar",
@@ -46,6 +47,7 @@ aspect_library(
         "java_classpath.bzl",
         "make_variables.bzl",
         ":BUILD.bazel",
+        "xcode_query.bzl", # maybe move this to a dedicated library, but let's keep this here for now
     ],
     namespace = "aspect/default",
     visibility = ["//visibility:public"],
@@ -53,10 +55,10 @@ aspect_library(
 
 aspect_library(
     name = "aspect_tools",
-    files = ["//aspect/tools:CreateAar"],
     jars = [
         "//aspect/tools:JarFilter_deploy.jar",
         "//aspect/tools:PackageParser_deploy.jar",
+        "//aspect/tools:CreateAar_deploy.jar",
     ],
     namespace = "aspect/default/tools",
     visibility = ["//visibility:public"],
@@ -96,7 +98,7 @@ genrule(
     srcs = ["intellij_info.bzl"],
     outs = ["intellij_info_bundled.bzl"],
     cmd = "cat $(SRCS) >$@ && " +
-          "sed -i -e 's,//%s/tools:\" + tool_name,:\" + tool_name + \"_bin\",g' $@ && " % _dev_aspect_path +
+          "sed -i -e 's,//%s/tools:\" + tool_name,tools/\" + tool_name,g' $@ && " % _dev_aspect_path +
           "sed -i -e 's,//%s:flag_hack,:flag_hack,g' $@  && " % _dev_aspect_path +
           "sed -i -e 's,:intellij_info_impl.bzl,:intellij_info_impl_bundled.bzl,g' $@",
 )
