@@ -237,7 +237,7 @@ public class TargetTree extends AbstractCollection<Label> {
 
     @CanIgnoreReturnValue
     public Builder add(Label target) {
-      return add(target.getPackage().iterator(), target.getName().toString());
+      return add(target.getPackage().iterator(), target.name());
     }
 
     @CanIgnoreReturnValue

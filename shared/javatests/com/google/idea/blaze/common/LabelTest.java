@@ -95,6 +95,11 @@ public class LabelTest {
   }
 
   @Test
+  public void testNew_backslashes() {
+    assertThrows(IllegalArgumentException.class, () -> Label.of("//package\\path:rule"));
+  }
+
+  @Test
   public void testNew_noName() {
     assertThrows(IllegalArgumentException.class, () -> Label.of("//package/path"));
   }
