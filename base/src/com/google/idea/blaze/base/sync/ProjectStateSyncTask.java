@@ -162,7 +162,7 @@ final class ProjectStateSyncTask {
     }
 
     ExternalWorkspaceData externalWorkspaceData =
-        getExternalWorkspaceData(context, projectViewSet, blazeVersionData, blazeInfo, params.syncMode());
+        getExternalWorkspaceData(context, projectViewSet, blazeVersionData, blazeInfo);
 
     WorkspacePathResolver workspacePathResolver =
         workspacePathResolverAndProjectView.workspacePathResolver;
@@ -230,43 +230,15 @@ final class ProjectStateSyncTask {
       BlazeContext context,
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
-      BlazeInfo blazeInfo,
-      SyncMode syncMode)
-      throws SyncCanceledException, SyncFailedException {
+      BlazeInfo blazeInfo)
+      throws SyncFailedException {
 
-    List<String> blazeModFlags =
-        BlazeFlags.blazeFlags(
-            project,
-            projectViewSet,
-            BlazeCommandName.MOD,
-            context,
-            BlazeInvocationContext.SYNC_CONTEXT);
-
-    ListenableFuture<ExternalWorkspaceData> externalWorkspaceDataFuture =
-        ExternalWorkspaceDataProvider.getInstance(project)
-            .getExternalWorkspaceData(context, blazeModFlags, blazeVersionData, blazeInfo);
-
-    FutureResult<ExternalWorkspaceData> externalWorkspaceDataResult =
-        FutureUtil.waitForFuture(context, externalWorkspaceDataFuture)
-            .timed(Blaze.buildSystemName(project) + "Mod", EventType.BlazeInvocation)
-            .withProgressMessage("Resolving module repository mapping...")
-            .onError(String.format("Could not run %s mod dump_repo_mapping", Blaze.buildSystemName(project)))
-            .run();
-
-    ExternalWorkspaceData externalWorkspaceData = externalWorkspaceDataResult.result();
-    if (externalWorkspaceData == null) {
-      Exception exception = externalWorkspaceDataResult.exception();
-      if (exception != null) {
-        Throwable cause = exception.getCause();
-        if (cause instanceof BuildException
-                && cause.getCause() instanceof ExecutionDeniedException) {
-          throw new SyncCanceledException();
-        }
-      }
-      throw new SyncFailedException();
+    try {
+      return ExternalWorkspaceDataProvider.getInstance(project)
+          .getExternalWorkspaceData(context, projectViewSet, blazeVersionData.getBazelVersion(), blazeInfo);
+    } catch (BuildException e) {
+      throw new SyncFailedException(e.getMessage(), e.getCause());
     }
-
-    return externalWorkspaceData;
   }
 
   private static class WorkspacePathResolverAndProjectView {

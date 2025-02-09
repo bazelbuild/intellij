@@ -48,6 +48,8 @@ public class QuerySyncProjectData implements BlazeProjectData {
 
   private final WorkspacePathResolver workspacePathResolver;
   private final Optional<QuerySyncProjectSnapshot> blazeProject;
+  private final ExternalWorkspaceData externalWorkspaceData;
+  private final BlazeInfo blazeInfo;
 
   /**
    * Static language settings are those derived from the {@code .blazeproject} file. The dynamic
@@ -58,22 +60,37 @@ public class QuerySyncProjectData implements BlazeProjectData {
 
   QuerySyncProjectData(
       WorkspacePathResolver workspacePathResolver,
-      WorkspaceLanguageSettings workspaceLanguageSettings) {
-    this(Optional.empty(), workspacePathResolver, workspaceLanguageSettings);
+      WorkspaceLanguageSettings workspaceLanguageSettings,
+      BlazeInfo blazeInfo,
+      ExternalWorkspaceData externalWorkspaceData) {
+    this(
+        Optional.empty(),
+        workspacePathResolver,
+        workspaceLanguageSettings, blazeInfo,
+        externalWorkspaceData);
   }
 
   private QuerySyncProjectData(
       Optional<QuerySyncProjectSnapshot> projectSnapshot,
       WorkspacePathResolver workspacePathResolver,
-      WorkspaceLanguageSettings workspaceLanguageSettings) {
+      WorkspaceLanguageSettings workspaceLanguageSettings,
+      BlazeInfo blazeInfo,
+      ExternalWorkspaceData externalWorkspaceData) {
     this.blazeProject = projectSnapshot;
     this.workspacePathResolver = workspacePathResolver;
     this.staticLanguageSettings = workspaceLanguageSettings;
+    this.blazeInfo = blazeInfo;
+    this.externalWorkspaceData = externalWorkspaceData;
   }
 
   public QuerySyncProjectData withSnapshot(QuerySyncProjectSnapshot newSnapshot) {
     return new QuerySyncProjectData(
-        Optional.of(newSnapshot), workspacePathResolver, staticLanguageSettings);
+        Optional.of(newSnapshot),
+        workspacePathResolver,
+        staticLanguageSettings,
+        blazeInfo,
+        externalWorkspaceData
+    );
   }
 
   @Nullable
@@ -140,7 +157,7 @@ public class QuerySyncProjectData implements BlazeProjectData {
 
   @Override
   public BlazeInfo getBlazeInfo() {
-    throw new NotSupportedWithQuerySyncException("getBlazeInfo");
+    return blazeInfo;
   }
 
   @Override
@@ -179,7 +196,7 @@ public class QuerySyncProjectData implements BlazeProjectData {
 
   @Override
   public ExternalWorkspaceData getExternalWorkspaceData() {
-    throw new NotSupportedWithQuerySyncException("getExternalWorkspaceData");
+    return externalWorkspaceData;
   }
 
   @Override

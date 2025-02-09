@@ -86,6 +86,10 @@ public final class BlazeVersionData implements ProtoWrapper<ProjectData.BlazeVer
     return bazelVersion != null ? BuildSystemName.Bazel : BuildSystemName.Blaze;
   }
 
+  public BazelVersion getBazelVersion() {
+    return bazelVersion;
+  }
+
   @Override
   public String toString() {
     if (bazelVersion != null) {
