@@ -4,6 +4,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 import static com.google.idea.blaze.clwb.base.Assertions.assertDefine;
 
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.BazelVersionRule;
 import com.google.idea.blaze.clwb.base.ProjectViewBuilder;
 import com.google.idea.blaze.clwb.base.ClwbIntegrationTestCase;
@@ -27,9 +28,9 @@ public class LlvmToolchainTest extends ClwbIntegrationTestCase {
   public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
 
   @Override
-  protected ProjectViewBuilder projectViewText() {
+  protected ProjectViewBuilder projectViewText(BazelVersion version) {
     // required because this test targets wasm
-    return super.projectViewText().addBuildFlag("--platforms=@toolchains_llvm//platforms:wasm32");
+    return super.projectViewText(version).addBuildFlag("--platforms=@toolchains_llvm//platforms:wasm32");
   }
 
   @Test

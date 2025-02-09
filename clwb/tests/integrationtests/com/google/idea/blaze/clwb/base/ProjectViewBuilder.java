@@ -8,8 +8,10 @@ public class ProjectViewBuilder {
 
   private final List<String> directories = new ArrayList<>();
   private final List<String> build_flags = new ArrayList<>();
+  private final List<String> sync_flags = new ArrayList<>();
 
   private boolean derive_targets_from_directories = true;
+  private boolean use_query_sync = false;
 
   public ProjectViewBuilder addDirectories(String... values) {
     directories.addAll(Arrays.asList(values));
@@ -26,8 +28,18 @@ public class ProjectViewBuilder {
     return this;
   }
 
+  public ProjectViewBuilder addSyncFlag(String... values) {
+    sync_flags.addAll(Arrays.asList(values));
+    return this;
+  }
+
   public ProjectViewBuilder setDeriveTargetsFromDirectories(boolean value) {
     derive_targets_from_directories = value;
+    return this;
+  }
+
+  public ProjectViewBuilder useQuerySync(boolean value) {
+    use_query_sync = value;
     return this;
   }
 
@@ -45,7 +57,13 @@ public class ProjectViewBuilder {
       build_flags.stream().map(ProjectViewBuilder::toElement).forEach(builder::append);
     }
 
+    if (!sync_flags.isEmpty()) {
+      builder.append("sync_flags:\n");
+      sync_flags.stream().map(ProjectViewBuilder::toElement).forEach(builder::append);
+    }
+
     builder.append(String.format("derive_targets_from_directories: %b%n", derive_targets_from_directories));
+    builder.append(String.format("use_query_sync: %b%n", use_query_sync));
 
     return builder.toString();
   }

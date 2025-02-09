@@ -3,9 +3,13 @@ package com.google.idea.blaze.clwb;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 
+import com.google.idea.blaze.base.bazel.BazelVersion;
+import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
 import com.google.idea.blaze.clwb.base.BazelVersionRule;
 import com.google.idea.blaze.clwb.base.ClwbIntegrationTestCase;
 import com.google.idea.blaze.clwb.base.OSRule;
+import com.google.idea.blaze.clwb.base.ProjectViewBuilder;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.system.OS;
 import java.util.concurrent.ExecutionException;
 import org.junit.Rule;
@@ -24,6 +28,11 @@ public class QuerySyncTest extends ClwbIntegrationTestCase {
   @Rule
   public final BazelVersionRule bazelRule = new BazelVersionRule(6, 0);
 
+  @Override
+  protected ProjectViewBuilder projectViewText(BazelVersion version) {
+    return super.projectViewText(version).useQuerySync(true);
+  }
+
   @Test
   public void testClwb() throws Exception {
     final var success = runQuerySync();
@@ -31,6 +40,7 @@ public class QuerySyncTest extends ClwbIntegrationTestCase {
 
     checkAnalysis();
     checkCompiler();
+    checkResolveRulesCC();
   }
 
   private void checkAnalysis() throws ExecutionException {
@@ -51,5 +61,20 @@ public class QuerySyncTest extends ClwbIntegrationTestCase {
     // }
 
     assertContainsHeader("iostream", compilerSettings);
+  }
+
+  // TODO: find a common place for shared test between async (SimpleTest) and qsync
+  private void checkResolveRulesCC() {
+    final var file = findProjectPsiFile("main/BUILD");
+
+    final var load = PsiTreeUtil.findChildOfType(file, LoadStatement.class);
+    assertThat(load).isNotNull();
+    assertThat(load.getImportedPath()).isEqualTo("@rules_cc//cc:defs.bzl");
+
+    for (final var symbol : load.getLoadedSymbols()) {
+      final var reference = symbol.getReference();
+      assertThat(reference).isNotNull();
+      assertThat(reference.resolve()).isNotNull();
+    }
   }
 }
