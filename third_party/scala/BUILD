@@ -1,4 +1,5 @@
 load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
+load("//third_party/bazel_rules/rules_java/java:java_library.bzl", "java_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -8,12 +9,6 @@ java_library(
     name = "scala_internal",
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
-        "intellij-2021.3": ["@scala_2021_3//:scala"],
-        "intellij-ue-2021.3": ["@scala_2021_3//:scala"],
-        "intellij-2022.1": ["@scala_2022_1//:scala"],
-        "intellij-ue-2022.1": ["@scala_2022_1//:scala"],
-        "intellij-2022.2": ["@scala_2022_2//:scala"],
-        "intellij-ue-2022.2": ["@scala_2022_2//:scala"],
         "intellij-2022.3": ["@scala_2022_3//:scala"],
         "intellij-ue-2022.3": ["@scala_2022_3//:scala"],
         "default": [],
