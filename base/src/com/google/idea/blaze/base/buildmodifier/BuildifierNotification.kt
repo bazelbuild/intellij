@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,6 +40,8 @@ object BuildifierNotification {
   private const val NOTIFICATION_DOWNLOAD_FAILURE = "Buildifier download failed. Please install it manually."
   private const val NOTIFICATION_NOTFOUND_FAILURE = "Could not find buildifier binary. Please install it manually."
 
+  private const val PROGRESS_TITLE = "Downloading Buildifier binary..."
+
   private val NOTIFICATION_DOWNLOAD_SHOWN_KEY = Key<Boolean>("buildifier.notification.download")
   private val NOTIFICATION_NOTFOUND_SHOWN_KEY = Key<Boolean>("buildifier.notification.notfound")
 
@@ -51,7 +54,7 @@ object BuildifierNotification {
   }
 
   @JvmStatic
-  fun showDownloadNotification() {
+  fun showDownloadNotification(project: Project) {
     if (!shouldShowNotification(NOTIFICATION_DOWNLOAD_SHOWN_KEY)) {
       return
     }
@@ -66,7 +69,7 @@ object BuildifierNotification {
       object : NotificationAction("Download") {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           notification.expire()
-          install()
+          install(project)
         }
       }
     )
@@ -93,12 +96,14 @@ object BuildifierNotification {
     Notifications.Bus.notify(notification)
   }
 
-  private fun install() {
+  private fun install(project: Project) {
     val scope = pluginApplicationScope()
 
     scope.launch {
       val file = withContext(Dispatchers.IO) {
-        BuildifierDownloader.downloadWithProgress()
+        withBackgroundProgress(project, PROGRESS_TITLE) {
+          BuildifierDownloader.downloadSync()
+        }
       }
 
       if (file == null) {
