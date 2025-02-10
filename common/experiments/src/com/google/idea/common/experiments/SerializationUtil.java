@@ -17,13 +17,10 @@ package com.google.idea.common.experiments;
 
 import com.intellij.UtilBundle;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import javax.annotation.Nullable;
 
 /** Utils for serialization. */
 public final class SerializationUtil {
@@ -38,13 +35,13 @@ public final class SerializationUtil {
     }
   }
 
-  @Nullable
+  @javax.annotation.Nullable
   public static Object loadFromDisk(File file) throws IOException {
     if (!file.exists()) {
       return null;
     }
-    try (FileInputStream fis = new FileInputStream(file);
-        ObjectInputStream ois = new ObjectInputStream(fis)) {
+    try (java.io.FileInputStream fis = new java.io.FileInputStream(file);
+        java.io.ObjectInputStream ois = new java.io.ObjectInputStream(fis)) {
       return ois.readObject();
     } catch (ClassNotFoundException e) {
       throw new IOException(e);
