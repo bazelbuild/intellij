@@ -188,30 +188,6 @@ DIRECT_IJ_PRODUCTS = {
         archive = "android_studio_with_blaze_2023_3",
         oss_workspace = "android_studio_2023_3",
     ),
-    "clion-2021.3": struct(
-        ide = "clion",
-        directory = "clion_2021_3",
-    ),
-    "clion-2021.3-mac": struct(
-        ide = "clion",
-        directory = "clion_2021_3",
-    ),
-    "clion-2022.1": struct(
-        ide = "clion",
-        directory = "clion_2022_1",
-    ),
-    "clion-2022.1-mac": struct(
-        ide = "clion",
-        directory = "clion_2022_1",
-    ),
-    "clion-2022.2": struct(
-        ide = "clion",
-        directory = "clion_2022_2",
-    ),
-    "clion-2022.2-mac": struct(
-        ide = "clion",
-        directory = "clion_2022_2",
-    ),
     "clion-2022.3": struct(
         ide = "clion",
         directory = "clion_2022_3",

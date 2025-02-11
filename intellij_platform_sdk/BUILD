@@ -480,57 +480,6 @@ config_setting(
 )
 
 config_setting(
-    name = "clion-2021.3",
-    values = {
-        "define": "ij_product=clion-2021.3",
-    },
-)
-
-config_setting(
-    name = "clion-2021.3-mac",
-    constraint_values = [
-        "@platforms//os:macos",
-    ],
-    values = {
-        "define": "ij_product=clion-2021.3",
-    },
-)
-
-config_setting(
-    name = "clion-2022.1",
-    values = {
-        "define": "ij_product=clion-2022.1",
-    },
-)
-
-config_setting(
-    name = "clion-2022.1-mac",
-    constraint_values = [
-        "@platforms//os:macos",
-    ],
-    values = {
-        "define": "ij_product=clion-2022.1",
-    },
-)
-
-config_setting(
-    name = "clion-2022.2",
-    values = {
-        "define": "ij_product=clion-2022.2",
-    },
-)
-
-config_setting(
-    name = "clion-2022.2-mac",
-    constraint_values = [
-        "@platforms//os:macos",
-    ],
-    values = {
-        "define": "ij_product=clion-2022.2",
-    },
-)
-
-config_setting(
     name = "clion-2022.3",
     values = {
         "define": "ij_product=clion-2022.3",

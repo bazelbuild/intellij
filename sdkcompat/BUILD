@@ -27,8 +27,6 @@ java_library(
         "intellij-2022.3": ["//sdkcompat/v223"],
         "intellij-ue-2022.2": ["//sdkcompat/v222"],
         "intellij-ue-2022.3": ["//sdkcompat/v223"],
-        "clion-2022.1": ["//sdkcompat/v221"],
-        "clion-2022.2": ["//sdkcompat/v222"],
         "clion-2022.3": ["//sdkcompat/v223"],
     }),
 )
