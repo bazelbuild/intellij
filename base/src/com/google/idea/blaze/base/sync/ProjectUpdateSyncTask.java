@@ -61,6 +61,7 @@ import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.common.util.Transactions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -346,6 +347,7 @@ final class ProjectUpdateSyncTask {
             throw e;
           } catch (Throwable e) {
             IssueOutput.error("Internal error. Error: " + e).submit(context);
+            context.output(new PrintOutput(e.getMessage(), PrintOutput.OutputType.ERROR));
             logger.error(e);
             return false;
           }
