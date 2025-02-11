@@ -72,7 +72,7 @@ use_repo(
     "build_bazel_bazel_8_0_1",
 )
 
-bazel_dep(name = "rules_jvm_external", version = "6.6")
+bazel_dep(name = "rules_jvm_external", version = "6.7")
 
 # bzlmod-compatible version of rules_scala, required for Bazel 9+ compatibility
 git_override(
