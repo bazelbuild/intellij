@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
+import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.blaze.java.sync.projectstructure.Jdks;
 import com.google.idea.common.util.Transactions;
 import com.intellij.openapi.project.Project;
@@ -53,6 +54,7 @@ public class BlazeJavaQuerySyncPlugin implements BlazeQuerySyncPlugin {
       String msg =
           String.format(
               "Unable to find a JDK %1$s installed.\n", javaLanguageLevel.getPresentableText());
+      Jdks.notifyJdkSetupIssuesOccurred(project, projectViewSet, javaLanguageLevel, LanguageLevel.JDK_21);
       IssueOutput.error(msg).submit(context);
       return;
     }
