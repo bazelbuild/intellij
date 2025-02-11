@@ -53,18 +53,6 @@ java_library(
             "testcompat/v233/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v233/com/google/idea/testing/**/*.java",
         ]),
-        "clion-2021.3": glob([
-            "testcompat/v213/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v213/com/google/idea/testing/*.java",
-        ]),
-        "clion-2022.1": glob([
-            "testcompat/v221/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v221_ij/com/google/idea/sdkcompat/**/*.java",
-        ]),
-        "clion-2022.2": glob([
-            "testcompat/v222/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v222/com/google/idea/testing/*.java",
-        ]),
         "clion-2022.3": glob([
             "testcompat/v223/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v223/com/google/idea/testing/*.java",
@@ -110,7 +98,7 @@ java_library(
         "//common/experiments",
         "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:plugin_api_for_tests",  # unuseddeps: keep: runtime dep and BUILD rule doesn't support runtime_deps
         "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
