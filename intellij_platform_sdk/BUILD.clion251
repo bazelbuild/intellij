@@ -54,6 +54,7 @@ java_import(
     jars = glob([
         "plugins/c-plugin/lib/*.jar",
         "plugins/cidr-base-plugin/lib/*.jar",
+        "plugins/cidr-base-plugin/lib/modules/*.jar",
         "plugins/cidr-debugger-plugin/lib/*.jar",
         "plugins/clion/lib/*.jar",
         "plugins/clion-test-google/lib/*.jar",
