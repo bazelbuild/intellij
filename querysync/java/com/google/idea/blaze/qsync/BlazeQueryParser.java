@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The Bazel Authors. All rights reserved.
+ * Copyright 2022-2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package com.google.idea.blaze.qsync;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
-import static com.google.idea.blaze.common.Label.toLabelList;
-import static java.util.Arrays.stream;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.ImmutableMap;
@@ -29,11 +27,9 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.RuleKinds;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
-import com.google.idea.blaze.qsync.project.BuildGraphData.Location;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.project.ProjectTarget.SourceType;
 import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
-import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.QueryData;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.util.HashSet;
@@ -47,8 +43,15 @@ import java.util.Set;
  */
 public class BlazeQueryParser {
 
-  // Rules that will need to be built, whether or not the target is included in the
-  // project.
+  /**
+   * When a rule has a transition applied to it then it will present with this
+   * prefix on it.
+   */
+
+  private final static String RULE_NAME_PREFIX_TRANSITION = "_transition_";
+
+  // Rules that will need to be built, whether the target is included in the
+  // project or not.
   public static final ImmutableSet<String> ALWAYS_BUILD_RULE_KINDS =
       ImmutableSet.of(
           "java_proto_library",
@@ -110,6 +113,17 @@ public class BlazeQueryParser {
                                  RuleVisitor visitor) {
       for (String kind : kinds) {
         builder.put(kind, visitor);
+
+        // When the `bazel query` executes over Rules which have transitions applied to them, the
+        // returned list of data contains rules which have Rule names with `_` prefixed but with
+        // the original Kind and _also_ original Rule names with the Kind prefixed with
+        // `_transition_`. An example is when a specific pinned Python version is used, a
+        // transition is employed to enforce the vesion. In this case we see a rule `_my_rule` with
+        // kind `py_test` and a rule `my_rule` with kind `_transition_py_test`. Without
+        // accommodating for this, the `_transition_py_test` one would be ignored and so the
+        // downstream logic here would be working with the wrong Rule name.
+
+        builder.put(RULE_NAME_PREFIX_TRANSITION + kind, visitor);
       }
     }
   }
