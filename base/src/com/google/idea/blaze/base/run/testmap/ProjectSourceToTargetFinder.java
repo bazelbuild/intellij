@@ -15,11 +15,9 @@
  */
 package com.google.idea.blaze.base.run.testmap;
 
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.util.function.Predicate.not;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -37,6 +35,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -80,7 +79,8 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
               .map(TargetInfo::fromBuildTarget)
               .distinct()
               .sorted(new TargetInfoComparator())
-              .collect(Collectors.toList());
+              .collect(Collectors.collectingAndThen(
+                  Collectors.toList(), Collections::unmodifiableList));
       return Futures.immediateFuture(targets);
     }
     FilteredTargetMap targetMap =
@@ -95,7 +95,8 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
             .filter(target -> !ruleType.isPresent() || target.getRuleType().equals(ruleType.get()))
             .distinct()
             .sorted(new TargetInfoComparator())
-            .collect(Collectors.toList());
+            .collect(Collectors.collectingAndThen(
+                Collectors.toList(), Collections::unmodifiableList));
     return Futures.immediateFuture(targets);
   }
 
