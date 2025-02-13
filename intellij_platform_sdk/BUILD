@@ -128,57 +128,6 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-2021.3",
-    values = {
-        "define": "ij_product=intellij-2021.3",
-    },
-)
-
-config_setting(
-    name = "intellij-2021.3-mac",
-    constraint_values = [
-        "@platforms//os:macos",
-    ],
-    values = {
-        "define": "ij_product=intellij-2021.3",
-    },
-)
-
-config_setting(
-    name = "intellij-2022.1",
-    values = {
-        "define": "ij_product=intellij-2022.1",
-    },
-)
-
-config_setting(
-    name = "intellij-2022.1-mac",
-    constraint_values = [
-        "@platforms//os:macos",
-    ],
-    values = {
-        "define": "ij_product=intellij-2022.1",
-    },
-)
-
-config_setting(
-    name = "intellij-2022.2",
-    values = {
-        "define": "ij_product=intellij-2022.2",
-    },
-)
-
-config_setting(
-    name = "intellij-2022.2-mac",
-    constraint_values = [
-        "@platforms//os:macos",
-    ],
-    values = {
-        "define": "ij_product=intellij-2022.2",
-    },
-)
-
-config_setting(
     name = "intellij-2022.3",
     values = {
         "define": "ij_product=intellij-2022.3",
@@ -192,57 +141,6 @@ config_setting(
     ],
     values = {
         "define": "ij_product=intellij-2022.3",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2021.3",
-    values = {
-        "define": "ij_product=intellij-ue-2021.3",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2021.3-mac",
-    constraint_values = [
-        "@platforms//os:macos",
-    ],
-    values = {
-        "define": "ij_product=intellij-ue-2021.3",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2022.1",
-    values = {
-        "define": "ij_product=intellij-ue-2022.1",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2022.1-mac",
-    constraint_values = [
-        "@platforms//os:macos",
-    ],
-    values = {
-        "define": "ij_product=intellij-ue-2022.1",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2022.2",
-    values = {
-        "define": "ij_product=intellij-ue-2022.2",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2022.2-mac",
-    constraint_values = [
-        "@platforms//os:macos",
-    ],
-    values = {
-        "define": "ij_product=intellij-ue-2022.2",
     },
 )
 

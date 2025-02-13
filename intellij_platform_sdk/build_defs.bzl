@@ -104,61 +104,13 @@ def _check_channel_map():
         fail("Unexpected values in INDIRECT_PRODUCT_CHANNELS: %s" % unexpected)
 
 DIRECT_IJ_PRODUCTS = {
-    "intellij-2021.3": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2021_3",
-    ),
-    "intellij-2021.3-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2021_3",
-    ),
-    "intellij-2022.1": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2022_1",
-    ),
-    "intellij-2022.1-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2022_1",
-    ),
-    "intellij-2022.2": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2022_2",
-    ),
     "intellij-2022.3": struct(
         ide = "intellij",
         directory = "intellij_ce_2022_3",
     ),
-    "intellij-2022.2-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2022_2",
-    ),
     "intellij-2022.3-mac": struct(
         ide = "intellij",
         directory = "intellij_ce_2022_3",
-    ),
-    "intellij-ue-2021.3": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2021_3",
-    ),
-    "intellij-ue-2021.3-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2021_3",
-    ),
-    "intellij-ue-2022.1": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2022_1",
-    ),
-    "intellij-ue-2022.1-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2022_1",
-    ),
-    "intellij-ue-2022.2": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2022_2",
-    ),
-    "intellij-ue-2022.2-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2022_2",
     ),
     "intellij-ue-2022.3": struct(
         ide = "intellij-ue",
