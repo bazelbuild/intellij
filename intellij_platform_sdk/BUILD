@@ -241,23 +241,6 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-2022.2",
-    values = {
-        "define": "ij_product=android-studio-2022.2",
-    },
-)
-
-config_setting(
-    name = "android-studio-2022.2-mac",
-    constraint_values = [
-        "@platforms//os:macos",
-    ],
-    values = {
-        "define": "ij_product=android-studio-2022.2",
-    },
-)
-
-config_setting(
     name = "android-studio-2022.3",
     values = {
         "define": "ij_product=android-studio-2022.3",

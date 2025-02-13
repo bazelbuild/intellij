@@ -28,11 +28,6 @@ java_library(
                ]),
                default = [],
            ) + select_for_plugin_api({
-        "android-studio-2022.2": glob([
-            "testcompat/v222/com/google/idea/cidr/**/*.java",
-            "testcompat/v222/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v222/com/google/idea/testing/**/*.java",
-        ]),
         "android-studio-2022.3": glob([
             "testcompat/v223/com/google/idea/cidr/**/*.java",
             "testcompat/v223/com/google/idea/sdkcompat/**/*.java",
