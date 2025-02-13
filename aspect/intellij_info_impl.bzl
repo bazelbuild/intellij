@@ -1374,6 +1374,7 @@ def make_intellij_info_aspect(aspect_impl, semantics, **kwargs):
         ),
         "_java_runtime": attr.label(
             default = "@bazel_tools//tools/jdk:current_java_runtime",
+            cfg = "exec",
         ),
     }
 

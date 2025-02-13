@@ -7,7 +7,6 @@ build --deleted_packages=aspect/testing/tests/src/com/google/idea/blaze/aspect/i
 query --deleted_packages=aspect/testing/tests/src/com/google/idea/blaze/aspect/integration/testdata,clwb/tests/projects/simple/main,clwb/tests/projects/virtual_includes/lib/strip_absolut,clwb/tests/projects/virtual_includes/lib/strip_relative,clwb/tests/projects/virtual_includes/main,clwb/tests/projects/llvm_toolchain/main,clwb/tests/projects/external_includes/main,clwb/tests/projects/virtual_includes/lib/impl_deps
 
 common --enable_bzlmod
-common --enable_workspace # to load rules_scala from WORKSPACE.bzlmod
 common --noincompatible_disallow_empty_glob
 
 # Disabled by default in bazel 8, https://github.com/bazelbuild/bazel/issues/24578
