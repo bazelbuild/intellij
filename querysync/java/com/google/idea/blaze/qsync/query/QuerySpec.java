@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The Bazel Authors. All rights reserved.
+ * Copyright 2023-2025 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.qsync.query;
 
-import static com.google.common.collect.Iterables.concat;
 import static java.util.stream.Collectors.joining;
 
 import com.google.auto.value.AutoValue;
@@ -23,7 +22,6 @@ import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -79,13 +77,28 @@ public abstract class QuerySpec implements TruncatingFormattable {
         if (baseQuery.isEmpty()) {
           return Optional.empty();
         }
-        String ruleClassPattern = String.join("|", concat(SOURCE_FILE_AS_LIST, querySpec.supportedRuleClasses()));
-        return Optional.of(
 
+        // The rules are sorted in order to ensure determinism in testing.
+
+        String ruleClassPattern = querySpec.supportedRuleClasses()
+            .stream()
+            .sorted()
+            .collect(joining("|"));
+
+        // When the `bazel query` executes over Rules which have transitions applied to them, the
+        // returned list of data contains rules which have Rule names with `_` prefixed but with
+        // the original Kind and _also_ original Rule names with the Kind prefixed with
+        // `_transition_`. An example is when a specific pinned Python version is used, a
+        // transition is employed to enforce the version. In this case we see a rule `_my_rule` with
+        // kind `py_test` and a rule `my_rule` with kind `_transition_py_test`. Without
+        // accommodating for this, the `_transition_py_test` one would be ignored and so the
+        // downstream logic here would be working with the wrong Rule name.
+
+        return Optional.of(
           "let base = " +
           baseQuery +
           "\n" +
-          " in let known = kind(\"" + ruleClassPattern + "\", $base) \n" +
+          " in let known = kind(\"source file|(_transition_)?(" + ruleClassPattern + ")\", $base) \n" +
           " in let unknown = $base except $known \n" +
           " in $known union ($base intersect allpaths($known, $unknown)) \n");
       }
@@ -99,8 +112,6 @@ public abstract class QuerySpec implements TruncatingFormattable {
              querySpec.excludes().stream().map(s -> String.format(" - %s:*", s)).collect(joining());
     }
   }
-
-  private static final ImmutableList<String> SOURCE_FILE_AS_LIST = ImmutableList.of("source file");
 
   public abstract QueryStrategy queryStrategy();
 
