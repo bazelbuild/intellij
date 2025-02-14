@@ -15,11 +15,11 @@
  */
 package com.google.idea.blaze.base.run.testmap;
 
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.google.common.collect.ImmutableSortedSet.toImmutableSortedSet;
 import static java.util.function.Predicate.not;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -37,12 +37,10 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 /**
  * Used to locate tests from source files for things like right-clicks.
@@ -60,7 +58,7 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
       if (projectData == null) {
         return Futures.immediateFuture(ImmutableList.of());
       }
-      List<TargetInfo> targets =
+      ImmutableSortedSet<TargetInfo> targets =
           sourceFiles.stream()
               .map(file -> projectData.getWorkspacePathResolver().getWorkspacePath(file))
               .filter(Objects::nonNull)
@@ -78,9 +76,7 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
                     return kind.getRuleType().equals(ruleType.get());
                   })
               .map(TargetInfo::fromBuildTarget)
-              .distinct()
-              .sorted(new TargetInfoComparator())
-              .collect(Collectors.toList());
+              .collect(toImmutableSortedSet(new TargetInfoComparator()));
       return Futures.immediateFuture(targets);
     }
     FilteredTargetMap targetMap =
@@ -89,13 +85,13 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
     if (targetMap == null) {
       return Futures.immediateFuture(ImmutableList.of());
     }
-    List<TargetInfo> targets =
+      ImmutableSortedSet<TargetInfo> targets =
         targetMap.targetsForSourceFiles(sourceFiles).stream()
             .map(TargetIdeInfo::toTargetInfo)
-            .filter(target -> !ruleType.isPresent() || target.getRuleType().equals(ruleType.get()))
+            .filter(target -> ruleType.isEmpty() || target.getRuleType().equals(ruleType.get()))
             .distinct()
             .sorted(new TargetInfoComparator())
-            .collect(Collectors.toList());
+            .collect(toImmutableSortedSet(new TargetInfoComparator()));
     return Futures.immediateFuture(targets);
   }
 
