@@ -1,15 +1,12 @@
 load("@rules_java//java:defs.bzl", "java_library")
 
 package(default_visibility = [
-    ":__subpackages__",
     "//aswb:__subpackages__",
     "//base:__subpackages__",
     "//cpp:__subpackages__",
     "//java:__subpackages__",
     "//java/com/google/devtools/intellij/blaze/plugin/base:__subpackages__",
-    "//java/com/google/devtools/intellij/blaze/plugin/cpp:__subpackages__",
     "//java/com/google/devtools/intellij/blaze/plugin/querysync:__subpackages__",
-    "//querysync/javatests:__subpackages__",
 ])
 
 # A build rule to expose individual targets under java/ to users
