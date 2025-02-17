@@ -1,6 +1,7 @@
 package com.google.idea.blaze.clwb.base;
 
 import static com.google.common.truth.Truth.assertThat;
+import static junit.framework.Assert.fail;
 
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
@@ -25,7 +26,6 @@ import com.google.idea.blaze.base.wizard2.BlazeProjectCommitException;
 import com.google.idea.blaze.base.wizard2.BlazeProjectImportBuilder;
 import com.google.idea.blaze.base.wizard2.CreateFromScratchProjectViewOption;
 import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
-import com.google.idea.testing.ServiceHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -41,7 +41,6 @@ import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import com.google.idea.blaze.base.sync.SyncPhaseCoordinator;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageUtils;
-import com.jetbrains.cidr.lang.psi.OCFile;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
@@ -50,7 +49,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import org.intellij.lang.annotations.Language;
 
 public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
   protected VirtualFile myProjectRoot;
@@ -164,7 +162,7 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
             .build()
     );
 
-    final var projectViewLines = projectViewText().split("\n");
+    final var projectViewLines = projectViewText().toString().split("\n");
     final var projectViewBuilder = ProjectView.builder();
     projectViewBuilder.add(TextBlockSection.of(TextBlock.of(1, projectViewLines)));
     final var projectView = projectViewBuilder.build();
@@ -198,17 +196,16 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
     builder.builder().commitToProject(myProject);
   }
 
-  protected @Language("projectview") String projectViewText() {
-    return """
-directories:
-  .
+  protected ProjectViewBuilder projectViewText() {
+    final var builder = new ProjectViewBuilder();
 
-derive_targets_from_directories: true
+    builder.addRootDirectory();
+    builder.setDeriveTargetsFromDirectories(true);
 
-build_flags:
-  # required for Bazel 6
-  --enable_bzlmod
-    """;
+    // required for Bazel 6 integration tests
+    builder.addBuildFlag("--enable_bzlmod");
+
+    return builder;
   }
 
   protected SyncOutput runSync(BlazeSyncParams params) {
@@ -231,9 +228,9 @@ build_flags:
     try {
       future.get();
     } catch (ExecutionException e) {
-      fail("sync failed " + e.getMessage());
+      LOG.error("sync failed", e);
     } catch (InterruptedException e) {
-      fail("sync was interrupted");
+      LOG.error("sync was interrupted", e);
     }
 
     return output;
@@ -257,9 +254,9 @@ build_flags:
     try {
       return future.get();
     } catch (ExecutionException e) {
-      fail("query sync failed " + e.getMessage());
+      LOG.error("query sync failed", e);
     } catch (InterruptedException e) {
-      fail("query sync was interrupted");
+      LOG.error("query sync was interrupted", e);
     }
 
     return false;

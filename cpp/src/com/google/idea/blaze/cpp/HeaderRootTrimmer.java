@@ -198,6 +198,7 @@ final class HeaderRootTrimmer {
     // Builtin includes should not be added to the switch builder, because CLion discovers builtin include paths during
     // the compiler info collection, and therefore it would be safe to filter these header roots. But this would make
     // the filter stricter, and it is unclear if this would affect any users.
+    // NOTE: if the toolchain uses an external sysroot, CLion might not be able to discover the all builtin include paths.
     Set<CToolchainIdeInfo> toolchains = new LinkedHashSet<>(toolchainLookupMap.values());
     for (CToolchainIdeInfo toolchain : toolchains) {
       paths.addAll(toolchain.getBuiltInIncludeDirectories());

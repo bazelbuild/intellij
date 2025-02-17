@@ -17,6 +17,7 @@ package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.CLanguageKind;
@@ -38,6 +39,7 @@ public final class BlazeCompilerSettings {
   private final ImmutableList<String> cppCompilerSwitches;
   private final String compilerVersion;
   private final ImmutableMap<String, String> compilerEnvironment;
+  private final ImmutableList<ExecutionRootPath> builtInIncludes;
 
   BlazeCompilerSettings(
       Project project,
@@ -46,13 +48,15 @@ public final class BlazeCompilerSettings {
       ImmutableList<String> cFlags,
       ImmutableList<String> cppFlags,
       String compilerVersion,
-      ImmutableMap<String, String> compilerEnvironment) {
+      ImmutableMap<String, String> compilerEnvironment,
+      ImmutableList<ExecutionRootPath> bultinIncludes) {
     this.cCompiler = cCompiler;
     this.cppCompiler = cppCompiler;
     this.cCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cFlags));
     this.cppCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cppFlags));
     this.compilerVersion = compilerVersion;
     this.compilerEnvironment = compilerEnvironment;
+    this.builtInIncludes = bultinIncludes;
   }
 
   public OCCompilerKind getCompiler(OCLanguageKind languageKind) {
@@ -102,5 +106,9 @@ public final class BlazeCompilerSettings {
 
   public String getCompilerEnvironment(String variable) {
     return compilerEnvironment.get(variable);
+  }
+
+  public ImmutableList<ExecutionRootPath> getBuiltInIncludes() {
+    return builtInIncludes;
   }
 }
