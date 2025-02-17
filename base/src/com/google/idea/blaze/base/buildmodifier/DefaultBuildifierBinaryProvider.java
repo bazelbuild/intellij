@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.buildmodifier;
 
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.openapi.project.Project;
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -24,7 +25,7 @@ import javax.annotation.Nullable;
 public class DefaultBuildifierBinaryProvider implements BuildifierBinaryProvider {
   @Nullable
   @Override
-  public String getBuildifierBinaryPath() {
+  public String getBuildifierBinaryPath(Project project) {
     String binaryPath = BlazeUserSettings.getInstance().getBuildifierBinaryPath();
 
     // Check if the binary path obtained is absolute.
@@ -40,7 +41,7 @@ public class DefaultBuildifierBinaryProvider implements BuildifierBinaryProvider
     }
 
     if (BuildifierDownloader.canDownload()) {
-      BuildifierNotification.showDownloadNotification();
+      BuildifierNotification.showDownloadNotification(project);
     } else {
       BuildifierNotification.showNotFoundNotification();
     }

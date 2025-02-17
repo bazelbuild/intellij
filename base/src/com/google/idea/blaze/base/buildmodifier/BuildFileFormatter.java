@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import java.io.BufferedReader;
 import java.io.File;
@@ -43,9 +44,9 @@ public class BuildFileFormatter {
   private static final Logger logger = Logger.getInstance(BuildFileFormatter.class);
 
   @Nullable
-  private static String getBuildifierBinaryPath() {
+  private static String getBuildifierBinaryPath(Project project) {
     for (BuildifierBinaryProvider provider : BuildifierBinaryProvider.EP_NAME.getExtensions()) {
-      String path = provider.getBuildifierBinaryPath();
+      String path = provider.getBuildifierBinaryPath(project);
       if (!Strings.isNullOrEmpty(path)) {
         return path;
       }
@@ -60,7 +61,7 @@ public class BuildFileFormatter {
   @Nullable
   static Replacements getReplacements(
       BuildFile buildFile, FileContentsProvider fileContents, Collection<TextRange> ranges) {
-    String buildifierBinaryPath = getBuildifierBinaryPath();
+    String buildifierBinaryPath = getBuildifierBinaryPath(buildFile.getProject());
     if (buildifierBinaryPath == null) {
       return null;
     }
