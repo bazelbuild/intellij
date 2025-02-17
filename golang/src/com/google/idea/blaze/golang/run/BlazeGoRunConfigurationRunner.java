@@ -373,7 +373,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
           candidateFiles =
               LocalFileArtifact.getLocalFiles(
                       BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
-                          .getDirectArtifactsForTarget(label, file -> true))
+                          .getDirectArtifactsForTarget(label.toString(), file -> true))
                   .stream()
                   .filter(File::canExecute)
                   .collect(Collectors.toList());

@@ -329,7 +329,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
           LocalFileArtifact.getLocalFiles(
               BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
                   .getDirectArtifactsForTarget(
-                      deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData), jarPredicate));
+                      deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData).toString(), jarPredicate));
       checkState(deployJarArtifacts.size() == 1);
       deployJar = deployJarArtifacts.get(0);
     } catch (GetArtifactsException e) {
