@@ -23,9 +23,11 @@ import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -69,14 +71,16 @@ object BuildifierNotification {
       object : NotificationAction("Download") {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           notification.expire()
-          install(project)
+
+          @Suppress("UnstableApiUsage")
+          install(project, currentThreadCoroutineScope())
         }
       }
     )
 
     notification.addDismissAction(NOTIFICATION_DOWNLOAD_SHOWN_KEY)
 
-    Notifications.Bus.notify(notification)
+    notification.notify(project)
   }
 
   @JvmStatic
@@ -96,9 +100,7 @@ object BuildifierNotification {
     Notifications.Bus.notify(notification)
   }
 
-  private fun install(project: Project) {
-    val scope = pluginApplicationScope()
-
+  private fun install(project: Project, scope: CoroutineScope) {
     scope.launch {
       val file = withContext(Dispatchers.IO) {
         withBackgroundProgress(project, PROGRESS_TITLE) {
@@ -158,9 +160,9 @@ object BuildifierNotification {
   }
 
   private fun Notification.addDismissAction(key: Key<Boolean>) {
-    NotificationAction.createSimple("Dismiss") {
+    this.addAction(NotificationAction.createSimple("Dismiss") {
       this.expire()
       PropertiesComponent.getInstance().setValue(key.toString(), true)
-    }
+    })
   }
 }
