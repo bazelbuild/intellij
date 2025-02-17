@@ -43,7 +43,7 @@ java_binary(
     name = "get_jar_roots",
     srcs = ["GetJarRoots.java"],
     main_class = "com.google.idea.blaze.qsync.util.GetJarRoots",
-    visibility = ["//querysync:__pkg__"],
+    visibility = ["//visibility:private"],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync",
         "//querysync/java/com/google/idea/blaze/qsync/java",
