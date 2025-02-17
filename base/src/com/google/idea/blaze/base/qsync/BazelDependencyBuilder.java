@@ -219,11 +219,6 @@ public class BazelDependencyBuilder implements DependencyBuilder {
         stats -> stats.setBuildFlags(builder.build().toArgumentList()));
     Instant buildTime = Instant.now();
     BlazeBuildOutputs outputs = BazelExecService.instance(project).build(context, builder);
-    buildDepsStatsBuilder.ifPresent(
-        stats -> {
-          stats.setBuildIds(outputs.getBuildIds());
-          stats.setBepByteConsumed(outputs.bepBytesConsumed);
-        });
 
     BazelExitCodeException.throwIfFailed(
         builder,
