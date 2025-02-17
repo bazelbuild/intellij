@@ -26,8 +26,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteSource;
 import com.google.common.io.MoreFiles;
 import com.google.idea.blaze.base.bazel.BuildSystem;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
+import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -146,7 +148,9 @@ public class QuerySyncProject {
       QuerySyncSourceToTargetMap sourceToTargetMap,
       ProjectViewManager projectViewManager,
       BuildSystem buildSystem,
-      ProjectProtoTransform.Registry projectProtoTransforms) {
+      ProjectProtoTransform.Registry projectProtoTransforms,
+      BlazeInfo blazeInfo,
+      ExternalWorkspaceData externalWorkspaceData) {
     this.project = project;
     this.snapshotFilePath = snapshotFilePath;
     this.snapshotHolder = snapshotHolder;
@@ -171,7 +175,12 @@ public class QuerySyncProject {
     this.projectViewManager = projectViewManager;
     this.buildSystem = buildSystem;
     this.projectProtoTransforms = projectProtoTransforms;
-    projectData = new QuerySyncProjectData(workspacePathResolver, workspaceLanguageSettings);
+    projectData = new QuerySyncProjectData(
+        workspacePathResolver,
+        workspaceLanguageSettings,
+        blazeInfo,
+        externalWorkspaceData
+    );
   }
 
   public Project getIdeProject() {

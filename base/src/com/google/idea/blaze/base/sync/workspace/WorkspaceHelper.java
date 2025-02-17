@@ -193,10 +193,7 @@ public class WorkspaceHelper {
   @Nullable
   private static synchronized WorkspaceRoot resolveExternalWorkspaceRoot(
       Project project, String workspaceName, @Nullable BuildFile buildFile) {
-    if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze || Blaze.getProjectType(project) == BlazeImportSettings.ProjectType.QUERY_SYNC) {
-      return null;
-    }
-    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
+    if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze) {
       return null;
     }
 
