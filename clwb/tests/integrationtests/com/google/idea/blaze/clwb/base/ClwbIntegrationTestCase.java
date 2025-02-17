@@ -4,6 +4,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static junit.framework.Assert.fail;
 
 import com.google.idea.blaze.base.async.process.ExternalTask;
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.project.AutoImportProjectOpenProcessor;
@@ -162,7 +163,10 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
             .build()
     );
 
-    final var projectViewLines = projectViewText().toString().split("\n");
+    final var bazelVersion = BazelVersionRule.getBazelVersion();
+    assertThat(bazelVersion).isPresent();
+
+    final var projectViewLines = projectViewText(bazelVersion.get()).toString().split("\n");
     final var projectViewBuilder = ProjectView.builder();
     projectViewBuilder.add(TextBlockSection.of(TextBlock.of(1, projectViewLines)));
     final var projectView = projectViewBuilder.build();
@@ -196,7 +200,7 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
     builder.builder().commitToProject(myProject);
   }
 
-  protected ProjectViewBuilder projectViewText() {
+  protected ProjectViewBuilder projectViewText(BazelVersion version) {
     final var builder = new ProjectViewBuilder();
 
     builder.addRootDirectory();
@@ -204,6 +208,13 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
 
     // required for Bazel 6 integration tests
     builder.addBuildFlag("--enable_bzlmod");
+
+    if (version.isAtLeast(7, 0, 0)) {
+      // required for external modules
+      builder.addBuildFlag("--incompatible_use_plus_in_repo_names");
+      // required as build and sync flag to work for both async and qsync
+      builder.addSyncFlag("--incompatible_use_plus_in_repo_names");
+    }
 
     return builder;
   }

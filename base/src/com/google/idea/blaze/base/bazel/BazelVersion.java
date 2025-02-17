@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 
 /** Bazel version */
 public class BazelVersion implements ProtoWrapper<ProjectData.BazelVersion> {
-  static final BazelVersion DEVELOPMENT = new BazelVersion(999, 999, 999);
+  public static final BazelVersion DEVELOPMENT = new BazelVersion(999, 999, 999);
   private static final Pattern PATTERN = Pattern.compile("([[0-9]\\.]+)");
 
   private final int major;
