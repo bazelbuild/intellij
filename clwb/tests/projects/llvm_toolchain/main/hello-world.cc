@@ -1,6 +1,5 @@
-#include <iostream>
+#include <wasi/wasip2.h>
 
 int main() {
-    std::cout << "Hello, there!" << std::endl;
-    return 0;
+    return FILESYSTEM_ERROR_CODE_IO;
 }

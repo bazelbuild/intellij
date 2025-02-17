@@ -119,7 +119,7 @@ public class BazelRenderJarBuilder implements RenderJarBuilder {
           public void onSuccess(@Nullable Boolean unused) {
             BlazeBuildListener.EP_NAME
                 .extensions()
-                .forEach(ep -> ep.buildCompleted(project, buildOutputs));
+                .forEach(ep -> ep.buildCompleted(project, buildOutputs.buildResult));
           }
 
           @Override
@@ -128,7 +128,7 @@ public class BazelRenderJarBuilder implements RenderJarBuilder {
             // print logs as required.
             BlazeBuildListener.EP_NAME
                 .extensions()
-                .forEach(ep -> ep.buildCompleted(project, buildOutputs));
+                .forEach(ep -> ep.buildCompleted(project, buildOutputs.buildResult));
           }
         },
         MoreExecutors.directExecutor());

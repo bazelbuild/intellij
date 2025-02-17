@@ -3,6 +3,7 @@ package com.google.idea.blaze.clwb;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 
+import com.google.idea.blaze.clwb.base.ProjectViewBuilder;
 import com.google.idea.blaze.clwb.base.ClwbIntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
@@ -24,12 +25,9 @@ public class VirtualIncludesTest extends ClwbIntegrationTestCase {
   }
 
   @Override
-  protected String projectViewText() {
+  protected ProjectViewBuilder projectViewText() {
     // required for bazel 5
-    return super.projectViewText() + """
-build_flags:
-  --experimental_cc_implementation_deps
-    """;
+    return super.projectViewText().addBuildFlag("--experimental_cc_implementation_deps");
   }
 
   private @Nullable VirtualFile findHeader(String fileName, OCCompilerSettings settings) {

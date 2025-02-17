@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.buildview.BuildViewMigration;
 import com.google.idea.blaze.base.scope.output.StateUpdate;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.common.PrintOutput;
@@ -101,6 +102,11 @@ final class ToolWindowTabs {
     TasksTreeConsoleModel model = TasksTreeConsoleModel.create(project, behaviour);
     Content content = createToolWindowContent(model, type);
     getContentManager().addContent(content);
+
+    if (type == Task.Type.SYNC) {
+      BuildViewMigration.addPromotionTooltip(project, content);
+    }
+
     return new Tab(behaviour, content);
   }
 
@@ -113,6 +119,7 @@ final class ToolWindowTabs {
                 new TasksTreeConsoleView(model, viewParentDisposable).getComponent(),
                 type.getDisplayName(),
                 false);
+
     content.setCloseable(false);
     content.setDisposer(viewParentDisposable);
     return content;
