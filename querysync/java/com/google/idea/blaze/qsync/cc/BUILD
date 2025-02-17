@@ -27,10 +27,7 @@ java_library(
 proto_library(
     name = "cc_compilation_info_proto",
     srcs = ["cc_compilation_info.proto"],
-    visibility = [
-        "//proto:__pkg__",
-        "//querysync/java/com/google/idea/blaze/qsync/deps:__pkg__",
-    ],
+    visibility = ["//proto:__pkg__"],
 )
 
 java_proto_library(
