@@ -3,8 +3,9 @@ package com.google.idea.blaze.base.buildview
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.settings.BlazeUserSettings
+import com.google.idea.blaze.base.util.pluginProjectScope
 import com.intellij.build.BuildContentManager
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.wm.impl.content.ContentLabel
@@ -12,6 +13,9 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.content.Content
 import com.intellij.util.asSafely
+import com.intellij.util.concurrency.ThreadingAssertions
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.swing.JComponent
 
 private val PROMO_TOOLTIP_ID = "com.google.idea.blaze.base.buildview.promo"
@@ -50,19 +54,19 @@ object BuildViewMigration {
   }
 
   private fun enableBuildView(project: Project) {
-    // enable the build view in the settings
-    BlazeUserSettings.getInstance().useNewSyncView = true
+    pluginProjectScope(project).launch(Dispatchers.EDT) {
+      // enable the build view in the settings
+      BlazeUserSettings.getInstance().useNewSyncView = true
 
-    // show the user the build tool window
-    invokeLater {
-      if (!project.isDisposed) {
-        BuildContentManager.getInstance(project).getOrCreateToolWindow().activate(null)
-      }
+      // show the user the build tool window
+      BuildContentManager.getInstance(project).getOrCreateToolWindow().activate(null)
     }
   }
 
   @JvmStatic
   fun addPromotionTooltip(project: Project, content: Content) {
+    ThreadingAssertions.softAssertEventDispatchThread()
+
     val label = findContentLabel(content) ?: return
 
     GotItTooltip(PROMO_TOOLTIP_ID, PROMO_TOOLTIP_TEXT, content)
