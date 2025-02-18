@@ -28,6 +28,11 @@ public class BlazeGoRunConfigurationHandlerProvider
     implements BlazeCommandRunConfigurationHandlerProvider {
 
   @Override
+  public String getDisplayLabel() {
+    return "Go (Binary or Test)";
+  }
+
+  @Override
   public boolean canHandleKind(TargetState state, @Nullable Kind kind) {
     return kind != null
         && kind.hasLanguage(LanguageClass.GO)
