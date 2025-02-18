@@ -35,17 +35,10 @@ import kotlin.io.path.pathString
 private val LOG: Logger = Logger.getInstance(BazelExecService::class.java)
 
 @Service(Service.Level.PROJECT)
-class BazelExecService(private val project: Project) : Disposable {
+class BazelExecService(private val project: Project, private val scope: CoroutineScope) {
   companion object {
     @JvmStatic
     fun instance(project: Project): BazelExecService = project.service()
-  }
-
-  // #api223 use the injected scope
-  private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
-  override fun dispose() {
-    scope.cancel()
   }
 
   private fun assertNonBlocking() {
