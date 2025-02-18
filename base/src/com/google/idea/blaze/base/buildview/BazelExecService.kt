@@ -79,7 +79,6 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
       .withExePath(cmd.binaryPath)
       .withParameters(cmd.toArgumentList())
       .apply { setWorkDirectory(root.pathString) } // required for backwards compatability
-      .withRedirectErrorStream(true)
 
     var handler: OSProcessHandler? = null
     val exitCode = try {
