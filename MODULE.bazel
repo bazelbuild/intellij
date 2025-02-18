@@ -48,7 +48,7 @@ bazel_dep(
 
 bazel_dep(
     name = "rules_bazel_integration_test",
-    version = "0.31.0",
+    version = "0.32.0",
     dev_dependency = True,
 )
 
