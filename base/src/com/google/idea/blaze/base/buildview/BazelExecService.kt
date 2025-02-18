@@ -17,6 +17,7 @@ import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -78,7 +79,7 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
       .withInitialRows(size.rows)
       .withExePath(cmd.binaryPath)
       .withParameters(cmd.toArgumentList())
-      .apply { setWorkDirectory(root.pathString) } // required for backwards compatability
+      .withWorkDirectory(root.pathString)
 
     var handler: OSProcessHandler? = null
     val exitCode = try {
@@ -88,7 +89,12 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
 
       handler.addProcessListener(object : ProcessListener {
         override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-          ctx.output(PrintOutput.process(event.text))
+          if (outputType === ProcessOutputTypes.SYSTEM) {
+            ctx.println(event.text)
+          } else {
+            ctx.output(PrintOutput.process(event.text))
+          }
+
           LOG.debug("BUILD OUTPUT: " + event.text)
         }
       })
