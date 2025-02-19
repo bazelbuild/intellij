@@ -43,7 +43,7 @@ def expand_make_variables(attr_name, expression, ctx, additional_subs = {}):
     rv = ""
     substitutions = {}
 
-    # TODO: b/394297448 Remove the `hasattr` check when ctx.rule.var is fully released.
+    # TODO: Bazel 9.x - Remove the `hasattr` check when ctx.rule.var is in released Bazel.
     if hasattr(ctx.rule, "var"):
         substitutions.update(ctx.rule.var)
     substitutions.update(ctx.var)
