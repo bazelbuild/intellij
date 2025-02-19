@@ -14,12 +14,7 @@ proto_library(
 
 java_proto_library(
     name = "language_class_java_proto",
-    visibility = [
-        "//base:__subpackages__",
-        "//cpp:__subpackages__",
-        "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__subpackages__",
-        "//querysync:__subpackages__",
-    ],
+    visibility = ["//querysync:__subpackages__"],
     deps = [":language_class_proto"],
 )
 
@@ -32,7 +27,6 @@ proto_library(
 java_proto_library(
     name = "project_java_proto",
     visibility = [
-        "//base:__subpackages__",
         "//cpp:__subpackages__",
         "//querysync:__subpackages__",
     ],
