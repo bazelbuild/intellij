@@ -1,3 +1,6 @@
+> [!NOTE]  
+> This branch is deprecated, only the master branch is actively maintained.
+
 # An IntelliJ plugin for [Bazel](http://bazel.build) projects
 
 This is an early-access version of our Bazel plugins for IntelliJ,
