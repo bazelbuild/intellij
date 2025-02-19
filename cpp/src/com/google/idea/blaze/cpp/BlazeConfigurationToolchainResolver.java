@@ -425,7 +425,8 @@ public final class BlazeConfigurationToolchainResolver {
         cFlagsBuilder.build(),
         cppFlagsBuilder.build(),
         compilerVersion,
-        compilerEnv.build());
+        compilerEnv.build(),
+        toolchainIdeInfo.getBuiltInIncludeDirectories());
   }
 
   private static <T> ListenableFuture<T> submit(Callable<T> callable) {

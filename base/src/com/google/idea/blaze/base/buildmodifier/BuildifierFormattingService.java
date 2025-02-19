@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.intellij.formatting.service.AsyncDocumentFormattingService;
 import com.intellij.formatting.service.AsyncFormattingRequest;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -44,8 +45,10 @@ public final class BuildifierFormattingService extends AsyncDocumentFormattingSe
   @Override
   @Nullable
   protected FormattingTask createFormattingTask(AsyncFormattingRequest request) {
-    BuildFile buildFile = (BuildFile) request.getContext().getContainingFile();
-    return getBinary()
+    final var ctx = request.getContext();
+
+    BuildFile buildFile = (BuildFile) ctx.getContainingFile();
+    return getBinary(ctx.getProject())
         .map(binary -> BuildFileFormatter.getCommandLineArgs(binary, buildFile))
         .map(args -> new BuildifierFormattingTask(request, args))
         .orElse(null);
@@ -72,12 +75,12 @@ public final class BuildifierFormattingService extends AsyncDocumentFormattingSe
   public boolean canFormat(PsiFile file) {
     return useNewBuildifierFormattingService.isEnabled()
         && file instanceof BuildFile
-        && getBinary().isPresent();
+        && getBinary(file.getProject()).isPresent();
   }
 
-  private static Optional<String> getBinary() {
+  private static Optional<String> getBinary(Project project) {
     for (BuildifierBinaryProvider provider : BuildifierBinaryProvider.EP_NAME.getExtensions()) {
-      String path = provider.getBuildifierBinaryPath();
+      String path = provider.getBuildifierBinaryPath(project);
       if (!Strings.isNullOrEmpty(path)) {
         return Optional.of(path);
       }

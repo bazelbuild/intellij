@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.command;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -77,19 +78,14 @@ public final class BlazeFlags {
     for (BuildFlagsProvider buildFlagsProvider : BuildFlagsProvider.EP_NAME.getExtensions()) {
       buildFlagsProvider.addBuildFlags(project, projectViewSet, command, invocationContext, flags);
     }
-    if (command != BlazeCommandName.MOD) {
-      flags.addAll(expandBuildFlags(projectViewSet.listItems(BuildFlagsSection.KEY)));
-    }
+
     if (invocationContext.type() == ContextType.Sync) {
       for (BuildFlagsProvider buildFlagsProvider : BuildFlagsProvider.EP_NAME.getExtensions()) {
         buildFlagsProvider.addSyncFlags(
             project, projectViewSet, command, context, invocationContext, flags);
       }
-      flags.addAll(expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY)));
     }
-    if (BlazeCommandName.TEST.equals(command)) {
-      flags.addAll(expandBuildFlags(projectViewSet.listItems(TestFlagsSection.KEY)));
-    }
+
     return flags;
   }
 

@@ -23,6 +23,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.model.ExternalWorkspaceData;
+import com.google.idea.blaze.base.model.ExternalWorkspaceDataProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -213,14 +216,21 @@ public class ProjectLoader {
             QuerySync.USE_NEW_RES_DIR_LOGIC::getValue,
             () -> !QuerySync.EXTRACT_RES_PACKAGES_AT_BUILD_TIME.getValue());
     QueryRunner queryRunner = createQueryRunner(buildSystem);
+    BazelVersionHandler versionHandler =
+        new BazelVersionHandler(buildSystem, buildSystem.getBuildInvoker(project, context));
     ProjectQuerier projectQuerier =
         createProjectQuerier(
             projectRefresher,
             queryRunner,
             vcsHandler,
-            new BazelVersionHandler(buildSystem, buildSystem.getBuildInvoker(project, context)));
+            versionHandler);
     QuerySyncSourceToTargetMap sourceToTargetMap =
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
+    BlazeInfo blazeInfo =
+        new BazelInfoHandler(buildSystem.getBuildInvoker(project, context))
+            .getBazelInfo();
+    ExternalWorkspaceData externalWorkspaceData = ExternalWorkspaceDataProvider.getInstance(project)
+        .getExternalWorkspaceData(context, projectViewSet, versionHandler.getBazelVersion(), blazeInfo);
 
     QuerySyncProject querySyncProject =
         new QuerySyncProject(
@@ -247,7 +257,9 @@ public class ProjectLoader {
             sourceToTargetMap,
             projectViewManager,
             buildSystem,
-            projectTransformRegistry);
+            projectTransformRegistry,
+            blazeInfo,
+            externalWorkspaceData);
     QuerySyncProjectListenerProvider.registerListenersFor(querySyncProject);
     projectTransformRegistry.addAll(ProjectProtoTransformProvider.getAll(latestProjectDef));
 

@@ -4,7 +4,9 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 import static com.google.idea.blaze.clwb.base.Assertions.assertDefine;
 
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.BazelVersionRule;
+import com.google.idea.blaze.clwb.base.ProjectViewBuilder;
 import com.google.idea.blaze.clwb.base.ClwbIntegrationTestCase;
 import com.google.idea.blaze.clwb.base.OSRule;
 import com.intellij.util.system.OS;
@@ -25,6 +27,12 @@ public class LlvmToolchainTest extends ClwbIntegrationTestCase {
   @Rule
   public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
 
+  @Override
+  protected ProjectViewBuilder projectViewText(BazelVersion version) {
+    // required because this test targets wasm
+    return super.projectViewText(version).addBuildFlag("--platforms=@toolchains_llvm//platforms:wasm32");
+  }
+
   @Test
   public void testClwb() {
     final var errors = runSync(defaultSyncParams().build());
@@ -41,5 +49,6 @@ public class LlvmToolchainTest extends ClwbIntegrationTestCase {
     assertDefine("__VERSION__", compilerSettings).startsWith("\"Clang 19.1.0");
 
     assertContainsHeader("iostream", compilerSettings);
+    assertContainsHeader("wasi/wasip2.h", compilerSettings);
   }
 }

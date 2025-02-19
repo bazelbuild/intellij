@@ -11,7 +11,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "rules_java",
-    version = "8.3.1",
+    version = "8.9.0",
 )
 bazel_dep(
     name = "rules_python",
@@ -48,7 +48,7 @@ bazel_dep(
 
 bazel_dep(
     name = "rules_bazel_integration_test",
-    version = "0.31.0",
+    version = "0.32.0",
     dev_dependency = True,
 )
 
