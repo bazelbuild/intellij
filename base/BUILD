@@ -30,6 +30,7 @@ kt_jvm_library(
         "//aspect:aspect_lib",
         "//aspect:aspect_template_lib",
         "//aspect:aspect_qsync_lib",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
         "//common/actions",
         "//common/experiments",
         "//common/settings",
@@ -376,7 +377,6 @@ java_library(
     testonly = 1,
     srcs = [
         "src/com/google/idea/blaze/base/async/FutureUtil.java",
-        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifactParser.java",
         "src/com/google/idea/blaze/base/command/buildresult/RemoteOutputArtifact.java",
         "src/com/google/idea/blaze/base/ideinfo/ProtoWrapper.java",
         "src/com/google/idea/blaze/base/prefetch/DefaultPrefetcher.java",
@@ -386,6 +386,7 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":base",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
         "//proto:proto_deps",
         "//shared:artifact",
         "//intellij_platform_sdk:plugin_api",
@@ -468,11 +469,12 @@ java_library(
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":base",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
+        "//proto:proto_deps",
         "//shared:artifact",
         "//shared:exception",
         "//shared/java/com/google/idea/blaze/common",
         "//testing:lib",
-        "//third_party/bazel/src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_java_proto",
         "//third_party/java/auto_value",
         "//third_party/java/junit",
         "//intellij_platform_sdk:jsr305",
@@ -521,6 +523,7 @@ intellij_unit_test_suite(
     deps = [
         ":base",
         ":unit_test_utils",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
         "//common/util:process",

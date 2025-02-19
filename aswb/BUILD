@@ -116,6 +116,7 @@ java_library(
     ),
     deps = [
         "//base",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
         "//common/experiments",
         "//cpp",
         "//java",
