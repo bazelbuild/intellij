@@ -42,10 +42,7 @@ def expand_make_variables(attr_name, expression, ctx, additional_subs = {}):
     current_offset = 0
     rv = ""
     substitutions = {}
-
-    # TODO: b/394297448 Remove the `hasattr` check when ctx.rule.var is fully released.
-    if hasattr(ctx.rule, "var"):
-        substitutions.update(ctx.rule.var)
+    substitutions.update(ctx.rule.var)
     substitutions.update(ctx.var)
 
     # make variables from ctx.var can be overridden
