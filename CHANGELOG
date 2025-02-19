@@ -1,8 +1,14 @@
 v2025.02.18
 ===========
-
-
-
+Fixes:
+* Replace VFS with a manifest file for copying aspects #7259
+* Add cfg exec to java runtime required by aspects #7301
+* handling for debugging python test targets with transitions #7198
+* Open build toolwindow when the sync ends with an error #7304
+* CLion support for custom sysroot #7274
+* Followup: External modules navigation in starlark files #7294
+* [AOSP-pick] Remove 2 options of query sync settings #7264
+* [AOSP-pick] Make run configurations configurable #7275
 
 v2025.02.04
 ===========
