@@ -118,7 +118,7 @@ public class Jdks {
                 .withProject(project)
                 .withSdkTypeFilter(type -> type instanceof JavaSdkType)
                 .updateProjectSdkFromSelection()
-                .onPopupClosed(() -> notification.hideBalloon())
+                .onPopupClosed(notification::hideBalloon)
                 .buildPopup()
                 .showPopup(e);
       }
