@@ -229,12 +229,12 @@ public final class BuildPluginBeforeRunTaskProvider
                         invoker
                             .getCommandRunner()
                             .run(project, command, buildResultHelper, context, ImmutableMap.of());
-                    if (!outputs.buildResult.equals(BuildResult.SUCCESS)) {
+                    if (!outputs.buildResult().equals(BuildResult.SUCCESS)) {
                       context.setHasError();
                     }
                     ListenableFuture<Void> unusedFuture =
                         FileCaches.refresh(
-                            project, context, BlazeBuildOutputs.noOutputs(outputs.buildResult));
+                            project, context, BlazeBuildOutputs.noOutputs(outputs.buildResult()));
                     try {
                       deployer.reportBuildComplete(outputs);
                     } catch (GetArtifactsException e) {
