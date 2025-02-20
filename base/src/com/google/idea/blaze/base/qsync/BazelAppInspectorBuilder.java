@@ -80,7 +80,7 @@ public class BazelAppInspectorBuilder implements AppInspectorBuilder {
 
   private AppInspectorInfo createAppInspectorInfo(BlazeBuildOutputs blazeBuildOutputs) {
     ImmutableList<OutputArtifact> appInspectorJars =
-        blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("default"));
+        blazeBuildOutputs.getOutputGroupArtifacts("default");
 
     return AppInspectorInfo.create(appInspectorJars, blazeBuildOutputs.buildResult.exitCode);
   }
