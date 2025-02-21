@@ -1,4 +1,4 @@
-package com.google.idea.blaze.clwb.base;
+package com.google.idea.testing.headless;
 
 import static com.google.common.truth.Truth.assertThat;
 import static junit.framework.Assert.fail;
@@ -40,18 +40,13 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import com.google.idea.blaze.base.sync.SyncPhaseCoordinator;
-import com.jetbrains.cidr.lang.CLanguageKind;
-import com.jetbrains.cidr.lang.OCLanguageUtils;
-import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
-import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
-import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
+public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
   protected VirtualFile myProjectRoot;
 
   /**
@@ -325,27 +320,7 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
       final var psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
       assertThat(psiFile).isNotNull();
 
-      return OCLanguageUtils.tryGetOCFile(psiFile);
+      return psiFile;
     });
-  }
-
-  protected OCWorkspace getWorkspace() {
-    return OCWorkspace.getInstance(myProject);
-  }
-
-  protected OCResolveConfiguration findFileResolveConfiguration(String relativePath) {
-    final var file = findProjectFile(relativePath);
-
-    final var configurations = getWorkspace().getConfigurationsForFile(file);
-    assertThat(configurations).hasSize(1);
-
-    return configurations.get(0);
-  }
-
-  protected OCCompilerSettings findFileCompilerSettings(String relativePath) {
-    final var file = findProjectFile(relativePath);
-    final var resolveConfiguration = findFileResolveConfiguration(relativePath);
-
-    return resolveConfiguration.getCompilerSettings(CLanguageKind.CPP, file);
   }
 }

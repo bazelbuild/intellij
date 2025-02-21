@@ -1,4 +1,4 @@
-package com.google.idea.blaze.clwb.base;
+package com.google.idea.testing.headless;
 
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import java.util.Optional;

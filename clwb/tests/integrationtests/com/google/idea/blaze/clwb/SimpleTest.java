@@ -5,12 +5,12 @@ import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsPattern;
 
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
+import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
-import com.google.idea.blaze.clwb.base.ClwbIntegrationTestCase;
 import java.io.IOException;
 import java.nio.file.Files;
 import org.junit.Test;
@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class SimpleTest extends ClwbIntegrationTestCase {
+public class SimpleTest extends ClwbHeadlessTestCase {
 
   @Test
   public void testClwb() throws IOException {
