@@ -5,10 +5,10 @@ import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
-import com.google.idea.blaze.clwb.base.BazelVersionRule;
-import com.google.idea.blaze.clwb.base.ClwbIntegrationTestCase;
-import com.google.idea.blaze.clwb.base.OSRule;
-import com.google.idea.blaze.clwb.base.ProjectViewBuilder;
+import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
+import com.google.idea.testing.headless.BazelVersionRule;
+import com.google.idea.testing.headless.OSRule;
+import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.system.OS;
 import java.util.concurrent.ExecutionException;
@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class QuerySyncTest extends ClwbIntegrationTestCase {
+public class QuerySyncTest extends ClwbHeadlessTestCase {
 
   // currently query sync only works on linux, TODO: fix mac and windows
   @Rule
