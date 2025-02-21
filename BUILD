@@ -29,6 +29,7 @@ test_suite(
         "//dart:unit_tests",
         "//ijwb:integration_tests",
         "//ijwb:unit_tests",
+        "//ijwb:headless_tests",
         "//java:integration_tests",
         "//java:unit_tests",
         "//kotlin:integration_tests",
