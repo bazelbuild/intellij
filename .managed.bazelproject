@@ -16,6 +16,7 @@ additional_languages:
 test_sources:
   */tests/unittests*
   */tests/integrationtests*
+  */tests/headlesstests*
 
 build_flags:
   # Choose one target ij product:
