@@ -114,20 +114,21 @@ public class BuildGraphDataTest {
                 NOOP_CONTEXT,
                 ImmutableSet.of())
             .parse();
+    var expectedPackagePath = TESTDATA_ROOT.resolve("nodeps");
     assertThat(graph.allTargets())
-        .containsExactly(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps"));
+        .containsExactly(Label.fromWorkspacePackageAndName("", expectedPackagePath, "nodeps"));
     assertThat(graph.sourceFileLabels())
         .containsExactly(
-            Label.of("//" + TESTDATA_ROOT + "/nodeps:TestClassNoDeps.java"),
-                     Label.of("//" + TESTDATA_ROOT + "/nodeps:BUILD"));
+            Label.fromWorkspacePackageAndName("", expectedPackagePath, "TestClassNoDeps.java"),
+                     Label.fromWorkspacePackageAndName("", expectedPackagePath, "BUILD"));
     assertThat(graph.getJavaSourceFiles())
         .containsExactly(TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java"));
     assertThat(graph.getAndroidSourceFiles()).isEmpty();
     assertThat(graph.getSourceFileOwners(TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java")))
-        .containsExactly(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps"));
+        .containsExactly(Label.fromWorkspacePackageAndName("", expectedPackagePath, "nodeps"));
     assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java")))
         .isEmpty();
-    assertThat(graph.targetMap().get(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps")).languages())
+    assertThat(graph.targetMap().get(Label.fromWorkspacePackageAndName("", expectedPackagePath, "nodeps")).languages())
         .containsExactly(QuerySyncLanguage.JAVA);
   }
 
@@ -155,7 +156,7 @@ public class BuildGraphDataTest {
             .parse();
     // Sanity check:
     assertThat(graph.sourceFileLabels())
-        .contains(Label.of("//" + TESTDATA_ROOT + "/nodeps:TestClassNoDeps.java"));
+        .contains(Label.fromWorkspacePackageAndName("", TESTDATA_ROOT.resolve("nodeps"), "TestClassNoDeps.java"));
     assertThat(
             graph.getFileDependencies(
                 TESTDATA_ROOT.resolve("internaldep/TestClassInternalDep.java")))
@@ -172,7 +173,7 @@ public class BuildGraphDataTest {
             .parse();
     // Sanity check:
     assertThat(graph.sourceFileLabels())
-        .contains(Label.of("//" + TESTDATA_ROOT + "/externaldep:TestClassExternalDep.java"));
+        .contains(Label.fromWorkspacePackageAndName("", TESTDATA_ROOT.resolve("externaldep"), "TestClassExternalDep.java"));
     assertThat(
             graph.getFileDependencies(
                 TESTDATA_ROOT.resolve("transitivedep/TestClassTransitiveDep.java")))
@@ -187,21 +188,22 @@ public class BuildGraphDataTest {
                 NOOP_CONTEXT,
                 ImmutableSet.of())
             .parse();
-    assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("protodep/TestClassProtoDep.java")))
+    Path expectedPackagePath = TESTDATA_ROOT.resolve("protodep");
+    assertThat(graph.getFileDependencies(expectedPackagePath.resolve("TestClassProtoDep.java")))
         .containsExactly(
-            Label.of("//" + TESTDATA_ROOT + "/protodep:proto_java_proto"),
-            Label.of("//" + TESTDATA_ROOT + "/protodep:indirect_proto_java_proto"),
+            Label.fromWorkspacePackageAndName("", expectedPackagePath, "proto_java_proto"),
+            Label.fromWorkspacePackageAndName("", expectedPackagePath, "indirect_proto_java_proto"),
             Label.of("@@bazel_tools//tools/proto:java_toolchain"));
 
-    Path protoSourceFilePath = TESTDATA_ROOT.resolve("protodep/testproto.proto");
+    Path protoSourceFilePath = expectedPackagePath.resolve("testproto.proto");
     assertThat(graph.getProtoSourceFiles()).containsExactly(protoSourceFilePath);
 
     Collection<ProjectTarget> firstConsumingTargets =
         graph.getFirstReverseDepsOfType(protoSourceFilePath, ImmutableSet.of("java_proto_library"));
     assertThat(firstConsumingTargets.stream().map(ProjectTarget::label))
         .containsExactly(
-            Label.of("//" + TESTDATA_ROOT + "/protodep:proto_java_proto"),
-            Label.of("//" + TESTDATA_ROOT + "/protodep:indirect_proto_java_proto"));
+            Label.fromWorkspacePackageAndName("", expectedPackagePath, "proto_java_proto"),
+            Label.fromWorkspacePackageAndName("", expectedPackagePath, "indirect_proto_java_proto"));
   }
 
   @Test
@@ -250,21 +252,22 @@ public class BuildGraphDataTest {
                 NOOP_CONTEXT,
                 ImmutableSet.of())
             .parse();
+    Path expectedPackagePath = TESTDATA_ROOT.resolve("multitarget");
     assertThat(graph.allTargets())
         .containsExactly(
-            Label.of("//" + TESTDATA_ROOT + "/multitarget:nodeps"),
-            Label.of("//" + TESTDATA_ROOT + "/multitarget:externaldep"));
+            Label.fromWorkspacePackageAndName("", expectedPackagePath, "nodeps"),
+            Label.fromWorkspacePackageAndName("", expectedPackagePath, "externaldep"));
     // Sanity check:
     assertThat(graph.getJavaSourceFiles())
-        .contains(TESTDATA_ROOT.resolve("multitarget/TestClassSingleTarget.java"));
+        .contains(expectedPackagePath.resolve("TestClassSingleTarget.java"));
     assertThat(
-            graph.getSourceFileOwners(TESTDATA_ROOT.resolve("multitarget/TestClassMultiTarget.java")))
+            graph.getSourceFileOwners(expectedPackagePath.resolve("TestClassMultiTarget.java")))
         .containsExactly(
-            Label.of("//" + TESTDATA_ROOT + "/multitarget:nodeps"),
-            Label.of("//" + TESTDATA_ROOT + "/multitarget:externaldep"));
+            Label.fromWorkspacePackageAndName("", expectedPackagePath, "nodeps"),
+            Label.fromWorkspacePackageAndName("", expectedPackagePath, "externaldep"));
     assertThat(
             graph.getFileDependencies(
-                TESTDATA_ROOT.resolve("multitarget/TestClassMultiTarget.java")))
+                    expectedPackagePath.resolve("TestClassMultiTarget.java")))
         .contains(Label.of("@@rules_jvm_external++maven+com_google_guava_guava//jar:jar"));
   }
 
@@ -302,17 +305,18 @@ public class BuildGraphDataTest {
         new BlazeQueryParser(
                 getQuerySummary(TestData.CC_LIBRARY_QUERY), NOOP_CONTEXT, ImmutableSet.of())
             .parse();
+    Path expectedPackagePath = TESTDATA_ROOT.resolve("cc");
     assertThat(graph.sourceFileLabels())
         .containsExactly(
-            Label.of("//" + TESTDATA_ROOT + "/cc:TestClass.cc"),
-            Label.of("//" + TESTDATA_ROOT + "/cc:TestClass.h"),
-            Label.of("//" + TESTDATA_ROOT + "/cc:BUILD"));
+            Label.fromWorkspacePackageAndName("", expectedPackagePath, "TestClass.cc"),
+            Label.fromWorkspacePackageAndName("", expectedPackagePath, "TestClass.h"),
+            Label.fromWorkspacePackageAndName("", expectedPackagePath, "BUILD"));
     assertThat(graph.getJavaSourceFiles()).isEmpty();
     assertThat(graph.getAndroidSourceFiles()).isEmpty();
-    assertThat(graph.getSourceFileOwners(TESTDATA_ROOT.resolve("cc/TestClass.cc")))
-        .containsExactly(Label.of("//" + TESTDATA_ROOT + "/cc:cc"));
-    assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("cc/TestClass.cc"))).isEmpty();
-    assertThat(graph.targetMap().get(Label.of("//" + TESTDATA_ROOT + "/cc:cc")).languages())
+    assertThat(graph.getSourceFileOwners(expectedPackagePath.resolve("TestClass.cc")))
+        .containsExactly(Label.fromWorkspacePackageAndName("", expectedPackagePath, "cc"));
+    assertThat(graph.getFileDependencies(expectedPackagePath.resolve("TestClass.cc"))).isEmpty();
+    assertThat(graph.targetMap().get(Label.fromWorkspacePackageAndName("", expectedPackagePath, "cc")).languages())
         .containsExactly(QuerySyncLanguage.CC);
   }
 
@@ -323,27 +327,25 @@ public class BuildGraphDataTest {
         BuildGraphs.forTestProject(TestData.JAVA_LIBRARY_TRANSITIVE_INTERNAL_DEP_QUERY);
     assertThat(
             graph.getSameLanguageTargetsDependingOn(
-                ImmutableSet.of(Label.of("//" + TestData.ROOT.resolve("nodeps:nodeps")))))
+                ImmutableSet.of(Label.fromWorkspacePackageAndName("", TestData.ROOT.resolve("nodeps"), "nodeps"))))
         .containsExactly(
-            Label.of("//" + TestData.ROOT.resolve("nodeps:nodeps")),
-            Label.of("//" + TestData.ROOT.resolve("internaldep:internaldep")));
+            Label.fromWorkspacePackageAndName("", TestData.ROOT.resolve("nodeps"), "nodeps"),
+            Label.fromWorkspacePackageAndName("", TestData.ROOT.resolve("internaldep"), "internaldep"));
 
     assertThat(
             graph.getSameLanguageTargetsDependingOn(
-                ImmutableSet.of(Label.of("//" + TestData.ROOT.resolve("internaldep:internaldep")))))
+                ImmutableSet.of(Label.fromWorkspacePackageAndName("", TestData.ROOT.resolve("internaldep"), "internaldep"))))
         .containsExactly(
-            Label.of("//" + TestData.ROOT.resolve("internaldep:internaldep")),
-            Label.of("//" + TestData.ROOT.resolve("transitiveinternaldep:transitiveinternaldep")));
+                Label.fromWorkspacePackageAndName("", TestData.ROOT.resolve("internaldep"), "internaldep"),
+                Label.fromWorkspacePackageAndName("", TestData.ROOT.resolve("transitiveinternaldep"), "transitiveinternaldep"));
 
     assertThat(
             graph.getSameLanguageTargetsDependingOn(
                 ImmutableSet.of(
-                    Label.of(
-                        "//"
-                            + TestData.ROOT.resolve(
-                                "transitiveinternaldep:transitiveinternaldep")))))
+                    Label.fromWorkspacePackageAndName(
+                        "", TestData.ROOT.resolve("transitiveinternaldep"), "transitiveinternaldep"))))
         .containsExactly(
-            Label.of("//" + TestData.ROOT.resolve("transitiveinternaldep:transitiveinternaldep")));
+            Label.fromWorkspacePackageAndName("", TestData.ROOT.resolve("transitiveinternaldep"), "transitiveinternaldep"));
   }
 
   @Test
