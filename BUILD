@@ -81,21 +81,3 @@ test_suite(
     ],
 )
 # END-EXTERNAL
-
-# ASwB tests, run with an Android Studio plugin SDK
-test_suite(
-    name = "aswb_tests",
-    tests = [
-        "//aswb:integration_tests",
-        "//aswb:unit_tests",
-        "//base:integration_tests",
-        "//base:unit_tests",
-        "//cpp:integration_tests",
-        "//cpp:unit_tests",
-        "//dart:unit_tests",
-        "//java:integration_tests",
-        "//java:unit_tests",
-        "//skylark:unit_tests",
-    ],
-    visibility = DEFAULT_TEST_VISIBILITY,
-)
