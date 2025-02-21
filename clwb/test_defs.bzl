@@ -16,7 +16,7 @@ def clwb_integration_test(name, project, srcs, deps = []):
             # disables the default bazel security manager, causes tests to fail on windows
             "-Dcom.google.testing.junit.runner.shouldInstallTestSecurityManager=false",
             # fixes preferences not writable on mac
-            "-Djava.util.prefs.PreferencesFactory=com.google.idea.blaze.clwb.base.InMemoryPreferencesFactory",
+            "-Djava.util.prefs.PreferencesFactory=com.google.idea.testing.headless.InMemoryPreferencesFactory",
             # suppressed plugin sets for classic, radler is currently disabled for tests
             "-Didea.suppressed.plugins.set.classic=org.jetbrains.plugins.clion.radler,intellij.rider.cpp.debugger,intellij.rider.plugins.clion.radler.cwm",
             "-Didea.suppressed.plugins.set.selector=classic",
@@ -32,6 +32,7 @@ def clwb_integration_test(name, project, srcs, deps = []):
             "//sdkcompat",
             "//third_party/java/junit",
             "@org_opentest4j_opentest4j//jar",
+            "//testing/src/com/google/idea/testing/headless"
         ],
     )
 

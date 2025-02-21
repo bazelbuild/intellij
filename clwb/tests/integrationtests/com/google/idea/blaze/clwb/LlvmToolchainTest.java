@@ -5,10 +5,10 @@ import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 import static com.google.idea.blaze.clwb.base.Assertions.assertDefine;
 
 import com.google.idea.blaze.base.bazel.BazelVersion;
-import com.google.idea.blaze.clwb.base.BazelVersionRule;
-import com.google.idea.blaze.clwb.base.ProjectViewBuilder;
-import com.google.idea.blaze.clwb.base.ClwbIntegrationTestCase;
-import com.google.idea.blaze.clwb.base.OSRule;
+import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
+import com.google.idea.testing.headless.BazelVersionRule;
+import com.google.idea.testing.headless.ProjectViewBuilder;
+import com.google.idea.testing.headless.OSRule;
 import com.intellij.util.system.OS;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 import org.junit.Rule;
@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class LlvmToolchainTest extends ClwbIntegrationTestCase {
+public class LlvmToolchainTest extends ClwbHeadlessTestCase {
 
   // llvm toolchain currently does not support windows, otherwise this test should be fine to run on windows
   @Rule
