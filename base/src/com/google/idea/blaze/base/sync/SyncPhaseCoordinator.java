@@ -535,7 +535,7 @@ public final class SyncPhaseCoordinator {
     if (buildOutputs == null || !syncBuildResult.hasValidOutputs()) {
       return SyncResult.FAILURE;
     }
-    if (buildOutputs.buildResult.status == Status.FATAL_ERROR) {
+    if (buildOutputs.buildResult().status == Status.FATAL_ERROR) {
       if (BuildPhaseSyncTask.continueSyncOnOom.getValue()) {
         context.output(
             PrintOutput.error(
@@ -546,7 +546,7 @@ public final class SyncPhaseCoordinator {
         return SyncResult.FAILURE;
       }
     }
-    if (buildOutputs.buildResult.status == BuildResult.Status.BUILD_ERROR) {
+    if (buildOutputs.buildResult().status == BuildResult.Status.BUILD_ERROR) {
       final var message = String.format(
           "The project may not be fully updated or resolve until fixed. "
               + "If the errors are from your working set, please uncheck "
