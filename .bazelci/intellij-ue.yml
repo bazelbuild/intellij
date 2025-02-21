@@ -45,6 +45,11 @@ tasks:
       - --define=ij_product=intellij-ue-oss-under-dev
     build_targets:
       - //ijwb/...
+    test_flags:
+      - --define=ij_product=intellij-ue-oss-under-dev
+      - --test_output=errors
+    test_targets:
+      - //ijwb:headless_tests
     soft_fail:
       - exit_status: 1
   Querysync:
