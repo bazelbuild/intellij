@@ -38,7 +38,7 @@ tasks:
       - --define=ij_product=clion-oss-oldest-stable
       - --test_output=errors
     test_targets:
-      - //clwb:integration_tests
+      - //clwb:headless_tests
   CLion-Windows-OSS-latest-stable:
     name: CLion Windows OSS Latest Stable
     platform: windows
@@ -51,7 +51,7 @@ tasks:
       - --define=ij_product=clion-oss-latest-stable
       - --test_output=errors
     test_targets:
-      - //clwb:integration_tests
+      - //clwb:headless_tests
   CLion-MacOS-OSS-oldest-stable:
     name: CLion MacOS OSS Oldest Stable
     platform: macos_arm64
@@ -109,7 +109,7 @@ tasks:
       - --define=ij_product=clion-oss-under-dev
       - --test_output=errors
     test_targets:
-      - //clwb:integration_tests
+      - //clwb:headless_tests
     soft_fail:
       - exit_status: 1
   CLion-MacOS-OSS-under-dev:

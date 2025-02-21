@@ -4,12 +4,12 @@ load(
     "intellij_integration_test_suite",
 )
 
-def clwb_integration_test(name, project, srcs, deps = []):
+def clwb_headless_test(name, project, srcs, deps = []):
     runner = name + "_runner"
 
     intellij_integration_test_suite(
         name = runner,
-        srcs = srcs + native.glob(["tests/integrationtests/com/google/idea/blaze/clwb/base/*.java"]),
+        srcs = srcs + native.glob(["tests/headlesstests/com/google/idea/blaze/clwb/base/*.java"]),
         test_package_root = "com.google.idea.blaze.clwb",
         runtime_deps = [":clwb_bazel"],
         jvm_flags = [
