@@ -432,6 +432,11 @@ public final class SyncPhaseCoordinator {
         return;
       }
 
+      // aspects are required for builds and also during startup for the xcode query
+      if (params.syncMode().involvesBlazeBuild() || params.syncMode().equals(SyncMode.STARTUP)) {
+        AspectStorageService.of(project).prepare(context);
+      }
+
       if (params.syncMode() == SyncMode.STARTUP) {
         finishSync(
             params,
@@ -442,10 +447,6 @@ public final class SyncPhaseCoordinator {
             SyncResult.SUCCESS,
             SyncStats.builder());
         return;
-      }
-
-      if (params.syncMode().involvesBlazeBuild()) {
-        AspectStorageService.of(project).prepare(context);
       }
 
       SyncProjectState projectState = ProjectStateSyncTask.collectProjectState(project, context, params);
