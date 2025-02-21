@@ -69,7 +69,7 @@ public record Label(String workspace, String buildPackage, String name) {
     StringBuilder res = new StringBuilder();
     p.iterator().forEachRemaining(part -> res.append(part).append("/"));
     // Remove the trailing slash
-    return res.substring(0, res.length() - 1);
+    return res.isEmpty()? "" : res.substring(0, res.length() - 1);
   }
 
   public static Label fromWorkspacePackageAndName(String workspace, Path packagePath, String name) {
