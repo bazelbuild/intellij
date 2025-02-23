@@ -3,7 +3,9 @@
 # Tools needed by the bazel plugin's aspect.
 #
 
-load("@rules_java//java:defs.bzl", "java_binary", "java_library", "java_test")
+load("@rules_java//java:java_binary.bzl", "java_binary")
+load("@rules_java//java:java_library.bzl", "java_library")
+load("@rules_java//java:java_test.bzl", "java_test")
 
 package(default_visibility = ["//aspect:__pkg__"])
 
@@ -24,6 +26,7 @@ java_library(
     deps = [
         ":guava",
         "//proto:proto_deps",
+        "@com_google_protobuf//:protobuf_java",
         "@jsr305_annotations//jar",
     ],
 )
@@ -84,6 +87,7 @@ java_test(
     test_class = "com.google.idea.blaze.aspect.PackageParserTest",
     deps = [
         ":test_lib",
+        "@com_google_protobuf//:protobuf_java",
         "@error_prone_annotations//jar",
     ],
 )
