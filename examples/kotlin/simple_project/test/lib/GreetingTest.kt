@@ -21,8 +21,8 @@ internal class GreetingTest {
 
   @Test
   fun testGetMultipleGreetings() {
-    val actual = Greeting.getGreetings(arrayOf("User 1", "User 2", "User 3"))
-    val expected = arrayOf("Hello User 1!", "Hello User 2!", "Hello User 3!")
+    val actual = Greeting.getGreetings(arrayOf("User 1", "User 2", "User 4"))
+    val expected = arrayOf("Hello User 1!", "Hello User 2!", "Hello User 4!")
     assertThat(actual).asList().containsExactlyElementsIn(expected)
   }
 }
