@@ -17,6 +17,7 @@ import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -35,17 +36,10 @@ import kotlin.io.path.pathString
 private val LOG: Logger = Logger.getInstance(BazelExecService::class.java)
 
 @Service(Service.Level.PROJECT)
-class BazelExecService(private val project: Project) : Disposable {
+class BazelExecService(private val project: Project, private val scope: CoroutineScope) {
   companion object {
     @JvmStatic
     fun instance(project: Project): BazelExecService = project.service()
-  }
-
-  // #api223 use the injected scope
-  private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
-  override fun dispose() {
-    scope.cancel()
   }
 
   private fun assertNonBlocking() {
@@ -85,8 +79,7 @@ class BazelExecService(private val project: Project) : Disposable {
       .withInitialRows(size.rows)
       .withExePath(cmd.binaryPath)
       .withParameters(cmd.toArgumentList())
-      .apply { setWorkDirectory(root.pathString) } // required for backwards compatability
-      .withRedirectErrorStream(true)
+      .withWorkDirectory(root.pathString)
 
     var handler: OSProcessHandler? = null
     val exitCode = try {
@@ -96,7 +89,12 @@ class BazelExecService(private val project: Project) : Disposable {
 
       handler.addProcessListener(object : ProcessListener {
         override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-          ctx.output(PrintOutput.process(event.text))
+          if (outputType === ProcessOutputTypes.SYSTEM) {
+            ctx.println(event.text)
+          } else {
+            ctx.output(PrintOutput.process(event.text))
+          }
+
           LOG.debug("BUILD OUTPUT: " + event.text)
         }
       })
