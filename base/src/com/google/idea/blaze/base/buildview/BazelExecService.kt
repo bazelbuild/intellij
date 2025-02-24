@@ -170,7 +170,7 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
     }
   }
 
-  fun build(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): BlazeBuildOutputs {
+  fun build(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): BlazeBuildOutputs.Legacy {
     assertNonBlocking()
     LOG.assertTrue(cmdBuilder.name == BlazeCommandName.BUILD)
 
@@ -185,11 +185,11 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
       parseJob.cancelAndJoin()
 
       if (result.status == BuildResult.Status.FATAL_ERROR) {
-        return@executionScope BlazeBuildOutputs.noOutputs(result)
+        return@executionScope BlazeBuildOutputs.noOutputsForLegacy(result)
       }
 
       provider.getBepStream(Optional.empty()).use { bepStream ->
-        BlazeBuildOutputs.fromParsedBepOutput(
+        BlazeBuildOutputs.fromParsedBepOutputForLegacy(
           result,
           BuildResultParser.getBuildOutput(bepStream, Interners.STRING),
         )

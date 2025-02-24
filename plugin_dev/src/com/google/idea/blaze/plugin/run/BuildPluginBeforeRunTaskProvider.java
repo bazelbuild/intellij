@@ -225,10 +225,10 @@ public final class BuildPluginBeforeRunTaskProvider
                       return null;
                     }
                     SaveUtil.saveAllFiles();
-                    BlazeBuildOutputs outputs =
+                    BlazeBuildOutputs.Legacy outputs =
                         invoker
                             .getCommandRunner()
-                            .run(project, command, buildResultHelper, context, ImmutableMap.of());
+                            .runLegacy(project, command, buildResultHelper, context, ImmutableMap.of());
                     if (!outputs.buildResult().equals(BuildResult.SUCCESS)) {
                       context.setHasError();
                     }

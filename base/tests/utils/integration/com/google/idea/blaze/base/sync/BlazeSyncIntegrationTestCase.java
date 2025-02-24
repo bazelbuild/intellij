@@ -341,7 +341,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     }
 
     @Override
-    public BlazeBuildOutputs build(
+    public BlazeBuildOutputs.Legacy build(
         Project project,
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
@@ -353,7 +353,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         ImmutableSet<OutputGroup> outputGroups,
         BlazeInvocationContext blazeInvocationContext,
         boolean invokeParallel) {
-      return BlazeBuildOutputs.noOutputs(BuildResult.SUCCESS);
+      return BlazeBuildOutputs.noOutputsForLegacy(BuildResult.SUCCESS);
     }
   }
 
