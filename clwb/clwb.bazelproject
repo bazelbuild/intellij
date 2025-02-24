@@ -4,6 +4,7 @@ directories:
   -aswb
   -plugin_dev
   -examples
+  -clwb/tests/projects
 
 targets:
   //clwb:all
@@ -17,6 +18,7 @@ build_flags:
 test_sources:
   */tests/unittests*
   */tests/integrationtests*
+  */tests/headlesstests*
 
 additional_languages:
   kotlin

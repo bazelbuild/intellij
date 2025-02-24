@@ -2,6 +2,7 @@ directories:
   .
   -aswb/testdata
   -clwb/tests/projects
+  -ijwb/tests/projects
   -examples
 
 derive_targets_from_directories: true
@@ -16,6 +17,7 @@ additional_languages:
 test_sources:
   */tests/unittests*
   */tests/integrationtests*
+  */tests/headlesstests*
 
 build_flags:
   # Choose one target ij product:
