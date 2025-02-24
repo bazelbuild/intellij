@@ -80,7 +80,7 @@ public class BlazeBuildOutputs {
    * {@link BepArtifactData} by {@link OutputArtifact#getBazelOutRelativePath()} for all artifacts from a
    * build.
    */
-  public final ImmutableMap<String, BepArtifactData> artifacts;
+  private final ImmutableMap<String, BepArtifactData> artifacts;
 
   /** The artifacts transitively associated with each top-level target. */
   private final ImmutableSetMultimap<String, OutputArtifact> perTargetArtifacts;
@@ -109,6 +109,13 @@ public class BlazeBuildOutputs {
       .filter(a -> a.outputGroups.contains(outputGroup) && a.topLevelTargets.contains(label))
       .map(a -> a.artifact)
       .collect(toImmutableSet());
+  }
+
+  /** Returns all output artifacts. */
+  public ImmutableSet<OutputArtifact> getAllArtifacts() {
+    return artifacts.values().stream()
+        .map((it) -> it.artifact)
+        .collect(ImmutableSet.toImmutableSet());
   }
 
   @VisibleForTesting
@@ -195,5 +202,12 @@ public class BlazeBuildOutputs {
 
   public BuildResult buildResult() {
     return buildResult;
+  }
+
+  /**
+   * @return true if the build outputs are empty ().
+   */
+  public boolean isEmpty() {
+    return artifacts.isEmpty();
   }
 }
