@@ -489,7 +489,7 @@ public class BlazeCommandRunConfiguration
       }
     }
     if (handlerProvider.canHandleKind(TargetState.PENDING, null)) {
-      throw new RuntimeConfigurationError("Android Studio handler must be selected");
+      throw new RuntimeConfigurationError("A Bazel handler must be selected");
     }
   }
 
@@ -663,7 +663,7 @@ public class BlazeCommandRunConfiguration
       targetExpressionLabel = new JBLabel(UIUtil.ComponentStyle.LARGE);
       keepInSyncCheckBox = new JBCheckBox("Keep in sync with source XML");
       outputFileUi = new ConsoleOutputFileSettingsUi<>();
-      handlerLabel = new JLabel("Android Studio handler");
+      handlerLabel = new JLabel("Bazel handler:");
       handlerCombo =
         new ComboBox<>(new DefaultComboBoxModel<>(BlazeCommandRunConfigurationHandlerProvider.findHandlerProviders().stream().map(
           ProviderItem::new).toArray(ProviderItem[]::new)));
