@@ -190,7 +190,6 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
 
       provider.getBepStream(Optional.empty()).use { bepStream ->
         BlazeBuildOutputs.fromParsedBepOutputForLegacy(
-          result,
           BuildResultParser.getBuildOutput(bepStream, Interners.STRING),
         )
       }
