@@ -192,7 +192,7 @@ class GenerateDeployableJarTaskProvider
       try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
         outputs = LocalFileArtifact.getLocalFiles(
             BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
-                .getDirectArtifactsForTarget(String.format("%s_deploy.jar", target), file -> true));
+                .getDirectArtifactsForTarget(String.format("%s_deploy.jar", target)));
       }
 
       if (outputs.isEmpty()) {
