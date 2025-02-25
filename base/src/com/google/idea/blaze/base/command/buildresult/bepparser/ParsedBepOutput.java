@@ -122,12 +122,24 @@ public final class ParsedBepOutput {
         .collect(toImmutableSet());
   }
 
-  /** Returns the set of artifacts directly produced by the given target. */
+  /** Returns the set of artifacts directly produced by the given target.
+   * Deprecated since AOSP pick b228d1ef2bdb093b73203176ec8158061042505e */
+  @Deprecated
   public ImmutableSet<OutputArtifact> getDirectArtifactsForTarget(String label) {
     return targetFileSets.get(label).stream()
         .map(s -> fileSets.get(s).parsedOutputs)
         .flatMap(List::stream)
         .collect(toImmutableSet());
+  }
+
+  /** Returns the set of artifacts directly produced by the given target. */
+  public ImmutableSet<OutputArtifact> getOutputGroupTargetArtifacts(String outputGroup, String label) {
+    return fileSets.values().stream()
+      .filter(f -> f.targets.contains(label) && f.outputGroups.contains(outputGroup))
+      .map(f -> f.parsedOutputs)
+      .flatMap(List::stream)
+      .distinct()
+      .collect(toImmutableSet());
   }
 
   public ImmutableList<OutputArtifact> getOutputGroupArtifacts(String outputGroup) {
