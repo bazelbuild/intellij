@@ -15,10 +15,6 @@
  */
 package com.google.idea.blaze.java.fastbuild;
 
-import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.ImmutableMap.toImmutableMap;
-import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
-
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -68,6 +64,8 @@ import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -79,7 +77,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
-import javax.annotation.Nullable;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
 
@@ -321,7 +323,6 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     if (result.status != Status.SUCCESS) {
       throw new FastBuildTunnelException(new BlazeBuildError("Blaze failure building deploy jar"));
     }
-    Predicate<String> jarPredicate = file -> file.endsWith(deployJarLabel.targetName().toString());
 
     File deployJar;
     try (final var bepStream = resultHelper.getBepStream(Optional.empty())) {
@@ -329,7 +330,10 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
           LocalFileArtifact.getLocalFiles(
               BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
                   .getDirectArtifactsForTarget(
-                      deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData).toString(), jarPredicate));
+                      deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData).toString())
+                  .stream()
+                  .filter(artifact -> artifact.getArtifactPath().endsWith(deployJarLabel.targetName().toString()))
+                  .collect(Collectors.toUnmodifiableSet()));
       checkState(deployJarArtifacts.size() == 1);
       deployJar = deployJarArtifacts.get(0);
     } catch (GetArtifactsException e) {
@@ -338,12 +342,16 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
 
     ImmutableList<File> ideInfoFiles;
     try (final var bepStream = resultHelper.getBepStream(Optional.empty())) {
-      Predicate<String> filePredicate =
-          file -> aspectStrategy.getAspectOutputFilePredicate().test(file);
       ideInfoFiles = LocalFileArtifact.getLocalFiles(
           BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
               .getOutputGroupArtifacts(
-                  aspectStrategy.getAspectOutputGroup(), filePredicate));
+                  aspectStrategy.getAspectOutputGroup())
+              .stream()
+              .filter(artifact ->
+                  aspectStrategy.getAspectOutputFilePredicate().test(
+                      artifact.getArtifactPath().toString()
+                  )
+              ).collect(Collectors.toUnmodifiableSet()));
     } catch (GetArtifactsException e) {
       throw new RuntimeException("Blaze failure building ide info files: " + e.getMessage());
     }
