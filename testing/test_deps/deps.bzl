@@ -47,8 +47,8 @@ def aswb_test_deps_dependencies():
     http_file(
         name = "aswb_test_deps_bazel",
         executable = True,
-        sha256 = "09bac5c11165a6ab0b7a90d6937c8bc3fcdcda662ffe0590e87ac2ae0e5e8978",
-        url = "https://github.com/bazelbuild/bazel/releases/download/7.2.0/bazel-7.2.0-linux-x86_64",
+        sha256 = "b4bae524f58e00a69f7c6fa10e62a91f85bfee586105dd480dccb4300c7cbca5",
+        url = "https://github.com/bazelbuild/bazel/releases/download/8.1.0/bazel-8.1.0-linux-x86_64",
         visibility = ["//:__subpackages__"],
     )
 
