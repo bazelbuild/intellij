@@ -40,12 +40,13 @@ public class QuerySyncTest extends ClwbIntegrationTestCase {
 
     checkAnalysis();
     checkCompiler();
+    checkTest();
     checkResolveRulesCC();
   }
 
   private void checkAnalysis() throws ExecutionException {
-    final var success = enableAnalysisFor(findProjectFile("main/hello-world.cc"));
-    assertThat(success).isTrue();
+    final var result = enableAnalysisFor(findProjectFile("main/hello-world.cc"));
+    result.assertNoErrors();
   }
 
   private void checkCompiler() {
@@ -61,6 +62,16 @@ public class QuerySyncTest extends ClwbIntegrationTestCase {
     // }
 
     assertContainsHeader("iostream", compilerSettings);
+  }
+
+  private void checkTest() throws ExecutionException {
+    final var result = enableAnalysisFor(findProjectFile("main/test.cc"));
+    result.assertNoErrors();
+
+    final var compilerSettings = findFileCompilerSettings("main/test.cc");
+
+    assertContainsHeader("iostream", compilerSettings);
+    assertContainsHeader("catch2/catch_test_macros.hpp", compilerSettings);
   }
 
   // TODO: find a common place for shared test between async (SimpleTest) and qsync

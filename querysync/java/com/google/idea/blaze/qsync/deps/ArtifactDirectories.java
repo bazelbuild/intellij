@@ -60,8 +60,10 @@ public class ArtifactDirectories {
       return GEN_CC_HEADERS.resolveChild(includePath);
     } else if (includePath.isAbsolute()) {
       return ProjectPath.absolute(includePath);
+    } else if (includePath.startsWith("external")) {
+      return ProjectPath.execrootRelative(includePath);
     } else {
-      return ProjectPath.WORKSPACE_ROOT.resolveChild(includePath);
+      return ProjectPath.workspaceRelative(includePath);
     }
   }
 }

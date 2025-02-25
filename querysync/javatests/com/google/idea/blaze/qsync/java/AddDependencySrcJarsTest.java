@@ -61,7 +61,11 @@ public class AddDependencySrcJarsTest {
   public void createDirs() throws IOException {
     workspaceRoot = tempDir.newFolder("workspace").toPath();
     pathResolver =
-        ProjectPath.Resolver.create(workspaceRoot, tempDir.newFolder("project").toPath());
+        ProjectPath.Resolver.create(
+            workspaceRoot,
+            tempDir.newFolder("project").toPath(),
+            tempDir.newFolder("execroot").toPath()
+        );
   }
 
   @Test

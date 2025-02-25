@@ -32,6 +32,7 @@ public abstract class ProjectPath {
     WORKSPACE,
     PROJECT,
     ABSOLUTE,
+    EXECROOT,
   }
 
   public abstract Root rootType();
@@ -62,6 +63,9 @@ public abstract class ProjectPath {
       case ABSOLUTE:
         proto.setBase(Base.ABSOLUTE);
         break;
+      case EXECROOT:
+        proto.setBase(Base.EXECROOT);
+        break;
     }
     return proto.setPath(relativePath().toString()).setInnerPath(innerJarPath().toString()).build();
   }
@@ -72,6 +76,14 @@ public abstract class ProjectPath {
 
   public static ProjectPath workspaceRelative(String path) {
     return workspaceRelative(Path.of(path));
+  }
+
+  public static ProjectPath execrootRelative(Path path) {
+    return create(Root.EXECROOT, path);
+  }
+
+  public static ProjectPath execrootRelative(String path) {
+    return execrootRelative(Path.of(path));
   }
 
   public static ProjectPath projectRelative(Path path) {
@@ -99,6 +111,8 @@ public abstract class ProjectPath {
         return Root.WORKSPACE;
       case ABSOLUTE:
         return Root.ABSOLUTE;
+      case EXECROOT:
+        return Root.EXECROOT;
       default:
         throw new IllegalArgumentException(base.name());
     }
@@ -124,14 +138,16 @@ public abstract class ProjectPath {
   public abstract static class Resolver {
 
     @VisibleForTesting
-    public static final Resolver EMPTY_FOR_TESTING = create(Path.of(""), Path.of(""));
+    public static final Resolver EMPTY_FOR_TESTING = create(Path.of(""), Path.of(""), Path.of(""));
 
     abstract Path workspaceRoot();
 
     abstract Path projectRoot();
 
-    public static Resolver create(Path workspaceRoot, Path projectRoot) {
-      return new AutoValue_ProjectPath_Resolver(workspaceRoot, projectRoot);
+    abstract Path execRoot();
+
+    public static Resolver create(Path workspaceRoot, Path projectRoot, Path execRoot) {
+      return new AutoValue_ProjectPath_Resolver(workspaceRoot, projectRoot, execRoot);
     }
 
     public Path resolve(ProjectPath path) {
@@ -142,6 +158,8 @@ public abstract class ProjectPath {
           return projectRoot().resolve(path.relativePath());
         case ABSOLUTE:
           return path.relativePath();
+        case EXECROOT:
+          return execRoot().resolve(path.relativePath());
       }
       throw new IllegalStateException(path.rootType().name());
     }
