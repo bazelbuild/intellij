@@ -176,7 +176,7 @@ public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceO
 
   private static JComponent getIconComponent() {
     JLabel iconPanel =
-        new JLabel(IconLoader.getIconSnapshot(BlazeIcons.BazelLogo)) {
+        new JLabel(IconLoader.getIconSnapshot(BlazeIcons.Logo)) {
           @Override
           public boolean isEnabled() {
             return true;
