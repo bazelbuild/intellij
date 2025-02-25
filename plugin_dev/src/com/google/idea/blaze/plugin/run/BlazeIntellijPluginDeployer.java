@@ -78,8 +78,8 @@ class BlazeIntellijPluginDeployer {
     buildArtifactsMap.clear();
   }
 
-  void reportBuildComplete(BlazeBuildOutputs blazeBuildOutputs) throws GetArtifactsException {
-    ImmutableSet<OutputArtifact> buildArtifacts = blazeBuildOutputs.getAllArtifacts();
+  void reportBuildComplete(BlazeBuildOutputs.Legacy blazeBuildOutputs) throws GetArtifactsException {
+    ImmutableSet<OutputArtifact> buildArtifacts = blazeBuildOutputs.getAllOutputArtifacts();
     buildArtifactsMap.clear();
     buildArtifacts.forEach(a -> buildArtifactsMap.put(a.getBazelOutRelativePath(), a));
 
