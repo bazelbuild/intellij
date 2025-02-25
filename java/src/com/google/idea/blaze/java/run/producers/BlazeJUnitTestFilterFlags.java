@@ -211,12 +211,11 @@ public final class BlazeJUnitTestFilterFlags {
       return output.toString();
     }
     output.append('#').append(methodNamePattern);
-    // JUnit 4 and 5 test filters are regexes, and must be terminated to avoid matching
-    // unintended classes/methods. JUnit 3 test filters do not need or support this syntax.
-    if (jUnitVersion == JUnitVersion.JUNIT_3) {
-      return output.toString();
+    // JUnit 4 test filters are regexes and must be terminated to avoid matching unintended
+    // classes/methods.
+    if (jUnitVersion == JUnitVersion.JUNIT_4) {
+      output.append('$');
     }
-    output.append('$');
     return output.toString();
   }
 
