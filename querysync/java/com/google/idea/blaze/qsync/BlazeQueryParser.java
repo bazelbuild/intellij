@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 The Bazel Authors. All rights reserved.
+ * Copyright 2022-2025 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,13 +42,6 @@ import java.util.Set;
  * yields a {@link BuildGraphData} instance derived from it. Instances of this class are single use.
  */
 public class BlazeQueryParser {
-
-  /**
-   * When a rule has a transition applied to it then it will present with this
-   * prefix on it.
-   */
-
-  private final static String RULE_NAME_PREFIX_TRANSITION = "_transition_";
 
   // Rules that will need to be built, whether the target is included in the
   // project or not.
@@ -113,17 +106,6 @@ public class BlazeQueryParser {
                                  RuleVisitor visitor) {
       for (String kind : kinds) {
         builder.put(kind, visitor);
-
-        // When the `bazel query` executes over Rules which have transitions applied to them, the
-        // returned list of data contains rules which have Rule names with `_` prefixed but with
-        // the original Kind and _also_ original Rule names with the Kind prefixed with
-        // `_transition_`. An example is when a specific pinned Python version is used, a
-        // transition is employed to enforce the vesion. In this case we see a rule `_my_rule` with
-        // kind `py_test` and a rule `my_rule` with kind `_transition_py_test`. Without
-        // accommodating for this, the `_transition_py_test` one would be ignored and so the
-        // downstream logic here would be working with the wrong Rule name.
-
-        builder.put(RULE_NAME_PREFIX_TRANSITION + kind, visitor);
       }
     }
   }
@@ -131,7 +113,7 @@ public class BlazeQueryParser {
   /**
    * Returns the list of all rule classes directly supported by the current query sync configuration.
    *
-   * <p>This information is only supposed ot be used to refine the Bazel query that query sync issues.
+   * <p>This information is only supposed to be used to refine the Bazel query that query sync issues.
    */
   public static ImmutableSet<String> getAllSupportedRuleClasses() {
     return new RuleVisitors().myVisitorsByRuleClass.keySet();

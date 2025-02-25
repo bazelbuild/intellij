@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The Bazel Authors. All rights reserved.
+ * Copyright 2023-2025 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import java.nio.file.Path;
-import java.util.stream.Stream;
-import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -88,21 +86,14 @@ public class QuerySpecTest {
 
   @Test
   public void testGetQueryExpression_experimental_includes_and_excludes() {
-
-    // There are a number of Kinds that are expected to be queried for. It is also
-    // necessary to include the same Kinds with the prefix `_transition_` as well because it
-    // could be that any given rule is subject to a transition.
-
-    String kindsExpression = Stream.of(
-        "android_library", "android_binary", "android_local_test",
-        "android_instrumentation_test", "kt_android_library_helper", "java_library", "java_binary",
-        "kt_jvm_library", "kt_jvm_binary", "kt_jvm_library_helper", "kt_native_library", "java_test",
-        "java_proto_library", "java_lite_proto_library", "java_mutable_proto_library",
-        "_java_grpc_library", "_kotlin_library", "_java_lite_grpc_library", "_iml_module_",
-        "cc_library", "cc_binary", "cc_shared_library", "cc_test", "proto_library", "py_library",
-        "py_binary", "py_test")
-        .flatMap(k -> Stream.of(k, "_transition_" + k))
-        .collect(Collectors.joining("|"));
+    String kindsExpression = String.join("|",
+        "_iml_module_", "_java_grpc_library", "_java_lite_grpc_library",
+        "_kotlin_library", "android_binary", "android_instrumentation_test", "android_library",
+        "android_local_test", "cc_binary", "cc_library", "cc_shared_library", "cc_test",
+        "java_binary", "java_library", "java_lite_proto_library", "java_mutable_proto_library",
+        "java_proto_library", "java_test", "kt_android_library_helper", "kt_jvm_binary",
+        "kt_jvm_library", "kt_jvm_library_helper", "kt_native_library", "proto_library",
+        "py_binary", "py_library", "py_test");
 
     QuerySpec qs =
       QuerySpec.builder(QuerySpec.QueryStrategy.FILTERING_TO_KNOWN_AND_USED_TARGETS)
@@ -113,10 +104,11 @@ public class QuerySpecTest {
         .excludePath(Path.of("another/included/path/excluded"))
         .supportedRuleClasses(BlazeQueryParser.getAllSupportedRuleClasses())
         .build();
+
     assertThat(qs.getQueryExpression())
       .hasValue(
         "let base = //some/included/path/...:* + //another/included/path/...:* - //some/included/path/excluded/...:* - //another/included/path/excluded/...:*\n" +
-        " in let known = kind(\"source file|" + kindsExpression + "\", $base) \n" +
+        " in let known = kind(\"source file|(_transition_)?(" + kindsExpression + ")\", $base) \n" +
         " in let unknown = $base except $known \n" +
         " in $known union ($base intersect allpaths($known, $unknown)) \n");
   }
