@@ -120,7 +120,8 @@ public interface BlazeBuildOutputs {
 
 
   static BlazeBuildOutputs fromParsedBepOutput(
-    BuildResult result, ParsedBepOutput parsedOutput) {
+    ParsedBepOutput parsedOutput) {
+    final var result = BuildResult.fromExitCode(parsedOutput.getBuildResult());
     ImmutableMap<String, BuildResult> buildIdWithResult =
       parsedOutput.buildId != null
       ? ImmutableMap.of(parsedOutput.buildId, result)
@@ -136,7 +137,8 @@ public interface BlazeBuildOutputs {
   }
 
   static BlazeBuildOutputs.Legacy fromParsedBepOutputForLegacy(
-    BuildResult result, ParsedBepOutput parsedOutput) {
+    ParsedBepOutput parsedOutput) {
+    final var result = BuildResult.fromExitCode(parsedOutput.getBuildResult());
     ImmutableMap<String, BuildResult> buildIdWithResult =
       parsedOutput.buildId != null
       ? ImmutableMap.of(parsedOutput.buildId, result)
