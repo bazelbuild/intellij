@@ -44,8 +44,8 @@ public class QuerySyncTest extends ClwbIntegrationTestCase {
   }
 
   private void checkAnalysis() throws ExecutionException {
-    final var success = enableAnalysisFor(findProjectFile("main/hello-world.cc"));
-    assertThat(success).isTrue();
+    final var result = enableAnalysisFor(findProjectFile("main/hello-world.cc"));
+    result.assertNoErrors();
   }
 
   private void checkCompiler() {
