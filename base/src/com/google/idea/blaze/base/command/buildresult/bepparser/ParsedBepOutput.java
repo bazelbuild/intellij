@@ -40,7 +40,6 @@ public final class ParsedBepOutput {
   public static final ParsedBepOutput EMPTY =
       new ParsedBepOutput(
           "build-id",
-          null,
           ImmutableMap.of(),
           ImmutableMap.of(),
           ImmutableSetMultimap.of(),
@@ -50,9 +49,6 @@ public final class ParsedBepOutput {
           ImmutableSet.of());
 
   @Nullable public final String buildId;
-
-  /** A path to the local execroot */
-  @Nullable private final String localExecRoot;
 
   final ImmutableMap<String, String> workspaceStatus;
 
@@ -70,7 +66,6 @@ public final class ParsedBepOutput {
 
   ParsedBepOutput(
     @Nullable String buildId,
-    @Nullable String localExecRoot,
     ImmutableMap<String, String> workspaceStatus,
     ImmutableMap<String, FileSet> fileSets,
     ImmutableSetMultimap<String, String> targetFileSets,
@@ -79,7 +74,6 @@ public final class ParsedBepOutput {
     long bepBytesConsumed,
     ImmutableSet<String> targetsWithErrors) {
     this.buildId = buildId;
-    this.localExecRoot = localExecRoot;
     this.workspaceStatus = workspaceStatus;
     this.fileSets = fileSets;
     this.targetFileSets = targetFileSets;
@@ -87,12 +81,6 @@ public final class ParsedBepOutput {
     this.buildResult = buildResult;
     this.bepBytesConsumed = bepBytesConsumed;
     this.targetsWithErrors = targetsWithErrors;
-  }
-
-  /** Returns the local execroot. */
-  @Nullable
-  public String getLocalExecRoot() {
-    return localExecRoot;
   }
 
   /**
