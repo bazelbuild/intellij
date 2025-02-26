@@ -171,6 +171,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
         candidateFiles =
             LocalFileArtifact.getLocalFiles(
                     BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
+                        //TODO: define outputGroup and switch to ParsedBepOutput.getOutputGroupTargetArtifacts
                         .getDirectArtifactsForTarget(target.toString()))
                 .stream()
                 .filter(File::canExecute)

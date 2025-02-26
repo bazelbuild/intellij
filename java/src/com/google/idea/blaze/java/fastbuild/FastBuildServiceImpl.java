@@ -329,7 +329,8 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
       ImmutableList<File> deployJarArtifacts =
           LocalFileArtifact.getLocalFiles(
               BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
-                  .getDirectArtifactsForTarget(
+                  .getOutputGroupTargetArtifacts(
+                      aspectStrategy.getAspectOutputGroup(),
                       deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData).toString())
                   .stream()
                   .filter(artifact -> artifact.getArtifactPath().endsWith(deployJarLabel.targetName().toString()))
