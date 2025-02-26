@@ -159,7 +159,6 @@ public final class BepParser {
     final FileSets fileSets = new FileSets();
     final Set<String> targetsWithErrors = new LinkedHashSet<>();
     ImmutableMap<String, String> workspaceStatus;
-    String localExecRoot = null;
     String buildId = null;
     long startTimeMillis = 0L;
     int buildResult = 0;
@@ -183,7 +182,6 @@ public final class BepParser {
         fillInTransitiveFileSetData(state.fileSets, state.outputs, state.startTimeMillis);
       return new ParsedBepOutput(
         state.buildId,
-        state.localExecRoot,
         state.workspaceStatus,
         filesMap,
         state.outputs.fileSetStream()
@@ -209,9 +207,6 @@ public final class BepParser {
     while ((event = stream.getNext()) != null) {
       emptyBuildEventStream = false;
       switch (event.getId().getIdCase()) {
-        case WORKSPACE:
-          state.localExecRoot = event.getWorkspaceInfo().getLocalExecRoot();
-          continue;
         case WORKSPACE_STATUS:
           state.workspaceStatus =
               event.getWorkspaceStatus().getItemList().stream().collect(toImmutableMap(Item::getKey, Item::getValue));

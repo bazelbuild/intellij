@@ -67,7 +67,6 @@ public class BlazeApkDeployInfoProtoHelper {
 
     if (outputArtifacts.isEmpty()) {
       Logger log = Logger.getInstance(BlazeApkDeployInfoProtoHelper.class.getName());
-      log.warn("Local execroot: " + bepOutput.getLocalExecRoot());
       log.warn("All artifacts for " + target + ":");
       List<OutputArtifact> allBuildArtifacts =
         targetOutputArtifacts.asList();
