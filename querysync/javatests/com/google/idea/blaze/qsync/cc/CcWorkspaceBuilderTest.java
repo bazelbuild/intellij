@@ -123,7 +123,9 @@ public class CcWorkspaceBuilderTest {
 
     FlagResolver resolver =
         new FlagResolver(
-            ProjectPath.Resolver.create(Path.of("/workspace"), Path.of("/project")), false);
+            ProjectPath.Resolver.create(Path.of("/workspace"), Path.of("/project"), Path.of("/execroot")),
+            false
+        );
 
     CcWorkspaceBuilder builder =
         new CcWorkspaceBuilder(

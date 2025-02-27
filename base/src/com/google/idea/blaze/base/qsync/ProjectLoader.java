@@ -146,9 +146,13 @@ public class ProjectLoader {
     RenderJarBuilder renderJarBuilder = createRenderJarBuilder(workspaceRoot, buildSystem);
     AppInspectorBuilder appInspectorBuilder = createAppInspectorBuilder(buildSystem);
 
+    BlazeInfo blazeInfo =
+        new BazelInfoHandler(buildSystem.getBuildInvoker(project, context))
+            .getBazelInfo();
+
     Path ideProjectBasePath = Paths.get(checkNotNull(project.getBasePath()));
     ProjectPath.Resolver projectPathResolver =
-        ProjectPath.Resolver.create(workspaceRoot.path(), ideProjectBasePath);
+        ProjectPath.Resolver.create(workspaceRoot.path(), ideProjectBasePath, blazeInfo.getExecutionRoot().toPath());
 
     ProjectProtoTransform.Registry projectTransformRegistry = new Registry();
     SnapshotHolder graph = new SnapshotHolder();
@@ -227,9 +231,6 @@ public class ProjectLoader {
             versionHandler);
     QuerySyncSourceToTargetMap sourceToTargetMap =
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
-    BlazeInfo blazeInfo =
-        new BazelInfoHandler(buildSystem.getBuildInvoker(project, context))
-            .getBazelInfo();
     ExternalWorkspaceData externalWorkspaceData = ExternalWorkspaceDataProvider.getInstance(project)
         .getExternalWorkspaceData(context, projectViewSet, versionHandler.getBazelVersion(), blazeInfo);
 

@@ -72,6 +72,7 @@ message ProjectPath {
     WORKSPACE = 1;
     PROJECT = 2;
     ABSOLUTE = 3;
+    EXECROOT = 4;
   }
 
   // path to the content root, relative to base.
