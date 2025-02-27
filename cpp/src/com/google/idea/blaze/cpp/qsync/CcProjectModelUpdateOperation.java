@@ -21,7 +21,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.util.UrlUtil;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
@@ -35,7 +34,6 @@ import com.google.idea.blaze.qsync.project.ProjectProto.CcCompilerSettings;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcLanguage;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcSourceFile;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcWorkspace;
-import com.intellij.build.events.MessageEvent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -213,17 +211,8 @@ public class CcProjectModelUpdateOperation implements Disposable {
           messages.freezeValues().values().stream()
               .flatMap(Collection::stream)
               .collect(ImmutableList.toImmutableList());
-
-      for (final var message : frozenMessages) {
-        final var kind = switch (message.getType()) {
-          case ERROR -> MessageEvent.Kind.ERROR;
-          case WARNING -> MessageEvent.Kind.WARNING;
-        };
-
-        IssueOutput.issue(kind, "COMPILER INFO COLLECTION")
-            .withDescription(message.getText())
-            .submit(context);
-      }
+      frozenMessages.forEach(
+          m -> context.output(PrintOutput.log(m.getType().name() + ": " + m.getText())));
     } finally {
       if (!sessionClosed) {
         session.dispose();

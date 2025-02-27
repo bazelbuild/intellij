@@ -70,7 +70,7 @@ public abstract class CcToolchain {
     return builder()
         .id(proto.getId())
         .compiler(proto.getCompiler())
-        .compilerExecutable(ProjectPath.execrootRelative(proto.getCompilerExecutable()))
+        .compilerExecutable(ProjectPath.workspaceRelative(proto.getCompilerExecutable()))
         .cpu(proto.getCpu())
         .targetGnuSystemName(proto.getTargetName())
         .builtInIncludeDirectories(

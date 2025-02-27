@@ -273,42 +273,27 @@ public abstract class ClwbIntegrationTestCase extends HeavyPlatformTestCase {
     return false;
   }
 
-  protected SyncOutput enableAnalysisFor(VirtualFile file) throws ExecutionException {
-    final var context = BlazeContext.create();
-
-    final var output = new SyncOutput();
-    output.install(context);
-
+  protected boolean enableAnalysisFor(VirtualFile file) throws ExecutionException {
     final var manager = QuerySyncManager.getInstance(myProject);
     final var targets = manager.getTargetsToBuild(file).targets();
 
-    final var projects = manager.getLoadedProject();
-    assertThat(projects).isPresent();
-
-    final var future = CompletableFuture.runAsync(() -> {
-      try {
-        projects.get().enableAnalysis(context, targets);
-      } catch (Exception e) {
-        LOG.error("enable analysis failed", e);
-      }
-    }, ApplicationManager.getApplication()::executeOnPooledThread);
+    final var future = manager.enableAnalysis(
+        targets,
+        QuerySyncActionStatsScope.createForFile(getClass(), null, file),
+        TaskOrigin.USER_ACTION
+    );
 
     while (!future.isDone()) {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
 
-    context.close();
-    LOG.info(String.format("PROJECT BUILD LOG:%n%s", output.collectLog()));
-
     try {
-      future.get();
-    } catch (ExecutionException e) {
-      LOG.error("enable analysis failed", e);
+      return future.get();
     } catch (InterruptedException e) {
-      LOG.error("enable analysis was interrupted", e);
+      fail("enable analysis was interrupted");
     }
 
-    return output;
+    return false;
   }
 
   protected VirtualFile findProjectFile(String relativePath) {

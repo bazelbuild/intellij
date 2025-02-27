@@ -150,9 +150,7 @@ public class ConfigureCcCompilationTest {
     CcCompilerSettings compilerSettings = sourceFile.getCompilerSettings();
     FlagResolver resolver =
         new FlagResolver(
-            ProjectPath.Resolver.create(Path.of("/workspace"), Path.of("/project"), Path.of("/execroot")),
-            false
-        );
+            ProjectPath.Resolver.create(Path.of("/workspace"), Path.of("/project")), false);
     assertThat(resolver.resolveAll(workspace.getFlagSetsOrThrow(compilerSettings.getFlagSetId())))
         .containsExactly(
             "-DDEBUG",
@@ -170,7 +168,7 @@ public class ConfigureCcCompilationTest {
             "--sharedopt",
             "--cppopt");
 
-    assertThat(compilerSettings.getCompilerExecutablePath().getBase()).isEqualTo(Base.EXECROOT);
+    assertThat(compilerSettings.getCompilerExecutablePath().getBase()).isEqualTo(Base.WORKSPACE);
     assertThat(compilerSettings.getCompilerExecutablePath().getPath())
         .isEqualTo("workspace/path/to/clang");
 
