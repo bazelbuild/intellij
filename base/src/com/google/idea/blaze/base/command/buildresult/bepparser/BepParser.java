@@ -178,15 +178,12 @@ public final class BepParser {
     semaphore.start();
     try {
       BepParserState state = parseBep(stream, nullableInterner);
-      ImmutableMap<String, ParsedBepOutput.FileSet> filesMap =
+      ImmutableMap<String, ParsedBepOutput.FileSet> fileSetMap =
         fillInTransitiveFileSetData(state.fileSets, state.outputs, state.startTimeMillis);
       return new ParsedBepOutput(
         state.buildId,
         state.workspaceStatus,
-        filesMap,
-        state.outputs.fileSetStream()
-          .collect(ImmutableSetMultimap.flatteningToImmutableSetMultimap(OutputGroupTargetConfigFileSets::target,
-                                                               it -> it.fileSetNames().stream())),
+        fileSetMap,
         state.startTimeMillis,
         state.buildResult,
         stream.getBytesConsumed(),

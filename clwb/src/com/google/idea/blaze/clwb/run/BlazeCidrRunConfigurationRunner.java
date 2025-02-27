@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.Interners;
 import com.intellij.execution.ExecutionException;
@@ -170,9 +171,10 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
       try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
         candidateFiles =
             LocalFileArtifact.getLocalFiles(
-                    BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
-                        //TODO: define outputGroup and switch to ParsedBepOutput.getOutputGroupTargetArtifacts
-                        .getDirectArtifactsForTarget(target.toString()))
+                  BlazeBuildOutputs.fromParsedBepOutput(
+                    BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
+                        //TODO: define outputGroup and switch method to one that takes outputGroup as well
+                        .getTargetArtifacts(target.toString()))
                 .stream()
                 .filter(File::canExecute)
                 .collect(Collectors.toList());

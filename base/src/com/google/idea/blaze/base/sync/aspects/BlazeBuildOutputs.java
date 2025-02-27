@@ -43,6 +43,9 @@ import java.util.stream.Stream;
  */
 public interface BlazeBuildOutputs {
 
+  @Deprecated
+  ImmutableSet<OutputArtifact> getTargetArtifacts(String label);
+
   ImmutableSet<OutputArtifact> getTargetArtifacts(String label, String outputGroup);
 
   ImmutableList<OutputArtifact> getOutputGroupArtifacts(String outputGroup);
@@ -189,6 +192,17 @@ public interface BlazeBuildOutputs {
       ImmutableSetMultimap.Builder<String, OutputArtifact> perTarget = ImmutableSetMultimap.builder();
       artifacts.values().forEach(a -> a.topLevelTargets.forEach(t -> perTarget.put(t, a.artifact)));
       this.perTargetArtifacts = perTarget.build();
+    }
+
+    /** Returns the output artifacts generated for target with given label. */
+    @Override
+    @Deprecated
+    public ImmutableSet<OutputArtifact> getTargetArtifacts(String label) {
+      // TODO: solodkyy - This is slow although it is invoked at most two times.
+      return artifacts.values().stream()
+          .filter(a -> a.topLevelTargets.contains(label))
+          .map(a -> a.artifact)
+          .collect(toImmutableSet());
     }
 
     /** Returns the output artifacts generated for target with given label. */

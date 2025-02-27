@@ -54,6 +54,7 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.common.Interners;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.JavaBlazeRules;
@@ -328,8 +329,9 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     try (final var bepStream = resultHelper.getBepStream(Optional.empty())) {
       ImmutableList<File> deployJarArtifacts =
           LocalFileArtifact.getLocalFiles(
-              BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
-                  .getOutputGroupTargetArtifacts(
+              BlazeBuildOutputs.fromParsedBepOutput(
+                BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
+                  .getTargetArtifacts(
                       aspectStrategy.getAspectOutputGroup(),
                       deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData).toString())
                   .stream()
@@ -344,7 +346,8 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     ImmutableList<File> ideInfoFiles;
     try (final var bepStream = resultHelper.getBepStream(Optional.empty())) {
       ideInfoFiles = LocalFileArtifact.getLocalFiles(
-          BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
+          BlazeBuildOutputs.fromParsedBepOutput(
+            BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
               .getOutputGroupArtifacts(
                   aspectStrategy.getAspectOutputGroup())
               .stream()
