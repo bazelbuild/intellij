@@ -20,20 +20,20 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.Callable
-import java.util.function.Consumer
+import java.util.function.BiConsumer
 
 class ProjectUpdaterThreadingUtils {
   companion object {
     val logger = Logger.getInstance(ProjectUpdaterThreadingUtils::class.java)
 
     @JvmStatic
-    fun <T> readWriteAction(readPart: Callable<T>, commit: Consumer<T>) {
+    fun <T, U> readWriteAction(readPart: Callable<Pair<T, U>>, commit: BiConsumer<T, U>) {
       runBlocking {
         readAndWriteAction {
           logger.info("Starting read operation")
-          val ret = readPart.call();
+          val (t, u) = readPart.call();
           writeAction {
-            commit.accept(ret)
+            commit.accept(t, u)
           }
         }
       }
@@ -42,7 +42,7 @@ class ProjectUpdaterThreadingUtils {
     @JvmStatic
     fun performWriteAction(action: Runnable) {
       runBlocking {
-        writeAction<Unit> {
+        writeAction {
           action.run()
         }
       }
