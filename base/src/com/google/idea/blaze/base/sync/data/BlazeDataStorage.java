@@ -76,28 +76,6 @@ public class BlazeDataStorage {
   }
 
   /**
-   * DO NOT USE: Returns a best-effort list of all project data directories used by the IDE.
-   */
-  public static Collection<Path> getMaybeAllProjectDataDirs(Project project) {
-    BlazeImportSettings importSettings = BlazeImportSettingsManager.getInstance(project)
-      .getImportSettings();
-    if (importSettings == null) {
-      throw new IllegalStateException("BlazeImportSettings unavailable");
-    }
-    final var pathResolver =
-      ProjectPath.Resolver.create(
-        WorkspaceRoot.fromImportSettings(importSettings).path(),
-        Path.of(
-          importSettings
-            .getProjectDataDirectory()));
-    return ImmutableList.of(
-      getProjectDataDir(importSettings).toPath(),
-      pathResolver.resolve(ArtifactDirectories.ROOT),
-      ProjectLoader.getBuildCachePath(project)
-    );
-  }
-
-  /**
    * Configuration which includes the plugin's own project-specific data directory (used for
    * artifacts related to IntelliJ's project setup - module configurations, locally cached jars,
    * locally cached remote outputs) in the logged metrics.
