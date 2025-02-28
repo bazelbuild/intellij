@@ -15,11 +15,8 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
-import static java.util.Arrays.stream;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -37,20 +34,12 @@ import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.LibrarySource;
-import com.google.idea.common.util.Transactions;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.Library.ModifiableModel;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -60,14 +49,15 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
-import org.jetbrains.jps.model.java.JavaSourceRootProperties;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
-/** An object that monitors the build graph and applies the changes to the project structure. */
+/**
+ * An object that monitors the build graph and applies the changes to the project structure.
+ */
 public class ProjectUpdater implements QuerySyncProjectListener {
 
-  /** Entry point for instantiating {@link ProjectUpdater}. */
+  /**
+   * Entry point for instantiating {@link ProjectUpdater}.
+   */
   public static class Provider implements QuerySyncProjectListenerProvider {
     @Override
     public QuerySyncProjectListener createListener(QuerySyncProject querySyncProject) {
@@ -116,14 +106,16 @@ public class ProjectUpdater implements QuerySyncProjectListener {
 
   private void updateProjectModel(ProjectProto.Project spec, Context<?> context) {
     File imlDirectory = new File(BlazeDataStorage.getProjectDataDir(importSettings), "modules");
-    Transactions.submitWriteActionTransactionAndWait(
+    ProjectUpdaterThreadingUtils.performWriteAction(() -> {
+      for (BlazeQuerySyncPlugin syncPlugin : BlazeQuerySyncPlugin.EP_NAME.getExtensions()) {
+        syncPlugin.updateProjectSettingsForQuerySync(project, context, projectViewSet);
+      }
+    });
+    ProjectUpdaterThreadingUtils.readWriteAction(
         () -> {
           IdeModifiableModelsProvider models =
               ProjectDataManager.getInstance().createModifiableModelsProvider(project);
 
-          for (BlazeQuerySyncPlugin syncPlugin : BlazeQuerySyncPlugin.EP_NAME.getExtensions()) {
-            syncPlugin.updateProjectSettingsForQuerySync(project, context, projectViewSet);
-          }
           int removedLibCount = removeUnusedLibraries(models, spec.getLibraryList());
           if (removedLibCount > 0) {
             context.output(PrintOutput.output("Removed " + removedLibCount + " libs"));
@@ -134,91 +126,28 @@ public class ProjectUpdater implements QuerySyncProjectListener {
             libMapBuilder.put(libSpec.getName(), library);
           }
           ImmutableMap<String, Library> libMap = libMapBuilder.buildOrThrow();
+          return ProjectUpdaterHelper.getModulesForModels(spec, models, imlDirectory, projectPathResolver, workspaceRoot, libMap);
+        },
+        (models, modules) -> {
+          WorkspaceLanguageSettings workspaceLanguageSettings =
+              LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
 
-          for (ProjectProto.Module moduleSpec : spec.getModulesList()) {
-            Module module =
-                models.newModule(
-                    imlDirectory.toPath().resolve(moduleSpec.getName() + ".iml").toString(),
-                    mapModuleType(moduleSpec.getType()).getId());
-
-            ModifiableRootModel roots = models.getModifiableRootModel(module);
-            ImmutableList<OrderEntry> existingLibraryOrderEntries =
-                stream(roots.getOrderEntries())
-                    .filter(it -> it instanceof LibraryOrderEntry)
-                    .collect(toImmutableList());
-            for (OrderEntry entry : existingLibraryOrderEntries) {
-              roots.removeOrderEntry(entry);
-            }
-            // TODO: should this be encapsulated in ProjectProto.Module?
-            roots.inheritSdk();
-
-            // TODO instead of removing all content entries and re-adding, we should calculate the
-            //  diff.
-            for (ContentEntry entry : roots.getContentEntries()) {
-              roots.removeContentEntry(entry);
-            }
-            for (ProjectProto.ContentEntry ceSpec : moduleSpec.getContentEntriesList()) {
-              ProjectPath projectPath = ProjectPath.create(ceSpec.getRoot());
-
-              ContentEntry contentEntry =
-                  roots.addContentEntry(
-                      UrlUtil.pathToUrl(projectPathResolver.resolve(projectPath).toString()));
-              for (ProjectProto.SourceFolder sfSpec : ceSpec.getSourcesList()) {
-                ProjectPath sourceFolderProjectPath = ProjectPath.create(sfSpec.getProjectPath());
-
-                JavaSourceRootProperties properties =
-                    JpsJavaExtensionService.getInstance()
-                        .createSourceRootProperties(
-                            sfSpec.getPackagePrefix(), sfSpec.getIsGenerated());
-                JavaSourceRootType rootType =
-                    sfSpec.getIsTest() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
-                String url =
-                    UrlUtil.pathToUrl(
-                        projectPathResolver.resolve(sourceFolderProjectPath).toString(),
-                        sourceFolderProjectPath.innerJarPath());
-                SourceFolder unused = contentEntry.addSourceFolder(url, rootType, properties);
-              }
-              for (String exclude : ceSpec.getExcludesList()) {
-                contentEntry.addExcludeFolder(
-                    UrlUtil.pathToIdeaDirectoryUrl(workspaceRoot.absolutePathFor(exclude)));
-              }
-            }
-
-            for (String lib : moduleSpec.getLibraryNameList()) {
-              Library library = libMap.get(lib);
-              if (library == null) {
-                throw new IllegalStateException(
-                    "Module refers to library " + lib + " not present in the project spec");
-              }
-              LibraryOrderEntry entry = roots.addLibraryEntry(library);
-              // TODO should this stuff be specified by the Module proto too?
-              entry.setScope(DependencyScope.COMPILE);
-              entry.setExported(false);
-            }
-
-            WorkspaceLanguageSettings workspaceLanguageSettings =
-                LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
-
-            for (BlazeQuerySyncPlugin syncPlugin : BlazeQuerySyncPlugin.EP_NAME.getExtensions()) {
-              // TODO update ProjectProto.Module and updateProjectStructure() to allow a more
-              // suitable
-              //   data type to be passed in here instead of androidResourceDirectories and
-              //   androidSourcePackages
-              syncPlugin.updateProjectStructureForQuerySync(
-                  project,
-                  context,
-                  models,
-                  workspaceRoot,
-                  module,
-                  ImmutableSet.copyOf(moduleSpec.getAndroidResourceDirectoriesList()),
-                  ImmutableSet.<String>builder()
-                      .addAll(moduleSpec.getAndroidSourcePackagesList())
-                      .addAll(moduleSpec.getAndroidCustomPackagesList())
-                      .build(),
-                  workspaceLanguageSettings);
-            }
-            models.commit();
+          for (BlazeQuerySyncPlugin syncPlugin : BlazeQuerySyncPlugin.EP_NAME.getExtensions()) {
+            // TODO update ProjectProto.Module and updateProjectStructure() to allow a more
+            // suitable
+            //   data type to be passed in here instead of androidResourceDirectories and
+            //   androidSourcePackages
+            ProjectUpdaterHelper.updateProjectStructureForQuerySync(
+                project,
+                context,
+                models,
+                modules,
+                workspaceRoot,
+                workspaceLanguageSettings,
+                syncPlugin
+            );
           }
+          models.commit();
         });
   }
 
