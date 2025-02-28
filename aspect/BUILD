@@ -42,8 +42,6 @@ aspect_files(
         "artifacts.bzl",
         "fast_build_info_bundled.bzl",
         "flag_hack.bzl",
-        "intellij_info.bzl",
-        "intellij_info_bundled.bzl",
         "intellij_info_impl_bundled.bzl",
         "java_classpath.bzl",
         "make_variables.bzl",
@@ -134,6 +132,8 @@ aspect_library(
         "java_info.template.bzl",
         "python_info.bzl",
         "python_info.template.bzl",
+        "intellij_info.bzl",
+        "intellij_info.template.bzl",
     ],
     namespace = "aspect/template",
     visibility = ["//visibility:public"],
@@ -162,5 +162,12 @@ genrule(
     name = "generate_code_generator_info_template",
     srcs = ["code_generator_info.bzl"],
     outs = ["code_generator_info.template.bzl"],
+    cmd = STRIP_TEMPLATE_SCRIPT,
+)
+
+genrule(
+    name = "generate_intellij_info_template",
+    srcs = ["intellij_info_bundled.bzl"],
+    outs = ["intellij_info.template.bzl"],
     cmd = STRIP_TEMPLATE_SCRIPT,
 )
