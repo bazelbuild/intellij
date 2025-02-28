@@ -44,6 +44,7 @@ import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.Interners;
 import com.intellij.execution.BeforeRunTask;
@@ -191,9 +192,10 @@ class GenerateDeployableJarTaskProvider
       List<File> outputs;
       try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
         outputs = LocalFileArtifact.getLocalFiles(
-            BuildResultParser.getBuildOutput(bepStream, Interners.STRING)
-                //TODO: define outputGroup and switch to ParsedBepOutput.getOutputGroupTargetArtifacts
-                .getDirectArtifactsForTarget(String.format("%s_deploy.jar", target)));
+            BlazeBuildOutputs.fromParsedBepOutput(
+              BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
+                  //TODO: define outputGroup and switch method to one that takes outputGroup as well
+                  .getTargetArtifacts(String.format("%s_deploy.jar", target)));
       }
 
       if (outputs.isEmpty()) {
