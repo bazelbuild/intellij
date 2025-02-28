@@ -18,16 +18,19 @@ package com.google.idea.blaze.base.sync.aspects.storage
 import com.google.idea.blaze.base.buildview.println
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.scope.Scope
+import com.google.idea.blaze.base.scope.output.IssueOutput
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope
 import com.google.idea.blaze.base.settings.BlazeImportSettings
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager
 import com.google.idea.blaze.base.toolwindow.Task
 import com.google.idea.blaze.common.Label
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import java.io.IOException
@@ -37,6 +40,10 @@ import java.util.*
 
 private const val ASPECT_TASK_TITLE = "Write Aspects"
 private const val ASPECT_DIRECTORY = "aspects"
+
+private const val BAZEL_IGNORE_FILE = ".bazelignore"
+
+private val LOG = logger<AspectStorageService>()
 
 @Service(Service.Level.PROJECT)
 class AspectStorageService(private val project: Project, private val scope: CoroutineScope) {
@@ -71,6 +78,8 @@ class AspectStorageService(private val project: Project, private val scope: Coro
         ?: throw SyncFailedException("Could not determine aspect directory")
 
       ctx.println("Writing aspects to $directory")
+
+      detectBazelIgnoreAndEmitWarning(ctx, directory)
 
       try {
         if (!Files.exists(directory)) {
@@ -113,5 +122,37 @@ class AspectStorageService(private val project: Project, private val scope: Coro
 
     // if this is not the case, fallback to .ijwb_aspects or .clwb_aspects
     return workspacePath.resolve(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY + "_aspects")
+  }
+
+  /**
+   * The aspects should not be in the bazel ignore file. Emit a warning if any subpath of the aspect directory is
+   * mentioned in the bazel ignore file.
+   */
+  private fun detectBazelIgnoreAndEmitWarning(ctx: BlazeContext, aspectPath: Path) {
+    val projectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData() ?: return
+
+    val bazelIgnore = projectData.workspacePathResolver.resolveToFile(BAZEL_IGNORE_FILE).toPath()
+    if (!Files.exists(bazelIgnore)) return
+
+    val aspectFile = aspectPath.toFile()
+    val aspectRelativePath = projectData.workspacePathResolver.getWorkspacePath(aspectFile)?.asPath() ?: return
+
+    val lines = try {
+      Files.lines(bazelIgnore).map(String::trim).toList()
+    } catch (e: IOException) {
+      LOG.warn("could not read bazel ignore file", e)
+      return
+    }
+
+    for (i in 1..aspectRelativePath.nameCount) {
+      if (!lines.contains(aspectRelativePath.subpath(0, i).toString())) continue
+
+      IssueOutput.warn("Aspects in $BAZEL_IGNORE_FILE file")
+        .withDescription("Please make sure that $aspectRelativePath is not covered by the $BAZEL_IGNORE_FILE file")
+        .withFile(bazelIgnore.toFile())
+        .submit(ctx)
+
+      break
+    }
   }
 }
