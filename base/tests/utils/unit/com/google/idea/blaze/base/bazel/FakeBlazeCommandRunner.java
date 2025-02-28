@@ -68,7 +68,7 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
         buildResultHelper -> {
           try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
             return BlazeBuildOutputs.fromParsedBepOutputForLegacy(
-                BuildResultParser.getBuildOutput(bepStream, Interners.STRING));
+                BuildResultParser.getBuildOutputForLegacySync(bepStream, Interners.STRING));
           }
         });
   }
@@ -108,7 +108,7 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
       BuildDepsStatsScope.fromContext(context).ifPresent(stats -> stats.setBazelExitCode(exitCode));
       try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
         return BlazeBuildOutputs.fromParsedBepOutputForLegacy(
-            BuildResultParser.getBuildOutput(bepStream, Interners.STRING));
+            BuildResultParser.getBuildOutputForLegacySync(bepStream, Interners.STRING));
       }
     } catch (GetArtifactsException e) {
       return BlazeBuildOutputs.noOutputsForLegacy(BuildResult.FATAL_ERROR);

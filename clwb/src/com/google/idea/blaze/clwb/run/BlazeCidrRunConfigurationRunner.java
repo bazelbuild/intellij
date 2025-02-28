@@ -58,6 +58,8 @@ import java.util.stream.Collectors;
 
 /** CLion-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
+  private static final String DEFAULT_OUTPUT_GROUP_NAME = "default";
+
   private final BlazeCommandRunConfiguration configuration;
 
   /** Calculated during the before-run task, and made available to the debugger. */
@@ -173,8 +175,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
             LocalFileArtifact.getLocalFiles(
                   BlazeBuildOutputs.fromParsedBepOutput(
                     BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
-                        //TODO: define outputGroup and switch method to one that takes outputGroup as well
-                        .getTargetArtifacts(target.toString()))
+                      .getTargetArtifacts(target.toString(), DEFAULT_OUTPUT_GROUP_NAME))
                 .stream()
                 .filter(File::canExecute)
                 .collect(Collectors.toList());
