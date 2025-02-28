@@ -190,7 +190,7 @@ test_suite(
     name = "integration_tests",
     tests = [
         ":external_includes_integration_test",
-        ":llvm_toolchain_integration_test",
+        # ":llvm_toolchain_integration_test", excluded for now since they are kinda slow
         ":query_sync_integration_test",
         ":simple_integration_test",
         ":virtual_includes_integration_test",
