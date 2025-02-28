@@ -27,15 +27,14 @@ public class BlazeIcons {
 
   private static final String BASE = "resources/icons/";
 
-  public static final Icon Logo = loadForBuildSystem("logo.png"); // 16x16
+  public static final Icon Logo = loadForBuildSystem("blaze_logo.svg"); // 16x16
   public static final Icon BazelLogo = load("bazel/logo.png"); // 16x16
   public static final Icon BlazeSlow = load("blaze_slow.png"); // 16x16
   public static final Icon Failed = loadForBuildSystem("failed.png"); // 16x16
 
   public static final Icon BlazeRerun = load("blazeRerun.png"); // 16x16
 
-  // This is just the Blaze icon scaled down to the size IJ wants for tool windows.
-  public static final Icon ToolWindow = loadForBuildSystem("tool_window.png"); // 13x13
+  public static final Icon ToolWindow = loadForBuildSystem("blaze_logo.svg");
 
   // Build file support icons
   public static final Icon BuildFile = load("build_file.png"); // 16x16
