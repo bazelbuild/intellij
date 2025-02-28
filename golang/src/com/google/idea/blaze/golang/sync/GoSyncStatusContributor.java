@@ -18,14 +18,14 @@ package com.google.idea.blaze.golang.sync;
 import com.goide.psi.GoFile;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.syncstatus.SyncStatusContributor;
+import com.google.idea.blaze.base.syncstatus.LegacySyncStatusContributor;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import javax.annotation.Nullable;
 
-class GoSyncStatusContributor implements SyncStatusContributor {
+class GoSyncStatusContributor implements LegacySyncStatusContributor {
 
   @Nullable
   @Override
