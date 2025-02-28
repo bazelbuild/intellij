@@ -95,6 +95,7 @@ public class BlazeTestCase {
 
   @Before
   public final void setup() {
+    Registry.markAsLoaded();
     Registry.get("allow.macros.for.run.configurations").setValue(false);
     testDisposable = new RootDisposable();
     MockApplication application = TestUtils.createMockApplication(testDisposable);
