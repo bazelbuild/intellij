@@ -132,7 +132,7 @@ aspect_library(
         "java_info.template.bzl",
         "python_info.bzl",
         "python_info.template.bzl",
-        "intellij_info.bzl",
+        "intellij_info_bundled.bzl",
         "intellij_info.template.bzl",
     ],
     namespace = "aspect/template",
