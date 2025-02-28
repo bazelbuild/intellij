@@ -331,9 +331,9 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
           LocalFileArtifact.getLocalFiles(
               BlazeBuildOutputs.fromParsedBepOutput(
                 BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
-                  .getTargetArtifacts(
-                      aspectStrategy.getAspectOutputGroup(),
-                      deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData).toString())
+                  .getOutputGroupTargetArtifacts(
+                      deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData).toString(),
+                      aspectStrategy.getAspectOutputGroup())
                   .stream()
                   .filter(artifact -> artifact.getArtifactPath().endsWith(deployJarLabel.targetName().toString()))
                   .collect(Collectors.toUnmodifiableSet()));

@@ -197,7 +197,7 @@ class GenerateDeployableJarTaskProvider
         outputs = LocalFileArtifact.getLocalFiles(
             BlazeBuildOutputs.fromParsedBepOutput(
               BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
-                  .getTargetArtifacts(String.format("%s_deploy.jar", target), DEFAULT_OUTPUT_GROUP_NAME));
+                  .getOutputGroupTargetArtifacts(DEFAULT_OUTPUT_GROUP_NAME, String.format("%s_deploy.jar", target)));
       }
 
       if (outputs.isEmpty()) {
