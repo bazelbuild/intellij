@@ -97,6 +97,8 @@ import javax.annotation.Nullable;
 /** Go-specific run configuration runner. */
 public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
 
+  private static final String DEFAULT_OUTPUT_GROUP_NAME = "default";
+
   // The actual Bazel shell script uses "1", which is considered as true.
   // For robustness, we include other common representations of true.
   private static final List<String> TRUTHY_ENV_VALUES_LOWER = List.of("true", "1", "yes", "on");
@@ -375,8 +377,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
               LocalFileArtifact.getLocalFiles(
                    BlazeBuildOutputs.fromParsedBepOutput(
                       BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
-                          //TODO: define outputGroup and switch method to one that takes outputGroup as well
-                          .getTargetArtifacts(label.toString()))
+                          .getTargetArtifacts(label.toString(), DEFAULT_OUTPUT_GROUP_NAME))
                   .stream()
                   .filter(File::canExecute)
                   .collect(Collectors.toList());

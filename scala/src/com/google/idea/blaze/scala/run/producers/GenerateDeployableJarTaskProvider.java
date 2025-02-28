@@ -69,6 +69,9 @@ import javax.swing.Icon;
 
 class GenerateDeployableJarTaskProvider
     extends BeforeRunTaskProvider<GenerateDeployableJarTaskProvider.Task> {
+
+  private static final String DEFAULT_OUTPUT_GROUP_NAME = "default";
+
   private static final Key<GenerateDeployableJarTaskProvider.Task> ID =
       Key.create("GenerateDeployableJarTarget");
 
@@ -194,8 +197,7 @@ class GenerateDeployableJarTaskProvider
         outputs = LocalFileArtifact.getLocalFiles(
             BlazeBuildOutputs.fromParsedBepOutput(
               BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
-                  //TODO: define outputGroup and switch method to one that takes outputGroup as well
-                  .getTargetArtifacts(String.format("%s_deploy.jar", target)));
+                  .getTargetArtifacts(String.format("%s_deploy.jar", target), DEFAULT_OUTPUT_GROUP_NAME));
       }
 
       if (outputs.isEmpty()) {
