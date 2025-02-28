@@ -37,7 +37,7 @@ public class SyncStatusEditorTabTitleProvider implements EditorTabTitleProvider,
     }
 
     SyncStatus status = ApplicationManager.getApplication()
-        .runReadAction((Computable<SyncStatus>) () -> SyncStatusContributor.getSyncStatus(project, file));
+        .runReadAction((Computable<SyncStatus>) () -> LegacySyncStatusContributor.getSyncStatus(project, file));
 
     if (status == null) {
       return null;

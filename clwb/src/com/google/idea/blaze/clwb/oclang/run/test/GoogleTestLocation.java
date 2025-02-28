@@ -16,7 +16,7 @@
 package com.google.idea.blaze.clwb.oclang.run.test;
 
 import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
-import com.google.idea.blaze.base.syncstatus.SyncStatusContributor;
+import com.google.idea.blaze.base.syncstatus.LegacySyncStatusContributor;
 import com.google.idea.blaze.clwb.oclang.run.CidrGoogleTestUtilAdapter;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
@@ -182,7 +182,7 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
     if (virtualFile == null) {
       return false;
     }
-    SyncStatus status = SyncStatusContributor.getSyncStatus(file.getProject(), virtualFile);
+    SyncStatus status = LegacySyncStatusContributor.getSyncStatus(file.getProject(), virtualFile);
     if (status != null && (status == SyncStatus.UNSYNCED || status == SyncStatus.IN_PROGRESS)) {
       MacroCallLocator locator = new MacroCallLocator();
       file.accept(locator);
