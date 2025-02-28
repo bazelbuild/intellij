@@ -58,15 +58,20 @@ def get_py_launcher(target, ctx):
 def _collect_targets_from_toolchains(ctx, toolchain_types):
     """Returns a list of targets for the given toolchain types."""
     result = []
+
     for toolchain_type in toolchain_types:
-        if toolchain_type in ctx.rule.toolchains:
-            if is_valid_aspect_target(ctx.rule.toolchains[toolchain_type]):
-                result.append(ctx.rule.toolchains[toolchain_type])
+        # toolchains attribute only available in Bazel 8+
+        toolchains = getattr(ctx.rule, "toolchains", [])
+
+        if toolchain_type in toolchains:
+            if is_valid_aspect_target(toolchains[toolchain_type]):
+                result.append(toolchains[toolchain_type])
+
     return result
-    
+
 semantics = struct(
     tool_label = tool_label,
-    toolchains_propagation  = struct(
+    toolchains_propagation = struct(
         toolchain_types = TOOLCHAIN_TYPE_DEPS,
         collect_toolchain_deps = _collect_targets_from_toolchains,
     ),
@@ -86,4 +91,20 @@ semantics = struct(
 def _aspect_impl(target, ctx):
     return intellij_info_aspect_impl(target, ctx, semantics)
 
-intellij_info_aspect = make_intellij_info_aspect(_aspect_impl, semantics, toolchains_aspects = TOOLCHAIN_TYPE_DEPS,)
+# TEMPLATE-INCLUDE-BEGIN
+##intellij_info_aspect = make_intellij_info_aspect(
+##    _aspect_impl,
+##    semantics,
+## #if( $bazel8OrAbove == "true" )
+##    toolchains_aspects = TOOLCHAIN_TYPE_DEPS,
+## #end
+##)
+# TEMPLATE-INCLUDE-END
+
+# TEMPLATE-IGNORE-BEGIN
+intellij_info_aspect = make_intellij_info_aspect(
+    _aspect_impl,
+    semantics,
+    toolchains_aspects = TOOLCHAIN_TYPE_DEPS,
+)
+# TEMPLATE-IGNORE-END
