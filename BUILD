@@ -29,6 +29,7 @@ test_suite(
         "//dart:unit_tests",
         "//ijwb:integration_tests",
         "//ijwb:unit_tests",
+        "//ijwb:headless_tests",
         "//java:integration_tests",
         "//java:unit_tests",
         "//kotlin:integration_tests",
@@ -72,7 +73,7 @@ test_suite(
     tests = [
         "//base:unit_tests",
         "//clwb:unit_tests",
-        "//clwb:integration_tests",
+        "//clwb:headless_tests",
         "//cpp:unit_tests",
         "//dart:unit_tests",
         "//python:unit_tests",
@@ -80,21 +81,3 @@ test_suite(
     ],
 )
 # END-EXTERNAL
-
-# ASwB tests, run with an Android Studio plugin SDK
-test_suite(
-    name = "aswb_tests",
-    tests = [
-        "//aswb:integration_tests",
-        "//aswb:unit_tests",
-        "//base:integration_tests",
-        "//base:unit_tests",
-        "//cpp:integration_tests",
-        "//cpp:unit_tests",
-        "//dart:unit_tests",
-        "//java:integration_tests",
-        "//java:unit_tests",
-        "//skylark:unit_tests",
-    ],
-    visibility = DEFAULT_TEST_VISIBILITY,
-)

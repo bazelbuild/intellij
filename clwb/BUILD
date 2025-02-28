@@ -27,7 +27,7 @@ load(
     "intellij_unit_test_suite",
 )
 load(":build_defs.bzl", "select_since")
-load(":test_defs.bzl", "clwb_integration_test")
+load(":test_defs.bzl", "clwb_headless_test")
 
 licenses(["notice"])
 
@@ -156,43 +156,43 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
-clwb_integration_test(
-    name = "simple_integration_test",
-    srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/SimpleTest.java"],
+clwb_headless_test(
+    name = "simple_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/SimpleTest.java"],
     project = "simple",
 )
 
-clwb_integration_test(
-    name = "virtual_includes_integration_test",
-    srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/VirtualIncludesTest.java"],
+clwb_headless_test(
+    name = "virtual_includes_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/VirtualIncludesTest.java"],
     project = "virtual_includes",
 )
 
-clwb_integration_test(
-    name = "llvm_toolchain_integration_test",
-    srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/LlvmToolchainTest.java"],
+clwb_headless_test(
+    name = "llvm_toolchain_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/LlvmToolchainTest.java"],
     project = "llvm_toolchain",
 )
 
-clwb_integration_test(
-    name = "external_includes_integration_test",
-    srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/ExternalIncludesTest.java"],
+clwb_headless_test(
+    name = "external_includes_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/ExternalIncludesTest.java"],
     project = "external_includes",
 )
 
-clwb_integration_test(
-    name = "query_sync_integration_test",
-    srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/QuerySyncTest.java"],
+clwb_headless_test(
+    name = "query_sync_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/QuerySyncTest.java"],
     project = "simple",
 )
 
 test_suite(
-    name = "integration_tests",
+    name = "headless_tests",
     tests = [
-        ":external_includes_integration_test",
-        # ":llvm_toolchain_integration_test", excluded for now since they are kinda slow
-        ":query_sync_integration_test",
-        ":simple_integration_test",
-        ":virtual_includes_integration_test",
+        ":external_includes_headless_test",
+        # ":llvm_toolchain_headless_test", excluded for now since they are kinda slow
+        ":query_sync_headless_test",
+        ":simple_headless_test",
+        ":virtual_includes_headless_test",
     ],
 )

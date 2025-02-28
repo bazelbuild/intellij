@@ -28,6 +28,7 @@ load(
     "IJWB_PACKAGES_VISIBILITY",
     "PLUGIN_PACKAGES_VISIBILITY",
 )
+load(":test_defs.bzl", "ijwb_headless_test")
 
 licenses(["notice"])
 
@@ -168,5 +169,18 @@ intellij_integration_test_suite(
         "@com_google_guava_guava//jar",
         "//third_party/java/junit",
         "@org_opentest4j_opentest4j//jar",
+    ],
+)
+
+ijwb_headless_test(
+    name = "simple_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/ijwb/headless/SimpleTest.java"],
+    project = "simple",
+)
+
+test_suite(
+    name = "headless_tests",
+    tests = [
+        ":simple_headless_test",
     ],
 )

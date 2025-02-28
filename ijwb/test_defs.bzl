@@ -4,25 +4,22 @@ load(
     "intellij_integration_test_suite",
 )
 
-def clwb_headless_test(name, project, srcs, deps = []):
+def ijwb_headless_test(name, project, srcs, deps = []):
     runner = name + "_runner"
 
     intellij_integration_test_suite(
         name = runner,
-        srcs = srcs + native.glob(["tests/headlesstests/com/google/idea/blaze/clwb/base/*.java"]),
-        test_package_root = "com.google.idea.blaze.clwb",
-        runtime_deps = [":clwb_bazel"],
+        srcs = srcs + native.glob(["tests/headlesstests/com/google/idea/blaze/ijwb/headless/base/*.java"]),
+        test_package_root = "com.google.idea.blaze.ijwb",
+        runtime_deps = [":ijwb_bazel"],
         jvm_flags = [
             # disables the default bazel security manager, causes tests to fail on windows
             "-Dcom.google.testing.junit.runner.shouldInstallTestSecurityManager=false",
             # fixes preferences not writable on mac
             "-Djava.util.prefs.PreferencesFactory=com.google.idea.testing.headless.InMemoryPreferencesFactory",
-            # suppressed plugin sets for classic, radler is currently disabled for tests
-            "-Didea.suppressed.plugins.set.classic=org.jetbrains.plugins.clion.radler,intellij.rider.cpp.debugger,intellij.rider.plugins.clion.radler.cwm",
-            "-Didea.suppressed.plugins.set.selector=classic",
         ],
         deps = deps + [
-            ":clwb_lib",
+            ":ijwb_lib",
             "//base",
             "//shared",
             "//common/util:process",
@@ -40,10 +37,6 @@ def clwb_headless_test(name, project, srcs, deps = []):
         name = name,
         test_runner = runner,
         workspace_path = "tests/projects/" + project,
-        env = {
-            # disables automatic conversion of bazel target names to absolut windows paths by msys
-            "MSYS_NO_PATHCONV": "true",
-        },
         # inherit bash shell and visual studio path from host for windows
         additional_env_inherit = ["BAZEL_SH", "BAZEL_VC"],
     )

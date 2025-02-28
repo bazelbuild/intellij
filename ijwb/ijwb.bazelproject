@@ -4,6 +4,7 @@ directories:
   -clwb
   -cpp
   -examples
+  -ijwb/tests/projects
 
 targets:
   //ijwb:ijwb_bazel_dev
@@ -19,6 +20,7 @@ build_flags:
 test_sources:
   */tests/unittests*
   */tests/integrationtests*
+  */tests/headlesstests*
 
 additional_languages:
   kotlin
