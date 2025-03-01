@@ -1183,7 +1183,6 @@ def _is_analysis_test(target):
 
 def intellij_info_aspect_impl(target, ctx, semantics):
     """Aspect implementation function."""
-
     tags = ctx.rule.attr.tags
     if "no-ide" in tags:
         return struct()
