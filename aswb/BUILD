@@ -104,11 +104,26 @@ java_library(
 java_library(
     name = "aswb_lib",
     srcs = glob(
-        [
-            "src/**/*.java",
+        ["src/**/*.java"],
+        # These source files below should be omitted for versions < 2023.1.1.11
+        exclude = ["src/com/google/idea/blaze/android/run/binary/tasks/*.java"],
+    ) + select_for_plugin_api({
+        "android-studio-2022.3": glob(["sdkcompat/as223/**/*.java"]),
+        "android-studio-2023.1": glob([
+            "sdkcompat/as231/**/*.java",
             "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
+        ]),
+        "android-studio-2023.2": glob([
+            "sdkcompat/as232/**/*.java",
+            "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
+        ]),
+        "android-studio-2023.3": glob([
+            "sdkcompat/as233/**/*.java",
+            "src/com/google/idea/blaze/android/run/binary/tasks/*.java",
+        ]) + [
+            "sdkcompat/as232/com/google/idea/blaze/android/projectsystem/BinaryTargetClassFileFinder.java",
         ],
-    ),
+    }),
     resources = glob(["resources/**/*"]),
     visibility = combine_visibilities(
         ASWB_SUBPACKAGES_VISIBILITY,
@@ -118,17 +133,19 @@ java_library(
         "//base",
         "//common/experiments",
         "//cpp",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
+        "//intellij_platform_sdk:kotlin",
+        "//intellij_platform_sdk:plugin_api",
         "//java",
         "//proto:proto_deps",
         "//querysync",
         "//shared",
         "//shared:artifact",
-        "//third_party/java/auto_value",
-        "//intellij_platform_sdk:plugin_api",
-        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
-        "//intellij_platform_sdk:kotlin",
+        "//third_party/auto_value",
+        "@gson//jar",
     ],
 )
+
 
 intellij_unit_test_suite(
     name = "unit_tests",
