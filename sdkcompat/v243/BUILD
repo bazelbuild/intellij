@@ -34,6 +34,7 @@ java_library(
         "com/google/idea/sdkcompat/platform/**",
         "com/google/idea/sdkcompat/psi/**",
         "com/google/idea/sdkcompat/python/**",
+        "com/google/idea/sdkcompat/querysync/**",
         "com/google/idea/sdkcompat/ui/icons/**",
     ]) + select_for_ide(
         clion = glob([
