@@ -1,4 +1,6 @@
-load("//testing:test_defs.bzl", "bazel_integration_tests")
+load("@bazel_binaries//:defs.bzl", "bazel_binaries")
+load("@rules_bazel_integration_test//bazel_integration_test:defs.bzl", "bazel_integration_test")
+load("@rules_java//java:defs.bzl", "java_binary")
 
 java_binary(
     name = "BazelInvokingIntegrationTestRunner",
@@ -15,8 +17,11 @@ java_binary(
     ],
 )
 
-bazel_integration_tests(
+bazel_integration_test(
     name = "bazel_invocation_integration_test",
+    bazel_version = bazel_binaries.versions.current,
+    env = {"BIT_BAZEL_VERSION": bazel_binaries.versions.current},
+    tags = ["exclusive"],
     test_runner = ":BazelInvokingIntegrationTestRunner",
     workspace_path = "testdata",
 )
