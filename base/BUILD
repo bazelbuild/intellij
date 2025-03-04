@@ -579,6 +579,8 @@ intellij_integration_test_suite(
         "//querysync",
         "//querysync/javatests/com/google/idea/blaze/qsync/artifacts:mock_artifact_cache",
         "//shared:exception",
+        "//shared/java/com/google/idea/blaze/common",
+        "//shared/java/com/google/idea/blaze/common/artifact",
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",

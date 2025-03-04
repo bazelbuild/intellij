@@ -6,6 +6,7 @@ java_library(
     name = "artifact",
     srcs = glob(["*.java"]),
     visibility = [
+        "//base:__subpackages__",
         "//shared:__subpackages__",
         "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__subpackages__",
     ],
