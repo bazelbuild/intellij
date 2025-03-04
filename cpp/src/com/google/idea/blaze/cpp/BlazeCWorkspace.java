@@ -36,6 +36,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.base.sync.workspace.VirtualIncludesHandler;
+import com.intellij.build.events.MessageEvent;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -156,14 +157,10 @@ public final class BlazeCWorkspace implements ProjectComponent {
                   WorkspaceModel model =
                       calculateConfigurations(
                           blazeProjectData, workspaceRoot, newResult, indicator);
-                  ImmutableList<String> issues =
-                      commit(SERIALIZATION_VERSION, model, workspaceRoot);
+                  commit(SERIALIZATION_VERSION, context, model, workspaceRoot);
                   logger.info(
                       String.format(
                           "Update configurations took %dms", s.elapsed(TimeUnit.MILLISECONDS)));
-                  if (!issues.isEmpty()) {
-                    showSetupIssues(issues, context);
-                  }
                 }
                 resolverResult = newResult;
                 incModificationTrackers();
@@ -502,37 +499,12 @@ public final class BlazeCWorkspace implements ProjectComponent {
         .collect(toImmutableList());
   }
 
-  private static void showSetupIssues(ImmutableList<String> issues, BlazeContext context) {
-    logger.warn(
-        String.format(
-            "Issues collecting info from C++ compiler. Showing first few out of %d:\n%s",
-            issues.size(), Iterables.limit(issues, 25)));
-    IssueOutput.warn("Issues collecting info from C++ compiler (click to see logs)")
-        .withNavigatable(
-            new Navigatable() {
-              @Override
-              public void navigate(boolean b) {
-                ShowFilePathAction.openFile(new File(PathManager.getLogPath(), "idea.log"));
-              }
-
-              @Override
-              public boolean canNavigate() {
-                return true;
-              }
-
-              @Override
-              public boolean canNavigateToSource() {
-                return false;
-              }
-            })
-        .submit(context);
-  }
-
-  private ImmutableList<String> commit(
+  private void commit(
       int serialVersion,
+      BlazeContext context,
       WorkspaceModel workspaceModel,
       WorkspaceRoot workspaceRoot) {
-    final var issues = collectCompilerSettingsInParallel(workspaceModel, workspaceRoot);
+    collectCompilerSettingsInParallel(context, workspaceModel, workspaceRoot);
 
     workspaceModel.model.setClientVersion(serialVersion);
     workspaceModel.model.preCommit();
@@ -541,17 +513,15 @@ public final class BlazeCWorkspace implements ProjectComponent {
         () -> ApplicationManager.getApplication()
             .runWriteAction((Runnable) workspaceModel.model::commit)
     );
-
-    return issues;
   }
 
-  private ImmutableList<String> collectCompilerSettingsInParallel(
+  private void collectCompilerSettingsInParallel(
+      BlazeContext context,
       WorkspaceModel workspaceModel,
       WorkspaceRoot workspaceRoot) {
     CompilerInfoCache compilerInfoCache = new CompilerInfoCache();
     TempFilesPool tempFilesPool = new CachedTempFilesPool();
     Session<Integer> session = compilerInfoCache.createSession(new EmptyProgressIndicator());
-    ImmutableList.Builder<String> issues = ImmutableList.builder();
 
     try {
       int i = 0;
@@ -564,18 +534,26 @@ public final class BlazeCWorkspace implements ProjectComponent {
       }
       MultiMap<Integer, Message> messages = new MultiMap<>();
       session.waitForAll(messages);
-      for (Map.Entry<Integer, Collection<Message>> entry :
-          ContainerUtil.sorted(messages.entrySet(), Comparator.comparingInt(Map.Entry::getKey))) {
-        entry.getValue().stream()
-            .filter(m -> m.getType().equals(Message.Type.ERROR))
-            .map(Message::getText)
-            .forEachOrdered(issues::add);
+
+      final var frozenMessages =
+        messages.freezeValues().values().stream()
+          .flatMap(Collection::stream)
+          .collect(ImmutableList.toImmutableList());
+
+      for (final var message : frozenMessages) {
+        final var kind = switch (message.getType()) {
+          case ERROR -> MessageEvent.Kind.ERROR;
+          case WARNING -> MessageEvent.Kind.WARNING;
+        };
+
+        IssueOutput.issue(kind, "COMPILER INFO COLLECTION")
+          .withDescription(message.getText())
+          .submit(context);
       }
     } catch (Error | RuntimeException e) {
       session.dispose(); // This calls tempFilesPool.clean();
       throw e;
     }
     tempFilesPool.clean();
-    return issues.build();
   }
 }
