@@ -1,98 +1,194 @@
-"""Utility functions to expand make variables."""
+"""Utility functions to expand make variables. Implementation taken from cc_helper. """
 
-def _is_valid_make_var(varname):
-    """Check if the make variable name seems valid."""
-    if len(varname) == 0:
-        return False
-
-    # According to gnu make, any chars not whitespace, ':', '#', '=' are valid.
-    invalid_chars = ":#= \t\n\r"
-    for n in range(0, len(invalid_chars)):
-        if invalid_chars[n] in varname:
-            return False
-    return True
-
-def expand_make_variables(attr_name, expression, ctx, additional_subs = {}):
-    """Substitutes make variables defined in $() syntax.
-
-    Because ctx.expand_make_variables is deprecated, we need to be able to do the
-    substitution without relying on it.
-    Before the aspect is processed, the build system already detects most/all of
-    the failure modes and the aspect does not get processed, but including them
-    here helps with following the logic.
-
-    Args:
-      attr_name: The attribute name. Used for error reporting.
-      expression: The expression to expand. It can contain references to "Make
-        variables".
-      ctx: The context containing default make variables to subtitute.
-      additional_subs: Additional substitutions to make beyond the default make
-        variables.
-
-    Returns:
-      Returns a string after expanding all references to "Make variables". The
-      variables must have the following format: $(VAR_NAME). Also, $$VAR_NAME
-      expands to $VAR_NAME.
-
-
-    """
-    if "$" not in expression:
-        return expression
-
-    current_offset = 0
-    rv = ""
-    substitutions = {}
-    substitutions.update(ctx.var)
-
-    # make variables from ctx.var can be overridden
-    substitutions.update(additional_subs)
-
-    # skylark does not support while. This is the maximum iteration count this
-    # loop will need, but it will exit early if possible.
-    for _n in range(0, len(expression)):
-        if current_offset >= len(expression):
-            break
-        begin_dollars = expression.find("$", current_offset)
-        if begin_dollars == -1:
-            # append whatever is left in expression
-            rv = rv + expression[current_offset:]
-            current_offset = len(expression)
-            continue
-        if begin_dollars != current_offset:
-            rv = rv + expression[current_offset:begin_dollars]
-
-        # consume the entire run of $$$...
-        end_dollars = begin_dollars + 1
-        for _m in range(end_dollars, len(expression)):
-            if expression[end_dollars] == "$":
-                end_dollars = end_dollars + 1
+# Source: https://github.com/bazelbuild/bazel/blob/6f7faa659e5eb3e56c8a6274ebcb86884703d603/src/main/starlark/builtins_bzl/common/cc/cc_helper.bzl#L910
+def expand_make_variables(ctx, tokenization, unexpanded_tokens, additional_make_variable_substitutions = {}):
+    tokens = []
+    targets = []
+    for additional_compiler_input in getattr(ctx.attr, "additional_compiler_inputs", []):
+        targets.append(additional_compiler_input)
+    for token in unexpanded_tokens:
+        if tokenization:
+            expanded_token = _expand(ctx, token, additional_make_variable_substitutions, targets = targets)
+            _tokenize(tokens, expanded_token)
+        else:
+            exp = _expand_single_make_variable(ctx, token, additional_make_variable_substitutions)
+            if exp != None:
+                _tokenize(tokens, exp)
             else:
-                break
-        if (end_dollars - begin_dollars) % 2 == 0:
-            # even number of '$'
-            rv = rv + "$" * ((end_dollars - begin_dollars) // 2)
-            current_offset = end_dollars
+                tokens.append(_expand(ctx, token, additional_make_variable_substitutions, targets = targets))
+    return tokens
+
+# Tries to expand a single make variable from token.
+# If token has additional characters other than ones
+# corresponding to make variable returns None.
+def _expand_single_make_variable(ctx, token, additional_make_variable_substitutions = {}):
+    if len(token) < 3:
+        return None
+    if token[0] != "$" or token[1] != "(" or token[len(token) - 1] != ")":
+        return None
+    unexpanded_var = token[2:len(token) - 1]
+    expanded_var = _expand_nested_variable(ctx, additional_make_variable_substitutions, unexpanded_var)
+    return expanded_var
+
+
+def _expand_nested_variable(ctx, additional_vars, exp, execpath = True, targets = []):
+    # If make variable is predefined path variable(like $(location ...))
+    # we will expand it first.
+    if exp.find(" ") != -1:
+        if not execpath:
+            if exp.startswith("location"):
+                exp = exp.replace("location", "rootpath", 1)
+        data_targets = []
+        if ctx.attr.data != None:
+            data_targets = ctx.attr.data
+
+        # Make sure we do not duplicate targets.
+        unified_targets_set = {}
+        for data_target in data_targets:
+            unified_targets_set[data_target] = True
+        for target in targets:
+            unified_targets_set[target] = True
+        return ctx.expand_location("$({})".format(exp), targets = unified_targets_set.keys())
+
+    # Recursively expand nested make variables, but since there is no recursion
+    # in Starlark we will do it via for loop.
+    unbounded_recursion = True
+
+    # The only way to check if the unbounded recursion is happening or not
+    # is to have a look at the depth of the recursion.
+    # 10 seems to be a reasonable number, since it is highly unexpected
+    # to have nested make variables which are expanding more than 10 times.
+    for _ in range(10):
+        exp = _lookup_var(ctx, additional_vars, exp)
+        if len(exp) >= 3 and exp[0] == "$" and exp[1] == "(" and exp[len(exp) - 1] == ")":
+            # Try to expand once more.
+            exp = exp[2:len(exp) - 1]
+            continue
+        unbounded_recursion = False
+        break
+
+    if unbounded_recursion:
+        fail("potentially unbounded recursion during expansion of {}".format(exp))
+    return exp
+
+def _lookup_var(ctx, additional_vars, var):
+    expanded_make_var_ctx = ctx.var.get(var)
+    expanded_make_var_additional = additional_vars.get(var)
+    if expanded_make_var_additional != None:
+        return expanded_make_var_additional
+    if expanded_make_var_ctx != None:
+        return expanded_make_var_ctx
+    fail("{}: {} not defined".format(ctx.label, "$(" + var + ")"))
+
+def _expand(ctx, expression, additional_make_variable_substitutions, execpath = True, targets = []):
+    idx = 0
+    last_make_var_end = 0
+    result = []
+    n = len(expression)
+    for _ in range(n):
+        if idx >= n:
+            break
+        if expression[idx] != "$":
+            idx += 1
             continue
 
-        # odd number of '$'
-        if end_dollars == len(expression) or expression[end_dollars] != "(":
-            # odd number of '$' at the end of the string is invalid
-            # odd number of '$' followed by non-( is invalid
-            fail("expand_make_variables: unterminated $", attr_name)
-        end_parens = expression.find(")", end_dollars)
-        if end_parens == -1:
-            # no end parens is invalid
-            fail("expand_make_variables: unterminated variable reference", attr_name)
+        idx += 1
 
-        # odd number of '$', but integer division will provide correct count
-        rv = rv + "$" * ((end_dollars - begin_dollars) // 2)
-        varname = expression[end_dollars + 1:end_parens]
-        if not _is_valid_make_var(varname):
-            # invalid make variable name
-            fail("expand_make_variables: $(%s) invalid name" % varname, attr_name)
-        if not varname in substitutions:
-            # undefined make variable
-            fail("expand_make_variables: $(%s) not defined" % varname, attr_name)
-        rv = rv + substitutions[varname]
-        current_offset = end_parens + 1
-    return rv
+        # We've met $$ pattern, so $ is escaped.
+        if idx < n and expression[idx] == "$":
+            idx += 1
+            result.append(expression[last_make_var_end:idx - 1])
+            last_make_var_end = idx
+            # We might have found a potential start for Make Variable.
+
+        elif idx < n and expression[idx] == "(":
+            # Try to find the closing parentheses.
+            make_var_start = idx
+            make_var_end = make_var_start
+            for j in range(idx + 1, n):
+                if expression[j] == ")":
+                    make_var_end = j
+                    break
+
+            # Note we cannot go out of string's bounds here,
+            # because of this check.
+            # If start of the variable is different from the end,
+            # we found a make variable.
+            if make_var_start != make_var_end:
+                # Some clarifications:
+                # *****$(MAKE_VAR_1)*******$(MAKE_VAR_2)*****
+                #                   ^       ^          ^
+                #                   |       |          |
+                #   last_make_var_end  make_var_start make_var_end
+                result.append(expression[last_make_var_end:make_var_start - 1])
+                make_var = expression[make_var_start + 1:make_var_end]
+                exp = _expand_nested_variable(ctx, additional_make_variable_substitutions, make_var, execpath, targets)
+                result.append(exp)
+
+                # Update indexes.
+                idx = make_var_end + 1
+                last_make_var_end = idx
+
+    # Add the last substring which would be skipped by for loop.
+    if last_make_var_end < n:
+        result.append(expression[last_make_var_end:n])
+
+    return "".join(result)
+
+def _tokenize(options, options_string):
+    token = []
+    force_token = False
+    quotation = "\0"
+    length = len(options_string)
+
+    # Since it is impossible to modify loop variable inside loop
+    # in Starlark, and also there is no while loop, I have to
+    # use this ugly hack.
+    i = -1
+    for _ in range(length):
+        i += 1
+        if i >= length:
+            break
+        c = options_string[i]
+        if quotation != "\0":
+            # In quotation.
+            if c == quotation:
+                # End quotation.
+                quotation = "\0"
+            elif c == "\\" and quotation == "\"":
+                i += 1
+                if i == length:
+                    fail("backslash at the end of the string: {}".format(options_string))
+                c = options_string[i]
+                if c != "\\" and c != "\"":
+                    token.append("\\")
+                token.append(c)
+            else:
+                # Regular char, in quotation.
+                token.append(c)
+        else:
+            # Not in quotation.
+            if c == "'" or c == "\"":
+                # Begin single double quotation.
+                quotation = c
+                force_token = True
+            elif c == " " or c == "\t":
+                # Space not quoted.
+                if force_token or len(token) > 0:
+                    options.append("".join(token))
+                    token = []
+                    force_token = False
+            elif c == "\\":
+                # Backslash not quoted.
+                i += 1
+                if i == length:
+                    fail("backslash at the end of the string: {}".format(options_string))
+                token.append(options_string[i])
+            else:
+                # Regular char, not quoted.
+                token.append(c)
+    if quotation != "\0":
+        fail("unterminated quotation at the end of the string: {}".format(options_string))
+
+    if force_token or len(token) > 0:
+        options.append("".join(token))

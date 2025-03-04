@@ -1,6 +1,7 @@
 package com.google.idea.blaze.clwb;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.clwb.base.Assertions.assertContainsCompilerFlag;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsPattern;
 
@@ -43,6 +44,7 @@ public class SimpleTest extends ClwbHeadlessTestCase {
     }
 
     assertContainsHeader("iostream", compilerSettings);
+    assertContainsCompilerFlag("-Wall", compilerSettings);
   }
 
   private void checkTest() {
