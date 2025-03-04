@@ -1,8 +1,39 @@
 v2025.03.04
 ===========
-
-
-
+Fixes:
+* More customary to IJ error reporting for cases when required JDK is missing #7321
+* Fixes for the PTY terminal on Windows #7348
+* Copy aspects also during startup sync #7331
+* Stop adding $ as "terminators" when filtering tests for JUnit 5 #7080
+* Reduce freeze in ProjectUpdater #7199
+Updates:
+* 2025.1 update: promote 2025.1 builds to stable #7396
+AOSP updates:
+* [AOSP-pick] Fix skip finding output experiment implementation #7381
+* [AOSP-pick] Remove TODOs and rename classes #7380
+* [AOSP-pick] Mark ASwB K2 compatible #7379
+* [AOSP-pick] Clean up and Java docs #7378
+* [AOSP-pick] Complete separation of legacy BepParser #7377
+* [AOSP-pick] Rename build_id to build_id_for_logging #7370
+* [AOSP-pick] Always use BlazeBuildOutputs #7369
+* [AOSP-pick] Never ask for artifacts without output group #7366
+* [AOSP-pick] Drop log only localExecRoot property #7365
+* [AOSP-pick] Cleanup BlazeBuildOutputs instantiation #7362
+* [AOSP-pick] Simplify ParsedBepOutput public interface #7361
+* [AOSP-pick] Enumerate all currently used cache directories. #7360
+* [AOSP-pick] Extract core BEP parsing #7358
+* [AOSP-pick] Simplify handling of config mnemonics #7356
+* [AOSP-pick] Separate BEP analysis and parsing #7355
+* [AOSP-pick] Extract BuildOutputs interface #7354
+* [AOSP-pick] Encapsulate BuildOutputs.artifacts #7350
+* [AOSP-pick] Make artifact prefix path public #7346
+* [AOSP-pick] Handle output groups explicitly in deployment #7347
+* [AOSP-pick] Clean up DeployTarget interface #7345
+* [AOSP-pick] Encapsulate buildResult field #7344
+* [AOSP-pick] Replace output group name filter #7342
+* [AOSP-pick] Separate BEP parsing and data #7338
+* [AOSP-pick] Delete currently unused fields #7337
+* [AOSP-pick] Delete unused code #7330
 
 v2025.02.18
 ===========
