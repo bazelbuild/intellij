@@ -442,6 +442,7 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":base",
+        "//common/experiments",
         "//shared",
         "//shared:artifact",
         "//intellij_platform_sdk:plugin_api",
