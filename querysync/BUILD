@@ -13,6 +13,8 @@ package(default_visibility = [
     "//java/com/google/devtools/intellij/blaze/plugin/cpp:__subpackages__",
     "//java/com/google/devtools/intellij/blaze/plugin/querysync:__subpackages__",
     "//java/com/google/devtools/intellij/g3plugins/services:__subpackages__",
+    "//java/com/google/devtools/intellij/protobuf:__subpackages__",
+    "//javatests/com/google/devtools/intellij/protobuf:__subpackages__",
 ])
 
 # A build rule to expose individual targets under java/ to users
