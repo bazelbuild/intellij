@@ -65,8 +65,6 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:clwb_tests
-    soft_fail:
-      - exit_status: 1
   CLion-MacOS-OSS-latest-stable:
     name: CLion MacOS OSS Latest Stable
     platform: macos_arm64
@@ -80,8 +78,6 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:clwb_tests
-    soft_fail:
-      - exit_status: 1
   CLion-Linux-OSS-under-dev:
     name: CLion Linux OSS Under Development
     platform: ubuntu2204
