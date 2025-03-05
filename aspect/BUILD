@@ -2,6 +2,7 @@
 # Description: Bazel aspect bundled with the Bazel IntelliJ plugin.
 #
 
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load(":flag_hack.bzl", "define_flag_hack")
 load(":build_defs.bzl", "aspect_library", "aspect_files")
 
@@ -74,11 +75,11 @@ aspect_library(
 # BUILD file bundled with the aspect must not override the BUILD file
 # used for development. So we name it BUILD.aspect, and rename prior
 # to bundling with the plugin.
-genrule(
+
+copy_file(
     name = "rename_files",
-    srcs = ["BUILD.aspect"],
-    outs = ["BUILD.bazel"],
-    cmd = "cp $< $@",
+    src = "BUILD.aspect",
+    out = "BUILD.bazel",
 )
 
 _dev_aspect_path = package_name()

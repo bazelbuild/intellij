@@ -1,5 +1,6 @@
 """Rules for writing tests for the IntelliJ aspect."""
 
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load(
     "//aspect:intellij_info.bzl",
     "intellij_info_aspect",
@@ -76,9 +77,8 @@ def intellij_aspect_test_fixture(name, deps, transitive_configs = []):
 
 def test_sources(outs):
     for out in outs:
-        native.genrule(
+        copy_file(
             name = out + ".genrule",
-            srcs = [out + ".testdata"],
-            outs = [out],
-            cmd = "cp $< $@",
+            src = out + ".testdata",
+            out = out,
         )
