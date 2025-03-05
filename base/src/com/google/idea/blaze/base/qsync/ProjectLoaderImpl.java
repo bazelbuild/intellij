@@ -27,6 +27,8 @@ import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.ExternalWorkspaceDataProvider;
+import com.google.idea.blaze.base.model.ExternalWorkspaceData;
+import com.google.idea.blaze.base.model.ExternalWorkspaceDataProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -52,7 +54,6 @@ import com.google.idea.blaze.common.artifact.BuildArtifactCache;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.DependenciesProjectProtoUpdater;
-import com.google.idea.blaze.qsync.ProjectProtoTransform;
 import com.google.idea.blaze.qsync.ProjectProtoTransform.Registry;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.SnapshotBuilder;
@@ -93,6 +94,42 @@ public class ProjectLoaderImpl implements ProjectLoader {
   private final SimpleModificationTracker projectModificationTracker;
   protected final Project project;
 
+  /**
+   * A loaded  {@link QuerySyncProject} with all the services it depends on.
+   */
+  public record LoadProjectResult(QuerySyncProject result, QuerySyncProjectDeps deps) {}
+
+  /**
+   * Services {@link QuerySyncProject} depends on.
+   */
+  public record QuerySyncProjectDeps(BlazeImportSettings importSettings,
+                                     WorkspaceRoot workspaceRoot,
+                                     WorkspacePathResolver workspacePathResolver,
+                                     ProjectViewManager projectViewManager,
+                                     ProjectViewSet projectViewSet,
+                                     BuildSystem buildSystem,
+                                     WorkspaceLanguageSettings workspaceLanguageSettings,
+                                     ProjectDefinition latestProjectDef,
+                                     Path snapshotFilePath,
+                                     ProjectPath.Resolver projectPathResolver,
+                                     Registry projectTransformRegistry,
+                                     SnapshotHolder graph,
+                                     BuildArtifactCache artifactCache,
+                                     ArtifactTracker<BlazeContext> artifactTracker,
+                                     RenderJarArtifactTracker renderJarArtifactTracker,
+                                     AppInspectorArtifactTracker appInspectorArtifactTracker,
+                                     RenderJarTracker renderJarTracker,
+                                     AppInspectorTracker appInspectorTracker,
+                                     ProjectArtifactStore artifactStore,
+                                     DependencyBuilder dependencyBuilder,
+                                     DependencyTracker dependencyTracker,
+                                     SnapshotBuilder snapshotBuilder,
+                                     ProjectQuerier projectQuerier,
+                                     QuerySyncSourceToTargetMap sourceToTargetMap,
+                                     BlazeInfo blazeInfo,
+                                     ExternalWorkspaceData externalWorkspaceData) {
+  }
+
   public ProjectLoaderImpl(Project project) {
     this(MoreExecutors.listeningDecorator(
       AppExecutorUtil.createBoundedApplicationPoolExecutor("QuerySync", 128)), project);
@@ -106,6 +143,52 @@ public class ProjectLoaderImpl implements ProjectLoader {
 
   @Override
   public @Nullable QuerySyncProject loadProject(BlazeContext context) throws BuildException {
+    LoadProjectResult loadProjectResult = doLoadProject(context);
+    return loadProjectResult.result();
+  }
+
+  public LoadProjectResult doLoadProject(BlazeContext context) throws BuildException {
+    QuerySyncProjectDeps deps = instantiateDeps(context);
+    final var querySyncProject =  loadProject(deps);
+    return new LoadProjectResult(querySyncProject, deps);
+  }
+
+  private QuerySyncProject loadProject(QuerySyncProjectDeps result) {
+    QuerySyncProject querySyncProject =
+        new QuerySyncProject(
+          project,
+          result.snapshotFilePath(),
+          result.graph(),
+          result.importSettings(),
+          result.workspaceRoot(),
+          result.artifactTracker(),
+          result.artifactCache(),
+          result.artifactStore(),
+          result.renderJarArtifactTracker(),
+          result.appInspectorArtifactTracker(),
+          result.dependencyTracker(),
+          result.renderJarTracker(),
+          result.appInspectorTracker(),
+          result.projectQuerier(),
+          result.snapshotBuilder(),
+          result.latestProjectDef(),
+          result.projectViewSet(),
+          result.workspacePathResolver(),
+          result.projectPathResolver(),
+          result.workspaceLanguageSettings(),
+          result.sourceToTargetMap(),
+          result.projectViewManager(),
+          result.buildSystem(),
+          result.projectTransformRegistry(),
+          result.blazeInfo(),
+          result.externalWorkspaceData());
+    QuerySyncProjectListenerProvider.registerListenersFor(querySyncProject);
+    result.projectTransformRegistry().addAll(ProjectProtoTransformProvider.getAll(result.latestProjectDef()));
+
+    return querySyncProject;
+  }
+
+  private QuerySyncProjectDeps instantiateDeps(BlazeContext context) throws BuildException {
     BlazeImportSettings importSettings =
         Preconditions.checkNotNull(
             BlazeImportSettingsManager.getInstance(project).getImportSettings());
@@ -162,7 +245,7 @@ public class ProjectLoaderImpl implements ProjectLoader {
     ProjectPath.Resolver projectPathResolver =
         ProjectPath.Resolver.create(workspaceRoot.path(), ideProjectBasePath, blazeInfo.getExecutionRoot().toPath());
 
-    ProjectProtoTransform.Registry projectTransformRegistry = new Registry();
+    Registry projectTransformRegistry = new Registry();
     SnapshotHolder graph = new SnapshotHolder();
     graph.addListener((c, i) -> projectModificationTracker.incModificationCount());
     Path buildCachePath = getBuildCachePath(project);
@@ -241,39 +324,16 @@ public class ProjectLoaderImpl implements ProjectLoader {
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
     ExternalWorkspaceData externalWorkspaceData = ExternalWorkspaceDataProvider.getInstance(project)
         .getExternalWorkspaceData(context, projectViewSet, versionHandler.getBazelVersion(), blazeInfo);
-
-    QuerySyncProject querySyncProject =
-        new QuerySyncProject(
-            project,
-            snapshotFilePath,
-            graph,
-            importSettings,
-            workspaceRoot,
-            artifactTracker,
-            artifactCache,
-            artifactStore,
-            renderJarArtifactTracker,
-            appInspectorArtifactTracker,
-            dependencyTracker,
-            renderJarTracker,
-            appInspectorTracker,
-            projectQuerier,
-            snapshotBuilder,
-            latestProjectDef,
-            projectViewSet,
-            workspacePathResolver,
-            projectPathResolver,
-            workspaceLanguageSettings,
-            sourceToTargetMap,
-            projectViewManager,
-            buildSystem,
-            projectTransformRegistry,
-            blazeInfo,
-            externalWorkspaceData);
-    QuerySyncProjectListenerProvider.registerListenersFor(querySyncProject);
-    projectTransformRegistry.addAll(ProjectProtoTransformProvider.getAll(latestProjectDef));
-
-    return querySyncProject;
+    QuerySyncProjectDeps result =
+      new QuerySyncProjectDeps(importSettings, workspaceRoot, workspacePathResolver, projectViewManager, projectViewSet, buildSystem,
+                               workspaceLanguageSettings, latestProjectDef, snapshotFilePath, projectPathResolver, projectTransformRegistry,
+                               graph, artifactCache, artifactTracker, renderJarArtifactTracker, appInspectorArtifactTracker,
+                               renderJarTracker, appInspectorTracker, artifactStore, dependencyBuilder, dependencyTracker, snapshotBuilder,
+                               projectQuerier,
+                               sourceToTargetMap,
+                               blazeInfo,
+                               externalWorkspaceData);
+    return result;
   }
 
   public static Path getBuildCachePath(Project project) {
