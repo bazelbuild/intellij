@@ -28,6 +28,7 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteSource;
 import com.google.common.io.MoreFiles;
@@ -400,7 +401,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
             blazeBuildOutputs.buildId(), buildTime);
 
     return OutputInfo.create(
-      allArtifacts,
+      Multimaps.filterKeys(allArtifacts, it -> it != OutputGroup.ARTIFACT_INFO_FILE && it != OutputGroup.CC_INFO_FILE),
       artifactInfoFilesBuilder.build(),
       ccInfoBuilder.build(),
       blazeBuildOutputs.targetsWithErrors().stream()
