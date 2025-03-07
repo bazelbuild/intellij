@@ -46,6 +46,8 @@ public class AspectTemplateWriter implements AspectWriter {
   private final static String REALIZED_PYTHON = "python_info.bzl";
   private final static String TEMPLATE_CODE_GENERATOR = "code_generator_info.template.bzl";
   private final static String REALIZED_CODE_GENERATOR = "code_generator_info.bzl";
+  private final static String TEMPLATE_INTELLIJ_INFO = "intellij_info.template.bzl";
+  private final static String REALIZED_INTELLIJ_INFO = "intellij_info_bundled.bzl";
 
   @Override
   public @NotNull String name() {
@@ -108,6 +110,13 @@ public class AspectTemplateWriter implements AspectWriter {
         REALIZED_PYTHON,
         ASPECT_TEMPLATE_DIRECTORY,
         TEMPLATE_PYTHON,
+        templateLanguageStringMap
+    );
+    TemplateWriter.evaluate(
+        dst,
+        REALIZED_INTELLIJ_INFO,
+        ASPECT_TEMPLATE_DIRECTORY,
+        TEMPLATE_INTELLIJ_INFO,
         templateLanguageStringMap
     );
   }
