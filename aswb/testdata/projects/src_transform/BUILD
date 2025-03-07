@@ -1,3 +1,4 @@
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load(
     "//aswb/testdata/projects:test_projects.bzl",
     "test_project_package",
@@ -26,10 +27,9 @@ java_library(
     ],
 )
 
-genrule(
+copy_file(
     name = "transformed_source",
-    srcs = ["java/com/example/TestClass.java"],
-    outs = ["gen/com/example/TestClass.java"],
-    cmd = "cp $< $@",
+    src = "java/com/example/TestClass.java",
+    out = "gen/com/example/TestClass.java",
     tags = ["ij-ignore-source-transform"],
 )

@@ -503,6 +503,8 @@ http_archive(
 )
 
 _JARJAR_BUILD_FILE = """
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+
 java_binary(
     name = "jarjar_bin",
     srcs = glob(
@@ -525,11 +527,10 @@ java_import(
     jars = glob(["lib/asm-*.jar"]),
 )
 
-genrule(
+copy_file(
     name = "help",
-    srcs = ["src/main/com/tonicsystems/jarjar/help.txt"],
-    outs = ["com/tonicsystems/jarjar/help.txt"],
-    cmd = "cp $< $@",
+    src = "src/main/com/tonicsystems/jarjar/help.txt",
+    out = "com/tonicsystems/jarjar/help.txt",
 )
 """
 
