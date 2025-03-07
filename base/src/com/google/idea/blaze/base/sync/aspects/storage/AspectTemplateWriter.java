@@ -118,11 +118,12 @@ public class AspectTemplateWriter implements AspectWriter {
     // TODO: adapt the logic to query sync
     boolean isQuerySync = projectData.map(BlazeProjectData::isQuerySync).orElse(false);
     var externalWorkspaceData = isQuerySync ? null : projectData.map(BlazeProjectData::getExternalWorkspaceData).orElse(null);
+    var isBzlmod = projectData.map(it -> it.getBlazeInfo().getStarlarkSemantics().contains("enable_bzlmod=true")).orElse(false);
     var isAtLeastBazel8 = projectData.map(it -> it.getBlazeVersionData().bazelIsAtLeastVersion(8, 0, 0)).orElse(false);
     var isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA) &&
-            (isQuerySync || (externalWorkspaceData != null && (!isAtLeastBazel8 || externalWorkspaceData.getByRepoName("rules_java") != null)));
+            (isQuerySync || (externalWorkspaceData != null && (!isAtLeastBazel8 || !isBzlmod || externalWorkspaceData.getByRepoName("rules_java") != null)));
     var isPythonEnabled = activeLanguages.contains(LanguageClass.PYTHON) &&
-            (isQuerySync || (externalWorkspaceData != null && (!isAtLeastBazel8 || externalWorkspaceData.getByRepoName("rules_python") != null)));
+            (isQuerySync || (externalWorkspaceData != null && (!isAtLeastBazel8 || !isBzlmod || externalWorkspaceData.getByRepoName("rules_python") != null)));
     return Map.of(
             "bazel8OrAbove", isAtLeastBazel8 ? "true" : "false",
             "isJavaEnabled", isJavaEnabled ? "true" : "false",
