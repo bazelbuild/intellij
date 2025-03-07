@@ -34,7 +34,8 @@ public class QuerySpecTest {
         .includePath(Path.of("some/included/path"))
         .supportedRuleClasses(BlazeQueryParser.getAllSupportedRuleClasses())
         .build();
-    assertThat(qs.getQueryExpression()).hasValue("(//some/included/path/...:*)");
+    assertThat(qs.getQueryExpression()).hasValue("let base = //some/included/path/...:*\n" +
+        "in $base - attr(\"tags\", \"[\\[,]no-ide[\\],]\", $base)");
   }
 
   @Test
@@ -64,7 +65,8 @@ public class QuerySpecTest {
         .supportedRuleClasses(BlazeQueryParser.getAllSupportedRuleClasses())
         .build();
     assertThat(qs.getQueryExpression())
-      .hasValue("(//some/included/path/...:* + //another/included/path/...:*)");
+      .hasValue("let base = //some/included/path/...:* + //another/included/path/...:*\n" +
+          "in $base - attr(\"tags\", \"[\\[,]no-ide[\\],]\", $base)");
   }
 
   @Test
@@ -79,9 +81,8 @@ public class QuerySpecTest {
         .supportedRuleClasses(BlazeQueryParser.getAllSupportedRuleClasses())
         .build();
     assertThat(qs.getQueryExpression())
-      .hasValue(
-        "(//some/included/path/...:* + //another/included/path/...:* -"
-        + " //some/included/path/excluded/...:* - //another/included/path/excluded/...:*)");
+      .hasValue("let base = //some/included/path/...:* + //another/included/path/...:* - //some/included/path/excluded/...:* - //another/included/path/excluded/...:*\n" +
+          "in $base - attr(\"tags\", \"[\\[,]no-ide[\\],]\", $base)");
   }
 
   @Test
