@@ -368,11 +368,9 @@ def no_mockito_extensions(name, jars, **kwargs):
             srcs = [input_jar],
             outs = [output_jar],
             cmd = """
-            cp "$<" "$@"
-            chmod u+w "$@"
             tmpdir=$$(mktemp -d)
             zipper="$$(pwd)/$(execpath @bazel_tools//tools/zip:zipper)"
-            "$$zipper" x "$@" -d ".out"
+            "$$zipper" x "$<" -d ".out"
             mv ".out" "$$tmpdir"
 
             pushd "$$tmpdir/.out" >/dev/null
