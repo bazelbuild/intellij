@@ -3,10 +3,7 @@ load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
 cc_binary(
     name = "hello-world",
     srcs = ["hello-world.cc"],
-    copts = [
-        "-Wall",
-        "$(STACK_FRAME_UNLIMITED)", # empty make variable should be stripped by make variable tokenization
-    ],
+    copts = ["-Wall"],
 )
 
 cc_test(

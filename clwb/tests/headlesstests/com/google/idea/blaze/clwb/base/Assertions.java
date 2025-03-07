@@ -7,6 +7,7 @@ import com.google.common.truth.StringSubject;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches.Format;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import java.util.List;
@@ -82,5 +83,13 @@ public class Assertions {
     final var match = list.stream().anyMatch(it -> pattern.matcher(it).matches());
 
     assertWithMessage(message).that(match).isTrue();
+  }
+
+  public static void assertContainsCompilerFlag(String flag, OCCompilerSettings settings) {
+    final var switches = settings.getCompilerSwitches();
+    assertThat(switches).isNotNull();
+
+    final var list = switches.getList(Format.BASH_SHELL);
+    assertThat(list).contains(flag);
   }
 }
