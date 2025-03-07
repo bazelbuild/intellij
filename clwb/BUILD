@@ -183,7 +183,7 @@ clwb_headless_test(
 clwb_headless_test(
     name = "query_sync_headless_test",
     srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/QuerySyncTest.java"],
-    project = "simple",
+    project = "query_sync",
 )
 
 test_suite(

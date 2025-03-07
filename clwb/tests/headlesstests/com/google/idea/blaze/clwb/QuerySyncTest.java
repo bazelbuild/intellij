@@ -1,6 +1,7 @@
 package com.google.idea.blaze.clwb;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.clwb.base.Assertions.assertContainsCompilerFlag;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 
 import com.google.idea.blaze.base.bazel.BazelVersion;
@@ -62,6 +63,7 @@ public class QuerySyncTest extends ClwbHeadlessTestCase {
     // }
 
     assertContainsHeader("iostream", compilerSettings);
+    assertContainsCompilerFlag("-Wall", compilerSettings);
   }
 
   private void checkTest() throws ExecutionException {
