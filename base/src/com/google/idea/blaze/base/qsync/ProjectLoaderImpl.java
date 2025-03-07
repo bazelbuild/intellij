@@ -69,6 +69,7 @@ import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.query.QuerySpec.QueryStrategy;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.common.experiments.EnumExperiment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -86,7 +87,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ProjectLoaderImpl implements ProjectLoader {
 
-  public final static BoolExperiment enableExperimentalQuery = new BoolExperiment("query.sync.experimental.query", false);
+  public final static EnumExperiment<QueryStrategy> enableExperimentalQuery = new EnumExperiment<>("query.sync.experimental.query", QueryStrategy.PLAIN_WITH_SAFE_FILTERS);
   public final static BoolExperiment runQueryInWorkspace = new BoolExperiment("query.sync.run.query.in.workspace", true);
 
   protected final ListeningExecutorService executor;
@@ -300,7 +301,7 @@ public class ProjectLoaderImpl implements ProjectLoader {
         new ProjectRefresher(
             vcsHandler.map(it -> (VcsStateDiffer)it::diffVcsState).orElse(VcsStateDiffer.NONE),
             workspaceRoot.path(),
-            enableExperimentalQuery.getValue() ? QueryStrategy.FILTERING_TO_KNOWN_AND_USED_TARGETS : QueryStrategy.PLAIN,
+            enableExperimentalQuery.getValue(),
             graph::getCurrent,
             runQueryInWorkspace::getValue);
     SnapshotBuilder snapshotBuilder =
