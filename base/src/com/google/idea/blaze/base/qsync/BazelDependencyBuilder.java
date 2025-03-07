@@ -99,6 +99,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 import org.jetbrains.annotations.VisibleForTesting;
 
 /** An object that knows how to build dependencies for given targets */
@@ -107,6 +108,10 @@ public class BazelDependencyBuilder implements DependencyBuilder {
 
   public static final BoolExperiment buildGeneratedSrcJars =
       new BoolExperiment("qsync.build.generated.src.jars", false);
+
+  // Note, this is currently incompatible with the build API.
+  public static final BoolExperiment buildUseTargetPatternFile =
+      new BoolExperiment("qsync.build.use.target.pattern.file", false);
 
   public static final BoolExperiment multiInfoFile =
       new BoolExperiment("qsync.multi.info.file.mode", true);
@@ -148,7 +153,8 @@ public class BazelDependencyBuilder implements DependencyBuilder {
    *                     sync.
    * @param requestedOutputGroups lists output groups that are requested by {@code argsAndFlags}.
    */
-  public record BuildDependenciesBazelInvocationInfo(ImmutableList<String> argsAndFlags, ImmutableSet<OutputGroup> requestedOutputGroups) {}
+  public record BuildDependenciesBazelInvocationInfo(ImmutableList<String> argsAndFlags, ImmutableSet<OutputGroup> requestedOutputGroups,
+                                                     ImmutableMap<Path, ByteSource> invocationWorkspaceFiles) {}
 
   public BazelDependencyBuilder(
     Project project,
@@ -185,8 +191,8 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     try (
       final var ignoredLock = ApplicationManager.getApplication().getService(BuildDependenciesLockService.class)
         .lockWorkspace(workspaceRoot.path().toString())) {
-      BuildDependenciesBazelInvocationInfo buildDependenciesFlags = prepareAspectAndGetInvocationFlags(
-        context, buildTargets, languages);
+      final var buildDependenciesBazelInvocationInfo = getInvocationInfo(context, buildTargets, languages);
+      prepareInvocationFiles(context, buildDependenciesBazelInvocationInfo.invocationWorkspaceFiles());
 
       BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
 
@@ -195,7 +201,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
       buildDepsStatsBuilder.ifPresent(stats -> stats.setBlazeBinaryType(invoker.getType()));
       BlazeCommand.Builder builder =
         BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project)
-          .addBlazeFlags(buildDependenciesFlags.argsAndFlags());
+          .addBlazeFlags(buildDependenciesBazelInvocationInfo.argsAndFlags());
       buildDepsStatsBuilder.ifPresent(
         stats -> stats.setBuildFlags(builder.build().toArgumentList()));
       Instant buildTime = Instant.now();
@@ -207,15 +213,14 @@ public class BazelDependencyBuilder implements DependencyBuilder {
         ThrowOption.ALLOW_PARTIAL_SUCCESS,
         ThrowOption.ALLOW_BUILD_FAILURE);
 
-      return createOutputInfo(outputs, buildDependenciesFlags.requestedOutputGroups(), buildTime, context);
+      return createOutputInfo(outputs, buildDependenciesBazelInvocationInfo.requestedOutputGroups(), buildTime, context);
     }
   }
 
   @VisibleForTesting
-  public BuildDependenciesBazelInvocationInfo prepareAspectAndGetInvocationFlags(BlazeContext context,
-                                                                                 Set<Label> buildTargets,
-                                                                                 Set<QuerySyncLanguage> languages)
-    throws IOException, BuildException {
+  public BuildDependenciesBazelInvocationInfo getInvocationInfo(BlazeContext context,
+                                                                Set<Label> buildTargets,
+                                                                Set<QuerySyncLanguage> languages) {
     ImmutableList<String> includes =
       projectDefinition.projectIncludes().stream()
         .map(path -> "//" + path)
@@ -235,8 +240,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
       multiInfoFile.getValue()
     );
 
-    InvocationFiles invocationFiles = getInvocationFiles(parameters);
-    prepareInvocation(context, invocationFiles.files());
+    InvocationFiles invocationFiles = getInvocationFiles(buildTargets, parameters);
 
     ImmutableSet<OutputGroup> outputGroups =
       languages.stream()
@@ -256,7 +260,12 @@ public class BazelDependencyBuilder implements DependencyBuilder {
         BlazeInvocationContext.OTHER_CONTEXT);
 
     final var querySyncFlags = ImmutableList.<String>builder();
-    querySyncFlags.addAll(buildTargets.stream().map(Label::toString).collect(toImmutableList()));
+    if (invocationFiles.targetPatternFileWorkspaceRelativeFile().isPresent()) {
+      querySyncFlags.add("--target_pattern_file=" + invocationFiles.targetPatternFileWorkspaceRelativeFile().get());
+    }
+    else {
+      querySyncFlags.addAll(buildTargets.stream().map(Label::toString).collect(toImmutableList()));
+    }
     querySyncFlags.addAll(additionalBlazeFlags);
     querySyncFlags.add(
         String.format(
@@ -266,10 +275,14 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     querySyncFlags.add("--keep_going");
     querySyncFlags.addAll(
         outputGroups.stream().map(g -> "--output_groups=" + g.outputGroupName()).collect(toImmutableList()));
-    return new BuildDependenciesBazelInvocationInfo(querySyncFlags.build(), outputGroups);
+    return new BuildDependenciesBazelInvocationInfo(querySyncFlags.build(), outputGroups, invocationFiles.files());
   }
 
-  public record InvocationFiles(ImmutableMap<Path, ByteSource> files, String aspectFileLabel){}
+  public record InvocationFiles(
+    ImmutableMap<Path, ByteSource> files,
+    String aspectFileLabel,
+    Optional<String> targetPatternFileWorkspaceRelativeFile) {
+  }
 
   /**
    * Provides information about files that must be create in the workspace root for the aspect to operate.
@@ -277,16 +290,27 @@ public class BazelDependencyBuilder implements DependencyBuilder {
    * @return A map of (workspace-relative path) to (contents to write there).
    */
   @VisibleForTesting
-  public final InvocationFiles getInvocationFiles(BuildDependencyParameters parameters) {
+  public InvocationFiles getInvocationFiles(Set<Label> buildTargets, BuildDependencyParameters parameters) {
     String aspectFileName = String.format("qs-%s.bzl", getProjectHash());
     ImmutableMap.Builder<Path, ByteSource> files = ImmutableMap.builder();
     files.put(Path.of(".aswb/BUILD"), ByteSource.empty());
     files.put(Path.of(".aswb/build_dependencies.bzl"), getBundledAspect("build_dependencies.bzl"));
     files.put(Path.of(".aswb/build_dependencies_deps.bzl"), getBundledAspect("build_dependencies_deps.bzl"));
     files.put(Path.of(".aswb/" + aspectFileName), getByteSourceFromString(getBuildDependenciesParametersFileContent(parameters)));
+    Optional<String> targetPatternFileWorkspaceRelativeFile;
+    if (buildUseTargetPatternFile.getValue()) {
+      String patternsFileName = String.format("targets-%s.txt", getProjectHash());
+      files.put(Path.of(".aswb/" + patternsFileName),
+                getByteSourceFromString(buildTargets.stream().map(Label::toString).collect(Collectors.joining("\n"))));
+      targetPatternFileWorkspaceRelativeFile = Optional.of(".aswb/" + patternsFileName);
+    }
+    else {
+      targetPatternFileWorkspaceRelativeFile = Optional.empty();
+    }
     return new InvocationFiles(
       files.build(),
-      Label.of(String.format("//.aswb:" + aspectFileName)).toString()
+      Label.of(String.format("//.aswb:" + aspectFileName)).toString(),
+      targetPatternFileWorkspaceRelativeFile
     );
   }
 
@@ -343,8 +367,9 @@ public class BazelDependencyBuilder implements DependencyBuilder {
    * <p>The return value is a string in the format expected by bazel for an aspect file, omitting
    * the name of the aspect within that file. For example, {@code //package:aspect.bzl}.
    */
-  protected void prepareInvocation(BlazeContext context,
-                                     ImmutableMap<Path, ByteSource> invocationFiles) throws IOException, BuildException {
+  @VisibleForTesting
+  public void prepareInvocationFiles(BlazeContext context,
+                                        ImmutableMap<Path, ByteSource> invocationFiles) throws IOException, BuildException {
     for (Map.Entry<Path, ByteSource> e : invocationFiles.entrySet()) {
       Path absolutePath = workspaceRoot.path().resolve(e.getKey());
       Files.createDirectories(absolutePath.getParent());

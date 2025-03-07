@@ -576,6 +576,8 @@ intellij_integration_test_suite(
         ":base",
         ":integration_test_utils",
         ":unit_test_utils",
+        "//common/experiments",
+        "//common/experiments:unit_test_utils",
         "//proto:proto_deps",
         "//querysync",
         "//querysync/javatests/com/google/idea/blaze/qsync/artifacts:mock_artifact_cache",
