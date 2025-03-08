@@ -1055,6 +1055,9 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
     if android.resource_jar:
         resolve_files += [jar for jar in jars_from_output(android.resource_jar)]
 
+    if android.resource_jar:
+        resolve_files += [jar for jar in jars_from_output(android.resource_jar)]
+
     ide_info["android_ide_info"] = android_info
     update_sync_output_groups(output_groups, "intellij-resolve-android", depset(resolve_files))
     return True
