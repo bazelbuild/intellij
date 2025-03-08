@@ -82,10 +82,6 @@ def _test_codegen_directory_py_impl(ctx):
             runfiles = ctx.runfiles([output_directory]),
             files = depset([output_directory]),
         ),
-        PyInfo(
-            transitive_sources = depset([output_directory]),
-            imports = depset([imports_path]),
-        ),
         RulesPythonPyInfo(
             transitive_sources = depset([output_directory]),
             imports = depset([imports_path]),
@@ -120,10 +116,6 @@ def _test_codegen_files_py_impl(ctx):
             runfiles = ctx.runfiles(files = output_files),
             files = depset(output_files),
         ),
-        PyInfo(
-            transitive_sources = depset(output_files),
-            imports = depset([imports_path]),
-        ),
         RulesPythonPyInfo(
             transitive_sources = depset(output_files),
             imports = depset([imports_path]),
@@ -132,7 +124,7 @@ def _test_codegen_files_py_impl(ctx):
 
 test_codegen_directory_py = rule(
     implementation = _test_codegen_directory_py_impl,
-    provides = [DefaultInfo, PyInfo, RulesPythonPyInfo],
+    provides = [DefaultInfo, RulesPythonPyInfo],
     doc = """\
     Produces a Python code-generation library to demonstrate production of a directory of files.
     """,
@@ -140,7 +132,7 @@ test_codegen_directory_py = rule(
 
 test_codegen_files_py = rule(
     implementation = _test_codegen_files_py_impl,
-    provides = [DefaultInfo, PyInfo, RulesPythonPyInfo],
+    provides = [DefaultInfo, RulesPythonPyInfo],
     doc = """\
     Produces a Python code-generation library to demonstrate production of files.
     """,
