@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<idea-plugin>
+    <id>com.snowflake.telemetry</id>
+    <name>Snowflake OpenTelemetry Bridge</name>
+    <vendor email="support@snowflake.com" url="http://www.snowflake.com">Snowflake Inc.</vendor>
+    <version>1.0</version>
+    <idea-version since-build="233" until-build="243.*"/>
+
+    <description><![CDATA[
+        Bridges IntelliJ's internal metrics to an OpenTelemetry collector.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <openTelemetryExporterProvider implementation="com.snowflake.telemetry.SnowflakeOtelExporterProvider"/>
+    </extensions>
+
+</idea-plugin> 
