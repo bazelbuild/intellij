@@ -1,7 +1,5 @@
 """An aspect which extracts the runtime classpath from a java target."""
 
-load("@rules_java//java:defs.bzl", "JavaInfo")
-
 def _runtime_classpath_impl(target, ctx):
     """The top level aspect implementation function.
 
