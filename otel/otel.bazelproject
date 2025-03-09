@@ -1,0 +1,21 @@
+directories:
+  .
+  -ijwb
+  -aswb
+  -clwb
+  -cpp
+  -examples
+  -ijwb/tests/projects
+
+targets:
+  //otel:otel_lib
+
+workspace_type: java 
+
+build_flags:
+  --define=ij_product=intellij-2024.3
+
+additional_languages:
+  kotlin
+
+use_query_sync: false
