@@ -37,9 +37,12 @@ public class BazelVersionRule implements TestRule {
     if (bitBazelVersion == null) {
       return Optional.empty();
     }
+    if (bitBazelVersion.equals("last_green")) {
+      return Optional.of(BazelVersion.DEVELOPMENT);
+    }
 
     final var version = BazelVersion.parseVersion(bitBazelVersion);
-    if (version.isAtLeast(999, 0, 0)) {
+    if (version.isAtLeast(BazelVersion.DEVELOPMENT)) {
       return Optional.empty();
     }
 

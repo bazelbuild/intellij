@@ -17,12 +17,8 @@ package com.google.idea.blaze.base.sync.aspects.storage
 
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VfsUtilCore
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
 import kotlin.jvm.Throws
 
 class AspectWriterImpl : AspectWriter {
@@ -31,7 +27,8 @@ class AspectWriterImpl : AspectWriter {
     return "Default Aspects"
   }
 
-  override fun write(dst: Path, project: Project) {
+  @Throws(SyncFailedException::class)
+  override fun writeDumb(dst: Path, project: Project) {
     try {
       AspectWriter.copyAspects(AspectWriterImpl::class.java, dst, AspectRepositoryProvider.ASPECT_DIRECTORY);
     } catch (e: IOException) {
