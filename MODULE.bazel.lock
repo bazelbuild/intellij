@@ -317,7 +317,7 @@
     "@@rules_bazel_integration_test+//:extensions.bzl%bazel_binaries": {
       "general": {
         "bzlTransitiveDigest": "OLGorlZxYgeKB4KNm0mINVW5TUPx4IQtHpMrUjJMTxI=",
-        "usagesDigest": "FmrvNYJOyj+TmtOm14/VZiro6yt1s1INzZvy5lBlavg=",
+        "usagesDigest": "E8v0HScFHixKtiDBEDiPQH1ej+MCoHCwp0HYf3RJg5U=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -365,7 +365,7 @@
                 "8.1.1": "build_bazel_bazel_8_1_1",
                 "last_green": "build_bazel_bazel_last_green"
               },
-              "current_version": "6.5.0"
+              "current_version": "8.1.1"
             }
           }
         },

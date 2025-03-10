@@ -59,7 +59,7 @@ bazel_binaries = use_extension(
 )
 bazel_binaries.download(version = "6.5.0")
 bazel_binaries.download(version = "7.5.0")
-bazel_binaries.download(version = "8.1.1")
+bazel_binaries.download(version = "8.1.1", current = True)
 bazel_binaries.download(version = "last_green")
 use_repo(
     bazel_binaries,
