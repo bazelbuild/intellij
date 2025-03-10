@@ -106,7 +106,7 @@ public class ClassFileManifestBuilder {
     }
 
     try {
-      AspectStorageService.of(project).prepare(null);
+      AspectStorageService.of(project).prepare(null, projectData, versionData);
     } catch (SyncFailedException e) {
       throw new ExecutionException("could not prepare aspects", e);
     }

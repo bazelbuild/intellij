@@ -16,8 +16,8 @@
 package com.google.idea.blaze.base.sync.aspects.storage
 
 import com.google.common.io.ByteSource
+import com.google.idea.blaze.base.sync.SyncProjectState
 import com.google.idea.blaze.base.sync.SyncScope
-import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider.ASPECT_QSYNC_DIRECTORY
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import java.io.IOException
@@ -49,11 +49,19 @@ interface AspectWriter {
   fun name(): String
 
   /**
+   * Implement this function if the [AspectWriter] does not require any data from the sync.
+   */
+  @Throws(SyncScope.SyncFailedException::class)
+  fun writeDumb(dst: Path, project: Project) { }
+
+  /**
    * Write all aspect files to the destination directory.
    * Files are resolved relative to the destination directory.
    */
   @Throws(SyncScope.SyncFailedException::class)
-  fun write(dst: Path, project: Project)
+  fun write(dst: Path, project: Project, state: SyncProjectState) {
+    writeDumb(dst, project)
+  }
 }
 
 private fun copyAspectsImpl(ctx: Class<*>, dst: Path, src: String) {
