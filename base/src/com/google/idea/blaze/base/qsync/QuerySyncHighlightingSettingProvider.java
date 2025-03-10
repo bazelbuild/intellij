@@ -12,18 +12,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class QuerySyncHighlightingSettingProvider extends DefaultHighlightingSettingProvider {
-    @Override
-    public @Nullable FileHighlightingSetting getDefaultSetting(@NotNull Project project, @NotNull VirtualFile file) {
 
-        var psiFile = PsiManager.getInstance(project).findFile(file);
-        if (Blaze.getProjectType(psiFile.getProject()) == BlazeImportSettings.ProjectType.QUERY_SYNC) {
-            if(!QuerySyncManager.getInstance(psiFile.getProject()).isReadyForAnalysis(psiFile)){
-                return FileHighlightingSetting.ESSENTIAL;
-            } else {
-                return FileHighlightingSetting.FORCE_HIGHLIGHTING;
-            }
-        }
-        return null;
-
+  @Override
+  public @Nullable FileHighlightingSetting getDefaultSetting(@NotNull Project project, @NotNull VirtualFile file) {
+    final var psiFile = PsiManager.getInstance(project).findFile(file);
+    if (psiFile == null) {
+      return null;
     }
+
+    if (Blaze.getProjectType(project) == BlazeImportSettings.ProjectType.QUERY_SYNC) {
+      if (!QuerySyncManager.getInstance(project).isReadyForAnalysis(psiFile.getVirtualFile())) {
+        return FileHighlightingSetting.ESSENTIAL;
+      } else {
+        return FileHighlightingSetting.FORCE_HIGHLIGHTING;
+      }
+    }
+
+    return null;
+  }
 }
