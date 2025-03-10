@@ -332,25 +332,6 @@ def plugin_deploy_zip(name, srcs, zip_filename, **kwargs):
     """
     _plugin_deploy_zip(name = name, zip_filename = zip_filename, srcs = srcs, **kwargs)
 
-def unescape_filenames(name, srcs):
-    """Macro to generate files with spaces in their names instead of underscores.
-
-    For each file in the srcs, a file will be generated with the same name but with all underscores
-    replaced with spaces.
-
-    Args:
-      name: The name of the generator rule
-      srcs: A list of source files to process
-    """
-    outs = [s.replace("_", " ") for s in srcs]
-    cmd = "&&".join(["cp \"{}\" $(@D)/\"{}\"".format(s, d) for (s, d) in zip(srcs, outs)])
-    native.genrule(
-        name = name,
-        srcs = srcs,
-        outs = outs,
-        cmd = cmd,
-    )
-
 def combine_visibilities(*args):
     """
     Concatenates the given lists of visibilities and returns the combined list.
