@@ -4,7 +4,7 @@ load(
     "intellij_integration_test_suite",
 )
 
-def clwb_headless_test(name, project, srcs, deps = []):
+def clwb_headless_test(name, project, srcs, deps = [], last_green = True):
     runner = name + "_runner"
 
     intellij_integration_test_suite(
@@ -39,6 +39,7 @@ def clwb_headless_test(name, project, srcs, deps = []):
     bazel_integration_tests(
         name = name,
         test_runner = runner,
+        last_green = last_green,
         workspace_path = "tests/projects/" + project,
         env = {
             # disables automatic conversion of bazel target names to absolut windows paths by msys
