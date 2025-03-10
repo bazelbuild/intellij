@@ -101,6 +101,7 @@ class AspectTemplateWriter : AspectWriter {
     val activeLanguages = state.languageSettings.activeLanguages
     val externalWorkspaceData = state.externalWorkspaceData
     val isAtLeastBazel8 = state.blazeVersionData.bazelIsAtLeastVersion(8, 0, 0)
+    val isAtLeastBazel9 = state.blazeVersionData.bazelIsAtLeastVersion(9, 0, 0)
 
     val isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA) &&
         (externalWorkspaceData != null && (!isAtLeastBazel8 || externalWorkspaceData.getByRepoName("rules_java") != null))
@@ -110,6 +111,7 @@ class AspectTemplateWriter : AspectWriter {
 
     return ImmutableMap.of(
       "bazel8OrAbove", if (isAtLeastBazel8) "true" else "false",
+      "bazel9OrAbove", if (isAtLeastBazel9) "true" else "false",
       "isJavaEnabled", if (isJavaEnabled) "true" else "false",
       "isPythonEnabled", if (isPythonEnabled) "true" else "false"
     )

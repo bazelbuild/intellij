@@ -95,7 +95,7 @@ def _aspect_impl(target, ctx):
 ##intellij_info_aspect = make_intellij_info_aspect(
 ##    _aspect_impl,
 ##    semantics,
-## #if( $bazel8OrAbove == "true" )
+## #if( $bazel9OrAbove == "true" )
 ##    toolchains_aspects = TOOLCHAIN_TYPE_DEPS,
 ## #end
 ##)
