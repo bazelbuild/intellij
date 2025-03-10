@@ -5,5 +5,8 @@ licenses(["notice"])
 java_library(
     name = "exception",
     srcs = glob(["*.java"]),
-    visibility = ["//shared:__subpackages__"],
+    visibility = [
+        "//base:__subpackages__",
+        "//shared:__subpackages__",
+    ],
 )

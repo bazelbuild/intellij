@@ -339,6 +339,8 @@ java_library(
     ],
     deps = [
         ":base",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
+        "//shared/java/com/google/idea/blaze/exception",
         "//third_party/java/auto_value",
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
