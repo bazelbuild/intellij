@@ -410,8 +410,11 @@
                  description="Scan for non-root source folders in source jars. (requires re-sync)"
                  key="bazel.sync.detect.source.roots"/>
     <registryKey defaultValue="false"
-                 description="Determines whether Bazel ProjectOpenProcessors are strong info holders or not."
+                 description="Determines whether AutoImportProjectOpenProcessor is a strong info holder."
                  key="bazel.project.auto.open"/>
+    <registryKey defaultValue="true"
+                 description="Determines whether BlazeProjectOpenProcessor is a strong info holder."
+                 key="bazel.project.auto.open.if.present"/>
     <registryKey defaultValue="false"
                  description="The Bazel Plugin sometimes uses the --query_file option to pass the query via a file. By default, the file is deleted immediately after the query execution is finished. Set this flag to true to avoid file deletion"
                  key="bazel.sync.keep.query.files"/>
