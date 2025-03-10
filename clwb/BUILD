@@ -184,6 +184,7 @@ clwb_headless_test(
     name = "query_sync_headless_test",
     srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/QuerySyncTest.java"],
     project = "query_sync",
+    last_green = False, # do not test query sync against last green
 )
 
 test_suite(

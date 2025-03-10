@@ -292,7 +292,7 @@ def _get_test_srcs(targets):
         files = depset(transitive = [files, target.files])
     return [f for f in files.to_list() if (f.basename.endswith("Test.java") or f.basename.endswith("Test.kt"))]
 
-def bazel_integration_tests(name, env = None, tags = None, **kwargs):
+def bazel_integration_tests(name, env = None, tags = None, last_green = True, **kwargs):
     """
     Generates a bazel integration test for every configured bazel and sets the
     BIT_BAZEL_VERSION environment variable. Also generates a manual test suite
@@ -306,13 +306,20 @@ def bazel_integration_tests(name, env = None, tags = None, **kwargs):
     tags = tags or ["exclusive"]
 
     for version in bazel_binaries.versions.all:
+
+        if version == "last_green" and not last_green:
+            continue
+
         env["BIT_BAZEL_VERSION"] = version
+
+        # used to run last_green test separately
+        version_tag = "bit_bazel_%s" % version.replace(".", "_")
 
         bazel_integration_test(
             name = integration_test_utils.bazel_integration_test_name(name, version),
             bazel_version = version,
             env = env,
-            tags = tags,
+            tags = tags + [version_tag],
             **kwargs
         )
 
@@ -321,6 +328,7 @@ def bazel_integration_tests(name, env = None, tags = None, **kwargs):
         tags = ["manual"],
         tests = integration_test_utils.bazel_integration_test_names(
             name,
-            bazel_binaries.versions.all,
+            # do not include last_green test into default test suite
+            [version for version in bazel_binaries.versions.all if version != "last_green"],
         ),
     )
