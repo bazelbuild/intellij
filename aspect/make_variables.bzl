@@ -87,12 +87,19 @@ def _expand_nested_variable(ctx, additional_vars, exp, execpath = True, targets 
     return exp
 
 def _lookup_var(ctx, additional_vars, var):
-    expanded_make_var_ctx = ctx.var.get(var)
-    expanded_make_var_additional = additional_vars.get(var)
-    if expanded_make_var_additional != None:
-        return expanded_make_var_additional
-    if expanded_make_var_ctx != None:
-        return expanded_make_var_ctx
+    expanded_make_var = additional_vars.get(var)
+    if expanded_make_var != None:
+        return expanded_make_var
+
+    expanded_make_var = ctx.var.get(var)
+    if expanded_make_var != None:
+        return expanded_make_var
+
+    # ctx.rule.var is only available in Bazel 9+
+    expanded_make_var = getattr(ctx.rule, "var", {}).get(var)
+    if expanded_make_var != None:
+        return expanded_make_var
+
     fail("{}: {} not defined".format(ctx.label, "$(" + var + ")"))
 
 def _expand(ctx, expression, additional_make_variable_substitutions, execpath = True, targets = []):
