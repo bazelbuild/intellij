@@ -73,7 +73,7 @@ public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Override
   public boolean isStrongProjectInfoHolder() {
-    return Registry.is("bazel.project.auto.open.if.present");
+    return Registry.is("bazel.project.auto.open.if.present", false);
   }
 
   @Override
