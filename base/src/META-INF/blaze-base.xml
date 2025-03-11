@@ -410,7 +410,7 @@
                  description="Scan for non-root source folders in source jars. (requires re-sync)"
                  key="bazel.sync.detect.source.roots"/>
     <registryKey defaultValue="false"
-                 description="Determines whether AutoImportProjectOpenProcessor is a strong info holders."
+                 description="Determines whether AutoImportProjectOpenProcessor is a strong info holder."
                  key="bazel.project.auto.open"/>
     <registryKey defaultValue="true"
                  description="Determines whether BlazeProjectOpenProcessor is a strong info holder."
