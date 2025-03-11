@@ -27,6 +27,7 @@ import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.artifact.ArtifactFetcher;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import java.util.concurrent.TimeUnit;
@@ -36,8 +37,9 @@ import java.util.stream.Collectors;
  * A delegating {@link ArtifactFetcher} that relies on {@link
  * ArtifactFetcher#supportedArtifactType()} to chose fetchers to fetchers to delegate fetching to.
  */
+@Service(Service.Level.PROJECT)
 @VisibleForTesting
-public class DynamicallyDispatchingArtifactFetcher implements ArtifactFetcher<OutputArtifact> {
+public final class DynamicallyDispatchingArtifactFetcher implements ArtifactFetcher<OutputArtifact> {
 
   private final ImmutableList<ArtifactFetcher<?>> fetchers;
 
