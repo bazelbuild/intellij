@@ -80,7 +80,8 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Override
   public boolean isStrongProjectInfoHolder() {
-      return Registry.is("bazel.project.auto.open");
+      return !PluginManagerCore.isPluginInstalled(PluginId.getId("org.jetbrains.bazel")) ||
+              Registry.is("bazel.project.prefer.google.plugin");
   }
 
   @Override
