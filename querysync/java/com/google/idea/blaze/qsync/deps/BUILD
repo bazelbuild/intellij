@@ -21,6 +21,7 @@ java_library(
         "//shared:proto",
         "//shared:vcs",
         "//third_party/java/auto_value",
+        "//intellij_platform_sdk:plugin_api",
         "@com_google_guava_guava//jar",
         "@protobuf//:protobuf_java",
         "@error_prone_annotations//jar",
