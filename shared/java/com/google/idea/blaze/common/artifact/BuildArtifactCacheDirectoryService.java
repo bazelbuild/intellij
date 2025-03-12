@@ -9,9 +9,13 @@ public final class BuildArtifactCacheDirectoryService {
 
   private BuildArtifactCacheDirectory buildArtifactCacheDirectory;
 
-  public BuildArtifactCacheDirectory getBuildArtifactCache(Project project) throws BuildException {
+  public <T extends ArtifactFetcher<OutputArtifact>,G extends BuildArtifactCache.CleanRequest> BuildArtifactCacheDirectory getBuildArtifactCache(
+      Project project,
+      Class<T> artifactFetcherClass,
+      Class<G> cleanRequestClass)
+      throws BuildException {
     if (buildArtifactCacheDirectory == null) {
-      buildArtifactCacheDirectory = new BuildArtifactCacheDirectory(project);
+      buildArtifactCacheDirectory = new BuildArtifactCacheDirectory(project, artifactFetcherClass, cleanRequestClass);
     }
     return buildArtifactCacheDirectory;
   }

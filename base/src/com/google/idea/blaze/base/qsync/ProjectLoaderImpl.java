@@ -250,7 +250,8 @@ public class ProjectLoaderImpl implements ProjectLoader {
     Registry projectTransformRegistry = new Registry();
     SnapshotHolder graph = new SnapshotHolder();
     graph.addListener((c, i) -> projectModificationTracker.incModificationCount());
-    BuildArtifactCache artifactCache = project.getService(BuildArtifactCacheDirectoryService.class).getBuildArtifactCache(project);
+    BuildArtifactCache artifactCache = project.getService(BuildArtifactCacheDirectoryService.class)
+        .getBuildArtifactCache(project, DynamicallyDispatchingArtifactFetcher.class, CacheCleaner.class);
 
     DependencyBuilder dependencyBuilder =
       createDependencyBuilder(

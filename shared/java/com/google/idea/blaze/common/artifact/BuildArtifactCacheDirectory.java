@@ -117,13 +117,17 @@ public class BuildArtifactCacheDirectory implements BuildArtifactCache {
    */
   private final StampedLock lock = new StampedLock();
 
-  public BuildArtifactCacheDirectory(Project project) throws BuildException {
+  public <T extends ArtifactFetcher<OutputArtifact>,G extends CleanRequest> BuildArtifactCacheDirectory(
+      Project project,
+      Class<T> artifactFetcherClass,
+      Class<G> cleanRequestClass )
+      throws BuildException {
     this(
       Paths.get(checkNotNull(project.getBasePath())).resolve(".buildcache"),
-      project.getService(ArtifactFetcher.class),
+      project.getService(artifactFetcherClass),
       MoreExecutors.listeningDecorator(
         AppExecutorUtil.createBoundedApplicationPoolExecutor("BuildArtifactCache", 128)),
-      project.getService(CleanRequest.class));
+      project.getService(cleanRequestClass));
   }
 
   public BuildArtifactCacheDirectory(
