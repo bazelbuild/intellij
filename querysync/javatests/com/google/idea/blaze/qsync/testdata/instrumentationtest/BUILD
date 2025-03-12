@@ -18,6 +18,7 @@ android_library(
 
 android_binary(
     name = "test_app",
+    testonly = 1,
     instruments = ":app",
     manifest = "AndroidManifest.xml",
     deps = [":test_lib"],
