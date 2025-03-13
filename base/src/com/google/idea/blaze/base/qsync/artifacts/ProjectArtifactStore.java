@@ -117,7 +117,7 @@ public class ProjectArtifactStore {
               root,
               entry.getValue(),
               sourcesStripper,
-              BazelDependencyBuilder.buildGeneratedSrcJars::getValue);
+              BazelDependencyBuilder.buildGeneratedSrcJars.getValue());
       try {
         incompleteTargets.addAll(dirUpdate.update());
       } catch (IOException e) {
