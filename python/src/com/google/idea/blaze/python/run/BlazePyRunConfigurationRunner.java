@@ -371,6 +371,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
                 target));
       }
       LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
+      BlazePyDebugHelperImpl.knownExecRoots.put(configuration.getSingleTarget(), file.toPath());
       return new PyExecutionInfo(file, args);
     }
   }
