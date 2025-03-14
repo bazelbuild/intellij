@@ -16,12 +16,16 @@
 package com.google.idea.blaze.base.sync.aspects.storage
 
 import com.google.idea.blaze.base.buildview.println
+import com.google.idea.blaze.base.model.BlazeProjectData
+import com.google.idea.blaze.base.model.BlazeVersionData
+import com.google.idea.blaze.base.projectview.ProjectViewSet
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.scope.Scope
 import com.google.idea.blaze.base.scope.output.IssueOutput
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope
 import com.google.idea.blaze.base.settings.BlazeImportSettings
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager
+import com.google.idea.blaze.base.sync.SyncProjectState
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager
@@ -60,7 +64,7 @@ class AspectStorageService(private val project: Project, private val scope: Coro
    * Register a [AspectWriter] to provide aspect files.
    */
   @Throws(SyncFailedException::class)
-  fun prepare(parentCtx: BlazeContext?) {
+  fun prepare(parentCtx: BlazeContext?, state: SyncProjectState?) {
     val parentScope = parentCtx?.getScope(ToolWindowScope::class.java)
 
     Scope.push(parentCtx) { ctx ->
@@ -91,8 +95,13 @@ class AspectStorageService(private val project: Project, private val scope: Coro
 
       for (writer in AspectWriter.EP_NAME.extensionList) {
         try {
-          writer.write(directory, project)
-          ctx.println("Aspects written: ${writer.name()}")
+          if (state == null) {
+            writer.writeDumb(directory, project)
+            ctx.println("Aspects written (dumb): ${writer.name()}")
+          } else {
+            writer.write(directory, project, state)
+            ctx.println("Aspects written: ${writer.name()}")
+          }
         } catch (e: SyncFailedException) {
           throw SyncFailedException("Could not writer aspects: ${writer.name()}", e)
         }
@@ -100,15 +109,32 @@ class AspectStorageService(private val project: Project, private val scope: Coro
     }
   }
 
+  /**
+   * Convince wrapper that derives an appropriate [SyncProjectState] for [prepare].
+   */
+  @Throws(SyncFailedException::class)
+  fun prepare(parentCtx: BlazeContext?, projectData: BlazeProjectData, versionData: BlazeVersionData) {
+    val state = SyncProjectState.builder()
+      .setProjectViewSet(ProjectViewSet.EMPTY) // not used by any AspectWriter
+      .setLanguageSettings(projectData.workspaceLanguageSettings)
+      .setExternalWorkspaceData(projectData.externalWorkspaceData)
+      .setWorkspacePathResolver(projectData.workspacePathResolver)
+      .setWorkingSet(null)
+      .setBlazeVersionData(versionData)
+      .build()
+
+    prepare(parentCtx, state)
+  }
+
   fun resolve(file: String): Optional<Label> {
     val settings = BlazeImportSettingsManager.getInstance(project).importSettings ?: return Optional.empty()
     val directory = aspectDirectory(settings) ?: return Optional.empty()
 
-    val file = directory.resolve(file)
-    if (!Files.exists(file)) return Optional.empty()
+    val relativePath = directory.resolve(file)
+    if (!Files.exists(relativePath)) return Optional.empty()
 
-    val path = Path.of(settings.workspaceRoot).relativize(file)
-    return Optional.of(Label.fromWorkspacePackageAndName("", path.parent, path.fileName))
+    val absolutPath = Path.of(settings.workspaceRoot).relativize(relativePath)
+    return Optional.of(Label.fromWorkspacePackageAndName("", absolutPath.parent, absolutPath.fileName))
   }
 
   private fun aspectDirectory(settings: BlazeImportSettings): Path? {

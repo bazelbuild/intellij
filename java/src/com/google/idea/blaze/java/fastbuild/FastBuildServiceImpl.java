@@ -54,7 +54,10 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.common.Interners;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.JavaBlazeRules;
@@ -285,6 +288,17 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     BlazeVersionData blazeVersionData =
         BlazeVersionData.build(
             Blaze.getBuildSystemProvider(project).getBuildSystem(), workspaceRoot, blazeInfo);
+
+    final var projectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (projectData == null) {
+      throw new RuntimeException("not synced yet; please sync project");
+    }
+
+    try {
+      AspectStorageService.of(project).prepare(context, projectData, blazeVersionData);
+    } catch (SyncFailedException e) {
+      throw new RuntimeException("could not prepare aspects", e);
+    }
 
     FastBuildDeployJarStrategy deployJarStrategy =
         FastBuildDeployJarStrategy.getInstance(Blaze.getBuildSystemName(project));

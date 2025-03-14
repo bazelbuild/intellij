@@ -123,3 +123,19 @@ tasks:
       - //:clwb_tests
     soft_fail:
       - exit_status: 1
+  CLion-last-green:
+    name: CLion Headless Tests Last Green
+    platform: ubuntu2204
+    build_flags:
+      - --define=ij_product=clion-oss-under-dev
+    build_targets:
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
+    test_flags:
+      - --define=ij_product=clion-oss-under-dev
+      - --test_output=errors
+      - --test_tag_filters=bit_bazel_last_green
+    test_targets:
+      - //clwb:all
+    soft_fail:
+      - exit_status: 1

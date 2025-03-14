@@ -2,7 +2,9 @@ package com.google.idea.blaze.ijwb.headless.base;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.testing.headless.HeadlessTestCase;
+import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -22,6 +24,11 @@ public class IjwbHeadlessTestCase extends HeadlessTestCase {
     });
 
     super.tearDown();
+  }
+
+  @Override
+  protected ProjectViewBuilder projectViewText(BazelVersion version) {
+    return super.projectViewText(version).addBuildFlag("--java_language_version=17");
   }
 
   protected Module findWorkspaceModule() {
