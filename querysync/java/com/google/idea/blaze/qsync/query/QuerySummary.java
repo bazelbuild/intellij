@@ -194,7 +194,7 @@ public abstract class QuerySummary {
               rule.setInstruments(a.getStringValue());
             }
           }
-          ruleMap.put(Label.of(target.getRule().getName()).toString(), rule.build());
+          ruleMap.put(target.getRule().getName(), rule.build());
           break;
         default:
           break;
