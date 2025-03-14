@@ -119,6 +119,13 @@ maven.install(
         "com.google.j2objc:j2objc-annotations:2.8",
         "com.google.guava:failureaccess:1.0.2",
         "org.hamcrest:hamcrest-core:3.0",
+
+	# For OTEL plugin
+        "io.grpc:grpc-stub:1.70.0",
+        "io.grpc:grpc-api:1.70.0",
+        "io.grpc:grpc-core:1.70.0",
+        "io.grpc:grpc-netty:1.70.0",
+
     ],
     fail_if_repin_required = True,
     generate_compat_repositories = True,
@@ -543,3 +550,49 @@ new_git_repository(
     remote = "https://github.com/google/jarjar",
     shallow_since = "1518210648 -0800",
 )
+
+# Dependencies needed for OTEL plugin
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+http_file(
+  name = "opentelemetry-exporter-otlp-common-1_47_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp-common/1.47.0/opentelemetry-exporter-otlp-common-1.47.0.jar",
+  sha256 = "aa1799740e75486da0b64b1455d24150a5bff64c71a72482bdf3d8e5274d4bd5",
+  downloaded_file_path = "opentelemetry-exporter-otlp-common-1.47.0.jar"
+)
+
+http_file(
+  name = "opentelemetry-exporter-common-1_47_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-common/1.47.0/opentelemetry-exporter-common-1.47.0.jar",
+  sha256 = "691479853712dbdf4ccbd5ec72434732918723f21d7d75b6b57436cca943a330",
+  downloaded_file_path = "opentelemetry-exporter-common-1.47.0.jar"
+)
+
+http_file(
+  name = "opentelemetry-exporter-otlp-1_47_0_http",
+  url = "https://repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp/1.47.0/opentelemetry-exporter-otlp-1.47.0.jar",
+  sha256 = "0bf93192631d8d069f865707abf456432bb8fca316d5a7fd0ff5d1302414c651",
+  downloaded_file_path = "opentelemetry-exporter-otlp-1.47.0.jar"
+)
+
+http_file(
+  name = "opentelemetry-sdk-1_47_0_http",
+  url = "https://repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk/1.47.0/opentelemetry-sdk-1.47.0.jar",
+  sha256 = "4a09eb2ee484769973e14218a34e6da54f35955aa02b26dc5238b0c2ed6a801d",
+  downloaded_file_path = "opentelemetry-sdk-1.47.0.jar"
+)
+
+http_file(
+  name = "opentelemetry-exporter-sender-grpc-managed-channel-1_47_0_http",
+  url = "https://repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-sender-grpc-managed-channel/1.47.0/opentelemetry-exporter-sender-grpc-managed-channel-1.47.0.jar",
+  sha256 = "409e293d4252f958d0ea0f16890aa0806359b0250cee39e602f80dc2684b5277",
+  downloaded_file_path = "opentelemetry-exporter-sender-grpc-managed-channel-1.47.0.jar"
+)
+
+http_file(
+  name = "opentelemetry-sdk-extension-autoconfigure-spi-1_47_0_http",
+  url = "https://repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.47.0/opentelemetry-sdk-extension-autoconfigure-spi-1.47.0.jar",
+  sha256 = "94348d4263e2c59c7039630cad379d969b62644ed09b6178fa952988559b396a",
+  downloaded_file_path = "opentelemetry-sdk-extension-autoconfigure-spi-1.47.0.jar"
+)
+
