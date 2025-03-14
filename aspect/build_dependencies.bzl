@@ -716,7 +716,7 @@ def _collect_own_and_dependency_java_artifacts(
 
     target_to_artifacts = {}
 
-    # Flattening is fine here as these are files from a single target (maybe some are re-exported from a few of its depende3ncies).
+    # Flattening is fine here as these are files from a single target (maybe some are re-exported from a few of its dependencies).
     jars = own_files.jar_depset.to_list()
     ide_aars = own_files.ide_aar_depset.to_list()
     gen_srcs = own_files.gensrc_depset.to_list()  # Flattening is fine here (these are files from one target)
