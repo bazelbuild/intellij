@@ -88,6 +88,8 @@ java_library(
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
+        "//common/experiments",
+        "//common/experiments:unit_test_utils",
         "//cpp",
         "//java",
         "//shared:artifact",
