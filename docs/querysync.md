@@ -18,6 +18,12 @@ In Query Sync mode, you'll interact with two primary actions in the Bazel Plugin
 ## Enabling Query Sync
 There are two ways to enable the Query Sync mode:
 
+### In the Project View file
+1. No cleanup required
+2. Open the Project View file
+3. Add this line: `use_query_sync: true`
+4. Sync the project
+
 ### In Settings
 
 1. Open **IntelliJ IDEA**.
@@ -26,19 +32,8 @@ There are two ways to enable the Query Sync mode:
 4. Clean your project's old import files (`.ijwb` or `.aswb` directory)
 5. Import your project in the same way you were doing before
 
-### In the Project View file
-1. Open **IntelliJ IDEA**.
-2. Clean your project's old import files (`.ijwb` or `.aswb` directory)
-3. Go to **File** > **Import Project...** or **File** > **New** > **Project from Existing Sources...** to start the **Project Import Wizard**.
-4. Select your project's root directory and click **OK**.
-5. In the **Import Project from Bazel** dialog, proceed with the import process.
-6. When you reach the **Project View** setup step, enable **Query Sync** by setting the attribute `use_query_sync` to `true`.
 ## Demos
 
 ### Setup, Import & Enable Analysis
 https://github.com/user-attachments/assets/8547dcf5-7005-4db9-b555-e39af82ccd92
-
-### Auto Sync
-https://github.com/user-attachments/assets/28e42b6a-916e-495e-953d-e0e96644790a
-
 
