@@ -20,6 +20,7 @@ import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.common.experiments.IntExperiment;
 import com.intellij.ide.IdleTracker;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -30,7 +31,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.jetbrains.annotations.NotNull;
 
 /** Manages cleaning of the cache at an appropriate time. */
-public class CacheCleaner implements BuildArtifactCache.CleanRequest {
+@Service(Service.Level.PROJECT)
+public final class CacheCleaner implements BuildArtifactCache.CleanRequest {
 
   private final IntExperiment TARGET_CACHE_SIZE_MB =
       new IntExperiment("build.cache.target.size.mb", 1024);
@@ -42,12 +44,10 @@ public class CacheCleaner implements BuildArtifactCache.CleanRequest {
   private final Logger logger = Logger.getInstance(CacheCleaner.class);
 
   private final Project project;
-  private final QuerySyncManager querySyncManager;
   private final AtomicReference<AccessToken> activeCleanRequest = new AtomicReference<>();
 
-  CacheCleaner(Project project, QuerySyncManager qsm) {
+  CacheCleaner(Project project) {
     this.project = project;
-    this.querySyncManager = qsm;
   }
 
   @Override
@@ -83,11 +83,7 @@ public class CacheCleaner implements BuildArtifactCache.CleanRequest {
             new Task.Backgroundable(project, "Cleaning build cache") {
               @Override
               public void run(@NotNull ProgressIndicator progressIndicator) {
-                BuildArtifactCache cache =
-                    querySyncManager
-                        .getLoadedProject()
-                        .map(QuerySyncProject::getBuildArtifactCache)
-                        .orElse(null);
+                BuildArtifactCache cache = project.getService(BuildArtifactCache.class);
                 if (cache == null) {
                   return;
                 }

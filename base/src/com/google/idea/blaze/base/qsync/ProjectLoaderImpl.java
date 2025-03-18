@@ -51,6 +51,7 @@ import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.artifact.ArtifactFetcher;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
+import com.google.idea.blaze.common.artifact.BuildArtifactCacheDirectoryService;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.DependenciesProjectProtoUpdater;
@@ -252,13 +253,8 @@ public class ProjectLoaderImpl implements ProjectLoader {
     Registry projectTransformRegistry = new Registry();
     SnapshotHolder graph = new SnapshotHolder();
     graph.addListener((c, i) -> projectModificationTracker.incModificationCount());
-    Path buildCachePath = getBuildCachePath(project);
-    BuildArtifactCache artifactCache =
-        BuildArtifactCache.create(
-          buildCachePath,
-            createArtifactFetcher(),
-            executor,
-            QuerySyncManager.getInstance(project).cacheCleanRequest());
+    BuildArtifactCache artifactCache = project.getService(BuildArtifactCacheDirectoryService.class)
+        .getBuildArtifactCache(project, DynamicallyDispatchingArtifactFetcher.class, CacheCleaner.class);
 
     DependencyBuilder dependencyBuilder =
       createDependencyBuilder(
@@ -382,11 +378,6 @@ public class ProjectLoaderImpl implements ProjectLoader {
 
   private Path getSnapshotFilePath(BlazeImportSettings importSettings) {
     return BlazeDataStorage.getProjectDataDir(importSettings).toPath().resolve("qsyncdata.gz");
-  }
-
-  private ArtifactFetcher<OutputArtifact> createArtifactFetcher() {
-    return new DynamicallyDispatchingArtifactFetcher(
-        ImmutableList.copyOf(ArtifactFetchers.EP_NAME.getExtensions()));
   }
 
   /**
