@@ -1,3 +1,29 @@
+v2025.03.18
+===========
+Followup: Use toolchains_aspects to propagate aspects to toolchains #7376
+Fix make variable expansion #7399
+[AOSP-pick] Remove unused DBiP experimental flag #7401
+[AOSP-pick] Fix and improve artifact fetching reporting #7405
+[AOSP-pick] Extract ProjectLoader interface #7406
+[AOSP-pick] Make thread pools a concern of ProjectLoader #7407
+[AOSP-pick] Make test_deps buildable from the command line #7413
+[AOSP-pick] Delete getLocalInvoker method #7416
+[AOSP-pick] Convert BEP parsing to Kotlin #7417
+[AOSP-pick] Make FileApiArtifactFetcher thread pool configurable #7421
+[AOSP-pick] Fix experiment service performance issues #7426
+[AOSP-pick] qs_info groups are not concern of ArtifactTracker #7427
+[AOSP-pick] Enable multi info file sync mode #7428
+[AOSP-pick] Introduce new default query strategy #7439
+[AOSP-pick] Exclude no-ide targets from query results #7441
+[AOSP-pick] Delete SINGLE_TARGET case as unused #7442
+[AOSP-pick] Skip no-ide targets in the aspect #7446
+[AOSP-pick] Build workflows cleanup in tools/adt/idea (Part 1) #7454
+[AOSP-pick] Simplest possible version check #7456
+[AOSP-pick] Automatically exclude .aswb from analysis #7465
+[AOSP-pick] Fix incorrect application of if in cc_info handling #7466
+[AOSP-pick] Fix navigation to sources #7469
+[AOSP-pick] Clean up and fix java-info file generation #7472
+
 v2025.03.04
 ===========
 Fixes:
