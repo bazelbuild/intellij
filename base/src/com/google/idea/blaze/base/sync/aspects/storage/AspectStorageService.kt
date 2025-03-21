@@ -39,7 +39,7 @@ import java.nio.file.Path
 import java.util.*
 
 private const val ASPECT_TASK_TITLE = "Write Aspects"
-private const val ASPECT_DIRECTORY = "aspects"
+private const val ASPECT_DIRECTORY = "aspect"
 
 private const val BAZEL_IGNORE_FILE = ".bazelignore"
 
