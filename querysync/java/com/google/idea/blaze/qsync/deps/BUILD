@@ -25,6 +25,7 @@ java_library(
         "@protobuf//:protobuf_java",
         "@error_prone_annotations//jar",
         "@jsr305_annotations//jar",
+        "@jetbrains_annotations//jar",
     ],
 )
 
