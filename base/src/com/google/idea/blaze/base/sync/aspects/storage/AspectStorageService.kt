@@ -133,7 +133,7 @@ class AspectStorageService(private val project: Project, private val scope: Coro
     val relativePath = directory.resolve(file)
     if (!Files.exists(relativePath)) return Optional.empty()
 
-    val absolutPath = Path.of(settings.workspaceRoot).relativize(relativePath)
+    val absolutePath = Path.of(settings.workspaceRoot).relativize(relativePath)
     return Optional.of(Label.fromWorkspacePackageAndName("", absolutPath.parent, absolutPath.fileName))
   }
 
