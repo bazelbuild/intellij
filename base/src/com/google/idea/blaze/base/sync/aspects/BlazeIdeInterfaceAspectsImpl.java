@@ -178,7 +178,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   }
 
   /** Returns the {@link OutputArtifact}s we want to track between syncs. */
-  private static ImmutableSet<OutputArtifact> getTrackedOutputs(BlazeBuildOutputs.Legacy buildOutput) {
+  private static ImmutableSet<OutputArtifact> getTrackedOutputs(
+      BlazeBuildOutputs.Legacy buildOutput) {
     // don't track intellij-info.txt outputs -- they're already tracked in
     // BlazeIdeInterfaceState
     return getTrackedOutputs(buildOutput, group -> true);
@@ -216,7 +217,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     Collection<OutputArtifact> files =
         buildResult
             .getBuildResult()
-            .getOutputGroupArtifactsLegacySyncOnly(group -> group.startsWith(OutputGroup.INFO.prefix))
+            .getOutputGroupArtifactsLegacySyncOnly(
+                group -> group.startsWith(OutputGroup.INFO.prefix))
             .stream()
             .filter(f -> ideInfoPredicate.test(f.getBazelOutRelativePath()))
             .distinct()
@@ -308,7 +310,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
           ImmutableList<OutputArtifact> resolveOutputs =
               buildResult
                   .getBuildResult()
-                  .getOutputGroupArtifactsLegacySyncOnly(group -> group.startsWith(OutputGroup.RESOLVE.prefix));
+                  .getOutputGroupArtifactsLegacySyncOnly(
+                      group -> group.startsWith(OutputGroup.RESOLVE.prefix));
           prefetchGenfiles(context, resolveOutputs);
         });
     return state;
@@ -697,7 +700,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
   /* Prints summary only for failed shards */
   private void printShardFinishedSummary(
-      BlazeContext context, String taskName, BlazeBuildOutputs.Legacy result, BuildInvoker invoker) {
+      BlazeContext context,
+      String taskName,
+      BlazeBuildOutputs.Legacy result,
+      BuildInvoker invoker) {
     if (result.buildResult().status == Status.SUCCESS) {
       return;
     }
