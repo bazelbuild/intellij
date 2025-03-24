@@ -2,6 +2,7 @@ load("@rules_java//java:defs.bzl", "java_library", "java_test")
 
 package(
     default_visibility = [
+        "//aswb:__subpackages__",
         "//base:__subpackages__",
         "//querysync:__subpackages__",
         "//shared:__subpackages__",
