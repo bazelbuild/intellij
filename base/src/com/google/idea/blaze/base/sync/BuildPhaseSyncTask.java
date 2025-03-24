@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.buildview.BuildViewMigration;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.command.BlazercMigrator;
+import com.google.idea.blaze.base.command.buildresult.BuildResult;
 import com.google.idea.blaze.base.dependencies.BlazeQuerySourceToTargetProvider;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
@@ -58,7 +59,6 @@ import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
-import com.google.idea.blaze.base.command.buildresult.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder;
@@ -267,7 +267,8 @@ public final class BuildPhaseSyncTask {
     if (context.isCancelled()) {
       throw new SyncCanceledException();
     }
-    String invocationResultMsg = "Build invocation result: " + blazeBuildResult.buildResult().status;
+    String invocationResultMsg =
+        "Build invocation result: " + blazeBuildResult.buildResult().status;
     if (blazeBuildResult.buildResult().status == BuildResult.Status.FATAL_ERROR) {
       context.setHasError();
       if (blazeBuildResult.buildResult().outOfMemory()) {
