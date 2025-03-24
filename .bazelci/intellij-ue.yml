@@ -59,3 +59,18 @@ tasks:
       - --test_output=errors
     test_targets:
       - //querysync/...
+  IntelliJ-UE-last-green:
+    name: IntelliJ UE Headless Tests Last Green
+    platform: ubuntu2204
+    build_flags:
+      - --define=ij_product=intellij-ue-oss-under-dev
+    build_targets:
+      - //ijwb/...
+    test_flags:
+      - --define=ij_product=intellij-ue-oss-under-dev
+      - --test_output=errors
+      - --test_tag_filters=bit_bazel_last_green
+    test_targets:
+      - //ijwb:all
+    soft_fail:
+      - exit_status: 1
