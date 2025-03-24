@@ -134,7 +134,7 @@ class AspectStorageService(private val project: Project, private val scope: Coro
     if (!Files.exists(relativePath)) return Optional.empty()
 
     val absolutePath = Path.of(settings.workspaceRoot).relativize(relativePath)
-    return Optional.of(Label.fromWorkspacePackageAndName("", absolutPath.parent, absolutPath.fileName))
+    return Optional.of(Label.fromWorkspacePackageAndName("", absolutePath.parent, absolutePath.fileName))
   }
 
   private fun aspectDirectory(settings: BlazeImportSettings): Path? {
