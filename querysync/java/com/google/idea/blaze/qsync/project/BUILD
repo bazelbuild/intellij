@@ -4,7 +4,8 @@ load("@rules_java//java:defs.bzl", "java_library")
 
 package(default_visibility = [
     "//querysync:__subpackages__",
-    "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
+    "//third_party/google/aswb/java/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
+    "//third_party/google/aswb/javatests/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
 ])
 
 proto_library(
@@ -18,7 +19,7 @@ java_proto_library(
         "//base:__subpackages__",
         "//cpp:__subpackages__",
         "//querysync:__subpackages__",
-        "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__subpackages__",
+        "//third_party/google/aswb/javatests/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
     ],
     deps = [":language_class_proto"],
 )

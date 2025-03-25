@@ -5,7 +5,8 @@ java_library(
     srcs = glob(["*.java"]),
     visibility = [
         "//querysync:__subpackages__",
-        "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
+        "//third_party/google/aswb/java/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
+        "//third_party/google/aswb/javatests/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
     ],
     deps = [
         ":build_artifact_java_proto",

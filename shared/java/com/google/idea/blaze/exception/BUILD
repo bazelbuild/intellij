@@ -6,6 +6,7 @@ java_library(
     name = "exception",
     srcs = glob(["*.java"]),
     visibility = [
+        "//aswb:__subpackages__",
         "//base:__subpackages__",
         "//shared:__subpackages__",
     ],
