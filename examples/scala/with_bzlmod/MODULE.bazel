@@ -1,0 +1,22 @@
+bazel_dep(name = "rules_scala", version = "7.0.0")
+
+scala_config = use_extension(
+    "@rules_scala//scala/extensions:config.bzl",
+    "scala_config",
+)
+scala_config.settings(scala_version = "2.13.16")
+
+scala_deps = use_extension(
+    "@rules_scala//scala/extensions:deps.bzl",
+    "scala_deps",
+)
+scala_deps.toolchains(
+    scalatest = True,
+)
+
+#TODO Remove when this issue is closed: https://github.com/bazelbuild/rules_scala/issues/1482
+git_override(
+    module_name = "rules_scala",
+    branch = "bzlmod-bazel-8",
+    remote = "https://github.com/mbland/rules_scala.git",
+)
