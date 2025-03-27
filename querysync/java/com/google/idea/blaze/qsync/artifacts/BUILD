@@ -29,6 +29,7 @@ proto_library(
     visibility = [
         "//querysync/java/com/google/idea/blaze/qsync/cc:__pkg__",
         "//querysync/java/com/google/idea/blaze/qsync/java:__pkg__",
+        "//third_party/google/aswb/javatests/com/google/devtools/intellij/blaze/plugin/aswb:__subpackages__",
     ],
 )
 
