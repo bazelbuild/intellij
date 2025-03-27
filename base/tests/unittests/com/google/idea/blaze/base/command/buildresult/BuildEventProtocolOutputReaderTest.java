@@ -585,7 +585,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
   }
 
   private static ImmutableList<File> getOutputXmlFiles(BlazeTestResult result) {
-    return LocalFileArtifact.getLocalFiles(result.getOutputXmlFiles());
+    return LocalFileArtifact.getLocalFilesForLegacySync(result.getOutputXmlFiles());
   }
 
   private static InputStream asInputStream(BuildEvent.Builder... events) throws Exception {
