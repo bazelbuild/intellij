@@ -18,7 +18,7 @@ package com.google.idea.blaze.java.run.fastbuild;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
@@ -26,22 +26,22 @@ import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.blaze.java.fastbuild.FastBuildLogDataScope.FastBuildLogOutput;
-import java.io.File;
 
 final class FastBuildTestResultFinderStrategy implements BlazeTestResultFinderStrategy {
 
   private final Label label;
   private final Kind kind;
-  private final File outputFile;
+  private final LocalFileOutputArtifact outputArtifact;
   private final BlazeContext blazeContext;
   private final Stopwatch timer;
 
   FastBuildTestResultFinderStrategy(
-      Label label, Kind kind, File outputFile, BlazeContext blazeContext) {
+      Label label, Kind kind, LocalFileOutputArtifact outputFile, BlazeContext blazeContext) {
     this.label = label;
     this.kind = kind;
-    this.outputFile = outputFile;
+    this.outputArtifact = outputFile;
     this.blazeContext = blazeContext;
     this.timer = Stopwatch.createStarted();
   }
@@ -58,11 +58,11 @@ final class FastBuildTestResultFinderStrategy implements BlazeTestResultFinderSt
                 label,
                 kind,
                 TestStatus.NO_STATUS,
-                ImmutableSet.of(new SourceArtifact(outputFile)))));
+                  ImmutableSet.of(outputArtifact))));
   }
 
   @Override
   public void deleteTemporaryOutputFiles() {
-    outputFile.delete();
+    outputArtifact.getFile().delete();
   }
 }
