@@ -17,13 +17,12 @@
 
 package com.google.idea.blaze.base.project.startup
 
-import com.android.annotations.concurrency.WorkerThread
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
 /**
- * An adapter for Java implementations of [ProjectActivit].
+ * An adapter for Java implementations of [ProjectActivity].
  *
  * Note: Prefer implementing [ProjectActivity] directly in Kotlin as it utilizes resources more efficiently.
  */
@@ -34,6 +33,5 @@ abstract class ProjectActivityJavaShim: ProjectActivity {
     }
   }
 
-  @WorkerThread
   abstract fun runActivity(project: Project)
 }
