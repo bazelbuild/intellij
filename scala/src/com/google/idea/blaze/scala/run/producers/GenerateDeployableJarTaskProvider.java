@@ -195,9 +195,12 @@ class GenerateDeployableJarTaskProvider
       List<File> outputs;
       try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
         outputs = LocalFileArtifact.getLocalFiles(
+            com.google.idea.blaze.common.Label.of(target.toString()),
             BlazeBuildOutputs.fromParsedBepOutput(
               BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
-                  .getOutputGroupTargetArtifacts(DEFAULT_OUTPUT_GROUP_NAME, String.format("%s_deploy.jar", target)));
+                  .getOutputGroupTargetArtifacts(DEFAULT_OUTPUT_GROUP_NAME, String.format("%s_deploy.jar", target)),
+            BlazeContext.create(),
+            env.getProject());
       }
 
       if (outputs.isEmpty()) {

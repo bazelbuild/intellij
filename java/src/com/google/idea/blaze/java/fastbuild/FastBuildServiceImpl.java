@@ -343,6 +343,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     try (final var bepStream = resultHelper.getBepStream(Optional.empty())) {
       ImmutableList<File> deployJarArtifacts =
           LocalFileArtifact.getLocalFiles(
+              com.google.idea.blaze.common.Label.of(label.toString()),
               BlazeBuildOutputs.fromParsedBepOutput(
                 BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
                   .getOutputGroupTargetArtifacts(
@@ -350,7 +351,9 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
                       aspectStrategy.getAspectOutputGroup())
                   .stream()
                   .filter(artifact -> artifact.getArtifactPath().endsWith(deployJarLabel.targetName().toString()))
-                  .collect(Collectors.toUnmodifiableSet()));
+                  .collect(Collectors.toUnmodifiableSet()),
+              BlazeContext.create(),
+              project);
       checkState(deployJarArtifacts.size() == 1);
       deployJar = deployJarArtifacts.get(0);
     } catch (GetArtifactsException e) {
@@ -360,6 +363,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     ImmutableList<File> ideInfoFiles;
     try (final var bepStream = resultHelper.getBepStream(Optional.empty())) {
       ideInfoFiles = LocalFileArtifact.getLocalFiles(
+          com.google.idea.blaze.common.Label.of(label.toString()),
           BlazeBuildOutputs.fromParsedBepOutput(
             BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
               .getOutputGroupArtifacts(
@@ -369,7 +373,9 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
                   aspectStrategy.getAspectOutputFilePredicate().test(
                       artifact.getArtifactPath().toString()
                   )
-              ).collect(Collectors.toUnmodifiableSet()));
+              ).collect(Collectors.toUnmodifiableSet()),
+          BlazeContext.create(),
+          project);
     } catch (GetArtifactsException e) {
       throw new RuntimeException("Blaze failure building ide info files: " + e.getMessage());
     }
