@@ -27,7 +27,6 @@ import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStream
 import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.command.buildresult.LocalFileParser;
 import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
 import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider.BuildEventStreamException;
@@ -64,7 +63,7 @@ public class LocalBuildEventProtocolTestFinderStrategyTest extends BlazeTestCase
     File file = tempDirectory.newFile("tmp/bep_output.txt", new byte[0]);
 
     LocalBuildEventProtocolTestFinderStrategy testFinder =
-        new LocalBuildEventProtocolTestFinderStrategy(new BuildResultHelperBep(file));
+        new LocalBuildEventProtocolTestFinderStrategy(file);
     try {
       BlazeTestResults unused = testFinder.findTestResults();
     } finally {
@@ -90,7 +89,7 @@ public class LocalBuildEventProtocolTestFinderStrategyTest extends BlazeTestCase
     File bepOutputFile =
         tempDirectory.newFile("tmp/bep_output.txt", asByteArray(ImmutableList.of(test1, test2)));
     LocalBuildEventProtocolTestFinderStrategy strategy =
-        new LocalBuildEventProtocolTestFinderStrategy(new BuildResultHelperBep(bepOutputFile));
+        new LocalBuildEventProtocolTestFinderStrategy(bepOutputFile);
 
     BlazeTestResults results =
         BuildEventProtocolOutputReader.parseTestResults(

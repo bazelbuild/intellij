@@ -25,6 +25,7 @@ java_library(
     visibility = GOLANG_PACKAGES_VISIBILITY,
     deps = [
         "//base",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
         "//common/experiments",
         "//common/util:transactions",
         "//intellij_platform_sdk:jsr305",

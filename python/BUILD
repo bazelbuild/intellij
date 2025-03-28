@@ -24,6 +24,7 @@ java_library(
     visibility = PYTHON_PACKAGES_VISIBILITY,
     deps = [
         "//base",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
         "//common/experiments",
         "//common/util:transactions",
         "//proto:proto_deps",
