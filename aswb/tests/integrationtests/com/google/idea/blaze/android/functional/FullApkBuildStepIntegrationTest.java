@@ -244,7 +244,7 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     File lib = new File("/path/to/symbol");
     File altLib = new File("/path/to/alt/symbol");
     ImmutableList<File> symbolFiles = ImmutableList.of(lib, altLib);
-    when(mockSymbolFinder.getNativeSymbolsForBuild(any(), any(), any())).thenReturn(symbolFiles);
+    when(mockSymbolFinder.getNativeSymbolsForBuild(any(), any(), any(), any())).thenReturn(symbolFiles);
 
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     File apkFile = new File("/path/to/apk");
@@ -336,7 +336,7 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     File lib = new File("/path/to/symbol");
     File altLib = new File("/path/to/alt/symbol");
     ImmutableList<File> symbolFiles = ImmutableList.of(lib, altLib);
-    when(mockSymbolFinder.getNativeSymbolsForBuild(any(), any(), any())).thenReturn(symbolFiles);
+    when(mockSymbolFinder.getNativeSymbolsForBuild(any(), any(), any(), any())).thenReturn(symbolFiles);
 
     // Return fake deploy info proto and mocked deploy info data object.
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
