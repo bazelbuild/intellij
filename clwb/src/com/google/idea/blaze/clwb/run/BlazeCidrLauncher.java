@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
 import com.google.idea.blaze.base.logging.EventLoggingService;
@@ -118,6 +119,10 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     if (useTestUi()
         && BlazeTestEventsHandler.targetsSupported(project, configuration.getTargets())) {
       try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
+        if (!(buildResultHelper instanceof BuildResultHelperBep)) {
+          throw new ExecutionException("Build result helper not supported");
+        }
+        File outputFile = ((BuildResultHelperBep) buildResultHelper).getOutputFile();
         testUiSession =
             BlazeTestUiSession.create(
                 ImmutableList.<String>builder()
@@ -125,7 +130,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
                     .add("--flaky_test_attempts=1")
                     .addAll(buildResultHelper.getBuildFlags())
                     .build(),
-                new LocalBuildEventProtocolTestFinderStrategy(buildResultHelper));
+                new LocalBuildEventProtocolTestFinderStrategy(outputFile));
       }
     }
     if (testUiSession != null) {

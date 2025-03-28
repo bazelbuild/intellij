@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.bazel.BazelExitCodeException;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.exception.BuildException;
@@ -108,17 +107,14 @@ public class CandidatePackageFinder {
         BlazeCommand.builder(buildInvoker, BlazeCommandName.QUERY, ideProject)
             .addBlazeFlags("--output", "package")
             .addBlazeFlags("//" + path + "/...");
-    try (BuildResultHelper helper = buildInvoker.createBuildResultHelper()) {
-      try (InputStream queryOut =
-          buildInvoker.getCommandRunner().runQuery(ideProject, command, helper, context)) {
-        return ImmutableList.copyOf(CharStreams.readLines(new InputStreamReader(queryOut, UTF_8)));
-      } catch (BazelExitCodeException exitCodeException) {
-        if (exitCodeException.getExitCode() == BAZEL_QUERY_EXIT_CODE_COMMAND_FAILURE) {
-          // This covers the case that there were no matching packages which is WAI here.
-          return ImmutableList.of();
+    try (InputStream queryOut = buildInvoker.invokeQuery(command, context)) {
+      return ImmutableList.copyOf(CharStreams.readLines(new InputStreamReader(queryOut, UTF_8)));
+    } catch (BazelExitCodeException exitCodeException) {
+      if (exitCodeException.getExitCode() == BAZEL_QUERY_EXIT_CODE_COMMAND_FAILURE) {
+        // This covers the case that there were no matching packages which is WAI here.
+        return ImmutableList.of();
         }
-        throw exitCodeException;
-      }
+      throw exitCodeException;
     } catch (IOException ioe) {
       throw new BuildException(ioe);
     }
