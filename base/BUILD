@@ -598,6 +598,7 @@ intellij_integration_test_suite(
         "//shared/java/com/google/idea/blaze/common",
         "//shared/java/com/google/idea/blaze/common/artifact",
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
+        "//third_party/java/auto_value",
         "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",  # unuseddeps: keep
