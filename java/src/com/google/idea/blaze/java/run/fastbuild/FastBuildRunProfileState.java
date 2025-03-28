@@ -17,6 +17,9 @@ package com.google.idea.blaze.java.run.fastbuild;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
+import com.google.common.hash.Hashing;
+import com.google.common.io.Files;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.logging.EventLoggingService.Command;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -56,14 +59,14 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
 
   @Override
   protected ProcessHandler startProcess() throws ExecutionException {
-    File outputFile = createOutputFile();
+    final var outputArtifact = createOutputArtifact();
     Project project = getConfiguration().getProject();
     Label label = getLabel();
     BlazeTestUiSession testUiSession =
         BlazeTestUiSession.create(
             /* blazeFlags= */ ImmutableList.of(),
             new FastBuildTestResultFinderStrategy(
-                label, getConfiguration().getTargetKind(), outputFile, getBlazeContext()));
+                label, getConfiguration().getTargetKind(), outputArtifact, getBlazeContext()));
     setConsoleBuilder(
         new TextConsoleBuilderImpl(project) {
           @Override
@@ -89,7 +92,7 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
             project,
             getConfiguration(),
             getFastBuildInfo(),
-            outputFile,
+            outputArtifact.getFile(),
             handlerState.getTestFilterForExternalProcesses(),
             debugPort);
 
@@ -99,11 +102,20 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
     return processHandler;
   }
 
-  private File createOutputFile() throws ExecutionException {
+  private LocalFileOutputArtifact createOutputArtifact() throws ExecutionException {
     try {
-      File outputXmlFile = File.createTempFile("ide-fast-build-test-output-", ".xml");
-      outputXmlFile.deleteOnExit();
-      return outputXmlFile;
+      final var file = File.createTempFile("ide-fast-build-test-output-", ".xml").getAbsoluteFile();
+      file.deleteOnExit();
+
+      final var digest = Files.asByteSource(file).hash(Hashing.crc32());
+
+      // treat output xml file as external absolute artifact, therefore prefix is 0
+      return new LocalFileOutputArtifact(
+          /* file = */ file,
+          /* file = */ file.toPath(),
+          /* prefixLength = */ 0,
+          /* digest = */ digest.toString()
+      );
     } catch (IOException e) {
       throw new ExecutionException("Error creating test output XML file.", e);
     }
