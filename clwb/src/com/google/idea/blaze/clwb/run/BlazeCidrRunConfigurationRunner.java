@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtif
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
+import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -147,11 +148,10 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
     SaveUtil.saveAllFiles();
     try (BuildResultHelper buildResultHelper =
         BuildResultHelperProvider.createForLocalBuild(env.getProject())) {
-      ListenableFuture<BuildResult> buildOperation =
+      ListenableFuture<BuildEventStreamProvider> streamProviderFuture =
           BlazeBeforeRunCommandHelper.runBlazeCommand(
               BlazeCommandName.BUILD,
               configuration,
-              buildResultHelper,
               ImmutableList.of(),
               getExtraDebugFlags(env),
               BlazeInvocationContext.runConfigContext(
@@ -160,15 +160,22 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
 
       Label target = getSingleTarget(configuration);
       try {
-        BuildResult result = buildOperation.get();
+        BuildResult result =
+            BuildResult.fromExitCode(
+                BuildResultParser.getBuildOutput(streamProviderFuture.get(), Interners.STRING)
+                    .buildResult());
         if (result.status != BuildResult.Status.SUCCESS) {
           throw new ExecutionException("Blaze failure building debug binary");
         }
       } catch (InterruptedException | CancellationException e) {
-        buildOperation.cancel(true);
+        streamProviderFuture.cancel(true);
         throw new RunCanceledByUserException();
       } catch (java.util.concurrent.ExecutionException e) {
         throw new ExecutionException(e);
+      } catch (GetArtifactsException e) {
+        throw new ExecutionException(
+          String.format(
+              "Failed to get output artifacts when building %s: %s", target, e.getMessage()));
       }
       List<File> candidateFiles;
       try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {

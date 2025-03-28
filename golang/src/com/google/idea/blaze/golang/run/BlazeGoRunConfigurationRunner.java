@@ -38,6 +38,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtif
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
+import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -332,11 +333,10 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
         }
       }
 
-      ListenableFuture<BuildResult> buildOperation =
+      ListenableFuture<BuildEventStreamProvider> streamProviderFuture =
           BlazeBeforeRunCommandHelper.runBlazeCommand(
               scriptPath.isPresent() ? BlazeCommandName.RUN : BlazeCommandName.BUILD,
               configuration,
-              buildResultHelper,
               flags.build(),
               ImmutableList.of("--dynamic_mode=off", "--test_sharding_strategy=disabled"),
               BlazeInvocationContext.runConfigContext(
@@ -344,7 +344,10 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
               "Building debug binary");
 
       try {
-        BuildResult result = buildOperation.get();
+        BuildResult result =
+            BuildResult.fromExitCode(
+                BuildResultParser.getBuildOutput(streamProviderFuture.get(), Interners.STRING)
+                    .buildResult());
         if (result.outOfMemory()) {
           throw new ExecutionException("Out of memory while trying to build debug target");
         } else if (result.status == Status.BUILD_ERROR) {
@@ -355,10 +358,14 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
                   "Fatal error (%d) while trying to build debug target", result.exitCode));
         }
       } catch (InterruptedException | CancellationException e) {
-        buildOperation.cancel(true);
+        streamProviderFuture.cancel(true);
         throw new RunCanceledByUserException();
       } catch (java.util.concurrent.ExecutionException e) {
         throw new ExecutionException(e);
+      } catch (GetArtifactsException e) {
+        throw new ExecutionException(
+            String.format(
+                "Failed to get output artifacts when building %s: %s", label, e.getMessage()));
       }
       if (scriptPath.isPresent()) {
         if (!Files.exists(scriptPath.get())) {

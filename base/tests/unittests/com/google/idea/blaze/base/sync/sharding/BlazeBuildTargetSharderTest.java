@@ -24,6 +24,7 @@ import static junit.framework.TestCase.fail;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -32,6 +33,7 @@ import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
 import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.bazel.FakeBlazeCommandRunner;
@@ -40,6 +42,7 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BuildFlagsProvider;
 import com.google.idea.blaze.base.command.buildresult.BuildResult;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider.GeneralProvider;
 import com.google.idea.blaze.base.io.FileOperationProvider;
@@ -80,6 +83,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -93,9 +97,8 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   private final FakeWildCardTargetExpanderExternalTaskProvider
       fakeWildCardTargetExpanderExternalTaskProvider =
           new FakeWildCardTargetExpanderExternalTaskProvider();
-  private final FakeWildCardTargetExpanderBlazeCommandRunner
-      fakeWildCardTargetExpanderBlazeCommandRunner =
-          new FakeWildCardTargetExpanderBlazeCommandRunner();
+  private final FakeWildCardTargetExpanderBlazeInvoker fakeWildCardTargetExpanderBlazeInvoker =
+      new FakeWildCardTargetExpanderBlazeInvoker();
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
@@ -270,7 +273,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   public void expandAndShardTargets_shardingApproachPartitionWithoutExpanding() {
     List<TargetExpression> targets = ImmutableList.of(target("//java/com/google:foo"));
     ShardedTargetsResult result =
-        expandAndShardTargets(SyncStrategy.SERIAL, ProjectView.builder().build(), targets, fakeWildCardTargetExpanderBlazeCommandRunner);
+        expandAndShardTargets(SyncStrategy.SERIAL, ProjectView.builder().build(), targets);
 
     assertThat(result.buildResult.exitCode).isEqualTo(0);
     assertThat(result.shardedTargets.shardStats.shardingApproach())
@@ -284,7 +287,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
         .setFailToBatchTarget(false);
     List<TargetExpression> targets = ImmutableList.of(target("//java/com/google:foo"));
     ShardedTargetsResult result =
-        expandAndShardTargets(SyncStrategy.PARALLEL, ProjectView.builder().build(), targets, fakeWildCardTargetExpanderBlazeCommandRunner);
+        expandAndShardTargets(SyncStrategy.PARALLEL, ProjectView.builder().build(), targets);
 
     assertThat(result.buildResult.exitCode).isEqualTo(0);
     assertThat(result.shardedTargets.shardStats.shardingApproach())
@@ -304,7 +307,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
                 .add(ScalarSection.builder(ShardBlazeBuildsSection.KEY).set(true))
                 .add(ScalarSection.builder(TargetShardSizeSection.KEY).set(500))
                 .build(),
-            targets, fakeWildCardTargetExpanderBlazeCommandRunner);
+            targets);
 
     assertThat(result.buildResult.exitCode).isEqualTo(0);
     ShardStats shardStats = result.shardedTargets.shardStats;
@@ -314,7 +317,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
 
   @Test
   public void expandAndShardTargets_failToExpand_shardingApproachError() {
-    fakeWildCardTargetExpanderBlazeCommandRunner.setFailure(true);
+    fakeWildCardTargetExpanderBlazeInvoker.setFailure(true);
     fakeBuildBatchingService
         .setShardingApproach(ShardingApproach.LEXICOGRAPHIC_TARGET_SHARDER)
         .setFailToBatchTarget(false);
@@ -326,7 +329,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
                 .add(ScalarSection.builder(ShardBlazeBuildsSection.KEY).set(true))
                 .add(ScalarSection.builder(TargetShardSizeSection.KEY).set(500))
                 .build(),
-            targets, fakeWildCardTargetExpanderBlazeCommandRunner);
+            targets);
 
     assertThat(result.buildResult.exitCode).isEqualTo(BuildResult.FATAL_ERROR.exitCode);
     assertThat(result.shardedTargets.shardStats.shardingApproach())
@@ -347,7 +350,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
                 .add(ScalarSection.builder(ShardBlazeBuildsSection.KEY).set(true))
                 .add(ScalarSection.builder(TargetShardSizeSection.KEY).set(500))
                 .build(),
-            targets, fakeWildCardTargetExpanderBlazeCommandRunner);
+            targets);
 
     assertThat(result.buildResult.exitCode).isEqualTo(0);
     assertThat(result.shardedTargets.shardStats.shardingApproach())
@@ -361,7 +364,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     fakeWildCardTargetExpanderExternalTaskProvider
         .setReturnVal(0)
         .setOutputMessage("sh_library rule " + expectedLabel1, "sh_library rule " + expectedLabel2);
-    fakeWildCardTargetExpanderBlazeCommandRunner.setOutputMessages(
+    fakeWildCardTargetExpanderBlazeInvoker.setOutputMessages(
         ImmutableList.of("sh_library rule " + expectedLabel1, "sh_library rule " + expectedLabel2));
     fakeBuildBatchingService
         .setShardingApproach(ShardingApproach.LEXICOGRAPHIC_TARGET_SHARDER)
@@ -375,7 +378,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
                 .add(ScalarSection.builder(ShardBlazeBuildsSection.KEY).set(true))
                 .add(ScalarSection.builder(TargetShardSizeSection.KEY).set(500))
                 .build(),
-            targets, fakeWildCardTargetExpanderBlazeCommandRunner);
+            targets);
 
     ShardStats shardStats = result.shardedTargets.shardStats;
     assertThat(shardStats.suggestedTargetSizePerShard()).isEqualTo(500);
@@ -387,23 +390,23 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   @Test
   public void expandAndShardTargets_expandWildcardTargetsNoExcludeManualTag() {
     String expectedLabel1 = "//java/com/google:one";
-    FakeWildCardTargetExpanderBlazeCommandRunner commandRunner = new FakeWildCardTargetExpanderBlazeCommandRunner() {
+    FakeWildCardTargetExpanderBlazeInvoker commandInvoker = new FakeWildCardTargetExpanderBlazeInvoker() {
 
       @Override
-      public InputStream runQuery(Project project, BlazeCommand.Builder blazeCommandBuilder, BuildResultHelper buildResultHelper, BlazeContext context) throws BuildException {
+      public InputStream invokeQuery(BlazeCommand.Builder blazeCommandBuilder, BlazeContext context) throws BuildException {
         // We need to confirm within the query runner because there are no public methods currently to
         // perform this check downstream.
         for (String argument : blazeCommandBuilder.build().toArgumentList()) {
           assertFalse(argument.contains(WildcardTargetExpander.MANUAL_EXCLUDE_TAG));
         }
-        return super.runQuery(project, blazeCommandBuilder, buildResultHelper, context);
+        return super.invokeQuery(blazeCommandBuilder, context);
       }
     };
 
     fakeWildCardTargetExpanderExternalTaskProvider
             .setReturnVal(0)
             .setOutputMessage("sh_library rule " + expectedLabel1);
-    commandRunner.setOutputMessages(
+    commandInvoker.setOutputMessages(
             ImmutableList.of("sh_library rule " + expectedLabel1));
     fakeBuildBatchingService
             .setShardingApproach(ShardingApproach.LEXICOGRAPHIC_TARGET_SHARDER)
@@ -420,7 +423,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
             expandAndShardTargets(
                     SyncStrategy.PARALLEL,
                     projectView,
-                    targets, commandRunner);
+                    targets, commandInvoker);
 
     assertThat(result.shardedTargets.shardedTargets)
             .containsExactly(ImmutableList.of(target(expectedLabel1)));
@@ -429,21 +432,21 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   @Test
   public void expandAndShardTargets_expandWildcardTargetsIncludesManualTag() {
     String expectedLabel1 = "//java/com/google:one";
-    FakeWildCardTargetExpanderBlazeCommandRunner commandRunner = new FakeWildCardTargetExpanderBlazeCommandRunner() {
+    FakeWildCardTargetExpanderBlazeInvoker blazeInvoker = new FakeWildCardTargetExpanderBlazeInvoker() {
 
       @Override
-      public InputStream runQuery(Project project, BlazeCommand.Builder blazeCommandBuilder, BuildResultHelper buildResultHelper, BlazeContext context) throws BuildException {
+      public InputStream invokeQuery(BlazeCommand.Builder blazeCommandBuilder, BlazeContext context) throws BuildException {
         // We need to confirm within the query runner because there are no public methods currently to
         // perform this check downstream.
         assertTrue(blazeCommandBuilder.build().toArgumentList().stream().anyMatch(argument -> argument.contains(WildcardTargetExpander.MANUAL_EXCLUDE_TAG)));
-        return super.runQuery(project, blazeCommandBuilder, buildResultHelper, context);
+        return super.invokeQuery(blazeCommandBuilder, context);
       }
     };
 
     fakeWildCardTargetExpanderExternalTaskProvider
             .setReturnVal(0)
             .setOutputMessage("sh_library rule " + expectedLabel1);
-    commandRunner.setOutputMessages(
+    blazeInvoker.setOutputMessages(
             ImmutableList.of("sh_library rule " + expectedLabel1));
     fakeBuildBatchingService
             .setShardingApproach(ShardingApproach.LEXICOGRAPHIC_TARGET_SHARDER)
@@ -460,14 +463,15 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
             expandAndShardTargets(
                     SyncStrategy.PARALLEL,
                     projectView,
-                    targets, commandRunner);
+                    targets,
+                    blazeInvoker);
 
     assertThat(result.shardedTargets.shardedTargets)
             .containsExactly(ImmutableList.of(target(expectedLabel1)));
   }
 
   private ShardedTargetsResult expandAndShardTargets(
-      SyncStrategy syncStrategy, ProjectView projectView, List<TargetExpression> targets, FakeBlazeCommandRunner commandRunner) {
+      SyncStrategy syncStrategy, ProjectView projectView, List<TargetExpression> targets, BuildSystem.BuildInvoker invoker) {
     WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("workspaceRoot"));
     return BlazeBuildTargetSharder.expandAndShardTargets(
         getProject(),
@@ -475,18 +479,20 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
         ProjectViewSet.builder().add(projectView).build(),
         new WorkspacePathResolverImpl(workspaceRoot),
         targets,
-        FakeBuildInvoker.builder()
-            .type(BuildBinaryType.BAZEL)
-            .commandRunner(commandRunner)
-            .build(),
+        invoker,
         syncStrategy);
+  }
+
+  private ShardedTargetsResult expandAndShardTargets(
+      SyncStrategy syncStrategy, ProjectView projectView, List<TargetExpression> targets) {
+    return expandAndShardTargets(syncStrategy, projectView, targets, fakeWildCardTargetExpanderBlazeInvoker);
   }
 
   private static TargetExpression target(String expression) {
     return Preconditions.checkNotNull(TargetExpression.fromStringSafe(expression));
   }
 
-  private static class FakeWildCardTargetExpanderBlazeCommandRunner extends FakeBlazeCommandRunner {
+  private static class FakeWildCardTargetExpanderBlazeInvoker extends FakeBuildInvoker {
     private List<String> outputMessages = ImmutableList.of();
     private boolean failure = false;
 
@@ -499,17 +505,58 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     }
 
     @Override
-    public InputStream runQuery(
-        Project project,
-        BlazeCommand.Builder blazeCommandBuilder,
-        BuildResultHelper buildResultHelper,
-        BlazeContext context)
-        throws BuildException {
+    public InputStream invokeQuery(BlazeCommand.Builder blazeCommandBuilder, BlazeContext context) throws BuildException {
       if (this.failure) {
         throw new BuildException("failure");
       }
       return new ByteArrayInputStream(
           String.join(System.lineSeparator(), outputMessages).getBytes(UTF_8));
+    }
+
+    @Override
+    public ImmutableSet<Capability> getCapabilities() {
+      return super.getCapabilities();
+    }
+
+    @Override
+    public BuildBinaryType getType() {
+      throw new UnsupportedOperationException(String.format("%s does not support getType()", this.getClass().getName()));
+    }
+
+    @Override
+    public String getBinaryPath() {
+      return "";
+    }
+
+    @Override
+    @Nullable
+    public BlazeInfo getBlazeInfo() {
+      return null;
+    }
+
+    @Override
+    public boolean getSupportsParallelism() {
+      return false;
+    }
+
+    @Override
+    protected Supplier<BuildResultHelper> getBuildResultHelperSupplier() {
+      return null;
+    }
+
+    @Override
+    public FakeBlazeCommandRunner getCommandRunner() {
+      throw new UnsupportedOperationException(String.format("%s does not support getCommandRunner()", this.getClass().getName()));
+    }
+
+    @Override
+    public boolean supportsHomeBlazerc() {
+      return super.supportsHomeBlazerc();
+    }
+
+    @Override
+    public BuildSystem getBuildSystem() {
+      throw new UnsupportedOperationException(String.format("%s does not support getBuildSystem()", this.getClass().getName()));
     }
   }
 
