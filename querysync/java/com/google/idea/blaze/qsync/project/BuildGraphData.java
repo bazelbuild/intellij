@@ -558,7 +558,7 @@ public abstract class BuildGraphData {
    *     given; the {@link RequestedTargets#expectedDependencyTargets} will be determined by the
    *     {@link #getDependencyTrackingBehaviors(Label)} of the targets given.
    */
-  public Optional<RequestedTargets> computeRequestedTargets(ImmutableSet<Label> projectTargets) {
+  public Optional<RequestedTargets> computeRequestedTargets(Collection<Label> projectTargets) {
     final var externalDeps = new LinkedHashSet<Label>();
     final var seen = new HashSet<>(projectTargets);
     final var queue = new ArrayDeque<Label>(projectTargets);
@@ -575,6 +575,6 @@ public abstract class BuildGraphData {
         queue.addAll(targetInfo.deps().stream().filter(seen::add).toList());
       }
     }
-    return Optional.of(new RequestedTargets(projectTargets, ImmutableSet.copyOf(externalDeps)));
+    return Optional.of(new RequestedTargets(ImmutableSet.copyOf(projectTargets), ImmutableSet.copyOf(externalDeps)));
   }
 }
