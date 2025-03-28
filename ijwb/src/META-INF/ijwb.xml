@@ -15,4 +15,12 @@
   -->
 <idea-plugin>
   <vendor>Google</vendor>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+      defaultValue="true"
+      description="Determines whether AutoImportProjectOpenProcessor is a strong info holder."
+      key="bazel.project.auto.open"
+      overrides="true"/>
+  </extensions>
 </idea-plugin>
