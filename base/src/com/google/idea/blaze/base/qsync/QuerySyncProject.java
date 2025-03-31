@@ -263,13 +263,7 @@ public class QuerySyncProject {
             lastQuery.isEmpty()
                 ? projectQuerier.fullQuery(projectDefinition, context)
                 : projectQuerier.update(projectDefinition, lastQuery.get(), context);
-        QuerySyncProjectSnapshot newSnapshot =
-            snapshotBuilder.createBlazeProjectSnapshot(
-                context,
-                postQuerySyncData,
-                artifactTracker.getStateSnapshot(),
-                projectProtoTransforms.getComposedTransform());
-        onNewSnapshot(context, newSnapshot);
+        updateProjectSnapshot(context, postQuerySyncData);
 
         // TODO: Revisit SyncListeners once we switch fully to qsync
         for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
@@ -344,13 +338,7 @@ public class QuerySyncProject {
     } catch (IOException e) {
       throw new BuildException("Failed to clear dependency info", e);
     }
-    QuerySyncProjectSnapshot newSnapshot =
-        snapshotBuilder.createBlazeProjectSnapshot(
-            context,
-            snapshotHolder.getCurrent().orElseThrow().queryData(),
-            artifactTracker.getStateSnapshot(),
-            projectProtoTransforms.getComposedTransform());
-    onNewSnapshot(context, newSnapshot);
+    updateProjectSnapshot(context, snapshotHolder.getCurrent().orElseThrow().queryData());
   }
 
   public void resetQuerySyncState(BlazeContext context) throws BuildException {
@@ -372,15 +360,20 @@ public class QuerySyncProject {
     try (BlazeContext context = BlazeContext.create(parentContext)) {
       context.push(new BuildDepsStatsScope());
       if (getDependencyTracker().buildDependenciesForTargets(context, request)) {
-        QuerySyncProjectSnapshot newSnapshot =
-            snapshotBuilder.createBlazeProjectSnapshot(
-                context,
-                snapshotHolder.getCurrent().orElseThrow().queryData(),
-                artifactTracker.getStateSnapshot(),
-                projectProtoTransforms.getComposedTransform());
-        onNewSnapshot(context, newSnapshot);
+        updateProjectSnapshot(context, snapshotHolder.getCurrent().orElseThrow().queryData());
       }
     }
+  }
+
+  private void updateProjectSnapshot(BlazeContext context, PostQuerySyncData queryData)
+    throws BuildException {
+    QuerySyncProjectSnapshot newSnapshot =
+      snapshotBuilder.createBlazeProjectSnapshot(
+        context,
+        queryData,
+        artifactTracker.getStateSnapshot(),
+        projectProtoTransforms.getComposedTransform());
+    onNewSnapshot(context, newSnapshot);
   }
 
   public void buildRenderJar(BlazeContext parentContext, List<Path> wps)
