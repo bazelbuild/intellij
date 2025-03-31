@@ -41,8 +41,10 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.command.buildresult.BuildResult;
+import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -89,6 +91,7 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedBuildProgressTracker;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.toolwindow.Task;
+import com.google.idea.blaze.common.Interners;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.artifact.ArtifactState;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
@@ -657,8 +660,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                     BlazeBuildOutputs.Legacy result =
                         runBuildForTargets(
                             project,
-                            childContext,
                             invoker,
+                            childContext,
                             projectViewSet,
                             workspaceLanguageSettings.getActiveLanguages(),
                             targets,
@@ -746,8 +749,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   /** Runs a blaze build for the given output groups. */
   private static BlazeBuildOutputs.Legacy runBuildForTargets(
       Project project,
-      BlazeContext context,
       BuildInvoker invoker,
+      BlazeContext context,
       ProjectViewSet viewSet,
       ImmutableSet<LanguageClass> activeLanguages,
       List<? extends TargetExpression> targets,
@@ -761,26 +764,22 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
 
     Path targetPatternFile = prepareTargetPatternFile(project, targets);
+    BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project);
+    builder
+        .setInvokeParallel(invokeParallel)
+        .addTargets(targets)
+        .addBlazeFlags(BlazeFlags.KEEP_GOING)
+        .addBlazeFlags(BlazeFlags.DISABLE_VALIDATIONS) // b/145245918: don't run lint during sync
+        .addBlazeFlags(additionalBlazeFlags);
+
+    // b/236031309: Sync builds that use rabbit-cli rely on build-changelist.txt being populated
+    // with the correct build request id. We force Blaze to emit the correct build-changelist.
+    if (noFakeStampExperiment.getValue() && invoker.getType() == BuildBinaryType.RABBIT) {
+      builder.addBlazeFlags("--nofake_stamp_data");
+    }
+
+    aspectStrategy.addAspectAndOutputGroups(project, builder, outputGroups, activeLanguages, onlyDirectDeps);
     try {
-      BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project);
-      builder
-          .setInvokeParallel(invokeParallel)
-          .addBlazeFlags(BlazeFlags.TARGET_PATTERN_FILE, targetPatternFile.toString())
-          .addBlazeFlags(BlazeFlags.KEEP_GOING)
-          .addBlazeFlags(additionalBlazeFlags);
-      if (disableValidationActionExperiment.getValue()) {
-        builder.addBlazeFlags(BlazeFlags.DISABLE_VALIDATIONS);
-      }
-
-      // b/236031309: Sync builds that use rabbit-cli rely on build-changelist.txt being populated
-      // with the correct build request id. We force Blaze to emit the correct build-changelist.
-      if (noFakeStampExperiment.getValue() && invoker.getType() == BuildBinaryType.RABBIT) {
-        builder.addBlazeFlags("--nofake_stamp_data");
-      }
-
-      aspectStrategy.addAspectAndOutputGroups(
-          project, builder, outputGroups, activeLanguages, onlyDirectDeps);
-
       return BazelExecService.instance(project).build(context, builder);
     } finally {
       if (!Registry.is("bazel.sync.keep.target.files")) {
