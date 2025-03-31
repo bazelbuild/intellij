@@ -115,7 +115,7 @@ def _fast_build_info_impl(target, ctx):
 
     output_groups = depset(output_files, transitive = dep_outputs)
 
-    return struct(output_groups = {"ide-fast-build": output_groups})
+    return OutputGroupInfo(**{"ide-fast-build": output_groups})
 
 def _get_all_dep_outputs(dep_targets):
     """Get the ide-fast-build output files for all dependencies"""
