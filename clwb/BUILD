@@ -76,6 +76,7 @@ java_library(
     visibility = ["//clwb:__subpackages__"],
     deps = [
         "//base",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
         "//clwb/sdkcompat",
         "//common/actions",
         "//common/experiments",

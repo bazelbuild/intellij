@@ -204,6 +204,7 @@ intellij_integration_test_suite(
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
         "//cpp",

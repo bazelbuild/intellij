@@ -43,6 +43,7 @@ java_library(
     deps = [
         ":fast_build_javac_interface",
         "//base",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
         "//common/actions",
         "//common/experiments",
         "//common/settings",
