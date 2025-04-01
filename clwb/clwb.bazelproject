@@ -4,7 +4,10 @@ directories:
   -aswb
   -plugin_dev
   -examples
+  -java
+  -golang
   -clwb/tests/projects
+  -testing/test_deps/projects
 
 targets:
   //clwb:all
