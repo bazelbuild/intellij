@@ -19,8 +19,8 @@ These come up again and again in the codebase.
 - [Run Configuration](https://plugins.jetbrains.com/docs/intellij/run-configurations.html#run_configurations.md)
 - [Run Profile State](https://plugins.jetbrains.com/docs/intellij/execution.html#architecture-overview).
 - `ConfigurationContext` and `TestContext`:
-	- A in-memory representations of "the code a gutter play icon points to".
-	- Get passed to `RunConfigurationProducer`s.
+	- These are in-memory representations of "the code a gutter play icon points to".
+	- They get passed to `RunConfigurationProducer`s.
 - `RunConfigurationProducer`:
 	- An interface that defines how a plugin can create Run Configurations.
 	- It's responsible for translating a `ConfigurationContext` (or a `TestContext`) into zero or more `RunConfiguration`s.
@@ -56,7 +56,7 @@ These names keep popping up across the codebase, it pays to build a working know
     - Has functions to go from `File` to a `Label` and from `File` to a `TargetKey`.
     - Usually, implementors will hold a reference `TargetMap` that they look into to fulfil requests.
 - `Kind`:
-    - How a plugin represents a Bazel rule. [`py_binary`](https://github.com/bazelbuild/intellij/blob/0fb951c53e3ba3bdd08280054840359fe448ef45/python/src/com/google/idea/blaze/python/PythonBlazeRules.java#L30) is a `Kind`, and so is [`go_library`](https://github.com/bazelbuild/intellij/blob/ca9c95e73deb35d193938e00dc2a4c885bfe998a/golang/src/com/google/idea/blaze/golang/GoBlazeRules.java#L37).
+    - How the plugin represents a Bazel rule. [`py_binary`](https://github.com/bazelbuild/intellij/blob/0fb951c53e3ba3bdd08280054840359fe448ef45/python/src/com/google/idea/blaze/python/PythonBlazeRules.java#L30) is a `Kind`, and so is [`go_library`](https://github.com/bazelbuild/intellij/blob/ca9c95e73deb35d193938e00dc2a4c885bfe998a/golang/src/com/google/idea/blaze/golang/GoBlazeRules.java#L37).
     - `Kind`s are how the plugin knows how to parse BUILD files.
     - Sub-plugins can register their own `Kind`s of targets by implementing `Kind.Provider`.
     - If a rule or macro doesn't have a registered `Kind`, it will be ignored by the plugin when placing gutter icons on BUILD files.
@@ -72,10 +72,10 @@ These names keep popping up across the codebase, it pays to build a working know
 - `ProjectViewSet`:
     - `ProjectView`s are composable. For instance, you may `import` another `.bazelproject` file from your current `.bazelproject` file.
     - If a `ProjectView` is a single `.bazelproject` file, a `ProjectViewSet` represents the whole hierarchy of `ProjectView`s that affect your project.
-    - Often, you'll be dealing with `ProjectViewSet`s instead of lone `ProjectView`s, even if you're dealing with only one file.
+    - Often you'll be dealing with `ProjectViewSet`s instead of lone `ProjectView`s, even if you're dealing with only one file.
 - `UserSetting`s:
     - A `UserSetting` is the informal name the Bazel plugin gives to the global settings you set for all projects using the plugin (via `Cmd+, -> Bazel`).
-    - Most `UserSetting`s can be overriden in a `ProjectView`.
+    - Most `UserSetting`s can be overridden in a `ProjectView`.
 
 ## Plugin Architecture
 The Bazel IntelliJ Plugin is structured as a base plugin (that lives in `/base`), and a series of sub-plugins. There are [Other Directories](#other-directories), but we'll ignore those for now.
@@ -121,7 +121,7 @@ When exploring a sub-plugin, the first point of call should always be `/<name>/s
 </idea-plugin>
 ```
 
-Just by looking at this, we can guess a few things:
+Just by looking at this, we can find out a few things:
 - We hook up to both the core of IntelliJ (via `<extensions defaultExtensionNs="com.intellij">`) _and_ the base Bazel plugin (via `<extensions defaultExtensionNs="com.google.idea.blaze">`).
 - The Gazelle plugin wants to:
 	- Interact with the sync process in some way (because we extend `SyncListener` and `SyncPlugin`).
@@ -129,12 +129,12 @@ Just by looking at this, we can guess a few things:
 	- Provide a default value to the Project View (via `ProjectViewDefaultValueProvider`).
 	- Registers an application service, `GazelleRunner`, which is a static (per-application) singleton that can run Gazelle commands.
 
-It's a simple exercise, but this guessing game helps us decide where to start reading the code. This is important, because there's _so much_ code to read.
+This simple trick helps us to decide where to start reading the code. This is important, because there's _so much_ code to read.
 
 ## Features
 Let's walk through some common operations in the plugin. I'll try to list what the major classes are and how they interact together.
 
-### Syncing A Project
+### Syncing a Project
 In the context of the Bazel plugin, syncing is the act of translating the Bazel build into the IntelliJ project model. In general, the goal is to translate first-party source code into [Modules](https://plugins.jetbrains.com/docs/intellij/module.html), and third-party code into [Libraries](https://plugins.jetbrains.com/docs/intellij/library.html).
 
 #### Sync TL;DR
@@ -152,7 +152,7 @@ Here are the major classes that play a role in all syncs, in order of appearance
 - `BlazeSyncManager`: The entry point for a sync. When we request a sync, it always ends up going through `BlazeSyncManager.requestProjectSync`.
 - `BlazeSyncParams`: The plugin supports many different kinds of syncs. Do we need to build the entire project, or just a directory? Or maybe we don't need to build anything at all. `BlazeSyncParams` encapsulates those options.
 - `BlazeSyncStatus`: Project Service in charge of keeping the status of the sync. Other, asynchronous systems such as UI widgets can call on it to display information about the sync.
-- `SyncPhaseCoordinator`: This is where the sync really starts to happen. Syncing has several steps (outlined in [[#Sync TL;DR]]), which this class orchestrates.
+- `SyncPhaseCoordinator`: This is where the sync actually begins. Syncing has several steps (outlined in [Sync TL;DR](sync-tl-dr)), which this class orchestrates.
 	- The most important method on this class is `SyncPhaseCoordinator.runSync()`. Reading this method will give you a great overview of the different phases and how they interact.
 	- `SyncPhaseCoordinator` also offers extension points for different `SyncListeners`, which we'll see later.
 - `SyncListener`: A `SyncListener` is a class that can react to sync events. There are three main hook-points that a `SyncListener` can latch on to:
@@ -185,7 +185,7 @@ In the Bazel plugin, we extend one of four `RunConfigurationProducer`s:
 - `BlazeBuildFileRunConfigurationProducer`: Generate `RunConfiguration`s from gutter icons in BUILD files.
 - `BlazeFilterExistingRunConfigurationProducer`: Identify when we're trying to run a target/test we've run before, and use that instead of creating a new run configuration.
 - `TestContextRunConfigurationProducer`: Generate `RunConfiguration`s from gutter icons in test sources (e.g. `lib_test.go`, or a JUnit test class).
-- `BinaryContextRunConfigurationProducer`: Generate `RunConfiguration`s from gutter icons near binary entry points (e.g. the `int main() {` in a C program).
+- `BinaryContextRunConfigurationProducer`: Generate `RunConfiguration`s from gutter icons at the application entry points (e.g. the `int main() {` in a C program).
 
 #### From `RunConfiguration` To Actually Running Things
 
@@ -203,7 +203,7 @@ However, there are some general principles that usually hold true:
 	- Create `Runner`s, objects that can actually run the commands required by the run configuration. Speaking of Runners...
 - `Runner`s are created by `Handler`s. These are classes that implement `BlazeCommandRunConfigurationRunner`.
 	- A `Runner`'s main job is to create `RunProfileState`s. Essentially, they are responsible for crafting the command line that will run our target.
-	- They also know several miscellaneous things such as "am I used for debugging or running?", which are useful for UI purposes.
+	- They also know several miscellaneous things such as "am I used for debugging or for running?", which are useful for UI purposes.
 	- If something needs to connect to a debugger, it's probably implemented in the `Runner`.
 
 #### A Note About UI
@@ -224,8 +224,8 @@ Besides `/base` and the per-language plugins, there are several top-level direct
 - `examples`: Self-contained example repositories to manually test the plugin. Every directory should have at least one `.bazelproject` file, and you should use that to import it.
 - `intellij_platform_sdk`: BUILD files for building, re-packaging and depending on the IntelliJ Platform SDK.
 - `plugin_dev`: Utility classes to create run configurations to debug the plugin itself.
-- `querysync`: An alternative to regular sync, being worked on by Google. It's extremely experimental, and currently disabled. Safe to ignore.
-- `sdkcompat`: A layer of compatibility between different IntelliJ SDK API versions. This code makes the rest of the code compatible with both IntelliJ 2022.1 and 2024.1.
+- `querysync`: An experimental alternative to regular sync. Instead of running an aspect build, it collects information by running a query. Query sync is much faster, but can fail on some build definitions.
+- `sdkcompat`: A layer of compatibility between different IntelliJ SDK API versions. This allows us to support a range of different IntelliJ versions (currently between 2024.2 and 2025.1).
 - `testing`: Some utilities for running the plugin's tests.
 - `third_party`: What it says on the tin.
 - `tools`: Exactly what it means in other Bazel repositories.
