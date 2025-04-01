@@ -21,7 +21,7 @@ public class QuerySyncHighlightingSettingProvider extends DefaultHighlightingSet
     }
 
     if (Blaze.getProjectType(project) == BlazeImportSettings.ProjectType.QUERY_SYNC) {
-      if (!QuerySyncManager.getInstance(project).isReadyForAnalysis(psiFile.getVirtualFile())) {
+      if (!QuerySyncManager.getInstance(project).isReadyForAnalysis(psiFile)) {
         return FileHighlightingSetting.ESSENTIAL;
       } else {
         return FileHighlightingSetting.FORCE_HIGHLIGHTING;
