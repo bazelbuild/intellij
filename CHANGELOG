@@ -1,9 +1,23 @@
 v2025.04.01
 ===========
-
-
-
-
+Fixes:
+* CLion Bazel 9 compatability fixes #7455
+* Make ProjectOpenProcessors no strong info holder by default in CLion #7493
+AOSP updates:
+* [AOSP-pick] Make BuildArtifactCache an independent service #7459
+* [AOSP-pick] Query sync cache invalidator #7480
+* [AOSP-pick] ASwB can always follow required proto dependencies #7490
+* [AOSP-pick] Fix project definition serialization #7498
+* [AOSP-pick] Remove fetching configMnemonic from BEP event as its calculated from artifact prefix path #7500
+* [AOSP-pick] Add true dependency graph to java-info.txt files #7506
+* [AOSP-pick] Store output xml files as OutputArtifact instead of BlazeArtifact in BlazeTestResult #7507
+* [AOSP-pick] Add/Update getLocalFiles method to support both BlazeArtifact and OutputArtifact type artifacts #7508
+* [AOSP-pick] Use the same project definition to load and reload #7510
+* [AOSP-pick] Fix invalidate caches contributor registration #7513
+* [AOSP-pick] Ignore bazel-* directories #7514
+* [AOSP-pick] Move RuntimeArtifactCache to base folder #7520
+* [AOSP-pick] Build dependencies in the same way #7523
+* [AOSP-pick] Fix deletion of all files in artifact directory #7528
 
 v2025.03.18
 ===========
