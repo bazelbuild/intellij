@@ -35,17 +35,16 @@ import com.google.protobuf.TextFormat;
 import com.intellij.concurrency.AsyncUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Future;
 
@@ -59,7 +58,7 @@ class BlazeIntellijPluginDeployer {
       Key.create(BlazeIntellijPluginDeployer.class.getName());
 
   private final String sandboxHome;
-  private final Map<String, OutputArtifact> buildArtifactsMap = new HashMap<>();
+  private final Map<Path, OutputArtifact> buildArtifactsMap = new HashMap<>();
   private final List<OutputArtifact> deployInfoArtifacts = new ArrayList<>();
   private final Map<OutputArtifact, File> filesToDeploy = Maps.newHashMap();
 
@@ -81,7 +80,7 @@ class BlazeIntellijPluginDeployer {
   void reportBuildComplete(BlazeBuildOutputs.Legacy blazeBuildOutputs) throws GetArtifactsException {
     ImmutableSet<OutputArtifact> buildArtifacts = blazeBuildOutputs.getAllOutputArtifacts();
     buildArtifactsMap.clear();
-    buildArtifacts.forEach(a -> buildArtifactsMap.put(a.getBazelOutRelativePath(), a));
+    buildArtifacts.forEach(a -> buildArtifactsMap.put(a.getArtifactPath(), a));
 
     deployInfoArtifacts.clear();
     deployInfoArtifacts.addAll(
@@ -158,36 +157,34 @@ class BlazeIntellijPluginDeployer {
     for (IntellijPluginDeployInfo deployInfo : deployInfos) {
       for (IntellijPluginDeployFile deployFile : deployInfo.getDeployFilesList()) {
         result.put(
-            getArtifactFromDeployFile(deployFile, buildSystem),
+            getArtifactFromDeployFile(deployFile),
             new File(sandboxPluginDirectory(sandboxHome), deployFile.getDeployLocation()));
       }
       for (IntellijPluginDeployFile deployFile : deployInfo.getJavaAgentDeployFilesList()) {
         result.put(
-            getArtifactFromDeployFile(deployFile, buildSystem),
+            getArtifactFromDeployFile(deployFile),
             new File(sandboxPluginDirectory(sandboxHome), deployFile.getDeployLocation()));
       }
     }
     return result.build();
   }
 
-  private OutputArtifact getArtifactFromDeployFile(
-      IntellijPluginDeployFile deployFile, String buildSystem) throws ExecutionException {
-    String relativePath =
-        buildArtifactsMap.keySet().stream()
-            .filter(
-                key ->
-                    key.endsWith(
-                        StringUtil.trimStart(
-                            deployFile.getExecutionPath(),
-                            String.format("%s-out/", buildSystem.toLowerCase(Locale.ROOT)))))
-            .findAny()
-            .orElseThrow(
-                () ->
-                    new ExecutionException(
-                        String.format(
-                            "Plugin file '%s' not found. Did the build fail?",
-                            deployFile.getExecutionPath())));
-    return buildArtifactsMap.get(relativePath);
+  private OutputArtifact getArtifactFromDeployFile(IntellijPluginDeployFile deployFile) throws ExecutionException {
+    final var fileExecutionPath = Path.of(deployFile.getExecutionPath());
+
+    // trim the first element from the execution path i.e. bazel-out
+    final var fileRelativePath = fileExecutionPath.subpath(1, fileExecutionPath.getNameCount());
+
+    // Find the matching artifact by comparing the end of the path
+    Path matchingPath = buildArtifactsMap.keySet().stream()
+        .filter(key -> key.endsWith(fileRelativePath))
+        .findAny()
+        .orElseThrow(
+            () ->
+                new ExecutionException(
+                    String.format("Plugin file '%s' not found. Did the build fail?", fileExecutionPath)));
+
+    return buildArtifactsMap.get(matchingPath);
   }
 
   private ImmutableSet<File> listJavaAgentFiles(Collection<IntellijPluginDeployInfo> deployInfos) {
