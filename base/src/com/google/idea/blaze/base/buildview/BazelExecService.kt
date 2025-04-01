@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.io.LimitedInputStream
+import com.intellij.util.system.OS
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import java.io.BufferedInputStream
@@ -63,8 +64,8 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
   }
 
   private suspend fun execute(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): Int {
-    // the old sync view does not use a PTY based terminal
-    if (BuildViewMigration.present(ctx)) {
+    // the old sync view does not use a PTY based terminal, and idk why it does not work on windows :c
+    if (BuildViewMigration.present(ctx) && OS.CURRENT != OS.Windows) {
       cmdBuilder.addBlazeFlags("--curses=yes")
     } else {
       cmdBuilder.addBlazeFlags("--curses=no")
@@ -89,7 +90,7 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
 
       handler.addProcessListener(object : ProcessListener {
         override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-          if (outputType === ProcessOutputTypes.SYSTEM) {
+          if (outputType == ProcessOutputTypes.SYSTEM) {
             ctx.println(event.text)
           } else {
             ctx.output(PrintOutput.process(event.text))
