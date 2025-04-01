@@ -173,7 +173,7 @@ public class BlazeJavascriptSyncPlugin implements BlazeSyncPlugin {
       IssueOutput.error(
               "The JavaScript plugin is required for JavaScript support. "
                   + "Click here to install/enable the plugin and restart")
-          .navigatable(PluginUtils.installOrEnablePluginNavigable(JAVASCRIPT_PLUGIN_ID))
+          .withNavigatable(PluginUtils.installOrEnablePluginNavigable(JAVASCRIPT_PLUGIN_ID))
           .submit(context);
       return false;
     }

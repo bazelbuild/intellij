@@ -1,0 +1,13 @@
+load("@rules_python//python:defs.bzl", "py_binary")
+
+py_binary(
+    name = "bin",
+    srcs = ["main.py"],
+    main = "main.py",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//generated:generated_directory_lib",
+        "//generated:generated_files_lib",
+        "//lib:static_lib",
+    ],
+)

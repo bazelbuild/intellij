@@ -18,11 +18,9 @@ package com.google.idea.blaze.java.run.hotswap;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import java.io.File;
+import com.intellij.openapi.project.Project;
 import java.util.Arrays;
 import javax.annotation.Nullable;
 
@@ -44,7 +42,7 @@ public interface JavaClasspathAspectStrategy {
 
   boolean isApplicable(BlazeVersionData versionData);
 
-  ImmutableList<String> getBuildFlags(BlazeVersionData versionData);
+  ImmutableList<String> getBuildFlags(BlazeVersionData versionData, Project project);
 
   /** A strategy for attaching the java_classpath aspect during a bazel build invocation. */
   class BazelStrategy implements JavaClasspathAspectStrategy {
@@ -56,28 +54,14 @@ public interface JavaClasspathAspectStrategy {
     }
 
     @Override
-    public ImmutableList<String> getBuildFlags(BlazeVersionData versionData) {
-      String intellijAspect;
-      if (versionData.bazelIsAtLeastVersion(6, 0, 0)) {
-        intellijAspect = "--aspects=@@intellij_aspect//:java_classpath.bzl%java_classpath_aspect";
-      } else {
-        intellijAspect = "--aspects=@intellij_aspect//:java_classpath.bzl%java_classpath_aspect";
-      }
-
-      return ImmutableList.of(
-          intellijAspect, getAspectRepositoryOverrideFlag(), "--output_groups=" + OUTPUT_GROUP);
-    }
-
-    private static String getAspectRepositoryOverrideFlag() {
-      return String.format(
-          "--override_repository=intellij_aspect=%s", findAspectDirectory().getPath());
-    }
-
-    private static File findAspectDirectory() {
-      IdeaPluginDescriptor plugin =
-          PluginManager.getPlugin(
-              PluginManager.getPluginByClassName(AspectStrategy.class.getName()));
-      return new File(plugin.getPath(), "aspect");
+    public ImmutableList<String> getBuildFlags(BlazeVersionData versionData, Project project) {
+      return AspectStorageService.of(project).resolve("java_classpath.bzl")
+          .map(label ->
+              ImmutableList.of(
+                  String.format("--aspects=%s%%java_classpath_aspect", label),
+                  "--output_groups=" + OUTPUT_GROUP
+              )
+          ).orElseGet(ImmutableList::of);
     }
   }
 }

@@ -26,8 +26,6 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaArtifacts;
 import com.google.idea.blaze.qsync.java.cc.CcCompilationInfoOuterClass.CcCompilationInfo;
-import java.time.Instant;
-import java.util.Optional;
 
 /** A data class that collecting and converting output group artifacts. */
 @AutoValue
@@ -41,7 +39,7 @@ public abstract class OutputInfo {
           ImmutableSet.of(),
           ImmutableSet.of(),
           0,
-          DependencyBuildContext.create("empty", Instant.EPOCH, Optional.empty()));
+          DependencyBuildContext.NONE);
 
   /** Returns the proto containing details of artifacts per target produced by the aspect. */
   public abstract ImmutableSet<JavaArtifacts> getArtifactInfo();
@@ -56,10 +54,6 @@ public abstract class OutputInfo {
 
   public abstract DependencyBuildContext getBuildContext();
 
-  public ImmutableList<OutputArtifact> get(OutputGroup group) {
-    return getOutputGroups().get(group);
-  }
-
   public ImmutableList<OutputArtifact> getJars() {
     return getOutputGroups().get(OutputGroup.JARS);
   }
@@ -73,7 +67,7 @@ public abstract class OutputInfo {
   }
 
   public boolean isEmpty() {
-    return getOutputGroups().isEmpty();
+    return getOutputGroups().isEmpty() && getCcCompilationInfo().isEmpty() && getArtifactInfo().isEmpty();
   }
 
   @VisibleForTesting

@@ -1,3 +1,4 @@
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
@@ -27,6 +28,7 @@ java_library(
         "//java",
         "//proto:proto_deps",
         "//sdkcompat",
+        "//shared",
         "//third_party/scala",
     ],
 )
@@ -81,7 +83,7 @@ intellij_unit_test_suite(
         "//java",
         "//third_party/scala:scala_for_tests",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+        "//third_party/java/junit",
     ],
 )
 
@@ -102,6 +104,7 @@ intellij_integration_test_suite(
         "//java",
         "//third_party/scala:scala_for_tests",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+        "//third_party/java/junit",
+        "@org_opentest4j_opentest4j//jar",
     ],
 )

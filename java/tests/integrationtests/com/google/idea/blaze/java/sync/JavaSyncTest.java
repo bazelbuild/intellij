@@ -43,6 +43,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.util.List;
 import javax.annotation.Nullable;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -53,7 +54,12 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
 
   @Test
   public void testJavaClassesPresentInClassPath() throws Exception {
-    setProjectView("directories:", "  java/com/google", "targets:", "  //java/com/google:lib");
+    setProjectView(
+        "directories:",
+        "  java/com/google",
+        "workspace_type: java",
+        "targets:",
+        "  //java/com/google:lib");
 
     workspace.createFile(
         new WorkspacePath("java/com/google/ClassWithUniqueName1.java"),
@@ -114,7 +120,12 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
 
   @Test
   public void testSimpleSync() throws Exception {
-    setProjectView("directories:", "  java/com/google", "targets:", "  //java/com/google:lib");
+    setProjectView(
+        "directories:",
+        "  java/com/google",
+        "workspace_type: java",
+        "targets:",
+        "  //java/com/google:lib");
 
     workspace.createFile(
         new WorkspacePath("java/com/google/Source.java"),
@@ -236,7 +247,12 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
 
   @Test
   public void testSimpleSyncLogging() throws Exception {
-    setProjectView("directories:", "  java/com/google", "targets:", "  //java/com/google:lib");
+    setProjectView(
+        "directories:",
+        "  java/com/google",
+        "workspace_type: java",
+        "targets:",
+        "  //java/com/google:lib");
 
     workspace.createFile(
         new WorkspacePath("java/com/google/Source.java"),
@@ -305,6 +321,7 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
         "directories:",
         "  java/com/google",
         "  javatests/com/google",
+        "workspace_type: java",
         "targets:",
         "  //java/com/google:lib",
         "test_sources:",
@@ -342,6 +359,7 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
     setProjectView(
         "directories:",
         "  java/com/google",
+        "workspace_type: java",
         "targets:",
         "  //java/com/google:lib",
         "test_sources:",
@@ -387,6 +405,7 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
     setProjectView(
         "directories:",
         "  java/com/google",
+        "workspace_type: java",
         "targets:",
         "  //java/com/google:lib",
         "test_sources:",
@@ -417,6 +436,7 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
     setProjectView(
         "directories:",
         "  java/com/google",
+        "workspace_type: java",
         "targets:",
         "  //java/com/google:lib",
         "test_sources:",
@@ -435,6 +455,7 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
         "directories:",
         "  java/com/google",
         "  javatests/com/google",
+        "workspace_type: java",
         "targets:",
         "  //java/com/google:lib",
         "test_sources:",
@@ -466,6 +487,7 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
     setProjectView(
         "directories:",
         "  java/com/google",
+        "workspace_type: java",
         "targets:",
         "  //java/com/google:lib",
         "test_sources:",

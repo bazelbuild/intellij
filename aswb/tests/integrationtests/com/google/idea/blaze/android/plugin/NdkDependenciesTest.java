@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.testing.DisablePluginsTestRule;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -47,12 +48,14 @@ public class NdkDependenciesTest extends BlazeIntegrationTestCase {
   public final AndroidIntegrationTestSetupRule androidSetupRule =
       new AndroidIntegrationTestSetupRule();
 
+  @Ignore("b/337933435")
   @Test
   public void testNdkPluginsInstalled() {
     assertThat(PluginUtils.isPluginInstalled("com.android.tools.ndk")).isTrue();
     assertThat(PluginUtils.isPluginInstalled("com.google.idea.bazel.aswb")).isTrue();
   }
 
+  @Ignore("b/337933435")
   @Test
   public void testPluginLoadsWithoutNdkPlugins() {
     assertThat(PluginUtils.isPluginEnabled("com.android.tools.ndk")).isFalse();

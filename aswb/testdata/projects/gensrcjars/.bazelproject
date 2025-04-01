@@ -1,0 +1,6 @@
+directories:
+  aswb/testdata/projects/gensrcjars
+
+android_sdk_platform: android-34
+
+

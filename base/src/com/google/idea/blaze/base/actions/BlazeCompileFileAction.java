@@ -70,7 +70,7 @@ class BlazeCompileFileAction extends BlazeProjectAction {
 
     if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
       BuildDependenciesHelper buildDependenciesHelper =
-          new BuildDependenciesHelper(project, BlazeCompileFileAction.class, DepsBuildType.SELF);
+          new BuildDependenciesHelper(project, DepsBuildType.SELF);
       buildDependenciesHelper.determineTargetsAndRun(
           virtualFile,
           popup -> popup.showCenteredInCurrentWindow(project),

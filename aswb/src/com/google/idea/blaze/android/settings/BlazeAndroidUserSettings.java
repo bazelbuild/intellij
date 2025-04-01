@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.android.settings;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -30,7 +30,7 @@ public class BlazeAndroidUserSettings
   private boolean useLayoutEditor = false;
 
   public static BlazeAndroidUserSettings getInstance() {
-    return ServiceManager.getService(BlazeAndroidUserSettings.class);
+    return ApplicationManager.getApplication().getService(BlazeAndroidUserSettings.class);
   }
 
   @Override

@@ -22,14 +22,22 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import org.jetbrains.annotations.Nullable;
 
 /** Use local file to fake {@link RemoteOutputArtifact} that used by tests. */
 public class FakeRemoteOutputArtifact implements RemoteOutputArtifact {
   private final File file;
+  private final Path artifactPath;
+  private final int artifactPathPrefixLength;
 
-  public FakeRemoteOutputArtifact(File file) {
+  public FakeRemoteOutputArtifact(File file, Path artifactPath, int artifactPathPrefixLength) {
+    this.artifactPathPrefixLength = artifactPathPrefixLength;
+    if (!file.toPath().endsWith(artifactPath)) {
+      throw new IllegalArgumentException(file + "must end with " + artifactPath);
+    }
     this.file = file;
+    this.artifactPath = artifactPath;
   }
 
   @Override
@@ -43,13 +51,13 @@ public class FakeRemoteOutputArtifact implements RemoteOutputArtifact {
   }
 
   @Override
-  public String getConfigurationMnemonic() {
-    return "";
+  public Path getArtifactPath() {
+    return artifactPath;
   }
 
   @Override
-  public String getRelativePath() {
-    return file.getPath();
+  public int getArtifactPathPrefixLength() {
+    return artifactPathPrefixLength;
   }
 
   @Nullable
@@ -87,6 +95,6 @@ public class FakeRemoteOutputArtifact implements RemoteOutputArtifact {
       return true;
     }
     return obj instanceof FakeRemoteOutputArtifact
-        && getRelativePath().equals(((FakeRemoteOutputArtifact) obj).getRelativePath());
+           && getBazelOutRelativePath().equals(((FakeRemoteOutputArtifact) obj).getBazelOutRelativePath());
   }
 }

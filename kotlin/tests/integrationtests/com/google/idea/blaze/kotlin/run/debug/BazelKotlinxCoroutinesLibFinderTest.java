@@ -16,7 +16,6 @@
 package com.google.idea.blaze.kotlin.run.debug;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth8.assertThat;
 
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;

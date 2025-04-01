@@ -46,7 +46,7 @@ public class BlazeCommandTest extends BlazeTestCase {
   @Test
   public void addedFlagsShouldGoAtStart() {
     List<String> flagsCommand =
-        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.RUN)
+        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.RUN, project)
             .addTargets(Label.create("//a:b"))
             .addBlazeFlags("--flag1", "--flag2")
             .addExeFlags("--exeFlag1", "--exeFlag2")
@@ -59,7 +59,7 @@ public class BlazeCommandTest extends BlazeTestCase {
   @Test
   public void targetsShouldGoAfterBlazeFlagsAndDoubleHyphen() {
     List<String> command =
-        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.RUN)
+        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.RUN, project)
             .addTargets(Label.create("//a:b"), Label.create("//c:d"))
             .addBlazeFlags("--flag1", "--flag2")
             .addExeFlags("--exeFlag1", "--exeFlag2")
@@ -74,7 +74,7 @@ public class BlazeCommandTest extends BlazeTestCase {
   @Test
   public void exeFlagsShouldGoLast() {
     List<String> command =
-        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.RUN)
+        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.RUN, project)
             .addTargets(Label.create("//a:b"), Label.create("//c:d"))
             .addBlazeFlags("--flag1", "--flag2")
             .addExeFlags("--exeFlag1", "--exeFlag2")
@@ -87,7 +87,7 @@ public class BlazeCommandTest extends BlazeTestCase {
   @Test
   public void maintainUserOrderingOfTargets() {
     List<String> command =
-        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.RUN)
+        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.RUN, project)
             .addTargets(
                 Label.create("//a:b"),
                 TargetExpression.fromStringSafe("-//e:f"),
@@ -117,7 +117,7 @@ public class BlazeCommandTest extends BlazeTestCase {
   @Test
   public void binaryAndCommandShouldComeFirst() {
     List<String> command =
-        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD)
+        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD, project)
             .addBlazeFlags("--flag")
             .addExeFlags("--exeFlag")
             .build()

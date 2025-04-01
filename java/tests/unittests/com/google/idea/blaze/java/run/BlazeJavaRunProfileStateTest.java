@@ -44,6 +44,7 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
+import com.google.idea.blaze.base.run.confighandler.PendingTargetRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -115,6 +116,8 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
         registerExtensionPoint(
             BlazeCommandRunConfigurationHandlerProvider.EP_NAME,
             BlazeCommandRunConfigurationHandlerProvider.class);
+    handlerProviderEp.registerExtension(
+      new PendingTargetRunConfigurationHandlerProvider(), testDisposable);
     handlerProviderEp.registerExtension(
         new BlazeJavaRunConfigurationHandlerProvider(), testDisposable);
     handlerProviderEp.registerExtension(
@@ -313,7 +316,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
   @Test
   public void getBashCommandsToRunScript() throws Exception {
     BlazeCommand.Builder commandBuilder =
-        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD)
+        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD, getProject())
             .addTargets(Label.create("//label:java_binary_rule"));
     List<String> command =
         HotSwapCommandBuilder.getBashCommandsToRunScript(getProject(), commandBuilder);

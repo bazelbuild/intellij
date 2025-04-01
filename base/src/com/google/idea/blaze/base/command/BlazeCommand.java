@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyBazel;
+import com.intellij.openapi.project.Project;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -55,6 +55,10 @@ public final class BlazeCommand {
     return name;
   }
 
+  public String getBinaryPath() {
+    return binaryPath;
+  }
+
   public ImmutableList<String> toArgumentList() {
     return ImmutableList.<String>builder()
         .addAll(blazeStartupFlags)
@@ -81,16 +85,16 @@ public final class BlazeCommand {
     return Joiner.on(' ').join(toList());
   }
 
-  public static Builder builder(BuildInvoker invoker, BlazeCommandName name) {
-    return new Builder(invoker.getBinaryPath(), name);
+  public static Builder builder(BuildInvoker invoker, BlazeCommandName name, Project project) {
+    return new Builder(invoker.getBinaryPath(), name, project);
   }
 
   /**
    * @deprecated Use {@link #builder(BuildInvoker, BlazeCommandName)} instead.
    */
   @Deprecated
-  public static Builder builder(String binaryPath, BlazeCommandName name) {
-    return new Builder(binaryPath, name);
+  public static Builder builder(String binaryPath, BlazeCommandName name, Project project) {
+    return new Builder(binaryPath, name, project);
   }
 
   /** Builder for a blaze command */
@@ -104,15 +108,16 @@ public final class BlazeCommand {
     private final ImmutableList.Builder<String> blazeCmdlineFlags = ImmutableList.builder();
     private final ImmutableList.Builder<String> exeFlags = ImmutableList.builder();
 
-    public Builder(String binaryPath, BlazeCommandName name) {
+    public Builder(String binaryPath, BlazeCommandName name, Project project) {
       this.binaryPath = binaryPath;
       this.name = name;
       this.invokeParallel = false;
       // Tell forge what tool we used to call blaze so we can track usage.
       addBlazeFlags(BlazeFlags.getToolTagFlag());
-      AspectStrategyBazel.getAspectRepositoryOverrideFlag().ifPresent(it ->
-          addBlazeFlags(it)
-      );
+    }
+
+    public BlazeCommandName getName() {
+      return name;
     }
 
     private ImmutableList<String> getArguments() {

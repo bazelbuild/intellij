@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.wizard2;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 
 /** Provides options during the import process. */
 public interface BlazeWizardOptionProvider {
@@ -30,6 +30,6 @@ public interface BlazeWizardOptionProvider {
       BlazeNewProjectBuilder builder);
 
   static BlazeWizardOptionProvider getInstance() {
-    return ServiceManager.getService(BlazeWizardOptionProvider.class);
+    return ApplicationManager.getApplication().getService(BlazeWizardOptionProvider.class);
   }
 }

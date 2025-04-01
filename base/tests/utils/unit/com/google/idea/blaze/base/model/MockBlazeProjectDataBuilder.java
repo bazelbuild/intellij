@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+
 import java.io.File;
 
 /**
@@ -45,6 +46,7 @@ public class MockBlazeProjectDataBuilder {
   private WorkspacePathResolver workspacePathResolver;
   private ArtifactLocationDecoder artifactLocationDecoder;
   private WorkspaceLanguageSettings workspaceLanguageSettings;
+  private ExternalWorkspaceData externalWorkspaceData;
   private SyncState syncState;
 
   private MockBlazeProjectDataBuilder(WorkspaceRoot workspaceRoot) {
@@ -105,6 +107,13 @@ public class MockBlazeProjectDataBuilder {
   }
 
   @CanIgnoreReturnValue
+  public MockBlazeProjectDataBuilder setExternalWorkspaceData(
+      ExternalWorkspaceData externalWorkspaceData) {
+    this.externalWorkspaceData = externalWorkspaceData;
+    return this;
+  }
+
+  @CanIgnoreReturnValue
   public MockBlazeProjectDataBuilder setSyncState(SyncState syncState) {
     this.syncState = syncState;
     return this;
@@ -119,10 +128,10 @@ public class MockBlazeProjectDataBuilder {
       blazeInfo =
           BlazeInfo.createMockBlazeInfo(
               outputBase,
-              outputBase + "/execroot",
-              outputBase + "/execroot/bin",
-              outputBase + "/execroot/gen",
-              outputBase + "/execroot/testlogs");
+              outputBase + "/execroot/_main",
+              outputBase + "/execroot/_main/bin",
+              outputBase + "/execroot/_main/gen",
+              outputBase + "/execroot/_main/testlogs");
     }
     BlazeVersionData blazeVersionData =
         this.blazeVersionData != null ? this.blazeVersionData : BlazeVersionData.builder().build();
@@ -142,6 +151,11 @@ public class MockBlazeProjectDataBuilder {
     SyncState syncState =
         this.syncState != null ? this.syncState : new SyncState(ImmutableMap.of());
 
+    ExternalWorkspaceData externalWorkspaceData =
+        this.externalWorkspaceData != null
+            ? this.externalWorkspaceData
+            : ExternalWorkspaceData.EMPTY;
+
     return new AspectSyncProjectData(
         new ProjectTargetData(
             targetMap, /* ideInterfaceState= */ null, RemoteOutputArtifacts.EMPTY),
@@ -150,6 +164,7 @@ public class MockBlazeProjectDataBuilder {
         workspacePathResolver,
         artifactLocationDecoder,
         workspaceLanguageSettings,
+        externalWorkspaceData,
         syncState);
   }
 }

@@ -17,11 +17,13 @@ package com.google.idea.blaze.qsync.java;
 
 import java.io.IOException;
 import java.io.InputStream;
+import javax.annotation.Nullable;
 
 /**
  * Interface to an android manifest parser. This is used to read android manifest package names from
  * {@code .aar} files.
  */
 public interface AndroidManifestParser {
+  @Nullable
   String readPackageNameFrom(InputStream in) throws IOException;
 }

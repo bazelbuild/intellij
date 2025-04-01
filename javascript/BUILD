@@ -1,3 +1,9 @@
+load("@rules_java//java:defs.bzl", "java_library")
+load(
+    "//:build-visibility.bzl",
+    "JAVASCRIPT_PACKAGES_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
@@ -5,15 +11,11 @@ load(
     "optional_plugin_xml",
     "stamped_plugin_xml",
 )
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
-)
-load(
-    "//:build-visibility.bzl",
-    "JAVASCRIPT_PACKAGES_VISIBILITY",
-    "PLUGIN_PACKAGES_VISIBILITY",
 )
 
 licenses(["notice"])
@@ -81,8 +83,8 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "//third_party/java/junit",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
     ],
 )
 
@@ -97,11 +99,13 @@ intellij_integration_test_suite(
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
+        "//intellij_platform_sdk:json_for_tests",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "//third_party/java/junit",
         "//third_party/javascript:javascript_for_tests",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+        "@org_opentest4j_opentest4j//jar",
     ],
 )

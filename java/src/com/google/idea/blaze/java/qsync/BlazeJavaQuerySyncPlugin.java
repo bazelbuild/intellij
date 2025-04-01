@@ -45,7 +45,7 @@ public class BlazeJavaQuerySyncPlugin implements BlazeQuerySyncPlugin {
     }
 
     LanguageLevel javaLanguageLevel =
-        JavaLanguageLevelSection.getLanguageLevel(projectViewSet, LanguageLevel.JDK_11);
+        JavaLanguageLevelSection.getLanguageLevel(projectViewSet, LanguageLevel.JDK_21);
     Sdk currentSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     Sdk sdk = Jdks.chooseOrCreateJavaSdk(currentSdk, javaLanguageLevel);
 
@@ -53,6 +53,7 @@ public class BlazeJavaQuerySyncPlugin implements BlazeQuerySyncPlugin {
       String msg =
           String.format(
               "Unable to find a JDK %1$s installed.\n", javaLanguageLevel.getPresentableText());
+      Jdks.notifyJdkSetupIssuesOccurred(project, projectViewSet, javaLanguageLevel, LanguageLevel.JDK_21);
       IssueOutput.error(msg).submit(context);
       return;
     }

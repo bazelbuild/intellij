@@ -43,7 +43,7 @@ public abstract class BuildLookupElement extends LookupElement {
     this.wrapWithQuotes = quoteWrapping != QuoteType.NoQuotes;
   }
 
-  private static boolean insertClosingQuotes() {
+  protected static boolean insertClosingQuotes() {
     return CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE;
   }
 

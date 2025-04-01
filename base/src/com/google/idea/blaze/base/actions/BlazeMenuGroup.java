@@ -21,11 +21,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
 
 /** The "Blaze" menu group, only visible in blaze mode */
 public class BlazeMenuGroup extends DefaultActionGroup {
-
   @Override
   public final void update(AnActionEvent e) {
     // Don't hide the menu if project is null: it will be null temporarily while loading a

@@ -34,8 +34,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-
-
 @RunWith(JUnit4.class)
 public class SnapshotSerializationTest {
 
@@ -44,11 +42,14 @@ public class SnapshotSerializationTest {
     PostQuerySyncData original =
         PostQuerySyncData.builder()
             .setProjectDefinition(
-                ProjectDefinition.create(
-                    ImmutableSet.of(Path.of("project/path")),
-                    ImmutableSet.of(Path.of("project/path/excluded")),
-                    ImmutableSet.of(QuerySyncLanguage.JAVA),
-                    ImmutableSet.of("javatests/*")))
+                ProjectDefinition
+                    .builder()
+                    .setProjectIncludes(ImmutableSet.of(Path.of("project/path")))
+                    .setProjectExcludes(ImmutableSet.of(Path.of("project/path/excluded")))
+                    .setSystemExcludes(ImmutableSet.of(Path.of(".aswb")))
+                    .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
+                    .setTestSources(ImmutableSet.of("javatests/*"))
+                    .build())
             .setVcsState(
                 Optional.of(
                     new VcsState(
@@ -75,9 +76,7 @@ public class SnapshotSerializationTest {
   public void testSerialization_withVcsState_including_workspaceSnapshot() throws IOException {
     PostQuerySyncData original =
         PostQuerySyncData.builder()
-            .setProjectDefinition(
-                ProjectDefinition.create(
-                    ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of(), ImmutableSet.of()))
+            .setProjectDefinition(ProjectDefinition.EMPTY)
             .setVcsState(
                 Optional.of(
                     new VcsState(
@@ -102,11 +101,14 @@ public class SnapshotSerializationTest {
     PostQuerySyncData original =
         PostQuerySyncData.builder()
             .setProjectDefinition(
-                ProjectDefinition.create(
-                    ImmutableSet.of(Path.of("project/path")),
-                    ImmutableSet.of(Path.of("project/path/excluded")),
-                    ImmutableSet.of(QuerySyncLanguage.JAVA),
-                    ImmutableSet.of("javatests/*")))
+                ProjectDefinition
+                    .builder()
+                    .setProjectIncludes(ImmutableSet.of(Path.of("project/path")))
+                    .setProjectExcludes(ImmutableSet.of(Path.of("project/path/excluded")))
+                    .setSystemExcludes(ImmutableSet.of())
+                    .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
+                    .setTestSources(ImmutableSet.of("javatests/*"))
+                    .build())
             .setVcsState(Optional.empty())
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//project/path:path"))
             .build();
@@ -125,11 +127,14 @@ public class SnapshotSerializationTest {
     PostQuerySyncData original =
         PostQuerySyncData.builder()
             .setProjectDefinition(
-                ProjectDefinition.create(
-                    ImmutableSet.of(Path.of("project/path")),
-                    ImmutableSet.of(Path.of("project/path/excluded")),
-                    ImmutableSet.of(QuerySyncLanguage.JAVA),
-                    ImmutableSet.of("javatests/*")))
+                ProjectDefinition
+                    .builder()
+                    .setProjectIncludes(ImmutableSet.of(Path.of("project/path")))
+                    .setProjectExcludes(ImmutableSet.of(Path.of("project/path/excluded")))
+                    .setSystemExcludes(ImmutableSet.of())
+                    .setLanguageClasses(ImmutableSet.of(QuerySyncLanguage.JAVA))
+                    .setTestSources(ImmutableSet.of("javatests/*"))
+                    .build())
             .setVcsState(Optional.empty())
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//project/path:path"))
             .build();

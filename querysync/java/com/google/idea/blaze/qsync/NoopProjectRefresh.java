@@ -31,12 +31,12 @@ import java.util.function.Supplier;
  */
 public class NoopProjectRefresh implements RefreshOperation {
 
-  private final Supplier<BlazeProjectSnapshot> latestProjectSnapshotSupplier;
+  private final Supplier<QuerySyncProjectSnapshot> latestProjectSnapshotSupplier;
   private final Optional<VcsState> currentVcsState;
   private final Optional<String> bazelVersion;
 
   public NoopProjectRefresh(
-      Supplier<BlazeProjectSnapshot> latestProjectSnapshotSupplier,
+      Supplier<QuerySyncProjectSnapshot> latestProjectSnapshotSupplier,
       Optional<VcsState> currentVcsState,
       Optional<String> bazelVersion) {
     this.latestProjectSnapshotSupplier = latestProjectSnapshotSupplier;

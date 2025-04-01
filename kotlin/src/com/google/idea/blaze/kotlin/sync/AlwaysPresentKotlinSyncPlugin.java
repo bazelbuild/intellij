@@ -72,7 +72,7 @@ public class AlwaysPresentKotlinSyncPlugin implements BlazeSyncPlugin {
                 + "plugin, then restart the IDE",
             fixable ? "Click here to" : "Please");
     IssueOutput.error(message)
-        .navigatable(PluginUtils.installOrEnablePluginNavigable(KOTLIN_PLUGIN_ID))
+        .withNavigatable(PluginUtils.installOrEnablePluginNavigable(KOTLIN_PLUGIN_ID))
         .submit(context);
     BlazeSyncManager.printAndLogError(
         "Kotlin support requires the Kotlin plugin. Please install/enable the Kotlin "

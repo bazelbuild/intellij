@@ -21,19 +21,32 @@ import static com.intellij.openapi.util.io.FileUtil.notNullize;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
 import com.google.idea.blaze.java.sync.sdk.BlazeJdkProvider;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.java.JavaBundle;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -93,6 +106,46 @@ public class Jdks {
         .or(() -> Optional.ofNullable(getJdkHomePath(langLevel)))
         .map(Jdks::getOrCreateSdk)
         .orElse(null);
+  }
+
+  public static void notifyJdkSetupIssuesOccurred(Project project, ProjectViewSet projectViewSet, LanguageLevel javaLanguageLevel, LanguageLevel defaultJavaLanguageLevel) {
+    NotificationAction action = new NotificationAction(JavaBundle.message("notification.content.change.jdk")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e,
+                                  @NotNull Notification notification) {
+        SdkPopupFactory
+                .newBuilder()
+                .withProject(project)
+                .withSdkTypeFilter(type -> type instanceof JavaSdkType)
+                .updateProjectSdkFromSelection()
+                .onPopupClosed(notification::hideBalloon)
+                .buildPopup()
+                .showPopup(e);
+      }
+    };
+    LanguageLevel javaLanguageLevelFromProjectView =
+            JavaLanguageLevelSection.getLanguageLevel(projectViewSet, null);
+    String languageLevelOrigins;
+    String suggestion = "";
+    if (javaLanguageLevelFromProjectView != null)  {
+      languageLevelOrigins = "projectView";
+    } else {
+      if (!javaLanguageLevel.equals(defaultJavaLanguageLevel)) {
+        languageLevelOrigins = "toolchain";
+      } else {
+        languageLevelOrigins = "toolchain (or fallback value from the Bazel plugin from Google)";
+        suggestion = " If this is wrong you can try to override it in the project view. " +
+                "See <a href='https://ij.bazel.build/docs/project-views.html#java_language_level'>" +
+                "https://ij.bazel.build/docs/project-views.html#java_language_level</a> for more details.";
+      }
+    }
+    Notifications.Bus.notify(new Notification("Setup JDK",
+            String.format("Based on the information from the %s, this project requires JDK that supports language level %s.%s",
+                    languageLevelOrigins,
+                    javaLanguageLevel.getPresentableText(),
+                    suggestion),
+            NotificationType.ERROR).addAction(
+            action));
   }
 
   private static Sdk getOrCreateSdk(String homePath) {

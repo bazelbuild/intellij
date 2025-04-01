@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2016-2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package com.google.idea.blaze.base.run.testmap;
 
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.google.common.collect.ImmutableSortedSet.toImmutableSortedSet;
 import static java.util.function.Predicate.not;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -58,7 +58,7 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
       if (projectData == null) {
         return Futures.immediateFuture(ImmutableList.of());
       }
-      ImmutableSet<TargetInfo> targets =
+      ImmutableSortedSet<TargetInfo> targets =
           sourceFiles.stream()
               .map(file -> projectData.getWorkspacePathResolver().getWorkspacePath(file))
               .filter(Objects::nonNull)
@@ -76,7 +76,7 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
                     return kind.getRuleType().equals(ruleType.get());
                   })
               .map(TargetInfo::fromBuildTarget)
-              .collect(toImmutableSet());
+              .collect(toImmutableSortedSet(new TargetInfoComparator()));
       return Futures.immediateFuture(targets);
     }
     FilteredTargetMap targetMap =
@@ -85,11 +85,13 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
     if (targetMap == null) {
       return Futures.immediateFuture(ImmutableList.of());
     }
-    ImmutableSet<TargetInfo> targets =
+      ImmutableSortedSet<TargetInfo> targets =
         targetMap.targetsForSourceFiles(sourceFiles).stream()
             .map(TargetIdeInfo::toTargetInfo)
-            .filter(target -> !ruleType.isPresent() || target.getRuleType().equals(ruleType.get()))
-            .collect(toImmutableSet());
+            .filter(target -> ruleType.isEmpty() || target.getRuleType().equals(ruleType.get()))
+            .distinct()
+            .sorted(new TargetInfoComparator())
+            .collect(toImmutableSortedSet(new TargetInfoComparator()));
     return Futures.immediateFuture(targets);
   }
 

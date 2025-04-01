@@ -86,6 +86,7 @@ public class ManifestParser {
    * <p>An invalid manifest is anything that could not be parsed by the parser, such as a malformed
    * manifest.
    */
+  @Nullable
   public static ParsedManifest parseManifestFromInputStream(InputStream inputStream)
       throws IOException {
     Element manifestRootElement = getManifestRootElementFromInputStream(inputStream);

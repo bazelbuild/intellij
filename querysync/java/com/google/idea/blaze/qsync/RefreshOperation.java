@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 /**
- * Represents an operation that is refreshing a {@link BlazeProjectSnapshot}.
+ * Represents an operation that is refreshing a {@link QuerySyncProjectSnapshot}.
  *
  * <p>To use this interface:
  *

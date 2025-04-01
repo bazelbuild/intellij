@@ -17,8 +17,8 @@ package com.google.idea.blaze.base.settings;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.logging.LoggedSettingsProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -73,6 +73,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private boolean expandSyncToWorkingSet = true;
   private boolean showPerformanceWarnings = false;
   private boolean collapseProjectView = true;
+  private boolean useNewSyncView = false;
 
   private boolean javascriptTestrunnersEnabled = false;
 
@@ -85,7 +86,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private String fastBuildJavaBinaryPathInRunFiles = "";
 
   public static BlazeUserSettings getInstance() {
-    return ServiceManager.getService(BlazeUserSettings.class);
+    return ApplicationManager.getApplication().getService(BlazeUserSettings.class);
   }
 
   @Override
@@ -207,6 +208,14 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
     this.collapseProjectView = collapseProjectView;
   }
 
+  public boolean getUseNewSyncView() {
+    return useNewSyncView;
+  }
+
+  public void setUseNewSyncView(boolean useNewSyncView) {
+    this.useNewSyncView = useNewSyncView;
+  }
+
   public boolean isJavascriptTestrunnersEnabled() {
     return javascriptTestrunnersEnabled;
   }
@@ -269,6 +278,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
       builder.put("blazeBinaryPath", settings.blazeBinaryPath);
       builder.put("bazelBinaryPath", settings.bazelBinaryPath);
       builder.put("buildifierBinaryPath", settings.buildifierBinaryPath);
+      builder.put("useNewSyncView", Boolean.toString(settings.useNewSyncView));
       return builder.build();
     }
   }

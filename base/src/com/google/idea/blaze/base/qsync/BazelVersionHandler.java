@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.auto.value.extension.memoized.Memoized;
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
@@ -34,12 +36,18 @@ public class BazelVersionHandler {
     this.buildInvoker = buildInvoker;
   }
 
-  public Optional<String> getBazelVersion() throws BuildException {
+  public Optional<String> getBazelVersionStr() throws BuildException {
+    // TODO: can we cache the results from handlers?
     try {
       return buildSystem.getBazelVersionString(buildInvoker.getBlazeInfo());
     } catch (SyncFailedException e) {
-      throw new BuildException(
-          "Could not get bazel version, incorrect aspect file may be used. ", e);
+      throw new BuildException("Could not get bazel version", e);
     }
+  }
+
+  public BazelVersion getBazelVersion() throws BuildException {
+    return getBazelVersionStr()
+        .map(BazelVersion::parseVersion)
+        .orElse(BazelVersion.DEVELOPMENT);
   }
 }

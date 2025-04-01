@@ -19,7 +19,6 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.lang.projectview.ProjectViewIntegrationTestCase;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
@@ -46,7 +45,7 @@ public class ProjectViewRearrangerTest extends ProjectViewIntegrationTestCase {
   }
 
   private void rearrangeCode(Collection<TextRange> ranges) {
-    ArrangementEngine engine = ServiceManager.getService(getProject(), ArrangementEngine.class);
+    ArrangementEngine engine = getProject().getService(ArrangementEngine.class);
     CommandProcessor.getInstance()
         .executeCommand(
             getProject(),

@@ -23,11 +23,17 @@ import com.goide.sdk.GoSdkImpl;
 import com.goide.sdk.GoSdkService;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
+import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.GoIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.mock.MockLocalFileSystem;
 import com.intellij.openapi.util.io.FileUtil;
@@ -45,19 +51,53 @@ import org.junit.runners.JUnit4;
 public class BlazeDlvPositionConverterTest extends BlazeIntegrationTestCase {
   private File executionRoot;
   private PartialMockLocalFileSystem mockFileSystem;
+  private BlazeDlvPositionConverter.CgoTrimmedPathsHandler cgoTrimmedPathsHandler;
 
   @Before
   public void init() {
     GoSdkService.getInstance(getProject()).setSdk(new GoSdkImpl("/usr/lib/golang", null, null));
     registerApplicationService(VirtualFileSystemProvider.class, () -> mockFileSystem);
+    String pathThatConflictsWithBazelWorkspace = "_main/";
+    TargetMapBuilder cgoTestTargetMapBuilder = TargetMapBuilder.builder()
+            .addTarget(
+                    TargetIdeInfo.builder()
+                            .setLabel("//cgo1:test")
+                            .setGoInfo(GoIdeInfo.builder().setIsCgo(true)
+                                    .addSource(ArtifactLocation.builder().setRelativePath("cgo.go").setIsSource(true).build())
+                                    .addSource(ArtifactLocation.builder().setRelativePath("collision1.go").setIsSource(true).build())
+                                    .addSource(ArtifactLocation.builder().setRelativePath("collision2.go").setIsSource(true).build())
+                            ).build())
+            .addTarget(
+                    TargetIdeInfo.builder()
+                            .setLabel("//noCgo:test")
+                            .setGoInfo(GoIdeInfo.builder().setIsCgo(false)
+                                    .addSource(ArtifactLocation.builder().setRelativePath("nonCgo.go").setIsSource(true).build())
+                                    .addSource(ArtifactLocation.builder().setRelativePath(pathThatConflictsWithBazelWorkspace + "collision1.go").setIsSource(true).build())
+                            ).build()
+            )
+            .addTarget(
+                    TargetIdeInfo.builder()
+                            .setLabel("//cgo2:test")
+                            .setGoInfo(GoIdeInfo.builder().setIsCgo(true)
+                                    .addSource(ArtifactLocation.builder().setRelativePath(pathThatConflictsWithBazelWorkspace + "collision2.go").setIsSource(true).build())
+                            ).build());
     BlazeProjectData projectData =
         MockBlazeProjectDataBuilder.builder()
             .setWorkspacePathResolver(new WorkspacePathResolverImpl(workspaceRoot))
+            .setTargetMap(cgoTestTargetMapBuilder.build())
             .build();
     registerProjectService(
         BlazeProjectDataManager.class, new MockBlazeProjectDataManager(projectData));
     executionRoot = projectData.getBlazeInfo().getExecutionRoot();
     mockFileSystem = new PartialMockLocalFileSystem();
+    ExecutionRootPathResolver resolver = new ExecutionRootPathResolver(
+                    new BazelBuildSystemProvider(),
+                    workspaceRoot,
+                    executionRoot,
+                    projectData.getBlazeInfo().getOutputBase(),
+                    new WorkspacePathResolverImpl(workspaceRoot),
+                    cgoTestTargetMapBuilder.build());
+    cgoTrimmedPathsHandler = new BlazeDlvPositionConverter.CgoTrimmedPathsHandler(getProject(), resolver);
   }
 
   @Test
@@ -306,5 +346,38 @@ public class BlazeDlvPositionConverterTest extends BlazeIntegrationTestCase {
     public VirtualFile findFileByIoFile(File file) {
       return this.findFileByPath(FileUtil.toSystemIndependentName(file.getPath()));
     }
+  }
+
+  @Test
+  public void testConvertCgoTrimmedPaths() {
+    ImmutableSet<String> remotePaths = ImmutableSet.of("cgo.go", "noCgo.go", "_main/nonExistent.go", "_main/collision1.go", "collision2.go", "_main/collision2.go", "foobar/cgo.go");
+    mockFileSystem.setResolvablePaths(remotePaths.stream().map(this::workspacePath).toArray(String[]::new));
+
+    DlvPositionConverter sut = DlvPositionConverterFactory.create(getProject(), null, remotePaths);
+
+    assertThatFile(sut.toLocalFile("noCgo.go")).hasWorkspacePath("noCgo.go");
+    assertThatFile(sut.toLocalFile("_main/cgo.go")).hasWorkspacePath("cgo.go");
+    assertThatFile(sut.toLocalFile("_main/collision1.go")).hasWorkspacePath("_main/collision1.go");
+    assertThatFile(sut.toLocalFile("_main/collision2.go")).hasWorkspacePath("collision2.go");
+    assertThatFile(sut.toLocalFile("_main/_main/collision2.go")).hasWorkspacePath("_main/collision2.go");
+    assertThatFile(sut.toLocalFile("_main/nonExistent.go")).hasWorkspacePath("_main/nonExistent.go");
+    assertThatFile(sut.toLocalFile("foobar/cgo.go")).hasWorkspacePath("foobar/cgo.go");
+  }
+
+  @Test
+  public void testMatchesCgoTrimmedPath() {
+    assertThat(cgoTrimmedPathsHandler.matchesCgoTrimmedPath("_main/cgo.go")).isTrue();
+    assertThat(cgoTrimmedPathsHandler.matchesCgoTrimmedPath("nonCgo.go")).isFalse();
+    assertThat(cgoTrimmedPathsHandler.matchesCgoTrimmedPath("foobar/cgo.go")).isFalse();
+  }
+
+  @Test
+  public void testNormalizeCgoTrimmedPath() {
+    assertThat(cgoTrimmedPathsHandler.normalizeCgoTrimmedPath("_main/cgo.go")).isEqualTo("cgo.go");
+    assertThat(cgoTrimmedPathsHandler.normalizeCgoTrimmedPath("noCgo.go")).isEqualTo("noCgo.go");
+    assertThat(cgoTrimmedPathsHandler.normalizeCgoTrimmedPath("_main/collision1.go")).isEqualTo("_main/collision1.go");
+    assertThat(cgoTrimmedPathsHandler.normalizeCgoTrimmedPath("_main/collision2.go")).isEqualTo("collision2.go");
+    assertThat(cgoTrimmedPathsHandler.normalizeCgoTrimmedPath("_main/_main/collision2.go")).isEqualTo("_main/collision2.go");
+    assertThat(cgoTrimmedPathsHandler.normalizeCgoTrimmedPath("_main/nonExistent.go")).isEqualTo("_main/nonExistent.go");
   }
 }

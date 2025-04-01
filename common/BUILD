@@ -6,3 +6,5 @@ load(
 licenses(["notice"])
 
 create_common_plugins_package()
+
+exports_files(["pluginIcon.svg"])

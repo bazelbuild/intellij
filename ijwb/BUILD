@@ -2,6 +2,7 @@
 # Description: Builds ijwb
 #
 
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
@@ -24,9 +25,10 @@ load(
 load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 load(
     "//:build-visibility.bzl",
-    "IJWB_PACKAGES_VISIBILIY",
+    "IJWB_PACKAGES_VISIBILITY",
     "PLUGIN_PACKAGES_VISIBILITY",
 )
+load(":test_defs.bzl", "ijwb_headless_test")
 
 licenses(["notice"])
 
@@ -60,7 +62,7 @@ stamped_plugin_xml(
 java_library(
     name = "ijwb_lib",
     srcs = glob(["src/**/*.java"]),
-    visibility = IJWB_PACKAGES_VISIBILIY,
+    visibility = IJWB_PACKAGES_VISIBILITY,
     deps = [
         "//base",
         "//intellij_platform_sdk:jsr305",
@@ -74,6 +76,7 @@ java_library(
 intellij_plugin(
     name = "ijwb_bazel",
     plugin_xml = ":stamped_plugin_xml",
+    plugin_icons = ["//common:pluginIcon.svg"],
     tags = [
         "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
     ],
@@ -105,26 +108,16 @@ repackaged_files(
 )
 
 repackaged_files(
-    name = "aspect_directory",
-    srcs = ["//aspect:aspect_files"],
-    prefix = "ijwb/aspect",
-    strip_prefix = "/aspect",
-    visibility = IJWB_PACKAGES_VISIBILIY,
-    java_copts = ["-source", "8", "-target", "8"],
-)
-
-repackaged_files(
     name = "fast_build_javac",
     srcs = ["//java:fast_build_javac"],
     prefix = "ijwb/lib",
-    visibility = IJWB_PACKAGES_VISIBILIY,
+    visibility = IJWB_PACKAGES_VISIBILITY,
     java_copts = ["-source", "8", "-target", "8"],
 )
 
 intellij_plugin_debug_target(
     name = "ijwb_bazel_dev",
     deps = [
-        ":aspect_directory",
         ":fast_build_javac",
         ":plugin_jar",
     ],
@@ -133,7 +126,6 @@ intellij_plugin_debug_target(
 plugin_deploy_zip(
     name = "ijwb_bazel_zip",
     srcs = [
-        ":aspect_directory",
         ":fast_build_javac",
         ":plugin_jar",
     ],
@@ -154,7 +146,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+        "//third_party/java/junit",
     ],
 )
 
@@ -175,6 +167,20 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+        "//third_party/java/junit",
+        "@org_opentest4j_opentest4j//jar",
+    ],
+)
+
+ijwb_headless_test(
+    name = "simple_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/ijwb/headless/SimpleTest.java"],
+    project = "simple",
+)
+
+test_suite(
+    name = "headless_tests",
+    tests = [
+        ":simple_headless_test",
     ],
 )

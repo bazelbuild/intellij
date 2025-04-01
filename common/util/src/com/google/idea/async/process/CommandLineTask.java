@@ -23,9 +23,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.ui.EDT;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -181,6 +183,8 @@ public interface CommandLineTask {
 
     @Override
     public int run() throws IOException, InterruptedException, TimeoutException {
+      logger.assertTrue(!EDT.isCurrentThreadEdt(), "runs on background thread");
+      logger.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed(), "runs without read lock");
 
       String logCommand = ParametersListUtil.join(command);
       if (logCommand.length() > 2000) {

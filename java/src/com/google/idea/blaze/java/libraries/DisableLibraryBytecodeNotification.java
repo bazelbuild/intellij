@@ -15,12 +15,13 @@
  */
 package com.google.idea.blaze.java.libraries;
 
+import com.google.idea.blaze.base.project.startup.ProjectActivityJavaShim;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.sdkcompat.general.EditorNotificationCompat;
 import com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.ui.EditorNotificationProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,17 +29,17 @@ import org.jetbrains.annotations.NotNull;
  * expected for blaze projects, since we're attaching header jars to the project to improve
  * performance.
  */
-final class DisableLibraryBytecodeNotification implements StartupActivity {
+final class DisableLibraryBytecodeNotification extends ProjectActivityJavaShim {
 
   private static final BoolExperiment enabled =
       new BoolExperiment("disable.bytecode.notification", true);
 
   @Override
   public void runActivity(@NotNull Project project) {
-    if (!enabled.getValue() || !Blaze.isBlazeProject(project)) {
+    if (!enabled.getValue() || Blaze.getProjectType(project) == ProjectType.UNKNOWN) {
       return;
     }
-    EditorNotificationCompat.getEp(project)
+    EditorNotificationProvider.EP_NAME.getPoint(project)
         .unregisterExtension(LibrarySourceNotificationProvider.class);
   }
 }

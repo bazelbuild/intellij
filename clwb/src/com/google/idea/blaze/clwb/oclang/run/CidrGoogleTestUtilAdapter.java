@@ -17,6 +17,7 @@ package com.google.idea.blaze.clwb.oclang.run;
 
 import com.google.common.collect.Iterables;
 import com.google.idea.blaze.clwb.run.GoogleTestUtilAdapter;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiElement;
@@ -38,7 +39,6 @@ public class CidrGoogleTestUtilAdapter implements GoogleTestUtilAdapter {
   @Nullable
   public static PsiElement findGoogleTestSymbol(
       Project project, String suiteName, String testName) {
-    CidrGoogleTestFramework instance = CidrGoogleTestFramework.getInstance();
     final String prefixedSuiteName = "suite:" + suiteName;
     final String prefixedTestName = "test:" + testName;
 
@@ -47,15 +47,8 @@ public class CidrGoogleTestUtilAdapter implements GoogleTestUtilAdapter {
             (CidrTestScopeElement testElement) ->
                 prefixedSuiteName.equals(testElement.getSuiteName())
                     && prefixedTestName.equals(testElement.getTestName()));
-    instance.consumeTestObjects(project, GlobalSearchScope.allScope(project), processor);
-    if (!processor.isFound()) {
-      return null;
-    }
-    CidrTestScopeElement testElement = processor.getFoundValue();
-    if (testElement == null) {
-      return null;
-    }
-    return testElement.getElement();
+
+    return getTestElement(project, processor);
   }
 
   @Nullable
@@ -82,16 +75,7 @@ public class CidrGoogleTestUtilAdapter implements GoogleTestUtilAdapter {
                   parameterizedSuiteName.equals(testElement.getSuiteName()));
     }
 
-    CidrGoogleTestFramework instance = CidrGoogleTestFramework.getInstance();
-    instance.consumeTestObjects(project, GlobalSearchScope.allScope(project), processor);
-    if (!processor.isFound()) {
-      return null;
-    }
-    CidrTestScopeElement testElement = processor.getFoundValue();
-    if (testElement == null) {
-      return null;
-    }
-    return testElement.getElement();
+    return getTestElement(project, (FindFirstWithPredicateProcessor<CidrTestScopeElement>) processor);
   }
 
   /* TODO: Convert to not use CidrGoogleTestUtilObsolete. */
@@ -133,12 +117,15 @@ public class CidrGoogleTestUtilAdapter implements GoogleTestUtilAdapter {
     CidrGoogleTestFramework instance = CidrGoogleTestFramework.getInstance();
     FindFirstWithPredicateProcessor<CidrTestScopeElement> processor =
         new FindFirstWithPredicateProcessor<>(predicate);
-    instance.consumeTestObjects(project, GlobalSearchScope.allScope(project), processor);
-    CidrTestScopeElement testScopeElement = processor.getFoundValue();
-    if (testScopeElement == null) {
-      return null;
-    }
-    return testScopeElement.getElement();
+
+    return ReadAction.compute(() -> {
+      instance.consumeTestObjects(project, GlobalSearchScope.allScope(project), processor);
+      CidrTestScopeElement testScopeElement = processor.getFoundValue();
+      if (testScopeElement == null) {
+        return null;
+      }
+      return testScopeElement.getElement();
+    });
   }
 
   private static Collection<CidrTestScopeElement> findGoogleTestSymbols(
@@ -151,8 +138,11 @@ public class CidrGoogleTestUtilAdapter implements GoogleTestUtilAdapter {
             return predicate.test(cidrTestScopeElement);
           }
         };
-    instance.consumeTestObjects(project, GlobalSearchScope.allScope(project), processor);
-    return processor.getResults();
+
+    return ReadAction.compute(() -> {
+      instance.consumeTestObjects(project, GlobalSearchScope.allScope(project), processor);
+      return processor.getResults();
+    });
   }
 
   private static class FindFirstWithPredicateProcessor<T> extends FindProcessor<T> {
@@ -166,5 +156,20 @@ public class CidrGoogleTestUtilAdapter implements GoogleTestUtilAdapter {
     protected boolean accept(T t) {
       return !isFound() && predicate.test(t);
     }
+  }
+
+  private static PsiElement getTestElement(Project project, FindFirstWithPredicateProcessor<CidrTestScopeElement> processor) {
+    return ReadAction.compute(() -> {
+      CidrGoogleTestFramework instance = CidrGoogleTestFramework.getInstance();
+      instance.consumeTestObjects(project, GlobalSearchScope.allScope(project), processor);
+      if (!processor.isFound()) {
+        return null;
+      }
+      CidrTestScopeElement testElement = processor.getFoundValue();
+      if (testElement == null) {
+        return null;
+      }
+      return testElement.getElement();
+    });
   }
 }

@@ -16,8 +16,8 @@
 package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.project.ExtendableBazelProjectCreator;
-import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import javax.swing.SwingUtilities;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -64,8 +65,8 @@ public class BlazeProjectCreator {
 
     @VisibleForTesting
     public void openProject() {
-      ProjectManagerEx.getInstanceEx()
-          .openProject(ideaProjectPath, BaseSdkCompat.createOpenProjectTask(project));
+        ProjectManagerEx.getInstanceEx()
+          .openProject(ideaProjectPath, OpenProjectTask.build().withProject(project));
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         SaveAndSyncHandler.getInstance().scheduleProjectSave(project);
@@ -105,14 +106,13 @@ public class BlazeProjectCreator {
       FileUtil.ensureExists(ideaDir);
     }
 
-    Project newProject =
-        ApplicationManager.getApplication()
-            .getService(ExtendableBazelProjectCreator.class)
+    Optional<Project> returnedValue =
+        ExtendableBazelProjectCreator.getInstance()
             .createProject(projectBuilder, projectName, projectFilePath);
-    if (newProject == null) {
+    if (returnedValue.isEmpty()) {
       return null;
     }
-
+    Project newProject = returnedValue.get();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       newProject.save();
     }

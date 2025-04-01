@@ -30,8 +30,8 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -68,7 +68,7 @@ public final class FastBuildSuggestion
   private State state = new State();
 
   public static FastBuildSuggestion getInstance() {
-    return ServiceManager.getService(FastBuildSuggestion.class);
+    return ApplicationManager.getApplication().getService(FastBuildSuggestion.class);
   }
 
   public void displayNotification(BlazeCommandRunConfiguration runProfile) {

@@ -20,8 +20,8 @@ import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.logging.LoggedSettingsProvider;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.common.util.MorePlatformUtils;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.SystemInfo;
@@ -33,7 +33,7 @@ public class BlazeJavaUserSettings implements PersistentStateComponent<BlazeJava
   private boolean useJarCache = getDefaultJarCacheValue();
 
   public static BlazeJavaUserSettings getInstance() {
-    return ServiceManager.getService(BlazeJavaUserSettings.class);
+    return ApplicationManager.getApplication().getService(BlazeJavaUserSettings.class);
   }
 
   private static boolean getDefaultJarCacheValue() {

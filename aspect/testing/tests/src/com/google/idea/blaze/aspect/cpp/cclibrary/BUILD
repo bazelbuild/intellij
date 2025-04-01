@@ -1,5 +1,6 @@
 licenses(["notice"])
 
+load("@rules_java//java:defs.bzl", "java_test")
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
@@ -65,6 +66,6 @@ java_test(
         "//aspect/testing/rules:intellij_aspect_test_fixture_java_proto",
         "//intellij_platform_sdk:test_libs",
         "//proto:intellij_ide_info_java_proto",
-        "@junit//jar",
+        "//third_party/java/junit",
     ],
 )

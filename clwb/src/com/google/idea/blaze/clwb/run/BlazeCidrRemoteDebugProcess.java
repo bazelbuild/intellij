@@ -59,7 +59,7 @@ public class BlazeCidrRemoteDebugProcess extends CidrDebugProcess {
   }
 
   private void writeLineToConsole(String s) {
-    myConsole.print(s + SystemProperties.getLineSeparator(), ConsoleViewContentType.SYSTEM_OUTPUT);
+    myConsole.print(s + System.lineSeparator(), ConsoleViewContentType.SYSTEM_OUTPUT);
   }
 
   @Override

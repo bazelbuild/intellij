@@ -38,6 +38,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -107,13 +109,15 @@ public class PackageParserTest {
           .setIsSource(false)
           .build();
 
+  private ExecutorService executorService;
   private MockPackageParserIoProvider mockIoProvider;
   private PackageParser parser;
 
   @Before
   public void setUp() {
+    executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     mockIoProvider = new MockPackageParserIoProvider();
-    parser = new PackageParser(mockIoProvider);
+    parser = new PackageParser(mockIoProvider, executorService);
   }
 
   private Map<ArtifactLocation, String> parsePackageStrings() throws Exception {

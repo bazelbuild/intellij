@@ -40,6 +40,14 @@ public class LabelTest {
   }
 
   @Test
+  public void testGetPackage_withQualifiedRootWorkspace() {
+    Truth8.assertThat(Label.of("@//package/path:rule").getPackage())
+        .isEqualTo(Path.of("package/path"));
+    Truth8.assertThat(Label.of("@@//package/path:rule").getPackage())
+        .isEqualTo(Path.of("package/path"));
+  }
+
+  @Test
   public void testGetName_simple() {
     Truth8.assertThat(Label.of("//package/path:rule").getName()).isEqualTo(Path.of("rule"));
   }
@@ -77,8 +85,18 @@ public class LabelTest {
   }
 
   @Test
+  public void testNew_empty() {
+    assertThrows(IllegalArgumentException.class, () -> Label.of(""));
+  }
+
+  @Test
   public void testNew_badPackage() {
     assertThrows(IllegalArgumentException.class, () -> Label.of("package/path:rule"));
+  }
+
+  @Test
+  public void testNew_backslashes() {
+    assertThrows(IllegalArgumentException.class, () -> Label.of("//package\\path:rule"));
   }
 
   @Test
@@ -115,5 +133,17 @@ public class LabelTest {
   @Test
   public void doubleAtNormalization() {
     assertThat(Label.of("@abc//:def")).isEqualTo(Label.of("@@abc//:def"));
+  }
+
+  @Test
+  public void siblingWithName() {
+    assertThat(Label.of("//some/path:def").siblingWithName("name"))
+        .isEqualTo(Label.of("//some/path:name"));
+  }
+
+  @Test
+  public void siblingWithPathAndName() {
+    assertThat(Label.of("@abc//some/path:def").siblingWithPathAndName("other/path:name"))
+        .isEqualTo(Label.of("@@abc//some/path/other/path:name"));
   }
 }

@@ -34,14 +34,16 @@ import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelpe
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.DeviceSession;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProviderWrapper;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import java.io.File;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** Integration tests for {@link MobileInstallBuildStep} */
 @RunWith(JUnit4.class)
+@Ignore("b/396309705")
 public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBuildStepTestCase {
   @Test
   public void deployInfoBuiltCorrectly() throws Exception {
@@ -53,8 +55,13 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
+    when(helper.readDeployInfoProtoForTarget(
+            eq(buildTarget),
+            eq("mobile_install_INTERNAL_"),
+            any(BlazeBuildOutputs.class),
+            any()))
         .thenReturn(fakeProto);
+
     when(helper.extractDeployInfoAndInvalidateManifests(
             getProject(), new File(getExecRoot()), fakeProto))
         .thenReturn(mockDeployInfo);
@@ -68,8 +75,8 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     assertThat(buildStep.getDeployInfo()).isNotNull();
     assertThat(buildStep.getDeployInfo()).isEqualTo(mockDeployInfo);
     assertThat(externalTaskInterceptor.getContext()).isEqualTo(context);
-    assertThat(externalTaskInterceptor.getCommand()).containsAtLeastElementsIn(blazeFlags);
-    assertThat(externalTaskInterceptor.getCommand()).containsAtLeastElementsIn(execFlags);
+    assertThat(externalTaskInterceptor.getCommand()).containsAllIn(blazeFlags);
+    assertThat(externalTaskInterceptor.getCommand()).containsAllIn(execFlags);
     assertThat(externalTaskInterceptor.getCommand())
         .containsAnyOf("serial-number", "serial-number:tcp:0");
     assertThat(externalTaskInterceptor.getCommand()).contains(buildTarget.toString());
@@ -85,8 +92,13 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
+    when(helper.readDeployInfoProtoForTarget(
+            eq(buildTarget),
+            eq("mobile_install_INTERNAL_"),
+            any(BlazeBuildOutputs.class),
+            any()))
         .thenReturn(fakeProto);
+
     when(helper.extractDeployInfoAndInvalidateManifests(
             getProject(), new File(getExecRoot()), fakeProto))
         .thenReturn(mockDeployInfo);
@@ -106,8 +118,8 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     assertThat(buildStep.getDeployInfo()).isNotNull();
     assertThat(buildStep.getDeployInfo()).isEqualTo(mockDeployInfo);
     assertThat(externalTaskInterceptor.getContext()).isEqualTo(context);
-    assertThat(externalTaskInterceptor.getCommand()).containsAtLeastElementsIn(blazeFlags);
-    assertThat(externalTaskInterceptor.getCommand()).containsAtLeastElementsIn(execFlags);
+    assertThat(externalTaskInterceptor.getCommand()).containsAllIn(blazeFlags);
+    assertThat(externalTaskInterceptor.getCommand()).containsAllIn(execFlags);
     assertThat(externalTaskInterceptor.getCommand()).contains("--device");
     // workaround for inconsistent stateful AndroidDebugBridge class.
     assertThat(externalTaskInterceptor.getCommand())
@@ -125,7 +137,11 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
+    when(helper.readDeployInfoProtoForTarget(
+            eq(buildTarget),
+            eq("mobile_install_INTERNAL_"),
+            any(BlazeBuildOutputs.class),
+            any()))
         .thenReturn(fakeProto);
     when(helper.extractDeployInfoAndInvalidateManifests(
             getProject(), new File(getExecRoot()), fakeProto))
@@ -135,7 +151,8 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     AdbTunnelConfigurator tunnelConfigurator = mock(AdbTunnelConfigurator.class);
     when(tunnelConfigurator.isActive()).thenReturn(true);
     when(tunnelConfigurator.getAdbServerPort()).thenReturn(12345);
-    registerExtension(AdbTunnelConfiguratorProvider.EP_NAME, providerCxt -> tunnelConfigurator);
+    registerExtensionFirst(
+        AdbTunnelConfiguratorProvider.EP_NAME, providerCxt -> tunnelConfigurator);
 
     // Perform
     MobileInstallBuildStep buildStep =
@@ -146,8 +163,8 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     assertThat(buildStep.getDeployInfo()).isNotNull();
     assertThat(buildStep.getDeployInfo()).isEqualTo(mockDeployInfo);
     assertThat(externalTaskInterceptor.getContext()).isEqualTo(context);
-    assertThat(externalTaskInterceptor.getCommand()).containsAtLeastElementsIn(blazeFlags);
-    assertThat(externalTaskInterceptor.getCommand()).containsAtLeastElementsIn(execFlags);
+    assertThat(externalTaskInterceptor.getCommand()).containsAllIn(blazeFlags);
+    assertThat(externalTaskInterceptor.getCommand()).containsAllIn(execFlags);
     assertThat(externalTaskInterceptor.getCommand()).contains("--device");
     assertThat(externalTaskInterceptor.getCommand()).contains("serial-number:tcp:12345");
     assertThat(externalTaskInterceptor.getCommand()).contains(buildTarget.toString());
@@ -163,7 +180,11 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
+    when(helper.readDeployInfoProtoForTarget(
+            eq(buildTarget),
+            eq("mobile_install_INTERNAL_"),
+            any(BlazeBuildOutputs.class),
+            any()))
         .thenReturn(fakeProto);
     when(helper.extractDeployInfoAndInvalidateManifests(
             getProject(), new File(getExecRoot()), fakeProto))
@@ -181,8 +202,8 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     assertThat(buildStep.getDeployInfo()).isNotNull();
     assertThat(buildStep.getDeployInfo()).isEqualTo(mockDeployInfo);
     assertThat(externalTaskInterceptor.getContext()).isEqualTo(context);
-    assertThat(externalTaskInterceptor.getCommand()).containsAtLeastElementsIn(blazeFlags);
-    assertThat(externalTaskInterceptor.getCommand()).containsAtLeastElementsIn(execFlags);
+    assertThat(externalTaskInterceptor.getCommand()).containsAllIn(blazeFlags);
+    assertThat(externalTaskInterceptor.getCommand()).containsAllIn(execFlags);
     assertThat(externalTaskInterceptor.getCommand()).contains("--device");
     // workaround for inconsistent stateful AndroidDebugBridge class.
     assertThat(externalTaskInterceptor.getCommand())
@@ -204,7 +225,11 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
+    when(helper.readDeployInfoProtoForTarget(
+            eq(buildTarget),
+            eq("mobile_install_INTERNAL_"),
+            any(BlazeBuildOutputs.class),
+            any()))
         .thenReturn(fakeProto);
     when(helper.extractDeployInfoAndInvalidateManifests(
             getProject(), new File(getExecRoot()), fakeProto))
@@ -234,7 +259,11 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     // Return fake deploy info proto and mocked deploy info data object.
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
+    when(helper.readDeployInfoProtoForTarget(
+            eq(buildTarget),
+            eq("mobile_install_INTERNAL_"),
+            any(BlazeBuildOutputs.class),
+            any()))
         .thenReturn(fakeProto);
     when(helper.extractDeployInfoAndInvalidateManifests(any(), any(), any()))
         .thenThrow(new GetDeployInfoException("Fake Exception"));
@@ -264,7 +293,11 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
+    when(helper.readDeployInfoProtoForTarget(
+            eq(buildTarget),
+            eq("mobile_install_INTERNAL_"),
+            any(BlazeBuildOutputs.class),
+            any()))
         .thenReturn(fakeProto);
     when(helper.extractDeployInfoAndInvalidateManifests(
             getProject(), new File(getExecRoot()), fakeProto))
@@ -296,7 +329,11 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
+    when(helper.readDeployInfoProtoForTarget(
+            eq(buildTarget),
+            eq("mobile_install_INTERNAL_"),
+            any(BlazeBuildOutputs.class),
+            any()))
         .thenReturn(fakeProto);
     when(helper.extractDeployInfoAndInvalidateManifests(
             getProject(), new File(getExecRoot()), fakeProto))

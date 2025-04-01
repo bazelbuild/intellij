@@ -16,12 +16,11 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.BlazeCommandRunner;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStats;
 import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -29,6 +28,7 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
@@ -44,6 +44,9 @@ import java.util.concurrent.TimeUnit;
 /** The default implementation of QueryRunner. */
 public class BazelQueryRunner implements QueryRunner {
 
+  private static final BoolExperiment PREFER_REMOTE_QUERIES =
+      new BoolExperiment("query.sync.run.query.remotely", true);
+
   private static final Logger logger = Logger.getInstance(BazelQueryRunner.class);
 
   private final Project project;
@@ -58,22 +61,37 @@ public class BazelQueryRunner implements QueryRunner {
   public QuerySummary runQuery(QuerySpec query, BlazeContext context)
       throws IOException, BuildException {
     Stopwatch timer = Stopwatch.createStarted();
-    BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
+    BuildInvoker invoker;
+    if (PREFER_REMOTE_QUERIES.getValue()) {
+      // TODO(b/374906681) The "parallel" here is not really what we want: really we want to run the
+      // query remotely if that's supported. But we know that the parallel invoker is also a remote
+      // one so we use that for now. Once legacy sync code is deleted, cleaning all this up will
+      // become much easier.
+      invoker =
+          buildSystem
+              .getBuildInvoker(project, context, ImmutableSet.of(BuildInvoker.Capability.SUPPORTS_PARALLELISM));
+    } else {
+      invoker = buildSystem.getDefaultInvoker(project, context);
+    }
     Optional<SyncQueryStats.Builder> syncQueryStatsBuilder =
         SyncQueryStatsScope.fromContext(context);
     syncQueryStatsBuilder.ifPresent(stats -> stats.setBlazeBinaryType(invoker.getType()));
 
-    BlazeCommandRunner commandRunner = invoker.getCommandRunner();
     logger.info(
         String.format(
-            "Running `%.200s` using invoker %s, runner %s",
-            query, invoker.getClass().getSimpleName(), commandRunner.getClass().getSimpleName()));
+            "Running `%.250s` using invoker %s", query, invoker.getClass().getSimpleName()));
 
-    BlazeCommand.Builder commandBuilder = BlazeCommand.builder(invoker, BlazeCommandName.QUERY);
+    BlazeCommand.Builder commandBuilder = BlazeCommand.builder(invoker, BlazeCommandName.QUERY, project);
     commandBuilder.addBlazeFlags(query.getQueryFlags());
     commandBuilder.addBlazeFlags("--keep_going");
-    String queryExp = query.getQueryExpression();
-    if (commandRunner.getMaxCommandLineLength().map(max -> queryExp.length() > max).orElse(false)) {
+    String queryExp = query.getQueryExpression().orElse(null);
+    if (queryExp == null) {
+      context.output(PrintOutput.output("Project is empty, not running a query"));
+      return QuerySummary.EMPTY;
+    }
+    // TODO b/374906681 - The 130000 figure comes from the command runner. Move it to the invoker
+    // instead of hardcoding.
+    if (queryExp.length() > 130000) {
       // Query is too long, write it to a file.
       Path tmpFile =
           Files.createTempFile(
@@ -85,15 +103,13 @@ public class BazelQueryRunner implements QueryRunner {
       commandBuilder.addBlazeFlags(queryExp);
     }
     commandBuilder.setWorkspaceRoot(query.workspaceRoot());
-    addExtraFlags(commandBuilder);
+    addExtraFlags(commandBuilder, invoker);
 
     syncQueryStatsBuilder.ifPresent(
         stats -> stats.setQueryFlags(commandBuilder.build().toArgumentList()));
-    try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper();
-        InputStream in =
-            commandRunner.runQuery(project, commandBuilder, buildResultHelper, context)) {
-      QuerySummary querySummary = readFrom(in, context);
-      int packagesWithErrorsCount = querySummary.proto().getPackagesWithErrorsCount();
+    try (InputStream queryStream = invoker.invokeQuery(commandBuilder, context)) {
+      QuerySummary querySummary = readFrom(query.queryStrategy(), queryStream, context);
+      int packagesWithErrorsCount = querySummary.getPackagesWithErrorsCount();
       context.output(
           PrintOutput.output("Total query time ms: " + timer.elapsed(TimeUnit.MILLISECONDS)));
       if (packagesWithErrorsCount > 0) {
@@ -109,13 +125,15 @@ public class BazelQueryRunner implements QueryRunner {
   }
 
   /** Allows derived classes to add proprietary flags to the query invocation. */
-  protected void addExtraFlags(BlazeCommand.Builder commandBuilder) {}
+  protected void addExtraFlags(BlazeCommand.Builder commandBuilder, BuildInvoker invoker) {}
 
-  protected QuerySummary readFrom(InputStream in, BlazeContext context) throws BuildException {
+  protected QuerySummary readFrom(
+      QuerySpec.QueryStrategy queryStrategy, InputStream in, BlazeContext context)
+      throws BuildException {
     logger.info(String.format("Summarising query from %s", in));
     Instant start = Instant.now();
     try {
-      QuerySummary summary = QuerySummary.create(in);
+      QuerySummary summary = QuerySummary.create(queryStrategy, in);
       logger.info(
           String.format(
               "Summarised query in %ds", Duration.between(start, Instant.now()).toSeconds()));

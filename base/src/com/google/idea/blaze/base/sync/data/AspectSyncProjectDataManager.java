@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
+import com.google.idea.blaze.base.buildview.BuildViewMigration;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.AspectSyncProjectData;
@@ -92,6 +93,7 @@ public class AspectSyncProjectDataManager implements BlazeProjectDataManager {
     Future<?> unused =
         ProgressiveTaskWithProgressIndicator.builder(project, "Saving sync data...")
             .setExecutor(writeDataExecutor)
+            .setModality(BuildViewMigration.progressModality())
             .submitTask(
                 (ProgressIndicator indicator) -> {
                   try {

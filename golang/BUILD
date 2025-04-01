@@ -1,3 +1,4 @@
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
     "GOLANG_PACKAGES_VISIBILITY",
@@ -24,12 +25,14 @@ java_library(
     visibility = GOLANG_PACKAGES_VISIBILITY,
     deps = [
         "//base",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
         "//common/experiments",
         "//common/util:transactions",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//sdkcompat",
+        "//shared",
         "//third_party/go",
     ],
 )
@@ -83,7 +86,7 @@ intellij_unit_test_suite(
         "//testing:lib",
         "//third_party/go:go_for_tests",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+        "//third_party/java/junit",
     ],
 )
 
@@ -110,11 +113,13 @@ intellij_integration_test_suite(
         "//common/experiments",
         "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:intellilang_for_tests",
+        "//intellij_platform_sdk:json_for_tests",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//third_party/go:go_for_tests",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+        "//third_party/java/junit",
+        "@org_opentest4j_opentest4j//jar",
     ],
 )

@@ -15,39 +15,25 @@
  */
 package com.google.idea.blaze.java.fastbuild;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
-import java.io.File;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService;
+import com.intellij.openapi.project.Project;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 final class BazelFastBuildAspectStrategy extends FastBuildAspectStrategy {
 
   @Override
-  protected List<String> getAspectFlags(BlazeVersionData versionData) {
-    if (versionData.bazelIsAtLeastVersion(6, 0, 0)) {
-      return ImmutableList.of(
-          "--aspects=@@intellij_aspect//:fast_build_info_bundled.bzl%fast_build_info_aspect",
-          getAspectRepositoryOverrideFlag());
-    }
-    return ImmutableList.of(
-        "--aspects=@intellij_aspect//:fast_build_info_bundled.bzl%fast_build_info_aspect",
-        getAspectRepositoryOverrideFlag());
-  }
-
-  private static File findAspectDirectory() {
-    IdeaPluginDescriptor plugin =
-        PluginManager.getPlugin(PluginManager.getPluginByClassName(AspectStrategy.class.getName()));
-    return new File(plugin.getPath(), "aspect");
-  }
-
-  private static String getAspectRepositoryOverrideFlag() {
-    return String.format(
-        "--override_repository=intellij_aspect=%s", findAspectDirectory().getPath());
+  protected List<String> getAspectFlags(BlazeVersionData versionData, Project project) {
+    return AspectStorageService.of(project).resolve("fast_build_info_bundled.bzl")
+        .map(label -> String.format("--aspects=%s%%fast_build_info_aspect", label))
+        .stream()
+        .collect(Collectors.toList());
   }
 
   @Override

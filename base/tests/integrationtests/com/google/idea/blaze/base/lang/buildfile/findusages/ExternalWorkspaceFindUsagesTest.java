@@ -26,12 +26,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import java.io.File;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import org.junit.Test;
@@ -139,17 +134,5 @@ public class ExternalWorkspaceFindUsagesTest extends BuildFileIntegrationTestCas
     PsiReference[] references = FindUsages.findAllReferences(target);
     assertThat(references).hasLength(1);
     assertThat(references[0].getElement()).isEqualTo(label);
-  }
-
-  private PsiFile createFileInExternalWorkspace(
-      String workspaceName, WorkspacePath path, String... contents) {
-    String filePath =
-        Paths.get(getExternalSourceRoot().getPath(), workspaceName, path.relativePath()).toString();
-    return fileSystem.createPsiFile(filePath, contents);
-  }
-
-  private File getExternalSourceRoot() {
-    return WorkspaceHelper.getExternalSourceRoot(
-        BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData());
   }
 }

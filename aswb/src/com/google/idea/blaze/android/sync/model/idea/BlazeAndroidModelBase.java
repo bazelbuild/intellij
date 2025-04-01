@@ -45,18 +45,15 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
   protected final Project project;
   private final ListenableFuture<String> applicationId;
   private final int minSdkVersion;
-  private final boolean desugarJava8Libs;
 
   protected BlazeAndroidModelBase(
       Project project,
       File rootDirPath,
       ListenableFuture<String> applicationId,
-      int minSdkVersion,
-      boolean desugarJava8Libs) {
+      int minSdkVersion) {
     this.project = project;
     this.applicationId = applicationId;
     this.minSdkVersion = minSdkVersion;
-    this.desugarJava8Libs = desugarJava8Libs;
   }
 
   @Override
@@ -113,7 +110,7 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
 
   @Override
   public Set<Desugaring> getDesugaring() {
-    return desugarJava8Libs ? Desugaring.FULL : Desugaring.DEFAULT;
+    return Desugaring.FULL;
   }
 
   @Override

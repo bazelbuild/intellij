@@ -21,6 +21,8 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
+
 import javax.annotation.Nullable;
 
 /** Called by sync plugins to determine the appropriate java language level. */
@@ -30,11 +32,18 @@ public class JavaLanguageLevelHelper {
       ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
     LanguageLevel fromToolchain = getLanguageLevelFromToolchain(blazeProjectData);
     return JavaLanguageLevelSection.getLanguageLevel(
-        projectViewSet, fromToolchain != null ? fromToolchain : LanguageLevel.JDK_11);
+        projectViewSet, fromToolchain != null ? fromToolchain : getDefaultLanguageLevel());
+  }
+
+  public static @NotNull LanguageLevel getDefaultLanguageLevel() {
+    return LanguageLevel.JDK_11;
   }
 
   @Nullable
   private static LanguageLevel getLanguageLevelFromToolchain(BlazeProjectData projectData) {
+    if (projectData == null) {
+      return null;
+    }
     BlazeJavaSyncData javaSyncData = projectData.getSyncState().get(BlazeJavaSyncData.class);
     if (javaSyncData == null) {
       return null;

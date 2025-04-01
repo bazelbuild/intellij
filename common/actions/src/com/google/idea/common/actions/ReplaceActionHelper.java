@@ -127,8 +127,9 @@ public class ReplaceActionHelper {
     }
 
     @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+    @NotNull
+    public ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

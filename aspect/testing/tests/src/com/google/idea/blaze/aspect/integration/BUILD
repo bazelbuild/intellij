@@ -1,29 +1,27 @@
-load(
-    "@rules_bazel_integration_test//bazel_integration_test:defs.bzl",
-    "bazel_integration_tests",
-)
 load("@bazel_binaries//:defs.bzl", "bazel_binaries")
+load("@rules_bazel_integration_test//bazel_integration_test:defs.bzl", "bazel_integration_test")
+load("@rules_java//java:defs.bzl", "java_binary")
 
 java_binary(
     name = "BazelInvokingIntegrationTestRunner",
     testonly = True,
     srcs = ["BazelInvokingIntegrationTestRunner.java"],
-    data = [
-        "//aspect:aspect_files",
-    ],
     main_class = "com.google.idea.blaze.aspect.integration.BazelInvokingIntegrationTestRunner",
     deps = [
         "//aspect/testing:guava",
         "//base",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
+        "//sdkcompat",
     ],
 )
 
-bazel_integration_tests(
-    name = "bazel_invocation_integration_tests",
-    bazel_versions = bazel_binaries.versions.all,
-    # set tags = [] because otherwise bazel_integration_tests sets
-    # tags = ["manual"] and the target is not be detected via test //pkg/...
-    tags = [],
+bazel_integration_test(
+    name = "bazel_invocation_integration_test",
+    bazel_version = bazel_binaries.versions.current,
+    env = {"BIT_BAZEL_VERSION": bazel_binaries.versions.current},
+    tags = ["exclusive"],
     test_runner = ":BazelInvokingIntegrationTestRunner",
     workspace_path = "testdata",
 )

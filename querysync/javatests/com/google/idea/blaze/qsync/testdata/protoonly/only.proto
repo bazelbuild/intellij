@@ -1,9 +1,0 @@
-syntax = "proto3";
-
-package buildgraph;
-
-option java_package = "com.google.idea.blaze.qsync.testdata.protoonly";
-
-message ProtoOnlyTest {
-  optional string message = 1;
-}

@@ -27,7 +27,6 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SyncMode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import java.util.Set;
@@ -59,13 +58,9 @@ final class BlazeCSyncPlugin implements BlazeSyncPlugin {
         childContext -> {
           childContext.push(new TimingScope("Setup C Workspace", EventType.Other));
 
-          ApplicationManager.getApplication()
-              .runReadAction(
-                  () -> {
-                    BlazeCWorkspace blazeCWorkspace = BlazeCWorkspace.getInstance(project);
-                    blazeCWorkspace.update(
-                        childContext, workspaceRoot, projectViewSet, blazeProjectData, syncMode);
-                  });
+          BlazeCWorkspace blazeCWorkspace = BlazeCWorkspace.getInstance(project);
+          blazeCWorkspace.update(
+              childContext, workspaceRoot, projectViewSet, blazeProjectData, syncMode);
         });
   }
 

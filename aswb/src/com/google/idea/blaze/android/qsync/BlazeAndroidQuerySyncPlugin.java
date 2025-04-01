@@ -53,7 +53,6 @@ import com.intellij.util.containers.ContainerUtil;
 import java.io.File;
 import java.util.Set;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.facet.AndroidFacetProperties;
 
 /** ASwB sync plugin. */
 public class BlazeAndroidQuerySyncPlugin implements BlazeQuerySyncPlugin {
@@ -68,7 +67,7 @@ public class BlazeAndroidQuerySyncPlugin implements BlazeQuerySyncPlugin {
         AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet);
     Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdkPlatform.androidSdk);
     LanguageLevel javaLanguageLevel =
-        JavaLanguageLevelSection.getLanguageLevel(projectViewSet, LanguageLevel.JDK_11);
+        JavaLanguageLevelSection.getLanguageLevel(projectViewSet, LanguageLevel.JDK_21);
     ProjectRootManagerEx rootManager = ProjectRootManagerEx.getInstanceEx(project);
     rootManager.setProjectSdk(sdk);
     LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
@@ -123,8 +122,6 @@ public class BlazeAndroidQuerySyncPlugin implements BlazeQuerySyncPlugin {
 
     // Set AndroidModel for this AndroidFacet
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    boolean desugarJava8Libs =
-        projectViewSet.listItems(BuildFlagsSection.KEY).contains("--config=android_java8_libs");
     AndroidSdkPlatform androidSdkPlatform =
         AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet);
 
@@ -134,13 +131,8 @@ public class BlazeAndroidQuerySyncPlugin implements BlazeQuerySyncPlugin {
             workspaceRoot.directory(),
             sourceProvider,
             Futures.immediateFuture(":workspace"),
-            androidSdkPlatform != null ? androidSdkPlatform.androidMinSdkLevel : 1,
-            desugarJava8Libs);
+            androidSdkPlatform != null ? androidSdkPlatform.androidMinSdkLevel : 1);
     AndroidModel.set(workspaceFacet, androidModel);
-    workspaceFacet.getProperties().RES_FOLDERS_RELATIVE_PATH =
-        androidResourceDirectoryFiles.stream()
-            .map(VfsUtilCore::fileToUrl)
-            .collect(joining(AndroidFacetProperties.PATH_LIST_SEPARATOR_IN_FACET_CONFIGURATION));
 
     // Register all source java packages as workspace packages
     BlazeLightResourceClassService.Builder rClassBuilder =

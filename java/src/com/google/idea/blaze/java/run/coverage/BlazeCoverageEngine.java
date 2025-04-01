@@ -178,6 +178,16 @@ public class BlazeCoverageEngine extends CoverageEngine {
     return Blaze.defaultBuildSystemName() + " Coverage";
   }
 
+
+  // #api241 inline
+  // https://github.com/JetBrains/intellij-community/commit/a3ccb39c0a49173ceee13e0eb7d06598b0e1a2de
+  // Add @Override after we drop 241 support
+  @Nullable
+  public CoverageViewExtension createCoverageViewExtension(
+          Project project, CoverageSuitesBundle suites) {
+    return createCoverageViewExtension(project, suites, null);
+  }
+
   @Nullable
   @Override
   public CoverageViewExtension createCoverageViewExtension(

@@ -28,6 +28,8 @@ public final class BuildEventProtocolUtils {
 
   // Instructs BEP to use local file paths (file://...) rather than objfs blobids.
   private static final String LOCAL_FILE_PATHS = "--nobuild_event_binary_file_path_conversion";
+  // Instructs BEP to emit events for all actions.
+  private static final String PUBLISH_ALL_ACTIONS = "--build_event_publish_all_actions";
   // A vm option overriding the directory used for the BEP output file.
   private static final String BEP_OUTPUT_FILE_VM_OVERRIDE = "bazel.bep.path";
 
@@ -55,7 +57,11 @@ public final class BuildEventProtocolUtils {
 
   /** Returns a build flag instructing blaze to write build events to the given output file. */
   public static ImmutableList<String> getBuildFlags(File outputFile) {
-    return ImmutableList.of("--build_event_binary_file=" + outputFile.getPath(), LOCAL_FILE_PATHS);
+    return ImmutableList.of(
+        "--build_event_binary_file=" + outputFile.getPath(),
+        LOCAL_FILE_PATHS,
+        PUBLISH_ALL_ACTIONS
+    );
   }
 
   /**

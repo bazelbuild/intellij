@@ -47,7 +47,7 @@ public class BuildDependenciesForWorkingSetAction extends BlazeProjectAction {
   }
 
   private BuildDependenciesHelper createHelper(Project project) {
-    return new BuildDependenciesHelper(project, getClass(), DepsBuildType.REVERSE_DEPS);
+    return new BuildDependenciesHelper(project, DepsBuildType.REVERSE_DEPS);
   }
 
   @Override

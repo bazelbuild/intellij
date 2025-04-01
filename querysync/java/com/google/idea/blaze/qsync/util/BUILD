@@ -1,3 +1,5 @@
+load("@rules_java//java:defs.bzl", "java_binary", "java_library")
+
 package(default_visibility = [
     "//java/com/google/devtools/intellij/blaze/plugin/querysync:__subpackages__",
 ])
@@ -14,7 +16,7 @@ java_binary(
         "//querysync/java/com/google/idea/blaze/qsync/project",
         "//shared",
         "@com_google_guava_guava//jar",
-        "@com_google_protobuf//:protobuf_java",
+        "@protobuf//:protobuf_java",
     ],
 )
 

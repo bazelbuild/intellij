@@ -47,7 +47,7 @@ import java.util.zip.GZIPInputStream;
  *   <li>{@code blaze build
  *       //querysync/java/com/google/idea/blaze/qsync/util:project_spec_builder}
  *   <li>{@code
- *       blaze-bin/querysync/java/com/google/idea/blaze/qsync/util/project_spec_builder
+ *       blaze-bin/third_party/intellij/bazel/plugin/querysync/java/com/google/idea/blaze/qsync/util/project_spec_builder
  *       /path/to/project/.blaze/qsyncdata.gz}
  * </ol>
  *
@@ -96,8 +96,7 @@ public class ProjectSpecBuilder {
             snapshot.projectDefinition(),
             executor,
             Suppliers.ofInstance(true),
-            Suppliers.ofInstance(false),
-            true);
+            Suppliers.ofInstance(false));
     System.out.println(TextFormat.printer().printToString(converter.createProject(buildGraph)));
     return context.hasError() ? 1 : 0;
   }

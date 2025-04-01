@@ -1,78 +1,141 @@
 ---
 tasks:
-  CLion-internal-stable:
-    name: CLion Internal Stable
-    platform: ubuntu1804
+  CLion-Linux-OSS-oldest-stable:
+    name: CLion Linux OSS Oldest Stable
+    platform: ubuntu2204
     build_flags:
-      - --define=ij_product=clion-latest
+      - --define=ij_product=clion-oss-oldest-stable
     build_targets:
-      - //clwb/...
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
     test_flags:
-      - --define=ij_product=clion-latest
+      - --define=ij_product=clion-oss-oldest-stable
       - --test_output=errors
     test_targets:
       - //:clwb_tests
-  CLion-internal-beta:
-    name: CLion Internal Beta
-    platform: ubuntu1804
+  CLion-Linux-OSS-latest-stable:
+    name: CLion Linux OSS Latest Stable
+    platform: ubuntu2204
     build_flags:
-      - --define=ij_product=clion-beta
+      - --define=ij_product=clion-oss-latest-stable
     build_targets:
-      - //clwb/...
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
     test_flags:
-      - --define=ij_product=clion-beta
+      - --define=ij_product=clion-oss-latest-stable
       - --test_output=errors
     test_targets:
       - //:clwb_tests
-  CLion-internal-under-dev:
-    name: CLion Internal Under Development
-    platform: ubuntu1804
+  CLion-Windows-OSS-oldest-stable:
+    name: CLion Windows OSS Oldest Stable
+    platform: windows
     build_flags:
-      - --define=ij_product=clion-under-dev
+      - --define=ij_product=clion-oss-oldest-stable
     build_targets:
-      - //clwb/...
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
     test_flags:
-      - --define=ij_product=clion-under-dev
+      - --define=ij_product=clion-oss-oldest-stable
+      - --test_output=errors
+    test_targets:
+      - //clwb:headless_tests
+  CLion-Windows-OSS-latest-stable:
+    name: CLion Windows OSS Latest Stable
+    platform: windows
+    build_flags:
+      - --define=ij_product=clion-oss-latest-stable
+    build_targets:
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
+    test_flags:
+      - --define=ij_product=clion-oss-latest-stable
+      - --test_output=errors
+    test_targets:
+      - //clwb:headless_tests
+  CLion-MacOS-OSS-oldest-stable:
+    name: CLion MacOS OSS Oldest Stable
+    platform: macos_arm64
+    build_flags:
+      - --define=ij_product=clion-oss-oldest-stable
+    build_targets:
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
+    test_flags:
+      - --define=ij_product=clion-oss-oldest-stable
+      - --test_output=errors
+    test_targets:
+      - //:clwb_tests
+  CLion-MacOS-OSS-latest-stable:
+    name: CLion MacOS OSS Latest Stable
+    platform: macos_arm64
+    build_flags:
+      - --define=ij_product=clion-oss-latest-stable
+    build_targets:
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
+    test_flags:
+      - --define=ij_product=clion-oss-latest-stable
+      - --test_output=errors
+    test_targets:
+      - //:clwb_tests
+  CLion-Linux-OSS-under-dev:
+    name: CLion Linux OSS Under Development
+    platform: ubuntu2204
+    build_flags:
+      - --define=ij_product=clion-oss-under-dev
+    build_targets:
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
+    test_flags:
+      - --define=ij_product=clion-oss-under-dev
       - --test_output=errors
     test_targets:
       - //:clwb_tests
     soft_fail:
       - exit_status: 1
-  CLion-OSS-oldest-stable:
-    name: CLion OSS Oldest Stable
-    platform: ubuntu1804
-    build_flags:
-      - --define=ij_product=clion-oss-oldest-stable
-    build_targets:
-      - //clwb/...
-    test_flags:
-      - --define=ij_product=clion-oss-oldest-stable
-      - --test_output=errors
-    test_targets:
-      - //:clwb_tests
-  CLion-OSS-latest-stable:
-    name: CLion OSS Latest Stable
-    platform: ubuntu1804
-    build_flags:
-      - --define=ij_product=clion-oss-latest-stable
-    build_targets:
-      - //clwb/...
-    test_flags:
-      - --define=ij_product=clion-oss-latest-stable
-      - --test_output=errors
-    test_targets:
-      - //:clwb_tests
-  CLion-OSS-under-dev:
-    name: CLion OSS Under Development
-    platform: ubuntu1804
+  CLion-Windows-OSS-under-dev:
+    name: CLion Windows OSS Under Development
+    platform: windows
     build_flags:
       - --define=ij_product=clion-oss-under-dev
     build_targets:
-      - //clwb/...
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
+    test_flags:
+      - --define=ij_product=clion-oss-under-dev
+      - --test_output=errors
+    test_targets:
+      - //clwb:headless_tests
+    soft_fail:
+      - exit_status: 1
+  CLion-MacOS-OSS-under-dev:
+    name: CLion MacOS OSS Under Development
+    platform: macos_arm64
+    build_flags:
+      - --define=ij_product=clion-oss-under-dev
+    build_targets:
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
     test_flags:
       - --define=ij_product=clion-oss-under-dev
       - --test_output=errors
     test_targets:
       - //:clwb_tests
+    soft_fail:
+      - exit_status: 1
+  CLion-last-green:
+    name: CLion Headless Tests Last Green
+    platform: ubuntu2204
+    build_flags:
+      - --define=ij_product=clion-oss-under-dev
+    build_targets:
+      - //clwb:clwb_bazel_zip
+      - //:clwb_tests
+    test_flags:
+      - --define=ij_product=clion-oss-under-dev
+      - --test_output=errors
+      - --test_tag_filters=bit_bazel_last_green
+    test_targets:
+      - //clwb:all
     soft_fail:
       - exit_status: 1

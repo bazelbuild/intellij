@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,18 @@ public interface BlazeCommandRunner {
       throws BuildException;
 
   /**
+   * Runs a blaze build command, parses the build results into a {@link BlazeBuildOutputs} object
+   * using the given {@link BuildResultHelper}.
+   */
+  BlazeBuildOutputs.Legacy runLegacy(
+    Project project,
+    BlazeCommand.Builder blazeCommandBuilder,
+    BuildResultHelper buildResultHelper,
+    BlazeContext context,
+    Map<String, String> envVars)
+    throws BuildException;
+
+  /**
    * Runs a blaze test command, parses the test results into a {@link BlazeTestResults} object using
    * the given {@link BuildResultHelper}.
    */
@@ -71,6 +83,14 @@ public interface BlazeCommandRunner {
 
   @MustBeClosed
   InputStream runBlazeInfo(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context)
+      throws BuildException;
+
+  @MustBeClosed
+  InputStream runBlazeMod(
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,

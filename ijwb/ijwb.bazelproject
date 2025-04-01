@@ -4,6 +4,7 @@ directories:
   -clwb
   -cpp
   -examples
+  -ijwb/tests/projects
 
 targets:
   //ijwb:ijwb_bazel_dev
@@ -14,8 +15,14 @@ targets:
 workspace_type: intellij_plugin
 
 build_flags:
-  --define=ij_product=intellij-latest
+  --define=ij_product=intellij-ue-oss-under-dev
 
 test_sources:
   */tests/unittests*
   */tests/integrationtests*
+  */tests/headlesstests*
+
+additional_languages:
+  kotlin
+
+use_query_sync: false

@@ -25,11 +25,11 @@ import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.util.Optional;
 
 /**
- * Represents state of the project after the query invocation has been completed, but before the
- * project structure has been derived from this.
+ * Represents state of the project after the query invocation has been completed, but without any
+ * state from dependencies builds and before the project structure has been derived from this.
  *
- * <p>This is the state that is persisted to disk over an IDE restart. It is also the input to a
- * partial query update.
+ * <p>This state is persisted to disk over an IDE restart. It is also the input to a partial query
+ * update.
  */
 @AutoValue
 public abstract class PostQuerySyncData {
@@ -37,12 +37,7 @@ public abstract class PostQuerySyncData {
   @VisibleForTesting
   public static final PostQuerySyncData EMPTY =
       builder()
-          .setProjectDefinition(
-              ProjectDefinition.create(
-                  /* includes= */ ImmutableSet.of(),
-                  /* excludes= */ ImmutableSet.of(),
-                  /* languageClasses= */ ImmutableSet.of(),
-                  /* testSources= */ ImmutableSet.of()))
+          .setProjectDefinition(ProjectDefinition.EMPTY)
           .setVcsState(Optional.empty())
           .setBazelVersion(Optional.empty())
           .setQuerySummary(QuerySummary.EMPTY)

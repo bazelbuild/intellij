@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.util.Arrays;
 import java.util.Collection;
@@ -43,6 +43,13 @@ import javax.annotation.Nullable;
  */
 @AutoValue
 public abstract class Kind {
+
+  /**
+   * When a rule has a transition applied to it then it will present with this
+   * prefix on it.
+   */
+
+  private final static String RULE_NAME_PREFIX_TRANSITION = "_transition_";
 
   /**
    * Provides a set of recognized blaze rule names. Individual language-specific sub-plugins can use
@@ -84,7 +91,7 @@ public abstract class Kind {
   @VisibleForTesting
   public static final class ApplicationState {
     private static ApplicationState getService() {
-      return ServiceManager.getService(ApplicationState.class);
+      return ApplicationManager.getApplication().getService(ApplicationState.class);
     }
 
     /** An internal map of all known rule types. */
@@ -134,7 +141,13 @@ public abstract class Kind {
 
   @Nullable
   public static Kind fromRuleName(String ruleName) {
-    return ApplicationState.getService().stringToKind.get(ruleName);
+    if (null != ruleName) {
+      if (ruleName.startsWith(RULE_NAME_PREFIX_TRANSITION)) {
+        ruleName = ruleName.substring(RULE_NAME_PREFIX_TRANSITION.length());
+      }
+      return ApplicationState.getService().stringToKind.get(ruleName);
+    }
+    return null;
   }
 
   /**

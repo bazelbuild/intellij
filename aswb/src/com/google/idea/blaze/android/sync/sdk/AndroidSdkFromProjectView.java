@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.sync.sdk;
 
+import com.android.tools.sdk.AndroidPlatform;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -33,10 +34,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.jetbrains.android.sdk.AndroidPlatformCompat;
+import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 
 /** Calculates AndroidSdkPlatform. */
 public final class AndroidSdkFromProjectView {
+  private static final int DEFAULT_ANDROID_SDK_API_LEVEL = 1;
   private static final Joiner COMMA_JOINER = Joiner.on(", ");
   public static final String NO_SDK_ERROR_TEMPLATE =
       "No such android_sdk_platform: '%s'. "
@@ -51,7 +53,7 @@ public final class AndroidSdkFromProjectView {
     if (sdks.isEmpty()) {
       String msg = "No Android SDK configured. Please use the SDK manager to configure.";
       IssueOutput.error(msg)
-          .navigatable(
+          .withNavigatable(
               new Navigatable() {
                 @Override
                 public void navigate(boolean b) {
@@ -133,7 +135,14 @@ public final class AndroidSdkFromProjectView {
   }
 
   private static int getAndroidSdkApiLevel(Sdk sdk) {
-    return AndroidPlatformCompat.getApiLevel(sdk);
+    AndroidSdkAdditionalData additionalData = (AndroidSdkAdditionalData) sdk.getSdkAdditionalData();
+    if (additionalData != null) {
+      AndroidPlatform androidPlatform = additionalData.getAndroidPlatform();
+      if (androidPlatform != null) {
+        return androidPlatform.getApiLevel();
+      }
+    }
+    return DEFAULT_ANDROID_SDK_API_LEVEL;
   }
 
   private AndroidSdkFromProjectView() {}

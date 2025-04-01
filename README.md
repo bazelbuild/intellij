@@ -18,9 +18,32 @@ how to join the discussion can be found in the [SIG charter](https://github.com/
 
 ## Support
 
-See the [documentation entry](https://ij.bazel.build/docs/bazel-support.html)
+See the [documentation entry](https://github.com/bazelbuild/intellij/blob/master/docs/index.md)
 on the plugin support across JetBrains products, languages, and operating
 systems.
+
+## Source Code Locations
+
+The Bazel plugins for IntelliJ and CLion are built and released from the [master branch](https://github.com/bazelbuild/intellij) of this repository. An external team of maintainers addresses IntelliJ and CLion plugin issues and pull requests. 
+
+The Bazel plugin for Android Studio is built and released from  [AOSP](https://android.googlesource.com/platform/tools/adt/idea/+/refs/heads/mirror-goog-studio-main/aswb/). The [google branch](https://github.com/bazelbuild/intellij/tree/google) is now deprecated.
+
+Although the code in this repository and in AOSP share the same structure and core components, they have diverged from each other. 
+
+- Changes for IntelliJ and CLion plugins are *only* merged into the master branch of this repository. Users can request that certain fixes which are also needed for the Android Studio plugin get merged into the AOSP project. This will require the internal teams’ approval. 
+- Changes made by the internal Google teams are automatically exported to AOSP. These commits will regularly be cherry-picked to the master branch. See the next paragraph for details.
+- The master branch is not intended to be used to build the Android Studio with Bazel plugin; failures of the Android Studio plugin built from the master branch will not be addressed.
+
+### Cherry-picks from AOSP to this project
+
+After the migration of the Android Studio plugin to [AOSP](https://android.googlesource.com/platform/tools/adt/idea/+/refs/heads/mirror-goog-studio-main/aswb/), this process was interrupted for approximately five months.
+
+In November 2024, many changes from AOSP were cherry-picked in [6965](https://github.com/bazelbuild/intellij/pull/6965).
+Starting from that point, we have been making our best effort to apply AOSP changes to the [master branch](https://github.com/bazelbuild/intellij/tree/master).
+
+For this purpose, we use the Python tool [LeFrosch/intellij-aosp-merge](https://github.com/LeFrosch/intellij-aosp-merge), which is capable of adjusting paths from AOSP to this project's layout and allows us to compare revisions in AOSP and here.
+
+Status of picked and skipped commits could be found in the following [googledoc](https://jb.gg/aosp-picks).
 
 ## Installation
 
@@ -38,11 +61,12 @@ Beta versions are usually uploaded to the Beta channel 2 weeks before they becom
   - Android Studio -> `https://plugins.jetbrains.com/plugins/beta/9185`
 
 ## Usage
+We recommend watching [this video](https://www.youtube.com/watch?v=GV_KwWK3Qy8) to familiarize yourself with the plugin's features.
 
 To import an existing Bazel project, choose `Import Bazel Project`,
 and follow the instructions in the project import wizard.
 
-Detailed docs are available [here](http://ij.bazel.build).
+Detailed docs are available [here](https://github.com/bazelbuild/intellij/blob/master/docs/index.md).
 
 ## Known issues
 

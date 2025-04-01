@@ -21,8 +21,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
-import com.google.idea.blaze.qsync.BlazeProject;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
+import com.google.idea.blaze.qsync.SnapshotHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
 import java.nio.file.Path;
@@ -34,11 +34,11 @@ public class QuerySyncSourceToTargetMap implements SourceToTargetMap {
 
   private final Logger logger = Logger.getInstance(getClass());
 
-  private final BlazeProject blazeProject;
+  private final SnapshotHolder snapshotHolder;
   private final Path workspaceRoot;
 
-  public QuerySyncSourceToTargetMap(BlazeProject blazeProject, Path workspaceRoot) {
-    this.blazeProject = blazeProject;
+  public QuerySyncSourceToTargetMap(SnapshotHolder snapshotHolder, Path workspaceRoot) {
+    this.snapshotHolder = snapshotHolder;
     this.workspaceRoot = workspaceRoot;
   }
 
@@ -46,7 +46,7 @@ public class QuerySyncSourceToTargetMap implements SourceToTargetMap {
   public ImmutableList<Label> getTargetsToBuildForSourceFile(File file) {
     Path rel = workspaceRoot.relativize(file.toPath());
 
-    BlazeProjectSnapshot snapshot = blazeProject.getCurrent().orElse(null);
+    QuerySyncProjectSnapshot snapshot = snapshotHolder.getCurrent().orElse(null);
     if (snapshot == null) {
       logger.warn("getTargetsToBuildForSourceFile call before sync complete");
       return ImmutableList.of();

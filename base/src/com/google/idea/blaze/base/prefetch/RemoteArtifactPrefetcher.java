@@ -17,13 +17,13 @@ package com.google.idea.blaze.base.prefetch;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import java.util.Collection;
 
 /** A service for fetching a batch of remote files */
 public interface RemoteArtifactPrefetcher {
   static RemoteArtifactPrefetcher getInstance() {
-    return ServiceManager.getService(RemoteArtifactPrefetcher.class);
+    return ApplicationManager.getApplication().getService(RemoteArtifactPrefetcher.class);
   }
 
   /**

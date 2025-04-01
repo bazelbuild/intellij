@@ -88,6 +88,6 @@ public class BazelPluginProcessorJarTest extends BazelIntellijAspectTest {
    * `external/com_google_guava_guava/jar`
    */
   private static String simplifyPath(String path) {
-    return path.replaceAll("/.*~", "/");
+    return path.replaceAll("/.*~", "/").replaceAll("/.*\\+", "/");
   }
 }

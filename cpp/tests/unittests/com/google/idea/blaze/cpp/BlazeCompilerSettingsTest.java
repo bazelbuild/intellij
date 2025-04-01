@@ -56,7 +56,6 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
     applicationServices.register(ExperimentService.class, new MockExperimentService());
 
     Registry.get("bazel.sync.resolve.virtual.includes").setValue(true);
-    Registry.get("bazel.sync.collect.virtual.includes.hints").setValue(true);
 
     applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
 
@@ -95,7 +94,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             cFlags,
             cFlags,
             "cc version (trunk r123456)",
-            ImmutableMap.of());
+            ImmutableMap.of(),
+            ImmutableList.of());
 
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
         .containsExactly("-fast", "-slow")
@@ -113,7 +113,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             cFlags,
             cFlags,
             "cc version (trunk r123456)",
-            ImmutableMap.of());
+            ImmutableMap.of(),
+            ImmutableList.of());
 
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
         .containsExactly("--sysroot=" + workspaceRoot + "/third_party/toolchain");
@@ -130,7 +131,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             cFlags,
             cFlags,
             "cc version (trunk r123456)",
-            ImmutableMap.of());
+            ImmutableMap.of(),
+            ImmutableList.of());
 
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
         .containsExactly("--sysroot=/usr");
@@ -148,7 +150,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             cFlags,
             cFlags,
             "cc version (trunk r123456)",
-            ImmutableMap.of());
+            ImmutableMap.of(),
+            ImmutableList.of());
 
     String outputBase = blazeProjectData.getBlazeInfo().getOutputBase().toString();
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
@@ -172,7 +175,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             cFlags,
             cFlags,
             "cc version (trunk r123456)",
-            ImmutableMap.of());
+            ImmutableMap.of(),
+            ImmutableList.of());
 
     String execRoot = blazeProjectData.getBlazeInfo().getExecutionRoot().toString();
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
@@ -192,7 +196,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             cFlags,
             cFlags,
             "cc version (trunk r123456)",
-            ImmutableMap.of());
+            ImmutableMap.of(),
+            ImmutableList.of());
 
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
         .containsExactly("-isystem", "/usr/include");
@@ -208,7 +213,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             ImmutableList.of(),
             ImmutableList.of(),
             "cc version (trunk r123456)",
-            ImmutableMap.of("DEVELOPER_DIR", "/tmp/foobar"));
+            ImmutableMap.of("DEVELOPER_DIR", "/tmp/foobar"),
+            ImmutableList.of());
 
     assertThat(settings.getCompilerEnvironment("DEVELOPER_DIR"))
         .matches("/tmp/foobar");

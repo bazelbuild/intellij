@@ -22,6 +22,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
+import com.google.idea.blaze.base.buildview.BuildViewMigration;
+import com.google.idea.blaze.base.buildview.BuildViewScope;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
@@ -30,6 +32,7 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.NotSupportedWithQuerySyncException;
 import com.google.idea.blaze.base.qsync.QuerySyncPromo;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
@@ -41,6 +44,7 @@ import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
@@ -61,6 +65,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.text.StringUtil;
+
 import java.util.Collection;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -89,6 +94,9 @@ public class BlazeSyncManager {
 
   /** Requests a project sync with Blaze. */
   public void requestProjectSync(BlazeSyncParams syncParams) {
+    if (Blaze.getUpToDateProjectTypeBeforeSync(project) == ProjectType.QUERY_SYNC) {
+      throw new NotSupportedWithQuerySyncException("legacy sync requested");
+    }
     if (syncParams.syncMode() == SyncMode.NO_BUILD
         && !syncParams.backgroundSync()
         && !SyncDirectoriesWarning.warn(project)) {
@@ -111,10 +119,16 @@ public class BlazeSyncManager {
             () -> {
               Future<Void> unusedFuture =
                   ProgressiveTaskWithProgressIndicator.builder(project, "Initiating project sync")
+                      .setModality(BuildViewMigration.progressModality())
                       .submitTask(
                           indicator ->
                               Scope.root(
                                   context -> {
+                                    if (BuildViewMigration.getEnabled()) {
+                                      context.push(new BuildViewScope(project,
+                                          getRootInvocationTitle(syncParams)));
+                                    }
+
                                     context
                                         .push(new ProgressIndicatorScope(indicator))
                                         .push(buildToolWindowScope(syncParams, indicator))
@@ -123,6 +137,7 @@ public class BlazeSyncManager {
                                                 project,
                                                 BlazeUserSettings.getInstance()
                                                     .getShowProblemsViewOnSync()));
+
                                     if (!runInitialDirectoryOnlySync(syncParams)) {
                                       executeTask(project, syncParams, context);
                                       return;
@@ -224,20 +239,22 @@ public class BlazeSyncManager {
     }
   }
 
-  private Task getRootInvocationTask(BlazeSyncParams params) {
-    String taskTitle;
+  private String getRootInvocationTitle(BlazeSyncParams params) {
     if (params.syncMode() == SyncMode.STARTUP) {
-      taskTitle = "Startup Sync";
+      return "Startup Sync";
     } else if (params.syncOrigin().equals(BlazeSyncStartupActivity.SYNC_REASON)) {
-      taskTitle = "Importing " + project.getName();
+      return "Importing " + project.getName();
     } else if (params.syncMode() == SyncMode.PARTIAL) {
-      taskTitle = "Partial Sync";
+      return "Partial Sync";
     } else if (params.syncMode() == SyncMode.FULL) {
-      taskTitle = "Non-Incremental Sync";
+      return "Non-Incremental Sync";
     } else {
-      taskTitle = "Incremental Sync";
+      return "Incremental Sync";
     }
-    return new Task(project, taskTitle, Task.Type.SYNC);
+  }
+
+  private Task getRootInvocationTask(BlazeSyncParams params) {
+    return new Task(project, getRootInvocationTitle(params), Task.Type.SYNC);
   }
 
   private BlazeScope buildToolWindowScope(BlazeSyncParams syncParams, ProgressIndicator indicator) {

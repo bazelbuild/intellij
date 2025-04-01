@@ -26,9 +26,11 @@ import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndi
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
+import com.google.idea.blaze.base.buildview.BuildViewMigration;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.command.BlazercMigrator;
+import com.google.idea.blaze.base.command.buildresult.BuildResult;
 import com.google.idea.blaze.base.dependencies.BlazeQuerySourceToTargetProvider;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
@@ -57,7 +59,6 @@ import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
-import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder;
@@ -239,10 +240,11 @@ public final class BuildPhaseSyncTask {
 
     BuildInvoker syncBuildInvoker =
         parallel
-            ? buildSystem.getParallelBuildInvoker(project, context).orElse(defaultInvoker)
+            ? buildSystem.getBuildInvoker(project, context, ImmutableSet.of(BuildInvoker.Capability.SUPPORTS_PARALLELISM))
             : defaultInvoker;
     final BlazercMigrator blazercMigrator = new BlazercMigrator(project);
-    if (!syncBuildInvoker.supportsHomeBlazerc() && blazercMigrator.needMigration()) {
+    if (!syncBuildInvoker.getCapabilities().contains(BuildInvoker.Capability.SUPPORTS_CLI)
+        && blazercMigrator.needMigration()) {
       context.output(
           SummaryOutput.output(Prefix.INFO, "No .blazerc found at workspace root!").log().dedupe());
       ApplicationManager.getApplication()
@@ -254,28 +256,30 @@ public final class BuildPhaseSyncTask {
         .setSyncSharded(shardedTargets.shardCount() > 1)
         .setShardCount(shardedTargets.shardCount())
         .setShardStats(shardedTargets.shardStats())
-        .setParallelBuilds(syncBuildInvoker.supportsParallelism());
+        .setParallelBuilds(
+            syncBuildInvoker
+                .getCapabilities()
+                .contains(BuildInvoker.Capability.SUPPORTS_PARALLELISM));
 
-    BlazeBuildOutputs blazeBuildResult =
+    BlazeBuildOutputs.Legacy blazeBuildResult =
         getBlazeBuildResult(context, viewSet, shardedTargets, syncBuildInvoker, parallel);
     resultBuilder.setBuildResult(blazeBuildResult);
     buildStats
-        .setBuildResult(blazeBuildResult.buildResult)
-        .setBuildIds(blazeBuildResult.getBuildIds())
-        .setBuildBinaryType(syncBuildInvoker.getType())
-        .setBepBytesConsumed(blazeBuildResult.bepBytesConsumed);
+        .setBuildResult(blazeBuildResult.buildResult())
+        .setBuildBinaryType(syncBuildInvoker.getType());
 
     if (context.isCancelled()) {
       throw new SyncCanceledException();
     }
-    String invocationResultMsg = "Build invocation result: " + blazeBuildResult.buildResult.status;
-    if (blazeBuildResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
+    String invocationResultMsg =
+        "Build invocation result: " + blazeBuildResult.buildResult().status;
+    if (blazeBuildResult.buildResult().status == BuildResult.Status.FATAL_ERROR) {
       context.setHasError();
-      if (blazeBuildResult.buildResult.outOfMemory()) {
+      if (blazeBuildResult.buildResult().outOfMemory()) {
         SuggestBuildShardingNotification.syncOutOfMemoryError(project, context);
       }
 
-      if (!continueSyncOnOom.getValue() || blazeBuildResult.artifacts.isEmpty()) {
+      if (!continueSyncOnOom.getValue() || blazeBuildResult.isEmpty()) {
         context.output(PrintOutput.error(invocationResultMsg));
         throw new SyncFailedException();
       }
@@ -385,28 +389,30 @@ public final class BuildPhaseSyncTask {
     }
     String title = "Query targets building source files";
     List<TargetInfo> result =
-        ProgressiveTaskWithProgressIndicator.builder(project, title).submitTaskWithResult(
-            indicator -> Scope.push(
-                context,
-                childContext -> {
-                  childContext.push(new TimingScope("QuerySourceTargets", EventType.BlazeInvocation));
-                  childContext.output(new StatusOutput("Querying targets building source files..."));
-                  var scope = childContext.getScope(ToolWindowScope.class);
-                  if(scope != null) { // If ToolWindowScope doesn't already exist, it means the output is not supposed to be printed to toolwindow (for example in tests)
-                    var task = new Task(project, title, Task.Type.SYNC, scope.getTask());
-                    var newScope = new ToolWindowScope.Builder(project, task)
-                        .setProgressIndicator(indicator)
-                        .setPopupBehavior(BlazeUserSettings.FocusBehavior.ON_ERROR)
-                        .setIssueParsers(targetDetectionQueryParsers(project, WorkspaceRoot.fromProject(project)))
-                        .build();
-                    childContext.push(newScope);
-                  }
+        ProgressiveTaskWithProgressIndicator.builder(project, title)
+            .setModality(BuildViewMigration.progressModality())
+            .submitTaskWithResult(
+                indicator -> Scope.push(
+                    context,
+                    childContext -> {
+                      childContext.push(new TimingScope("QuerySourceTargets", EventType.BlazeInvocation));
+                      childContext.output(new StatusOutput("Querying targets building source files..."));
+                      var scope = childContext.getScope(ToolWindowScope.class);
+                      if(scope != null) { // If ToolWindowScope doesn't already exist, it means the output is not supposed to be printed to toolwindow (for example in tests)
+                        var task = new Task(project, title, Task.Type.SYNC, scope.getTask());
+                        var newScope = new ToolWindowScope.Builder(project, task)
+                            .setProgressIndicator(indicator)
+                            .setPopupBehavior(BlazeUserSettings.FocusBehavior.ON_ERROR)
+                            .setIssueParsers(targetDetectionQueryParsers(project, WorkspaceRoot.fromProject(project)))
+                            .build();
+                        childContext.push(newScope);
+                      }
 
-                  // We don't want blaze build errors to fail the whole sync
-                  childContext.setPropagatesErrors(false);
-                  return BlazeQuerySourceToTargetProvider.getTargetsBuildingSourceFiles(
-                      project, pathsToQuery.build(), childContext, ContextType.Sync);
-                })).get(); // We still call no-timeout waitFor in ExternalTask.run()
+                      // We don't want blaze build errors to fail the whole sync
+                      childContext.setPropagatesErrors(false);
+                      return BlazeQuerySourceToTargetProvider.getTargetsBuildingSourceFiles(
+                          project, pathsToQuery.build(), childContext, ContextType.Sync);
+                    })).get(); // We still call no-timeout waitFor in ExternalTask.run()
     if (context.isCancelled()) {
       throw new SyncCanceledException();
     }
@@ -414,7 +420,7 @@ public final class BuildPhaseSyncTask {
       String fileBugSuggestion =
           Blaze.getBuildSystemName(project) == BuildSystemName.Bazel
               ? ""
-              : " Please run 'Blaze > File a Bug'";
+              : " Please run 'Help > File a Bug'";
       IssueOutput.error(
               "Querying blaze targets building project source files failed." + fileBugSuggestion)
           .submit(context);
@@ -424,7 +430,7 @@ public final class BuildPhaseSyncTask {
     return targets.build();
   }
 
-  private BlazeBuildOutputs getBlazeBuildResult(
+  private BlazeBuildOutputs.Legacy getBlazeBuildResult(
       BlazeContext parentContext,
       ProjectViewSet projectViewSet,
       ShardedTargetList shardedTargets,

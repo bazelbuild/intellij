@@ -20,7 +20,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.CopyOption;
@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
 public class FileOperationProvider {
 
   public static FileOperationProvider getInstance() {
-    return ServiceManager.getService(FileOperationProvider.class);
+    return ApplicationManager.getApplication().getService(FileOperationProvider.class);
   }
 
   public boolean exists(File file) {

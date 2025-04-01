@@ -15,11 +15,11 @@
  */
 package com.google.idea.blaze.cpp.qsync;
 
-import com.google.idea.blaze.base.qsync.BlazeProjectListenerProvider;
 import com.google.idea.blaze.base.qsync.QuerySyncProject;
+import com.google.idea.blaze.base.qsync.QuerySyncProjectListenerProvider;
 import com.google.idea.blaze.common.Context;
-import com.google.idea.blaze.qsync.BlazeProjectListener;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.QuerySyncProjectListener;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.intellij.openapi.application.WriteAction;
@@ -28,17 +28,17 @@ import com.intellij.openapi.util.Disposer;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 
 /**
- * A {@link BlazeProjectListener} that triggers the update of the IJ project model with CC
+ * A {@link QuerySyncProjectListener} that triggers the update of the IJ project model with CC
  * compilation information from the project proto.
  */
-public class CcProjectModelUpdater implements BlazeProjectListener {
+public class CcProjectModelUpdater implements QuerySyncProjectListener {
 
   /** Provides instances of {@link CcProjectModelUpdater}. Instantiated as an extension by IJ. */
-  public static class Provider implements BlazeProjectListenerProvider {
+  public static class Provider implements QuerySyncProjectListenerProvider {
     public Provider() {}
 
     @Override
-    public BlazeProjectListener createListener(QuerySyncProject querySyncProject) {
+    public QuerySyncProjectListener createListener(QuerySyncProject querySyncProject) {
       return create(querySyncProject.getIdeProject(), querySyncProject.getProjectPathResolver());
     }
   }
@@ -59,7 +59,7 @@ public class CcProjectModelUpdater implements BlazeProjectListener {
   }
 
   @Override
-  public void onNewProjectSnapshot(Context<?> context, BlazeProjectSnapshot instance) {
+  public void onNewProjectSnapshot(Context<?> context, QuerySyncProjectSnapshot instance) {
     updateProjectModel(instance.project(), context);
   }
 

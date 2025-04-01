@@ -73,7 +73,7 @@ final class BlazeResolveConfiguration {
         computeTargetToSources(blazeProjectData, targets));
   }
 
-  Collection<TargetKey> getTargets() {
+  public Collection<TargetKey> getTargets() {
     return targets;
   }
 

@@ -16,7 +16,7 @@
 package com.google.idea.blaze.android.sdk;
 
 import com.android.repository.api.ProgressIndicator;
-import com.android.tools.idea.progress.StudioLoggerProgressIndicatorCompat;
+import com.android.tools.idea.progress.StudioLoggerProgressIndicator;
 import com.android.tools.idea.sdk.AndroidSdks;
 import com.android.tools.idea.sdk.IdeSdks;
 import com.google.idea.blaze.android.sync.sdk.SdkUtil;
@@ -25,7 +25,6 @@ import com.intellij.util.ui.UIUtil;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
-import org.jetbrains.android.sdk.AndroidSdkAdditionalDataCompat;
 
 /** Indirection to Sdks for testing purposes. */
 public class BlazeSdkProviderImpl implements BlazeSdkProvider {
@@ -45,7 +44,7 @@ public class BlazeSdkProviderImpl implements BlazeSdkProvider {
     // We may have an android platform downloaded, but not created an IntelliJ SDK out of it.
     // If so, trigger the construction of an SDK
     ProgressIndicator progress =
-        new StudioLoggerProgressIndicatorCompat(BlazeSdkProviderImpl.class);
+        new StudioLoggerProgressIndicator(BlazeSdkProviderImpl.class);
     androidSdks.tryToChooseSdkHandler().getSdkManager(progress).reloadLocalIfNeeded(progress);
 
     return UIUtil.invokeAndWaitIfNeeded(
@@ -55,7 +54,7 @@ public class BlazeSdkProviderImpl implements BlazeSdkProvider {
   @Override
   @Nullable
   public String getSdkTargetHash(Sdk sdk) {
-    AndroidSdkAdditionalData additionalData = AndroidSdkAdditionalDataCompat.from(sdk);
+    AndroidSdkAdditionalData additionalData = AndroidSdkAdditionalData.from(sdk);
     if (additionalData == null) {
       return null;
     }

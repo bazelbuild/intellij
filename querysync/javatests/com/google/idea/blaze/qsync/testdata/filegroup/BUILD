@@ -1,3 +1,5 @@
+load("@rules_java//java:defs.bzl", "java_library")
+
 filegroup(
     name = "nested_filegroup",
     srcs = ["TestSubFileGroupSource.java"],

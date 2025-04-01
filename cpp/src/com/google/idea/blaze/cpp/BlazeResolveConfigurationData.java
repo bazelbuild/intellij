@@ -75,9 +75,8 @@ final class BlazeResolveConfigurationData {
         && this.localCopts.equals(otherData.localCopts)
         && this.transitiveDefines.equals(otherData.transitiveDefines)
         && this.toolchainIdeInfo.equals(otherData.toolchainIdeInfo)
-        && this.compilerSettings
-            .getCompilerVersion()
-            .equals(otherData.compilerSettings.getCompilerVersion());
+        && this.compilerSettings.getCompilerVersion().equals(
+            otherData.compilerSettings.getCompilerVersion());
   }
 
   @Override

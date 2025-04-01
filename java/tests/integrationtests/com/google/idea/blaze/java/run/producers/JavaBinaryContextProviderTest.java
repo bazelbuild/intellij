@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducerTes
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.psi.PsiFile;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

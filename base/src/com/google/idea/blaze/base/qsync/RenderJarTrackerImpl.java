@@ -23,8 +23,8 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
-import com.google.idea.blaze.qsync.BlazeProject;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
+import com.google.idea.blaze.qsync.SnapshotHolder;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -37,15 +37,15 @@ import java.util.Set;
  */
 public class RenderJarTrackerImpl implements RenderJarTracker {
 
-  private final BlazeProject blazeProject;
+  private final SnapshotHolder snapshotHolder;
   private final RenderJarBuilder renderJarBuilder;
   private final RenderJarArtifactTracker renderJarArtifactTracker;
 
   public RenderJarTrackerImpl(
-      BlazeProject blazeProject,
+      SnapshotHolder snapshotHolder,
       RenderJarBuilder renderJarBuilder,
       RenderJarArtifactTracker renderJarArtifactTracker) {
-    this.blazeProject = blazeProject;
+    this.snapshotHolder = snapshotHolder;
     this.renderJarBuilder = renderJarBuilder;
     this.renderJarArtifactTracker = renderJarArtifactTracker;
   }
@@ -56,8 +56,8 @@ public class RenderJarTrackerImpl implements RenderJarTracker {
       throws IOException, BuildException {
     workspaceRelativePaths.forEach(path -> Preconditions.checkState(!path.isAbsolute(), path));
 
-    BlazeProjectSnapshot snapshot =
-        blazeProject
+    QuerySyncProjectSnapshot snapshot =
+        snapshotHolder
             .getCurrent()
             .orElseThrow(() -> new IllegalStateException("Failed to get the snapshot"));
 

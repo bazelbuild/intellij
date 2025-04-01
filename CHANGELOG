@@ -1,3 +1,284 @@
+v2025.03.18
+===========
+Followup: Use toolchains_aspects to propagate aspects to toolchains #7376
+Fix make variable expansion #7399
+[AOSP-pick] Remove unused DBiP experimental flag #7401
+[AOSP-pick] Fix and improve artifact fetching reporting #7405
+[AOSP-pick] Extract ProjectLoader interface #7406
+[AOSP-pick] Make thread pools a concern of ProjectLoader #7407
+[AOSP-pick] Make test_deps buildable from the command line #7413
+[AOSP-pick] Delete getLocalInvoker method #7416
+[AOSP-pick] Convert BEP parsing to Kotlin #7417
+[AOSP-pick] Make FileApiArtifactFetcher thread pool configurable #7421
+[AOSP-pick] Fix experiment service performance issues #7426
+[AOSP-pick] qs_info groups are not concern of ArtifactTracker #7427
+[AOSP-pick] Enable multi info file sync mode #7428
+[AOSP-pick] Introduce new default query strategy #7439
+[AOSP-pick] Exclude no-ide targets from query results #7441
+[AOSP-pick] Delete SINGLE_TARGET case as unused #7442
+[AOSP-pick] Skip no-ide targets in the aspect #7446
+[AOSP-pick] Build workflows cleanup in tools/adt/idea (Part 1) #7454
+[AOSP-pick] Simplest possible version check #7456
+[AOSP-pick] Automatically exclude .aswb from analysis #7465
+[AOSP-pick] Fix incorrect application of if in cc_info handling #7466
+[AOSP-pick] Fix navigation to sources #7469
+[AOSP-pick] Clean up and fix java-info file generation #7472
+
+v2025.03.04
+===========
+Fixes:
+* More customary to IJ error reporting for cases when required JDK is missing #7321
+* Fixes for the PTY terminal on Windows #7348
+* Copy aspects also during startup sync #7331
+* Stop adding $ as "terminators" when filtering tests for JUnit 5 #7080
+* Reduce freeze in ProjectUpdater #7199
+Updates:
+* 2025.1 update: promote 2025.1 builds to stable #7396
+AOSP updates:
+* [AOSP-pick] Fix skip finding output experiment implementation #7381
+* [AOSP-pick] Remove TODOs and rename classes #7380
+* [AOSP-pick] Mark ASwB K2 compatible #7379
+* [AOSP-pick] Clean up and Java docs #7378
+* [AOSP-pick] Complete separation of legacy BepParser #7377
+* [AOSP-pick] Rename build_id to build_id_for_logging #7370
+* [AOSP-pick] Always use BlazeBuildOutputs #7369
+* [AOSP-pick] Never ask for artifacts without output group #7366
+* [AOSP-pick] Drop log only localExecRoot property #7365
+* [AOSP-pick] Cleanup BlazeBuildOutputs instantiation #7362
+* [AOSP-pick] Simplify ParsedBepOutput public interface #7361
+* [AOSP-pick] Enumerate all currently used cache directories. #7360
+* [AOSP-pick] Extract core BEP parsing #7358
+* [AOSP-pick] Simplify handling of config mnemonics #7356
+* [AOSP-pick] Separate BEP analysis and parsing #7355
+* [AOSP-pick] Extract BuildOutputs interface #7354
+* [AOSP-pick] Encapsulate BuildOutputs.artifacts #7350
+* [AOSP-pick] Make artifact prefix path public #7346
+* [AOSP-pick] Handle output groups explicitly in deployment #7347
+* [AOSP-pick] Clean up DeployTarget interface #7345
+* [AOSP-pick] Encapsulate buildResult field #7344
+* [AOSP-pick] Replace output group name filter #7342
+* [AOSP-pick] Separate BEP parsing and data #7338
+* [AOSP-pick] Delete currently unused fields #7337
+* [AOSP-pick] Delete unused code #7330
+
+v2025.02.18
+===========
+Fixes:
+* Replace VFS with a manifest file for copying aspects #7259
+* Add cfg exec to java runtime required by aspects #7301
+* handling for debugging python test targets with transitions #7198
+* Open build toolwindow when the sync ends with an error #7304
+* CLion support for custom sysroot #7274
+* Followup: External modules navigation in starlark files #7294
+* [AOSP-pick] Remove 2 options of query sync settings #7264
+* [AOSP-pick] Make run configurations configurable #7275
+
+v2025.02.04
+===========
+Fixes:
+* Followup: query xcode parameters from provider based on attributes #7266
+* make label parsing more resilient #7257
+* Fix aspect_template reference in java_classpath aspect #7265
+
+v2025.01.21
+===========
+Fixes:
+* Fix qsync NPE #7222
+* Fix red code in MODULE.bazel #7217
+* Copy aspect files to workspace #7202
+* Fix mac agent native errors #7216
+
+v2025.01.07
+===========
+* Allow to boost .ijwb over BSP and .idea folder. #7201
+
+v2024.12.17
+===========
+Fixes:
+* Keep bazel from automatically enabling curses with the old sync view #7143
+* Do not use curses with the old sync view #7139
+* Do not append \n for PROCESS since that output has all of the delim… #7146
+* clion: fix non-passed env vars for gdbserverless debugging #7167
+* handle non-valid project view file on reload #7159
+Features:
+* Adds support for the google test run button in nova #7062
+* Add catch2 test support in CLion #7141
+* Adds support for the run button on main functions in nova  #7100
+* Experimental: Basic qsync support in CLion for linux #7094
+
+v2024.12.03
+===========
+Fixes:
+* fix: NPE in WorkspaceHelper when project is not loaded yet #7036
+* fix issues with aspect templates not available in query sync mode #7048
+* fix: Don't require rules_java and rules_python for bazel 7 and older #7052
+* Reapply "fix: Support bazel 8 and --noenable_workspace mode (#6990)… #7045
+* Handle included MODULE.bazel files as well #7057
+* Fix indexing problem with Fix getPackageName which didn't respect "build ignore" #7034
+* Stop adding a trailing # when filtering tests for JUnit 5 #7060
+* fix(qsync): Include runtime_deps in the target graph #7081
+* Fix over-including when view_project_root is set. #7002
+* fix: remove strongInfoHolder flag, so users can choose which plugin t… #7092
+* Reload project view, and make sure that BazelImportSettings respect p… #7088
+* fix(qsync): Hightlighting level is always updated after 'enable analy… #7101
+Features:
+* PTY enabled terminal for the new sync view #7001
+* Enable the new sync view for query sync #7037
+
+v2024.11.19
+===========
+Features:
+* Bazel Icon for Plugin Logo #6973
+* Query Sync: "Enable analysis" widget for Remote Development #6996
+* Starlark Debuger: Gutter icons to start debugging #6999
+Fixes:
+* C++: Do not collide with CMake #6770
+* Make the BlazeImportProjectAction dumb aware #6985
+* Query Sync: Fix NPE when enabling analysis for a directory #6992
+* Bazel 8 support for Java (#6987 and #7006)
+* Exception in the new QuerySyncNotificationProvider #7009
+* fix(qsync): Fix build_dependencies after AOSP merge #7027
+* disable warmup service #7029
+* fix(qsync): NPE in QuerySyncNotificationProvider #7032
+
+v2024.11.05
+===========
+Features:
+* C++: Use execroot for compiler working directory #6911
+* C++: CLion support for cc_library implementation deps #6919
+* C++: External includes support #6922
+* GoLand: cgo support #6891
+* GoLand: gotest support on Windows #6938
+* Query Sync: better syntax highlithting when analysis disabled #6941
+Fixes:
+* Do not decorate tabs for BUILD files in non-bazel projects #6925
+* fix: NPE in location provider #6960
+* Query Sync: Use git info only when Expand to Working Set is enabled #6944
+* Query Sync: fix(qsync): IJ incorrectly recognizes files as external and asks to a… #6964
+* Query Sync: fix(qsync): Unhandled exception when trying to resolve external works… #6962
+* Query Sync: fix(qsync): NPE in "Add to project" panel action #6967
+
+v2024.10.22
+===========
+Bug Fixes
+* [fix] Fix python debugging #6847
+* Set runfiles vars to absolute paths when debugging Go tests #6883
+* Fix starlark debugger #6888
+* fix(querysync): affected packages calculator was broken when 'directories' contained '.' #6885
+* fix: fast test not working when main class is not set #6903
+* fix: fast sync with bazel 8 or when --incompatible_use_plus_in_repo_names is on #6901
+* BEP parse unknown targets in aborted event #6910
+Features
+* Download Buildifier Binary #6625
+* Support for Python Rules that are Code Generators #6726
+* Decorate tabs for BUILD files with package name #6900
+* New Sync View #6813
+* feat: More descriptive location labels (instead of just .workspace) #6916
+
+v2024.10.08
+===========
+Bug Fixes
+* CLion Virtual Include Fixes #6759
+* Fixes for Query Sync (ready to use): #6833, #6834, #6835, #6841
+* [fix] Confirm if user wants to reimport instead of disallowing it #6839
+Features
+* Implement JUnit5 support and parameterize tests #4473
+* [feature] Recognize WORKSPACE.bzlmod files #6853
+
+v2024.09.24
+===========
+Bug Fixes
+* Fix auto-import exception #6753
+* Fix unrecognized options by bazel mod command #6756
+* Set go DebugConfguration working directory for tests #6748
+Features
+* CLion add support for additional_compiler_inputs #6774
+* Added completion support for external targets from modules. Needs --incompatible_use_plus_in_repo_names set (defaults to true in bazel 8.0+) to work optimally. (credits: @mtoader)
+
+v2024.09.10
+===========
+Bug Fixes
+* Fix reading MatchedMatcher data in BlazePyTracebackParser #6693
+* Fix googletest integration with CLion 2024.2 #6741
+
+v2024.08.27
+===========
+Features
+* Added build folder action #6615
+* Invoke bazel build during sync using --target_pattern_fi… #6595
+Bug Fixes
+* fix: Exception when opening a JavaScript project #6645
+* go: fix testify single test execution #6634
+* fix: Resolve collision between view_project_root and "directories: ." #6665
+
+v2024.08.13
+===========
+## Features
+- Python: Implemented `imports` Attribute Handling
+  Improved support for Python imports in Bazel projects. [#6606]
+
+- Python: Transition Rules Handling
+  Added handling for Bazel rules involving transitions, such as pinned Python interpreter targets, enhancing project configuration. [#6605]
+
+- C++: Project Status API Integration
+  Integrated the Project Status API with Bazel for CLion, improving project sync and status reporting. [#6585]
+
+## Bug Fixes
+- Fixed an issue causing `NoClassDefFoundError: com/intellij/history/core/Paths` during project operations. [#6616]
+- Stopped printing `AswbDumpVfs` logs. [#6617]
+- Scala: Updated the plugin to correctly recognize `org_scala_lang_scala_library` as a valid Scala library name, improving Scala project support. [#6629]
+
+v2024.07.30
+===========
+Features:
+* feat: enable view_project_root by default in auto import mode #6596
+* CLion MSVC Support #6500
+Bug Fixes:
+* Fix wrong heuristic for when bazel uses a wrapper script #6592
+* use absolute directories paths while deriving targets #6544
+Performance Fixes:
+* Don't build unnecessary jars. #5515
+* fix: Adjust executor threads based on device core count #6588
+
+v2024.07.16
+===========
+Performance Fix
+* Fixes after sync freeze on MacOS  #6562
+* Improve performance when resolving the workspace root #6530
+Bug Fixes
+* fix: Resolve query failure when there is a large number of files in t… #6537
+* Propagate build errors to UI #6546
+
+v2024.07.02
+===========
+Performance fix:
+* Use a global bounded threadpool when using persistent workers #6508
+Bug fixes:
+* fix: Display "Coverage" tool window correctly after executing "run wi… #6502
+* Disable include hints (-ibazel) by default #6534
+* trusted project: respect intellij settings controlling project trustness #6521
+* clion: fix broken debug in 2024.2 #6538
+Internal changes:
+* CI build on Windows #6494
+
+v2024.06.18
+===========
+* fix: Missing directories when view_project_root is on #6493
+* fix: "Read access is allowed from inside read-action" exception when opening a file #6489
+* Add extension point to detect whether a module is to be orphaned or retained. #6467
+* Fix for wrong compiler executable when using custom toolchains #6419
+* fix(coverage): Account for SHA in lcov DA parsing #6463
+* fix: Mark saveAllFiles as a WriteAction #6459
+* fix: Rely on the bazel zipper instead of zip #6462
+
+v2024.06.04-RC-2
+================
+* Address CVE-2024-5899
+* feat: Support JetBrains IDEs 2024.2 #6434
+* feat: Editor notification on bazel files if the project is not imported #6153
+* perf: perf: Pass --override_repository flag to all commands for faster analysis phase #6453
+* fix: Default to project name to workspace name instead of root directory #6458
+
 v2024.06.04
 ===========
 * feat: Support JetBrains IDEs 2024.2 #6434

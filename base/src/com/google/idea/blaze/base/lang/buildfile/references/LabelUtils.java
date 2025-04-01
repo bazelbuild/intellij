@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,11 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.codeInsight.completion.CompletionUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /** Utility methods for working with blaze labels. */
@@ -119,7 +121,9 @@ public class LabelUtils {
   /** The blaze file referenced by the label. */
   @Nullable
   public static BuildFile getReferencedBuildFile(
-      @Nullable BuildFile containingFile, String packagePathComponent) {
+      @Nullable BuildFile containingFile,
+      @Nullable String externalWorkspaceComponent,
+      String packagePathComponent) {
     if (containingFile == null) {
       return null;
     }
@@ -127,10 +131,18 @@ public class LabelUtils {
       return containingFile;
     }
     return BuildReferenceManager.getInstance(containingFile.getProject())
-        .resolveBlazePackage(packagePathComponent);
+        .resolveBlazePackage(packagePathComponent, externalWorkspaceComponent);
   }
 
+  @Nonnull
   public static String getRuleComponent(String labelString) {
+    if (labelString.startsWith("@")) {
+      int colonIndex = labelString.indexOf('/');
+      if (colonIndex == -1) {
+        return "";
+      }
+      labelString = labelString.substring(colonIndex + 1);
+    }
     if (labelString.startsWith("/")) {
       int colonIndex = labelString.indexOf(':');
       return colonIndex == -1 ? "" : labelString.substring(colonIndex + 1);

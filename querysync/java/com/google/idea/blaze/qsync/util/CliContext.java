@@ -49,6 +49,15 @@ public class CliContext implements Context<CliContext> {
   @Override
   public void setHasWarnings() {}
 
+  @Override
+  public boolean isCancelled() {
+    return false;
+  }
+
+  @Override
+  public void addCancellationHandler(Runnable runOnCancel) {
+  }
+
   public boolean hasError() {
     return hasError;
   }

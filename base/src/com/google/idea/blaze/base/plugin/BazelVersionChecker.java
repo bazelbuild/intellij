@@ -20,12 +20,11 @@ import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.common.experiments.FeatureRolloutExperiment;
 
 /** Verifies that the available Bazel version is supported by this plugin. */
 public class BazelVersionChecker implements BuildSystemVersionChecker {
 
-  private static final BazelVersion OLDEST_SUPPORTED_VERSION = new BazelVersion(4, 0, 0);
+  private static final BazelVersion OLDEST_SUPPORTED_VERSION = new BazelVersion(6, 0, 0);
 
   @Override
   public boolean versionSupported(BlazeContext context, BlazeVersionData version) {

@@ -20,10 +20,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Optional;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * A service that tracks what files in the project can be analyzed and what is the status of their
@@ -32,36 +29,15 @@ import javax.annotation.Nullable;
 public interface DependencyTracker {
 
   /**
-   * For a given project targets, returns all the targets outside the project that its source files
-   * need to be edited fully. This method return the dependencies for the target with fewest pending
-   * so that if dependencies have been built for one, the empty set will be returned even if others
-   * have pending dependencies.
-   */
-  @Nullable
-  Set<Label> getPendingExternalDeps(Set<Label> projectTargets);
-
-  /** Recursively get all the transitive deps outside the project */
-  @Nullable
-  Set<Label> getPendingTargets(Path workspaceRelativePath);
-
-  /**
    * Builds the external dependencies of the given target(s), putting the resultant libraries in the
    * shared library directory so that they are picked up by the IDE.
    */
   boolean buildDependenciesForTargets(BlazeContext context, DependencyBuildRequest request)
       throws IOException, BuildException;
 
-  /**
-   * Returns a list of local cache files that build by target provided. Returns Optional.empty() if
-   * the target has not yet been built.
-   */
-  Optional<ImmutableSet<Path>> getCachedArtifacts(Label target);
-
   /** Request to {@link #buildDependenciesForTargets(BlazeContext, DependencyBuildRequest)}. */
   class DependencyBuildRequest {
     enum RequestType {
-      /** Build a single target and do not check if its dependencies were built. */
-      SINGLE_TARGET,
       /**
        * Build multiple targets and mark all dependencies as built even if they produce no
        * artifacts.
@@ -80,10 +56,6 @@ public interface DependencyTracker {
     private DependencyBuildRequest(RequestType type, ImmutableSet<Label> targets) {
       this.requestType = type;
       this.targets = targets;
-    }
-
-    public static DependencyBuildRequest singleTarget(Label target) {
-      return new DependencyBuildRequest(RequestType.SINGLE_TARGET, ImmutableSet.of(target));
     }
 
     public static DependencyBuildRequest multiTarget(Set<Label> targets) {

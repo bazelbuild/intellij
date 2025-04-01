@@ -69,7 +69,6 @@ import javax.swing.JTable;
 import javax.swing.table.TableColumn;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
-import org.jetbrains.annotations.NotNull;
 
 /** UI for exporting run configurations. */
 public class ExportRunConfigurationDialog extends DialogWrapper {

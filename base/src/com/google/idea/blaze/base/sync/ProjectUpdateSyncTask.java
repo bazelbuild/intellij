@@ -227,6 +227,7 @@ final class ProjectUpdateSyncTask {
             projectState.getWorkspacePathResolver(),
             artifactLocationDecoder,
             projectState.getLanguageSettings(),
+            projectState.getExternalWorkspaceData(),
             syncStateBuilder.build());
 
     FileCaches.onSync(

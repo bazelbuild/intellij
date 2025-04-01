@@ -16,18 +16,22 @@
 package com.google.idea.blaze.aspect.integration;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Resources;
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectWriter;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyBazel;
-import java.io.File;
-import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Map;
+import org.jetbrains.annotations.Contract;
 
 /**
  * A Bazel-invoking integration test for the bundled IntelliJ aspect.
@@ -37,51 +41,30 @@ import java.util.stream.Collectors;
  */
 public class BazelInvokingIntegrationTestRunner {
 
+  private static final String ASPECT_DIRECTORY = ".ijwb/aspect";
+
   public static void main(String[] a) throws Exception {
-    BazelVersion bazelVersion = getBazelVersion();
-    if (bazelVersion == null) {
-      exitWithError(
-          String.format(
-              "Failed to get Bazel version from Bazel path (%s)",
-              System.getenv("BIT_BAZEL_BINARY")));
-    }
-    AspectStrategyBazel aspectStrategyBazel =
-        new AspectStrategyBazel(BlazeVersionData.builder().setBazelVersion(bazelVersion).build());
+    final var bazelVersion = getBazelVersion();
+    final var projectRoot = getProjectRoot();
 
-    // Flags for wiring up the plugin aspect from the external @intellij_aspect repository.
-    ImmutableList<String> aspectFlags =
-        ImmutableList.of(
-            aspectStrategyBazel.getAspectFlag().get(),
-            String.format(
-                "%s=%s/%s/aspect",
-                AspectStrategyBazel.OVERRIDE_REPOSITORY_FLAG,
-                System.getenv("TEST_SRCDIR"),
-                System.getenv("TEST_WORKSPACE")));
+    final var aspectDst = projectRoot.resolve(ASPECT_DIRECTORY);
 
-    if (bazelVersion.isAtLeast(6, 0, 0)
-        && !aspectFlags.contains(
-            "--aspects=@@intellij_aspect//:intellij_info_bundled.bzl%intellij_info_aspect")) {
-      exitWithError(
-          String.format("Incorrect/Missing aspects flag in command args (%s)", aspectFlags));
-    }
+    AspectWriter.copyAspects(BazelInvokingIntegrationTestRunner.class, aspectDst, AspectRepositoryProvider.ASPECT_DIRECTORY);
+    AspectWriter.copyAspects(BazelInvokingIntegrationTestRunner.class, aspectDst, AspectRepositoryProvider.ASPECT_TEMPLATE_DIRECTORY);
 
     ImmutableList.Builder<String> args = ImmutableList.builder();
     args.add(System.getenv("BIT_BAZEL_BINARY"));
     args.add("build");
     args.add("//:foo");
     args.add("--define=ij_product=intellij-latest");
-    args.addAll(aspectFlags);
-    args.add(
-        getOutputGroupsFlag(
-            ImmutableList.of(OutputGroup.INFO),
-            ImmutableList.of(LanguageClass.GENERIC),
-            aspectStrategyBazel));
+    args.add(String.format("--aspects=//%s:intellij_info_bundled.bzl%%intellij_info_aspect", ASPECT_DIRECTORY));
+    args.add(getOutputGroupsFlag(bazelVersion));
     ImmutableList<String> command = args.build();
 
     ProcessBuilder processBuilder =
         new ProcessBuilder()
             .command(command)
-            .directory(Paths.get(System.getenv("BIT_WORKSPACE_DIR")).toFile());
+            .directory(projectRoot.toFile());
     Process bazelInvocation = processBuilder.start();
     int exitCode = bazelInvocation.waitFor();
     String invocationOutput = new String(bazelInvocation.getErrorStream().readAllBytes());
@@ -100,6 +83,7 @@ public class BazelInvokingIntegrationTestRunner {
     }
   }
 
+  @Contract("_ -> fail")
   private static void exitWithError(String message) {
     System.err.println(message);
     System.exit(1);
@@ -112,46 +96,46 @@ public class BazelInvokingIntegrationTestRunner {
     return String.format("%s-%s.intellij-info.txt", targetName, targetName.hashCode());
   }
 
-  private static String getOutputGroupsFlag(
-      Collection<OutputGroup> outputGroups,
-      Collection<LanguageClass> languageClassList,
-      AspectStrategy strategy) {
+  private static String getOutputGroupsFlag(BazelVersion version) {
+    final var aspectStrategy = new AspectStrategyBazel(
+        BlazeVersionData.builder().setBazelVersion(version).build()
+    );
+
     // e.g. --output_groups=intellij-info-generic,intellij-resolve-java,intellij-compile-java
-    Set<LanguageClass> languageClasses = new HashSet<>(languageClassList);
-    String outputGroupNames =
-        outputGroups.stream()
-            .flatMap(
-                g ->
-                    strategy
-                        .getBaseOutputGroups(g, languageClasses, /* directDepsOnly= */ false)
-                        .stream())
-            .collect(Collectors.joining(","));
-    return "--output_groups=" + outputGroupNames;
+    final var outputGroups = aspectStrategy.getBaseOutputGroups(
+        OutputGroup.INFO,
+        ImmutableSet.of(LanguageClass.GENERIC),
+        /* directDepsOnly= */ false
+    );
+
+    return "--output_groups=" + String.join(",", outputGroups);
   }
 
   private static BazelVersion getBazelVersion() {
-    // The name of the directory containing the bazel binary is formatted as
-    // build_bazel_bazel_{major}_{minor}_{bugfix}[-pre] for a bazel binary of version
-    // {major}.{minor}.{bugfix}
-    String bazelBinaryPath = System.getenv("BIT_BAZEL_BINARY");
-    if (bazelBinaryPath == null) {
-      return null;
+    final var bitVersion = System.getenv("BIT_BAZEL_VERSION");
+    if (bitVersion == null) {
+      exitWithError("Missing environment variable BIT_BAZEL_VERSION");
     }
-    String bazelDir = new File(bazelBinaryPath).getParentFile().getName();
-    // Get the part after last ~ (becase of canonicalization with bzlmod)
-    if (bazelDir.contains("~")) {
-      bazelDir = bazelDir.substring(bazelDir.lastIndexOf("~") + 1);
+
+    final var version = BazelVersion.parseVersion(bitVersion);
+    if (version.isAtLeast(999, 0, 0)) {
+      exitWithError("Unsupported Bazel version: " + bitVersion);
     }
-    String[] parts = bazelDir.split("_|-");
-    if (parts.length < 6) {
-      return null;
+
+    return version;
+  }
+
+  private static Path getProjectRoot() {
+    final var bitWorkspace = System.getenv("BIT_WORKSPACE_DIR");
+    if (bitWorkspace == null) {
+      exitWithError("Missing environment variable BIT_WORKSPACE_DIR");
     }
-    try {
-      return new BazelVersion(
-          Integer.parseInt(parts[3]), Integer.parseInt(parts[4]), Integer.parseInt(parts[5]));
-    } catch (NumberFormatException e) {
-      // invalid version
-      return null;
+
+    final var root = Path.of(bitWorkspace);
+    if (!Files.exists(root)) {
+      exitWithError("Project root does not exist: " + root);
     }
+
+    return root;
   }
 }

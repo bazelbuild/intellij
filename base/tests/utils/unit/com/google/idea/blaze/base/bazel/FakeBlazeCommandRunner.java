@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,24 @@ package com.google.idea.blaze.base.bazel;
 import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
+import com.google.idea.blaze.base.command.buildresult.BuildResult;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
 import com.google.idea.blaze.base.command.info.BlazeInfoException;
+import com.google.idea.blaze.base.command.mod.BlazeModException;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
-import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.common.Interners;
 import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.project.Project;
+
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A fake for {@link BlazeCommandRunner} that doesn't execute the build, but returns results from
@@ -43,32 +48,48 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
     BlazeBuildOutputs runBuild(BuildResultHelper buildResultHelper) throws BuildException;
   }
 
+  @FunctionalInterface
+  public interface LegacyBuildFunction {
+    BlazeBuildOutputs.Legacy runBuild(BuildResultHelper buildResultHelper) throws BuildException;
+  }
+
   private final BuildFunction resultsFunction;
+  private final LegacyBuildFunction legacyResultsFunction;
   private BlazeCommand command;
 
   public FakeBlazeCommandRunner() {
     this(
-        buildResultHelper ->
-            BlazeBuildOutputs.fromParsedBepOutput(
-                BuildResult.SUCCESS, buildResultHelper.getBuildOutput()));
+        buildResultHelper -> {
+          try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
+            return BlazeBuildOutputs.fromParsedBepOutput(
+              BuildResultParser.getBuildOutput(bepStream, Interners.STRING));
+          }
+        },
+        buildResultHelper -> {
+          try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
+            return BlazeBuildOutputs.fromParsedBepOutputForLegacy(
+                BuildResultParser.getBuildOutputForLegacySync(bepStream, Interners.STRING));
+          }
+        });
   }
 
-  public FakeBlazeCommandRunner(BuildFunction buildFunction) {
+  public FakeBlazeCommandRunner(BuildFunction buildFunction, LegacyBuildFunction legacyBuildFunction) {
     this.resultsFunction = buildFunction;
+    this.legacyResultsFunction = legacyBuildFunction;
   }
 
   @Override
   public BlazeBuildOutputs run(
-          Project project,
-          BlazeCommand.Builder blazeCommandBuilder,
-          BuildResultHelper buildResultHelper,
-          BlazeContext context,
-          Map<String, String> envVars)
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context,
+      Map<String, String> envVars)
       throws BuildException {
     command = blazeCommandBuilder.build();
     try {
       BlazeBuildOutputs blazeBuildOutputs = resultsFunction.runBuild(buildResultHelper);
-      int exitCode = blazeBuildOutputs.buildResult.exitCode;
+      int exitCode = blazeBuildOutputs.buildResult().exitCode;
       BuildDepsStatsScope.fromContext(context).ifPresent(stats -> stats.setBazelExitCode(exitCode));
       return blazeBuildOutputs;
     } catch (GetArtifactsException e) {
@@ -77,12 +98,30 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
   }
 
   @Override
+  public BlazeBuildOutputs.Legacy runLegacy(Project project, BlazeCommand.Builder blazeCommandBuilder,
+                                            BuildResultHelper buildResultHelper, BlazeContext context,
+                                            Map<String, String> envVars) throws BuildException {
+    command = blazeCommandBuilder.build();
+    try {
+      BlazeBuildOutputs blazeBuildOutputs = resultsFunction.runBuild(buildResultHelper);
+      int exitCode = blazeBuildOutputs.buildResult().exitCode;
+      BuildDepsStatsScope.fromContext(context).ifPresent(stats -> stats.setBazelExitCode(exitCode));
+      try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
+        return BlazeBuildOutputs.fromParsedBepOutputForLegacy(
+            BuildResultParser.getBuildOutputForLegacySync(bepStream, Interners.STRING));
+      }
+    } catch (GetArtifactsException e) {
+      return BlazeBuildOutputs.noOutputsForLegacy(BuildResult.FATAL_ERROR);
+    }
+  }
+
+  @Override
   public BlazeTestResults runTest(
-          Project project,
-          BlazeCommand.Builder blazeCommandBuilder,
-          BuildResultHelper buildResultHelper,
-          BlazeContext context,
-          Map<String, String> envVars) {
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context,
+      Map<String, String> envVars) {
     return BlazeTestResults.NO_RESULTS;
   }
 
@@ -105,6 +144,17 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
       BuildResultHelper buildResultHelper,
       BlazeContext context)
       throws BlazeInfoException {
+    return InputStream.nullInputStream();
+  }
+
+  @Override
+  @MustBeClosed
+  public InputStream runBlazeMod(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context)
+      throws BlazeModException {
     return InputStream.nullInputStream();
   }
 

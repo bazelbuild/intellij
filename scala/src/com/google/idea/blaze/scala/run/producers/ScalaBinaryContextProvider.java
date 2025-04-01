@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.run.producers.BinaryContextProvider;
 import com.google.idea.blaze.base.run.testmap.FilteredTargetMap;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.java.run.RunUtil;
-import com.google.idea.sdkcompat.scala.ScalaCompat;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -36,8 +35,10 @@ import com.intellij.psi.PsiMethod;
 import java.io.File;
 import java.util.Collection;
 import javax.annotation.Nullable;
+
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScObject;
+import org.jetbrains.plugins.scala.util.ScalaMainMethodUtil;
 import scala.Option;
 
 /** Creates run configurations for Scala main classes sourced by scala_binary targets. */
@@ -56,7 +57,7 @@ class ScalaBinaryContextProvider implements BinaryContextProvider {
     if (target == null) {
       return null;
     }
-    Option<PsiMethod> mainMethod = ScalaCompat.findMainMethod(mainObject);
+    Option<PsiMethod> mainMethod = ScalaMainMethodUtil.findScala2MainMethod(mainObject);
     PsiElement sourceElement = mainMethod.getOrElse(() -> mainObject);
     return BinaryRunContext.create(sourceElement, target.toTargetInfo());
   }
@@ -86,7 +87,7 @@ class ScalaBinaryContextProvider implements BinaryContextProvider {
     for (; element != null; element = element.getParent()) {
       if (element instanceof ScObject) {
         ScObject obj = (ScObject) element;
-        if (ScalaCompat.hasMainMethod(obj)) {
+        if (ScalaMainMethodUtil.hasScala2MainMethod(obj)) {
           return obj;
         }
       } else if (element instanceof ScalaFile) {
@@ -103,7 +104,7 @@ class ScalaBinaryContextProvider implements BinaryContextProvider {
         continue;
       }
       ScObject obj = (ScObject) aClass;
-      if (ScalaCompat.hasMainMethod(obj)) {
+      if (ScalaMainMethodUtil.hasScala2MainMethod(obj)) {
         // Potentially multiple matches, we'll pick the first one.
         // TODO: prefer class with same name as file?
         // TODO: skip if not main_class of a rule.

@@ -47,6 +47,7 @@ public class TargetNameTest extends BlazeTestCase {
     assertThat(TargetName.validate("foo#bar")).isNull();
     assertThat(TargetName.validate("foo!bar")).isNull();
     assertThat(TargetName.validate("foo bar")).isNull();
+    assertThat(TargetName.validate("bar&")).isNull();
 
     // Illegal names
     assertThat(TargetName.validate("")).isNotEmpty();
@@ -63,6 +64,5 @@ public class TargetNameTest extends BlazeTestCase {
     assertThat(TargetName.validate("/")).isNotEmpty();
     assertThat(TargetName.validate("bar:baz")).isNotEmpty();
     assertThat(TargetName.validate("bar:")).isNotEmpty();
-    assertThat(TargetName.validate("bar&")).isNotEmpty();
   }
 }

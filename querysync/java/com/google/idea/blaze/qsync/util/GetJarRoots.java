@@ -15,26 +15,21 @@
  */
 package com.google.idea.blaze.qsync.util;
 
-import static java.util.stream.Collectors.joining;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.idea.blaze.qsync.java.SrcJarProjectUpdater;
+import com.google.idea.blaze.qsync.java.PackageStatementParser;
+import com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder;
+import com.google.idea.blaze.qsync.java.SrcJarInnerPathFinder.AllowPackagePrefixes;
 import com.google.idea.blaze.qsync.project.ProjectPath;
-import com.google.idea.blaze.qsync.project.ProjectPath.Root;
-import com.google.idea.blaze.qsync.project.ProjectProto;
-import com.google.idea.blaze.qsync.project.ProjectProto.LibrarySource;
-import java.io.File;
 import java.nio.file.Path;
 
 /**
- * Simple CLI tool to run the logic inside {@link SrcJarProjectUpdater#findInnerJarPaths(File)} on a
- * jar file provided as a CLI parameter.
+ * Simple CLI tool to run the logic inside {@link SrcJarInnerPathFinder#findInnerJarPaths} on a jar
+ * file provided as a CLI parameter.
  *
  * <p>Example usage:
  *
  * <pre>
- *   blaze run //querysync/java/com/google/idea/blaze/qsync/util:get_jar_roots -- $(pwd)/tools/build_defs/kotlin/release/rules/kotlin-stdlib-sources.jar
+ *   bazel run //querysync/java/com/google/idea/blaze/qsync/util:get_jar_roots -- $(pwd)/tools/build_defs/kotlin/release/rules/kotlin-stdlib-sources.jar
  * </pre>
  */
 public class GetJarRoots {
@@ -50,22 +45,17 @@ public class GetJarRoots {
   }
 
   int run() {
-    ProjectProto.Project project =
-        ProjectProto.Project.newBuilder()
-            .addLibrary(ProjectProto.Library.newBuilder().setName(".dependencies"))
-            .build();
-    SrcJarProjectUpdater sjpu =
-        new SrcJarProjectUpdater(
-            project,
-            ImmutableSet.of(ProjectPath.create(Root.WORKSPACE, jarFile.getFileName())),
-            ProjectPath.Resolver.create(jarFile.getParent(), jarFile.getParent()));
-    project = sjpu.addSrcJars();
-    System.out.println(
-        Iterables.getOnlyElement(project.getLibraryList()).getSourcesList().stream()
-            .map(LibrarySource::getSrcjar)
-            .map(ProjectPath::create)
-            .map(pp -> String.format("%s!/%s", pp.relativePath(), pp.innerJarPath()))
-            .collect(joining("\n")));
+    SrcJarInnerPathFinder pathFinder = new SrcJarInnerPathFinder(new PackageStatementParser());
+    ProjectPath projectPath = ProjectPath.workspaceRelative(jarFile.getFileName());
+    pathFinder
+        .findInnerJarPaths(
+            jarFile.toFile(),
+            AllowPackagePrefixes.EMPTY_PACKAGE_PREFIXES_ONLY,
+            jarFile.getFileName().toString())
+        .stream()
+        .map(p -> projectPath.withInnerJarPath(p.path()))
+        .map(pp -> String.format("%s!/%s", pp.relativePath(), pp.innerJarPath()))
+        .forEach(System.out::println);
     return 0;
   }
 }

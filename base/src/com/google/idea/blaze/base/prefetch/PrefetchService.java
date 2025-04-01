@@ -19,7 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 /** Interface to request prefetching of files */
 public interface PrefetchService {
   static PrefetchService getInstance() {
-    return ServiceManager.getService(PrefetchService.class);
+    return ApplicationManager.getApplication().getService(PrefetchService.class);
   }
 
   /**

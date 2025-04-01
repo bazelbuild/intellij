@@ -34,8 +34,14 @@ public class BlazePyTracebackParser extends PyTracebackParser {
     if (!enabled.getValue()) {
       return super.findLinkInTrace(line, matchedMatcher);
     }
-    final String fileName = matchedMatcher.group(1).replace('\\', '/');
-    final int lineNumber = Integer.parseInt(matchedMatcher.group(2));
+    final String file1 = matchedMatcher.group("file");
+    final String file2 = matchedMatcher.group("file2");
+
+    String fileName = (file1 != null ? file1 : file2).replace('\\', '/');
+
+    String lineNumber1 = matchedMatcher.group("line");
+    String lineNumber2 = matchedMatcher.group("line2");
+    int lineNumber = Integer.parseInt((lineNumber1 != null ? lineNumber1 : lineNumber2));
     final int startPos = line.indexOf('\"') + 1;
     final int endPos = line.indexOf('\"', startPos);
     return new LinkInTrace(getCanonicalFilePath(fileName), lineNumber, startPos, endPos);

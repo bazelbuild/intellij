@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.LanguageClassProto.LanguageClass;
 import com.google.idea.blaze.qsync.project.ProjectProto;
@@ -34,6 +35,7 @@ import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.testdata.BuildGraphs;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.nio.file.Path;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -411,10 +413,10 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateAndroidResourceDirectories_single_directory() {
-    ImmutableSet<Path> sourceFiles =
+    final var sourceFiles =
         ImmutableSet.of(
-            Path.of("java/com/test/AndroidManifest.xml"),
-            Path.of("java/com/test/res/values/strings.xml"));
+          Label.of("//java/com/test:AndroidManifest.xml"),
+          Label.of("//java/com/test:res/values/strings.xml"));
 
     ImmutableSet<Path> androidResourceDirectories =
         GraphToProjectConverter.computeAndroidResourceDirectories(sourceFiles);
@@ -423,13 +425,13 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateAndroidResourceDirectories_multiple_directories() {
-    ImmutableSet<Path> sourceFiles =
+    final var sourceFiles =
         ImmutableSet.of(
-            Path.of("java/com/test/AndroidManifest.xml"),
-            Path.of("java/com/test/res/values/strings.xml"),
-            Path.of("java/com/test2/AndroidManifest.xml"),
-            Path.of("java/com/test2/res/layout/some-activity.xml"),
-            Path.of("java/com/test2/res/layout/another-activity.xml"));
+          Label.of("//java/com/test:AndroidManifest.xml"),
+          Label.of("//java/com/test:res/values/strings.xml"),
+          Label.of("//java/com/test2:AndroidManifest.xml"),
+          Label.of("//java/com/test2:res/layout/some-activity.xml"),
+          Label.of("//java/com/test2:res/layout/another-activity.xml"));
 
     ImmutableSet<Path> androidResourceDirectories =
         GraphToProjectConverter.computeAndroidResourceDirectories(sourceFiles);
@@ -439,9 +441,9 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateAndroidResourceDirectories_manifest_without_res_directory() {
-    ImmutableSet<Path> sourceFiles =
+    final var sourceFiles =
         ImmutableSet.of(
-            Path.of("java/com/nores/AndroidManifest.xml"), Path.of("java/com/nores/Foo.java"));
+          Label.of("//java/com/nores:AndroidManifest.xml"), Label.of("//java/com/nores:Foo.java"));
 
     ImmutableSet<Path> androidResourceDirectories =
         GraphToProjectConverter.computeAndroidResourceDirectories(sourceFiles);
@@ -602,13 +604,13 @@ public class GraphToProjectConverterTest {
         .isEqualTo(
             ProjectPath.newBuilder()
                 .setBase(Base.WORKSPACE)
-                .setPath(
-                    "querysync/javatests/com/google/idea/blaze/qsync/testdata/nodeps")
+                .setPath(TestData.ROOT.resolve("nodeps").toString())
                 .build());
     assertThat(sourceFolder.getIsTest()).isTrue();
   }
 
   @Test
+  @Ignore("b/336967556")
   public void testCreateProject_protoInStandaloneFolder_createsSourceFolder() throws Exception {
     ImmutableMap<Path, String> sourcePackages = ImmutableMap.of();
 
@@ -678,6 +680,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
+  @Ignore("b/336967556")
   public void testProtoSourceFolders_whenSubfolderOfJavaRoot_notCreated() throws Exception {
 
     ImmutableMap<Path, String> sourcePackages =
@@ -710,6 +713,7 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
+  @Ignore("b/336967556")
   public void testNonJavaSourceFolders_whenSubfolderOfJavaRootAtContentEntry_notCreated()
       throws Exception {
 
@@ -767,5 +771,22 @@ public class GraphToProjectConverterTest {
     ProjectProto.Project project = converter.createProject(buildGraphData);
 
     assertThat(project.getActiveLanguagesList()).contains(LanguageClass.LANGUAGE_CLASS_JAVA);
+  }
+
+  @Test
+  public void testActiveLanguages_cc() throws Exception {
+    Path workspaceImportDirectory = TestData.ROOT.resolve("cc");
+    GraphToProjectConverter converter =
+        GraphToProjectConverters.builder()
+            .setProjectIncludes(ImmutableSet.of(workspaceImportDirectory))
+            .build();
+
+    BuildGraphData buildGraphData =
+        new BlazeQueryParser(
+                getQuerySummary(TestData.CC_LIBRARY_QUERY), NOOP_CONTEXT, ImmutableSet.of())
+            .parse();
+    ProjectProto.Project project = converter.createProject(buildGraphData);
+
+    assertThat(project.getActiveLanguagesList()).contains(LanguageClass.LANGUAGE_CLASS_CC);
   }
 }

@@ -45,7 +45,7 @@ import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
-import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.command.buildresult.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.exception.BuildException;
@@ -204,7 +204,7 @@ public final class BuildPluginBeforeRunTaskProvider
                           .getBuildInvoker(project, context);
                   try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
                     BlazeCommand.Builder command =
-                        BlazeCommand.builder(invoker, BlazeCommandName.BUILD)
+                        BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project)
                             .addTargets(config.getTargets())
                             .addBlazeFlags(
                                 BlazeFlags.blazeFlags(
@@ -225,16 +225,16 @@ public final class BuildPluginBeforeRunTaskProvider
                       return null;
                     }
                     SaveUtil.saveAllFiles();
-                    BlazeBuildOutputs outputs =
+                    BlazeBuildOutputs.Legacy outputs =
                         invoker
                             .getCommandRunner()
-                            .run(project, command, buildResultHelper, context, ImmutableMap.of());
-                    if (!outputs.buildResult.equals(BuildResult.SUCCESS)) {
+                            .runLegacy(project, command, buildResultHelper, context, ImmutableMap.of());
+                    if (!outputs.buildResult().equals(BuildResult.SUCCESS)) {
                       context.setHasError();
                     }
                     ListenableFuture<Void> unusedFuture =
                         FileCaches.refresh(
-                            project, context, BlazeBuildOutputs.noOutputs(outputs.buildResult));
+                            project, context, BlazeBuildOutputs.noOutputs(outputs.buildResult()));
                     try {
                       deployer.reportBuildComplete(outputs);
                     } catch (GetArtifactsException e) {

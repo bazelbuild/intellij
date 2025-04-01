@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import java.io.File;
@@ -41,6 +42,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -50,6 +53,11 @@ public interface ExternalTask {
 
   /** Run the task, attaching the given scopes to the task's {@link BlazeContext}. */
   int run(BlazeScope... scopes);
+
+  /** Run the task async on thread pool */
+  default Future<Integer> runAsync(BlazeScope... scopes) {
+    return CompletableFuture.supplyAsync(() -> run(scopes), ApplicationManager.getApplication()::executeOnPooledThread);
+  }
 
   /** A builder for an external task */
   class Builder {

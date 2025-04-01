@@ -15,14 +15,14 @@
  */
 package com.google.idea.blaze.base.io;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 
 /** Provides indirection for virtual file systems. */
 public interface VirtualFileSystemProvider {
 
   static VirtualFileSystemProvider getInstance() {
-    return ServiceManager.getService(VirtualFileSystemProvider.class);
+    return ApplicationManager.getApplication().getService(VirtualFileSystemProvider.class);
   }
 
   LocalFileSystem getSystem();

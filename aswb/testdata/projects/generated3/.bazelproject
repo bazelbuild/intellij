@@ -1,0 +1,6 @@
+directories:
+  aswb/testdata/projects/generated3
+
+android_sdk_platform: android-34
+
+

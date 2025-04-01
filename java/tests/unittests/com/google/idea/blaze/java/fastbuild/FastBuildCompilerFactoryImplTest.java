@@ -21,6 +21,7 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
@@ -33,6 +34,10 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaToolchainInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildCompiler.CompileInstructions;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileManagerListener;
+import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
+import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -41,6 +46,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -50,7 +56,7 @@ import org.junit.runners.JUnit4;
 
 /** Unit tests for {@link FastBuildCompilerFactoryImpl}. */
 @RunWith(JUnit4.class)
-public final class FastBuildCompilerFactoryImplTest {
+public final class FastBuildCompilerFactoryImplTest extends BlazeTestCase {
 
   private static final String AUTO_VALUE_PROCESSOR =
       "com.google.auto.value.processor.AutoValueProcessor";
@@ -82,8 +88,8 @@ public final class FastBuildCompilerFactoryImplTest {
     checkState(TRUTH_JAR.exists());
   }
 
-  @Before
-  public void setUp() {
+  @Override
+  protected void initTest(Container applicationServices, Container projectServices) {
     BlazeProjectData projectData =
         MockBlazeProjectDataBuilder.builder()
             .setArtifactLocationDecoder(new MockArtifactLocationDecoder())
@@ -91,6 +97,9 @@ public final class FastBuildCompilerFactoryImplTest {
     BlazeProjectDataManager projectDataManager = new MockBlazeProjectDataManager(projectData);
     compilerFactory =
         FastBuildCompilerFactoryImpl.createForTest(projectDataManager, FAST_BUILD_JAVAC_JAR);
+
+    registerExtensionPointByName("com.intellij.virtualFileManagerListener", VirtualFileManagerListener.class);
+    applicationServices.register(VirtualFileManager.class, new VirtualFileManagerImpl(List.of(new CoreLocalFileSystem())));
   }
 
   @Test

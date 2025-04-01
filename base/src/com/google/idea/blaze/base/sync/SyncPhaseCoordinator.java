@@ -28,6 +28,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
+import com.google.idea.blaze.base.buildview.BuildViewMigration;
+import com.google.idea.blaze.base.command.buildresult.BuildResult;
+import com.google.idea.blaze.base.command.buildresult.BuildResult.Status;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -70,8 +73,7 @@ import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
-import com.google.idea.blaze.base.sync.aspects.BuildResult;
-import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
@@ -101,11 +103,11 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 
 /** Manages sync execution, coordinating the possibly-separate build/update phases. */
-final class SyncPhaseCoordinator {
+public final class SyncPhaseCoordinator {
 
   private static final Logger logger = Logger.getInstance(SyncPhaseCoordinator.class);
 
-  static SyncPhaseCoordinator getInstance(Project project) {
+  public static SyncPhaseCoordinator getInstance(Project project) {
     return project.getService(SyncPhaseCoordinator.class);
   }
 
@@ -234,6 +236,7 @@ final class SyncPhaseCoordinator {
     boolean singleThreaded = !useRemoteExecutor(syncParams);
     return ProgressiveTaskWithProgressIndicator.builder(project, "Syncing Project")
         .setExecutor(singleThreaded ? singleThreadedExecutor : remoteBuildExecutor)
+        .setModality(BuildViewMigration.progressModality())
         .submitTask(
             indicator ->
                 Scope.push(
@@ -282,6 +285,7 @@ final class SyncPhaseCoordinator {
     Future<?> possiblyIgnoredError =
         ProgressiveTaskWithProgressIndicator.builder(project, "Filtering Project Targets")
             .setExecutor(singleThreadedExecutor)
+            .setModality(BuildViewMigration.progressModality())
             .submitTask(
                 indicator ->
                     Scope.root(
@@ -410,7 +414,7 @@ final class SyncPhaseCoordinator {
    *     Otherwise runs the build phase then passes the result to the project update queue.
    */
   @VisibleForTesting
-  void runSync(BlazeSyncParams params, boolean singleThreaded, BlazeContext context) {
+  public void runSync(BlazeSyncParams params, boolean singleThreaded, BlazeContext context) {
     Instant startTime = Instant.now();
     int buildId = nextBuildId.getAndIncrement();
     try {
@@ -429,6 +433,9 @@ final class SyncPhaseCoordinator {
       }
 
       if (params.syncMode() == SyncMode.STARTUP) {
+        // aspects are also required on startup for the xcode query
+        AspectStorageService.of(project).prepare(context, null);
+
         finishSync(
             params,
             startTime,
@@ -439,7 +446,13 @@ final class SyncPhaseCoordinator {
             SyncStats.builder());
         return;
       }
+
       SyncProjectState projectState = ProjectStateSyncTask.collectProjectState(project, context, params);
+
+      if (params.syncMode().involvesBlazeBuild()) {
+        AspectStorageService.of(project).prepare(context, projectState);
+      }
+
       BlazeSyncBuildResult buildResult =
           BuildPhaseSyncTask.runBuildPhase(
               project, params, projectState, buildId, context, buildSystem);
@@ -495,6 +508,7 @@ final class SyncPhaseCoordinator {
 
     ProgressiveTaskWithProgressIndicator.builder(project, "Syncing Project")
         .setExecutor(singleThreadedExecutor)
+        .setModality(BuildViewMigration.progressModality())
         .submitTaskLater(
             indicator ->
                 Scope.root(
@@ -525,7 +539,7 @@ final class SyncPhaseCoordinator {
     if (buildOutputs == null || !syncBuildResult.hasValidOutputs()) {
       return SyncResult.FAILURE;
     }
-    if (buildOutputs.buildResult.status == Status.FATAL_ERROR) {
+    if (buildOutputs.buildResult().status == Status.FATAL_ERROR) {
       if (BuildPhaseSyncTask.continueSyncOnOom.getValue()) {
         context.output(
             PrintOutput.error(
@@ -536,17 +550,17 @@ final class SyncPhaseCoordinator {
         return SyncResult.FAILURE;
       }
     }
-    if (buildOutputs.buildResult.status == BuildResult.Status.BUILD_ERROR) {
-      String buildSystem = Blaze.buildSystemName(project);
-      String message =
-          String.format(
-              "Sync was successful, but there were %1$s build errors. "
-                  + "The project may not be fully updated or resolve until fixed. "
-                  + "If the errors are from your working set, please uncheck "
-                  + "'%1$s > Sync > Expand Sync to Working Set' and try again.",
-              buildSystem);
-      context.output(PrintOutput.error(message));
-      IssueOutput.warn(message).submit(context);
+    if (buildOutputs.buildResult().status == BuildResult.Status.BUILD_ERROR) {
+      final var message = String.format(
+          "The project may not be fully updated or resolve until fixed. "
+              + "If the errors are from your working set, please uncheck "
+              + "'%s > Sync > Expand Sync to Working Set' and try again.",
+          Blaze.buildSystemName(project));
+
+      IssueOutput.warn("Sync was successful, but there were build errors")
+          .withDescription(message)
+          .submit(context);
+
       return SyncResult.PARTIAL_SUCCESS;
     }
     return SyncResult.SUCCESS;

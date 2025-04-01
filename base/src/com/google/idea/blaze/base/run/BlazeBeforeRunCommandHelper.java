@@ -19,14 +19,12 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
-import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.TempDirectoryProvider;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
@@ -42,8 +40,8 @@ import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.toolwindow.Task;
+import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -69,10 +67,9 @@ public final class BlazeBeforeRunCommandHelper {
    *
    * <p>Runs the blaze command on the targets specified in the given {@code configuration}.
    */
-  public static ListenableFuture<BuildResult> runBlazeCommand(
+  public static ListenableFuture<BuildEventStreamProvider> runBlazeCommand(
       BlazeCommandName commandName,
       BlazeCommandRunConfiguration configuration,
-      BuildResultHelper buildResultHelper,
       List<String> requiredExtraBlazeFlags,
       List<String> overridableExtraBlazeFlags,
       BlazeInvocationContext invocationContext,
@@ -80,7 +77,6 @@ public final class BlazeBeforeRunCommandHelper {
     return runBlazeCommand(
         commandName,
         configuration,
-        buildResultHelper,
         requiredExtraBlazeFlags,
         overridableExtraBlazeFlags,
         invocationContext,
@@ -92,10 +88,9 @@ public final class BlazeBeforeRunCommandHelper {
    * Runs the given blaze command on the given list of {@code targets} instead of retrieving the
    * targets from the run {@code configuration}.
    */
-  public static ListenableFuture<BuildResult> runBlazeCommand(
+  public static ListenableFuture<BuildEventStreamProvider> runBlazeCommand(
       BlazeCommandName commandName,
       BlazeCommandRunConfiguration configuration,
-      BuildResultHelper buildResultHelper,
       List<String> requiredExtraBlazeFlags,
       List<String> overridableExtraBlazeFlags,
       BlazeInvocationContext invocationContext,
@@ -115,9 +110,9 @@ public final class BlazeBeforeRunCommandHelper {
 
     return ProgressiveTaskWithProgressIndicator.builder(project, TASK_TITLE)
         .submitTaskWithResult(
-            new ScopedTask<BuildResult>() {
+            new ScopedTask<BuildEventStreamProvider>() {
               @Override
-              protected BuildResult execute(BlazeContext context) {
+              protected BuildEventStreamProvider execute(BlazeContext context) {
                 context
                     .push(
                         new ToolWindowScope.Builder(
@@ -135,7 +130,7 @@ public final class BlazeBeforeRunCommandHelper {
                 context.output(new StatusOutput(progressMessage));
 
                 BlazeCommand.Builder command =
-                    BlazeCommand.builder(binaryPath, commandName)
+                    BlazeCommand.builder(binaryPath, commandName, project)
                         .addTargets(targets)
                         .addBlazeFlags(overridableExtraBlazeFlags)
                         .addBlazeFlags(
@@ -147,20 +142,17 @@ public final class BlazeBeforeRunCommandHelper {
                                 invocationContext))
                         .addBlazeFlags(
                             handlerState.getBlazeFlagsState().getFlagsForExternalProcesses())
-                        .addBlazeFlags(requiredExtraBlazeFlags)
-                        .addBlazeFlags(buildResultHelper.getBuildFlags());
+                        .addBlazeFlags(requiredExtraBlazeFlags);
 
-                int exitCode =
-                    ExternalTask.builder(workspaceRoot)
-                        .addBlazeCommand(command.build())
-                        .context(context)
-                        .stderr(
-                            LineProcessingOutputStream.of(
-                                BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(
-                                    context)))
-                        .build()
-                        .run();
-                return BuildResult.fromExitCode(exitCode);
+                BuildSystem.BuildInvoker invoker =
+                    Blaze.getBuildSystemProvider(project)
+                        .getBuildSystem()
+                        .getDefaultInvoker(project, BlazeContext.create());
+                try {
+                  return invoker.invoke(command, context);
+                } catch (BuildException e) {
+                  throw new RuntimeException(e);
+                }
               }
             });
   }

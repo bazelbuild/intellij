@@ -221,16 +221,12 @@ public class AddToProjectAction extends BlazeProjectAction {
                             }
                           });
 
-                  if (candidatePackages.size() == 1) {
-                    doAddToProjectView(Iterables.getOnlyElement(candidatePackages));
-                  } else {
                     ListPopup popup =
-                        JBPopupFactory.getInstance()
-                            .createListPopup(
-                                SelectPackagePopupStep.create(
-                                    candidatePackages, Performer.this::doAddToProjectView));
+                            JBPopupFactory.getInstance()
+                                    .createListPopup(
+                                            SelectPackagePopupStep.create(
+                                                    candidatePackages, Performer.this::doAddToProjectView));
                     popupPositioner.showInCorrectPosition(popup);
-                  }
                 } catch (BuildException e) {
                   notify(
                       NotificationType.ERROR,

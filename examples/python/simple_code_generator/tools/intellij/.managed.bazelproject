@@ -1,0 +1,11 @@
+directories:
+  .
+
+derive_targets_from_directories: true
+
+additional_languages:
+  python
+
+python_code_generator_rule_names:
+  test_codegen_files_py
+  test_codegen_directory_py

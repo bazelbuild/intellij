@@ -195,7 +195,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
   public void testParenthesesCompletionWhenTemplatesNotApplicable() {
     setRules("abc_rule");
 
-    PsiFile file = testFixture.configureByText("BUILD", "ab<caret>");
+    PsiFile file = testFixture.configureByText("BUILD", "abc_<caret>");
     editorTest.completeIfUnique();
 
     assertFileContents(file, "abc_rule()");

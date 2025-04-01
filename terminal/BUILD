@@ -1,3 +1,4 @@
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
     "PLUGIN_PACKAGES_VISIBILITY",
@@ -15,8 +16,8 @@ java_library(
     srcs = glob(["src/**/*.java"]),
     deps = [
         "//base",
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:terminal",
     ],
 )

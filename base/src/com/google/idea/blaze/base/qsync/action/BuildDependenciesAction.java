@@ -68,8 +68,7 @@ public class BuildDependenciesAction extends BlazeProjectAction {
       presentation.setText(NAME);
     }
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    BuildDependenciesHelper helper =
-        new BuildDependenciesHelper(project, getClass(), DepsBuildType.SELF);
+    BuildDependenciesHelper helper = new BuildDependenciesHelper(project, DepsBuildType.SELF);
     Optional<Path> relativePath = helper.getRelativePathToEnableAnalysisFor(virtualFile);
     if (relativePath.isEmpty()) {
       presentation.setEnabled(false);
@@ -84,8 +83,7 @@ public class BuildDependenciesAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    BuildDependenciesHelper helper =
-        new BuildDependenciesHelper(project, getClass(), DepsBuildType.SELF);
-    helper.enableAnalysis(e, PopupPositioner.showAtMousePointerOrCentered(e));
+    BuildDependenciesHelper helper = new BuildDependenciesHelper(project, DepsBuildType.SELF);
+    helper.enableAnalysis(getClass(), e, PopupPositioner.showAtMousePointerOrCentered(e));
   }
 }

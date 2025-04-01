@@ -31,7 +31,9 @@ import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.vcs.VcsSyncListener;
 import com.google.idea.common.util.Transactions;
+import com.google.idea.sdkcompat.general.AsyncVfsEventsPostProcessorCompat;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
@@ -66,8 +68,7 @@ public class ExternalLibraryManager implements Disposable {
     this.project = project;
     this.duringBlazeSync = false;
     this.libraries = ImmutableMap.of();
-    AsyncVfsEventsPostProcessor.getInstance()
-        .addListener(
+    AsyncVfsEventsPostProcessorCompat.addListener(
             events -> {
               if (duringBlazeSync || libraries.isEmpty()) {
                 return;
@@ -81,7 +82,8 @@ public class ExternalLibraryManager implements Disposable {
                 libraries.values().forEach(library -> library.removeInvalidFiles(deletedFiles));
               }
             },
-            this);
+            this,
+            project);
   }
 
   @Nullable

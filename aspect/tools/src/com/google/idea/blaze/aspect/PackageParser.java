@@ -37,6 +37,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -113,8 +114,9 @@ public class PackageParser {
   }
 
   public static void main(String[] args) throws Exception {
+    ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     PackageParserOptions options = parseArgs(args);
-    PackageParser parser = new PackageParser(PackageParserIoProvider.INSTANCE);
+    PackageParser parser = new PackageParser(PackageParserIoProvider.INSTANCE, executorService);
 
     try {
       if (isWorkerMode(args)) {
@@ -150,9 +152,12 @@ public class PackageParser {
 
   private final PackageParserIoProvider ioProvider;
 
+  private final ExecutorService executorService;
+
   @VisibleForTesting
-  PackageParser(PackageParserIoProvider ioProvider) {
+  PackageParser(PackageParserIoProvider ioProvider, ExecutorService executorService) {
     this.ioProvider = ioProvider;
+    this.executorService = executorService;
   }
 
   @VisibleForTesting
@@ -180,8 +185,7 @@ public class PackageParser {
       throws Exception {
 
     ListeningExecutorService executorService =
-        MoreExecutors.listeningDecorator(
-            Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
+        MoreExecutors.listeningDecorator(this.executorService);
 
     Map<ArtifactLocation, ListenableFuture<String>> futures = Maps.newHashMap();
     for (final ArtifactLocation source : sources) {

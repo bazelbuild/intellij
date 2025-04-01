@@ -31,10 +31,14 @@ import com.google.common.io.MoreFiles;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.buildresult.BuildResult;
+import com.google.idea.blaze.base.command.buildresult.BuildResult.Status;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
+import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -47,13 +51,14 @@ import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationRunner.BlazeCommandRunProfileState;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.blaze.base.sync.aspects.BuildResult;
-import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.common.Interners;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -93,6 +98,19 @@ import javax.annotation.Nullable;
 
 /** Go-specific run configuration runner. */
 public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
+
+  private static final String DEFAULT_OUTPUT_GROUP_NAME = "default";
+
+  // The actual Bazel shell script uses "1", which is considered as true.
+  // For robustness, we include other common representations of true.
+  private static final List<String> TRUTHY_ENV_VALUES_LOWER = List.of("true", "1", "yes", "on");
+  private static final String POP_UP_MESSAGE_ENABLE_SYMLINKS = """
+          Please enable symlink support. Add the following lines to your .bazelrc file:
+          startup --windows_enable_symlinks
+          build --enable_runfiles
+          
+          Refer to the online documentation for Using Bazel on Windows: \
+          https://bazel.build/configure/windows.""";
 
   private static class ExecutableInfo {
     final File binary;
@@ -315,11 +333,10 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
         }
       }
 
-      ListenableFuture<BuildResult> buildOperation =
+      ListenableFuture<BuildEventStreamProvider> streamProviderFuture =
           BlazeBeforeRunCommandHelper.runBlazeCommand(
               scriptPath.isPresent() ? BlazeCommandName.RUN : BlazeCommandName.BUILD,
               configuration,
-              buildResultHelper,
               flags.build(),
               ImmutableList.of("--dynamic_mode=off", "--test_sharding_strategy=disabled"),
               BlazeInvocationContext.runConfigContext(
@@ -327,7 +344,10 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
               "Building debug binary");
 
       try {
-        BuildResult result = buildOperation.get();
+        BuildResult result =
+            BuildResult.fromExitCode(
+                BuildResultParser.getBuildOutput(streamProviderFuture.get(), Interners.STRING)
+                    .buildResult());
         if (result.outOfMemory()) {
           throw new ExecutionException("Out of memory while trying to build debug target");
         } else if (result.status == Status.BUILD_ERROR) {
@@ -338,10 +358,14 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
                   "Fatal error (%d) while trying to build debug target", result.exitCode));
         }
       } catch (InterruptedException | CancellationException e) {
-        buildOperation.cancel(true);
+        streamProviderFuture.cancel(true);
         throw new RunCanceledByUserException();
       } catch (java.util.concurrent.ExecutionException e) {
         throw new ExecutionException(e);
+      } catch (GetArtifactsException e) {
+        throw new ExecutionException(
+            String.format(
+                "Failed to get output artifacts when building %s: %s", label, e.getMessage()));
       }
       if (scriptPath.isPresent()) {
         if (!Files.exists(scriptPath.get())) {
@@ -356,10 +380,15 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
         return parseScriptPathFile(workspaceRoot, blazeInfo.getExecutionRoot(), scriptPath.get());
       } else {
         List<File> candidateFiles;
-        try {
+        try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
           candidateFiles =
               LocalFileArtifact.getLocalFiles(
-                      buildResultHelper.getBuildArtifactsForTarget(label, file -> true))
+                   com.google.idea.blaze.common.Label.of(label.toString()),
+                   BlazeBuildOutputs.fromParsedBepOutput(
+                      BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
+                          .getOutputGroupTargetArtifacts(DEFAULT_OUTPUT_GROUP_NAME, label.toString()),
+                      BlazeContext.create(),
+                      env.getProject())
                   .stream()
                   .filter(File::canExecute)
                   .collect(Collectors.toList());
@@ -406,9 +435,11 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
   }
 
   // Matches TEST_SRCDIR=<dir>
-  private static final Pattern TEST_SRCDIR = Pattern.compile("TEST_SRCDIR=([^ ]+)");
+  private static final Pattern TEST_SRCDIR = Pattern.compile("TEST_SRCDIR=([^\\s]+)");
   // Matches RUNFILES_<NAME>=<value>
-  private static final Pattern RUNFILES_VAR = Pattern.compile("RUNFILES_([A-Z_]+)=([^ ]+)");
+  private static final Pattern RUNFILES_VAR = Pattern.compile("RUNFILES_([A-Z_]+)=([^\\s]+)");
+  // Matches TEST_TARGET=//<package_path>:<target>
+  private static final Pattern TEST_TARGET = Pattern.compile("TEST_TARGET=//([^:]*):([^\\s]+)");
   // Matches a space-delimited arg list. Supports wrapping arg in single quotes.
   private static final Pattern ARGS = Pattern.compile("([^\']\\S*|\'.+?\')\\s*");
 
@@ -438,12 +469,18 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
       if (args.size() < 3) {
         throw new ExecutionException("Failed to parse args in script_path: " + scriptPath);
       }
-      envVars.put("TEST_SRCDIR", testScrDir.group(1));
+      // Make paths used for runfiles discovery absolute as the working directory is changed below.
+      envVars.put("TEST_SRCDIR", workspaceRoot.absolutePathFor(testScrDir.group(1)).toString());
       Matcher runfilesVars = RUNFILES_VAR.matcher(text);
       while (runfilesVars.find()) {
-        envVars.put(String.format("RUNFILES_%s", runfilesVars.group(1)), runfilesVars.group(2));
+        String envKey = String.format("RUNFILES_%s", runfilesVars.group(1));
+        String envVal = runfilesVars.group(2);
+        if ("RUNFILES_MANIFEST_ONLY".equals(envKey)
+                && envVal != null && TRUTHY_ENV_VALUES_LOWER.contains(envVal.trim().toLowerCase())) {
+          throw new ExecutionException(POP_UP_MESSAGE_ENABLE_SYMLINKS);
+        }
+        envVars.put(envKey, workspaceRoot.absolutePathFor(envVal).toString());
       }
-      workingDir = workspaceRoot.directory();
       String workspaceName = execRoot.getName();
       binary =
           Paths.get(
@@ -452,6 +489,21 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
                   workspaceName,
                   args.get(1))
               .toFile();
+
+      Matcher testTarget = TEST_TARGET.matcher(text);
+      if (testTarget.find()) {
+        String packagePath = testTarget.group(1);
+        workingDir = 
+            Paths.get(
+                    workspaceRoot.directory().getPath(),
+                    testScrDir.group(1),
+                    workspaceName,
+                    packagePath)
+                .toFile();
+      } else {
+        workingDir = workspaceRoot.directory();
+      }
+
       // Remove everything except the args.
       args = args.subList(2, args.size() - 1);
     } else {

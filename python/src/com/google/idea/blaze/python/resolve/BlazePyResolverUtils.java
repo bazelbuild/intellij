@@ -20,6 +20,9 @@ import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.project.Project;
@@ -49,6 +52,10 @@ public class BlazePyResolverUtils {
 
   /** Resolves a genfiles-relative path to a locally-accessible file. */
   private static Optional<File> resolveGenfilesPath(Project project, String relativePath) {
+    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
+      // TODO(b/351133513) Fix this if/when we implement python support in querysync.
+      return Optional.empty();
+    }
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null) {

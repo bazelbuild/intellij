@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.android.sdk;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -23,7 +23,7 @@ import javax.annotation.Nullable;
 /** Indirection to Sdks for testing purposes. */
 public interface BlazeSdkProvider {
   static BlazeSdkProvider getInstance() {
-    return ServiceManager.getService(BlazeSdkProvider.class);
+    return ApplicationManager.getApplication().getService(BlazeSdkProvider.class);
   }
 
   List<Sdk> getAllAndroidSdks();

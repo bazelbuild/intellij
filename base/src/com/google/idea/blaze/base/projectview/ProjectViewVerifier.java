@@ -85,7 +85,7 @@ public class ProjectViewVerifier {
             deprecationMessage = String.format("%s is deprecated", sectionParser.getName());
           }
           IssueOutput.warn(deprecationMessage)
-              .inFile(projectViewFile.projectViewFile)
+              .withFile(projectViewFile.projectViewFile)
               .submit(context);
         }
       }
@@ -124,7 +124,7 @@ public class ProjectViewVerifier {
                 String.format(
                     "%s is included, but that contradicts %s which was excluded",
                     includedDirectory, excludedDirectory);
-            IssueOutput.error(message).inFile(projectViewFile.projectViewFile).submit(context);
+            IssueOutput.error(message).withFile(projectViewFile.projectViewFile).submit(context);
             context.output(new PrintOutput(message, OutputType.ERROR));
             ok = false;
           }
@@ -157,13 +157,13 @@ public class ProjectViewVerifier {
         if (!fileOperationProvider.exists(file)) {
           String message =
               String.format("Directory '%s' specified in project view not found.", workspacePath);
-          IssueOutput.error(message).inFile(projectViewFile.projectViewFile).submit(context);
+          IssueOutput.error(message).withFile(projectViewFile.projectViewFile).submit(context);
           context.output(new PrintOutput(message, OutputType.ERROR));
           ok = false;
         } else if (!fileOperationProvider.isDirectory(file)) {
           String message =
               String.format("Directory '%s' specified in project view is a file.", workspacePath);
-          IssueOutput.error(message).inFile(projectViewFile.projectViewFile).submit(context);
+          IssueOutput.error(message).withFile(projectViewFile.projectViewFile).submit(context);
           context.output(new PrintOutput(message, OutputType.ERROR));
           ok = false;
         }

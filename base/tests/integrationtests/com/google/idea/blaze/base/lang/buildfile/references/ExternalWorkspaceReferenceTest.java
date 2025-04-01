@@ -25,13 +25,10 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.intellij.psi.PsiFile;
-import java.io.File;
-import java.nio.file.Paths;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -145,7 +142,7 @@ public class ExternalWorkspaceReferenceTest extends BuildFileIntegrationTestCase
   public void testReferenceToWorkspaceFileContents() {
     BuildFile workspaceFile =
         createBuildFile(
-            new WorkspacePath("WORKSPACE.bazel"),
+            new WorkspacePath("WORKSPACE"),
             "maven_jar(",
             "    name = 'w3c_css_sac',",
             "    artifact = 'org.w3c.css:sac:1.3',",
@@ -223,15 +220,8 @@ public class ExternalWorkspaceReferenceTest extends BuildFileIntegrationTestCase
     assertThat(load.getImportedSymbolElements()[0].getLoadedElement()).isEqualTo(function);
   }
 
-  private PsiFile createFileInExternalWorkspace(
-      String workspaceName, WorkspacePath path, String... contents) {
-    String filePath =
-        Paths.get(getExternalSourceRoot().getPath(), workspaceName, path.relativePath()).toString();
-    return fileSystem.createPsiFile(filePath, contents);
-  }
-
-  private File getExternalSourceRoot() {
-    return WorkspaceHelper.getExternalSourceRoot(
-        BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData());
+  @Override
+  protected ExternalWorkspaceData mockExternalWorkspaceData() {
+    return super.mockExternalWorkspaceData();
   }
 }

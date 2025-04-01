@@ -1,5 +1,7 @@
 # Integration tests for the plugin's Skylark aspect
 
+load("@rules_java//java:defs.bzl", "java_library")
+
 licenses(["notice"])
 
 # To prevent versioning conflicts when developing internally, we always use the same

@@ -21,13 +21,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.util.UrlUtil;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.cpp.CppSupportChecker;
 import com.google.idea.blaze.qsync.cc.FlagResolver;
 import com.google.idea.blaze.qsync.project.ProjectPath;
-import com.google.idea.blaze.qsync.project.ProjectPath.Root;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcCompilationContext;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcCompilerFlagSet;
@@ -35,10 +35,12 @@ import com.google.idea.blaze.qsync.project.ProjectProto.CcCompilerSettings;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcLanguage;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcSourceFile;
 import com.google.idea.blaze.qsync.project.ProjectProto.CcWorkspace;
+import com.intellij.build.events.MessageEvent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
@@ -140,7 +142,7 @@ public class CcProjectModelUpdateOperation implements Disposable {
     Path srcPath = Path.of(source.getWorkspacePath());
     CLanguageKind language =
         getLanguageKind(source.getLanguage(), "Source file " + source.getWorkspacePath());
-    srcPath = pathResolver.resolve(ProjectPath.create(Root.WORKSPACE, srcPath));
+    srcPath = pathResolver.resolve(ProjectPath.workspaceRelative(srcPath));
     if (!Files.exists(srcPath)) {
       logger.warn("Src file not found: " + srcPath);
     }
@@ -173,8 +175,8 @@ public class CcProjectModelUpdateOperation implements Disposable {
 
   /** Pre-commits the project update. Should be called from a background thread. */
   public void preCommit() {
-    modifiableOcWorkspace.preCommit();
     processCompilerSettings();
+    modifiableOcWorkspace.preCommit();
   }
 
   /** Commits the project update. Must be called from the write thread. */
@@ -211,8 +213,17 @@ public class CcProjectModelUpdateOperation implements Disposable {
           messages.freezeValues().values().stream()
               .flatMap(Collection::stream)
               .collect(ImmutableList.toImmutableList());
-      frozenMessages.forEach(
-          m -> context.output(PrintOutput.log(m.getType().name() + ": " + m.getText())));
+
+      for (final var message : frozenMessages) {
+        final var kind = switch (message.getType()) {
+          case ERROR -> MessageEvent.Kind.ERROR;
+          case WARNING -> MessageEvent.Kind.WARNING;
+        };
+
+        IssueOutput.issue(kind, "COMPILER INFO COLLECTION")
+            .withDescription(message.getText())
+            .submit(context);
+      }
     } finally {
       if (!sessionClosed) {
         session.dispose();
@@ -222,6 +233,6 @@ public class CcProjectModelUpdateOperation implements Disposable {
 
   @Override
   public void dispose() {
-    OCWorkspaceModifiableModelDisposer.dispose(modifiableOcWorkspace);
+    Disposer.dispose(modifiableOcWorkspace);
   }
 }

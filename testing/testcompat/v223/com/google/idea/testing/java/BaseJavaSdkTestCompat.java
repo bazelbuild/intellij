@@ -1,1 +1,0 @@
-../../../../../../v222/com/google/idea/testing/java/BaseJavaSdkTestCompat.java

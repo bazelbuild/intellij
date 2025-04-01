@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.bazel.BazelExitCodeException;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.exception.BuildException;
@@ -90,6 +89,8 @@ public class CandidatePackageFinder {
     // - at least two paths with any packages in
     // this is to offer the user some choice, and ensure we don't add paths with no packages in
     // (which would cause the query to fail later on).
+    // However, sometimes there might be a case where there's only one valid package.
+    // in such a case, we return it, but we don't add it unconditionally.
     do {
       cancellationCheck.run();
       packages = runQuery(forPath);
@@ -97,26 +98,23 @@ public class CandidatePackageFinder {
         candidates.add(new CandidatePackage(forPath, packages.size()));
       }
       forPath = forPath.getParent();
-    } while (candidates.size() < 2 && packages.size() < 2);
+    } while (candidates.size() < 2 && packages.size() < 2 && forPath != null);
     return ImmutableList.copyOf(candidates);
   }
 
   private ImmutableList<String> runQuery(Path path) throws BuildException {
     BlazeCommand.Builder command =
-        BlazeCommand.builder(buildInvoker, BlazeCommandName.QUERY)
+        BlazeCommand.builder(buildInvoker, BlazeCommandName.QUERY, ideProject)
             .addBlazeFlags("--output", "package")
             .addBlazeFlags("//" + path + "/...");
-    try (BuildResultHelper helper = buildInvoker.createBuildResultHelper()) {
-      try (InputStream queryOut =
-          buildInvoker.getCommandRunner().runQuery(ideProject, command, helper, context)) {
-        return ImmutableList.copyOf(CharStreams.readLines(new InputStreamReader(queryOut, UTF_8)));
-      } catch (BazelExitCodeException exitCodeException) {
-        if (exitCodeException.getExitCode() == BAZEL_QUERY_EXIT_CODE_COMMAND_FAILURE) {
-          // This covers the case that there were no matching packages which is WAI here.
-          return ImmutableList.of();
+    try (InputStream queryOut = buildInvoker.invokeQuery(command, context)) {
+      return ImmutableList.copyOf(CharStreams.readLines(new InputStreamReader(queryOut, UTF_8)));
+    } catch (BazelExitCodeException exitCodeException) {
+      if (exitCodeException.getExitCode() == BAZEL_QUERY_EXIT_CODE_COMMAND_FAILURE) {
+        // This covers the case that there were no matching packages which is WAI here.
+        return ImmutableList.of();
         }
-        throw exitCodeException;
-      }
+      throw exitCodeException;
     } catch (IOException ioe) {
       throw new BuildException(ioe);
     }

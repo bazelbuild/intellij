@@ -19,7 +19,13 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.google.idea.blaze.cpp.BlazeCTargetInfoService;
 import com.google.idea.blaze.cpp.CppBlazeRules;
+import com.intellij.openapi.util.registry.Registry;
+import com.jetbrains.cidr.lang.CLanguageKind;
+import com.jetbrains.cidr.lang.workspace.OCWorkspace;
+import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
+import com.jetbrains.cidr.lang.workspace.compiler.UnknownCompilerKind;
 import javax.annotation.Nullable;
 
 /** Utility methods for CLion run configurations */
@@ -43,6 +49,30 @@ public class RunConfigurationUtils {
         && ((kind == CppBlazeRules.RuleTypes.CC_TEST.getKind()
                 && command.equals(BlazeCommandName.TEST))
             || (kind == CppBlazeRules.RuleTypes.CC_BINARY.getKind()
-                && command.equals(BlazeCommandName.RUN)));
+                && command.equals(BlazeCommandName.RUN))) ;
+  }
+
+  public static OCCompilerKind getCompilerKind(BlazeCommandRunConfiguration runConfig) {
+    final var project = runConfig.getProject();
+
+    final var info = BlazeCTargetInfoService.getFirst(project, runConfig.getTargets());
+    if (info == null) {
+      return UnknownCompilerKind.INSTANCE;
+    }
+
+    final var resolveConfig = OCWorkspace.getInstance(project).getConfigurationById(info.getConfigurationId());
+    if (resolveConfig == null) {
+      return UnknownCompilerKind.INSTANCE;
+    }
+
+    return resolveConfig.getCompilerSettings(CLanguageKind.CPP).getCompilerKind();
+  }
+
+  public static BlazeDebuggerKind getDebuggerKind(BlazeCommandRunConfiguration runConfig) {
+    if (Registry.is("bazel.clwb.debug.use.default.toolchain")) {
+      return BlazeDebuggerKind.byDefaultToolchain();
+    } else {
+      return BlazeDebuggerKind.byHeuristic(getCompilerKind(runConfig));
+    }
   }
 }

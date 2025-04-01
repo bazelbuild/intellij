@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.io;
 
 import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.common.artifact.BlazeArtifact;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +27,7 @@ import java.io.InputStream;
 public interface InputStreamProvider {
 
   static InputStreamProvider getInstance() {
-    return ServiceManager.getService(InputStreamProvider.class);
+    return ApplicationManager.getApplication().getService(InputStreamProvider.class);
   }
 
   InputStream forFile(File file) throws IOException;

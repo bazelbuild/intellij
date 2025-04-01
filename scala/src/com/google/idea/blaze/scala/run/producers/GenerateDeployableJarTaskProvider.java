@@ -24,9 +24,11 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.buildresult.BuildResult;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
@@ -42,8 +44,9 @@ import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.common.Interners;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.ExecutionException;
@@ -59,12 +62,16 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import icons.BlazeIcons;
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
 class GenerateDeployableJarTaskProvider
     extends BeforeRunTaskProvider<GenerateDeployableJarTaskProvider.Task> {
+
+  private static final String DEFAULT_OUTPUT_GROUP_NAME = "default";
+
   private static final Key<GenerateDeployableJarTaskProvider.Task> ID =
       Key.create("GenerateDeployableJarTarget");
 
@@ -185,10 +192,17 @@ class GenerateDeployableJarTaskProvider
         throw new ExecutionException(e);
       }
 
-      List<File> outputs =
-          LocalFileArtifact.getLocalFiles(
-              buildResultHelper.getBuildArtifactsForTarget(
-                  target.withTargetName(target.targetName() + "_deploy.jar"), file -> true));
+      List<File> outputs;
+      try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
+        outputs = LocalFileArtifact.getLocalFiles(
+            com.google.idea.blaze.common.Label.of(target.toString()),
+            BlazeBuildOutputs.fromParsedBepOutput(
+              BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
+                  .getOutputGroupTargetArtifacts(DEFAULT_OUTPUT_GROUP_NAME, String.format("%s_deploy.jar", target)),
+            BlazeContext.create(),
+            env.getProject());
+      }
+
       if (outputs.isEmpty()) {
         throw new ExecutionException(
             String.format("Failed to find deployable jar when building %s", target));
@@ -243,7 +257,7 @@ class GenerateDeployableJarTaskProvider
 
                 context.output(new StatusOutput(title));
                 BlazeCommand command =
-                    BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
+                    BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD, project)
                         .addTargets(target.withTargetName(target.targetName() + "_deploy.jar"))
                         .addBlazeFlags(
                             BlazeFlags.blazeFlags(

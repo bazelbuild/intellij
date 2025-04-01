@@ -1,0 +1,2 @@
+# test external includes explicitly
+build --features=external_include_paths

@@ -41,7 +41,6 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.OutputSink.Propagation;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.settings.ui.JPanelProvidingProject;
 import com.google.idea.blaze.base.settings.ui.ProjectViewUi;
@@ -57,10 +56,13 @@ import com.google.idea.blaze.base.wizard2.BlazeSelectProjectViewOption;
 import com.google.idea.blaze.base.wizard2.ProjectDataDirectoryValidator;
 import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.build.events.MessageEvent.Kind;
+import com.intellij.icons.AllIcons;
 import com.intellij.icons.AllIcons.General;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -465,9 +467,12 @@ public final class BlazeEditProjectViewControl {
       return BlazeValidationResult.failure(
           new BlazeValidationError("Project data directory is not valid"));
     }
-    if (projectDataDir.exists()) {
-      return BlazeValidationResult.failure(
-          new BlazeValidationError(projectDataDir + " already exists"));
+    if (projectDataDir.exists() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      int result = Messages.showOkCancelDialog("This folder has already been imported by the Bazel plugin. Reimporting it can cause data loss.", "Possible Loss of Project Data", "OK", "Cancel", AllIcons.General.ShowWarning);
+
+      if (result == Messages.CANCEL) {
+        return BlazeValidationResult.cancelled();
+      }
     }
     for (ProjectDataDirectoryValidator validator :
         ProjectDataDirectoryValidator.EP_NAME.getExtensions()) {
@@ -546,7 +551,7 @@ public final class BlazeEditProjectViewControl {
       context.addOutputSink(
           IssueOutput.class,
           output -> {
-            if (output.getCategory() == Category.ERROR) {
+            if (output.getKind() == Kind.ERROR) {
               errors.add(output);
             }
             return Propagation.Continue;
@@ -562,7 +567,7 @@ public final class BlazeEditProjectViewControl {
   private static BlazeValidationError validationErrorFromIssueList(List<IssueOutput> issues) {
     List<IssueOutput> errors =
         issues.stream()
-            .filter(issue -> issue.getCategory() == IssueOutput.Category.ERROR)
+            .filter(issue -> issue.getKind() == Kind.ERROR)
             .collect(toList());
 
     if (!errors.isEmpty()) {

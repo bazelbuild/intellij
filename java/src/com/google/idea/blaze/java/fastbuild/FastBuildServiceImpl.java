@@ -15,10 +15,6 @@
  */
 package com.google.idea.blaze.java.fastbuild;
 
-import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.ImmutableMap.toImmutableMap;
-import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
-
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -34,9 +30,12 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.buildresult.BuildResult;
+import com.google.idea.blaze.base.command.buildresult.BuildResult.Status;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
@@ -55,8 +54,11 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.blaze.base.sync.aspects.BuildResult;
-import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
+import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.common.Interners;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService.ChangedSources;
@@ -66,29 +68,40 @@ import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
-import javax.annotation.Nullable;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
 
   private static final ImmutableSetMultimap<BuildSystemName, Kind> SUPPORTED_KINDS =
       ImmutableSetMultimap.<BuildSystemName, Kind>builder()
-          .putAll(BuildSystemName.Bazel, JavaBlazeRules.RuleTypes.JAVA_TEST.getKind())
+          .putAll(
+              BuildSystemName.Bazel,
+              JavaBlazeRules.RuleTypes.JAVA_TEST.getKind(),
+              JavaBlazeRules.RuleTypes.JAVA_JUNIT5_TEST.getKind())
           .putAll(
               BuildSystemName.Blaze,
               AndroidBlazeRules.RuleTypes.ANDROID_ROBOLECTRIC_TEST.getKind(),
               AndroidBlazeRules.RuleTypes.ANDROID_LOCAL_TEST.getKind(),
               AndroidBlazeRules.RuleTypes.KT_ANDROID_LOCAL_TEST.getKind(),
-              JavaBlazeRules.RuleTypes.JAVA_TEST.getKind())
+              JavaBlazeRules.RuleTypes.JAVA_TEST.getKind(),
+              JavaBlazeRules.RuleTypes.JAVA_JUNIT5_TEST.getKind())
           .build();
 
   private final Project project;
@@ -276,6 +289,17 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
         BlazeVersionData.build(
             Blaze.getBuildSystemProvider(project).getBuildSystem(), workspaceRoot, blazeInfo);
 
+    final var projectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (projectData == null) {
+      throw new RuntimeException("not synced yet; please sync project");
+    }
+
+    try {
+      AspectStorageService.of(project).prepare(context, projectData, blazeVersionData);
+    } catch (SyncFailedException e) {
+      throw new RuntimeException("could not prepare aspects", e);
+    }
+
     FastBuildDeployJarStrategy deployJarStrategy =
         FastBuildDeployJarStrategy.getInstance(Blaze.getBuildSystemName(project));
     Label deployJarLabel = deployJarStrategy.createDeployJarLabel(label, blazeVersionData);
@@ -289,14 +313,14 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     Stopwatch timer = Stopwatch.createStarted();
 
     BlazeCommand.Builder command =
-        BlazeCommand.builder(buildParameters.blazeBinary(), BlazeCommandName.BUILD)
+        BlazeCommand.builder(buildParameters.blazeBinary(), BlazeCommandName.BUILD, project)
             .addTargets(deployJarStrategy.getBuildTargets(label, blazeVersionData))
             .addBlazeFlags(deployJarStrategy.getBuildFlags(blazeVersionData))
             .addBlazeFlags(buildParameters.buildFlags())
             .addBlazeFlags(resultHelper.getBuildFlags());
 
     aspectStrategy.addAspectAndOutputGroups(
-        command, blazeVersionData, /* additionalOutputGroups...= */ "default");
+        command, blazeVersionData, project, /* additionalOutputGroups...= */ "default");
 
     int exitCode =
         ExternalTask.builder(workspaceRoot)
@@ -314,32 +338,55 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     if (result.status != Status.SUCCESS) {
       throw new FastBuildTunnelException(new BlazeBuildError("Blaze failure building deploy jar"));
     }
-    Predicate<String> jarPredicate = file -> file.endsWith(deployJarLabel.targetName().toString());
-    try {
+
+    File deployJar;
+    try (final var bepStream = resultHelper.getBepStream(Optional.empty())) {
       ImmutableList<File> deployJarArtifacts =
           LocalFileArtifact.getLocalFiles(
-              resultHelper.getBuildArtifactsForTarget(
-                  deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData), jarPredicate));
+              com.google.idea.blaze.common.Label.of(label.toString()),
+              BlazeBuildOutputs.fromParsedBepOutput(
+                BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
+                  .getOutputGroupTargetArtifacts(
+                      deployJarStrategy.deployJarOwnerLabel(label, blazeVersionData).toString(),
+                      aspectStrategy.getAspectOutputGroup())
+                  .stream()
+                  .filter(artifact -> artifact.getArtifactPath().endsWith(deployJarLabel.targetName().toString()))
+                  .collect(Collectors.toUnmodifiableSet()),
+              BlazeContext.create(),
+              project);
       checkState(deployJarArtifacts.size() == 1);
-      File deployJar = deployJarArtifacts.get(0);
-
-      Predicate<String> filePredicate =
-          file -> aspectStrategy.getAspectOutputFilePredicate().test(file);
-      ImmutableList<File> ideInfoFiles =
-          LocalFileArtifact.getLocalFiles(
-              resultHelper.getArtifactsForOutputGroup(
-                  aspectStrategy.getAspectOutputGroup(), filePredicate));
-
-      // if targets are built with multiple configurations, just take the first one
-      // TODO(brendandouglas): choose a consistent configuration instead
-      ImmutableMap<Label, FastBuildBlazeData> blazeData =
-          ideInfoFiles.stream()
-              .map(aspectStrategy::readFastBuildBlazeData)
-              .collect(toImmutableMap(FastBuildBlazeData::label, i -> i, (i, j) -> i));
-      return BuildOutput.create(deployJar, blazeData, blazeInfo);
+      deployJar = deployJarArtifacts.get(0);
     } catch (GetArtifactsException e) {
       throw new RuntimeException("Blaze failure building deploy jar: " + e.getMessage());
     }
+
+    ImmutableList<File> ideInfoFiles;
+    try (final var bepStream = resultHelper.getBepStream(Optional.empty())) {
+      ideInfoFiles = LocalFileArtifact.getLocalFiles(
+          com.google.idea.blaze.common.Label.of(label.toString()),
+          BlazeBuildOutputs.fromParsedBepOutput(
+            BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
+              .getOutputGroupArtifacts(
+                  aspectStrategy.getAspectOutputGroup())
+              .stream()
+              .filter(artifact ->
+                  aspectStrategy.getAspectOutputFilePredicate().test(
+                      artifact.getArtifactPath().toString()
+                  )
+              ).collect(Collectors.toUnmodifiableSet()),
+          BlazeContext.create(),
+          project);
+    } catch (GetArtifactsException e) {
+      throw new RuntimeException("Blaze failure building ide info files: " + e.getMessage());
+    }
+
+    // if targets are built with multiple configurations, just take the first one
+    // TODO(brendandouglas): choose a consistent configuration instead
+    ImmutableMap<Label, FastBuildBlazeData> blazeData =
+        ideInfoFiles.stream()
+            .map(aspectStrategy::readFastBuildBlazeData)
+            .collect(toImmutableMap(FastBuildBlazeData::label, i -> i, (i, j) -> i));
+    return BuildOutput.create(deployJar, blazeData, blazeInfo);
   }
 
   private BlazeInfo getBlazeInfo(BlazeContext context, FastBuildParameters buildParameters) {

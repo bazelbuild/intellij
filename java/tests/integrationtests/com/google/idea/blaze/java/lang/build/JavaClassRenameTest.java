@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.refactoring.rename.RenameProcessor;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

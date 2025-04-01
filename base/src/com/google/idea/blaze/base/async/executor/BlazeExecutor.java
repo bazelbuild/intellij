@@ -17,14 +17,14 @@ package com.google.idea.blaze.base.async.executor;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import java.util.concurrent.Callable;
 
 /** Shared thread pool for blaze tasks. */
 public abstract class BlazeExecutor {
 
   public static BlazeExecutor getInstance() {
-    return ServiceManager.getService(BlazeExecutor.class);
+    return ApplicationManager.getApplication().getService(BlazeExecutor.class);
   }
 
   public abstract <T> ListenableFuture<T> submit(Callable<T> callable);

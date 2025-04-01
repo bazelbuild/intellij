@@ -132,7 +132,7 @@ public class CleanProjectTargetsSyncAction extends BlazeProjectSyncAction {
   private static ImmutableList<TargetInfo> runBlazeQuery(
       Project project, String query, BlazeContext context) {
     BlazeCommand command =
-        BlazeCommand.builder(getBlazeBinaryPath(project), BlazeCommandName.QUERY)
+        BlazeCommand.builder(getBlazeBinaryPath(project), BlazeCommandName.QUERY, project)
             .addBlazeFlags("--output=label_kind")
             .addBlazeFlags("--keep_going")
             .addBlazeFlags(query)

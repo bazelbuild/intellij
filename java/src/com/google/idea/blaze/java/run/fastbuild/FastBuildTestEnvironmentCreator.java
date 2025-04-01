@@ -111,7 +111,11 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
         getTestClassProperty(),
         FastBuildTestClassFinder.getInstance(project).getTestClass(target, targetJavaInfo));
 
-    commandBuilder.setMainClass(getTestRunner());
+    if (targetJavaInfo.mainClass().isPresent() && !targetJavaInfo.mainClass().get().isBlank()) {
+        commandBuilder.setMainClass(targetJavaInfo.mainClass().get());
+    } else {
+        commandBuilder.setMainClass(getTestRunner());
+    }
 
     commandBuilder
         .addEnvironmentVariable(TEST_BINARY_VARIABLE, getTestBinary(target))

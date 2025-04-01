@@ -16,12 +16,21 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.UnmodifiableIterator;
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.blaze.exception.BuildException;
+import java.io.InputStream;
+import java.util.Optional;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
@@ -46,6 +55,21 @@ public abstract class FakeBuildInvoker implements BuildInvoker {
   public abstract String getBinaryPath();
 
   @Override
+  public BuildEventStreamProvider invoke(BlazeCommand.Builder blazeCommandBuilder, BlazeContext blazeContext) {
+    return fakeBuildEventStreamProvider();
+  }
+
+  @Override
+  public InputStream invokeQuery(BlazeCommand.Builder blazeCommandBuilder, BlazeContext blazeContext) throws BuildException {
+    return InputStream.nullInputStream();
+  }
+
+  @Override
+  public InputStream invokeInfo(BlazeCommand.Builder blazeCommandBuilder, BlazeContext blazeContext) {
+    return InputStream.nullInputStream();
+  }
+
+  @Override
   @Nullable
   public abstract BlazeInfo getBlazeInfo();
 
@@ -63,10 +87,57 @@ public abstract class FakeBuildInvoker implements BuildInvoker {
     return getBuildResultHelperSupplier().get();
   }
 
-  abstract Supplier<BuildResultHelper> getBuildResultHelperSupplier();
+  protected abstract Supplier<BuildResultHelper> getBuildResultHelperSupplier();
 
   @Override
   public abstract FakeBlazeCommandRunner getCommandRunner();
+
+  private BuildEventStreamProvider fakeBuildEventStreamProvider() {
+    return new BuildEventStreamProvider() {
+      private UnmodifiableIterator<BuildEventStreamProtos.BuildEvent> messages =
+          ImmutableList.of(
+                  BuildEventStreamProtos.BuildEvent.newBuilder()
+                      .setId(
+                          BuildEventStreamProtos.BuildEventId.newBuilder()
+                              .setStarted(
+                                  BuildEventStreamProtos.BuildEventId.BuildStartedId
+                                      .getDefaultInstance()))
+                      .setStarted(
+                          BuildEventStreamProtos.BuildStarted.newBuilder().setUuid("buildId"))
+                      .build(),
+                  BuildEventStreamProtos.BuildEvent.newBuilder()
+                      .setId(
+                          BuildEventStreamProtos.BuildEventId.newBuilder()
+                              .setBuildFinished(
+                                  BuildEventStreamProtos.BuildEventId.BuildFinishedId
+                                      .getDefaultInstance()))
+                      .setFinished(BuildEventStreamProtos.BuildFinished.newBuilder())
+                      .build())
+              .iterator();
+
+      @Override
+      public Object getId() {
+        return Optional.empty();
+      }
+
+      @Nullable
+      @Override
+      public BuildEventStreamProtos.BuildEvent getNext() {
+        if (messages.hasNext()) {
+          return messages.next();
+        }
+        return null;
+      }
+
+      @Override
+      public long getBytesConsumed() {
+        return 0;
+      }
+
+      @Override
+      public void close() {}
+    };
+  }
 
   /**
    * Builder class for instances of {@link com.google.idea.blaze.base.bazel.FakeBuildInvoker}.
@@ -92,5 +163,4 @@ public abstract class FakeBuildInvoker implements BuildInvoker {
 
     public abstract Builder buildSystem(BuildSystem buildSystem);
   }
-
 }

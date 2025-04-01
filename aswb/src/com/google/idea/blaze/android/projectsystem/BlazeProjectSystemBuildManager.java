@@ -21,13 +21,10 @@ import com.android.annotations.concurrency.UiThread;
 import com.android.tools.idea.projectsystem.ProjectSystemBuildManager;
 import com.google.idea.blaze.base.build.BlazeBuildListener;
 import com.google.idea.blaze.base.build.BlazeBuildService;
-import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
-import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,13 +42,6 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
   @Override
   public void compileProject() {
     BlazeBuildService.getInstance(project).buildProject();
-  }
-
-  @Override
-  public void compileFilesAndDependencies(Collection<? extends VirtualFile> files) {
-    // TODO(b/191937319): Implement incremental builds for individual files
-    // Just compile the entire project for now.
-    compileProject();
   }
 
   @Override
@@ -109,14 +99,15 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
       project
           .getMessageBus()
           .syncPublisher(PROJECT_SYSTEM_BUILD_TOPIC)
-          .buildStarted(BuildMode.COMPILE); // Blaze build currently only supports compilation
+          .buildStarted(
+              BuildMode.COMPILE_OR_ASSEMBLE); // Blaze build currently only supports compilation
     }
 
     @Override
-    public void buildCompleted(Project project, BlazeBuildOutputs buildOutputs) {
+    public void buildCompleted(Project project, com.google.idea.blaze.base.command.buildresult.BuildResult buildResult) {
       LastBuildResultCache lastBuildResultCache = LastBuildResultCache.getInstance(project);
       BuildResult projectSystemBuildResult =
-          lastBuildResultCache.updateBuildResult(buildOutputs.buildResult);
+          lastBuildResultCache.updateBuildResult(buildResult);
 
       // BlazeBuildListener does not have a concept of `beforeBuildCompleted` so we call both
       // `beforeBuildCompleted` and `buildCompleted` in required order here.
@@ -141,10 +132,8 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
     private BuildResult lastBuildResult = BuildResult.createUnknownBuildResult();
 
     private BuildResult updateBuildResult(
-        com.google.idea.blaze.base.sync.aspects.BuildResult buildResult) {
-      lastBuildResult =
-          new BuildResult(
-              BuildMode.COMPILE, mapBuildStatus(buildResult), System.currentTimeMillis());
+        com.google.idea.blaze.base.command.buildresult.BuildResult buildResult) {
+      lastBuildResult = new BuildResult(BuildMode.COMPILE_OR_ASSEMBLE, mapBuildStatus(buildResult));
       return lastBuildResult;
     }
 
@@ -153,7 +142,7 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
     }
 
     private static BuildStatus mapBuildStatus(
-        com.google.idea.blaze.base.sync.aspects.BuildResult buildResult) {
+        com.google.idea.blaze.base.command.buildresult.BuildResult buildResult) {
       switch (buildResult.status) {
         case SUCCESS:
           return BuildStatus.SUCCESS;
@@ -165,3 +154,4 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
     }
   }
 }
+

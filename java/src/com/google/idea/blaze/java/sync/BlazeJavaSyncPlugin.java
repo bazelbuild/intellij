@@ -67,6 +67,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.pom.java.LanguageLevel;
+
 import java.util.Collection;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -200,7 +201,6 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
 
     LanguageLevel javaLanguageLevel =
         JavaLanguageLevelHelper.getJavaLanguageLevel(projectViewSet, blazeProjectData);
-
     Sdk sdk = Jdks.chooseOrCreateJavaSdk(currentSdk, javaLanguageLevel);
     if (sdk == null) {
       String msg =
@@ -209,6 +209,7 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
       msg +=
           "After configuring a suitable JDK in the \"Project Structure\" dialog, "
               + "sync the project again.";
+      Jdks.notifyJdkSetupIssuesOccurred(project, projectViewSet, javaLanguageLevel, JavaLanguageLevelHelper.getDefaultLanguageLevel());
       IssueOutput.error(msg).submit(context);
       return;
     }

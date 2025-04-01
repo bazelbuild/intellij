@@ -18,15 +18,18 @@ package com.google.idea.blaze.base.sync.aspects.strategy;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.project.Project;
+
 import java.io.File;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Aspect strategy for Bazel, where the aspect is situated in an external repository. */
 public class AspectStrategyBazel extends AspectStrategy {
-  private final String aspectFlag;
+  Boolean supportsAspectParameters;
 
   static final class Provider implements AspectStrategyProvider {
     @Override
@@ -41,37 +44,23 @@ public class AspectStrategyBazel extends AspectStrategy {
   @VisibleForTesting
   public AspectStrategyBazel(BlazeVersionData versionData) {
     super(/* aspectSupportsDirectDepsTrimming= */ true);
-    if (versionData.bazelIsAtLeastVersion(6, 0, 0)) {
-      aspectFlag = "--aspects=@@intellij_aspect//:intellij_info_bundled.bzl%intellij_info_aspect";
-    } else {
-      aspectFlag = "--aspects=@intellij_aspect//:intellij_info_bundled.bzl%intellij_info_aspect";
-    }
+    supportsAspectParameters = versionData.bazelIsAtLeastVersion(6, 0, 0);
   }
 
   @Override
   @VisibleForTesting
-  public Optional<String> getAspectFlag() {
-    return Optional.of(aspectFlag);
+  public Optional<String> getAspectFlag(Project project) {
+    return AspectStorageService.of(project).resolve("intellij_info_bundled.bzl")
+        .map(label -> String.format("--aspects=%s%%intellij_info_aspect", label));
   }
 
-  // In tests, the location of @intellij_aspect is not known at compile time.
-  public static final String OVERRIDE_REPOSITORY_FLAG = "--override_repository=intellij_aspect";
+  @Override
+  protected Boolean supportsAspectsParameters() {
+    return supportsAspectParameters;
+  }
 
   @Override
   public String getName() {
     return "AspectStrategySkylarkBazel";
-  }
-
-  private static Optional<File> findAspectDirectory() {
-    IdeaPluginDescriptor plugin =
-        PluginManager.getPlugin(PluginManager.getPluginByClassName(AspectStrategy.class.getName()));
-    if (plugin == null) {
-      return Optional.empty();
-    }
-    return Optional.of(new File(plugin.getPath(), "aspect"));
-  }
-
-  public static Optional<String> getAspectRepositoryOverrideFlag() {
-    return findAspectDirectory().map(it -> OVERRIDE_REPOSITORY_FLAG + "=" + it.getPath());
   }
 }

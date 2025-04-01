@@ -114,26 +114,7 @@ public class ToolWindowTaskIssueOutputFilter implements Filter {
    */
   @Nullable
   private static ResultItem hyperlinkItem(IssueOutput issue, int offset) {
-    TextRange range = issue.getConsoleHyperlinkRange();
-    HyperlinkInfo link = getHyperlinkInfo(issue);
-    if (range == null || link == null) {
-      return null;
-    }
-    return new ResultItem(range.getStartOffset() + offset, range.getEndOffset() + offset, link);
-  }
-
-  @Nullable
-  private static HyperlinkInfo getHyperlinkInfo(IssueOutput issue) {
-    Navigatable navigatable = issue.getNavigatable();
-    if (navigatable != null) {
-      return project -> navigatable.navigate(true);
-    }
-    VirtualFile vf = resolveVirtualFile(issue.getFile());
-    return vf != null
-        ? project ->
-            new OpenFileDescriptor(project, vf, issue.getLine() - 1, issue.getColumn() - 1)
-                .navigate(true)
-        : null;
+    return null;
   }
 
   /**

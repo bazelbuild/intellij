@@ -1,6 +1,9 @@
 """Implementation of IntelliJ-specific information collecting aspect."""
 
-load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
+load(
+    "@bazel_tools//tools/build_defs/cc:action_names.bzl",
+    "ACTION_NAMES",
+)
 load(
     ":artifacts.bzl",
     "artifact_location",
@@ -10,9 +13,27 @@ load(
     "struct_omit_none",
     "to_artifact_location",
 )
+load(":flag_hack.bzl", "FlagHackInfo")
+
+load(":java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
+
+load(":python_info.bzl", "get_py_info", "py_info_in_target")
+
+load(":code_generator_info.bzl", "CODE_GENERATOR_RULE_NAMES")
+
 load(
     ":make_variables.bzl",
     "expand_make_variables",
+)
+
+IntelliJInfo = provider(
+    doc = "Collected information about the targets visited by the aspect.",
+    fields = [
+        "export_deps",
+        "kind",
+        "output_groups",
+        "target_key",
+    ],
 )
 
 # Defensive list of features that can appear in the C++ toolchain, but which we
@@ -28,9 +49,9 @@ UNSUPPORTED_FEATURES = [
 
 # Compile-time dependency attributes, grouped by type.
 DEPS = [
-    "_cc_toolchain",  # From cc rules
     "_stl",  # From cc rules
     "malloc",  # From cc_binary rules
+    "implementation_deps",  # From cc_library rules
     "_java_toolchain",  # From java rules
     "deps",
     "jars",  # from java_import rules
@@ -44,7 +65,6 @@ DEPS = [
     "tests",  # From test_suite
     "compilers",  # From go_proto_library
     "associates",  # From kotlin rules
-    "_kt_toolchain",  # From rules_kotlin
 ]
 
 # Run-time dependency attributes, grouped by type.
@@ -64,39 +84,6 @@ PY2 = 1
 
 PY3 = 2
 
-##### Begin bazel-flag-hack
-# The flag hack stuff below is a way to detect flags that bazel has been invoked with from the
-# aspect. Once PY3-as-default is stable, it can be removed. When removing, also remove the
-# define_flag_hack() call in BUILD and the "_flag_hack" attr on the aspect below. See
-# "PY3-as-default" in:
-# https://github.com/bazelbuild/bazel/blob/master/src/main/java/com/google/devtools/build/lib/rules/python/PythonConfiguration.java
-
-FlagHackInfo = provider(fields = ["incompatible_py2_outputs_are_suffixed"])
-
-def _flag_hack_impl(ctx):
-    return [FlagHackInfo(incompatible_py2_outputs_are_suffixed = ctx.attr.incompatible_py2_outputs_are_suffixed)]
-
-_flag_hack_rule = rule(
-    attrs = {"incompatible_py2_outputs_are_suffixed": attr.bool()},
-    implementation = _flag_hack_impl,
-)
-
-def define_flag_hack():
-    native.config_setting(
-        name = "incompatible_py2_outputs_are_suffixed_setting",
-        values = {"incompatible_py2_outputs_are_suffixed": "true"},
-    )
-    _flag_hack_rule(
-        name = "flag_hack",
-        incompatible_py2_outputs_are_suffixed = select({
-            ":incompatible_py2_outputs_are_suffixed_setting": True,
-            "//conditions:default": False,
-        }),
-        visibility = ["//visibility:public"],
-    )
-
-##### End bazel-flag-hack
-
 # PythonCompatVersion enum; must match PyIdeInfo.PythonSrcsVersion
 SRC_PY2 = 1
 
@@ -109,6 +96,42 @@ SRC_PY2ONLY = 4
 SRC_PY3ONLY = 5
 
 ##### Helpers
+
+def run_jar(ctx, jar, **kwargs):
+    """Runs a jar using the current java runtime used to run this bazel instance.
+
+    Finds the current java runtime and uses the java executable to run the provided jar. The jar
+    file should be a self contained _deploy jar.
+    """
+
+    host_java = ctx.attr._java_runtime[java_common.JavaRuntimeInfo]
+
+    return ctx.actions.run_shell(
+        tools = depset([jar], transitive = [host_java.files]),
+        command = "%s -jar %s $@" % (host_java.java_executable_exec_path, jar.path),
+        **kwargs,
+    )
+
+def get_code_generator_rule_names(ctx, language_name):
+    """Supplies a list of Rule names for code generation for the language specified
+
+    For some languages, it is possible to specify Rules' names that are interpreted as
+    code-generators for the language. These Rules' names are specified as attrs and are provided to
+    the aspect using the `AspectStrategy#AspectParameter` in the plugin logic.
+    """
+
+    if not language_name:
+        fail("the `language_name` must be provided")
+
+    if hasattr(CODE_GENERATOR_RULE_NAMES, language_name):
+        return getattr(CODE_GENERATOR_RULE_NAMES, language_name)
+
+    return []
+
+def get_registry_flag(ctx, name):
+    """Registry flags are passed to aspects using defines. See CppAspectArgsProvider."""
+
+    return ctx.var.get(name) == "true"
 
 def source_directory_tuple(resource_file):
     """Creates a tuple of (exec_path, root_exec_path_fragment, is_source, is_external)."""
@@ -190,9 +213,10 @@ def jars_from_output(output):
     """Collect jars for intellij-resolve-files from Java output."""
     if output == None:
         return []
+    source_jars = get_source_jars(output)
     return [
         jar
-        for jar in ([output.class_jar, output.ijar] + get_source_jars(output))
+        for jar in ([output.ijar if len(source_jars) > 0 and output.ijar else output.class_jar] + source_jars)
         if jar != None and not jar.is_source
     ]
 
@@ -214,13 +238,17 @@ def collect_targets_from_attrs(rule_attrs, attrs):
         _collect_target_from_attr(rule_attrs, attr_name, result)
     return [target for target in result if is_valid_aspect_target(target)]
 
+def targets_to_labels(targets):
+    """Returns a set of label strings for the given targets."""
+    return depset([str(target.label) for target in targets])
+
 def list_omit_none(value):
     """Returns a list of the value, or the empty list if None."""
     return [value] if value else []
 
 def is_valid_aspect_target(target):
     """Returns whether the target has had the aspect run on it."""
-    return hasattr(target, "intellij_info")
+    return IntelliJInfo in target
 
 def get_aspect_ids(ctx):
     """Returns the all aspect ids, filtering out self."""
@@ -235,7 +263,7 @@ def _is_language_specific_proto_library(ctx, target, semantics):
     """Returns True if the target is a proto library with attached language-specific aspect."""
     if ctx.rule.kind != "proto_library":
         return False
-    if JavaInfo in target:
+    if java_info_in_target(target):
         return True
     if CcInfo in target:
         return True
@@ -262,7 +290,7 @@ def make_dep(dep, dependency_type):
     """Returns a Dependency proto struct."""
     return struct(
         dependency_type = dependency_type,
-        target = dep.intellij_info.target_key,
+        target = dep[IntelliJInfo].target_key,
     )
 
 def make_deps(deps, dependency_type):
@@ -321,20 +349,19 @@ def _get_python_srcs_version(ctx):
     srcs_version = getattr(ctx.rule.attr, "srcs_version", "PY2AND3")
     return _SRCS_VERSION_MAPPING.get(srcs_version, default = SRC_PY2AND3)
 
-def _do_starlark_string_expansion(ctx, name, strings, extra_targets = []):
+def _do_starlark_string_expansion(ctx, name, strings, extra_targets = [], tokenization = True):
     # first, expand all starlark predefined paths:
     #   location, locations, rootpath, rootpaths, execpath, execpaths
     strings = [ctx.expand_location(value, targets = extra_targets) for value in strings]
 
     # then expand any regular GNU make style variables
-    strings = [expand_make_variables(name, value, ctx) for value in strings]
-    return strings
+    return expand_make_variables(ctx, tokenization, strings)
 
 ##### Builders for individual parts of the aspect output
 
 def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates Python-specific output groups, returns false if not a Python target."""
-    if not PyInfo in target or _is_language_specific_proto_library(ctx, target, semantics):
+    if not py_info_in_target(target) or _is_language_specific_proto_library(ctx, target, semantics):
         return False
 
     py_semantics = getattr(semantics, "py", None)
@@ -344,10 +371,68 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         py_launcher = None
 
     sources = sources_from_target(ctx)
-    to_build = target[PyInfo].transitive_sources
+    to_build = get_py_info(target).transitive_sources
     args = getattr(ctx.rule.attr, "args", [])
     data_deps = getattr(ctx.rule.attr, "data", [])
-    args = _do_starlark_string_expansion(ctx, "args", args, data_deps)
+    args = _do_starlark_string_expansion(ctx, "args", args, data_deps, tokenization = False)
+    imports = getattr(ctx.rule.attr, "imports", [])
+    is_code_generator = False
+
+    # If there are apparently no sources found from `srcs` and the target has a rule name which is
+    # one of the ones pre-specified to the aspect as being a code-generator for Python then
+    # interpret the outputs of the target specified in the PyInfo as being sources.
+
+    if 0 == len(sources) and ctx.rule.kind in get_code_generator_rule_names(ctx, "python"):
+        def provider_import_to_attr_import(provider_import):
+            """\
+            Remaps the imports from PyInfo
+
+            The imports that are supplied on the `PyInfo` are relative to the runfiles and so are
+            not the same as those which might be supplied on an attribute of `py_library`. This
+            function will remap those back so they look as if they were `imports` attributes on
+            the rule. The form of the runfiles import is `<workspace_name>/<package_dir>/<import>`.
+            The actual `workspace_name` is not interesting such that the first part can be simply
+            stripped. Next the package to the Label is stripped leaving a path that would have been
+            supplied on an `imports` attribute to a Rule.
+            """
+
+            # Other code in this file appears to assume *NIX path component separators?
+
+            provider_import_parts = [p for p in provider_import.split("/")]
+            package_parts = [p for p in ctx.label.package.split("/")]
+
+            if 0 == len(provider_import_parts):
+                return None
+
+            scratch_parts = provider_import_parts[1:]  # remove the workspace name or _main
+
+            for p in package_parts:
+                if 0 != len(provider_import_parts) and scratch_parts[0] == p:
+                    scratch_parts = scratch_parts[1:]
+                else:
+                    return None
+
+            return "/".join(scratch_parts)
+
+        def provider_imports_to_attr_imports():
+            result = []
+
+            for provider_import in get_py_info(target).imports.to_list():
+                attr_import = provider_import_to_attr_import(provider_import)
+                if attr_import:
+                    result.append(attr_import)
+
+            return result
+
+        if get_py_info(target).imports:
+            imports.extend(provider_imports_to_attr_imports())
+
+        runfiles = target[DefaultInfo].default_runfiles
+
+        if runfiles and runfiles.files:
+            sources.extend([artifact_location(f) for f in runfiles.files.to_list()])
+
+        is_code_generator = True
 
     ide_info["py_ide_info"] = struct_omit_none(
         launcher = py_launcher,
@@ -355,6 +440,8 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         sources = sources,
         srcs_version = _get_python_srcs_version(ctx),
         args = args,
+        imports = imports,
+        is_code_generator = is_code_generator,
     )
 
     update_sync_output_groups(output_groups, "intellij-info-py", depset([ide_info_file]))
@@ -373,6 +460,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     """Updates Go-specific output groups, returns false if not a recognized Go target."""
     sources = []
     generated = []
+    cgo = False
 
     # currently there's no Go Skylark API, with the only exception being proto_library targets
     if ctx.rule.kind in [
@@ -386,6 +474,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     ]:
         sources = [f for src in getattr(ctx.rule.attr, "srcs", []) for f in src.files.to_list()]
         generated = [f for f in sources if not f.is_source]
+        cgo = getattr(ctx.rule.attr, "cgo", False)
     elif ctx.rule.kind == "go_wrap_cc":
         genfiles = target.files.to_list()
         go_genfiles = [f for f in genfiles if f.basename.endswith(".go")]
@@ -413,8 +502,8 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
             library_labels = [stringify_label(ctx.rule.attr.library.label)]
         elif getattr(ctx.rule.attr, "embed", None) != None:
             for library in ctx.rule.attr.embed:
-                if library.intellij_info.kind == "go_source" or library.intellij_info.kind == "go_proto_library":
-                    l = library.intellij_info.output_groups["intellij-sources-go-outputs"].to_list()
+                if library[IntelliJInfo].kind == "go_source" or library[IntelliJInfo].kind == "go_proto_library":
+                    l = library[IntelliJInfo].output_groups["intellij-sources-go-outputs"].to_list()
                     sources += l
                     generated += [f for f in l if not f.is_source]
                 else:
@@ -424,6 +513,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         import_path = import_path,
         library_labels = library_labels,
         sources = [artifact_location(f) for f in sources],
+        cgo = cgo,
     )
 
     compile_files = target[OutputGroupInfo].compilation_outputs if hasattr(target[OutputGroupInfo], "compilation_outputs") else depset([])
@@ -456,12 +546,26 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
     target_copts = []
     if hasattr(ctx.rule.attr, "copts"):
         target_copts += ctx.rule.attr.copts
+    extra_targets = []
+    if hasattr(ctx.rule.attr, "additional_compiler_inputs"):
+        extra_targets += ctx.rule.attr.additional_compiler_inputs
     if hasattr(semantics, "cc") and hasattr(semantics.cc, "get_default_copts"):
         target_copts += semantics.cc.get_default_copts(ctx)
 
-    target_copts = _do_starlark_string_expansion(ctx, "copt", target_copts)
+    target_copts = _do_starlark_string_expansion(ctx, "copt", target_copts, extra_targets)
 
     compilation_context = target[CcInfo].compilation_context
+
+    # Merge current compilation context with context of implementation dependencies.
+    if hasattr(ctx.rule.attr, "implementation_deps"):
+        implementation_deps = ctx.rule.attr.implementation_deps
+        compilation_context = cc_common.merge_compilation_contexts(
+            compilation_contexts =
+                [compilation_context] + [impl[CcInfo].compilation_context for impl in implementation_deps],
+        )
+
+    # external_includes available since bazel 7
+    external_includes = getattr(compilation_context, "external_includes", depset()).to_list()
 
     c_info = struct_omit_none(
         header = headers,
@@ -471,7 +575,8 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
         transitive_define = compilation_context.defines.to_list(),
         transitive_include_directory = compilation_context.includes.to_list(),
         transitive_quote_include_directory = compilation_context.quote_includes.to_list(),
-        transitive_system_include_directory = compilation_context.system_includes.to_list(),
+        # both system and external includes are add using `-isystem`
+        transitive_system_include_directory = compilation_context.system_includes.to_list() + external_includes,
         include_prefix = getattr(ctx.rule.attr, "include_prefix", None),
         strip_include_prefix = getattr(ctx.rule.attr, "strip_include_prefix", None),
     )
@@ -506,56 +611,56 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
     # cpp fragment to access bazel options
     cpp_fragment = ctx.fragments.cpp
 
-    # Enabled in Bazel 0.16
-    if hasattr(cc_common, "get_memory_inefficient_command_line"):
-        # Enabled in Bazel 0.17
-        if hasattr(cpp_fragment, "copts"):
-            copts = cpp_fragment.copts
-            cxxopts = cpp_fragment.cxxopts
-            conlyopts = cpp_fragment.conlyopts
-        else:
-            copts = []
-            cxxopts = []
-            conlyopts = []
-        feature_configuration = cc_common.configure_features(
-            ctx = ctx,
-            cc_toolchain = cpp_toolchain,
-            requested_features = ctx.features,
-            unsupported_features = ctx.disabled_features + UNSUPPORTED_FEATURES,
-        )
-        c_variables = cc_common.create_compile_variables(
+    copts = cpp_fragment.copts
+    cxxopts = cpp_fragment.cxxopts
+    conlyopts = cpp_fragment.conlyopts
+
+    feature_configuration = cc_common.configure_features(
+        ctx = ctx,
+        cc_toolchain = cpp_toolchain,
+        requested_features = ctx.features,
+        unsupported_features = ctx.disabled_features + UNSUPPORTED_FEATURES,
+    )
+    c_variables = cc_common.create_compile_variables(
+        feature_configuration = feature_configuration,
+        cc_toolchain = cpp_toolchain,
+        user_compile_flags = copts + conlyopts,
+    )
+    cpp_variables = cc_common.create_compile_variables(
+        feature_configuration = feature_configuration,
+        cc_toolchain = cpp_toolchain,
+        user_compile_flags = copts + cxxopts,
+    )
+    c_options = cc_common.get_memory_inefficient_command_line(
+        feature_configuration = feature_configuration,
+        action_name = ACTION_NAMES.c_compile,
+        variables = c_variables,
+    )
+    cpp_options = cc_common.get_memory_inefficient_command_line(
+        feature_configuration = feature_configuration,
+        action_name = ACTION_NAMES.cpp_compile,
+        variables = cpp_variables,
+    )
+
+    if (get_registry_flag(ctx, "_cpp_use_get_tool_for_action")):
+        c_compiler = cc_common.get_tool_for_action(
             feature_configuration = feature_configuration,
-            cc_toolchain = cpp_toolchain,
-            user_compile_flags = copts + conlyopts,
+            action_name = ACTION_NAMES.c_compile,
         )
-        cpp_variables = cc_common.create_compile_variables(
+        cpp_compiler = cc_common.get_tool_for_action(
             feature_configuration = feature_configuration,
-            cc_toolchain = cpp_toolchain,
-            user_compile_flags = copts + cxxopts,
-        )
-        c_options = cc_common.get_memory_inefficient_command_line(
-            feature_configuration = feature_configuration,
-            # TODO(#391): Use constants from action_names.bzl
-            action_name = "c-compile",
-            variables = c_variables,
-        )
-        cpp_options = cc_common.get_memory_inefficient_command_line(
-            feature_configuration = feature_configuration,
-            # TODO(#391): Use constants from action_names.bzl
-            action_name = "c++-compile",
-            variables = cpp_variables,
+            action_name = ACTION_NAMES.cpp_compile,
         )
     else:
-        # See the plugin's BazelVersionChecker. We should have checked that we are Bazel 0.16+,
-        # so get_memory_inefficient_command_line should be available.
-        c_options = []
-        cpp_options = []
+        c_compiler = str(cpp_toolchain.compiler_executable)
+        cpp_compiler = str(cpp_toolchain.compiler_executable)
 
     c_toolchain_info = struct_omit_none(
         built_in_include_directory = [str(d) for d in cpp_toolchain.built_in_include_directories],
         c_option = c_options,
-        cpp_executable = str(cpp_toolchain.compiler_executable),
         cpp_option = cpp_options,
+        c_compiler = c_compiler,
+        cpp_compiler = cpp_compiler,
         target_name = cpp_toolchain.target_gnu_system_name,
     )
     ide_info["c_toolchain_ide_info"] = c_toolchain_info
@@ -570,8 +675,9 @@ def get_java_provider(target):
     # See https://github.com/bazelbuild/intellij/pull/1202
     if hasattr(target, "kt") and hasattr(target.kt, "outputs"):
         return target.kt
-    if JavaInfo in target:
-        return target[JavaInfo]
+    java_info = get_java_info(target)
+    if java_info:
+        return java_info
     if hasattr(java_common, "JavaPluginInfo") and java_common.JavaPluginInfo in target:
         return target[java_common.JavaPluginInfo]
     return None
@@ -701,8 +807,9 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     return True
 
 def _android_lint_plugin_jars(target):
-    if JavaInfo in target:
-        return target[JavaInfo].transitive_runtime_jars.to_list()
+    java_info = get_java_info(target)
+    if java_info:
+        return java_info.transitive_runtime_jars.to_list()
     else:
         return []
 
@@ -735,10 +842,11 @@ def build_java_package_manifest(ctx, target, source_files, suffix):
     args.use_param_file("@%s", use_always = True)
     args.set_param_file_format("multiline")
 
-    ctx.actions.run(
+    run_jar(
+        ctx = ctx,
+        jar = ctx.file._package_parser,
         inputs = source_files,
         outputs = [output],
-        executable = ctx.executable._package_parser,
         arguments = [args],
         mnemonic = "JavaPackageManifest",
         progress_message = "Parsing java package strings for " + str(target.label),
@@ -763,6 +871,9 @@ def _build_filtered_gen_jar(ctx, target, java_outputs, gen_java_sources, srcjars
         elif hasattr(jar, "source_jar") and jar.source_jar:
             source_jar_artifacts.append(jar.source_jar)
 
+    if len(source_jar_artifacts) == 0 or len(jar_artifacts) == 0:
+        jar_artifacts.extend([jar.class_jar for jar in java_outputs if jar.class_jar])
+
     filtered_jar = ctx.actions.declare_file(target.label.name + "-filtered-gen.jar")
     filtered_source_jar = ctx.actions.declare_file(target.label.name + "-filtered-gen-src.jar")
     args = []
@@ -778,10 +889,11 @@ def _build_filtered_gen_jar(ctx, target, java_outputs, gen_java_sources, srcjars
     if srcjars:
         for source_jar in srcjars:
             args += ["--keep_source_jar", source_jar.path]
-    ctx.actions.run(
+    run_jar(
+        ctx = ctx,
+        jar = ctx.file._jar_filter,
         inputs = jar_artifacts + source_jar_artifacts + gen_java_sources + srcjars,
         outputs = [filtered_jar, filtered_source_jar],
-        executable = ctx.executable._jar_filter,
         arguments = args,
         mnemonic = "JarFilter",
         progress_message = "Filtering generated code for " + str(target.label),
@@ -892,11 +1004,12 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
             args.add_joined("--resources", res_files, join_with = ",")
             args.add("--resource_root", root.relative_path if root.is_source else root.root_execution_path_fragment + "/" + root.relative_path)
 
-            ctx.actions.run(
+            run_jar(
+                ctx = ctx,
+                jar = ctx.file._create_aar,
                 outputs = [aar],
                 inputs = [android.manifest] + res_files,
                 arguments = [args],
-                executable = ctx.executable._create_aar,
                 mnemonic = "CreateAar",
                 progress_message = "Generating " + aar_file_name + ".aar for target " + str(target.label),
             )
@@ -1030,10 +1143,12 @@ def collect_kotlin_toolchain_info(target, ctx, ide_info, ide_info_file, output_g
     else:
         return False
 
+    if not hasattr(kt, "language_version"):
+        return False
     ide_info["kt_toolchain_ide_info"] = struct(
         language_version = kt.language_version,
     )
-    update_sync_output_groups(output_groups, "intellij-info-kotlin", depset([ide_info_file]))
+    update_sync_output_groups(output_groups, "intellij-info-kt", depset([ide_info_file]))
     return True
 
 def _is_proto_library_wrapper(target, ctx):
@@ -1043,7 +1158,7 @@ def _is_proto_library_wrapper(target, ctx):
 
     # treat any *proto_library rule with a single proto_library dep as a shim
     deps = collect_targets_from_attrs(ctx.rule.attr, ["deps"])
-    return len(deps) == 1 and deps[0].intellij_info and deps[0].intellij_info.kind == "proto_library"
+    return len(deps) == 1 and IntelliJInfo in deps[0] and deps[0][IntelliJInfo].kind == "proto_library"
 
 def _get_forwarded_deps(target, ctx):
     """Returns the list of deps of this target to forward.
@@ -1082,12 +1197,22 @@ def intellij_info_aspect_impl(target, ctx, semantics):
         rule_attrs,
         semantics_extra_deps(DEPS, semantics, "extra_deps"),
     )
+
+    # Collect direct toolchain type-based dependencies
+    if hasattr(semantics, "toolchains_propagation"):
+        direct_dep_targets.extend(
+            semantics.toolchains_propagation.collect_toolchain_deps(
+                ctx,
+                semantics.toolchains_propagation.toolchain_types,
+            ),
+        )
+
     direct_deps = make_deps(direct_dep_targets, COMPILE_TIME)
 
     # Add exports from direct dependencies
     exported_deps_from_deps = []
     for dep in direct_dep_targets:
-        exported_deps_from_deps = exported_deps_from_deps + dep.intellij_info.export_deps
+        exported_deps_from_deps = exported_deps_from_deps + dep[IntelliJInfo].export_deps
 
     # Combine into all compile time deps
     compiletime_deps = direct_deps + exported_deps_from_deps
@@ -1095,13 +1220,13 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     # Propagate my own exports
     export_deps = []
     direct_exports = []
-    if JavaInfo in target:
+    if java_info_in_target(target):
         direct_exports = collect_targets_from_attrs(rule_attrs, ["exports"])
         export_deps.extend(make_deps(direct_exports, COMPILE_TIME))
 
         # Collect transitive exports
         for export in direct_exports:
-            export_deps.extend(export.intellij_info.export_deps)
+            export_deps.extend(export[IntelliJInfo].export_deps)
 
         if ctx.rule.kind == "android_library" or ctx.rule.kind == "kt_android_library":
             # Empty android libraries export all their dependencies.
@@ -1131,7 +1256,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     prerequisites = direct_dep_targets + runtime_dep_targets + extra_prerequisite_targets + direct_exports
     output_groups = dict()
     for dep in prerequisites:
-        for k, v in dep.intellij_info.output_groups.items():
+        for k, v in dep[IntelliJInfo].output_groups.items():
             if dep in forwarded_deps:
                 # unconditionally roll up deps for these targets
                 output_groups[k] = output_groups[k] + [v] if k in output_groups else [v]
@@ -1204,15 +1329,15 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     ctx.actions.write(ide_info_file, proto.encode_text(info))
 
     # Return providers.
-    return struct_omit_none(
-        intellij_info = struct(
+    return [
+        IntelliJInfo(
             export_deps = export_deps,
             kind = ctx.rule.kind,
             output_groups = output_groups,
             target_key = target_key,
         ),
-        output_groups = output_groups,
-    )
+        OutputGroupInfo(**output_groups),
+    ]
 
 def semantics_extra_deps(base, semantics, name):
     if not hasattr(semantics, name):
@@ -1220,7 +1345,7 @@ def semantics_extra_deps(base, semantics, name):
     extra_deps = getattr(semantics, name)
     return base + extra_deps
 
-def make_intellij_info_aspect(aspect_impl, semantics):
+def make_intellij_info_aspect(aspect_impl, semantics, **kwargs):
     """Creates the aspect given the semantics."""
     tool_label = semantics.tool_label
     flag_hack_label = semantics.flag_hack_label
@@ -1232,25 +1357,23 @@ def make_intellij_info_aspect(aspect_impl, semantics):
 
     attrs = {
         "_package_parser": attr.label(
-            default = tool_label("PackageParser"),
-            cfg = "exec",
-            executable = True,
-            allow_files = True,
+            default = tool_label("PackageParser_deploy.jar"),
+            allow_single_file = True,
         ),
         "_jar_filter": attr.label(
-            default = tool_label("JarFilter"),
-            cfg = "exec",
-            executable = True,
-            allow_files = True,
+            default = tool_label("JarFilter_deploy.jar"),
+            allow_single_file = True,
         ),
         "_flag_hack": attr.label(
             default = flag_hack_label,
         ),
         "_create_aar": attr.label(
-            default = tool_label("CreateAar"),
+            default = tool_label("CreateAar_deploy.jar"),
+            allow_single_file = True,
+        ),
+        "_java_runtime": attr.label(
+            default = "@bazel_tools//tools/jdk:current_java_runtime",
             cfg = "exec",
-            executable = True,
-            allow_files = True,
         ),
     }
 
@@ -1262,6 +1385,7 @@ def make_intellij_info_aspect(aspect_impl, semantics):
         attr_aspects = attr_aspects,
         attrs = attrs,
         fragments = ["cpp"],
-        required_aspect_providers = [[JavaInfo], [CcInfo]] + semantics.extra_required_aspect_providers,
+        required_aspect_providers = [java_info_reference(), [CcInfo]] + semantics.extra_required_aspect_providers,
         implementation = aspect_impl,
+        **kwargs
     )

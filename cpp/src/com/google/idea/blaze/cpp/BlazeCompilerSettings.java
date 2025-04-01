@@ -17,18 +17,21 @@ package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
+import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind;
+import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.UnknownCompilerKind;
 import java.io.File;
 import java.util.List;
 import javax.annotation.Nullable;
 
-final class BlazeCompilerSettings {
+public final class BlazeCompilerSettings {
 
   @Nullable private final File cCompiler;
   @Nullable private final File cppCompiler;
@@ -36,6 +39,7 @@ final class BlazeCompilerSettings {
   private final ImmutableList<String> cppCompilerSwitches;
   private final String compilerVersion;
   private final ImmutableMap<String, String> compilerEnvironment;
+  private final ImmutableList<ExecutionRootPath> builtInIncludes;
 
   BlazeCompilerSettings(
       Project project,
@@ -44,23 +48,35 @@ final class BlazeCompilerSettings {
       ImmutableList<String> cFlags,
       ImmutableList<String> cppFlags,
       String compilerVersion,
-      ImmutableMap<String, String> compilerEnvironment) {
+      ImmutableMap<String, String> compilerEnvironment,
+      ImmutableList<ExecutionRootPath> bultinIncludes) {
     this.cCompiler = cCompiler;
     this.cppCompiler = cppCompiler;
     this.cCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cFlags));
     this.cppCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cppFlags));
     this.compilerVersion = compilerVersion;
     this.compilerEnvironment = compilerEnvironment;
+    this.builtInIncludes = bultinIncludes;
   }
 
-  OCCompilerKind getCompiler(OCLanguageKind languageKind) {
-    if (languageKind == CLanguageKind.C || languageKind == CLanguageKind.CPP) {
+  public OCCompilerKind getCompiler(OCLanguageKind languageKind) {
+    if (languageKind != CLanguageKind.C && languageKind != CLanguageKind.CPP) {
+      return UnknownCompilerKind.INSTANCE;
+    }
+
+    if (CompilerVersionUtil.isMSVC(compilerVersion)) {
+      return MSVCCompilerKind.INSTANCE;
+    }
+
+    if (CompilerVersionUtil.isClang(compilerVersion)) {
       return ClangCompilerKind.INSTANCE;
     }
-    return UnknownCompilerKind.INSTANCE;
+
+    // default to gcc
+    return GCCCompilerKind.INSTANCE;
   }
 
-  File getCompilerExecutable(OCLanguageKind lang) {
+  public File getCompilerExecutable(OCLanguageKind lang) {
     if (lang == CLanguageKind.C) {
       return cCompiler;
     } else if (lang == CLanguageKind.CPP) {
@@ -70,7 +86,7 @@ final class BlazeCompilerSettings {
     return null;
   }
 
-  ImmutableList<String> getCompilerSwitches(OCLanguageKind lang, @Nullable VirtualFile sourceFile) {
+  public ImmutableList<String> getCompilerSwitches(OCLanguageKind lang, @Nullable VirtualFile sourceFile) {
     if (lang == CLanguageKind.C) {
       return cCompilerSwitches;
     }
@@ -84,11 +100,15 @@ final class BlazeCompilerSettings {
     return BlazeCompilerFlagsProcessor.process(project, allCompilerFlags);
   }
 
-  String getCompilerVersion() {
+  public String getCompilerVersion() {
     return compilerVersion;
   }
 
-  String getCompilerEnvironment(String variable) {
+  public String getCompilerEnvironment(String variable) {
     return compilerEnvironment.get(variable);
+  }
+
+  public ImmutableList<ExecutionRootPath> getBuiltInIncludes() {
+    return builtInIncludes;
   }
 }

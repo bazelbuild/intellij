@@ -4,71 +4,20 @@ load("@rules_java//java:defs.bzl", "java_import")
 
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
-    # Indirect ij_product mapping for internal Blaze Plugin
-    "intellij-latest": "intellij-2022.3",
-    "intellij-latest-mac": "intellij-2022.3-mac",
-    "intellij-beta": "intellij-2022.3",
-    "intellij-under-dev": "intellij-2022.3",
-    "intellij-ue-latest": "intellij-ue-2022.3",
-    "intellij-ue-latest-mac": "intellij-ue-2022.3-mac",
-    "intellij-ue-beta": "intellij-ue-2022.3",
-    "intellij-ue-under-dev": "intellij-ue-2022.3",
-    "android-studio-latest": "android-studio-2023.1",
-    "android-studio-latest-mac": "android-studio-2023.1-mac",
-    "android-studio-beta": "android-studio-2023.1",
-    "android-studio-beta-mac": "android-studio-2023.1-mac",
-    "android-studio-canary": "android-studio-2023.2",
-    "android-studio-canary-mac": "android-studio-2023.2-mac",
-    "clion-latest": "clion-2022.3",
-    "clion-latest-mac": "clion-2022.3-mac",
-    "clion-beta": "clion-2022.3",
-    "clion-under-dev": "clion-2022.3",
-    # Indirect ij_product mapping for Bazel Plugin OSS
-    # The old names for -oss-oldest-stable and -oss-latest-stable were
-    # -oss-stable and -oss-beta respectively.
-    "intellij-oss-oldest-stable": "intellij-2023.3",
-    "intellij-oss-latest-stable": "intellij-2024.1",
-    "intellij-oss-under-dev": "intellij-2024.2",
-    "intellij-ue-oss-oldest-stable": "intellij-ue-2023.3",
-    "intellij-ue-oss-latest-stable": "intellij-ue-2024.1",
-    "intellij-ue-oss-under-dev": "intellij-ue-2024.2",
-    "android-studio-oss-oldest-stable": "android-studio-2023.1",
-    "android-studio-oss-latest-stable": "android-studio-2023.2",
-    "android-studio-oss-under-dev": "android-studio-2023.2",
-    "clion-oss-oldest-stable": "clion-2023.3",
-    "clion-oss-latest-stable": "clion-2024.1",
-    "clion-oss-under-dev": "clion-2024.1",
-    # Indirect ij_product mapping for Cloud Code Plugin OSS
-    "intellij-cc-oldest-stable": "intellij-2022.3",
-    "intellij-cc-latest-stable": "intellij-2022.3",
-    "intellij-cc-under-dev": "intellij-2022.3",
-    "intellij-ue-cc-oldest-stable": "intellij-ue-2022.3",
-    "intellij-ue-cc-latest-stable": "intellij-ue-2022.3",
-    "intellij-ue-cc-under-dev": "intellij-ue-2022.3",
+    "intellij-oss-oldest-stable": "intellij-2024.3",
+    "intellij-oss-latest-stable": "intellij-2025.1",
+    "intellij-oss-under-dev": "intellij-2025.1",
+    "intellij-ue-oss-oldest-stable": "intellij-ue-2024.3",
+    "intellij-ue-oss-latest-stable": "intellij-ue-2025.1",
+    "intellij-ue-oss-under-dev": "intellij-ue-2025.1",
+    "clion-oss-oldest-stable": "clion-2024.3",
+    "clion-oss-latest-stable": "clion-2025.1",
+    "clion-oss-under-dev": "clion-2025.1",
 }
 
 (CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_CANARY, CHANNEL_FREEFORM) = ("stable", "beta", "canary", "freeform")
 
 INDIRECT_PRODUCT_CHANNELS = {
-    # Channel mapping for internal Blaze Plugin
-    "intellij-latest": CHANNEL_STABLE,
-    "intellij-latest-mac": CHANNEL_STABLE,
-    "intellij-beta": CHANNEL_BETA,
-    "intellij-under-dev": CHANNEL_CANARY,
-    "intellij-ue-latest": CHANNEL_STABLE,
-    "intellij-ue-latest-mac": CHANNEL_STABLE,
-    "intellij-ue-beta": CHANNEL_BETA,
-    "intellij-ue-under-dev": CHANNEL_CANARY,
-    "android-studio-latest": CHANNEL_STABLE,
-    "android-studio-latest-mac": CHANNEL_STABLE,
-    "android-studio-beta": CHANNEL_BETA,
-    "android-studio-beta-mac": CHANNEL_BETA,
-    "android-studio-canary": CHANNEL_CANARY,
-    "android-studio-canary-mac": CHANNEL_CANARY,
-    "clion-latest": CHANNEL_STABLE,
-    "clion-latest-mac": CHANNEL_STABLE,
-    "clion-beta": CHANNEL_BETA,
-    "clion-under-dev": CHANNEL_CANARY,
     # Channel mapping for Bazel Plugin OSS
     "intellij-oss-oldest-stable": CHANNEL_STABLE,
     "intellij-oss-latest-stable": CHANNEL_STABLE,
@@ -76,19 +25,9 @@ INDIRECT_PRODUCT_CHANNELS = {
     "intellij-ue-oss-oldest-stable": CHANNEL_STABLE,
     "intellij-ue-oss-latest-stable": CHANNEL_STABLE,
     "intellij-ue-oss-under-dev": CHANNEL_CANARY,
-    "android-studio-oss-oldest-stable": CHANNEL_STABLE,
-    "android-studio-oss-latest-stable": CHANNEL_STABLE,
-    "android-studio-oss-under-dev": CHANNEL_CANARY,
     "clion-oss-oldest-stable": CHANNEL_STABLE,
     "clion-oss-latest-stable": CHANNEL_STABLE,
     "clion-oss-under-dev": CHANNEL_CANARY,
-    # Channel mapping for Cloud Code Plugin OSS
-    "intellij-cc-oldest-stable": CHANNEL_STABLE,
-    "intellij-cc-latest-stable": CHANNEL_STABLE,
-    "intellij-cc-under-dev": CHANNEL_CANARY,
-    "intellij-ue-cc-oldest-stable": CHANNEL_STABLE,
-    "intellij-ue-cc-latest-stable": CHANNEL_STABLE,
-    "intellij-ue-cc-under-dev": CHANNEL_CANARY,
 }
 
 def _check_channel_map():
@@ -106,70 +45,6 @@ def _check_channel_map():
         fail("Unexpected values in INDIRECT_PRODUCT_CHANNELS: %s" % unexpected)
 
 DIRECT_IJ_PRODUCTS = {
-    "intellij-2021.3": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2021_3",
-    ),
-    "intellij-2021.3-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2021_3",
-    ),
-    "intellij-2022.1": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2022_1",
-    ),
-    "intellij-2022.1-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2022_1",
-    ),
-    "intellij-2022.2": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2022_2",
-    ),
-    "intellij-2022.2-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2022_2",
-    ),
-    "intellij-2022.3": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2022_3",
-    ),
-    "intellij-2022.3-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2022_3",
-    ),
-    "intellij-2023.1": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2023_1",
-    ),
-    "intellij-2023.1-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2023_1",
-    ),
-    "intellij-2023.2": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2023_2",
-    ),
-    "intellij-2023.2-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2023_2",
-    ),
-    "intellij-2023.3": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2023_3",
-    ),
-    "intellij-2023.3-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2023_3",
-    ),
-    "intellij-2024.1": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2024_1",
-    ),
-    "intellij-2024.1-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2024_1",
-    ),
     "intellij-2024.2": struct(
         ide = "intellij",
         directory = "intellij_ce_2024_2",
@@ -178,69 +53,21 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij",
         directory = "intellij_ce_2024_2",
     ),
-    "intellij-ue-2021.3": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2021_3",
+    "intellij-2024.3": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2024_3",
     ),
-    "intellij-ue-2021.3-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2021_3",
+    "intellij-2024.3-mac": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2024_3",
     ),
-    "intellij-ue-2022.1": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2022_1",
+    "intellij-2025.1": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2025_1",
     ),
-    "intellij-ue-2022.1-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2022_1",
-    ),
-    "intellij-ue-2022.2": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2022_2",
-    ),
-    "intellij-ue-2022.2-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2022_2",
-    ),
-    "intellij-ue-2022.3": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2022_3",
-    ),
-    "intellij-ue-2022.3-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2022_3",
-    ),
-    "intellij-ue-2023.1": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2023_1",
-    ),
-    "intellij-ue-2023.1-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2023_1",
-    ),
-    "intellij-ue-2023.2": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2023_2",
-    ),
-    "intellij-ue-2023.2-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2023_2",
-    ),
-    "intellij-ue-2023.3": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2023_3",
-    ),
-    "intellij-ue-2023.3-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2023_3",
-    ),
-    "intellij-ue-2024.1": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2024_1",
-    ),
-    "intellij-ue-2024.1-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2024_1",
+    "intellij-2025.1-mac": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2025_1",
     ),
     "intellij-ue-2024.2": struct(
         ide = "intellij-ue",
@@ -250,84 +77,21 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij-ue",
         directory = "intellij_ue_2024_2",
     ),
-    "android-studio-2022.3": struct(
-        ide = "android-studio",
-        archive = "android_studio_with_blaze_2022_3",
-        oss_workspace = "android_studio_2022_3",
+    "intellij-ue-2024.3": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2024_3",
     ),
-    "android-studio-2023.1": struct(
-        ide = "android-studio",
-        archive = "android_studio_with_blaze_2023_1",
-        oss_workspace = "android_studio_2023_1",
+    "intellij-ue-2024.3-mac": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2024_3",
     ),
-    "android-studio-2023.2": struct(
-        ide = "android-studio",
-        archive = "android_studio_with_blaze_2023_2",
-        oss_workspace = "android_studio_2023_2",
+    "intellij-ue-2025.1": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2025_1",
     ),
-    "clion-2021.3": struct(
-        ide = "clion",
-        directory = "clion_2021_3",
-    ),
-    "clion-2021.3-mac": struct(
-        ide = "clion",
-        directory = "clion_2021_3",
-    ),
-    "clion-2022.1": struct(
-        ide = "clion",
-        directory = "clion_2022_1",
-    ),
-    "clion-2022.1-mac": struct(
-        ide = "clion",
-        directory = "clion_2022_1",
-    ),
-    "clion-2022.2": struct(
-        ide = "clion",
-        directory = "clion_2022_2",
-    ),
-    "clion-2022.2-mac": struct(
-        ide = "clion",
-        directory = "clion_2022_2",
-    ),
-    "clion-2022.3": struct(
-        ide = "clion",
-        directory = "clion_2022_3",
-    ),
-    "clion-2022.3-mac": struct(
-        ide = "clion",
-        directory = "clion_2022_3",
-    ),
-    "clion-2023.1": struct(
-        ide = "clion",
-        directory = "clion_2023_1",
-    ),
-    "clion-2023.1-mac": struct(
-        ide = "clion",
-        directory = "clion_2023_1",
-    ),
-    "clion-2023.2": struct(
-        ide = "clion",
-        directory = "clion_2023_2",
-    ),
-    "clion-2023.2-mac": struct(
-        ide = "clion",
-        directory = "clion_2023_2",
-    ),
-    "clion-2023.3": struct(
-        ide = "clion",
-        directory = "clion_2023_3",
-    ),
-    "clion-2023.3-mac": struct(
-        ide = "clion",
-        directory = "clion_2023_3",
-    ),
-    "clion-2024.1": struct(
-        ide = "clion",
-        directory = "clion_2024_1",
-    ),
-    "clion-2024.1-mac": struct(
-        ide = "clion",
-        directory = "clion_2024_1",
+    "intellij-ue-2025.1-mac": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2025_1",
     ),
     "clion-2024.2": struct(
         ide = "clion",
@@ -336,6 +100,22 @@ DIRECT_IJ_PRODUCTS = {
     "clion-2024.2-mac": struct(
         ide = "clion",
         directory = "clion_2024_2",
+    ),
+    "clion-2024.3": struct(
+        ide = "clion",
+        directory = "clion_2024_3",
+    ),
+    "clion-2024.3-mac": struct(
+        ide = "clion",
+        directory = "clion_2024_3",
+    ),
+    "clion-2025.1": struct(
+        ide = "clion",
+        directory = "clion_2025_1",
+    ),
+    "clion-2025.1-mac": struct(
+        ide = "clion",
+        directory = "clion_2025_1",
     ),
 }
 
@@ -404,7 +184,7 @@ def _do_select_for_plugin_api(params):
         no_match_error = "define an intellij product version, e.g. --define=ij_product=intellij-latest",
     )
 
-def select_for_ide(intellij = None, intellij_ue = None, android_studio = None, clion = None, default = []):
+def select_for_ide(intellij = None, intellij_ue = None, clion = None, default = []):
     """Selects for the supported IDEs.
 
     Args:
@@ -427,13 +207,11 @@ def select_for_ide(intellij = None, intellij_ue = None, android_studio = None, c
     """
     intellij = intellij if intellij != None else default
     intellij_ue = intellij_ue if intellij_ue != None else intellij
-    android_studio = android_studio if android_studio != None else default
     clion = clion if clion != None else default
 
     ide_to_value = {
         "intellij": intellij,
         "intellij-ue": intellij_ue,
-        "android-studio": android_studio,
         "clion": clion,
     }
 
@@ -452,12 +230,11 @@ def _plugin_api_directory(value):
         directory = value.directory
     return "@" + directory + "//"
 
-def select_from_plugin_api_directory(intellij, android_studio, clion, intellij_ue = None):
+def select_from_plugin_api_directory(intellij, clion, intellij_ue = None):
     """Internal convenience method to generate select statement from the IDE's plugin_api directories.
 
     Args:
       intellij: the items that IntelliJ product to use.
-      android_studio: the items that android studio product to use.
       clion: the items that clion product to use.
       intellij_ue: the items that intellij ue product to use.
 
@@ -469,7 +246,6 @@ def select_from_plugin_api_directory(intellij, android_studio, clion, intellij_u
     ide_to_value = {
         "intellij": intellij,
         "intellij-ue": intellij_ue if intellij_ue else intellij,
-        "android-studio": android_studio,
         "clion": clion,
     }
 
@@ -479,7 +255,7 @@ def select_from_plugin_api_directory(intellij, android_studio, clion, intellij_u
         params[ij_product] = [_plugin_api_directory(value) + item for item in ide_to_value[value.ide]]
 
     # No ij_product == intellij-latest
-    params["default"] = params[INDIRECT_IJ_PRODUCTS["intellij-latest"]]
+    params["default"] = params[INDIRECT_IJ_PRODUCTS["intellij-oss-latest-stable"]]
 
     return select_for_plugin_api(params)
 
@@ -574,30 +350,6 @@ def get_unique_supported_oss_ide_versions(product):
 
     return " ".join(unique_aliases)
 
-def combine_visibilities(*args):
-    """
-    Concatenates the given lists of visibilities and returns the combined list.
-
-    If one of the given elements is //visibility:public then return //visibility:public
-    If one of the lists is None, skip it.
-    If the result list is empty, then return None.
-
-    Args:
-      *args: the list of visibilities lists to combine
-    Returns:
-      the concatenated visibility targets list
-    """
-    res = []
-    for arg in args:
-        if arg:
-            for visibility in arg:
-                if visibility == "//visibility:public":
-                    return ["//visibility:public"]
-                res.append(visibility)
-    if res == []:
-        return None
-    return res
-
 def no_mockito_extensions(name, jars, **kwargs):
     """Removes mockito extensions from jars.
 
@@ -616,11 +368,9 @@ def no_mockito_extensions(name, jars, **kwargs):
             srcs = [input_jar],
             outs = [output_jar],
             cmd = """
-            cp "$<" "$@"
-            chmod u+w "$@"
             tmpdir=$$(mktemp -d)
             zipper="$$(pwd)/$(execpath @bazel_tools//tools/zip:zipper)"
-            "$$zipper" x "$@" -d ".out"
+            "$$zipper" x "$<" -d ".out"
             mv ".out" "$$tmpdir"
 
             pushd "$$tmpdir/.out" >/dev/null
@@ -648,30 +398,7 @@ def no_mockito_extensions(name, jars, **kwargs):
 # Since 2022.3, JVM 17 is required to start IntelliJ
 # https://blog.jetbrains.com/platform/2022/08/intellij-project-migrates-to-java-17/
 def java_version_flags():
-    java11 = ["-source", "11", "-target", "11"]
-    java17 = ["-source", "17", "-target", "17"]
-    return select_for_plugin_api({
-        "intellij-2021.3": java11,
-        "intellij-2021.3-mac": java11,
-        "intellij-2022.1": java11,
-        "intellij-2022.1-mac": java11,
-        "intellij-2022.2": java11,
-        "intellij-2022.2-mac": java11,
-        "intellij-ue-2021.3": java11,
-        "intellij-ue-2021.3-mac": java11,
-        "intellij-ue-2022.1": java11,
-        "intellij-ue-2022.1-mac": java11,
-        "intellij-ue-2022.2": java11,
-        "intellij-ue-2022.2-mac": java11,
-        "android-studio-2022.2": java11,
-        "clion-2021.3": java11,
-        "clion-2021.3-mac": java11,
-        "clion-2022.1": java11,
-        "clion-2022.1-mac": java11,
-        "clion-2022.2": java11,
-        "clion-2022.2-mac": java11,
-        "default": java17,
-    })
+    return ["-source", "17", "-target", "17"]
 
 def select_for_channel(channel_map):
     """Returns a select based on the IDE channel (stable, beta, canary).

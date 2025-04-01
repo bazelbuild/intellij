@@ -95,6 +95,11 @@ public abstract class AffectedPackagesCalculator {
       context().output(PrintOutput.log("Edited %d BUILD files", buildFileChanges.size()));
       for (WorkspaceFileChange c : buildFileChanges) {
         Path buildPackage = c.workspaceRelativePath.getParent();
+
+        if (buildPackage == null) {
+          buildPackage = Path.of("");
+        }
+
         if (c.operation != Operation.ADD) {
           // modifying/deleting an existing package
           if (!lastQuery().getPackages().contains(buildPackage)) {
@@ -235,7 +240,7 @@ public abstract class AffectedPackagesCalculator {
 
   private boolean isIncludedInProject(Path file) {
     for (Path includePath : projectIncludes()) {
-      if (file.startsWith(includePath)) {
+      if (file.startsWith(includePath) || includePath.toString().isEmpty()) {
         for (Path excludePath : projectExcludes()) {
           if (file.startsWith(excludePath)) {
             return false;

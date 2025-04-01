@@ -27,6 +27,8 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.intellij.openapi.project.Project;
+
 import java.io.ByteArrayOutputStream;
 import java.util.Collection;
 import java.util.List;
@@ -42,9 +44,10 @@ public class GazelleRunnerImpl extends GazelleRunner {
       List<String> blazeFlags,
       Label gazelleTarget,
       Collection<WorkspacePath> directories,
-      ImmutableList<Parser> issueParsers) {
+      ImmutableList<Parser> issueParsers,
+      Project project) {
     BlazeCommand command = GazelleRunner.createGazelleRunCommand(invoker,
-            blazeFlags, gazelleTarget, directories);
+            blazeFlags, gazelleTarget, directories, project);
     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
     int exitCode =
         ExternalTask.builder(workspaceRoot)

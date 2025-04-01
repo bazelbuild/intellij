@@ -28,7 +28,7 @@ import com.google.idea.blaze.base.sync.libraries.LibraryEditor;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.util.Transactions;
-import com.google.idea.sdkcompat.java.AttachSourcesProviderAdapter;
+import com.intellij.codeInsight.AttachSourcesProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -39,6 +39,8 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -49,12 +51,11 @@ import javax.annotation.Nullable;
  *
  * <p>Optionally also attaches sources automatically, on demand.
  */
-public class BlazeAttachSourceProvider extends AttachSourcesProviderAdapter {
+public class BlazeAttachSourceProvider implements AttachSourcesProvider {
 
   private static final BoolExperiment attachAutomatically =
       new BoolExperiment("blaze.attach.source.jars.automatically.3", true);
 
-  @Override
   public Collection<AttachSourcesAction> getAdapterActions(
       List<? extends LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
     Project project = psiFile.getProject();
@@ -178,4 +179,20 @@ public class BlazeAttachSourceProvider extends AttachSourcesProviderAdapter {
               modelsProvider.commit();
             });
   }
+
+    @NotNull
+    @Override
+    public Collection<AttachSourcesAction> getActions(
+        List<? extends LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
+        return getAdapterActions(orderEntries, psiFile);
+    }
+
+    public static abstract class AttachSourcesActionAdapter implements AttachSourcesAction {
+        public abstract ActionCallback adapterPerform(List<? extends LibraryOrderEntry> orderEntriesContainingFile);
+
+
+        public ActionCallback perform(List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
+            return adapterPerform(orderEntriesContainingFile);
+        }
+    }
 }

@@ -17,7 +17,6 @@ package com.google.idea.blaze.qsync.project;
 
 import static com.google.common.truth.Truth.assertThat;
 
-
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.Path;
 import org.junit.Test;
@@ -30,11 +29,13 @@ public class ProjectDefinitionTest {
   @Test
   public void testGetIncludingContentRoot_returnsContentRoot() {
     ProjectDefinition projectDefinition =
-        ProjectDefinition.create(
-            ImmutableSet.of(Path.of("contentroot1"), Path.of("contentroot2")),
-            ImmutableSet.of(),
-            ImmutableSet.of(),
-            ImmutableSet.of());
+        ProjectDefinition.builder()
+            .setProjectIncludes(ImmutableSet.of(Path.of("contentroot1"), Path.of("contentroot2")))
+            .setProjectExcludes(ImmutableSet.of())
+            .setSystemExcludes(ImmutableSet.of())
+            .setTestSources(ImmutableSet.of())
+            .setLanguageClasses(ImmutableSet.of())
+            .build();
     assertThat(projectDefinition.getIncludingContentRoot(Path.of("contentroot1/some/path")))
         .hasValue(Path.of("contentroot1"));
     assertThat(projectDefinition.getIncludingContentRoot(Path.of("contentroot2")))
@@ -44,11 +45,13 @@ public class ProjectDefinitionTest {
   @Test
   public void testGetIncludingContentRoot_externalPath_returnsEmpty() {
     ProjectDefinition projectDefinition =
-        ProjectDefinition.create(
-            ImmutableSet.of(Path.of("contentroot1"), Path.of("contentroot2")),
-            ImmutableSet.of(),
-            ImmutableSet.of(),
-            ImmutableSet.of());
+        ProjectDefinition.builder()
+            .setProjectIncludes(ImmutableSet.of(Path.of("contentroot1"), Path.of("contentroot2")))
+            .setProjectExcludes(ImmutableSet.of())
+            .setSystemExcludes(ImmutableSet.of())
+            .setTestSources(ImmutableSet.of())
+            .setLanguageClasses(ImmutableSet.of())
+            .build();
     assertThat(projectDefinition.getIncludingContentRoot(Path.of("anotherRoot/some/path")))
         .isEmpty();
   }
@@ -56,11 +59,13 @@ public class ProjectDefinitionTest {
   @Test
   public void testGetIncludingContentRoot_excludedPath_returnsEmpty() {
     ProjectDefinition projectDefinition =
-        ProjectDefinition.create(
-            ImmutableSet.of(Path.of("contentroot1"), Path.of("contentroot2")),
-            ImmutableSet.of(Path.of("contentroot1/excluded")),
-            ImmutableSet.of(),
-            ImmutableSet.of());
+        ProjectDefinition.builder()
+        .setProjectIncludes(ImmutableSet.of(Path.of("contentroot1"), Path.of("contentroot2")))
+        .setProjectExcludes(ImmutableSet.of(Path.of("contentroot1/excluded")))
+        .setSystemExcludes(ImmutableSet.of())
+        .setTestSources(ImmutableSet.of())
+        .setLanguageClasses(ImmutableSet.of())
+        .build();
     assertThat(projectDefinition.getIncludingContentRoot(Path.of("contentroot1/excluded/path")))
         .isEmpty();
   }

@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.gazelle.GazelleRunResult;
 import com.google.idea.blaze.gazelle.GazelleRunner;
 import com.google.idea.blaze.gazelle.GazelleUserSettings;
+import com.intellij.openapi.project.Project;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,7 +44,7 @@ import static com.google.common.truth.Truth.assertThat;
 @RunWith(JUnit4.class)
 public class RunGazelleOnSyncTest extends BlazeSyncIntegrationTestCase {
     private final String GAZELLE_RUN_COMMAND =
-            "bazel run --tool_tag=.* --curses=no --color=yes --progress_in_terminal_title=no -- //:gazelle";
+            "bazel run --tool_tag=.* --progress_in_terminal_title=no -- //:gazelle";
 
     private MockGazelleRunner mockGazelleRunner;
 
@@ -146,12 +147,13 @@ public class RunGazelleOnSyncTest extends BlazeSyncIntegrationTestCase {
                                                 List<String> blazeFlags,
                                                 Label gazelleTarget,
                                                 Collection<WorkspacePath> directories,
-                                                ImmutableList<BlazeIssueParser.Parser> issueParsers) {
+                                                ImmutableList<BlazeIssueParser.Parser> issueParsers,
+                                                Project project) {
             // For now, we can't run bazel on tests, since some of these tests
             // might be run remotely. Therefore, we just check that the Bazel
             // command that would have been run has the right shape.
             command = GazelleRunner.createGazelleRunCommand(invoker, blazeFlags,
-                    gazelleTarget, directories);
+                    gazelleTarget, directories, project);
             return GazelleRunResult.SUCCESS;
         }
     }

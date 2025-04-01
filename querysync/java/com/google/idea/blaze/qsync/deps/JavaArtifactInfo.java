@@ -15,22 +15,19 @@
  */
 package com.google.idea.blaze.qsync.deps;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Streams;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.idea.blaze.common.Interners;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.artifacts.ArtifactMetadata;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
+import com.google.idea.blaze.qsync.artifacts.DigestMap;
 import com.google.idea.blaze.qsync.java.JavaTargetInfo.JavaTargetArtifacts;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 /** Information about a project dependency that is calculated when the dependency is built. */
 @AutoValue
@@ -43,19 +40,19 @@ public abstract class JavaArtifactInfo {
    * The jar artifacts relative path (blaze-out/xxx) that can be used to retrieve local copy in the
    * cache.
    */
-  public abstract ImmutableList<BuildArtifact> jars();
+  public abstract ImmutableSet<BuildArtifact> jars();
 
   /**
    * The aar artifacts relative path (blaze-out/xxx) that can be used to retrieve local copy in the
    * cache.
    */
-  public abstract ImmutableList<BuildArtifact> ideAars();
+  public abstract ImmutableSet<BuildArtifact> ideAars();
 
   /**
    * The gensrc artifacts relative path (blaze-out/xxx) that can be used to retrieve local copy in
    * the cache.
    */
-  public abstract ImmutableList<BuildArtifact> genSrcs();
+  public abstract ImmutableSet<BuildArtifact> genSrcs();
 
   /** Workspace relative sources for this dependency, extracted at dependency build time. */
   public abstract ImmutableSet<Path> sources();
@@ -66,63 +63,35 @@ public abstract class JavaArtifactInfo {
 
   public abstract Builder toBuilder();
 
+  public JavaArtifactInfo withMetadata(
+      ImmutableSetMultimap<BuildArtifact, ArtifactMetadata> metadata) {
+    if (metadata.isEmpty()) {
+      return this;
+    }
+    return toBuilder()
+        .setGenSrcs(BuildArtifact.addMetadata(genSrcs(), metadata))
+        .setIdeAars(BuildArtifact.addMetadata(ideAars(), metadata))
+        .setJars(BuildArtifact.addMetadata(jars(), metadata))
+        .build();
+  }
+
   public static Builder builder() {
     return new AutoValue_JavaArtifactInfo.Builder();
   }
 
-  public static JavaArtifactInfo create(
-      JavaTargetArtifacts proto, Function<Path, String> digestMap) {
+  public static JavaArtifactInfo create(JavaTargetArtifacts proto, DigestMap digestMap) {
     // Note, the proto contains a list of sources, we take the parent as we want directories instead
     Label target = Label.of(proto.getTarget());
     return builder()
         .setLabel(target)
-        .setJars(toArtifacts(proto.getJarsList(), digestMap, target))
-        .setIdeAars(toArtifacts(proto.getIdeAarsList(), digestMap, target))
-        .setGenSrcs(toArtifacts(proto.getGenSrcsList(), digestMap, target))
+        .setJars(BuildArtifact.fromProtos(proto.getJarsList(), digestMap, target))
+        .setIdeAars(BuildArtifact.fromProtos(proto.getIdeAarsList(), digestMap, target))
+        .setGenSrcs(BuildArtifact.fromProtos(proto.getGenSrcsList(), digestMap, target))
         .setSources(proto.getSrcsList().stream().map(Interners::pathOf).collect(toImmutableSet()))
         .setSrcJars(
             proto.getSrcjarsList().stream().map(Interners::pathOf).collect(toImmutableSet()))
         .setAndroidResourcesPackage(proto.getAndroidResourcesPackage())
         .build();
-  }
-
-  private static ImmutableList<BuildArtifact> toArtifacts(
-      List<String> paths, Function<Path, String> digestMap, Label target) {
-    return paths.stream()
-        .map(Interners::pathOf)
-        .map(p -> BuildArtifact.create(p, target, digestMap))
-        .collect(toImmutableList());
-  }
-
-  public JavaTargetArtifacts toProto() {
-    return JavaTargetArtifacts.newBuilder()
-        .setTarget(label().toString())
-        .addAllJars(toPathStrings(jars()))
-        .addAllIdeAars(toPathStrings(ideAars()))
-        .addAllGenSrcs(toPathStrings(genSrcs()))
-        .addAllSrcs(sources().stream().map(Path::toString).collect(toImmutableList()))
-        .addAllSrcjars(srcJars().stream().map(Path::toString).collect(toImmutableList()))
-        .setAndroidResourcesPackage(androidResourcesPackage())
-        .build();
-  }
-
-  private static ImmutableList<String> toPathStrings(ImmutableList<BuildArtifact> artifacts) {
-    return artifacts.stream()
-        .map(BuildArtifact::path)
-        .map(Path::toString)
-        .collect(toImmutableList());
-  }
-
-  public final boolean containsPath(Path artifactPath) {
-    Predicate<BuildArtifact> pathMatch = a -> a.path().equals(artifactPath);
-    return jars().stream().anyMatch(pathMatch)
-        || ideAars().stream().anyMatch(pathMatch)
-        || genSrcs().stream().anyMatch(pathMatch);
-  }
-
-  public final Stream<Path> artifactStream() {
-    return Streams.concat(jars().stream(), ideAars().stream(), genSrcs().stream())
-        .map(BuildArtifact::path);
   }
 
   public static JavaArtifactInfo empty(Label target) {
@@ -145,9 +114,15 @@ public abstract class JavaArtifactInfo {
 
     public abstract Builder setJars(ImmutableList<BuildArtifact> value);
 
+    public abstract ImmutableSet.Builder<BuildArtifact> jarsBuilder();
+
     public abstract Builder setIdeAars(ImmutableList<BuildArtifact> value);
 
+    public abstract Builder setIdeAars(BuildArtifact... value);
+
     public abstract Builder setGenSrcs(ImmutableList<BuildArtifact> value);
+
+    public abstract Builder setGenSrcs(BuildArtifact... value);
 
     public abstract Builder setSources(ImmutableSet<Path> value);
 

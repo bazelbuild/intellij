@@ -43,6 +43,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import java.util.List;
+import java.util.Objects;
+
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,6 +64,7 @@ public class BlazeGoTestConfigurationProducerTest extends BlazeRunConfigurationP
 
     suppressNativeProducers();
     setupMockTestingPackage();
+    setupMockTestifyPackage();
   }
 
   private void suppressNativeProducers() {
@@ -87,6 +90,23 @@ public class BlazeGoTestConfigurationProducerTest extends BlazeRunConfigurationP
     };
     importResolver.put("testing", testingPkg);
     packageFactory.put("testing", testingPkg);
+  }
+
+  private void setupMockTestifyPackage() {
+    GoFile testifySrc = (GoFile)workspace.createPsiFile(
+        new WorkspacePath("github.com/stretchr/testify/suite/suite.go"),
+        "package suite",
+        "type Suite struct {}",
+        "func (suite *Suite) Run(name string, subtest func()) bool {}"
+    );
+    GoPackage testifyPkg = new GoPackage(getProject(), "suite",
+        testifySrc.getContainingDirectory().getVirtualFile()) {
+      public @NotNull String getImportPath(boolean withVendoring) {
+        return "github.com/stretchr/testify/suite";
+      }
+    };
+    importResolver.put("github.com/stretchr/testify/suite", testifyPkg);
+    packageFactory.put("suite", testifyPkg);
   }
 
   private PsiFile setupWithSingleFile(String... contents) throws Throwable {
@@ -134,6 +154,47 @@ public class BlazeGoTestConfigurationProducerTest extends BlazeRunConfigurationP
     assertThat(config.getTargets())
         .containsExactly(TargetExpression.fromStringSafe("//foo/bar:foo_test"));
     assertThat(getTestFilterContents(config)).isNull();
+    assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
+  }
+
+  @Test
+  public void testTestifyFile() throws Throwable {
+    PsiFile goFile = setupWithSingleFile(
+        """
+            package foo
+            import "github.com/stretchr/testify/suite"
+            
+            type ExampleTestSuite struct {
+                suite.Suite
+                VariableThatShouldStartAtFive int
+            }
+            
+            func (suite *ExampleTestSuite) Test<caret>Example() {
+            }
+            
+            func TestExampleTestSuite(t *testing.T) {
+                suite.Run(t, new(ExampleTestSuite))
+            }
+            """
+    );
+
+    PsiElement element = getElementAtCaret(0, goFile);
+    String expectedTestFilter = "^TestExample$";
+    ConfigurationContext context = createContextFromPsi(element);
+    List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
+    assertThat(configurations).isNotNull();
+    assertThat(configurations).hasSize(1);
+
+    ConfigurationFromContext fromContext = configurations.get(0);
+    assertThat(fromContext.isProducedBy(TestContextRunConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
+
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration)fromContext.getConfiguration();
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//foo/bar:foo_test"));
+    assertThat(Objects.requireNonNull(getTestArgsContents(config)).get(0)).isEqualTo(
+        "-testify.m=" + expectedTestFilter);
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
 

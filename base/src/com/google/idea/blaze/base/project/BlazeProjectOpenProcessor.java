@@ -17,21 +17,25 @@ package com.google.idea.blaze.base.project;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
-import com.google.idea.sdkcompat.general.BaseSdkCompat;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import icons.BlazeIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import javax.swing.Icon;
+import java.nio.file.Paths;
 
 /** Allows directly opening a project with project data directory embedded within the project. */
 public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
   @Override
-  public String getName() {
-    return Blaze.defaultBuildSystemName() + " Project";
+  public @NotNull String getName() {
+    return "Bazel";
   }
 
   @Nullable
@@ -69,7 +73,7 @@ public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Override
   public boolean isStrongProjectInfoHolder() {
-    return Registry.is("bazel.project.auto.open.if.present", true);
+    return Registry.is("bazel.project.auto.open.if.present");
   }
 
   @Override
@@ -81,11 +85,17 @@ public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
   @Override
   public Project doOpenProject(
       VirtualFile file, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
+    ProjectManager pm = ProjectManager.getInstance();
+    if (projectToClose != null) {
+      pm.closeProject(projectToClose);
+    }
+
     VirtualFile ideaSubdirectory = getIdeaSubdirectory(file);
     if (ideaSubdirectory == null) {
       return null;
     }
     VirtualFile projectSubdirectory = ideaSubdirectory.getParent();
-    return BaseSdkCompat.openProject(projectSubdirectory,projectToClose, forceOpenInNewFrame);
+    OpenProjectTask options = OpenProjectTask.build().withForceOpenInNewFrame(forceOpenInNewFrame).withProjectToClose(projectToClose);
+    return ProjectUtil.openProject(Paths.get(projectSubdirectory.getPath()),options);
   }
 }

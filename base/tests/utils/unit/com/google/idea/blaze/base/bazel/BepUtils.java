@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.bazel;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.base.Joiner;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId;
@@ -30,8 +30,10 @@ import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.Con
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.NamedSetOfFiles;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.OutputGroup;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.TargetComplete;
-import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
-import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
+import com.google.idea.blaze.base.command.buildresult.bepparser.BepParser;
+import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
+import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider.BuildEventStreamException;
+import com.google.idea.blaze.base.command.buildresult.bepparser.ParsedBepOutput;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -85,17 +87,37 @@ public final class BepUtils {
         .build();
   }
 
-  public static BuildEvent setOfFiles(List<String> filePaths, String id) {
-    return setOfFiles(filePaths, id, ImmutableList.of());
+  public static final class FileArtifact {
+    public final List<String> prefixes;
+    public final String name;
+    public final File file;
+
+    public FileArtifact(List<String> prefixes, String name, File file) {
+      this.prefixes = prefixes;
+      this.name = name;
+      this.file = file;
+    }
+
+    public BuildEventStreamProtos.File toFileEvent() {
+        return BuildEventStreamProtos.File.newBuilder()
+          .setUri(file.toURI().toString())
+          .setName(name)
+          .addAllPathPrefix(prefixes)
+          .build();
+      }
+
+      public String getArtifactPath() {
+        return Joiner.on("/").join(prefixes) + "/" + name;
+      }
   }
 
-  public static BuildEvent setOfFiles(List<String> filePaths, String id, List<String> fileSetDeps) {
+  public static BuildEvent setOfFiles(List<FileArtifact> filePaths, String id, List<String> fileSetDeps) {
     return BuildEvent.newBuilder()
         .setId(BuildEventId.newBuilder().setNamedSet(NamedSetOfFilesId.newBuilder().setId(id)))
         .setNamedSetOfFiles(
             NamedSetOfFiles.newBuilder()
                 .addAllFiles(
-                    filePaths.stream().map(BepUtils::toFileEvent).collect(toImmutableList()))
+                    filePaths.stream().map(FileArtifact::toFileEvent).collect(toImmutableList()))
                 .addAllFileSets(
                     fileSetDeps.stream()
                         .map(dep -> NamedSetOfFilesId.newBuilder().setId(dep).build())
@@ -103,15 +125,8 @@ public final class BepUtils {
         .build();
   }
 
-  private static BuildEventStreamProtos.File toFileEvent(String filePath) {
-    return BuildEventStreamProtos.File.newBuilder()
-        .setUri(new File(filePath).toURI().toString())
-        .setName(filePath)
-        .build();
-  }
-
   public static ParsedBepOutput parsedBep(List<BuildEvent> events)
       throws IOException, BuildEventStreamException {
-    return ParsedBepOutput.parseBepArtifacts(asInputStream(events));
+    return BepParser.parseBepArtifacts(BuildEventStreamProvider.fromInputStream(asInputStream(events)), null);
   }
 }

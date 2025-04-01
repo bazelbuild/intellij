@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
@@ -116,16 +117,37 @@ public class BuildReferenceManager {
 
   @Nullable
   public File resolvePackage(@Nullable WorkspacePath packagePath) {
-    return resolveWorkspaceRelativePath(packagePath != null ? packagePath.relativePath() : null);
+    return resolvePackageInWorkspace(packagePath, null);
   }
 
   @Nullable
-  private File resolveWorkspaceRelativePath(@Nullable String relativePath) {
-    WorkspacePathResolver pathResolver = getWorkspacePathResolver();
-    if (pathResolver == null || relativePath == null) {
+  public File resolvePackageInWorkspace(
+      @Nullable WorkspacePath packagePath, @Nullable String externalWorkspace) {
+    return resolveWorkspaceRelativePath(
+        packagePath != null ? packagePath.relativePath() : null, externalWorkspace);
+  }
+
+  @Nullable
+  private File resolveWorkspaceRelativePath(
+      @Nullable String relativePath, @Nullable String workspace) {
+    if (relativePath == null) {
       return null;
     }
-    return pathResolver.resolveToFile(relativePath);
+
+    if (workspace == null) {
+      WorkspacePathResolver pathResolver = getWorkspacePathResolver();
+      if (pathResolver == null) {
+        return null;
+      }
+      return pathResolver.resolveToFile(relativePath);
+    }
+
+    WorkspaceRoot workspaceRoot = WorkspaceHelper.getExternalWorkspace(project, workspace);
+    if (workspaceRoot != null) {
+      return workspaceRoot.absolutePathFor(relativePath).toFile();
+    }
+
+    return null;
   }
 
   @Nullable
@@ -145,14 +167,14 @@ public class BuildReferenceManager {
       // ignore invalid labels containing './', '../', etc.
       return BuildLookupElement.EMPTY_ARRAY;
     }
-    File file = resolveWorkspaceRelativePath(relativePath);
+    File file = resolveWorkspaceRelativePath(relativePath, lookupData.externalWorkspace);
 
     FileOperationProvider provider = FileOperationProvider.getInstance();
     String pathFragment = "";
     if (file == null || (!provider.isDirectory(file) && !relativePath.endsWith("/"))) {
       // we might be partway through a file name. Try the parent directory
       relativePath = PathUtil.getParentPath(relativePath);
-      file = resolveWorkspaceRelativePath(relativePath);
+      file = resolveWorkspaceRelativePath(relativePath, lookupData.externalWorkspace);
       pathFragment =
           StringUtil.trimStart(lookupData.filePathFragment.substring(relativePath.length()), "/");
     }
@@ -217,14 +239,17 @@ public class BuildReferenceManager {
   }
 
   @Nullable
-  public BuildFile resolveBlazePackage(String workspaceRelativePath) {
+  public BuildFile resolveBlazePackage(
+      String workspaceRelativePath, @Nullable String externalWorkspace) {
     workspaceRelativePath = StringUtil.trimStart(workspaceRelativePath, "//");
-    return resolveBlazePackage(WorkspacePath.createIfValid(workspaceRelativePath));
+    return resolveBlazePackage(
+        WorkspacePath.createIfValid(workspaceRelativePath), externalWorkspace);
   }
 
   @Nullable
-  public BuildFile resolveBlazePackage(@Nullable WorkspacePath path) {
-    return findBuildFile(resolvePackage(path));
+  public BuildFile resolveBlazePackage(
+      @Nullable WorkspacePath path, @Nullable String externalWorkspace) {
+    return findBuildFile(resolvePackageInWorkspace(path, externalWorkspace));
   }
 
   @Nullable
@@ -253,12 +278,16 @@ public class BuildReferenceManager {
    */
   @Nullable
   public File resolveParentDirectory(@Nullable Label label) {
-    return label != null ? resolveParentDirectory(label.blazePackage(), label.targetName()) : null;
+    return label != null
+        ? resolveParentDirectory(
+            label.externalWorkspaceName(), label.blazePackage(), label.targetName())
+        : null;
   }
 
   @Nullable
-  private File resolveParentDirectory(WorkspacePath packagePath, TargetName targetName) {
-    File packageFile = resolvePackage(packagePath);
+  private File resolveParentDirectory(
+      String workspaceName, WorkspacePath packagePath, TargetName targetName) {
+    File packageFile = resolvePackageInWorkspace(packagePath, workspaceName);
     if (packageFile == null) {
       return null;
     }

@@ -5,5 +5,5 @@ package buildgraph;
 option java_package = "com.google.idea.blaze.qsync.testdata.protodep.proto";
 
 message Test {
-  optional string message = 1;
+  string message = 1;
 }

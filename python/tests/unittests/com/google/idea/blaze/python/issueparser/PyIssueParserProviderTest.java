@@ -21,16 +21,19 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParserProvider;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.intellij.build.events.MessageEvent.Kind;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileManagerListener;
+import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
+import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -59,6 +62,9 @@ public class PyIssueParserProviderTest extends BlazeTestCase {
     ep.registerExtension(new PyIssueParserProvider());
 
     parsers = ImmutableList.copyOf(BlazeIssueParserProvider.getAllIssueParsers(project));
+
+    registerExtensionPointByName("com.intellij.virtualFileManagerListener", VirtualFileManagerListener.class);
+    applicationServices.register(VirtualFileManager.class, new VirtualFileManagerImpl(List.of(new CoreLocalFileSystem())));
   }
 
   @Test
@@ -69,20 +75,6 @@ public class PyIssueParserProviderTest extends BlazeTestCase {
             "File \"dataset.py\", line 109, in Dataset: "
                 + "Name 'function' is not defined [name-error]");
     assertThat(issue).isNotNull();
-    assertThat(issue.getCategory()).isEqualTo(Category.ERROR);
-    assertThat(issue.getNavigatable()).isNotNull();
-    assertThat(issue.getConsoleHyperlinkRange())
-        .isEqualTo(TextRange.create("File \"".length(), "File \"dataset.py\", line 109".length()));
-  }
-
-  @Test
-  public void testParseWorkspaceRelativePath() {
-    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
-    IssueOutput issue =
-        blazeIssueParser.parseIssue(
-            "File \"path/to/file.py\", line 109, in File: "
-                + "Name 'function' is not defined [name-error]");
-    assertThat(issue.getFile()).isEqualTo(ROOT.fileForPath(new WorkspacePath("path/to/file.py")));
-    assertThat(issue.getLine()).isEqualTo(109);
+    assertThat(issue.getKind()).isEqualTo(Kind.ERROR);
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run.producers;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.EditorTestHelper;
 import com.google.idea.blaze.base.command.BlazeCommandName;
@@ -25,7 +26,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.sdkcompat.ui.icons.IconManagerCompat;
 import com.google.idea.testing.FunctionalHeadlessDataManager;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
@@ -41,6 +41,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.icons.CoreIconManager;
 import java.util.Arrays;
 import javax.annotation.Nullable;
 import org.junit.After;
@@ -70,14 +72,14 @@ public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestC
 
     // IntelliJ will use a dummy icon manager that returns the same exact icon.
     // This will cause uniqueness issues for gutter icons.
-    IconManagerCompat.activateCoreIconManager();
+    IconManager.Companion.activate(new CoreIconManager());
   }
 
   @After
   public final void doTeardown() {
     ServiceContainerUtil.registerServiceInstance(
         ApplicationManager.getApplication(), DataManager.class, defaultDataManager);
-    IconManagerCompat.deactivate();
+    IconManager.Companion.deactivate();
   }
 
   protected PsiFile createAndIndexFile(WorkspacePath path, String... contents) throws Throwable {
@@ -91,6 +93,13 @@ public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestC
     BlazeCommandRunConfigurationCommonState handlerState =
         config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     return handlerState != null ? handlerState.getTestFilterFlag() : null;
+  }
+
+  @Nullable
+  protected static ImmutableList<String> getTestArgsContents(BlazeCommandRunConfiguration config) {
+    BlazeCommandRunConfigurationCommonState handlerState =
+        config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    return handlerState != null ? handlerState.getTestArgs() : null;
   }
 
   @Nullable

@@ -20,7 +20,7 @@ jobs:
 
     steps:
     - name: Track and close stale issues/PRs
-      uses: actions/stale@v5
+      uses: actions/stale@v9
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         days-before-issue-stale: 183

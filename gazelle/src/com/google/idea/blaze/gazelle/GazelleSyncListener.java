@@ -52,11 +52,16 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.jetbrains.annotations.Nullable;
 
 public class GazelleSyncListener implements SyncListener {
 
-  private Optional<Label> getGazelleBinary(ProjectViewSet projectViewSet)
+  private Optional<Label> getGazelleBinary(@Nullable ProjectViewSet projectViewSet)
       throws InvalidTargetException {
+    if (projectViewSet == null) {
+      return Optional.empty();
+    }
+
     Optional<Label> gazelleBinaryFromProjectSettings =
         projectViewSet.getScalarValue(GazelleSection.KEY);
     if (gazelleBinaryFromProjectSettings.isPresent()) {
@@ -89,7 +94,8 @@ public class GazelleSyncListener implements SyncListener {
             blazeFlags,
             gazelleBinary,
             importantDirectories,
-            issueParsers);
+            issueParsers,
+            project);
   }
 
   private ImmutableList<BlazeIssueParser.Parser> gazelleIssueParsers(

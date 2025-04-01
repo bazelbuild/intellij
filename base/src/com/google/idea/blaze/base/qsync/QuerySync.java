@@ -15,12 +15,9 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.common.base.Suppliers;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
+import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.experiments.FeatureRolloutExperiment;
-import com.intellij.openapi.project.Project;
 import java.util.function.Supplier;
 
 /** Holder class for basic information about querysync, e.g. is it enabled? */
@@ -31,9 +28,6 @@ public class QuerySync {
   private static final FeatureRolloutExperiment ENABLED =
       new FeatureRolloutExperiment("query.sync");
 
-  public static final BoolExperiment ENABLE_QUERY_SYNC_BY_PROJECT_VIEW =
-      new BoolExperiment("query.sync.projectview", true);
-
   public static final BoolExperiment USE_NEW_RES_DIR_LOGIC =
       new BoolExperiment("query.sync.new.resdir.logic", true);
 
@@ -43,9 +37,6 @@ public class QuerySync {
   public static final BoolExperiment ATTACH_DEP_SRCJARS =
       new BoolExperiment("querysync.attach.dep.srcjars", true);
 
-  public static final boolean USE_NEW_BUILD_ARTIFACT_MANAGEMENT =
-      new BoolExperiment("query.sync.new.artifact.management", false).getValue();
-
   /**
    * Previously, query sync was enabled by an experiment. Some users still have that experiment set
    * and we don't want to inadvertently disable query sync for them.
@@ -54,10 +45,6 @@ public class QuerySync {
    */
   private static final BoolExperiment LEGACY_EXPERIMENT =
       new BoolExperiment("use.query.sync", false);
-
-  /** Enable compose preview for Query Sync. */
-  private static final Supplier<Boolean> COMPOSE_ENABLED =
-      Suppliers.memoize(new BoolExperiment("aswb.query.sync.enable.compose", false)::getValue);
 
   private QuerySync() {}
 
@@ -69,7 +56,15 @@ public class QuerySync {
     return LEGACY_EXPERIMENT.getValue();
   }
 
-  public static boolean isComposeEnabled(Project project) {
-    return Blaze.getProjectType(project) == ProjectType.QUERY_SYNC && COMPOSE_ENABLED.get();
+  /**
+   * Checks if query sync for new project is enabled via experiment or settings page.
+   */
+  public static boolean useForNewProjects() {
+    if (useByDefault()) {
+      return QuerySyncSettings.getInstance().useQuerySync();
+    }
+    else {
+      return isLegacyExperimentEnabled() || QuerySyncSettings.getInstance().useQuerySyncBeta();
+    }
   }
 }

@@ -36,34 +36,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import java.util.Objects;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Creates run configurations from a BUILD file targets. */
 public class BlazeBuildFileRunConfigurationProducer
     extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
-
-  static class BuildTarget {
-
-    final FuncallExpression rule;
-    final RuleType ruleType;
-    final Label label;
-
-    BuildTarget(FuncallExpression rule, RuleType ruleType, Label label) {
-      this.rule = rule;
-      this.ruleType = ruleType;
-      this.label = label;
-    }
-
-    @Nullable
-    TargetInfo guessTargetInfo() {
-      String ruleName = rule.getFunctionName();
-      if (ruleName == null) {
-        return null;
-      }
-      Kind kind = Kind.fromRuleName(ruleName);
-      return kind != null ? TargetInfo.builder(label, kind.getKindString()).build() : null;
-    }
-  }
 
   public BlazeBuildFileRunConfigurationProducer() {
     super(BlazeCommandRunConfigurationType.getInstance());
@@ -85,9 +63,9 @@ public class BlazeBuildFileRunConfigurationProducer
     if (target == null) {
       return false;
     }
-    sourceElement.set(target.rule);
+    sourceElement.set(target.rule());
     setupConfiguration(configuration.getProject(), blazeProjectData, configuration, target);
-    return true;
+    return configuration.getHandler().getCommandName() != null;
   }
 
   @Override
@@ -97,7 +75,7 @@ public class BlazeBuildFileRunConfigurationProducer
     if (target == null) {
       return false;
     }
-    if (!Objects.equals(configuration.getTargets(), ImmutableList.of(target.label))) {
+    if (!Objects.equals(configuration.getTargets(), ImmutableList.of(target.label()))) {
       return false;
     }
     // We don't know any details about how the various factories set up configurations from here.
@@ -162,9 +140,9 @@ public class BlazeBuildFileRunConfigurationProducer
     // First see if a BlazeRunConfigurationFactory can give us a specialized setup.
     for (BlazeRunConfigurationFactory configurationFactory :
         BlazeRunConfigurationFactory.EP_NAME.getExtensions()) {
-      if (configurationFactory.handlesTarget(project, blazeProjectData, target.label)
+      if (configurationFactory.handlesTarget(project, blazeProjectData, target.label())
           && configurationFactory.handlesConfiguration(configuration)) {
-        configurationFactory.setupConfiguration(configuration, target.label);
+        configurationFactory.setupConfiguration(configuration, target.label());
         return;
       }
     }
@@ -179,24 +157,27 @@ public class BlazeBuildFileRunConfigurationProducer
     if (info != null) {
       config.setTargetInfo(info);
     } else {
-      config.setTarget(target.label);
+      config.setTarget(target.label());
     }
     BlazeCommandRunConfigurationCommonState state =
         config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (state != null) {
-      state.getCommandState().setCommand(commandForRuleType(target.ruleType));
+      Optional<BlazeCommandName> blazeCommandName = commandForRuleType(target.ruleType());
+      blazeCommandName.ifPresent(command ->
+              state.getCommandState().setCommand(command)
+      );
     }
     config.setGeneratedName();
   }
 
-  static BlazeCommandName commandForRuleType(RuleType ruleType) {
+  static Optional<BlazeCommandName> commandForRuleType(RuleType ruleType) {
     switch (ruleType) {
       case BINARY:
-        return BlazeCommandName.RUN;
+        return Optional.of(BlazeCommandName.RUN);
       case TEST:
-        return BlazeCommandName.TEST;
+        return Optional.of(BlazeCommandName.TEST);
       default:
-        return BlazeCommandName.BUILD;
+        return Optional.empty();
     }
   }
 }

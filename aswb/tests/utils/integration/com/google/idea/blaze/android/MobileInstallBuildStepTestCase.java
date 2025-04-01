@@ -31,7 +31,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.Keep;
-import com.google.idea.blaze.android.functional.AndroidDeviceCompat;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.DeviceSession;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
@@ -41,11 +40,15 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleColoredComponent;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 
@@ -67,6 +70,9 @@ public class MobileInstallBuildStepTestCase extends BlazeAndroidIntegrationTestC
         "  //java/com/foo/app:app",
         "android_sdk_platform: android-27");
     MockSdkUtil.registerSdk(workspace, "27");
+    MockExperimentService experimentService = new MockExperimentService();
+    registerApplicationComponent(ExperimentService.class, experimentService);
+    experimentService.setExperiment(new BoolExperiment("blaze.android.merge.libs", true), false);
 
     workspace.createFile(
         new WorkspacePath("java/com/foo/app/MainActivity.java"),
@@ -128,7 +134,7 @@ public class MobileInstallBuildStepTestCase extends BlazeAndroidIntegrationTestC
    * {@link DeviceFutures} and all other implementations of {@link AndroidDevice} are final,
    * therefore we need this to stub out a fake {@link DeviceSession}.
    */
-  public static class FakeDevice extends AndroidDeviceCompat {
+  public static class FakeDevice implements AndroidDevice {
     @Override
     public ListenableFuture<IDevice> getLaunchedDevice() {
       IDevice device = mock(IDevice.class);
@@ -162,6 +168,11 @@ public class MobileInstallBuildStepTestCase extends BlazeAndroidIntegrationTestC
     @Nullable
     @Override
     public List<Abi> getAbis() {
+      return null;
+    }
+
+    @Override
+    public @Nullable String getAppPreferredAbi() {
       return null;
     }
 
@@ -202,7 +213,11 @@ public class MobileInstallBuildStepTestCase extends BlazeAndroidIntegrationTestC
     }
 
     @Override
-    public ListenableFuture<IDevice> launch(Project project) {
+    public LaunchCompatibility canRun(
+      com.android.sdklib.AndroidVersion androidVersion,
+      IAndroidTarget iAndroidTarget,
+      Supplier<EnumSet<HardwareFeature>> getRequiredHardwareFeatures,
+      @Nullable Set<Abi> set) {
       return null;
     }
 

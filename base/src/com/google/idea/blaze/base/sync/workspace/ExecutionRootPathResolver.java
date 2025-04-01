@@ -119,8 +119,11 @@ public class ExecutionRootPathResolver {
         // Resolve virtual_include from execution root either to local or external workspace for correct code insight
         ImmutableList<File> resolved = ImmutableList.of();
         try {
-          resolved = VirtualIncludesHandler.resolveVirtualInclude(path, outputBase,
-                  workspacePathResolver, targetMap);
+          resolved = VirtualIncludesHandler.resolveVirtualInclude(
+              path,
+              outputBase,
+              workspacePathResolver,
+              targetMap);
         } catch (Throwable throwable) {
           LOG.error("Failed to resolve virtual includes for " + path, throwable);
         }

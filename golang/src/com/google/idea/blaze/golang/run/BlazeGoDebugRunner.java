@@ -28,7 +28,6 @@ import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.golang.run.BlazeGoRunConfigurationRunner.BlazeGoDummyDebugProfileState;
-import com.google.idea.sdkcompat.go.GoSdkCompat;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
@@ -86,7 +85,7 @@ public class BlazeGoDebugRunner extends GoBuildingRunner {
     EventLoggingService.getInstance().logEvent(getClass(), "debugging-go");
     GoApplicationRunningState goState = blazeState.toNativeState(environment);
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            () -> ReadAction.run(() -> GoSdkCompat.prepareState(goState)),
+            () -> ReadAction.run(goState::prepareStateInBGT),
             "Preparing Go Application Running State",
             false,
             environment.getProject());

@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.run.runner;
 
 import static java.util.stream.Collectors.joining;
 
+import com.android.annotations.Nullable;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -27,26 +28,25 @@ import com.google.idea.blaze.android.run.RemoteApkDownloader;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper.GetDeployInfoException;
-import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResult;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
+import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
-import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.common.Interners;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -57,6 +57,7 @@ import java.util.List;
 
 /** Builds the APK using normal blaze build. */
 public class FullApkBuildStep implements ApkBuildStep {
+  private static final String ANDROID_DEPLOY_INFO_OUTPUT_GROUP_NAME = "android_deploy_info";
   @VisibleForTesting public static final String DEPLOY_INFO_SUFFIX = ".deployinfo.pb";
 
   /** Controls the post-build remote APK fetching step. */
@@ -72,6 +73,7 @@ public class FullApkBuildStep implements ApkBuildStep {
   private final BlazeApkDeployInfoProtoHelper deployInfoHelper;
   private final boolean nativeDebuggingEnabled;
   private BlazeAndroidDeployInfo deployInfo = null;
+  @Nullable private final List<NativeSymbolFinder> defaultNativeSymbolFinderList;
 
   @VisibleForTesting
   public FullApkBuildStep(
@@ -79,12 +81,14 @@ public class FullApkBuildStep implements ApkBuildStep {
       Label label,
       ImmutableList<String> buildFlags,
       boolean nativeDebuggingEnabled,
-      BlazeApkDeployInfoProtoHelper deployInfoHelper) {
+      BlazeApkDeployInfoProtoHelper deployInfoHelper,
+      List<NativeSymbolFinder> defaultNativeSymbolFinderList) {
     this.project = project;
     this.label = label;
     this.buildFlags = buildFlags;
     this.deployInfoHelper = deployInfoHelper;
     this.nativeDebuggingEnabled = nativeDebuggingEnabled;
+    this.defaultNativeSymbolFinderList = defaultNativeSymbolFinderList;
   }
 
   public FullApkBuildStep(
@@ -92,7 +96,13 @@ public class FullApkBuildStep implements ApkBuildStep {
       Label label,
       ImmutableList<String> buildFlags,
       boolean nativeDebuggingEnabled) {
-    this(project, label, buildFlags, nativeDebuggingEnabled, new BlazeApkDeployInfoProtoHelper());
+    this(
+        project,
+        label,
+        buildFlags,
+        nativeDebuggingEnabled,
+        new BlazeApkDeployInfoProtoHelper(),
+        null);
   }
 
   private static boolean apksRequireDownload(BlazeAndroidDeployInfo deployInfo) {
@@ -146,6 +156,13 @@ public class FullApkBuildStep implements ApkBuildStep {
     return lib;
   }
 
+  private List<NativeSymbolFinder> getNativeSymbolFinderList() {
+    if (defaultNativeSymbolFinderList != null) {
+      return defaultNativeSymbolFinderList;
+    }
+    return NativeSymbolFinder.EP_NAME.getExtensionList();
+  }
+
   @Override
   public void build(BlazeContext context, BlazeAndroidDeviceSelector.DeviceSession deviceSession) {
     BlazeProjectData projectData =
@@ -159,40 +176,30 @@ public class FullApkBuildStep implements ApkBuildStep {
     BuildInvoker invoker =
         Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
     BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.BUILD);
-    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
-    try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
-      List<NativeSymbolFinder> nativeSymbolFinderList =
-          NativeSymbolFinder.EP_NAME.getExtensionList();
-      command.addTargets(label).addBlazeFlags("--output_groups=+android_deploy_info");
+    List<NativeSymbolFinder> nativeSymbolFinderList = getNativeSymbolFinderList();
+    command.addTargets(label).addBlazeFlags("--output_groups=+android_deploy_info");
 
-      if (!nativeSymbolFinderList.isEmpty()) {
-        command.addBlazeFlags(
-            nativeSymbolFinderList.stream()
-                .map(NativeSymbolFinder::getAdditionalBuildFlags)
-                .collect(joining(" ")));
-      }
+    if (!nativeSymbolFinderList.isEmpty()) {
+      command.addBlazeFlags(
+          nativeSymbolFinderList.stream()
+              .map(NativeSymbolFinder::getAdditionalBuildFlags)
+              .collect(joining(" ")));
+    }
 
-      command.addBlazeFlags(buildFlags).addBlazeFlags(buildResultHelper.getBuildFlags());
-
-      SaveUtil.saveAllFiles();
-      int retVal =
-          ExternalTask.builder(workspaceRoot)
-              .addBlazeCommand(command.build())
-              .context(context)
-              .stderr(
-                  LineProcessingOutputStream.of(
-                      BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
-              .build()
-              .run();
-      ListenableFuture<Void> unusedFuture =
-          FileCaches.refresh(
-              project, context, BlazeBuildOutputs.noOutputs(BuildResult.fromExitCode(retVal)));
-
-      if (retVal != 0) {
+    command.addBlazeFlags(buildFlags);
+    SaveUtil.saveAllFiles();
+    try (BuildEventStreamProvider streamProvider = invoker.invoke(command, context)) {
+      BlazeBuildOutputs outputs = BlazeBuildOutputs.fromParsedBepOutput(BuildResultParser.getBuildOutput(streamProvider, Interners.STRING));
+      int exitCode = outputs.buildResult().exitCode;
+      if (exitCode != 0) {
         IssueOutput.error("Blaze build failed. See Blaze Console for details.").submit(context);
         return;
       }
+
+      ListenableFuture<Void> unusedFuture =
+        FileCaches.refresh(
+          project, context, BlazeBuildOutputs.noOutputs(BuildResult.fromExitCode(exitCode)));
 
       context.output(new StatusOutput("Reading deployment information..."));
       String executionRoot = ExecRootUtil.getExecutionRoot(invoker, context);
@@ -203,21 +210,28 @@ public class FullApkBuildStep implements ApkBuildStep {
 
       AndroidDeployInfo deployInfoProto =
           deployInfoHelper.readDeployInfoProtoForTarget(
-              label, buildResultHelper, fileName -> fileName.endsWith(DEPLOY_INFO_SUFFIX));
+              label,
+              ANDROID_DEPLOY_INFO_OUTPUT_GROUP_NAME,
+              outputs,
+              fileName -> fileName.endsWith(DEPLOY_INFO_SUFFIX));
       ImmutableList<File> libs =
           nativeSymbolFinderList.stream()
               .flatMap(
                   finder ->
-                      finder.getNativeSymbolsForBuild(context, label, buildResultHelper).stream())
+                      finder.getNativeSymbolsForBuild(project, context, label, outputs).stream())
               .collect(ImmutableList.toImmutableList());
       deployInfo =
           deployInfoHelper.extractDeployInfoAndInvalidateManifests(
               project, new File(executionRoot), deployInfoProto, libs);
     } catch (GetArtifactsException e) {
+      // TODO b/374906681 - The following errors are internal errors and showing them to the users is not very useful.
+      //  Handle/log them more elegantly.
       IssueOutput.error("Could not read BEP output: " + e.getMessage()).submit(context);
     } catch (GetDeployInfoException e) {
       IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())
           .submit(context);
+    } catch (BuildException e) {
+      IssueOutput.error("Could not invoke blaze build: " + e.getMessage()).submit(context);
     }
 
     if (FETCH_REMOTE_APKS.getValue() && deployInfo != null && apksRequireDownload(deployInfo)) {

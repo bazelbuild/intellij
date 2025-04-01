@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Bazel Authors. All rights reserved.
+ * Copyright 2017-2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,28 @@
  */
 package com.google.idea.blaze.python.resolve.provider;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.PyIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.python.resolve.BlazePyResolverUtils;
+import com.google.idea.blaze.qsync.project.ProjectTarget;
+import com.google.idea.blaze.qsync.query.Query;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -41,9 +50,13 @@ import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -51,6 +64,36 @@ import javax.annotation.Nullable;
  * import strings are resolved to python packages and modules.
  */
 public abstract class AbstractPyImportResolverStrategy implements PyImportResolverStrategy {
+
+  /**
+   * This is a list of files, where the presence of one of these files represents either a
+   * Bazel Project or Bazel Repo.
+   */
+  private final static Set<String> BOUNDARY_MARKER_FILES = ImmutableSet.of(
+      "BUILD.bazel",
+      "BUILD",
+      "REPO.bazel",
+      "WORKSPACE.bazel",
+      "WORKSPACE",
+      "MODULE.bazel"
+  );
+
+  private final static Path PATH_CURRENT_DIR = Path.of(".");
+
+  private final ArtifactSupplierToPsiElementProviderMapper artifactSupplierToPsiElementProviderMapper;
+
+  public AbstractPyImportResolverStrategy() {
+    this(new DefaultArtifactSupplierToPsiElementProviderMapper());
+  }
+
+  /**
+   * This constructor is exposed package-private for testing purposes.
+   * @param artifactSupplierToPsiElementProviderMapper is supplied so that it is possible to mock.
+   */
+  AbstractPyImportResolverStrategy(
+      ArtifactSupplierToPsiElementProviderMapper artifactSupplierToPsiElementProviderMapper) {
+    this.artifactSupplierToPsiElementProviderMapper = artifactSupplierToPsiElementProviderMapper;
+  }
 
   @Nullable
   @Override
@@ -92,58 +135,189 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
   @Nullable
   private PySourcesIndex getSourcesIndex(Project project) {
     if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
-      return null;
+      return SyncCache.getInstance(project).get(getClass(), this::buildSourcesIndexQuerySync);
     }
     return SyncCache.getInstance(project).get(getClass(), this::buildSourcesIndex);
   }
 
+  // exposed package-private for testing
   @SuppressWarnings("unused")
-  private PySourcesIndex buildSourcesIndex(Project project, BlazeProjectData projectData) {
+  PySourcesIndex buildSourcesIndex(Project project, BlazeProjectData projectData) {
     ImmutableSetMultimap.Builder<String, QualifiedName> shortNames = ImmutableSetMultimap.builder();
     Map<QualifiedName, PsiElementProvider> map = new HashMap<>();
     ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
     for (TargetIdeInfo target : projectData.getTargetMap().targets()) {
-      for (ArtifactLocation source : getPySources(target)) {
-        QualifiedName name = toImportString(source);
-        if (name == null || name.getLastComponent() == null) {
-          continue;
-        }
-        shortNames.put(name.getLastComponent(), name);
-        PsiElementProvider psiProvider = psiProviderFromArtifact(project, decoder, source);
-        map.put(name, psiProvider);
-        if (includeParentDirectory(source)) {
-          map.put(name.removeTail(1), PsiElementProvider.getParent(psiProvider));
+      List<QualifiedName> importRoots = assembleImportRoots(target);
+      for (ArtifactLocation source : getPySources(projectData.getWorkspacePathResolver(), target)) {
+        List<QualifiedName> sourceImports = assembleSourceImportsFromImportRoots(importRoots,
+            toImportString(source));
+        for (QualifiedName sourceImport : sourceImports) {
+          if (null != sourceImport.getLastComponent()) {
+            shortNames.put(sourceImport.getLastComponent(), sourceImport);
+            PsiElementProvider psiProvider = artifactSupplierToPsiElementProviderMapper
+                .map(project, decoder, source);
+            map.put(sourceImport, psiProvider);
+            if (includeParentDirectory(source)) {
+              map.put(sourceImport.removeTail(1), PsiElementProvider.getParent(psiProvider));
+            }
+          }
         }
       }
     }
     return new PySourcesIndex(shortNames.build(), ImmutableMap.copyOf(map));
   }
 
-  private static PsiElementProvider psiProviderFromArtifact(
-      Project project, ArtifactLocationDecoder decoder, ArtifactLocation source) {
-    return (manager) -> {
-      File file = OutputArtifactResolver.resolve(project, decoder, source);
-      if (file == null) {
-        return null;
+  // exposed package-private for testing
+  @SuppressWarnings("unused")
+  PySourcesIndex buildSourcesIndexQuerySync(Project project, BlazeProjectData projectData) {
+    ImmutableSetMultimap.Builder<String, QualifiedName> shortNames = ImmutableSetMultimap.builder();
+    Map<QualifiedName, PsiElementProvider> map = new HashMap<>();
+
+    var currentSnapshot = QuerySyncManager.getInstance(project)
+            .getLoadedProject()
+            .flatMap(it -> it.getSnapshotHolder().getCurrent())
+            .orElse(null);
+    if (currentSnapshot == null) {
+      return null;
+    }
+    var workspaceRoot = WorkspaceRoot.fromProjectSafe(project);
+    if (workspaceRoot == null) {
+      return null;
+    }
+
+    for (var target : currentSnapshot.getTargetMap().entrySet()) {
+      List<QualifiedName> importRoots = assembleImportRootsQuerySync(target.getKey(), project);
+      for (var source : target.getValue().sourceLabels().get(ProjectTarget.SourceType.REGULAR)) {
+        List<QualifiedName> sourceImports = assembleSourceImportsFromImportRoots(importRoots,
+                fromRelativePath(source.toFilePath().toString()));
+        var file = workspaceRoot.path().resolve(source.toFilePath());
+        for (QualifiedName sourceImport : sourceImports) {
+          if (null != sourceImport.getLastComponent()) {
+            shortNames.put(sourceImport.getLastComponent(), sourceImport);
+            PsiElementProvider psiProvider = mapToPsiProviderQuerySync(file.toFile());
+            map.put(sourceImport, psiProvider);
+            if (includeParentDirectory(file.toFile())) {
+              map.put(sourceImport.removeTail(1), PsiElementProvider.getParent(psiProvider));
+            }
+          }
+        }
       }
-      if (PyNames.INIT_DOT_PY.equals(file.getName())) {
-        file = file.getParentFile();
-      }
-      return BlazePyResolverUtils.resolveFile(manager, file);
-    };
+    }
+    return new PySourcesIndex(shortNames.build(), ImmutableMap.copyOf(map));
   }
 
-  private static Collection<ArtifactLocation> getPySources(TargetIdeInfo target) {
+  /**
+   * This method will extract sources from the supplied target. If any of the sources
+   * are a directory rather than a file then it will descend through the directory
+   * transitively looking for any Python files. It is sometimes the case that
+   * generated code will supply source in a directory rather than as individual files.
+   */
+
+  private static Collection<ArtifactLocation> getPySources(
+      WorkspacePathResolver workspacePathResolver,
+      TargetIdeInfo target) {
+    Preconditions.checkArgument(null != workspacePathResolver);
+    Preconditions.checkArgument(null != target);
+
     if (target.getPyIdeInfo() != null) {
-      return target.getPyIdeInfo().getSources();
+      return getPySources(workspacePathResolver, target.getPyIdeInfo().getSources());
     }
     if (target.getKind().hasLanguage(LanguageClass.PYTHON)) {
-      return target.getSources();
+      return getPySources(workspacePathResolver, target.getSources());
     }
     return ImmutableList.of();
   }
 
-  /** Maps a blaze artifact to the import string used to reference it. */
+  private static List<ArtifactLocation> getPySources(
+      WorkspacePathResolver workspacePathResolver,
+      Collection<ArtifactLocation> sources) {
+    ImmutableList.Builder<ArtifactLocation> assembly = ImmutableList.builder();
+    marshallPySources(workspacePathResolver, sources, assembly);
+    return assembly.build();
+  }
+
+  private static void marshallPySources(
+      WorkspacePathResolver workspacePathResolver,
+      Collection<ArtifactLocation> sources,
+      ImmutableList.Builder<ArtifactLocation> assembly) {
+    for (ArtifactLocation source : sources) {
+      marshallPySources(workspacePathResolver, source, assembly);
+    }
+  }
+
+  /**
+   * Inspects the supplied {@code source}. If it is a Python file then it is added to the
+   * {@code assembly} If not then it will be then further processed as a {@link File};
+   * likely a directory that may then potentially contain Python source files.
+   */
+
+  private static void marshallPySources(
+      WorkspacePathResolver workspacePathResolver,
+      ArtifactLocation source,
+      ImmutableList.Builder<ArtifactLocation> assembly) {
+    if (source.getRelativePath().endsWith(".py")) {
+      assembly.add(source);
+    } else {
+      if (!source.isSource()) {
+        marshallPySources(
+            source,
+            workspacePathResolver.resolveToFile(source.getExecutionRootRelativePath()),
+            0,
+            assembly);
+      }
+    }
+  }
+
+  /**
+   * <p>Assembles Python source files as instances of {@code ArtifactLocation} by inspecting
+   * the supplied {@code sourceFileOrDirectory}. The outputs are written to the
+   * {@code assembly}. This method is recursive.</p>
+   *
+   * <p>If the logic should encounter a Bazel boundary file such as {@code BUILD.bazel} then
+   * it will stop walking the directory tree.</p>
+   *
+   * @param depth indicates how far down the directory tree the traversal is.
+   */
+
+  private static void marshallPySources(
+      ArtifactLocation source,
+      File sourceFileOrDirectory,
+      int depth,
+      ImmutableList.Builder<ArtifactLocation> assembly) {
+
+    if (sourceFileOrDirectory.isFile()) {
+      if (sourceFileOrDirectory.getName().endsWith(".py")) {
+        assembly.add(source);
+      }
+    }
+
+    if (sourceFileOrDirectory.isDirectory()
+        && (0 == depth || !containsBoundaryMarkerFile(sourceFileOrDirectory))) {
+      String[] subFilenames = sourceFileOrDirectory.list();
+
+      if (null != subFilenames) {
+        for (String subFilename : subFilenames) {
+          Path subSourcePath = Path.of(source.getRelativePath(), subFilename);
+          marshallPySources(
+              ArtifactLocation.Builder.copy(source).setRelativePath(subSourcePath.toString())
+                  .build(),
+              new File(sourceFileOrDirectory, subFilename),
+              depth + 1,
+              assembly);
+        }
+      }
+    }
+  }
+
+  private static boolean containsBoundaryMarkerFile(File directory) {
+    return BOUNDARY_MARKER_FILES.stream()
+        .map(filename -> new File(directory, filename))
+        .anyMatch(File::exists);
+  }
+
+  /**
+   * Maps a blaze artifact to the import string used to reference it.
+   */
   @Nullable
   abstract QualifiedName toImportString(ArtifactLocation source);
 
@@ -151,9 +325,181 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
     return source.getRelativePath().endsWith(".py");
   }
 
+  private static boolean includeParentDirectory(File source) {
+    return source.getName().endsWith(".py");
+  }
+
   static QualifiedName fromRelativePath(String relativePath) {
     relativePath = StringUtil.trimEnd(relativePath, File.separator + PyNames.INIT_DOT_PY);
     relativePath = StringUtil.trimExtensions(relativePath);
     return QualifiedName.fromComponents(StringUtil.split(relativePath, File.separator));
   }
+
+  /**
+   * <p>
+   * Introspects the target and extracts any imports as {@link QualifiedName} objects. The imports
+   * are relative to the basedir of the `BUILD` file and so the logic will adjust the imports to be
+   * from that directory. Later the file-paths related to the Bazel target are converted to
+   * {@link QualifiedName}s as well. By looking for the imports' {@link QualifiedName} as prefix on
+   * the source files' fully formed {@link QualifiedName}s, it is possible to derive how the Python
+   * interpreter would experience the modules and therefore reflect this in the mapping from the
+   * module names to the sources.
+   * </p>
+   * <p>
+   * An example; Consider a `py_library` target `:mylib` that is defined in a
+   * <code>BUILD.bazel</code> file;
+   * </p>
+   *
+   * <pre>{@code
+   * a/
+   *  b/
+   *   c/
+   *     BUILD.bazel
+   *     d/
+   *       e.py
+   * }</pre>
+   *
+   * <p>
+   * The <code>py_library</code> might have an <code>imports</code> attribute of <code>.</code>
+   * and in consideration of the <code>BUILD.bazel</code> path <code>a/b/c/BUILD.bazel</code>, this
+   * means that the <code>imports</code> {@link QualifiedName} will have components
+   * <code>a,b,c</code>. The logic at {@link #buildSourcesIndex(Project, BlazeProjectData)} will
+   * consider file <code>a/b/c/d/e.py</code> which will convert to a {@link QualifiedName} with
+   * components <code>a,b,c,d,e</code> and by removing the prefix obtained from
+   * <code>imports</code>, the final module {@link QualifiedName} will have components
+   * <code>d,e</code>.
+   * </p>
+   */
+  private static List<QualifiedName> assembleImportRoots(TargetIdeInfo target) {
+    ArtifactLocation buildFileArtifactLocation = target.getBuildFile();
+
+    if (null == buildFileArtifactLocation) {
+      return ImmutableList.of();
+    }
+
+    PyIdeInfo ideInfo = target.getPyIdeInfo();
+
+    if (null == ideInfo) {
+      return ImmutableList.of();
+    }
+
+    Path buildPath = Path.of(target.getBuildFile().getExecutionRootRelativePath());
+    Path buildParentPath = buildPath.getParent();
+
+    // In the case of an external repo the build path could be `/BUILD.bazel`
+    // which has a basedir of `/`. In this case we translate this to `.` so
+    // that it works in the sub file-system.
+
+    if (null == buildParentPath || 0 == buildParentPath.getNameCount()) {
+      buildParentPath = PATH_CURRENT_DIR;
+    }
+
+    ImmutableList.Builder<QualifiedName> resultBuilder = ImmutableList.builder();
+
+    for (String imp : ideInfo.getImports()) {
+      Path impPath = buildParentPath.resolve(imp).normalize();
+      String[] impPathParts = new String[impPath.getNameCount()];
+
+      for (int i = impPath.getNameCount() - 1; i >= 0; i--) {
+        impPathParts[i] = impPath.getName(i).toString();
+      }
+
+      resultBuilder.add(QualifiedName.fromComponents(impPathParts));
+    }
+
+    return resultBuilder.build();
+  }
+
+  private static List<QualifiedName> assembleImportRootsQuerySync(Label label, Project project) {
+    ImmutableList.Builder<QualifiedName> resultBuilder = ImmutableList.builder();
+
+    // In query sync, when analysis is disabled, we rely on  the `imports` attribute
+    // of the rules. Once it's enabled we should switch to what we got from providers
+    var imports = QuerySyncManager.getInstance(project).getLoadedProject()
+            .flatMap(it -> it.getSnapshotHolder().getCurrent())
+            .map(it -> it.queryData().querySummary().getRulesMap())
+            .flatMap(it -> Optional.ofNullable(it.get(label)))
+            .map(it -> it.imports())
+            .map(it -> it.stream().toList())
+            .orElse(ImmutableList.of());
+
+    var buildParentPath = label.getPackage();
+    for (String imp : imports) {
+      Path impPath = buildParentPath.resolve(imp).normalize();
+      String[] impPathParts = new String[impPath.getNameCount()];
+      for (int i = impPath.getNameCount() - 1; i >= 0; i--) {
+        impPathParts[i] = impPath.getName(i).toString();
+      }
+      resultBuilder.add(QualifiedName.fromComponents(impPathParts));
+    }
+    return resultBuilder.build();
+  }
+
+  private PsiElementProvider mapToPsiProviderQuerySync(File file) {
+    return (manager) -> {
+      if (PyNames.INIT_DOT_PY.equals(file.getName())) {
+        return BlazePyResolverUtils.resolveFile(manager, file.getParentFile());
+      } else {
+        return BlazePyResolverUtils.resolveFile(manager, file);
+      }
+    };
+  }
+
+  /**
+   * For each of the <code>importRoots</code>, see if it matches as a prefix on the
+   * <code>sourceImport</code> and then trim off the prefix; yielding the true module name.
+   * Also include the original in the list as well because this still seems to be able to be
+   * used as well. See {@link #assembleImportRoots(TargetIdeInfo)} for additional background.
+   */
+  private static List<QualifiedName> assembleSourceImportsFromImportRoots(
+      List<QualifiedName> importRoots,
+      QualifiedName sourceImport) {
+    if (null == sourceImport || null == sourceImport.getLastComponent()) {
+      return ImmutableList.of();
+    }
+
+    ImmutableList.Builder<QualifiedName> result = ImmutableList.builder();
+
+    result.add(sourceImport);
+
+    for (QualifiedName importsName : importRoots) {
+      // if the import name equals the name this is a strange situation.
+      if (!importsName.equals(sourceImport) && sourceImport.matchesPrefix(importsName)) {
+        result.add(sourceImport.subQualifiedName(importsName.getComponentCount(),
+            sourceImport.getComponentCount()));
+      }
+    }
+
+    return result.build();
+  }
+
+  /**
+   * This interface is used to isolate out the calls to statics so that unit testing is possible
+   * on this class.
+   */
+  interface ArtifactSupplierToPsiElementProviderMapper {
+
+    PsiElementProvider map(Project project, ArtifactLocationDecoder decoder,
+        ArtifactLocation source);
+  }
+
+  private static class DefaultArtifactSupplierToPsiElementProviderMapper implements
+      ArtifactSupplierToPsiElementProviderMapper {
+
+    @Override
+    public PsiElementProvider map(Project project, ArtifactLocationDecoder decoder,
+        ArtifactLocation source) {
+      return (manager) -> {
+        File file = OutputArtifactResolver.resolve(project, decoder, source);
+        if (file == null) {
+          return null;
+        }
+        if (PyNames.INIT_DOT_PY.equals(file.getName())) {
+          file = file.getParentFile();
+        }
+        return BlazePyResolverUtils.resolveFile(manager, file);
+      };
+    }
+  }
+
 }

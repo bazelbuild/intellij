@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+
 import javax.annotation.Nullable;
 
 /** Converts a blaze label into an absolute path, then resolves that path to a PsiElements */
@@ -97,15 +98,21 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
   private BuildLookupElement[] getRuleLookups(String labelString) {
     if (labelString.endsWith("/")
         || (labelString.startsWith("/") && !labelString.contains(":"))
+        || (labelString.startsWith("@") && !labelString.contains(":"))
         || skylarkExtensionReference(myElement)) {
       return BuildLookupElement.EMPTY_ARRAY;
     }
+
     String packagePrefix = LabelUtils.getPackagePathComponent(labelString);
+    String externalWorkspace = LabelUtils.getExternalWorkspaceComponent(labelString);
+
     BuildFile referencedBuildFile =
-        LabelUtils.getReferencedBuildFile(myElement.getContainingFile(), packagePrefix);
+        LabelUtils.getReferencedBuildFile(
+            myElement.getContainingFile(), externalWorkspace, packagePrefix);
     if (referencedBuildFile == null) {
       return BuildLookupElement.EMPTY_ARRAY;
     }
+
     String self = null;
     if (referencedBuildFile == myElement.getContainingFile()) {
       FuncallExpression funcall =
@@ -115,11 +122,11 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
       }
     }
     return LabelRuleLookupElement.collectAllRules(
-        referencedBuildFile, labelString, packagePrefix, self, myElement.getQuoteType());
+        referencedBuildFile, labelString, self, myElement.getQuoteType());
   }
 
   private BuildLookupElement[] getFileLookups(String labelString) {
-    if (labelString.startsWith("//") || labelString.equals("/")) {
+    if (labelString.startsWith("//") || labelString.equals("/") || labelString.startsWith("@")) {
       return getNonLocalFileLookups(labelString);
     }
     return getPackageLocalFileLookups(labelString);
@@ -150,6 +157,7 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
       return BuildLookupElement.EMPTY_ARRAY;
     }
     String packagePrefix = LabelUtils.getPackagePathComponent(labelString);
+    String externalWorkspace = LabelUtils.getExternalWorkspaceComponent(labelString);
     BuildFile parentFile = myElement.getContainingFile();
     if (parentFile == null) {
       return BuildLookupElement.EMPTY_ARRAY;
@@ -159,7 +167,8 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
       return BuildLookupElement.EMPTY_ARRAY;
     }
     BuildFile referencedBuildFile =
-        LabelUtils.getReferencedBuildFile(containingPackage.buildFile, packagePrefix);
+        LabelUtils.getReferencedBuildFile(
+            containingPackage.buildFile, externalWorkspace, packagePrefix);
 
     // Directories before the colon are already covered.
     // We're only concerned with package-local directories.

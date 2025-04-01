@@ -2,6 +2,7 @@
 # Description: Builds clwb
 #
 
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
     "CLWB_PACKAGES_VISIBILITY",
@@ -25,15 +26,29 @@ load(
     "//testing:test_defs.bzl",
     "intellij_unit_test_suite",
 )
+load(":build_defs.bzl", "select_since")
+load(":test_defs.bzl", "clwb_headless_test")
 
 licenses(["notice"])
 
 intellij_plugin_library(
     name = "plugin_library",
-    optional_plugin_xmls = ["optional_clwb_oclang"],
+    optional_plugin_xmls = [
+        "optional_clwb_oclang",
+    ] + select_since(
+        "2024.3",
+        ["//clwb/src/com/google/idea/blaze/clwb/radler:plugin_xml"],
+        default = [],
+    ),
     plugin_xmls = ["src/META-INF/clwb.xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
-    deps = [":clwb_lib"],
+    deps = [
+        ":clwb_lib",
+    ] + select_since(
+        "2024.3",
+        ["//clwb/src/com/google/idea/blaze/clwb/radler:lib"],
+        default = [],
+    ),
 )
 
 optional_plugin_xml(
@@ -58,19 +73,24 @@ stamped_plugin_xml(
 java_library(
     name = "clwb_lib",
     srcs = glob(["src/**/*.java"]),
+    visibility = ["//clwb:__subpackages__"],
     deps = [
         "//base",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
+        "//clwb/sdkcompat",
         "//common/actions",
         "//common/experiments",
         "//cpp",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
+        "//shared",
     ],
 )
 
 intellij_plugin(
     name = "clwb_bazel",
+    plugin_icons = ["//common:pluginIcon.svg"],
     plugin_xml = ":stamped_plugin_xml",
     tags = [
         "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
@@ -94,15 +114,6 @@ repackaged_files(
 )
 
 repackaged_files(
-    name = "aspect_directory",
-    srcs = ["//aspect:aspect_files"],
-    prefix = "clwb/aspect",
-    strip_prefix = "/aspect",
-    visibility = CLWB_PACKAGES_VISIBILITY,
-    java_copts = ["-source", "8", "-target", "8"],
-)
-
-repackaged_files(
     name = "clwb_bazel_gdbserver_wrapper",
     srcs = ["//clwb:gdbserver_wrapper"],
     prefix = "clwb/gdb",
@@ -112,7 +123,6 @@ repackaged_files(
 intellij_plugin_debug_target(
     name = "clwb_bazel_dev",
     deps = [
-        ":aspect_directory",
         ":clwb_bazel_gdbserver_wrapper",
         ":plugin_jar",
     ],
@@ -121,7 +131,6 @@ intellij_plugin_debug_target(
 plugin_deploy_zip(
     name = "clwb_bazel_zip",
     srcs = [
-        ":aspect_directory",
         ":clwb_bazel_gdbserver_wrapper",
         ":plugin_jar",
     ],
@@ -138,7 +147,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "@junit//jar",
+        "//third_party/java/junit",
     ],
 )
 
@@ -146,4 +155,46 @@ filegroup(
     name = "gdbserver_wrapper",
     srcs = ["gdbserver"],
     visibility = ["//visibility:public"],
+)
+
+clwb_headless_test(
+    name = "simple_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/SimpleTest.java"],
+    project = "simple",
+)
+
+clwb_headless_test(
+    name = "virtual_includes_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/VirtualIncludesTest.java"],
+    project = "virtual_includes",
+)
+
+clwb_headless_test(
+    name = "llvm_toolchain_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/LlvmToolchainTest.java"],
+    project = "llvm_toolchain",
+)
+
+clwb_headless_test(
+    name = "external_includes_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/ExternalIncludesTest.java"],
+    project = "external_includes",
+)
+
+clwb_headless_test(
+    name = "query_sync_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/QuerySyncTest.java"],
+    project = "query_sync",
+    last_green = False, # do not test query sync against last green
+)
+
+test_suite(
+    name = "headless_tests",
+    tests = [
+        ":external_includes_headless_test",
+        # ":llvm_toolchain_headless_test", excluded for now since they are kinda slow
+        ":query_sync_headless_test",
+        ":simple_headless_test",
+        ":virtual_includes_headless_test",
+    ],
 )

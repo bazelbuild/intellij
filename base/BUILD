@@ -1,3 +1,4 @@
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
     "DEFAULT_TEST_VISIBILITY",
@@ -11,20 +12,25 @@ load(
     "intellij_plugin_library",
     "stamped_plugin_xml",
 )
+load("//intellij_platform_sdk:build_defs.bzl", "java_version_flags", "select_for_plugin_api")
 load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "java_version_flags")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
-java_library(
+kt_jvm_library(
     name = "base",
-    srcs = glob(["src/**/*.java"]),
-    javacopts = ["-Xep:FutureReturnValueIgnored:OFF"],
+    srcs = glob(["src/**/*.java", "src/**/*.kt"]),
     resources = glob(["src/resources/**/*"]),
+    resource_strip_prefix = "base/src",
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
+        "//aspect:aspect_lib",
+        "//aspect:aspect_template_lib",
+        "//aspect:aspect_qsync_lib",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
         "//common/actions",
         "//common/experiments",
         "//common/settings",
@@ -33,9 +39,6 @@ java_library(
         "//common/util:platform",
         "//common/util:process",
         "//common/util:transactions",
-        "//ext:intellijext",
-        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
-        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//querysync",
         "//sdkcompat",
@@ -44,16 +47,25 @@ java_library(
         "//shared:exception",
         "//shared:proto",
         "//shared:vcs",
-        "//third_party/auto_value",
+        "//third_party/java/auto_value",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "@error_prone_annotations//jar",
+        "@gson//jar",
     ],
 )
 
 intellij_plugin_library(
     name = "plugin_library",
-    plugin_xmls = ["src/META-INF/blaze-base.xml"],
+    plugin_xmls = [
+        "src/META-INF/dependency-on-lvcs-impl.xml",
+        "src/META-INF/blaze-base.xml",
+    ],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
-    deps = [":base"],
+    deps = [
+        ":base",
+        "//base/src/com/google/idea/blaze/base/project/indexing",
+    ],
 )
 
 java_library(
@@ -67,9 +79,9 @@ java_library(
     deps = [
         ":base",
         "//common/experiments",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -80,9 +92,9 @@ java_library(
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -93,8 +105,8 @@ java_library(
     srcs = glob(["src/com/google/idea/blaze/base/formatter/*.java"]),
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
-        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep (b/146560321)
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep (b/146560321)
     ],
 )
 
@@ -103,6 +115,7 @@ java_library(
     name = "label_api",
     srcs = [
         "src/com/google/idea/blaze/base/ideinfo/ArtifactLocation.java",
+        "src/com/google/idea/blaze/base/ideinfo/Tags.java",
         "src/com/google/idea/blaze/base/model/primitives/InvalidTargetException.java",
         "src/com/google/idea/blaze/base/model/primitives/Kind.java",
         "src/com/google/idea/blaze/base/model/primitives/Label.java",
@@ -118,11 +131,12 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":proto_wrapper",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//shared",
-        "//third_party/auto_value",
+        "//third_party/java/auto_value",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
+        "@error_prone_annotations//jar",
     ],
 )
 
@@ -164,8 +178,8 @@ java_library(
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -179,8 +193,8 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":vfs_api",
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -200,9 +214,9 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":proto_wrapper",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -215,8 +229,8 @@ java_library(
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -224,6 +238,7 @@ java_library(
 java_library(
     name = "workspace_language_checker_api",
     srcs = [
+        "src/com/google/idea/blaze/base/ideinfo/Tags.java",
         "src/com/google/idea/blaze/base/model/primitives/LanguageClass.java",
         "src/com/google/idea/blaze/base/sync/projectview/WorkspaceLanguageChecker.java",
     ],
@@ -231,8 +246,8 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":proto_wrapper",
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -248,9 +263,9 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         "//common/experiments",
-        "//intellij_platform_sdk:jsr305",
+        "//third_party/java/auto_value",
         "//intellij_platform_sdk:plugin_api",
-        "//third_party/auto_value",
+        "//intellij_platform_sdk:jsr305",
     ],
 )
 
@@ -258,16 +273,16 @@ java_library(
 java_library(
     name = "library_to_target_api",
     srcs = [
+        "src/com/google/idea/blaze/base/model/LegacyLibraryToTargetResolver.java",
         "src/com/google/idea/blaze/base/model/LibraryKey.java",
-        "src/com/google/idea/blaze/base/model/LibraryToTargetResolver.java",
     ],
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":label_api",
         ":proto_wrapper",
-        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Immutable
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Immutable
     ],
 )
 
@@ -280,8 +295,8 @@ java_library(
     neverlink = 1,
     deps = [
         ":logging_api",
-        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
     ],
 )
 
@@ -301,10 +316,11 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":base",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//shared",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
+        "@error_prone_annotations//jar",
     ],
 )
 
@@ -323,9 +339,12 @@ java_library(
     ],
     deps = [
         ":base",
-        "//intellij_platform_sdk:jsr305",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
+        "//shared/java/com/google/idea/blaze/exception",
+        "//third_party/java/auto_value",
         "//intellij_platform_sdk:plugin_api",
-        "//third_party/auto_value",
+        "//intellij_platform_sdk:jsr305",
+        "@error_prone_annotations//jar",
     ],
 )
 
@@ -349,8 +368,8 @@ java_library(
     ],
     neverlink = 1,
     deps = [
-        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
     ],
 )
 
@@ -360,7 +379,6 @@ java_library(
     testonly = 1,
     srcs = [
         "src/com/google/idea/blaze/base/async/FutureUtil.java",
-        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifactParser.java",
         "src/com/google/idea/blaze/base/command/buildresult/RemoteOutputArtifact.java",
         "src/com/google/idea/blaze/base/ideinfo/ProtoWrapper.java",
         "src/com/google/idea/blaze/base/prefetch/DefaultPrefetcher.java",
@@ -370,10 +388,12 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":base",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
         "//proto:proto_deps",
         "//shared:artifact",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
+        "@error_prone_annotations//jar",
     ],
 )
 
@@ -403,10 +423,11 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":base",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//shared:artifact",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
+        "@error_prone_annotations//jar",
     ],
 )
 
@@ -423,10 +444,12 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":base",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api",
+        "//common/experiments",
         "//shared",
         "//shared:artifact",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:jsr305",
+        "@error_prone_annotations//jar",
     ],
 )
 
@@ -443,20 +466,11 @@ java_library(
 )
 
 java_library(
-    name = "qsync-extensions",
-    srcs = ["src/com/google/idea/blaze/base/qsync/HandledRulesProvider.java"],
-    neverlink = 1,
-    visibility = ["//java/com/google/devtools/intellij/protobuf:__subpackages__"],
-    deps = [
-        "//intellij_platform_sdk:plugin_api",
+    name = "version_checker",
+    srcs = [
+        "src/com/google/idea/blaze/base/util/VersionChecker.java",
     ],
-)
-
-java_library(
-    name = "qsync-extensions-for-tests",
-    testonly = 1,
-    srcs = ["src/com/google/idea/blaze/base/qsync/HandledRulesProvider.java"],
-    visibility = ["//javatests/com/google/devtools/intellij/protobuf:__subpackages__"],
+    visibility = G3PLUGINS_VISIBILITY,
     deps = [
         "//intellij_platform_sdk:plugin_api",
     ],
@@ -469,17 +483,19 @@ java_library(
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":base",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
+        "//proto:proto_deps",
+        "//shared:artifact",
+        "//shared:exception",
+        "//shared/java/com/google/idea/blaze/common",
+        "//testing:lib",
+        "//third_party/java/auto_value",
+        "//third_party/java/junit",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "//shared:artifact",
-        "//shared:exception",
-        "//testing:lib",
-        "//third_party/auto_value",
-        "//third_party/bazel/src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_java_proto",
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
-        "@junit//jar",
     ],
 )
 
@@ -498,22 +514,55 @@ java_library(
     deps = [
         ":base",
         ":unit_test_utils",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api_for_tests",
-        "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
         "//sdkcompat",
         "//shared:artifact",
         "//shared:vcs",
         "//testing:lib",
+        "//third_party/java/junit",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "@bazel_tools//tools/java/runfiles",
         "@com_google_guava_guava//jar",
-        "@junit//jar",
+    ],
+)
+
+intellij_unit_test_suite(
+    name = "unit_tests",
+    srcs = glob(["tests/unittests/**/*.java"]),
+    tags = ["noci:studio-win"],
+    test_package_root = "com.google.idea.blaze.base",
+    visibility = DEFAULT_TEST_VISIBILITY,
+    deps = [
+        ":base",
+        ":unit_test_utils",
+        "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
+        "//common/experiments",
+        "//common/experiments:unit_test_utils",
+        "//common/util:process",
+        "//proto:proto_deps",
+        "//querysync",
+        "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
+        "//shared",
+        "//shared:artifact",
+        "//shared/java/com/google/idea/blaze/common",
+        "//shared/javatests/com/google/idea/blaze/common:test_utils",
+        "//shared/javatests/com/google/idea/blaze/common/artifact:test_utils",
+        "//testing:lib",
+        "//third_party/java/auto_value",
+        "//third_party/java/junit",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
+        "@com_google_guava_guava//jar",
     ],
 )
 
 stamped_plugin_xml(
     name = "base_plugin_xml",
+    testonly = 1,
     plugin_id = "com.google.idea.blaze.base",
     plugin_name = "com.google.idea.blaze.base",
 )
@@ -522,45 +571,15 @@ intellij_plugin(
     name = "base_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":base_plugin_xml",
-    tags = [
-        "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
-    ],
     deps = [":plugin_library"],
-)
-
-intellij_unit_test_suite(
-    name = "unit_tests",
-    srcs = glob(["tests/unittests/**/*.java"]),
-    test_package_root = "com.google.idea.blaze.base",
-    visibility = DEFAULT_TEST_VISIBILITY,
-    deps = [
-        ":base",
-        ":unit_test_utils",
-        "//common/experiments",
-        "//common/experiments:unit_test_utils",
-        "//common/util:process",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api_for_tests",
-        "//intellij_platform_sdk:test_libs",
-        "//proto:proto_deps",
-        "//querysync",
-        "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
-        "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
-        "//shared",
-        "//shared:artifact",
-        "//shared/javatests/com/google/idea/blaze/common:test_utils",
-        "//shared/javatests/com/google/idea/blaze/common/artifact:test_utils",
-        "//testing:lib",
-        "//third_party/auto_value",
-        "@com_google_guava_guava//jar",
-        "@junit//jar",
-    ],
 )
 
 intellij_integration_test_suite(
     name = "integration_tests",
     srcs = glob(["tests/integrationtests/**/*.java"]),
+    plugins = [":com.google.idea.blaze.base"],
     required_plugins = "com.google.idea.blaze.base",
+    tags = ["noci:studio-win"],
     test_package_root = "com.google.idea.blaze.base",
     visibility = DEFAULT_TEST_VISIBILITY,
     runtime_deps = [
@@ -570,12 +589,23 @@ intellij_integration_test_suite(
         ":base",
         ":integration_test_utils",
         ":unit_test_utils",
+        "//common/experiments",
+        "//common/experiments:unit_test_utils",
+        "//proto:proto_deps",
+        "//querysync",
+        "//querysync/javatests/com/google/idea/blaze/qsync/artifacts:mock_artifact_cache",
+        "//shared:exception",
+        "//shared/java/com/google/idea/blaze/common",
+        "//shared/java/com/google/idea/blaze/common/artifact",
+        "//shared/javatests/com/google/idea/blaze/common:test_utils",
+        "//third_party/java/auto_value",
+        "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",  # unuseddeps: keep
         "//intellij_platform_sdk:test_libs",
-        "//proto:proto_deps",
+        "//third_party/java/junit",
+        "@org_opentest4j_opentest4j//jar",
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
-        "@junit//jar",
     ],
 )

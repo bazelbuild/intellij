@@ -15,7 +15,6 @@
  */
 package com.google.idea.testing;
 
-import com.google.idea.sdkcompat.BaseSdkTestCompat;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockProject;
@@ -33,8 +32,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.testFramework.ServiceContainerUtil;
 import org.picocontainer.MutablePicoContainer;
-import com.intellij.mock.MockApplication;
-import com.intellij.mock.MockProject;
 
 /** Utility class for registering project services, application services and extensions. */
 public class ServiceHelper {
@@ -59,6 +56,19 @@ public class ServiceHelper {
       ExtensionPointName<T> name, T instance, Disposable parentDisposable) {
     ExtensionPoint<T> ep = Extensions.getRootArea().getExtensionPoint(name);
     ep.registerExtension(instance, parentDisposable);
+  }
+
+  public static <T> void unregisterExtension(
+      ExtensionPointName<T> name, Class<? extends T> clazz, Disposable parentDisposable) {
+    final var ep = name.getPoint();
+    for (final var extension : name.getExtensions()) {
+      if (!extension.getClass().equals(clazz)) {
+        continue;
+      }
+
+      ep.unregisterExtension(extension);
+      Disposer.register(parentDisposable, () -> ep.registerExtension(extension));
+    }
   }
 
   public static <T> void registerProjectExtension(
@@ -168,7 +178,6 @@ public class ServiceHelper {
       Disposer.register(parentDisposable, (Disposable) implementation);
     }
     Disposer.register(
-        parentDisposable,
-        () -> BaseSdkTestCompat.unregisterComponent(componentManager, key));
+        parentDisposable, () -> ((ComponentManagerImpl) componentManager).unregisterComponent(key));
   }
 }

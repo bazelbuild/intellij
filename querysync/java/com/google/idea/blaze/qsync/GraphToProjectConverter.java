@@ -38,6 +38,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.RuleKinds;
 import com.google.idea.blaze.exception.BuildException;
@@ -88,7 +89,6 @@ public class GraphToProjectConverter {
   private final ListeningExecutorService executor;
   private final Supplier<Boolean> useNewResDirLogic;
   private final Supplier<Boolean> guessAndroidResPackages;
-  private final boolean useNewBuildArtifactLogic;
 
   public GraphToProjectConverter(
       PackageReader packageReader,
@@ -97,8 +97,7 @@ public class GraphToProjectConverter {
       ProjectDefinition projectDefinition,
       ListeningExecutorService executor,
       Supplier<Boolean> useNewResDirLogic,
-      Supplier<Boolean> guessAndroidResPackages,
-      boolean useNewBuildArtifactLogic) {
+      Supplier<Boolean> guessAndroidResPackages) {
     this.packageReader = packageReader;
     this.fileExistenceCheck = p -> Files.isRegularFile(workspaceRoot.resolve(p));
     this.context = context;
@@ -106,7 +105,6 @@ public class GraphToProjectConverter {
     this.executor = executor;
     this.useNewResDirLogic = useNewResDirLogic;
     this.guessAndroidResPackages = guessAndroidResPackages;
-    this.useNewBuildArtifactLogic = useNewBuildArtifactLogic;
   }
 
   @VisibleForTesting
@@ -115,8 +113,7 @@ public class GraphToProjectConverter {
       Predicate<Path> fileExistenceCheck,
       Context<?> context,
       ProjectDefinition projectDefinition,
-      ListeningExecutorService executor,
-      boolean useNewBuildArtifactLogic) {
+      ListeningExecutorService executor) {
     this.packageReader = packageReader;
     this.fileExistenceCheck = fileExistenceCheck;
     this.context = context;
@@ -124,7 +121,6 @@ public class GraphToProjectConverter {
     this.executor = executor;
     this.useNewResDirLogic = Suppliers.ofInstance(true);
     this.guessAndroidResPackages = Suppliers.ofInstance(false);
-    this.useNewBuildArtifactLogic = useNewBuildArtifactLogic;
   }
 
   /**
@@ -219,7 +215,7 @@ public class GraphToProjectConverter {
       ImmutableMap.Builder<Path, String> inRoot = ImmutableMap.builder();
       for (Entry<Path, String> pkg : prefixes.entrySet()) {
         Path rel = pkg.getKey();
-        if (rel.startsWith(root)) {
+        if (root.toString().isEmpty() || rel.startsWith(root)) {
           Path relToRoot = root.relativize(rel);
           inRoot.put(relToRoot, pkg.getValue());
         }
@@ -522,7 +518,7 @@ public class GraphToProjectConverter {
               .collect(toImmutableSet());
     } else {
       // TODO(mathewi) Remove this and the corresponding experiment once the logic has been proven.
-      androidResDirs = computeAndroidResourceDirectories(graph.getAllSourceFiles());
+      androidResDirs = computeAndroidResourceDirectories(graph.sourceFileLabels());
     }
     ImmutableSet<String> androidResPackages;
     if (guessAndroidResPackages.get()) {
@@ -537,31 +533,10 @@ public class GraphToProjectConverter {
       context.output(PrintOutput.log("%-10d Android resource packages", androidResPackages.size()));
     }
 
-    ImmutableList<ProjectProto.Library> depsLibs;
-    if (useNewBuildArtifactLogic) {
-      depsLibs = ImmutableList.of();
-    } else {
-      depsLibs =
-          ImmutableList.of(
-              ProjectProto.Library.newBuilder()
-                  .setName(BlazeProjectDataStorage.DEPENDENCIES_LIBRARY)
-                  .addClassesJar(
-                      ProjectProto.JarDirectory.newBuilder()
-                          .setPath(
-                              Paths.get(
-                                      BlazeProjectDataStorage.BLAZE_DATA_SUBDIRECTORY,
-                                      BlazeProjectDataStorage.LIBRARY_DIRECTORY)
-                                  .toString())
-                          .setRecursive(false))
-                  .build());
-    }
-
     ProjectProto.Module.Builder workspaceModule =
         ProjectProto.Module.newBuilder()
             .setName(BlazeProjectDataStorage.WORKSPACE_MODULE_NAME)
             .setType(ProjectProto.ModuleType.MODULE_TYPE_DEFAULT)
-            .addAllLibraryName(
-                depsLibs.stream().map(LibraryOrBuilder::getName).collect(toImmutableList()))
             .addAllAndroidResourceDirectories(
                 androidResDirs.stream().map(Path::toString).collect(toImmutableList()))
             .addAllAndroidSourcePackages(androidResPackages)
@@ -617,9 +592,11 @@ public class GraphToProjectConverter {
     if (graph.targetMap().values().stream().map(ProjectTarget::kind).anyMatch(RuleKinds::isJava)) {
       activeLanguages.add(LanguageClass.LANGUAGE_CLASS_JAVA);
     }
+    if (graph.targetMap().values().stream().map(ProjectTarget::kind).anyMatch(RuleKinds::isCc)) {
+      activeLanguages.add(LanguageClass.LANGUAGE_CLASS_CC);
+    }
 
     return ProjectProto.Project.newBuilder()
-        .addAllLibrary(depsLibs)
         .addModules(workspaceModule)
         .addAllActiveLanguages(activeLanguages.build())
         .build();
@@ -627,19 +604,18 @@ public class GraphToProjectConverter {
 
   /**
    * Heuristic for determining Android resource directories, by searching for .xml source files with
-   * /res/ somewhere in the path. To be replaced by a more robust implementation.
+   * /res/ somewhere in the path under a build package. To be replaced by a more robust implementation.
    */
   @VisibleForTesting
   public static ImmutableSet<Path> computeAndroidResourceDirectories(
-      ImmutableSet<Path> sourceFiles) {
+      ImmutableSet<Label> sourceFiles) {
     Set<Path> directories = new HashSet<>();
-    for (Path sourceFile : sourceFiles) {
-
-      if (sourceFile.getFileName().toString().endsWith(".xml")) {
-        List<Path> pathParts = Lists.newArrayList(sourceFile);
+    for (var sourceFile : sourceFiles) {
+      if (sourceFile.getName().toString().endsWith(".xml")) {
+        List<Path> pathParts = Lists.newArrayList(sourceFile.getName());
         int resPos = pathParts.indexOf(Path.of("res"));
-        if (resPos > 0) {
-          directories.add(sourceFile.subpath(0, resPos + 1));
+        if (resPos >= 0) {
+          directories.add(sourceFile.getPackage().resolve(sourceFile.getName().subpath(0, resPos + 1)));
         }
       }
     }

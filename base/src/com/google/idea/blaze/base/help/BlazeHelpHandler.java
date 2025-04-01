@@ -15,12 +15,12 @@
  */
 package com.google.idea.blaze.base.help;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 
 /** Handles help requests. */
 public interface BlazeHelpHandler {
   static BlazeHelpHandler getInstance() {
-    return ServiceManager.getService(BlazeHelpHandler.class);
+    return ApplicationManager.getApplication().getService(BlazeHelpHandler.class);
   }
 
   void handleHelp(String urlFragment);

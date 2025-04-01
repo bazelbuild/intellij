@@ -1,7 +1,13 @@
+load("@rules_java//java:defs.bzl", "java_library")
+
 licenses(["notice"])
 
 java_library(
     name = "exception",
     srcs = glob(["*.java"]),
-    visibility = ["//shared:__subpackages__"],
+    visibility = [
+        "//aswb:__subpackages__",
+        "//base:__subpackages__",
+        "//shared:__subpackages__",
+    ],
 )

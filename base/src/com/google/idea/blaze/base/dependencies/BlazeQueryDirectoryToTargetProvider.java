@@ -18,12 +18,12 @@ package com.google.idea.blaze.base.dependencies;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.query.BlazeQueryLabelKindParser;
@@ -57,10 +57,11 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
       ImportRoots directories,
       WorkspacePathResolver pathResolver,
       BlazeContext context) {
-    return runQuery(project, getQueryString(directories, shouldManualTargetSync), context);
+    return runQuery(project, getQueryString(directories, shouldManualTargetSync, pathResolver), context);
   }
 
-  protected static String getQueryString(ImportRoots directories, boolean allowManualTargetsSync) {
+  @VisibleForTesting
+  public static String getQueryString(ImportRoots directories, boolean allowManualTargetsSync, WorkspacePathResolver pathResolver) {
     StringBuilder targets = new StringBuilder();
     targets.append(
         directories.rootDirectories().stream()
@@ -69,7 +70,7 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
     for (WorkspacePath excluded : directories.excludePathsForBazelQuery()) {
       // Bazel produces errors for paths that don't exist (e.g. bazel-out in a project that overrides the default symlinks),
       // so only include paths that actually exist.
-      if (Files.exists(excluded.asPath())) {
+      if (Files.exists(pathResolver.resolveToFile(excluded).toPath())) {
         targets.append(" - " + TargetExpression.allFromPackageRecursive(excluded).toString());
       }
     }
@@ -97,15 +98,13 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
     BuildSystem buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
     BlazeCommand.Builder command =
         BlazeCommand.builder(
-                buildSystem.getDefaultInvoker(project, context), BlazeCommandName.QUERY)
+                buildSystem.getDefaultInvoker(project, context), BlazeCommandName.QUERY, project)
             .addBlazeFlags("--output=label_kind")
             .addBlazeFlags("--keep_going")
             .addBlazeFlags(query);
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
     BlazeQueryLabelKindParser outputProcessor = new BlazeQueryLabelKindParser(t -> true);
-    try (BuildResultHelper helper = invoker.createBuildResultHelper();
-        InputStream queryResultStream =
-            invoker.getCommandRunner().runQuery(project, command, helper, context)) {
+    try (InputStream queryResultStream = invoker.invokeQuery(command, context)) {
       new BufferedReader(new InputStreamReader(queryResultStream, UTF_8))
           .lines()
           .forEach(outputProcessor::processLine);

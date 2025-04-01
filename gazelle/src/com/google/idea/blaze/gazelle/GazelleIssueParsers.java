@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.run.filter.FileResolver;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.regex.Matcher;
@@ -56,10 +55,8 @@ public class GazelleIssueParsers {
     @Override
     protected IssueOutput createIssue(Matcher matcher) {
       final File file = FileResolver.resolveToFile(project, matcher.group(1));
-      return IssueOutput.issue(Category.ERROR, matcher.group(2))
-          .inFile(file)
-          .consoleHyperlinkRange(
-              union(fileHighlightRange(matcher, 1), matchedTextRange(matcher, 1, 1)))
+      return IssueOutput.error(matcher.group(2))
+          .withFile(file)
           .build();
     }
   }

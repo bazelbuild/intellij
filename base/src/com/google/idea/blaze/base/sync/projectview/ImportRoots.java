@@ -42,12 +42,17 @@ import com.google.idea.blaze.base.util.WorkspacePathUtil;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Objects;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -133,11 +138,35 @@ public final class ImportRoots {
       return this;
     }
 
+    /**
+     * For Bazel projects if the root directories include the workspace root, exclude bazel-bin,
+     * bazel-out, ... directories to avoid scanning them for Build files by {@link
+     * com.google.idea.blaze.qsync.project.ProjectDefinition#deriveQuerySpec}
+     */
+    private ImmutableSet<WorkspacePath> getBuildSystemExcludes(
+        ImmutableCollection<WorkspacePath> rootDirectories) {
+      if (buildSystemName == BuildSystemName.Bazel && hasWorkspaceRoot(rootDirectories)) {
+        ImmutableSet<WorkspacePath> buildArtifactDirectories =
+            BuildSystemProvider.getBuildSystemProvider(buildSystemName)
+                .buildArtifactDirectories(workspaceRoot)
+                .stream()
+                .map(p -> new WorkspacePath(p))
+                .collect(toImmutableSet());
+        WorkspacePath projectDataSubdirectory =
+            new WorkspacePath(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY);
+        return ImmutableSet.<WorkspacePath>builder()
+            .addAll(buildArtifactDirectories)
+            .add(projectDataSubdirectory)
+            .build();
+      }
+      return ImmutableSet.of();
+    }
+
     public ImportRoots build() {
       if (viewProjectRoot) {
         rootDirectoriesBuilder.add(workspaceRoot.workspacePathFor(workspaceRoot.directory()));
       }
-      
+
       ImmutableCollection<WorkspacePath> rootDirectories = rootDirectoriesBuilder.build();
       if (buildSystemName == BuildSystemName.Bazel) {
         if (hasWorkspaceRoot(rootDirectories)) {
@@ -148,10 +177,7 @@ public final class ImportRoots {
       }
 
       if (viewProjectRoot) {
-        Arrays.stream(Objects.requireNonNull(workspaceRoot.directory().listFiles()))
-            .filter(f -> f.isDirectory() && rootDirectoriesBuilder.build().stream().noneMatch(r -> FileUtil.filesEqual(workspaceRoot.fileForPath(r), f)))
-            .map(workspaceRoot::workspacePathFor)
-            .forEach(excludeDirectoriesBuilder::add);
+          selectExcludes(rootDirectoriesBuilder.build()).forEach(excludeDirectoriesBuilder::add);
       }
 
       ImmutableSet<WorkspacePath> minimalExcludes =
@@ -164,8 +190,11 @@ public final class ImportRoots {
       //Paths in .bazelignore are already excluded by Bazel, excluding them explicitly in "bazel query" produces a warning
       ImmutableSet<WorkspacePath> excludePathsForBazelQuery = Sets.difference(minimalExcludes, bazelIgnorePathsBuilder.build()).immutableCopy();
 
+
+      ImmutableSet<WorkspacePath> systemExcludes = getBuildSystemExcludes(rootDirectories);
+
       ProjectDirectoriesHelper directories =
-          new ProjectDirectoriesHelper(minimalRootDirectories, minimalExcludes, excludePathsForBazelQuery);
+          new ProjectDirectoriesHelper(minimalRootDirectories, minimalExcludes, excludePathsForBazelQuery, systemExcludes);
 
       TargetExpressionList targets =
           deriveTargetsFromDirectories
@@ -173,7 +202,27 @@ public final class ImportRoots {
                   projectTargets.build(), directories)
               : TargetExpressionList.create(projectTargets.build());
 
-      return new ImportRoots(directories, targets);
+      return new ImportRoots(directories, targets, systemExcludes);
+    }
+
+    private @NotNull List<WorkspacePath> selectExcludes(ImmutableCollection<WorkspacePath> rootDirectories) {
+      var userDeclaredRootDirectories = rootDirectories.stream().filter(rootDirectory -> !rootDirectory.isWorkspaceRoot()).collect(toImmutableSet());
+      Queue<File> files = new LinkedList<>(Collections.singletonList(workspaceRoot.directory()));
+      var result = new ArrayList<File>();
+      while (!files.isEmpty()) {
+        File file = files.poll();
+        if (rootDirectories.stream().anyMatch(d -> FileUtil.isAncestor(file, workspaceRoot.fileForPath(d), /*strict=*/ true)) &&
+                userDeclaredRootDirectories.stream().noneMatch(d -> FileUtil.filesEqual(file, workspaceRoot.fileForPath(d)))
+        ) {
+          var children = file.listFiles(File::isDirectory);
+          if (children != null) {
+            files.addAll(List.of(children));
+          }
+        } else if (rootDirectories.stream().noneMatch(d -> FileUtil.filesEqual(file, workspaceRoot.fileForPath(d)))) {
+          result.add(file);
+        }
+      }
+      return result.stream().map(workspaceRoot::workspacePathFor).toList();
     }
 
     private void excludeBuildSystemArtifacts() {
@@ -201,6 +250,7 @@ public final class ImportRoots {
 
   private final ProjectDirectoriesHelper projectDirectories;
   private final TargetExpressionList projectTargets;
+  private final ImmutableSet<WorkspacePath> buildSystemExcludes;
 
   public static Builder builder(Project project) {
     return new Builder(WorkspaceRoot.fromProject(project), Blaze.getBuildSystemName(project));
@@ -211,9 +261,12 @@ public final class ImportRoots {
   }
 
   private ImportRoots(
-      ProjectDirectoriesHelper projectDirectories, TargetExpressionList projectTargets) {
+      ProjectDirectoriesHelper projectDirectories,
+      TargetExpressionList projectTargets,
+      ImmutableSet<WorkspacePath> buildSystemExcludes) {
     this.projectDirectories = projectDirectories;
     this.projectTargets = projectTargets;
+    this.buildSystemExcludes = buildSystemExcludes;
   }
 
   public Collection<WorkspacePath> rootDirectories() {
@@ -225,6 +278,11 @@ public final class ImportRoots {
     return projectDirectories.rootDirectories.stream()
         .map(WorkspacePath::asPath)
         .collect(toImmutableSet());
+  }
+
+  /** Returns the system excluded directories. */
+  public ImmutableSet<Path> systemExcludes() {
+    return buildSystemExcludes.stream().map(WorkspacePath::asPath).collect(toImmutableSet());
   }
 
   public Set<WorkspacePath> excludeDirectories() {
@@ -270,13 +328,18 @@ public final class ImportRoots {
     private final ImmutableSet<WorkspacePath> rootDirectories;
     private final ImmutableSet<WorkspacePath> excludeDirectories;
     private final ImmutableSet<WorkspacePath> excludePathsForBazelQuery;
+    private final ImmutableSet<WorkspacePath> systemExcludes;
 
     @VisibleForTesting
     ProjectDirectoriesHelper(
-        Collection<WorkspacePath> rootDirectories, Collection<WorkspacePath> excludeDirectories, Collection<WorkspacePath> excludePathsForBazelQuery) {
+        Collection<WorkspacePath> rootDirectories,
+        Collection<WorkspacePath> excludeDirectories,
+        Collection<WorkspacePath> excludePathsForBazelQuery,
+        ImmutableSet<WorkspacePath> systemExcludes) {
       this.rootDirectories = ImmutableSet.copyOf(rootDirectories);
       this.excludeDirectories = ImmutableSet.copyOf(excludeDirectories);
       this.excludePathsForBazelQuery = ImmutableSet.copyOf(excludePathsForBazelQuery);
+      this.systemExcludes = systemExcludes;
     }
 
     boolean containsWorkspacePath(WorkspacePath workspacePath) {

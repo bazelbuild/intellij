@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2016-2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,9 @@ public enum LanguageClass implements ProtoWrapper<String> {
   private final String name;
   private final ImmutableSet<String> recognizedFilenameExtensions;
 
-  LanguageClass(String name, ImmutableSet<String> recognizedFilenameExtensions) {
+  LanguageClass(
+      String name,
+      ImmutableSet<String> recognizedFilenameExtensions) {
     this.name = name;
     this.recognizedFilenameExtensions = recognizedFilenameExtensions;
   }

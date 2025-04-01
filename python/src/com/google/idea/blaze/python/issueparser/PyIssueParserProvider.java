@@ -69,15 +69,9 @@ public class PyIssueParserProvider implements BlazeIssueParserProvider {
       }
       // don't try to find PsiFiles here, just assume it's a relative path
       File file = BlazeIssueParser.fileFromRelativePath(workspaceRoot, fileNameOrPath);
-      TextRange highlightRange =
-          BlazeIssueParser.union(
-              BlazeIssueParser.fileHighlightRange(matcher, 1),
-              BlazeIssueParser.matchedTextRange(matcher, 2, 2));
       return IssueOutput.error(matcher.group(0))
-          .inFile(file)
-          .onLine(parseLineNumber(matcher.group(2)))
-          .navigatable(openFileNavigatable(fileNameOrPath, parseLineNumber(matcher.group(2))))
-          .consoleHyperlinkRange(highlightRange)
+          .withFile(file, parseLineNumber(matcher.group(2)), 0)
+          .withNavigatable(openFileNavigatable(fileNameOrPath, parseLineNumber(matcher.group(2))))
           .build();
     }
 

@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 
 import java.util.Collection;
 import java.util.List;
@@ -45,10 +46,11 @@ public abstract class GazelleRunner {
             BuildInvoker invoker,
             List<String> blazeFlags,
             Label gazelleTarget,
-            Collection<WorkspacePath> directories
+            Collection<WorkspacePath> directories,
+            Project project
     ) {
         BlazeCommand.Builder builder = BlazeCommand.builder(invoker,
-                BlazeCommandName.RUN);
+                BlazeCommandName.RUN, project);
         builder.addBlazeFlags(blazeFlags);
         builder.addTargets(gazelleTarget);
         List<String> directoriesToRegenerate =
@@ -72,5 +74,6 @@ public abstract class GazelleRunner {
             List<String> blazeFlags,
             Label gazelleTarget,
             Collection<WorkspacePath> directories,
-            ImmutableList<Parser> issueParsers);
+            ImmutableList<Parser> issueParsers,
+            Project project);
 }

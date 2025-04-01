@@ -34,7 +34,7 @@ public class BazelNotificationProvider implements EditorNotificationProvider, Du
   @Override
   public @Nullable Function<? super FileEditor, ? extends JComponent> collectNotificationData(
       @NotNull Project project, @NotNull VirtualFile file) {
-    if (file.getFileType() != BuildFileType.INSTANCE) {
+    if (!isProjectAwareFile(file)) {
       return null;
     }
     if (!BazelImportCurrentProjectAction.projectCouldBeImported(project)) {
@@ -51,7 +51,7 @@ public class BazelNotificationProvider implements EditorNotificationProvider, Du
 
     return fileEditor -> {
       EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, Status.Warning);
-      Runnable importAction = BazelImportCurrentProjectAction.createAction(panel, root);
+      Runnable importAction = BazelImportCurrentProjectAction.createAction(root);
 
       panel.setText("Project is not configured");
       panel.createActionLabel("Import Bazel project", importAction);
@@ -59,5 +59,9 @@ public class BazelNotificationProvider implements EditorNotificationProvider, Du
 
       return panel;
     };
+  }
+
+  protected boolean isProjectAwareFile(@NotNull VirtualFile file) {
+    return file.getFileType() == BuildFileType.INSTANCE;
   }
 }

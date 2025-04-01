@@ -15,22 +15,14 @@
  */
 package com.google.idea.testing;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
 import com.google.common.io.Files;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.util.PlatformUtils;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Enumeration;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -78,29 +70,11 @@ class BlazeTestSystemProperties {
     System.setProperty("user.home", new File(sandbox, "userhome").getAbsolutePath());
 
     // Tests fail if they access files outside of the project roots and other system directories.
-    // Ensure runfiles and platform api are allowed.
-    // Note: We want this access to be true for all tests so we don't dispose the disposable.
-    Disposable disposable = Disposer.newDisposable();
-    VfsRootAccess.allowRootAccess(disposable, RUNFILES_PATH);
-    String platformApi = getPlatformApiPath();
-    if (platformApi != null) {
-      VfsRootAccess.allowRootAccess(disposable, platformApi);
-    }
+    // When the class path contains jars which contain `kotlin` packages the `BuiltinsVirtualFileProviderBaseImpl`
+    // also access jars from the class path. Therefore, this checks needs either to be disabled or
+    // the specific jars need to be added to the `VfsRootAccess` allow list.
+    System.setProperty("NO_FS_ROOTS_ACCESS_CHECK", "true");
 
-    List<String> pluginJars = Lists.newArrayList();
-    try {
-      Enumeration<URL> urls =
-          BlazeTestSystemProperties.class.getClassLoader().getResources("META-INF/plugin.xml");
-      while (urls.hasMoreElements()) {
-        URL url = urls.nextElement();
-        addArchiveFile(url, pluginJars);
-      }
-    } catch (IOException e) {
-      System.err.println("Cannot find plugin.xml resources");
-      e.printStackTrace();
-    }
-
-    setIfEmpty("idea.plugins.path", Joiner.on(File.pathSeparator).join(pluginJars));
     setIfEmpty("idea.force.use.core.classloader", "true");
   }
 
@@ -171,19 +145,6 @@ class BlazeTestSystemProperties {
       }
     }
     return null;
-  }
-
-  private static void addArchiveFile(URL url, List<String> files) {
-    if ("jar".equals(url.getProtocol())) {
-      String path = url.getPath();
-      int index = path.indexOf("!/");
-      if (index > 0) {
-        String jarPath = path.substring(0, index);
-        if (jarPath.startsWith("file:")) {
-          files.add(jarPath.substring(5));
-        }
-      }
-    }
   }
 
   private static void setSandboxPath(String property, File path) {

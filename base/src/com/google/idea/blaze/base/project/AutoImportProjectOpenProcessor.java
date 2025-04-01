@@ -18,10 +18,12 @@ import com.google.idea.blaze.base.wizard2.BlazeProjectCommitException;
 import com.google.idea.blaze.base.wizard2.BlazeProjectImportBuilder;
 import com.google.idea.blaze.base.wizard2.CreateFromScratchProjectViewOption;
 import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
-import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -36,6 +38,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.Optional;
 import javax.swing.Icon;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +69,7 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
   public @NotNull
   @Nls
   String getName() {
-    return Blaze.defaultBuildSystemName() + " Project";
+    return "Bazel";
   }
 
   @javax.annotation.Nullable
@@ -77,7 +80,7 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Override
   public boolean isStrongProjectInfoHolder() {
-    return true;
+      return Registry.is("bazel.project.auto.open");
   }
 
   @Override
@@ -113,7 +116,9 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
     }
 
     Project newProject = createProject(virtualFile);
-    Objects.requireNonNull(newProject);
+    if (newProject == null) {
+      return null;
+    }
 
     newProject.putUserData(PROJECT_AUTO_IMPORTED, true);
 
@@ -123,7 +128,7 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
     ProjectManagerEx.getInstanceEx()
             .openProject(
                     projectFilePath,
-                    BaseSdkCompat.createOpenProjectTask(newProject)
+                    OpenProjectTask.build().withProject(newProject)
             );
     SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject);
     return newProject;
@@ -170,12 +175,13 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
       LOG.error("Failed to commit project import builder", e);
     }
 
-    Project newProject = builder.createProject(name, projectFilePath);
-    if (newProject == null) {
-      LOG.error("Failed to Bazel create project");
+    Optional<Project> returnedValue = ExtendableBazelProjectCreator.getInstance()
+        .createProject(builder, name, projectFilePath);
+    if (returnedValue.isEmpty()) {
       return null;
     }
-
+	
+    Project newProject = returnedValue.get();
     newProject.save();
 
     if (!builder.validate(null, newProject)) {
@@ -205,14 +211,16 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
             "# Otherwise, please specify 'directories' and 'targets' you want to be imported",
             " ",
             "# By default, we keep the 'directories' section empty, so nothing is imported.",
-            "# Please change `-.` to a list of directories you would like to import",
+            "# Specify the source directories you wish to include in the 'directories' section.",
             "# ",
             "# After that, please look at the `derive_targets_from_directories` section and then:",
             "#   - either keep it set to `true` to import ALL targets in the directories section",
             "#   - or set it to `false` and add `targets` section to choose the targets selectively",
             "",
-            "directories: ",
-            "  -.",
+            "# directories: ",
+            "#   Specify the source directories to be imported here",
+            "",
+            "view_project_root: true",
             "derive_targets_from_directories: true",
             ""
     )));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2024 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,12 +109,12 @@ public class ProjectViewLabelReference extends PsiReferenceBase<ProjectViewPsiSe
     }
     String packagePrefix = LabelUtils.getPackagePathComponent(labelString);
     BuildFile referencedBuildFile =
-        BuildReferenceManager.getInstance(getProject()).resolveBlazePackage(packagePrefix);
+        BuildReferenceManager.getInstance(getProject()).resolveBlazePackage(packagePrefix, null);
     if (referencedBuildFile == null) {
       return BuildLookupElement.EMPTY_ARRAY;
     }
     return LabelRuleLookupElement.collectAllRules(
-        referencedBuildFile, labelString, packagePrefix, null, QuoteType.NoQuotes);
+        referencedBuildFile, labelString, null, QuoteType.NoQuotes);
   }
 
   private BuildLookupElement[] getFileLookups(String labelString) {

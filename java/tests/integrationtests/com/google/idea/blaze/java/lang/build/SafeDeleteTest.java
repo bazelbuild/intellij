@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

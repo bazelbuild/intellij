@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -30,12 +31,13 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +47,9 @@ public class QuerySyncProjectData implements BlazeProjectData {
   private static final Logger logger = Logger.getInstance(QuerySyncProjectData.class);
 
   private final WorkspacePathResolver workspacePathResolver;
-  private final Optional<BlazeProjectSnapshot> blazeProject;
+  private final Optional<QuerySyncProjectSnapshot> blazeProject;
+  private final ExternalWorkspaceData externalWorkspaceData;
+  private final BlazeInfo blazeInfo;
 
   /**
    * Static language settings are those derived from the {@code .blazeproject} file. The dynamic
@@ -56,29 +60,44 @@ public class QuerySyncProjectData implements BlazeProjectData {
 
   QuerySyncProjectData(
       WorkspacePathResolver workspacePathResolver,
-      WorkspaceLanguageSettings workspaceLanguageSettings) {
-    this(Optional.empty(), workspacePathResolver, workspaceLanguageSettings);
+      WorkspaceLanguageSettings workspaceLanguageSettings,
+      BlazeInfo blazeInfo,
+      ExternalWorkspaceData externalWorkspaceData) {
+    this(
+        Optional.empty(),
+        workspacePathResolver,
+        workspaceLanguageSettings, blazeInfo,
+        externalWorkspaceData);
   }
 
   private QuerySyncProjectData(
-      Optional<BlazeProjectSnapshot> projectSnapshot,
+      Optional<QuerySyncProjectSnapshot> projectSnapshot,
       WorkspacePathResolver workspacePathResolver,
-      WorkspaceLanguageSettings workspaceLanguageSettings) {
+      WorkspaceLanguageSettings workspaceLanguageSettings,
+      BlazeInfo blazeInfo,
+      ExternalWorkspaceData externalWorkspaceData) {
     this.blazeProject = projectSnapshot;
     this.workspacePathResolver = workspacePathResolver;
     this.staticLanguageSettings = workspaceLanguageSettings;
+    this.blazeInfo = blazeInfo;
+    this.externalWorkspaceData = externalWorkspaceData;
   }
 
-  public QuerySyncProjectData withSnapshot(BlazeProjectSnapshot newSnapshot) {
+  public QuerySyncProjectData withSnapshot(QuerySyncProjectSnapshot newSnapshot) {
     return new QuerySyncProjectData(
-        Optional.of(newSnapshot), workspacePathResolver, staticLanguageSettings);
+        Optional.of(newSnapshot),
+        workspacePathResolver,
+        staticLanguageSettings,
+        blazeInfo,
+        externalWorkspaceData
+    );
   }
 
   @Nullable
   @Override
   public ProjectTarget getBuildTarget(Label label) {
     return blazeProject
-        .map(BlazeProjectSnapshot::getTargetMap)
+        .map(QuerySyncProjectSnapshot::getTargetMap)
         .map(map -> map.get(com.google.idea.blaze.common.Label.of(label.toString())))
         .orElse(null);
   }
@@ -92,7 +111,7 @@ public class QuerySyncProjectData implements BlazeProjectData {
    */
   public Collection<ProjectTarget> getReverseDeps(Path sourcePath) {
     return blazeProject
-        .map(BlazeProjectSnapshot::graph)
+        .map(QuerySyncProjectSnapshot::graph)
         .map(graph -> graph.getReverseDepsForSource(sourcePath))
         .orElse(ImmutableList.of());
   }
@@ -101,7 +120,8 @@ public class QuerySyncProjectData implements BlazeProjectData {
   public ImmutableList<TargetInfo> targets() {
     if (blazeProject.isPresent()) {
       return blazeProject.get().getTargetMap().values().stream()
-          .map(TargetInfo::fromBuildTarget)
+          .map(TargetInfo::tryFromBuildTarget)
+          .filter(Objects::nonNull)
           .collect(ImmutableList.toImmutableList());
     }
     return ImmutableList.of();
@@ -137,7 +157,7 @@ public class QuerySyncProjectData implements BlazeProjectData {
 
   @Override
   public BlazeInfo getBlazeInfo() {
-    throw new NotSupportedWithQuerySyncException("getBlazeInfo");
+    return blazeInfo;
   }
 
   @Override
@@ -172,6 +192,11 @@ public class QuerySyncProjectData implements BlazeProjectData {
   @Override
   public RemoteOutputArtifacts getRemoteOutputs() {
     throw new NotSupportedWithQuerySyncException("getRemoteOutputs");
+  }
+
+  @Override
+  public ExternalWorkspaceData getExternalWorkspaceData() {
+    return externalWorkspaceData;
   }
 
   @Override

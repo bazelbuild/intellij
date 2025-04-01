@@ -32,8 +32,8 @@ final class BlazeLanguageKindCalculatorHelper implements OCLanguageKindCalculato
     return Blaze.getProjectType(project) == ProjectType.ASPECT_SYNC;
   }
 
-  /** #api212: add @Override */
   @Nullable
+  @Override
   public OCLanguageKind getLanguageByPsiFile(PsiFile psiFile) {
     if (isEnabled(psiFile.getProject())) {
       return getLanguageFromExtension(psiFile.getFileType().getDefaultExtension());

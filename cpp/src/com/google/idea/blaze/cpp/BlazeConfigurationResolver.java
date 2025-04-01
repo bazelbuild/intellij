@@ -51,6 +51,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
@@ -108,7 +109,6 @@ final class BlazeConfigurationResolver {
             xcodeSettings
         );
 
-    ImmutableMap<String, String> targetToVersion = getTargetToVersionMap(toolchainLookupMap, compilerSettings);
     ProjectViewTargetImportFilter projectViewFilter =
         new ProjectViewTargetImportFilter(
             Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet);
@@ -122,26 +122,9 @@ final class BlazeConfigurationResolver {
         HeaderRootTrimmer.getValidRoots(
             context, blazeProjectData, toolchainLookupMap, targetFilter, executionRootPathResolver);
     builder.setValidHeaderRoots(validHeaderRoots);
-    builder.setTargetToVersionMap(targetToVersion);
     builder.setXcodeSettings(xcodeSettings);
 
     return builder.build();
-  }
-
-  @NotNull
-  private static ImmutableMap<String, String> getTargetToVersionMap(ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap, ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings) {
-    ImmutableMap<ExecutionRootPath, String> compilerVersionByPath =
-            compilerSettings.entrySet().stream().collect(
-                    ImmutableMap.toImmutableMap(
-                            e -> e.getKey().getCppExecutable(),
-                            e -> e.getValue().getCompilerVersion()));
-    return toolchainLookupMap.entrySet().stream()
-            .map(e -> new AbstractMap.SimpleImmutableEntry<>(
-                    e.getKey().getLabel().toString(),
-                    compilerVersionByPath.get(e.getValue().getCppExecutable())))
-            // In case of a broken compiler, the version string is null, but Collectors.toMap requires non-null value function.
-            .filter(e -> e.getValue() != null)
-            .collect(ImmutableMap.toImmutableMap(e -> e.getKey(), e -> e.getValue()));
   }
 
   private static Predicate<TargetIdeInfo> getTargetFilter(
@@ -166,7 +149,7 @@ final class BlazeConfigurationResolver {
       Project project,
       WorkspacePathResolver workspacePathResolver) {
     if (target.toTargetInfo().getLabel().isExternal()) {
-      WorkspaceRoot externalWorkspace = WorkspaceHelper.resolveExternalWorkspace(project,
+      WorkspaceRoot externalWorkspace = WorkspaceHelper.getExternalWorkspace(project,
           target.getKey().getLabel().externalWorkspaceName());
 
       if (externalWorkspace != null) {

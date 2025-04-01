@@ -272,6 +272,7 @@ public class BlazeGoPackage extends GoPackage {
         .map(psiManager::findFile)
         .filter(GoFile.class::isInstance)
         .map(GoFile.class::cast)
+        .filter(goFile -> !Objects.equals(goFile.getBuildFlags(), "ignore"))
         .map(GoFile::getCanonicalPackageName) // strips _test suffix from test packages
         .filter(Objects::nonNull)
         .findFirst() // short circuit

@@ -18,6 +18,7 @@ package com.google.idea.blaze.common.artifact;
 import com.google.auto.value.AutoValue;
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import javax.annotation.Nullable;
 
 @AutoValue
@@ -27,8 +28,8 @@ public abstract class TestOutputArtifact implements OutputArtifact {
       new AutoValue_TestOutputArtifact.Builder()
           .setLength(0)
           .setDigest("digest")
-          .setRelativePath("path/file")
-          .setConfigurationMnemonic("mnemonic")
+          .setArtifactPath(Path.of("path/file"))
+          .setArtifactPathPrefixLength(0)
           .build();
 
   public static TestOutputArtifact forDigest(String digest) {
@@ -51,10 +52,10 @@ public abstract class TestOutputArtifact implements OutputArtifact {
   public abstract String getDigest();
 
   @Override
-  public abstract String getRelativePath();
+  public abstract Path getArtifactPath();
 
   @Override
-  public abstract String getConfigurationMnemonic();
+  public abstract int getArtifactPathPrefixLength();
 
   @Nullable
   @Override
@@ -71,9 +72,9 @@ public abstract class TestOutputArtifact implements OutputArtifact {
 
     public abstract Builder setDigest(String value);
 
-    public abstract Builder setRelativePath(String value);
+    public abstract Builder setArtifactPath(Path value);
 
-    public abstract Builder setConfigurationMnemonic(String value);
+    public abstract Builder setArtifactPathPrefixLength(int value);
 
     public abstract TestOutputArtifact build();
   }

@@ -95,6 +95,7 @@ public class BlazeTestCase {
 
   @Before
   public final void setup() {
+    Registry.markAsLoaded();
     Registry.get("allow.macros.for.run.configurations").setValue(false);
     testDisposable = new RootDisposable();
     MockApplication application = TestUtils.createMockApplication(testDisposable);
@@ -140,5 +141,10 @@ public class BlazeTestCase {
       ExtensionPointName<T> name, Class<T> type) {
     extensionsArea.registerExtensionPoint(name.getName(), type.getName(), Kind.INTERFACE);
     return extensionsArea.getExtensionPoint(name.getName());
+  }
+
+  protected <T> ExtensionPointImpl<T> registerExtensionPointByName(String name, Class<T> type) {
+    extensionsArea.registerExtensionPoint(name, type.getName(), Kind.INTERFACE);
+    return extensionsArea.getExtensionPoint(name);
   }
 }

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.command;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -63,6 +64,9 @@ public final class BlazeFlags {
   // Custom build metadata. This option takes a key-value pair as an argument.
   public static final String BUILD_METADATA = "--build_metadata=";
 
+  // New line separated file with list of target patterns to build.
+  public static final String TARGET_PATTERN_FILE = "--target_pattern_file";
+
   /** Flags to add to blaze/bazel invocations of the given type. */
   public static List<String> blazeFlags(
       Project project,
@@ -74,17 +78,14 @@ public final class BlazeFlags {
     for (BuildFlagsProvider buildFlagsProvider : BuildFlagsProvider.EP_NAME.getExtensions()) {
       buildFlagsProvider.addBuildFlags(project, projectViewSet, command, invocationContext, flags);
     }
-    flags.addAll(expandBuildFlags(projectViewSet.listItems(BuildFlagsSection.KEY)));
+
     if (invocationContext.type() == ContextType.Sync) {
       for (BuildFlagsProvider buildFlagsProvider : BuildFlagsProvider.EP_NAME.getExtensions()) {
         buildFlagsProvider.addSyncFlags(
             project, projectViewSet, command, context, invocationContext, flags);
       }
-      flags.addAll(expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY)));
     }
-    if (BlazeCommandName.TEST.equals(command)) {
-      flags.addAll(expandBuildFlags(projectViewSet.listItems(TestFlagsSection.KEY)));
-    }
+
     return flags;
   }
 
@@ -112,7 +113,7 @@ public final class BlazeFlags {
     String platformPrefix = PlatformUtils.getPlatformPrefix();
 
     // IDEA Community Edition is "Idea", whereas IDEA Ultimate Edition is "idea".
-    // That's dumb. Let's make them more useful.
+    // That's confusing. Let's make them more useful.
     if (PlatformUtils.isIdeaCommunity()) {
       platformPrefix = "IDEA:community";
     } else if (PlatformUtils.isIdeaUltimate()) {

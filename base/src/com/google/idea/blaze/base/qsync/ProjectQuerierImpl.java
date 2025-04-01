@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStats;
 import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
@@ -44,7 +45,6 @@ public class ProjectQuerierImpl implements ProjectQuerier {
   private final QueryRunner queryRunner;
   private final ProjectRefresher projectRefresher;
   private final Optional<BlazeVcsHandler> vcsHandler;
-
   private final BazelVersionHandler bazelVersionProvider;
 
   @VisibleForTesting
@@ -80,7 +80,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
 
     RefreshOperation fullQuery =
         projectRefresher.startFullUpdate(
-            context, projectDef, vcsState, bazelVersionProvider.getBazelVersion());
+            context, projectDef, vcsState, bazelVersionProvider.getBazelVersionStr());
 
     QuerySpec querySpec = fullQuery.getQuerySpec().get();
     return fullQuery.createPostQuerySyncData(queryRunner.runQuery(querySpec, context));
@@ -120,22 +120,28 @@ public class ProjectQuerierImpl implements ProjectQuerier {
       ProjectDefinition currentProjectDef, PostQuerySyncData previousState, BlazeContext context)
       throws IOException, BuildException {
 
-    Optional<VcsState> vcsState = getVcsState(context);
-    SyncQueryStatsScope.fromContext(context)
-        .ifPresent(stats -> stats.setSyncMode(SyncQueryStats.SyncMode.DELTA));
-    logger.info(
-        String.format(
-            "Starting partial query update; upstream rev=%s; snapshot path=%s",
-            vcsState.map(s -> s.upstreamRevision).orElse("<unknown>"),
-            vcsState.flatMap(s -> s.workspaceSnapshotPath).map(Object::toString).orElse("<none>")));
+    Optional<VcsState> vcsState = Optional.empty();
+    if (BlazeUserSettings.getInstance().getExpandSyncToWorkingSet()) {
+      vcsState = getVcsState(context);
+      SyncQueryStatsScope.fromContext(context)
+              .ifPresent(stats -> stats.setSyncMode(SyncQueryStats.SyncMode.DELTA));
+      logger.info(
+              String.format(
+                      "Starting partial query update; upstream rev=%s; snapshot path=%s",
+                      vcsState.map(s -> s.upstreamRevision).orElse("<unknown>"),
+                      vcsState.flatMap(s -> s.workspaceSnapshotPath).map(Object::toString).orElse("<none>")));
+    }
+
+    Optional<String> bazelVersion = Optional.empty();
+    try {
+      bazelVersion = bazelVersionProvider.getBazelVersionStr();
+    } catch (BuildException e) {
+      context.handleExceptionAsWarning("Could not get bazel version", e);
+    }
 
     RefreshOperation refresh =
         projectRefresher.startPartialRefresh(
-            context,
-            previousState,
-            vcsState,
-            bazelVersionProvider.getBazelVersion(),
-            currentProjectDef);
+            context, previousState, vcsState, bazelVersion, currentProjectDef);
 
     Optional<QuerySpec> spec = refresh.getQuerySpec();
     QuerySummary querySummary;

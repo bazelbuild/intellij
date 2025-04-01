@@ -21,7 +21,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 
 /** Shared executors for any prefetch/copy operations. */
 public class FetchExecutor {
-  private static final int MAX_THREADS = 128;
+  private static final int MAX_THREADS = Runtime.getRuntime().availableProcessors();
   public static final ListeningExecutorService EXECUTOR =
       MoreExecutors.listeningDecorator(
           AppExecutorUtil.createBoundedApplicationPoolExecutor("FetchExecutor", MAX_THREADS));

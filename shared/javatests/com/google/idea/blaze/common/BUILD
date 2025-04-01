@@ -1,3 +1,5 @@
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
 package(
     default_visibility = [
         "//base:__subpackages__",
@@ -12,8 +14,8 @@ java_test(
     srcs = ["LabelTest.java"],
     deps = [
         "//shared/java/com/google/idea/blaze/common",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
     ],
 )
 
@@ -25,7 +27,7 @@ java_library(
     ],
     deps = [
         "//shared/java/com/google/idea/blaze/common",
-        "@flogger//jar",
+        "//third_party/java/flogger",
     ],
 )
 
@@ -35,7 +37,18 @@ java_test(
     srcs = ["TargetTreeTest.java"],
     deps = [
         "//shared",
-        "@junit//jar",
-        "@truth//jar",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)
+
+java_test(
+    name = "AtomicFileWriterTest",
+    size = "small",
+    srcs = ["AtomicFileWriterTest.java"],
+    deps = [
+        "//shared",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
     ],
 )

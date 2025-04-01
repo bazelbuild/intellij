@@ -68,6 +68,9 @@ public class SnapshotSerializer {
     projectDefinition.projectExcludes().stream()
         .map(Path::toString)
         .forEach(proto::addExcludePaths);
+    projectDefinition.systemExcludes().stream()
+        .map(Path::toString)
+        .forEach(proto::addSystemExcludes);
     projectDefinition.languageClasses().stream()
         .map(l -> l.protoValue)
         .forEach(proto::addLanguageClasses);
@@ -93,6 +96,6 @@ public class SnapshotSerializer {
   }
 
   private void visitQuerySummary(QuerySummary summary) {
-    proto.setQuerySummary(summary.proto());
+    proto.setQuerySummary(summary.protoForSerializationOnly());
   }
 }

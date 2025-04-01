@@ -1,46 +1,8 @@
 ---
 tasks:
-  IntelliJ-UE-internal-stable:
-    name: IntelliJ UE Internal Stable
-    platform: ubuntu1804
-    build_flags:
-      - --define=ij_product=intellij-ue-latest
-    build_targets:
-      - //ijwb/...
-    test_flags:
-      - --define=ij_product=intellij-ue-latest
-      - --test_output=errors
-    test_targets:
-      - //:ijwb_ue_tests
-  IntelliJ-UE-internal-beta:
-    name: IntelliJ UE Internal Beta
-    platform: ubuntu1804
-    build_flags:
-      - --define=ij_product=intellij-ue-beta
-    build_targets:
-      - //ijwb/...
-    test_flags:
-      - --define=ij_product=intellij-ue-beta
-      - --test_output=errors
-    test_targets:
-      - //:ijwb_ue_tests
-  IntelliJ-UE-internal-under-dev:
-    name: IntelliJ UE Internal Under Development
-    platform: ubuntu1804
-    build_flags:
-      - --define=ij_product=intellij-ue-under-dev
-    build_targets:
-      - //ijwb/...
-    test_flags:
-      - --define=ij_product=intellij-ue-under-dev
-      - --test_output=errors
-    test_targets:
-      - //:ijwb_ue_tests
-    soft_fail:
-      - exit_status: 1
   IntelliJ-UE-OSS-oldest-stable:
     name: IntelliJ UE OSS Oldest Stable
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=intellij-ue-oss-oldest-stable
     build_targets:
@@ -52,7 +14,7 @@ tasks:
       - //:ijwb_ue_tests
   IntelliJ-UE-OSS-latest-stable:
     name: IntelliJ UE OSS Latest Stable
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=intellij-ue-oss-latest-stable
     build_targets:
@@ -64,7 +26,7 @@ tasks:
       - //:ijwb_ue_tests
   IntelliJ-UE-OSS-under-dev:
     name: IntelliJ UE OSS Under Development
-    platform: ubuntu1804
+    platform: ubuntu2204
     build_flags:
       - --define=ij_product=intellij-ue-oss-under-dev
     build_targets:
@@ -76,4 +38,39 @@ tasks:
       - //:ijwb_ue_tests
     soft_fail:
       - exit_status: 1
-
+  IntelliJ-UE-OSS-under-dev-windows:
+    name: IntelliJ UE OSS Under Development
+    platform: windows
+    build_flags:
+      - --define=ij_product=intellij-ue-oss-under-dev
+    build_targets:
+      - //ijwb/...
+    soft_fail:
+      - exit_status: 1
+  Querysync:
+    name: Querysync Library
+    platform: ubuntu2204
+    build_flags:
+      - --define=ij_product=intellij-ue-oss-under-dev
+    build_targets:
+      - //querysync/...
+    test_flags:
+      - --define=ij_product=intellij-ue-oss-under-dev
+      - --test_output=errors
+    test_targets:
+      - //querysync/...
+  IntelliJ-UE-last-green:
+    name: IntelliJ UE Headless Tests Last Green
+    platform: ubuntu2204
+    build_flags:
+      - --define=ij_product=intellij-ue-oss-under-dev
+    build_targets:
+      - //ijwb/...
+    test_flags:
+      - --define=ij_product=intellij-ue-oss-under-dev
+      - --test_output=errors
+      - --test_tag_filters=bit_bazel_last_green
+    test_targets:
+      - //ijwb:all
+    soft_fail:
+      - exit_status: 1

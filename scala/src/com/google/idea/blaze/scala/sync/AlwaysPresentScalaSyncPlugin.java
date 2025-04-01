@@ -65,7 +65,7 @@ public class AlwaysPresentScalaSyncPlugin implements BlazeSyncPlugin {
     if (!PluginUtils.isPluginEnabled(SCALA_PLUGIN_ID)) {
       String msg = "Scala plugin needed for Scala language support.";
       IssueOutput.error(msg)
-          .navigatable(PluginUtils.installOrEnablePluginNavigable(SCALA_PLUGIN_ID))
+          .withNavigatable(PluginUtils.installOrEnablePluginNavigable(SCALA_PLUGIN_ID))
           .submit(context);
       BlazeSyncManager.printAndLogError(msg, context);
       return false;

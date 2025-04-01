@@ -26,10 +26,11 @@ import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
+import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.project.TargetsToBuild;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
@@ -59,29 +60,27 @@ public class BuildDependenciesHelper {
 
   private final Project project;
   private final QuerySyncManager syncManager;
-  private final Class<?> actionClass;
   private final DepsBuildType depsBuildType;
 
-  public BuildDependenciesHelper(Project project, Class<?> actionClass, DepsBuildType buildType) {
+  public BuildDependenciesHelper(Project project, DepsBuildType buildType) {
     this.project = project;
     this.syncManager = QuerySyncManager.getInstance(project);
-    this.actionClass = actionClass;
     this.depsBuildType = buildType;
   }
 
   boolean canEnableAnalysisNow() {
-    return !BlazeSyncStatus.getInstance(project).syncInProgress();
+    return !syncManager.operationInProgress();
   }
 
   public TargetsToBuild getTargetsToEnableAnalysisFor(VirtualFile virtualFile) {
-    if (!syncManager.isProjectLoaded() || BlazeSyncStatus.getInstance(project).syncInProgress()) {
+    if (!syncManager.isProjectLoaded() || syncManager.operationInProgress()) {
       return TargetsToBuild.NONE;
     }
     return syncManager.getTargetsToBuild(virtualFile);
   }
 
   public TargetsToBuild getTargetsToEnableAnalysisFor(Path workspaceRelativeFile) {
-    if (!syncManager.isProjectLoaded() || BlazeSyncStatus.getInstance(project).syncInProgress()) {
+    if (!syncManager.isProjectLoaded() || syncManager.operationInProgress()) {
       return TargetsToBuild.NONE;
     }
     return syncManager.getTargetsToBuild(workspaceRelativeFile);
@@ -89,7 +88,11 @@ public class BuildDependenciesHelper {
 
   public int getSourceFileMissingDepsCount(TargetsToBuild toBuild) {
     Preconditions.checkState(toBuild.type() == TargetsToBuild.Type.SOURCE_FILE);
-    return syncManager.getDependencyTracker().getPendingExternalDeps(toBuild.targets()).size();
+    QuerySyncProjectSnapshot snapshot = syncManager.getCurrentSnapshot().orElse(null);
+    if (snapshot == null) {
+      return 0;
+    }
+    return snapshot.getPendingExternalDeps(toBuild.targets()).size();
   }
 
   public Optional<Path> getRelativePathToEnableAnalysisFor(VirtualFile virtualFile) {
@@ -137,7 +140,8 @@ public class BuildDependenciesHelper {
     return disambiguator.unambiguousTargets;
   }
 
-  public void enableAnalysis(AnActionEvent e, PopupPositioner popupPositioner) {
+  public void enableAnalysis(
+      Class<? extends AnAction> actionClass, AnActionEvent e, PopupPositioner popupPositioner) {
     ImmutableSet<Label> additionalTargets;
     if (QuerySyncSettings.getInstance().buildWorkingSet()) {
       try {
@@ -151,11 +155,14 @@ public class BuildDependenciesHelper {
     } else {
       additionalTargets = ImmutableSet.of();
     }
-    enableAnalysis(e, popupPositioner, additionalTargets);
+    enableAnalysis(actionClass, e, popupPositioner, additionalTargets);
   }
 
   public void enableAnalysis(
-      AnActionEvent e, PopupPositioner positioner, ImmutableSet<Label> additionalTargetsToBuild) {
+      Class<? extends AnAction> actionClass,
+      AnActionEvent e,
+      PopupPositioner positioner,
+      ImmutableSet<Label> additionalTargetsToBuild) {
     VirtualFile vfile = getVirtualFile(e);
     determineTargetsAndRun(
         vfile,

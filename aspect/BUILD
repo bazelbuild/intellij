@@ -2,10 +2,9 @@
 # Description: Bazel aspect bundled with the Bazel IntelliJ plugin.
 #
 
-load(
-    ":intellij_info_impl.bzl",
-    "define_flag_hack",
-)
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load(":flag_hack.bzl", "define_flag_hack")
+load(":build_defs.bzl", "aspect_library", "aspect_files")
 
 licenses(["notice"])
 
@@ -17,6 +16,7 @@ filegroup(
         "intellij_info_impl.bzl",
         "java_classpath.bzl",
         "make_variables.bzl",
+        "xcode_query.bzl",
         ":BUILD.bazel",
         "//aspect/tools:CreateAar",
         "//aspect/tools:JarFilter_deploy.jar",
@@ -26,34 +26,60 @@ filegroup(
 )
 
 # the aspect files that will be bundled with the final plugin zip
-filegroup(
+aspect_library(
+    name = "aspect_lib",
+    files = [
+       ":aspect_files",
+       ":aspect_tools",
+    ],
+    visibility = ["//visibility:public"],
+    namespace = "aspect/default"
+)
+
+# Separate different targets as they are put into different directories
+aspect_files(
     name = "aspect_files",
-    srcs = [
-        "WORKSPACE",
+    files = [
         "artifacts.bzl",
-        "build_dependencies.bzl",
         "fast_build_info_bundled.bzl",
-        "intellij_info.bzl",
-        "intellij_info_bundled.bzl",
+        "flag_hack.bzl",
         "intellij_info_impl_bundled.bzl",
         "java_classpath.bzl",
         "make_variables.bzl",
         ":BUILD.bazel",
-        "//aspect/tools:CreateAar",
+        "xcode_query.bzl", # maybe move this to a dedicated library, but let's keep this here for now
+    ],
+)
+
+aspect_files(
+    name = "aspect_tools",
+    jars = [
         "//aspect/tools:JarFilter_deploy.jar",
         "//aspect/tools:PackageParser_deploy.jar",
+        "//aspect/tools:CreateAar_deploy.jar",
     ],
+    namespace = "tools",
+)
+
+aspect_library(
+    name = "aspect_qsync_lib",
+    files = [
+        "build_compose_dependencies.bzl",
+        "build_dependencies.bzl",
+        "build_dependencies_deps.bzl",
+    ],
+    namespace = "aspect/qsync",
     visibility = ["//visibility:public"],
 )
 
 # BUILD file bundled with the aspect must not override the BUILD file
 # used for development. So we name it BUILD.aspect, and rename prior
 # to bundling with the plugin.
-genrule(
+
+copy_file(
     name = "rename_files",
-    srcs = ["BUILD.aspect"],
-    outs = ["BUILD.bazel"],
-    cmd = "cp $< $@",
+    src = "BUILD.aspect",
+    out = "BUILD.bazel",
 )
 
 _dev_aspect_path = package_name()
@@ -69,8 +95,8 @@ genrule(
     srcs = ["intellij_info.bzl"],
     outs = ["intellij_info_bundled.bzl"],
     cmd = "cat $(SRCS) >$@ && " +
-          "sed -i -e 's,//%s/tools:\" + tool_name,//:\" + tool_name + \"_bin\",g' $@ && " % _dev_aspect_path +
-          "sed -i -e 's,//%s:flag_hack,//:flag_hack,g' $@  && " % _dev_aspect_path +
+          "sed -i -e 's,//%s/tools:\" + tool_name,tools/\" + tool_name,g' $@ && " % _dev_aspect_path +
+          "sed -i -e 's,//%s:flag_hack,:flag_hack,g' $@  && " % _dev_aspect_path +
           "sed -i -e 's,:intellij_info_impl.bzl,:intellij_info_impl_bundled.bzl,g' $@",
 )
 
@@ -82,6 +108,8 @@ genrule(
     outs = ["intellij_info_impl_bundled.bzl"],
     cmd = "cat $(SRCS) >$@ && " +
           "sed -i -e '/BUNDLED-IGNORE-BEGIN/,/BUNDLED-IGNORE-END/d' $@ && " +
+          "sed -i -e '/BUNDLED-INCLUDE-BEGIN/,/BUNDLED-INCLUDE-END/{s/^[#][#]//;}' $@ &&" +
+          "sed -i -e 's,load(\"//aspect_template:,load(\"ASPECT_TEMPLATE_PATH', $@ &&" +
           "sed -i -e 's,load(\".*/rules_java/,load(\"@rules_java//', $@",
 )
 
@@ -95,3 +123,52 @@ genrule(
 )
 
 define_flag_hack()
+
+aspect_library(
+    name = "aspect_template_lib",
+    files = [
+        "code_generator_info.bzl",
+        "code_generator_info.template.bzl",
+        "java_info.bzl",
+        "java_info.template.bzl",
+        "python_info.bzl",
+        "python_info.template.bzl",
+        "intellij_info_bundled.bzl",
+        "intellij_info.template.bzl",
+    ],
+    namespace = "aspect/template",
+    visibility = ["//visibility:public"],
+)
+
+STRIP_TEMPLATE_SCRIPT = """cat $(SRCS) >$@ &&
+sed -i -e '/TEMPLATE-IGNORE-BEGIN/,/TEMPLATE-IGNORE-END/d' $@ &&
+sed -i -e '/TEMPLATE-INCLUDE-BEGIN/,/TEMPLATE-INCLUDE-END/{s/^[#][#]//;}' $@
+"""
+
+genrule(
+    name = "generate_java_info_template",
+    srcs = ["java_info.bzl"],
+    outs = ["java_info.template.bzl"],
+    cmd = STRIP_TEMPLATE_SCRIPT,
+)
+
+genrule(
+    name = "generate_py_info_template",
+    srcs = ["python_info.bzl"],
+    outs = ["python_info.template.bzl"],
+    cmd = STRIP_TEMPLATE_SCRIPT,
+)
+
+genrule(
+    name = "generate_code_generator_info_template",
+    srcs = ["code_generator_info.bzl"],
+    outs = ["code_generator_info.template.bzl"],
+    cmd = STRIP_TEMPLATE_SCRIPT,
+)
+
+genrule(
+    name = "generate_intellij_info_template",
+    srcs = ["intellij_info_bundled.bzl"],
+    outs = ["intellij_info.template.bzl"],
+    cmd = STRIP_TEMPLATE_SCRIPT,
+)

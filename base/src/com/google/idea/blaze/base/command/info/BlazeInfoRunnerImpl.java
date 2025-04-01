@@ -22,7 +22,6 @@ import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.project.Project;
@@ -37,20 +36,16 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
       BuildInvoker invoker,
       BlazeContext context,
       List<String> blazeFlags,
-      String key) {
+      String... keys) {
     return BlazeExecutor.getInstance()
         .submit(
             () -> {
-              BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.INFO);
+              BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.INFO, project);
               builder.addBlazeFlags(blazeFlags);
-              if (key != null) {
-                builder.addBlazeFlags(key);
+              if (keys != null) {
+                builder.addBlazeFlags(keys);
               }
-              try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper();
-                  InputStream blazeInfoStream =
-                      invoker
-                          .getCommandRunner()
-                          .runBlazeInfo(project, builder, buildResultHelper, context)) {
+              try (InputStream blazeInfoStream = invoker.invokeInfo(builder, context)) {
                 return blazeInfoStream.readAllBytes();
               }
             });
@@ -62,9 +57,9 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
       BuildInvoker invoker,
       BlazeContext context,
       List<String> blazeFlags,
-      String key) {
+      String... keys) {
     return Futures.transform(
-        runBlazeInfoGetBytes(project, invoker, context, blazeFlags, key),
+        runBlazeInfoGetBytes(project, invoker, context, blazeFlags, keys),
         bytes -> new String(bytes, StandardCharsets.UTF_8).trim(),
         BlazeExecutor.getInstance().getExecutor());
   }
@@ -77,15 +72,30 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
       BuildSystemName buildSystemName,
       List<String> blazeFlags) {
     return Futures.transform(
-        runBlazeInfoGetBytes(project, invoker, context, blazeFlags, /* key= */ null),
+        runBlazeInfoGetBytes(
+            project,
+            invoker,
+            context,
+            blazeFlags,
+            BlazeInfo.blazeBinKey(buildSystemName),
+            BlazeInfo.blazeGenfilesKey(buildSystemName),
+            BlazeInfo.blazeTestlogsKey(buildSystemName),
+            BlazeInfo.EXECUTION_ROOT_KEY,
+            BlazeInfo.PACKAGE_PATH_KEY,
+            BlazeInfo.OUTPUT_PATH_KEY,
+            BlazeInfo.OUTPUT_BASE_KEY,
+            BlazeInfo.RELEASE,
+            BlazeInfo.STARLARK_SEMANTICS,
+            BlazeInfo.JAVA_HOME),
         bytes ->
             BlazeInfo.create(
                 buildSystemName,
-                parseBlazeInfoResult(new String(bytes, StandardCharsets.UTF_8).trim())),
+                parseBlazeInfoResult(new String(bytes, StandardCharsets.UTF_8).trim()).build()),
         BlazeExecutor.getInstance().getExecutor());
   }
-  private static ImmutableMap<String, String> parseBlazeInfoResult(String blazeInfoString) {
-    ImmutableMap.Builder<String, String> blazeInfoMapBuilder = ImmutableMap.builder();
+
+  private static ImmutableMap.Builder<String, String> parseBlazeInfoResult(String blazeInfoString) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     String[] blazeInfoLines = blazeInfoString.split("\n");
     for (String blazeInfoLine : blazeInfoLines) {
       // Just split on the first ":".
@@ -96,8 +106,9 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
       }
       String key = keyValue[0].trim();
       String value = keyValue[1].trim();
-      blazeInfoMapBuilder.put(key, value);
+      builder.put(key, value);
     }
-    return blazeInfoMapBuilder.build();
+
+    return builder;
   }
 }
