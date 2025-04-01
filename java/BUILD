@@ -44,6 +44,7 @@ java_library(
         ":fast_build_javac_interface",
         "//base",
         "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
+        "//base/src/com/google/idea/blaze/base/project/startup",
         "//common/actions",
         "//common/experiments",
         "//common/settings",
