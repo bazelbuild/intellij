@@ -297,9 +297,7 @@ public class ProjectLoaderImpl implements ProjectLoader {
             executor,
             createWorkspaceRelativePackageReader(),
             workspaceRoot.path(),
-            handledRules,
-            QuerySync.USE_NEW_RES_DIR_LOGIC::getValue,
-            () -> !QuerySync.EXTRACT_RES_PACKAGES_AT_BUILD_TIME.getValue());
+            handledRules);
     QueryRunner queryRunner = createQueryRunner(buildSystem);
     BazelVersionHandler versionHandler =
         new BazelVersionHandler(buildSystem, buildSystem.getBuildInvoker(project, context));
