@@ -30,6 +30,7 @@ import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectProto.Project;
 import com.google.idea.blaze.qsync.query.QuerySummary;
+import com.google.idea.blaze.qsync.query.QuerySummaryImpl;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.io.IOException;
 import java.util.Map;
@@ -98,7 +99,7 @@ public class TestDataSyncRunner {
                 .collect(Collectors.toMap(
                         it -> Label.of(it.getKey().toString().replaceFirst("^//", "@@//")),
                         Map.Entry::getValue));
-        return QuerySummary.newBuilder()
+        return QuerySummaryImpl.newBuilder()
                 .putAllPackagesWithErrors(querySummary.getPackagesWithErrors())
                 .putAllSourceFiles(querySummary.getSourceFilesMap())
                 .putAllRules(newRulesMap.values())
