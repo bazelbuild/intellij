@@ -74,7 +74,7 @@ public class QuerySyncNotificationProvider implements EditorNotificationProvider
                 notificationText = "Query Sync";
                 actionText = "Rebuild dependencies";
             }
-            return new QuerySyncNotificationPanel(fileEditor, project, notificationText, actionText);
+            return null;
         };
     }
 
