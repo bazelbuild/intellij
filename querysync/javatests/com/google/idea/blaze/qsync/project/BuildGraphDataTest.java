@@ -127,7 +127,7 @@ public class BuildGraphDataTest {
     assertThat(graph.getAndroidSourceFiles()).isEmpty();
     assertThat(graph.getSourceFileOwners(TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java")))
         .containsExactly(Label.fromWorkspacePackageAndName("", expectedPackagePath, "nodeps"));
-    assertThat(graph.getTransitiveExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps"))))
+    assertThat(graph.getExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps"))))
         .isEmpty();
     assertThat(graph.targetMap().get(Label.fromWorkspacePackageAndName("", expectedPackagePath, "nodeps")).languages())
         .containsExactly(QuerySyncLanguage.JAVA);
@@ -142,7 +142,7 @@ public class BuildGraphDataTest {
                 ImmutableSet.of())
             .parse();
     assertThat(
-            graph.getTransitiveExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT.resolve("externaldep:externaldep")))))
+            graph.getExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT.resolve("externaldep:externaldep")))))
         .containsExactly(TestData.JAVA_LIBRARY_NO_DEPS_QUERY.getAssumedOnlyLabel());
   }
 
@@ -158,7 +158,7 @@ public class BuildGraphDataTest {
     assertThat(graph.sourceFileLabels())
         .contains(Label.fromWorkspacePackageAndName("", TESTDATA_ROOT.resolve("nodeps"), "TestClassNoDeps.java"));
     assertThat(
-            graph.getTransitiveExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT.resolve("internaldep:internaldep")))))
+            graph.getExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT.resolve("internaldep:internaldep")))))
         .isEmpty();
   }
 
@@ -174,7 +174,7 @@ public class BuildGraphDataTest {
     assertThat(graph.sourceFileLabels())
         .contains(Label.fromWorkspacePackageAndName("", TESTDATA_ROOT.resolve("externaldep"), "TestClassExternalDep.java"));
     assertThat(
-            graph.getTransitiveExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT.resolve("transitivedep:transitivedep")))))
+            graph.getExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT.resolve("transitivedep:transitivedep")))))
         .containsExactly(TestData.JAVA_LIBRARY_NO_DEPS_QUERY.getAssumedOnlyLabel());
   }
 
@@ -187,14 +187,12 @@ public class BuildGraphDataTest {
                 ImmutableSet.of())
             .parse();
     Path expectedPackagePath = TESTDATA_ROOT.resolve("protodep");
-        assertThat(graph.getTransitiveExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT.resolve("protodep:protodep")))))
+        assertThat(graph.getExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT.resolve("protodep:protodep")))))
         .containsExactly(
-            Label.fromWorkspacePackageAndName("", expectedPackagePath, "proto_java_proto"),
-            Label.of("@@bazel_tools//tools/proto:java_toolchain"));
-        assertThat(graph.getTransitiveExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT.resolve("protodep:indirect_protodep")))))
+            Label.fromWorkspacePackageAndName("", expectedPackagePath, "proto_java_proto"));
+        assertThat(graph.getExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT.resolve("protodep:indirect_protodep")))))
         .containsExactly(
-            Label.fromWorkspacePackageAndName("", expectedPackagePath, "indirect_proto_java_proto"),
-            Label.of("@@bazel_tools//tools/proto:java_toolchain"));
+            Label.fromWorkspacePackageAndName("", expectedPackagePath, "indirect_proto_java_proto"));
 
     Path protoSourceFilePath = expectedPackagePath.resolve("testproto.proto");
     assertThat(graph.getProtoSourceFiles()).containsExactly(protoSourceFilePath);
@@ -267,10 +265,10 @@ public class BuildGraphDataTest {
             Label.fromWorkspacePackageAndName("", expectedPackagePath, "nodeps"),
             Label.fromWorkspacePackageAndName("", expectedPackagePath, "externaldep"));
     assertThat(
-        graph.getTransitiveExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT.resolve("multitarget:externaldep")))))
+        graph.getExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT.resolve("multitarget:externaldep")))))
         .contains(Label.of("@@rules_jvm_external++maven+com_google_guava_guava//jar:jar"));
     assertThat(
-            graph.getTransitiveExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT.resolve("multitarget:nodeps")))))
+            graph.getExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT.resolve("multitarget:nodeps")))))
         .isEmpty();
   }
 
@@ -282,7 +280,7 @@ public class BuildGraphDataTest {
             .parse();
     Path sourceFile = TESTDATA_ROOT.resolve("exports/TestClassUsingExport.java");
     assertThat(graph.getJavaSourceFiles()).containsExactly(sourceFile);
-    assertThat(graph.getTransitiveExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT.resolve("exports:exports")))))
+    assertThat(graph.getExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT.resolve("exports:exports")))))
         .containsExactly(Label.of("@@rules_jvm_external++maven+com_google_guava_guava//jar:jar"));
   }
 
@@ -300,7 +298,7 @@ public class BuildGraphDataTest {
         .containsExactly(Label.of("//" + TESTDATA_ROOT + "/filegroup:filegroup"));
     assertThat(graph.getSourceFileOwners(subgroupSourceFile))
         .containsExactly(Label.of("//" + TESTDATA_ROOT + "/filegroup:filegroup"));
-    assertThat(graph.getTransitiveExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT + "/filegroup:filegroup"))))
+    assertThat(graph.getExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT + "/filegroup:filegroup"))))
         .containsExactly(Label.of("@@rules_jvm_external++maven+com_google_guava_guava//jar:jar"));
   }
 
@@ -320,7 +318,7 @@ public class BuildGraphDataTest {
     assertThat(graph.getAndroidSourceFiles()).isEmpty();
     assertThat(graph.getSourceFileOwners(expectedPackagePath.resolve("TestClass.cc")))
         .containsExactly(Label.fromWorkspacePackageAndName("", expectedPackagePath, "cc"));
-    assertThat(graph.getTransitiveExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT + "/cc:cc")))).isEmpty();
+    assertThat(graph.getExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT + "/cc:cc")))).isEmpty();
     assertThat(graph.targetMap().get(Label.fromWorkspacePackageAndName("", expectedPackagePath, "cc")).languages())
         .containsExactly(QuerySyncLanguage.CC);
   }
