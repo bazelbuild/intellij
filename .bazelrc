@@ -19,3 +19,8 @@ common --incompatible_use_plus_in_repo_names
 # Required for CLion integration tests on windows
 startup --windows_enable_symlinks
 build --enable_runfiles
+
+build --action_env=PATH=/opt/rh/devtoolset-10/root/usr/bin:/opt/rh/rh-python36/root/usr/bin:/bin:/usr/bin:/usr/local/bin
+build --action_env=LD_LIBRARY_PATH=/opt/rh/devtoolset-10/root/usr/lib64:/opt/rh/devtoolset-10/root/usr/lib:/opt/rh/devtoolset-10/root/usr/lib64/dyninst:/opt/rh/devtoolset-10/root/usr/lib/dyninst:/opt/rh/devtoolset-10/root/usr/lib64:/opt/rh/devtoolset-10/root/usr/lib
+build --host_action_env=PATH=/opt/rh/devtoolset-10/root/usr/bin:/opt/rh/rh-python36/root/usr/bin:/bin:/usr/bin:/usr/local/bin
+build --host_action_env=LD_LIBRARY_PATH=/opt/rh/devtoolset-10/root/usr/lib64:/opt/rh/devtoolset-10/root/usr/lib:/opt/rh/devtoolset-10/root/usr/lib64/dyninst:/opt/rh/devtoolset-10/root/usr/lib/dyninst:/opt/rh/devtoolset-10/root/usr/lib64:/opt/rh/devtoolset-10/root/usr/lib
