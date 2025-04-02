@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
-import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -97,8 +96,7 @@ public class QuerySyncProjectData implements BlazeProjectData {
   @Override
   public ProjectTarget getBuildTarget(Label label) {
     return blazeProject
-        .map(QuerySyncProjectSnapshot::getTargetMap)
-        .map(map -> map.get(com.google.idea.blaze.common.Label.of(label.toString())))
+        .map(it -> it.graph().targetMap().get(com.google.idea.blaze.common.Label.of(label.toString())))
         .orElse(null);
   }
 
@@ -117,11 +115,10 @@ public class QuerySyncProjectData implements BlazeProjectData {
   }
 
   @Override
-  public ImmutableList<TargetInfo> targets() {
+  public ImmutableList<Label> targets() {
     if (blazeProject.isPresent()) {
-      return blazeProject.get().getTargetMap().values().stream()
-          .map(TargetInfo::tryFromBuildTarget)
-          .filter(Objects::nonNull)
+      return blazeProject.get().getAllTargets().stream()
+          .map(com.google.idea.blaze.base.model.primitives.Label::create)
           .collect(ImmutableList.toImmutableList());
     }
     return ImmutableList.of();

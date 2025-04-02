@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toCollection;
 
 import com.google.common.base.Splitter;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
@@ -140,7 +141,8 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
       if (projectData == null) {
         return null;
       }
-      return projectData.targets().stream()
+      return projectData.getTargetMap().targets().stream()
+          .map(TargetIdeInfo::toTargetInfo)
           .filter(IntellijPluginRule::isPluginTarget)
           .map(info -> info.label)
           .findFirst()

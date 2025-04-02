@@ -55,6 +55,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -185,7 +186,7 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
       return null;
     }
 
-    for (var target : currentSnapshot.getTargetMap().entrySet()) {
+    for (var target : currentSnapshot.graph().targetMap().entrySet()) {
       List<QualifiedName> importRoots = assembleImportRootsQuerySync(target.getKey(), project);
       for (var source : target.getValue().sourceLabels().get(ProjectTarget.SourceType.REGULAR)) {
         List<QualifiedName> sourceImports = assembleSourceImportsFromImportRoots(importRoots,
