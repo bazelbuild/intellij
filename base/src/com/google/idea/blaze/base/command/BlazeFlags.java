@@ -85,6 +85,8 @@ public final class BlazeFlags {
         buildFlagsProvider.addSyncFlags(
             project, projectViewSet, command, context, invocationContext, flags);
       }
+    }
+    if (invocationContext.type() == ContextType.QuerySync || invocationContext.type() == ContextType.Sync) {
       flags.addAll(expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY)));
     }
     if (BlazeCommandName.TEST.equals(command)) {

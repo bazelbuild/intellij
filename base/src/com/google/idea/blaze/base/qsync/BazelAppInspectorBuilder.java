@@ -62,7 +62,7 @@ public class BazelAppInspectorBuilder implements AppInspectorBuilder {
               projectViewSet,
               BlazeCommandName.BUILD,
               context,
-              BlazeInvocationContext.OTHER_CONTEXT);
+              BlazeInvocationContext.QUERY_SYNC_CONTEXT);
 
       BlazeCommand.Builder builder =
           BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project)

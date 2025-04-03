@@ -27,6 +27,7 @@ public interface BlazeInvocationContext {
   /** The context in which a blaze command is invoked. */
   enum ContextType {
     Sync,
+    QuerySync,
     BeforeRunTask,
     RunConfiguration,
     Other,
@@ -35,6 +36,7 @@ public interface BlazeInvocationContext {
   ContextType type();
 
   SyncContext SYNC_CONTEXT = new SyncContext();
+  QuerySyncContext QUERY_SYNC_CONTEXT = new QuerySyncContext();
   OtherContext OTHER_CONTEXT = new OtherContext();
 
   static RunConfigurationContext runConfigContext(
@@ -52,6 +54,16 @@ public interface BlazeInvocationContext {
     @Override
     public final ContextType type() {
       return ContextType.Sync;
+    }
+  }
+
+  /** Invocation context for sync-related build actions. */
+  final class QuerySyncContext implements BlazeInvocationContext {
+    private QuerySyncContext() {}
+
+    @Override
+    public final ContextType type() {
+      return ContextType.QuerySync;
     }
   }
 
