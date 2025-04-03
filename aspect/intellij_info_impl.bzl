@@ -1058,10 +1058,10 @@ def intellij_info_aspect_impl(target, ctx, semantics):
 
     tags = ctx.rule.attr.tags
     if "no-ide" in tags:
-        return struct()
+        return []
 
     if _is_analysis_test(target):
-        return struct()
+        return []
 
     rule_attrs = ctx.rule.attr
 
