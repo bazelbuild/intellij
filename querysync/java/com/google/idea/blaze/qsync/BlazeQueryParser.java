@@ -27,6 +27,7 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.RuleKinds;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
+import com.google.idea.blaze.qsync.project.BuildGraphDataImpl;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.project.ProjectTarget.SourceType;
 import com.google.idea.blaze.qsync.project.QuerySyncLanguage;
@@ -39,7 +40,7 @@ import java.util.Set;
 
 /**
  * A class that parses the proto output from a `blaze query --output=streamed_proto` invocation, and
- * yields a {@link BuildGraphData} instance derived from it. Instances of this class are single use.
+ * yields a {@link BuildGraphDataImpl} instance derived from it. Instances of this class are single use.
  */
 public class BlazeQueryParser {
 
@@ -65,7 +66,7 @@ public class BlazeQueryParser {
 
   private final QuerySummary query;
 
-  private final BuildGraphData.Builder graphBuilder = BuildGraphData.builder();
+  private final BuildGraphDataImpl.Builder graphBuilder = BuildGraphDataImpl.builder();
 
   private final Set<Label> projectDeps = Sets.newHashSet();
   // All the project targets the aspect needs to build
