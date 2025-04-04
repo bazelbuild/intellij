@@ -18,6 +18,8 @@ package com.google.idea.blaze.plugin;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Label;
+
 import javax.annotation.Nullable;
 
 /** Utility methods for intellij_plugin blaze targets */
