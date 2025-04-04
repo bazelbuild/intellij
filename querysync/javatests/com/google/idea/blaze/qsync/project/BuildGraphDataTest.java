@@ -130,7 +130,7 @@ public class BuildGraphDataTest {
     assertThat(graph.getExternalDependencies(ImmutableList.of(Label.of("//" + TESTDATA_ROOT + "/nodeps:nodeps"))))
         .isEmpty();
     assertThat(graph.targetMap().get(Label.fromWorkspacePackageAndName("", expectedPackagePath, "nodeps")).languages())
-        .containsExactly(QuerySyncLanguage.JAVA);
+        .containsExactly(QuerySyncLanguage.JVM);
   }
 
   @Test
