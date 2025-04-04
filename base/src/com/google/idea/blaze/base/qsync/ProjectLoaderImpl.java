@@ -233,8 +233,8 @@ public class ProjectLoaderImpl implements ProjectLoader {
     AppInspectorBuilder appInspectorBuilder = createAppInspectorBuilder(buildSystem);
 
     BlazeInfo blazeInfo =
-        new BazelInfoHandler(buildSystem.getBuildInvoker(project, context))
-            .getBazelInfo();
+        new BazelInfoHandler(buildSystem.getBuildInvoker(project))
+            .getBazelInfo(context);
 
     Path ideProjectBasePath = Paths.get(checkNotNull(project.getBasePath()));
     ProjectPath.Resolver projectPathResolver =
@@ -300,17 +300,17 @@ public class ProjectLoaderImpl implements ProjectLoader {
             handledRules);
     QueryRunner queryRunner = createQueryRunner(buildSystem);
     BazelVersionHandler versionHandler =
-        new BazelVersionHandler(buildSystem, buildSystem.getBuildInvoker(project, context));
+        new BazelVersionHandler(buildSystem, buildSystem.getBuildInvoker(project));
     ProjectQuerier projectQuerier =
         createProjectQuerier(
             projectRefresher,
             queryRunner,
             vcsHandler,
-            new BazelVersionHandler(buildSystem, buildSystem.getBuildInvoker(project, context)));
+            new BazelVersionHandler(buildSystem, buildSystem.getBuildInvoker(project)));
     QuerySyncSourceToTargetMap sourceToTargetMap =
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
     ExternalWorkspaceData externalWorkspaceData = ExternalWorkspaceDataProvider.getInstance(project)
-        .getExternalWorkspaceData(context, projectViewSet, versionHandler.getBazelVersion(), blazeInfo);
+        .getExternalWorkspaceData(context, projectViewSet, versionHandler.getBazelVersion(context), blazeInfo);
     return new QuerySyncProjectDeps(importSettings, workspaceRoot, new WorkspacePathResolverImpl(workspaceRoot), projectViewSet, buildSystem,
                                     workspaceLanguageSettings, latestProjectDef, snapshotFilePath, projectPathResolver, projectTransformRegistry,
                                     graph, artifactCache, artifactTracker, renderJarArtifactTracker, appInspectorArtifactTracker,

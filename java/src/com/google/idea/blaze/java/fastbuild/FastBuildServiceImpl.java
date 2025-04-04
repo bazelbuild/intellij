@@ -397,7 +397,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
                 project,
                 Blaze.getBuildSystemProvider(project)
                     .getBuildSystem()
-                    .getDefaultInvoker(project, context),
+                    .getDefaultInvoker(project),
                 context,
                 buildSystemName,
                 buildParameters.infoFlags());

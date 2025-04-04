@@ -199,7 +199,7 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
     Path queryFile = prepareQueryFile(project, rdepsQuery);
     BlazeCommand.Builder command =
         getBlazeCommandBuilder(
-            project, type, "--query_file=" + queryFile.toAbsolutePath(), ImmutableList.of("--output=label_kind"), context);
+            project, type, "--query_file=" + queryFile.toAbsolutePath(), ImmutableList.of("--output=label_kind"));
     try (InputStream queryResultStream = runQuery(project, command, context)) {
       BlazeQueryLabelKindParser blazeQueryLabelKindParser =
           new BlazeQueryLabelKindParser(t -> true);
@@ -248,7 +248,7 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
       Project project, BlazeContext context, ContextType type, String expr)
       throws BlazeQuerySourceToTargetException {
     BlazeCommand.Builder commandBuilder =
-        getBlazeCommandBuilder(project, type, expr, ImmutableList.of("--output=package"), context);
+        getBlazeCommandBuilder(project, type, expr, ImmutableList.of("--output=package"));
 
     try (InputStream queryResultStream = runQuery(project, commandBuilder, context)) {
       return queryResultStream == null
@@ -269,7 +269,7 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
       throws BuildException {
     return Blaze.getBuildSystemProvider(project)
         .getBuildSystem()
-        .getDefaultInvoker(project, context)
+        .getDefaultInvoker(project)
         .invokeQuery(blazeCommand, context);
   }
 
@@ -277,15 +277,14 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
       Project project,
       ContextType type,
       String query,
-      List<String> additionalBlazeFlags,
-      BlazeContext context) {
+      List<String> additionalBlazeFlags) {
     // never use a custom output base for queries during sync
     String outputBaseFlag =
         type == ContextType.Sync
             ? null
             : BlazeQueryOutputBaseProvider.getInstance(project).getOutputBaseFlag();
     BuildInvoker buildInvoker =
-        Blaze.getBuildSystemProvider(project).getBuildSystem().getDefaultInvoker(project, context);
+        Blaze.getBuildSystemProvider(project).getBuildSystem().getDefaultInvoker(project);
     return BlazeCommand.builder(buildInvoker, BlazeCommandName.QUERY, project)
         .addBlazeFlags(additionalBlazeFlags)
         .addBlazeFlags("--keep_going")

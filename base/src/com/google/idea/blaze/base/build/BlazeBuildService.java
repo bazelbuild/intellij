@@ -243,7 +243,7 @@ public class BlazeBuildService {
                     SaveUtil.saveAllFiles();
                     BlazeBuildListener.EP_NAME.extensions().forEach(e -> e.buildStarting(project));
 
-                    BuildInvoker buildInvoker = buildSystem.getBuildInvoker(project, context);
+                    BuildInvoker buildInvoker = buildSystem.getBuildInvoker(project);
 
                     ShardedTargetsResult shardedTargets =
                         BlazeBuildTargetSharder.expandAndShardTargets(
