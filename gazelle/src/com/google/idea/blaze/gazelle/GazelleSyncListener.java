@@ -84,7 +84,7 @@ public class GazelleSyncListener implements SyncListener {
       Collection<WorkspacePath> importantDirectories,
       List<String> blazeFlags) {
     BuildSystem.BuildInvoker invoker =
-        Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
+        Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project);
 
     return GazelleRunner.getInstance()
         .runBlazeGazelle(

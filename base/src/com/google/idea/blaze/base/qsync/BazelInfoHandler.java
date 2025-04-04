@@ -19,6 +19,7 @@ import static com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.exception.BuildException;
 
 public class BazelInfoHandler {
@@ -28,10 +29,10 @@ public class BazelInfoHandler {
     this.buildInvoker = buildInvoker;
   }
 
-  public BlazeInfo getBazelInfo() throws BuildException {
+  public BlazeInfo getBazelInfo(BlazeContext context) throws BuildException {
     // TODO: can we cache the results from handlers?
     try {
-      return buildInvoker.getBlazeInfo();
+      return buildInvoker.getBlazeInfo(context);
     } catch (SyncFailedException e) {
       throw new BuildException("Could not get bazel info", e);
     }

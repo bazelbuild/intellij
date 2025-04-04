@@ -62,7 +62,7 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
       throws XcodeCompilerSettingsException {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     BuildSystem.BuildInvoker invoker =
-        Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
+        Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project);
 
     Optional<XcodeAndSdkVersions> xcodeAndSdkVersions = XcodeCompilerSettingsProviderImpl.queryXcodeAndSdkVersions(
         context, 

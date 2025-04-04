@@ -114,7 +114,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     ImmutableList<String> testHandlerFlags = ImmutableList.of();
     BlazeContext context = BlazeContext.create();
     BuildInvoker invoker =
-        Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
+        Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project);
     BlazeTestUiSession testUiSession = null;
     if (useTestUi()
         && BlazeTestEventsHandler.targetsSupported(project, configuration.getTargets())) {

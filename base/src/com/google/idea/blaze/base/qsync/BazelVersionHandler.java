@@ -15,10 +15,10 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.auto.value.extension.memoized.Memoized;
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.exception.BuildException;
 import java.util.Optional;
@@ -36,17 +36,17 @@ public class BazelVersionHandler {
     this.buildInvoker = buildInvoker;
   }
 
-  public Optional<String> getBazelVersionStr() throws BuildException {
+  public Optional<String> getBazelVersionStr(BlazeContext blazeContext) throws BuildException {
     // TODO: can we cache the results from handlers?
     try {
-      return buildSystem.getBazelVersionString(buildInvoker.getBlazeInfo());
+      return buildSystem.getBazelVersionString(buildInvoker.getBlazeInfo(blazeContext));
     } catch (SyncFailedException e) {
       throw new BuildException("Could not get bazel version", e);
     }
   }
 
-  public BazelVersion getBazelVersion() throws BuildException {
-    return getBazelVersionStr()
+  public BazelVersion getBazelVersion(BlazeContext context) throws BuildException {
+    return getBazelVersionStr(context)
         .map(BazelVersion::parseVersion)
         .orElse(BazelVersion.DEVELOPMENT);
   }

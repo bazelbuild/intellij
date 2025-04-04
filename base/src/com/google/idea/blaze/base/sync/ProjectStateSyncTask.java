@@ -214,8 +214,7 @@ final class ProjectStateSyncTask {
                      project,
                      Blaze.getBuildSystemProvider(project)
                          .getBuildSystem()
-                         .getDefaultInvoker(project,
-                             context),
+                         .getDefaultInvoker(project),
                      context,
                      importSettings.getBuildSystem(),
                      syncFlags);

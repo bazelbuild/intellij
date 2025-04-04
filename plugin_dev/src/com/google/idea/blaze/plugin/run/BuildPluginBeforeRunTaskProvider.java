@@ -201,7 +201,7 @@ public final class BuildPluginBeforeRunTaskProvider
                   BuildInvoker invoker =
                       Blaze.getBuildSystemProvider(project)
                           .getBuildSystem()
-                          .getBuildInvoker(project, context);
+                          .getBuildInvoker(project);
                   try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
                     BlazeCommand.Builder command =
                         BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project)
