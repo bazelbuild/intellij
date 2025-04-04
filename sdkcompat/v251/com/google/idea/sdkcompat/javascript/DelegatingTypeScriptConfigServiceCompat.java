@@ -12,7 +12,7 @@ public abstract class DelegatingTypeScriptConfigServiceCompat implements TypeScr
   }
 
   @Override
-  public IntPredicate getFilterId(VirtualFile scope, boolean useProjectScopeGraph) {
-    return impl.getFilterId(scope, useProjectScopeGraph);
+  public IntPredicate getFilterId(VirtualFile scope) {
+    return impl.getFilterId(scope);
   }
 }
