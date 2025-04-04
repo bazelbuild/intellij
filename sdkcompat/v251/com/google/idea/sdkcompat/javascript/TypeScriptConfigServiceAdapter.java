@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 public abstract class TypeScriptConfigServiceAdapter implements TypeScriptConfigService {
 
   @Override
-  public IntPredicate getFilterId(VirtualFile scope, boolean useProjectScopeGraph) {
+  public IntPredicate getFilterId(VirtualFile scope) {
     return i -> true;
   }
 }
