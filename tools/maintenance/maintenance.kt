@@ -25,23 +25,24 @@ import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 import javax.xml.parsers.DocumentBuilderFactory
 
-// Usage: bazel run //maintenance -- $PWD/MODULE.bazel && cp MODULE.bazel.out MODULE.bazel
+// Usage: bazel run //tools/maintenance -- $PWD/MODULE.bazel && cp MODULE.bazel.out MODULE.bazel
 fun main(args: Array<String>) { 
     val out = Paths.get("${args[0]}.out")
     Files.copy(Paths.get(args[0]), out, StandardCopyOption.REPLACE_EXISTING)
-    bumpRelease("2023.1", "231", out)
-    bumpPlugins("231", out)
-    bumpRelease("2023.2", "232", out)
-    bumpPlugins("232", out)
-    bumpRelease("2023.3", "233", out)
-    bumpPlugins("233", out)
-    bumpRelease("2024.1", "241", out)
-    bumpPlugins("241", out)
-    bumpRelease("2024.2", "242", out)
-    bumpPlugins("242", out)
-    bumpRelease("2024.3", "243", out)
-    bumpPlugins("243", out)
-    bumpMavenPackages("junit:junit", "JUNIT", out)
+    bumpPlugins("251", out)
+    // bumpRelease("2023.1", "231", out)
+    // bumpPlugins("231", out)
+    // bumpRelease("2023.2", "232", out)
+    // bumpPlugins("232", out)
+    // bumpRelease("2023.3", "233", out)
+    // bumpPlugins("233", out)
+    // bumpRelease("2024.1", "241", out)
+    // bumpPlugins("241", out)
+    // bumpRelease("2024.2", "242", out)
+    // bumpPlugins("242", out)
+    // bumpRelease("2024.3", "243", out)
+    // bumpPlugins("243", out)
+    // bumpMavenPackages("junit:junit", "JUNIT", out)
 }
 
 fun bumpMavenPackages(coordinates: String, variablePrefix: String, out: Path) {
