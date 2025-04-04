@@ -21,6 +21,7 @@ java_library(
         "//shared:vcs",
         "//third_party/java/auto_value",
         "@com_google_guava_guava//jar",
+        "@jetbrains_annotations//jar",
         "@protobuf//:protobuf_java",
         "@error_prone_annotations//jar",
     ],
