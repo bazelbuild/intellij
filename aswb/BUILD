@@ -320,7 +320,6 @@ validate_test_dependencies(
         "//common/experiments:unit_tests",
         "//common/ui/properties:unit_tests",
         "//common/util:CommandLineTaskTest",
-        "//querysync:cli_tools_build_test",
         "//shared:tests",
     ],
 )
