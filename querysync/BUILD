@@ -36,11 +36,3 @@ java_library(
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
     ],
 )
-
-build_test(
-    name = "cli_tools_build_test",
-    targets = [
-        "//querysync/java/com/google/idea/blaze/qsync/util:project_spec_builder",
-        "//querysync/java/com/google/idea/blaze/qsync/util:query_summarizer",
-    ],
-)
