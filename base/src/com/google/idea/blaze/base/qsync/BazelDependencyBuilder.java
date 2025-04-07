@@ -31,7 +31,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteSource;
-import com.google.common.io.MoreFiles;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException;
@@ -43,8 +42,6 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
-import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStats;
 import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -57,7 +54,6 @@ import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider;
 import com.google.idea.blaze.base.util.VersionChecker;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.Context;
-import com.google.idea.blaze.common.Interners;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.artifact.BuildArtifactCache;
@@ -77,14 +73,12 @@ import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.experiments.StringExperiment;
 import com.google.protobuf.Message;
 import com.google.protobuf.TextFormat;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.jgoodies.common.base.Strings;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -315,6 +309,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     files.put(Path.of(INVOCATION_FILES_DIR + "/BUILD"), ByteSource.empty());
     files.put(Path.of(INVOCATION_FILES_DIR + "/build_dependencies.bzl"), getBundledAspect("build_dependencies.bzl"));
     files.put(Path.of(INVOCATION_FILES_DIR + "/build_dependencies_deps.bzl"), getBundledAspect("build_dependencies_deps.bzl"));
+    files.put(Path.of(INVOCATION_FILES_DIR + "/build_dependencies_android_deps.bzl"), getBundledAspectAndroidDepsFilePath());
     files.put(Path.of(INVOCATION_FILES_DIR + "/" + aspectFileName), getByteSourceFromString(getBuildDependenciesParametersFileContent(parameters)));
     Optional<String> targetPatternFileWorkspaceRelativeFile;
     if (buildUseTargetPatternFile.getValue()) {
@@ -332,6 +327,9 @@ public class BazelDependencyBuilder implements DependencyBuilder {
         files.build(),
         Label.of(String.format("//" + INVOCATION_FILES_DIR + ":" + aspectFileName)).toString(),
         targetPatternFileWorkspaceRelativeFile);
+  }
+  protected ByteSource getBundledAspectAndroidDepsFilePath() {
+    return getBundledAspect("build_dependencies_android_deps.bzl");
   }
 
   private ByteSource getByteSourceFromString(String content) {
