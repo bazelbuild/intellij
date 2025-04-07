@@ -112,10 +112,15 @@ genquery(
 
 genquery(
     name = "buildincludes_query",
-    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/buildincludes:*",
+    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/buildincludes:* + " +
+                 "//querysync/javatests/com/google/idea/blaze/qsync/testdata/buildincludes/sub:* + " +
+                 "//querysync/javatests/com/google/idea/blaze/qsync/testdata/buildincludes/sub/includes:*",
     opts = ["--output=streamed_proto"],
     scope =
-        scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/buildincludes:mylib"),
+        scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/buildincludes:mylib_top") +
+        scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/buildincludes:mylib_top2") +
+        scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/buildincludes/sub:mylib_sub") +
+        scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/buildincludes/sub/includes:mylib"),
 )
 
 genquery(
