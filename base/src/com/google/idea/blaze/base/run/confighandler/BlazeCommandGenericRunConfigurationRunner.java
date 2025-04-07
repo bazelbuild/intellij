@@ -149,8 +149,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
       assert projectViewSet != null;
       BlazeContext context = BlazeContext.create();
       BuildInvoker invoker =
-          Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
-      WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
+          Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project);
       BlazeCommand.Builder blazeCommand =
           getBlazeCommand(
               project,
@@ -159,8 +158,8 @@ public final class BlazeCommandGenericRunConfigurationRunner
               ImmutableList.of(),
               context);
       return isTest()
-          ? getProcessHandlerForTests(project, invoker, blazeCommand, workspaceRoot, context)
-          : getProcessHandlerForNonTests(project, invoker, blazeCommand, workspaceRoot, context);
+          ? getProcessHandlerForTests(project, invoker, blazeCommand, context)
+          : getProcessHandlerForNonTests(project, invoker, blazeCommand, context);
     }
 
     private ProcessHandler getGenericProcessHandler() {
@@ -192,7 +191,6 @@ public final class BlazeCommandGenericRunConfigurationRunner
         Project project,
         BuildInvoker invoker,
         BlazeCommand.Builder blazeCommandBuilder,
-        WorkspaceRoot workspaceRoot,
         BlazeContext context)
         throws ExecutionException {
       ProcessHandler processHandler = getGenericProcessHandler();
@@ -250,7 +248,6 @@ public final class BlazeCommandGenericRunConfigurationRunner
         Project project,
         BuildInvoker invoker,
         BlazeCommand.Builder blazeCommandBuilder,
-        WorkspaceRoot workspaceRoot,
         BlazeContext context) {
       BlazeTestResultFinderStrategy testResultFinderStrategy = new BlazeTestResultHolder();
       BlazeTestUiSession testUiSession = null;

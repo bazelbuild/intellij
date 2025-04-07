@@ -128,7 +128,7 @@ public class ExternalWorkspaceDataProvider {
       BuildSystem.BuildInvoker buildInvoker =
           Blaze.getBuildSystemProvider(project)
               .getBuildSystem()
-              .getDefaultInvoker(project, context);
+              .getDefaultInvoker(project);
 
       externalWorkspaceData =
           BlazeModRunner.getInstance()
