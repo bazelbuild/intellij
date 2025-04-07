@@ -99,7 +99,6 @@ def intellij_unit_test_suite(
         test_package_root,
         runtime_deps = [],
         args = [],
-        friends = [],
         target_compatible_with = None,
         class_rules = [],
         size = "medium",
