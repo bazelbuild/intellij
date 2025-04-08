@@ -20,6 +20,9 @@ public interface FileTransform {
   FileTransform COPY =
       (src, dest) -> {
         src.byteSource().copyTo(MoreFiles.asByteSink(dest));
+        if (src.isExecutable()) {
+          dest.toFile().setExecutable(true);
+        }
         return ImmutableSet.of(dest);
       };
 
