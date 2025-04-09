@@ -66,6 +66,7 @@ aspect_library(
     files = [
         "build_compose_dependencies.bzl",
         "build_dependencies.bzl",
+        "build_dependencies_android_deps.bzl",
         "build_dependencies_deps.bzl",
     ],
     namespace = "aspect/qsync",
