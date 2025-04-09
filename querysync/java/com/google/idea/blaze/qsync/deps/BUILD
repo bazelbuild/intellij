@@ -11,6 +11,7 @@ kt_jvm_library(
     ],
     deps = [
         ":artifact_tracker_state_java_proto",
+        "//common/experiments",
         "//querysync/java/com/google/idea/blaze/qsync/artifacts",
         "//querysync/java/com/google/idea/blaze/qsync/cc:cc_compilation_info_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/java:java_target_info_java_proto",

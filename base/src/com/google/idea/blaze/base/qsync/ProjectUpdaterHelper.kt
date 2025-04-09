@@ -6,6 +6,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings
 import com.google.idea.blaze.base.util.UrlUtil
 import com.google.idea.blaze.common.Context
+import com.google.idea.blaze.qsync.deps.ProjectProtoUpdateOperation.JAVA_DEPS_LIB_NAME
 import com.google.idea.blaze.qsync.project.ProjectPath
 import com.google.idea.blaze.qsync.project.ProjectProto
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
@@ -15,11 +16,13 @@ import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.io.File
+import kotlin.text.get
 
 object ProjectUpdaterHelper {
 
@@ -80,18 +83,25 @@ object ProjectUpdaterHelper {
         )
       }
     }
-
-    moduleSpec.libraryNameList.forEach { lib ->
-      val library = libMap[lib]
-        ?: throw IllegalStateException("Module refers to library $lib not present in the project spec")
-      roots.addLibraryEntry(library).apply {
-        // TODO should this stuff be specified by the Module proto too?
-        setScope(DependencyScope.COMPILE)
-        setExported(false)
+    if (!QuerySync.enableBazelAdditionalLibraryRootsProvider()) {
+      moduleSpec.libraryNameList.forEach { lib ->
+        val library = libMap[lib]
+          ?: throw IllegalStateException("Module refers to library $lib not present in the project spec")
+        addLibraryEntry(roots, library)
+      }
+    } else {
+      libMap[JAVA_DEPS_LIB_NAME]?.let {
+        addLibraryEntry(roots, it)
       }
     }
     return module
   }
+
+private fun addLibraryEntry(roots: ModifiableRootModel, library: Library) =
+    roots.addLibraryEntry(library).apply {
+      setScope(DependencyScope.COMPILE)
+      setExported(false)
+    }
 
   @JvmStatic
   fun getModulesForModels(

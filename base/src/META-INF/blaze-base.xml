@@ -737,6 +737,8 @@
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
+    <orderEnumerationHandlerFactory implementation="com.google.idea.blaze.base.qsync.QuerySyncBazelOrderEnumeratorHandler$FactoryImpl"/>
+    <additionalLibraryRootsProvider implementation="com.google.idea.blaze.base.qsync.QuerySyncBazelAdditionalLibraryRootsProvider"/>
     <indexedRootsProvider implementation="com.google.idea.blaze.base.project.indexing.WarmUpTriggeringIndexableSetContributor" />
   </extensions>
 

@@ -21,6 +21,8 @@ import com.google.idea.common.experiments.FeatureRolloutExperiment;
 
 /** Holder class for basic information about querysync, e.g. is it enabled? */
 public class QuerySync {
+  private static final BoolExperiment useAdditionalLibraryProvider =
+    new BoolExperiment("query.sync.use.additional.library.provider", false);
 
   public static final String BUILD_DEPENDENCIES_ACTION_NAME = "Enable analysis";
 
@@ -59,5 +61,10 @@ public class QuerySync {
     else {
       return isLegacyExperimentEnabled() || QuerySyncSettings.getInstance().useQuerySyncBeta();
     }
+  }
+
+  /** Provides library via BazelAdditionalLibraryRootsProvider instead of library table. */
+  public static boolean enableBazelAdditionalLibraryRootsProvider() {
+    return useAdditionalLibraryProvider.getValue();
   }
 }
