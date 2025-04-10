@@ -45,7 +45,6 @@ import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.google.idea.blaze.cpp.CppBlazeRules;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
@@ -264,7 +263,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
       }
 
       final DebuggerDriverConfiguration debuggerDriver;
-      if (debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB) {
+      if (debuggerKind == BlazeDebuggerKind.LLDB) {
         debuggerDriver = new BlazeLLDBDriverConfiguration(project, workspaceRoot.directory().toPath());
       } else {
         final var startupCommands = getGdbStartupCommands(workspaceRootDirectory);

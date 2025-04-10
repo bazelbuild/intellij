@@ -49,7 +49,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
-import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -121,7 +120,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
 
     final var flagsBuilder = ImmutableList.<String>builder();
 
-    if (debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB && !Registry.is("bazel.trim.absolute.path.disabled")) {
+    if (debuggerKind == BlazeDebuggerKind.LLDB && !Registry.is("bazel.trim.absolute.path.disabled")) {
       flagsBuilder.add("--copt=-fdebug-compilation-dir=" + WorkspaceRoot.fromProject(env.getProject()));
 
       if (SystemInfo.isMac) {

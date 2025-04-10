@@ -21,8 +21,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 
 public enum BlazeDebuggerKind {
-  BUNDLED_GDB,
-  BUNDLED_LLDB,
+  GDB,
+  LLDB,
   GDB_SERVER;
 
   /**
@@ -32,12 +32,12 @@ public enum BlazeDebuggerKind {
    * - Mac does not have gdbserver
    * - Windows does not support the gdbwrapper script
    */
-  private static BlazeDebuggerKind gdbBundledOrServer() {
+  static BlazeDebuggerKind gdbBundledOrServer() {
     if (!SystemInfo.isLinux) {
-      return BUNDLED_GDB;
+      return GDB;
     }
     if (!Registry.is("bazel.clwb.debug.use.gdb.server")) {
-      return BUNDLED_GDB;
+      return GDB;
     }
 
     return GDB_SERVER;
@@ -50,11 +50,11 @@ public enum BlazeDebuggerKind {
    */
   public static BlazeDebuggerKind byDefaultToolchain() {
     final var kind = ToolchainUtils.getToolchain().getDebuggerKind();
+    if (kind.isLLDB()) {
+      return LLDB;
+    }
 
-    return switch (kind) {
-      case BUNDLED_GDB, CUSTOM_GDB -> gdbBundledOrServer();
-      case BUNDLED_LLDB -> BUNDLED_LLDB;
-    };
+    return gdbBundledOrServer();
   }
 
   /**
@@ -66,15 +66,14 @@ public enum BlazeDebuggerKind {
       return gdbBundledOrServer();
     }
     if (SystemInfo.isMac) {
-      return BUNDLED_LLDB;
+      return LLDB;
     }
     if (SystemInfo.isWindows) {
       // TODO: gdb configuration is not working correctly on windows because of path mappings
-      return BUNDLED_LLDB;
+      return LLDB;
     }
 
     // fallback to default toolchain
     return byDefaultToolchain();
   }
-
 }
