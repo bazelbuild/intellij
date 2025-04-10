@@ -48,6 +48,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.ExecutorType;
+import com.google.idea.blaze.base.run.RuntimeArtifactKind;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
@@ -353,7 +354,8 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
                   .filter(artifact -> artifact.getArtifactPath().endsWith(deployJarLabel.targetName().toString()))
                   .collect(Collectors.toUnmodifiableSet()),
               BlazeContext.create(),
-              project);
+              project,
+              RuntimeArtifactKind.JAR);
       checkState(deployJarArtifacts.size() == 1);
       deployJar = deployJarArtifacts.get(0);
     } catch (GetArtifactsException e) {
@@ -375,7 +377,8 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
                   )
               ).collect(Collectors.toUnmodifiableSet()),
           BlazeContext.create(),
-          project);
+          project,
+          RuntimeArtifactKind.JAR);
     } catch (GetArtifactsException e) {
       throw new RuntimeException("Blaze failure building ide info files: " + e.getMessage());
     }
