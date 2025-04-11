@@ -19,6 +19,7 @@ import com.google.common.io.ByteSource;
 import com.google.common.io.MoreFiles;
 import com.google.errorprone.annotations.MustBeClosed;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.zip.ZipFile;
 
@@ -35,6 +36,10 @@ public class CachedArtifact {
 
   public ByteSource byteSource() {
     return byteSource;
+  }
+
+  public boolean isExecutable() {
+    return Files.isExecutable(path);
   }
 
   /**
