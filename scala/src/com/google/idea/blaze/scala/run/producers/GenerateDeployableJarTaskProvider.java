@@ -37,6 +37,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.ExecutorType;
+import com.google.idea.blaze.base.run.RuntimeArtifactKind;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
@@ -200,7 +201,8 @@ class GenerateDeployableJarTaskProvider
               BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
                   .getOutputGroupTargetArtifacts(DEFAULT_OUTPUT_GROUP_NAME, String.format("%s_deploy.jar", target)),
             BlazeContext.create(),
-            env.getProject());
+            env.getProject(),
+            RuntimeArtifactKind.JAR);
       }
 
       if (outputs.isEmpty()) {

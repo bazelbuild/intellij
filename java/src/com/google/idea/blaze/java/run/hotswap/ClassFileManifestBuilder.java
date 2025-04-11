@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
+import com.google.idea.blaze.base.run.RuntimeArtifactKind;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResult;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -141,7 +142,8 @@ public class ClassFileManifestBuilder {
                   BlazeBuildOutputs.fromParsedBepOutput(parsedBepOutput)
                       .getOutputGroupArtifacts(JavaClasspathAspectStrategy.OUTPUT_GROUP),
                   BlazeContext.create(),
-                  project)
+                  project,
+                  RuntimeArtifactKind.JAR)
               .stream()
               .filter(f -> f.getName().endsWith(".jar"))
               .collect(toImmutableList());

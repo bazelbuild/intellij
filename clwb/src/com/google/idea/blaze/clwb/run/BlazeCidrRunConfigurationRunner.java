@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
+import com.google.idea.blaze.base.run.RuntimeArtifactKind;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
@@ -186,7 +187,8 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
                     BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
                       .getOutputGroupTargetArtifacts(DEFAULT_OUTPUT_GROUP_NAME, target.toString() ),
                   BlazeContext.create(),
-                  env.getProject())
+                  env.getProject(),
+                  RuntimeArtifactKind.JAR)
                 .stream()
                 .filter(File::canExecute)
                 .collect(Collectors.toList());
