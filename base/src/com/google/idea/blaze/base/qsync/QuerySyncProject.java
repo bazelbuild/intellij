@@ -266,8 +266,8 @@ public class QuerySyncProject {
         SaveUtil.saveAllFiles();
         PostQuerySyncData postQuerySyncData =
             lastQuery.isEmpty()
-                ? projectQuerier.fullQuery(projectDefinition, context)
-                : projectQuerier.update(projectDefinition, lastQuery.get(), context);
+                ? projectQuerier.fullQuery(projectDefinition, projectViewSet, context)
+                : projectQuerier.update(projectDefinition, projectViewSet, lastQuery.get(), context);
         QuerySyncProjectSnapshot newSnapshot =
             snapshotBuilder.createBlazeProjectSnapshot(
                 context,

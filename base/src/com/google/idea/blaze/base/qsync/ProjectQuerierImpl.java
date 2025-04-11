@@ -16,11 +16,16 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStats;
 import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
@@ -36,6 +41,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /** An object that knows how to */
 public class ProjectQuerierImpl implements ProjectQuerier {
@@ -65,7 +72,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
    * <p>This includes reloading the project view.
    */
   @Override
-  public PostQuerySyncData fullQuery(ProjectDefinition projectDef, BlazeContext context)
+  public PostQuerySyncData fullQuery(ProjectDefinition projectDef, ProjectViewSet projectViewSet, BlazeContext context)
       throws IOException, BuildException {
 
     Optional<VcsState> vcsState = getVcsState(context);
@@ -83,7 +90,8 @@ public class ProjectQuerierImpl implements ProjectQuerier {
             context, projectDef, vcsState, bazelVersionProvider.getBazelVersion());
 
     QuerySpec querySpec = fullQuery.getQuerySpec().get();
-    return fullQuery.createPostQuerySyncData(queryRunner.runQuery(querySpec, context));
+    List<String> excludedTargetPatterns = this.targetExclusionPatterns(projectViewSet);
+    return fullQuery.createPostQuerySyncData(queryRunner.runQuery(querySpec, context, excludedTargetPatterns));
   }
 
   @Override
@@ -117,7 +125,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
    */
   @Override
   public PostQuerySyncData update(
-      ProjectDefinition currentProjectDef, PostQuerySyncData previousState, BlazeContext context)
+      ProjectDefinition currentProjectDef, ProjectViewSet projectViewSet, PostQuerySyncData previousState, BlazeContext context)
       throws IOException, BuildException {
 
     Optional<VcsState> vcsState = Optional.empty();
@@ -145,11 +153,33 @@ public class ProjectQuerierImpl implements ProjectQuerier {
 
     Optional<QuerySpec> spec = refresh.getQuerySpec();
     QuerySummary querySummary;
+    List<String> excludedTargetPatterns = this.targetExclusionPatterns(projectViewSet);
     if (spec.isPresent()) {
-      querySummary = queryRunner.runQuery(spec.get(), context);
+      querySummary = queryRunner.runQuery(spec.get(), context, excludedTargetPatterns);
     } else {
       querySummary = QuerySummary.EMPTY;
     }
     return refresh.createPostQuerySyncData(querySummary);
+  }
+
+  // Query sync queries all targets within the workspace and use that as source of truth 
+  // for future IDE operations such as analysis. 
+  // It ignores the target patterns settings in the project files,
+  // thus simplifies the "Target Finding" flow.
+  // The design to support all target patterns (inclusion and exclusion) means a lot of changes 
+  // in different places within qsync codebase.
+  // Here we only deal with exclusions to address the monolith performance issues in snowflake. 
+  private List<String> targetExclusionPatterns(ProjectViewSet projectViewSet) {
+    List<String> result = Lists.newArrayList();
+    ImmutableSet<String> projectTargetPatterns = 
+      projectViewSet.listItems(TargetSection.KEY).stream()
+            .map(TargetExpression::toString)
+            .collect(ImmutableSet.toImmutableSet());
+    for (String targetPattern : projectTargetPatterns) {
+      if (targetPattern.startsWith("-")) {
+        result.add(targetPattern);
+      }
+    }
+    return result;
   }
 }

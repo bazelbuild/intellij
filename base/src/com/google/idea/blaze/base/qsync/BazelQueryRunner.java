@@ -42,6 +42,8 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import java.util.List;
+
 /** The default implementation of QueryRunner. */
 public class BazelQueryRunner implements QueryRunner {
 
@@ -60,6 +62,12 @@ public class BazelQueryRunner implements QueryRunner {
 
   @Override
   public QuerySummary runQuery(QuerySpec query, BlazeContext context)
+      throws IOException, BuildException {
+    return this.runQuery(query, context, List.<String>of());
+  }
+
+  @Override
+  public QuerySummary runQuery(QuerySpec query, BlazeContext context, List<String> extraScope)
       throws IOException, BuildException {
     Stopwatch timer = Stopwatch.createStarted();
     BuildInvoker invoker;
@@ -88,11 +96,18 @@ public class BazelQueryRunner implements QueryRunner {
     BlazeCommand.Builder commandBuilder = BlazeCommand.builder(invoker, BlazeCommandName.QUERY, project);
     commandBuilder.addBlazeFlags(query.getQueryFlags());
     commandBuilder.addBlazeFlags("--keep_going");
-    String queryExp = query.getQueryExpression().orElse(null);
-    if (queryExp == null) {
+    StringBuilder queryExpBuilder = new StringBuilder();
+    String origQueryExp = query.getQueryExpression().orElse(null);
+    if (origQueryExp == null) {
       context.output(PrintOutput.output("Project is empty, not running a query"));
       return QuerySummary.EMPTY;
+    } else {
+      queryExpBuilder.append(origQueryExp);
     }
+    if (extraScope != null && !extraScope.isEmpty()) {
+      queryExpBuilder.append(String.join(" ", extraScope));
+    }
+    String queryExp = queryExpBuilder.toString();
     if (commandRunner.getMaxCommandLineLength().map(max -> queryExp.length() > max).orElse(false)) {
       // Query is too long, write it to a file.
       Path tmpFile =

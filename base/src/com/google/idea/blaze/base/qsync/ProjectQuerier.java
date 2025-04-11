@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.exception.BuildException;
@@ -29,11 +30,11 @@ import java.util.Optional;
  */
 public interface ProjectQuerier {
 
-  PostQuerySyncData fullQuery(ProjectDefinition projectDef, BlazeContext context)
+  PostQuerySyncData fullQuery(ProjectDefinition projectDef, ProjectViewSet projectViewSet, BlazeContext context)
       throws IOException, BuildException;
 
   PostQuerySyncData update(
-      ProjectDefinition currentProjectDef, PostQuerySyncData previousState, BlazeContext context)
+      ProjectDefinition currentProjectDef, ProjectViewSet projectViewSet, PostQuerySyncData previousState, BlazeContext context)
       throws IOException, BuildException;
 
   // TODO(b/308807019): Move vcs calculation out of ProjectQuerier
