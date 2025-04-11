@@ -252,7 +252,10 @@ public class BlazeWebJavascriptTestEventsHandlerTest extends BlazeIntegrationTes
 
     JasmineFileStructure barFileStructure =
         JasmineFileStructureBuilder.getInstance().buildTestFileStructure(barFile);
-    JasmineSuiteStructure barSuite = barFileStructure.findTopLevelSuiteByName("bar");
+    JasmineSuiteStructure barSuite = barFileStructure.getSuites().stream()
+        .filter((it) -> it.getName().equals("bar"))
+        .findFirst()
+        .orElse(null);
     assertThat(barSuite).isNotNull();
     JasmineSuiteStructure nestedSuite = barSuite.findChildSuiteByName("nested");
     assertThat(nestedSuite).isNotNull();

@@ -12,12 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_binary", "kt_jvm_library")
+load("@rules_java//java:defs.bzl", "java_binary")
 
-kt_jvm_binary(
+kt_jvm_library(
+    name = "lib",
+    srcs = ["maintenance.kt"],
+    deps = ["@com_google_guava_guava//jar"],
+)
+
+java_binary(
     name = "maintenance",
-    srcs = glob(["maintenance.kt"]),
     main_class = "MaintenanceKt",
-    deps = [
-        "@com_google_guava_guava//jar",
-    ],
+    runtime_deps = [":lib"] ,
 )
