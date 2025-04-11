@@ -93,6 +93,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -868,8 +869,8 @@ public final class SyncPhaseCoordinator {
 
   private static String durationStr(long timeMillis) {
     return timeMillis >= 1000
-        ? String.format("%.1fs", timeMillis / 1000d)
-        : String.format("%sms", timeMillis);
+        ? String.format(Locale.ROOT, "%.1fs", timeMillis / 1000d)
+        : String.format(Locale.ROOT, "%sms", timeMillis);
   }
 
   private static void logSyncError(BlazeContext context, Throwable e) {

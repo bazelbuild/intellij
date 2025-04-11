@@ -405,13 +405,13 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
         FutureUtil.waitForFuture(context, blazeInfoFuture)
             .timed(buildSystemName.getName() + "Info", EventType.BlazeInvocation)
             .withProgressMessage(
-                String.format("Running %s info...", buildSystemName.getLowerCaseName()))
-            .onError(String.format("Could not run %s info", buildSystemName.getLowerCaseName()))
+                String.format("Running %s info...", buildSystemName.name().toLowerCase()))
+            .onError(String.format("Could not run %s info", buildSystemName.name().toLowerCase()))
             .run()
             .result();
     if (info == null) {
       throw new RuntimeException(
-          String.format("%s info failed", buildSystemName.getLowerCaseName()));
+          String.format("%s info failed", buildSystemName.name().toLowerCase()));
     }
     return info;
   }

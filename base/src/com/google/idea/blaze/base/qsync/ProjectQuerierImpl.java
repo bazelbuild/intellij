@@ -47,7 +47,6 @@ public class ProjectQuerierImpl implements ProjectQuerier {
   private final Optional<BlazeVcsHandler> vcsHandler;
   private final BazelVersionHandler bazelVersionProvider;
 
-  @VisibleForTesting
   public ProjectQuerierImpl(
       QueryRunner queryRunner,
       ProjectRefresher projectRefresher,
