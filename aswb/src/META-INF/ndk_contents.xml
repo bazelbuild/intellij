@@ -33,4 +33,8 @@
     <androidDebugger implementation="com.google.idea.blaze.android.cppimpl.debug.BlazeNativeAndroidDebugger"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.android.tools">
+    <ndk.run.NativeDebuggerAppContextProvider implementation="com.google.idea.blaze.android.run.BlazeNativeDebuggerAppContextProvider"/>
+  </extensions>
+
 </idea-plugin>
