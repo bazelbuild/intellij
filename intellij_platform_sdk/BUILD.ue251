@@ -158,6 +158,9 @@ java_import(
         "plugins/java-i18n/lib/*.jar",
         "plugins/junit/lib/*.jar",
         "plugins/properties/lib/*.jar",
+        "plugins/json/lib/*.jar",
+        "plugins/json/lib/modules/*.jar",
+        "plugins/toml/lib/*.jar",
     ]),
     tags = ["intellij-provided-by-sdk"],
 )
