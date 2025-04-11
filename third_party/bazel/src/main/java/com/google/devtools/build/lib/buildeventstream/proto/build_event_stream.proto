@@ -168,9 +168,9 @@ message BuildEventId {
   message ActionCompletedId {
     string primary_output = 1;
     // Optional, the label of the owner of the action, for reference.
-    string label = 2;
+    optional string label = 2;
     // Optional, the id of the configuration of the action owner.
-    ConfigurationId configuration = 3;
+    optional ConfigurationId configuration = 3;
   }
 
   // Identifier of an event reporting an event associated with an unconfigured

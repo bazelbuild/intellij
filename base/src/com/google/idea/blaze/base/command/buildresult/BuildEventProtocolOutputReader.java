@@ -52,13 +52,15 @@ public final class BuildEventProtocolOutputReader {
     ImmutableList.Builder<BlazeTestResult> results = ImmutableList.builder();
     BuildEventStreamProtos.BuildEvent event;
     while ((event = streamProvider.getNext()) != null) {
+      String label;
+      Kind kind;
       switch (event.getId().getIdCase()) {
         case STARTED:
           startTimeMillis = event.getStarted().getStartTimeMillis();
           continue;
         case TARGET_COMPLETED:
-          String label = event.getId().getTargetCompleted().getLabel();
-          Kind kind = parseTargetKind(event.getCompleted().getTargetKind());
+          label = event.getId().getTargetCompleted().getLabel();
+          kind = parseTargetKind(event.getCompleted().getTargetKind());
           if (kind != null) {
             labelToKind.put(label, kind);
           }
@@ -80,6 +82,9 @@ public final class BuildEventProtocolOutputReader {
                   startTimeMillis));
           continue;
         case ACTION_COMPLETED:
+          if(!event.getId().getActionCompleted().hasLabel()) {
+            continue;
+          }
           label = event.getId().getActionCompleted().getLabel();
           // If no test result is available after action_completed event,
           // add a NO_STATUS test result.
