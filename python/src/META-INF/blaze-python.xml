@@ -19,4 +19,7 @@
     <TargetKindProvider implementation="com.google.idea.blaze.python.PythonBlazeRules"/>
     <BlazePyExecutableOutputFinder implementation="com.google.idea.blaze.python.run.BlazePyExecutableOutputFinderImpl"/>
   </extensions>
+  <extensions defaultExtensionNs="com.google.idea.blaze">
+    <BlazePyDebugFlagsProvider implementation="com.google.idea.blaze.python.run.BlazePyDebugHelperImpl"/>
+  </extensions>
 </idea-plugin>
