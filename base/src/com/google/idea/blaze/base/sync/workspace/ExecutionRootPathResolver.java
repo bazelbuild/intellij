@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2025 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -158,14 +160,19 @@ public class ExecutionRootPathResolver {
   public ImmutableList<File> resolveToExternalWorkspaceWithSymbolicLinkResolution(
       ExecutionRootPath path) {
     File fileInExecutionRoot = path.getFileRootedAt(outputBase);
-
-    try {
-      File realPath = fileInExecutionRoot.toPath().toRealPath().toFile();
-      if (workspacePathResolver.getWorkspacePath(realPath) != null) {
-        return ImmutableList.of(realPath);
+    Path pathInExecutionRoot = fileInExecutionRoot.toPath();
+    if (!Files.exists(pathInExecutionRoot)) {
+      LOG.info("Cannot resolve " + pathInExecutionRoot + " because it does not exist");
+    }
+    else {
+      try {
+        File realPath = pathInExecutionRoot.toRealPath().toFile();
+        if (workspacePathResolver.getWorkspacePath(realPath) != null) {
+          return ImmutableList.of(realPath);
+        }
+      } catch (IOException ioException) {
+        LOG.warn("Failed to resolve real path for " + fileInExecutionRoot, ioException);
       }
-    } catch (IOException ioException) {
-      LOG.warn("Failed to resolve real path for " + fileInExecutionRoot, ioException);
     }
 
     return ImmutableList.of(fileInExecutionRoot);
