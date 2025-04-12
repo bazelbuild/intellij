@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2025 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import java.io.File;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -77,6 +78,7 @@ public class AspectSyncSourceToTargetMap implements SourceToTargetMap {
   }
 
   @SuppressWarnings("unused")
+  @RequiresBackgroundThread
   private static ImmutableMultimap<File, TargetKey> computeSourceToTargetMap(
       Project project, BlazeProjectData blazeProjectData) {
     ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();

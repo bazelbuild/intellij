@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2016 The Bazel Authors. All rights reserved.
+  ~ Copyright 2025 The Bazel Authors. All rights reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -625,6 +625,7 @@
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncListener implementation="com.google.idea.blaze.base.sync.SyncCache$ClearSyncCache"/>
+    <SyncListener implementation="com.google.idea.blaze.base.sync.SourceToTargetMapInitializer"/>
     <SyncListener implementation="com.google.idea.blaze.base.run.BlazeRunConfigurationSyncListener"/>
     <SyncListener implementation="com.google.idea.blaze.base.sync.status.BlazeSyncStatusListener" order="first"/>
     <SyncListener implementation="com.google.idea.blaze.base.dependencies.ExternalFileProjectManagementHelper$UpdateNotificationsAfterSync"/>
