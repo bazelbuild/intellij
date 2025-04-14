@@ -188,6 +188,12 @@ clwb_headless_test(
     last_green = False, # do not test query sync against last green
 )
 
+clwb_headless_test(
+    name = "execution_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/ExecutionTest.java"],
+    project = "simple",
+)
+
 test_suite(
     name = "headless_tests",
     tests = [
@@ -196,5 +202,6 @@ test_suite(
         ":query_sync_headless_test",
         ":simple_headless_test",
         ":virtual_includes_headless_test",
+        ":execution_headless_test",
     ],
 )

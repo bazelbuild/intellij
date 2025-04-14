@@ -65,6 +65,11 @@ java_import(
     ]),
 )
 
+filegroup(
+    name = "clion_tools",
+    srcs = glob(["bin/**/*"]),
+)
+
 java_import(
     name = "hg4idea",
     jars = glob(["plugins/hg4idea/lib/hg4idea.jar"]),
