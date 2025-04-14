@@ -20,16 +20,12 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.command.buildresult.BuildResult;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
-import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
-import com.google.idea.blaze.base.command.buildresult.bepparser.ParsedBepOutput;
 import com.google.idea.blaze.base.ideinfo.PyIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -45,8 +41,6 @@ import com.google.idea.blaze.base.run.WithBrowserHyperlinkExecutionException;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationRunner.BlazeCommandRunProfileState;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.ProcessGroupUtil;
 import com.google.idea.blaze.base.util.SaveUtil;
@@ -86,14 +80,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Python-specific run configuration runner. */
 public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
-  private static final String DEFAULT_OUTPUT_GROUP_NAME = "default";
-
-  /** This inserts flags provided by any BlazePyDebugHelpers to the pydevd.py invocation */
 
   /** Used to store a runner to an {@link ExecutionEnvironment}. */
   private static final Key<AtomicReference<PyExecutionInfo>> EXECUTABLE_KEY =
@@ -324,30 +314,13 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
                 ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
             "Building debug binary");
 
-    try {
-      BuildEventStreamProvider streamProvider =
-          Uninterruptibles.getUninterruptibly(streamProviderFuture);
-      ParsedBepOutput parsedBepOutput =
-          BuildResultParser.getBuildOutput(streamProvider, Interners.STRING);
-      BuildResult result = BuildResult.fromExitCode(parsedBepOutput.buildResult());
-      if (result.status != BuildResult.Status.SUCCESS) {
-        throw new ExecutionException("Blaze failure building debug binary");
-      }
-      List<File> candidateFiles =
-          LocalFileArtifact.getLocalFiles(
-                  com.google.idea.blaze.common.Label.of(target.toString()),
-                  BlazeBuildOutputs.fromParsedBepOutput(parsedBepOutput)
-                      .getOutputGroupTargetArtifacts(DEFAULT_OUTPUT_GROUP_NAME, target.toString())
-                      .asList(),
-                  BlazeContext.create(),
-                  project)
-              .stream()
-              .filter(File::canExecute)
-              .collect(Collectors.toList());
-      if (candidateFiles.isEmpty()) {
-        throw new ExecutionException(
-            String.format("No output artifacts found when building %s", target));
-      }
+    try (BuildEventStreamProvider streamProvider = streamProviderFuture.get()) {
+      final var candidateFiles = BuildResultParser.getExecutableArtifacts(
+          streamProvider,
+          Interners.STRING,
+          target.toString()
+      );
+
       File file = findExecutable(target, candidateFiles);
       if (file == null) {
         throw new ExecutionException(
@@ -358,7 +331,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       }
       LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
       return new PyExecutionInfo(file, args);
-    } catch (CancellationException e) {
+    } catch (InterruptedException | CancellationException e) {
       streamProviderFuture.cancel(true);
       throw new RunCanceledByUserException();
     } catch (java.util.concurrent.ExecutionException | GetArtifactsException e) {
