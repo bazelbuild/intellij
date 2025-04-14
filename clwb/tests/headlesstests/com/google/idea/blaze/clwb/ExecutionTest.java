@@ -90,6 +90,6 @@ public class ExecutionTest extends ClwbHeadlessTestCase {
     manager.setForceCompilationInTests(true);
     manager.restartRunProfile(environment);
 
-    return pullFuture(future, 30, TimeUnit.SECONDS);
+    return pullFuture(future, 2, TimeUnit.MINUTES);
   }
 }

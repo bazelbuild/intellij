@@ -34,7 +34,8 @@ public class BlazeSyncStartupActivity implements StartupActivity.DumbAware {
 
   @Override
   public void runActivity(Project project) {
-    // do not automatically start a sync during testing
+    // do not automatically start a sync during testing, this allows tests to
+    // manually start a sync and instrument the BlazeContext
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
