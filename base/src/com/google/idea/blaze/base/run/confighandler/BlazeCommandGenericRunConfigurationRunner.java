@@ -21,25 +21,20 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.buildview.BazelExecService;
+import com.google.idea.blaze.base.buildview.BazelProcess;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
-import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
-import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
-import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
-import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
@@ -48,48 +43,32 @@ import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultHolder;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.OutputSink;
-import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
-import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
-import com.google.idea.blaze.common.Interners;
-import com.google.idea.blaze.common.PrintOutput;
-import com.google.idea.blaze.common.PrintOutput.OutputType;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.CommandLineState;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilderImpl;
 import com.intellij.execution.filters.UrlFilter;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import java.io.OutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * Generic runner for {@link BlazeCommandRunConfiguration}s, used as a fallback in the case where no
- * other runners are more relevant.
+ * Generic runner for {@link BlazeCommandRunConfiguration}s, used as a fallback in the case where no other runners are
+ * more relevant.
  */
 public final class BlazeCommandGenericRunConfigurationRunner
     implements BlazeCommandRunConfigurationRunner {
@@ -105,8 +84,11 @@ public final class BlazeCommandGenericRunConfigurationRunner
     return true;
   }
 
-  /** {@link RunProfileState} for generic blaze commands. */
+  /**
+   * {@link RunProfileState} for generic blaze commands.
+   */
   public static class BlazeCommandRunProfileState extends CommandLineState {
+
     private static final int BLAZE_BUILD_INTERRUPTED = 8;
     private final BlazeCommandRunConfiguration configuration;
     private final BlazeCommandRunConfigurationCommonState handlerState;
@@ -162,40 +144,13 @@ public final class BlazeCommandGenericRunConfigurationRunner
           : getProcessHandlerForNonTests(project, invoker, blazeCommand, context);
     }
 
-    private ProcessHandler getGenericProcessHandler() {
-      return new ProcessHandler() {
-        @Override
-        protected void destroyProcessImpl() {
-          notifyProcessTerminated(BLAZE_BUILD_INTERRUPTED);
-        }
-
-        @Override
-        protected void detachProcessImpl() {
-          ApplicationManager.getApplication().executeOnPooledThread(this::notifyProcessDetached);
-        }
-
-        @Override
-        public boolean detachIsDefault() {
-          return false;
-        }
-
-        @Nullable
-        @Override
-        public OutputStream getProcessInput() {
-          return null;
-        }
-      };
-    }
-
     private ProcessHandler getProcessHandlerForNonTests(
         Project project,
         BuildInvoker invoker,
         BlazeCommand.Builder blazeCommandBuilder,
         BlazeContext context)
         throws ExecutionException {
-      ProcessHandler processHandler = getGenericProcessHandler();
       ConsoleView consoleView = getConsoleBuilder().getConsole();
-      context.addOutputSink(PrintOutput.class, new WritingOutputSink(consoleView));
       setConsoleBuilder(
           new TextConsoleBuilderImpl(project) {
             @Override
@@ -205,43 +160,12 @@ public final class BlazeCommandGenericRunConfigurationRunner
           });
       addConsoleFilters(consoleFilters.toArray(new Filter[0]));
 
-      @NotNull Map<String, String> envVars = handlerState.getUserEnvVarsState().getData().getEnvs();
-      ListenableFuture<BlazeBuildOutputs> blazeBuildOutputsListenableFuture =
-          BlazeExecutor.getInstance()
-              .submit(
-                  () -> {
-                    try (BuildEventStreamProvider streamProvider =
-                        invoker.invoke(blazeCommandBuilder, context)) {
-                      return BlazeBuildOutputs.fromParsedBepOutput(
-                          BuildResultParser.getBuildOutput(streamProvider, Interners.STRING));
-                    }
-                  });
-      Futures.addCallback(
-          blazeBuildOutputsListenableFuture,
-          new FutureCallback<BlazeBuildOutputs>() {
-            @Override
-            public void onSuccess(BlazeBuildOutputs blazeBuildOutputs) {
-              processHandler.detachProcess();
-            }
-
-            @Override
-            public void onFailure(Throwable throwable) {
-              context.handleException(throwable.getMessage(), throwable);
-              processHandler.detachProcess();
-            }
-          },
-          BlazeExecutor.getInstance().getExecutor());
-
-      processHandler.addProcessListener(
-          new ProcessAdapter() {
-            @Override
-            public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
-              if (willBeDestroyed) {
-                context.setCancelled();
-              }
-            }
-          });
-      return processHandler;
+      final var envVars = handlerState.getUserEnvVarsState().getData().getEnvs();
+      try {
+        return BazelExecService.instance(project).run(context, blazeCommandBuilder).getHdl();
+      } catch (IOException e) {
+        throw new ExecutionException(e);
+      }
     }
 
     private ProcessHandler getProcessHandlerForTests(
@@ -271,7 +195,6 @@ public final class BlazeCommandGenericRunConfigurationRunner
                 return consoleView;
               }
             });
-        context.addOutputSink(PrintOutput.class, new WritingOutputSink(consoleView));
       }
       addConsoleFilters(consoleFilters.toArray(new Filter[0]));
       @NotNull Map<String, String> envVars = handlerState.getUserEnvVarsState().getData().getEnvs();
@@ -280,32 +203,29 @@ public final class BlazeCommandGenericRunConfigurationRunner
         // If we can use the CLI, that means we will run through Bazel (as opposed to a raw process handler)
         // When running `bazel test`, bazel will not forward the environment to the tests themselves -- we need to use
         // the --test_env flag for that. Therefore, we convert all the env vars to --test_env flags here.
-        for (Map.Entry<String, String> env: envVars.entrySet()) {
+        for (Map.Entry<String, String> env : envVars.entrySet()) {
           blazeCommandBuilder.addBlazeFlags(BlazeFlags.TEST_ENV, String.format("%s=%s", env.getKey(), env.getValue()));
         }
       }
       return getCommandRunnerProcessHandlerForTests(
-          invoker, blazeCommandBuilder, testResultFinderStrategy, context);
+          project, blazeCommandBuilder, testResultFinderStrategy, context);
     }
 
     private ProcessHandler getCommandRunnerProcessHandlerForTests(
-        BuildInvoker invoker,
+        Project project,
         BlazeCommand.Builder blazeCommandBuilder,
         BlazeTestResultFinderStrategy testResultFinderStrategy,
         BlazeContext context) {
-      ProcessHandler processHandler = getGenericProcessHandler();
-      @NotNull Map<String, String> envVars = handlerState.getUserEnvVarsState().getData().getEnvs();
-      ListenableFuture<BlazeTestResults> blazeTestResultsFuture =
-          BlazeExecutor.getInstance()
-              .submit(
-                  () -> {
-                    try (BuildEventStreamProvider streamProvider =
-                        invoker.invoke(blazeCommandBuilder, context)) {
-                      return BuildResultParser.getTestResults(streamProvider);
-                    }
-                  });
+      final var envVars = handlerState.getUserEnvVarsState().getData().getEnvs();
+      final BazelProcess<BlazeTestResults> process;
+      try {
+        process = BazelExecService.instance(project).test(context, blazeCommandBuilder);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+
       Futures.addCallback(
-          blazeTestResultsFuture,
+          process.getResultFuture(),
           new FutureCallback<BlazeTestResults>() {
             @Override
             public void onSuccess(BlazeTestResults blazeTestResults) {
@@ -315,7 +235,6 @@ public final class BlazeCommandGenericRunConfigurationRunner
               // test results to a local file.
               verify(testResultFinderStrategy instanceof BlazeTestResultHolder);
               ((BlazeTestResultHolder) testResultFinderStrategy).setTestResults(blazeTestResults);
-              processHandler.detachProcess();
             }
 
             @Override
@@ -324,24 +243,11 @@ public final class BlazeCommandGenericRunConfigurationRunner
               verify(testResultFinderStrategy instanceof BlazeTestResultHolder);
               ((BlazeTestResultHolder) testResultFinderStrategy)
                   .setTestResults(BlazeTestResults.NO_RESULTS);
-              processHandler.detachProcess();
             }
           },
           BlazeExecutor.getInstance().getExecutor());
 
-      processHandler.addProcessListener(
-          new ProcessAdapter() {
-            @Override
-            public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
-              if (willBeDestroyed) {
-                context.setCancelled();
-                verify(testResultFinderStrategy instanceof BlazeTestResultHolder);
-                ((BlazeTestResultHolder) testResultFinderStrategy)
-                    .setTestResults(BlazeTestResults.NO_RESULTS);
-              }
-            }
-          });
-      return processHandler;
+      return process.getHdl();
     }
 
     private BlazeCommand.Builder getBlazeCommand(
@@ -380,25 +286,6 @@ public final class BlazeCommandGenericRunConfigurationRunner
 
     private boolean isTest() {
       return BlazeCommandName.TEST.equals(getCommand());
-    }
-  }
-
-  private static class WritingOutputSink implements OutputSink<PrintOutput> {
-    private final ConsoleView console;
-
-    public WritingOutputSink(ConsoleView console) {
-      this.console = console;
-    }
-
-    @Override
-    public Propagation onOutput(PrintOutput output) {
-      // Add ANSI support to the console to view colored output
-      console.print(
-          output.getText().replaceAll("\u001B\\[[;\\d]*m", "") + "\n",
-          output.getOutputType() == OutputType.ERROR
-              ? ConsoleViewContentType.ERROR_OUTPUT
-              : ConsoleViewContentType.NORMAL_OUTPUT);
-      return Propagation.Continue;
     }
   }
 }

@@ -796,7 +796,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
     aspectStrategy.addAspectAndOutputGroups(project, builder, outputGroups, activeLanguages, onlyDirectDeps);
     try {
-      return BazelExecService.instance(project).build(context, builder);
+      return BazelExecService.instance(project).build(context, builder).getResultBlocking();
+    } catch (IOException e) {
+      throw new BuildException("bazel build failed", e);
     } finally {
       if (!Registry.is("bazel.sync.keep.target.files")) {
           try {
