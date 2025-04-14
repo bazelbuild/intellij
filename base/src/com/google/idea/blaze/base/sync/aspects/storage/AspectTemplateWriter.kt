@@ -16,12 +16,12 @@
 package com.google.idea.blaze.base.sync.aspects.storage
 
 import com.google.common.collect.ImmutableMap
-import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider.ASPECT_TEMPLATE_DIRECTORY
 import com.google.idea.blaze.base.model.primitives.LanguageClass
 import com.google.idea.blaze.base.projectview.ProjectViewManager
 import com.google.idea.blaze.base.projectview.ProjectViewSet
 import com.google.idea.blaze.base.sync.SyncProjectState
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException
+import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider.ASPECT_TEMPLATE_DIRECTORY
 import com.google.idea.blaze.base.sync.codegenerator.CodeGeneratorRuleNameHelper
 import com.google.idea.blaze.base.util.TemplateWriter
 import com.intellij.openapi.project.Project
@@ -102,12 +102,14 @@ class AspectTemplateWriter : AspectWriter {
     val externalWorkspaceData = state.externalWorkspaceData
     val isAtLeastBazel8 = state.blazeVersionData.bazelIsAtLeastVersion(8, 0, 0)
     val isAtLeastBazel9 = state.blazeVersionData.bazelIsAtLeastVersion(9, 0, 0)
+    val isNotBzlmod = state.blazeInfo.starlarkSemantics.contains("enable_bzlmod=false")
+    fun hasRepository(name: String) = externalWorkspaceData?.getByRepoName(name) != null
 
     val isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA) &&
-        (externalWorkspaceData != null && (!isAtLeastBazel8 || externalWorkspaceData.getByRepoName("rules_java") != null))
+        (externalWorkspaceData != null && (!isAtLeastBazel8 || isNotBzlmod || hasRepository("rules_java")))
 
     val isPythonEnabled = activeLanguages.contains(LanguageClass.PYTHON) &&
-        (externalWorkspaceData != null && (!isAtLeastBazel8 || externalWorkspaceData.getByRepoName("rules_python") != null))
+        (externalWorkspaceData != null && (!isAtLeastBazel8 || isNotBzlmod || hasRepository("rules_python")))
 
     return ImmutableMap.of(
       "bazel8OrAbove", if (isAtLeastBazel8) "true" else "false",
