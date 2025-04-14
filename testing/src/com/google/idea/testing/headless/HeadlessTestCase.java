@@ -27,6 +27,8 @@ import com.google.idea.blaze.base.wizard2.BlazeProjectCommitException;
 import com.google.idea.blaze.base.wizard2.BlazeProjectImportBuilder;
 import com.google.idea.blaze.base.wizard2.CreateFromScratchProjectViewOption;
 import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -209,6 +211,9 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
     }
 
     builder.builder().commitToProject(myProject);
+
+    final var options = new OpenProjectTask(false, null, false, false).withProject(myProject);
+    ProjectUtil.openProject(projectFile.toPath(), options);
   }
 
   protected ProjectViewBuilder projectViewText(BazelVersion version) {
