@@ -8,17 +8,14 @@ import com.google.idea.blaze.base.command.buildresult.BuildResult
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep
 import com.google.idea.blaze.base.command.buildresult.BuildResultParser
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResults
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
 import com.google.idea.blaze.common.Interners
 import com.google.idea.blaze.common.PrintOutput
 import com.google.protobuf.CodedInputStream
 import com.intellij.execution.configurations.PtyCommandLine
-import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.ProcessListener
-import com.intellij.execution.process.ProcessOutputTypes
-import com.intellij.openapi.Disposable
+import com.intellij.execution.process.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -29,15 +26,18 @@ import com.intellij.util.io.LimitedInputStream
 import com.intellij.util.system.OS
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import java.io.BufferedInputStream
 import java.io.FileInputStream
-import java.util.Optional
+import java.io.IOException
+import java.util.*
 import kotlin.io.path.pathString
 
 private val LOG: Logger = Logger.getInstance(BazelExecService::class.java)
 
 @Service(Service.Level.PROJECT)
 class BazelExecService(private val project: Project, private val scope: CoroutineScope) {
+
   companion object {
     @JvmStatic
     fun instance(project: Project): BazelExecService = project.service()
@@ -54,18 +54,67 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
     )
   }
 
+  @Throws(IOException::class)
   private fun <T> executionScope(
     ctx: BlazeContext,
-    block: suspend CoroutineScope.(BuildResultHelperBep) -> T
-  ): T {
-    return ctx.pushJob(scope) {
+    block: suspend CoroutineScope.(BuildResultHelperBep) -> BazelProcess<T>
+  ): BazelProcess<T> {
+    // create the ProcessHandler and thereby start the bazel process
+    val deferred = scope.async(CoroutineName("BazelExecution")) {
       BuildResultHelperBep().use { block(it) }
     }
+    ctx.addCancellationHandler { deferred.cancel() }
+
+    // get the BazelProcess, but cancel it if the scope is canceled
+    val process = try {
+      deferred.asCompletableFuture().get()
+    } catch (e: Exception) {
+      throw IOException("bazel process creation was interrupted", e)
+    }
+    ctx.addCancellationHandler { process.cancel() }
+
+    return process
   }
 
-  private suspend fun execute(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): Int {
-    // the old sync view does not use a PTY based terminal, and idk why it does not work on windows :c
-    if (BuildViewMigration.present(ctx) && OS.CURRENT != OS.Windows) {
+  private suspend fun awaitProcess(ctx: BlazeContext, hdl: ProcessHandler): Int {
+    hdl.addProcessListener(object : ProcessListener {
+      override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+        if (outputType == ProcessOutputTypes.SYSTEM) {
+          ctx.println(event.text)
+        } else {
+          ctx.output(PrintOutput.process(event.text))
+        }
+
+        LOG.debug("BAZEL OUTPUT: " + event.text)
+      }
+    })
+    hdl.startNotify()
+
+    while (!hdl.isProcessTerminated) {
+      delay(100)
+    }
+
+    val exitCode = hdl.exitCode ?: 1
+    if (exitCode != 0) {
+      ctx.setHasError()
+    }
+
+    return exitCode
+  }
+
+  /**
+   * Executes the bazel command and creates a [BazelProcess] that captures the
+   * running process. Returns immediately after the process was created. The
+   * result of the process is awaited asynchronously and can be accessed as by
+   * the deferred result in the [BazelProcess].
+   */
+  private suspend fun <T> execute(
+    ctx: BlazeContext,
+    cmdBuilder: BlazeCommand.Builder,
+    useCurses: Boolean,
+    result: suspend CoroutineScope.(Int) -> T, // allows to create a custom result upon completion of the process
+  ): BazelProcess<T> {
+    if (useCurses) {
       cmdBuilder.addBlazeFlags("--curses=yes")
     } else {
       cmdBuilder.addBlazeFlags("--curses=no")
@@ -78,43 +127,26 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
     val cmdLine = PtyCommandLine()
       .withInitialColumns(size.columns)
       .withInitialRows(size.rows)
+      // redirect the error stream to not print everything in red :c
+      .withRedirectErrorStream(true)
       .withExePath(cmd.binaryPath)
       .withParameters(cmd.toArgumentList())
       .withWorkDirectory(root.pathString)
 
-    var handler: OSProcessHandler? = null
-    val exitCode = try {
-      handler = withContext(Dispatchers.IO) {
-        OSProcessHandler(cmdLine)
-      }
-
-      handler.addProcessListener(object : ProcessListener {
-        override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-          if (outputType == ProcessOutputTypes.SYSTEM) {
-            ctx.println(event.text)
-          } else {
-            ctx.output(PrintOutput.process(event.text))
-          }
-
-          LOG.debug("BUILD OUTPUT: " + event.text)
-        }
-      })
-      handler.startNotify()
-
-      while (!handler.isProcessTerminated) {
-        delay(100)
-      }
-
-      handler.exitCode ?: 1
-    } finally {
-      handler?.destroyProcess()
+    val handler = withContext(Dispatchers.IO) {
+      ColoredProcessHandler(cmdLine)
     }
 
-    if (exitCode != 0) {
-      ctx.setHasError()
+    // await the result of the process asynchronously, cancellation is handled in the executionScope function
+    val callback = scope.async(CoroutineName("AwaitProcess")) {
+      try {
+        result(awaitProcess(ctx, handler))
+      } finally {
+        handler.destroyProcess()
+      }
     }
 
-    return exitCode
+    return BazelProcess(handler, callback)
   }
 
   private suspend fun parseEvent(ctx: BlazeContext, stream: BufferedInputStream) {
@@ -171,29 +203,70 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
     }
   }
 
-  fun build(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): BlazeBuildOutputs.Legacy {
+  /**
+   * Runs a bazel build, output is added to the [BlazeContext]. If the context
+   * contains a [BuildViewScope] the bazel is run with curses.
+   */
+  @Throws(IOException::class)
+  fun build(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): BazelProcess<BlazeBuildOutputs.Legacy> {
     assertNonBlocking()
     LOG.assertTrue(cmdBuilder.name == BlazeCommandName.BUILD)
+
+    // the old sync view does not use a PTY based terminal, and idk why it does not work on windows :c
+    val useCurses = BuildViewMigration.present(ctx) && OS.CURRENT != OS.Windows
 
     return executionScope(ctx) { provider ->
       cmdBuilder.addBlazeFlags(provider.buildFlags)
 
       val parseJob = parseEvents(ctx, provider)
 
-      val exitCode = execute(ctx, cmdBuilder)
-      val result = BuildResult.fromExitCode(exitCode)
+      execute(ctx, cmdBuilder, useCurses) { exitCode ->
+        parseJob.cancelAndJoin()
+        ensureActive()
 
-      parseJob.cancelAndJoin()
+        val result = BuildResult.fromExitCode(exitCode)
+        if (result.status == BuildResult.Status.FATAL_ERROR) {
+          return@execute BlazeBuildOutputs.noOutputsForLegacy(result)
+        }
 
-      if (result.status == BuildResult.Status.FATAL_ERROR) {
-        return@executionScope BlazeBuildOutputs.noOutputsForLegacy(result)
+        provider.getBepStream(Optional.empty()).use { bepStream ->
+          BlazeBuildOutputs.fromParsedBepOutputForLegacy(
+            BuildResultParser.getBuildOutputForLegacySync(bepStream, Interners.STRING),
+          )
+        }
       }
+    }
+  }
 
-      provider.getBepStream(Optional.empty()).use { bepStream ->
-        BlazeBuildOutputs.fromParsedBepOutputForLegacy(
-          BuildResultParser.getBuildOutputForLegacySync(bepStream, Interners.STRING),
-        )
+  /**
+   * Runs a bazel test, output is added to the [BlazeContext]. Bazel is always
+   * run without curses.
+   */
+  @Throws(IOException::class)
+  fun test(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): BazelProcess<BlazeTestResults> {
+    LOG.assertTrue(cmdBuilder.name == BlazeCommandName.TEST)
+
+    return executionScope(ctx) { provider ->
+      cmdBuilder.addBlazeFlags(provider.buildFlags)
+
+      execute(ctx, cmdBuilder, useCurses = false) {
+        ensureActive()
+        provider.getBepStream(Optional.empty()).use(BuildResultParser::getTestResults)
       }
+    }
+  }
+
+  /**
+   * Runs a bazel run command, output is added to the [BlazeContext]. Bazel is always
+   * run without curses.
+   */
+  @Throws(IOException::class)
+  fun run(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): BazelProcess<Unit> {
+    LOG.assertTrue(cmdBuilder.name == BlazeCommandName.RUN)
+
+    return executionScope(ctx) { provider ->
+      cmdBuilder.addBlazeFlags(provider.buildFlags)
+      execute(ctx, cmdBuilder, useCurses = false) { }
     }
   }
 }
