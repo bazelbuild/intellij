@@ -246,7 +246,8 @@ java_library(
 # For tests, we need the IJ API at runtime, so we can't use the neverlink rule.
 java_library(
     data = select_from_plugin_api_directory(
-        clion = [],
+        # Provide access to clion bundled tools to tests (like debugers).
+        clion = [":clion_tools"],
         # From 2022.1 forward, the version of kotlinc will be obtained
         # by KotlinPluginLayout from plugins/kotlin/kotlinc/build.txt
         # so we need to provide this to our tests
