@@ -198,7 +198,7 @@ test_suite(
     name = "headless_tests",
     tests = [
         ":external_includes_headless_test",
-        # ":llvm_toolchain_headless_test", excluded for now since they are kinda slow
+        ":llvm_toolchain_headless_test",
         ":query_sync_headless_test",
         ":simple_headless_test",
         ":virtual_includes_headless_test",
