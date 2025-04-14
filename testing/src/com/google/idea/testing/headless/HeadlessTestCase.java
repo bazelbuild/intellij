@@ -5,6 +5,8 @@ import static junit.framework.Assert.fail;
 
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.bazel.BazelVersion;
+import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.project.AutoImportProjectOpenProcessor;
@@ -27,6 +29,7 @@ import com.google.idea.blaze.base.wizard2.BlazeProjectCommitException;
 import com.google.idea.blaze.base.wizard2.BlazeProjectImportBuilder;
 import com.google.idea.blaze.base.wizard2.CreateFromScratchProjectViewOption;
 import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
+import com.google.idea.blaze.common.Label;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -311,5 +314,15 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
 
       return psiFile;
     });
+  }
+
+  protected FuncallExpression findRule(Label label) {
+    final var buildFile = findProjectPsiFile(String.format("%s/BUILD", label.buildPackage()));
+    assertThat(buildFile).isInstanceOf(BuildFile.class);
+
+    final var element = ((BuildFile) buildFile).findRule(label.name());
+    assertThat(element).isNotNull();
+
+    return element;
   }
 }
