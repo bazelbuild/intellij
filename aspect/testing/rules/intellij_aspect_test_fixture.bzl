@@ -28,7 +28,7 @@ def _impl(ctx):
     output = ctx.actions.declare_file(output_name)
 
     args = [output.path]
-    args += [":".join([f.path for f in inputs.to_list()])]
+    args.append(":".join([f.path for f in inputs.to_list()]))
     for k, v in output_groups.items():
         args.append(k)
         args.append(":".join([f.short_path for f in v.to_list()]))

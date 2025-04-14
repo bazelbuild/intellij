@@ -4,6 +4,9 @@ load(
     "@bazel_tools//tools/build_defs/cc:action_names.bzl",
     "ACTION_NAMES",
 )
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
+load("@rules_java//java/common:java_common.bzl", "java_common")
 load(
     ":artifacts.bzl",
     "artifact_location",
@@ -13,18 +16,14 @@ load(
     "struct_omit_none",
     "to_artifact_location",
 )
-load(":flag_hack.bzl", "FlagHackInfo")
-
-load(":java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
-
-load(":python_info.bzl", "get_py_info", "py_info_in_target")
-
 load(":code_generator_info.bzl", "CODE_GENERATOR_RULE_NAMES")
-
+load(":flag_hack.bzl", "FlagHackInfo")
+load(":java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
 load(
     ":make_variables.bzl",
     "expand_make_variables",
 )
+load(":python_info.bzl", "get_py_info", "py_info_in_target")
 
 IntelliJInfo = provider(
     doc = "Collected information about the targets visited by the aspect.",
@@ -109,7 +108,7 @@ def run_jar(ctx, jar, **kwargs):
     return ctx.actions.run_shell(
         tools = depset([jar], transitive = [host_java.files]),
         command = "%s -jar %s $@" % (host_java.java_executable_exec_path, jar.path),
-        **kwargs,
+        **kwargs
     )
 
 def get_code_generator_rule_names(ctx, language_name):
@@ -462,7 +461,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     generated = []
     cgo = False
 
-    # currently there's no Go Skylark API, with the only exception being proto_library targets
+    # currently there's no Go Starlark API, with the only exception being proto_library targets
     if ctx.rule.kind in [
         "go_binary",
         "go_library",
