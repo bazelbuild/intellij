@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -193,7 +194,13 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
         .setLanguageSettings(new WorkspaceLanguageSettings(WorkspaceType.ANDROID, activeLanguages))
         .setProjectViewSet(MockProjectViewManager.getInstance(project).getProjectViewSet())
         .setBlazeVersionData(BlazeVersionData.builder().build())
-        .setBlazeInfo(BlazeInfo.builder().build(BuildSystemName.Blaze))
+        .setBlazeInfo(
+            BlazeInfo.createMockBlazeInfo(
+                "/",
+                "/root",
+                "/root/out/bin",
+                "/root/out/gen",
+                "/root/out/testlogs"))
         .setWorkspacePathResolver(
             new WorkspacePathResolverImpl(WorkspaceRoot.fromProjectSafe(project)))
         .setExternalWorkspaceData(ExternalWorkspaceData.EMPTY)

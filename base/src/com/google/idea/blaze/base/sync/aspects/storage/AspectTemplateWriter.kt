@@ -102,7 +102,7 @@ class AspectTemplateWriter : AspectWriter {
     val externalWorkspaceData = state.externalWorkspaceData
     val isAtLeastBazel8 = state.blazeVersionData.bazelIsAtLeastVersion(8, 0, 0)
     val isAtLeastBazel9 = state.blazeVersionData.bazelIsAtLeastVersion(9, 0, 0)
-    val isNotBzlmod = state.blazeInfo.starlarkSemantics.contains("enable_bzlmod=false")
+    val isNotBzlmod = state.blazeInfo.starlarkSemantics?.contains("enable_bzlmod=false") ?: false
     fun hasRepository(name: String) = externalWorkspaceData?.getByRepoName(name) != null
 
     val isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA) &&
