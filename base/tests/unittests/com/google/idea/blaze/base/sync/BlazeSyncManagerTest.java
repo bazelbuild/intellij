@@ -26,10 +26,12 @@ import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -39,6 +41,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
@@ -191,6 +194,13 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
         .setLanguageSettings(new WorkspaceLanguageSettings(WorkspaceType.ANDROID, activeLanguages))
         .setProjectViewSet(MockProjectViewManager.getInstance(project).getProjectViewSet())
         .setBlazeVersionData(BlazeVersionData.builder().build())
+        .setBlazeInfo(
+            BlazeInfo.createMockBlazeInfo(
+                "/",
+                "/root",
+                "/root/out/bin",
+                "/root/out/gen",
+                "/root/out/testlogs"))
         .setWorkspacePathResolver(
             new WorkspacePathResolverImpl(WorkspaceRoot.fromProjectSafe(project)))
         .setExternalWorkspaceData(ExternalWorkspaceData.EMPTY)

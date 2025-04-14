@@ -198,6 +198,7 @@ final class ProjectStateSyncTask {
                .setProjectViewSet(projectViewSet)
                .setLanguageSettings(workspaceLanguageSettings)
                .setBlazeVersionData(blazeVersionData)
+               .setBlazeInfo(blazeInfo)
                .setWorkingSet(workingSet)
                .setWorkspacePathResolver(workspacePathResolver)
                .setExternalWorkspaceData(externalWorkspaceData)

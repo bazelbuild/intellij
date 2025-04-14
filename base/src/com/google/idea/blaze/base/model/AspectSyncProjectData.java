@@ -111,8 +111,8 @@ public final class AspectSyncProjectData implements BlazeProjectData {
   public ProjectData.BlazeProjectData toProto() {
     return ProjectData.BlazeProjectData.newBuilder()
         .setTargetData(targetData.toProto())
-        .setBlazeInfo(blazeInfo.toProto())
         .setBlazeVersionData(blazeVersionData.toProto())
+        .setBlazeInfo(blazeInfo.toProto())
         .setWorkspacePathResolver(workspacePathResolver.toProto())
         .setWorkspaceLanguageSettings(workspaceLanguageSettings.toProto())
         .setSyncState(syncState.toProto())
