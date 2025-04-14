@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
 import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
+import com.google.idea.blaze.base.command.buildresult.bepparser.ParsedBepOutput;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -60,6 +61,7 @@ import java.util.stream.Collectors;
 
 /** CLion-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
+
   private static final String DEFAULT_OUTPUT_GROUP_NAME = "default";
 
   private final BlazeCommandRunConfiguration configuration;
@@ -146,55 +148,37 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
    */
   private File getExecutableToDebug(ExecutionEnvironment env) throws ExecutionException {
     SaveUtil.saveAllFiles();
-    try (BuildResultHelper buildResultHelper =
-        BuildResultHelperProvider.createForLocalBuild(env.getProject())) {
-      ListenableFuture<BuildEventStreamProvider> streamProviderFuture =
-          BlazeBeforeRunCommandHelper.runBlazeCommand(
-              BlazeCommandName.BUILD,
-              configuration,
-              ImmutableList.of(),
-              getExtraDebugFlags(env),
-              BlazeInvocationContext.runConfigContext(
-                  ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
-              "Building debug binary");
 
-      Label target = getSingleTarget(configuration);
-      try {
-        BuildResult result =
-            BuildResult.fromExitCode(
-                BuildResultParser.getBuildOutput(streamProviderFuture.get(), Interners.STRING)
-                    .buildResult());
-        if (result.status != BuildResult.Status.SUCCESS) {
-          throw new ExecutionException("Blaze failure building debug binary");
-        }
-      } catch (InterruptedException | CancellationException e) {
-        streamProviderFuture.cancel(true);
-        throw new RunCanceledByUserException();
-      } catch (java.util.concurrent.ExecutionException e) {
-        throw new ExecutionException(e);
-      } catch (GetArtifactsException e) {
-        throw new ExecutionException(
-          String.format(
-              "Failed to get output artifacts when building %s: %s", target, e.getMessage()));
+    ListenableFuture<BuildEventStreamProvider> streamProviderFuture =
+        BlazeBeforeRunCommandHelper.runBlazeCommand(
+            BlazeCommandName.BUILD,
+            configuration,
+            ImmutableList.of(),
+            getExtraDebugFlags(env),
+            BlazeInvocationContext.runConfigContext(
+                ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
+            "Building debug binary");
+
+    Label target = getSingleTarget(configuration);
+    try (BuildEventStreamProvider streamProvider = streamProviderFuture.get()) {
+      ParsedBepOutput parsedBepOutput = BuildResultParser.getBuildOutput(streamProvider, Interners.STRING);
+      BuildResult result = BuildResult.fromExitCode(parsedBepOutput.buildResult());
+      if (result.status != BuildResult.Status.SUCCESS) {
+        throw new ExecutionException("Blaze failure building debug binary");
+
       }
-      List<File> candidateFiles;
-      try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
-        candidateFiles =
-            LocalFileArtifact.getLocalFiles(
-                  com.google.idea.blaze.common.Label.of(target.toString()),
-                  BlazeBuildOutputs.fromParsedBepOutput(
-                    BuildResultParser.getBuildOutput(bepStream, Interners.STRING))
-                      .getOutputGroupTargetArtifacts(DEFAULT_OUTPUT_GROUP_NAME, target.toString() ),
-                  BlazeContext.create(),
-                  env.getProject())
-                .stream()
-                .filter(File::canExecute)
-                .collect(Collectors.toList());
-      } catch (GetArtifactsException e) {
-        throw new ExecutionException(
-            String.format(
-                "Failed to get output artifacts when building %s: %s", target, e.getMessage()));
-      }
+
+      // manually find local artifacts in favour of LocalFileArtifact.getLocalFiles, to avoid the artifacts cache
+      // the artifacts cache atm does not preserve the executable flag for files (and there might be other issues)
+      final var candidateFiles = BlazeBuildOutputs.fromParsedBepOutput(parsedBepOutput)
+          .getOutputGroupTargetArtifacts(DEFAULT_OUTPUT_GROUP_NAME, target.toString())
+          .stream()
+          .filter(LocalFileArtifact.class::isInstance)
+          .map(LocalFileArtifact.class::cast)
+          .map(LocalFileArtifact::getFile)
+          .filter(File::canExecute)
+          .toList();
+
       if (candidateFiles.isEmpty()) {
         throw new ExecutionException(
             String.format("No output artifacts found when building %s", target));
@@ -208,6 +192,15 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
       }
       LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
       return file;
+    } catch (InterruptedException | CancellationException e) {
+      streamProviderFuture.cancel(true);
+      throw new RunCanceledByUserException();
+    } catch (java.util.concurrent.ExecutionException e) {
+      throw new ExecutionException(e);
+    } catch (GetArtifactsException e) {
+      throw new ExecutionException(
+          String.format(
+              "Failed to get output artifacts when building %s: %s", target, e.getMessage()));
     }
   }
 
