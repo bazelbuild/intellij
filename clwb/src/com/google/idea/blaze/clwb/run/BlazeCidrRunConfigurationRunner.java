@@ -19,14 +19,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.command.buildresult.BuildResult;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
-import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
-import com.google.idea.blaze.base.command.buildresult.bepparser.ParsedBepOutput;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -34,8 +29,6 @@ import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.Interners;
 import com.intellij.execution.ExecutionException;
@@ -50,19 +43,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
-import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 
-import java.util.Optional;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.CancellationException;
-import java.util.stream.Collectors;
 
 /** CLion-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
-
-  private static final String DEFAULT_OUTPUT_GROUP_NAME = "default";
 
   private final BlazeCommandRunConfiguration configuration;
 
@@ -161,28 +149,12 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
 
     Label target = getSingleTarget(configuration);
     try (BuildEventStreamProvider streamProvider = streamProviderFuture.get()) {
-      ParsedBepOutput parsedBepOutput = BuildResultParser.getBuildOutput(streamProvider, Interners.STRING);
-      BuildResult result = BuildResult.fromExitCode(parsedBepOutput.buildResult());
-      if (result.status != BuildResult.Status.SUCCESS) {
-        throw new ExecutionException("Blaze failure building debug binary");
+      final var candidateFiles = BuildResultParser.getExecutableArtifacts(
+          streamProvider,
+          Interners.STRING,
+          target.toString()
+      );
 
-      }
-
-      // manually find local artifacts in favour of LocalFileArtifact.getLocalFiles, to avoid the artifacts cache
-      // the artifacts cache atm does not preserve the executable flag for files (and there might be other issues)
-      final var candidateFiles = BlazeBuildOutputs.fromParsedBepOutput(parsedBepOutput)
-          .getOutputGroupTargetArtifacts(DEFAULT_OUTPUT_GROUP_NAME, target.toString())
-          .stream()
-          .filter(LocalFileArtifact.class::isInstance)
-          .map(LocalFileArtifact.class::cast)
-          .map(LocalFileArtifact::getFile)
-          .filter(File::canExecute)
-          .toList();
-
-      if (candidateFiles.isEmpty()) {
-        throw new ExecutionException(
-            String.format("No output artifacts found when building %s", target));
-      }
       File file = findExecutable(target, candidateFiles);
       if (file == null) {
         throw new ExecutionException(
