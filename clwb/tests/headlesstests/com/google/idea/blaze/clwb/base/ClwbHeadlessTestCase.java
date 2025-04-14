@@ -3,7 +3,9 @@ package com.google.idea.blaze.clwb.base;
 import static com.google.common.truth.Truth.assertThat;
 import static junit.framework.Assert.fail;
 
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.testing.headless.HeadlessTestCase;
+import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.PluginId;
@@ -43,6 +45,12 @@ public class ClwbHeadlessTestCase extends HeadlessTestCase {
     } catch (IOException e) {
       fail("could not create bin path symlink: " + e.getMessage());
     }
+  }
+
+  @Override
+  protected ProjectViewBuilder projectViewText(BazelVersion version) {
+    // required for Bazel 6 integration tests
+    return super.projectViewText(version).addBuildFlag("--cxxopt=-std=c++17");
   }
 
   protected OCWorkspace getWorkspace() {
