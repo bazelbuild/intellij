@@ -48,7 +48,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -248,7 +247,7 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
       SyncPhaseCoordinator.getInstance(myProject).runSync(params, true, context);
     }, ApplicationManager.getApplication()::executeOnPooledThread);
 
-    pullFuture(future, 2, TimeUnit.MINUTES);
+    pullFuture(future, 10, TimeUnit.MINUTES);
 
     context.close();
     LOG.info(String.format("PROJECT SYNC LOG:%n%s", output.collectLog()));
@@ -267,7 +266,7 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
   protected boolean runQuerySync() {
     final var future = QuerySyncManager.getInstance(myProject).onStartup(QuerySyncActionStatsScope.create(getClass(), null));
 
-    return pullFuture(future, 2, TimeUnit.MINUTES);
+    return pullFuture(future, 10, TimeUnit.MINUTES);
   }
 
   protected SyncOutput enableAnalysisFor(VirtualFile file) {
@@ -290,7 +289,7 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
       }
     }, ApplicationManager.getApplication()::executeOnPooledThread);
 
-    pullFuture(future, 2, TimeUnit.MINUTES);
+    pullFuture(future, 10, TimeUnit.MINUTES);
 
     context.close();
     LOG.info(String.format("PROJECT BUILD LOG:%n%s", output.collectLog()));

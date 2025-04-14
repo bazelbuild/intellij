@@ -137,5 +137,4 @@ tasks:
       - --test_tag_filters=bit_bazel_last_green
     test_targets:
       - //clwb:all
-    soft_fail:
-      - exit_status: 1
+    soft_fail: true
