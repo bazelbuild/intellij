@@ -14,12 +14,12 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
-import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
+import com.google.idea.blaze.base.sync.SyncPhaseCoordinator;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.toolwindow.TasksToolWindowFactory;
@@ -39,15 +39,31 @@ import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
-import com.google.idea.blaze.base.sync.SyncPhaseCoordinator;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
+
   protected VirtualFile myProjectRoot;
+
+  protected static <T> T pullFuture(Future<T> future, long timeout, TimeUnit unit) {
+    final var deadline = System.currentTimeMillis() + unit.toMillis(timeout);
+
+    while (!future.isDone()) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+
+      if (System.currentTimeMillis() > deadline) {
+        fail("timeout exceeded while waiting for Future");
+      }
+    }
+
+    return future.resultNow();
+  }
 
   /**
    * Normalizes an absolut posix path for windows. Since tests have to be run with `MSYS_NO_PATHCONV`
@@ -224,20 +240,10 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
       SyncPhaseCoordinator.getInstance(myProject).runSync(params, true, context);
     }, ApplicationManager.getApplication()::executeOnPooledThread);
 
-    while (!future.isDone()) {
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-    }
+    pullFuture(future, 2, TimeUnit.MINUTES);
 
     context.close();
     LOG.info(String.format("PROJECT SYNC LOG:%n%s", output.collectLog()));
-
-    try {
-      future.get();
-    } catch (ExecutionException e) {
-      LOG.error("sync failed", e);
-    } catch (InterruptedException e) {
-      LOG.error("sync was interrupted", e);
-    }
 
     return output;
   }
@@ -253,22 +259,10 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
   protected boolean runQuerySync() {
     final var future = QuerySyncManager.getInstance(myProject).onStartup(QuerySyncActionStatsScope.create(getClass(), null));
 
-    while (!future.isDone()) {
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-    }
-
-    try {
-      return future.get();
-    } catch (ExecutionException e) {
-      LOG.error("query sync failed", e);
-    } catch (InterruptedException e) {
-      LOG.error("query sync was interrupted", e);
-    }
-
-    return false;
+    return pullFuture(future, 2, TimeUnit.MINUTES);
   }
 
-  protected SyncOutput enableAnalysisFor(VirtualFile file) throws ExecutionException {
+  protected SyncOutput enableAnalysisFor(VirtualFile file) {
     final var context = BlazeContext.create();
 
     final var output = new SyncOutput();
@@ -288,20 +282,10 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
       }
     }, ApplicationManager.getApplication()::executeOnPooledThread);
 
-    while (!future.isDone()) {
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-    }
+    pullFuture(future, 2, TimeUnit.MINUTES);
 
     context.close();
     LOG.info(String.format("PROJECT BUILD LOG:%n%s", output.collectLog()));
-
-    try {
-      future.get();
-    } catch (ExecutionException e) {
-      LOG.error("enable analysis failed", e);
-    } catch (InterruptedException e) {
-      LOG.error("enable analysis was interrupted", e);
-    }
 
     return output;
   }
