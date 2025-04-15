@@ -6,6 +6,7 @@ import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsPattern;
 
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
+import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,6 +31,7 @@ public class SimpleTest extends ClwbHeadlessTestCase {
     checkTest();
     checkXcode();
     checkResolveRulesCC();
+    checkSyncStatus();
   }
 
   private void checkCompiler() {
@@ -82,5 +84,10 @@ public class SimpleTest extends ClwbHeadlessTestCase {
       assertThat(reference).isNotNull();
       assertThat(reference.resolve()).isNotNull();
     }
+  }
+
+  private void checkSyncStatus() {
+    assertThat(getSyncStatus("main/hello-world.cc")).isEqualTo(SyncStatus.SYNCED);
+    assertThat(getSyncStatus("main/test.cc")).isEqualTo(SyncStatus.SYNCED);
   }
 }

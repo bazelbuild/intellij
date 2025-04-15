@@ -19,5 +19,6 @@
     <TestContextProvider implementation="com.google.idea.blaze.clwb.radler.RadCatchTestContextProvider"/>
     <BinaryContextProvider implementation="com.google.idea.blaze.clwb.radler.RadBinaryContextProvider"/>
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.clwb.radler.RadTestEventsHandler"/>
+    <SyncStatusContributor implementation="com.google.idea.blaze.clwb.radler.RadSyncStatusContributor"/>
   </extensions>
 </idea-plugin>
