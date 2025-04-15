@@ -771,6 +771,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         .addTargets(targets)
         .addBlazeFlags(BlazeFlags.KEEP_GOING)
         .addBlazeFlags(BlazeFlags.DISABLE_VALIDATIONS) // b/145245918: don't run lint during sync
+        .addBlazeFlags(BlazeFlags.SKIP_INCOMPATIBLE_TARGETS)
         .addBlazeFlags(additionalBlazeFlags);
 
     // b/236031309: Sync builds that use rabbit-cli rely on build-changelist.txt being populated
