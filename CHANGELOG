@@ -1,3 +1,13 @@
+v2025.04.15
+===========
+Fixes:
+* CLion fix run configuration #7595
+* clion: fix CNFE for nova mode #7599
+Fixed issues:
+* IllegalArgumentException: Not a valid label, no target name found #7586
+* Debugging not working while Testing C++ Project #7519
+* No output artifacts found when debugging a Python target #7552
+
 v2025.04.01
 ===========
 Fixes:
