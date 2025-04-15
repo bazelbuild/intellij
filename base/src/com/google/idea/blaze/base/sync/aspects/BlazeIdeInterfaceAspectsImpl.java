@@ -636,10 +636,25 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       context.output(SummaryOutput.output(Prefix.INFO, message).dedupe());
       context.output(PrintOutput.log(message));
     }
+
+    final var additionalBlazeFlagsBuilder = ImmutableList.<String>builder();
+
     // Fetching blaze flags here using parent context, to avoid duplicate fetch for every shard.
-    List<String> additionalBlazeFlags =
-        BlazeFlags.blazeFlags(
-            project, projectViewSet, BlazeCommandName.BUILD, context, blazeInvocationContext);
+    additionalBlazeFlagsBuilder.addAll(BlazeFlags.blazeFlags(
+        project,
+        projectViewSet,
+        BlazeCommandName.BUILD,
+        context,
+        blazeInvocationContext
+    ));
+
+    // The --skip_incompatible_explicit_targets flag is only available in Bazel 7+
+    if (blazeVersion.bazelIsAtLeastVersion(7, 0, 0)) {
+      additionalBlazeFlagsBuilder.add(BlazeFlags.SKIP_INCOMPATIBLE_TARGETS);
+    }
+
+    final var additionalBlazeFlags = additionalBlazeFlagsBuilder.build();
+
     Function<List<? extends TargetExpression>, BuildResult> invocation =
         targets ->
             Scope.push(
@@ -771,7 +786,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         .addTargets(targets)
         .addBlazeFlags(BlazeFlags.KEEP_GOING)
         .addBlazeFlags(BlazeFlags.DISABLE_VALIDATIONS) // b/145245918: don't run lint during sync
-        .addBlazeFlags(BlazeFlags.SKIP_INCOMPATIBLE_TARGETS)
         .addBlazeFlags(additionalBlazeFlags);
 
     // b/236031309: Sync builds that use rabbit-cli rely on build-changelist.txt being populated
