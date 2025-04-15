@@ -1,7 +1,5 @@
 """Aspects to build and collect project dependencies."""
 
-load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
-load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load(
     ":build_dependencies_android_deps.bzl",
     "ANDROID_IDE_INFO",
