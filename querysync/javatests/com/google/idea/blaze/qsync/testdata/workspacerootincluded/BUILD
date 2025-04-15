@@ -1,3 +1,4 @@
+load("@rules_java//java:java_library.bzl", "java_library")
 load(":collect_deps.bzl", "java_info_txt")
 
 java_library(

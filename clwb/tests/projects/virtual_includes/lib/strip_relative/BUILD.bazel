@@ -5,5 +5,5 @@ cc_library(
     srcs = ["strip_relative.cc"],
     hdrs = ["include/strip_relative.h"],
     strip_include_prefix = "include",
-    visibility = ["//visibility:public"]
+    visibility = ["//visibility:public"],
 )

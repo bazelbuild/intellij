@@ -14,6 +14,9 @@
 
 filegroup(
     name = "v243",
-    srcs = glob(["**/*.java", "**/*.kt"]),
+    srcs = glob([
+        "**/*.java",
+        "**/*.kt",
+    ]),
     visibility = ["//clwb/sdkcompat:__pkg__"],
 )

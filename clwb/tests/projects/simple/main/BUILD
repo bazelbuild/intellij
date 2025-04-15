@@ -5,7 +5,7 @@ cc_binary(
     srcs = ["hello-world.cc"],
     copts = [
         "-Wall",
-        "$(STACK_FRAME_UNLIMITED)", # empty make variable should be stripped by make variable tokenization
+        "$(STACK_FRAME_UNLIMITED)",  # empty make variable should be stripped by make variable tokenization
     ],
 )
 

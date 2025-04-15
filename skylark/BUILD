@@ -1,9 +1,9 @@
-#
-# Description: A Skylark debugging client for IntelliJ.
-#
+load("@rules_java//java:defs.bzl", "java_library")
 load(
-    "//testing:test_defs.bzl",
-    "intellij_unit_test_suite",
+    "//:build-visibility.bzl",
+    "DEFAULT_TEST_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+    "SKYLARK_PACKAGES_VISIBILITY",
 )
 load(
     "//build_defs:build_defs.bzl",
@@ -12,14 +12,13 @@ load(
     "stamped_plugin_xml",
 )
 
-load("@rules_java//java:defs.bzl", "java_library")
+#
+# Description: A Starlark debugging client for IntelliJ.
+#
 load(
-    "//:build-visibility.bzl",
-    "PLUGIN_PACKAGES_VISIBILITY",
-    "SKYLARK_PACKAGES_VISIBILITY",
-    "DEFAULT_TEST_VISIBILITY",
+    "//testing:test_defs.bzl",
+    "intellij_unit_test_suite",
 )
-load("//build_defs:build_defs.bzl", "intellij_plugin_library")
 
 licenses(["notice"])
 
@@ -30,9 +29,9 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
-        "//proto:proto_deps",
-        "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+        "//proto:proto_deps",
     ],
 )
 

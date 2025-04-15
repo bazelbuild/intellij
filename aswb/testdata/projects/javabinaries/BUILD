@@ -1,3 +1,4 @@
+load("@rules_java//java:java_binary.bzl", "java_binary")
 load(
     "//aswb/testdata/projects:test_projects.bzl",
     "test_project_package",

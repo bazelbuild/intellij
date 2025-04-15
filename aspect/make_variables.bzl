@@ -45,7 +45,6 @@ def _expand_single_make_variable(ctx, token, additional_make_variable_substituti
     expanded_var = _expand_nested_variable(ctx, additional_make_variable_substitutions, unexpanded_var)
     return expanded_var
 
-
 def _expand_nested_variable(ctx, additional_vars, exp, execpath = True, targets = []):
     # If make variable is predefined path variable(like $(location ...))
     # we will expand it first.

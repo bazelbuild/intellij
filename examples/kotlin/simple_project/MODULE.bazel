@@ -2,12 +2,10 @@ bazel_dep(
     name = "rules_java",
     version = "8.3.1",
 )
-
 bazel_dep(
     name = "rules_kotlin",
     version = "2.0.0",
 )
-
 bazel_dep(name = "rules_jvm_external", version = "6.7")
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
@@ -21,7 +19,6 @@ maven.install(
     generate_compat_repositories = True,
     lock_file = "//:maven_install.json",
 )
-
 use_repo(
     maven,
     "maven",

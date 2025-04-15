@@ -17,10 +17,13 @@ llvm.sysroot(
     targets = ["wasm32"],
 )
 use_repo(llvm, "wasm_toolchain")
+
 register_toolchains("@wasm_toolchain//:all")
 
 wasi_sdk_sysroots = use_repo_rule("//wasm:wasi_sdk.bzl", "wasi_sdk_sysroots")
+
 wasi_sdk_sysroots(name = "wasi_sdk_sysroots")
 
 libclang_rt_wasm32 = use_repo_rule("//wasm:wasi_sdk.bzl", "libclang_rt_wasm32")
+
 libclang_rt_wasm32(name = "libclang_rt_wasm32")

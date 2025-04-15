@@ -3,6 +3,7 @@
 #
 
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@rules_java//java:java_library.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
     "ASWB_PACKAGES_VISIBILITY",
@@ -91,14 +92,14 @@ java_library(
         "//common/experiments",
         "//common/experiments:unit_test_utils",
         "//cpp",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:plugin_api_for_tests",  # unuseddeps: keep
+        "//intellij_platform_sdk:test_libs",
         "//java",
         "//shared:artifact",
         "//testing:lib",
         "//third_party/java/junit",
-        "//intellij_platform_sdk:plugin_api",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api_for_tests",  # unuseddeps: keep
-        "//intellij_platform_sdk:test_libs",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -121,15 +122,15 @@ java_library(
         "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
         "//common/experiments",
         "//cpp",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
+        "//intellij_platform_sdk:kotlin",
+        "//intellij_platform_sdk:plugin_api",
         "//java",
         "//proto:proto_deps",
         "//querysync",
         "//shared",
         "//shared:artifact",
         "//third_party/java/auto_value",
-        "//intellij_platform_sdk:plugin_api",
-        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
-        "//intellij_platform_sdk:kotlin",
     ],
 )
 
@@ -151,15 +152,15 @@ intellij_unit_test_suite(
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "//java",
         "//proto:proto_deps",
         "//shared",
         "//shared:artifact",
         "//testing:lib",
         "//third_party/java/junit",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api_for_tests",
-        "//intellij_platform_sdk:test_libs",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -208,6 +209,10 @@ intellij_integration_test_suite(
         "//common/experiments",
         "//common/experiments:unit_test_utils",
         "//cpp",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "//java",
         "//proto:proto_deps",
         "//shared:artifact",
@@ -215,10 +220,6 @@ intellij_integration_test_suite(
         "//shared/java/com/google/idea/blaze/exception",
         "//shared/javatests/com/google/idea/blaze/common/artifact:test_utils",
         "//third_party/java/junit",
-        "//intellij_platform_sdk:plugin_api",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api_for_tests",
-        "//intellij_platform_sdk:test_libs",
         "@com_google_guava_guava//jar",
     ],
 )
@@ -239,10 +240,10 @@ intellij_integration_test_suite(
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
-        "//proto:proto_deps",
-        "//third_party/java/junit",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "//proto:proto_deps",
+        "//third_party/java/junit",
     ],
 )
 

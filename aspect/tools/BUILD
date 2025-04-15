@@ -23,9 +23,9 @@ java_library(
     javacopts = ["-source 8 -target 8"],
     deps = [
         ":guava",
+        "//proto:proto_deps",
         "//third_party/bazel/src/main/protobuf:worker_protocol_java_proto",
         "@jsr305_annotations//jar",
-        "//proto:proto_deps",
     ],
 )
 
@@ -63,10 +63,10 @@ java_library(
     exports = [
         ":guava",
         ":lib",
-        "//proto:proto_deps",
-        "//third_party/java/junit",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:truth",
+        "//proto:proto_deps",
+        "//third_party/java/junit",
     ],
 )
 

@@ -15,7 +15,7 @@ kt_jvm_library(
     name = "lib",
     srcs = glob(["*.kt"]),
     deps = [
-        "//intellij_platform_sdk:plugin_api",
         "//clwb:clwb_lib",
+        "//intellij_platform_sdk:plugin_api",
     ],
 )

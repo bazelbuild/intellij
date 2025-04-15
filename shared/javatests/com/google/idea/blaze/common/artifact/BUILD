@@ -31,11 +31,11 @@ java_library(
         "TestOutputArtifact.java",
     ],
     deps = [
-        "@jsr305_annotations//jar",
         "//shared/java/com/google/idea/blaze/common",
         "//shared/java/com/google/idea/blaze/common/artifact",
         "//shared/java/com/google/idea/blaze/exception",
         "//third_party/java/auto_value",
         "@com_google_guava_guava//jar",
+        "@jsr305_annotations//jar",
     ],
 )

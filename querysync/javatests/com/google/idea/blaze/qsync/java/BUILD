@@ -98,8 +98,8 @@ java_test(
         "//third_party/java/junit",
         "//third_party/java/truth",
         "@com_google_guava_guava//jar",
-        "@protobuf//:protobuf_java",
         "@mockito//jar",
+        "@protobuf//:protobuf_java",
     ],
 )
 
@@ -122,7 +122,7 @@ java_test(
         "//third_party/java/junit",
         "//third_party/java/truth",
         "@com_google_guava_guava//jar",
-        "@protobuf//:protobuf_java",
         "@mockito//jar",
+        "@protobuf//:protobuf_java",
     ],
 )

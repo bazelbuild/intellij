@@ -1,3 +1,4 @@
+load("@rules_android//android:rules.bzl", "android_binary", "android_library")
 load(
     "//aswb/testdata/projects:test_projects.bzl",
     "test_project_package",

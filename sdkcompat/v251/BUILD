@@ -14,6 +14,7 @@
 
 # Description: Indirections for SDK changes to the underlying platform library.
 
+load("@rules_java//java:java_library.bzl", "java_library")
 load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 
 licenses(["notice"])

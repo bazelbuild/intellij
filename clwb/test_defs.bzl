@@ -32,7 +32,7 @@ def clwb_headless_test(name, project, srcs, deps = [], last_green = True):
             "//sdkcompat",
             "//third_party/java/junit",
             "@org_opentest4j_opentest4j//jar",
-            "//testing/src/com/google/idea/testing/headless"
+            "//testing/src/com/google/idea/testing/headless",
         ],
     )
 

@@ -3,6 +3,7 @@ Helper macros for creating generated srcjars.
 """
 
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load("@rules_java//java:java_library.bzl", "java_library")
 load("@rules_pkg//pkg:pkg.bzl", "pkg_zip")
 
 def gen_srcjar(name, src, package_dir):
@@ -23,8 +24,7 @@ def gen_srcjar(name, src, package_dir):
 
     if not src.endswith("_"):
         fail("src must end with a `_`: ", src)
-
-    native.java_library(
+    java_library(
         name = name,
         srcs = [":generated.srcjar"],
         deps = [],

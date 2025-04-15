@@ -1,5 +1,10 @@
 """Aspects to build and collect project dependencies."""
 
+load(
+    ":build_dependencies_android_deps.bzl",
+    "ANDROID_IDE_INFO",
+)
+
 # Load external dependencies of this aspect. These are loaded in a separate file and re-exported as necessary
 # to make supporting other versions of bazel easier, by replacing build_dependencies_deps.bzl.
 load(
@@ -9,10 +14,6 @@ load(
     _ide_java_not_validated = "IDE_JAVA",
     _ide_java_proto_not_validated = "IDE_JAVA_PROTO",
     _ide_kotlin_not_validated = "IDE_KOTLIN",
-)
-load(
-    ":build_dependencies_android_deps.bzl",
-    "ANDROID_IDE_INFO",
 )
 
 ALWAYS_BUILD_RULES = "java_proto_library,java_lite_proto_library,java_mutable_proto_library,kt_proto_library_helper,_java_grpc_library,_java_lite_grpc_library,kt_grpc_library_helper,java_stubby_library,kt_stubby_library_helper,aar_import,java_import, j2kt_native_import"
@@ -478,11 +479,11 @@ def _target_within_project_scope(label, include, exclude):
     package = label.package
     result = False
     if repo != "":
-        return False # We don't support external includes, so all external repos are outside the project scope
+        return False  # We don't support external includes, so all external repos are outside the project scope
     if include:
         if len(include) == 1 and include[0] == "//":
-             # when workspace root is included
-             result = True
+            # when workspace root is included
+            result = True
         else:
             for inc in [Label(i) for i in include]:
                 if _get_repo_name(inc) == repo and _package_prefix_match(package, inc.package):

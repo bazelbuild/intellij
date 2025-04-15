@@ -3,8 +3,8 @@
 load(
     ":intellij_info_impl.bzl",
     "intellij_info_aspect_impl",
-    "make_intellij_info_aspect",
     "is_valid_aspect_target",
+    "make_intellij_info_aspect",
 )
 
 EXTRA_DEPS = [

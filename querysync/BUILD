@@ -1,5 +1,4 @@
 load("@rules_java//java:defs.bzl", "java_library")
-load("@bazel_skylib//rules:build_test.bzl", "build_test")
 
 package(default_visibility = [
     ":__subpackages__",

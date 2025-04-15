@@ -3,8 +3,8 @@
 #
 
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load(":build_defs.bzl", "aspect_files", "aspect_library")
 load(":flag_hack.bzl", "define_flag_hack")
-load(":build_defs.bzl", "aspect_library", "aspect_files")
 
 licenses(["notice"])
 
@@ -29,11 +29,11 @@ filegroup(
 aspect_library(
     name = "aspect_lib",
     files = [
-       ":aspect_files",
-       ":aspect_tools",
+        ":aspect_files",
+        ":aspect_tools",
     ],
+    namespace = "aspect/default",
     visibility = ["//visibility:public"],
-    namespace = "aspect/default"
 )
 
 # Separate different targets as they are put into different directories
@@ -46,8 +46,8 @@ aspect_files(
         "intellij_info_impl_bundled.bzl",
         "java_classpath.bzl",
         "make_variables.bzl",
+        "xcode_query.bzl",  # maybe move this to a dedicated library, but let's keep this here for now
         ":BUILD.bazel",
-        "xcode_query.bzl", # maybe move this to a dedicated library, but let's keep this here for now
     ],
 )
 
@@ -130,12 +130,12 @@ aspect_library(
     files = [
         "code_generator_info.bzl",
         "code_generator_info.template.bzl",
+        "intellij_info.template.bzl",
+        "intellij_info_bundled.bzl",
         "java_info.bzl",
         "java_info.template.bzl",
         "python_info.bzl",
         "python_info.template.bzl",
-        "intellij_info_bundled.bzl",
-        "intellij_info.template.bzl",
     ],
     namespace = "aspect/template",
     visibility = ["//visibility:public"],

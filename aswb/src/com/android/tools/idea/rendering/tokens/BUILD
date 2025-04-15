@@ -1,3 +1,4 @@
+load("@rules_java//java:java_library.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
     "ASWB_SUBPACKAGES_VISIBILITY",
@@ -20,11 +21,11 @@ java_library(
         "//base",
         "//common/experiments",
         "//cpp",
+        "//intellij_platform_sdk:plugin_api",
         "//java",
         "//proto:proto_deps",
         "//querysync",
         "//shared",
         "//shared:artifact",
-        "//intellij_platform_sdk:plugin_api",
     ],
 )

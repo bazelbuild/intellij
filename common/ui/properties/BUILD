@@ -16,8 +16,8 @@ java_library(
     srcs = glob(["src/**/*.java"]),
     visibility = COMMON_PLUGINS_VISIBILITY,
     deps = [
-        "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
     ],
 )
 
@@ -32,7 +32,7 @@ intellij_unit_test_suite(
     ],
     deps = [
         ":properties",
-        "//third_party/java/junit",
         "//intellij_platform_sdk:test_libs",
+        "//third_party/java/junit",
     ],
 )

@@ -4,7 +4,6 @@
 load(
     "//:build-visibility.bzl",
     "BAZEL_PLUGIN_SUBPACKAGES",
-    "DEFAULT_TEST_VISIBILITY",
     "create_plugin_packages_group",
 )
 
@@ -27,9 +26,9 @@ test_suite(
         "//base:integration_tests",
         "//base:unit_tests",
         "//dart:unit_tests",
+        "//ijwb:headless_tests",
         "//ijwb:integration_tests",
         "//ijwb:unit_tests",
-        "//ijwb:headless_tests",
         "//java:integration_tests",
         "//java:unit_tests",
         "//kotlin:integration_tests",
@@ -72,8 +71,8 @@ test_suite(
     name = "clwb_tests",
     tests = [
         "//base:unit_tests",
-        "//clwb:unit_tests",
         "//clwb:headless_tests",
+        "//clwb:unit_tests",
         "//cpp:unit_tests",
         "//dart:unit_tests",
         "//python:unit_tests",

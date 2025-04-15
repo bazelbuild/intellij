@@ -1,3 +1,5 @@
+load("@rules_java//java:java_library.bzl", "java_library")
+load("@rules_java//java:java_plugin.bzl", "java_plugin")
 load(
     "//aswb/testdata/projects:test_projects.bzl",
     "external_sources_package",

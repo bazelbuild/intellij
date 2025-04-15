@@ -7,14 +7,14 @@ java_library(
     srcs = glob(["*.java"]),
     visibility = [
         "//base:__subpackages__",
-        "//shared:__subpackages__",
         "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__subpackages__",
+        "//shared:__subpackages__",
     ],
     deps = [
-        "@jsr305_annotations//jar",
-        "//shared",
         "//intellij_platform_sdk:plugin_api",
+        "//shared",
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
+        "@jsr305_annotations//jar",
     ],
 )

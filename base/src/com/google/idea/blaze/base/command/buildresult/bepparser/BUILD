@@ -13,11 +13,11 @@ kt_jvm_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         "//common/experiments",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
+        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//shared:artifact",
         "//shared:exception",
-        "//intellij_platform_sdk:plugin_api",
-        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "@com_google_guava_guava//jar",
     ],
 )

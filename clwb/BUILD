@@ -5,7 +5,6 @@
 load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
-    "CLWB_PACKAGES_VISIBILITY",
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 load("//:version.bzl", "VERSION")
@@ -184,8 +183,8 @@ clwb_headless_test(
 clwb_headless_test(
     name = "query_sync_headless_test",
     srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/QuerySyncTest.java"],
+    last_green = False,  # do not test query sync against last green
     project = "query_sync",
-    last_green = False, # do not test query sync against last green
 )
 
 clwb_headless_test(

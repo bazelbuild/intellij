@@ -1,17 +1,18 @@
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@protobuf//bazel:java_proto_library.bzl", "java_proto_library")
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
     name = "deps",
     srcs = glob(["*.java"]),
     visibility = [
-        "//querysync:__subpackages__",
         "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
+        "//querysync:__subpackages__",
     ],
     deps = [
         ":artifact_tracker_state_java_proto",
         "//common/experiments",
+        "//intellij_platform_sdk:plugin_api",
         "//querysync/java/com/google/idea/blaze/qsync/artifacts",
         "//querysync/java/com/google/idea/blaze/qsync/cc:cc_compilation_info_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/java:java_target_info_java_proto",
@@ -22,12 +23,11 @@ kt_jvm_library(
         "//shared:proto",
         "//shared:vcs",
         "//third_party/java/auto_value",
-        "//intellij_platform_sdk:plugin_api",
         "@com_google_guava_guava//jar",
-        "@protobuf//:protobuf_java",
         "@error_prone_annotations//jar",
-        "@jsr305_annotations//jar",
         "@jetbrains_annotations//jar",
+        "@jsr305_annotations//jar",
+        "@protobuf//:protobuf_java",
     ],
 )
 

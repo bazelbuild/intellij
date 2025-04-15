@@ -51,15 +51,15 @@ java_library(
         "//common/util:concurrency",
         "//common/util:platform",
         "//common/util:transactions",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:junit",
+        "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//querysync",
         "//sdkcompat",
         "//shared",
         "//shared:artifact",
         "//third_party/java/auto_value",
-        "//intellij_platform_sdk:plugin_api",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:junit",
         "@error_prone_annotations//jar",
     ],
 )
@@ -91,7 +91,10 @@ optional_plugin_xml(
 
 optional_plugin_xml(
     name = "optional_java_coverage",
-    module = ["com.intellij.modules.coverage", "com.intellij.java"],
+    module = [
+        "com.intellij.modules.coverage",
+        "com.intellij.java",
+    ],
     plugin_xml = "src/META-INF/java-coverage-contents.xml",
 )
 
@@ -137,16 +140,16 @@ intellij_unit_test_suite(
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
-        "//proto:proto_deps",
-        "//shared",
-        "//third_party/java/junit",
         "//intellij_platform_sdk:coverage_for_tests",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//intellij_platform_sdk:truth",
-        "@com_google_guava_guava//jar",
+        "//proto:proto_deps",
+        "//shared",
         "//testing:lib",
+        "//third_party/java/junit",
+        "@com_google_guava_guava//jar",
         "@org_opentest4j_opentest4j//jar",
     ],
 )
@@ -203,15 +206,15 @@ intellij_integration_test_suite(
     srcs = glob(
         ["tests/integrationtests/**/*.java"],
     ),
-    runtime_deps = [
-        ":java_integration_test_plugin",
-    ],
     required_plugins = "com.google.idea.blaze.java",
     tags = [
         "noci:studio-win",
     ],
     test_package_root = "com.google.idea.blaze.java",
     visibility = DEFAULT_TEST_VISIBILITY,
+    runtime_deps = [
+        ":java_integration_test_plugin",
+    ],
     deps = [
         ":java",
         "//base",
@@ -219,15 +222,15 @@ intellij_integration_test_suite(
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
         "//querysync",
         "//shared",
         "//third_party/java/junit",
         "//third_party/java/truth",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api_for_tests",
-        "//intellij_platform_sdk:test_libs",
-        "@org_opentest4j_opentest4j//jar",
         "@com_google_guava_guava//jar",
+        "@org_opentest4j_opentest4j//jar",
     ],
 )

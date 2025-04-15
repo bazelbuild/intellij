@@ -1,3 +1,6 @@
+load("@rules_java//java:java_import.bzl", "java_import")
+load("@rules_java//java:java_library.bzl", "java_library")
+
 package(default_visibility = ["//java:__subpackages__"])
 
 java_library(name = "empty")

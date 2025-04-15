@@ -52,4 +52,3 @@ bazel_dep(
     version = "1.19.0",
     repo_name = "build_bazel_apple_support",
 )
-
