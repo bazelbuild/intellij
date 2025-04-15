@@ -54,13 +54,13 @@ def java_info_reference():
 def get_provider_from_target(provider_name, target):
 # TEMPLATE-IGNORE-BEGIN
     provider = getattr(java_common, provider_name, None)
-    return target[provider] if provider else None
+    return target[provider] if provider and provider in target else None
 # TEMPLATE-IGNORE-END
 
 # TEMPLATE-INCLUDE-BEGIN
 ##  #if( $isJavaEnabled == "true" )
 ##  provider = getattr(java_common, provider_name, None)
-##  return target[provider] if provider else None
+##  return target[provider] if provider and provider in target else None
 ##  #else
 ##  return None
 ##  #end
