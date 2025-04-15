@@ -47,6 +47,11 @@ bazel_dep(
 )
 
 bazel_dep(
+    name = "rules_cc",
+    version = "0.1.0",
+    dev_dependency = True,
+)
+bazel_dep(
     name = "rules_bazel_integration_test",
     version = "0.32.0",
     dev_dependency = True,
