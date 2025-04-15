@@ -22,8 +22,10 @@ import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncPhaseCoordinator;
+import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.blaze.base.syncstatus.LegacySyncStatusContributor;
 import com.google.idea.blaze.base.toolwindow.TasksToolWindowFactory;
 import com.google.idea.blaze.base.wizard2.BlazeProjectCommitException;
 import com.google.idea.blaze.base.wizard2.BlazeProjectImportBuilder;
@@ -323,5 +325,14 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
     assertThat(element).isNotNull();
 
     return element;
+  }
+
+  protected SyncStatus getSyncStatus(String relativePath) {
+    final var file = findProjectFile(relativePath);
+
+    final var status = LegacySyncStatusContributor.getSyncStatus(myProject, file);
+    assertThat(status).isNotNull();
+
+    return status;
   }
 }
