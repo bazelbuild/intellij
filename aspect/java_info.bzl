@@ -1,6 +1,7 @@
 # TEMPLATE-INCLUDE-BEGIN
 ###if( $isJavaEnabled == "true" && $bazel8OrAbove == "true" )
 ##load("@rules_java//java/common:java_info.bzl", "JavaInfo")
+##load("@rules_java//java/common:java_common.bzl", "java_common")
 ###end
 # TEMPLATE-INCLUDE-END
 
@@ -46,5 +47,21 @@ def java_info_reference():
 ##  return [JavaInfo]
 ##  #else
 ##  return []
+##  #end
+# TEMPLATE-INCLUDE-END
+
+
+def get_provider_from_target(provider_name, target):
+# TEMPLATE-IGNORE-BEGIN
+    provider = getattr(java_common, provider_name, None)
+    return target[provider] if provider and provider in target else None
+# TEMPLATE-IGNORE-END
+
+# TEMPLATE-INCLUDE-BEGIN
+##  #if( $isJavaEnabled == "true" )
+##  provider = getattr(java_common, provider_name, None)
+##  return target[provider] if provider and provider in target else None
+##  #else
+##  return None
 ##  #end
 # TEMPLATE-INCLUDE-END

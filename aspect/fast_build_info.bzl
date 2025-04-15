@@ -10,7 +10,7 @@ load(
     ":intellij_info_impl.bzl",
     "stringify_label",
 )
-load(":java_info.bzl", "get_java_info")
+load(":java_info.bzl", "get_java_info", "get_provider_from_target")
 
 _DEP_ATTRS = ["deps", "exports", "runtime_deps", "_java_toolchain"]
 
@@ -48,11 +48,8 @@ def _fast_build_info_impl(target, ctx):
 
     if hasattr(target, "java_toolchain"):
         toolchain = target.java_toolchain
-    elif java_common.JavaToolchainInfo != platform_common.ToolchainInfo and \
-         java_common.JavaToolchainInfo in target:
-        toolchain = target[java_common.JavaToolchainInfo]
     else:
-        toolchain = None
+        toolchain = get_provider_from_target("JavaToolchainInfo", target)
     if toolchain:
         write_output = True
         javac_jars = []
