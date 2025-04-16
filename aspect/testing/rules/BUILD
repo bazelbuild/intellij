@@ -8,6 +8,7 @@ load(
     "ASPECT_TEST_RULES_VISIBILITY_TO_ALL",
     "ASPECT_TEST_RULES_VISIBILITY_TO_TESTS",
 )
+load("//tools/build_defs/testing:bzl_library.bzl", "bzl_library")
 
 licenses(["notice"])
 
@@ -88,4 +89,11 @@ java_library(
         "//aspect/testing:guava",
         "@junit//jar",
     ],
+)
+
+bzl_library(
+    name = "build_dependencies_blaze_deps_test_fixture_bzl",
+    srcs = ["build_dependencies_blaze_deps_test_fixture.bzl"],
+    parse_tests = False,
+    visibility = ["//visibility:private"],
 )
