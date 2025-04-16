@@ -89,7 +89,7 @@ def _fast_build_info_impl(target, ctx):
             "jvm_flags": getattr(ctx.rule.attr, "jvm_flags", []),
             "main_class": getattr(ctx.rule.attr, "main_class", None),
         }
-        annotation_processing = target[JavaInfo].annotation_processing
+        annotation_processing = getattr(java_info, "annotation_processing", None)
         if annotation_processing:
             java_info["annotation_processor_class_names"] = annotation_processing.processor_classnames
             java_info["annotation_processor_classpath"] = [
