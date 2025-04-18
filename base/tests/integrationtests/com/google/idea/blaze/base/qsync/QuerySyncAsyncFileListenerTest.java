@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.qsync;
 
 import static com.google.common.truth.Truth.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -32,10 +33,14 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4;
 import com.intellij.testFramework.PlatformTestUtil;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collection;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -61,7 +66,7 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
             .setAutoSync(true);
     VirtualFileManager.getInstance()
         .addAsyncFileListener(fileListener, getFixture().getTestRootDisposable());
-    verify(mockSyncRequester, never()).requestSync();
+    verify(mockSyncRequester, never()).requestSync(any());
 
     getFixture()
         .addFileToProject(
@@ -69,7 +74,7 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
             "package com.example;public class Class1{}");
     ApplicationManager.getApplication()
         .invokeAndWait(PlatformTestUtil::dispatchAllEventsInIdeEventQueue);
-    verify(mockSyncRequester, atLeastOnce()).requestSync();
+    verify(mockSyncRequester, atLeastOnce()).requestSync(argThat(hasFiles("/src/my/project")));
   }
 
   @Test
@@ -87,7 +92,7 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
             "package com.example;public class Class1{}");
     ApplicationManager.getApplication()
         .invokeAndWait(PlatformTestUtil::dispatchAllEventsInIdeEventQueue);
-    verify(mockSyncRequester, never()).requestSync();
+    verify(mockSyncRequester, never()).requestSync(any());
   }
 
   @Test
@@ -98,14 +103,14 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
             .setAutoSync(true);
     VirtualFileManager.getInstance()
         .addAsyncFileListener(fileListener, getFixture().getTestRootDisposable());
-    verify(mockSyncRequester, never()).requestSync();
+    verify(mockSyncRequester, never()).requestSync(any());
 
     getFixture()
         .addFileToProject(
             "some/other/path/Class1.java", "package some.other.path;public class Class1{}");
     ApplicationManager.getApplication()
         .invokeAndWait(PlatformTestUtil::dispatchAllEventsInIdeEventQueue);
-    verify(mockSyncRequester, never()).requestSync();
+    verify(mockSyncRequester, never()).requestSync(any());
   }
 
   @Test
@@ -124,17 +129,15 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
             .setAutoSync(true);
     VirtualFileManager.getInstance()
         .addAsyncFileListener(fileListener, getFixture().getTestRootDisposable());
-    verify(mockSyncRequester, never()).requestSync();
+    verify(mockSyncRequester, never()).requestSync(any());
 
+    String sourcePath = INCLUDED_DIRECTORY.resolve("java/com/example/Class1.java").toString();
+    String destinationPath = INCLUDED_DIRECTORY.resolve("submodule/java/com/example").toString();
     WriteAction.runAndWait(
-        () ->
-            getFixture()
-                .moveFile(
-                    INCLUDED_DIRECTORY.resolve("java/com/example/Class1.java").toString(),
-                    INCLUDED_DIRECTORY.resolve("submodule/java/com/example").toString()));
+        () -> getFixture().moveFile(sourcePath, destinationPath));
     ApplicationManager.getApplication()
         .invokeAndWait(PlatformTestUtil::dispatchAllEventsInIdeEventQueue);
-    verify(mockSyncRequester, atLeastOnce()).requestSync();
+    verify(mockSyncRequester, atLeastOnce()).requestSync(argThat(hasFiles("/src/" + destinationPath + "/Class1.java")));
   }
 
   @Test
@@ -150,7 +153,7 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
             .setAutoSync(true);
     VirtualFileManager.getInstance()
         .addAsyncFileListener(fileListener, getFixture().getTestRootDisposable());
-    verify(mockSyncRequester, never()).requestSync();
+    verify(mockSyncRequester, never()).requestSync(any());
 
     VirtualFile vf =
         getFixture()
@@ -163,15 +166,14 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
     ApplicationManager.getApplication()
         .invokeAndWait(PlatformTestUtil::dispatchAllEventsInIdeEventQueue);
 
-    verify(mockSyncRequester, never()).requestSync();
+    verify(mockSyncRequester, never()).requestSync(any());
     assertThat(fileListener.hasModifiedBuildFiles()).isFalse();
   }
 
   @Test
   public void projectFileModified_buildFile_requestsSync() throws Exception {
-    getFixture()
-        .addFileToProject(
-            INCLUDED_DIRECTORY.resolve("BUILD").toString(), "java_library(name=\"java\",srcs=[])");
+    String buildFilePath = INCLUDED_DIRECTORY.resolve("BUILD").toString();
+    getFixture().addFileToProject(buildFilePath, "java_library(name=\"java\",srcs=[])");
 
     TestListener fileListener =
         new TestListener(getFixture().getProject(), mockSyncRequester)
@@ -179,9 +181,9 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
             .setAutoSync(true);
     VirtualFileManager.getInstance()
         .addAsyncFileListener(fileListener, getFixture().getTestRootDisposable());
-    verify(mockSyncRequester, never()).requestSync();
+    verify(mockSyncRequester, never()).requestSync(any());
 
-    VirtualFile vf = getFixture().findFileInTempDir(INCLUDED_DIRECTORY.resolve("BUILD").toString());
+    VirtualFile vf = getFixture().findFileInTempDir(buildFilePath);
     WriteAction.runAndWait(
         () ->
             vf.setBinaryContent(
@@ -189,8 +191,23 @@ public class QuerySyncAsyncFileListenerTest extends LightJavaCodeInsightFixtureT
     ApplicationManager.getApplication()
         .invokeAndWait(PlatformTestUtil::dispatchAllEventsInIdeEventQueue);
 
-    verify(mockSyncRequester, atLeastOnce()).requestSync();
+    verify(mockSyncRequester, atLeastOnce()).requestSync(argThat(hasFiles("/src/" + buildFilePath)));
     assertThat(fileListener.hasModifiedBuildFiles()).isTrue();
+  }
+
+  private static ArgumentMatcher<Collection<VirtualFile>> hasFiles(String... paths) {
+    return new ArgumentMatcher<>() {
+      @Override
+      public boolean matches(Collection<VirtualFile> virtualFiles) {
+        var actualPaths = virtualFiles.stream().map(VirtualFile::getPath).sorted().toList();
+        return actualPaths.equals(Arrays.stream(paths).sorted().toList());
+      }
+
+      @Override
+      public Class<?> type() {
+        return Collection.class;
+      }
+    };
   }
 
   /**
