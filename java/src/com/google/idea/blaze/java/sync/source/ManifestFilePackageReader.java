@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-class ManifestFilePackageReader extends JavaPackageReader {
+class ManifestFilePackageReader implements JavaPackageReader {
 
   private final Map<TargetKey, Map<ArtifactLocation, String>> manifestMap;
 
@@ -32,7 +32,7 @@ class ManifestFilePackageReader extends JavaPackageReader {
 
   @Nullable
   @Override
-  String getDeclaredPackageOfJavaFile(
+  public String getDeclaredPackageOfJavaFile(
       BlazeContext context,
       ArtifactLocationDecoder artifactLocationDecoder,
       SourceArtifact sourceArtifact) {
