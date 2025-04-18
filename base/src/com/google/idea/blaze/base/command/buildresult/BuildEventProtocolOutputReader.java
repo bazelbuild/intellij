@@ -29,10 +29,6 @@ import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
-import com.intellij.util.io.URLUtil;
-import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -56,15 +52,25 @@ public final class BuildEventProtocolOutputReader {
     ImmutableList.Builder<BlazeTestResult> results = ImmutableList.builder();
     BuildEventStreamProtos.BuildEvent event;
     while ((event = streamProvider.getNext()) != null) {
+      String label;
+      Kind kind;
       switch (event.getId().getIdCase()) {
         case STARTED:
           startTimeMillis = event.getStarted().getStartTimeMillis();
           continue;
         case TARGET_COMPLETED:
-          String label = event.getId().getTargetCompleted().getLabel();
-          Kind kind = parseTargetKind(event.getCompleted().getTargetKind());
+          label = event.getId().getTargetCompleted().getLabel();
+          kind = parseTargetKind(event.getCompleted().getTargetKind());
           if (kind != null) {
             labelToKind.put(label, kind);
+          }
+          if(event.getCompleted().hasFailureDetail()) {
+            results.add(
+                    parseTestResult(
+                            label,
+                            labelToKind.get(label),
+                            BuildEventStreamProtos.TestResult.newBuilder().getDefaultInstanceForType(),
+                            startTimeMillis));
           }
           continue;
         case TARGET_CONFIGURED:
