@@ -8,6 +8,8 @@ import com.google.idea.blaze.base.command.buildresult.BuildResult
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep
 import com.google.idea.blaze.base.command.buildresult.BuildResultParser
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResultHolder
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
@@ -76,32 +78,6 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
     return process
   }
 
-  private suspend fun awaitProcess(ctx: BlazeContext, hdl: ProcessHandler): Int {
-    hdl.addProcessListener(object : ProcessListener {
-      override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-        if (outputType == ProcessOutputTypes.SYSTEM) {
-          ctx.println(event.text)
-        } else {
-          ctx.output(PrintOutput.process(event.text))
-        }
-
-        LOG.debug("BAZEL OUTPUT: " + event.text)
-      }
-    })
-    hdl.startNotify()
-
-    while (!hdl.isProcessTerminated) {
-      delay(100)
-    }
-
-    val exitCode = hdl.exitCode ?: 1
-    if (exitCode != 0) {
-      ctx.setHasError()
-    }
-
-    return exitCode
-  }
-
   /**
    * Executes the bazel command and creates a [BazelProcess] that captures the
    * running process. Returns immediately after the process was created. The
@@ -112,7 +88,7 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
     ctx: BlazeContext,
     cmdBuilder: BlazeCommand.Builder,
     useCurses: Boolean,
-    result: suspend CoroutineScope.(Int) -> T, // allows to create a custom result upon completion of the process
+    result: (Int) -> T, // allows to create a custom result upon completion of the process
   ): BazelProcess<T> {
     if (useCurses) {
       cmdBuilder.addBlazeFlags("--curses=yes")
@@ -134,19 +110,21 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
       .withWorkDirectory(root.pathString)
 
     val handler = withContext(Dispatchers.IO) {
-      ColoredProcessHandler(cmdLine)
-    }
-
-    // await the result of the process asynchronously, cancellation is handled in the executionScope function
-    val callback = scope.async(CoroutineName("AwaitProcess")) {
-      try {
-        result(awaitProcess(ctx, handler))
-      } finally {
-        handler.destroyProcess()
+      object : ColoredProcessHandler(cmdLine) {
+        override fun coloredTextAvailable(text: String, attributes: Key<*>) {
+          super.coloredTextAvailable(text, attributes)
+        }
       }
     }
+    val process = BazelProcess<T>(handler)
 
-    return BazelProcess(handler, callback)
+    handler.addProcessListener(object : ProcessListener {
+      override fun processWillTerminate(event: ProcessEvent, willBeDestroyed: Boolean) {
+        process.finishWithResult(result(event.exitCode))
+      }
+    })
+
+    return process
   }
 
   private suspend fun parseEvent(ctx: BlazeContext, stream: BufferedInputStream) {
@@ -221,7 +199,7 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
       val parseJob = parseEvents(ctx, provider)
 
       execute(ctx, cmdBuilder, useCurses) { exitCode ->
-        parseJob.cancelAndJoin()
+        runBlocking { parseJob.cancelAndJoin() }
         ensureActive()
 
         val result = BuildResult.fromExitCode(exitCode)
@@ -243,15 +221,16 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
    * run without curses.
    */
   @Throws(IOException::class)
-  fun test(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): BazelProcess<BlazeTestResults> {
+  fun test(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder, testResultFinderStrategy: BlazeTestResultFinderStrategy): BazelProcess<BlazeTestResults> {
     LOG.assertTrue(cmdBuilder.name == BlazeCommandName.TEST)
 
     return executionScope(ctx) { provider ->
       cmdBuilder.addBlazeFlags(provider.buildFlags)
 
       execute(ctx, cmdBuilder, useCurses = false) {
-        ensureActive()
-        provider.getBepStream(Optional.empty()).use(BuildResultParser::getTestResults)
+        val result = provider.getBepStream(Optional.empty()).use(BuildResultParser::getTestResults)
+        (testResultFinderStrategy as? BlazeTestResultHolder)?.setTestResults(result)
+        result
       }
     }
   }

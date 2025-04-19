@@ -3,29 +3,28 @@ package com.google.idea.blaze.base.buildview
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.idea.blaze.exception.BuildException
 import com.intellij.execution.process.ProcessHandler
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.guava.asListenableFuture
+import java.util.concurrent.CompletableFuture
 
 /**
  * Represents a running bazel process with an eventual result. The actual result
  * depends on the context (i.e. build returns BlazeBuildOutputs and test returns
  * BlazeTestOutputs).
  */
-data class BazelProcess<T>(val hdl: ProcessHandler, private val result: Deferred<T>) {
+data class BazelProcess<T>(val hdl: ProcessHandler) {
 
-  suspend fun getResult(): T {
-    return result.await()
-  }
+  val processResult = CompletableDeferred<T>()
 
-  fun getResultFuture(): ListenableFuture<T> {
-    return result.asListenableFuture()
-  }
-
+  @OptIn(ExperimentalCoroutinesApi::class)
   @Throws(BuildException::class)
   fun getResultBlocking(): T {
     return try {
-      getResultFuture().get()
+      processResult.getCompleted()
     } catch (e: Exception) {
+      processResult.completeExceptionally(e)
       throw BuildException("bazel process failed", e)
     }
   }
@@ -35,8 +34,12 @@ data class BazelProcess<T>(val hdl: ProcessHandler, private val result: Deferred
       hdl.destroyProcess()
     }
 
-    if (!result.isCancelled) {
-      result.cancel()
+    if (!processResult.isCancelled) {
+      processResult.cancel()
     }
+  }
+
+  fun finishWithResult(result: T) {
+    processResult.complete(result)
   }
 }
