@@ -1,4 +1,5 @@
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load("@rules_java//java:java_library.bzl", "java_library")
 load(
     "//aswb/testdata/projects:test_projects.bzl",
     "test_project_package",

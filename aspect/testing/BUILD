@@ -1,4 +1,4 @@
-# Integration tests for the plugin's Skylark aspect
+# Integration tests for the plugin's Starlark aspect
 
 load("@rules_java//java:defs.bzl", "java_library")
 
