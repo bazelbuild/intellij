@@ -19,7 +19,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertNotNull;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
@@ -41,10 +40,8 @@ import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.prefetch.MockPrefetchService;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
@@ -67,6 +64,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.MockRemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettingsExamples.SingleLanguage;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
@@ -165,8 +163,6 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
   private final ErrorCollector errorCollector = new ErrorCollector();
   private final MockJdepsMap jdepsMap = new MockJdepsMap();
   private JavaWorkingSet workingSet = null;
-  private final WorkspaceLanguageSettings workspaceLanguageSettings =
-      new WorkspaceLanguageSettings(WorkspaceType.JAVA, ImmutableSet.of(LanguageClass.JAVA));
   private MockFileOperationProvider fileOperationProvider;
   private MockExperimentService experimentService;
 
@@ -243,7 +239,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
             project,
             workspaceRoot,
             projectViewSet,
-            workspaceLanguageSettings,
+            SingleLanguage.JAVA,
             targetMap,
             sourceFilter,
             jdepsMap,
