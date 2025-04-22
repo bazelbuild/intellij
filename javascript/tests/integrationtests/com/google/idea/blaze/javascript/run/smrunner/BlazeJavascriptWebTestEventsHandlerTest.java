@@ -17,7 +17,6 @@ package com.google.idea.blaze.javascript.run.smrunner;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JsIdeInfo;
@@ -28,11 +27,9 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettingsExamples.SingleLanguage;
 import com.intellij.execution.Location;
 import com.intellij.javascript.testFramework.jasmine.JasmineFileStructure;
 import com.intellij.javascript.testFramework.jasmine.JasmineFileStructureBuilder;
@@ -83,9 +80,7 @@ public class BlazeJavascriptWebTestEventsHandlerTest extends BlazeIntegrationTes
         new MockBlazeProjectDataManager(
             MockBlazeProjectDataBuilder.builder(workspaceRoot)
                 .setTargetMap(targetMap)
-                .setWorkspaceLanguageSettings(
-                    new WorkspaceLanguageSettings(
-                        WorkspaceType.JAVASCRIPT, ImmutableSet.of(LanguageClass.JAVASCRIPT)))
+                .setWorkspaceLanguageSettings(SingleLanguage.JAVASCRIPT)
                 .build()));
 
     JSFile fooFile =
@@ -186,9 +181,7 @@ public class BlazeJavascriptWebTestEventsHandlerTest extends BlazeIntegrationTes
         new MockBlazeProjectDataManager(
             MockBlazeProjectDataBuilder.builder(workspaceRoot)
                 .setTargetMap(targetMap)
-                .setWorkspaceLanguageSettings(
-                    new WorkspaceLanguageSettings(
-                        WorkspaceType.JAVASCRIPT, ImmutableSet.of(LanguageClass.JAVASCRIPT)))
+                .setWorkspaceLanguageSettings(SingleLanguage.JAVASCRIPT)
                 .build()));
 
     // it's usually () => {} instead of function () {}, but lambdas don't seem to work in tests
