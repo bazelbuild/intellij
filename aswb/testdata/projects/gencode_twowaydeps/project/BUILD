@@ -1,8 +1,9 @@
+load("@rules_java//java:java_library.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(
     "//aswb/testdata/projects:test_projects.bzl",
     "test_project_package",
 )
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 # Ideally, we would have a single kt_jvm_library rule here, and all the source
 # would be in Kotlin. But since the Kotlin support we load above does not

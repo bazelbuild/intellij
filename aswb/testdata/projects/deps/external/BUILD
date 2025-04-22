@@ -1,3 +1,5 @@
+load("@rules_java//java:java_import.bzl", "java_import")
+load("@rules_java//java:java_library.bzl", "java_library")
 load("@rules_pkg//pkg:mappings.bzl", "strip_prefix")
 load("@rules_pkg//pkg:pkg.bzl", "pkg_zip")
 load(

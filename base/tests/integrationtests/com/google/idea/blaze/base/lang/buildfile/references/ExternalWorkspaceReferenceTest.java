@@ -27,7 +27,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.psi.PsiFile;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,11 +35,6 @@ import org.junit.runners.JUnit4;
 /** Tests that labels referencing external workspaces are correctly resolved. */
 @RunWith(JUnit4.class)
 public class ExternalWorkspaceReferenceTest extends BuildFileIntegrationTestCase {
-
-  @Override
-  protected BuildSystemName buildSystem() {
-    return BuildSystemName.Bazel;
-  }
 
   @Test
   public void testExternalWorkspaceTargetReference() {

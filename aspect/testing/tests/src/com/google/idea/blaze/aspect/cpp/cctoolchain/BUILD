@@ -1,10 +1,11 @@
-licenses(["notice"])
-
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_java//java:defs.bzl", "java_test")
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
 )
+
+licenses(["notice"])
 
 cc_library(
     name = "simple",

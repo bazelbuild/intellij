@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
@@ -40,11 +39,6 @@ import org.junit.runners.JUnit4;
 /** Test behavior of {@link BazelPyImportResolverStrategy}. */
 @RunWith(JUnit4.class)
 public class BazelPyImportResolverStrategyTest extends PyImportResolverStrategyTestCase {
-
-  @Override
-  protected BuildSystemName buildSystem() {
-    return BuildSystemName.Bazel;
-  }
 
   @Test
   public void testResolveWorkspaceImport() {

@@ -1,4 +1,5 @@
 load("@rules_java//java:defs.bzl", "java_test")
+load("@rules_java//java:java_library.bzl", "java_library")
 load("//:build-visibility.bzl", "DEFAULT_TEST_VISIBILITY")
 
 package(default_visibility = DEFAULT_TEST_VISIBILITY)
@@ -8,7 +9,6 @@ java_test(
     srcs = ["ArtifactDirectoryUpdateTest.java"],
     deps = [
         ":mock_artifact_cache",
-        "@jsr305_annotations//jar",
         "//querysync/java/com/google/idea/blaze/qsync/artifacts",
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//shared",
@@ -16,6 +16,7 @@ java_test(
         "//third_party/java/junit",
         "//third_party/java/truth",
         "@com_google_guava_guava//jar",
+        "@jsr305_annotations//jar",
     ],
 )
 
