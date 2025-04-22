@@ -4,6 +4,12 @@
 
 load("@rules_java//java:defs.bzl", "java_library")
 load(
+    "//:build-visibility.bzl",
+    "IJWB_PACKAGES_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
+load("//:version.bzl", "VERSION")
+load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
     "intellij_plugin_library",
@@ -16,17 +22,11 @@ load(
     "//build_defs:intellij_plugin_debug_target.bzl",
     "intellij_plugin_debug_target",
 )
-load("//:version.bzl", "VERSION")
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
-)
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
-load(
-    "//:build-visibility.bzl",
-    "IJWB_PACKAGES_VISIBILITY",
-    "PLUGIN_PACKAGES_VISIBILITY",
 )
 load(":test_defs.bzl", "ijwb_headless_test")
 
@@ -75,8 +75,8 @@ java_library(
 
 intellij_plugin(
     name = "ijwb_bazel",
-    plugin_xml = ":stamped_plugin_xml",
     plugin_icons = ["//common:pluginIcon.svg"],
+    plugin_xml = ":stamped_plugin_xml",
     tags = [
         "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
     ],
@@ -110,9 +110,14 @@ repackaged_files(
 repackaged_files(
     name = "fast_build_javac",
     srcs = ["//java:fast_build_javac"],
+    java_copts = [
+        "-source",
+        "8",
+        "-target",
+        "8",
+    ],
     prefix = "ijwb/lib",
     visibility = IJWB_PACKAGES_VISIBILITY,
-    java_copts = ["-source", "8", "-target", "8"],
 )
 
 intellij_plugin_debug_target(
@@ -145,8 +150,8 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "@com_google_guava_guava//jar",
         "//third_party/java/junit",
+        "@com_google_guava_guava//jar",
     ],
 )
 
@@ -166,8 +171,8 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "@com_google_guava_guava//jar",
         "//third_party/java/junit",
+        "@com_google_guava_guava//jar",
         "@org_opentest4j_opentest4j//jar",
     ],
 )

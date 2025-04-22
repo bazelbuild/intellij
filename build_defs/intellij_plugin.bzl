@@ -122,7 +122,7 @@ def _synthetic_plugin_id(modules):
     return struct(name = "___".join(modules), is_synthetic = len(modules) > 1)
 
 def _synthetic_dep_file(ctx, modules):
-    synthname = ctx.actions.declare_file("synthetic_"+ "_".join(modules[:-1]) + ".xml")
+    synthname = ctx.actions.declare_file("synthetic_" + "_".join(modules[:-1]) + ".xml")
     file = _filename_for_module_dependency(_synthetic_plugin_id(modules).name)
     ctx.actions.write(
         synthname,
@@ -130,7 +130,8 @@ def _synthetic_dep_file(ctx, modules):
         <idea-plugin>
            <depends optional="true" config-file="{0}">{1}</depends>
         </idea-plugin>
-        """.format (file, modules[-1]))
+        """.format(file, modules[-1]),
+    )
     return synthname
 
 """
@@ -160,11 +161,12 @@ This file will be included in `optional-module.A.xml` file via a dependents dire
 
 https://plugins.jetbrains.com/docs/intellij/plugin-dependencies.html#optional-plugin-dependencies
 """
+
 def _create_dependency_file_chain(ctx, xml):
     module = sorted(xml.module)
     chained_files_dict = {}
     for i in range(1, len(module) + 1):
-        synthname = _synthetic_dep_file(ctx, module[:(i+1)]) if i < len(module) else xml.plugin_xml
+        synthname = _synthetic_dep_file(ctx, module[:(i + 1)]) if i < len(module) else xml.plugin_xml
         chained_files_dict[_synthetic_plugin_id(module[:i])] = synthname
     return chained_files_dict
 

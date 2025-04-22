@@ -113,11 +113,10 @@ def _fast_build_info_impl(target, ctx):
     if write_output:
         output_file = ctx.actions.declare_file(target.label.name + ".ide-fast-build-info.txt")
         ctx.actions.write(output_file, proto.encode_text(struct_omit_none(**info)))
-        output_files += [output_file]
+        output_files.append(output_file)
 
     output_groups = depset(output_files, transitive = dep_outputs)
-
-    return struct(output_groups = {"ide-fast-build": output_groups})
+    return [OutputGroupInfo(**{"ide-fast-build": output_groups})]
 
 def _get_all_dep_outputs(dep_targets):
     """Get the ide-fast-build output files for all dependencies"""

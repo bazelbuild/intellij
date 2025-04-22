@@ -39,7 +39,7 @@ public class ExecutionTest extends ClwbHeadlessTestCase {
     errors.assertNoErrors();
 
     checkRun();
-    // checkTest(); -- java.lang.IllegalArgumentException: Not a valid label, no target name found
+    checkTest();
   }
 
   private void checkRun() throws Exception {

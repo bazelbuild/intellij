@@ -1,8 +1,8 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(
     "//aswb/testdata/projects:test_projects.bzl",
     "test_project_package",
 )
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 package(
     default_visibility = ["//visibility:private"],
