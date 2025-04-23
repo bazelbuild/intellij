@@ -1,5 +1,6 @@
 package com.google.idea.blaze.base.buildview.events
 
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.Aborted.AbortReason
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId
 import com.google.idea.blaze.base.scope.output.IssueOutput
@@ -63,6 +64,9 @@ class AbortedParser : BuildEventParser {
 
   override fun parse(event: BuildEvent): IssueOutput? {
     if (!event.hasAborted()) return null
+
+    // do not report skipped targets, this event is expected because sync is executed with `--skip_incompatible_explicit_targets`
+    if (event.aborted.reason == AbortReason.SKIPPED) return null
 
     val label = getLabel(event.id) ?: return null
     val issue = BazelBuildIssue(

@@ -61,6 +61,11 @@ public final class BlazeFlags {
   // during syncing projects.
   public static final String DISABLE_VALIDATIONS = "--noexperimental_run_validations";
 
+  // Since query cannot resolve target_compatible_with constraints we try to explicitly build
+  // incompatible targets during the sync. This flags allows bazel to skip incompatible targets
+  // even if they were explicitly requested.
+  public static final String SKIP_INCOMPATIBLE_TARGETS = "--skip_incompatible_explicit_targets";
+
   // Custom build metadata. This option takes a key-value pair as an argument.
   public static final String BUILD_METADATA = "--build_metadata=";
 
