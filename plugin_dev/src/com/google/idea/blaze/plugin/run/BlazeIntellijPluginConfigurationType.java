@@ -15,9 +15,6 @@
  */
 package com.google.idea.blaze.plugin.run;
 
-import static java.util.stream.Collectors.toCollection;
-
-import com.google.common.base.Splitter;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -43,8 +40,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.util.execution.ParametersListUtil;
-import java.util.ArrayList;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.Icon;
 
 /**
@@ -91,11 +88,10 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
 
   static class BlazeIntellijPluginConfigurationFactory extends ConfigurationFactory {
 
-    private static NullableLazyValue<String> currentVmOptions =
+    private static final NullableLazyValue<String> currentVmOptions =
         new NullableLazyValue<String>() {
-          @Nullable
           @Override
-          protected String compute() {
+          protected @NotNull String compute() {
             return defaultVmOptions();
           }
         };
@@ -105,7 +101,7 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
     }
 
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       // must be left unchanged for backwards compatibility
       return getName();
     }
@@ -116,7 +112,7 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
     }
 
     @Override
-    public RunConfiguration createTemplateConfiguration(Project project) {
+    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
 
       if (PORTABLE_DEPLOYER_ENABLED) {
         // TODO
@@ -168,30 +164,20 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
     }
 
     @Override
-    public RunConfigurationSingletonPolicy getSingletonPolicy() {
+    public @NotNull RunConfigurationSingletonPolicy getSingletonPolicy() {
       return RunConfigurationSingletonPolicy.SINGLE_INSTANCE_ONLY;
     }
 
     private static String defaultVmOptions() {
-      String vmoptionsText = VMOptions.read();
-      if (vmoptionsText == null) {
-        return null;
-      }
-      ArrayList<String> vmoptions =
-          Splitter.on("\n")
-              .trimResults()
-              .omitEmptyStrings()
-              .splitToStream(vmoptionsText)
-              .filter(opt -> !opt.startsWith("#"))
-              .collect(toCollection(ArrayList::new));
+      var vmOptions = VMOptions.readOptions("", false);
 
-      String vmoptionsFile = System.getProperty("jb.vmOptionsFile");
-      if (vmoptionsFile != null) {
-        vmoptions.add("-Djb.vmOptionsFile=" + vmoptionsFile);
+      String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
+      if (vmOptionsFile != null) {
+        vmOptions.add("-Djb.vmOptionsFile=" + vmOptionsFile);
       }
-      vmoptions.add("-Didea.is.internal=true");
+      vmOptions.add("-Didea.is.internal=true");
 
-      return ParametersListUtil.join(vmoptions);
+      return ParametersListUtil.join(vmOptions);
     }
   }
 
@@ -200,7 +186,7 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
   }
 
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return Blaze.defaultBuildSystemName() + " IntelliJ Plugin";
   }
 
@@ -215,7 +201,7 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
   }
 
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "BlazeIntellijPluginConfigurationType";
   }
 
