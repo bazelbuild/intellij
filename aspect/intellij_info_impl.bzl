@@ -15,7 +15,7 @@ load(
 )
 load(":code_generator_info.bzl", "CODE_GENERATOR_RULE_NAMES")
 load(":flag_hack.bzl", "FlagHackInfo")
-load(":java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference")
+load(":java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference", "get_provider_from_target")
 load(
     ":make_variables.bzl",
     "expand_make_variables",
@@ -100,7 +100,7 @@ def run_jar(ctx, jar, **kwargs):
     file should be a self contained _deploy jar.
     """
 
-    host_java = ctx.attr._java_runtime[java_common.JavaRuntimeInfo]
+    host_java = get_provider_from_target("JavaRuntimeInfo", ctx.attr._java_runtime)
 
     return ctx.actions.run_shell(
         tools = depset([jar], transitive = [host_java.files]),
@@ -674,9 +674,7 @@ def get_java_provider(target):
     java_info = get_java_info(target)
     if java_info:
         return java_info
-    if hasattr(java_common, "JavaPluginInfo") and java_common.JavaPluginInfo in target:
-        return target[java_common.JavaPluginInfo]
-    return None
+    return get_provider_from_target("JavaPluginInfo", target)
 
 def _collect_generated_files(java):
     """Collects generated files from a Java target"""
@@ -1107,10 +1105,9 @@ def collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups):
     """Updates java_toolchain-relevant output groups, returns false if not a java_toolchain target."""
     if hasattr(target, "java_toolchain"):
         toolchain = target.java_toolchain
-    elif java_common.JavaToolchainInfo != platform_common.ToolchainInfo and \
-         java_common.JavaToolchainInfo in target:
-        toolchain = target[java_common.JavaToolchainInfo]
     else:
+        toolchain = get_provider_from_target("JavaToolchainInfo", target)
+    if not toolchain:
         return False
     javac_jars = []
     if hasattr(toolchain, "tools"):
