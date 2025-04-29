@@ -226,6 +226,7 @@ def intellij_integration_test_suite(
         # Usually, we'd get this from the JetBrains SDK, but the bundled one not aware of Bazel platforms,
         # so it fails on certain setups.
         "@jna//jar",
+        "@org_jetbrains_pty4j_pty4j//jar",
     ])
     runtime_deps = list(runtime_deps)
     runtime_deps.extend([

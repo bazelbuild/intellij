@@ -132,10 +132,16 @@ maven.install(
         "com.google.guava:failureaccess:1.0.2",
         "org.hamcrest:hamcrest-core:3.0",
         "org.jetbrains:annotations:26.0.2",
+        #"org.jetbrains.pty4j:pty4j:0.12.13",
+        "org.jetbrains.pty4j:pty4j:0.13.0",
     ],
     fail_if_repin_required = True,
     generate_compat_repositories = True,
     lock_file = "//:maven_install.json",
+    repositories = [
+        "https://repo1.maven.org/maven2",
+        "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies",
+    ],
 )
 use_repo(
     maven,
@@ -143,6 +149,7 @@ use_repo(
     "com_google_guava_guava",
     "com_google_j2objc_j2objc_annotations",
     "maven",
+    "org_jetbrains_pty4j_pty4j",
     "org_opentest4j_opentest4j",
     "unpinned_maven",
     auto_value = "com_google_auto_value_auto_value",
@@ -161,6 +168,7 @@ use_repo(
     junit = "junit_junit",
     mockito = "org_mockito_mockito_core",
     objenesis = "org_objenesis_objenesis",
+    #ptylib = "org_jetbrains_pty4j_pty4j",
     truth = "com_google_truth_truth",
     truth8 = "com_google_truth_extensions_truth_java8_extension",
 )
