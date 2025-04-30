@@ -2,6 +2,13 @@
 
 load("@rules_java//java:defs.bzl", "JavaInfo")
 
+RuntimeClasspathInfo = provider(
+    doc = "A provider for the runtime classpath of a java target.",
+    fields = {
+        "output_groups": "A depset of all runtime classpath for a target.",
+    },
+)
+
 def _runtime_classpath_impl(target, ctx):
     """The top level aspect implementation function.
 
@@ -15,9 +22,9 @@ def _runtime_classpath_impl(target, ctx):
       A struct with only the output_groups provider.
     """
     ctx = ctx  # unused argument
-    return struct(output_groups = {
-        "runtime_classpath": _get_runtime_jars(target),
-    })
+    return [RuntimeClasspathInfo(
+        output_groups = {"runtime_classpath": _get_runtime_jars(target)},
+    )]
 
 def _get_runtime_jars(target):
     if JavaInfo not in target:
