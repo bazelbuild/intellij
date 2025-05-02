@@ -1,22 +1,8 @@
 v2025.04.29
 ===========
-Fixes: 
+Fixes:
 * Run sync with --skip_incompatible_explicit_targets #7617
 * Remove references to java_common from aspects #7615
-* Windows fixes #7535
-* Workaround fix for java project sync without bzlmod for bazel 8+ #7605
-* [AOSP-pick] Fix java_binary debugging #7544
-* [AOSP-pick] Fix remote query runner #7551
-* [AOSP-pick] Warm-up the working directory only #7576
-Performance improvements:
-* [AOSP-pick] Cache isReadyForAnalysis value #7537
-* [AOSP-pick] Replace usages of ExternalTransitiveClosure #7538
-* [AOSP-pick] Provides libraries via extension point instead of library table #7567
-* [AOSP-pick] Do not configure duplicate jars in one library #7587
-*[AOSP-pick] Unzip generated sources for project structure #7588
-New features:
-* [AOSP-pick] Always build af_internal_soyinfo_generator rules #7543
-* [AOSP-pick] Collect BUILD included files #7565
 
 v2025.04.15
 ===========
