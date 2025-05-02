@@ -2,6 +2,7 @@ v2025.04.29
 ===========
 Fixes: 
 * Run sync with --skip_incompatible_explicit_targets #7617
+* Remove references to java_common from aspects #7615
 * Windows fixes #7535
 * Workaround fix for java project sync without bzlmod for bazel 8+ #7605
 * [AOSP-pick] Fix java_binary debugging #7544
