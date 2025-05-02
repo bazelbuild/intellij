@@ -188,7 +188,7 @@ public class BlazeCommandRunConfiguration
     super(project, factory, name);
     // start with whatever fallback is present for unknown state. The user may need to fix it.
     handlerProvider =
-        BlazeCommandRunConfigurationHandlerProvider.findHandlerProvider(TargetState.PENDING, null);
+        BlazeCommandRunConfigurationHandlerProvider.findHandlerProvider(TargetState.KNOWN, null);
     handler = handlerProvider.createHandler(this);
     try {
       handler.getState().readExternal(blazeElementState);
