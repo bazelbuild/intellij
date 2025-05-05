@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.psi.PsiReference;
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -36,11 +35,6 @@ import org.junit.runners.JUnit4;
 /** Test that references to external workspaces appear in 'find usages' results. */
 @RunWith(JUnit4.class)
 public class ExternalWorkspaceFindUsagesTest extends BuildFileIntegrationTestCase {
-
-  @Override
-  protected BuildSystemName buildSystem() {
-    return BuildSystemName.Bazel;
-  }
 
   @Test
   public void testFindUsagesFromWorkspaceFile() {

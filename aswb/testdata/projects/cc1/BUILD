@@ -1,3 +1,4 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load(
     "//aswb/testdata/projects:test_projects.bzl",
     "test_project_package",

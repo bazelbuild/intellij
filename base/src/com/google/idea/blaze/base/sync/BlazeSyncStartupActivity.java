@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 
@@ -33,6 +34,12 @@ public class BlazeSyncStartupActivity implements StartupActivity.DumbAware {
 
   @Override
   public void runActivity(Project project) {
+    // do not automatically start a sync during testing, this allows tests to
+    // manually start a sync and instrument the BlazeContext
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     if (importSettings == null) {

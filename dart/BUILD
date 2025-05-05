@@ -1,3 +1,4 @@
+load("@rules_java//java:java_library.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
     "DEFAULT_TEST_VISIBILITY",
@@ -12,9 +13,9 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
-        "//proto:proto_deps",
-        "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+        "//proto:proto_deps",
     ],
 )
 
@@ -36,10 +37,10 @@ intellij_unit_test_suite(
         "//base",
         "//base:unit_test_utils",
         "//common/experiments",
-        "//third_party/java/junit",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "//third_party/java/junit",
         "@com_google_guava_guava//jar",
     ],
 )

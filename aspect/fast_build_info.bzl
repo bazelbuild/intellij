@@ -10,7 +10,7 @@ load(
     ":intellij_info_impl.bzl",
     "stringify_label",
 )
-load(":java_info.bzl", "get_java_info")
+load(":java_info.bzl", "get_java_info", "get_provider_from_target")
 
 _DEP_ATTRS = ["deps", "exports", "runtime_deps", "_java_toolchain"]
 
@@ -48,11 +48,8 @@ def _fast_build_info_impl(target, ctx):
 
     if hasattr(target, "java_toolchain"):
         toolchain = target.java_toolchain
-    elif java_common.JavaToolchainInfo != platform_common.ToolchainInfo and \
-         java_common.JavaToolchainInfo in target:
-        toolchain = target[java_common.JavaToolchainInfo]
     else:
-        toolchain = None
+        toolchain = get_provider_from_target("JavaToolchainInfo", target)
     if toolchain:
         write_output = True
         javac_jars = []
@@ -89,7 +86,7 @@ def _fast_build_info_impl(target, ctx):
             "jvm_flags": getattr(ctx.rule.attr, "jvm_flags", []),
             "main_class": getattr(ctx.rule.attr, "main_class", None),
         }
-        annotation_processing = target[JavaInfo].annotation_processing
+        annotation_processing = getattr(java_info, "annotation_processing", None)
         if annotation_processing:
             java_info["annotation_processor_class_names"] = annotation_processing.processor_classnames
             java_info["annotation_processor_classpath"] = [
@@ -113,11 +110,10 @@ def _fast_build_info_impl(target, ctx):
     if write_output:
         output_file = ctx.actions.declare_file(target.label.name + ".ide-fast-build-info.txt")
         ctx.actions.write(output_file, proto.encode_text(struct_omit_none(**info)))
-        output_files += [output_file]
+        output_files.append(output_file)
 
     output_groups = depset(output_files, transitive = dep_outputs)
-
-    return struct(output_groups = {"ide-fast-build": output_groups})
+    return [OutputGroupInfo(**{"ide-fast-build": output_groups})]
 
 def _get_all_dep_outputs(dep_targets):
     """Get the ide-fast-build output files for all dependencies"""

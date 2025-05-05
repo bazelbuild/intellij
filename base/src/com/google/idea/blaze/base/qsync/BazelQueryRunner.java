@@ -39,6 +39,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -66,7 +67,7 @@ public class BazelQueryRunner implements QueryRunner {
     if (PREFER_REMOTE_QUERIES.getValue()) {
       invoker =
           buildSystem
-              .getBuildInvoker(project, ImmutableSet.of(BuildInvoker.Capability.SUPPORTS_API));
+              .getBuildInvoker(project, ImmutableSet.of(BuildInvoker.Capability.RUN_REMOTE_QUERIES)).orElseThrow();
     } else {
       invoker = buildSystem.getDefaultInvoker(project);
     }
@@ -132,8 +133,8 @@ public class BazelQueryRunner implements QueryRunner {
     try {
       QuerySummary summary = QuerySummaryImpl.create(queryStrategy, in);
       logger.info(
-          String.format(
-              "Summarised query in %ds", Duration.between(start, Instant.now()).toSeconds()));
+          String.format(Locale.ROOT,
+                        "Summarised query in %ds", Duration.between(start, Instant.now()).toSeconds()));
       return summary;
     } catch (IOException e) {
       throw new BuildException("Failed to read query output", e);

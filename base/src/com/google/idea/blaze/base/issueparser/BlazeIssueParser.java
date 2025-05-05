@@ -439,8 +439,8 @@ public class BlazeIssueParser {
    */
   static class GenericErrorParser extends SingleLineParser {
 
-    // Match either specific blacklisted patterns we don't want, or the generic error message we do.
-    // Then throw away the blacklisted matches later.
+    // Match either specific patterns we don't want, or the generic error message we do.
+    // Then throw away the matches patterns later.
     private static final ImmutableList<String> COMMON_PATTERNS = ImmutableList.of(
             "(//.+?: Exit [0-9]+\\.)",
             "(.*: Process exited with status [0-9]+\\.)",

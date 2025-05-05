@@ -37,6 +37,7 @@ public final class ArtifactLocation
     this.isExternal = isExternal;
   }
 
+  @SuppressWarnings("NoInterning")
   public static ArtifactLocation fromProto(Common.ArtifactLocation proto) {
     return ProjectDataInterner.intern(
         new ArtifactLocation(

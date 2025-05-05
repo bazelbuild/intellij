@@ -64,6 +64,7 @@ import com.intellij.openapi.project.Project;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -197,6 +198,7 @@ final class ProjectStateSyncTask {
                .setProjectViewSet(projectViewSet)
                .setLanguageSettings(workspaceLanguageSettings)
                .setBlazeVersionData(blazeVersionData)
+               .setBlazeInfo(blazeInfo)
                .setWorkingSet(workingSet)
                .setWorkspacePathResolver(workspacePathResolver)
                .setExternalWorkspaceData(externalWorkspaceData)
@@ -331,7 +333,7 @@ final class ProjectStateSyncTask {
       context.output(PrintOutput.log("  " + message));
     }
     if (messages.size() > maxFiles) {
-      context.output(PrintOutput.log(String.format("  (and %d more)", messages.size() - maxFiles)));
+      context.output(PrintOutput.log(String.format(Locale.ROOT, "  (and %d more)", messages.size() - maxFiles)));
     }
     context.output(PrintOutput.output(""));
   }

@@ -1,8 +1,10 @@
+load("@rules_java//java:java_library.bzl", "java_library")
+
 java_library(
     name = "junit",
     visibility = ["//visibility:public"],
     exports = [
-        "@junit//jar",
         "@hamcrest//jar",
+        "@junit//jar",
     ],
 )

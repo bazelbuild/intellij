@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2025 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,9 @@ class IssueOutput(
   issue: BuildIssue,
   val kind: MessageEvent.Kind,
 ) : Output, BuildIssue by issue {
+  override fun toString(): String {
+    return "$kind: \"$title\" \"$description\""
+  }
 
   companion object {
     @JvmStatic
