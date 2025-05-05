@@ -53,7 +53,8 @@ public enum BlazeDebuggerKind {
 
     return switch (kind) {
       case BUNDLED_GDB, CUSTOM_GDB -> gdbBundledOrServer();
-      case BUNDLED_LLDB -> BUNDLED_LLDB;
+      // case BUNDLED_LLDB, CUSTOM_LLDB, use default for SDK compat reasons
+      default -> BUNDLED_LLDB;
     };
   }
 

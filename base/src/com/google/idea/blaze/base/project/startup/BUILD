@@ -10,7 +10,7 @@ kt_jvm_library(
         "//visibility:public",
     ],
     deps = [
-        "//intellij_platform_sdk:plugin_api",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
+        "//intellij_platform_sdk:plugin_api",
     ],
 )

@@ -4,11 +4,10 @@ kt_jvm_library(
     name = "qsync",
     srcs = glob(["*.java"]),
     visibility = [
-        "//querysync:__subpackages__",
         "//javatests/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
+        "//querysync:__subpackages__",
     ],
     deps = [
-        "@jsr305_annotations//jar",
         "//querysync/java/com/google/idea/blaze/qsync/artifacts",
         "//querysync/java/com/google/idea/blaze/qsync/cc",
         "//querysync/java/com/google/idea/blaze/qsync/deps",
@@ -23,8 +22,9 @@ kt_jvm_library(
         "//shared:vcs",
         "//third_party/java/auto_value",
         "@com_google_guava_guava//jar",
-        "@jetbrains_annotations//jar",
-        "@protobuf//:protobuf_java",
         "@error_prone_annotations//jar",
+        "@jetbrains_annotations//jar",
+        "@jsr305_annotations//jar",
+        "@protobuf//:protobuf_java",
     ],
 )

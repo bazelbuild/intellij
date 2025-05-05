@@ -121,6 +121,7 @@ class AspectStorageService(private val project: Project, private val scope: Coro
       .setWorkspacePathResolver(projectData.workspacePathResolver)
       .setWorkingSet(null)
       .setBlazeVersionData(versionData)
+      .setBlazeInfo(projectData.blazeInfo)
       .build()
 
     prepare(parentCtx, state)

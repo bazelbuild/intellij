@@ -28,7 +28,6 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducerTestCase;
-import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.psi.PsiFile;
@@ -54,11 +53,6 @@ public class BazelKotlinxCoroutinesLibFinderTest extends BlazeRunConfigurationPr
   private TargetIdeInfo kotlinxCoroutinesLibMultipleJars;
 
   private PsiFile mainFile;
-
-  @Override
-  protected BuildSystemName buildSystem() {
-    return BuildSystemName.Bazel;
-  }
 
   @Before
   public final void setup() throws Throwable {

@@ -72,15 +72,3 @@ java_test(
         "@com_google_guava_guava//jar",
     ],
 )
-
-java_test(
-    name = "DepsGraphTest",
-    size = "small",
-    srcs = ["DepsGraphTest.java"],
-    deps = [
-        "//querysync/java/com/google/idea/blaze/qsync/project",
-        "//third_party/java/junit",
-        "//third_party/java/truth",
-        "@com_google_guava_guava//jar",
-    ],
-)

@@ -75,6 +75,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -240,10 +241,10 @@ public final class BuildPhaseSyncTask {
 
     BuildInvoker syncBuildInvoker =
         parallel
-            ? buildSystem.getBuildInvoker(project, ImmutableSet.of(BuildInvoker.Capability.SUPPORTS_PARALLELISM))
+            ? buildSystem.getBuildInvoker(project, ImmutableSet.of(BuildInvoker.Capability.BUILD_PARALLEL_SHARDS)).orElseThrow()
             : defaultInvoker;
     final BlazercMigrator blazercMigrator = new BlazercMigrator(project);
-    if (!syncBuildInvoker.getCapabilities().contains(BuildInvoker.Capability.SUPPORTS_CLI)
+    if (!syncBuildInvoker.getCapabilities().contains(BuildInvoker.Capability.SUPPORT_CLI)
         && blazercMigrator.needMigration()) {
       context.output(
           SummaryOutput.output(Prefix.INFO, "No .blazerc found at workspace root!").log().dedupe());
@@ -259,7 +260,7 @@ public final class BuildPhaseSyncTask {
         .setParallelBuilds(
             syncBuildInvoker
                 .getCapabilities()
-                .contains(BuildInvoker.Capability.SUPPORTS_PARALLELISM));
+                .contains(BuildInvoker.Capability.BUILD_PARALLEL_SHARDS));
 
     BlazeBuildOutputs.Legacy blazeBuildResult =
         getBlazeBuildResult(context, viewSet, shardedTargets, syncBuildInvoker, parallel);
@@ -295,8 +296,8 @@ public final class BuildPhaseSyncTask {
     context.output(
         SummaryOutput.output(
                 Prefix.INFO,
-                String.format(
-                    "Found %d %s, split into %d %s",
+                String.format(Locale.ROOT,
+                              "Found %d %s, split into %d %s",
                     targetCount,
                     StringUtil.pluralize("target", targetCount),
                     shardCount,
@@ -319,7 +320,7 @@ public final class BuildPhaseSyncTask {
 
     targets.stream().limit(50).forEach(target -> sb.append("  ").append(target).append('\n'));
     if (targets.size() > 50) {
-      sb.append(String.format("\nPlus %d more targets", targets.size() - 50));
+      sb.append(String.format(Locale.ROOT, "\nPlus %d more targets", targets.size() - 50));
     }
     context.output(PrintOutput.log(sb.toString()));
   }

@@ -1,3 +1,5 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+
 # Copyright 2024 The Bazel Authors. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,13 +13,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_binary", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
-kt_jvm_binary(
+kt_jvm_library(
+    name = "lib",
+    srcs = ["maintenance.kt"],
+    deps = ["@com_google_guava_guava//jar"],
+)
+
+java_binary(
     name = "maintenance",
-    srcs = glob(["maintenance.kt"]),
     main_class = "MaintenanceKt",
-    deps = [
-        "@com_google_guava_guava//jar",
-    ],
+    runtime_deps = [":lib"],
 )

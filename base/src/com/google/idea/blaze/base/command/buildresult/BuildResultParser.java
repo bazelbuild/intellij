@@ -15,16 +15,22 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Interner;
 import com.google.idea.blaze.base.command.buildresult.bepparser.BepParser;
 import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
 import com.google.idea.blaze.base.command.buildresult.bepparser.ParsedBepOutput;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
+import java.io.File;
 
 /**
  * A utility class that knows how to collect data from {@link BuildEventStreamProvider} in a use case specific way.
  */
 public final class BuildResultParser {
+
+  private static final String DEFAULT_OUTPUT_GROUP_NAME = "default";
+
   private BuildResultParser() { }
 
   /**
@@ -82,7 +88,7 @@ public final class BuildResultParser {
   }
 
   /**
-   * Parses the BEP stream and  collects all build flags used. Return all flags that pass filters
+   * Parses the BEP stream and collects all build flags used. Return all flags that pass filters
    */
   public static BuildFlags getBlazeFlags(BuildEventStreamProvider bepStream) throws BuildResultHelper.GetFlagsException {
     try {
@@ -91,5 +97,43 @@ public final class BuildResultParser {
       throw new BuildResultHelper.GetFlagsException(
         String.format("Failed to parse bep for build id: %s", bepStream.getId()), e);
     }
+  }
+
+  /**
+   * Parses the BEP stream and collects all local executable artifacts of the provided label in the default output
+   * group. LocalFileArtifact.getLocalFiles is not used by this implementation to avoid the local artifact cache.
+   *
+   * <p>Returns a non-empty list of all artifacts or throws a GetArtifactsException.
+   */
+  public static ImmutableList<File> getExecutableArtifacts(
+      BuildEventStreamProvider bepStream,
+      Interner<String> stringInterner,
+      String label)
+      throws BuildResultHelper.GetArtifactsException {
+    final var parsedBepOutput = getBuildOutput(bepStream, stringInterner);
+
+    final var result = BuildResult.fromExitCode(parsedBepOutput.buildResult());
+    if (result.status != BuildResult.Status.SUCCESS) {
+      throw new BuildResultHelper.GetArtifactsException(
+          String.format("Failed to parse bep for build id: %s", bepStream.getId()));
+    }
+
+    // manually find local artifacts in favour of LocalFileArtifact.getLocalFiles, to avoid the artifacts cache
+    // the artifacts cache atm does not preserve the executable flag for files (and there might be other issues)
+    final var artifacts =  BlazeBuildOutputs.fromParsedBepOutput(parsedBepOutput)
+        .getOutputGroupTargetArtifacts(DEFAULT_OUTPUT_GROUP_NAME, label)
+        .stream()
+        .filter(LocalFileArtifact.class::isInstance)
+        .map(LocalFileArtifact.class::cast)
+        .map(LocalFileArtifact::getFile)
+        .filter(File::canExecute)
+        .collect(ImmutableList.toImmutableList());
+
+    if (artifacts.isEmpty()) {
+      throw new BuildResultHelper.GetArtifactsException(
+          String.format("No output artifacts found for build id: %s", bepStream.getId()));
+    }
+
+    return artifacts;
   }
 }

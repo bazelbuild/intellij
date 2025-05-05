@@ -19,7 +19,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyFile;
@@ -33,11 +32,6 @@ import org.junit.runners.JUnit4;
 /** Test behavior of {@link BazelPyGenfilesImportResolverStrategy}. */
 @RunWith(JUnit4.class)
 public class BazelPyGenfilesImportResolverStrategyTest extends PyImportResolverStrategyTestCase {
-
-  @Override
-  protected BuildSystemName buildSystem() {
-    return BuildSystemName.Bazel;
-  }
 
   @Test
   public void testResolveGenfiles() {

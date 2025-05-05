@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2024 The Bazel Authors. All rights reserved.
+  ~ Copyright 2025 The Bazel Authors. All rights reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -18,5 +18,7 @@
     <TestContextProvider implementation="com.google.idea.blaze.clwb.radler.RadGoogleTestContextProvider"/>
     <TestContextProvider implementation="com.google.idea.blaze.clwb.radler.RadCatchTestContextProvider"/>
     <BinaryContextProvider implementation="com.google.idea.blaze.clwb.radler.RadBinaryContextProvider"/>
+    <BlazeTestEventsHandler implementation="com.google.idea.blaze.clwb.radler.RadTestEventsHandler"/>
+    <SyncStatusContributor implementation="com.google.idea.blaze.clwb.radler.RadSyncStatusContributor"/>
   </extensions>
 </idea-plugin>

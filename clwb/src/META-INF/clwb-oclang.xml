@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2023 The Bazel Authors. All rights reserved.
+  ~ Copyright 2025 The Bazel Authors. All rights reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -21,5 +21,6 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <clwb.googleTestUtilAdapter implementation="com.google.idea.blaze.clwb.oclang.run.CidrGoogleTestUtilAdapter"/>
     <TestContextProvider implementation="com.google.idea.blaze.clwb.oclang.run.producers.CppTestContextProvider"/>
+    <BlazeTestEventsHandler implementation="com.google.idea.blaze.clwb.oclang.run.test.BlazeCidrTestEventsHandler"/>
   </extensions>
 </idea-plugin>

@@ -119,6 +119,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -244,7 +245,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
     context.output(
         PrintOutput.log(
-            String.format(
+            String.format(Locale.ROOT,
                 "Total rules: %d, new/changed: %d, removed: %d",
                 targetCount, diff.getUpdatedOutputs().size(), removedCount)));
 
@@ -431,18 +432,18 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
               context.output(
                   PrintOutput.log(
-                      String.format(
+                      String.format(Locale.ROOT,
                           "Loaded %d aspect files, total size %dkB",
                           fileState.getUpdatedOutputs().size(), totalSizeLoaded.get() / 1024)));
               if (duplicateTargetLabels > 0) {
                 context.output(
                     new PerformanceWarning(
-                        String.format(
+                        String.format(Locale.ROOT,
                             "There were %d duplicate rules, built with the following "
                                 + "configurations: %s.\nYour IDE sync is slowed down by ~%d%%.",
-                            duplicateTargetLabels,
-                            configurations,
-                            (100 * duplicateTargetLabels / targetMap.size()))));
+                                      duplicateTargetLabels,
+                                      configurations,
+                                      (100 * duplicateTargetLabels / targetMap.size()))));
               }
 
               // remove previously synced targets which are now unsupported
@@ -635,10 +636,25 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       context.output(SummaryOutput.output(Prefix.INFO, message).dedupe());
       context.output(PrintOutput.log(message));
     }
+
+    final var additionalBlazeFlagsBuilder = ImmutableList.<String>builder();
+
     // Fetching blaze flags here using parent context, to avoid duplicate fetch for every shard.
-    List<String> additionalBlazeFlags =
-        BlazeFlags.blazeFlags(
-            project, projectViewSet, BlazeCommandName.BUILD, context, blazeInvocationContext);
+    additionalBlazeFlagsBuilder.addAll(BlazeFlags.blazeFlags(
+        project,
+        projectViewSet,
+        BlazeCommandName.BUILD,
+        context,
+        blazeInvocationContext
+    ));
+
+    // The --skip_incompatible_explicit_targets flag is only available in Bazel 7+
+    if (blazeVersion.bazelIsAtLeastVersion(7, 0, 0)) {
+      additionalBlazeFlagsBuilder.add(BlazeFlags.SKIP_INCOMPATIBLE_TARGETS);
+    }
+
+    final var additionalBlazeFlags = additionalBlazeFlagsBuilder.build();
+
     Function<List<? extends TargetExpression>, BuildResult> invocation =
         targets ->
             Scope.push(

@@ -53,7 +53,7 @@ import javax.annotation.Nullable;
 import org.jetbrains.plugins.scala.project.ScalaLibraryProperties;
 import org.jetbrains.plugins.scala.project.ScalaLibraryType;
 import scala.Option;
-import scala.collection.immutable.List$;
+import scala.collection.immutable.Seq$;
 
 /** Supports scala. */
 public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
@@ -105,7 +105,7 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
       // TODO: We could pick the min or max version, but either choice is problematic, see SCL-18866.
       // TODO: The best solution would be letting the user specify the expected Scala version explicitly
       if (library.getName() != null && isRuntimeLibrary(library.getName())) {
-        ScalaLibraryProperties properties = ScalaLibraryProperties.apply(libraryVersion(library.getName()), List$.MODULE$.<File>empty(), List$.MODULE$.<File>empty());
+        ScalaLibraryProperties properties = ScalaLibraryProperties.apply(libraryVersion(library.getName()), Seq$.MODULE$.<File>empty(), Seq$.MODULE$.<File>empty());
         ExistingLibraryEditor editor = new ExistingLibraryEditor(library, null);
         editor.setType(ScalaLibraryType.apply());
         editor.setProperties(properties);
