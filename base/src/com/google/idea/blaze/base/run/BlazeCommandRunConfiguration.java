@@ -403,10 +403,10 @@ public class BlazeCommandRunConfiguration
       return false;
     }
     targetKindString = kind;
-    if (targetStateWas == TargetState.PENDING) {
+    //if (targetStateWas == TargetState.PENDING) {
       // Let users choose if already determined.
       updateHandler();
-    }
+    //}
     return true;
   }
 
