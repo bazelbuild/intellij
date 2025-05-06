@@ -186,7 +186,7 @@ public class BlazeCommandRunConfiguration
 
   public BlazeCommandRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(project, factory, name);
-    // start with whatever fallback is present for unknown state. The user may need to fix it.
+    // start with whatever fallback is present
     handlerProvider =
         BlazeCommandRunConfigurationHandlerProvider.findHandlerProvider(TargetState.KNOWN, null);
     handler = handlerProvider.createHandler(this);
@@ -398,15 +398,11 @@ public class BlazeCommandRunConfiguration
   }
 
   private boolean updateTargetKind(@Nullable String kind) {
-    TargetState targetStateWas = getTargetState();
     if (Objects.equals(targetKindString, kind)) {
       return false;
     }
     targetKindString = kind;
-    //if (targetStateWas == TargetState.PENDING) {
-      // Let users choose if already determined.
-      updateHandler();
-    //}
+    updateHandler();
     return true;
   }
 
