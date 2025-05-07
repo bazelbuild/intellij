@@ -113,6 +113,7 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
       object : ColoredProcessHandler(cmdLine) {
         override fun coloredTextAvailable(text: String, attributes: Key<*>) {
           super.coloredTextAvailable(text, attributes)
+          ctx.output(PrintOutput.process(text))
         }
       }
     }
@@ -198,9 +199,8 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
 
       val parseJob = parseEvents(ctx, provider)
 
-      execute(ctx, cmdBuilder, useCurses) { exitCode ->
+      val process = execute(ctx, cmdBuilder, useCurses) { exitCode ->
         runBlocking { parseJob.cancelAndJoin() }
-        ensureActive()
 
         val result = BuildResult.fromExitCode(exitCode)
         if (result.status == BuildResult.Status.FATAL_ERROR) {
@@ -213,6 +213,7 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
           )
         }
       }
+      process.also { it.hdl.startNotify() }
     }
   }
 
