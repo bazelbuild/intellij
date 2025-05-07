@@ -23,6 +23,7 @@ java_library(
     name = "v251",
     srcs = glob([
         "com/google/idea/sdkcompat/general/**",
+        "com/google/idea/sdkcompat/querysync/**",
     ]) + select_for_ide(
         clion = glob([
             "com/google/idea/sdkcompat/javascript/**",  #api223
