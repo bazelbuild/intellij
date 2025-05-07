@@ -7,6 +7,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.guava.asListenableFuture
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -22,6 +23,9 @@ data class BazelProcess<T>(val hdl: ProcessHandler) {
   @Throws(BuildException::class)
   fun getResultBlocking(): T {
     return try {
+      runBlocking {
+        processResult.await()
+      }
       processResult.getCompleted()
     } catch (e: Exception) {
       processResult.completeExceptionally(e)
