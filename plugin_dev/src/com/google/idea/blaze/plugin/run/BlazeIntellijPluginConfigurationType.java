@@ -19,7 +19,6 @@ import static java.util.stream.Collectors.toCollection;
 
 import com.google.common.base.Splitter;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
@@ -74,7 +73,7 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
       if (target == null) {
         return false;
       }
-      return IntellijPluginRule.isPluginTarget(TargetInfo.builder(label, target.kind()).build());
+      return IntellijPluginRule.isPluginTarget(target);
     }
 
     @Override
@@ -141,10 +140,10 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
       if (projectData == null) {
         return null;
       }
-      return projectData.getTargetMap().targets().stream()
-          .map(TargetIdeInfo::toTargetInfo)
+      return projectData.targets().stream()
+          .map(projectData::getBuildTarget)
           .filter(IntellijPluginRule::isPluginTarget)
-          .map(info -> info.label)
+          .map(info -> Label.create(info.label()))
           .findFirst()
           .orElse(null);
     }

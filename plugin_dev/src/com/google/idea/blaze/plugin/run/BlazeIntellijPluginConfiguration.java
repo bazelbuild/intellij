@@ -268,15 +268,22 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
 
-    Label label = target;
+    final var label = target;
     if (label == null) {
       throw new RuntimeConfigurationError("Select a target to run");
     }
-    TargetInfo target = TargetFinder.findTargetInfo(getProject(), label);
-    if (target == null) {
+
+    final var projectData = BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
+    if (projectData == null) {
+      throw new RuntimeConfigurationError("Project configuration error.");
+    }
+
+    final var buildTarget = projectData.getBuildTarget(label);
+    if (buildTarget == null) {
       throw new RuntimeConfigurationError("The selected target does not exist.");
     }
-    if (!IntellijPluginRule.isPluginTarget(target)) {
+
+    if (!IntellijPluginRule.isPluginTarget(buildTarget)) {
       throw new RuntimeConfigurationError("The selected target is not an intellij_plugin");
     }
     if (!IdeaJdkHelper.isIdeaJdk(pluginSdk)) {
@@ -363,15 +370,14 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
   }
 
   private static Set<Label> findPluginTargets(Project project) {
-    BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    BlazeProjectData projectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null) {
       return ImmutableSet.of();
     }
-    return projectData.getTargetMap().targets().stream()
-        .map(TargetIdeInfo::toTargetInfo)
+    return projectData.targets().stream()
+        .map(projectData::getBuildTarget)
         .filter(IntellijPluginRule::isPluginTarget)
-        .map(info -> info.label)
+        .map(info -> Label.create(info.label()))
         .collect(toImmutableSet());
   }
 
