@@ -102,7 +102,12 @@ public class BlazeBuildTargetSharder {
             : maxTargetShardSize.getValue();
     int userSpecified =
         projectViewSet.getScalarValue(TargetShardSizeSection.KEY).orElse(defaultLimit);
-    return min(userSpecified, TargetShardSizeLimit.getMaxTargetsPerShard().orElse(userSpecified));
+    // If user has explicitly set the shard size, honor it instead of heuristic limit.
+    int maxTargetShardSize = 
+      projectViewSet.getScalarValue(ShardBlazeBuildsSection.KEY).orElse(false)
+          ? userSpecified
+          : TargetShardSizeLimit.getMaxTargetsPerShard().orElse(userSpecified);
+    return min(userSpecified, maxTargetShardSize);
   }
 
   private enum ShardingApproach {
