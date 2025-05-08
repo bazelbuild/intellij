@@ -19,13 +19,8 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import javax.annotation.Nullable;
 
-public class PendingTargetRunConfigurationHandlerProvider
+class PendingTargetRunConfigurationHandlerProvider
     implements BlazeCommandRunConfigurationHandlerProvider {
-
-  @Override
-  public String getDisplayLabel() {
-    return "(select)";
-  }
 
   @Override
   public boolean canHandleKind(TargetState state, @Nullable Kind kind) {

@@ -15,13 +15,9 @@
  */
 package com.google.idea.blaze.base.run.confighandler;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
-
-import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import java.util.Collection;
 import javax.annotation.Nullable;
 
 /**
@@ -33,8 +29,6 @@ public interface BlazeCommandRunConfigurationHandlerProvider {
   ExtensionPointName<BlazeCommandRunConfigurationHandlerProvider> EP_NAME =
       ExtensionPointName.create(
           "com.google.idea.blaze.BlazeCommandRunConfigurationHandlerProvider");
-
-  String getDisplayLabel();
 
   /** The target state of a blaze run configuration. */
   enum TargetState {
@@ -48,24 +42,13 @@ public interface BlazeCommandRunConfigurationHandlerProvider {
    */
   static BlazeCommandRunConfigurationHandlerProvider findHandlerProvider(
       TargetState state, @Nullable Kind kind) {
-    final var result = Iterables.getFirst(findHandlerProviders(state, kind), null);
-    if (result != null) {
-      return result;
+    for (BlazeCommandRunConfigurationHandlerProvider handlerProvider : EP_NAME.getExtensions()) {
+      if (handlerProvider.canHandleKind(state, kind)) {
+        return handlerProvider;
+      }
     }
     throw new RuntimeException(
         "No BlazeCommandRunConfigurationHandlerProvider found for Kind " + kind);
-  }
-
-  /**
-   * Find BlazeCommandRunConfigurationHandlerProviders applicable to the given kind.
-   */
-  static Collection<BlazeCommandRunConfigurationHandlerProvider> findHandlerProviders(
-      TargetState state, @Nullable Kind kind) {
-    return EP_NAME.getExtensionList().stream().filter(it -> it.canHandleKind(state, kind)).collect(toImmutableList());
-  }
-
-  static Collection<BlazeCommandRunConfigurationHandlerProvider> findHandlerProviders(){
-    return EP_NAME.getExtensionList();
   }
 
   /** Get the BlazeCommandRunConfigurationHandlerProvider with the given ID, if one exists. */
