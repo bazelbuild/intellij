@@ -10,9 +10,8 @@ scala_deps = use_extension(
     "@rules_scala//scala/extensions:deps.bzl",
     "scala_deps",
 )
-scala_deps.toolchains(
-    scalatest = True,
-)
+scala_deps.scala()
+scala_deps.scalatest()
 
 #TODO Remove when this issue is closed: https://github.com/bazelbuild/rules_scala/issues/1482
 git_override(
