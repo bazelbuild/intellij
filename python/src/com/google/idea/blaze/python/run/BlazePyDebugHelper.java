@@ -17,11 +17,16 @@ package com.google.idea.blaze.python.run;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.python.projectview.DebugFlagsSection;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import java.util.List;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /** Extension point for adding blaze flags when debugging python targets. */
 public interface BlazePyDebugHelper {
@@ -29,8 +34,20 @@ public interface BlazePyDebugHelper {
   ExtensionPointName<BlazePyDebugHelper> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.BlazePyDebugFlagsProvider");
 
+  /**
+   * <p>These debug flags are configured by the user in their `.bazelproject` file.</p>
+   */
+  static @NotNull List<String> getSectionBlazeDebugFlags(Project project) {
+    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    if (projectViewSet != null) {
+      return projectViewSet.listItems(DebugFlagsSection.KEY);
+    }
+    return ImmutableList.of();
+  }
+
   static ImmutableList<String> getAllBlazeDebugFlags(Project project, TargetExpression target) {
     ImmutableList.Builder<String> builder = ImmutableList.builder();
+    builder.addAll(getSectionBlazeDebugFlags(project));
     for (BlazePyDebugHelper provider : EP_NAME.getExtensions()) {
       builder.addAll(provider.getBlazeDebugFlags(project, target));
     }
