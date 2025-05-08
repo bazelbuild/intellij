@@ -77,6 +77,7 @@ def _fast_build_info_impl(target, ctx):
             launcher = stringify_label(ctx.rule.attr._java_launcher.label)
         elif hasattr(ctx.rule.attr, "_javabase") and ctx.rule.attr._javabase:
             launcher = stringify_label(ctx.rule.attr._javabase.label)
+        annotation_processing = getattr(java_info, "annotation_processing", None)
         java_info = {
             "sources": sources_from_target(ctx),
             "test_class": getattr(ctx.rule.attr, "test_class", None),
@@ -86,7 +87,6 @@ def _fast_build_info_impl(target, ctx):
             "jvm_flags": getattr(ctx.rule.attr, "jvm_flags", []),
             "main_class": getattr(ctx.rule.attr, "main_class", None),
         }
-        annotation_processing = getattr(java_info, "annotation_processing", None)
         if annotation_processing:
             java_info["annotation_processor_class_names"] = annotation_processing.processor_classnames
             java_info["annotation_processor_classpath"] = [
