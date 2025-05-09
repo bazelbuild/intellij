@@ -39,7 +39,6 @@
     <cpp.BlazeCompilerFlagsProcessorProvider implementation="com.google.idea.blaze.cpp.IncludeRootFlagsProcessor$Provider"/>
     <cpp.BlazeCompilerFlagsProcessorProvider implementation="com.google.idea.blaze.cpp.SysrootFlagsProcessor$Provider"/>
     <TargetKindProvider implementation="com.google.idea.blaze.cpp.CppBlazeRules"/>
-    <AspectWriter implementation="com.google.idea.blaze.cpp.sync.CcAspectTemplateWriter"/>
   </extensions>
 
   <extensions defaultExtensionNs="cidr.lang">
