@@ -136,6 +136,8 @@ aspect_library(
         "java_info.template.bzl",
         "python_info.bzl",
         "python_info.template.bzl",
+        "cc_info.bzl",
+        "cc_info.template.bzl",
     ],
     namespace = "aspect/template",
     visibility = ["//visibility:public"],
@@ -171,5 +173,12 @@ genrule(
     name = "generate_intellij_info_template",
     srcs = ["intellij_info_bundled.bzl"],
     outs = ["intellij_info.template.bzl"],
+    cmd = STRIP_TEMPLATE_SCRIPT,
+)
+
+genrule(
+    name = "generate_cc_info_template",
+    srcs = ["cc_info.bzl"],
+    outs = ["cc_info.template.bzl"],
     cmd = STRIP_TEMPLATE_SCRIPT,
 )

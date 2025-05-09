@@ -1,4 +1,5 @@
 load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(
     "//:build-visibility.bzl",
     "DEFAULT_TEST_VISIBILITY",
@@ -18,12 +19,13 @@ load(
     "intellij_unit_test_suite",
 )
 
-java_library(
+kt_jvm_library(
     name = "cpp",
     srcs = glob([
         "src/com/google/idea/blaze/cpp/*.java",
         "src/com/google/idea/blaze/cpp/includes/*.java",
         "src/com/google/idea/blaze/cpp/qsync/*.java",
+        "src/com/google/idea/blaze/cpp/sync/*.kt",
         "src/com/google/idea/blaze/cpp/syncstatus/*.java",
         "src/com/google/idea/blaze/cpp/navigation/*.java",
         "src/com/google/idea/blaze/cpp/oclang/*.java",
