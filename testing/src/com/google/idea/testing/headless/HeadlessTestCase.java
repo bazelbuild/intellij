@@ -1,7 +1,7 @@
 package com.google.idea.testing.headless;
 
 import static com.google.common.truth.Truth.assertThat;
-import static junit.framework.Assert.fail;
+import static com.google.idea.testing.headless.Assertions.abort;
 
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.bazel.BazelVersion;
@@ -49,7 +49,9 @@ import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -64,11 +66,19 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
       if (System.currentTimeMillis() > deadline) {
-        fail("timeout exceeded while waiting for Future");
+        abort("timeout exceeded while waiting for Future");
       }
     }
 
-    return future.resultNow();
+    try {
+      return future.get();
+    } catch (InterruptedException | CancellationException e) {
+      abort("future was interrupted or cancelled");
+    } catch (ExecutionException e) {
+      abort("future threw an exception", e);
+    }
+
+    return null; // unreachable
   }
 
   /**
@@ -124,7 +134,7 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
         .get();
 
     if (result != 0) {
-      fail("cannot run bazel binary: " + errStream);
+      abort("cannot run bazel binary: " + errStream);
     }
 
     return file.getAbsolutePath();
@@ -162,7 +172,7 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
     try {
       FileUtil.ensureExists(new File(projectFile, Project.DIRECTORY_STORE_FOLDER));
     } catch (IOException e) {
-      fail("could not create project directory: " + e.getMessage());
+      abort("could not create project directory", e);
     }
 
     final var name = rootFile.getName();
@@ -198,20 +208,20 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
     try {
       builder.builder().commit(); // set pending project settings
     } catch (BlazeProjectCommitException e) {
-      fail("could not commit project: " + e.getMessage());
+      abort("could not commit project", e);
     }
 
     final var projectCreator = ExtendableBazelProjectCreator.getInstance();
     final var projectOpt = projectCreator.createProject(builder, name, projectFile.getAbsolutePath());
     if (projectOpt.isEmpty()) {
-      fail("could not create project");
+      abort("could not create project");
     }
 
     myProject = projectOpt.get();
     myProject.save();
 
     if (!builder.validate(null, myProject)) {
-      fail("could not validate project");
+      abort("could not validate project");
     }
 
     builder.builder().commitToProject(myProject);
@@ -287,7 +297,7 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
       try {
         projects.get().enableAnalysis(context, targets);
       } catch (Exception e) {
-        LOG.error("enable analysis failed", e);
+        abort("enable analysis failed");
       }
     }, ApplicationManager.getApplication()::executeOnPooledThread);
 

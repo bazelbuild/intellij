@@ -720,6 +720,7 @@
     <BuildEventParser implementation="com.google.idea.blaze.base.buildview.events.ActionCompletedParser"/>
     <AspectWriter implementation="com.google.idea.blaze.base.sync.aspects.storage.AspectTemplateWriter"/>
     <AspectWriter implementation="com.google.idea.blaze.base.sync.aspects.storage.AspectWriterImpl"/>
+    <AspectWriter implementation="com.google.idea.blaze.base.sync.aspects.storage.CcAspectTemplateWriter"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze.qsync">

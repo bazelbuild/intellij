@@ -1,7 +1,7 @@
 package com.google.idea.blaze.clwb.base;
 
 import static com.google.common.truth.Truth.assertThat;
-import static junit.framework.Assert.fail;
+import static com.google.idea.testing.headless.Assertions.abort;
 
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.testing.headless.HeadlessTestCase;
@@ -43,7 +43,7 @@ public class ClwbHeadlessTestCase extends HeadlessTestCase {
     try {
       Files.createSymbolicLink(Path.of(PathManager.getBinPath()), sdkBinPath);
     } catch (IOException e) {
-      fail("could not create bin path symlink: " + e.getMessage());
+      abort("could not create bin path symlink", e);
     }
   }
 
