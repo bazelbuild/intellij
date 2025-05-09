@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.android.run.runner;
 
+import static com.google.idea.blaze.android.cppimpl.debug.BlazeNativeDebuggerStateSourceMapping.MAP_WORKING_DIR;
+import static com.google.idea.blaze.android.cppimpl.debug.BlazeNativeDebuggerStateSourceMapping.SOURCE_MAP_TO_WORKSPACE_ROOT_COMMAND;
+
 import com.android.tools.idea.execution.common.debug.AndroidDebugger;
 import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.execution.common.debug.impl.java.AndroidJavaDebugger;
@@ -27,10 +30,14 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import javax.annotation.Nullable;
 
 /** Provides android debuggers and debugger states for blaze projects. */
 public interface BlazeAndroidDebuggerService {
+
+  /** Registry key to enable or disable maping the working directory to /proc/self/cwd */
+  static final String MAP_WORKING_DIR = "bazel.cpp.debug.map_working_dir";
 
   static BlazeAndroidDebuggerService getInstance(Project project) {
     return ServiceManager.getService(project, BlazeAndroidDebuggerService.class);
@@ -74,19 +81,21 @@ public interface BlazeAndroidDebuggerService {
         String workingDirPath = WorkspaceRoot.fromProject(project).directory().getPath();
         nativeState.setWorkingDir(workingDirPath);
 
-        // Remote built binaries may use /proc/self/cwd to represent the working directory
-        // so we manually map /proc/self/cwd to the workspace root.  We used to use
-        // `plugin.symbol-file.dwarf.comp-dir-symlink-paths = "/proc/self/cwd"`
-        // to automatically resolve this but it's no longer supported in newer versions of
-        // LLDB.
-        String sourceMapToWorkspaceRootCommand =
-            "settings append target.source-map /proc/self/cwd/ " + workingDirPath;
-        ImmutableList<String> startupCommands =
+        ImmutableList.Builder <String> startupCommands =
             ImmutableList.<String>builder()
-                .addAll(nativeState.getUserStartupCommands())
-                .add(sourceMapToWorkspaceRootCommand)
-                .build();
-        nativeState.setUserStartupCommands(startupCommands);
+                .addAll(nativeState.getUserStartupCommands());
+
+        // Google specific logic for binaries built in their RBE system.
+        if (Registry.is(MAP_WORKING_DIR, true)) {
+          // Remote built binaries may use /proc/self/cwd to represent the working directory
+          // so we manually map /proc/self/cwd to the workspace root.  We used to use
+          // `plugin.symbol-file.dwarf.comp-dir-symlink-paths = "/proc/self/cwd"`
+          // to automatically resolve this but it's no longer supported in newer versions of
+          // LLDB.
+          startupCommands.add(
+              SOURCE_MAP_TO_WORKSPACE_ROOT_COMMAND + workingDirPath);
+        }
+        nativeState.setUserStartupCommands(startupCommands.build());
       }
       return debuggerState;
     }
@@ -103,20 +112,21 @@ public interface BlazeAndroidDebuggerService {
       String workingDirPath = WorkspaceRoot.fromProject(project).directory().getPath();
       state.setWorkingDir(workingDirPath);
 
-      // Remote built binaries may use /proc/self/cwd to represent the working directory,
-      // so we manually map /proc/self/cwd to the workspace root.  We used to use
-      // `plugin.symbol-file.dwarf.comp-dir-symlink-paths = "/proc/self/cwd"`
-      // to automatically resolve this, but it's no longer supported in newer versions of
-      // LLDB.
-      String sourceMapToWorkspaceRootCommand =
-          "settings append target.source-map /proc/self/cwd/ " + workingDirPath;
+      ImmutableList.Builder <String> startupCommands =
+        ImmutableList.<String>builder()
+        .addAll(state.getUserStartupCommands());
 
-      ImmutableList<String> startupCommands =
-          ImmutableList.<String>builder()
-              .addAll(state.getUserStartupCommands())
-              .add(sourceMapToWorkspaceRootCommand)
-              .build();
-      state.setUserStartupCommands(startupCommands);
+        // Google specific logic for binaries built in their RBE platform.
+      if (Registry.is(MAP_WORKING_DIR, true)) {
+        // Remote built binaries may use /proc/self/cwd to represent the working directory
+        // so we manually map /proc/self/cwd to the workspace root.  We used to use
+        // `plugin.symbol-file.dwarf.comp-dir-symlink-paths = "/proc/self/cwd"`
+        // to automatically resolve this but it's no longer supported in newer versions of
+        // LLDB.
+        startupCommands.add(
+              SOURCE_MAP_TO_WORKSPACE_ROOT_COMMAND + workingDirPath);
+      }
+      state.setUserStartupCommands(startupCommands.build());
 
       // NDK plugin will pass symbol directories to LLDB as `settings append
       // target.exec-search-paths`.
