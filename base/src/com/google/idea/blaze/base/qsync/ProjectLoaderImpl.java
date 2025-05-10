@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The Bazel Authors. All rights reserved.
+ * Copyright 2025 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.ExternalWorkspaceDataProvider;
 import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.ExternalWorkspaceDataProvider;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -76,6 +77,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -398,7 +400,7 @@ public class ProjectLoaderImpl implements ProjectLoader {
       .setLanguageClasses(LanguageClasses.toQuerySync(workspaceLanguageSettings.getActiveLanguages()))
       .setTestSources(testSourceGlobs)
       .setSystemExcludes(ImmutableSet.<Path>builder()
-                           .addAll(importRoots.systemExcludes())
+                           .addAll(importRoots.systemExcludes().stream().map(WorkspacePath::asPath).collect(Collectors.toList()))
                            .add(Path.of(BazelDependencyBuilder.INVOCATION_FILES_DIR))
                            .build())
       .build();

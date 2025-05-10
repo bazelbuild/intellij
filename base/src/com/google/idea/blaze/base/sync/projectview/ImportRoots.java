@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2025 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -281,8 +281,8 @@ public final class ImportRoots {
   }
 
   /** Returns the system excluded directories. */
-  public ImmutableSet<Path> systemExcludes() {
-    return buildSystemExcludes.stream().map(WorkspacePath::asPath).collect(toImmutableSet());
+  public ImmutableSet<WorkspacePath> systemExcludes() {
+    return ImmutableSet.copyOf(buildSystemExcludes);
   }
 
   public Set<WorkspacePath> excludeDirectories() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2025 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,13 +75,13 @@ public class ContentEntryEditor {
         contentEntry.addExcludeFolder(UrlUtil.fileToIdeaUrl(excludeFolder));
       }
 
-      for (String dir : BuildSystemProvider.getBuildSystemProvider(Blaze.getBuildSystemName(project))
-              .buildArtifactDirectories(workspaceRoot)) {
-        var workspacePath = new WorkspacePath(dir);
-        if (projectViewSet.getScalarValue(UseExclusionPatternsSection.KEY).orElse(true)
-                && !workspacePath.asPath().isAbsolute()
-                && workspacePath.asPath().getNameCount() == 1) {
-          contentEntry.addExcludePattern(workspacePath.relativePath());
+      if (projectViewSet.getScalarValue(UseExclusionPatternsSection.KEY).orElse(true)) {
+        var exclusionPatternsDirectories = importRoots.systemExcludes();
+
+        for (WorkspacePath workspacePath : exclusionPatternsDirectories) {
+          if (!workspacePath.asPath().isAbsolute() && workspacePath.asPath().getNameCount() == 1) {
+            contentEntry.addExcludePattern(workspacePath.relativePath());
+          }
         }
       }
 
