@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Bazel Authors. All rights reserved.
+ * Copyright 2025 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,10 +182,7 @@ public class TargetExpressionListTest extends BlazeTestCase {
             new ProjectDirectoriesHelper(
                 /* rootDirectories= */ ImmutableList.of(new WorkspacePath("foo")),
                 /* excludeDirectories= */ ImmutableSet.of(),
-                /* excludePathsForBazelQuery= */ ImmutableSet.of(),
-                    ImmutableSet.of()
-
-                ));
+                /* excludePathsForBazelQuery= */ ImmutableSet.of()));
 
     assertThat(helper.includesTarget(Label.create("//foo:target"))).isTrue();
     assertThat(helper.includesTarget(Label.create("//foo/bar:target"))).isTrue();
@@ -205,9 +202,7 @@ public class TargetExpressionListTest extends BlazeTestCase {
             new ProjectDirectoriesHelper(
                 /* rootDirectories= */ ImmutableList.of(new WorkspacePath("foo")),
                 /* excludeDirectories= */ ImmutableSet.of(new WorkspacePath("bar")),
-                /* excludePathsForBazelQuery= */ ImmutableSet.of(),
-                    ImmutableSet.of()
-                ));
+                /* excludePathsForBazelQuery= */ ImmutableSet.of()));
 
     assertThat(helper.includesTarget(Label.create("//foo:target"))).isFalse();
     assertThat(helper.includesTarget(Label.create("//foo:other"))).isTrue();
@@ -227,9 +222,7 @@ public class TargetExpressionListTest extends BlazeTestCase {
             new ProjectDirectoriesHelper(
                 /* rootDirectories= */ ImmutableList.of(new WorkspacePath("foo")),
                 /* excludeDirectories= */ ImmutableSet.of(new WorkspacePath("foo/bar")),
-                /* excludePathsForBazelQuery= */ ImmutableSet.of(),
-                    ImmutableSet.of()
-                ));
+                /* excludePathsForBazelQuery= */ ImmutableSet.of()));
 
     assertThat(helper.includesTarget(Label.create("//foo:target"))).isTrue();
     assertThat(helper.includesTarget(Label.create("//foo/bar:target"))).isFalse();
