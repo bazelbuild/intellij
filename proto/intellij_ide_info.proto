@@ -184,6 +184,7 @@ message CToolchainIdeInfo {
   string cpp_compiler = 5;
   repeated string built_in_include_directory = 6;
   string compiler_name = 7;
+  string sysroot = 8;
 }
 
 message TestInfo {

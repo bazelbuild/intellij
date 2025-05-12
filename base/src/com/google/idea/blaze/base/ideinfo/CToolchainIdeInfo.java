@@ -39,6 +39,7 @@ public abstract class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.
 
   public abstract String compilerName();
 
+  public abstract @Nullable ExecutionRootPath sysroot();
 
   static CToolchainIdeInfo fromProto(IntellijIdeInfo.CToolchainIdeInfo proto) {
     return CToolchainIdeInfo.builder()
@@ -49,20 +50,27 @@ public abstract class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.
         .setCppCompiler(ExecutionRootPath.fromProto(proto.getCppCompiler()))
         .setTargetName(proto.getTargetName())
         .setCompilerName(proto.getCompilerName())
+        .setSysroot(ExecutionRootPath.fromNullableProto(proto.getSysroot()))
         .build();
   }
 
   @Override
   public IntellijIdeInfo.CToolchainIdeInfo toProto() {
-    return IntellijIdeInfo.CToolchainIdeInfo.newBuilder()
+    final var builder = IntellijIdeInfo.CToolchainIdeInfo.newBuilder()
         .addAllCOption(cCompilerOptions())
         .addAllCppOption(cppCompilerOptions())
         .addAllBuiltInIncludeDirectory(ProtoWrapper.mapToProtos(builtInIncludeDirectories()))
         .setCCompiler(cCompiler().toProto())
         .setCppCompiler(cppCompiler().toProto())
         .setTargetName(targetName())
-        .setCompilerName(compilerName())
-        .build();
+        .setCompilerName(compilerName());
+
+    final var sysroot = sysroot();
+    if (sysroot != null) {
+      builder.setSysroot(sysroot.toProto());
+    }
+
+    return builder.build();
   }
 
   public static Builder builder() {
@@ -88,6 +96,8 @@ public abstract class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.
     public abstract Builder setTargetName(String value);
 
     public abstract Builder setCompilerName(String value);
+
+    public abstract Builder setSysroot(@Nullable ExecutionRootPath value);
 
     public abstract CToolchainIdeInfo build();
   }

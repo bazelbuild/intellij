@@ -655,6 +655,7 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
         cpp_compiler = cpp_compiler,
         target_name = cpp_toolchain.target_gnu_system_name,
         compiler_name = cpp_toolchain.compiler,
+        sysroot = cpp_toolchain.sysroot,
     )
     ide_info["c_toolchain_ide_info"] = c_toolchain_info
     update_sync_output_groups(output_groups, "intellij-info-cpp", depset([ide_info_file]))

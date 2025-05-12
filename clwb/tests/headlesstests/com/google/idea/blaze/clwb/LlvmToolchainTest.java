@@ -48,7 +48,7 @@ public class LlvmToolchainTest extends ClwbHeadlessTestCase {
     assertDefine("__llvm__", compilerSettings).isNotEmpty();
     assertDefine("__VERSION__", compilerSettings).startsWith("\"Clang 19.1.0");
 
-    assertContainsHeader("iostream", compilerSettings);
+    assertContainsHeader("stdlib.h", compilerSettings);
     assertContainsHeader("wasi/wasip2.h", compilerSettings);
   }
 }

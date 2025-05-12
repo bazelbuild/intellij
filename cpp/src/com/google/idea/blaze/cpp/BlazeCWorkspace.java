@@ -257,13 +257,18 @@ public final class BlazeCWorkspace implements ProjectComponent {
             .map(File::getAbsolutePath)
             .forEach(compilerSwitchesBuilder::withSystemIncludePath);
 
-        // add builtin includes provided by the compiler as system includes
-        // Note: In most cases CLion is able to derive the builtin includes during compiler info collection, unless
-        // the toolchain uses an external sysroot.
-        compilerSettings.builtInIncludes().stream()
-            .flatMap(resolver)
-            .map(File::getAbsolutePath)
-            .forEach(compilerSwitchesBuilder::withSystemIncludePath);
+        // add includes from a custom sysroot as system includes
+        // Note: Only add includes from a custom sysroot manually, CLion can derive the other
+        // bulletin includes during the compiler info collection. Manually adding all builtin
+        // includes can lead to headers being resolved into the wrong include directory.
+        final var sysroot = compilerSettings.sysroot();
+        if (sysroot != null) {
+          compilerSettings.builtInIncludes().stream()
+              .filter((it) -> ExecutionRootPath.isAncestor(sysroot, it, false))
+              .flatMap(resolver)
+              .map(File::getAbsolutePath)
+              .forEach(compilerSwitchesBuilder::withSystemIncludePath);
+        }
 
         final var cCompilerSwitches =
             buildSwitchBuilder(compilerSettings, compilerSwitchesBuilder, CLanguageKind.C);
