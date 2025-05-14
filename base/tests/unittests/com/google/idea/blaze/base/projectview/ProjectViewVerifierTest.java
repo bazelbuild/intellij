@@ -34,7 +34,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
-import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettingsExamples.SingleLanguage;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -56,8 +56,6 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
   private MockFileOperationProvider fileOperationProvider;
   private ErrorCollector errorCollector = new ErrorCollector();
   private BlazeContext context;
-  private WorkspaceLanguageSettings workspaceLanguageSettings =
-      new WorkspaceLanguageSettings(WorkspaceType.JAVA, ImmutableSet.of(LanguageClass.JAVA));
 
   @Override
   protected void initTest(
@@ -102,7 +100,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
             .build();
     fileOperationProvider.addProjectView(projectViewSet);
     ProjectViewVerifier.verifyProjectView(
-        project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
+        project, context, workspacePathResolver, projectViewSet, SingleLanguage.JAVA);
     errorCollector.assertNoIssues();
   }
 
@@ -124,7 +122,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
             .build();
     fileOperationProvider.addProjectView(projectViewSet);
     ProjectViewVerifier.verifyProjectView(
-        project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
+        project, context, workspacePathResolver, projectViewSet, SingleLanguage.JAVA);
     errorCollector.assertIssues(
         "java/com/google/android/apps/example is included, "
             + "but that contradicts java/com/google/android/apps/example which was excluded");
@@ -148,7 +146,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
             .build();
     fileOperationProvider.addProjectView(projectViewSet);
     ProjectViewVerifier.verifyProjectView(
-        project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
+        project, context, workspacePathResolver, projectViewSet, SingleLanguage.JAVA);
     errorCollector.assertIssues(
         "java/com/google/android/apps/example is included, "
             + "but that contradicts java/com/google/android/apps which was excluded");
@@ -173,7 +171,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
             .build();
     fileOperationProvider.addProjectView(projectViewSet);
     ProjectViewVerifier.verifyProjectView(
-        project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
+        project, context, workspacePathResolver, projectViewSet, SingleLanguage.JAVA);
     errorCollector.assertNoIssues();
   }
 
@@ -191,7 +189,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
                     .build())
             .build();
     ProjectViewVerifier.verifyProjectView(
-        project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
+        project, context, workspacePathResolver, projectViewSet, SingleLanguage.JAVA);
     errorCollector.assertIssues(
         String.format(
             "Directory '%s' specified in project view not found.",
@@ -213,7 +211,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
             .build();
     fileOperationProvider.addFile(new WorkspacePath("java/com/google/android/apps/example"));
     ProjectViewVerifier.verifyProjectView(
-        project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings);
+        project, context, workspacePathResolver, projectViewSet, SingleLanguage.JAVA);
     errorCollector.assertIssues(
         String.format(
             "Directory '%s' specified in project view is a file.",
