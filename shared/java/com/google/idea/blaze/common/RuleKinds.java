@@ -16,7 +16,6 @@
 package com.google.idea.blaze.common;
 
 import com.google.common.collect.ImmutableSet;
-import java.util.Set;
 
 /** Utility class for information about specific bazel rule kinds (java, cpp, etc.) */
 public final class RuleKinds {
@@ -59,6 +58,9 @@ public final class RuleKinds {
 
   public static final ImmutableSet<String> PYTHON_RULE_KINDS =
           ImmutableSet.of("py_library", "py_binary", "py_test");
+
+  public static final ImmutableSet<String> INTELLIJ_PLUGIN =
+      ImmutableSet.of("intellij_plugin_debug_target");
 
   public static boolean isJava(String ruleClass) {
     return JAVA_RULE_KINDS.contains(ruleClass) || ANDROID_RULE_KINDS.contains(ruleClass);
