@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.sdkcompat.javascript.TypeScriptConfigServiceAdapter;
 import com.intellij.lang.typescript.compiler.TypeScriptCompilerService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
@@ -50,7 +49,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
-class BlazeTypeScriptConfigServiceImpl extends TypeScriptConfigServiceAdapter {
+class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
   private static final Logger logger = Logger.getInstance(BlazeTypeScriptConfigServiceImpl.class);
   private static final BoolExperiment restartTypeScriptService =
       new BoolExperiment("restart.typescript.service", true);
@@ -122,6 +121,11 @@ class BlazeTypeScriptConfigServiceImpl extends TypeScriptConfigServiceAdapter {
   @Override
   public Condition<VirtualFile> getAccessScope(VirtualFile scope) {
     return f -> true;
+  }
+
+  @Override
+  public IntPredicate getFilterId(VirtualFile scope) {
+    return i -> true;
   }
 
   @Nullable

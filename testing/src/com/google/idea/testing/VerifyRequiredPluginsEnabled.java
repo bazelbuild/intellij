@@ -17,7 +17,11 @@ package com.google.idea.testing;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /** Check that plugins flagged by the test runner as required are actually loaded. */
 public class VerifyRequiredPluginsEnabled {
@@ -34,7 +38,9 @@ public class VerifyRequiredPluginsEnabled {
       String msg =
           String.format(
               "Required plugin '%s' is not %s",
-              pluginId, pluginInstalled(pluginId) ? "enabled" : "available");
+              pluginId, pluginInstalled(pluginId) ? "enabled" : "available. " + String.format("Available plugins are: %s",
+                  Arrays.stream(PluginManager.getPlugins()).sequential().map((PluginDescriptor::getName))
+                      .collect(Collectors.joining("', '", "'", "'"))));
       throw new RuntimeException(msg);
     }
   }
