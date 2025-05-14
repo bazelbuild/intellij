@@ -1,3 +1,8 @@
+v2025.05.13
+===========
+* Fix annotation_processing in fast_build aspect #7643
+* Revert "Make run configurations configurable (#7275)" #7659
+
 v2025.04.29
 ===========
 Fixes:
