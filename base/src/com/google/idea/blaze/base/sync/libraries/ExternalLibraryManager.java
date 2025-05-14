@@ -31,7 +31,6 @@ import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.vcs.VcsSyncListener;
 import com.google.idea.common.util.Transactions;
-import com.google.idea.sdkcompat.general.AsyncVfsEventsPostProcessorCompat;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,8 +40,15 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.JavaCoroutines;
+import com.intellij.vfs.AsyncVfsEventsListener;
 import com.intellij.vfs.AsyncVfsEventsPostProcessor;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -68,22 +74,27 @@ public class ExternalLibraryManager implements Disposable {
     this.project = project;
     this.duringBlazeSync = false;
     this.libraries = ImmutableMap.of();
-    AsyncVfsEventsPostProcessorCompat.addListener(
-            events -> {
+    AsyncVfsEventsPostProcessor.getInstance().addListener(new AsyncVfsEventsListener() {
+
+      @Override
+      public @Nullable Object filesChanged(@NotNull List<? extends VFileEvent> list, @NotNull Continuation<? super Unit> continuation) {
+        return JavaCoroutines.suspendJava(javaContinuation -> {
               if (duringBlazeSync || libraries.isEmpty()) {
                 return;
               }
               ImmutableList<VirtualFile> deletedFiles =
-                  events.stream()
+                  list.stream()
                       .filter(VFileDeleteEvent.class::isInstance)
                       .map(VFileEvent::getFile)
                       .collect(toImmutableList());
               if (!deletedFiles.isEmpty()) {
                 libraries.values().forEach(library -> library.removeInvalidFiles(deletedFiles));
               }
-            },
-            this,
-            project);
+              javaContinuation.resume(Unit.INSTANCE);
+            }
+            , continuation);
+      }
+    }, ((ComponentManagerEx) project).getCoroutineScope());
   }
 
   @Nullable

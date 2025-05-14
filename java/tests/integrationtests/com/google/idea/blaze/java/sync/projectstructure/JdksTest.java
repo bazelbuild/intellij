@@ -18,10 +18,12 @@ package com.google.idea.blaze.java.sync.projectstructure;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.java.sync.sdk.BlazeJdkProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.UnknownSdkType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import java.io.File;
@@ -37,8 +39,6 @@ import java.util.Comparator;
 import java.util.Optional;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.idea.java.JavaSdkCompat.getNonJavaMockSdk;
-import static com.google.idea.java.JavaSdkCompat.getUniqueMockJdk;
 import static java.util.Arrays.stream;
 
 /** Integration tests for {@link Jdks}. */
@@ -301,6 +301,19 @@ public class JdksTest extends BlazeIntegrationTestCase {
                 .map(Sdk::getHomePath)
                 .map(File::new)
                 .orElse(null));
+  }
+
+  private Sdk getUniqueMockJdk(LanguageLevel languageLevel) {
+    var jdk = IdeaTestUtil.getMockJdk(languageLevel.toJavaVersion());
+    var modificator = jdk.getSdkModificator();
+    modificator.setHomePath(jdk.getHomePath() + "." + jdk.hashCode());
+    modificator.setName(jdk.getName() + "." + jdk.hashCode());
+    ApplicationManager.getApplication().runWriteAction(modificator::commitChanges);
+    return jdk;
+  }
+
+  private Sdk getNonJavaMockSdk() {
+    return ProjectJdkTable.getInstance().createSdk("", UnknownSdkType.getInstance(""));
   }
 
 }
