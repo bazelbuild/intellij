@@ -199,6 +199,12 @@ clwb_headless_test(
     project = "target_compatible",
 )
 
+clwb_headless_test(
+    name = "example_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/ExampleTest.java"],
+    example = "simple_project",
+)
+
 test_suite(
     name = "headless_tests",
     tests = [
@@ -209,5 +215,6 @@ test_suite(
         ":virtual_includes_headless_test",
         ":execution_headless_test",
         ":target_compatible_headless_test",
+        ":example_headless_test",
     ],
 )

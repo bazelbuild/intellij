@@ -4,7 +4,7 @@ load(
     "intellij_integration_test_suite",
 )
 
-def clwb_headless_test(name, project, srcs, deps = [], last_green = True):
+def clwb_headless_test(name, srcs, project = None, example = None, deps = [], last_green = True):
     runner = name + "_runner"
 
     intellij_integration_test_suite(
@@ -36,11 +36,21 @@ def clwb_headless_test(name, project, srcs, deps = [], last_green = True):
         ],
     )
 
+    if project != None:
+        workspace_path = "tests/projects/" + project
+        workspace_files = None
+    elif example != None:
+        workspace_path = "examples/cpp/" + example
+        workspace_files = ["//examples/cpp:" + example]
+    else:
+        fail("neither project nor example is defined")
+
     bazel_integration_tests(
         name = name,
         test_runner = runner,
         last_green = last_green,
-        workspace_path = "tests/projects/" + project,
+        workspace_path = workspace_path,
+        workspace_files = workspace_files,
         env = {
             # disables automatic conversion of bazel target names to absolut windows paths by msys
             "MSYS_NO_PATHCONV": "true",
