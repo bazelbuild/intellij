@@ -91,6 +91,12 @@ public abstract class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.
 
     public abstract Builder setCppCompiler(ExecutionRootPath value);
 
+    public Builder setCCppCompiler(ExecutionRootPath value) {
+      setCCompiler(value);
+      setCppCompiler(value);
+      return this;
+    }
+
     public abstract Builder setTargetName(String value);
 
     public abstract Builder setSysroot(@Nullable ExecutionRootPath value);
