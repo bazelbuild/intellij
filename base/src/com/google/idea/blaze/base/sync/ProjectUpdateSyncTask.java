@@ -258,7 +258,9 @@ final class ProjectUpdateSyncTask {
         DirectoryStructure.getRootDirectoryStructure(
             project, workspaceRoot, projectState.getProjectViewSet());
 
-    refreshVirtualFileSystem(context, project, newProjectData);
+    if (Registry.is("blaze.refresh.virtual.filesystem.execroot")) {
+      refreshVirtualFileSystem(context, project, newProjectData);
+    }
 
     DirectoryStructure directoryStructure =
         FutureUtil.waitForFuture(context, directoryStructureFuture)
@@ -286,10 +288,6 @@ final class ProjectUpdateSyncTask {
 
   private static void refreshVirtualFileSystem(
       BlazeContext context, Project project, BlazeProjectData blazeProjectData) {
-    if (Registry.is("blaze.refresh.virtual.filesystem.execroot")) {
-      return;
-    }
-
     Scope.push(
         context,
         (childContext) -> {
