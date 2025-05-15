@@ -73,6 +73,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -285,6 +286,10 @@ final class ProjectUpdateSyncTask {
 
   private static void refreshVirtualFileSystem(
       BlazeContext context, Project project, BlazeProjectData blazeProjectData) {
+    if (Registry.is("blaze.refresh.virtual.filesystem.execroot")) {
+      return;
+    }
+
     Scope.push(
         context,
         (childContext) -> {
