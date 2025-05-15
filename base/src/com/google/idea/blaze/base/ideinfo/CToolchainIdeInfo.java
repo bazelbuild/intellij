@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /** Represents toolchain info from a cc_toolchain or cc_toolchain_suite */
 @AutoValue
@@ -73,6 +74,15 @@ public abstract class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.
 
   public static Builder builder() {
     return new AutoValue_CToolchainIdeInfo.Builder();
+  }
+
+  @VisibleForTesting
+  public static Builder builderWithDefaults() {
+    return builder()
+        .setCCompilerOptions(ImmutableList.of())
+        .setCppCompilerOptions(ImmutableList.of())
+        .setTargetName("")
+        .setBuiltInIncludeDirectories(ImmutableList.of());
   }
 
   /**
