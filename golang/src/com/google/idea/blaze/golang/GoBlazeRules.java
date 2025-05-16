@@ -37,6 +37,7 @@ public final class GoBlazeRules implements Kind.Provider {
     GO_LIBRARY("go_library", LanguageClass.GO, RuleType.LIBRARY),
     GO_APPENGINE_LIBRARY("go_appengine_library", LanguageClass.GO, RuleType.LIBRARY),
     GO_PROTO_LIBRARY("go_proto_library", LanguageClass.GO, RuleType.LIBRARY),
+    GO_THRIFT_LIBRARY("go_thrift_library", LanguageClass.GO, RuleType.LIBRARY),
     GO_WRAP_CC("go_wrap_cc", LanguageClass.GO, RuleType.UNKNOWN),
     GO_WEB_TEST("go_web_test", LanguageClass.GO, RuleType.TEST);
 

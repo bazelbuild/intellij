@@ -253,7 +253,7 @@ def get_aspect_ids(ctx):
 
 def _is_language_specific_proto_library(ctx, target, semantics):
     """Returns True if the target is a proto library with attached language-specific aspect."""
-    if ctx.rule.kind != "proto_library":
+    if ctx.rule.kind != "proto_library" and ctx.rule.kind != "thrift_library":
         return False
     if java_info_in_target(target):
         return True
@@ -494,7 +494,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
             library_labels = [stringify_label(ctx.rule.attr.library.label)]
         elif getattr(ctx.rule.attr, "embed", None) != None:
             for library in ctx.rule.attr.embed:
-                if library[IntelliJInfo].kind == "go_source" or library[IntelliJInfo].kind == "go_proto_library":
+                if "intellij-sources-go-outputs" in library[IntelliJInfo].output_groups:
                     l = library[IntelliJInfo].output_groups["intellij-sources-go-outputs"].to_list()
                     sources += l
                     generated += [f for f in l if not f.is_source]

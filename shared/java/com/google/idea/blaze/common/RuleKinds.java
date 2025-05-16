@@ -55,6 +55,9 @@ public final class RuleKinds {
   /** Rule kinds that have proto files for sources. */
   public static final ImmutableSet<String> PROTO_SOURCE_RULE_KINDS =
       ImmutableSet.of("proto_library");
+  /** Rule kinds that have thrift files for sources. */
+  public static final ImmutableSet<String> THRIFT_SOURCE_RULE_KINDS =
+          ImmutableSet.of("thrift_library");
 
   public static final ImmutableSet<String> PYTHON_RULE_KINDS =
           ImmutableSet.of("py_library", "py_binary", "py_test");
@@ -75,7 +78,7 @@ public final class RuleKinds {
   }
 
   public static boolean isProtoSource(String ruleClass) {
-    return PROTO_SOURCE_RULE_KINDS.contains(ruleClass);
+    return PROTO_SOURCE_RULE_KINDS.contains(ruleClass) || THRIFT_SOURCE_RULE_KINDS.contains(ruleClass);
   }
 
   public static boolean isPythonSource(String ruleClass) {

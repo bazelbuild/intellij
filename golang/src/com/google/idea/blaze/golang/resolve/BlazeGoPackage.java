@@ -125,13 +125,16 @@ public class BlazeGoPackage extends GoPackage {
       Project project, BlazeProjectData projectData, TargetKey targetKey) {
     TargetMap targetMap = projectData.getTargetMap();
     TargetIdeInfo target = targetMap.get(targetKey);
-    if (target == null || target.getKind() != GenericBlazeRules.RuleTypes.PROTO_LIBRARY.getKind()) {
+    if (target == null || !target.getKind().isOneOf(
+            GenericBlazeRules.RuleTypes.PROTO_LIBRARY.getKind(),
+            GenericBlazeRules.RuleTypes.THRIFT_LIBRARY.getKind())
+    ) {
       return targetKey;
     }
     return ReverseDependencyMap.get(project).get(targetKey).stream()
         .map(targetMap::get)
         .filter(Objects::nonNull)
-        .filter(t -> t.getKind() == RuleTypes.GO_PROTO_LIBRARY.getKind())
+        .filter(t -> t.getKind() == RuleTypes.GO_PROTO_LIBRARY.getKind() || t.getKind() == RuleTypes.GO_THRIFT_LIBRARY.getKind())
         .map(TargetIdeInfo::getKey)
         .findFirst()
         .orElse(targetKey);

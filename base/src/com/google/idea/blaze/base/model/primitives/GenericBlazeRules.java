@@ -27,6 +27,7 @@ public final class GenericBlazeRules implements Kind.Provider {
   /** Generic blaze rule types. */
   public enum RuleTypes {
     PROTO_LIBRARY("proto_library", LanguageClass.GENERIC, RuleType.LIBRARY),
+    THRIFT_LIBRARY("thrift_library", LanguageClass.GENERIC, RuleType.LIBRARY),
     TEST_SUITE("test_suite", LanguageClass.GENERIC, RuleType.TEST),
     INTELLIJ_PLUGIN_DEBUG_TARGET(
         "intellij_plugin_debug_target", LanguageClass.JAVA, RuleType.UNKNOWN),

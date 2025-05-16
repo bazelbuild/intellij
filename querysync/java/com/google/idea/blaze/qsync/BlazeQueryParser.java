@@ -91,6 +91,7 @@ public class BlazeQueryParser {
       register(builder, RuleKinds.JAVA_RULE_KINDS, BlazeQueryParser::visitJavaRule);
       register(builder, RuleKinds.CC_RULE_KINDS, BlazeQueryParser::visitCcRule);
       register(builder, RuleKinds.PROTO_SOURCE_RULE_KINDS, BlazeQueryParser::visitProtoRule);
+      register(builder, RuleKinds.THRIFT_SOURCE_RULE_KINDS, BlazeQueryParser::visitProtoRule); // reuse visitProtoRule
       register(builder, RuleKinds.PYTHON_RULE_KINDS, BlazeQueryParser::visitPythonRule);
       register(builder, RuleKinds.INTELLIJ_PLUGIN, BlazeQueryParser::visitIntellijPluginRule);
       myVisitorsByRuleClass = builder.buildOrThrow();
