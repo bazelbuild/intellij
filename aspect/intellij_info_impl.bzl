@@ -680,10 +680,6 @@ def _collect_generated_files(java):
             for outputs in java.java_outputs
             if outputs.generated_class_jar != None
         ]
-
-    # Handles Bazel versions before 5.0.0.
-    if (hasattr(java, "annotation_processing") and java.annotation_processing and java.annotation_processing.enabled):
-        return [(java.annotation_processing.class_jar, java.annotation_processing.source_jar)]
     return []
 
 def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
