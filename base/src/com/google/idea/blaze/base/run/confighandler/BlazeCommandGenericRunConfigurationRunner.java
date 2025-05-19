@@ -19,7 +19,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.buildview.BazelExecService;
-import com.google.idea.blaze.base.buildview.BazelProcess;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -34,7 +33,6 @@ import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultHolder;
-import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -200,13 +198,13 @@ public final class BlazeCommandGenericRunConfigurationRunner
         BlazeCommand.Builder blazeCommandBuilder,
         BlazeTestResultFinderStrategy testResultFinderStrategy,
         BlazeContext context) {
-      final BazelProcess<BlazeTestResults> process;
       try {
-        process = BazelExecService.instance(project).test(context, blazeCommandBuilder, testResultFinderStrategy);
+        return BazelExecService.instance(project)
+            .test(context, blazeCommandBuilder, ((BlazeTestResultHolder) testResultFinderStrategy))
+            .getHdl();
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
-      return process.getHdl();
     }
 
     private BlazeCommand.Builder getBlazeCommand(

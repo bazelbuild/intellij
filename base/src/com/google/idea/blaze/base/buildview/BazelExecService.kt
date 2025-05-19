@@ -8,9 +8,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResult
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep
 import com.google.idea.blaze.base.command.buildresult.BuildResultParser
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
-import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultHolder
-import com.google.idea.blaze.base.run.testlogs.BlazeTestResults
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
 import com.google.idea.blaze.common.Interners
@@ -83,12 +81,16 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
    * running process. Returns immediately after the process was created. The
    * result of the process is awaited asynchronously and can be accessed as by
    * the deferred result in the [BazelProcess].
+   *
+   * The [computeResult] argument allows creating a custom result upon completion
+   * of the process. It cannot be a suspending function to avoid race conditions.
    */
   private suspend fun <T> execute(
     ctx: BlazeContext,
     cmdBuilder: BlazeCommand.Builder,
     useCurses: Boolean,
-    result: (Int) -> T, // allows to create a custom result upon completion of the process
+    forwardOutput: Boolean,
+    computeResult: (Int) -> T,
   ): BazelProcess<T> {
     if (useCurses) {
       cmdBuilder.addBlazeFlags("--curses=yes")
@@ -110,22 +112,42 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
       .withWorkDirectory(root.pathString)
 
     val handler = withContext(Dispatchers.IO) {
-      object : ColoredProcessHandler(cmdLine) {
-        override fun coloredTextAvailable(text: String, attributes: Key<*>) {
-          super.coloredTextAvailable(text, attributes)
-          ctx.output(PrintOutput.process(text))
-        }
-      }
+      ColoredProcessHandler(cmdLine)
     }
-    val process = BazelProcess<T>(handler)
 
+    // handle process termination and forward the result
+    val result = CompletableDeferred<T>()
     handler.addProcessListener(object : ProcessListener {
-      override fun processWillTerminate(event: ProcessEvent, willBeDestroyed: Boolean) {
-        process.finishWithResult(result(event.exitCode))
+      override fun processNotStarted() {
+        result.completeExceptionally(IOException("process not started"))
+      }
+
+      override fun processTerminated(event: ProcessEvent) {
+        result.complete(computeResult(event.exitCode))
+
+        if (event.exitCode != 0) {
+          ctx.setHasError()
+        }
       }
     })
 
-    return process
+    // add a listener to forward the output to the context if requested
+    if (forwardOutput) {
+      handler.addProcessListener(object : ProcessListener {
+        override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+          if (outputType == ProcessOutputTypes.SYSTEM) {
+            ctx.println(event.text)
+          } else {
+            ctx.output(PrintOutput.process(event.text))
+          }
+
+          // used for debugging headless tests
+          LOG.debug("BAZEL OUTPUT: " + event.text)
+        }
+      })
+    }
+
+    return BazelProcess(handler, result)
   }
 
   private suspend fun parseEvent(ctx: BlazeContext, stream: BufferedInputStream) {
@@ -159,8 +181,8 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
     BuildEventParser.parse(event)?.let(ctx::output)
   }
 
-  private fun CoroutineScope.parseEvents(ctx: BlazeContext, helper: BuildResultHelperBep): Job {
-    return launch(Dispatchers.IO + CoroutineName("EventParser")) {
+  private fun parseEvents(ctx: BlazeContext, helper: BuildResultHelperBep): Job {
+    return scope.launch(Dispatchers.IO + CoroutineName("EventParser")) {
       try {
         // wait for bazel to create the output file
         while (!helper.outputFile.exists()) {
@@ -185,6 +207,9 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
   /**
    * Runs a bazel build, output is added to the [BlazeContext]. If the context
    * contains a [BuildViewScope] the bazel is run with curses.
+   *
+   * Automatically calls startNotify for the process, output should be retrieved
+   * from the context.
    */
   @Throws(IOException::class)
   fun build(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): BazelProcess<BlazeBuildOutputs.Legacy> {
@@ -194,12 +219,12 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
     // the old sync view does not use a PTY based terminal, and idk why it does not work on windows :c
     val useCurses = BuildViewMigration.present(ctx) && OS.CURRENT != OS.Windows
 
-    return executionScope(ctx) { provider ->
+    val process = executionScope(ctx) { provider ->
       cmdBuilder.addBlazeFlags(provider.buildFlags)
 
       val parseJob = parseEvents(ctx, provider)
 
-      val process = execute(ctx, cmdBuilder, useCurses) { exitCode ->
+      execute(ctx, cmdBuilder, useCurses, forwardOutput = true) { exitCode ->
         runBlocking { parseJob.cancelAndJoin() }
 
         val result = BuildResult.fromExitCode(exitCode)
@@ -213,32 +238,41 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
           )
         }
       }
-      process.also { it.hdl.startNotify() }
     }
+
+    // automatically call start notify for build processes, since the output is forwarded to the context
+    process.hdl.startNotify()
+
+    return process
   }
 
   /**
    * Runs a bazel test, output is added to the [BlazeContext]. Bazel is always
    * run without curses.
+   *
+   * Does not call startNotify for the process, callee is required to set up
+   * output handling themselves.
    */
   @Throws(IOException::class)
-  fun test(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder, testResultFinderStrategy: BlazeTestResultFinderStrategy): BazelProcess<BlazeTestResults> {
+  fun test(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder, resultHolder: BlazeTestResultHolder): BazelProcess<Unit> {
     LOG.assertTrue(cmdBuilder.name == BlazeCommandName.TEST)
 
     return executionScope(ctx) { provider ->
       cmdBuilder.addBlazeFlags(provider.buildFlags)
 
-      execute(ctx, cmdBuilder, useCurses = false) {
+      execute(ctx, cmdBuilder, useCurses = false, forwardOutput = false) {
         val result = provider.getBepStream(Optional.empty()).use(BuildResultParser::getTestResults)
-        (testResultFinderStrategy as? BlazeTestResultHolder)?.setTestResults(result)
-        result
+        resultHolder.setTestResults(result)
       }
     }
   }
 
   /**
-   * Runs a bazel run command, output is added to the [BlazeContext]. Bazel is always
-   * run without curses.
+   * Runs a bazel run command, output is added to the [BlazeContext]. Bazel is
+   * always run without curses.
+   *
+   * Does not call startNotify for the process, callee is required to set up
+   * output handling themselves.
    */
   @Throws(IOException::class)
   fun run(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): BazelProcess<Unit> {
@@ -246,7 +280,7 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
 
     return executionScope(ctx) { provider ->
       cmdBuilder.addBlazeFlags(provider.buildFlags)
-      execute(ctx, cmdBuilder, useCurses = false) { }
+      execute(ctx, cmdBuilder, useCurses = false, forwardOutput = false) { }
     }
   }
 }
