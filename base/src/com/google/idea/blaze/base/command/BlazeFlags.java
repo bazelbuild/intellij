@@ -59,7 +59,7 @@ public final class BlazeFlags {
 
   // Avoid running validation actions at the end of build. This flag is expected to be set only
   // during syncing projects.
-  public static final String DISABLE_VALIDATIONS = "--noexperimental_run_validations";
+  public static final String DISABLE_VALIDATIONS = "--norun_validations";
 
   // Since query cannot resolve target_compatible_with constraints we try to explicitly build
   // incompatible targets during the sync. This flags allows bazel to skip incompatible targets
