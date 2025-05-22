@@ -277,9 +277,9 @@ http_archive(
     url = CLION_251_URL,
 )
 
-CLION_252_SHA = "ccf8a74534102d0985801e4ec1a5552ea283741ef8a7edefaced20dcf644612c"
+CLION_252_SHA = "4446f86b61fa0fd507024803d637b4fc3bb7ce2734506c4b3614afbc421ce68b"
 
-CLION_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/252.16512-EAP-CANDIDATE-SNAPSHOT/clion-252.16512-EAP-CANDIDATE-SNAPSHOT.zip"
+CLION_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/252.13776.55-EAP-SNAPSHOT/clion-252.13776.55-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "clion_2025_2",
