@@ -43,7 +43,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "rules_kotlin",
-    version = "2.1.3",
+    version = "2.1.3-codeql.3",
 )
 
 bazel_dep(
@@ -374,7 +374,6 @@ http_archive(
     sha256 = PYTHON_PLUGIN_252_SHA,
     url = PYTHON_PLUGIN_252_URL,
 )
-
 
 _GO_BUILD_FILE = """
 java_import(
