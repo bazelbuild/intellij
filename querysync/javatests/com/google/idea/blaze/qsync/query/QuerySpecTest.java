@@ -94,7 +94,7 @@ public class QuerySpecTest {
         "intellij_plugin_debug_target", "java_binary", "java_library", "java_lite_proto_library",
         "java_mutable_proto_library", "java_proto_library", "java_test", "kt_android_library_helper",
         "kt_jvm_binary", "kt_jvm_library", "kt_jvm_library_helper", "kt_native_library", "proto_library",
-        "py_binary", "py_library", "py_test");
+        "py_binary", "py_library", "py_test", "thrift_library");
 
     QuerySpec qs =
       QuerySpec.builder(QuerySpec.QueryStrategy.FILTERING_TO_KNOWN_AND_USED_TARGETS)
