@@ -3,6 +3,7 @@
 #
 
 load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(
     "//:build-visibility.bzl",
     "PLUGIN_PACKAGES_VISIBILITY",
@@ -25,7 +26,6 @@ load(
     "//testing:test_defs.bzl",
     "intellij_unit_test_suite",
 )
-load(":build_defs.bzl", "select_since")
 load(":test_defs.bzl", "clwb_headless_test")
 
 licenses(["notice"])
@@ -34,20 +34,14 @@ intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [
         "optional_clwb_oclang",
-    ] + select_since(
-        "2024.3",
-        ["//clwb/src/com/google/idea/blaze/clwb/radler:plugin_xml"],
-        default = [],
-    ),
+        "//clwb/src/com/google/idea/blaze/clwb/radler:plugin_xml",
+    ],
     plugin_xmls = ["src/META-INF/clwb.xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":clwb_lib",
-    ] + select_since(
-        "2024.3",
-        ["//clwb/src/com/google/idea/blaze/clwb/radler:lib"],
-        default = [],
-    ),
+        "//clwb/src/com/google/idea/blaze/clwb/radler:lib",
+    ],
 )
 
 optional_plugin_xml(
@@ -69,14 +63,16 @@ stamped_plugin_xml(
     version = VERSION,
 )
 
-java_library(
+kt_jvm_library(
     name = "clwb_lib",
-    srcs = glob(["src/**/*.java"]),
+    srcs = glob([
+        "src/**/*.java",
+        "src/**/*.kt",
+    ]),
     visibility = ["//clwb:__subpackages__"],
     deps = [
         "//base",
         "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
-        "//clwb/sdkcompat",
         "//common/actions",
         "//common/experiments",
         "//cpp",

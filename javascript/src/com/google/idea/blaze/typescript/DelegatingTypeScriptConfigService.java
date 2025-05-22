@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.sdkcompat.javascript.DelegatingTypeScriptConfigServiceCompat;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigServiceImpl;
@@ -28,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -38,7 +38,13 @@ import java.util.Set;
  * Switches between {@link BlazeTypeScriptConfigServiceImpl} if the project is an applicable blaze
  * project, or {@link TypeScriptConfigServiceImpl} if it isn't.
  */
-class DelegatingTypeScriptConfigService extends DelegatingTypeScriptConfigServiceCompat {
+class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
+
+  public DelegatingTypeScriptConfigService(Project project) {
+    impl = pickServiceImpl(project);
+  }
+
+  private final TypeScriptConfigService impl;
 
   public TypeScriptConfigService getImpl() {
     return impl;
@@ -46,6 +52,7 @@ class DelegatingTypeScriptConfigService extends DelegatingTypeScriptConfigServic
 
   private static final BoolExperiment useBlazeTypeScriptConfig =
       new BoolExperiment("use.blaze.typescript.config", true);
+
 
   private static TypeScriptConfigService pickServiceImpl(Project project) {
     if (useBlazeTypeScriptConfig.getValue() && Blaze.isBlazeProject(project)) {
@@ -55,14 +62,15 @@ class DelegatingTypeScriptConfigService extends DelegatingTypeScriptConfigServic
     }
   }
 
-  DelegatingTypeScriptConfigService(Project project) {
-    super(pickServiceImpl(project));
-  }
-
   void update(ImmutableMap<Label, File> tsconfigs) {
     if (impl instanceof BlazeTypeScriptConfigServiceImpl) {
       ((BlazeTypeScriptConfigServiceImpl) impl).update(tsconfigs);
     }
+  }
+
+  @Override
+  public @NotNull IntPredicate getFilterId(@NotNull VirtualFile scope) {
+    return impl.getFilterId(scope);
   }
 
   @Override
