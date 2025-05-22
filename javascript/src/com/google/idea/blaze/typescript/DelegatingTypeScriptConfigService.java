@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -73,6 +74,11 @@ class DelegatingTypeScriptConfigService extends DelegatingTypeScriptConfigServic
   @Override
   public Condition<VirtualFile> getAccessScope(VirtualFile scope) {
     return impl.getAccessScope(scope);
+  }
+
+  @Override
+  public @NotNull IntPredicate getFilterId(@NotNull VirtualFile virtualFile) {
+    return null;
   }
 
   @Nullable

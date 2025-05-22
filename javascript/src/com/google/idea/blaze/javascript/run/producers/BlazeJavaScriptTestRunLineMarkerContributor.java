@@ -66,6 +66,7 @@ import javax.swing.Icon;
  *
  * <p>{@link JSFile#isTestFile()} will return false for these files.
  */
+@SuppressWarnings("all")
 public class BlazeJavaScriptTestRunLineMarkerContributor extends RunLineMarkerContributor {
   private static BoolExperiment enableJavascriptRunLineMarkers =
       new BoolExperiment("enable.javascript.runline.markers", true);

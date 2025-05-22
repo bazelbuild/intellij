@@ -158,6 +158,8 @@ public final class BlazeCommandGenericRunConfigurationRunner
               invoker,
               ImmutableList.of(),
               context);
+      @NotNull Map<String, String> envVars = handlerState.getUserEnvVarsState().getData().getEnvs();
+      blazeCommand.addEnvironmentVariables(envVars);
       return isTest()
           ? getProcessHandlerForTests(project, invoker, blazeCommand, workspaceRoot, context)
           : getProcessHandlerForNonTests(project, invoker, blazeCommand, workspaceRoot, context);
@@ -207,7 +209,6 @@ public final class BlazeCommandGenericRunConfigurationRunner
           });
       addConsoleFilters(consoleFilters.toArray(new Filter[0]));
 
-      @NotNull Map<String, String> envVars = handlerState.getUserEnvVarsState().getData().getEnvs();
       ListenableFuture<BlazeBuildOutputs> blazeBuildOutputsListenableFuture =
           BlazeExecutor.getInstance()
               .submit(

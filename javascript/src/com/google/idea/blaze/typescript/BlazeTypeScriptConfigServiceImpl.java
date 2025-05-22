@@ -39,6 +39,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -122,6 +124,11 @@ class BlazeTypeScriptConfigServiceImpl extends TypeScriptConfigServiceAdapter {
   @Override
   public Condition<VirtualFile> getAccessScope(VirtualFile scope) {
     return f -> true;
+  }
+
+  @Override
+  public @NotNull IntPredicate getFilterId(@NotNull VirtualFile virtualFile) {
+    return null;
   }
 
   @Nullable

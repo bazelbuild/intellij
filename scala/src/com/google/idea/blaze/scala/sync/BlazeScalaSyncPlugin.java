@@ -45,6 +45,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -105,7 +106,7 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
       // TODO: We could pick the min or max version, but either choice is problematic, see SCL-18866.
       // TODO: The best solution would be letting the user specify the expected Scala version explicitly
       if (library.getName() != null && isRuntimeLibrary(library.getName())) {
-        ScalaLibraryProperties properties = ScalaLibraryProperties.apply(libraryVersion(library.getName()), List$.MODULE$.<File>empty(), List$.MODULE$.<File>empty());
+        ScalaLibraryProperties properties = ScalaLibraryProperties.apply(libraryVersion(library.getName()), List$.MODULE$.<Path>empty(), List$.MODULE$.<Path>empty());
         ExistingLibraryEditor editor = new ExistingLibraryEditor(library, null);
         editor.setType(ScalaLibraryType.apply());
         editor.setProperties(properties);

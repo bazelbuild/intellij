@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.command;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -25,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.concurrent.Immutable;
 
@@ -37,18 +39,22 @@ public final class BlazeCommand {
   private final ImmutableList<String> blazeCmdlineFlags;
   private final ImmutableList<String> blazeStartupFlags;
   private final Optional<Path> effectiveWorkspaceRoot;
+  private final ImmutableMap<String, String> environmentVariables;
 
   private BlazeCommand(
       String binaryPath,
       BlazeCommandName name,
       ImmutableList<String> blazeStartupFlags,
       ImmutableList<String> blazeCmdlineFlags,
-      Optional<Path> effectiveWorkspaceRoot) {
+      Optional<Path> effectiveWorkspaceRoot,
+      ImmutableMap<String, String> environmentVariables
+      ) {
     this.binaryPath = binaryPath;
     this.name = name;
     this.blazeCmdlineFlags = blazeCmdlineFlags;
     this.blazeStartupFlags = blazeStartupFlags;
     this.effectiveWorkspaceRoot = effectiveWorkspaceRoot;
+    this.environmentVariables = environmentVariables;
   }
 
   public BlazeCommandName getName() {
@@ -80,6 +86,10 @@ public final class BlazeCommand {
     return effectiveWorkspaceRoot;
   }
 
+  public ImmutableMap<String, String> getEnvironmentVariables() {
+    return environmentVariables;
+  }
+
   @Override
   public String toString() {
     return Joiner.on(' ').join(toList());
@@ -107,6 +117,7 @@ public final class BlazeCommand {
     private final ImmutableList.Builder<TargetExpression> targets = ImmutableList.builder();
     private final ImmutableList.Builder<String> blazeCmdlineFlags = ImmutableList.builder();
     private final ImmutableList.Builder<String> exeFlags = ImmutableList.builder();
+    private final ImmutableMap.Builder<String, String> environmentVariables = ImmutableMap.builder();
 
     public Builder(String binaryPath, BlazeCommandName name, Project project) {
       this.binaryPath = binaryPath;
@@ -142,7 +153,8 @@ public final class BlazeCommand {
           name,
           blazeStartupFlags.build(),
           getArguments(),
-          Optional.ofNullable(effectiveWorkspaceRoot));
+          Optional.ofNullable(effectiveWorkspaceRoot),
+          environmentVariables.build());
     }
 
     public boolean isInvokeParallel() {
@@ -205,6 +217,12 @@ public final class BlazeCommand {
     @CanIgnoreReturnValue
     public BlazeCommand.Builder setWorkspaceRoot(Path root) {
       this.effectiveWorkspaceRoot = root;
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public BlazeCommand.Builder addEnvironmentVariables(Map<String, String> environmentVariables) {
+      this.environmentVariables.putAll(environmentVariables);
       return this;
     }
   }
