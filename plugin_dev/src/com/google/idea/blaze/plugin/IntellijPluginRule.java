@@ -15,21 +15,23 @@
  */
 package com.google.idea.blaze.plugin;
 
-import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes;
-import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.model.primitives.Label;
 
+import com.google.idea.blaze.common.BuildTarget;
 import javax.annotation.Nullable;
 
 /** Utility methods for intellij_plugin blaze targets */
 public class IntellijPluginRule {
 
-  public static boolean isPluginTarget(TargetInfo target) {
-    return isPluginTargetKind(target.getKind());
+  public static boolean isPluginTarget(@Nullable BuildTarget target) {
+    if (target == null) {
+      return false;
+    }
+
+    return isPluginTargetKind(target.kind());
   }
 
-  private static boolean isPluginTargetKind(@Nullable Kind kind) {
-    return RuleTypes.INTELLIJ_PLUGIN_DEBUG_TARGET.getKind().equals(kind);
+  private static boolean isPluginTargetKind(String kind) {
+    return RuleTypes.INTELLIJ_PLUGIN_DEBUG_TARGET.getKind().getKindString().equals(kind);
   }
 }

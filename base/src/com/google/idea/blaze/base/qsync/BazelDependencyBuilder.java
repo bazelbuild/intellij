@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
@@ -281,7 +280,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
         String.format(
             "--aspects=%1$s%%collect_dependencies,%1$s%%package_dependencies",
             invocationFiles.aspectFileLabel()));
-    querySyncFlags.add("--noexperimental_run_validations");
+    querySyncFlags.add(BlazeFlags.DISABLE_VALIDATIONS);
     querySyncFlags.add("--keep_going");
     querySyncFlags.addAll(
         outputGroups.stream()

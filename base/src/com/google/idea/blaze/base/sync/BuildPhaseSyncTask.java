@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.buildview.BuildViewMigration;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
-import com.google.idea.blaze.base.command.BlazercMigrator;
 import com.google.idea.blaze.base.command.buildresult.BuildResult;
 import com.google.idea.blaze.base.dependencies.BlazeQuerySourceToTargetProvider;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -243,14 +242,6 @@ public final class BuildPhaseSyncTask {
         parallel
             ? buildSystem.getBuildInvoker(project, ImmutableSet.of(BuildInvoker.Capability.BUILD_PARALLEL_SHARDS)).orElseThrow()
             : defaultInvoker;
-    final BlazercMigrator blazercMigrator = new BlazercMigrator(project);
-    if (!syncBuildInvoker.getCapabilities().contains(BuildInvoker.Capability.SUPPORT_CLI)
-        && blazercMigrator.needMigration()) {
-      context.output(
-          SummaryOutput.output(Prefix.INFO, "No .blazerc found at workspace root!").log().dedupe());
-      ApplicationManager.getApplication()
-          .invokeAndWait(() -> blazercMigrator.promptAndMigrate(context));
-    }
     resultBuilder.setBlazeInfo(syncBuildInvoker.getBlazeInfo(context));
 
     buildStats

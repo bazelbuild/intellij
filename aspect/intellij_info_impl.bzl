@@ -21,6 +21,7 @@ load(
     "expand_make_variables",
 )
 load(":python_info.bzl", "get_py_info", "py_info_in_target")
+load(":cc_info.bzl", "CC_USE_GET_TOOL_FOR_ACTION")
 
 IntelliJInfo = provider(
     doc = "Collected information about the targets visited by the aspect.",
@@ -123,11 +124,6 @@ def get_code_generator_rule_names(ctx, language_name):
         return getattr(CODE_GENERATOR_RULE_NAMES, language_name)
 
     return []
-
-def get_registry_flag(ctx, name):
-    """Registry flags are passed to aspects using defines. See CppAspectArgsProvider."""
-
-    return ctx.var.get(name) == "true"
 
 def source_directory_tuple(resource_file):
     """Creates a tuple of (exec_path, root_exec_path_fragment, is_source, is_external)."""
@@ -638,7 +634,7 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
         variables = cpp_variables,
     )
 
-    if (get_registry_flag(ctx, "_cpp_use_get_tool_for_action")):
+    if CC_USE_GET_TOOL_FOR_ACTION:
         c_compiler = cc_common.get_tool_for_action(
             feature_configuration = feature_configuration,
             action_name = ACTION_NAMES.c_compile,
@@ -684,10 +680,6 @@ def _collect_generated_files(java):
             for outputs in java.java_outputs
             if outputs.generated_class_jar != None
         ]
-
-    # Handles Bazel versions before 5.0.0.
-    if (hasattr(java, "annotation_processing") and java.annotation_processing and java.annotation_processing.enabled):
-        return [(java.annotation_processing.class_jar, java.annotation_processing.source_jar)]
     return []
 
 def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):

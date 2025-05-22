@@ -16,7 +16,6 @@
 
 package com.google.idea.testing.headless;
 
-import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -75,11 +74,8 @@ public class SyncOutput {
   }
 
   public void assertNoErrors() {
-    final var message = String.format(
-        "there where errors during the sync, check this log:%n%s",
-        collectLog()
-    );
-
-    assertWithMessage(message).that(issues).isEmpty();
+    assertWithMessage("sync contains issues, refer to 'PROJECT SYNC LOG' above")
+        .that(issues)
+        .isEmpty();
   }
 }
