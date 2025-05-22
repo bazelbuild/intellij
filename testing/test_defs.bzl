@@ -28,6 +28,7 @@ ADD_OPENS = [
         "java.desktop/javax.swing.plaf.basic",
         "java.desktop/javax.swing.text",
         "java.desktop/javax.swing.text.html",
+        "java.desktop/javax.swing.text.html.parser",
         "java.desktop/sun.awt",
         "java.desktop/sun.awt.image",
         "java.desktop/sun.font",

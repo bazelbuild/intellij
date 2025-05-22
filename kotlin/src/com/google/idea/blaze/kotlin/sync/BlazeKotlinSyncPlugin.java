@@ -61,7 +61,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
-import org.jetbrains.kotlin.android.synthetic.AndroidCommandLineProcessor;
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
 import org.jetbrains.kotlin.cli.common.arguments.FreezableKt;
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
@@ -82,6 +81,7 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
   // set).
   private static final String KOTLIN_PLUGIN_ID = "org.jetbrains.kotlin";
   private static final LanguageVersion DEFAULT_VERSION = LanguageVersion.KOTLIN_1_2;
+  private static final String KOTLIN_ANDROID_PLUGIN_PREFIX = "org.jetbrains.kotlin.android";
   private static final BoolExperiment setCompilerFlagsExperiment =
       new BoolExperiment("blaze.kotlin.sync.set.compiler.flags", true);
   // Creates K2JVMCompilerArguments for the .workspace module
@@ -215,7 +215,7 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
 
   private static boolean isCompilerOption(String option) {
     return option.startsWith(
-        "plugin:" + AndroidCommandLineProcessor.Companion.getANDROID_COMPILER_PLUGIN_ID() + ":");
+        "plugin:" + KOTLIN_ANDROID_PLUGIN_PREFIX + ":");
   }
 
   @Override

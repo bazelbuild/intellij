@@ -209,9 +209,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2025_2. This is required to build IJwB and run integration tests.
-IC_252_SHA = "b1473112c7dfa453846a5fd824ecc60979fef1c35e5653da2ae8e36a0c3f8c6a"
+IC_252_SHA = "bffc1d38def2cc2768cc8af4ee84f3e243806c87aaab048557e73791495607f5"
 
-IC_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/252.13776.59-EAP-SNAPSHOT/ideaIC-252.13776.59-EAP-SNAPSHOT.zip"
+IC_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/252.16512.17-EAP-SNAPSHOT/ideaIC-252.16512.17-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ce_2025_2",
@@ -244,9 +244,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2025_2. This is required to build IJwB and run integration tests.
-IU_252_SHA = "f4c53631bbe1eef329d08195625578fbabf21a9a8580f607faef9c369e20a9d7"
+IU_252_SHA = "be3a688f1c1d42bafe1ab0b138476f68bed7598119e093226b7314786a27af98"
 
-IU_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/252.13776.59-EAP-SNAPSHOT/ideaIU-252.13776.59-EAP-SNAPSHOT.zip"
+IU_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/252.16512.17-EAP-SNAPSHOT/ideaIU-252.16512.17-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ue_2025_2",
@@ -277,9 +277,9 @@ http_archive(
     url = CLION_251_URL,
 )
 
-CLION_252_SHA = "ccf8a74534102d0985801e4ec1a5552ea283741ef8a7edefaced20dcf644612c"
+CLION_252_SHA = "4446f86b61fa0fd507024803d637b4fc3bb7ce2734506c4b3614afbc421ce68b"
 
-CLION_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/252.16512-EAP-CANDIDATE-SNAPSHOT/clion-252.16512-EAP-CANDIDATE-SNAPSHOT.zip"
+CLION_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/252.13776.55-EAP-SNAPSHOT/clion-252.13776.55-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "clion_2025_2",
