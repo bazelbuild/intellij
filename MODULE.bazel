@@ -132,16 +132,11 @@ maven.install(
         "com.google.guava:failureaccess:1.0.2",
         "org.hamcrest:hamcrest-core:3.0",
         "org.jetbrains:annotations:26.0.2",
-        #"org.jetbrains.pty4j:pty4j:0.12.13",
         "org.jetbrains.pty4j:pty4j:0.13.0",
     ],
     fail_if_repin_required = True,
     generate_compat_repositories = True,
     lock_file = "//:maven_install.json",
-    #    repositories = [
-    #        "https://repo1.maven.org/maven2",
-    #        "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies",
-    #    ],
 )
 use_repo(
     maven,
