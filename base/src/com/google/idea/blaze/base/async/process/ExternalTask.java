@@ -108,6 +108,7 @@ public interface ExternalTask {
       this.blazeCommand = blazeCommand;
       command.addAll(blazeCommand.toList());
       blazeCommand.getEffectiveWorkspaceRoot().ifPresent(p -> workingDirectory = p.toFile());
+      environmentVariables.putAll(blazeCommand.getEnvironmentVariables());
       return this;
     }
 
