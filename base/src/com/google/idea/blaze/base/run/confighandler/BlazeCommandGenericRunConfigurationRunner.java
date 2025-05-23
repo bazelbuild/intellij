@@ -142,7 +142,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
               ImmutableList.of(),
               context);
       return isTest()
-          ? getProcessHandlerForTests(project, invoker, blazeCommand, workspaceRoot, context)
+          ? getProcessHandlerForTests(project, blazeCommand, workspaceRoot, context)
           : getScopedProcessHandler(project, blazeCommand.build(), workspaceRoot);
     }
 
@@ -185,7 +185,6 @@ public final class BlazeCommandGenericRunConfigurationRunner
 
     private ProcessHandler getProcessHandlerForTests(
         Project project,
-        BuildInvoker invoker,
         BlazeCommand.Builder blazeCommandBuilder,
         WorkspaceRoot workspaceRoot,
         BlazeContext context
@@ -221,6 +220,8 @@ public final class BlazeCommandGenericRunConfigurationRunner
 
       addConsoleFilters(consoleFilters.toArray(new Filter[0]));
 
+      // When running `bazel test`, bazel will not forward the environment to the tests themselves -- we need to use
+      // the --test_env flag for that. Therefore, we convert all the env vars to --test_env flags here.
       for (Map.Entry<String, String> env : handlerState.getUserEnvVarsState().getData().getEnvs().entrySet()) {
         blazeCommandBuilder.addBlazeFlags(BlazeFlags.TEST_ENV, String.format("%s=%s", env.getKey(), env.getValue()));
       }
