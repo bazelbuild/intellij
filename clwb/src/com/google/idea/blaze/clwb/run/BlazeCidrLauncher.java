@@ -118,6 +118,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     BlazeTestUiSession testUiSession = null;
     if (useTestUi()
         && BlazeTestEventsHandler.targetsSupported(project, configuration.getTargets())) {
+
+      // TODO: the result helper is closed before the command is executed, this is useless
       try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
         if (!(buildResultHelper instanceof BuildResultHelperBep)) {
           throw new ExecutionException("Build result helper not supported");
