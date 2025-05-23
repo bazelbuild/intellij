@@ -73,6 +73,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -257,7 +258,9 @@ final class ProjectUpdateSyncTask {
         DirectoryStructure.getRootDirectoryStructure(
             project, workspaceRoot, projectState.getProjectViewSet());
 
-    refreshVirtualFileSystem(context, project, newProjectData);
+    if (Registry.is("blaze.refresh.virtual.filesystem.execroot")) {
+      refreshVirtualFileSystem(context, project, newProjectData);
+    }
 
     DirectoryStructure directoryStructure =
         FutureUtil.waitForFuture(context, directoryStructureFuture)
