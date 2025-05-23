@@ -90,4 +90,20 @@ public class SimpleTest extends ClwbHeadlessTestCase {
     assertThat(getSyncStatus("main/hello-world.cc")).isEqualTo(SyncStatus.SYNCED);
     assertThat(getSyncStatus("main/test.cc")).isEqualTo(SyncStatus.SYNCED);
   }
+
+  // private void checkVFS() {
+  //   final var data = BlazeProjectDataManager.getInstance(myProject).getBlazeProjectData();
+  //   assertThat(data).isNotNull();
+
+  //   final var rootFile = data.getBlazeInfo().getExecutionRoot();
+  //   assertThat(rootFile).isNotNull();
+
+  //   final var rootPath = rootFile.toPath();
+
+  //   final var files = BazelDumpVFSAction.collect(rootPath)
+  //       .stream()
+  //       .map(rootPath::relativize);
+
+  //   assertWithMessage(String.format("DEBUG WITH: '-Dfile.system.trace.loading=%s/<path>'", rootFile.getPath())).that(files).isEmpty();
+  // }
 }
