@@ -224,6 +224,8 @@ def list_omit_none(value):
 
 def is_valid_aspect_target(target):
     """Returns whether the target has had the aspect run on it."""
+    if type(target) == "DormantDependency":
+        return False
     return IntelliJInfo in target
 
 def get_aspect_ids(ctx):
