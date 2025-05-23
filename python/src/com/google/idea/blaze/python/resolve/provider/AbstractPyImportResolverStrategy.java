@@ -37,6 +37,7 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.python.resolve.BlazePyResolverUtils;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
 import com.google.idea.blaze.qsync.query.Query;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -55,7 +56,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -65,6 +65,8 @@ import javax.annotation.Nullable;
  * import strings are resolved to python packages and modules.
  */
 public abstract class AbstractPyImportResolverStrategy implements PyImportResolverStrategy {
+
+  private static final Logger logger = Logger.getInstance(AbstractPyImportResolverStrategy.class);
 
   /**
    * This is a list of files, where the presence of one of these files represents either a
@@ -405,7 +407,14 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
         impPathParts[i] = impPath.getName(i).toString();
       }
 
-      resultBuilder.add(QualifiedName.fromComponents(impPathParts));
+      try {
+        var qualifiedName = QualifiedName.fromComponents(impPathParts);
+        resultBuilder.add(qualifiedName);
+      } catch (IllegalArgumentException e) {
+        // TODO https://github.com/bazelbuild/intellij/issues/6832
+        logger.warn(String.format("Failed to convert '%s' into a qualified name", impPath), e);
+      }
+
     }
 
     return resultBuilder.build();
