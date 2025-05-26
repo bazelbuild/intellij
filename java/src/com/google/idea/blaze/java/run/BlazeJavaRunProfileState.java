@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2025 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,8 +64,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.java.TargetKindUtil;
-import com.google.idea.blaze.java.run.hotswap.HotSwapCommandBuilder;
-import com.google.idea.blaze.java.run.hotswap.HotSwapUtils;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -86,7 +84,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -218,17 +215,7 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
         WorkspaceRoot.fromProject(project),
         BlazeInvocationContext.ContextType.RunConfiguration));
 
-    ImmutableList<String> command;
-    if (HotSwapUtils.canHotSwap(getEnvironment())) {
-      try {
-        command = HotSwapCommandBuilder.getBashCommandsToRunScript(project, blazeCommand);
-      } catch (IOException e) {
-        logger.warn("Failed to create script path. Hot swap will be disabled.", e);
-        command = blazeCommand.build().toList();
-      }
-    } else {
-      command = blazeCommand.build().toList();
-    }
+    ImmutableList<String> command = blazeCommand.build().toList();
 
     return getScopedProcessHandler(project, command, WorkspaceRoot.fromProject(project));
   }
